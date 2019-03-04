@@ -1,5 +1,3 @@
-# see https://github.com/Oshlack/STRetch/wiki/Running-STRetch
-
 workflow BasicStatsWorkflow {
     String input_bam
     String output_prefix
@@ -19,20 +17,21 @@ task FileSize {
     String docker_image
 
     Int cpus = 1
-    Int disk_size = 1
+    Int disk_size = 10
 
     command {
-	ls -lah ${input_bam} > ${output_prefix}.listing.txt
+	gsutil ls ${input_bam} > ${output_prefix}.listing.txt
     }
 
     output {
-	File listing = "*.listing.txt"
+	File listing = "${output_prefix}.listing.txt"
     }
 
     runtime {
         docker: "${docker_image}"
         cpu: "${cpus}"
         memory: "1G"
+	bootDiskSizeGb: 50
         disks: "local-disk ${disk_size} SSD"
     }
 }

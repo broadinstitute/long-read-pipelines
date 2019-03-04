@@ -114,7 +114,7 @@ RUN python3 -m pip install --upgrade pip \
 RUN curl -LO https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 RUN bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
 RUN rm Miniconda3-latest-Linux-x86_64.sh
-ENV PATH=/miniconda/bin:${PATH}
+ENV PATH=/root/google-cloud-sdk/bin/:/miniconda/bin:${PATH}
 RUN conda update -y conda
 
 # configure conda
@@ -143,3 +143,8 @@ COPY standardize_output_vcf.py /
 COPY update_vcf_id_field.py /
 
 COPY bashrc /root/.bashrc
+
+# install gsutil
+RUN curl https://sdk.cloud.google.com | bash
+#ENV PATH=/root/google-cloud-sdk/bin/:${PATH}
+#RUN gcloud init
