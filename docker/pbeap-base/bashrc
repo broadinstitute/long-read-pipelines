@@ -7,5 +7,6 @@ export LS_OPTIONS='--color=auto'
 alias ll="ls -al"
 alias less='less -m -g -i--underline-special --SILENT'
 alias more='less'
+alias ls='ls --color'
 
 export TERM=xterm

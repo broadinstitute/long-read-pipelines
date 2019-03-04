@@ -1,0 +1,8 @@
+{
+  "BasicStatsWorkflow.output_prefix": "results",
+  "BasicStatsWorkflow.pbeap_base_image": "kgarimella/pbeap-base",
+  "BasicStatsWorkflow.FileSize.disk_size": "10",
+  "BasicStatsWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/Ecoli_Training_Run/m64020_190123_195048.subreads.bam",
+  "BasicStatsWorkflow.FileSize.cpus": "1"
+}
+
