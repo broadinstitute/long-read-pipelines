@@ -1,4 +1,4 @@
-TAG1 = kgarimella/pbeap-base:v4
+TAG1 = kgarimella/pbeap-base:v5
 TAG2 = kgarimella/pbeap-base:latest
 
 all: build push

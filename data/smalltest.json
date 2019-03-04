@@ -1,0 +1,8 @@
+{
+  "BasicStatsWorkflow.output_prefix": "results",
+  "BasicStatsWorkflow.pbeap_base_image": "kgarimella/pbeap-base",
+  "BasicStatsWorkflow.FileSize.disk_size": "10",
+  "BasicStatsWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/SmallTestData/small.subreads.bam",
+  "BasicStatsWorkflow.FileSize.cpus": "1"
+}
+
