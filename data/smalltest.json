@@ -1,8 +1,26 @@
 {
-  "BasicStatsWorkflow.output_prefix": "results",
-  "BasicStatsWorkflow.pbeap_base_image": "kgarimella/pbeap-base",
-  "BasicStatsWorkflow.FileSize.disk_size": "10",
-  "BasicStatsWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/SmallTestData/small.subreads.bam",
-  "BasicStatsWorkflow.FileSize.cpus": "1"
-}
+  "CorrectAndAlignWorkflow.base_image": "kgarimella/pbtools@sha256:7bb26d8a142cd85999ed1a55a8b2b299dda6264709150eb968d90a694f6d5851",
+  "CorrectAndAlignWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/grch37/hs37d5.fa",
+  "CorrectAndAlignWorkflow.ref_mmi": "gs://broad-dsde-methods-kiran/resources/references/grch37/hs37d5.mmi",
+  "CorrectAndAlignWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/SmallTestData/small.subreads.bam",
+  "CorrectAndAlignWorkflow.output_prefix": ".",
 
+  "CorrectAndAlignWorkflow.SplitSubreads.cpus": "1",
+  "CorrectAndAlignWorkflow.SplitSubreads.disk_size": "20",
+  "CorrectAndAlignWorkflow.SplitSubreads.num_reads_per_split": "5000",
+
+  "CorrectAndAlignWorkflow.Minimap2.cpus": "1",
+  "CorrectAndAlignWorkflow.Minimap2.disk_size": "20",
+
+  "CorrectAndAlignWorkflow.CCS.cpus": "1",
+  "CorrectAndAlignWorkflow.CCS.disk_size": "20",
+
+  "CorrectAndAlignWorkflow.Minimap2CCS.cpus": "1",
+  "CorrectAndAlignWorkflow.Minimap2CCS.disk_size": "20",
+
+  "CorrectAndAlignWorkflow.MergeBams.cpus": "1",
+  "CorrectAndAlignWorkflow.MergeBams.disk_size": "20",
+
+  "CorrectAndAlignWorkflow.MergeCCSBams.cpus": "1",
+  "CorrectAndAlignWorkflow.MergeCCSBams.disk_size": "20"
+}
