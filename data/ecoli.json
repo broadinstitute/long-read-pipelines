@@ -1,8 +1,9 @@
 {
-  "BasicStatsWorkflow.output_prefix": "results",
-  "BasicStatsWorkflow.pbeap_base_image": "kgarimella/pbeap-base",
-  "BasicStatsWorkflow.FileSize.disk_size": "10",
-  "BasicStatsWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/Ecoli_Training_Run/m64020_190123_195048.subreads.bam",
-  "BasicStatsWorkflow.FileSize.cpus": "1"
-}
+  "CorrectAndAlignWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/Ecoli_Training_Run/m64020_190123_195048.subreads.bam",
 
+  "CorrectAndAlignWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.fasta",
+  "CorrectAndAlignWorkflow.ref_fasta_fai": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.fasta.fai",
+  "CorrectAndAlignWorkflow.ref_dict": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.dict",
+
+  "CorrectAndAlignWorkflow.num_reads_per_split": "100000"
+}

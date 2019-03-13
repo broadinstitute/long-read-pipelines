@@ -1,4 +1,4 @@
-TAG1 = kgarimella/pbtools:v3
+TAG1 = kgarimella/pbtools:v4
 TAG2 = kgarimella/pbtools:latest
 
 all: build push

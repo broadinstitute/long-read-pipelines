@@ -4,3 +4,4 @@ pb_eap
 resources
 bin
 *.swp
+*.jar
