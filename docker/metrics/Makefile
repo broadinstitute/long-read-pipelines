@@ -1,5 +1,5 @@
-TAG1 = kgarimella/pbtools:v7
-TAG2 = kgarimella/pbtools:latest
+TAG1 = kgarimella/metrics:v1
+TAG2 = kgarimella/metrics:latest
 
 all: build push
 

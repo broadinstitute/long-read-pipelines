@@ -11,7 +11,7 @@ ENV SAMTOOLS_VERSION="1.9"
 
 RUN install_packages ca-certificates pkg-config gcc g++ make bzip2 zlib1g-dev dpkg-dev build-essential libcurl4-openssl-dev libbz2-dev liblzma-dev libcrypto++-dev libgdbm-dev libc6-dev zlib1g-dev libsqlite3-dev libssl-dev openssl libffi-dev
 RUN install_packages python-pip python-dev
-RUN install_packages wget curl vim tree
+RUN install_packages wget curl vim tree time
 
 # install htslib
 RUN wget https://github.com/samtools/htslib/releases/download/${SAMTOOLS_VERSION}/htslib-${SAMTOOLS_VERSION}.tar.bz2 \
@@ -37,6 +37,3 @@ ENV PATH=/root/google-cloud-sdk/bin/:${PATH}
 
 # copy over other resources
 COPY bashrc /root/.bashrc
-
-# cleanup
-RUN rm -rf samtools-${SAMTOOLS_VERSION} htslib-${SAMTOOLS_VERSION}

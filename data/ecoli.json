@@ -1,5 +1,6 @@
 {
   "CorrectAndAlignWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/Ecoli_Training_Run/m64020_190123_195048.subreads.bam",
+  "CorrectAndAlignWorkflow.sm": "ecoli_training_run",
 
   "CorrectAndAlignWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.fasta",
   "CorrectAndAlignWorkflow.ref_fasta_fai": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.fasta.fai",
