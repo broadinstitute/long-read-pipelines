@@ -28,15 +28,10 @@ RUN conda config --add channels conda-forge
 RUN conda update --all
 
 # install conda packages
-RUN conda install -c bioconda pbccs
-RUN conda install -c bioconda pbmm2
-RUN conda install -c bioconda pbsv
 RUN conda install -c bioconda mosdepth
-RUN conda install -c bioconda nanoplot
 
 # gatk
 COPY gatk.jar /
-COPY combine_ccs_reports.py /
 
 # cleanup
 RUN rm Miniconda3-latest-Linux-x86_64.sh

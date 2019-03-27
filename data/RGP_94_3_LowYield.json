@@ -1,10 +1,10 @@
 {
-  "CorrectAndAlignWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/SmallTestData/small.subreads.bam",
-  "CorrectAndAlignWorkflow.sm": "SmallTest",
+  "CorrectAndAlignWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/RGP_94_3_LowYield/m64020_190323_074451.subreads.bam",
+  "CorrectAndAlignWorkflow.sm": "RGP_94_3",
 
   "CorrectAndAlignWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/grch37/hs37d5.fa",
   "CorrectAndAlignWorkflow.ref_fasta_fai": "gs://broad-dsde-methods-kiran/resources/references/grch37/hs37d5.fa.fai",
   "CorrectAndAlignWorkflow.ref_dict": "gs://broad-dsde-methods-kiran/resources/references/grch37/hs37d5.dict",
 
-  "CorrectAndAlignWorkflow.num_reads_per_split": "5000"
+  "CorrectAndAlignWorkflow.num_reads_per_split": "100000"
 }

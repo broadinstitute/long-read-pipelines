@@ -1,0 +1,317 @@
+---
+title: "README"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(magrittr)
+library(ggplot2)
+```
+
+```{r sample_status}
+samples_tbl = tribble(
+~sample,	     ~rel_to_proband, ~sex,      ~pop,
+"Ecoli",         NA,              NA,        NA,
+"NA12891",       "father",        "male",    "CEU",
+"NA12892",       "mother",        "female",  "CEU",
+"NA12878rep1",   "proband",       "female",  "CEU",
+"NA12878rep2",   "proband",       "female",  "CEU",
+"HG02982",       "father",        "male",    "GWD",
+"HG02983",       "mother",        "female",  "GWD",
+"HG02984",       "proband",       "male",    "GWD",
+"HG00512",       "father",        "male",    "CHS",
+"HG00513",       "mother",        "female",  "CHS",
+"HG00514",       "proband",       "female",  "CHS",
+"NA19239",       "father",        "male",    "YRI",
+"NA19238",       "mother",        "female",  "YRI",
+"NA19240",       "proband",       "female",  "YRI",
+"HG00731",       "father",        "male",    "PUR",
+"HG00732",       "mother",        "female",  "PUR",
+"HG00733",       "proband",       "female",  "PUR",
+"HG03727",       "father",        "male",    "ITU",
+"HG03721",       "mother",        "female",  "ITU",
+"HG03732",       "proband",       "male",    "ITU",
+"NA19649",       "father",        "male",    "MXL",
+"NA19648",       "mother",        "female",  "MXL",
+"NA19650",       "proband",       "male",    "MXL",
+"NA10494",       "proband",       "male",    "Mbuti",
+"SM-HC449",      "mother",        "female",  "?",
+"SM-HC448",      "father",        "male",    "?",
+"SM-HC447",      "proband",       "male",    "?",
+"SM-GNXIC",      "mother",        "female",  "?",
+"SM-GNXID",      "father",        "male",    "?",
+"SM-GM5IP",      "proband",       "female",  "?",
+"SM-GA3AR",      "mother",        "female",  "?",
+"SM-GA3AS",      "father",        "male",    "?",
+"SM-GA3AT",      "proband",       "male",    "?"
+)
+
+a = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/pb_eap/", intern=TRUE);
+buckets = grep("SmallTestData", a[2:length(a)], invert=TRUE, value=TRUE, perl=TRUE) %>% sort()
+
+samples_tbl$run_type = NA
+samples_tbl$bucket = NA
+
+for (bucket in buckets) {
+    for (sample in samples_tbl$sample) {
+        if (grepl(sample, bucket) || grepl(gsub("NA19", "NA129", sample), bucket)) {
+            samples_tbl[which(samples_tbl$sample == sample), "bucket"] = bucket
+            samples_tbl[which(samples_tbl$sample == sample), "run_type"] = ifelse(grepl("_CLR", bucket), "CLR", "CCS")
+        }
+    }
+}
+```
+
+```{r processing_progress}
+sslogs = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/*/call-SplitSubreads/SplitSubreads.log", intern=TRUE)
+
+m = c()
+
+for (sslog in sslogs) {
+    cmd = system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat", sslog, " | grep -m1 java"), intern=TRUE)
+    
+    cromwell_hash = basename(dirname(dirname(sslog)))
+    codec = ifelse(grep("jdk-deflater", cmd), "JDK", "Intel")
+    
+    compression = 2;
+    if (grepl("compression", cmd)) {
+        compression = unlist(strsplit(grep("compression", unlist(strsplit(cmd, " ")), value=TRUE), "="))[2]
+    }
+    
+    approx_reads_per_shard = unlist(strsplit(cmd, " "))[grep("-nr", unlist(strsplit(cmd, " "))) + 1]
+    movie_name = gsub(".subreads.bam", "", basename(grep(".subreads.bam", unlist(strsplit(cmd, " ")), value=TRUE)))
+    sample_name = basename(dirname(grep(".subreads.bam", unlist(strsplit(cmd, " ")), value=TRUE)))
+    if (sample_name == "3_C01") {
+        sample_name = basename(dirname(dirname(grep(".subreads.bam", unlist(strsplit(cmd, " ")), value=TRUE))))
+    }
+    sample_name = gsub("NA129", "NA19", gsub("^\\w\\w\\w_", "", sample_name, perl=TRUE))
+    
+    merged_uncorrected_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeUncorrected/", movie_name, ".subreads.aligned.merged.bam", sep="")
+    merged_uncorrected_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeUncorrected/", movie_name, ".subreads.aligned.merged.bai", sep="")
+    merged_corrected_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCorrected/", movie_name, ".subreads.ccs.aligned.merged.bam", sep="")
+    merged_corrected_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCorrected/", movie_name, ".subreads.ccs.aligned.merged.bai", sep="")
+    
+    merged_uncorrected_size = as.double(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -lh", merged_uncorrected_bam, "| grep -v TOTAL | awk '{ print $1 }'"), intern=TRUE))
+    merged_corrected_size = as.double(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -lh", merged_corrected_bam, "| grep -v TOTAL | awk '{ print $1 }'"), intern=TRUE))
+    
+    merged_uncorrected_size = ifelse(identical(merged_uncorrected_size, character(0)), 0, merged_uncorrected_size)
+    merged_corrected_size = ifelse(identical(merged_corrected_size, character(0)), 0, merged_corrected_size)
+    
+    run_type = ifelse(grepl("_CLR", sample_name), "CLR", "CCS")
+    
+    m = rbind(m, c(cromwell_hash, codec, compression, approx_reads_per_shard, movie_name, sample_name, run_type, merged_uncorrected_bam, merged_uncorrected_size, merged_corrected_bam, merged_corrected_size))
+}
+
+colnames(m) = c("cromwell_hash", "codec", "compression", "shard_size", "movie_name", "sample_name", "run_type", "merged_uncorrected_bam", "merged_uncorrected_size", "merged_corrected_bam", "merged_corrected_size")
+tm = as_tibble(m)
+
+tm$accept = TRUE
+tm[which(tm$cromwell_hash %in% c("66182c6f-97e7-4b93-93b4-1ee830ce3ad5", "c31f1abe-84f7-4259-a5ef-7b7962d5cb3e", "fb6c81c9-c3df-4d49-a3ce-aa6ae0f6e45d", "5199a7e9-4579-4ede-976d-8b74cb211163", "ba5a752a-ac77-456c-99e9-2d99c8cb098f")), "accept"] = FALSE
+```
+
+```{r error_rate}
+d.uncorrected = read_delim("../../results/error_rate/all.uncorrected.txt", delim=" ");
+d.uncorrected = inner_join(d.uncorrected, tm %>% select(cromwell_hash, sample_name)) %>% arrange(sample_name)
+colnames(d.uncorrected) = c("cromwell_hash", "uncorrected_num_mismatches", "uncorrected_num_deletions", "uncorrected_num_insertions", "uncorrected_num_bases", "sample_name")
+
+d.corrected = read_delim("../../results/error_rate/all.corrected.txt", delim=" ");
+d.corrected = inner_join(d.corrected, tm %>% select(cromwell_hash, sample_name)) %>% arrange(sample_name)
+colnames(d.corrected) = c("cromwell_hash", "corrected_num_mismatches", "corrected_num_deletions", "corrected_num_insertions", "corrected_num_bases", "sample_name")
+
+d.uncorrected %<>% mutate(uncorrected_mismatch_rate = 100*uncorrected_num_mismatches/uncorrected_num_bases) %>%
+                   mutate(uncorrected_deletion_rate = 100*uncorrected_num_deletions/uncorrected_num_bases) %>%
+                   mutate(uncorrected_insertion_rate = 100*uncorrected_num_insertions/uncorrected_num_bases) %>%
+                   mutate(uncorrected_error_rate = 100*((uncorrected_num_mismatches + uncorrected_num_deletions + uncorrected_num_insertions)/uncorrected_num_bases))
+
+d.corrected %<>% mutate(corrected_mismatch_rate = 100*corrected_num_mismatches/corrected_num_bases) %>%
+                   mutate(corrected_deletion_rate = 100*corrected_num_deletions/corrected_num_bases) %>%
+                   mutate(corrected_insertion_rate = 100*corrected_num_insertions/corrected_num_bases) %>%
+                   mutate(corrected_error_rate = 100*((corrected_num_mismatches + corrected_num_deletions + corrected_num_insertions)/corrected_num_bases))
+
+dij = inner_join(
+    d.uncorrected %>% select(sample_name, uncorrected_mismatch_rate, uncorrected_deletion_rate, uncorrected_insertion_rate, uncorrected_error_rate) %>% distinct(),
+    d.corrected %>% select(sample_name, corrected_mismatch_rate, corrected_deletion_rate, corrected_insertion_rate, corrected_error_rate) %>% distinct()
+)
+
+dij %<>% filter(sample_name != "SmallTestData") %>% arrange(uncorrected_error_rate) %>% distinct()
+dij = dij[2:nrow(dij),]
+dij = dij[c(2, 3, 4, 5, 6, 8, 10, 11, 13), ]
+dij[2, "sample_name"] = "NA12878"
+dij %<>% arrange(sample_name)
+
+da = tribble(
+~mismatches, ~deletions, ~insertions, ~bases,
+ 0.7*85880573,    3927130,    2439225,     11702086109,
+ 0.7*88824450,    4372204,    2704999,     12964001414,
+ 0.7*94124921,    4673024,    2893108,     13913532449,
+ 0.7*116567038,   5504623,    3412812,     16450946868,
+ 0.7*6390020,     448212,     388683,      1123473038
+)
+da %<>% mutate(mm_rate = 100 * mismatches / bases, del_rate = 100 * deletions / bases, ins_rate = 100 * insertions / bases, tot_rate = 100 * (mismatches + deletions + insertions) / bases)
+
+par(mar=c(8, 5, 2, 5))
+plot(dij$uncorrected_error_rate, ylim=c(0.01, 300), bty="n", xaxt="n", xlab="", ylab="", pch=19, col="red", log="y", yaxt="n")
+axis(2, at=c(0.01, 0.1, 1.0, 10.0, 100), labels=c(0.01, 0.1, 1.0, 10.0, 100.0), las=1)
+mtext("Error rate (%)", 2, line=3, las=3)
+
+points(dij$uncorrected_mismatch_rate, pch=4, col="red")
+points(dij$uncorrected_insertion_rate, pch=2, col="red")
+points(dij$uncorrected_deletion_rate, pch=6, col="red")
+abline(h=mean(na.omit(dij$uncorrected_error_rate)), col="red", lty=2)
+mtext(sprintf("%.2f%%", mean(na.omit(dij$uncorrected_error_rate))), 4, at=mean(na.omit(dij$uncorrected_error_rate)), las=2)
+axis(1, at=1:nrow(dij), labels=dij$sample_name, las=2)
+#legend("topleft", c("Total errors", "Insertion errors", "Deletion errors", "Mismatch errors"), pch=c(19, 2, 6, 4))
+
+points(dij$corrected_error_rate, pch=19, col="blue")
+points(dij$corrected_mismatch_rate, pch=4, col="blue")
+points(dij$corrected_insertion_rate, pch=2, col="blue")
+points(dij$corrected_deletion_rate, pch=6, col="blue")
+abline(h=mean(na.omit(dij %>% filter(sample_name != "HG02982_CLR") %>% pull(corrected_error_rate))), col="blue", lty=2)
+mtext(sprintf("%.2f%%", mean(na.omit(dij %>% filter(sample_name != "HG02982_CLR") %>% pull(corrected_error_rate)))), 4, at=mean(na.omit(dij %>% filter(sample_name != "HG02982_CLR") %>% pull(corrected_error_rate))), las=2)
+axis(1, at=1:nrow(dij), labels=dij$sample_name, las=2)
+
+#points(2.2, 100*(6390020+448212+388683)/1123473038, pch=4, cex=0.7, col="darkgreen")
+#points(2.2, 100*6390020/1123473038, pch=4, cex=0.7, col="darkgreen")
+#points(2.2, 100*448212/1123473038, pch=2, cex=0.7, col="darkgreen")
+#points(2.2, 100*388683/1123473038, pch=6, cex=0.7, col="darkgreen")
+
+points(rep(jitter(5.5, factor=1.3), nrow(da)), da$tot_rate, pch=19, cex=0.7, col="darkgreen")
+points(rep(jitter(5.5, factor=1.3), nrow(da)), da$mm_rate, pch=4, cex=0.7, col="darkgreen")
+points(rep(jitter(5.5, factor=1.3), nrow(da)), da$ins_rate, pch=2, cex=0.7, col="darkgreen")
+points(rep(jitter(5.5, factor=1.3), nrow(da)), da$del_rate, pch=6, cex=0.7, col="darkgreen")
+mtext("NA12878 HiSeqX/\nHiSeq2500 controls", 1, at=5.3, las=2, cex=0.7, padj=1, line=1.1)
+abline(h=mean(da$tot_rate), col="darkgreen", lty=2)
+mtext(sprintf("%.2f%%", mean(da$tot_rate)), 4, at=mean(da$tot_rate), las=2)
+
+legend(1, 2e02, c("Total errors"), pch=19, bty="n", cex=0.8)
+legend(3, 2e02, c("Insertion errors"), pch=2, bty="n", cex=0.8)
+legend(5, 2e02, c("Deletion errors"), pch=6, bty="n", cex=0.8)
+legend(7, 2e02, c("Mismatch errors"), pch=4, bty="n", cex=0.8)
+```
+
+```{r read_lengths, fig.width=2, fig.height=2}
+rl_files = system("find ../../results/read_lengths -name '*.txt'", intern=TRUE)
+
+p = FALSE
+for (rl_file in rl_files) {
+    mn = gsub(".subreads.ccs.aligned.merged.readlengths.txt", "", basename(rl_file))
+    
+    if (tm %>% filter(movie_name == mn, sample_name != "Ecoli_Training_Run", sample_name != "SmallTestData") %>% nrow() > 0) {
+        #print(tm %>% filter(movie_name == mn))
+        
+        color = "red";
+        linetype = 3;
+        if (tm %>% filter(movie_name == mn) %>% pull(run_type) %>% unique() %in% ("CCS")) {
+            color = "#00006677"
+            linetype = 1;
+        }
+        
+        d = read_delim(rl_file, delim=" ", col_names = c("zmw", "range", "length"))
+        
+        h = hist(d$length, breaks=seq(0, 300000, 100), plot=FALSE)
+        
+        #print(color)
+        #print(mean(d$length))
+        #print(median(d$length))
+        
+        if (p) {
+            points(h$mids, h$density, type="l", lwd=2, col=color, lty=linetype)
+        } else {
+            plot(h$mids, h$density, type="l", lwd=2, xlim=c(0, 30000), ylim=c(0, 0.0010), bty="n", col=color, lty=linetype, xlab="Subread length (bp)", ylab="", xaxt="n", las=1)
+            axis(1, at=c(0, 10000, 20000, 30000), cex.axis=1.3)
+            p=TRUE
+        }
+    }
+}
+
+legend(15000, 7e-4, c("CCS", "CLR"), col=c("blue", "red"), lty=c(1, 2), lwd=2)
+```
+
+```{r read_length_hist}
+h_clr = hist(rl_clr$length, breaks = seq(1,300000,by=1000), plot=FALSE)
+h_ccs = hist(rl_ccs$length, breaks = seq(1,300000,by=1000), plot=FALSE)
+
+plot(h_ccs$mids, h_ccs$density, type="l", xlim=c(0, 30000), lwd=2, col="blue", bty="n", xlab="Read length (bp)", ylab="Density", xaxt="n")
+axis(1, at=c(0, 10000, 20000, 30000), cex.axis=1.3)
+points(h_clr$mids, h_clr$density, type="l", xlim=c(0, 30000), lwd=2, col="red")
+legend("topright", c("CCS", "CLR"), lwd=2, col=c("blue", "red"))
+#abline(v=mean(rl_ccs$length), col="blue", lty=2)
+abline(v=median(rl_ccs$length), col="blue", lty=2)
+#mtext(as.integer(mean(rl_ccs$length)), 3, at=mean(rl_ccs$length))
+mtext(as.integer(median(rl_ccs$length)), 3, at=median(rl_ccs$length))
+#abline(v=mean(rl_clr$length), col="red", lty=2)
+abline(v=(rl_clr %>% filter(length > 3000) %>% pull(length) %>% median()), col="red", lty=2)
+#mtext(as.integer(mean(rl_clr$length)), 3, at=mean(rl_clr$length))
+mtext(as.integer(rl_clr %>% filter(length > 3000) %>% pull(length) %>% median()), 3, at=rl_clr %>% filter(length > 3000) %>% pull(length) %>% median())
+
+plot(h_clr$mids, h_clr$density, type="l", xlim=c(0, 50000), lwd=2, col="red", bty="n", xlab="Read length (bp)", ylab="Density")
+legend("topright", c("CLR"), lwd=2, col=c("red"))
+#abline(v=mean(rl_ccs$length), col="blue", lty=2)
+abline(v=median(rl_ccs$length), col="blue", lty=2)
+#mtext(as.integer(mean(rl_ccs$length)), 3, at=mean(rl_ccs$length))
+mtext(as.integer(median(rl_ccs$length)), 3, at=median(rl_ccs$length))
+#abline(v=mean(rl_clr$length), col="red", lty=2)
+abline(v=median(rl_clr$length), col="red", lty=2)
+#mtext(as.integer(mean(rl_clr$length)), 3, at=mean(rl_clr$length))
+mtext(as.integer(median(rl_clr$length)), 3, at=median(rl_clr$length))
+```
+
+```{r costs}
+ct_all = tibble()
+
+cromwell_hash = tm$cromwell_hash[1]
+for (cromwell_hash in tm$cromwell_hash) {
+    costs_file = paste("../../results/costs/", cromwell_hash, ".costs.txt", sep="")
+    
+    if (!file.exists(costs_file)) {
+        print(paste("Costs for", cromwell_hash, " not computed yet"))
+    } else {
+        ct = read_table(costs_file)
+        ct$cromwell_hash = cromwell_hash
+        
+        ct_all = rbind(ct_all, ct)
+    }
+}
+
+ct_all %<>% mutate(cromwell_hash = as_factor(cromwell_hash))
+ct_all %<>% mutate(task_name = as_factor(task_name))
+ct_all %<>% mutate(status = as_factor(status))
+```
+
+```{r costs_boxplot}
+hashes.clr = tm %>% filter(sample_name != "SmallTestData", sample_name != "Ecoli_Training_Run") %>% filter(grepl("CLR", sample_name)) %>% pull(cromwell_hash)
+hashes.ccs = tm %>% filter(sample_name != "SmallTestData", sample_name != "Ecoli_Training_Run") %>% filter(!grepl("CLR", sample_name)) %>% pull(cromwell_hash)
+
+l = list(
+    "SplitSubreads"       = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.SplitSubreads") %>% pull(total_cost),
+    "CCS"                 = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.CCS") %>% pull(total_cost),
+    "Minimap2Uncorrected" = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.Minimap2Uncorrected") %>% pull(total_cost),
+    "Minimap2Corrected"   = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.Minimap2Corrected") %>% pull(total_cost),
+    "MergeUncorrected"    = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.MergeUncorrected") %>% pull(total_cost),
+    "MergeCorrected"      = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.MergeCorrected") %>% pull(total_cost),
+    " " = c(),
+    "Total (CLR)"         = ct_all %>% filter(status == "complete", cromwell_hash %in% hashes.clr) %>% group_by(cromwell_hash) %>% select(total_cost) %>% summarise(total_clr = sum(total_cost)) %>% pull(total_clr),
+    "Total (CCS)"         = ct_all %>% filter(status == "complete", cromwell_hash %in% hashes.ccs) %>% group_by(cromwell_hash) %>% select(total_cost) %>% summarise(total_ccs = sum(total_cost)) %>% pull(total_ccs)
+)
+
+par(mar=c(11, 6, 4, 1))
+b = boxplot(l, frame=FALSE, las=2, ylab="Cost ($)")
+```
+
+```{r coverage, fig.width=1.5, fig.height=1.5}
+cov = list(
+    corrected = c(15, 10, 10, 12, 10, 14, 10, 10, 12),
+    uncorrected = c(200, 120, 140, 145, 117, 170, 195, 127, 133, 166)
+)
+
+par(mar=c(4, 6, 1, 1))
+b = boxplot(cov, frame=FALSE, las=2, ylim=c(0, 200), xlab="Coverage", horizontal = TRUE)
+abline(v = b$stats[3,1], col="red", lty=2)
+mtext(sprintf("%.2fx", b$stats[3,1]), 3, at=b$stats[3,1])
+abline(v = b$stats[3,2], col="red", lty=2)
+mtext(sprintf("%.2fx", b$stats[3,2]), 3, at=b$stats[3,2])
+
+```

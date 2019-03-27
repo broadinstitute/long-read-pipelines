@@ -12,4 +12,9 @@ pbtools: pbeap-base pbtools/Dockerfile
 	&& cd $(PWD)/pbtools && make | grep sha256 | grep latest | cut -d ' ' -f 3 > sha256.txt \
 	&& cat sha256.txt
 
-all: pbeap-base pbtools
+metrics: pbeap-base metrics/Dockerfile
+	printf "\n============\nMetrics Image\n" \
+	&& cd $(PWD)/metrics && make | grep sha256 | grep latest | cut -d ' ' -f 3 > sha256.txt \
+	&& cat sha256.txt
+
+all: pbtools metrics
