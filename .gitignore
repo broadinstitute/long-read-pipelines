@@ -3,5 +3,8 @@ cromwell-workflow-logs
 pb_eap
 resources
 bin
+results
 *.swp
 *.jar
+.DS_Store
+.idea

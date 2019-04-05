@@ -8,6 +8,7 @@ MAINTAINER Kiran Garimella
 
 ENV PYTHON_VERSION="3.7.1"
 ENV SAMTOOLS_VERSION="1.9"
+ENV MINIMAP2_VERSION="2.16"
 
 RUN install_packages ca-certificates pkg-config gcc g++ make bzip2 zlib1g-dev dpkg-dev build-essential libcurl4-openssl-dev libbz2-dev liblzma-dev libcrypto++-dev libgdbm-dev libc6-dev zlib1g-dev libsqlite3-dev libssl-dev openssl libffi-dev
 RUN install_packages python-pip python-dev
@@ -30,6 +31,14 @@ RUN wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSI
 	&& ./configure --without-curses \
 	&& make \
 	&& make install
+
+# install minimap2
+RUN wget https://github.com/lh3/minimap2/releases/download/v${MINIMAP2_VERSION}/minimap2-${MINIMAP2_VERSION}.tar.bz2 \
+        && tar xjf minimap2-${MINIMAP2_VERSION}.tar.bz2 \
+        && rm minimap2-${MINIMAP2_VERSION}.tar.bz2 \
+        && cd minimap2-${MINIMAP2_VERSION} \
+        && make \
+        && cp minimap2 /usr/local/bin/
 
 # install gsutil
 RUN curl https://sdk.cloud.google.com | bash

@@ -1,64 +1,29 @@
-#!/bin/bash
+#!/usr/local/bin/python3
+import subprocess
+import sys
+import time
+from os import walk
 
-set -euxo pipefail
+return_code = subprocess.call(f'java -jar bin/womtool-36.1.jar validate wdl/correct_and_align/correct_and_align.wdl', shell=True)
+print(f'womtool validate correct_and_align.wdl return_code={return_code}')
 
-java -jar bin/womtool-36.1.jar validate wdl/correct_and_align/correct_and_align.wdl
-java -jar bin/womtool-36.1.jar validate wdl/compute_metrics/compute_metrics.wdl
+if return_code != 0:
+    print("Validation failed.")
+else:
+    dry_run = True if len(sys.argv) == 1 else False
 
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/smalltest.json            resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/ecoli.json                resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/CEU_NA12878rep1.json      resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/CEU_NA12878rep2.json      resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/CEU_NA12891.json          resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/CEU_NA12892.json          resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/CHS_HG00512.json          resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/CHS_HG00513.json          resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/CHS_HG00514.json          resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/GWD_HG02982_CLR.json      resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/GWD_HG02983.json          resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/GWD_HG02984.json          resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/YRI_NA19238.json          resources/gcs_workflow_options.json
-#sleep 5
-#cromshell  submit  wdl/correct_and_align/correct_and_align.wdl  data/YRI_NA19239.json          resources/gcs_workflow_options.json
-#sleep 5
+    print(f'\ndry_run: {dry_run}')
 
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/smalltest.json            resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/ecoli.json                resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/CEU_NA12878rep1.json      resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/CEU_NA12878rep2.json      resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/CEU_NA12891.json          resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/CEU_NA12892.json          resources/gcs_workflow_options_metrics.json
-sleep 5
-#cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/CHS_HG00512.json          resources/gcs_workflow_options_metrics.json
-#sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/CHS_HG00513.json          resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/CHS_HG00514.json          resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/GWD_HG02982_CLR.json      resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/GWD_HG02983.json          resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/GWD_HG02984.json          resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/YRI_NA19238.json          resources/gcs_workflow_options_metrics.json
-sleep 5
-cromshell  submit  wdl/compute_metrics/compute_metrics.wdl  data/YRI_NA19239.json          resources/gcs_workflow_options_metrics.json
-sleep 5
+    f = []
+    for (dirpath, dirnames, filenames) in walk("data/"):
+        f.extend(filenames)
+        break
+
+    for file in sorted(f, reverse=True):
+        if file.endswith(".json"):
+            cmd = f'cromshell submit wdl/correct_and_align/correct_and_align.wdl data/{file} resources/gcs_workflow_options.json'
+            if dry_run:
+                subprocess.call(f'echo {cmd}', shell=True)
+            else:
+                return_code = subprocess.call(f'{cmd}', shell=True)
+                time.sleep(5)
