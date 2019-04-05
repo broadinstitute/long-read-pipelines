@@ -1,6 +1,6 @@
 PWD=`pwd`
 
-.PHONY : pbeap-base pbtools
+.PHONY : pbeap-base pbtools metrics
 
 pbeap-base: pbeap-base/Dockerfile
 	printf "\n============\nPBEAP Base Image\n" \

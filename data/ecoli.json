@@ -5,6 +5,7 @@
   "CorrectAndAlignWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.fasta",
   "CorrectAndAlignWorkflow.ref_fasta_fai": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.fasta.fai",
   "CorrectAndAlignWorkflow.ref_dict": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.dict",
+  "CorrectAndAlignWorkflow.trf": "gs://broad-dsde-methods-kiran/resources/references/ecoli/ecoli_NC_000913.3.trf.bed",
 
   "CorrectAndAlignWorkflow.num_reads_per_split": "100000"
 }
