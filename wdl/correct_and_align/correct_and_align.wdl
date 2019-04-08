@@ -124,6 +124,7 @@ workflow CorrectAndAlignWorkflow {
         input:
             bam_outs=Minimap2Remaining.aligned,
             merged_bam=basename(input_bam, ".bam") + ".ccs.uncorrected.aligned.merged.bam",
+            disk_inflate_factor=10,
             docker_image=base_image
     }
 
@@ -143,15 +144,6 @@ workflow CorrectAndAlignWorkflow {
             bam_report=basename(MergeRemaining.merged, ".bam") + ".alignment.report.txt",
             docker_image=base_image
     }
-
-    # depth calculations
-    #call SplitIntervalsByChr {
-    #    input:
-    #        ref_fasta=ref_fasta,
-    #        ref_fasta_fai=ref_fasta_fai,
-    #        ref_dict=ref_dict,
-    #        docker_image=base_image
-    #}
 
     call Depth as DepthUncorrected {
         input:
@@ -368,7 +360,7 @@ task RecoverUncorrectedReads {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose java -Xmx4g -jar /gatk.jar RecoverUncorrectedReads -I ${subread_file} -C ${subread_ccs} -O ${subread_remaining}
+        /usr/bin/time --verbose java -Dsamjdk.compression_level=0 -Xmx4g -jar /gatk.jar RecoverUncorrectedReads -I ${subread_file} -C ${subread_ccs} -O ${subread_remaining} --use-jdk-deflater --use-jdk-inflater
 
         df -h .
         tree -h
@@ -424,16 +416,17 @@ task MergeBams {
     Array[File] bam_outs
     String merged_bam
     String docker_image
+    Int disk_inflate_factor = 3
 
-    Int cpus = 1
-    Int disk_size = 3*ceil(length(bam_outs)*size(bam_outs[0], "GB"))
+    Int cpus = 2
+    Int disk_size = disk_inflate_factor*ceil(length(bam_outs)*size(bam_outs[0], "GB"))
 
     command <<<
         set -euxo pipefail
         df -h .
         tree -h
 
-        /usr/bin/time --verbose java -Xmx4g -jar /gatk.jar MergeSamFiles -I ${sep=" -I " bam_outs} -O ${merged_bam} -AS --CREATE_INDEX
+        /usr/bin/time --verbose java -Xmx4g -jar /gatk.jar MergeSamFiles -I ${sep=" -I " bam_outs} -O ${merged_bam} -AS --CREATE_INDEX --USE_JDK_DEFLATER --USE_JDK_INFLATER --VALIDATION_STRINGENCY SILENT
 
         df -h .
         tree -h
@@ -470,7 +463,7 @@ task AlignmentStats {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose java -Xmx4g -jar /gatk.jar CollectAlignmentSummaryMetrics -R ${ref_fasta} -I ${bam_file} -O ${bam_report} --USE_JDK_DEFLATER --USE_JDK_INFLATER
+        /usr/bin/time --verbose java -Xmx4g -jar /gatk.jar CollectAlignmentSummaryMetrics -R ${ref_fasta} -I ${bam_file} -O ${bam_report} --USE_JDK_DEFLATER --USE_JDK_INFLATER --VALIDATION_STRINGENCY SILENT
 
         df -h .
         tree -h

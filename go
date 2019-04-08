@@ -25,5 +25,6 @@ else:
             if dry_run:
                 subprocess.call(f'echo {cmd}', shell=True)
             else:
+                print(cmd)
                 return_code = subprocess.call(f'{cmd}', shell=True)
-                time.sleep(5)
+                time.sleep(10)
