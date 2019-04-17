@@ -291,7 +291,7 @@ task Minimap2 {
 
         ((samtools view -H ${subread_file} | grep '^@RG' | sed 's/\t/\n/g' | grep -v SM) && echo -n 'SM:${sample_name}') | tr "\n" "\t" | sed 's/\t/\\t/g' | sed 's/SUBREAD/${read_type}/' > rg.txt
         echo $?
-        samtools view ${subread_file} | head -1 | sed 's/\t/\n/g' | grep '^.\+:.:' | cut -d':' -f1 | head -c -1 | tr '\n' ',' > tags.txt
+        samtools view ${subread_file} | head -1 | sed 's/\t/\n/g' | grep -v '^RG' | grep -v ':B:' | grep '^.\+:.:' | cut -d':' -f1 | head -c -1 | tr '\n' ',' > tags.txt
         echo $?
         samtools fastq -T `cat tags.txt` ${subread_file} | minimap2 -R `cat rg.txt` -ax ${correction_arg} -t${cpus} -y ${ref_fasta} - | samtools sort -m4G -o ${subread_aligned} -
         echo $?
