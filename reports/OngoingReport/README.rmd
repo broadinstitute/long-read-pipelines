@@ -11,6 +11,41 @@ library(magrittr)
 library(ggplot2)
 ```
 
+```{r gcs_timestamp}
+gcs_timestamp <- function(x) {
+   return(unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -l", x), intern=TRUE)[1], "\\s+", perl=TRUE))[3])
+}
+```
+
+```{r get_ccs_report}
+get_ccs_report <- function(x) {
+    ls = system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat", x), intern=TRUE)
+    
+    report = list()
+    for (l in ls) {
+        if (grepl("Success|Failed", l)) {
+            q = gsub(" ", "_", tolower(unlist(strsplit(l, "\\s+--\\s+|,|%", perl=TRUE))))
+            report[paste(q[1], q[2], sep="_")] = as.integer(q[3])
+        }
+    }
+    
+    return(report)
+}
+```
+
+```{r get_alignment_stats}
+get_alignment_stats <- function(x) {
+    q = system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat ", x, " | grep -A1 CATEGORY", sep=""), intern=TRUE)
+    cnames = unlist(strsplit(q[1], "\t"))
+    vals = c(unlist(strsplit(q[2], "\t")), "")
+    
+    tb = as_tibble(as.matrix(t(vals)))
+    colnames(tb) = cnames
+    
+    return(tb)
+}
+```
+
 ```{r sample_status}
 samples_tbl = tribble(
 ~sample,	     ~rel_to_proband, ~sex,      ~pop,
@@ -66,13 +101,14 @@ for (bucket in buckets) {
 ```
 
 ```{r processing_progress}
-sslogs = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/*/call-SplitSubreads/SplitSubreads.log", intern=TRUE)
+asrs = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/*/call-AlignmentStatsRemaining/*report.txt", intern=TRUE)
 
 m = c()
 
-for (sslog in sslogs) {
-    cmd = system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat", sslog, " | grep -m1 java"), intern=TRUE)
+for (asr in asrs) {
+    sslog = paste(dirname(dirname(asr)), "/call-SplitSubreads/SplitSubreads.log", sep="")
     
+    cmd = system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat", sslog, " | grep -m1 java"), intern=TRUE)
     cromwell_hash = basename(dirname(dirname(sslog)))
     codec = ifelse(grep("jdk-deflater", cmd), "JDK", "Intel")
     
@@ -93,23 +129,125 @@ for (sslog in sslogs) {
     merged_uncorrected_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeUncorrected/", movie_name, ".subreads.aligned.merged.bai", sep="")
     merged_corrected_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCorrected/", movie_name, ".subreads.ccs.aligned.merged.bam", sep="")
     merged_corrected_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCorrected/", movie_name, ".subreads.ccs.aligned.merged.bai", sep="")
+    merged_remaining_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.bam", sep="")
+    merged_remaining_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.bai", sep="")
     
     merged_uncorrected_size = as.double(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -lh", merged_uncorrected_bam, "| grep -v TOTAL | awk '{ print $1 }'"), intern=TRUE))
     merged_corrected_size = as.double(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -lh", merged_corrected_bam, "| grep -v TOTAL | awk '{ print $1 }'"), intern=TRUE))
+    merged_remaining_size = as.double(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -lh", merged_remaining_bam, "| grep -v TOTAL | awk '{ print $1 }'"), intern=TRUE))
     
-    merged_uncorrected_size = ifelse(identical(merged_uncorrected_size, character(0)), 0, merged_uncorrected_size)
-    merged_corrected_size = ifelse(identical(merged_corrected_size, character(0)), 0, merged_corrected_size)
+    merged_uncorrected_size = ifelse(identical(merged_uncorrected_size, numeric(0)), 0, merged_uncorrected_size)
+    merged_corrected_size = ifelse(identical(merged_corrected_size, numeric(0)), 0, merged_corrected_size)
+    merged_remaining_size = ifelse(identical(merged_remaining_size, numeric(0)), 0, merged_remaining_size)
     
     run_type = ifelse(grepl("_CLR", sample_name), "CLR", "CCS")
+    run_date = gcs_timestamp(asr)
     
-    m = rbind(m, c(cromwell_hash, codec, compression, approx_reads_per_shard, movie_name, sample_name, run_type, merged_uncorrected_bam, merged_uncorrected_size, merged_corrected_bam, merged_corrected_size))
+    depth_uncorrected = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-DepthUncorrected/coverage.txt", sep=""), intern=TRUE), " "))
+    depth_uncorrected_mean = as.double(ifelse(is.null(depth_uncorrected), 0, depth_uncorrected[2]))
+    depth_uncorrected_sd = as.double(ifelse(is.null(depth_uncorrected), 0, depth_uncorrected[3]))
+    depth_uncorrected_median = as.double(ifelse(is.null(depth_uncorrected), 0, depth_uncorrected[4]))
+    
+    depth_corrected = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-DepthCorrected/coverage.txt", sep=""), intern=TRUE), " "))
+    depth_corrected_mean = as.double(ifelse(is.null(depth_corrected), 0, depth_corrected[2]))
+    depth_corrected_sd = as.double(ifelse(is.null(depth_corrected), 0, depth_corrected[3]))
+    depth_corrected_median = as.double(ifelse(is.null(depth_corrected), 0, depth_corrected[4]))
+    
+    depth_remaining = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-DepthRemaining/coverage.txt", sep=""), intern=TRUE), " "))
+    depth_remaining_mean = as.double(ifelse(is.null(depth_remaining), 0, depth_remaining[2]))
+    depth_remaining_sd = as.double(ifelse(is.null(depth_remaining), 0, depth_remaining[3]))
+    depth_remaining_median = as.double(ifelse(is.null(depth_remaining), 0, depth_remaining[4]))
+    
+    ccs_report_gs = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCCSReports/ccs_report.txt", sep="")
+    ccs = get_ccs_report(ccs_report_gs)
+    
+    if (length(ccs) == 0) {
+        ccs = list(
+            "success_(without_retry)_ccs_generated" = 0,
+            "success_(with_retry)_ccs_generated" = 0,
+            "failed_below_snr_threshold" = 0,
+            "failed_no_usable_subreads" = 0,
+            "failed_insert_size_too_long" = 0,
+            "failed_insert_size_too_small" = 0,
+            "failed_not_enough_full_passes" = 0,
+            "failed_too_many_unusable_subreads" = 0,
+            "failed_ccs_did_not_converge" = 0,
+            "failed_ccs_below_minimum_predicted_accuracy" = 0
+        )
+    }
+    
+    astats_uncorrected = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-AlignmentStatsUncorrected/", movie_name, ".subreads.aligned.merged.alignment.report.txt", sep=""))
+    astats_corrected = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-AlignmentStatsCorrected/", movie_name, ".subreads.ccs.aligned.merged.alignment.report.txt", sep=""))
+    astats_remaining = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-AlignmentStatsRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.alignment.report.txt", sep=""))
+    
+    #tm$ccs_success_wo_retry_generated + tm$ccs_success_w_retry_generated
+    #tm$ccs_failed_below_snr_threshold + tm$ccs_failed_no_usable_subreads + tm$ccs_failed_insert_size_too_long + tm$ccs_failed_insert_size_too_small + tm$ccs_failed_not_enough_full_passes + tm$ccs_failed_not_enough_full_passes + tm$ccs_failed_too_many_unusable_subreads + tm$ccs_failed_did_not_converge + tm$ccs_failed_below_minimum_predicted_accuracy
+    
+    m = rbind(m, c(run_date, cromwell_hash, codec, compression, approx_reads_per_shard, movie_name, sample_name, run_type, merged_uncorrected_bam, merged_uncorrected_size, depth_uncorrected_mean, depth_uncorrected_sd, depth_uncorrected_median, merged_corrected_bam, merged_corrected_size, depth_corrected_mean, depth_corrected_sd, depth_corrected_median, merged_remaining_bam, merged_remaining_size, depth_remaining_mean, depth_remaining_sd, depth_remaining_median, as.integer(astats_uncorrected$TOTAL_READS[1]), as.integer(astats_corrected$TOTAL_READS[1]), as.integer(astats_remaining$TOTAL_READS[1]), ccs$`success_(without_retry)_ccs_generated`, ccs$`success_(with_retry)_ccs_generated`, ccs$failed_below_snr_threshold, ccs$failed_no_usable_subreads, ccs$failed_insert_size_too_long, ccs$failed_insert_size_too_small, ccs$failed_not_enough_full_passes, ccs$failed_too_many_unusable_subreads, ccs$failed_ccs_did_not_converge, ccs$failed_ccs_below_minimum_predicted_accuracy, ccs$failed_unknown_error_during_processing))
 }
 
-colnames(m) = c("cromwell_hash", "codec", "compression", "shard_size", "movie_name", "sample_name", "run_type", "merged_uncorrected_bam", "merged_uncorrected_size", "merged_corrected_bam", "merged_corrected_size")
+colnames(m) = c("run_date", "cromwell_hash", "codec", "compression", "shard_size", "movie_name", "sample_name", "run_type", "merged_uncorrected_bam", "merged_uncorrected_size", "depth_uncorrected_mean", "depth_uncorrected_sd", "depth_uncorrected_median", "merged_corrected_bam", "merged_corrected_size", "depth_corrected_mean", "depth_corrected_sd", "depth_corrected_median", "merged_remaining_bam", "merged_remaining_size", "depth_remaining_mean", "depth_remaining_sd", "depth_remaining_median", "total_reads_uncorrected", "total_reads_corrected", "total_reads_remaining", "ccs_success_wo_retry_generated", "ccs_success_w_retry_generated", "ccs_failed_below_snr_threshold", "ccs_failed_no_usable_subreads", "ccs_failed_insert_size_too_long", "ccs_failed_insert_size_too_small", "ccs_failed_not_enough_full_passes", "ccs_failed_too_many_unusable_subreads", "ccs_failed_did_not_converge", "ccs_failed_below_minimum_predicted_accuracy", "ccs_failed_unknown_error_during_processing")
 tm = as_tibble(m)
 
-tm$accept = TRUE
-tm[which(tm$cromwell_hash %in% c("66182c6f-97e7-4b93-93b4-1ee830ce3ad5", "c31f1abe-84f7-4259-a5ef-7b7962d5cb3e", "fb6c81c9-c3df-4d49-a3ce-aa6ae0f6e45d", "5199a7e9-4579-4ede-976d-8b74cb211163", "ba5a752a-ac77-456c-99e9-2d99c8cb098f")), "accept"] = FALSE
+tm$total_reads_uncorrected = as.integer(tm$total_reads_uncorrected)
+tm$total_reads_corrected = as.integer(tm$total_reads_corrected)
+tm$total_reads_remaining = as.integer(tm$total_reads_remaining)
+
+tm$depth_uncorrected_median[is.na(tm$depth_uncorrected_median)] = 0
+tm$depth_corrected_median[is.na(tm$depth_corrected_median)] = 0
+tm$depth_remaining_median[is.na(tm$depth_remaining_median)] = 0
+
+tm$codec = as.factor(tm$codec)
+tm$compression = as.integer(tm$compression)
+tm$shard_size = as.integer(tm$shard_size)
+tm$run_type = as.factor(tm$run_type)
+
+tm$merged_uncorrected_size = as.double(tm$merged_uncorrected_size)
+tm$merged_corrected_size = as.double(tm$merged_corrected_size)
+tm$merged_remaining_size = as.double(tm$merged_remaining_size)
+
+tm$depth_uncorrected_mean = as.double(tm$depth_uncorrected_mean)
+tm$depth_uncorrected_sd = as.double(tm$depth_uncorrected_sd)
+tm$depth_uncorrected_median = as.double(tm$depth_uncorrected_median)
+
+tm$depth_corrected_mean = as.double(tm$depth_corrected_mean)
+tm$depth_corrected_sd = as.double(tm$depth_corrected_sd)
+tm$depth_corrected_median = as.double(tm$depth_corrected_median)
+
+tm$depth_remaining_mean = as.double(tm$depth_remaining_mean)
+tm$depth_remaining_sd = as.double(tm$depth_remaining_sd)
+tm$depth_remaining_median = as.double(tm$depth_remaining_median)
+
+tm$ccs_success_wo_retry_generated = as.integer(tm$ccs_success_wo_retry_generated)
+tm$ccs_success_w_retry_generated = as.integer(tm$ccs_success_w_retry_generated)
+tm$ccs_failed_below_snr_threshold = as.integer(tm$ccs_failed_below_snr_threshold)
+tm$ccs_failed_no_usable_subreads = as.integer(tm$ccs_failed_no_usable_subreads)
+tm$ccs_failed_insert_size_too_long = as.integer(tm$ccs_failed_insert_size_too_long)
+tm$ccs_failed_insert_size_too_small = as.integer(tm$ccs_failed_insert_size_too_small)
+tm$ccs_failed_not_enough_full_passes = as.integer(tm$ccs_failed_not_enough_full_passes)
+tm$ccs_failed_too_many_unusable_subreads = as.integer(tm$ccs_failed_too_many_unusable_subreads)
+tm$ccs_failed_did_not_converge = as.integer(tm$ccs_failed_did_not_converge)
+tm$ccs_failed_below_minimum_predicted_accuracy = as.integer(tm$ccs_failed_below_minimum_predicted_accuracy)
+tm$ccs_failed_unknown_error_during_processing = as.integer(tm$ccs_failed_unknown_error_during_processing)
+```
+
+```{r latest_runs}
+seen_runs = list()
+selected_rows = c()
+
+tm_desc = tm %>% arrange(desc(run_date))
+
+for (i in 1:nrow(tm_desc)) {
+    sn = tm_desc$sample_name[i]
+    
+    if (! sn %in% names(seen_runs)) {
+        selected_rows = c(selected_rows, i)
+    }
+    
+    seen_runs[sn] = 1
+}
+
+tm_sub = tm_desc[selected_rows,]
 ```
 
 ```{r error_rate}
