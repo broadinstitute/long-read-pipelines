@@ -215,7 +215,7 @@ task SplitIntervalsByChr {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose java -jar /gatk.jar SplitIntervals -R ${ref_fasta} -mode INTERVAL_COUNT -O ./ -scatter 100000000
+        java -jar /gatk.jar SplitIntervals -R ${ref_fasta} -mode INTERVAL_COUNT -O ./ -scatter 100000000
 
         df -h .
         tree -h
@@ -249,7 +249,7 @@ task SplitSubreads {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose java -Dsamjdk.compression_level=0 -jar /gatk.jar SplitSubreadsByZmw -I ${input_bam} -O ${output_prefix} -nr ${num_reads_per_split} --use-jdk-deflater --use-jdk-inflater
+        java -Dsamjdk.compression_level=0 -jar /gatk.jar SplitSubreadsByZmw -I ${input_bam} -O ${output_prefix} -nr ${num_reads_per_split} --use-jdk-deflater --use-jdk-inflater
 
         df -h .
         tree -h
@@ -285,12 +285,16 @@ task Minimap2 {
     Int disk_size = ceil(size(ref_fasta, "GB")) + 3*ceil(size(subread_file, "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -uxo pipefail
         df -h .
         tree -h
 
         ((samtools view -H ${subread_file} | grep '^@RG' | sed 's/\t/\n/g' | grep -v SM) && echo -n 'SM:${sample_name}') | tr "\n" "\t" | sed 's/\t/\\t/g' | sed 's/SUBREAD/${read_type}/' > rg.txt
-        /usr/bin/time --verbose samtools fastq ${subread_file} | minimap2 -t ${cpus} -a -x ${correction_arg} -R `cat rg.txt` ${ref_fasta} - | samtools sort - | samtools view -bS - > ${subread_aligned}
+        echo $?
+        samtools view ${subread_file} | head -1 | sed 's/\t/\n/g' | grep '^.\+:.:' | cut -d':' -f1 | head -c -1 | tr '\n' ',' > tags.txt
+        echo $?
+        samtools fastq -T `cat tags.txt` ${subread_file} | minimap2 -R `cat rg.txt` -ax ${correction_arg} -t${cpus} -y ${ref_fasta} - | samtools sort -m4G -o ${subread_aligned} -
+        echo $?
 
         df -h .
         tree -h
@@ -298,6 +302,8 @@ task Minimap2 {
 
     output {
         File aligned = "${subread_aligned}"
+        File rg = "rg.txt"
+        File tags = "tags.txt"
     }
 
     runtime {
@@ -325,7 +331,7 @@ task CCS {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose ccs --maxLength ${max_length} --minPasses ${min_passes} -j ${cpus} --richQVs ${subread_file} ${subread_ccs}
+        ccs --maxLength ${max_length} --minPasses ${min_passes} -j ${cpus} --richQVs ${subread_file} ${subread_ccs}
 
         df -h .
         tree -h
@@ -339,7 +345,7 @@ task CCS {
     runtime {
         docker: "${docker_image}"
         cpu: "${cpus}"
-        memory: "20G"
+        memory: "40G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
         preemptible: 1
@@ -360,7 +366,7 @@ task RecoverUncorrectedReads {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose java -Dsamjdk.compression_level=0 -Xmx4g -jar /gatk.jar RecoverUncorrectedReads -I ${subread_file} -C ${subread_ccs} -O ${subread_remaining} --use-jdk-deflater --use-jdk-inflater
+        java -Dsamjdk.compression_level=0 -Xmx4g -jar /gatk.jar RecoverUncorrectedReads -I ${subread_file} -C ${subread_ccs} -O ${subread_remaining} --use-jdk-deflater --use-jdk-inflater
 
         df -h .
         tree -h
@@ -392,7 +398,7 @@ task MergeCCSReports {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose python3 /combine_ccs_reports.py ${sep=" " reports} > ccs_report.txt
+        python3 /combine_ccs_reports.py ${sep=" " reports} > ccs_report.txt
 
         df -h .
         tree -h
@@ -426,7 +432,7 @@ task MergeBams {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose java -Xmx4g -jar /gatk.jar MergeSamFiles -I ${sep=" -I " bam_outs} -O ${merged_bam} -AS --CREATE_INDEX --USE_JDK_DEFLATER --USE_JDK_INFLATER --VALIDATION_STRINGENCY SILENT
+        java -Xmx4g -jar /gatk.jar MergeSamFiles -I ${sep=" -I " bam_outs} -O ${merged_bam} -AS --CREATE_INDEX --USE_JDK_DEFLATER --USE_JDK_INFLATER --VALIDATION_STRINGENCY SILENT
 
         df -h .
         tree -h
@@ -463,7 +469,7 @@ task AlignmentStats {
         df -h .
         tree -h
 
-        /usr/bin/time --verbose java -Xmx4g -jar /gatk.jar CollectAlignmentSummaryMetrics -R ${ref_fasta} -I ${bam_file} -O ${bam_report} --USE_JDK_DEFLATER --USE_JDK_INFLATER --VALIDATION_STRINGENCY SILENT
+        java -Xmx4g -jar /gatk.jar CollectAlignmentSummaryMetrics -R ${ref_fasta} -I ${bam_file} -O ${bam_report} --USE_JDK_DEFLATER --USE_JDK_INFLATER --VALIDATION_STRINGENCY SILENT
 
         df -h .
         tree -h
