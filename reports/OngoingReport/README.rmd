@@ -400,19 +400,26 @@ mtext(as.integer(median(rl_clr$length)), 3, at=median(rl_clr$length))
 ```{r costs}
 ct_all = tibble()
 
-cromwell_hash = tm$cromwell_hash[1]
-for (cromwell_hash in tm$cromwell_hash) {
-    costs_file = paste("../../results/costs/", cromwell_hash, ".costs.txt", sep="")
-    
-    if (!file.exists(costs_file)) {
-        print(paste("Costs for", cromwell_hash, " not computed yet"))
-    } else {
+for (costs_file in list.files("../../results/costs/", pattern="costs.txt", full.names=TRUE)) {
+    if (file.info(costs_file)$size != 0) {
         ct = read_table(costs_file)
-        ct$cromwell_hash = cromwell_hash
-        
         ct_all = rbind(ct_all, ct)
     }
 }
+
+#cromwell_hash = tm_sub$cromwell_hash[1]
+#for (cromwell_hash in tm_sub$cromwell_hash) {
+#    costs_file = paste("../../results/costs/", cromwell_hash, ".costs.txt", sep="")
+#    
+#    if (!file.exists(costs_file)) {
+#        print(paste("Costs for", cromwell_hash, " not computed yet"))
+#    } else {
+#        ct = read_table(costs_file)
+#        ct$cromwell_hash = cromwell_hash
+#        
+#        ct_all = rbind(ct_all, ct)
+#    }
+#}
 
 ct_all %<>% mutate(cromwell_hash = as_factor(cromwell_hash))
 ct_all %<>% mutate(task_name = as_factor(task_name))
@@ -420,8 +427,8 @@ ct_all %<>% mutate(status = as_factor(status))
 ```
 
 ```{r costs_boxplot}
-hashes.clr = tm %>% filter(sample_name != "SmallTestData", sample_name != "Ecoli_Training_Run") %>% filter(grepl("CLR", sample_name)) %>% pull(cromwell_hash)
-hashes.ccs = tm %>% filter(sample_name != "SmallTestData", sample_name != "Ecoli_Training_Run") %>% filter(!grepl("CLR", sample_name)) %>% pull(cromwell_hash)
+hashes.clr = tm_sub %>% filter(sample_name != "SmallTestData", sample_name != "Ecoli_Training_Run") %>% filter(grepl("CLR", sample_name)) %>% pull(cromwell_hash)
+hashes.ccs = tm_sub %>% filter(sample_name != "SmallTestData", sample_name != "Ecoli_Training_Run") %>% filter(!grepl("CLR", sample_name)) %>% pull(cromwell_hash)
 
 l = list(
     "SplitSubreads"       = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.SplitSubreads") %>% pull(total_cost),
