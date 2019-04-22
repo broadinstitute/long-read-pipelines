@@ -100,7 +100,7 @@ for (bucket in buckets) {
 }
 ```
 
-```{r processing_progress}
+```{r processing_progress, warning=FALSE}
 asrs = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/*/call-AlignmentStatsRemaining/*report.txt", intern=TRUE)
 
 m = c()
@@ -458,5 +458,12 @@ abline(v = b$stats[3,1], col="red", lty=2)
 mtext(sprintf("%.2fx", b$stats[3,1]), 3, at=b$stats[3,1])
 abline(v = b$stats[3,2], col="red", lty=2)
 mtext(sprintf("%.2fx", b$stats[3,2]), 3, at=b$stats[3,2])
+
+#> m = sum(h$breaks[2:length(h$breaks)]*h$counts)/(sum(h$counts))
+#> s = sqrt(sum(h$counts*((h$breaks[2:length(h$breaks)] - m)**2))/sum(h$counts))
+#> m
+#[1] 6.203183
+#> s
+#[1] 2.398369
 
 ```

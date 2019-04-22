@@ -5,10 +5,10 @@ workflow CorrectAndAlignWorkflow {
     File ref_fasta_fai
     File ref_dict
     File trf
-    Int num_reads_per_split=200000
+    Int num_reads_per_split=100000
 
     String output_prefix="."
-    String base_image="kgarimella/pbtools@sha256:ae9451dd3e7857c999d6477893eb573da4cb4ab1c2f3e21a178d585c41a3aad7"
+    String base_image="kgarimella/pbtools@sha256:d9de7c6a7d1ad8f6c85fb52f3b3bc93893ce74f7a6dd06782d2c29809fdd5911"
 
     call SplitSubreads {
         input:
@@ -149,6 +149,8 @@ workflow CorrectAndAlignWorkflow {
         input:
             input_bam=MergeUncorrected.merged,
             input_bai=MergeUncorrected.merged_bai,
+            ref_fasta=ref_fasta,
+            ref_fasta_fai=ref_fasta_fai,
             docker_image=base_image
     }
 
@@ -156,6 +158,8 @@ workflow CorrectAndAlignWorkflow {
         input:
             input_bam=MergeCorrected.merged,
             input_bai=MergeCorrected.merged_bai,
+            ref_fasta=ref_fasta,
+            ref_fasta_fai=ref_fasta_fai,
             docker_image=base_image
     }
 
@@ -163,6 +167,8 @@ workflow CorrectAndAlignWorkflow {
         input:
             input_bam=MergeRemaining.merged,
             input_bai=MergeRemaining.merged_bai,
+            ref_fasta=ref_fasta,
+            ref_fasta_fai=ref_fasta_fai,
             docker_image=base_image
     }
 }
@@ -181,7 +187,7 @@ task ReadLengths {
         tree -h
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        samtools view ${input_bam} | awk -F"[\t/]" '{ print $2, $3, length($12) }' > ${output_lengths}
+        samtools view ${input_bam} | awk -F"[\t/]" '{ print $2, $3, $7, length($12) }' > ${output_lengths}
 
         df -h .
         tree -h
@@ -279,22 +285,18 @@ task Minimap2 {
     Boolean? correct_reads
     Boolean correct = select_first([correct_reads, false])
     String correction_arg = if (correct) then "asm10" else "map-pb"
-    String read_type = if (correct) then "CCS" else "SUBREAD"
 
     Int cpus = 3
-    Int disk_size = ceil(size(ref_fasta, "GB")) + 3*ceil(size(subread_file, "GB"))
+    Int disk_size = ceil(size(ref_fasta, "GB")) + 4*ceil(size(subread_file, "GB"))
 
     command <<<
-        set -uxo pipefail
+        set -euxo pipefail
         df -h .
         tree -h
 
-        ((samtools view -H ${subread_file} | grep '^@RG' | sed 's/\t/\n/g' | grep -v SM) && echo -n 'SM:${sample_name}') | tr "\n" "\t" | sed 's/\t/\\t/g' | sed 's/SUBREAD/${read_type}/' > rg.txt
-        echo $?
-        samtools view ${subread_file} | head -1 | sed 's/\t/\n/g' | grep -v '^RG' | grep -v ':B:' | grep '^.\+:.:' | cut -d':' -f1 | head -c -1 | tr '\n' ',' > tags.txt
-        echo $?
-        samtools fastq -T `cat tags.txt` ${subread_file} | minimap2 -R `cat rg.txt` -ax ${correction_arg} -t${cpus} -y ${ref_fasta} - | samtools sort -m4G -o ${subread_aligned} -
-        echo $?
+        samtools fastq ${subread_file} | minimap2 -ax ${correction_arg} -t${cpus} -y ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
+        java -Dsamjdk.compression_level=0 -Xmx4g -jar /gatk.jar RepairPacBioBam -I ${subread_file} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -S ${sample_name} --use-jdk-deflater --use-jdk-inflater
+        samtools sort -@${cpus} -m4G -o ${subread_aligned} temp.aligned.unsorted.repaired.bam
 
         df -h .
         tree -h
@@ -302,8 +304,6 @@ task Minimap2 {
 
     output {
         File aligned = "${subread_aligned}"
-        File rg = "rg.txt"
-        File tags = "tags.txt"
     }
 
     runtime {
@@ -492,17 +492,23 @@ task AlignmentStats {
 task Depth {
     File input_bam
     File input_bai
+    File ref_fasta
+    File ref_fasta_fai
     String docker_image
 
     Int cpus = 2
-    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB"))
+    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB"))
 
     command <<<
         set -euxo pipefail
         df -h .
         tree -h
 
-        samtools depth -r `samtools view -H ${input_bam} | head -2 | tail -1 | cut -f2 | sed 's/SN://'` -a ${input_bam} | awk '{ chr = $1; d = $3 - mean; mean += d/NR; M2 += d*($3 - mean); } END { print sprintf("%s %.2f %.2f", chr, mean, sqrt(M2/(NR - 1))); }' > coverage.txt
+        samtools view -H ${input_bam} | grep SQ | cut -f2,3 | sed 's/[SL]N://g' > chrs.txt
+        bedtools makewindows -g chrs.txt -s 10000 -w 10000 > windows.bed
+        bedtools coverage -a windows.bed -b ${input_bam} -mean > coverage.txt
+        bedtools genomecov -ibam ${input_bam} > hist.txt
+        bedtools nuc -fi ${ref_fasta} -bed windows.bed | cut -f1-3,5 | grep -v '^#' > gc.bed
 
         df -h .
         tree -h
@@ -510,6 +516,8 @@ task Depth {
 
     output {
         File wgsmetrics = "coverage.txt"
+        File gcbed = "gc.bed"
+        File hist = "hist.txt"
     }
 
     runtime {
