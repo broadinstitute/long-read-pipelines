@@ -30,6 +30,7 @@ RUN conda update --all
 # install conda packages
 RUN conda install -c bioconda pbccs
 RUN conda install -c bioconda pbsv
+RUN conda install -c bioconda bedtools
 
 # gatk
 COPY gatk.jar /
