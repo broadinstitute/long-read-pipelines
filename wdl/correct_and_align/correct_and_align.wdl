@@ -8,7 +8,7 @@ workflow CorrectAndAlignWorkflow {
     Int num_reads_per_split=100000
 
     String output_prefix="."
-    String base_image="kgarimella/pbtools@sha256:d9de7c6a7d1ad8f6c85fb52f3b3bc93893ce74f7a6dd06782d2c29809fdd5911"
+    String base_image="kgarimella/pbtools@sha256:bd01bd809fa500d2b17ef7ac2ed86646d14cc08b0e7f2ae61e61780bf383fa0c"
 
     call SplitSubreads {
         input:
