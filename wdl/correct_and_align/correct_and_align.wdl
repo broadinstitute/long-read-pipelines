@@ -8,7 +8,7 @@ workflow CorrectAndAlignWorkflow {
     Int num_reads_per_split=100000
 
     String output_prefix="."
-    String base_image="kgarimella/pbtools@sha256:8e88df36f043fd0d895b27175f7248d99f90a4ed66039933f0fd0cd70005bccc"
+    String base_image="kgarimella/pbtools@sha256:304d90d8130fc8a8704eef566a7de7b614e386e1c02964ec7821f9bd0c25a046"
 
     call SplitSubreads {
         input:
@@ -119,6 +119,35 @@ workflow CorrectAndAlignWorkflow {
             docker_image=base_image
     }
 
+    call HaplotypeCaller {
+        input:
+            input_bam=MergeCorrected.merged,
+            input_bai=MergeCorrected.merged_bai,
+            ref_fasta=ref_fasta,
+            ref_fasta_fai=ref_fasta_fai,
+            ref_dict=ref_dict,
+            calls=basename(MergeCorrected.merged, ".bam") + ".hc.vcf",
+            docker_image=base_image
+    }
+
+    call PBSV {
+        input:
+            input_bam=MergeCorrected.merged,
+            input_bai=MergeCorrected.merged_bai,
+            ref_fasta=ref_fasta,
+            ref_fasta_fai=ref_fasta_fai,
+            calls=basename(MergeCorrected.merged, ".bam") + ".pbsv.vcf",
+            docker_image=base_image
+    }
+
+    call Sniffles {
+        input:
+            input_bam=MergeCorrected.merged,
+            input_bai=MergeCorrected.merged_bai,
+            calls=basename(MergeCorrected.merged, ".bam") + ".sniffles.vcf",
+            docker_image=base_image
+    }
+
     # remaining
     call MergeBams as MergeRemaining {
         input:
@@ -203,7 +232,8 @@ task ReadLengths {
         memory: "1G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -237,7 +267,8 @@ task SplitIntervalsByChr {
         memory: "2G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -271,7 +302,8 @@ task SplitSubreads {
         memory: "2G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -294,7 +326,7 @@ task Minimap2 {
         df -h .
         tree -h
 
-        samtools fastq ${subread_file} | minimap2 -ax ${correction_arg} -t${cpus} -y ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
+        samtools fastq ${subread_file} | minimap2 -ayY -x ${correction_arg} -t ${cpus} ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
         java -Dsamjdk.compression_level=0 -Xmx4g -jar /gatk.jar RepairPacBioBam -I ${subread_file} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -S ${sample_name} --use-jdk-deflater --use-jdk-inflater
         samtools sort -@${cpus} -m4G -o ${subread_aligned} temp.aligned.unsorted.repaired.bam
 
@@ -312,7 +344,8 @@ task Minimap2 {
         disks: "local-disk ${disk_size} SSD"
         memory: "20G"
         bootDiskSizeGb: 20
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -348,7 +381,8 @@ task CCS {
         memory: "40G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -382,7 +416,8 @@ task RecoverUncorrectedReads {
         memory: "20G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -414,7 +449,8 @@ task MergeCCSReports {
         memory: "20G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -449,7 +485,8 @@ task MergeBams {
         memory: "20G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -485,7 +522,8 @@ task AlignmentStats {
         memory: "20G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
     }
 }
 
@@ -526,6 +564,120 @@ task Depth {
         memory: "20G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 1
+        preemptible: 3
+        maxRetries: 3
+    }
+}
+
+task HaplotypeCaller {
+    File input_bam
+    File input_bai
+    File ref_fasta
+    File ref_fasta_fai
+    File ref_dict
+    String calls
+    String docker_image
+
+    Int cpus = 2
+    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_dict, "GB") + size(ref_fasta_fai, "GB"))
+
+    command <<<
+        set -euxo pipefail
+        df -h .
+        tree -h
+
+        java -Xmx16g -jar /gatk.jar HaplotypeCaller -R ${ref_fasta} -I ${input_bam} -O ${calls} --use-jdk-deflater --use-jdk-inflater -VS SILENT
+
+        df -h .
+        tree -h
+    >>>
+
+    output {
+        File calls_vcf = "${calls}"
+        File calls_idx = "${calls}.idx"
+    }
+
+    runtime {
+        docker: "${docker_image}"
+        cpu: "${cpus}"
+        memory: "20G"
+        bootDiskSizeGb: 20
+        disks: "local-disk ${disk_size} SSD"
+        preemptible: 3
+        maxRetries: 3
+    }
+}
+
+task PBSV {
+    File input_bam
+    File input_bai
+    File ref_fasta
+    File ref_fasta_fai
+    String calls
+    String docker_image
+
+    Int cpus = 2
+    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB"))
+
+    command <<<
+        set -euxo pipefail
+        df -h .
+        tree -h
+
+        pbsv discover --log-level INFO ${input_bam} calls.svsig.gz
+        pbsv call --log-level INFO --ccs -j ${cpus} ${ref_fasta} calls.svsig.gz ${calls}
+
+        df -h .
+        tree -h
+    >>>
+
+    output {
+        File svsigfile = "calls.svsig.gz"
+        File calls_vcf = "${calls}"
+    }
+
+    runtime {
+        docker: "${docker_image}"
+        cpu: "${cpus}"
+        memory: "20G"
+        bootDiskSizeGb: 20
+        disks: "local-disk ${disk_size} SSD"
+        preemptible: 3
+        maxRetries: 3
+    }
+}
+
+task Sniffles {
+    File input_bam
+    File input_bai
+    String calls
+    String docker_image
+
+    Int cpus = 3
+    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB"))
+
+    command <<<
+        set -euxo pipefail
+        df -h .
+        tree -h
+
+        sniffles -s 5 -t ${cpus} --genotype --cluster --report_seq --report_read_strands --ccs_reads -m ${input_bam} -v ${calls}
+
+        df -h .
+        tree -h
+    >>>
+
+    output {
+        File calls_vcf = "${calls}"
+    }
+
+    runtime {
+        docker: "${docker_image}"
+        cpu: "${cpus}"
+        memory: "20G"
+        bootDiskSizeGb: 20
+        disks: "local-disk ${disk_size} SSD"
+        preemptible: 3
+        maxRetries: 3
     }
 }

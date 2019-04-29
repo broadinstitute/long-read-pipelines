@@ -16,10 +16,28 @@ RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VER
 	&& ./configure --enable-optimizations \
 	&& make install
 
+# Sniffles installation
+RUN wget https://github.com/fritzsedlazeck/Sniffles/archive/master.tar.gz -O Sniffles.tar.gz \
+        && tar xzvf Sniffles.tar.gz \
+        && cd Sniffles-master \
+        && mkdir -p build \
+        && cd build \
+        && cmake .. \
+        && make
+
+# Hap.py installation
+RUN wget https://github.com/Illumina/hap.py/archive/v0.3.9.tar.gz -O happy.tar.gz \
+        && tar xzvf happy.tar.gz \
+        && cd hap.py-0.3.9 \
+        && mkdir -p build \
+        && cd build \
+        && cmake .. \
+        && make
+
 # miniconda installation
 RUN curl -LO https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 RUN bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
-ENV PATH=/miniconda/bin:${PATH}
+ENV PATH=/miniconda/bin:/Sniffles-master/bin/sniffles-core-1.0.11/:${PATH}
 RUN conda update -y conda
 
 # configure conda
@@ -38,3 +56,5 @@ COPY combine_ccs_reports.py /
 
 # cleanup
 RUN rm Miniconda3-latest-Linux-x86_64.sh
+RUN rm Sniffles.tar.gz
+RUN rm happy.tar.gz

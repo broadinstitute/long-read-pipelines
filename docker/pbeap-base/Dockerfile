@@ -10,7 +10,7 @@ ENV PYTHON_VERSION="3.7.1"
 ENV SAMTOOLS_VERSION="1.9"
 ENV MINIMAP2_VERSION="2.16"
 
-RUN install_packages ca-certificates pkg-config gcc g++ make bzip2 zlib1g-dev dpkg-dev build-essential libcurl4-openssl-dev libbz2-dev liblzma-dev libcrypto++-dev libgdbm-dev libc6-dev zlib1g-dev libsqlite3-dev libssl-dev openssl libffi-dev
+RUN install_packages ca-certificates pkg-config gcc g++ make cmake autoconf bzip2 zlib1g-dev dpkg-dev build-essential libcurl4-openssl-dev libbz2-dev liblzma-dev libcrypto++-dev libgdbm-dev libc6-dev zlib1g-dev libsqlite3-dev libssl-dev openssl libffi-dev
 RUN install_packages python-pip python-dev
 RUN install_packages wget curl vim tree time
 
