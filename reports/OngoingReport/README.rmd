@@ -9,6 +9,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(magrittr)
 library(ggplot2)
+library(curl)
+library(rjson)
+library(vcfR)
 ```
 
 ```{r gcs_timestamp}
@@ -17,32 +20,225 @@ gcs_timestamp <- function(x) {
 }
 ```
 
+```{r gs_cat}
+gs_cat <- function(file, pipe="") {
+    return(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat", file, ifelse(pipe == "", "", "|"), pipe), intern=TRUE))
+}
+```
+
+```{r gs_ls}
+gs_ls <- function(file) {
+    as = system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -l", file), intern=TRUE, ignore.stderr=TRUE)
+    
+    ll = list()
+    index = 1
+    if (length(as) == 0) {
+        ll[[index]] = list(size = 0, timestamp = "", "file" = file)
+    } else {
+        for (a in as[1:length(as)-1]) {
+            l = unlist(strsplit(gsub("^\\s+", "", a), "\\s+", perl=TRUE))
+            s = as.numeric(l[1])
+            dt = parse_datetime(l[2])
+            f = l[3]
+            
+            ll[[index]] = list(size = s, timestamp = dt, file = f)
+            index = index + 1
+        }
+    }
+    
+    return(ll)
+}
+```
+
+```{r gs_best}
+gs_best <- function(ll) {
+    l = ll[[which.max(unlist(lapply(ll, function(x) { return(x$size); })))]]
+    
+    return(l)
+}
+```
+
+```{r gs_exists}
+gs_exists <- function(file) {
+    f = gs_best(gs_ls(file))
+    
+    return(f$size > 0)
+}
+```
+
+```{r gs_read_table}
+gs_read_table <- function(table_file) {
+    q = gs_cat(table_file)
+    qa = grep("#|^$", q, value=TRUE, invert=TRUE)
+    f = read.table(textConnection(qa), sep="\t", header=TRUE)
+    
+    return(as_tibble(f))
+}
+```
+
+```{r get_splitsubreads_stats}
+get_splitsubreads_stats <- function(cromwell_hash) {
+    l = gs_best(gs_ls(paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-SplitSubreads/**SplitSubreads.log", sep="")))
+    
+    if (gs_exists(l$file)) {
+        sslog = l$file
+        timestamp = l$timestamp
+        cmd = gs_cat(paste(sslog, "| grep -m1 java"))
+        codec = ifelse(grep("jdk-deflater", cmd), "JDK", "Intel")
+        
+        compression = 2;
+        if (grepl("compression", cmd)) {
+            compression = unlist(strsplit(grep("compression", unlist(strsplit(cmd, " ")), value=TRUE), "="))[2]
+        }
+        
+        approx_reads_per_shard = unlist(strsplit(cmd, " "))[grep("-nr", unlist(strsplit(cmd, " "))) + 1]
+        movie_name = gsub(".subreads.bam", "", basename(grep(".subreads.bam", unlist(strsplit(cmd, " ")), value=TRUE)))
+        sample_name = basename(dirname(grep(".subreads.bam", unlist(strsplit(cmd, " ")), value=TRUE)))
+        if (sample_name == "1_A01" || sample_name == "3_C01") {
+            sample_name = basename(dirname(dirname(grep(".subreads.bam", unlist(strsplit(cmd, " ")), value=TRUE))))
+        }
+        
+        q = gs_cat(sslog, "grep '.bam'") %>% tail(n=1) %>% strsplit("[.\\s]+", perl=TRUE) %>% unlist()
+        num_shards = as.integer(q[length(q)-1])
+        
+        return(list(timestamp = timestamp,
+                    codec = codec,
+                    compression = as.integer(compression),
+                    approx_reads_per_shard = as.integer(approx_reads_per_shard),
+                    movie_name = movie_name,
+                    sample_name = sample_name,
+                    num_shards = num_shards)
+               )
+    } else {
+        return(list(timestamp = 0,
+                    codec = "none",
+                    compression = 0,
+                    approx_reads_per_shard = 0,
+                    movie_name = "none",
+                    sample_name = "none",
+                    num_shards = 0)
+               )
+    }
+}
+```
+
 ```{r get_ccs_report}
-get_ccs_report <- function(x) {
-    ls = system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat", x), intern=TRUE)
+get_ccs_report <- function(cromwell_hash) {
+    x = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCCSReports/**ccs_report.txt", sep="")
+    xa = gs_best(gs_ls(x))
     
     report = list()
-    for (l in ls) {
-        if (grepl("Success|Failed", l)) {
-            q = gsub(" ", "_", tolower(unlist(strsplit(l, "\\s+--\\s+|,|%", perl=TRUE))))
-            report[paste(q[1], q[2], sep="_")] = as.integer(q[3])
+    if (gs_exists(xa$file)) {
+        ls = gs_cat(xa$file)
+        
+        for (l in ls) {
+            if (grepl("Success|Failed", l)) {
+                q = gsub(" ", "_", tolower(unlist(strsplit(l, "\\s+--\\s+|,|%", perl=TRUE))))
+                report[paste(q[1], q[2], sep="_")] = as.integer(q[3])
+            }
         }
+    } else {
+        report = list(
+            "success_(without_retry)_ccs_generated" = 0,
+            "success_(with_retry)_ccs_generated" = 0,
+            "failed_below_snr_threshold" = 0,
+            "failed_no_usable_subreads" = 0,
+            "failed_insert_size_too_long" = 0,
+            "failed_insert_size_too_small" = 0,
+            "failed_not_enough_full_passes" = 0,
+            "failed_too_many_unusable_subreads" = 0,
+            "failed_ccs_did_not_converge" = 0,
+            "failed_ccs_below_minimum_predicted_accuracy" = 0,
+            "failed_unknown_error_during_processing" = 0
+        )
     }
     
     return(report)
 }
 ```
 
+```{r get_read_lengths_file}
+get_read_lengths_file <- function(cromwell_hash) {
+    rlfile = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-ReadLengthsCorrected/**.readlengths.txt", sep="")
+    rl = gs_ls(rlfile)
+    return(gs_best(rl))
+}
+```
+
+```{r get_workflow_execution_status}
+get_workflow_execution_status <- function(cromwell_hash) {
+    return(fromJSON(readLines(curl(paste("https://cromwell-v36.dsde-methods.broadinstitute.org/api/workflows/v1/", cromwell_hash, "/status", sep="")), warn=FALSE))$status)
+}
+```
+
+```{r get_bam_uncorrected_file}
+get_bam_uncorrected_file <- function(cromwell_hash) {
+    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeUncorrected/**.bam", sep="")
+    return(gs_best(gs_ls(bam_file)))
+}
+```
+
+```{r get_bam_corrected_file}
+get_bam_corrected_file <- function(cromwell_hash) {
+    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCorrected/**.bam", sep="")
+    return(gs_best(gs_ls(bam_file)))
+}
+```
+
+```{r get_bam_remaining_file}
+get_bam_remaining_file <- function(cromwell_hash) {
+    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeRemaining/**.bam", sep="")
+    return(gs_best(gs_ls(bam_file)))
+}
+```
+
 ```{r get_alignment_stats}
-get_alignment_stats <- function(x) {
-    q = system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat ", x, " | grep -A1 CATEGORY", sep=""), intern=TRUE)
-    cnames = unlist(strsplit(q[1], "\t"))
-    vals = c(unlist(strsplit(q[2], "\t")), "")
+get_alignment_stats <- function(cromwell_hash, type) {
+    tbl_file = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-AlignmentStats", type, "/**.alignment.report.txt", sep="")
     
-    tb = as_tibble(as.matrix(t(vals)))
-    colnames(tb) = cnames
+    tbl = gs_best(gs_ls(tbl_file))
     
-    return(tb)
+    if (gs_exists(tbl$file)) {
+        return(gs_read_table(tbl$file))
+    }
+    
+    am = tribble(
+~CATEGORY, ~TOTAL_READS, ~PF_READS, ~PCT_PF_READS, ~PF_NOISE_READS,  ~PF_READS_ALIGNED, ~PCT_PF_READS_ALIGNED, ~PF_ALIGNED_BASES, ~PF_HQ_ALIGNED_READS, ~PF_HQ_ALIGNED_BASES, ~PF_HQ_ALIGNED_Q20_BASES, ~PF_HQ_MEDIAN_MISMATCHES, ~PF_MISMATCH_RATE, ~PF_HQ_ERROR_RATE, ~PF_INDEL_RATE, ~MEAN_READ_LENGTH, ~READS_ALIGNED_IN_PAIRS, ~PCT_READS_ALIGNED_IN_PAIRS, ~PF_READS_IMPROPER_PAIRS, ~PCT_PF_READS_IMPROPER_PAIRS, ~BAD_CYCLES, ~STRAND_BALANCE, ~PCT_CHIMERAS, ~PCT_ADAPTER, ~SAMPLE, ~LIBRARY, ~READ_GROUP,
+"UNPAIRED", 0,            0,         0,             0,                0,                 0.0,                   0,                 0,                                        0,                    0,                        0,                       0.0,                0.0,               0.0,            0.0,               0,                       0,                           0,                        0,                            0,           0.0,             0.0,           0,            FALSE,   FALSE,             FALSE
+    )
+    
+    return(am)
+}
+```
+
+```{r get_workflow_stats}
+get_workflow_stats <- function(cromwell_hash) {
+    splitsubreads_stats = get_splitsubreads_stats(cromwell_hash)
+    ccs_stats = get_ccs_report(cromwell_hash)
+    rl_file = get_read_lengths_file(cromwell_hash)
+    
+    bam_uncorrected_file = get_bam_uncorrected_file(cromwell_hash)
+    bam_corrected_file = get_bam_corrected_file(cromwell_hash)
+    bam_remaining_file = get_bam_remaining_file(cromwell_hash)
+    
+    alignment_stats_uncorrected = get_alignment_stats(cromwell_hash, "Uncorrected")
+    alignment_stats_corrected = get_alignment_stats(cromwell_hash, "Corrected")
+    alignment_stats_remaining = get_alignment_stats(cromwell_hash, "Remaining")
+    
+    return(c(list("cromwell_hash" = cromwell_hash),
+             workflow_status = get_workflow_execution_status(cromwell_hash),
+             splitsubreads_stats,
+             ccs_stats,
+             file_read_lengths_path = rl_file$file,
+             file_read_lengths_size = rl_file$size,
+             file_bam_corrected_file = bam_corrected_file$file,
+             file_bam_corrected_size = bam_corrected_file$size,
+             file_bam_uncorrected_file = bam_uncorrected_file$file,
+             file_bam_uncorrected_size = bam_uncorrected_file$size,
+             file_bam_remaining_file = bam_remaining_file$file,
+             file_bam_remaining_size = bam_remaining_file$size
+             )
+           )
 }
 ```
 
@@ -66,22 +262,12 @@ samples_tbl = tribble(
 "HG00731",       "father",        "male",    "PUR",
 "HG00732",       "mother",        "female",  "PUR",
 "HG00733",       "proband",       "female",  "PUR",
-"HG03727",       "father",        "male",    "ITU",
-"HG03721",       "mother",        "female",  "ITU",
-"HG03732",       "proband",       "male",    "ITU",
-"NA19649",       "father",        "male",    "MXL",
-"NA19648",       "mother",        "female",  "MXL",
-"NA19650",       "proband",       "male",    "MXL",
-"NA10494",       "proband",       "male",    "Mbuti",
-"SM-HC449",      "mother",        "female",  "?",
-"SM-HC448",      "father",        "male",    "?",
-"SM-HC447",      "proband",       "male",    "?",
 "SM-GNXIC",      "mother",        "female",  "?",
 "SM-GNXID",      "father",        "male",    "?",
 "SM-GM5IP",      "proband",       "female",  "?",
-"SM-GA3AR",      "mother",        "female",  "?",
-"SM-GA3AS",      "father",        "male",    "?",
-"SM-GA3AT",      "proband",       "male",    "?"
+"VS_ABC012_3_1", "mother",        "female",  "?",
+"VS_ABC012_1_1", "proband",       "unknown", "?",
+"VS_ABC012_2_1", "father",        "male",    "?"
 )
 
 a = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/pb_eap/", intern=TRUE);
@@ -100,8 +286,95 @@ for (bucket in buckets) {
 }
 ```
 
+
+```{r cromwell_hashes}
+cromwell_hashes = c(
+    "dfad1c6c-246d-43dc-af36-17a7d5712a3a",
+    "16884faf-2359-47d4-817f-03d2e0561540",
+    "96cf0495-fdd3-46c0-a5c8-91f4cd19eabb",
+    "3c30905a-a7bc-4b96-bb58-52327d8395bf",
+    "9f138dee-162c-4eec-8f20-3ba189d393e7",
+    "2e54ab02-3924-4918-a86c-160d0993e008",
+    "66c72d9b-ccb1-4aa7-a9fd-374e88274e4f",
+    "6d49fa15-719b-401b-b4ae-95d6d2c32f0e",
+    "def40ee2-d5a4-43f2-84b5-599ac04a6bfc",
+    "f5da6cc2-16ef-481a-9aac-224e7f4d0691",
+    "2f12f967-6a3d-461b-b26f-3bb9f52c1ec3",
+    "b9ea6c00-0ecd-433b-83f0-f4fbcecdb901",
+    "ce3a3344-a09f-4c93-9026-945fae03c93a",
+    "6c16bf66-975f-4051-a84a-ecee334d407a",
+    "3433e4b1-a991-467d-8b42-2ae74852a35b",
+    "e8e48f57-c04a-4dfe-bc10-bbac9b783f47",
+    "dac336dc-66d5-4790-8879-3d3ce729bc10",
+    "19f94ab9-4882-4405-bf9f-7a026b333bf7",
+    "d6d814ff-d06d-447d-a38c-60a0204afa08",
+    "e13c74a8-8bd4-4ec4-84ae-96cc5e12bf67",
+    "35ba136d-73c0-49d6-a00d-ee53f1871300",
+    "ba3e29f9-952f-4e10-9ae6-d2747ca663dc",
+    "40d481ba-2374-474d-a95b-3b45490e366e"
+)
+```
+
+```{r selected_progress, warning=FALSE}
+all_stats = NULL
+for (cromwell_hash in cromwell_hashes) {
+    stats = as_tibble(get_workflow_stats(cromwell_hash))
+    
+    if (is.null(all_stats)) {
+        all_stats = stats
+    } else {
+        all_stats = rbind(all_stats, stats)
+    }
+    
+    print(paste(cromwell_hash, stats$sample_name, stats$timestamp))
+}
+```
+
+```{r look_at_vcfs}
+vcf_files = list(
+    NA12878rep1 = "../../m64020_190208_213731.subreads.ccs.aligned.merged.pbsv.vcf",
+    NA12878rep2 = "../../m64020_190210_035026.subreads.ccs.aligned.merged.pbsv.vcf",
+    NA12891 = "../../m64020_190211_100935.subreads.ccs.aligned.merged.pbsv.vcf",
+    NA12892 = "../../m64020_190212_162420.subreads.ccs.aligned.merged.pbsv.vcf"
+)
+
+vcfs = list()
+
+samples = "NA12878rep1"
+for (sample in names(vcf_files)) {
+#for (sample in samples) {
+    vcf = vcfR2tidy(read.vcfR(vcf_files[[sample]], verbose=TRUE), format_fields = c("GT", "AD", "DP"))
+    
+    vcfs[[sample]] = vcf
+    
+    a = (vcfs[[sample]]$fix %>% select(SVLEN) %>% mutate(SVLEN = as.integer(SVLEN)) %>% filter(!is.na(SVLEN)) %>% range()) + c(-1000, 1000)
+    vcfs[[sample]]$fix %>% select(SVLEN) %>%
+                           filter(!is.na(SVLEN)) %>%
+                           mutate(SVLEN = as.integer(SVLEN)) %>%
+                           pull(SVLEN) %>%
+                           hist(breaks=seq(ra[1], ra[2], by=10), xlim=c(-1000, 1000), main = paste("SV lengths in", sample), las=2)
+    
+    labels = vcfs[[sample]]$fix %>% select(SVTYPE) %>% group_by(SVTYPE) %>% count()
+    
+    for (i in 1:nrow(labels)) {
+        text(500, 10000 - (i*800), paste(labels[i,], collapse = ": "), pos=2)
+    }
+}
+```
+
+```{r progress, warning=FALSE}
+workflows = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", intern=TRUE)
+
+for (workflow in workflows) {
+    cromwell_hash = basename(workflow)
+     
+    stats = get_workflow_stats(cromwell_hash)
+    print(paste(cromwell_hash, stats$sample_name))
+}
+```
+
 ```{r processing_progress, warning=FALSE}
-asrs = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/*/call-AlignmentStatsRemaining/*report.txt", intern=TRUE)
+asrs = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/*/call-AlignmentStatsCorrected/**report.txt", intern=TRUE)
 
 m = c()
 

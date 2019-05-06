@@ -326,7 +326,7 @@ task Minimap2 {
         df -h .
         tree -h
 
-        samtools fastq ${subread_file} | minimap2 -ayY -x ${correction_arg} -t ${cpus} ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
+        samtools fastq ${subread_file} | minimap2 -ayY --MD -x ${correction_arg} -t ${cpus} ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
         java -Dsamjdk.compression_level=0 -Xmx4g -jar /gatk.jar RepairPacBioBam -I ${subread_file} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -S ${sample_name} --use-jdk-deflater --use-jdk-inflater
         samtools sort -@${cpus} -m4G -o ${subread_aligned} temp.aligned.unsorted.repaired.bam
 
