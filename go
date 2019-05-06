@@ -20,7 +20,7 @@ else:
         break
 
     for file in sorted(f, reverse=True):
-        if file.endswith(".json"):
+        if file.endswith(".json") and not "ecoli" in file:
             cmd = f'cromshell submit wdl/correct_and_align/correct_and_align.wdl data/{file} resources/gcs_workflow_options.json'
             if dry_run:
                 subprocess.call(f'echo {cmd}', shell=True)
