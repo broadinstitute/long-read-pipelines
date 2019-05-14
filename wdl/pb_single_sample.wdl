@@ -244,7 +244,7 @@ task SplitIntervalsByChr {
     String docker_image
 
     Int cpus = 1
-    Int disk_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
+    Int disk_size = ceil((size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB")) * 1.1)
 
     command <<<
         set -euxo pipefail
@@ -499,7 +499,7 @@ task AlignmentStats {
     String docker_image
 
     Int cpus = 1
-    Int disk_size = ceil(size(bam_file, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
+    Int disk_size = ceil((size(bam_file, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB")) * 1.1)
 
     command <<<
         set -euxo pipefail
@@ -535,7 +535,7 @@ task Depth {
     String docker_image
 
     Int cpus = 2
-    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB"))
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB")) * 1.1)
 
     command <<<
         set -euxo pipefail
@@ -579,7 +579,7 @@ task HaplotypeCaller {
     String docker_image
 
     Int cpus = 2
-    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_dict, "GB") + size(ref_fasta_fai, "GB"))
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_dict, "GB") + size(ref_fasta_fai, "GB")) * 1.1)
 
     command <<<
         set -euxo pipefail
@@ -617,7 +617,7 @@ task PBSV {
     String docker_image
 
     Int cpus = 2
-    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB"))
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB")) * 1.1)
 
     command <<<
         set -euxo pipefail
@@ -654,7 +654,7 @@ task Sniffles {
     String docker_image
 
     Int cpus = 3
-    Int disk_size = ceil(size(input_bam, "GB") + size(input_bai, "GB"))
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB")) * 1.1)
 
     command <<<
         set -euxo pipefail
