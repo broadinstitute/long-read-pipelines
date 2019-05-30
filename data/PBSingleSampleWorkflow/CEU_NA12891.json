@@ -1,0 +1,11 @@
+{
+  "PBSingleSampleWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/NA12891/m64020_190211_100935.subreads.bam",
+  "PBSingleSampleWorkflow.sm": "NA12891",
+
+  "PBSingleSampleWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
+  "PBSingleSampleWorkflow.ref_fasta_fai": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa.fai",
+  "PBSingleSampleWorkflow.ref_dict": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.dict",
+  "PBSingleSampleWorkflow.trf": "gs://broad-dsde-methods-kiran/resources/references/grch38/human_GRCh38_no_alt_analysis_set.trf.bed",
+
+  "PBSingleSampleWorkflow.num_reads_per_split": "100000"
+}

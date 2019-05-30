@@ -1,4 +1,4 @@
-workflow CorrectAndAlignWorkflow {
+workflow PBSingleSampleWorkflow {
     String input_bam
     String sm
     File ref_fasta
@@ -119,16 +119,36 @@ workflow CorrectAndAlignWorkflow {
             docker_image=base_image
     }
 
-    call HaplotypeCaller {
+    call SplitIntervalsByChr {
         input:
-            input_bam=MergeCorrected.merged,
-            input_bai=MergeCorrected.merged_bai,
             ref_fasta=ref_fasta,
             ref_fasta_fai=ref_fasta_fai,
             ref_dict=ref_dict,
-            calls=basename(MergeCorrected.merged, ".bam") + ".hc.vcf",
             docker_image=base_image
     }
+
+    scatter (intervals_file in SplitIntervalsByChr.interval_files) {
+        call Depth as DepthCorrected {
+            input:
+                input_bam=MergeCorrected.merged,
+                input_bai=MergeCorrected.merged_bai,
+                ref_fasta=ref_fasta,
+                ref_fasta_fai=ref_fasta_fai,
+                intervals_file=intervals_file,
+                docker_image=base_image
+            }
+    }
+
+#    call HaplotypeCaller {
+#        input:
+#            input_bam=MergeCorrected.merged,
+#            input_bai=MergeCorrected.merged_bai,
+#            ref_fasta=ref_fasta,
+#            ref_fasta_fai=ref_fasta_fai,
+#            ref_dict=ref_dict,
+#            calls=basename(MergeCorrected.merged, ".bam") + ".hc.vcf",
+#            docker_image=base_image
+#    }
 
     call PBSV {
         input:
@@ -174,32 +194,32 @@ workflow CorrectAndAlignWorkflow {
             docker_image=base_image
     }
 
-    call Depth as DepthUncorrected {
-        input:
-            input_bam=MergeUncorrected.merged,
-            input_bai=MergeUncorrected.merged_bai,
-            ref_fasta=ref_fasta,
-            ref_fasta_fai=ref_fasta_fai,
-            docker_image=base_image
-    }
-
-    call Depth as DepthCorrected {
-        input:
-            input_bam=MergeCorrected.merged,
-            input_bai=MergeCorrected.merged_bai,
-            ref_fasta=ref_fasta,
-            ref_fasta_fai=ref_fasta_fai,
-            docker_image=base_image
-    }
-
-    call Depth as DepthRemaining {
-        input:
-            input_bam=MergeRemaining.merged,
-            input_bai=MergeRemaining.merged_bai,
-            ref_fasta=ref_fasta,
-            ref_fasta_fai=ref_fasta_fai,
-            docker_image=base_image
-    }
+#    call Depth as DepthUncorrected {
+#        input:
+#            input_bam=MergeUncorrected.merged,
+#            input_bai=MergeUncorrected.merged_bai,
+#            ref_fasta=ref_fasta,
+#            ref_fasta_fai=ref_fasta_fai,
+#            docker_image=base_image
+#    }
+#
+#    call Depth as DepthCorrected {
+#        input:
+#            input_bam=MergeCorrected.merged,
+#            input_bai=MergeCorrected.merged_bai,
+#            ref_fasta=ref_fasta,
+#            ref_fasta_fai=ref_fasta_fai,
+#            docker_image=base_image
+#    }
+#
+#    call Depth as DepthRemaining {
+#        input:
+#            input_bam=MergeRemaining.merged,
+#            input_bai=MergeRemaining.merged_bai,
+#            ref_fasta=ref_fasta,
+#            ref_fasta_fai=ref_fasta_fai,
+#            docker_image=base_image
+#    }
 }
 
 task ReadLengths {
@@ -381,7 +401,7 @@ task CCS {
         memory: "40G"
         bootDiskSizeGb: 20
         disks: "local-disk ${disk_size} SSD"
-        preemptible: 3
+        #preemptible: 3
         maxRetries: 3
     }
 }
@@ -532,30 +552,28 @@ task Depth {
     File input_bai
     File ref_fasta
     File ref_fasta_fai
+    File intervals_file
     String docker_image
 
     Int cpus = 2
-    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB")) * 1.1)
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(intervals_file, "GB")) * 1.1)
 
     command <<<
         set -euxo pipefail
         df -h .
         tree -h
 
-        samtools view -H ${input_bam} | grep SQ | cut -f2,3 | sed 's/[SL]N://g' > chrs.txt
-        bedtools makewindows -g chrs.txt -s 10000 -w 10000 > windows.bed
-        bedtools coverage -a windows.bed -b ${input_bam} -mean > coverage.txt
-        bedtools genomecov -ibam ${input_bam} > hist.txt
-        bedtools nuc -fi ${ref_fasta} -bed windows.bed | cut -f1-3,5 | grep -v '^#' > gc.bed
+        tail -1 ${intervals_file} | cut -f1 > chr.txt
+        samtools depth -aa -r `cat chr.txt` ${input_bam} | bgzip > `cut -f1 chr.txt`.depth.txt.gz
+        tabix -s 1 -b 2 -e 2 depth.txt.gz
 
         df -h .
         tree -h
     >>>
 
     output {
-        File wgsmetrics = "coverage.txt"
-        File gcbed = "gc.bed"
-        File hist = "hist.txt"
+        Array[File] depth = glob("*.depth.txt.gz")
+        Array[File] depth_index = glob("*.depth.txt.gz.tbi")
     }
 
     runtime {

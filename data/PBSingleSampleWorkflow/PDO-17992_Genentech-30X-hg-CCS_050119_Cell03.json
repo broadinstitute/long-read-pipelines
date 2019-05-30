@@ -1,0 +1,11 @@
+{
+  "PBSingleSampleWorkflow.input_bam": "gs://broad-dsde-methods-long-reads/incoming/PDO-17992_Genentech-30X-hg-CCS_050119/Cell03/m64020_190429_082353.subreads.bam",
+  "PBSingleSampleWorkflow.sm": "Genetech_Pilot_CCS",
+
+  "PBSingleSampleWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
+  "PBSingleSampleWorkflow.ref_fasta_fai": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa.fai",
+  "PBSingleSampleWorkflow.ref_dict": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.dict",
+  "PBSingleSampleWorkflow.trf": "gs://broad-dsde-methods-kiran/resources/references/grch38/human_GRCh38_no_alt_analysis_set.trf.bed",
+
+  "PBSingleSampleWorkflow.num_reads_per_split": "100000"
+}
