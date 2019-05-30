@@ -67,10 +67,10 @@ gs_exists <- function(file) {
 ```
 
 ```{r gs_read_table}
-gs_read_table <- function(table_file) {
+gs_read_table <- function(table_file, sep="\t", header=TRUE) {
     q = gs_cat(table_file)
     qa = grep("#|^$", q, value=TRUE, invert=TRUE)
-    f = read.table(textConnection(qa), sep="\t", header=TRUE)
+    f = read.table(textConnection(qa), sep=sep, header=header)
     
     return(as_tibble(f))
 }
@@ -78,7 +78,7 @@ gs_read_table <- function(table_file) {
 
 ```{r get_splitsubreads_stats}
 get_splitsubreads_stats <- function(cromwell_hash) {
-    l = gs_best(gs_ls(paste("gs://broad-dsde-methods-kiran/workflow_output/*/", cromwell_hash, "/call-SplitSubreads/**SplitSubreads.log", sep="")))
+    l = gs_best(gs_ls(paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-SplitSubreads/**SplitSubreads.log", sep="")))
     
     if (gs_exists(l$file)) {
         sslog = l$file
@@ -124,7 +124,7 @@ get_splitsubreads_stats <- function(cromwell_hash) {
 
 ```{r get_ccs_report}
 get_ccs_report <- function(cromwell_hash) {
-    x = paste("gs://broad-dsde-methods-kiran/workflow_output/*/", cromwell_hash, "/call-MergeCCSReports/**ccs_report.txt", sep="")
+    x = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeCCSReports/**ccs_report.txt", sep="")
     xa = gs_best(gs_ls(x))
     
     report = list()
@@ -157,9 +157,25 @@ get_ccs_report <- function(cromwell_hash) {
 }
 ```
 
-```{r get_read_lengths_file}
-get_read_lengths_file <- function(cromwell_hash) {
-    rlfile = paste("gs://broad-dsde-methods-kiran/workflow_output/*/", cromwell_hash, "/call-ReadLengthsCorrected/**.readlengths.txt", sep="")
+```{r get_read_lengths_corrected_file}
+get_read_lengths_corrected_file <- function(cromwell_hash) {
+    rlfile = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-ReadLengthsCorrected/**.readlengths.txt", sep="")
+    rl = gs_ls(rlfile)
+    return(gs_best(rl))
+}
+```
+
+```{r get_read_lengths_uncorrected_file}
+get_read_lengths_uncorrected_file <- function(cromwell_hash) {
+    rlfile = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-ReadLengthsUncorrected/**.readlengths.txt", sep="")
+    rl = gs_ls(rlfile)
+    return(gs_best(rl))
+}
+```
+
+```{r get_read_lengths_remaining_file}
+get_read_lengths_remaining_file <- function(cromwell_hash) {
+    rlfile = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-ReadLengthsRemaining/**.readlengths.txt", sep="")
     rl = gs_ls(rlfile)
     return(gs_best(rl))
 }
@@ -171,42 +187,30 @@ get_workflow_execution_status <- function(cromwell_hash) {
 }
 ```
 
-```{r get_workflow_metadata}
-get_workflow_metadata <- function(cromwell_hash) {
-    #return(fromJSON(readLines(curl(paste("https://cromwell-v36.dsde-methods.broadinstitute.org/api/workflows/v1/", cromwell_hash, "/metadata?expandSubWorkflows=false", sep="")), warn=FALSE)))
-    con = curl(paste("https://cromwell-v36.dsde-methods.broadinstitute.org/api/workflows/v1/", cromwell_hash, "/metadata?expandSubWorkflows=false", sep=""))
-    fa = readLines(con, warn=FALSE)
-    q = fromJSON(fa)
-    close(con)
-    
-    return(q)
-}
-```
-
 ```{r get_bam_uncorrected_file}
 get_bam_uncorrected_file <- function(cromwell_hash) {
-    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/*/", cromwell_hash, "/call-MergeUncorrected/**.bam", sep="")
+    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeUncorrected/**.bam", sep="")
     return(gs_best(gs_ls(bam_file)))
 }
 ```
 
 ```{r get_bam_corrected_file}
 get_bam_corrected_file <- function(cromwell_hash) {
-    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/*/", cromwell_hash, "/call-MergeCorrected/**.bam", sep="")
+    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeCorrected/**.bam", sep="")
     return(gs_best(gs_ls(bam_file)))
 }
 ```
 
 ```{r get_bam_remaining_file}
 get_bam_remaining_file <- function(cromwell_hash) {
-    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/*/", cromwell_hash, "/call-MergeRemaining/**.bam", sep="")
+    bam_file = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeRemaining/**.bam", sep="")
     return(gs_best(gs_ls(bam_file)))
 }
 ```
 
 ```{r get_alignment_stats}
 get_alignment_stats <- function(cromwell_hash, type) {
-    tbl_file = paste("gs://broad-dsde-methods-kiran/workflow_output/*/", cromwell_hash, "/call-AlignmentStats", type, "/**.alignment.report.txt", sep="")
+    tbl_file = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-AlignmentStats", type, "/**.alignment.report.txt", sep="")
     
     tbl = gs_best(gs_ls(tbl_file))
     
@@ -227,7 +231,9 @@ get_alignment_stats <- function(cromwell_hash, type) {
 get_workflow_stats <- function(cromwell_hash) {
     splitsubreads_stats = get_splitsubreads_stats(cromwell_hash)
     ccs_stats = get_ccs_report(cromwell_hash)
-    rl_file = get_read_lengths_file(cromwell_hash)
+    rl_file_corrected = get_read_lengths_corrected_file(cromwell_hash)
+    rl_file_uncorrected = get_read_lengths_uncorrected_file(cromwell_hash)
+    rl_file_remaining = get_read_lengths_remaining_file(cromwell_hash)
     
     bam_uncorrected_file = get_bam_uncorrected_file(cromwell_hash)
     bam_corrected_file = get_bam_corrected_file(cromwell_hash)
@@ -241,8 +247,9 @@ get_workflow_stats <- function(cromwell_hash) {
              workflow_status = get_workflow_execution_status(cromwell_hash),
              splitsubreads_stats,
              ccs_stats,
-             file_read_lengths_path = rl_file$file,
-             file_read_lengths_size = rl_file$size,
+             file_read_lengths_corrected_path = rl_file_corrected$file,
+             file_read_lengths_uncorrected_path = rl_file_uncorrected$file,
+             file_read_lengths_remaining_path = rl_file_remaining$file,
              file_bam_corrected_file = bam_corrected_file$file,
              file_bam_corrected_size = bam_corrected_file$size,
              file_bam_uncorrected_file = bam_uncorrected_file$file,
@@ -254,77 +261,95 @@ get_workflow_stats <- function(cromwell_hash) {
 }
 ```
 
-```{r sample_status}
-samples_tbl = tribble(
-~sample,	     ~rel_to_proband, ~sex,      ~pop,
-"Ecoli",         NA,              NA,        NA,
-"NA12891",       "father",        "male",    "CEU",
-"NA12892",       "mother",        "female",  "CEU",
-"NA12878rep1",   "proband",       "female",  "CEU",
-"NA12878rep2",   "proband",       "female",  "CEU",
-"HG02982",       "father",        "male",    "GWD",
-"HG02983",       "mother",        "female",  "GWD",
-"HG02984",       "proband",       "male",    "GWD",
-"HG00512",       "father",        "male",    "CHS",
-"HG00513",       "mother",        "female",  "CHS",
-"HG00514",       "proband",       "female",  "CHS",
-"NA19239",       "father",        "male",    "YRI",
-"NA19238",       "mother",        "female",  "YRI",
-"NA19240",       "proband",       "female",  "YRI",
-"HG00731",       "father",        "male",    "PUR",
-"HG00732",       "mother",        "female",  "PUR",
-"HG00733",       "proband",       "female",  "PUR",
-"SM-GNXIC",      "mother",        "female",  "?",
-"SM-GNXID",      "father",        "male",    "?",
-"SM-GM5IP",      "proband",       "female",  "?",
-"VS_ABC012_3_1", "mother",        "female",  "?",
-"VS_ABC012_1_1", "proband",       "unknown", "?",
-"VS_ABC012_2_1", "father",        "male",    "?"
+```{r cromwell_hashes}
+cromwell_hashes = c(
+    "71edfc77-c70d-4cf8-9833-00997a59aedb",
+    "d5186f3b-ae46-49d7-b5b2-a4fe437ce4da",
+    "8e7023f8-7413-4f0c-9a4f-6551be22290b"
 )
+```
 
-a = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/pb_eap/", intern=TRUE);
-buckets = grep("SmallTestData", a[2:length(a)], invert=TRUE, value=TRUE, perl=TRUE) %>% sort()
-
-samples_tbl$run_type = NA
-samples_tbl$bucket = NA
-
-for (bucket in buckets) {
-    for (sample in samples_tbl$sample) {
-        if (grepl(sample, bucket) || grepl(gsub("NA19", "NA129", sample), bucket)) {
-            samples_tbl[which(samples_tbl$sample == sample), "bucket"] = bucket
-            samples_tbl[which(samples_tbl$sample == sample), "run_type"] = ifelse(grepl("_CLR", bucket), "CLR", "CCS")
-        }
+```{r selected_progress, warning=FALSE}
+all_stats = NULL
+for (cromwell_hash in cromwell_hashes) {
+    stats = as_tibble(get_workflow_stats(cromwell_hash))
+    
+    if (is.null(all_stats)) {
+        all_stats = stats
+    } else {
+        all_stats = rbind(all_stats, stats)
     }
+    
+    print(paste(cromwell_hash, stats$sample_name, stats$timestamp))
 }
 ```
 
+```{r plots_yield, dev="pdf"}
+png("yield.png", width=800, height=600, res=100)
 
-```{r cromwell_hashes}
-cromwell_hashes = c(
-    "dfad1c6c-246d-43dc-af36-17a7d5712a3a",
-    "16884faf-2359-47d4-817f-03d2e0561540",
-    "96cf0495-fdd3-46c0-a5c8-91f4cd19eabb",
-    "3c30905a-a7bc-4b96-bb58-52327d8395bf",
-    "9f138dee-162c-4eec-8f20-3ba189d393e7",
-    "2e54ab02-3924-4918-a86c-160d0993e008",
-    "66c72d9b-ccb1-4aa7-a9fd-374e88274e4f",
-    "6d49fa15-719b-401b-b4ae-95d6d2c32f0e",
-    "def40ee2-d5a4-43f2-84b5-599ac04a6bfc",
-    "f5da6cc2-16ef-481a-9aac-224e7f4d0691",
-    "2f12f967-6a3d-461b-b26f-3bb9f52c1ec3",
-    "b9ea6c00-0ecd-433b-83f0-f4fbcecdb901",
-    "ce3a3344-a09f-4c93-9026-945fae03c93a",
-    "6c16bf66-975f-4051-a84a-ecee334d407a",
-    "3433e4b1-a991-467d-8b42-2ae74852a35b",
-    "e8e48f57-c04a-4dfe-bc10-bbac9b783f47",
-    "dac336dc-66d5-4790-8879-3d3ce729bc10",
-    "19f94ab9-4882-4405-bf9f-7a026b333bf7",
-    "d6d814ff-d06d-447d-a38c-60a0204afa08",
-    "e13c74a8-8bd4-4ec4-84ae-96cc5e12bf67",
-    "35ba136d-73c0-49d6-a00d-ee53f1871300",
-    "ba3e29f9-952f-4e10-9ae6-d2747ca663dc",
-    "40d481ba-2374-474d-a95b-3b45490e366e"
+par(mar=c(5, 14, 1, 1))
+all_stats %>% mutate(success = `success_(without_retry)_ccs_generated` + `success_(with_retry)_ccs_generated`, failed = failed_below_snr_threshold + failed_no_usable_subreads + failed_insert_size_too_long + failed_insert_size_too_small + failed_not_enough_full_passes + failed_too_many_unusable_subreads + failed_ccs_did_not_converge + failed_ccs_below_minimum_predicted_accuracy) %>% select(failed, success) %>% as.matrix() %>% t() %>% barplot(beside=TRUE, horiz=TRUE, las=2, names.arg = paste(all_stats$sample_name, "\n(", all_stats$movie_name, ")", sep=""), col=c("#F8696B", "#63BE7B"))
+mtext("Number of reads", side=2, line=12)
+legend(2.5, 3000000, "Uncorrected", fill=c("#F8696B"), bty="n")
+legend(5.5, 3000000, "Corrected", fill=c("#63BE7B"), bty="n")
+
+par(xpd=TRUE)
+
+legend(-1400000, 0, c("CCS", "non-CCS"), fill=c("#63BE7B", "#F8696B"), bty="n")
+
+dev.off()
+```
+
+```{r plot_read_lengths}
+par(mar=c(6, 7, 2, 2))
+plot(0, 0, type="n", xlim=c(0, 30000), ylim=c(0, 200000), xlab="", ylab="", bty="n", las=2)
+legend("topright", c("CCS", "non-CCS"), fill=c("#63BE7B", "#F8696B"), bty="n")
+mtext("Read length (bp)", side=1, line=4)
+mtext("Counts", side=2, line=4)
+
+for (i in 1:nrow(all_stats)) {
+    rlfile_corrected = all_stats$file_read_lengths_corrected_path[i]
+    rlfile_remaining = all_stats$file_read_lengths_remaining_path[i]
+    
+    rl_corrected = gs_read_table(rlfile_corrected, sep=" ", header=FALSE)
+    rl_remaining = gs_read_table(rlfile_remaining, sep=" ", header=FALSE)
+    
+    h_corrected = hist(rl_corrected$V4, breaks=seq(0, max(rl_corrected$V4) + 100, by=100), plot=FALSE)
+    h_remaining = hist(rl_remaining$V4, breaks=seq(0, max(rl_remaining$V4) + 100, by=100), plot=FALSE)
+    
+    points(h_corrected$mids, h_corrected$counts, type="l", lwd=2, col="#63BE7B")
+    points(h_remaining$mids, h_remaining$counts, type="l", lwd=2, lty=2, col="#F8696B")
+}
+```
+
+```{r coverage}
+f.corrected = c(
+    "../../scratch/m64020_190426_195512.subreads.ccs.aligned.merged.cov.txt",
+    "../../scratch/m64020_190428_020942.subreads.ccs.aligned.merged.cov.txt",
+    "../../scratch/m64020_190429_082353.subreads.ccs.aligned.merged.cov.txt"
 )
+
+f.uncorrected = c(
+    "../../scratch/m64020_190426_195512.subreads.ccs.uncorrected.aligned.merged.cov.txt",
+    "../../scratch/m64020_190428_020942.subreads.ccs.uncorrected.aligned.merged.cov.txt",
+    "../../scratch/m64020_190429_082353.subreads.ccs.uncorrected.aligned.merged.cov.txt"
+)
+
+l = list(
+    'Cell01 (CCS)' = read_delim(f.corrected[1], col_names=c("chr", "pos", "depth"), delim="\t")$depth,
+    'Cell01 (non-CCS)' = read_delim(f.uncorrected[1], col_names=c("chr", "pos", "depth"), delim="\t")$depth,
+    ' ' = c(),
+    
+    'Cell02 (CCS)' = read_delim(f.corrected[2], col_names=c("chr", "pos", "depth"), delim="\t")$depth,
+    'Cell02 (non-CCS)' = read_delim(f.uncorrected[2], col_names=c("chr", "pos", "depth"), delim="\t")$depth,
+    ' ' = c(),
+    
+    'Cell03 (CCS)' = read_delim(f.corrected[3], col_names=c("chr", "pos", "depth"), delim="\t")$depth,
+    'Cell03 (non-CCS)' = read_delim(f.uncorrected[3], col_names=c("chr", "pos", "depth"), delim="\t")$depth
+);
+
+par(mar=c(10, 5, 2, 2))
+boxplot(l, las=2, frame=FALSE, ylab="Coverage", col=c("#63BE7B", "#F8696B"))
 ```
 
 ```{r look_at_vcfs}
@@ -359,106 +384,19 @@ for (sample in names(vcf_files)) {
 }
 ```
 
-```{r find_most_recent_runs}
-workflows_old = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", intern=TRUE)
-workflows_new = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", intern=TRUE)
-all_workflows = c(workflows_new, workflows_old)
-
-qd = NULL;
-for (workflow in all_workflows) {
-    cromwell_hash = basename(workflow)
-    
-    md = get_workflow_metadata(cromwell_hash)
-    if (length(grep("Minimap2Corrected", names(md$calls))) > 0) {
-        sample_name = ifelse(
-            grepl("PBSingleSample", workflow),
-            ifelse("sample_name" %in% names(md$calls$PBSingleSampleWorkflow.Minimap2Corrected[[1]]$inputs), md$calls$PBSingleSampleWorkflow.Minimap2Corrected[[1]]$inputs$sample_name, "unknown"),
-            ifelse("sample_name" %in% names(md$calls$CorrectAndAlignWorkflow.Minimap2Corrected[[1]]$inputs), md$calls$CorrectAndAlignWorkflow.Minimap2Corrected[[1]]$inputs$sample_name, "unknown")
-        )
-        
-        date = md$submission
-        status = md$status
-        workflow_root = md$workflowRoot
-        input_bam = ifelse(
-            grepl("PBSingleSample", workflow),
-            md$inputs$PBSingleSampleWorkflow.input_bam,
-            md$inputs$CorrectAndAlignWorkflow.input_bam
-        )
-        
-        print(paste(sample_name, cromwell_hash, date, status, workflow_root, input_bam))
-        
-        if (is.null(qd)) {
-            qd = c(sample_name, cromwell_hash, date, status, workflow_root, input_bam)
-        } else {
-            qd = rbind(qd, c(sample_name, cromwell_hash, date, status, workflow_root, input_bam))
-        }
-    }
-}
-
-qd = as_tibble(qd, .name_repair = "unique")
-names(qd) = c("sample_name", "cromwell_hash", "date", "status", "workflow_root", "input_bam")
-
-qd$date = as.Date(qd$date)
-
-best_workflows = NULL
-for (bam in unique(qd$input_bam)) {
-    best_workflow = qd %>% filter(input_bam == bam, sample_name != "unknown", status != "Aborted") %>% filter(date == max(date))
-    
-    if (nrow(best_workflow) >= 1) {
-        if (is.null(best_workflows)) {
-            best_workflows = best_workflow[1,]
-        } else {
-            best_workflows = rbind(best_workflows, best_workflow[1,])
-        }
-    }
-}
-```
-
-```{r selected_progress, warning=FALSE}
-some_stats = NULL
-for (cromwell_hash in best_runs$cromwell_hash) {
-    stats = as_tibble(get_workflow_stats(cromwell_hash))
-    
-    if (is.null(some_stats)) {
-        some_stats = stats
-    } else {
-        some_stats = rbind(some_stats, stats)
-    }
-    
-    print(paste(cromwell_hash, stats$sample_name, stats$timestamp))
-}
-```
-
-
 ```{r progress, warning=FALSE}
-workflows = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/ gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", intern=TRUE)
-#workflows = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", intern=TRUE)
+workflows = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", intern=TRUE)
 
-#for (workflow in workflows) {
-#    cromwell_hash = basename(workflow)
-#     
-#    stats = get_workflow_stats(cromwell_hash)
-#    print(paste(cromwell_hash, stats$sample_name))
-#}
-
-all_stats = NULL
 for (workflow in workflows) {
     cromwell_hash = basename(workflow)
-    
-    stats = as_tibble(get_workflow_stats(cromwell_hash))
-    
-    if (is.null(all_stats)) {
-        all_stats = stats
-    } else {
-        all_stats = rbind(all_stats, stats)
-    }
-    
-    print(paste(cromwell_hash, stats$sample_name, stats$timestamp))
+     
+    stats = get_workflow_stats(cromwell_hash)
+    print(paste(cromwell_hash, stats$sample_name))
 }
 ```
 
 ```{r processing_progress, warning=FALSE}
-asrs = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/*/call-AlignmentStatsCorrected/**report.txt", intern=TRUE)
+asrs = system("/Users/kiran/google-cloud-sdk/bin/gsutil ls gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/*/call-AlignmentStatsCorrected/**report.txt", intern=TRUE)
 
 m = c()
 
@@ -482,12 +420,12 @@ for (asr in asrs) {
     }
     sample_name = gsub("NA129", "NA19", gsub("^\\w\\w\\w_", "", sample_name, perl=TRUE))
     
-    merged_uncorrected_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeUncorrected/", movie_name, ".subreads.aligned.merged.bam", sep="")
-    merged_uncorrected_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeUncorrected/", movie_name, ".subreads.aligned.merged.bai", sep="")
-    merged_corrected_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCorrected/", movie_name, ".subreads.ccs.aligned.merged.bam", sep="")
-    merged_corrected_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCorrected/", movie_name, ".subreads.ccs.aligned.merged.bai", sep="")
-    merged_remaining_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.bam", sep="")
-    merged_remaining_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.bai", sep="")
+    merged_uncorrected_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeUncorrected/", movie_name, ".subreads.aligned.merged.bam", sep="")
+    merged_uncorrected_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeUncorrected/", movie_name, ".subreads.aligned.merged.bai", sep="")
+    merged_corrected_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeCorrected/", movie_name, ".subreads.ccs.aligned.merged.bam", sep="")
+    merged_corrected_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeCorrected/", movie_name, ".subreads.ccs.aligned.merged.bai", sep="")
+    merged_remaining_bam = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.bam", sep="")
+    merged_remaining_bai = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.bai", sep="")
     
     merged_uncorrected_size = as.double(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -lh", merged_uncorrected_bam, "| grep -v TOTAL | awk '{ print $1 }'"), intern=TRUE))
     merged_corrected_size = as.double(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil ls -lh", merged_corrected_bam, "| grep -v TOTAL | awk '{ print $1 }'"), intern=TRUE))
@@ -500,22 +438,22 @@ for (asr in asrs) {
     run_type = ifelse(grepl("_CLR", sample_name), "CLR", "CCS")
     run_date = gcs_timestamp(asr)
     
-    depth_uncorrected = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-DepthUncorrected/coverage.txt", sep=""), intern=TRUE), " "))
+    depth_uncorrected = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-DepthUncorrected/coverage.txt", sep=""), intern=TRUE), " "))
     depth_uncorrected_mean = as.double(ifelse(is.null(depth_uncorrected), 0, depth_uncorrected[2]))
     depth_uncorrected_sd = as.double(ifelse(is.null(depth_uncorrected), 0, depth_uncorrected[3]))
     depth_uncorrected_median = as.double(ifelse(is.null(depth_uncorrected), 0, depth_uncorrected[4]))
     
-    depth_corrected = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-DepthCorrected/coverage.txt", sep=""), intern=TRUE), " "))
+    depth_corrected = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-DepthCorrected/coverage.txt", sep=""), intern=TRUE), " "))
     depth_corrected_mean = as.double(ifelse(is.null(depth_corrected), 0, depth_corrected[2]))
     depth_corrected_sd = as.double(ifelse(is.null(depth_corrected), 0, depth_corrected[3]))
     depth_corrected_median = as.double(ifelse(is.null(depth_corrected), 0, depth_corrected[4]))
     
-    depth_remaining = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-DepthRemaining/coverage.txt", sep=""), intern=TRUE), " "))
+    depth_remaining = unlist(strsplit(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-DepthRemaining/coverage.txt", sep=""), intern=TRUE), " "))
     depth_remaining_mean = as.double(ifelse(is.null(depth_remaining), 0, depth_remaining[2]))
     depth_remaining_sd = as.double(ifelse(is.null(depth_remaining), 0, depth_remaining[3]))
     depth_remaining_median = as.double(ifelse(is.null(depth_remaining), 0, depth_remaining[4]))
     
-    ccs_report_gs = paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-MergeCCSReports/ccs_report.txt", sep="")
+    ccs_report_gs = paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-MergeCCSReports/ccs_report.txt", sep="")
     ccs = get_ccs_report(ccs_report_gs)
     
     if (length(ccs) == 0) {
@@ -533,9 +471,9 @@ for (asr in asrs) {
         )
     }
     
-    astats_uncorrected = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-AlignmentStatsUncorrected/", movie_name, ".subreads.aligned.merged.alignment.report.txt", sep=""))
-    astats_corrected = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-AlignmentStatsCorrected/", movie_name, ".subreads.ccs.aligned.merged.alignment.report.txt", sep=""))
-    astats_remaining = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/", cromwell_hash, "/call-AlignmentStatsRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.alignment.report.txt", sep=""))
+    astats_uncorrected = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-AlignmentStatsUncorrected/", movie_name, ".subreads.aligned.merged.alignment.report.txt", sep=""))
+    astats_corrected = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-AlignmentStatsCorrected/", movie_name, ".subreads.ccs.aligned.merged.alignment.report.txt", sep=""))
+    astats_remaining = get_alignment_stats(paste("gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/", cromwell_hash, "/call-AlignmentStatsRemaining/", movie_name, ".subreads.ccs.uncorrected.aligned.merged.alignment.report.txt", sep=""))
     
     #tm$ccs_success_wo_retry_generated + tm$ccs_success_w_retry_generated
     #tm$ccs_failed_below_snr_threshold + tm$ccs_failed_no_usable_subreads + tm$ccs_failed_insert_size_too_long + tm$ccs_failed_insert_size_too_small + tm$ccs_failed_not_enough_full_passes + tm$ccs_failed_not_enough_full_passes + tm$ccs_failed_too_many_unusable_subreads + tm$ccs_failed_did_not_converge + tm$ccs_failed_below_minimum_predicted_accuracy
@@ -788,12 +726,12 @@ hashes.clr = tm_sub %>% filter(sample_name != "SmallTestData", sample_name != "E
 hashes.ccs = tm_sub %>% filter(sample_name != "SmallTestData", sample_name != "Ecoli_Training_Run") %>% filter(!grepl("CLR", sample_name)) %>% pull(cromwell_hash)
 
 l = list(
-    "SplitSubreads"       = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.SplitSubreads") %>% pull(total_cost),
-    "CCS"                 = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.CCS") %>% pull(total_cost),
-    "Minimap2Uncorrected" = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.Minimap2Uncorrected") %>% pull(total_cost),
-    "Minimap2Corrected"   = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.Minimap2Corrected") %>% pull(total_cost),
-    "MergeUncorrected"    = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.MergeUncorrected") %>% pull(total_cost),
-    "MergeCorrected"      = ct_all %>% filter(status == "complete", task_name == "CorrectAndAlignWorkflow.MergeCorrected") %>% pull(total_cost),
+    "SplitSubreads"       = ct_all %>% filter(status == "complete", task_name == "PBSingleSampleWorkflow.SplitSubreads") %>% pull(total_cost),
+    "CCS"                 = ct_all %>% filter(status == "complete", task_name == "PBSingleSampleWorkflow.CCS") %>% pull(total_cost),
+    "Minimap2Uncorrected" = ct_all %>% filter(status == "complete", task_name == "PBSingleSampleWorkflow.Minimap2Uncorrected") %>% pull(total_cost),
+    "Minimap2Corrected"   = ct_all %>% filter(status == "complete", task_name == "PBSingleSampleWorkflow.Minimap2Corrected") %>% pull(total_cost),
+    "MergeUncorrected"    = ct_all %>% filter(status == "complete", task_name == "PBSingleSampleWorkflow.MergeUncorrected") %>% pull(total_cost),
+    "MergeCorrected"      = ct_all %>% filter(status == "complete", task_name == "PBSingleSampleWorkflow.MergeCorrected") %>% pull(total_cost),
     " " = c(),
     "Total (CLR)"         = ct_all %>% filter(status == "complete", cromwell_hash %in% hashes.clr) %>% group_by(cromwell_hash) %>% select(total_cost) %>% summarise(total_clr = sum(total_cost)) %>% pull(total_clr),
     "Total (CCS)"         = ct_all %>% filter(status == "complete", cromwell_hash %in% hashes.ccs) %>% group_by(cromwell_hash) %>% select(total_cost) %>% summarise(total_ccs = sum(total_cost)) %>% pull(total_ccs)

@@ -1,0 +1,11 @@
+{
+  "PBSingleSampleWorkflow.input_bam": "gs://broad-dsde-methods-kiran/pb_eap/Ecoli_Training_Run/m64020_190123_195048.subreads.bam",
+  "PBSingleSampleWorkflow.sm": "ecoli_training_run",
+
+  "PBSingleSampleWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.fasta",
+  "PBSingleSampleWorkflow.ref_fasta_fai": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.fasta.fai",
+  "PBSingleSampleWorkflow.ref_dict": "gs://broad-dsde-methods-kiran/resources/references/ecoli/NC_000913.3.dict",
+  "PBSingleSampleWorkflow.trf": "gs://broad-dsde-methods-kiran/resources/references/ecoli/ecoli_NC_000913.3.trf.bed",
+
+  "PBSingleSampleWorkflow.num_reads_per_split": "100000"
+}

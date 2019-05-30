@@ -1,0 +1,19 @@
+{
+  "PBMultiSampleWorkflow.input_bams": [
+    "gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/71edfc77-c70d-4cf8-9833-00997a59aedb/call-MergeCorrected/m64020_190426_195512.subreads.ccs.aligned.merged.bam",
+    "gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/d5186f3b-ae46-49d7-b5b2-a4fe437ce4da/call-MergeCorrected/m64020_190428_020942.subreads.ccs.aligned.merged.bam",
+    "gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/8e7023f8-7413-4f0c-9a4f-6551be22290b/call-MergeCorrected/m64020_190429_082353.subreads.ccs.aligned.merged.bam"
+  ],
+  "PBMultiSampleWorkflow.input_remaining_bams": [
+    "gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/71edfc77-c70d-4cf8-9833-00997a59aedb/call-MergeRemaining/m64020_190426_195512.subreads.ccs.uncorrected.aligned.merged.bam",
+    "gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/d5186f3b-ae46-49d7-b5b2-a4fe437ce4da/call-MergeRemaining/m64020_190428_020942.subreads.ccs.uncorrected.aligned.merged.bam",
+    "gs://broad-dsde-methods-kiran/workflow_output/PBSingleSampleWorkflow/8e7023f8-7413-4f0c-9a4f-6551be22290b/call-MergeRemaining/m64020_190429_082353.subreads.ccs.uncorrected.aligned.merged.bam"
+  ],
+  "PBMultiSampleWorkflow.name": "Genentech_Three_SMRTCells",
+  "PBMultiSampleWorkflow.rename": "PIPF-004-11095004",
+  "PBMultiSampleWorkflow.bam_out": "go12345_broad_ngs_dna_pacbio_PIPF-004-11095004_20190521.ccs_corrected.bam",
+  "PBMultiSampleWorkflow.bam_remaining_out": "go12345_broad_ngs_dna_pacbio_PIPF-004-11095004_20190521.ccs_uncorrected.bam",
+  "PBMultiSampleWorkflow.ref_fasta": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
+  "PBMultiSampleWorkflow.ref_fasta_fai": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa.fai",
+  "PBMultiSampleWorkflow.ref_dict": "gs://broad-dsde-methods-kiran/resources/references/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.dict"
+}
