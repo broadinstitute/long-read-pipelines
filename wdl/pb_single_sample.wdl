@@ -137,6 +137,7 @@ workflow PBSingleSampleWorkflow {
                 intervals_file=intervals_file,
                 docker_image=base_image
             }
+<<<<<<< HEAD
 
         call Depth as DepthRemaining {
             input:
@@ -178,6 +179,20 @@ workflow PBSingleSampleWorkflow {
             output_vcf = basename(MergeCorrected.merged, ".bam") + ".hc.vcf",
             docker_image=base_image
     }
+=======
+    }
+
+#    call HaplotypeCaller {
+#        input:
+#            input_bam=MergeCorrected.merged,
+#            input_bai=MergeCorrected.merged_bai,
+#            ref_fasta=ref_fasta,
+#            ref_fasta_fai=ref_fasta_fai,
+#            ref_dict=ref_dict,
+#            calls=basename(MergeCorrected.merged, ".bam") + ".hc.vcf",
+#            docker_image=base_image
+#    }
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
 
     call PBSV {
         input:
@@ -375,7 +390,11 @@ task Minimap2 {
         df -h .
         tree -h
 
+<<<<<<< HEAD
         samtools fastq ${subread_file} | minimap2 -ayY --MD --eqx -x ${correction_arg} -t ${cpus} ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
+=======
+        samtools fastq ${subread_file} | minimap2 -ayY --MD -x ${correction_arg} -t ${cpus} ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
         java -Dsamjdk.compression_level=0 -Xmx4g -jar /gatk.jar RepairPacBioBam -I ${subread_file} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -S ${sample_name} --use-jdk-deflater --use-jdk-inflater
         samtools sort -@${cpus} -m4G -o ${subread_aligned} temp.aligned.unsorted.repaired.bam
 
@@ -585,7 +604,11 @@ task Depth {
     String docker_image
 
     Int cpus = 2
+<<<<<<< HEAD
     Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(intervals_file, "GB")) * 2.0)
+=======
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(intervals_file, "GB")) * 1.1)
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
 
     command <<<
         set -euxo pipefail
@@ -593,7 +616,11 @@ task Depth {
         tree -h
 
         tail -1 ${intervals_file} | cut -f1 > chr.txt
+<<<<<<< HEAD
         samtools depth -aa -r `cat chr.txt` ${input_bam} | bgzip > depth.txt.gz
+=======
+        samtools depth -aa -r `cat chr.txt` ${input_bam} | bgzip > `cut -f1 chr.txt`.depth.txt.gz
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
         tabix -s 1 -b 2 -e 2 depth.txt.gz
 
         df -h .
@@ -601,9 +628,14 @@ task Depth {
     >>>
 
     output {
+<<<<<<< HEAD
         File chr = "chr.txt"
         File depth = "depth.txt.gz"
         File depth_index = "depth.txt.gz.tbi"
+=======
+        Array[File] depth = glob("*.depth.txt.gz")
+        Array[File] depth_index = glob("*.depth.txt.gz.tbi")
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
     }
 
     runtime {
@@ -623,19 +655,30 @@ task HaplotypeCaller {
     File ref_fasta
     File ref_fasta_fai
     File ref_dict
+<<<<<<< HEAD
     File intervals_file
+=======
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
     String calls
     String docker_image
 
     Int cpus = 2
+<<<<<<< HEAD
     Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_dict, "GB") + size(ref_fasta_fai, "GB") + size(intervals_file, "GB")) * 1.1)
+=======
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_dict, "GB") + size(ref_fasta_fai, "GB")) * 1.1)
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
 
     command <<<
         set -euxo pipefail
         df -h .
         tree -h
 
+<<<<<<< HEAD
         java -Xmx16g -jar /gatk.jar HaplotypeCaller -R ${ref_fasta} -I ${input_bam} -L ${intervals_file} -O ${calls} --use-jdk-deflater --use-jdk-inflater -VS SILENT
+=======
+        java -Xmx16g -jar /gatk.jar HaplotypeCaller -R ${ref_fasta} -I ${input_bam} -O ${calls} --use-jdk-deflater --use-jdk-inflater -VS SILENT
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
 
         df -h .
         tree -h
@@ -657,6 +700,7 @@ task HaplotypeCaller {
     }
 }
 
+<<<<<<< HEAD
 task MergeVCFs {
     Array[File] input_vcfs
     Array[File] input_vcf_indices
@@ -693,6 +737,8 @@ task MergeVCFs {
     }
 }
 
+=======
+>>>>>>> 0c345eea93ffdef78057021d4ac9ce17a2cdb8ef
 task PBSV {
     File input_bam
     File input_bai
