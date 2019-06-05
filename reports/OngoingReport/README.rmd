@@ -585,15 +585,13 @@ boxplot(eap_stats$zmw_mean, horizontal = TRUE, ylim=c(0, 50), xlab="Number of pa
 ```
 
 ```{r yield}
-eap_stats$new_sample_name = (eap_stats %>% pull(sample_name) %>% gsub("RGP_94_1", "clinical sample 1", .) %>% gsub("RGP_94_2_LowYield", "clinical sample 2", .) %>% gsub("RGP_94_2_Rework", "clinical sample 2 (rework)", .) %>% gsub("RGP_94_3_LowYield", "clinical sample 3", .) %>% gsub("RGP_94_3_Rework", "clinical sample 3 (rework)", .) %>% gsub("VS_ABC012_3_1_mother", "clinical sample 4", .) %>% gsub("VS_ABC012_1_1_proband", "clinical sample 5", .) %>% gsub("VS_ABC012_2_1_father", "clinical sample 6", .) %>% gsub("HCC1954T", "tumor cell line 1", .) %>% gsub("HCC1954N", "paired normal cell line 1", .) %>% gsub("Talkowski_MIN36192_SM-IBA3O", "clinical sample 7", .) %>% gsub("Talkowski_MIN39144_SM-IBA3L", "clinical sample 8", .) %>% gsub("Talkowski_JFG36815F_SM-IIU4J", "clinical sample 9", .) %>% gsub("Talkowski_22701_SM-IIU4K", "clinical sample 10", .))
-
 sl.indices = c(13,14,11,12,4,5,6,1,2,3,32,33,34,15,16,17,18,19,20,21,22,31,29,30,8,9,10,7,27,28,26,23)
 layout.matrix = matrix(c(1, 1, 2, 2), nrow=2, ncol=2)
 layout(mat = layout.matrix, heights=c(4, 4), widths=c(3, 1))
 
 par(mar=c(9, 6, 2, 1))
-barplot(eap_stats$yield[sl.indices]/1e9, names.arg = eap_stats$new_sample_name[sl.indices], las=2, cex.names=0.5, ylim=c(0, max(eap_stats$yield))/1e9, col=c("#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#F28379", "#05C7F2","#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#D94436", "#05C7F2", "#D94436", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#D94436", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#D94436"))
-abline(h=median(eap_stats$yield), lty=2, col="red")
+barplot(eap_stats$yield[sl.indices]/1e9, names.arg = eap_stats$sample_name[sl.indices], las=2, cex.names=0.5, ylim=c(0, max(eap_stats$yield))/1e9, col=c("#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#F28379", "#05C7F2","#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#D94436", "#05C7F2", "#D94436", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#D94436", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#05C7F2", "#D94436"))
+abline(h=median(eap_stats$yield/1e9), lty=2, col="red")
 mtext("Number of bases (Gbp)", 2, line=4)
 
 par(mar=c(9, 3, 2, 2))
@@ -628,6 +626,11 @@ abline(h=-10*log10(13493671/3123730626), lwd=1, lty=2, col="red")
 abline(h=-10*log10(860354/3123730626), lwd=1, lty=2, col="green")
 abline(h=-10*log10(629002/3123730626), lwd=1, lty=2, col="blue")
 abline(h=-10*log10((13493671+860354+629002)/3123730626), lwd=1, lty=2, col="black")
+```
+
+```{r error_hist}
+di = read_delim("../../test.chr20.small_indels_suppressed.insHist.txt", delim=' ', col_names=c("left", "right"))
+dd = read_delim("../../test.chr20.small_indels_suppressed.delHist.txt", delim=' ', col_names=c("left", "right"))
 ```
 
 ```{r progress, warning=FALSE}
