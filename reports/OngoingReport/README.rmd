@@ -597,7 +597,7 @@ abline(h=median(eap_stats$yield), lty=2, col="red")
 mtext("Number of bases (Gbp)", 2, line=4)
 
 par(mar=c(9, 3, 2, 2))
-boxplot(eap_stats$yield, ylim=c(0, max(eap_stats$yield)), las=2)
+boxplot(eap_stats$yield/1e9, ylim=c(0, max(eap_stats$yield)/1e9), las=2)
 ```
 
 ```{r error_rate_by_passes_load}
