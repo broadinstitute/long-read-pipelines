@@ -137,18 +137,47 @@ workflow PBSingleSampleWorkflow {
                 intervals_file=intervals_file,
                 docker_image=base_image
             }
+
+        call Depth as DepthRemaining {
+            input:
+                input_bam=MergeRemaining.merged,
+                input_bai=MergeRemaining.merged_bai,
+                ref_fasta=ref_fasta,
+                ref_fasta_fai=ref_fasta_fai,
+                intervals_file=intervals_file,
+                docker_image=base_image
+            }
+
+        call Depth as DepthUncorrected {
+            input:
+                input_bam=MergeUncorrected.merged,
+                input_bai=MergeUncorrected.merged_bai,
+                ref_fasta=ref_fasta,
+                ref_fasta_fai=ref_fasta_fai,
+                intervals_file=intervals_file,
+                docker_image=base_image
+            }
+
+        call HaplotypeCaller {
+            input:
+                input_bam=MergeCorrected.merged,
+                input_bai=MergeCorrected.merged_bai,
+                ref_fasta=ref_fasta,
+                ref_fasta_fai=ref_fasta_fai,
+                ref_dict=ref_dict,
+                intervals_file=intervals_file,
+                calls=basename(MergeCorrected.merged, ".bam") + ".hc.vcf",
+                docker_image=base_image
+        }
     }
 
-#    call HaplotypeCaller {
-#        input:
-#            input_bam=MergeCorrected.merged,
-#            input_bai=MergeCorrected.merged_bai,
-#            ref_fasta=ref_fasta,
-#            ref_fasta_fai=ref_fasta_fai,
-#            ref_dict=ref_dict,
-#            calls=basename(MergeCorrected.merged, ".bam") + ".hc.vcf",
-#            docker_image=base_image
-#    }
+    call MergeVCFs as MergeHaplotypeCallerVCFs {
+        input:
+            input_vcfs = HaplotypeCaller.calls_vcf,
+            input_vcf_indices = HaplotypeCaller.calls_idx,
+            output_vcf = basename(MergeCorrected.merged, ".bam") + ".hc.vcf",
+            docker_image=base_image
+    }
 
     call PBSV {
         input:
@@ -346,7 +375,7 @@ task Minimap2 {
         df -h .
         tree -h
 
-        samtools fastq ${subread_file} | minimap2 -ayY --MD -x ${correction_arg} -t ${cpus} ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
+        samtools fastq ${subread_file} | minimap2 -ayY --MD --eqx -x ${correction_arg} -t ${cpus} ${ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
         java -Dsamjdk.compression_level=0 -Xmx4g -jar /gatk.jar RepairPacBioBam -I ${subread_file} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -S ${sample_name} --use-jdk-deflater --use-jdk-inflater
         samtools sort -@${cpus} -m4G -o ${subread_aligned} temp.aligned.unsorted.repaired.bam
 
@@ -556,7 +585,7 @@ task Depth {
     String docker_image
 
     Int cpus = 2
-    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(intervals_file, "GB")) * 1.1)
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(intervals_file, "GB")) * 2.0)
 
     command <<<
         set -euxo pipefail
@@ -564,7 +593,7 @@ task Depth {
         tree -h
 
         tail -1 ${intervals_file} | cut -f1 > chr.txt
-        samtools depth -aa -r `cat chr.txt` ${input_bam} | bgzip > `cut -f1 chr.txt`.depth.txt.gz
+        samtools depth -aa -r `cat chr.txt` ${input_bam} | bgzip > depth.txt.gz
         tabix -s 1 -b 2 -e 2 depth.txt.gz
 
         df -h .
@@ -572,8 +601,9 @@ task Depth {
     >>>
 
     output {
-        Array[File] depth = glob("*.depth.txt.gz")
-        Array[File] depth_index = glob("*.depth.txt.gz.tbi")
+        File chr = "chr.txt"
+        File depth = "depth.txt.gz"
+        File depth_index = "depth.txt.gz.tbi"
     }
 
     runtime {
@@ -593,18 +623,19 @@ task HaplotypeCaller {
     File ref_fasta
     File ref_fasta_fai
     File ref_dict
+    File intervals_file
     String calls
     String docker_image
 
     Int cpus = 2
-    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_dict, "GB") + size(ref_fasta_fai, "GB")) * 1.1)
+    Int disk_size = ceil((size(input_bam, "GB") + size(input_bai, "GB") + size(ref_fasta, "GB") + size(ref_dict, "GB") + size(ref_fasta_fai, "GB") + size(intervals_file, "GB")) * 1.1)
 
     command <<<
         set -euxo pipefail
         df -h .
         tree -h
 
-        java -Xmx16g -jar /gatk.jar HaplotypeCaller -R ${ref_fasta} -I ${input_bam} -O ${calls} --use-jdk-deflater --use-jdk-inflater -VS SILENT
+        java -Xmx16g -jar /gatk.jar HaplotypeCaller -R ${ref_fasta} -I ${input_bam} -L ${intervals_file} -O ${calls} --use-jdk-deflater --use-jdk-inflater -VS SILENT
 
         df -h .
         tree -h
@@ -613,6 +644,42 @@ task HaplotypeCaller {
     output {
         File calls_vcf = "${calls}"
         File calls_idx = "${calls}.idx"
+    }
+
+    runtime {
+        docker: "${docker_image}"
+        cpu: "${cpus}"
+        memory: "20G"
+        bootDiskSizeGb: 20
+        disks: "local-disk ${disk_size} SSD"
+        preemptible: 3
+        maxRetries: 3
+    }
+}
+
+task MergeVCFs {
+    Array[File] input_vcfs
+    Array[File] input_vcf_indices
+    String output_vcf
+    String docker_image
+
+    Int cpus = 2
+    Int disk_size = ceil(3*(size(input_vcfs[0], "GB")*length(input_vcfs)))
+
+    command <<<
+        set -euxo pipefail
+        df -h .
+        tree -h
+
+        java -Xmx16g -jar /gatk.jar MergeVcfs -I ${sep=' -I ' input_vcfs} -O ${output_vcf}
+
+        df -h .
+        tree -h
+    >>>
+
+    output {
+        File calls_vcf = "${output_vcf}"
+        File calls_idx = "${output_vcf}.idx"
     }
 
     runtime {
