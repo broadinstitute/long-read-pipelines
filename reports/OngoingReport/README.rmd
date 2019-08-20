@@ -22,9 +22,31 @@ gcs_timestamp <- function(x) {
 }
 ```
 
+```{r gs_get}
+gs_get <- function(gspath, dir="scratch") {
+    gsdir = gsub("gs://", "", dirname(gspath))
+    gsbase = basename(gspath)
+    
+    outdir = paste(dir, gsdir, sep="/")
+    outpath = paste(outdir, gsbase, sep="/")
+    
+    if (!file.exists(outdir)) {
+        dir.create(outdir, recursive=TRUE)
+    }
+    
+    if (!file.exists(outpath)) {
+        system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cp", gspath, outpath))
+    }
+    
+    return(outpath)
+}
+```
+
 ```{r gs_cat}
 gs_cat <- function(file, pipe="") {
-    return(system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cat", file, ifelse(pipe == "", "", "|"), pipe), intern=TRUE))
+    local_file = gs_get(file)
+    
+    return(system(paste("cat", local_file, ifelse(pipe == "", "", "|"), pipe), intern=TRUE))
 }
 ```
 
@@ -80,23 +102,6 @@ gs_read_table <- function(table_file, sep="\t", header=FALSE) {
 }
 ```
 
-```{r gs_get}
-gs_get <- function(gspath, dir="scratch", use_cache=TRUE) {
-    gsdir = gsub("gs://", "", dirname(gspath))
-    gsbase = basename(gspath)
-    
-    outdir = paste(dir, gsdir, sep="/")
-    outpath = paste(outdir, gsbase, sep="/")
-    
-    if (!file.exists(outpath) | !use_cache) {
-        dir.create(outdir, recursive=TRUE)
-        system(paste("/Users/kiran/google-cloud-sdk/bin/gsutil cp", gspath, outpath))
-    }
-    
-    return(outpath)
-}
-```
-
 ```{r get_splitsubreads_stats}
 get_splitsubreads_stats <- function(cromwell_hash) {
     l = gs_best(gs_ls(paste("gs://broad-dsde-methods-kiran/workflow_output/*/", cromwell_hash, "/call-SplitSubreads/**SplitSubreads.log", sep="")))
@@ -104,7 +109,7 @@ get_splitsubreads_stats <- function(cromwell_hash) {
     if (gs_exists(l$file)) {
         sslog = l$file
         timestamp = l$timestamp
-        cmd = gs_cat(paste(sslog, "| grep -m1 java"))
+        cmd = gs_cat(sslog, pipe="grep -m1 java")
         codec = ifelse(grep("jdk-deflater", cmd), "JDK", "Intel")
         
         compression = 2;
@@ -119,7 +124,7 @@ get_splitsubreads_stats <- function(cromwell_hash) {
             sample_name = basename(dirname(dirname(grep(".subreads.bam", unlist(strsplit(cmd, " ")), value=TRUE))))
         }
         
-        q = gs_cat(sslog, "grep '.bam'") %>% tail(n=1) %>% strsplit("[.\\s]+", perl=TRUE) %>% unlist()
+        q = gs_cat(sslog, pipe="grep '.bam'") %>% tail(n=1) %>% strsplit("[.\\s]+", perl=TRUE) %>% unlist()
         num_shards = as.integer(q[length(q)-1])
         
         return(list(timestamp = timestamp,
@@ -202,7 +207,6 @@ get_workflow_execution_status <- function(cromwell_hash) {
 
 ```{r get_workflow_metadata}
 get_workflow_metadata <- function(cromwell_hash) {
-    #return(fromJSON(readLines(curl(paste("https://cromwell-v36.dsde-methods.broadinstitute.org/api/workflows/v1/", cromwell_hash, "/metadata?expandSubWorkflows=false", sep="")), warn=FALSE)))
     con = curl(paste("https://cromwell-v36.dsde-methods.broadinstitute.org/api/workflows/v1/", cromwell_hash, "/metadata?expandSubWorkflows=false", sep=""))
     fa = readLines(con, warn=FALSE)
     q = fromJSON(fa)
@@ -240,7 +244,7 @@ get_alignment_stats <- function(cromwell_hash, type) {
     tbl = gs_best(gs_ls(tbl_file))
     
     if (gs_exists(tbl$file)) {
-        return(gs_read_table(tbl$file))
+        return(gs_read_table(tbl$file, header=TRUE))
     }
     
     am = tribble(
@@ -267,9 +271,16 @@ get_workflow_stats <- function(cromwell_hash) {
     alignment_stats_corrected = get_alignment_stats(cromwell_hash, "Corrected")
     alignment_stats_remaining = get_alignment_stats(cromwell_hash, "Remaining")
     
+    names(alignment_stats_uncorrected) = paste(names(alignment_stats_corrected), "UNCORRECTED", sep="_")
+    names(alignment_stats_corrected) = paste(names(alignment_stats_corrected), "CORRECTED", sep="_")
+    names(alignment_stats_remaining) = paste(names(alignment_stats_corrected), "REMAINING", sep="_")
+    
     return(c(list("cromwell_hash" = cromwell_hash),
              workflow_status = get_workflow_execution_status(cromwell_hash),
              splitsubreads_stats,
+             alignment_stats_uncorrected,
+             alignment_stats_corrected,
+             alignment_stats_remaining,
              ccs_stats,
              file_read_lengths_uncorrected_path = rl_uncorrected_file$file,
              file_read_lengths_uncorrected_size = rl_uncorrected_file$size,
@@ -321,10 +332,10 @@ samples_tbl$run_type = NA
 samples_tbl$bucket = NA
 
 for (bucket in buckets) {
-    for (sample in samples_tbl$sample) {
-        if (grepl(sample, bucket) || grepl(gsub("NA19", "NA129", sample), bucket)) {
-            samples_tbl[which(samples_tbl$sample == sample), "bucket"] = bucket
-            samples_tbl[which(samples_tbl$sample == sample), "run_type"] = ifelse(grepl("_CLR", bucket), "CLR", "CCS")
+    for (sample_name in samples_tbl$sample) {
+        if (grepl(sample_name, bucket) || grepl(gsub("NA19", "NA129", sample_name), bucket)) {
+            samples_tbl[which(samples_tbl$sample == sample_name), "bucket"] = bucket
+            samples_tbl[which(samples_tbl$sample == sample_name), "run_type"] = ifelse(grepl("_CLR", bucket), "CLR", "CCS")
         }
     }
 }
@@ -476,18 +487,11 @@ eap_stats = some_stats %>%
 eap_stats$color = rainbow(nrow(eap_stats))
 eap_stats$lty = round(runif(nrow(eap_stats), min = 1, max = 7))
 eap_stats$pch = round(runif(nrow(eap_stats), min = 0, max = 25))
-```
 
-```{r read_length_files}
-registerDoParallel(4)
-rlu_files = foreach (i=1:nrow(eap_stats)) %dopar% {
-    rlu_file = gs_get(eap_stats$file_read_lengths_uncorrected_path[i])
-    
-    return(rlu_file)
-}
-```
+sl.indices = c(13,14,11,12,4,5,6,1,2,3,32,33,34,15,16,17,18,19,20,21,22,31,29,30,8,9,10,7,27,28,26,23)
+eap_stats$order = NA
+eap_stats[sl.indices,]$order = 1:length(sl.indices)
 
-```{r read_length_load}
 eap_stats$yield = 0
 eap_stats$num_reads = 0
 eap_stats$num_mapped_reads = 0
@@ -511,59 +515,81 @@ eap_stats$zmw_max = 0
 
 rl_h_list = list()
 zmw_h_list = list()
+```
 
+```{r read_length_files}
+registerDoParallel(4)
+rlu_files = foreach (i=1:nrow(eap_stats)) %dopar% {
+    rlu_file = gs_get(eap_stats$file_read_lengths_uncorrected_path[i])
+    
+    return(rlu_file)
+}
+```
+
+```{r read_length_load}
 for (i in 1:nrow(eap_stats)) {
-    rlu = read_delim(rlu_files[[i]], delim=' ', col_names=c("zmw", "range", "mq", "length"))
+    print(eap_stats$sample_name[i])
     
-    rlu.g = rlu %>% group_by(zmw) %>% count()
-    rlu.z = rlu %>% arrange(zmw) %>% select(zmw, length) %>% group_by(zmw) %>% summarize(n = n(), mean_length=mean(length))
-    
-    summary.rlu = summary(rlu$length)
-    summary.rlu.gn = summary(rlu.g$n)
-    
-    eap_stats$yield[i] = sum(rlu$length)
-    eap_stats$num_reads[i] = nrow(rlu)
-    eap_stats$num_mapped_reads[i] = (rlu %>% filter(mq > 0) %>% nrow())
-    eap_stats$active_zmws[i] = rlu.g %>% nrow()
-    
-    eap_stats$read_length_min[i] = summary.rlu[[1]]
-    eap_stats$read_length_1stqu[i] = summary.rlu[[2]]
-    eap_stats$read_length_median[i] = summary.rlu[[3]]
-    eap_stats$read_length_mean[i] = summary.rlu[[4]]
-    eap_stats$read_length_sd[i] = sd(rlu$length)
-    eap_stats$read_length_3rdqu[i] = summary.rlu[[5]]
-    eap_stats$read_length_max[i] = summary.rlu[[6]]
-    
-    eap_stats$zmw_min[i] = summary.rlu.gn[[1]]
-    eap_stats$zmw_1stqu[i] = summary.rlu.gn[[2]]
-    eap_stats$zmw_median[i] = summary.rlu.gn[[3]]
-    eap_stats$zmw_mean[i] = summary.rlu.gn[[4]]
-    eap_stats$zmw_sd[i] = sd(rlu.g$n)
-    eap_stats$zmw_3rdqu[i] = summary.rlu.gn[[5]]
-    eap_stats$zmw_max[i] = summary.rlu.gn[[6]]
-    
-    rl_h = hist(rlu$length, breaks=seq(0, as.integer(floor(1.1*max(rlu$length))), by=1), plot=FALSE)
-    zmw_h = hist(rlu.g$n, breaks=seq(0, max(rlu.g$n)+10, by=1), plot=FALSE)
-    
-    rl_h_list[[i]] = rl_h$counts
-    zmw_h_list[[i]] = zmw_h$counts
+    if (eap_stats$read_length_median[i] == 0) {
+        rlu = read_delim(rlu_files[[i]], delim=' ', col_names=c("zmw", "range", "mq", "length"), progress=TRUE)
+        
+        rlu.g = rlu %>% group_by(zmw) %>% count()
+        rlu.z = rlu %>% arrange(zmw) %>% select(zmw, length) %>% group_by(zmw) %>% summarize(n = n(), mean_length=mean(length))
+        
+        summary.rlu = summary(rlu$length)
+        summary.rlu.gn = summary(rlu.g$n)
+        
+        eap_stats$yield[i] = sum(rlu$length)
+        eap_stats$num_reads[i] = nrow(rlu)
+        eap_stats$num_mapped_reads[i] = (rlu %>% filter(mq > 0) %>% nrow())
+        eap_stats$active_zmws[i] = rlu.g %>% nrow()
+        
+        eap_stats$read_length_min[i] = summary.rlu[[1]]
+        eap_stats$read_length_1stqu[i] = summary.rlu[[2]]
+        eap_stats$read_length_median[i] = summary.rlu[[3]]
+        eap_stats$read_length_mean[i] = summary.rlu[[4]]
+        eap_stats$read_length_sd[i] = sd(rlu$length)
+        eap_stats$read_length_3rdqu[i] = summary.rlu[[5]]
+        eap_stats$read_length_max[i] = summary.rlu[[6]]
+        
+        eap_stats$zmw_min[i] = summary.rlu.gn[[1]]
+        eap_stats$zmw_1stqu[i] = summary.rlu.gn[[2]]
+        eap_stats$zmw_median[i] = summary.rlu.gn[[3]]
+        eap_stats$zmw_mean[i] = summary.rlu.gn[[4]]
+        eap_stats$zmw_sd[i] = sd(rlu.g$n)
+        eap_stats$zmw_3rdqu[i] = summary.rlu.gn[[5]]
+        eap_stats$zmw_max[i] = summary.rlu.gn[[6]]
+        
+        rl_h = hist(rlu$length, breaks=seq(0, as.integer(floor(1.1*max(rlu$length))), by=1), plot=FALSE)
+        zmw_h = hist(rlu.g$n, breaks=seq(0, max(rlu.g$n)+10, by=1), plot=FALSE)
+        
+        rl_h_list[[i]] = rl_h$counts
+        zmw_h_list[[i]] = zmw_h$counts
+    }
 }
 ```
 
 ```{r read_length_plots1}
-par(mar=c(5, 7, 2, 2))
+par(mar=c(4, 7, 2, 2))
 
-layout.matrix = matrix(c(1, 2, 1, 2), nrow=2, ncol=2)
-layout(mat = layout.matrix, heights=c(4, 2), widths=c(4, 4))
-
-plot(0, 0, type="n", xlim=c(0, 20000), ylim=c(0, max(unlist(lapply(rl_h_list, max)))), bty="n", las=1, ylab="", xlab="Read length (bp)", cex.axis=1.3, cex.lab=1.3)
+plot(0, 0, type="n", xlim=c(0, 20000), ylim=c(0, 2.5*max(unlist(lapply(rl_h_list, max)))), bty="n", las=1, ylab="", cex.axis=1.3, cex.lab=1.3, xlab="Read length (bp)")
 mtext("Number of reads", 2, line=5, cex=1.3)
+
+#eap_stats$read_length_median_v2 = 0
+
 for (i in 1:nrow(eap_stats)) {
-    mids = seq(0.5, length(rl_h_list[[i]]), by=1)
-    points(mids, rl_h_list[[i]], type="l", col=eap_stats$color[i], lty=eap_stats$lty[i])
+    if (!is.na(eap_stats$order[i])) {
+        mids = seq(0.5, length(rl_h_list[[i]]), by=1)
+        points(mids, rl_h_list[[i]], type="l", col=eap_stats$color[i], lty=eap_stats$lty[i])
+        
+        x = which.max(rl_h_list[[i]])
+        y = 30000 + (eap_stats$order[i]*1750)
+        text(x, y, labels=eap_stats$sample_name[i], col=eap_stats$color[i], cex=0.5, adj=0)
+        segments(x, rl_h_list[[i]][x], x, y, col=gsub("FF$", "99", eap_stats$color[i]), lty=2)
+        
+        #eap_stats$read_length_median_v2[i] = rep(mids, rl_h_list[[i]]) %>% median()
+    }
 }
-
-
 ```
 
 ```{r read_length_plots2}
@@ -585,7 +611,6 @@ boxplot(eap_stats$zmw_mean, horizontal = TRUE, ylim=c(0, 50), xlab="Number of pa
 ```
 
 ```{r yield}
-sl.indices = c(13,14,11,12,4,5,6,1,2,3,32,33,34,15,16,17,18,19,20,21,22,31,29,30,8,9,10,7,27,28,26,23)
 layout.matrix = matrix(c(1, 1, 2, 2), nrow=2, ncol=2)
 layout(mat = layout.matrix, heights=c(4, 4), widths=c(3, 1))
 
@@ -631,6 +656,60 @@ abline(h=-10*log10((13493671+860354+629002)/3123730626), lwd=1, lty=2, col="blac
 ```{r error_hist}
 di = read_delim("../../test.chr20.small_indels_suppressed.insHist.txt", delim=' ', col_names=c("left", "right"))
 dd = read_delim("../../test.chr20.small_indels_suppressed.delHist.txt", delim=' ', col_names=c("left", "right"))
+```
+
+```{r ccs}
+ccsm = rbind(
+    eap_stats[sl.indices,]$`success_(without_retry)_ccs_generated`,
+    eap_stats[sl.indices,]$`success_(with_retry)_ccs_generated`,
+    eap_stats[sl.indices,]$failed_below_snr_threshold,
+    eap_stats[sl.indices,]$failed_no_usable_subreads,
+    eap_stats[sl.indices,]$failed_insert_size_too_long,
+    eap_stats[sl.indices,]$failed_insert_size_too_small,
+    eap_stats[sl.indices,]$failed_not_enough_full_passes,
+    eap_stats[sl.indices,]$failed_too_many_unusable_subreads,
+    eap_stats[sl.indices,]$failed_ccs_did_not_converge,
+    eap_stats[sl.indices,]$failed_ccs_below_minimum_predicted_accuracy,
+    eap_stats[sl.indices,]$failed_unknown_error_during_processing
+)
+
+layout.matrix = matrix(c(1, 1, 2, 2), nrow=2, ncol=2)
+layout(mat = layout.matrix, heights=c(4, 4), widths=c(2, 2))
+
+par(mar=c(8, 6, 2, 0))
+colors = c(cm.colors(2), heat.colors(9))
+barplot(ccsm, col=colors, las=2, names.arg = eap_stats[sl.indices,]$sample_name, cex.names = 0.5, cex.axis=1.3, ylab="")
+mtext("# reads (corrected + discarded)", side=2, line=5)
+
+par(mar=c(8, 1, 2, 1))
+plot(0, 0, type="n", xlab="", ylab="", bty="n", xaxt="n", yaxt="n")
+legend("topright",
+c(
+    "Success (without retry)",
+    "Success (with retry)",
+    "Failed (below snr threshold)",
+    "Failed (no usable subreads)",
+    "Failed (insert size too long)",
+    "Failed (insert size too small)",
+    "Failed (not enough full passes)",
+    "Failed (too many unusable subreads)",
+    "Failed (ccs did not converge)",
+    "Failed (ccs below minimum predicted accuracy)",
+    "Failed (unknown error during processing)"     
+), fill=colors, bty="n")
+
+uncorrected_pct_mean = mean(100*(colSums(ccsm[c(3:11),]) / eap_stats[sl.indices,]$TOTAL_READS_UNCORRECTED)[c(-5)])
+uncorrected_pct_sd = sd(100*(colSums(ccsm[c(3:11),]) / eap_stats[sl.indices,]$TOTAL_READS_UNCORRECTED)[c(-5)])
+
+```
+
+```{r yield}
+plot(eap_stats$active_zmws, eap_stats$yield/1e9, bty="n", las=1, xlab="Active ZMWs", ylab="Yield (Gbp)", pch=19)
+abline(lm(eap_stats$yield/1e9 ~ eap_stats$active_zmws), col="red")
+text(2e6, 400, paste("R^2 =", sprintf("%.2f", summary(lm(eap_stats$yield/1e9 ~ eap_stats$active_zmws))$r.squared)))
+plot(eap_stats$read_length_median, eap_stats$yield/1e9, bty="n", las=1, xlab="Median read length", ylab="Yield (Gbp)", pch=19)
+abline(lm(eap_stats$yield/1e9 ~ eap_stats$read_length_median), col="red")
+text(10500, 320, paste("R^2 =", sprintf("%.2f", summary(lm(eap_stats$yield/1e9 ~ eap_stats$read_length_median))$r.squared)))
 ```
 
 ```{r progress, warning=FALSE}

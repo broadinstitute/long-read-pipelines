@@ -14,8 +14,8 @@ import pprint
 GCE_MACHINE_TYPES_URL = "http://cloudpricingcalculator.appspot.com/static/data/pricelist.json"
 TOTAL_WORKFLOW_COST = 0
 
-CUSTOM_MACHINE_CPU = "CP-DB-PG-CUSTOM-VM-CORE"
-CUSTOM_MACHINE_RAM = "CP-DB-PG-CUSTOM-VM-RAM"
+CUSTOM_MACHINE_CPU = "CP-COMPUTEENGINE-CUSTOM-VM-CORE"
+CUSTOM_MACHINE_RAM = "CP-COMPUTEENGINE-CUSTOM-VM-RAM"
 CUSTOM_MACHINE_EXTENDED_RAM = "CP-COMPUTEENGINE-CUSTOM-VM-EXTENDED-RAM"
 CUSTOM_MACHINE_CPU_PREEMPTIBLE = "CP-COMPUTEENGINE-CUSTOM-VM-CORE-PREEMPTIBLE"
 CUSTOM_MACHINE_RAM_PREEMPTIBLE = "CP-COMPUTEENGINE-CUSTOM-VM-RAM-PREEMPTIBLE"
@@ -160,9 +160,13 @@ def calculate_cost(metadata, ignore_preempted, only_total_cost, print_header):
     if print_header and not only_total_cost:
         # print out a header
         print "\t".join(
-            ["task_name", "status", "machine_type", "total_hours", "cpu_cost_per_hour", "cpu_cost", "pe_total_hours",
-             "pe_cpu_cost_per_hour", "pe_cpu_cost", "failed_pe_total_hours", "failed_pe_cpu_cost", "disk_type",
-             "disk_size", "disk_gb_hours", "disk_cost", "failed_pe_ssd_gb_hours", "failed_pe_ssd_cost", "total_cost"])
+            ["task_name", "status", "machine_type", "cpus", "mem_gbs",
+             "total_hours", "cpu_cost_per_hour", "cpu_cost", "mem_cost_per_hour", "mem_cost",
+             "pe_total_hours", "pe_cpu_cost_per_hour", "pe_cpu_cost", "pe_mem_cost_per_hour", "pe_mem_cost",
+             "failed_pe_total_hours", "failed_pe_cpu_cost", "failed_pe_mem_cost",
+             "disk_type", "disk_size", "disk_gb_hours", "disk_cost",
+             "failed_pe_ssd_gb_hours", "failed_pe_ssd_cost",
+             "total_cost"])
 
     # iterate through the metadata file for each call
     for k, v in metadata['calls'].iteritems():
@@ -171,6 +175,8 @@ def calculate_cost(metadata, ignore_preempted, only_total_cost, print_header):
         total_hours = 0
         pe_total_hours = 0
         failed_pe_total_hours = 0
+        cpus = 0
+        mem_gbs = 0
         machine_type = "unknown"
         complete = True
         disk_info = get_disk_info({})
@@ -208,10 +214,26 @@ def calculate_cost(metadata, ignore_preempted, only_total_cost, print_header):
                     else:
                         total_hours += run_hours
 
+        # Runtime parameters are the same across all calls; just pull the info from the first one
+        if 'runtimeAttributes' in v[0]:
+            if 'cpu' in v[0]['runtimeAttributes']:
+                cpus += int(v[0]['runtimeAttributes']['cpu'])
+            if 'memory' in v[0]['runtimeAttributes']:
+                mem_str = v[0]['runtimeAttributes']['memory']
+                mem_gbs += float(mem_str[:mem_str.index(" ")])
+
         if complete:
             status = "complete"
         else:
             status = "incomplete"
+
+        if machine_type not in pricing:
+            if "n2" in machine_type:
+                machine_type = machine_type.replace("n2", "n1")
+                if machine_type not in pricing:
+                    machine_type = "unknown"
+            else:
+                machine_type = "unknown"
 
         if machine_type == "unknown":
             cpu_cost_per_hour = 0
@@ -219,10 +241,10 @@ def calculate_cost(metadata, ignore_preempted, only_total_cost, print_header):
             mem_cost_per_hour = 0
             pe_mem_cost_per_hour = 0
         elif machine_type == "custom":
-            cpu_cost_per_hour = pricing[CUSTOM_MACHINE_CPU]
-            pe_cpu_cost_per_hour = pricing[CUSTOM_MACHINE_CPU_PREEMPTIBLE]
-            mem_cost_per_hour = pricing[CUSTOM_MACHINE_RAM]
-            pe_mem_cost_per_hour = pricing[CUSTOM_MACHINE_RAM_PREEMPTIBLE]
+            cpu_cost_per_hour = pricing[CUSTOM_MACHINE_CPU] * cpus
+            pe_cpu_cost_per_hour = pricing[CUSTOM_MACHINE_CPU_PREEMPTIBLE] * cpus
+            mem_cost_per_hour = pricing[CUSTOM_MACHINE_RAM] * mem_gbs
+            pe_mem_cost_per_hour = pricing[CUSTOM_MACHINE_RAM_PREEMPTIBLE] * mem_gbs
         else:
             cpu_cost_per_hour = pricing[machine_type]
             pe_cpu_cost_per_hour = pricing[machine_type + "-preemptible"]
@@ -260,9 +282,13 @@ def calculate_cost(metadata, ignore_preempted, only_total_cost, print_header):
 
         if not only_total_cost:
             out = (
-                task_name, status, machine_type, total_hours, cpu_cost_per_hour, cpu_cost, pe_total_hours,
-                pe_cpu_cost_per_hour, pe_cpu_cost, failed_pe_total_hours, failed_pe_cpu_cost, disk_info["type"],
-                disk_info["size"], disk_gb_hours, disk_cost, failed_pe_disk_gb_hours, failed_pe_disk_cost, total_cost)
+                task_name, status, machine_type, cpus, mem_gbs,
+                total_hours, cpu_cost_per_hour, cpu_cost, mem_cost_per_hour, mem_cost,
+                pe_total_hours, pe_cpu_cost_per_hour, pe_cpu_cost, pe_mem_cost_per_hour, pe_mem_cost,
+                failed_pe_total_hours, failed_pe_cpu_cost, failed_pe_mem_cost,
+                disk_info["type"], disk_info["size"], disk_gb_hours, disk_cost,
+                failed_pe_disk_gb_hours, failed_pe_disk_cost,
+                total_cost)
             print('\t'.join(map(str, out)))
 
 

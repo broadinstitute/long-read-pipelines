@@ -1,5 +1,5 @@
-TAG1 = kgarimella/pbasm:v1
-TAG2 = kgarimella/pbasm:latest
+TAG1 = kgarimella/lr-cloud-downloader:0.02.0
+TAG2 = kgarimella/lr-cloud-downloader:latest
 
 all: build push
 

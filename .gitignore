@@ -4,7 +4,9 @@ pb_eap
 resources
 bin
 results
+reports
 *.swp
 *.jar
 .DS_Store
 .idea
+.Rproj.user
