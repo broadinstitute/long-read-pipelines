@@ -46,7 +46,7 @@ workflow DownloadFromSRA {
 #
 # In inspecting the filesizes returned (column 8), it appears empirically to be around 5 times larger than the
 # gzipped fastq files themselves.  Thus I assume this number is the uncompressed size of the file, but I cannot
-# find any documentation that explicitly states this.  I've operated on this assumption in the following task.
+# find any documentation that explicitly states this.  I've assumed a lesser compression level of 2-fold below.
 
 task GetSRAIDs {
     input {
@@ -77,7 +77,6 @@ task GetSRAIDs {
 #
 # In the future, it might be interesting to explore gcsfuse (https://cloud.google.com/storage/docs/gcs-fuse) as an
 # option for downloading data directly to a GCS filepath.
-
 task FastqDump {
     input {
         String SRR_ID
@@ -88,7 +87,7 @@ task FastqDump {
     Int cpus = 4
 
     Int mb_to_gb_divisor = 1000
-    Int compression_factor = 5
+    Int compression_factor = 2
     Int disk_space_divisor = mb_to_gb_divisor * compression_factor
     Int minimum_disk_size_gb = 10
     Int compressed_disk_space_gb = ceil(uncompressed_disk_space_mb / disk_space_divisor)
@@ -101,7 +100,7 @@ task FastqDump {
         if gsutil ls -lh ~{gcs_output_dir}/~{SRR_ID}.fastq.gz ; then
             echo "~{gcs_output_dir}/~{SRR_ID} already exists."
         else
-            parallel-fastq-dump --sra-id ~{SRR_ID} --threads ~{cpus} --gzip
+            fastq-dump --gzip ~{SRR_ID}
             gsutil -o "GSUtil:parallel_process_count=~{cpus}" -o "GSUtil:parallel_thread_count=1" -m cp *.gz ~{gcs_output_dir}
         fi
 

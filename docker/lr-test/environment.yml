@@ -1,0 +1,10 @@
+name: lr-test
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - google-cloud-storage
+  - samtools
+  - java-jdk
+  - pbccs
