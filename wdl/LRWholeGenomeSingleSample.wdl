@@ -41,26 +41,27 @@ workflow LRWholeGenomeSingleSample {
         String? sample_name
     }
 
-    String docker = "kgarimella/lr-test:0.01.15"
+    String docker_align = "kgarimella/lr-align:0.01.15"
+    String docker_asm = "kgarimella/lr-asm:0.01.00"
 
     scatter (gcs_dir in gcs_dirs) {
         call DetectRunInfo {
             input:
                 gcs_dir = gcs_dir,
                 sample_name = sample_name,
-                docker = docker
+                docker = docker_align
         }
 
         call PrepareRun {
             input:
                 files = DetectRunInfo.files,
-                docker = docker
+                docker = docker_align
         }
 
         call ShardLongReads {
             input:
                 unmapped_bam=PrepareRun.unmapped_bam,
-                docker = docker
+                docker = docker_align
         }
 
         scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
@@ -68,7 +69,7 @@ workflow LRWholeGenomeSingleSample {
                 input:
                     unmapped_shard=unmapped_shard,
                     platform=DetectRunInfo.run_info['PL'],
-                    docker = docker
+                    docker = docker_align
             }
 
             call Minimap2 as AlignCCS {
@@ -79,14 +80,14 @@ workflow LRWholeGenomeSingleSample {
                     ID=DetectRunInfo.run_info['ID'] + ".corrected",
                     PL=DetectRunInfo.run_info['PL'],
                     reads_are_corrected=true,
-                    docker = docker
+                    docker = docker_align
             }
 
             call RecoverCCSRemainingReads {
                 input:
                     unmapped_shard=unmapped_shard,
                     ccs_shard=CCS.ccs_shard,
-                    docker = docker
+                    docker = docker_align
             }
 
             call Minimap2 as AlignRemaining {
@@ -97,7 +98,7 @@ workflow LRWholeGenomeSingleSample {
                     ID=DetectRunInfo.run_info['ID'] + ".remaining",
                     PL=DetectRunInfo.run_info['PL'],
                     reads_are_corrected=false,
-                    docker = docker
+                    docker = docker_align
             }
         }
 
@@ -105,14 +106,14 @@ workflow LRWholeGenomeSingleSample {
             input:
                 aligned_shards=AlignCCS.aligned_shard,
                 merged_name="corrected.bam",
-                docker = docker
+                docker = docker_align
         }
 
         call MergeBams as MergeRemaining {
             input:
                 aligned_shards=AlignRemaining.aligned_shard,
                 merged_name="remaining.bam",
-                docker = docker
+                docker = docker_align
         }
     }
 
@@ -120,26 +121,26 @@ workflow LRWholeGenomeSingleSample {
         input:
             aligned_shards=MergeCorrected.merged,
             merged_name="all.corrected.bam",
-            docker = docker
+            docker = docker_align
     }
 
     call ValidateBam as ValidateAllCorrected {
         input:
             input_bam=MergeAllCorrected.merged,
-            docker = docker
+            docker = docker_align
     }
 
     call MergeBams as MergeAllRemaining {
         input:
             aligned_shards=MergeRemaining.merged,
             merged_name="all.remaining.bam",
-            docker = docker
+            docker = docker_align
     }
 
     call ValidateBam as ValidateAllRemaining {
         input:
             input_bam=MergeAllRemaining.merged,
-            docker = docker
+            docker = docker_align
     }
 }
 
@@ -425,6 +426,67 @@ task ValidateBam {
     runtime {
         cpu: "~{cpus}"
         memory: "8G"
+        disks: "local-disk ~{disk_size} SSD"
+        preemptible: 1
+        maxRetries: 0
+        docker: "~{docker}"
+    }
+}
+
+task AssembleMT {
+    input {
+        File input_bam
+        File input_bai
+        String ref_fasta
+        String mt_chr_name
+        String SM
+        String ID
+        String docker
+    }
+
+    Int cpus = 4
+    Int disk_size = ceil(2*(size(input_bam, "GB") + size(input_bai, "GB")))
+
+    String reads = "reads.fastq.gz"
+
+    command <<<
+        set -euxo pipefail
+
+        # select MT
+        samtools view -hb ~{input_bam} ~{mt_chr_name} | samtools fastq - | gzip -1 > ~{reads}
+
+        # align
+        minimap2 -x ava-pb -t ~{cpus} ~{reads} ~{reads} | gzip -1 > reads.paf.gz
+
+        # layout
+        miniasm -f ~{reads} reads.paf.gz > reads.gfa
+        awk '$1 ~/S/ { print "\x3E" $2 "\n" $3 }' reads.gfa > reads.fasta
+
+        # correct 1
+        minimap2 -t ~{cpus} reads.fasta ~{reads} > reads.gfa1.paf
+        racon -t ~{cpus} ~{reads} reads.gfa1.paf reads.fasta > reads.racon1.fasta
+
+        # correct 2
+        minimap2 -t ~{cpus} reads.racon1.fasta ~{reads} > reads.gfa2.paf
+        racon -t ~{cpus} ~{reads} reads.gfa2.paf reads.racon1.fasta > mt.fasta
+
+        # align to ref
+        minimap2 -ayY --MD --eqx -x asm20 -R '@RG\tID:MT\tSM:MT' -t ~{cpus} ~{ref_fasta} mt.fasta | samtools sort -@~{cpus} -m4G -o mt.bam
+        samtools index mt.bam
+
+        # call variants
+        bcftools mpileup -Ou -f ~{ref_fasta} mt.bam | bcftools call -mv -Ov --ploidy 1 -o mt.vcf
+    >>>
+
+    output {
+        File mt_asm = "mt.fasta"
+        File mt_bam = "mt.bam"
+        File mt_vcf = "mt.vcf"
+    }
+
+    runtime {
+        cpu: "~{cpus}"
+        memory: "4G"
         disks: "local-disk ~{disk_size} SSD"
         preemptible: 1
         maxRetries: 0

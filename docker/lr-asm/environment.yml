@@ -1,0 +1,10 @@
+name: lr-asm
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - miniasm
+  - racon
+  - bcftools

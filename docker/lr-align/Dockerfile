@@ -7,7 +7,7 @@ COPY ./environment.yml /
 
 # install conda packages
 RUN conda env create -f /environment.yml && conda clean -a
-ENV PATH=/opt/conda/envs/lr-test/bin/:/root/google-cloud-sdk/bin/:${PATH}
+ENV PATH=/opt/conda/envs/lr-align/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install gsutil
 RUN apt update
