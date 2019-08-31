@@ -41,28 +41,34 @@ workflow LRWholeGenomeSingleSample {
         String? sample_name
     }
 
+    String docker = "kgarimella/lr-test:0.01.15"
+
     scatter (gcs_dir in gcs_dirs) {
         call DetectRunInfo {
             input:
                 gcs_dir = gcs_dir,
-                sample_name = sample_name
+                sample_name = sample_name,
+                docker = docker
         }
 
         call PrepareRun {
             input:
-                files = DetectRunInfo.files
+                files = DetectRunInfo.files,
+                docker = docker
         }
 
         call ShardLongReads {
             input:
-                unmapped_bam=PrepareRun.unmapped_bam
+                unmapped_bam=PrepareRun.unmapped_bam,
+                docker = docker
         }
 
         scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
             call CCS {
                 input:
                     unmapped_shard=unmapped_shard,
-                    platform=DetectRunInfo.run_info['PL']
+                    platform=DetectRunInfo.run_info['PL'],
+                    docker = docker
             }
 
             call Minimap2 as AlignCCS {
@@ -72,13 +78,15 @@ workflow LRWholeGenomeSingleSample {
                     SM=DetectRunInfo.run_info['SM'],
                     ID=DetectRunInfo.run_info['ID'] + ".corrected",
                     PL=DetectRunInfo.run_info['PL'],
-                    reads_are_corrected=true
+                    reads_are_corrected=true,
+                    docker = docker
             }
 
             call RecoverCCSRemainingReads {
                 input:
                     unmapped_shard=unmapped_shard,
-                    ccs_shard=CCS.ccs_shard
+                    ccs_shard=CCS.ccs_shard,
+                    docker = docker
             }
 
             call Minimap2 as AlignRemaining {
@@ -88,33 +96,50 @@ workflow LRWholeGenomeSingleSample {
                     SM=DetectRunInfo.run_info['SM'],
                     ID=DetectRunInfo.run_info['ID'] + ".remaining",
                     PL=DetectRunInfo.run_info['PL'],
-                    reads_are_corrected=true
+                    reads_are_corrected=false,
+                    docker = docker
             }
         }
 
         call MergeBams as MergeCorrected {
             input:
                 aligned_shards=AlignCCS.aligned_shard,
-                merged_name="corrected.bam"
+                merged_name="corrected.bam",
+                docker = docker
         }
 
         call MergeBams as MergeRemaining {
             input:
                 aligned_shards=AlignRemaining.aligned_shard,
-                merged_name="remaining.bam"
+                merged_name="remaining.bam",
+                docker = docker
         }
     }
 
     call MergeBams as MergeAllCorrected {
         input:
             aligned_shards=MergeCorrected.merged,
-            merged_name="all.corrected.bam"
+            merged_name="all.corrected.bam",
+            docker = docker
+    }
+
+    call ValidateBam as ValidateAllCorrected {
+        input:
+            input_bam=MergeAllCorrected.merged,
+            docker = docker
     }
 
     call MergeBams as MergeAllRemaining {
         input:
             aligned_shards=MergeRemaining.merged,
-            merged_name="all.remaining.bam"
+            merged_name="all.remaining.bam",
+            docker = docker
+    }
+
+    call ValidateBam as ValidateAllRemaining {
+        input:
+            input_bam=MergeAllRemaining.merged,
+            docker = docker
     }
 }
 
@@ -122,6 +147,7 @@ task DetectRunInfo {
     input {
         String gcs_dir
         String? sample_name
+        String docker
     }
 
     String SM = if defined(sample_name) then "--SM " + sample_name else ""
@@ -135,6 +161,8 @@ task DetectRunInfo {
     >>>
 
     output {
+        File run_info_file = "run_info.txt"
+        File fofn = "files.txt"
         Map[String, String] run_info = read_map("run_info.txt")
         Array[String] files = read_lines("files.txt")
     }
@@ -145,13 +173,14 @@ task DetectRunInfo {
         disks: "local-disk 1 SSD"
         preemptible: 1
         maxRetries: 0
-        docker: "kgarimella/lr-test:0.01.13"
+        docker: "~{docker}"
     }
 }
 
 task PrepareRun {
     input {
         Array[File] files
+        String docker
     }
 
     Int disk_size = 2*ceil(size(files, "GB"))
@@ -172,22 +201,25 @@ task PrepareRun {
         disks: "local-disk ~{disk_size} SSD"
         preemptible: 1
         maxRetries: 0
-        docker: "kgarimella/lr-test:0.01.13"
+        docker: "~{docker}"
     }
 }
 
 task ShardLongReads {
     input {
         File unmapped_bam
+        String docker
+        Int? num_reads_per_split
     }
 
     Int cpus = 1
     Int disk_size = 4*ceil(size(unmapped_bam, "GB"))
+    Int nr = select_first([num_reads_per_split, 10000])
 
     command <<<
         set -euxo pipefail
 
-        java -Dsamjdk.compression_level=0 -jar /usr/local/bin/gatk.jar ShardLongReads -I ~{unmapped_bam} -O ./ -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
+        java -Dsamjdk.compression_level=0 -jar /usr/local/bin/gatk.jar ShardLongReads -I ~{unmapped_bam} -nr ~{nr} -O ./ -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
     >>>
 
     output {
@@ -200,14 +232,16 @@ task ShardLongReads {
         disks: "local-disk ~{disk_size} SSD"
         preemptible: 1
         maxRetries: 0
-        docker: "kgarimella/lr-test:0.01.13"
+        docker: "~{docker}"
     }
 }
 
+# Note: this task changes the incoming read group name
 task CCS {
     input {
         File unmapped_shard
         String platform
+        String docker
     }
 
     String ccs_shard_name = basename(unmapped_shard, ".bam") + ".ccs.corrected.bam"
@@ -224,7 +258,24 @@ task CCS {
         if [ $PLATFORM == "ONT" ]
         then
             samtools view -H ~{unmapped_shard} | samtools view -b > ~{ccs_shard_name}
-            touch ccs_report.txt
+
+            echo "ZMWs input          (A)  : 0
+ZMWs generating CCS (B)  : 0 (100.00%)
+ZMWs filtered       (C)  : 0 (0.00%)
+
+Exclusive ZMW counts for (C):
+No usable subreads       : 0 (0.00%)
+Below SNR threshold      : 0 (0.00%)
+Lacking full passes      : 0 (0.00%)
+Heteroduplexes           : 0 (0.00%)
+Min coverage violation   : 0 (0.00%)
+Draft generation error   : 0 (0.00%)
+Draft above --max-length : 0 (0.00%)
+Draft below --min-length : 0 (0.00%)
+Lacking usable subreads  : 0 (0.00%)
+CCS did not converge     : 0 (0.00%)
+CCS below minimum RQ     : 0 (0.00%)
+Unknown error            : 0 (0.00%)" > ccs_report.txt
         else
             ccs --max-length ~{max_length} --min-passes ~{min_passes} -j ~{cpus} ~{unmapped_shard} ~{ccs_shard_name}
         fi
@@ -241,7 +292,7 @@ task CCS {
         disks: "local-disk ~{disk_size} SSD"
         preemptible: 1
         maxRetries: 0
-        docker: "kgarimella/lr-test:0.01.13"
+        docker: "~{docker}"
     }
 }
 
@@ -249,6 +300,7 @@ task RecoverCCSRemainingReads {
     input {
         File unmapped_shard
         File ccs_shard
+        String docker
     }
 
     String remaining_shard_name = basename(unmapped_shard, ".bam") + ".ccs.remaining.bam"
@@ -271,7 +323,7 @@ task RecoverCCSRemainingReads {
         disks: "local-disk ~{disk_size} SSD"
         preemptible: 1
         maxRetries: 0
-        docker: "kgarimella/lr-test:0.01.13"
+        docker: "~{docker}"
     }
 }
 
@@ -283,13 +335,12 @@ task Minimap2 {
         String ID
         String PL
         Boolean? reads_are_corrected
+        String docker
     }
 
     Boolean correct = select_first([reads_are_corrected, false])
     String map_arg = if (PL == "ONT") then "map-ont" else "map-pb"
     String correction_arg = if (correct) then "asm20" else map_arg
-
-    String rg = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}"
 
     Int cpus = 4
     Int disk_size = ceil(size(ref_fasta, "GB")) + 4*ceil(size(shard, "GB"))
@@ -299,20 +350,15 @@ task Minimap2 {
     command <<<
         set -euxo pipefail
 
-        samtools fastq ~{shard} | minimap2 -ayY --MD --eqx -x ~{correction_arg} -t ~{cpus} -R '~{rg}' ~{ref_fasta} - | samtools view -bS - > temp.aligned.unsorted.bam
-
-        NUM_RECORDS=`samtools view temp.aligned.unsorted.bam | wc -l`
-        if [ $NUM_RECORDS -eq 0 ]
-        then
-            cp temp.aligned.unsorted.bam temp.aligned.unsorted.repaired.bam
-        else
-            java -Dsamjdk.compression_level=0 -Xmx4g -jar /usr/local/bin/gatk.jar RepairLongReadBam -I ~{shard} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
-        fi
-
+        RG=`python /usr/local/bin/merge_read_group_tags.py --ID ~{ID} --SM ~{SM} --PL ~{PL} ~{shard}`
+        samtools fastq ~{shard} | minimap2 -ayY --MD --eqx -x ~{correction_arg} -R ${RG} -t ~{cpus} ~{ref_fasta} - | samtools view -b - > temp.aligned.unsorted.bam
+        java -Dsamjdk.compression_level=0 -Xmx4g -jar /usr/local/bin/gatk.jar RepairLongReadBam -I ~{shard} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
         samtools sort -@~{cpus} -m4G -o ~{aligned_shard_name} temp.aligned.unsorted.repaired.bam
     >>>
 
     output {
+        File temp_shard = "temp.aligned.unsorted.bam"
+        File temp_repaired = "temp.aligned.unsorted.repaired.bam"
         File aligned_shard = "~{aligned_shard_name}"
     }
 
@@ -322,7 +368,7 @@ task Minimap2 {
         disks: "local-disk ~{disk_size} SSD"
         preemptible: 1
         maxRetries: 0
-        docker: "kgarimella/lr-test:0.01.13"
+        docker: "~{docker}"
     }
 }
 
@@ -330,6 +376,7 @@ task MergeBams {
     input {
         Array[File] aligned_shards
         String merged_name
+        String docker
     }
 
     Int cpus = 2
@@ -352,6 +399,35 @@ task MergeBams {
         disks: "local-disk ~{disk_size} SSD"
         preemptible: 1
         maxRetries: 0
-        docker: "kgarimella/lr-test:0.01.13"
+        docker: "~{docker}"
+    }
+}
+
+task ValidateBam {
+    input {
+        File input_bam
+        String docker
+    }
+
+    Int cpus = 2
+    Int disk_size = ceil(size(input_bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        java -Xmx4g -jar /usr/local/bin/gatk.jar ValidateSamFile -I ~{input_bam} -O bam_validation_report.txt
+    >>>
+
+    output {
+        File report = "bam_validation_report.txt"
+    }
+
+    runtime {
+        cpu: "~{cpus}"
+        memory: "8G"
+        disks: "local-disk ~{disk_size} SSD"
+        preemptible: 1
+        maxRetries: 0
+        docker: "~{docker}"
     }
 }

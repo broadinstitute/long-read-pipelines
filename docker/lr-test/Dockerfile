@@ -17,6 +17,7 @@ RUN curl https://sdk.cloud.google.com | bash
 # copy other resources
 COPY detect_run_info.py /usr/local/bin/
 COPY prepare_run.py /usr/local/bin/
+COPY merge_read_group_tags.py /usr/local/bin/
 COPY gatk.jar /usr/local/bin/
 
 # install minimap2

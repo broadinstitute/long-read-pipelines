@@ -1,4 +1,4 @@
-TAG1 = kgarimella/lr-test:0.01.13
+TAG1 = kgarimella/lr-test:0.01.15
 TAG2 = kgarimella/lr-test:latest
 
 all: build push
