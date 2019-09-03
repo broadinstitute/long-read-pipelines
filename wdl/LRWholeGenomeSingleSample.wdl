@@ -79,92 +79,92 @@ workflow LRWholeGenomeSingleSample {
         scatter (unmapped_shard in slrslr.unmapped_shards) {
             call CR.CCS as crccs {
                 input:
-                    unmapped_shard=unmapped_shard,
-                    platform=udri.run_info['PL'],
-                    docker=docker_align
+                    unmapped_shard = unmapped_shard,
+                    platform = udri.run_info['PL'],
+                    docker = docker_align
             }
 
             call AR.Minimap2 as AlignCCS {
                 input:
-                    shard=crccs.ccs_shard,
-                    ref_fasta=ref_fasta,
-                    SM=udri.run_info['SM'],
-                    ID=udri.run_info['ID'] + ".corrected",
-                    PL=udri.run_info['PL'],
-                    reads_are_corrected=true,
-                    docker=docker_align
+                    shard = crccs.ccs_shard,
+                    ref_fasta = ref_fasta,
+                    SM = udri.run_info['SM'],
+                    ID = udri.run_info['ID'] + ".corrected",
+                    PL = udri.run_info['PL'],
+                    reads_are_corrected = true,
+                    docker = docker_align
             }
 
             call RCCSRR.RecoverCCSRemainingReads as rccsrr {
                 input:
-                    unmapped_shard=unmapped_shard,
-                    ccs_shard=crccs.ccs_shard,
-                    docker=docker_align
+                    unmapped_shard = unmapped_shard,
+                    ccs_shard = crccs.ccs_shard,
+                    docker = docker_align
             }
 
             call AR.Minimap2 as AlignRemaining {
                 input:
-                    shard=rccsrr.remaining_shard,
-                    ref_fasta=ref_fasta,
-                    SM=udri.run_info['SM'],
-                    ID=udri.run_info['ID'] + ".remaining",
-                    PL=udri.run_info['PL'],
-                    reads_are_corrected=false,
-                    docker=docker_align
+                    shard = rccsrr.remaining_shard,
+                    ref_fasta = ref_fasta,
+                    SM = udri.run_info['SM'],
+                    ID = udri.run_info['ID'] + ".remaining",
+                    PL = udri.run_info['PL'],
+                    reads_are_corrected = false,
+                    docker = docker_align
             }
         }
 
         call MB.MergeBams as MergeCorrected {
             input:
-                aligned_shards=AlignCCS.aligned_shard,
+                aligned_shards = AlignCCS.aligned_shard,
                 merged_name="corrected.bam",
-                docker=docker_align
+                docker = docker_align
         }
 
         call MB.MergeBams as MergeRemaining {
             input:
-                aligned_shards=AlignRemaining.aligned_shard,
+                aligned_shards = AlignRemaining.aligned_shard,
                 merged_name="remaining.bam",
-                docker=docker_align
+                docker = docker_align
         }
 
         call CMT.CanuMT {
             input:
-                corrected_bam=MergeCorrected.merged,
-                corrected_bai=MergeCorrected.merged_bai,
-                remaining_bam=MergeRemaining.merged,
-                remaining_bai=MergeRemaining.merged_bai,
-                ref_fasta=ref_fasta,
-                mt_chr_name=mt_chr_name,
-                SM=udri.run_info['SM'],
-                ID=udri.run_info['ID'] + ".mt",
-                docker=docker_asm
+                corrected_bam = MergeCorrected.merged,
+                corrected_bai = MergeCorrected.merged_bai,
+                remaining_bam = MergeRemaining.merged,
+                remaining_bai = MergeRemaining.merged_bai,
+                ref_fasta = ref_fasta,
+                mt_chr_name = mt_chr_name,
+                SM = udri.run_info['SM'],
+                ID = udri.run_info['ID'] + ".mt",
+                docker = docker_asm
         }
     }
 
     call MB.MergeBams as MergeAllCorrected {
         input:
-            aligned_shards=MergeCorrected.merged,
+            aligned_shards = MergeCorrected.merged,
             merged_name="all.corrected.bam",
-            docker=docker_align
+            docker = docker_align
     }
 
     call VB.ValidateBam as ValidateAllCorrected {
         input:
-            input_bam=MergeAllCorrected.merged,
-            docker=docker_align
+            input_bam = MergeAllCorrected.merged,
+            docker = docker_align
     }
 
     call MB.MergeBams as MergeAllRemaining {
         input:
-            aligned_shards=MergeRemaining.merged,
+            aligned_shards = MergeRemaining.merged,
             merged_name="all.remaining.bam",
-            docker=docker_align
+            docker = docker_align
     }
 
     call VB.ValidateBam as ValidateAllRemaining {
         input:
-            input_bam=MergeAllRemaining.merged,
-            docker=docker_align
+            input_bam = MergeAllRemaining.merged,
+            docker = docker_align
     }
 }
