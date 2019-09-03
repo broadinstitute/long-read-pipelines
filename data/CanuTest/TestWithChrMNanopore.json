@@ -1,0 +1,6 @@
+{
+    "CanuTest.bam": "gs://broad-dsde-methods-long-reads/intermediate/LRWholeGenomeSingleSample/44ebfcf4-85dd-4ab4-bd49-12867f8a1426/call-MergeRemaining/shard-2/remaining.bam",
+    "CanuTest.bai": "gs://broad-dsde-methods-long-reads/intermediate/LRWholeGenomeSingleSample/44ebfcf4-85dd-4ab4-bd49-12867f8a1426/call-MergeRemaining/shard-2/remaining.bai",
+    "CanuTest.platform": "ONT",
+    "CanuTest.is_corrected": false
+}

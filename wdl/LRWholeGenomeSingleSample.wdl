@@ -35,33 +35,36 @@ version 1.0
 workflow LRWholeGenomeSingleSample {
     input {
         Array[String] gcs_dirs
+
+        String? sample_name
+
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
-        String? sample_name
+        String mt_chr_name
     }
 
     String docker_align = "kgarimella/lr-align:0.01.15"
-    String docker_asm = "kgarimella/lr-asm:0.01.00"
+    String docker_asm = "kgarimella/lr-asm:0.01.06"
 
     scatter (gcs_dir in gcs_dirs) {
         call DetectRunInfo {
             input:
                 gcs_dir = gcs_dir,
                 sample_name = sample_name,
-                docker = docker_align
+                docker=docker_align
         }
 
         call PrepareRun {
             input:
                 files = DetectRunInfo.files,
-                docker = docker_align
+                docker=docker_align
         }
 
         call ShardLongReads {
             input:
                 unmapped_bam=PrepareRun.unmapped_bam,
-                docker = docker_align
+                docker=docker_align
         }
 
         scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
@@ -69,7 +72,7 @@ workflow LRWholeGenomeSingleSample {
                 input:
                     unmapped_shard=unmapped_shard,
                     platform=DetectRunInfo.run_info['PL'],
-                    docker = docker_align
+                    docker=docker_align
             }
 
             call Minimap2 as AlignCCS {
@@ -80,14 +83,14 @@ workflow LRWholeGenomeSingleSample {
                     ID=DetectRunInfo.run_info['ID'] + ".corrected",
                     PL=DetectRunInfo.run_info['PL'],
                     reads_are_corrected=true,
-                    docker = docker_align
+                    docker=docker_align
             }
 
             call RecoverCCSRemainingReads {
                 input:
                     unmapped_shard=unmapped_shard,
                     ccs_shard=CCS.ccs_shard,
-                    docker = docker_align
+                    docker=docker_align
             }
 
             call Minimap2 as AlignRemaining {
@@ -98,7 +101,7 @@ workflow LRWholeGenomeSingleSample {
                     ID=DetectRunInfo.run_info['ID'] + ".remaining",
                     PL=DetectRunInfo.run_info['PL'],
                     reads_are_corrected=false,
-                    docker = docker_align
+                    docker=docker_align
             }
         }
 
@@ -106,14 +109,27 @@ workflow LRWholeGenomeSingleSample {
             input:
                 aligned_shards=AlignCCS.aligned_shard,
                 merged_name="corrected.bam",
-                docker = docker_align
+                docker=docker_align
         }
 
         call MergeBams as MergeRemaining {
             input:
                 aligned_shards=AlignRemaining.aligned_shard,
                 merged_name="remaining.bam",
-                docker = docker_align
+                docker=docker_align
+        }
+
+        call CanuMT {
+            input:
+                corrected_bam=MergeCorrected.merged,
+                corrected_bai=MergeCorrected.merged_bai,
+                remaining_bam=MergeRemaining.merged,
+                remaining_bai=MergeRemaining.merged_bai,
+                ref_fasta=ref_fasta,
+                mt_chr_name=mt_chr_name,
+                SM=DetectRunInfo.run_info['SM'],
+                ID=DetectRunInfo.run_info['ID'] + ".mt",
+                docker=docker_asm
         }
     }
 
@@ -121,26 +137,26 @@ workflow LRWholeGenomeSingleSample {
         input:
             aligned_shards=MergeCorrected.merged,
             merged_name="all.corrected.bam",
-            docker = docker_align
+            docker=docker_align
     }
 
     call ValidateBam as ValidateAllCorrected {
         input:
             input_bam=MergeAllCorrected.merged,
-            docker = docker_align
+            docker=docker_align
     }
 
     call MergeBams as MergeAllRemaining {
         input:
             aligned_shards=MergeRemaining.merged,
             merged_name="all.remaining.bam",
-            docker = docker_align
+            docker=docker_align
     }
 
     call ValidateBam as ValidateAllRemaining {
         input:
             input_bam=MergeAllRemaining.merged,
-            docker = docker_align
+            docker=docker_align
     }
 }
 
@@ -358,8 +374,6 @@ task Minimap2 {
     >>>
 
     output {
-        File temp_shard = "temp.aligned.unsorted.bam"
-        File temp_repaired = "temp.aligned.unsorted.repaired.bam"
         File aligned_shard = "~{aligned_shard_name}"
     }
 
@@ -435,9 +449,11 @@ task ValidateBam {
 
 task AssembleMT {
     input {
-        File input_bam
-        File input_bai
-        String ref_fasta
+        File corrected_bam
+        File corrected_bai
+        File remaining_bam
+        File remaining_bai
+        File ref_fasta
         String mt_chr_name
         String SM
         String ID
@@ -445,7 +461,7 @@ task AssembleMT {
     }
 
     Int cpus = 4
-    Int disk_size = ceil(2*(size(input_bam, "GB") + size(input_bai, "GB")))
+    Int disk_size = 4*ceil(size(corrected_bam, "GB") + size(corrected_bai, "GB") + size(remaining_bam, "GB") + size(remaining_bai, "GB") + size(ref_fasta, "GB"))
 
     String reads = "reads.fastq.gz"
 
@@ -453,7 +469,8 @@ task AssembleMT {
         set -euxo pipefail
 
         # select MT
-        samtools view -hb ~{input_bam} ~{mt_chr_name} | samtools fastq - | gzip -1 > ~{reads}
+        samtools view -hb ~{corrected_bam} ~{mt_chr_name} | samtools fastq - | gzip -1 > ~{reads}
+        samtools view -hb ~{remaining_bam} ~{mt_chr_name} | samtools fastq - | gzip -1 >> ~{reads}
 
         # align
         minimap2 -x ava-pb -t ~{cpus} ~{reads} ~{reads} | gzip -1 > reads.paf.gz
@@ -471,7 +488,7 @@ task AssembleMT {
         racon -t ~{cpus} ~{reads} reads.gfa2.paf reads.racon1.fasta > mt.fasta
 
         # align to ref
-        minimap2 -ayY --MD --eqx -x asm20 -R '@RG\tID:MT\tSM:MT' -t ~{cpus} ~{ref_fasta} mt.fasta | samtools sort -@~{cpus} -m4G -o mt.bam
+        minimap2 -ayY --MD --eqx -x asm20 -R '@RG\tID:~{ID}\tSM:~{SM}' -t ~{cpus} ~{ref_fasta} mt.fasta | samtools sort -@~{cpus} -m4G -o mt.bam
         samtools index mt.bam
 
         # call variants
@@ -481,12 +498,58 @@ task AssembleMT {
     output {
         File mt_asm = "mt.fasta"
         File mt_bam = "mt.bam"
+        File mt_bai = "mt.bam.bai"
         File mt_vcf = "mt.vcf"
     }
 
     runtime {
         cpu: "~{cpus}"
-        memory: "4G"
+        memory: "20G"
+        disks: "local-disk ~{disk_size} SSD"
+        preemptible: 1
+        maxRetries: 0
+        docker: "~{docker}"
+    }
+}
+
+task CanuMT {
+    input {
+        File corrected_bam
+        File corrected_bai
+        File remaining_bam
+        File remaining_bai
+        File ref_fasta
+        String mt_chr_name
+        String SM
+        String ID
+        String docker
+    }
+
+    Int cpus = 4
+    Int disk_size = 4*ceil(size(corrected_bam, "GB") + size(corrected_bai, "GB") + size(remaining_bam, "GB") + size(remaining_bai, "GB") + size(ref_fasta, "GB"))
+
+    String creads = "creads.fastq.gz"
+    String rreads = "rreads.fastq.gz"
+
+    command <<<
+        set -euxo pipefail
+
+        # select MT
+        samtools view -hb ~{corrected_bam} ~{mt_chr_name} | samtools fastq - | gzip -1 > ~{creads}
+        samtools view -hb ~{remaining_bam} ~{mt_chr_name} | samtools fastq - | gzip -1 > ~{rreads}
+
+        canu -p mt -d mttest genomeSize=16.6k -pacbio-raw ~{rreads}
+
+        find . -type f -exec ls -lh {} \;
+    >>>
+
+    output {
+        Array[File] all = glob("mttest/*")
+    }
+
+    runtime {
+        cpu: "~{cpus}"
+        memory: "20G"
         disks: "local-disk ~{disk_size} SSD"
         preemptible: 1
         maxRetries: 0
