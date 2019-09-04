@@ -57,7 +57,7 @@ workflow LRWholeGenomeSingleSample {
     }
 
     String docker_align = "kgarimella/lr-align:0.01.17"
-    String docker_asm = "kgarimella/lr-asm:0.01.06"
+    String docker_asm = "kgarimella/lr-asm:0.01.09"
 
     scatter (gcs_dir in gcs_dirs) {
         call Utils.DetectRunInfo as DetectRunInfo {
@@ -158,5 +158,47 @@ workflow LRWholeGenomeSingleSample {
         input:
             bam = MergeAllCorrected.merged,
             bai = MergeAllCorrected.merged_bai
+    }
+
+    call AssembleGenomeWithShasta {
+        input:
+            corrected_bam = MergeAllCorrected.merged,
+            remaining_bam = MergeAllRemaining.merged,
+            docker = docker_asm
+    }
+}
+
+task AssembleGenomeWithShasta {
+    input {
+        File corrected_bam
+        File remaining_bam
+        String docker
+    }
+
+    Int disk_size = 10*ceil(size(corrected_bam, "GB") + size(remaining_bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        # convert to uncompressed fasta
+        samtools fasta ~{corrected_bam} > all.fasta
+
+        # assemble
+        shasta-Linux-0.2.0 --input all.fasta --Reads.minReadLength 5000 --memoryBacking 2M --memoryMode filesystem
+    >>>
+
+    output {
+        File assembly_fasta = "ShastaRun/Assembly.fasta"
+        File assembly_gfa = "ShastaRun/Assembly.gfa"
+        Array[File] files = glob("ShastaRun/*")
+    }
+
+    runtime {
+        cpu: 8
+        memory: "16G"
+        disks: "local-disk ~{disk_size} SSD"
+        preemptible: 0
+        maxRetries: 0
+        docker: "~{docker}"
     }
 }
