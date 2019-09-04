@@ -33,7 +33,6 @@ version 1.0
 #   this script.
 
 import "AlignReads.wdl" as AR
-import "CanuMT.wdl" as CMT
 import "CorrectReads.wdl" as CR
 import "MergeBams.wdl" as MB
 import "RecoverCCSRemainingReads.wdl" as RCCSRR
@@ -117,18 +116,6 @@ workflow LRWholeGenomeSingleSample {
             input:
                 aligned_shards = AlignRemaining.aligned_shard,
                 merged_name="remaining.bam",
-        }
-
-        call CMT.CanuMT {
-            input:
-                corrected_bam = MergeCorrected.merged,
-                corrected_bai = MergeCorrected.merged_bai,
-                remaining_bam = MergeRemaining.merged,
-                remaining_bai = MergeRemaining.merged_bai,
-                ref_fasta = ref_fasta,
-                mt_chr_name = mt_chr_name,
-                SM = udri.run_info['SM'],
-                ID = udri.run_info['ID'] + ".mt",
         }
     }
 
