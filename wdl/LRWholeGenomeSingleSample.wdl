@@ -33,6 +33,7 @@ version 1.0
 #   this script.
 
 import "AlignReads.wdl" as AR
+import "CallSV" as CallSV
 import "CanuMT.wdl" as CMT
 import "CorrectReads.wdl" as CR
 import "MergeBams.wdl" as MB
@@ -51,6 +52,8 @@ workflow LRWholeGenomeSingleSample {
         File ref_fasta_fai
         File ref_dict
         String mt_chr_name
+
+        File tandem_repeat_bed
     }
 
     String docker_align = "kgarimella/lr-align:0.01.15"
@@ -166,5 +169,20 @@ workflow LRWholeGenomeSingleSample {
         input:
             input_bam = MergeAllRemaining.merged,
             docker = docker_align
+    }
+
+    call CallSV.PBSV as PBSV {
+        input:
+            bam = MergeAllCorrected.merged,
+            bai = MergeAllCorrected.MergeAllCorrected.merged_bai,
+            ref_fasta = ref_fasta,
+            ref_fai = ref_fasta_fai,
+            tandem_repeat_bed = tandem_repeat_bed
+    }
+
+    call CallSV.Sniffles as Sniffles {
+        input:
+            bam = MergeAllCorrected.merged,
+            bai = MergeAllCorrected.MergeAllCorrected.merged_bai
     }
 }
