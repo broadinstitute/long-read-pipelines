@@ -56,56 +56,56 @@ workflow LRWholeGenomeSingleSample {
         File tandem_repeat_bed
     }
 
-    String docker_align = "kgarimella/lr-align:0.01.15"
+    String docker_align = "kgarimella/lr-align:0.01.17"
     String docker_asm = "kgarimella/lr-asm:0.01.06"
 
     scatter (gcs_dir in gcs_dirs) {
-        call Utils.DetectRunInfo as udri {
+        call Utils.DetectRunInfo as DetectRunInfo {
             input:
                 gcs_dir = gcs_dir,
                 sample_name = sample_name,
         }
 
-        call Utils.PrepareRun as upr {
+        call Utils.PrepareRun as PrepareRun {
             input:
-                files = udri.files,
+                files = DetectRunInfo.files,
         }
 
-        call SLR.ShardLongReads as slrslr {
+        call SLR.ShardLongReads as ShardLongReads {
             input:
-                unmapped_bam = upr.unmapped_bam,
+                unmapped_bam = PrepareRun.unmapped_bam,
         }
 
-        scatter (unmapped_shard in slrslr.unmapped_shards) {
-            call CR.CCS as crccs {
+        scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
+            call CR.CCS as CCS {
                 input:
                     unmapped_shard = unmapped_shard,
-                    platform = udri.run_info['PL'],
+                    platform = DetectRunInfo.run_info['PL'],
             }
 
             call AR.Minimap2 as AlignCCS {
                 input:
-                    shard = crccs.ccs_shard,
+                    shard = CCS.ccs_shard,
                     ref_fasta = ref_fasta,
-                    SM = udri.run_info['SM'],
-                    ID = udri.run_info['ID'] + ".corrected",
-                    PL = udri.run_info['PL'],
+                    SM = DetectRunInfo.run_info['SM'],
+                    ID = DetectRunInfo.run_info['ID'] + ".corrected",
+                    PL = DetectRunInfo.run_info['PL'],
                     reads_are_corrected = true,
             }
 
-            call RCCSRR.RecoverCCSRemainingReads as rccsrr {
+            call RCCSRR.RecoverCCSRemainingReads as RecoverCCSRemainingReads {
                 input:
                     unmapped_shard = unmapped_shard,
-                    ccs_shard = crccs.ccs_shard,
+                    ccs_shard = CCS.ccs_shard,
             }
 
             call AR.Minimap2 as AlignRemaining {
                 input:
-                    shard = rccsrr.remaining_shard,
+                    shard = RecoverCCSRemainingReads.remaining_shard,
                     ref_fasta = ref_fasta,
-                    SM = udri.run_info['SM'],
-                    ID = udri.run_info['ID'] + ".remaining",
-                    PL = udri.run_info['PL'],
+                    SM = DetectRunInfo.run_info['SM'],
+                    ID = DetectRunInfo.run_info['ID'] + ".remaining",
+                    PL = DetectRunInfo.run_info['PL'],
                     reads_are_corrected = false,
             }
         }

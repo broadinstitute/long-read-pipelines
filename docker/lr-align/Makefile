@@ -1,4 +1,4 @@
-TAG1 = kgarimella/lr-align:0.01.15
+TAG1 = kgarimella/lr-align:0.01.17
 TAG2 = kgarimella/lr-align:latest
 
 all: build push
