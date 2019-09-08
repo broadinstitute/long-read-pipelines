@@ -64,19 +64,16 @@ workflow LRWholeGenomeSingleSample {
             input:
                 gcs_dir = gcs_dir,
                 sample_name = sample_name,
-                docker = docker_align
         }
 
         call Utils.PrepareRun as upr {
             input:
                 files = udri.files,
-                docker = docker_align
         }
 
         call SLR.ShardLongReads as slrslr {
             input:
                 unmapped_bam = upr.unmapped_bam,
-                docker = docker_align
         }
 
         scatter (unmapped_shard in slrslr.unmapped_shards) {
@@ -84,7 +81,6 @@ workflow LRWholeGenomeSingleSample {
                 input:
                     unmapped_shard = unmapped_shard,
                     platform = udri.run_info['PL'],
-                    docker = docker_align
             }
 
             call AR.Minimap2 as AlignCCS {
@@ -95,14 +91,12 @@ workflow LRWholeGenomeSingleSample {
                     ID = udri.run_info['ID'] + ".corrected",
                     PL = udri.run_info['PL'],
                     reads_are_corrected = true,
-                    docker = docker_align
             }
 
             call RCCSRR.RecoverCCSRemainingReads as rccsrr {
                 input:
                     unmapped_shard = unmapped_shard,
                     ccs_shard = crccs.ccs_shard,
-                    docker = docker_align
             }
 
             call AR.Minimap2 as AlignRemaining {
@@ -113,7 +107,6 @@ workflow LRWholeGenomeSingleSample {
                     ID = udri.run_info['ID'] + ".remaining",
                     PL = udri.run_info['PL'],
                     reads_are_corrected = false,
-                    docker = docker_align
             }
         }
 
@@ -121,27 +114,12 @@ workflow LRWholeGenomeSingleSample {
             input:
                 aligned_shards = AlignCCS.aligned_shard,
                 merged_name="corrected.bam",
-                docker = docker_align
         }
 
         call MB.MergeBams as MergeRemaining {
             input:
                 aligned_shards = AlignRemaining.aligned_shard,
                 merged_name="remaining.bam",
-                docker = docker_align
-        }
-
-        call CMT.CanuMT {
-            input:
-                corrected_bam = MergeCorrected.merged,
-                corrected_bai = MergeCorrected.merged_bai,
-                remaining_bam = MergeRemaining.merged,
-                remaining_bai = MergeRemaining.merged_bai,
-                ref_fasta = ref_fasta,
-                mt_chr_name = mt_chr_name,
-                SM = udri.run_info['SM'],
-                ID = udri.run_info['ID'] + ".mt",
-                docker = docker_asm
         }
     }
 
@@ -149,26 +127,22 @@ workflow LRWholeGenomeSingleSample {
         input:
             aligned_shards = MergeCorrected.merged,
             merged_name="all.corrected.bam",
-            docker = docker_align
     }
 
     call VB.ValidateBam as ValidateAllCorrected {
         input:
             input_bam = MergeAllCorrected.merged,
-            docker = docker_align
     }
 
     call MB.MergeBams as MergeAllRemaining {
         input:
             aligned_shards = MergeRemaining.merged,
             merged_name="all.remaining.bam",
-            docker = docker_align
     }
 
     call VB.ValidateBam as ValidateAllRemaining {
         input:
             input_bam = MergeAllRemaining.merged,
-            docker = docker_align
     }
 
     call CallSV.PBSV as PBSV {
