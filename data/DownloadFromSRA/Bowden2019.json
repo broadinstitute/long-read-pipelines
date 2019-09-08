@@ -1,0 +1,4 @@
+{
+    "DownloadFromSRA.SRA_IDs": ["ERP113096"],
+    "DownloadFromSRA.gcs_output_dir": "gs://broad-dsde-methods-kiran/scratch/sra/Bowden2019/NA12878/"
+}

@@ -54,6 +54,8 @@ task GetSRAIDs {
     }
 
     command <<<
+        set -euxo pipefail
+
         esearch -db sra -query ~{SRA_ID} | efetch --format runinfo | grep '[SE]RR' | cut -f 1,8 -d',' | sed 's/,/\t/g' > sra.txt
     >>>
 
@@ -77,6 +79,7 @@ task GetSRAIDs {
 #
 # In the future, it might be interesting to explore gcsfuse (https://cloud.google.com/storage/docs/gcs-fuse) as an
 # option for downloading data directly to a GCS filepath.
+
 task FastqDump {
     input {
         String SRR_ID
@@ -97,6 +100,8 @@ task FastqDump {
     Int final_disk_space_gb = if (compressed_disk_space_gb < minimum_disk_size_gb) then minimum_disk_size_gb else compressed_disk_space_gb
 
     command <<<
+        set -euxo pipefail
+
         if gsutil ls -lh ~{gcs_output_dir}/~{SRR_ID}.fastq.gz ; then
             echo "~{gcs_output_dir}/~{SRR_ID} already exists."
         else
@@ -116,7 +121,7 @@ task FastqDump {
         memory: "4GB"
         disks: "local-disk ~{final_disk_space_gb} LOCAL"
         preemptible: 0
-        maxRetries: 0
+        maxRetries: 1
         docker: "kgarimella/lr-cloud-downloader:0.02.0"
     }
 }
