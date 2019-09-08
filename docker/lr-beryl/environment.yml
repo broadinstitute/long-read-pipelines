@@ -1,0 +1,9 @@
+name: lr-beryl
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - wget
+  - libidn
