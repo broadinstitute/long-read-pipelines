@@ -33,7 +33,7 @@ version 1.0
 #   this script.
 
 import "AlignReads.wdl" as AR
-import "CallSV" as CallSV
+import "CallSV.wdl" as CallSV
 import "CanuMT.wdl" as CMT
 import "CorrectReads.wdl" as CR
 import "MergeBams.wdl" as MB
@@ -148,7 +148,7 @@ workflow LRWholeGenomeSingleSample {
     call CallSV.PBSV as PBSV {
         input:
             bam = MergeAllCorrected.merged,
-            bai = MergeAllCorrected.MergeAllCorrected.merged_bai,
+            bai = MergeAllCorrected.merged_bai,
             ref_fasta = ref_fasta,
             ref_fai = ref_fasta_fai,
             tandem_repeat_bed = tandem_repeat_bed
@@ -157,6 +157,6 @@ workflow LRWholeGenomeSingleSample {
     call CallSV.Sniffles as Sniffles {
         input:
             bam = MergeAllCorrected.merged,
-            bai = MergeAllCorrected.MergeAllCorrected.merged_bai
+            bai = MergeAllCorrected.merged_bai
     }
 }
