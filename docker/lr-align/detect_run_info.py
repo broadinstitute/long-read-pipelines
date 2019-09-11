@@ -26,12 +26,6 @@ gcs_path = args.gcs_path.replace("gs://", "").split(delimiter)
 bucket_name = gcs_path[0]
 prefix = delimiter.join(gcs_path[1:])
 
-if prefix[-1] != delimiter:
-    prefix += delimiter
-
-storage_client = storage.Client()
-blobs = storage_client.list_blobs(bucket_name, prefix=prefix)
-
 info = {}
 bams = []
 fqs = []
@@ -49,41 +43,52 @@ ri = {
     'DA': None,
 }
 
-pp = pprint.PrettyPrinter(indent=4)
+if prefix.endswith(".bam") and not prefix.endswith(".scraps.bam"):
+    bams.append(prefix)
+elif prefix.endswith(".fastq.gz"):
+    fqs.append(prefix)
+else:
+    if prefix[-1] != delimiter:
+        prefix += delimiter
 
-# First, populate run info (ri) hash with information gleaned from run metadata
-for blob in blobs:
-    if blob.name.endswith(".bam") and not blob.name.endswith(".scraps.bam"):
-        bams.append(blob)
+    storage_client = storage.Client()
+    blobs = storage_client.list_blobs(bucket_name, prefix=prefix)
 
-    if bool(re.search('(f(ast)?q)(.gz)?', blob.name)):
-        fqs.append(blob)
+    pp = pprint.PrettyPrinter(indent=4)
 
-    if blob.name.endswith(".metadata.xml"):
-        ri['PL'] = 'PACBIO'
-        blob.download_to_filename("metadata.xml")
+    # First, populate run info (ri) hash with information gleaned from run metadata
+    for blob in blobs:
+        if blob.name.endswith(".bam") and not blob.name.endswith(".scraps.bam"):
+            bams.append(blob.name)
 
-        a = etree.parse("metadata.xml")
-        for e in a.iter():
-            if bool(e.attrib):
-                tag = re.sub(r"{.+}", "", e.tag)
-                for k, v in e.attrib.items():
-                    key = tag + "." + k
-                    info[key] = "".join(v)
+        if bool(re.search('(f(ast)?q)(.gz)?', blob.name)):
+            fqs.append(blob.name)
 
-        movieName = info['CollectionMetadata.Context']
-        readType = "SUBREAD"
+        if blob.name.endswith(".metadata.xml"):
+            ri['PL'] = 'PACBIO'
+            blob.download_to_filename("metadata.xml")
 
-        ri['ID'] = f'{movieName}//{readType}',
-        ri['DT'] = info['WellSample.CreatedAt'],
-        ri['PL'] = 'PACBIO',
-        ri['PM'] = info['CollectionMetadata.InstrumentName'],
-        ri['PU'] = info['CollectionMetadata.Context'],
-        ri['SM'] = info['BioSample.Name'],
+            a = etree.parse("metadata.xml")
+            for e in a.iter():
+                if bool(e.attrib):
+                    tag = re.sub(r"{.+}", "", e.tag)
+                    for k, v in e.attrib.items():
+                        key = tag + "." + k
+                        info[key] = "".join(v)
+
+            movieName = info['CollectionMetadata.Context']
+            readType = "SUBREAD"
+
+            ri['ID'] = f'{movieName}//{readType}',
+            ri['DT'] = info['WellSample.CreatedAt'],
+            ri['PL'] = 'PACBIO',
+            ri['PM'] = info['CollectionMetadata.InstrumentName'],
+            ri['PU'] = info['CollectionMetadata.Context'],
+            ri['SM'] = info['BioSample.Name'],
 
 if len(bams) > 0:
-    for blob in bams:
-        bam = f'gs://{bucket_name}/{blob.name}'
+    for name in bams:
+        bam = f'gs://{bucket_name}/{name}'
         o = subprocess.check_output(["samtools", "view", "-H", bam])
         os = str(o).split("\\n")
 
@@ -103,8 +108,8 @@ if len(bams) > 0:
             elif "unknown" in line:
                 ri['SO'] = "unknown"
 elif len(fqs) > 0:
-    blob = fqs[0]
-    fq = f'gs://{bucket_name}/{blob.name}'
+    name = fqs[0]
+    fq = f'gs://{bucket_name}/{name}'
     o = subprocess.check_output(f'gsutil cat {fq} | gunzip -c | head -1', shell=True)
 
     if '/' in str(o):
@@ -112,14 +117,14 @@ elif len(fqs) > 0:
     else:
         ri['PL'] = 'ONT'
 
-    ri['ID'] = os.path.basename(re.sub('.(f(ast)?q)(.gz)?', '', blob.name))
+    ri['ID'] = os.path.basename(re.sub('.(f(ast)?q)(.gz)?', '', name))
     ri['SO'] = "unsorted"
 
 if len(bams) > 0:
-    ri['DA'] = ",".join(map(lambda x: f'gs://{bucket_name}/{x.name}', bams))
+    ri['DA'] = ",".join(map(lambda x: f'gs://{bucket_name}/{x}', bams))
     ri['TY'] = "BAM"
 elif len(fqs) > 0:
-    ri['DA'] = ",".join(map(lambda x: f'gs://{bucket_name}/{x.name}', fqs))
+    ri['DA'] = ",".join(map(lambda x: f'gs://{bucket_name}/{x}', fqs))
     ri['TY'] = "FASTQ"
 
 if args.SM is not None:
