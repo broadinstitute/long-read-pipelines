@@ -5,7 +5,7 @@ python3 scripts/create_input_json_for_lrwgs_pipeline.py --SM HG00512 gs://broad-
 python3 scripts/create_input_json_for_lrwgs_pipeline.py --SM HG00513 gs://broad-dsde-methods-kiran/pb_eap/CHS_HG00513/ > data/LRWholeGenomeSingleSample/CHS_HG00513.json
 python3 scripts/create_input_json_for_lrwgs_pipeline.py --SM HG00514 gs://broad-dsde-methods-kiran/pb_eap/CHS_HG00514/ > data/LRWholeGenomeSingleSample/CHS_HG00514.json
 
-python3 scripts/create_input_json_for_lrwgs_pipeline.py --SM HG02982 gs://broad-dsde-methods-kiran/pb_eap/GWD_HG02982_CLR/ gs://broad-dsde-methods-kiran/pb_eap/Insert_Size_Titration/ > data/LRWholeGenomeSingleSample/GWD_HG02982.json
+python3 scripts/create_input_json_for_lrwgs_pipeline.py --SM HG02982 gs://broad-dsde-methods-kiran/pb_eap/GWD_HG02982_CLR/ gs://broad-dsde-methods-kiran/pb_eap/Insert_Size_Titration/HG02982_6-7kb/ gs://broad-dsde-methods-kiran/pb_eap/Insert_Size_Titration/HG02982_7-8kb/ gs://broad-dsde-methods-kiran/pb_eap/Insert_Size_Titration/HG02982_8-9kb/ > data/LRWholeGenomeSingleSample/GWD_HG02982.json
 python3 scripts/create_input_json_for_lrwgs_pipeline.py --SM HG02983 gs://broad-dsde-methods-kiran/pb_eap/GWD_HG02983/ > data/LRWholeGenomeSingleSample/GWD_HG02983.json
 python3 scripts/create_input_json_for_lrwgs_pipeline.py --SM HG02984 gs://broad-dsde-methods-kiran/pb_eap/GWD_HG02984/ > data/LRWholeGenomeSingleSample/GWD_HG02984.json
 

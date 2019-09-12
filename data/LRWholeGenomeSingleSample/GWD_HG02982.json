@@ -1,7 +1,9 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
         "gs://broad-dsde-methods-kiran/pb_eap/GWD_HG02982_CLR/",
-	"gs://broad-dsde-methods-kiran/pb_eap/Insert_Size_Titration/"
+        "gs://broad-dsde-methods-kiran/pb_eap/Insert_Size_Titration/HG02982_6-7kb/",
+        "gs://broad-dsde-methods-kiran/pb_eap/Insert_Size_Titration/HG02982_7-8kb/",
+        "gs://broad-dsde-methods-kiran/pb_eap/Insert_Size_Titration/HG02982_8-9kb/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "HG02982",

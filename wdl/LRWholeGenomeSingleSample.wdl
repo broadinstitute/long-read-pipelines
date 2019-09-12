@@ -21,6 +21,11 @@ version 1.0
 # Description of inputs:
 #   Required:
 #       Array[String] gcs_dirs          - The GCS directories wherein the data is stored.
+#       File ref_fasta                  - The reference genome to which reads should be aligned.
+#       File ref_fasta_fai              - The .fai index for the reference genome.
+#       File ref_dict                   - The sequence dictionary for the reference genome.
+#       String mt_chr_name              - The name of the contig in ref_fasta representing the mitochondrion genome.
+#       File tandem_repeat_bed          - BED file representing tandem repeats in the reference.
 #
 #   Optional:
 #       String sample_name              - The sample name to use in place of the autodetected name.
@@ -74,6 +79,7 @@ workflow LRWholeGenomeSingleSample {
         call SLR.ShardLongReads as ShardLongReads {
             input:
                 unmapped_bam = PrepareRun.unmapped_bam,
+                runtime_attr_override = { "preemptible_tries": 0 }
         }
 
         scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
