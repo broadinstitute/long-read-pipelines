@@ -79,7 +79,6 @@ workflow LRWholeGenomeSingleSample {
         call SLR.ShardLongReads as ShardLongReads {
             input:
                 unmapped_bam = PrepareRun.unmapped_bam,
-                runtime_attr_override = { "preemptible_tries": 0 }
         }
 
         scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
