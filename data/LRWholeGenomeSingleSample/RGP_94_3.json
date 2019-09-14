@@ -1,7 +1,7 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
         "gs://broad-dsde-methods-kiran/pb_eap/RGP_94_3_LowYield/",
-	"gs://broad-dsde-methods-kiran/pb_eap/RGP_94_3_Rework/"
+        "gs://broad-dsde-methods-kiran/pb_eap/RGP_94_3_Rework/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "RGP_94_3",

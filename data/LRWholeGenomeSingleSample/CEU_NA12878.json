@@ -1,7 +1,7 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
         "gs://broad-dsde-methods-kiran/pb_eap/NA12878rep1/",
-	"gs://broad-dsde-methods-kiran/pb_eap/NA12878rep2/"
+        "gs://broad-dsde-methods-kiran/pb_eap/NA12878rep2/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "NA12878",

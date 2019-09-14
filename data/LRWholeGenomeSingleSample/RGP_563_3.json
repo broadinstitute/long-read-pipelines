@@ -1,7 +1,7 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
         "gs://broad-dsde-methods-long-reads/incoming/RGP_563_3-Cell1/",
-	"gs://broad-dsde-methods-long-reads/incoming/RGP_563_3-Cell2/"
+        "gs://broad-dsde-methods-long-reads/incoming/RGP_563_3-Cell2/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "RGP_563_3",

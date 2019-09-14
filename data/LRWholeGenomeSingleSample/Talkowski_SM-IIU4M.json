@@ -1,7 +1,7 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
         "gs://broad-dsde-methods-kiran/pb_eap/Talkowski_JFG35878F_SM-IIU4M/",
-	"gs://broad-dsde-methods-kiran/pb_eap/Talkowski_JFG35878F_SM-IIU4M_RESEQ/"
+        "gs://broad-dsde-methods-kiran/pb_eap/Talkowski_JFG35878F_SM-IIU4M_RESEQ/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "SM-IIU4M",
