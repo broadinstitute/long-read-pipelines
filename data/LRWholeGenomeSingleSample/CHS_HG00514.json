@@ -1,6 +1,6 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/CHS_HG00514/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/CHS_HG00514/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "HG00514",

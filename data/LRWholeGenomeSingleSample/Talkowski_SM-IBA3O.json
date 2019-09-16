@@ -1,6 +1,6 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/Talkowski_MIN36192_SM-IBA3O/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/Talkowski_MIN36192_SM-IBA3O/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "SM-IBA3O",

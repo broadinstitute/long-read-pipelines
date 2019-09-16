@@ -1,0 +1,15 @@
+{
+    "LRWholeGenomeSingleSample.gcs_dirs": [
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/HCC1954N_CORRECT/"
+    ],
+
+    "LRWholeGenomeSingleSample.sample_name": "HCC1954N",
+
+    "LRWholeGenomeSingleSample.ref_fasta":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+    "LRWholeGenomeSingleSample.ref_fasta_fai": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+    "LRWholeGenomeSingleSample.ref_dict":      "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+
+    "LRWholeGenomeSingleSample.tandem_repeat_bed": "gs://broad-dsde-methods-long-reads/resources/references/grch38/human_GRCh38_no_alt_analysis_set.trf.bed",
+
+    "LRWholeGenomeSingleSample.mt_chr_name":   "chrM"
+}
