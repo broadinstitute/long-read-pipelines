@@ -30,6 +30,7 @@ RUN wget https://github.com/marbl/canu/releases/download/v1.8/canu-1.8.Linux-amd
 
 # copy additional scripts
 COPY ./dedup_reads_from_same_zmw.py /usr/local/bin/
+COPY ./cat_as_fasta.py /usr/local/bin/
 
 # set LD library path
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/lr-asm/lib/

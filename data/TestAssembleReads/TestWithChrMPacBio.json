@@ -1,0 +1,12 @@
+{
+    "TestAssembleReads.corrected_bam": "gs://broad-dsde-methods-long-reads-intermediate/LRWholeGenomeSingleSample/0b2a4502-ea95-4d85-bef7-e12998189162/call-MergeCorrected/shard-2/corrected.bam",
+    "TestAssembleReads.corrected_bai": "gs://broad-dsde-methods-long-reads-intermediate/LRWholeGenomeSingleSample/0b2a4502-ea95-4d85-bef7-e12998189162/call-MergeCorrected/shard-2/corrected.bai",
+    "TestAssembleReads.remaining_bam": "gs://broad-dsde-methods-long-reads-intermediate/LRWholeGenomeSingleSample/0b2a4502-ea95-4d85-bef7-e12998189162/call-MergeRemaining/shard-2/remaining.bam",
+    "TestAssembleReads.remaining_bai": "gs://broad-dsde-methods-long-reads-intermediate/LRWholeGenomeSingleSample/0b2a4502-ea95-4d85-bef7-e12998189162/call-MergeRemaining/shard-2/remaining.bai",
+
+    "TestAssembleReads.platform": "PACBIO",
+
+    "TestAssembleReads.ref_fasta":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+    "TestAssembleReads.ref_fasta_fai": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+    "TestAssembleReads.ref_dict":      "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict"
+}

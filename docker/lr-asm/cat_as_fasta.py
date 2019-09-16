@@ -34,17 +34,7 @@ def readfq(fp):  # this is a generator function
 if __name__ == "__main__":
     import sys
 
-    seen = set()
     for name, seq, qual in readfq(sys.stdin):
-        if "/" in name:
-            a = name.split("/")
-            if len(a) == 3:
-                zmw = a[1]
+        print(f'>{name}')
+        print(seq)
 
-                if zmw not in seen:
-                    print(f'@{name}')
-                    print(seq)
-                    print("+")
-                    print(qual)
-
-                seen.add(zmw)

@@ -34,13 +34,14 @@ version 1.0
 
 import "AlignReads.wdl" as AR
 import "CallSV.wdl" as CallSV
-import "CanuMT.wdl" as CMT
 import "CorrectReads.wdl" as CR
 import "MergeBams.wdl" as MB
 import "RecoverCCSRemainingReads.wdl" as RCCSRR
 import "ShardLongReads.wdl" as SLR
 import "Utils.wdl" as Utils
 import "ValidateBam.wdl" as VB
+import "AssembleReads.wdl" as ASM
+import "AssembleMT.wdl" as ASMT
 
 workflow LRWholeGenomeSingleSample {
     input {
@@ -55,9 +56,6 @@ workflow LRWholeGenomeSingleSample {
 
         File tandem_repeat_bed
     }
-
-    String docker_align = "kgarimella/lr-align:0.01.17"
-    String docker_asm = "kgarimella/lr-asm:0.01.09"
 
     scatter (gcs_dir in gcs_dirs) {
         call Utils.DetectRunInfo as DetectRunInfo {
@@ -121,6 +119,20 @@ workflow LRWholeGenomeSingleSample {
                 aligned_shards = AlignRemaining.aligned_shard,
                 merged_name="remaining.bam",
         }
+
+        call ASMT.AssembleMT as AssembleMT {
+            input:
+                corrected_bam = MergeCorrected.merged,
+                corrected_bai = MergeCorrected.merged_bai,
+                remaining_bam = MergeRemaining.merged,
+                remaining_bai = MergeRemaining.merged_bai,
+
+                platform      = DetectRunInfo.run_info['PL'],
+
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                ref_dict      = ref_dict
+        }
     }
 
     call MB.MergeBams as MergeAllCorrected {
@@ -158,47 +170,5 @@ workflow LRWholeGenomeSingleSample {
         input:
             bam = MergeAllCorrected.merged,
             bai = MergeAllCorrected.merged_bai
-    }
-
-    call AssembleGenomeWithShasta {
-        input:
-            corrected_bam = MergeAllCorrected.merged,
-            remaining_bam = MergeAllRemaining.merged,
-            docker = docker_asm
-    }
-}
-
-task AssembleGenomeWithShasta {
-    input {
-        File corrected_bam
-        File remaining_bam
-        String docker
-    }
-
-    Int disk_size = 10*ceil(size(corrected_bam, "GB") + size(remaining_bam, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        # convert to uncompressed fasta
-        samtools fasta ~{corrected_bam} > all.fasta
-
-        # assemble
-        shasta-Linux-0.2.0 --input all.fasta --Reads.minReadLength 5000 --memoryBacking 2M --memoryMode filesystem
-    >>>
-
-    output {
-        File assembly_fasta = "ShastaRun/Assembly.fasta"
-        File assembly_gfa = "ShastaRun/Assembly.gfa"
-        Array[File] files = glob("ShastaRun/*")
-    }
-
-    runtime {
-        cpu: 8
-        memory: "16G"
-        disks: "local-disk ~{disk_size} SSD"
-        preemptible: 0
-        maxRetries: 0
-        docker: "~{docker}"
     }
 }
