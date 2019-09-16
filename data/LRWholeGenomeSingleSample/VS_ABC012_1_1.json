@@ -1,6 +1,6 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/VS_ABC012_Trio/VS_ABC012_1_1_proband/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/VS_ABC012_Trio/VS_ABC012_1_1_proband/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "VS_ABC012_1_1",

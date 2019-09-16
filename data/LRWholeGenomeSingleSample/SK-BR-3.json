@@ -1,8 +1,8 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-long-reads/incoming/Verily_SK-BR-3_CCS_RW/",
-	"gs://broad-dsde-methods-long-reads/incoming/Verily_SK-BR-3_CLR/",
-	"gs://broad-dsde-methods-long-reads/incoming/Verily_SK-BR-3_hg_CCS_lowyield_050119/"
+        "gs://broad-dsde-methods-long-reads-incoming/Verily/Verily_SK-BR-3_CCS_RW/",
+        "gs://broad-dsde-methods-long-reads-incoming/Verily/Verily_SK-BR-3_CLR/",
+        "gs://broad-dsde-methods-long-reads-incoming/Verily/Verily_SK-BR-3_hg_CCS_lowyield_050119/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "SK-BR-3",

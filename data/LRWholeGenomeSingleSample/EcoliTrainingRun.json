@@ -1,6 +1,6 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/Ecoli_Training_Run/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/Ecoli_Training_Run/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "EcoliTrainingRun",
