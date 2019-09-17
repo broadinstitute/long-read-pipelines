@@ -1,6 +1,8 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/HCC1954T/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/HCC1954T/chip_01/",
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/HCC1954T/chip_02/",
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/HCC1954T/chip_03/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "HCC1954T",
