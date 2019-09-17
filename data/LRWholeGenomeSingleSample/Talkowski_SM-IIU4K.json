@@ -1,6 +1,6 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/Talkowski_22701_SM-IIU4K/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/Talkowski_22701_SM-IIU4K/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "SM-IIU4K",

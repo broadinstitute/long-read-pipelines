@@ -1,9 +1,9 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/SmallTestData/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/Talkowski_MIN39144_SM-IBA3L/"
     ],
 
-    "LRWholeGenomeSingleSample.sample_name": "SmallTestData",
+    "LRWholeGenomeSingleSample.sample_name": "SM-IBA3L",
 
     "LRWholeGenomeSingleSample.ref_fasta":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
     "LRWholeGenomeSingleSample.ref_fasta_fai": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",

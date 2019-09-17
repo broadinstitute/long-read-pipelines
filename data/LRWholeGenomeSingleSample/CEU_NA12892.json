@@ -1,6 +1,6 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/NA12892/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/NA12892/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "NA12892",

@@ -53,7 +53,7 @@ for gcs_path_full in args.gcs_paths:
         raise ValueError(f'No sequence data at the location {gcs_path_full}')
 
 eprint(f'[INFO] given= {args.SM} ; detected= {", ".join(sample_names)}')
-all_paths = ",\n\t".join(quoted_paths)
+all_paths = ",\n        ".join(quoted_paths)
 
 s = f"""
     "LRWholeGenomeSingleSample.gcs_dirs": [

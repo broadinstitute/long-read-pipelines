@@ -11,7 +11,7 @@ task ShardLongReads {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int nr = select_first([num_reads_per_split, 10000])
+    Int nr = select_first([num_reads_per_split, 200000])
     Int disk_size = 4*ceil(size(unmapped_bam, "GB"))
 
     command <<<

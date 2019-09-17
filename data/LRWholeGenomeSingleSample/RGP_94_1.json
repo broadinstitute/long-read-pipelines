@@ -1,6 +1,6 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/RGP_94_1/"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/RGP_94_1/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "RGP_94_1",

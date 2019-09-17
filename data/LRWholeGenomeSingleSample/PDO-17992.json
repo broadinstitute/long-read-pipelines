@@ -1,8 +1,8 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-long-reads/incoming/PDO-17992_Genentech-30X-hg-CCS_050119/Cell01/",
-        "gs://broad-dsde-methods-long-reads/incoming/PDO-17992_Genentech-30X-hg-CCS_050119/Cell02/",
-        "gs://broad-dsde-methods-long-reads/incoming/PDO-17992_Genentech-30X-hg-CCS_050119/Cell03/"
+        "gs://broad-dsde-methods-long-reads-incoming/Genentech/PDO-17992_Genentech-30X-hg-CCS_050119/Cell01/",
+        "gs://broad-dsde-methods-long-reads-incoming/Genentech/PDO-17992_Genentech-30X-hg-CCS_050119/Cell02/",
+        "gs://broad-dsde-methods-long-reads-incoming/Genentech/PDO-17992_Genentech-30X-hg-CCS_050119/Cell03/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "PDO-17992",

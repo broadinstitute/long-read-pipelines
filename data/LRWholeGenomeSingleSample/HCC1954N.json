@@ -1,6 +1,6 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-kiran/pb_eap/HCC1954N_CORRECT"
+        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/HCC1954N_CORRECT/"
     ],
 
     "LRWholeGenomeSingleSample.sample_name": "HCC1954N",
