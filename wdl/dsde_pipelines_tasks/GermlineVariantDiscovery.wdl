@@ -90,7 +90,8 @@ task HaplotypeCaller_GATK4_VCF {
     Boolean make_bamout
     Int preemptible_tries
     Int hc_scatter
-    String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.0.10.1"
+
+    String gatk4_docker_tag
   }
 
   String output_suffix = if make_gvcf then ".g.vcf.gz" else ".vcf.gz"
@@ -127,7 +128,7 @@ task HaplotypeCaller_GATK4_VCF {
   >>>
 
   runtime {
-    docker: gatk_docker
+    docker: "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
     preemptible: preemptible_tries
     memory: "6.5 GiB"
     cpu: "2"
@@ -179,7 +180,8 @@ task HardFilterVcf {
     String vcf_basename
     File interval_list
     Int preemptible_tries
-    String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.0.10.1"
+
+    String gatk4_docker_tag
   }
 
   Int disk_size = ceil(2 * size(input_vcf, "GiB")) + 20
@@ -199,7 +201,7 @@ task HardFilterVcf {
       File output_vcf_index = "~{output_vcf_name}.tbi"
     }
   runtime {
-    docker: gatk_docker
+    docker: "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
     preemptible: preemptible_tries
     memory: "3 GiB"
     disks: "local-disk " + disk_size + " HDD"
@@ -218,7 +220,8 @@ task CNNScoreVariants {
     File ref_fasta_index
     File ref_dict
     Int preemptible_tries
-    String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.1.0.0"
+
+    String gatk4_docker_tag
   }
 
   Int disk_size = ceil(size(bamout, "GiB") + size(ref_fasta, "GiB") + (size(input_vcf, "GiB") * 2))
@@ -248,7 +251,7 @@ task CNNScoreVariants {
   }
 
   runtime {
-    docker: gatk_docker
+    docker: "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
     preemptible: preemptible_tries
     memory: "15 GiB"
     cpu: "2"
@@ -274,7 +277,8 @@ task FilterVariantTranches {
     File dbsnp_resource_vcf_index
     String info_key
     Int preemptible_tries
-    String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.1.0.0"
+
+    String gatk4_docker_tag
   }
 
   Int disk_size = ceil(size(hapmap_resource_vcf, "GiB") +
@@ -309,6 +313,6 @@ task FilterVariantTranches {
     cpu: "2"
     disks: "local-disk " + disk_size + " HDD"
     preemptible: preemptible_tries
-    docker: gatk_docker
+    docker: "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
   }
 }
