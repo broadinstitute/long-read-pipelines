@@ -92,6 +92,14 @@ task HaplotypeCaller_GATK4_VCF {
     Int hc_scatter
 
     String gatk4_docker_tag
+
+    String? pcr_indel_model_override
+    Int? mapq_filter_threshold
+    Boolean? filter_secondary_0x100_mappgings
+    Boolean? filter_supplementary_0x800_mappings
+    Boolean? use_standard_annotations
+    Boolean? use_standard_hc_annotations
+    Boolean? use_allele_specific_annotations
   }
 
   String output_suffix = if make_gvcf then ".g.vcf.gz" else ".vcf.gz"
@@ -102,6 +110,16 @@ task HaplotypeCaller_GATK4_VCF {
 
   String bamout_arg = if make_bamout then "-bamout ~{vcf_basename}.bamout.bam" else ""
 
+  String extra_args_pcr = if defined(pcr_indel_model_override) then "--pcr-indel-model=~{pcr_indel_model_override}" else " "
+  String extra_args_mqft = if defined(mapq_filter_threshold) then "--read-filter MappingQualityReadFilter --minimum-mapping-quality ~{mapq_filter_threshold}" else " "
+  String extra_args_XAft = if defined(filter_secondary_0x100_mappgings) then "--read-filter NotSecondaryAlignmentReadFilter" else " "
+  String extra_args_SAft = if defined(filter_supplementary_0x800_mappings) then "--read-filter NotSecondaryAlignmentReadFilter" else " "
+  String extra_args_sdannot = if defined(use_standard_annotations) then "--annotation-group StandardAnnotation" else " "
+  String extra_args_sdhcannot = if defined(use_standard_hc_annotations) then "--annotation-group StandardHCAnnotation" else " "
+  String extra_args_asannot = if defined(use_allele_specific_annotations) then "--annotation-group AS_StandardAnnotation" else " "
+
+  String extra_args = extra_args_pcr + extra_args_mqft + extra_args_XAft + extra_args_SAft + extra_args_sdannot + extra_args_sdhcannot + extra_args_asannot
+
   parameter_meta {
     input_bam: {
       localization_optional: true
@@ -110,6 +128,7 @@ task HaplotypeCaller_GATK4_VCF {
 
   command <<<
     set -e
+
     gatk --java-options "-Xms6000m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
       HaplotypeCaller \
       -R ~{ref_fasta} \
@@ -121,7 +140,8 @@ task HaplotypeCaller_GATK4_VCF {
       -new-qual \
       -GQB 10 -GQB 20 -GQB 30 -GQB 40 -GQB 50 -GQB 60 -GQB 70 -GQB 80 -GQB 90 \
       ~{true="-ERC GVCF" false="" make_gvcf} \
-      ~{bamout_arg}
+      ~{bamout_arg} \
+      ~{extra_args}
 
     # Cromwell doesn't like optional task outputs, so we have to touch this file.
     touch ~{vcf_basename}.bamout.bam
