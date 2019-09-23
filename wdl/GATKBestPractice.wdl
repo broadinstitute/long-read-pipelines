@@ -34,7 +34,6 @@ workflow GATKBestPraciceForLR {
       String final_vcf_base_name
 
       Boolean run_qc_on_variants
-      Boolean make_gvcf = true
       Boolean make_bamout = false
 
       Int agg_preemptible_tries = 1 # can not be optional as the tasks and sub-workflows copied over has this non-optional
@@ -75,14 +74,26 @@ workflow GATKBestPraciceForLR {
             ref_fasta = ref_fasta,
             ref_fasta_index = ref_fasta_index,
             hc_scatter = hc_divisor,
-            make_gvcf = make_gvcf,
+            make_gvcf = true, # always produce gVCF
             make_bamout = make_bamout,
             preemptible_tries = agg_preemptible_tries,
 
             sample_is_female = sample_is_female,
 
             gatk4_docker_tag = gatk4_docker_tag
-         }
+        }
+
+        call GenotypeGVCFs as Genotyping {
+            input:
+              input_gvcf = HaplotypeCallerGATK4.output_vcf,
+              input_gvcf_index = HaplotypeCallerGATK4.output_vcf_index,
+              interval = scattered_interval_list,
+              ref_dict = ref_dict,
+              ref_fasta = ref_fasta,
+              ref_fasta_index = ref_fasta_index,
+
+              gatk4_docker_tag = gatk4_docker_tag
+        }
 
         # If bamout files were created, we need to sort and gather them into one bamout
         if (make_bamout) {
@@ -94,18 +105,28 @@ workflow GATKBestPraciceForLR {
           }
         }
 
-      File vcfs_to_merge = HaplotypeCallerGATK4.output_vcf
-      File vcf_indices_to_merge = HaplotypeCallerGATK4.output_vcf_index
+      File gvcfs_to_merge = HaplotypeCallerGATK4.output_vcf
+      File gvcf_indices_to_merge = HaplotypeCallerGATK4.output_vcf_index
+
+      File vcfs_to_merge = Genotyping.output_vcf
+      File vcf_indices_to_merge = Genotyping.output_vcf_index
     }
 
     ###########################################################################
     # Combine by-interval (g)VCFs into a single sample (g)VCF file
-    String merge_suffix = if make_gvcf then ".g.vcf.gz" else ".vcf.gz"
+    call Calling.MergeVCFs as MergeGVCFs {
+      input:
+        input_vcfs = gvcfs_to_merge,
+        input_vcfs_indexes = gvcf_indices_to_merge,
+        output_vcf_name = final_vcf_base_name + ".g.vcf.gz",
+        preemptible_tries = agg_preemptible_tries
+    }
+
     call Calling.MergeVCFs as MergeVCFs {
       input:
         input_vcfs = vcfs_to_merge,
         input_vcfs_indexes = vcf_indices_to_merge,
-        output_vcf_name = final_vcf_base_name + merge_suffix,
+        output_vcf_name = final_vcf_base_name + ".vcf.gz",
         preemptible_tries = agg_preemptible_tries
     }
 
@@ -121,6 +142,17 @@ workflow GATKBestPraciceForLR {
     ###########################################################################
     if (run_qc_on_variants) {
         # Validate the (g)VCF output of HaplotypeCaller
+        call QC.ValidateVCF as ValidateGVCF {
+          input:
+            input_vcf = MergeGVCFs.output_vcf,
+            input_vcf_index = MergeGVCFs.output_vcf_index,
+            ref_fasta = ref_fasta,
+            ref_fasta_index = ref_fasta_index,
+            ref_dict = ref_dict,
+            calling_interval_list = calling_interval_list,
+            is_gvcf = true,
+            preemptible_tries = agg_preemptible_tries
+        }
         call QC.ValidateVCF as ValidateVCF {
           input:
             input_vcf = MergeVCFs.output_vcf,
@@ -129,18 +161,27 @@ workflow GATKBestPraciceForLR {
             ref_fasta_index = ref_fasta_index,
             ref_dict = ref_dict,
             calling_interval_list = calling_interval_list,
-            is_gvcf = make_gvcf,
+            is_gvcf = false,
             preemptible_tries = agg_preemptible_tries
         }
 
         # QC the (g)VCF
+        call QC.CollectVariantCallingMetrics as CollectVariantCallingMetricsGVCF {
+          input:
+            input_vcf = MergeGVCFs.output_vcf,
+            input_vcf_index = MergeGVCFs.output_vcf_index,
+            metrics_basename = final_vcf_base_name,
+            ref_dict = ref_dict,
+            is_gvcf = true,
+            preemptible_tries = agg_preemptible_tries
+        }
         call QC.CollectVariantCallingMetrics as CollectVariantCallingMetrics {
           input:
             input_vcf = MergeVCFs.output_vcf,
             input_vcf_index = MergeVCFs.output_vcf_index,
             metrics_basename = final_vcf_base_name,
             ref_dict = ref_dict,
-            is_gvcf = make_gvcf,
+            is_gvcf = false,
             preemptible_tries = agg_preemptible_tries
         }
     }
@@ -148,8 +189,16 @@ workflow GATKBestPraciceForLR {
     output {
       File output_vcf = MergeVCFs.output_vcf
       File output_vcf_index = MergeVCFs.output_vcf_index
+
+      File output_gvcf = MergeGVCFs.output_vcf
+      File output_gvcf_index = MergeGVCFs.output_vcf_index
+
       File? vcf_summary_metrics = CollectVariantCallingMetrics.summary_metrics
       File? vcf_detail_metrics = CollectVariantCallingMetrics.detail_metrics
+
+      File? gvcf_summary_metrics = CollectVariantCallingMetricsGVCF.summary_metrics
+      File? gvcf_detail_metrics = CollectVariantCallingMetricsGVCF.detail_metrics
+
       File? bamout = MergeBamouts.output_bam
       File? bamout_index = MergeBamouts.output_bam_index
     }
@@ -187,6 +236,82 @@ task MergeBamouts {
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsde-methods/samtools-cloud:v1.clean"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+# Copied from
+# https://github.com/broadinstitute/dsde-pipelines/blob/1275cdb34f6589ea51d54daa33b3d948ac9da316/genomes_in_the_cloud/joint_genotyping_workflow/JointGenotypingWf.wdl
+# then did some modification to suite
+# https://github.com/PacificBiosciences/hg002-ccs/blob/master/smallvariants/gatk_genotypeGVCFs.sh
+# Note that the original task depends on GenomicsDB for large scale joint genotyping, we don't have that concern here for a single sample pipeline.
+# The original task was using "String" for what should be "File"s, again because of the large cohort JG hence using the NIO cloud feature.
+# Here we revert it back to File to take advantage of call-caching considering that we don't have a large cohort.
+task GenotypeGVCFs {
+
+    input {
+        File input_gvcf
+        File input_gvcf_index
+
+        File interval
+
+        File ref_dict
+        File ref_fasta
+        File ref_fasta_index
+
+        String dbsnp_vcf_gspath # using NIO to cut localization time because it is expected to be large
+
+        Float std_call_conf = 2.0 # this default value follows the CCS paper custom script value
+
+        String gatk4_docker_tag
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil(size(input_gvcf, "GiB") + size(ref_fasta, "GiB")) + 10
+    String out_vcf = basename(input_gvcf, ".g.vcf.gz") + ".vcf.gz"
+
+    command <<<
+        set -euo pipefail
+
+        # compared to the original, we take out "--only-output-calls-starting-in-intervals" 
+        # because we don't have to deal with a large (close to TB) VCF
+        gatk --java-options -Xms5g \
+          GenotypeGVCFs \
+          -V ~{input_gvcf} \
+          -R ~{ref_fasta} \
+          -O ~{out_vcf} \
+          -D ~{dbsnp_vcf_gspath} \
+          -L ~{interval} \
+          --annotation-group StandardAnnotation \
+          --annotation-group AS_StandardAnnotation \
+          --annotation-group StandardHCAnnotation \
+          --standard-min-confidence-threshold-for-calling ~{std_call_conf}
+    >>>
+
+    output {
+        File output_vcf = "~{out_vcf}"
+        File output_vcf_index = "~{out_vcf}.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             7,
+        disk_gb:            "~{disk_size}",
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
