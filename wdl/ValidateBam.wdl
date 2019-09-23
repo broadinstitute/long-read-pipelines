@@ -15,7 +15,7 @@ task ValidateBam {
     command <<<
         set -euxo pipefail
 
-        java -Xmx4g -jar /usr/local/bin/gatk.jar ValidateSamFile -I ~{input_bam} -O bam_validation_report.txt
+        java -Xmx4g -jar /usr/local/bin/gatk.jar ValidateSamFile -I ~{input_bam} -O bam_validation_report.txt --IGNORE_WARNINGS
     >>>
 
     output {
