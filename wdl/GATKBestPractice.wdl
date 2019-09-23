@@ -26,6 +26,8 @@ workflow GATKBestPraciceForLR {
       File ref_fasta_index
       File ref_dict
 
+      Boolean sample_is_female
+
       String gatk4_docker_tag
 
       String base_file_name
@@ -76,6 +78,8 @@ workflow GATKBestPraciceForLR {
             make_gvcf = make_gvcf,
             make_bamout = make_bamout,
             preemptible_tries = agg_preemptible_tries,
+
+            sample_is_female = sample_is_female,
 
             gatk4_docker_tag = gatk4_docker_tag
          }

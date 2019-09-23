@@ -81,6 +81,7 @@ task HaplotypeCaller_GATK4_VCF {
   input {
     File input_bam
     File interval_list
+    File par_regions_bed
     String vcf_basename
     File ref_dict
     File ref_fasta
@@ -91,6 +92,7 @@ task HaplotypeCaller_GATK4_VCF {
     Int preemptible_tries
     Int hc_scatter
 
+    Boolean sample_is_female
     String gatk4_docker_tag
 
     String? pcr_indel_model_override
@@ -110,15 +112,12 @@ task HaplotypeCaller_GATK4_VCF {
 
   String bamout_arg = if make_bamout then "-bamout ~{vcf_basename}.bamout.bam" else ""
 
-  String extra_args_pcr = if defined(pcr_indel_model_override) then "--pcr-indel-model=~{pcr_indel_model_override}" else " "
-  String extra_args_mqft = if defined(mapq_filter_threshold) then "--read-filter MappingQualityReadFilter --minimum-mapping-quality ~{mapq_filter_threshold}" else " "
-  String extra_args_XAft = if defined(filter_secondary_0x100_mappgings) then "--read-filter NotSecondaryAlignmentReadFilter" else " "
-  String extra_args_SAft = if defined(filter_supplementary_0x800_mappings) then "--read-filter NotSecondaryAlignmentReadFilter" else " "
-  String extra_args_sdannot = if defined(use_standard_annotations) then "--annotation-group StandardAnnotation" else " "
-  String extra_args_sdhcannot = if defined(use_standard_hc_annotations) then "--annotation-group StandardHCAnnotation" else " "
-  String extra_args_asannot = if defined(use_allele_specific_annotations) then "--annotation-group AS_StandardAnnotation" else " "
+  String extra_args_pcr = if defined(pcr_indel_model_override) then "--pcr-indel-model=~{pcr_indel_model_override} " else " "
+  String extra_args_mqft = if defined(mapq_filter_threshold) then "--read-filter MappingQualityReadFilter --minimum-mapping-quality ~{mapq_filter_threshold} " else " "
+  String extra_args_XAft = if defined(filter_secondary_0x100_mappgings) then "--read-filter NotSecondaryAlignmentReadFilter " else " "
+  String extra_args_SAft = if defined(filter_supplementary_0x800_mappings) then "--read-filter NotSupplementaryAlignmentReadFilter " else " "
 
-  String extra_args = extra_args_pcr + extra_args_mqft + extra_args_XAft + extra_args_SAft + extra_args_sdannot + extra_args_sdhcannot + extra_args_asannot
+  String extra_args = extra_args_pcr + extra_args_mqft + extra_args_XAft + extra_args_SAft
 
   parameter_meta {
     input_bam: {
@@ -127,7 +126,67 @@ task HaplotypeCaller_GATK4_VCF {
   }
 
   command <<<
-    set -e
+    set -eu
+
+    ####### custom/simple ploidy-determining logic
+    # ploidy is always 2 if sample is female
+    if [[ ~{sample_is_female} == true ]] || [[ ~{sample_is_female} == "true" ]]; then
+      echo "Sample is female, hence ploidy is set as 2."
+      LOCAL_PLOIDY=2;
+    else
+      # currently we count on bedtools being embedded in GATK docker (verified), but who knows what happens down the road
+      command -v bedtools >/dev/null 2>&1 || { echo >&2 "I require bedtools but it's not installed. Aborting."; exit 1; }
+      echo "Sample is male"
+
+      sed -E $'s/(:|-)/\t/g' ~{interval_list} > temp.intervals # standarize to BED format
+      filename=$(basename -- ~{interval_list})
+      extension="${filename##*.}"
+      if [[ ${extension} != "bed" ]]; then
+        awk 'BEGIN{OFS="\t";} {$2=$2-1; print}' temp.intervals | grep -v '^@' | grep -v '^#' > temp.intervals.bed # BED is [0, b), and input is [1, b]
+      else
+        mv temp.intervals temp.intervals.bed
+      fi
+      echo "Requested intervals"
+      cat temp.intervals.bed
+
+      # if all on autosomes, ploidy 2
+      # if mixture of autosomes and sex chromosomes, throw error
+      # if all on sex chromosomes, check overlap with PAR regions
+      #   if all overlaps are zero, then ploidy 1,
+      #   if some zero some non-zero,
+      #        if all chrY, then ploidy 1
+      #        otherwise require all intervals in it fall strictly in PAR regions, and ploidy 2 (if not, throw error)
+      ANY_OVP=$(bedtools intersect -a temp.intervals.bed -b ~{par_regions_bed} -wao | awk '{print $NF}' | sort -r | uniq | awk '{print $1}')
+      autosome_count=$(awk '{print $1}' temp.intervals.bed | sort | uniq | sed 's/chr//g' | grep -cvE '(X|Y)') || autosome_count=0
+      xy_count=$(awk '{print $1}' temp.intervals.bed | sort | uniq | sed 's/chr//g' | grep -cE '(X|Y)') || xy_count=0
+      echo "Count of intervals on autosomes: ${autosome_count}"
+      echo "Count of intervals on sex chromosomes: ${xy_count}"
+      if [[ ${xy_count} == 0 ]]; then
+        echo "Requested intervals all on autosomes."
+        LOCAL_PLOIDY=2
+      elif [[ ${autosome_count} != 0 ]]; then
+        echo "Requested intervals have mixture of autosomes and sex chromosomes. I CAN NOT handle that yet. Quit." && exit 1
+      elif [[ ${ANY_OVP} == 0 ]] || [[ ${ANY_OVP} == "0" ]]; then
+        echo "Requested intervals are all on the sex chromosomes, but have no overlap with PAR regions"
+        LOCAL_PLOIDY=1
+      else
+        chromosomes=$(awk '{print $1}' temp.intervals.bed | sort | uniq | sed 's/chr//g')
+        if [[ ${chromosomes} == "Y" ]]; then
+          echo "Requested intervals all on the Y chromosome"
+          LOCAL_PLOIDY=1;
+        else
+          is_ok=$(bedtools intersect -a temp.intervals.bed -b ~{par_regions_bed} -wao | awk '{l = $3-$2; if (l == $NF) print "YES"; else print "STOP";}' | sort | uniq)
+          if [[ ${is_ok} == "YES" ]]; then
+            LOCAL_PLOIDY=2;
+          else
+            echo "Requesting intervals intersect but do not fall strictly in PAR regions" && exit 1;
+          fi
+        fi
+      fi
+      echo "Using ploidy as ${LOCAL_PLOIDY}"
+    fi
+
+    #######
 
     gatk --java-options "-Xms6000m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
       HaplotypeCaller \
@@ -135,6 +194,7 @@ task HaplotypeCaller_GATK4_VCF {
       -I ~{input_bam} \
       -L ~{interval_list} \
       -O ~{output_file_name} \
+      --sample-ploidy ${LOCAL_PLOIDY} \
       -contamination ~{default=0 contamination} \
       -G StandardAnnotation -G StandardHCAnnotation ~{true="-G AS_StandardAnnotation" false="" make_gvcf} \
       -new-qual \
