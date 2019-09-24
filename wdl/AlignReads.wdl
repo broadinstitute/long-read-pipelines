@@ -11,13 +11,16 @@ task Minimap2 {
         String ID
         String PL
         Boolean? reads_are_corrected
+        Boolean? reads_are_rna
         
         RuntimeAttr? runtime_attr_override
     }
 
     Boolean correct = select_first([reads_are_corrected, false])
+    Boolean rna_reads = select_first([reads_are_rna, false])
     String map_arg = if (PL == "ONT") then "map-ont" else "map-pb"
     String correction_arg = if (correct) then "asm20" else map_arg
+    String map_preset = if (rna_reads) then "splice" else correction_arg
 
     Int cpus = 4
     Int disk_size = ceil(size(ref_fasta, "GB")) + 4*ceil(size(shard, "GB"))
