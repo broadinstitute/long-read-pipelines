@@ -4,8 +4,8 @@ version 1.0
 #
 # About:
 #   This WDL pipeline processes long read RNA data from a single sample (which may be split among multiple
-#   PacBio SMRTCells).  We perform a variety of tasks (including CCS error correction, alignment,
-#   flowcell merging, and automated QC). The results of pipeline are intended to be "analysis-ready".
+#   PacBio SMRTCells).  We perform a variety of tasks (including CCS error correction, alignment, and
+#   flowcell merging).
 #
 #   This pipeline is currently capable of processing any combination of the following datasets:
 #     - PacBio raw CCS IsoSeq data
@@ -84,35 +84,12 @@ workflow LRTranscriptomeSingleSample {
                     reads_are_corrected = true,
                     reads_are_rna = true,
             }
-
-            call RCCSRR.RecoverCCSRemainingReads as RecoverCCSRemainingReads {
-                input:
-                    unmapped_shard = unmapped_shard,
-                    ccs_shard = CCS.ccs_shard,
-            }
-
-            call AR.Minimap2 as AlignRemaining {
-                input:
-                    shard = RecoverCCSRemainingReads.remaining_shard,
-                    ref_fasta = ref_fasta,
-                    SM = DetectRunInfo.run_info['SM'],
-                    ID = DetectRunInfo.run_info['ID'] + ".remaining",
-                    PL = DetectRunInfo.run_info['PL'],
-                    reads_are_corrected = false,
-                    reads_are_rna = true,
-            }
         }
 
         call MB.MergeBams as MergeCorrected {
             input:
                 aligned_shards = AlignCCS.aligned_shard,
                 merged_name="corrected.bam",
-        }
-
-        call MB.MergeBams as MergeRemaining {
-            input:
-                aligned_shards = AlignRemaining.aligned_shard,
-                merged_name="remaining.bam",
         }
     }
 
@@ -125,16 +102,5 @@ workflow LRTranscriptomeSingleSample {
     call VB.ValidateBam as ValidateAllCorrected {
         input:
             input_bam = MergeAllCorrected.merged,
-    }
-
-    call MB.MergeBams as MergeAllRemaining {
-        input:
-            aligned_shards = MergeRemaining.merged,
-            merged_name="all.remaining.bam",
-    }
-
-    call VB.ValidateBam as ValidateAllRemaining {
-        input:
-            input_bam = MergeAllRemaining.merged,
     }
 }
