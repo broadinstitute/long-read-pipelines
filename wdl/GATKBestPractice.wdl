@@ -16,26 +16,29 @@ workflow GATKBestPraciceForLR {
 
     input {
       File calling_interval_list
-      Int haplotype_scatter_count
-      Int break_bands_at_multiples_of
 
       Float? contamination
 
       File input_bam
+
       File ref_fasta
       File ref_fasta_index
       File ref_dict
+      File par_regions_bed
 
       Boolean sample_is_female
 
       String gatk4_docker_tag
       String custom_lr_gatk4_docker_tag
 
-      String base_file_name
       String final_vcf_base_name
 
       Boolean run_qc_on_variants
       Boolean make_bamout = false
+      File var_calling_metrics_eval_interval_list
+
+      File dbsnp_vcf
+      File dbsnp_vcf_index
 
       Int agg_preemptible_tries = 1 # can not be optional as the tasks and sub-workflows copied over has this non-optional
     }
@@ -49,9 +52,7 @@ workflow GATKBestPraciceForLR {
     # Perform variant calling on the sub-intervals, and then gather the results
     call DSDEPipelinesUtils.ScatterIntervalList as ScatterIntervalList {
       input:
-        interval_list = calling_interval_list,
-        scatter_count = haplotype_scatter_count,
-        break_bands_at_multiples_of = break_bands_at_multiples_of
+        interval_list = calling_interval_list
     }
 
     ###########################################################################
@@ -60,6 +61,8 @@ workflow GATKBestPraciceForLR {
     # to account for the fact that the data is quite uneven across the shards.
     Int potential_hc_divisor = ScatterIntervalList.interval_count - 20
     Int hc_divisor = if potential_hc_divisor > 1 then potential_hc_divisor else 1
+
+    String dbsnp_vcf_gspath = dbsnp_vcf
 
     # Call variants in parallel over WGS calling intervals
     scatter (scattered_interval_list in ScatterIntervalList.out) {
@@ -70,10 +73,10 @@ workflow GATKBestPraciceForLR {
             contamination = contamination,
             input_bam = input_bam,
             interval_list = scattered_interval_list,
-            vcf_basename = base_file_name,
             ref_dict = ref_dict,
             ref_fasta = ref_fasta,
             ref_fasta_index = ref_fasta_index,
+            par_regions_bed = par_regions_bed,
             hc_scatter = hc_divisor,
             make_gvcf = true, # always produce gVCF
             make_bamout = make_bamout,
@@ -92,6 +95,8 @@ workflow GATKBestPraciceForLR {
               ref_dict = ref_dict,
               ref_fasta = ref_fasta,
               ref_fasta_index = ref_fasta_index,
+
+              dbsnp_vcf_gspath = dbsnp_vcf_gspath,
 
               gatk4_docker_tag = gatk4_docker_tag
         }
@@ -152,6 +157,8 @@ workflow GATKBestPraciceForLR {
             ref_dict = ref_dict,
             calling_interval_list = calling_interval_list,
             is_gvcf = true,
+            dbsnp_vcf = dbsnp_vcf,
+            dbsnp_vcf_index = dbsnp_vcf_index,
             gatk_docker = "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag,
             preemptible_tries = agg_preemptible_tries
         }
@@ -164,6 +171,8 @@ workflow GATKBestPraciceForLR {
             ref_dict = ref_dict,
             calling_interval_list = calling_interval_list,
             is_gvcf = false,
+            dbsnp_vcf = dbsnp_vcf,
+            dbsnp_vcf_index = dbsnp_vcf_index,
             gatk_docker = "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag,
             preemptible_tries = agg_preemptible_tries
         }
@@ -176,6 +185,9 @@ workflow GATKBestPraciceForLR {
             metrics_basename = final_vcf_base_name,
             ref_dict = ref_dict,
             is_gvcf = true,
+            dbsnp_vcf = dbsnp_vcf,
+            dbsnp_vcf_index = dbsnp_vcf_index,
+            evaluation_interval_list = var_calling_metrics_eval_interval_list,
             preemptible_tries = agg_preemptible_tries
         }
         call QC.CollectVariantCallingMetrics as CollectVariantCallingMetrics {
@@ -185,6 +197,9 @@ workflow GATKBestPraciceForLR {
             metrics_basename = final_vcf_base_name,
             ref_dict = ref_dict,
             is_gvcf = false,
+            dbsnp_vcf = dbsnp_vcf,
+            dbsnp_vcf_index = dbsnp_vcf_index,
+            evaluation_interval_list = var_calling_metrics_eval_interval_list,
             preemptible_tries = agg_preemptible_tries
         }
     }
@@ -248,7 +263,7 @@ task MergeBamouts {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             4,
-        disk_gb:            "local-disk ~{disk_size} HDD",
+        disk_gb:            "~{disk_size}",
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
@@ -384,7 +399,7 @@ task PostProcess {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "kgarimella/gatk-lr-custom:" + custom_lr_gatk4_docker_tag
+        docker:             "shuangbroad/gatk-lr-custom:" + custom_lr_gatk4_docker_tag
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

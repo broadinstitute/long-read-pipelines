@@ -94,7 +94,7 @@ task PrepareRun {
 
 # TODO: investigate if samtools is better for this task
 # Sort BAM file by coordinate order
-# copied from "dsde_pipelines_tasks/BamProcessing.wdl", with 
+# copied from "dsde_pipelines_tasks/BamProcessing.wdl", with
 #    customization on the runtime block, and "preemptible_tries" taken out
 task SortSam {
     input {
@@ -127,9 +127,9 @@ task SortSam {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1, 
-        mem_gb:             5, 
-        disk_gb:            "local-disk ~{disk_size} HDD",
+        cpu_cores:          1,
+        mem_gb:             5,
+        disk_gb:            "~{disk_size}",
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
