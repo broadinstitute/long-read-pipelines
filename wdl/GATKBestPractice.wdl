@@ -29,6 +29,7 @@ workflow GATKBestPraciceForLR {
       Boolean sample_is_female
 
       String gatk4_docker_tag
+      String custom_lr_gatk4_docker_tag
 
       String base_file_name
       String final_vcf_base_name
@@ -151,6 +152,7 @@ workflow GATKBestPraciceForLR {
             ref_dict = ref_dict,
             calling_interval_list = calling_interval_list,
             is_gvcf = true,
+            gatk_docker = "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag,
             preemptible_tries = agg_preemptible_tries
         }
         call QC.ValidateVCF as ValidateVCF {
@@ -162,6 +164,7 @@ workflow GATKBestPraciceForLR {
             ref_dict = ref_dict,
             calling_interval_list = calling_interval_list,
             is_gvcf = false,
+            gatk_docker = "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag,
             preemptible_tries = agg_preemptible_tries
         }
 
@@ -186,21 +189,35 @@ workflow GATKBestPraciceForLR {
         }
     }
 
+    ###########################################################################
+    call PostProcess as PostProcess {
+        input:
+          input_vcf = MergeVCFs.output_vcf,
+          input_vcf_index = MergeVCFs.output_vcf_index,
+          ref_fasta = ref_fasta,
+          ref_fasta_index = ref_fasta_index,
+          ref_dict = ref_dict,
+          custom_lr_gatk4_docker_tag = custom_lr_gatk4_docker_tag
+    }
+
     output {
-      File output_vcf = MergeVCFs.output_vcf
-      File output_vcf_index = MergeVCFs.output_vcf_index
+        File out_pp_vcf = PostProcess.output_vcf
+        File out_pp_vcf_index = PostProcess.output_vcf_index
 
-      File output_gvcf = MergeGVCFs.output_vcf
-      File output_gvcf_index = MergeGVCFs.output_vcf_index
+        File output_vcf = MergeVCFs.output_vcf
+        File output_vcf_index = MergeVCFs.output_vcf_index
 
-      File? vcf_summary_metrics = CollectVariantCallingMetrics.summary_metrics
-      File? vcf_detail_metrics = CollectVariantCallingMetrics.detail_metrics
+        File output_gvcf = MergeGVCFs.output_vcf
+        File output_gvcf_index = MergeGVCFs.output_vcf_index
 
-      File? gvcf_summary_metrics = CollectVariantCallingMetricsGVCF.summary_metrics
-      File? gvcf_detail_metrics = CollectVariantCallingMetricsGVCF.detail_metrics
+        File? vcf_summary_metrics = CollectVariantCallingMetrics.summary_metrics
+        File? vcf_detail_metrics = CollectVariantCallingMetrics.detail_metrics
 
-      File? bamout = MergeBamouts.output_bam
-      File? bamout_index = MergeBamouts.output_bam_index
+        File? gvcf_summary_metrics = CollectVariantCallingMetricsGVCF.summary_metrics
+        File? gvcf_detail_metrics = CollectVariantCallingMetricsGVCF.detail_metrics
+
+        File? bamout = MergeBamouts.output_bam
+        File? bamout_index = MergeBamouts.output_bam_index
     }
 }
 
@@ -312,6 +329,62 @@ task GenotypeGVCFs {
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+# Postprocessing the VCFs following the CCS paper
+task PostProcess {
+    input {
+
+        File input_vcf
+        File input_vcf_index
+
+        File ref_fasta
+        File ref_fasta_index
+        File ref_dict
+
+        String custom_lr_gatk4_docker_tag
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil(size(input_vcf, "GiB")) + 10
+
+    String out_vcf = "/cromwell_root/" + basename(input_vcf, ".vcf.gz") + ".merged.filtered.vcf.gz"
+
+    command <<<
+
+        set -euo pipefail
+
+        cd /opt/ && \
+          bash postprocess.sh ~{input_vcf} ~{out_vcf} ~{ref_fasta} && \
+          cd -
+    >>>
+
+    output {
+        File output_vcf = "~{out_vcf}"
+        File output_vcf_index = "~{out_vcf}.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             7,
+        disk_gb:            "~{disk_size}",
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "kgarimella/gatk-lr-custom:" + custom_lr_gatk4_docker_tag
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
