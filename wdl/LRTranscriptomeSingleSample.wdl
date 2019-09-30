@@ -48,6 +48,8 @@ workflow LRTranscriptomeSingleSample {
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
+
+        String gcs_output_dir
     }
 
     scatter (gcs_dir in gcs_dirs) {
@@ -65,6 +67,7 @@ workflow LRTranscriptomeSingleSample {
         call SLR.ShardLongReads as ShardLongReads {
             input:
                 unmapped_bam = PrepareRun.unmapped_bam,
+                num_reads_per_split = 2000000
         }
 
         scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
