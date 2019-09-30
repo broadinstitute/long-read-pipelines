@@ -10,7 +10,7 @@ task ValidateBam {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(size(input_bam, "GB"))
+    Int disk_size = 2*ceil(size(input_bam, "GB"))
 
     command <<<
         set -euxo pipefail
