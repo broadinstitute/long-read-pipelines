@@ -1,0 +1,14 @@
+{
+    "LRTranscriptomeSingleSample.gcs_dirs": [
+        "gs://broad-dsde-methods-long-reads-incoming/PDO-19423_IsoSeq/SM-HLD5O-Cell1/",
+        "gs://broad-dsde-methods-long-reads-incoming/PDO-19423_IsoSeq/SM-HLD5O-Cell2/"
+    ],
+
+    "LRTranscriptomeSingleSample.sample_name": "SM-HLD5O",
+
+    "LRTranscriptomeSingleSample.ref_fasta":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+    "LRTranscriptomeSingleSample.ref_fasta_fai": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+    "LRTranscriptomeSingleSample.ref_dict":      "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+
+    "LRTranscriptomeSingleSample.gcs_output_dir": "gs://broad-dsde-methods-long-reads-outgoing/LRTranscriptomeSingleSample"
+}

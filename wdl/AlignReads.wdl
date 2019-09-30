@@ -11,13 +11,16 @@ task Minimap2 {
         String ID
         String PL
         Boolean? reads_are_corrected
+        Boolean? reads_are_rna
         
         RuntimeAttr? runtime_attr_override
     }
 
     Boolean correct = select_first([reads_are_corrected, false])
+    Boolean rna_reads = select_first([reads_are_rna, false])
     String map_arg = if (PL == "ONT") then "map-ont" else "map-pb"
     String correction_arg = if (correct) then "asm20" else map_arg
+    String map_preset = if (rna_reads) then "splice" else correction_arg
 
     Int cpus = 4
     Int disk_size = ceil(size(ref_fasta, "GB")) + 4*ceil(size(shard, "GB"))
@@ -28,7 +31,7 @@ task Minimap2 {
         set -euxo pipefail
 
         RG=`python /usr/local/bin/merge_read_group_tags.py --ID ~{ID} --SM ~{SM} --PL ~{PL} ~{shard}`
-        samtools fastq ~{shard} | minimap2 -ayY --MD --eqx -x ~{correction_arg} -R ${RG} -t ~{cpus} ~{ref_fasta} - | samtools view -b - > temp.aligned.unsorted.bam
+        samtools fastq ~{shard} | minimap2 -ayY --MD --eqx -x ~{map_preset} -R ${RG} -t ~{cpus} ~{ref_fasta} - | samtools view -b - > temp.aligned.unsorted.bam
         java -Dsamjdk.compression_level=0 -Xmx4g -jar /usr/local/bin/gatk.jar RepairLongReadBam -I ~{shard} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
         samtools sort -@~{cpus} -m4G -o ~{aligned_shard_name} temp.aligned.unsorted.repaired.bam
     >>>
