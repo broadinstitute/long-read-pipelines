@@ -1,4 +1,4 @@
-TAG1 = kgarimella/lr-asm:0.01.09
+TAG1 = kgarimella/lr-asm:0.01.10
 TAG2 = kgarimella/lr-asm:latest
 
 all: build push

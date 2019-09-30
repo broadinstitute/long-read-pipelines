@@ -39,13 +39,14 @@ version 1.0
 
 import "AlignReads.wdl" as AR
 import "CallSV.wdl" as CallSV
-import "CanuMT.wdl" as CMT
 import "CorrectReads.wdl" as CR
 import "MergeBams.wdl" as MB
 import "RecoverCCSRemainingReads.wdl" as RCCSRR
 import "ShardLongReads.wdl" as SLR
 import "Utils.wdl" as Utils
 import "ValidateBam.wdl" as VB
+import "AssembleReads.wdl" as ASM
+import "AssembleMT.wdl" as ASMT
 
 workflow LRWholeGenomeSingleSample {
     input {
@@ -124,6 +125,20 @@ workflow LRWholeGenomeSingleSample {
             input:
                 aligned_shards = AlignRemaining.aligned_shard,
                 merged_name="remaining.bam",
+        }
+
+        call ASMT.AssembleMT as AssembleMT {
+            input:
+                corrected_bam = MergeCorrected.merged,
+                corrected_bai = MergeCorrected.merged_bai,
+                remaining_bam = MergeRemaining.merged,
+                remaining_bai = MergeRemaining.merged_bai,
+
+                platform      = DetectRunInfo.run_info['PL'],
+
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                ref_dict      = ref_dict
         }
     }
 

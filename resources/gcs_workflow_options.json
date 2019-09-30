@@ -3,5 +3,9 @@
   "read_from_cache": true,
   "workflow_failure_mode": "ContinueWhilePossible",
   "jes_gcs_root": "gs://broad-dsde-methods-long-reads-intermediate",
-  "monitoring_script": "gs://broad-dsde-methods-long-reads/resources/scripts/cromwell_monitoring_script.sh"
+  "final_workflow_outputs_dir": "gs://broad-dsde-methods-long-reads-outgoing",
+  "monitoring_script": "gs://broad-dsde-methods-long-reads/resources/scripts/cromwell_monitoring_script.sh",
+  "default_runtime_attributes": {
+    "zones": "us-east1-b us-east1-c us-east1-d"
+  }
 }
