@@ -4,6 +4,7 @@ This repository contains pipelines for processing of long read data from PacBio 
 ## Available pipelines:
 The following pipelines are implemented:
 
-| Pipeline                      | Description                                                                                              |
-|-------------------------------|----------------------------------------------------------------------------------------------------------|
-| LRWholeGenomeSingleSample.wdl | Error correction, alignment, and variant discovery on >= 1 {SMRT,flow}cell of data from the same sample. |
+| Pipeline                        | Description                                                                                              |
+|---------------------------------|----------------------------------------------------------------------------------------------------------|
+| LRWholeGenomeSingleSample.wdl   | Error correction, alignment, and variant discovery on >= 1 {SMRT,flow}cell of data from the same sample. |
+| LRTranscriptomeSingleSample.wdl | Error correction and splice-aware alignment on >= 1 {SMRT,flow}cell of data from the same sample.        |
