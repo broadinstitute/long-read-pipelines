@@ -59,10 +59,9 @@ workflow LRWholeGenomeSingleSample {
         String mt_chr_name
 
         File tandem_repeat_bed
-    }
 
-    String docker_align = "kgarimella/lr-align:0.01.17"
-    String docker_asm = "kgarimella/lr-asm:0.01.06"
+        String gcs_output_dir
+    }
 
     scatter (gcs_dir in gcs_dirs) {
         call Utils.DetectRunInfo as DetectRunInfo {

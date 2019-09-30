@@ -13,6 +13,7 @@
 
     "LRWholeGenomeSingleSample.tandem_repeat_bed": "gs://broad-dsde-methods-long-reads/2019-Aug-PacBio-Nature-Biotech-Paper/human_GRCh38_no_alt_analysis_set.trf.bed",
 
-    "LRWholeGenomeSingleSample.mt_chr_name":   "chrM"
-}
+    "LRWholeGenomeSingleSample.mt_chr_name":   "chrM",
 
+    "LRWholeGenomeSingleSample.gcs_output_dir":   "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample"
+}
