@@ -40,8 +40,8 @@ task DeepVariant {
           --model_type=~{model_class} \
           --ref=~{ref_fasta} \
           --reads=~{bam} \
-          --output_vcf=~{output_prefix}.vcf.gz \
-          --output_gvcf=~{output_prefix}.g.vcf.gz \
+          --output_vcf=/cromwell_root/~{output_prefix}.deepvariant.vcf.gz \
+          --output_gvcf=/cromwell_root/~{output_prefix}.deepvariant.g.vcf.gz \
           --num_shards=${num_core} \
           ~{extra_args}
     >>>
@@ -56,13 +56,13 @@ task DeepVariant {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          8, 
-        mem_gb:             50, 
+        cpu_cores:          32,
+        mem_gb:             120,
         disk_gb:            "~{disk_size}",
-        boot_disk_gb:       10,
+        boot_disk_gb:       100,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "gcr.io/deepvariant-docker/deepvariant@sha256:699870a8c4109c13f59a9a5899db563011746d6104aa78c999cbcc715d03dcf2"
+        docker:             "gcr.io/deepvariant-docker/deepvariant:0.8.0-gpu"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -73,10 +73,15 @@ task DeepVariant {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        gpuType:                "nvidia-tesla-p100"
+        gpuCount:               2
+        nvidiaDriverVersion:    "418.87.00"
+        zones:                  ["us-central1-c", "us-east1-b", "us-east1-c"]
+        cpuPlatform:            "Intel Skylake"
     }
 }
 
-workflow TestCallSmallVariants {
+workflow TestCallDeepVariant {
     input {
         File bam
         File bai
