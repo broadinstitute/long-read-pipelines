@@ -23,7 +23,7 @@ task Minimap2 {
     String map_preset = if (rna_reads) then "splice" else correction_arg
 
     Int cpus = 4
-    Int disk_size = ceil(size(ref_fasta, "GB")) + 4*ceil(size(shard, "GB"))
+    Int disk_size = ceil(size(ref_fasta, "GB")) + 10*ceil(size(shard, "GB"))
 
     String aligned_shard_name = basename(shard, ".bam") + ".aligned.bam"
 
