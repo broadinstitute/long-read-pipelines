@@ -1,4 +1,4 @@
-TAG1 = kgarimella/lr-peregrine:0.01.00
+TAG1 = kgarimella/lr-peregrine:0.01.05
 TAG2 = kgarimella/lr-peregrine:latest
 
 all: build push
