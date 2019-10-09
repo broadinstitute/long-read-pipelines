@@ -117,7 +117,8 @@ task SortSam {
         SORT_ORDER="coordinate" \
         CREATE_INDEX=true \
         CREATE_MD5_FILE=true \
-        MAX_RECORDS_IN_RAM=300000
+        MAX_RECORDS_IN_RAM=300000 \
+        VALIDATION_STRINGENCY=SILENT
     }
     output {
       File output_bam = "~{output_bam_basename}.bam"
