@@ -187,7 +187,7 @@ workflow GATKBestPraciceForLR {
             is_gvcf = true,
             dbsnp_vcf = dbsnp_vcf,
             dbsnp_vcf_index = dbsnp_vcf_index,
-            evaluation_interval_list = var_calling_metrics_eval_interval_list,
+            evaluation_interval_list = ScatterIntervalList.out[2],
             preemptible_tries = agg_preemptible_tries
         }
         call QC.CollectVariantCallingMetrics as CollectVariantCallingMetrics {
@@ -199,7 +199,7 @@ workflow GATKBestPraciceForLR {
             is_gvcf = false,
             dbsnp_vcf = dbsnp_vcf,
             dbsnp_vcf_index = dbsnp_vcf_index,
-            evaluation_interval_list = var_calling_metrics_eval_interval_list,
+            evaluation_interval_list = ScatterIntervalList.out[2],
             preemptible_tries = agg_preemptible_tries
         }
     }

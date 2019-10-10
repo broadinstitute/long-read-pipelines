@@ -55,8 +55,8 @@
   "GATKBestPraciceForLR.ref_fasta_index": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
   "GATKBestPraciceForLR.par_regions_bed": "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.par.bed",
 
-  "GATKBestPraciceForLR.dbsnp_vcf": "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.vcf.gz" ,
-  "GATKBestPraciceForLR.dbsnp_vcf_index": "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.vcf.gz.tbi",
+  "GATKBestPraciceForLR.dbsnp_vcf": "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
+  "GATKBestPraciceForLR.dbsnp_vcf_index": "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
 
   "GATKBestPraciceForLR.calling_interval_list": "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.all.canonical.autosomes.interval_list"
 }
