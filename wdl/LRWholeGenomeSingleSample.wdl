@@ -192,12 +192,11 @@ workflow LRWholeGenomeSingleSample {
                 ref_fasta = ref_fasta,
                 ref_fai = ref_fasta_fai,
                 model_class = "PACBIO",
-                output_prefix = select_first([sample_name, "DeepVariantTest"])
+                output_prefix = select_first([sample_name, "DeepVariant"])
         }
 
         call GATKBP.GATKBestPraciceForLR as GATKLR {
             input:
-
                 input_bam = MergeAllCorrected.merged,
                 sample_is_female = sample_is_female,
 

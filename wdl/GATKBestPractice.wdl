@@ -321,7 +321,7 @@ task GenotypeGVCFs {
     command <<<
         set -euo pipefail
 
-        # compared to the original, we take out "--only-output-calls-starting-in-intervals" 
+        # compared to the original, we take out "--only-output-calls-starting-in-intervals"
         # because we don't have to deal with a large (close to TB) VCF
         gatk --java-options -Xms5g \
           GenotypeGVCFs \
@@ -405,7 +405,7 @@ task PostProcess {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "kgarimella/gatk-lr-custom:" + custom_lr_gatk4_docker_tag
+        docker:             "kgarimella/lr-gatk:" + custom_lr_gatk4_docker_tag
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -1,5 +1,5 @@
-TAG1 = kgarimella/gatk-lr-custom:0.01.17
-TAG2 = kgarimella/gatk-lr-custom:latest
+TAG1 = kgarimella/lr-gatk:0.01.00
+TAG2 = kgarimella/lr-gatk:latest
 
 all: build push
 

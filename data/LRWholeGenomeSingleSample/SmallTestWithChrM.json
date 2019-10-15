@@ -1,9 +1,11 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-long-reads-incoming/PBEAP/YRI_NA19240/"
+        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_42_ZMWs/",
+        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_42_ZMWs/",
+        "gs://broad-dsde-methods-long-reads/resources/test_data/ONT/MinION/unaligned_reads/NA12878_chrM_400_reads/"
     ],
 
-    "LRWholeGenomeSingleSample.sample_name":       "NA19240",
+    "LRWholeGenomeSingleSample.sample_name":       "around_400_reads_from_chrM",
     "LRWholeGenomeSingleSample.gcs_output_dir":    "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample",
 
     "LRWholeGenomeSingleSample.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
