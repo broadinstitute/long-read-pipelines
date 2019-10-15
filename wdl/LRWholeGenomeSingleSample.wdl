@@ -47,6 +47,7 @@ import "Utils.wdl" as Utils
 import "ValidateBam.wdl" as VB
 import "AssembleReads.wdl" as ASM
 import "AssembleMT.wdl" as ASMT
+import "AssembleGenome.wdl" as AG
 import "DeepVariantLR.wdl" as DV
 import "GATKBestPractice.wdl" as GATKBP
 
@@ -185,6 +186,13 @@ workflow LRWholeGenomeSingleSample {
 
     Array[String?] platform_gather = platform
     if ("PACBIO" == select_first(platform_gather)) {
+        call AG.AssembleGenome as AssembleGenome {
+            input:
+                ref_fasta = ref_fasta,
+                bam = MergeAllCorrected.merged,
+                sample_name = sample_name
+        }
+
         call DV.DeepVariant as DeepVariant {
             input:
                 bam = MergeAllCorrected.merged,
