@@ -5,3 +5,5 @@ channels:
   - bioconda
 dependencies:
   - samtools
+  - bedtools
+  - java-jdk

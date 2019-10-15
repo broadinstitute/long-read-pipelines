@@ -1,4 +1,4 @@
-TAG1 = kgarimella/lr-metrics:0.01.01
+TAG1 = kgarimella/lr-metrics:0.01.05
 TAG2 = kgarimella/lr-metrics:latest
 
 all: build push
