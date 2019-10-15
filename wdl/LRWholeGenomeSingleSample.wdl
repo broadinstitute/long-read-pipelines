@@ -48,12 +48,14 @@ import "ValidateBam.wdl" as VB
 import "AssembleReads.wdl" as ASM
 import "AssembleMT.wdl" as ASMT
 import "DeepVariantLR.wdl" as DV
+import "GATKBestPractice.wdl" as GATKBP
 
 workflow LRWholeGenomeSingleSample {
     input {
         Array[String] gcs_dirs
 
         String? sample_name
+        Boolean? sample_is_female
 
         File ref_fasta
         File ref_fasta_fai
@@ -190,6 +192,19 @@ workflow LRWholeGenomeSingleSample {
                 ref_fasta = ref_fasta,
                 ref_fai = ref_fasta_fai,
                 output_prefix = select_first([sample_name, "DeepVariantTest"])
+        }
+
+        call GATKBP.GATKBestPraciceForLR as GATKLR {
+            input:
+
+                input_bam = MergeAllCorrected.merged,
+                sample_is_female = sample_is_female,
+
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_fai,
+                ref_dict = ref_dict,
+
+                final_vcf_base_name = select_first([sample_name, "GATK4"])
         }
     }
 }

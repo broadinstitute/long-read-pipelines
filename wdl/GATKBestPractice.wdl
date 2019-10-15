@@ -16,6 +16,8 @@ workflow GATKBestPraciceForLR {
 
     input {
       File calling_interval_list
+      Int calling_intervals_scatter_count
+      Int calling_intervals_break_bands_at_multiples_of
 
       Float? contamination
 
@@ -26,7 +28,7 @@ workflow GATKBestPraciceForLR {
       File ref_dict
       File par_regions_bed
 
-      Boolean sample_is_female
+      Boolean? sample_is_female
 
       String gatk4_docker_tag
       String custom_lr_gatk4_docker_tag
@@ -35,7 +37,7 @@ workflow GATKBestPraciceForLR {
 
       Boolean run_qc_on_variants
       Boolean make_bamout = false
-      File var_calling_metrics_eval_interval_list
+      File? var_calling_metrics_eval_interval_list
 
       File dbsnp_vcf
       File dbsnp_vcf_index
@@ -52,7 +54,9 @@ workflow GATKBestPraciceForLR {
     # Perform variant calling on the sub-intervals, and then gather the results
     call DSDEPipelinesUtils.ScatterIntervalList as ScatterIntervalList {
       input:
-        interval_list = calling_interval_list
+        interval_list = calling_interval_list,
+        scatter_count = calling_intervals_scatter_count,
+        break_bands_at_multiples_of = calling_intervals_break_bands_at_multiples_of
     }
 
     ###########################################################################
@@ -82,7 +86,9 @@ workflow GATKBestPraciceForLR {
             make_bamout = make_bamout,
             preemptible_tries = agg_preemptible_tries,
 
-            sample_is_female = sample_is_female,
+            sample_gender_known_as_female = sample_is_female,
+
+            vcf_basename = final_vcf_base_name + ".scatter.hc",
 
             gatk4_docker_tag = gatk4_docker_tag
         }
@@ -187,7 +193,7 @@ workflow GATKBestPraciceForLR {
             is_gvcf = true,
             dbsnp_vcf = dbsnp_vcf,
             dbsnp_vcf_index = dbsnp_vcf_index,
-            evaluation_interval_list = ScatterIntervalList.out[2],
+            evaluation_interval_list = select_first([var_calling_metrics_eval_interval_list, ScatterIntervalList.out[2]]),
             preemptible_tries = agg_preemptible_tries
         }
         call QC.CollectVariantCallingMetrics as CollectVariantCallingMetrics {
@@ -199,7 +205,7 @@ workflow GATKBestPraciceForLR {
             is_gvcf = false,
             dbsnp_vcf = dbsnp_vcf,
             dbsnp_vcf_index = dbsnp_vcf_index,
-            evaluation_interval_list = ScatterIntervalList.out[2],
+            evaluation_interval_list = select_first([var_calling_metrics_eval_interval_list, ScatterIntervalList.out[2]]),
             preemptible_tries = agg_preemptible_tries
         }
     }
@@ -399,7 +405,7 @@ task PostProcess {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "shuangbroad/gatk-lr-custom:" + custom_lr_gatk4_docker_tag
+        docker:             "kgarimella/gatk-lr-custom:" + custom_lr_gatk4_docker_tag
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
