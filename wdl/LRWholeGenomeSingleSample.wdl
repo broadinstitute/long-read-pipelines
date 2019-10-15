@@ -191,6 +191,7 @@ workflow LRWholeGenomeSingleSample {
                 bai = MergeAllCorrected.merged_bai,
                 ref_fasta = ref_fasta,
                 ref_fai = ref_fasta_fai,
+                model_class = "PACBIO",
                 output_prefix = select_first([sample_name, "DeepVariantTest"])
         }
 
