@@ -47,6 +47,7 @@ import "Utils.wdl" as Utils
 import "ValidateBam.wdl" as VB
 import "AssembleReads.wdl" as ASM
 import "AssembleMT.wdl" as ASMT
+import "DeepVariantLR.wdl" as DV
 
 workflow LRWholeGenomeSingleSample {
     input {
@@ -70,6 +71,7 @@ workflow LRWholeGenomeSingleSample {
                 gcs_dir = gcs_dir,
                 sample_name = sample_name,
         }
+        String platform = DetectRunInfo.run_info['PL']
 
         call Utils.PrepareRun as PrepareRun {
             input:
@@ -177,5 +179,17 @@ workflow LRWholeGenomeSingleSample {
         input:
             bam = MergeAllCorrected.merged,
             bai = MergeAllCorrected.merged_bai
+    }
+
+    Array[String?] platform_gather = platform
+    if ("PACBIO" == select_first(platform_gather)) {
+        call DV.DeepVariant as DeepVariant {
+            input:
+                bam = MergeAllCorrected.merged,
+                bai = MergeAllCorrected.merged_bai,
+                ref_fasta = ref_fasta,
+                ref_fai = ref_fasta_fai,
+                output_prefix = select_first([sample_name, "DeepVariantTest"])
+        }
     }
 }
