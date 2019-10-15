@@ -1,0 +1,63 @@
+{
+  "GATKBestPraciceForLR.input_bam": "gs://broad-dsde-methods-long-reads-intermediate/LRWholeGenomeSingleSample/3c059df3-efb0-4ad5-a626-e6d9e72210d3/call-MergeAllCorrected/all.corrected.bam",
+  "GATKBestPraciceForLR.sample_is_female": false,
+  "GATKBestPraciceForLR.contamination": 0.0,
+  "GATKBestPraciceForLR.final_vcf_base_name": "HCC1954T.GATK.bestpractice.v0.1",
+
+
+
+
+
+  "GATKBestPraciceForLR.gatk4_docker_tag": "latest",
+  "GATKBestPraciceForLR.custom_lr_gatk4_docker_tag": "0.1",
+
+
+
+
+
+  "GATKBestPraciceForLR.HaplotypeCallerGATK4.vcf_basename": "gatk.lr.bp.intermediate",
+  "GATKBestPraciceForLR.HaplotypeCallerGATK4.pcr_indel_model_override": "AGGRESSIVE",
+  "GATKBestPraciceForLR.HaplotypeCallerGATK4.mapq_filter_threshold": 60,
+  "GATKBestPraciceForLR.HaplotypeCallerGATK4.filter_secondary_0x100_mappgings": true,
+  "GATKBestPraciceForLR.HaplotypeCallerGATK4.filter_supplementary_0x800_mappings": true,
+  "GATKBestPraciceForLR.HaplotypeCallerGATK4.use_allele_specific_annotations": true,
+  "GATKBestPraciceForLR.HaplotypeCallerGATK4.use_standard_hc_annotations": true,
+  "GATKBestPraciceForLR.HaplotypeCallerGATK4.use_standard_annotations": true,
+
+
+
+
+
+  "GATKBestPraciceForLR.Genotyping.std_call_conf": 2.0,
+
+
+
+
+
+  "GATKBestPraciceForLR.ScatterIntervalList.scatter_count": 50,
+  "GATKBestPraciceForLR.ScatterIntervalList.break_bands_at_multiples_of": 1000000,
+
+
+
+
+
+  "GATKBestPraciceForLR.make_bamout": true,
+  "GATKBestPraciceForLR.run_qc_on_variants": true,
+  "GATKBestPraciceForLR.var_calling_metrics_eval_interval_list": "File",
+  "GATKBestPraciceForLR.agg_preemptible_tries": 3,
+
+
+
+
+
+  "GATKBestPraciceForLR.ref_dict": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+  "GATKBestPraciceForLR.ref_fasta": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+  "GATKBestPraciceForLR.ref_fasta_index": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+  "GATKBestPraciceForLR.par_regions_bed": "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.par.bed",
+
+  "GATKBestPraciceForLR.dbsnp_vcf": "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
+  "GATKBestPraciceForLR.dbsnp_vcf_index": "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
+
+  "GATKBestPraciceForLR.calling_interval_list": "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.all.canonical.autosomes.interval_list"
+}
+
