@@ -69,6 +69,7 @@ s = f"""
     "LRWholeGenomeSingleSample.mt_chr_name":       "chrM",
 
     "LRWholeGenomeSingleSample.tandem_repeat_bed": "gs://broad-dsde-methods-long-reads/resources/references/grch38/human_GRCh38_no_alt_analysis_set.trf.bed",
+    "LRWholeGenomeSingleSample.ref_flat":          "gs://broad-dsde-methods-long-reads/resources/references/grch38/refFlat.txt",
 
     "LRWholeGenomeSingleSample.GATKLR.par_regions_bed":                               "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.par.bed",
     "LRWholeGenomeSingleSample.GATKLR.calling_interval_list":                         "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.all.canonical.autosomes.interval_list",

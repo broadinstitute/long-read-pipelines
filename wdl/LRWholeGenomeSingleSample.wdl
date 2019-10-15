@@ -47,6 +47,7 @@ import "Utils.wdl" as Utils
 import "ValidateBam.wdl" as VB
 import "AssembleReads.wdl" as ASM
 import "AssembleMT.wdl" as ASMT
+import "Metrics.wdl" as MET
 import "AssembleGenome.wdl" as AG
 import "DeepVariantLR.wdl" as DV
 import "GATKBestPractice.wdl" as GATKBP
@@ -144,6 +145,15 @@ workflow LRWholeGenomeSingleSample {
                 ref_fasta     = ref_fasta,
                 ref_fasta_fai = ref_fasta_fai,
                 ref_dict      = ref_dict
+        }
+
+        call MET.LRMetrics {
+            input:
+                unaligned_bams = PrepareRun.unmapped_bam,
+                aligned_bams = MergeCorrected.merged,
+                aligned_bais = MergeCorrected.merged_bai,
+                ref_dict = ref_dict,
+                ref_flat = ref_flat,
         }
     }
 
