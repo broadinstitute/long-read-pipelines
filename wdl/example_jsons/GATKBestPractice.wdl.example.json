@@ -15,7 +15,6 @@
 
 
 
-  "GATKBestPraciceForLR.HaplotypeCallerGATK4.vcf_basename": "gatk.lr.bp.intermediate",
   "GATKBestPraciceForLR.HaplotypeCallerGATK4.pcr_indel_model_override": "AGGRESSIVE",
   "GATKBestPraciceForLR.HaplotypeCallerGATK4.mapq_filter_threshold": 60,
   "GATKBestPraciceForLR.HaplotypeCallerGATK4.filter_secondary_0x100_mappgings": true,
@@ -34,8 +33,8 @@
 
 
 
-  "GATKBestPraciceForLR.ScatterIntervalList.scatter_count": 50,
-  "GATKBestPraciceForLR.ScatterIntervalList.break_bands_at_multiples_of": 1000000,
+  "GATKBestPraciceForLR.calling_intervals_scatter_count": 50,
+  "GATKBestPraciceForLR.calling_intervals_break_bands_at_multiples_of": 1000000,
 
 
 
@@ -43,7 +42,6 @@
 
   "GATKBestPraciceForLR.make_bamout": true,
   "GATKBestPraciceForLR.run_qc_on_variants": true,
-  "GATKBestPraciceForLR.var_calling_metrics_eval_interval_list": "File",
   "GATKBestPraciceForLR.agg_preemptible_tries": 3,
 
 
