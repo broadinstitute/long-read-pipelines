@@ -26,6 +26,12 @@ workflow AssembleGenome {
             paf = AlignAsPAF.paf,
             sample_name = sample_name
     }
+
+    output {
+        File final_fa = "pasm/p_ctg_cns.fa"
+        File paf = "out.paf.gz"
+        File vcf = "~{sample_name}.pg.vcf"
+    }
 }
 
 task AssembleWithPeregrine {
