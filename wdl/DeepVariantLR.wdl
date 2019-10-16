@@ -61,7 +61,7 @@ task DeepVariant {
         disk_gb:            "~{disk_size}",
         boot_disk_gb:       100,
         preemptible_tries:  1,
-        max_retries:        0,
+        max_retries:        1,
         docker:             "gcr.io/deepvariant-docker/deepvariant:0.8.0-gpu"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

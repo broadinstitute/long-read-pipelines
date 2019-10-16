@@ -2,14 +2,14 @@ version 1.0
 
 import "Structs.wdl"
 
-workflow AssembleGenome {
+workflow Peregrine {
     input {
         File ref_fasta
         File bam
         String sample_name
     }
 
-    call AssembleWithPeregrine {
+    call Assemble {
         input:
             bam = bam,
     }
@@ -17,7 +17,7 @@ workflow AssembleGenome {
     call AlignAsPAF {
         input:
             ref_fasta = ref_fasta,
-            final_fa = AssembleWithPeregrine.final_fa
+            final_fa = Assemble.final_fa
     }
 
     call CallWithPaftools {
@@ -28,13 +28,13 @@ workflow AssembleGenome {
     }
 
     output {
-        File final_fa = "pasm/p_ctg_cns.fa"
-        File paf = "out.paf.gz"
-        File vcf = "~{sample_name}.pg.vcf"
+        File final_fa = Assemble.final_fa
+        File paf = AlignAsPAF.paf
+        File vcf = CallWithPaftools.vcf
     }
 }
 
-task AssembleWithPeregrine {
+task Assemble {
     input {
         File bam
 

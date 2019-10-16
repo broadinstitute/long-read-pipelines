@@ -47,8 +47,8 @@ import "Utils.wdl" as Utils
 import "ValidateBam.wdl" as VB
 import "AssembleReads.wdl" as ASM
 import "AssembleMT.wdl" as ASMT
-import "Metrics.wdl" as MET
-import "AssembleGenome.wdl" as AG
+import "LRMetrics.wdl" as MET
+import "Peregrine.wdl" as PG
 import "DeepVariantLR.wdl" as DV
 import "GATKBestPractice.wdl" as GATKBP
 
@@ -65,6 +65,7 @@ workflow LRWholeGenomeSingleSample {
         String mt_chr_name
 
         File tandem_repeat_bed
+        File ref_flat
 
         String gcs_output_dir
     }
@@ -149,9 +150,9 @@ workflow LRWholeGenomeSingleSample {
 
         call MET.LRMetrics {
             input:
-                unaligned_bams = PrepareRun.unmapped_bam,
-                aligned_bams = MergeCorrected.merged,
-                aligned_bais = MergeCorrected.merged_bai,
+                unaligned_bam = PrepareRun.unmapped_bam,
+                aligned_bam = MergeCorrected.merged,
+                aligned_bai = MergeCorrected.merged_bai,
                 ref_dict = ref_dict,
                 ref_flat = ref_flat,
         }
@@ -196,11 +197,11 @@ workflow LRWholeGenomeSingleSample {
 
     Array[String?] platform_gather = platform
     if ("PACBIO" == select_first(platform_gather)) {
-        call AG.AssembleGenome as AssembleGenome {
+        call PG.Peregrine as Peregrine {
             input:
                 ref_fasta = ref_fasta,
                 bam = MergeAllCorrected.merged,
-                sample_name = sample_name
+                sample_name = select_first([sample_name, "Peregrine"])
         }
 
         call DV.DeepVariant as DeepVariant {

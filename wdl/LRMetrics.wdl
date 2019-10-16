@@ -4,13 +4,24 @@ import "Structs.wdl"
 
 workflow LRMetrics {
     input {
-        Array[File] unaligned_bams
-
-        Array[File] aligned_bams
-        Array[File] aligned_bais
+        File unaligned_bam
+        File aligned_bam
+        File aligned_bai
 
         File ref_dict
         File ref_flat
+    }
+
+    # metrics on unaligned BAM
+    call ReadMetrics as UnalignedReadMetrics {
+        input:
+            bam = unaligned_bam,
+    }
+
+    # metrics on aligned BAM
+    call ReadMetrics as AlignedReadMetrics {
+        input:
+            bam = aligned_bam,
     }
 
     call MakeChrIntervalList {
@@ -18,42 +29,61 @@ workflow LRMetrics {
             ref_dict = ref_dict
     }
 
-    scatter (i in range(length(aligned_bams))) {
-        scatter (chr_info in MakeChrIntervalList.chrs) {
-            call CoverageTrack {
-                input:
-                    bam = aligned_bams[i],
-                    bai = aligned_bais[i],
-                    chr = chr_info[0],
-                    start = chr_info[1],
-                    end = chr_info[2]
-            }
-        }
-
-        call FlagStats {
+    scatter (chr_info in MakeChrIntervalList.chrs) {
+        call CoverageTrack {
             input:
-                bam = aligned_bams[i],
-                bai = aligned_bais[i]
-        }
-
-        call RnaSeqMetrics {
-            input:
-                bam = aligned_bams[i],
-                bai = aligned_bais[i],
-                ref_flat = ref_flat
-        }
-
-        call ReadMetrics as AlignedReadMetrics {
-            input:
-                bam = aligned_bams[i],
+                bam = aligned_bam,
+                bai = aligned_bai,
+                chr = chr_info[0],
+                start = chr_info[1],
+                end = chr_info[2]
         }
     }
 
-    scatter (unaligned_bam in unaligned_bams) {
-        call ReadMetrics as UnalignedReadMetrics{
-            input:
-                bam = unaligned_bam,
-        }
+    call FlagStats {
+        input:
+            bam = aligned_bam,
+            bai = aligned_bai,
+    }
+
+    call RnaSeqMetrics {
+        input:
+            bam = aligned_bam,
+            bai = aligned_bai,
+            ref_flat = ref_flat
+    }
+
+    output {
+        File flag_stats = FlagStats.flag_stats
+
+        Array[File] coverage = CoverageTrack.coverage
+        Array[File] coverage_tbi = CoverageTrack.coverage_tbi
+
+        File aligned_np_hist = AlignedReadMetrics.np_hist
+        File aligned_range_gap_hist = AlignedReadMetrics.range_gap_hist
+        File aligned_zmw_hist = AlignedReadMetrics.zmw_hist
+        File aligned_prl_counts = AlignedReadMetrics.prl_counts
+        File aligned_prl_hist = AlignedReadMetrics.prl_hist
+        File aligned_prl_nx = AlignedReadMetrics.prl_nx
+        File aligned_prl_yield_hist = AlignedReadMetrics.prl_yield_hist
+        File aligned_rl_counts = AlignedReadMetrics.rl_counts
+        File aligned_rl_hist = AlignedReadMetrics.rl_hist
+        File aligned_rl_nx = AlignedReadMetrics.rl_nx
+        File aligned_rl_yield_hist = AlignedReadMetrics.rl_yield_hist
+
+        File unaligned_np_hist = UnalignedReadMetrics.np_hist
+        File unaligned_range_gap_hist = UnalignedReadMetrics.range_gap_hist
+        File unaligned_zmw_hist = UnalignedReadMetrics.zmw_hist
+        File unaligned_prl_counts = UnalignedReadMetrics.prl_counts
+        File unaligned_prl_hist = UnalignedReadMetrics.prl_hist
+        File unaligned_prl_nx = UnalignedReadMetrics.prl_nx
+        File unaligned_prl_yield_hist = UnalignedReadMetrics.prl_yield_hist
+        File unaligned_rl_counts = UnalignedReadMetrics.rl_counts
+        File unaligned_rl_hist = UnalignedReadMetrics.rl_hist
+        File unaligned_rl_nx = UnalignedReadMetrics.rl_nx
+        File unaligned_rl_yield_hist = UnalignedReadMetrics.rl_yield_hist
+
+        File rna_metrics = RnaSeqMetrics.rna_metrics
     }
 }
 
