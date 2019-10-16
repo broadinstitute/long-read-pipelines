@@ -62,7 +62,7 @@ Unknown error            : 0 (0.00%)" > ccs_report.txt
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "kgarimella/lr-align:0.01.17"
+        docker:             "kgarimella/lr-align:0.01.18"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
