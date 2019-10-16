@@ -3,25 +3,24 @@
         "gs://broad-dsde-methods-long-reads-incoming/PBEAP/PUR_HG00732/"
     ],
 
-    "LRWholeGenomeSingleSample.sample_name": "HG00732",
+    "LRWholeGenomeSingleSample.sample_name":       "HG00732",
+    "LRWholeGenomeSingleSample.gcs_output_dir":    "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample",
 
-    "LRWholeGenomeSingleSample.ref_fasta":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
-    "LRWholeGenomeSingleSample.ref_fasta_fai": "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
-    "LRWholeGenomeSingleSample.ref_dict":      "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+    "LRWholeGenomeSingleSample.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+    "LRWholeGenomeSingleSample.ref_fasta_fai":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+    "LRWholeGenomeSingleSample.ref_dict":          "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+    "LRWholeGenomeSingleSample.mt_chr_name":       "chrM",
 
     "LRWholeGenomeSingleSample.tandem_repeat_bed": "gs://broad-dsde-methods-long-reads/resources/references/grch38/human_GRCh38_no_alt_analysis_set.trf.bed",
+    "LRWholeGenomeSingleSample.ref_flat":          "gs://broad-dsde-methods-long-reads/resources/references/grch38/refFlat.txt",
 
-    "LRWholeGenomeSingleSample.mt_chr_name":   "chrM",
-
-    "LRWholeGenomeSingleSample.gcs_output_dir":   "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample",
-
-    "LRWholeGenomeSingleSample.GATKLR.par_regions_bed":                                 "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.par.bed",
-    "LRWholeGenomeSingleSample.GATKLR.calling_interval_list":                            "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.all.canonical.autosomes.interval_list",
-    "LRWholeGenomeSingleSample.GATKLR.calling_intervals_scatter_count":                  50,
-    "LRWholeGenomeSingleSample.GATKLR.calling_intervals_break_bands_at_multiples_of":    1000000,
-    "LRWholeGenomeSingleSample.GATKLR.run_qc_on_variants":                               true,
-    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf":                                        "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
-    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf_index":                                  "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
-    "LRWholeGenomeSingleSample.GATKLR.gatk4_docker_tag":                                 "latest",
-    "LRWholeGenomeSingleSample.GATKLR.custom_lr_gatk4_docker_tag":                       "0.1"
+    "LRWholeGenomeSingleSample.GATKLR.par_regions_bed":                               "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.par.bed",
+    "LRWholeGenomeSingleSample.GATKLR.calling_interval_list":                         "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.all.canonical.autosomes.interval_list",
+    "LRWholeGenomeSingleSample.GATKLR.calling_intervals_scatter_count":               50,
+    "LRWholeGenomeSingleSample.GATKLR.calling_intervals_break_bands_at_multiples_of": 1000000,
+    "LRWholeGenomeSingleSample.GATKLR.run_qc_on_variants":                            true,
+    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf":                                     "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
+    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf_index":                               "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
+    "LRWholeGenomeSingleSample.GATKLR.gatk4_docker_tag":                              "latest",
+    "LRWholeGenomeSingleSample.GATKLR.custom_lr_gatk4_docker_tag":                    "0.01.00"
 }
