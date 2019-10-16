@@ -60,7 +60,7 @@ task DeepVariant {
         mem_gb:             120,
         disk_gb:            "~{disk_size}",
         boot_disk_gb:       100,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        1,
         docker:             "gcr.io/deepvariant-docker/deepvariant:0.8.0-gpu"
     }
@@ -76,7 +76,7 @@ task DeepVariant {
         gpuType:                "nvidia-tesla-p100"
         gpuCount:               2
         nvidiaDriverVersion:    "418.87.00"
-        zones:                  ["us-central1-c", "us-east1-b", "us-east1-c"]
+        zones:                  ["us-east1-b", "us-east1-c"]
         cpuPlatform:            "Intel Skylake"
     }
 }

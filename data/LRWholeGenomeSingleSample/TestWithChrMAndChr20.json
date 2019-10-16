@@ -1,12 +1,11 @@
 {
     "LRWholeGenomeSingleSample.gcs_dirs": [
-        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_42_ZMWs/",
-        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_42_ZMWs/",
-        "gs://broad-dsde-methods-long-reads/resources/test_data/ONT/MinION/unaligned_reads/NA12878_chrM_400_reads/"
+        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_and_chr20_tiny_subset/NA12878rep1.chrM_and_chr20.tiny_subset.unaligned.subreads.bam",
+        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep2_chrM_and_chr20_tiny_subset/NA12878rep2.chrM_and_chr20.tiny_subset.unaligned.subreads.bam"
     ],
 
-    "LRWholeGenomeSingleSample.sample_name":       "around_400_reads_from_chrM",
-    "LRWholeGenomeSingleSample.gcs_output_dir":    "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample",
+    "LRWholeGenomeSingleSample.sample_name":       "chrM_and_chr20_subset",
+    "LRWholeGenomeSingleSample.gcs_output_dir":    "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample/chrM_and_chr20_subset",
 
     "LRWholeGenomeSingleSample.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
     "LRWholeGenomeSingleSample.ref_fasta_fai":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",

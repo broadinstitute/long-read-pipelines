@@ -13,6 +13,11 @@ workflow LRMetrics {
     }
 
     # metrics on unaligned BAM
+    call FlagStats as UnalignedFlagStats {
+        input:
+            bam = unaligned_bam,
+    }
+
     call ReadMetrics as UnalignedReadMetrics {
         input:
             bam = unaligned_bam,
@@ -40,10 +45,9 @@ workflow LRMetrics {
         }
     }
 
-    call FlagStats {
+    call FlagStats as AlignedFlagStats {
         input:
             bam = aligned_bam,
-            bai = aligned_bai,
     }
 
     call RnaSeqMetrics {
@@ -54,7 +58,7 @@ workflow LRMetrics {
     }
 
     output {
-        File flag_stats = FlagStats.flag_stats
+        File aligned_flag_stats = AlignedFlagStats.flag_stats
 
         Array[File] coverage = CoverageTrack.coverage
         Array[File] coverage_tbi = CoverageTrack.coverage_tbi
@@ -70,6 +74,8 @@ workflow LRMetrics {
         File aligned_rl_hist = AlignedReadMetrics.rl_hist
         File aligned_rl_nx = AlignedReadMetrics.rl_nx
         File aligned_rl_yield_hist = AlignedReadMetrics.rl_yield_hist
+
+        File unaligned_flag_stats = UnalignedFlagStats.flag_stats
 
         File unaligned_np_hist = UnalignedReadMetrics.np_hist
         File unaligned_range_gap_hist = UnalignedReadMetrics.range_gap_hist
@@ -179,13 +185,12 @@ task CoverageTrack {
 task FlagStats {
     input {
         File bam
-        File bai
 
         RuntimeAttr? runtime_attr_override
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
