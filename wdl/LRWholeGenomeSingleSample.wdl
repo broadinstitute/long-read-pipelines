@@ -261,6 +261,14 @@ workflow LRWholeGenomeSingleSample {
             bai = MergeAllCorrected.merged_bai
     }
 
+    call CallSV.SVIM as SVIM {
+        input:
+            bam = MergeAllCorrected.merged,
+            bai = MergeAllCorrected.merged_bai,
+            ref_fasta = ref_fasta,
+            ref_fai = ref_fasta_fai
+    }
+
     Array[String?] platform_gather = platform
     if ("PACBIO" == select_first(platform_gather)) {
         call PG.Peregrine as Peregrine {
