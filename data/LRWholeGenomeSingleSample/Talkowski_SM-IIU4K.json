@@ -4,7 +4,7 @@
     ],
 
     "LRWholeGenomeSingleSample.sample_name":       "SM-IIU4K",
-    "LRWholeGenomeSingleSample.gcs_output_dir":    "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample",
+    "LRWholeGenomeSingleSample.gcs_output_dir":    "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample/SM-IIU4K",
 
     "LRWholeGenomeSingleSample.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
     "LRWholeGenomeSingleSample.ref_fasta_fai":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
@@ -20,7 +20,5 @@
     "LRWholeGenomeSingleSample.GATKLR.calling_intervals_break_bands_at_multiples_of": 1000000,
     "LRWholeGenomeSingleSample.GATKLR.run_qc_on_variants":                            true,
     "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf":                                     "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
-    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf_index":                               "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
-    "LRWholeGenomeSingleSample.GATKLR.gatk4_docker_tag":                              "latest",
-    "LRWholeGenomeSingleSample.GATKLR.custom_lr_gatk4_docker_tag":                    "0.01.00"
+    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf_index":                               "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi"
 }

@@ -1,0 +1,25 @@
+{
+    "LRWholeGenomeSingleSample.gcs_dirs": [
+        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_and_chr20/",
+        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep2_chrM_and_chr20/"
+    ],
+
+    "LRWholeGenomeSingleSample.sample_name":       "chrM_and_chr20_full",
+    "LRWholeGenomeSingleSample.gcs_output_dir":    "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample/PipelineTest/chrM_and_chr20_full/hg19",
+
+    "LRWholeGenomeSingleSample.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/hg19/Homo_sapiens_assembly19.fasta",
+    "LRWholeGenomeSingleSample.ref_fasta_fai":     "gs://broad-dsde-methods-long-reads/resources/references/hg19/Homo_sapiens_assembly19.fasta.fai",
+    "LRWholeGenomeSingleSample.ref_dict":          "gs://broad-dsde-methods-long-reads/resources/references/hg19/Homo_sapiens_assembly19.dict",
+    "LRWholeGenomeSingleSample.mt_chr_name":       "MT",
+
+    "LRWholeGenomeSingleSample.tandem_repeat_bed": "gs://broad-dsde-methods-long-reads/resources/references/hg19/Homo_sapiens_assembly19.trf.bed",
+    "LRWholeGenomeSingleSample.ref_flat":          "gs://broad-dsde-methods-long-reads/resources/references/hg19/refFlat.txt",
+
+    "LRWholeGenomeSingleSample.GATKLR.par_regions_bed":                               "gs://broad-dsde-methods-long-reads/resources/references/hg19/Homo_sapiens_assembly19.par.bed",
+    "LRWholeGenomeSingleSample.GATKLR.calling_interval_list":                         "gs://broad-dsde-methods-long-reads/resources/references/hg19/Homo_sapiens_assembly19.all.canonical.autosomes.interval_list",
+    "LRWholeGenomeSingleSample.GATKLR.calling_intervals_scatter_count":               50,
+    "LRWholeGenomeSingleSample.GATKLR.calling_intervals_break_bands_at_multiples_of": 1000000,
+    "LRWholeGenomeSingleSample.GATKLR.run_qc_on_variants":                            true,
+    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf":                                     "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_hg19/common_all_20180423.chr.prefix.vcf.gz",
+    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf_index":                               "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_hg19/common_all_20180423.chr.prefix.vcf.gz.tbi"
+}

@@ -77,9 +77,7 @@ s = f"""
     "LRWholeGenomeSingleSample.GATKLR.calling_intervals_break_bands_at_multiples_of": 1000000,
     "LRWholeGenomeSingleSample.GATKLR.run_qc_on_variants":                            true,
     "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf":                                     "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
-    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf_index":                               "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
-    "LRWholeGenomeSingleSample.GATKLR.gatk4_docker_tag":                              "latest",
-    "LRWholeGenomeSingleSample.GATKLR.custom_lr_gatk4_docker_tag":                    "0.01.00"
+    "LRWholeGenomeSingleSample.GATKLR.dbsnp_vcf_index":                               "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi"
 """
 
 print("{" + s + "}")
