@@ -13,50 +13,46 @@ import "dsde_pipelines_tasks/Utilities.wdl" as DSDEPipelinesUtils
 import "Utils.wdl" as Utils
 
 workflow GATKBestPraciceForLR {
-
     input {
-      File calling_interval_list
-      Int calling_intervals_scatter_count
-      Int calling_intervals_break_bands_at_multiples_of
+        File calling_interval_list
+        Int calling_intervals_scatter_count
+        Int calling_intervals_break_bands_at_multiples_of
 
-      Float? contamination
+        Float? contamination
 
-      File input_bam
+        File input_bam
 
-      File ref_fasta
-      File ref_fasta_index
-      File ref_dict
-      File par_regions_bed
+        File ref_fasta
+        File ref_fasta_index
+        File ref_dict
+        File par_regions_bed
 
-      Boolean? sample_is_female
+        Boolean? sample_is_female
 
-      String gatk4_docker_tag
-      String custom_lr_gatk4_docker_tag
+        String output_prefix
 
-      String final_vcf_base_name
+        Boolean run_qc_on_variants
+        Boolean make_bamout = false
+        File? var_calling_metrics_eval_interval_list
 
-      Boolean run_qc_on_variants
-      Boolean make_bamout = false
-      File? var_calling_metrics_eval_interval_list
+        File dbsnp_vcf
+        File dbsnp_vcf_index
 
-      File dbsnp_vcf
-      File dbsnp_vcf_index
-
-      Int agg_preemptible_tries = 1 # can not be optional as the tasks and sub-workflows copied over has this non-optional
+        Int agg_preemptible_tries = 1 # can not be optional as the tasks and sub-workflows copied over has this non-optional
     }
 
     parameter_meta {
-      make_bamout: "For CNNScoreVariants to run with a 2D model, a bamout must be created by HaplotypeCaller. The bamout is a bam containing information on how HaplotypeCaller remapped reads while it was calling variants. See https://gatkforums.broadinstitute.org/gatk/discussion/5484/howto-generate-a-bamout-file-showing-how-haplotypecaller-has-remapped-sequence-reads for more details."
+        make_bamout: "For CNNScoreVariants to run with a 2D model, a bamout must be created by HaplotypeCaller. The bamout is a bam containing information on how HaplotypeCaller remapped reads while it was calling variants. See https://gatkforums.broadinstitute.org/gatk/discussion/5484/howto-generate-a-bamout-file-showing-how-haplotypecaller-has-remapped-sequence-reads for more details."
     }
 
     ###########################################################################
     # Break the calling interval_list into sub-intervals
     # Perform variant calling on the sub-intervals, and then gather the results
     call DSDEPipelinesUtils.ScatterIntervalList as ScatterIntervalList {
-      input:
-        interval_list = calling_interval_list,
-        scatter_count = calling_intervals_scatter_count,
-        break_bands_at_multiples_of = calling_intervals_break_bands_at_multiples_of
+        input:
+            interval_list = calling_interval_list,
+            scatter_count = calling_intervals_scatter_count,
+            break_bands_at_multiples_of = calling_intervals_break_bands_at_multiples_of
     }
 
     ###########################################################################
@@ -73,152 +69,147 @@ workflow GATKBestPraciceForLR {
 
         # Generate GVCF by interval
         call Calling.HaplotypeCaller_GATK4_VCF as HaplotypeCallerGATK4 {
-          input:
-            contamination = contamination,
-            input_bam = input_bam,
-            interval_list = scattered_interval_list,
-            ref_dict = ref_dict,
-            ref_fasta = ref_fasta,
-            ref_fasta_index = ref_fasta_index,
-            par_regions_bed = par_regions_bed,
-            hc_scatter = hc_divisor,
-            make_gvcf = true, # always produce gVCF
-            make_bamout = make_bamout,
-            preemptible_tries = agg_preemptible_tries,
+            input:
+                contamination = contamination,
+                input_bam = input_bam,
+                interval_list = scattered_interval_list,
+                ref_dict = ref_dict,
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_index,
+                par_regions_bed = par_regions_bed,
+                hc_scatter = hc_divisor,
+                make_gvcf = true, # always produce gVCF
+                make_bamout = make_bamout,
+                preemptible_tries = agg_preemptible_tries,
 
-            sample_gender_known_as_female = sample_is_female,
+                sample_gender_known_as_female = sample_is_female,
 
-            vcf_basename = final_vcf_base_name + ".scatter.hc",
-
-            gatk4_docker_tag = gatk4_docker_tag
+                vcf_basename = output_prefix + ".scatter.hc",
         }
 
         call GenotypeGVCFs as Genotyping {
             input:
-              input_gvcf = HaplotypeCallerGATK4.output_vcf,
-              input_gvcf_index = HaplotypeCallerGATK4.output_vcf_index,
-              interval = scattered_interval_list,
-              ref_dict = ref_dict,
-              ref_fasta = ref_fasta,
-              ref_fasta_index = ref_fasta_index,
+                input_gvcf = HaplotypeCallerGATK4.output_vcf,
+                input_gvcf_index = HaplotypeCallerGATK4.output_vcf_index,
+                interval = scattered_interval_list,
+                ref_dict = ref_dict,
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_index,
 
-              dbsnp_vcf_gspath = dbsnp_vcf_gspath,
-
-              gatk4_docker_tag = gatk4_docker_tag
+                dbsnp_vcf_gspath = dbsnp_vcf_gspath
         }
 
         # If bamout files were created, we need to sort and gather them into one bamout
         if (make_bamout) {
-          call Utils.SortSam as SortBamout {
-            input:
-              input_bam = HaplotypeCallerGATK4.bamout,
-              output_bam_basename = final_vcf_base_name,
-              compression_level = 2
-          }
+            call Utils.SortSam as SortBamout {
+                input:
+                    input_bam = HaplotypeCallerGATK4.bamout,
+                    output_bam_basename = output_prefix,
+                    compression_level = 2
+            }
         }
 
-      File gvcfs_to_merge = HaplotypeCallerGATK4.output_vcf
-      File gvcf_indices_to_merge = HaplotypeCallerGATK4.output_vcf_index
+        File gvcfs_to_merge = HaplotypeCallerGATK4.output_vcf
+        File gvcf_indices_to_merge = HaplotypeCallerGATK4.output_vcf_index
 
-      File vcfs_to_merge = Genotyping.output_vcf
-      File vcf_indices_to_merge = Genotyping.output_vcf_index
+        File vcfs_to_merge = Genotyping.output_vcf
+        File vcf_indices_to_merge = Genotyping.output_vcf_index
     }
 
     ###########################################################################
     # Combine by-interval (g)VCFs into a single sample (g)VCF file
     call Calling.MergeVCFs as MergeGVCFs {
-      input:
-        input_vcfs = gvcfs_to_merge,
-        input_vcfs_indexes = gvcf_indices_to_merge,
-        output_vcf_name = final_vcf_base_name + ".g.vcf.gz",
-        preemptible_tries = agg_preemptible_tries
+        input:
+            input_vcfs = gvcfs_to_merge,
+            input_vcfs_indexes = gvcf_indices_to_merge,
+            output_vcf_name = output_prefix + ".haplotypecaller.g.vcf.gz",
+            preemptible_tries = agg_preemptible_tries
     }
 
     call Calling.MergeVCFs as MergeVCFs {
-      input:
-        input_vcfs = vcfs_to_merge,
-        input_vcfs_indexes = vcf_indices_to_merge,
-        output_vcf_name = final_vcf_base_name + ".vcf.gz",
-        preemptible_tries = agg_preemptible_tries
+        input:
+            input_vcfs = vcfs_to_merge,
+            input_vcfs_indexes = vcf_indices_to_merge,
+            output_vcf_name = output_prefix + ".vcf.gz",
+            preemptible_tries = agg_preemptible_tries
     }
 
     ###########################################################################
     if (make_bamout) {
-      call MergeBamouts {
-        input:
-          bams = select_all(SortBamout.output_bam),
-          output_base_name = final_vcf_base_name
-      }
+        call MergeBamouts {
+            input:
+                bams = select_all(SortBamout.output_bam),
+                output_base_name = output_prefix
+        }
     }
 
     ###########################################################################
     if (run_qc_on_variants) {
         # Validate the (g)VCF output of HaplotypeCaller
         call QC.ValidateVCF as ValidateGVCF {
-          input:
-            input_vcf = MergeGVCFs.output_vcf,
-            input_vcf_index = MergeGVCFs.output_vcf_index,
-            ref_fasta = ref_fasta,
-            ref_fasta_index = ref_fasta_index,
-            ref_dict = ref_dict,
-            calling_interval_list = calling_interval_list,
-            is_gvcf = true,
-            dbsnp_vcf = dbsnp_vcf,
-            dbsnp_vcf_index = dbsnp_vcf_index,
-            gatk_docker = "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag,
-            preemptible_tries = agg_preemptible_tries
+            input:
+                input_vcf = MergeGVCFs.output_vcf,
+                input_vcf_index = MergeGVCFs.output_vcf_index,
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_index,
+                ref_dict = ref_dict,
+                calling_interval_list = calling_interval_list,
+                is_gvcf = true,
+                dbsnp_vcf = dbsnp_vcf,
+                dbsnp_vcf_index = dbsnp_vcf_index,
+                gatk_docker = "us.gcr.io/broad-gatk/gatk:latest",
+                preemptible_tries = agg_preemptible_tries
         }
         call QC.ValidateVCF as ValidateVCF {
-          input:
-            input_vcf = MergeVCFs.output_vcf,
-            input_vcf_index = MergeVCFs.output_vcf_index,
-            ref_fasta = ref_fasta,
-            ref_fasta_index = ref_fasta_index,
-            ref_dict = ref_dict,
-            calling_interval_list = calling_interval_list,
-            is_gvcf = false,
-            dbsnp_vcf = dbsnp_vcf,
-            dbsnp_vcf_index = dbsnp_vcf_index,
-            gatk_docker = "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag,
-            preemptible_tries = agg_preemptible_tries
+            input:
+                input_vcf = MergeVCFs.output_vcf,
+                input_vcf_index = MergeVCFs.output_vcf_index,
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_index,
+                ref_dict = ref_dict,
+                calling_interval_list = calling_interval_list,
+                is_gvcf = false,
+                dbsnp_vcf = dbsnp_vcf,
+                dbsnp_vcf_index = dbsnp_vcf_index,
+                gatk_docker = "us.gcr.io/broad-gatk/gatk:latest",
+                preemptible_tries = agg_preemptible_tries
         }
 
         # QC the (g)VCF
         call QC.CollectVariantCallingMetrics as CollectVariantCallingMetricsGVCF {
-          input:
-            input_vcf = MergeGVCFs.output_vcf,
-            input_vcf_index = MergeGVCFs.output_vcf_index,
-            metrics_basename = final_vcf_base_name,
-            ref_dict = ref_dict,
-            is_gvcf = true,
-            dbsnp_vcf = dbsnp_vcf,
-            dbsnp_vcf_index = dbsnp_vcf_index,
-            evaluation_interval_list = select_first([var_calling_metrics_eval_interval_list, ScatterIntervalList.out[2]]),
-            preemptible_tries = agg_preemptible_tries
+            input:
+                input_vcf = MergeGVCFs.output_vcf,
+                input_vcf_index = MergeGVCFs.output_vcf_index,
+                metrics_basename = output_prefix,
+                ref_dict = ref_dict,
+                is_gvcf = true,
+                dbsnp_vcf = dbsnp_vcf,
+                dbsnp_vcf_index = dbsnp_vcf_index,
+                evaluation_interval_list = select_first([var_calling_metrics_eval_interval_list, ScatterIntervalList.out[2]]),
+                preemptible_tries = agg_preemptible_tries
         }
         call QC.CollectVariantCallingMetrics as CollectVariantCallingMetrics {
-          input:
-            input_vcf = MergeVCFs.output_vcf,
-            input_vcf_index = MergeVCFs.output_vcf_index,
-            metrics_basename = final_vcf_base_name,
-            ref_dict = ref_dict,
-            is_gvcf = false,
-            dbsnp_vcf = dbsnp_vcf,
-            dbsnp_vcf_index = dbsnp_vcf_index,
-            evaluation_interval_list = select_first([var_calling_metrics_eval_interval_list, ScatterIntervalList.out[2]]),
-            preemptible_tries = agg_preemptible_tries
+            input:
+                input_vcf = MergeVCFs.output_vcf,
+                input_vcf_index = MergeVCFs.output_vcf_index,
+                metrics_basename = output_prefix,
+                ref_dict = ref_dict,
+                is_gvcf = false,
+                dbsnp_vcf = dbsnp_vcf,
+                dbsnp_vcf_index = dbsnp_vcf_index,
+                evaluation_interval_list = select_first([var_calling_metrics_eval_interval_list, ScatterIntervalList.out[2]]),
+                preemptible_tries = agg_preemptible_tries
         }
     }
 
     ###########################################################################
     call PostProcess as PostProcess {
         input:
-          input_vcf = MergeVCFs.output_vcf,
-          input_vcf_index = MergeVCFs.output_vcf_index,
-          ref_fasta = ref_fasta,
-          ref_fasta_index = ref_fasta_index,
-          ref_dict = ref_dict,
-          custom_lr_gatk4_docker_tag = custom_lr_gatk4_docker_tag
+            input_vcf = MergeVCFs.output_vcf,
+            input_vcf_index = MergeVCFs.output_vcf_index,
+            ref_fasta = ref_fasta,
+            ref_fasta_index = ref_fasta_index,
+            ref_dict = ref_dict
     }
 
     output {
@@ -244,25 +235,24 @@ workflow GATKBestPraciceForLR {
 
 # This task is here because merging bamout files using Picard produces an error.
 task MergeBamouts {
-
     input {
-      Array[File] bams
-      String output_base_name
+        Array[File] bams
+        String output_base_name
 
-      RuntimeAttr? runtime_attr_override
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = ceil(size(bams, "GiB") * 2) + 10
 
     command {
-      samtools merge ~{output_base_name}.bam ~{sep=" " bams}
-      samtools index ~{output_base_name}.bam
-      mv ~{output_base_name}.bam.bai ~{output_base_name}.bai
+        samtools merge ~{output_base_name}.bam ~{sep=" " bams}
+        samtools index ~{output_base_name}.bam
+        mv ~{output_base_name}.bam.bai ~{output_base_name}.bai
     }
 
     output {
-      File output_bam = "~{output_base_name}.bam"
-      File output_bam_index = "~{output_base_name}.bai"
+        File output_bam = "~{output_base_name}.bam"
+        File output_bam_index = "~{output_base_name}.bai"
     }
 
     #########################
@@ -295,7 +285,6 @@ task MergeBamouts {
 # The original task was using "String" for what should be "File"s, again because of the large cohort JG hence using the NIO cloud feature.
 # Here we revert it back to File to take advantage of call-caching considering that we don't have a large cohort.
 task GenotypeGVCFs {
-
     input {
         File input_gvcf
         File input_gvcf_index
@@ -310,8 +299,6 @@ task GenotypeGVCFs {
 
         Float std_call_conf = 2.0 # this default value follows the CCS paper custom script value
 
-        String gatk4_docker_tag
-
         RuntimeAttr? runtime_attr_override
     }
 
@@ -323,17 +310,16 @@ task GenotypeGVCFs {
 
         # compared to the original, we take out "--only-output-calls-starting-in-intervals"
         # because we don't have to deal with a large (close to TB) VCF
-        gatk --java-options -Xms5g \
-          GenotypeGVCFs \
-          -V ~{input_gvcf} \
-          -R ~{ref_fasta} \
-          -O ~{out_vcf} \
-          -D ~{dbsnp_vcf_gspath} \
-          -L ~{interval} \
-          --annotation-group StandardAnnotation \
-          --annotation-group AS_StandardAnnotation \
-          --annotation-group StandardHCAnnotation \
-          --standard-min-confidence-threshold-for-calling ~{std_call_conf}
+        gatk --java-options -Xms5g GenotypeGVCFs \
+            -V ~{input_gvcf} \
+            -R ~{ref_fasta} \
+            -O ~{out_vcf} \
+            -D ~{dbsnp_vcf_gspath} \
+            -L ~{interval} \
+            --annotation-group StandardAnnotation \
+            --annotation-group AS_StandardAnnotation \
+            --annotation-group StandardHCAnnotation \
+            --standard-min-confidence-threshold-for-calling ~{std_call_conf}
     >>>
 
     output {
@@ -349,7 +335,7 @@ task GenotypeGVCFs {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
+        docker:             "us.gcr.io/broad-gatk/gatk:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -366,7 +352,6 @@ task GenotypeGVCFs {
 # Postprocessing the VCFs following the CCS paper
 task PostProcess {
     input {
-
         File input_vcf
         File input_vcf_index
 
@@ -374,22 +359,19 @@ task PostProcess {
         File ref_fasta_index
         File ref_dict
 
-        String custom_lr_gatk4_docker_tag
-
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = ceil(size(input_vcf, "GiB")) + 10
 
-    String out_vcf = "/cromwell_root/" + basename(input_vcf, ".vcf.gz") + ".merged.filtered.vcf.gz"
+    String out_vcf = "/cromwell_root/" + basename(input_vcf, ".vcf.gz") + ".haplotypecaller.vcf.gz"
 
     command <<<
-
         set -euo pipefail
 
         cd /opt/ && \
-          bash postprocess.sh ~{input_vcf} ~{out_vcf} ~{ref_fasta} && \
-          cd -
+            bash postprocess.sh ~{input_vcf} ~{out_vcf} ~{ref_fasta} && \
+            cd -
     >>>
 
     output {
@@ -405,7 +387,7 @@ task PostProcess {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "kgarimella/lr-gatk:" + custom_lr_gatk4_docker_tag
+        docker:             "kgarimella/lr-gatk:0.01.00"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

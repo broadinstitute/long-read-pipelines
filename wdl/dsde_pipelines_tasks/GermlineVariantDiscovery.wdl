@@ -94,8 +94,6 @@ task HaplotypeCaller_GATK4_VCF {
 
     Boolean? sample_gender_known_as_female
 
-    String gatk4_docker_tag
-
     String? pcr_indel_model_override
     Int? mapq_filter_threshold
     Boolean? filter_secondary_0x100_mappgings
@@ -211,7 +209,7 @@ task HaplotypeCaller_GATK4_VCF {
   >>>
 
   runtime {
-    docker: "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
+    docker: "us.gcr.io/broad-gatk/gatk:latest"
     preemptible: preemptible_tries
     memory: "20 GiB"
     cpu: "4"
@@ -263,8 +261,6 @@ task HardFilterVcf {
     String vcf_basename
     File interval_list
     Int preemptible_tries
-
-    String gatk4_docker_tag
   }
 
   Int disk_size = ceil(2 * size(input_vcf, "GiB")) + 20
@@ -284,7 +280,7 @@ task HardFilterVcf {
       File output_vcf_index = "~{output_vcf_name}.tbi"
     }
   runtime {
-    docker: "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
+    docker: "us.gcr.io/broad-gatk/gatk:latest"
     preemptible: preemptible_tries
     memory: "3 GiB"
     disks: "local-disk " + disk_size + " HDD"
@@ -303,8 +299,6 @@ task CNNScoreVariants {
     File ref_fasta_index
     File ref_dict
     Int preemptible_tries
-
-    String gatk4_docker_tag
   }
 
   Int disk_size = ceil(size(bamout, "GiB") + size(ref_fasta, "GiB") + (size(input_vcf, "GiB") * 2))
@@ -334,7 +328,7 @@ task CNNScoreVariants {
   }
 
   runtime {
-    docker: "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
+    docker: "us.gcr.io/broad-gatk/gatk:latest"
     preemptible: preemptible_tries
     memory: "15 GiB"
     cpu: "2"
@@ -360,8 +354,6 @@ task FilterVariantTranches {
     File dbsnp_resource_vcf_index
     String info_key
     Int preemptible_tries
-
-    String gatk4_docker_tag
   }
 
   Int disk_size = ceil(size(hapmap_resource_vcf, "GiB") +
@@ -396,6 +388,6 @@ task FilterVariantTranches {
     cpu: "2"
     disks: "local-disk " + disk_size + " HDD"
     preemptible: preemptible_tries
-    docker: "us.gcr.io/broad-gatk/gatk:" + gatk4_docker_tag
+    docker: "us.gcr.io/broad-gatk/gatk:latest"
   }
 }
