@@ -46,8 +46,8 @@ task PBSV {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4, 
-        mem_gb:             26, 
+        cpu_cores:          4,
+        mem_gb:             26,
         disk_gb:            "~{disk_size}",
         boot_disk_gb:       10,
         preemptible_tries:  1,
@@ -84,7 +84,7 @@ task Sniffles {
     command <<<
         set -euxo pipefail
 
-        # The following choices of parameters follow the descriptions in 
+        # The following choices of parameters follow the descriptions in
         # Accurate circular consensus long-read sequencing improves variant detection and assembly of a human genome
         # TODO: we can generalize it later
         sniffles \
@@ -104,13 +104,75 @@ task Sniffles {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4, 
-        mem_gb:             15, 
+        cpu_cores:          4,
+        mem_gb:             15,
         disk_gb:            "~{disk_size}",
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "quay.io/biocontainers/sniffles:1.0.11--hdbcaa40_1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SVIM {
+    input {
+        File bam
+        File bai
+
+        File ref_fasta
+        File ref_fai
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil(size(bam, "GB")) + 10
+
+    String out_prefix = basename(bam)
+
+    command <<<
+        set -euo pipefail
+
+        sample_name=$(samtools view -H ~{bam} | \
+                          grep -Eo 'SM:\S+' | \
+                          sort | uniq | sed 's/SM://')
+        echo "===================================="
+        echo "INFERRED SAMPLE NAME: ${sample_name}"
+        echo "===================================="
+        svim alignment \
+            --sample ${sample_name} \
+            --insertion_sequences \
+            --read_names \
+            ${sample_name}_svim_files \
+            ~{bam} \
+            ~{ref_fasta}
+        mv ${sample_name}_svim_files/final_results.vcf ${sample_name}_svim_files/${sample_name}.svim.vcf
+
+        tar -zcf ~{out_prefix}.svim.tar.gz ${sample_name}_svim_files
+    >>>
+
+    output {
+        File result = "~{out_prefix}.svim.tar.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            "~{disk_size}",
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "kgarimella/svim:1.2.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
