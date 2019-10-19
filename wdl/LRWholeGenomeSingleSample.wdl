@@ -162,7 +162,6 @@ workflow LRWholeGenomeSingleSample {
                 ref_flat = ref_flat,
         }
 
-        # finalize per-flowcell metrics
         call FF.FinalizeToDir as FinalizeMT {
             input:
                 files = [
@@ -174,56 +173,48 @@ workflow LRWholeGenomeSingleSample {
                 outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/mt/"
         }
 
-        #Array[File] coverage_full_dist      = MosDepth.full_dist
         call FF.FinalizeToDir as FinalizeCoverageFullGlobalDist {
             input:
                 files = PerFlowcellMetrics.coverage_full_dist,
                 outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
-        #Array[File] coverage_global_dist    = MosDepth.global_dist
         call FF.FinalizeToDir as FinalizeCoverageGlobalDist {
             input:
                 files = PerFlowcellMetrics.coverage_global_dist,
                 outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
-        #Array[File] coverage_region_dist    = MosDepth.region_dist
         call FF.FinalizeToDir as FinalizeCoverageRegionDist {
             input:
                 files = PerFlowcellMetrics.coverage_region_dist,
                 outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
-        #Array[File] coverage_regions        = MosDepth.regions
         call FF.FinalizeToDir as FinalizeCoverageRegions {
             input:
                 files = PerFlowcellMetrics.coverage_regions,
                 outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
-        #Array[File] coverage_regions_csi    = MosDepth.regions_csi
         call FF.FinalizeToDir as FinalizeCoverageSummary {
             input:
                 files = PerFlowcellMetrics.coverage_regions_csi,
                 outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
-        #Array[File] coverage_quantized_dist = MosDepth.quantized_dist
         call FF.FinalizeToDir as FinalizeCoverageQuantizedDist {
             input:
                 files = PerFlowcellMetrics.coverage_quantized_dist,
                 outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
-        #Array[File] coverage_quantized      = MosDepth.quantized
         call FF.FinalizeToDir as FinalizeCoverageQuantized {
             input:
                 files = PerFlowcellMetrics.coverage_quantized,
                 outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
-        #Array[File] coverage_quantized_csi  = MosDepth.quantized_csi
         call FF.FinalizeToDir as FinalizeCoverageQuantizedCsi {
             input:
                 files = PerFlowcellMetrics.coverage_quantized_csi,
@@ -325,7 +316,14 @@ workflow LRWholeGenomeSingleSample {
             bam = MergeAllCorrected.merged,
             bai = MergeAllCorrected.merged_bai,
             ref_fasta = ref_fasta,
-            ref_fai = ref_fasta_fai
+            ref_fai = ref_fasta_fai,
+            sample_name = sample_name,
+            output_prefix = basename(MergeAllCorrected.merged, ".bam")
+    }
+
+    call CallSV.CompressAndIndex as CompressAndIndexSVIM {
+        input:
+            vcf = SVIM.variants
     }
 
     Array[String?] platform_gather = platform
@@ -393,7 +391,8 @@ workflow LRWholeGenomeSingleSample {
     call FF.FinalizeToDir as FinalizeSVs {
         input:
             files = [ CompressAndIndexPBSV.variants, CompressAndIndexPBSV.variants_tbi,
-                      CompressAndIndexSniffles.variants, CompressAndIndexSniffles.variants_tbi ],
+                      CompressAndIndexSniffles.variants, CompressAndIndexSniffles.variants_tbi,
+                      CompressAndIndexSVIM.variants, CompressAndIndexSVIM.variants_tbi ],
             outdir = outdir + "/variants"
     }
 
