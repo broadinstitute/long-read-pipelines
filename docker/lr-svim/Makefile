@@ -1,5 +1,5 @@
-TAG1 = kgarimella/svim:1.2.0
-TAG2 = kgarimella/svim:latest
+TAG1 = kgarimella/lr-svim:0.1.0
+TAG2 = kgarimella/lr-svim:latest
 
 all: build push
 

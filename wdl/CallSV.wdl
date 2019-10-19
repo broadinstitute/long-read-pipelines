@@ -132,36 +132,33 @@ task SVIM {
         File ref_fasta
         File ref_fai
 
+        String sample_name
+        String output_prefix
+
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = ceil(size(bam, "GB")) + 10
 
-    String out_prefix = basename(bam)
-
     command <<<
         set -euo pipefail
 
-        sample_name=$(samtools view -H ~{bam} | \
-                          grep -Eo 'SM:\S+' | \
-                          sort | uniq | sed 's/SM://')
-        echo "===================================="
-        echo "INFERRED SAMPLE NAME: ${sample_name}"
-        echo "===================================="
         svim alignment \
-            --sample ${sample_name} \
+            --sample ~{sample_name} \
             --insertion_sequences \
             --read_names \
-            ${sample_name}_svim_files \
+            ~{output_prefix}_svim_files \
             ~{bam} \
             ~{ref_fasta}
-        mv ${sample_name}_svim_files/final_results.vcf ${sample_name}_svim_files/${sample_name}.svim.vcf
 
-        tar -zcf ~{out_prefix}.svim.tar.gz ${sample_name}_svim_files
+        mv ~{output_prefix}_svim_files/final_results.vcf ~{output_prefix}.svim.vcf
+
+        tar -zcf ~{output_prefix}.svim.tar.gz ~{output_prefix}_svim_files
     >>>
 
     output {
-        File result = "~{out_prefix}.svim.tar.gz"
+        File variants = "~{output_prefix}.svim.vcf"
+        File svim_outputs = "~{output_prefix}.svim.tar.gz"
     }
 
     #########################
@@ -172,7 +169,7 @@ task SVIM {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "kgarimella/svim:1.2.0"
+        docker:             "kgarimella/lr-svim:0.1.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

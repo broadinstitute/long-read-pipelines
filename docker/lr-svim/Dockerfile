@@ -9,5 +9,3 @@ RUN conda install python=3.6.9 && \
     conda clean -y --all
 
 ENV PATH /opt/conda/envs/env/bin:$PATH
-
-RUN svim --help
