@@ -1,5 +1,5 @@
-TAG1 = kgarimella/lr-peregrine:0.01.05
-TAG2 = kgarimella/lr-peregrine:latest
+TAG1 = quay.io/broad-long-read-pipelines/lr-peregrine:0.01.05
+TAG2 = quay.io/broad-long-read-pipelines/lr-peregrine:latest
 
 all: build push
 

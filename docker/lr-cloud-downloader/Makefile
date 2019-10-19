@@ -1,5 +1,5 @@
-TAG1 = kgarimella/lr-cloud-downloader:0.02.0
-TAG2 = kgarimella/lr-cloud-downloader:latest
+TAG1 = quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.0
+TAG2 = quay.io/broad-long-read-pipelines/lr-cloud-downloader:latest
 
 all: build push
 

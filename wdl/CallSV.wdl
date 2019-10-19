@@ -169,7 +169,7 @@ task SVIM {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "kgarimella/lr-svim:0.1.0"
+        docker:             "quay.io/broad-long-read-pipelines/lr-svim:0.1.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -213,7 +213,7 @@ task CompressAndIndex {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "kgarimella/lr-align:0.01.18"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.18"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

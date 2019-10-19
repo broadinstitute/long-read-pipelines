@@ -136,7 +136,7 @@ task MakeChrIntervalList {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "kgarimella/lr-metrics:0.01.05"
+        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -248,7 +248,7 @@ task CoverageTrack {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "kgarimella/lr-metrics:0.01.05"
+        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -290,7 +290,7 @@ task FlagStats {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "kgarimella/lr-metrics:0.01.05"
+        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -339,7 +339,7 @@ task RnaSeqMetrics {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "kgarimella/lr-metrics:0.01.05"
+        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -391,7 +391,7 @@ task ReadMetrics {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "kgarimella/lr-metrics:0.01.05"
+        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

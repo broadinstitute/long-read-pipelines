@@ -1,5 +1,5 @@
-TAG1 = kgarimella/lr-finalize:0.01.00
-TAG2 = kgarimella/lr-finalize:latest
+TAG1 = quay.io/broad-long-read-pipelines/lr-finalize:0.01.00
+TAG2 = quay.io/broad-long-read-pipelines/lr-finalize:latest
 
 all: build push
 

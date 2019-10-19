@@ -387,7 +387,7 @@ task PostProcess {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "kgarimella/lr-gatk:0.01.00"
+        docker:             "quay.io/broad-long-read-pipelines/lr-gatk:0.01.00"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

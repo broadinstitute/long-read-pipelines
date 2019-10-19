@@ -1,5 +1,5 @@
-TAG1 = kgarimella/lr-align:0.01.18
-TAG2 = kgarimella/lr-align:latest
+TAG1 = quay.io/broad-long-read-pipelines/lr-align:0.01.18
+TAG2 = quay.io/broad-long-read-pipelines/lr-align:latest
 
 all: build push
 

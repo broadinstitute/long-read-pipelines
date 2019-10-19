@@ -30,7 +30,7 @@ task FinalizeToFile {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        2,
-        docker:             "kgarimella/lr-finalize:0.01.00"
+        docker:             "quay.io/broad-long-read-pipelines/lr-finalize:0.01.00"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -72,7 +72,7 @@ task FinalizeToDir {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        2,
-        docker:             "kgarimella/lr-finalize:0.01.00"
+        docker:             "quay.io/broad-long-read-pipelines/lr-finalize:0.01.00"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

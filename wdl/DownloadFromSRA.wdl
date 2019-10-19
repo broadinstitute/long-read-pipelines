@@ -67,7 +67,7 @@ task GetSRAIDs {
         disks: "local-disk 1 LOCAL"
         preemptible: 1
         maxRetries: 0
-        docker: "kgarimella/lr-cloud-downloader:0.02.0"
+        docker: "quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.0"
     }
 }
 
@@ -117,6 +117,6 @@ task FastqDump {
         disks: "local-disk ~{final_disk_space_gb} LOCAL"
         preemptible: 0
         maxRetries: 0
-        docker: "kgarimella/lr-cloud-downloader:0.02.0"
+        docker: "quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.0"
     }
 }

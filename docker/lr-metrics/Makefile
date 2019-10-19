@@ -1,5 +1,5 @@
-TAG1 = kgarimella/lr-metrics:0.01.05
-TAG2 = kgarimella/lr-metrics:latest
+TAG1 = quay.io/broad-long-read-pipelines/lr-metrics:0.01.05
+TAG2 = quay.io/broad-long-read-pipelines/lr-metrics:latest
 
 all: build push
 
