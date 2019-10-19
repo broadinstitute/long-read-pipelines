@@ -1,4 +1,0 @@
-{
-  "FindMTPrimersWorkflow.input_bam": "gs://broad-dsde-methods-kiran/workflow_output/CorrectAndAlignWorkflow/3433e4b1-a991-467d-8b42-2ae74852a35b/call-MergeCorrected/m64020_190307_140324.subreads.ccs.aligned.merged.bam",
-  "FindMTPrimersWorkflow.sm": "HG02982"
-}
