@@ -214,8 +214,9 @@ task AlignContigs {
         String SM
         String ID
         String PL
-
         Boolean? is_corrected
+        String prefix
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -226,7 +227,7 @@ task AlignContigs {
     Int cpus = 4
     Int disk_size = ceil(size(ref_fasta, "GB")) + 4*ceil(size(contigs, "GB"))
 
-    String aligned_name = basename(contigs, ".fasta") + ".aligned.bam"
+    String aligned_name = "~{prefix}.aligned.bam"
 
     command <<<
         set -euxo pipefail

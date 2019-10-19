@@ -21,14 +21,12 @@ version 1.0
 # Description of inputs:
 #   Required:
 #       Array[String] gcs_dirs          - The GCS directories wherein the data is stored.
+#       String sample_name              - The sample name to use in place of the autodetected name.
 #       File ref_fasta                  - The reference genome to which reads should be aligned.
 #       File ref_fasta_fai              - The .fai index for the reference genome.
 #       File ref_dict                   - The sequence dictionary for the reference genome.
 #       String mt_chr_name              - The name of the contig in ref_fasta representing the mitochondrion genome.
 #       File tandem_repeat_bed          - BED file representing tandem repeats in the reference.
-#
-#   Optional:
-#       String sample_name              - The sample name to use in place of the autodetected name.
 #
 #
 # Licensing:
@@ -57,8 +55,7 @@ workflow LRWholeGenomeSingleSample {
     input {
         Array[String] gcs_dirs
 
-        String? sample_name
-        Boolean? sample_is_female
+        String sample_name
 
         File ref_fasta
         File ref_fasta_fai
@@ -69,9 +66,11 @@ workflow LRWholeGenomeSingleSample {
         File ref_flat
 
         String gcs_output_dir
+
+        Boolean? sample_is_female
     }
 
-    String outdir = sub(gcs_output_dir + "/", "/+", "/")
+    String outdir = sub(sub(gcs_output_dir + "/", "/+", "/"), "gs:/", "gs://")
 
     scatter (gcs_dir in gcs_dirs) {
         call Utils.DetectRunInfo as DetectRunInfo {
@@ -148,7 +147,10 @@ workflow LRWholeGenomeSingleSample {
 
                 ref_fasta     = ref_fasta,
                 ref_fasta_fai = ref_fasta_fai,
-                ref_dict      = ref_dict
+                ref_dict      = ref_dict,
+                mt_chr_name   = mt_chr_name,
+
+                prefix        = DetectRunInfo.run_info['PU'] + ".mt"
         }
 
         call MET.LRMetrics as PerFlowcellMetrics {
@@ -169,19 +171,63 @@ workflow LRWholeGenomeSingleSample {
                     AssembleMT.aligned_bai,
                     AssembleMT.calls
                 ],
-                outdir = gcs_output_dir + "/metrics/" + DetectRunInfo.run_info['PU'] + "/mt/"
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/mt/"
         }
 
-        call FF.FinalizeToDir as FinalizeCoverageTracks {
+        #Array[File] coverage_full_dist      = MosDepth.full_dist
+        call FF.FinalizeToDir as FinalizeCoverageFullGlobalDist {
             input:
-                files = PerFlowcellMetrics.coverage,
-                outdir = gcs_output_dir + "/metrics/" + DetectRunInfo.run_info['PU'] + "/coverage/"
+                files = PerFlowcellMetrics.coverage_full_dist,
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
-        call FF.FinalizeToDir as FinalizeCoverageTrackIndices {
+        #Array[File] coverage_global_dist    = MosDepth.global_dist
+        call FF.FinalizeToDir as FinalizeCoverageGlobalDist {
             input:
-                files = PerFlowcellMetrics.coverage_tbi,
-                outdir = gcs_output_dir + "/metrics/" + DetectRunInfo.run_info['PU'] + "/coverage/"
+                files = PerFlowcellMetrics.coverage_global_dist,
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
+        }
+
+        #Array[File] coverage_region_dist    = MosDepth.region_dist
+        call FF.FinalizeToDir as FinalizeCoverageRegionDist {
+            input:
+                files = PerFlowcellMetrics.coverage_region_dist,
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
+        }
+
+        #Array[File] coverage_regions        = MosDepth.regions
+        call FF.FinalizeToDir as FinalizeCoverageRegions {
+            input:
+                files = PerFlowcellMetrics.coverage_regions,
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
+        }
+
+        #Array[File] coverage_regions_csi    = MosDepth.regions_csi
+        call FF.FinalizeToDir as FinalizeCoverageSummary {
+            input:
+                files = PerFlowcellMetrics.coverage_regions_csi,
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
+        }
+
+        #Array[File] coverage_quantized_dist = MosDepth.quantized_dist
+        call FF.FinalizeToDir as FinalizeCoverageQuantizedDist {
+            input:
+                files = PerFlowcellMetrics.coverage_quantized_dist,
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
+        }
+
+        #Array[File] coverage_quantized      = MosDepth.quantized
+        call FF.FinalizeToDir as FinalizeCoverageQuantized {
+            input:
+                files = PerFlowcellMetrics.coverage_quantized,
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
+        }
+
+        #Array[File] coverage_quantized_csi  = MosDepth.quantized_csi
+        call FF.FinalizeToDir as FinalizeCoverageQuantizedCsi {
+            input:
+                files = PerFlowcellMetrics.coverage_quantized_csi,
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/coverage/"
         }
 
         call FF.FinalizeToDir as FinalizeAlignedMetrics {
@@ -201,7 +247,7 @@ workflow LRWholeGenomeSingleSample {
                     PerFlowcellMetrics.aligned_rl_yield_hist,
                     PerFlowcellMetrics.rna_metrics
                 ],
-                outdir = gcs_output_dir + "/metrics/" + DetectRunInfo.run_info['PU'] + "/aligned/"
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/aligned/"
         }
 
         call FF.FinalizeToDir as FinalizeUnalignedMetrics {
@@ -220,7 +266,7 @@ workflow LRWholeGenomeSingleSample {
                     PerFlowcellMetrics.unaligned_rl_nx,
                     PerFlowcellMetrics.unaligned_rl_yield_hist
                 ],
-                outdir = gcs_output_dir + "/metrics/" + DetectRunInfo.run_info['PU'] + "/unaligned/"
+                outdir = gcs_output_dir + "/metrics/per_flowcell/" + DetectRunInfo.run_info['PU'] + "/unaligned/"
         }
     }
 
@@ -252,13 +298,26 @@ workflow LRWholeGenomeSingleSample {
             bai = MergeAllCorrected.merged_bai,
             ref_fasta = ref_fasta,
             ref_fai = ref_fasta_fai,
-            tandem_repeat_bed = tandem_repeat_bed
+            tandem_repeat_bed = tandem_repeat_bed,
+            output_prefix = basename(MergeAllCorrected.merged, ".bam")
+    }
+
+    call CallSV.CompressAndIndex as CompressAndIndexPBSV {
+        input:
+            vcf = PBSV.variants
     }
 
     call CallSV.Sniffles as Sniffles {
         input:
             bam = MergeAllCorrected.merged,
-            bai = MergeAllCorrected.merged_bai
+            bai = MergeAllCorrected.merged_bai,
+            sample_name = sample_name,
+            output_prefix = basename(MergeAllCorrected.merged, ".bam")
+    }
+
+    call CallSV.CompressAndIndex as CompressAndIndexSniffles {
+        input:
+            vcf = Sniffles.variants
     }
 
     Array[String?] platform_gather = platform
@@ -267,7 +326,13 @@ workflow LRWholeGenomeSingleSample {
             input:
                 ref_fasta = ref_fasta,
                 bam = MergeAllCorrected.merged,
-                sample_name = select_first([sample_name, "Peregrine"])
+                sample_name = sample_name,
+                output_prefix = basename(MergeAllCorrected.merged, ".bam")
+        }
+
+        call CallSV.CompressAndIndex as CompressAndIndexPeregrine {
+            input:
+                vcf = Peregrine.variants
         }
 
         call DV.DeepVariant as DeepVariant {
@@ -277,7 +342,7 @@ workflow LRWholeGenomeSingleSample {
                 ref_fasta = ref_fasta,
                 ref_fai = ref_fasta_fai,
                 model_class = "PACBIO",
-                output_prefix = select_first([sample_name, "DeepVariant"])
+                output_prefix = basename(MergeAllCorrected.merged, ".bam")
         }
 
         call GATKBP.GATKBestPraciceForLR as GATKLR {
@@ -289,45 +354,50 @@ workflow LRWholeGenomeSingleSample {
                 ref_fasta_index = ref_fasta_fai,
                 ref_dict = ref_dict,
 
-                final_vcf_base_name = select_first([sample_name, "GATK4"])
+                output_prefix = basename(MergeAllCorrected.merged, ".bam")
         }
 
-        call FF.FinalizeToDir as FinalizePeregrine {
+        call FF.FinalizeToDir as FinalizePeregrineAssembly {
             input:
-                files = [ Peregrine.final_fa, Peregrine.paf, Peregrine.vcf ],
-                outdir = outdir
+                files = [ Peregrine.final_fa, Peregrine.paf ],
+                outdir = outdir + "/assembly"
+        }
+
+        call FF.FinalizeToDir as FinalizePeregrineCalls {
+            input:
+                files = [ CompressAndIndexPeregrine.variants, CompressAndIndexPeregrine.variants_tbi ],
+                outdir = outdir + "/variants"
         }
 
         call FF.FinalizeToDir as FinalizeDV {
             input:
                 files = [ DeepVariant.gvcf, DeepVariant.gvcf_tbi, DeepVariant.vcf, DeepVariant.vcf_tbi ],
-                outdir = outdir
+                outdir = outdir + "/variants"
         }
 
         call FF.FinalizeToDir as FinalizeGATK {
             input:
-                files = [
-                    GATKLR.out_pp_vcf,
-                    GATKLR.out_pp_vcf_index,
-                    GATKLR.output_vcf,
-                    GATKLR.output_vcf_index,
-                    GATKLR.output_gvcf,
-                    GATKLR.output_gvcf_index
-                ],
-                outdir = outdir
+                files = [ GATKLR.out_pp_vcf, GATKLR.out_pp_vcf_index, GATKLR.output_gvcf, GATKLR.output_gvcf_index ],
+                outdir = outdir + "/variants"
         }
     }
 
-    # Finalize pipeline results
+    call FF.FinalizeToDir as FinalizeSVs {
+        input:
+            files = [ CompressAndIndexPBSV.variants, CompressAndIndexPBSV.variants_tbi,
+                      CompressAndIndexSniffles.variants, CompressAndIndexSniffles.variants_tbi ],
+            outdir = outdir + "/variants"
+    }
+
     call FF.FinalizeToDir as FinalizeCorrectedBams {
         input:
             files = [ MergeAllCorrected.merged, MergeAllCorrected.merged_bai ],
-            outdir = outdir
+            outdir = outdir + "/alignments"
     }
 
     call FF.FinalizeToDir as FinalizeUncorrectedBams {
         input:
             files = [ MergeAllRemaining.merged, MergeAllRemaining.merged_bai ],
-            outdir = outdir
+            outdir = outdir + "/alignments"
     }
 }

@@ -7,6 +7,7 @@ workflow Peregrine {
         File ref_fasta
         File bam
         String sample_name
+        String output_prefix
     }
 
     call Assemble {
@@ -24,13 +25,14 @@ workflow Peregrine {
         input:
             ref_fasta = ref_fasta,
             paf = AlignAsPAF.paf,
-            sample_name = sample_name
+            sample_name = sample_name,
+            output_prefix = output_prefix
     }
 
     output {
         File final_fa = Assemble.final_fa
-        File paf = AlignAsPAF.paf
-        File vcf = CallWithPaftools.vcf
+        File paf      = AlignAsPAF.paf
+        File variants = CallWithPaftools.variants
     }
 }
 
@@ -134,6 +136,7 @@ task CallWithPaftools {
         File ref_fasta
         File paf
         String sample_name
+        String output_prefix
 
         RuntimeAttr? runtime_attr_override
     }
@@ -142,11 +145,11 @@ task CallWithPaftools {
     Int num_cpus = 1
 
     command <<<
-        zcat ~{paf} | sort -k6,6 -k8,8n | /opt/test/minimap2-2.17_x64-linux/k8 /opt/test/minimap2-2.17_x64-linux/paftools.js call -f ~{ref_fasta} -s ~{sample_name} - > ~{sample_name}.pg.vcf
+        zcat ~{paf} | sort -k6,6 -k8,8n | /opt/test/minimap2-2.17_x64-linux/k8 /opt/test/minimap2-2.17_x64-linux/paftools.js call -f ~{ref_fasta} -s ~{sample_name} - > ~{output_prefix}.peregrine.vcf
     >>>
 
     output {
-        File vcf = "~{sample_name}.pg.vcf"
+        File variants = "~{output_prefix}.peregrine.vcf"
     }
 
     #########################

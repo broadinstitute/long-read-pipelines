@@ -15,6 +15,9 @@ workflow AssembleMT {
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
+        String mt_chr_name
+
+        String prefix
     }
 
     # select corrected reads from MT
@@ -22,7 +25,7 @@ workflow AssembleMT {
         input:
             bam = corrected_bam,
             bai = corrected_bai,
-            region = "chrM"
+            region = mt_chr_name
     }
 
     # select remaining reads from MT
@@ -30,7 +33,7 @@ workflow AssembleMT {
         input:
             bam = remaining_bam,
             bai = remaining_bai,
-            region = "chrM"
+            region = mt_chr_name
     }
 
     # correct/trim remaining reads
@@ -55,7 +58,7 @@ workflow AssembleMT {
             reads = CombineReads.reads,
             target_size = "16.6k",
             platform = platform,
-            prefix = "mt"
+            prefix = prefix
     }
 
     # align assembly of combined reads
@@ -66,7 +69,8 @@ workflow AssembleMT {
             SM = "test",
             ID = "combined",
             PL = "PACBIO",
-            is_corrected = true
+            is_corrected = true,
+            prefix = prefix
     }
 
     # call haploid variants on combined assembly
@@ -75,7 +79,7 @@ workflow AssembleMT {
             bam = AlignedMTFromCombined.aligned_bam,
             bai = AlignedMTFromCombined.aligned_bai,
             ref_fasta = ref_fasta,
-            prefix = "combined"
+            prefix = prefix
     }
 
     output {

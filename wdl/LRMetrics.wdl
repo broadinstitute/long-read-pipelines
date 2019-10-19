@@ -35,14 +35,21 @@ workflow LRMetrics {
     }
 
     scatter (chr_info in MakeChrIntervalList.chrs) {
-        call CoverageTrack {
+        call MosDepth {
             input:
                 bam = aligned_bam,
                 bai = aligned_bai,
-                chr = chr_info[0],
-                start = chr_info[1],
-                end = chr_info[2]
+                chr = chr_info[0]
         }
+
+        #call CoverageTrack {
+        #    input:
+        #        bam = aligned_bam,
+        #        bai = aligned_bai,
+        #        chr = chr_info[0],
+        #        start = chr_info[1],
+        #        end = chr_info[2]
+        #}
     }
 
     call FlagStats as AlignedFlagStats {
@@ -60,8 +67,17 @@ workflow LRMetrics {
     output {
         File aligned_flag_stats = AlignedFlagStats.flag_stats
 
-        Array[File] coverage = CoverageTrack.coverage
-        Array[File] coverage_tbi = CoverageTrack.coverage_tbi
+        #Array[File] coverage = CoverageTrack.coverage
+        #Array[File] coverage_tbi = CoverageTrack.coverage_tbi
+
+        Array[File] coverage_full_dist      = MosDepth.full_dist
+        Array[File] coverage_global_dist    = MosDepth.global_dist
+        Array[File] coverage_region_dist    = MosDepth.region_dist
+        Array[File] coverage_regions        = MosDepth.regions
+        Array[File] coverage_regions_csi    = MosDepth.regions_csi
+        Array[File] coverage_quantized_dist = MosDepth.quantized_dist
+        Array[File] coverage_quantized      = MosDepth.quantized
+        Array[File] coverage_quantized_csi  = MosDepth.quantized_csi
 
         File aligned_np_hist = AlignedReadMetrics.np_hist
         File aligned_range_gap_hist = AlignedReadMetrics.range_gap_hist
@@ -134,6 +150,70 @@ task MakeChrIntervalList {
     }
 }
 
+task MosDepth {
+    input {
+        File bam
+        File bai
+        String chr
+        Int? window_size
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    Int ws = select_first([window_size, 500])
+    String basename = basename(bam, ".bam")
+    String prefix = "~{basename}.coverage.~{chr}"
+
+    command <<<
+        set -euxo pipefail
+
+        mosdepth -t 4 -c ~{chr} -n -x -Q 1 ~{prefix}.full ~{bam}
+        mosdepth -t 4 -c ~{chr} -n -x -Q 1 -b ~{ws} ~{prefix} ~{bam}
+
+        export MOSDEPTH_Q0=NO_COVERAGE   # 0 -- defined by the arguments to --quantize
+        export MOSDEPTH_Q1=LOW_COVERAGE  # 1..4
+        export MOSDEPTH_Q2=CALLABLE      # 5..149
+        export MOSDEPTH_Q3=HIGH_COVERAGE # 150 ...
+
+        mosdepth -t 4 -c ~{chr} -n -x -Q 1 --quantize 0:1:5:150: ~{prefix}.quantized ~{bam}
+
+        ls -lah
+    >>>
+
+    output {
+        File full_dist      = "~{prefix}.full.mosdepth.global.dist.txt"
+        File global_dist    = "~{prefix}.mosdepth.global.dist.txt"
+        File region_dist    = "~{prefix}.mosdepth.region.dist.txt"
+        File regions        = "~{prefix}.regions.bed.gz"
+        File regions_csi    = "~{prefix}.regions.bed.gz.csi"
+        File quantized_dist = "~{prefix}.quantized.mosdepth.global.dist.txt"
+        File quantized      = "~{prefix}.quantized.quantized.bed.gz"
+        File quantized_csi  = "~{prefix}.quantized.quantized.bed.gz.csi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             8,
+        disk_gb:            "~{disk_size}",
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "quay.io/biocontainers/mosdepth:0.2.4--he527e40_0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task CoverageTrack {
     input {
         File bam
@@ -151,7 +231,7 @@ task CoverageTrack {
     command <<<
         set -euxo pipefail
 
-        samtools depth ~{bam} -r ~{chr}:~{start}-~{end} | bgzip > ~{basename}.coverage.~{chr}_~{start}_~{end}.txt.gz
+        samtools depth -a ~{bam} -r ~{chr}:~{start}-~{end} | bgzip > ~{basename}.coverage.~{chr}_~{start}_~{end}.txt.gz
         tabix -p bed ~{basename}.coverage.~{chr}_~{start}_~{end}.txt.gz
     >>>
 
