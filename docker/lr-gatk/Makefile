@@ -1,5 +1,5 @@
-TAG1 = kgarimella/lr-gatk:0.01.00
-TAG2 = kgarimella/lr-gatk:latest
+TAG1 = quay.io/broad-long-read-pipelines/lr-gatk:0.01.00
+TAG2 = quay.io/broad-long-read-pipelines/lr-gatk:latest
 
 all: build push
 

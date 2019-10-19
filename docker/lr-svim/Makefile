@@ -1,5 +1,5 @@
-TAG1 = kgarimella/lr-svim:0.1.0
-TAG2 = kgarimella/lr-svim:latest
+TAG1 = quay.io/broad-long-read-pipelines/lr-svim:0.1.0
+TAG2 = quay.io/broad-long-read-pipelines/lr-svim:latest
 
 all: build push
 
