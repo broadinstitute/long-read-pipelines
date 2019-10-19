@@ -1,4 +1,0 @@
-{
-    "AssembleGenome.bam": "gs://broad-dsde-methods-long-reads-intermediate/LRWholeGenomeSingleSample/3c059df3-efb0-4ad5-a626-e6d9e72210d3/call-MergeCorrected/shard-2/corrected.bam",
-    "AssembleGenome.bai": "gs://broad-dsde-methods-long-reads-intermediate/LRWholeGenomeSingleSample/3c059df3-efb0-4ad5-a626-e6d9e72210d3/call-MergeCorrected/shard-2/corrected.bai"
-}
