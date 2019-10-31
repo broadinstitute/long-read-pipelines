@@ -4,7 +4,7 @@ MAINTAINER Kiran V Garimella
 
 # install some utilities
 RUN apt-get update -m
-RUN apt-get install wget datamash
+RUN apt-get install wget datamash bsdmainutils
 
 # install conda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh \

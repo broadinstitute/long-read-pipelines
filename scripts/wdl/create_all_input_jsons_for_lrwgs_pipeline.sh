@@ -8,6 +8,8 @@ export INPUT_PREFIX_EAP="gs://broad-dsde-methods-long-reads-incoming/PBEAP/"
 export INPUT_PREFIX_GENENTECH="gs://broad-dsde-methods-long-reads-incoming/Genentech/"
 export INPUT_PREFIX_RGP="gs://broad-dsde-methods-long-reads-incoming/RGP/"
 export INPUT_PREFIX_VERILY="gs://broad-dsde-methods-long-reads-incoming/Verily/"
+export INPUT_PREFIX_ONT="gs://broad-dsde-methods-long-reads-incoming/gp_ont/"
+export INPUT_PREFIX_DEEPSEQ="gs://broad-dsde-methods-long-reads-deepseq/ds783/"
 export OUTPUT_PREFIX="data/LRWholeGenomeSingleSample/"
 
 parse_and_execute() {
@@ -20,6 +22,10 @@ parse_and_execute() {
         INPUT_PREFIX=${INPUT_PREFIX_RGP}
     elif [[ "verily" == "$2" ]]; then
         INPUT_PREFIX=${INPUT_PREFIX_VERILY}
+    elif [[ "ont" == "$2" ]]; then
+        INPUT_PREFIX=${INPUT_PREFIX_ONT}
+    elif [[ "deepseq" == "$2" ]]; then
+        INPUT_PREFIX=${INPUT_PREFIX_DEEPSEQ}
     else
         echo "UNRECOGNIZED MODE: $2."
     fi
@@ -43,6 +49,8 @@ parse_and_execute() {
 export -f parse_and_execute
 
 parse_and_execute data/LRWholeGenomeSingleSample/eap.tsv eap
-parse_and_execute data/LRWholeGenomeSingleSample/genentech.tsv genentech
-parse_and_execute data/LRWholeGenomeSingleSample/rgp.tsv rgp
-parse_and_execute data/LRWholeGenomeSingleSample/verily.tsv verily
+#parse_and_execute data/LRWholeGenomeSingleSample/genentech.tsv genentech
+#parse_and_execute data/LRWholeGenomeSingleSample/rgp.tsv rgp
+#parse_and_execute data/LRWholeGenomeSingleSample/verily.tsv verily
+parse_and_execute data/LRWholeGenomeSingleSample/ont.tsv ont
+parse_and_execute data/LRWholeGenomeSingleSample/deepseq.tsv deepseq

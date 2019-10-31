@@ -1,0 +1,17 @@
+{
+    "LRMetrics.bam": "gs://broad-dsde-methods-long-reads-outgoing/LRTranscriptomeSingleSample/SM-HLD5P/alignments/all.corrected.bam",
+    "LRMetrics.bai": "gs://broad-dsde-methods-long-reads-outgoing/LRTranscriptomeSingleSample/SM-HLD5P/alignments/all.corrected.bai",
+
+    "LRMetrics.sample_name":    "SM-HLD5P",
+
+    "LRMetrics.ref_fasta":      "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+    "LRMetrics.ref_fasta_fai":  "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+    "LRMetrics.ref_dict":       "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+    "LRMetrics.ref_flat":       "gs://broad-dsde-methods-long-reads/resources/references/grch38/refFlat.txt",
+
+    "LRMetrics.dbsnp":          "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
+    "LRMetrics.dbsnp_tbi":      "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
+    "LRMetrics.metrics_locus":  "gs://broad-dsde-methods-long-reads/resources/references/grch38/metric_intervals.interval_list",
+
+    "LRMetrics.gcs_output_dir": "gs://broad-dsde-methods-long-reads-outgoing/LRTranscriptomeSingleSample/SM-HLD5P"
+}

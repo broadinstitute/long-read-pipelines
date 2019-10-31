@@ -34,6 +34,18 @@ for gcs_path_full in args.gcs_paths:
         if (blob.name.endswith(".bam") and not blob.name.endswith(".scraps.bam")) or bool(re.search('(f(ast)?q)(.gz)?', blob.name)):
             num_seq_blobs += 1
 
+        if blob.name.endswith("final_summary.txt"):
+            blob.download_to_filename("final_summary.txt")
+            info = {}
+
+            with open("final_summary.txt") as fp:
+                for line in fp:
+                    f = line.rstrip().split("=")
+                    info[f[0]] = f[1]
+
+            sample_name = info['sample_id']
+            sample_names.add(sample_name)
+
         if blob.name.endswith(".metadata.xml") and not blob.name.endswith(".run.metadata.xml"):
             blob.download_to_filename("metadata.xml")
             a = etree.parse("metadata.xml")
@@ -70,6 +82,9 @@ s = f"""
 
     "LRWholeGenomeSingleSample.tandem_repeat_bed": "gs://broad-dsde-methods-long-reads/resources/references/grch38/human_GRCh38_no_alt_analysis_set.trf.bed",
     "LRWholeGenomeSingleSample.ref_flat":          "gs://broad-dsde-methods-long-reads/resources/references/grch38/refFlat.txt",
+    "LRWholeGenomeSingleSample.dbsnp":             "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
+    "LRWholeGenomeSingleSample.dbsnp_tbi":         "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
+    "LRWholeGenomeSingleSample.metrics_locus":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/metric_intervals.interval_list",
 
     "LRWholeGenomeSingleSample.GATKLR.par_regions_bed":                               "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.par.bed",
     "LRWholeGenomeSingleSample.GATKLR.calling_interval_list":                         "gs://broad-dsde-methods-long-reads/resources/references/grch38/GRCh38.all.canonical.autosomes.interval_list",

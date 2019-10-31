@@ -1,0 +1,11 @@
+name: lr-c3poa
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - numpy
+  - zlib
+  - libcurl
+  - blat
