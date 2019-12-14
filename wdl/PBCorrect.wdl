@@ -4,9 +4,12 @@ version 1.0
 
 import "CorrectReads.wdl" as CR
 import "Utils.wdl" as Utils
+import "ShardLongReads.wdl" as SLR
+import "ValidateBam.wdl" as VB
+import "MergeBams.wdl" as MB
 import "Finalize.wdl" as FF
 
-workflow LRWholeGenomeSingleSample {
+workflow PBCorrect {
     input {
         Array[String] gcs_dirs
         String sample_name
@@ -36,7 +39,7 @@ workflow LRWholeGenomeSingleSample {
 
         call MB.MergeBams as MergeCorrected {
             input:
-                aligned_shards = CCS.shard,
+                aligned_shards = CCS.ccs_shard,
                 merged_name="~{sample_name}.corrected.unaligned.bam",
         }
     }
