@@ -1,0 +1,9 @@
+{
+    "PBCorrect.gcs_dirs": [
+        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_and_chr20_tiny_subset/",
+        "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep2_chrM_and_chr20_tiny_subset/"
+    ],
+
+    "PBCorrect.sample_name":       "chrM_and_chr20_subset",
+    "PBCorrect.gcs_output_dir":    "gs://broad-dsde-methods-long-reads-outgoing/PBCorrect/CorrectionTest/chrM_and_chr20_subset/grch38"
+}
