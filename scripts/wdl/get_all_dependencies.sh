@@ -10,7 +10,7 @@ if [[ "$#" -ne 1 ]]; then
 fi
 
 function get_dep() {
-	ff=$(grep -F 'import' "${1}" | sed 's/import //' | sed -E 's/ as [A-Za-z]+//' | sed 's/"//g')
+	ff=$(grep '^import ' "${1}" | sed 's/import //' | sed -E 's/ as [A-Za-z]+//' | sed 's/"//g')
 	echo "${ff}"
 }
 export -f get_dep
