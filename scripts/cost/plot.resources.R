@@ -27,7 +27,7 @@ get_time_series_df <- function(resources.log.file) {
     t = gsub("(\\[|\\])", "", sub("UTC ", "", sub("^  ", "", logs[1])))
     start.time = strptime(t, format = "%a %b %d %H:%M:%S %Y", tz = "UTC")
 
-    b.arrays = grep("^  \\[", logs)
+    b.arrays = grep("^\\s*?\\[", logs, perl = T)
     res = vector(mode = "list", length = length(b.arrays))
     j = 1
     for (i in b.arrays) {
