@@ -41,6 +41,7 @@ workflow CollectParentsKmerStats {
                 batch_id_hold_file = pair.left,
                 parental_reads_for_this_batch = pair.right,
                 meryl_count_script = ParentalReadsRepartitionAndMerylConfigure.count_script,
+                kmerSize = kmerSize,
                 meryl_operations_threads_est = meryl_operations_threads_est,
                 meryl_memory_in_GB = PrintMerylMemory.meryl_memory_in_GB
         }
@@ -235,6 +236,7 @@ task MerylCount {
 
         File meryl_count_script
 
+        Int? kmerSize
         Int meryl_operations_threads_est
         Int meryl_memory_in_GB
 
@@ -243,7 +245,12 @@ task MerylCount {
 
     String postfix = basename(batch_id_hold_file, ".txt")
 
-    Int half_meryl_memory = ceil(meryl_memory_in_GB/2)
+    Int emperical_memory_lower_limit = 18
+    Int memory_to_use = if (meryl_memory_in_GB < emperical_memory_lower_limit) then emperical_memory_lower_limit else meryl_memory_in_GB
+
+    Int emperical_thread_cout = 4 # based on monitor, the task is not CPU intensive (but memory intensive), and higher available CPU improved runtime only marginally
+
+    Int disk_space_gb = if(defined(kmerSize)) then 100 else 50
 
     command <<<
         set -euo pipefail
@@ -277,9 +284,13 @@ task MerylCount {
         echo "Dealing with batch: ${n}, with log name: ${log_name}"
         cd workdir/haplotype/0-kmers/ && chmod +x meryl-count.sh
         ./meryl-count.sh ${n} > ${log_name} 2>&1 || cat ${log_name}
+        echo "----------"
+        echo "tail log files"
         tail -n 5 ${log_name}
+        echo "----------"
         date -u
-        tar -czf reads-~{postfix}.meryl.tar.gz reads-~{postfix}.meryl
+        echo "Done counting, now compressing for delocalization..."
+        tar --use-compress-program=pigz -cf reads-~{postfix}.meryl.tar.gz reads-~{postfix}.meryl
         du -sh reads-~{postfix}.meryl.tar.gz
         cd -
         df -h
@@ -308,9 +319,9 @@ task MerylCount {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          meryl_operations_threads_est / 2,
-        mem_gb:             if (16 < half_meryl_memory) then half_meryl_memory else 16,
-        disk_gb:            50,
+        cpu_cores:          emperical_thread_cout,
+        mem_gb:             memory_to_use,
+        disk_gb:            disk_space_gb,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
@@ -434,9 +445,9 @@ task MerylMergeAndSubtract {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2 * meryl_operations_threads_est + 2,
-        mem_gb:             2 * meryl_memory_in_GB + 2, # choosing this specification so that two parallel jobs can be executed at the same time
-        disk_gb:            1500, # we strongly recommend you NOT lower this number, as we've seen it typically gets closer to 1.2T peak usage, and local SSD's increase by unit of 375GB
+        cpu_cores:          2 * meryl_operations_threads_est + 6, # a bit more threads, a bit more concurrency for decompression at the beginning
+        mem_gb:             3 * meryl_memory_in_GB + 6, # choosing this specification so that two parallel jobs can be executed at the same time
+        disk_gb:            3000, # we strongly recommend you NOT change this number: 1) we've seen close to full disk peak usage, and 2) local SSD's increase by unit of 375GB, this is the maximum
         boot_disk_gb:       10,
         preemptible_tries:  0, # explicitly turn off as this takes a long time
         max_retries:        0,

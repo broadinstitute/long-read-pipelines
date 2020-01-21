@@ -22,8 +22,8 @@ workflow TrioBinChildLongReads {
         # these numbers will be used to request VMs on which all meryl jobs are run, in stages
         Int meryl_operations_threads_est = 8
 
-        Int child_read_assign_threads_est = 64
-        Int child_read_assign_memoryG_est = 64
+        Int child_read_assign_threads_est = 36
+        Int child_read_assign_memoryG_est = 32
 
         Boolean? run_with_debug = false
     }
@@ -190,7 +190,7 @@ task AssignChildLongReads {
     RuntimeAttr default_attr = object {
         cpu_cores:          child_read_assign_threads_est,
         mem_gb:             child_read_assign_memoryG_est,
-        disk_gb:            300,
+        disk_gb:            500,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
