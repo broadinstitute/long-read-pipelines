@@ -8,6 +8,8 @@ workflow CollectParentsKmerStats {
 
         String workdir_name
 
+        Int? kmerSize
+
         String father_short_reads_bucket
         String mother_short_reads_bucket
 
@@ -20,6 +22,7 @@ workflow CollectParentsKmerStats {
     call ParentalReadsRepartitionAndMerylConfigure {
         input:
             workdir_name = workdir_name,
+            kmerSize = kmerSize,
             father_short_reads_bucket = father_short_reads_bucket,
             mother_short_reads_bucket = mother_short_reads_bucket,
             meryl_operations_threads_est = meryl_operations_threads_est,
@@ -69,6 +72,8 @@ task ParentalReadsRepartitionAndMerylConfigure {
 
         String workdir_name
 
+        Int? kmerSize
+
         String father_short_reads_bucket
         String mother_short_reads_bucket
 
@@ -79,7 +84,9 @@ task ParentalReadsRepartitionAndMerylConfigure {
         RuntimeAttr? runtime_attr_override
     }
 
-    String extra_args = if (run_with_debug) then "-debug" else " "
+    String debug_option = if (run_with_debug) then "-debug" else " "
+    String kmer_option = if (defined(kmerSize)) then ("-triobinK " + kmerSize) else " "
+    String extra_args = kmer_option + debug_option
 
     command <<<
         set -euo pipefail
@@ -134,10 +141,13 @@ task ParentalReadsRepartitionAndMerylConfigure {
         echo "==================================="
         ##########
 
-        # move configured shell scripts up for delocalization, then sed replace the thread configuration
-        # recall that memory is set purely based on file count
+        # move configured shell scripts up for delocalization
         mv workdir/haplotype/0-kmers/meryl-count.memory .
         mv workdir/haplotype/0-kmers/*.sh .
+        # then sed replace the thread configuration:
+        # 1. recall that memory was set purely based on file count hence no-need/better-not change
+        # 2. the number of threads was configured above using threads available on this VM
+        #    and we don't want that.
         th_cnt=~{meryl_operations_threads_est}
         for script in *.sh; do
             sed -i -E "s/threads=[0-9]+/threads=$th_cnt/g" $script;
@@ -180,7 +190,7 @@ task ParentalReadsRepartitionAndMerylConfigure {
         boot_disk_gb:       10,
         preemptible_tries:  0, # explicitly turn this off as we don't save that much for the disk, and pre-emption kills us
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch"
+        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -304,7 +314,7 @@ task MerylCount {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch"
+        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -430,7 +440,7 @@ task MerylMergeAndSubtract {
         boot_disk_gb:       10,
         preemptible_tries:  0, # explicitly turn off as this takes a long time
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch"
+        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
