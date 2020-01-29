@@ -232,7 +232,7 @@ task AlignContigs {
     command <<<
         set -euxo pipefail
 
-        awk '{ print $1 }' ~{contigs} | minimap2 -ayY --MD --eqx -x ~{correction_arg} -R '@RG\tID:~{ID}\tSM:~{SM}\tPL:~{PL}' -t ~{cpus} ~{ref_fasta} - | samtools sort -@~{cpus} -m4G -o ~{aligned_name} -
+        awk '{ print $1 }' ~{contigs} | minimap2 -ayYL --cs --MD --eqx -x ~{correction_arg} -R '@RG\tID:~{ID}\tSM:~{SM}\tPL:~{PL}' -t ~{cpus} ~{ref_fasta} - | samtools sort -@~{cpus} -m4G -o ~{aligned_name} -
         samtools index ~{aligned_name}
     >>>
 
