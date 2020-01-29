@@ -12,7 +12,7 @@ task Minimap2 {
         String PL
         Boolean? reads_are_corrected
         Boolean? reads_are_rna
-        
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -31,7 +31,7 @@ task Minimap2 {
         set -euxo pipefail
 
         RG=`python /usr/local/bin/merge_read_group_tags.py --ID ~{ID} --SM ~{SM} --PL ~{PL} ~{shard}`
-        samtools fastq ~{shard} | minimap2 -ayY --MD --eqx -x ~{map_preset} -R ${RG} -t ~{cpus} ~{ref_fasta} - | samtools view -b - > temp.aligned.unsorted.bam
+        samtools fastq ~{shard} | minimap2 -ayYL --cs --MD --eqx -x ~{map_preset} -R ${RG} -t ~{cpus} ~{ref_fasta} - | samtools view -b - > temp.aligned.unsorted.bam
         java -Dsamjdk.compression_level=0 -Xmx4g -jar /usr/local/bin/gatk.jar RepairLongReadBam -I ~{shard} -A temp.aligned.unsorted.bam -O temp.aligned.unsorted.repaired.bam -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
         samtools sort -@~{cpus} -m4G -o ~{aligned_shard_name} temp.aligned.unsorted.repaired.bam
     >>>
@@ -42,8 +42,8 @@ task Minimap2 {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          "~{cpus}", 
-        mem_gb:             20, 
+        cpu_cores:          "~{cpus}",
+        mem_gb:             20,
         disk_gb:            "~{disk_size}",
         boot_disk_gb:       10,
         preemptible_tries:  1,
