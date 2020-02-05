@@ -1,4 +1,4 @@
-TAG1 = quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.0
+TAG1 = quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.1
 TAG2 = quay.io/broad-long-read-pipelines/lr-cloud-downloader:latest
 
 all: build push

@@ -67,7 +67,7 @@ task GetSRAIDs {
         disks: "local-disk 1 LOCAL"
         preemptible: 1
         maxRetries: 0
-        docker: "quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.0"
+        docker: "quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.1"
     }
 }
 
@@ -100,11 +100,28 @@ task FastqDump {
         if gsutil ls -lh ~{gcs_output_dir}/~{SRR_ID}.fastq.gz ; then
             echo "~{gcs_output_dir}/~{SRR_ID} already exists."
         else
-            fastq-dump --gzip ~{SRR_ID}
-            gsutil -o "GSUtil:parallel_process_count=~{cpus}" -o "GSUtil:parallel_thread_count=1" -m cp *.gz ~{gcs_output_dir}
-        fi
+            set -eu # we place this here because the gsutil check up above will error us out were we to place it at the very beginning
 
-        gsutil ls -lh ~{gcs_output_dir} > upload_list.txt
+            # we do these because sratools actually prefetch SRA files to $HOME,
+            # which in cromwell-controlled workflows typically are quite small, and you'll see errors like
+            # "fasterq-dump.2.9.1 int: storage exhausted while writing file within file system module"
+            # then ultimately may fail to out of space errors
+            mkdir -p $HOME/.ncbi/ && mkdir -p ncbi/public/ && \
+                echo '/repository/user/main/public/root = "/cromwell_root/ncbi/public"' > $HOME/.ncbi/user-settings.mkfg
+
+            echo "=========="; df -h; echo "==========";
+            fasterq-dump ~{SRR_ID} --threads ~{cpus}
+            du -sh *
+            echo "-----"
+            for fastq in *.fastq; do pigz $fastq; done
+            echo "-----"
+            du -sh *
+            echo "=========="; df -h; echo "==========";
+            gsutil -o "GSUtil:parallel_process_count=~{cpus}" \
+                   -o "GSUtil:parallel_thread_count=1" \
+                   -m cp *.gz ~{gcs_output_dir}
+            gsutil ls -lh ~{gcs_output_dir} > upload_list.txt
+        fi
     >>>
 
     output {
@@ -117,6 +134,6 @@ task FastqDump {
         disks: "local-disk ~{final_disk_space_gb} LOCAL"
         preemptible: 0
         maxRetries: 0
-        docker: "quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.0"
+        docker: "quay.io/broad-long-read-pipelines/lr-cloud-downloader:0.02.1"
     }
 }
