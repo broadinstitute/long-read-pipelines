@@ -12,7 +12,7 @@ task FindSequencingSummaryFiles {
     String indir = sub(gcs_input_dir, "/$", "")
 
     command <<<
-        for summary_file in $(gsutil ls ~{indir}/**sequencing_summary.txt*)
+        for summary_file in $(gsutil ls ~{indir}/**sequencing_summary*.txt*)
         do
             DIR=$(dirname $summary_file)
             echo ${DIR}
@@ -50,7 +50,7 @@ task FindSequencingSummaryFiles {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.04"
+        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -76,7 +76,7 @@ task GetRunInfo {
     command <<<
         set -euxo pipefail
 
-        gsutil cat ~{indir}/final_summary.txt | sed 's/=/\t/g' > run_info.txt
+        gsutil cat ~{indir}/final_summary*.txt | sed 's/=/\t/g' > run_info.txt
     >>>
 
     output {
@@ -91,7 +91,7 @@ task GetRunInfo {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.04"
+        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -135,7 +135,7 @@ task ListFiles {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.04"
+        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -175,7 +175,7 @@ task PartitionManifest {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.04"
+        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.05"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -12,7 +12,7 @@ ENV PATH=/opt/conda/envs/lr-utils/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install gsutil
 RUN apt update
-RUN apt install -y python2.7
+RUN apt install -y curl python2.7
 RUN curl https://sdk.cloud.google.com | bash
 
 # copy other resources
