@@ -8,6 +8,8 @@ workflow TrioBinChildLongReads {
 
         String workdir_name
 
+        Int? kmerSize
+
         String father_short_reads_bucket
         String mother_short_reads_bucket
 
@@ -20,8 +22,8 @@ workflow TrioBinChildLongReads {
         # these numbers will be used to request VMs on which all meryl jobs are run, in stages
         Int meryl_operations_threads_est = 8
 
-        Int child_read_assign_threads_est = 64
-        Int child_read_assign_memoryG_est = 64
+        Int child_read_assign_threads_est = 36
+        Int child_read_assign_memoryG_est = 32
 
         Boolean? run_with_debug = false
     }
@@ -30,6 +32,7 @@ workflow TrioBinChildLongReads {
 
         input:
             workdir_name = workdir_name,
+            kmerSize = kmerSize,
             father_short_reads_bucket = father_short_reads_bucket,
             mother_short_reads_bucket = mother_short_reads_bucket,
             meryl_operations_threads_est = meryl_operations_threads_est,
@@ -43,7 +46,7 @@ workflow TrioBinChildLongReads {
             meryl_subtract_father = CollectParentsKmerStats.Father_haplotype_merylDB,
             meryl_subtract_mother = CollectParentsKmerStats.Mother_haplotype_merylDB,
             meryl_stats_father = CollectParentsKmerStats.Father_reads_statistics,
-            meryl_stats_mother = CollectParentsKmerStats.Father_reads_statistics,
+            meryl_stats_mother = CollectParentsKmerStats.Mother_reads_statistics,
 
             child_long_reads_bucket = child_long_reads_bucket,
             long_read_platform = long_read_platform,
@@ -187,11 +190,11 @@ task AssignChildLongReads {
     RuntimeAttr default_attr = object {
         cpu_cores:          child_read_assign_threads_est,
         mem_gb:             child_read_assign_memoryG_est,
-        disk_gb:            300,
+        disk_gb:            500,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch"
+        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -8,6 +8,8 @@ workflow CollectParentsKmerStats {
 
         String workdir_name
 
+        Int? kmerSize
+
         String father_short_reads_bucket
         String mother_short_reads_bucket
 
@@ -20,6 +22,7 @@ workflow CollectParentsKmerStats {
     call ParentalReadsRepartitionAndMerylConfigure {
         input:
             workdir_name = workdir_name,
+            kmerSize = kmerSize,
             father_short_reads_bucket = father_short_reads_bucket,
             mother_short_reads_bucket = mother_short_reads_bucket,
             meryl_operations_threads_est = meryl_operations_threads_est,
@@ -38,6 +41,7 @@ workflow CollectParentsKmerStats {
                 batch_id_hold_file = pair.left,
                 parental_reads_for_this_batch = pair.right,
                 meryl_count_script = ParentalReadsRepartitionAndMerylConfigure.count_script,
+                kmerSize = kmerSize,
                 meryl_operations_threads_est = meryl_operations_threads_est,
                 meryl_memory_in_GB = PrintMerylMemory.meryl_memory_in_GB
         }
@@ -69,6 +73,8 @@ task ParentalReadsRepartitionAndMerylConfigure {
 
         String workdir_name
 
+        Int? kmerSize
+
         String father_short_reads_bucket
         String mother_short_reads_bucket
 
@@ -79,7 +85,9 @@ task ParentalReadsRepartitionAndMerylConfigure {
         RuntimeAttr? runtime_attr_override
     }
 
-    String extra_args = if (run_with_debug) then "-debug" else " "
+    String debug_option = if (run_with_debug) then "-debug" else " "
+    String kmer_option = if (defined(kmerSize)) then ("-triobinK " + kmerSize) else " "
+    String extra_args = kmer_option + debug_option
 
     command <<<
         set -euo pipefail
@@ -134,10 +142,13 @@ task ParentalReadsRepartitionAndMerylConfigure {
         echo "==================================="
         ##########
 
-        # move configured shell scripts up for delocalization, then sed replace the thread configuration
-        # recall that memory is set purely based on file count
+        # move configured shell scripts up for delocalization
         mv workdir/haplotype/0-kmers/meryl-count.memory .
         mv workdir/haplotype/0-kmers/*.sh .
+        # then sed replace the thread configuration:
+        # 1. recall that memory was set purely based on file count hence no-need/better-not change
+        # 2. the number of threads was configured above using threads available on this VM
+        #    and we don't want that.
         th_cnt=~{meryl_operations_threads_est}
         for script in *.sh; do
             sed -i -E "s/threads=[0-9]+/threads=$th_cnt/g" $script;
@@ -180,7 +191,7 @@ task ParentalReadsRepartitionAndMerylConfigure {
         boot_disk_gb:       10,
         preemptible_tries:  0, # explicitly turn this off as we don't save that much for the disk, and pre-emption kills us
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch"
+        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -225,6 +236,7 @@ task MerylCount {
 
         File meryl_count_script
 
+        Int? kmerSize
         Int meryl_operations_threads_est
         Int meryl_memory_in_GB
 
@@ -233,7 +245,12 @@ task MerylCount {
 
     String postfix = basename(batch_id_hold_file, ".txt")
 
-    Int half_meryl_memory = ceil(meryl_memory_in_GB/2)
+    Int emperical_memory_lower_limit = 18
+    Int memory_to_use = if (meryl_memory_in_GB < emperical_memory_lower_limit) then emperical_memory_lower_limit else meryl_memory_in_GB
+
+    Int emperical_thread_cout = 4 # based on monitor, the task is not CPU intensive (but memory intensive), and higher available CPU improved runtime only marginally
+
+    Int disk_space_gb = if(defined(kmerSize)) then 100 else 50
 
     command <<<
         set -euo pipefail
@@ -267,9 +284,13 @@ task MerylCount {
         echo "Dealing with batch: ${n}, with log name: ${log_name}"
         cd workdir/haplotype/0-kmers/ && chmod +x meryl-count.sh
         ./meryl-count.sh ${n} > ${log_name} 2>&1 || cat ${log_name}
+        echo "----------"
+        echo "tail log files"
         tail -n 5 ${log_name}
+        echo "----------"
         date -u
-        tar -czf reads-~{postfix}.meryl.tar.gz reads-~{postfix}.meryl
+        echo "Done counting, now compressing for delocalization..."
+        tar --use-compress-program=pigz -cf reads-~{postfix}.meryl.tar.gz reads-~{postfix}.meryl
         du -sh reads-~{postfix}.meryl.tar.gz
         cd -
         df -h
@@ -298,13 +319,13 @@ task MerylCount {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          meryl_operations_threads_est / 2,
-        mem_gb:             if (16 < half_meryl_memory) then half_meryl_memory else 16,
-        disk_gb:            50,
+        cpu_cores:          emperical_thread_cout,
+        mem_gb:             memory_to_use,
+        disk_gb:            disk_space_gb,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch"
+        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -424,13 +445,13 @@ task MerylMergeAndSubtract {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2 * meryl_operations_threads_est + 2,
-        mem_gb:             2 * meryl_memory_in_GB + 2, # choosing this specification so that two parallel jobs can be executed at the same time
-        disk_gb:            1500, # we strongly recommend you NOT lower this number, as we've seen it typically gets closer to 1.2T peak usage, and local SSD's increase by unit of 375GB
+        cpu_cores:          2 * meryl_operations_threads_est + 6, # a bit more threads, a bit more concurrency for decompression at the beginning
+        mem_gb:             3 * meryl_memory_in_GB + 6, # choosing this specification so that two parallel jobs can be executed at the same time
+        disk_gb:            3000, # we strongly recommend you NOT change this number: 1) we've seen close to full disk peak usage, and 2) local SSD's increase by unit of 375GB, this is the maximum
         boot_disk_gb:       10,
         preemptible_tries:  0, # explicitly turn off as this takes a long time
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch"
+        docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
