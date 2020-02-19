@@ -1,0 +1,24 @@
+{
+    "AssembleMHC.mother_fastqs":       [ "gs://broad-dsde-methods-kiran/scratch/sra/GWD/HG02982/ERR1955429_1.fastq.gz", "gs://broad-dsde-methods-kiran/scratch/sra/GWD/HG02982/ERR1955429_2.fastq.gz", "gs://broad-dsde-methods-kiran/scratch/sra/GWD/HG02982/ERR1955429.fastq.gz" ],
+    "AssembleMHC.father_fastqs":       [ "gs://broad-dsde-methods-kiran/scratch/sra/GWD/HG02983/ERR1955425_1.fastq.gz", "gs://broad-dsde-methods-kiran/scratch/sra/GWD/HG02983/ERR1955425_2.fastq.gz", "gs://broad-dsde-methods-kiran/scratch/sra/GWD/HG02983/ERR1955425.fastq.gz" ],
+
+    "AssembleMHC.child_corrected_bam": "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample/HG02984/alignments/HG02984.corrected.bam",
+    "AssembleMHC.child_corrected_bai": "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample/HG02984/alignments/HG02984.corrected.bai",
+    "AssembleMHC.child_remaining_bam": "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample/HG02984/alignments/HG02984.remaining.bam",
+    "AssembleMHC.child_remaining_bai": "gs://broad-dsde-methods-long-reads-outgoing/LRWholeGenomeSingleSample/HG02984/alignments/HG02984.remaining.bai",
+
+    "AssembleMHC.platform":            "PACBIO",
+
+    "AssembleMHC.ref_fasta":           "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+    "AssembleMHC.ref_dict":            "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+    "AssembleMHC.ref_fasta_fai":       "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+    "AssembleMHC.ref_fasta_amb":       "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.amb",
+    "AssembleMHC.ref_fasta_ann":       "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.ann",
+    "AssembleMHC.ref_fasta_bwt":       "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.bwt",
+    "AssembleMHC.ref_fasta_pac":       "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.pac",
+    "AssembleMHC.ref_fasta_sa":        "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.sa",
+
+    "AssembleMHC.mhc_region":          [ "chr6:28450120-33530577", "chr6_GL000250v2_alt", "chr6_GL000251v2_alt", "chr6_GL000252v2_alt", "chr6_GL000253v2_alt", "chr6_GL000254v2_alt", "chr6_GL000255v2_alt", "chr6_GL000256v2_alt", "chr6_KI270758v1_alt" ],
+
+    "AssembleMHC.prefix":              "HG02984.MHC"
+}

@@ -1,0 +1,15 @@
+{
+    "ONT10xSingleFlowcell.gcs_input_dir":    "gs://broad-gp-oxfordnano/eQTL/1",
+
+    "ONT10xSingleFlowcell.ref_fasta":        "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+    "ONT10xSingleFlowcell.ref_fasta_fai":    "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+    "ONT10xSingleFlowcell.ref_dict":         "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+
+    "ONT10xSingleFlowcell.ref_flat":         "gs://broad-dsde-methods-long-reads/resources/references/grch38/refFlat.txt",
+    "ONT10xSingleFlowcell.dbsnp_vcf":        "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
+    "ONT10xSingleFlowcell.dbsnp_tbi":        "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
+
+    "ONT10xSingleFlowcell.metrics_locus":    "gs://broad-dsde-methods-long-reads/resources/references/grch38/metric_intervals.interval_list",
+
+    "ONT10xSingleFlowcell.gcs_out_root_dir": "gs://broad-dsde-methods-long-reads-outgoing/ONT10xSingleFlowcell/v3/"
+}

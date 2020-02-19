@@ -1,14 +1,16 @@
 scratch
 cromwell-workflow-logs
 pb_eap
-resources
 bin
 results
 reports
 *.swp
 *.jar
 .DS_Store
+reports/.DS_Store
 .idea
 .Rproj.user
 .RData
 .bak
+*.png
+*.pdf

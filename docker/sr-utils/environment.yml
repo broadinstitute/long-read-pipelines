@@ -1,0 +1,8 @@
+name: sr-utils
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - bwa

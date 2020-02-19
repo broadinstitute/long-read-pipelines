@@ -1,0 +1,11 @@
+name: lr-utils
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - google-cloud-storage
+  - samtools
+  - java-jdk
+  - bcftools
+  - ont-fast5-api

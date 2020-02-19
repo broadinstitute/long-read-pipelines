@@ -1,0 +1,9 @@
+name: lr-longshot
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - bcftools
+  - htslib
+  - longshot

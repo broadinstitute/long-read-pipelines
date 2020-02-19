@@ -1,0 +1,16 @@
+{
+    "PB10xSingleFlowcell.gcs_input_dir":     "gs://broad-dsde-methods-long-reads-incoming/PDO-19423_IsoSeq/SM-HLD5P-Cell2",
+    "PB10xSingleFlowcell.sample_name":       "SM-HLD5P",
+
+    "PB10xSingleFlowcell.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta",
+    "PB10xSingleFlowcell.ref_fasta_fai":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai",
+    "PB10xSingleFlowcell.ref_dict":          "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict",
+
+    "PB10xSingleFlowcell.ref_flat":          "gs://broad-dsde-methods-long-reads/resources/references/grch38/refFlat.txt",
+    "PB10xSingleFlowcell.dbsnp_vcf":         "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
+    "PB10xSingleFlowcell.dbsnp_tbi":         "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
+
+    "PB10xSingleFlowcell.metrics_locus":     "gs://broad-dsde-methods-long-reads/resources/references/grch38/metric_intervals.interval_list",
+
+    "PB10xSingleFlowcell.gcs_out_root_dir":  "gs://broad-dsde-methods-long-reads-outgoing/PB10xSingleFlowcell"
+}
