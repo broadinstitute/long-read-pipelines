@@ -1,0 +1,16 @@
+name: 10x_tool
+channels:
+  - default
+  - bioconda
+  - anaconda
+dependencies:
+  - python=3.6
+  - cython
+  - numpy
+  - samtools
+  - bwapy
+  - cigar
+  - pip
+  - pip:
+    - pysam
+    - biopython

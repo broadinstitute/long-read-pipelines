@@ -1,0 +1,14 @@
+name: lr-seanken
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+  - ostrokach
+dependencies:
+  - samtools
+  - bedtools
+  - java-jdk
+  - pysam
+  - scipy
+  - pandas
+  - python-levenshtein
