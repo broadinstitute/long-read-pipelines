@@ -101,10 +101,13 @@ task MergeLongshotCalls {
     Int disk_size = 2*ceil(size(vcfs, "GB"))
 
     command <<<
-        set -euxo pipefail
-        grep '^#' ~{vcfs[0]} | grep -v CHROM > header
+        set -x
+
+        VCF_WITH_HEADER=`ls -S ~{sep=' ' vcfs} | head -1`
+
+        grep '^#' $VCF_WITH_HEADER | grep -v CHROM > header
         grep '^@SQ' ~{ref_dict} | awk '{ print "##contig=<ID=" $2 ",length=" $3 ">" }' | sed 's/[SL]N://g' >> header
-        grep -m1 CHROM ~{vcfs[0]} >> header
+        grep -m1 CHROM $VCF_WITH_HEADER >> header
 
         ((cat header) && (grep -h -v '^#' ~{sep=' ' vcfs})) | bcftools sort | bgzip > ~{prefix}.longshot.vcf.gz
         tabix -p vcf ~{prefix}.longshot.vcf.gz
@@ -118,7 +121,7 @@ task MergeLongshotCalls {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             1,
+        mem_gb:             4,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,

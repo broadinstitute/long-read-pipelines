@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/ONTUtils.wdl" as ONT
+import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
@@ -9,7 +9,7 @@ import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 import "tasks/CallSmallVariants.wdl" as SMV
 
-workflow ONTWholeGenomeSingleFlowcell {
+workflow PBCCSWholeGenomeSingleFlowcell {
     input {
         String gcs_input_dir
         String? sample_name
@@ -31,32 +31,31 @@ workflow ONTWholeGenomeSingleFlowcell {
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call ONT.FindSequencingSummaryFiles { input: gcs_input_dir = gcs_input_dir }
+    call PB.FindBams { input: gcs_input_dir = gcs_input_dir }
 
-    scatter (summary_file in FindSequencingSummaryFiles.summary_files) {
-        call ONT.GetRunInfo { input: summary_file = summary_file }
-        call ONT.ListFiles as ListFast5s { input: summary_file = summary_file, suffix = "fast5" }
-        call ONT.ListFiles as ListFastqs { input: summary_file = summary_file, suffix = "fastq" }
+    scatter (subread_bam in FindBams.subread_bams) {
+        call PB.GetRunInfo { input: subread_bam = subread_bam }
 
-        String SM  = select_first([sample_name, GetRunInfo.run_info["sample_id"]])
-        String PL  = "ONT"
-        String PU  = GetRunInfo.run_info["instrument"]
-        String DT  = GetRunInfo.run_info["started"]
-        String ID  = GetRunInfo.run_info["flow_cell_id"] + "." + GetRunInfo.run_info["position"]
-        String DIR = GetRunInfo.run_info["protocol_group_id"] + "." + SM + "." + ID
-        String SID = ID + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
-        String RG = "@RG\\tID:~{SID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+        String SM  = select_first([sample_name, GetRunInfo.run_info["SM"]])
+        String PL  = "PACBIO"
+        String PU  = GetRunInfo.run_info["PU"]
+        String DT  = GetRunInfo.run_info["DT"]
+        String ID  = PU
+        String DS  = GetRunInfo.run_info["DS"]
+        String DIR = SM + "." + ID
+        String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = 4  }
-        call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = 50 }
+        call PB.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
 
-        scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
+        scatter (subreads in ShardLongReads.unmapped_shards) {
+            call PB.CCS { input: subreads = subreads }
+
             call AR.Minimap2 as AlignChunk {
                 input:
-                    reads      = read_lines(manifest_chunk),
+                    reads      = [ CCS.consensus ],
                     ref_fasta  = ref_fasta,
                     RG         = RG,
-                    map_preset = "map-ont"
+                    map_preset = "asm20"
             }
         }
 
@@ -74,20 +73,20 @@ workflow ONTWholeGenomeSingleFlowcell {
                 metrics_locus  = metrics_locus,
                 per            = "flowcell",
                 type           = "subrun",
-                label          = SID,
+                label          = ID,
                 gcs_output_dir = outdir + "/" + DIR
         }
 
-        call FIG.Figures as PerFlowcellSubRunFigures {
-            input:
-                summary_files  = [ summary_file ],
-
-                per            = "flowcell",
-                type           = "subrun",
-                label          = SID,
-
-                gcs_output_dir = outdir + "/" + DIR
-        }
+#        call FIG.Figures as PerFlowcellSubRunFigures {
+#            input:
+#                summary_files  = [ summary_file ],
+#
+#                per            = "flowcell",
+#                type           = "subrun",
+#                label          = SID,
+#
+#                gcs_output_dir = outdir + "/" + DIR
+#        }
     }
 
     call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
@@ -108,16 +107,16 @@ workflow ONTWholeGenomeSingleFlowcell {
             gcs_output_dir = outdir + "/" + DIR[0]
     }
 
-    call FIG.Figures as PerFlowcellRunFigures {
-        input:
-            summary_files  = FindSequencingSummaryFiles.summary_files,
-
-            per            = "flowcell",
-            type           = "run",
-            label          = ID[0],
-
-            gcs_output_dir = outdir + "/" + DIR[0]
-    }
+#    call FIG.Figures as PerFlowcellRunFigures {
+#        input:
+#            summary_files  = FindSequencingSummaryFiles.summary_files,
+#
+#            per            = "flowcell",
+#            type           = "run",
+#            label          = ID[0],
+#
+#            gcs_output_dir = outdir + "/" + DIR[0]
+#    }
 
     call SV.CallSVs as CallSVs {
         input:

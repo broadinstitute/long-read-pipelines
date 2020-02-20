@@ -39,7 +39,7 @@ workflow PB10xSingleFlowcell {
         String PL  = "PACBIO"
         String PU  = GetRunInfo.run_info["PU"]
         String DT  = GetRunInfo.run_info["DT"]
-        String ID  = GetRunInfo.run_info["ID"]
+        String ID  = PU
         String DS  = GetRunInfo.run_info["DS"]
         String DIR = SM + "." + ID
 
@@ -49,7 +49,7 @@ workflow PB10xSingleFlowcell {
         call PB.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
 
         scatter (subreads in ShardLongReads.unmapped_shards) {
-            call HIFI.CCS { input: subreads = subreads }
+            call PB.CCS { input: subreads = subreads }
 
 #            call Utils.FastaToSam as FastaToSam { input: fasta = Correct.consensus }
 #
