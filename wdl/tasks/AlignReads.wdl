@@ -20,7 +20,7 @@ task Minimap2 {
     command <<<
         set -euxo pipefail
 
-        MAP_PARAMS="-ayY --MD --eqx -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
+        MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
         FILE="~{reads[0]}"
         FILES="~{sep=' ' reads}"
 
