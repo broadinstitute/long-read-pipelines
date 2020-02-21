@@ -2,7 +2,6 @@ version 1.0
 
 import "Structs.wdl"
 import "Utils.wdl" as Utils
-import "ProcessReads.wdl" as PR
 
 workflow C3POa {
     input {

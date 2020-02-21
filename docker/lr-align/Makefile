@@ -1,4 +1,4 @@
-TAG1 = quay.io/broad-long-read-pipelines/lr-align:0.01.24
+TAG1 = quay.io/broad-long-read-pipelines/lr-align:0.01.25
 TAG2 = quay.io/broad-long-read-pipelines/lr-align:latest
 
 all: build push

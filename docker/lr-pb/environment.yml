@@ -1,4 +1,4 @@
-name: lr-align
+name: lr-pb
 channels:
   - defaults
   - conda-forge
@@ -6,4 +6,4 @@ channels:
 dependencies:
   - google-cloud-storage
   - samtools
-  - java-jdk
+  - pbccs
