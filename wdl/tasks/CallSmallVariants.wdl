@@ -98,7 +98,7 @@ task MergeLongshotCalls {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(vcfs, "GB"))
+    Int disk_size = 2*ceil(size(vcfs, "GB")) + 1
 
     command <<<
         set -x

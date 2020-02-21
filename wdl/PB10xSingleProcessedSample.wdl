@@ -226,7 +226,7 @@ task RevertBam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -267,7 +267,7 @@ task SplitBam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -309,7 +309,7 @@ task GetRunInfo {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

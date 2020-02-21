@@ -45,7 +45,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         String DIR = SM + "." + ID
         String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        call PB.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
+        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
 
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }

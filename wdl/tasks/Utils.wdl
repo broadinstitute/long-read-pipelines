@@ -2,53 +2,6 @@ version 1.0
 
 import "Structs.wdl"
 
-task DetectRunInfo {
-    input {
-        String gcs_dir
-        String? sample_name
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    String SM = if defined(sample_name) then "--SM " + sample_name else ""
-
-    command <<<
-        set -x
-
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        python /usr/local/bin/detect_run_info.py ~{SM} ~{gcs_dir} > run_info.txt
-        grep '^DA' run_info.txt | awk '{ print $2 }' | sed 's/,/\n/g' > files.txt
-    >>>
-
-    output {
-        File run_info_file = "run_info.txt"
-        Map[String, String] run_info = read_map("run_info.txt")
-        File fofn = "files.txt"
-        Array[String] files = read_lines("files.txt")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            50,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.02"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
 task ShardLongReads {
     input {
         Array[String] unmapped_files
@@ -58,21 +11,13 @@ task ShardLongReads {
     }
 
     Int nr = select_first([num_reads_per_split, 200000])
-    Int disk_size = 1000
+    Int disk_size = 4*ceil(size(unmapped_files, "GB"))
     Int num_files = length(unmapped_files)
 
     command <<<
-        set -x
+        set -euxo pipefail
 
-        echo ~{unmapped_files[0]} | grep '.bam'
-        if [ $? -eq 0 ]
-        then
-            java -Dsamjdk.compression_level=0 -jar /usr/local/bin/gatk.jar ShardLongReads -I ~{sep=' -I ' unmapped_files} -nr ~{nr} -O ./ -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
-        else
-            touch empty.bam
-        fi
-
-        df -h .
+        java -Dsamjdk.compression_level=0 -jar /usr/local/bin/gatk.jar ShardLongReads -I ~{sep=' -I ' unmapped_files} -nr ~{nr} -O ./ -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
     >>>
 
     output {
@@ -81,13 +26,13 @@ task ShardLongReads {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             2,
+        cpu_cores:          2,
+        mem_gb:             4,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.02"
+        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.04"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -124,7 +69,7 @@ task PrepareManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.02"
+        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.04"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -163,7 +108,7 @@ task EchoManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.02"
+        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.04"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -203,7 +148,7 @@ task ChunkManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.02"
+        docker:             "quay.io/broad-long-read-pipelines/lr-utils:0.01.04"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -302,7 +247,7 @@ task MakeChrIntervalList {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.06"
+        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.07"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -342,7 +287,7 @@ task FastaToSam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -388,7 +333,7 @@ task CountFastqRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -427,7 +372,7 @@ task CountFastaRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -466,7 +411,7 @@ task CountBamRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -514,7 +459,7 @@ task GrepCountBamRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -562,7 +507,7 @@ task GrepCountUniqueBamRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -601,7 +546,7 @@ task Sum {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -642,7 +587,7 @@ task BamToTable {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.24"
+        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
