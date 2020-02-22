@@ -61,6 +61,8 @@ workflow PBCCSWholeGenomeSingleFlowcell {
 
         call AR.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
 
+        call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
+
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
             input:
                 aligned_bam    = MergeChunks.merged_bam,
@@ -90,6 +92,8 @@ workflow PBCCSWholeGenomeSingleFlowcell {
     }
 
     call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+
+    call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
 
     call AM.AlignedMetrics as PerFlowcellRunMetrics {
         input:
@@ -160,5 +164,11 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         input:
             files = [ MergeRuns.merged_bam, MergeRuns.merged_bai ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
+    }
+
+    call FF.FinalizeToDir as FinalizeCCSMetrics {
+        input:
+            files = [ MergeAllCCSReports.report ],
+            outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
     }
 }
