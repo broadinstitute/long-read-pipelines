@@ -111,7 +111,6 @@ task CCS {
             --max-length ~{max_length} \
             --min-rq ~{min_rq} \
             --num-threads ~{cpus} \
-            --log-level TRACE \
             ~{subreads} ccs_unmapped.bam
     >>>
 
