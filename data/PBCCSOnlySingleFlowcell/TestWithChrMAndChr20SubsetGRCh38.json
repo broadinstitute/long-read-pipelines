@@ -1,0 +1,5 @@
+{
+    "PBCCSOnlySingleFlowcell.gcs_input_dir":     "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_and_chr20_tiny_subset/",
+
+    "PBCCSOnlySingleFlowcell.gcs_out_root_dir":  "gs://broad-dsde-methods-long-reads-outgoing/PBCCSOnlySingleFlowcell"
+}
