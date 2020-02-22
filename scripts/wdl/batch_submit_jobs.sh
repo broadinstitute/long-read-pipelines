@@ -150,8 +150,6 @@ for input_json in `cat ${INPUT_JSON_LIST}`; do
     timestamp=$(date '+%Y%m%d%H%M%S')
     nick="${filename%.*}.${timestamp}"
 
-    echo "${nick}"
-
     keep_submitting_and_alias \
         "${nick}" \
         "${WORKFLOW_WDL}" \
