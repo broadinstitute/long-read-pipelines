@@ -7,3 +7,4 @@ dependencies:
   - google-cloud-storage
   - samtools
   - pbccs
+  - java-jdk

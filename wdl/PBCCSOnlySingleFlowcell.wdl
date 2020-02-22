@@ -8,7 +8,9 @@ import "tasks/Finalize.wdl" as FF
 workflow PBCCSOnlySingleFlowcell {
     input {
         String gcs_input_dir
+
         String? sample_name
+        Int num_reads_per_split = 100000
 
         String gcs_out_root_dir
     }
@@ -25,16 +27,25 @@ workflow PBCCSOnlySingleFlowcell {
         String ID  = PU
         String DIR = SM + "." + ID
 
-        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
+        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = num_reads_per_split }
 
         scatter (subreads in ShardLongReads.unmapped_shards) {
-            call PB.CCS { input: subreads = subreads }
+            #call PB.CCS { input: subreads = subreads }
+            call PB.CCSWithClasses { input: subreads = subreads }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = CCS.consensus }
+        call AR.MergeBams as MergeChunks { input: bams = CCSWithClasses.consensus }
+
+        #call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
+        call PB.MergeCCSReports as MergeCCSWithClassesReports { input: reports = CCSWithClasses.report }
+        call PB.MergeCCSClasses as MergeCCSWithClassesClasses { input: classes = CCSWithClasses.classes }
     }
 
     call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+
+    #call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+    call PB.MergeCCSReports as MergeAllCCSWithClassesReports { input: reports = MergeCCSWithClassesReports.report }
+    call PB.MergeCCSClasses as MergeAllCCSWithClassesClasses { input: classes = MergeCCSWithClassesClasses.classes }
 
     ##########
     # Finalize
@@ -44,5 +55,11 @@ workflow PBCCSOnlySingleFlowcell {
         input:
             files = [ MergeRuns.merged_bam ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
+    }
+
+    call FF.FinalizeToDir as FinalizeCCSMetrics {
+        input:
+            files = [ MergeAllCCSWithClassesReports.report, MergeAllCCSWithClassesClasses.classes ],
+            outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
     }
 }

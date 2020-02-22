@@ -16,3 +16,5 @@ RUN curl https://sdk.cloud.google.com | bash
 
 # copy other resources
 COPY detect_run_info.py /usr/local/bin/
+COPY merge_ccs_reports.py /usr/local/bin/
+COPY gatk.jar /usr/local/bin/
