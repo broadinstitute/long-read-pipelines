@@ -104,7 +104,12 @@ else:
             ri['PL'] = 'PACBIO'
             ri['PM'] = info['CollectionMetadata.InstrumentName']
             ri['PU'] = info['CollectionMetadata.Context']
-            ri['SM'] = info['BioSample.Name']
+            ri['SM'] = 'unknown'
+
+            if 'BioSample.Name' in info:
+                ri['SM'] = info['BioSample.Name']
+            elif 'WellSample.Name' in info:
+                ri['SM'] = info['WellSample.Name']
 
 if len(bams) > 0:
     for name in bams:
