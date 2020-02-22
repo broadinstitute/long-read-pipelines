@@ -1,4 +1,4 @@
-TAG1 = quay.io/broad-long-read-pipelines/lr-pb:0.01.03
+TAG1 = quay.io/broad-long-read-pipelines/lr-pb:0.01.04
 TAG2 = quay.io/broad-long-read-pipelines/lr-pb:latest
 
 all: build push

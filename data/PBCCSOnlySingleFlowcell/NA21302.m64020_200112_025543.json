@@ -1,0 +1,5 @@
+{
+    "PBCCSOnlySingleFlowcell.gcs_input_dir":     "gs://broad-gp-pacbio/r64020_20200110_203223/2_B01",
+
+    "PBCCSOnlySingleFlowcell.gcs_out_root_dir":  "gs://broad-dsde-methods-long-reads-outgoing/PBCCSOnlySingleFlowcell"
+}
