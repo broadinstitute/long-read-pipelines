@@ -147,7 +147,9 @@ export -f keep_submitting_and_alias
 
 for input_json in `cat ${INPUT_JSON_LIST}`; do
     filename=$(basename -- "${input_json}")
-    nick="${filename%.*}"
+    timestamp=$(date '+%Y%m%d%H%M%S')
+    nick="${filename%.*}.${timestamp}"
+
     keep_submitting_and_alias \
         "${nick}" \
         "${WORKFLOW_WDL}" \
