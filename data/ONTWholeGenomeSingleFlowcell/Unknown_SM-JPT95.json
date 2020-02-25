@@ -1,0 +1,17 @@
+{
+    "ONTWholeGenomeSingleFlowcell.gcs_input_dir":     "gs://broad-gp-oxfordnano/SM-JPT95/",
+
+    "ONTWholeGenomeSingleFlowcell.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
+    "ONTWholeGenomeSingleFlowcell.ref_fasta_fai":     "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa.fai",
+    "ONTWholeGenomeSingleFlowcell.ref_dict":          "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.dict",
+
+    "ONTWholeGenomeSingleFlowcell.tandem_repeat_bed": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/human_GRCh38_no_alt_analysis_set.trf.bed",
+    "ONTWholeGenomeSingleFlowcell.ref_flat":          "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/refFlat.txt",
+    "ONTWholeGenomeSingleFlowcell.dbsnp_vcf":         "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz",
+    "ONTWholeGenomeSingleFlowcell.dbsnp_tbi":         "gs://broad-dsde-methods-long-reads/resources/var_db/dbsnp/v151_GRCh38p7/common_all_20180418.chr.prefix.vcf.gz.tbi",
+
+    "ONTWholeGenomeSingleFlowcell.mt_chr_name":       "chrM",
+    "ONTWholeGenomeSingleFlowcell.metrics_locus":     "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/metric_intervals.interval_list",
+
+    "ONTWholeGenomeSingleFlowcell.gcs_out_root_dir":  "gs://broad-dsde-methods-long-reads-outgoing/ONTWholeGenomeSingleFlowcell"
+}

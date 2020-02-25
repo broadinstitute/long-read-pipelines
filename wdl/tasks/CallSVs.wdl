@@ -62,8 +62,11 @@ task PBSV {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int cpus = 8
-    Int disk_size = ceil(size(bam, "GB")) + 10
+    Int disk_size = ceil(size(bam, "GiB")) + ceil(size(ref_fasta, "GiB")) + 20
+
+    # purely experiential
+    Int memory = if (ceil(size(bam, "GiB")) > 20) then 96 else 64
+    Int cpus = ceil( memory / 6 ) # a range of, approximately, [1,6] ratio between mem/cpu allowed from cloud service provider
 
     command <<<
         set -euxo pipefail
@@ -83,7 +86,7 @@ task PBSV {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
-        mem_gb:             64,
+        mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,

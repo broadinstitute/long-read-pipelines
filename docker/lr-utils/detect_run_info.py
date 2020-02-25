@@ -69,7 +69,7 @@ else:
         if not "fail" in blob.name and blob.name.endswith(".fast5"):
             f5s.append(blob.name)
 
-        if blob.name.endswith("final_summary.txt"):
+        if bool(re.search('final_summary[0-9A-Za-z_]+.txt$', blob.name)):
             blob.download_to_filename("final_summary.txt")
 
             with open("final_summary.txt") as fp:
