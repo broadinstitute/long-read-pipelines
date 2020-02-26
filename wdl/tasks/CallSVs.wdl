@@ -1,6 +1,6 @@
 version 1.0
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/2.0-dockstore-test/wdl/tasks/Structs.wdl"
 
 workflow CallSVs {
     input {

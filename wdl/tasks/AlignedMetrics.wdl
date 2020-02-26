@@ -1,7 +1,7 @@
 version 1.0
 
-import "Structs.wdl"
-import "Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/2.0-dockstore-test/wdl/tasks/Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/2.0-dockstore-test/wdl/tasks/Finalize.wdl" as FF
 
 workflow AlignedMetrics {
     input {
