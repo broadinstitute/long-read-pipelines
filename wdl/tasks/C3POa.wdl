@@ -1,7 +1,7 @@
 version 1.0
 
-import "Structs.wdl"
-import "Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/2.0-dockstore-test-2/wdl/tasks/Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/2.0-dockstore-test-2/wdl/tasks/Utils.wdl" as Utils
 
 workflow C3POa {
     input {

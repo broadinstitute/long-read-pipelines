@@ -1,6 +1,6 @@
 version 1.0
 
-import "CollectParentsKmerStats.wdl" as stats
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/2.0-dockstore-test-2/wdl/tasks/CollectParentsKmerStats.wdl" as stats
 
 # A workflow that performs triobinning of child long reads given parental short reads
 workflow TrioBinChildLongReads {
