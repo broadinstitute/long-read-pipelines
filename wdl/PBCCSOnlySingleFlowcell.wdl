@@ -30,22 +30,22 @@ workflow PBCCSOnlySingleFlowcell {
         call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = num_reads_per_split }
 
         scatter (subreads in ShardLongReads.unmapped_shards) {
-            #call PB.CCS { input: subreads = subreads }
-            call PB.CCSWithClasses { input: subreads = subreads }
+            call PB.CCS { input: subreads = subreads }
+            #call PB.CCSWithClasses { input: subreads = subreads }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = CCSWithClasses.consensus }
+        call AR.MergeBams as MergeChunks { input: bams = CCS.consensus }
 
-        #call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
-        call PB.MergeCCSReports as MergeCCSWithClassesReports { input: reports = CCSWithClasses.report }
-        call PB.MergeCCSClasses as MergeCCSWithClassesClasses { input: classes = CCSWithClasses.classes }
+        call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
+        #call PB.MergeCCSReports as MergeCCSWithClassesReports { input: reports = CCSWithClasses.report }
+        #call PB.MergeCCSClasses as MergeCCSWithClassesClasses { input: classes = CCSWithClasses.classes }
     }
 
     call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
 
-    #call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
-    call PB.MergeCCSReports as MergeAllCCSWithClassesReports { input: reports = MergeCCSWithClassesReports.report }
-    call PB.MergeCCSClasses as MergeAllCCSWithClassesClasses { input: classes = MergeCCSWithClassesClasses.classes }
+    call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+    #call PB.MergeCCSReports as MergeAllCCSWithClassesReports { input: reports = MergeCCSWithClassesReports.report }
+    #call PB.MergeCCSClasses as MergeAllCCSWithClassesClasses { input: classes = MergeCCSWithClassesClasses.classes }
 
     ##########
     # Finalize
@@ -59,7 +59,8 @@ workflow PBCCSOnlySingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeCCSMetrics {
         input:
-            files = [ MergeAllCCSWithClassesReports.report, MergeAllCCSWithClassesClasses.classes ],
+            files = [ MergeAllCCSReports.report ],
+            #files = [ MergeAllCCSWithClassesReports.report, MergeAllCCSWithClassesClasses.classes ],
             outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
     }
 }
