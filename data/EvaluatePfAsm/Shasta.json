@@ -1,0 +1,13 @@
+{
+    "EvaluatePfAsm.asm":              "gs://broad-dsde-methods-long-reads-outgoing/ONTPlasmodiumSingleFlowcell/Kiran.3D7.PAE51023.1B/assembly/shasta/Assembly.fasta",
+    "EvaluatePfAsm.asm_name":         "Shasta3D7",
+
+    "EvaluatePfAsm.ref_fasta":        "gs://broad-dsde-methods-long-reads/resources/references/pfalciparum3D7/PlasmoDB-46_Pfalciparum3D7_Genome.fasta",
+    "EvaluatePfAsm.ref_fasta_fai":    "gs://broad-dsde-methods-long-reads/resources/references/pfalciparum3D7/PlasmoDB-46_Pfalciparum3D7_Genome.fasta.fai",
+    "EvaluatePfAsm.ref_dict":         "gs://broad-dsde-methods-long-reads/resources/references/pfalciparum3D7/PlasmoDB-46_Pfalciparum3D7_Genome.dict",
+
+    "EvaluatePfAsm.gff":              "gs://broad-dsde-methods-long-reads/resources/references/pfalciparum3D7/PlasmoDB-46_Pfalciparum3D7.gff",
+    "EvaluatePfAsm.trf":              "gs://broad-dsde-methods-long-reads/resources/references/pfalciparum3D7/pf.trf.bed",
+
+    "EvaluatePfAsm.gcs_out_root_dir": "gs://broad-dsde-methods-long-reads-outgoing/EvaluatePfAsm/"
+}

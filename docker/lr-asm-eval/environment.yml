@@ -1,0 +1,13 @@
+name: lr-asm-eval
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - mummer4
+  - quast
+  - busco
+  - bwa
+  - minimap2
+  - gnuplot
