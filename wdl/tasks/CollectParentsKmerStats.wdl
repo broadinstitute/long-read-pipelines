@@ -8,6 +8,7 @@ workflow CollectParentsKmerStats {
 
         String workdir_name
 
+        String genome_size
         Int? kmerSize
 
         String father_short_reads_bucket
@@ -22,6 +23,7 @@ workflow CollectParentsKmerStats {
     call ParentalReadsRepartitionAndMerylConfigure {
         input:
             workdir_name = workdir_name,
+            genome_size = genome_size,
             kmerSize = kmerSize,
             father_short_reads_bucket = father_short_reads_bucket,
             mother_short_reads_bucket = mother_short_reads_bucket,
@@ -73,6 +75,7 @@ task ParentalReadsRepartitionAndMerylConfigure {
 
         String workdir_name
 
+        String genome_size
         Int? kmerSize
 
         String father_short_reads_bucket
@@ -124,7 +127,7 @@ task ParentalReadsRepartitionAndMerylConfigure {
             -haplotype \
             -p ~{workdir_name} \
             -d /cromwell_root/workdir/ \
-            genomeSize=3.1G \
+            genomeSize=~{genome_size} \
             stopAfter=parent-kmer-stat-conf \
             -haplotypeFather /cromwell_root/father/*.fastq.gz \
             -haplotypeMother /cromwell_root/mother/*.fastq.gz \
