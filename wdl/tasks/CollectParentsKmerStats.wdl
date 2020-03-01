@@ -424,6 +424,8 @@ task MerylMergeAndSubtract {
 
         mv workdir/haplotype/0-kmers/haplotype-Father.meryl .
         mv workdir/haplotype/0-kmers/haplotype-Mother.meryl .
+        touch this.is.father.db && mv this.is.father.db haplotype-Father.meryl/
+        touch this.is.mother.db && mv this.is.mother.db haplotype-Mother.meryl/
 
         # save logs and scripts
         tar -czf canu-logs.tar.gz workdir/canu-logs
