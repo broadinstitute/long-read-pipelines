@@ -90,17 +90,19 @@ task AssignChildLongReads {
         # parallel localize the input reads (remove trailing slash first to be safe)
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
         child_path=$(echo ~{child_long_reads_bucket} | sed 's:/*$::')
-        a=$(gsutil ls "${child_path}/"*.fastq.gz | wc -l)
-        if [[ $a == 0 ]]; then
+        if ! gsutil ls "${child_path}/" | grep -Eq "(fa|fq|fasta|fastq)(.gz)?$"; then
           echo "no reads in ~{child_long_reads_bucket}" && exit 1
         fi
         echo "==================================="
         echo "BEGIN LOCALIZING CHILD LONG READS"
         date -u
-        mkdir child && gsutil -mq cp "${child_path}/"*.fastq.gz child/ && echo "Child localized"
+        mkdir child
+        gsutil ls "${child_path}/" | grep -E "(fa|fq|fasta|fastq)(.gz)?$" | gsutil -mq cp -I child/
+        echo "Child localized"
         date -u
         echo "DONE LOCALIZING CHILD LONG READS"
         echo "==================================="
+        read_input_format=$(gsutil ls "${child_path}/" | grep -Eo "(fa|fq|fasta|fastq)(.gz)?$" | uniq)
 
         ##########
         # prep files from previous stages
@@ -110,7 +112,7 @@ task AssignChildLongReads {
         for ff in `ls ~{sep=' ' meryl_db_files_father}`; do
             mv $ff workdir/haplotype/0-kmers/haplotype-Father.meryl/
         done
-        for ff in `ls ~{sep=' ' meryl_db_files_father}`; do
+        for ff in `ls ~{sep=' ' meryl_db_files_mother}`; do
             mv $ff workdir/haplotype/0-kmers/haplotype-Mother.meryl/
         done
 
@@ -140,7 +142,7 @@ task AssignChildLongReads {
             stopAfter=haplotype \
             hapMemory=${hap_mem} \
             -hapNames "Father Mother" \
-            -~{long_read_platform} /cromwell_root/child/*.fastq.gz \
+            -~{long_read_platform} /cromwell_root/child/*${read_input_format} \
             ~{extra_args} ||
             cat workdir/haplotype/*.out
         kill $job_id || true
