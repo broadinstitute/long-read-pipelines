@@ -28,7 +28,7 @@ task SelectReadsFromRegion {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             4,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
@@ -69,7 +69,7 @@ task CombineReads {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             4,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
@@ -123,7 +123,7 @@ task CorrectAndTrimReadsWithCanu {
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             12,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
@@ -191,7 +191,7 @@ task AssembleReadsWithCanu {
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             12,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
@@ -247,7 +247,7 @@ task AlignContigs {
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             20,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
@@ -292,7 +292,7 @@ task CallHaploidVariants {
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             4,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        0,

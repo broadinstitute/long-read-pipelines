@@ -87,7 +87,7 @@ task PBSV {
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             memory,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
@@ -145,7 +145,7 @@ task Sniffles {
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             15,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
@@ -201,7 +201,7 @@ task SVIM {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             8,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,

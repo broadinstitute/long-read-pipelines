@@ -123,7 +123,7 @@ task CCS {
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             40,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -194,7 +194,7 @@ task CCSWithClasses {
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             40,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -235,7 +235,7 @@ task MergeCCSReports {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -276,7 +276,7 @@ task MergeCCSClasses {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,

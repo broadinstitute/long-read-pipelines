@@ -2,7 +2,7 @@ version 1.0
 
 ##################################################
 # This is essentially copying "dsde_pipelines_tasks/VariantCalling.wdl"
-# with some customization to fit the process described in 
+# with some customization to fit the process described in
 # "https://github.com/PacificBiosciences/hg002-ccs/"
 ##################################################
 
@@ -259,7 +259,7 @@ task MergeBamouts {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             4,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
@@ -331,7 +331,7 @@ task GenotypeGVCFs {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             7,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
@@ -383,7 +383,7 @@ task PostProcess {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             7,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,

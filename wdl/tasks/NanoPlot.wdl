@@ -28,7 +28,7 @@ task NanoPlotFromSummary {
     RuntimeAttr default_attr = object {
         cpu_cores:          "~{num_cpus}",
         mem_gb:             32,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -85,7 +85,7 @@ task NanoPlotFromAlignedBam {
     RuntimeAttr default_attr = object {
         cpu_cores:          "~{num_cpus}",
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,

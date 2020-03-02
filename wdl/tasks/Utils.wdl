@@ -28,7 +28,7 @@ task ShardLongReads {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             4,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -202,7 +202,7 @@ task SortSam {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             5,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
@@ -243,7 +243,7 @@ task MakeChrIntervalList {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -283,7 +283,7 @@ task FastaToSam {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -329,7 +329,7 @@ task CountFastqRecords {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -368,7 +368,7 @@ task CountFastaRecords {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -407,7 +407,7 @@ task CountBamRecords {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -455,7 +455,7 @@ task GrepCountBamRecords {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -503,7 +503,7 @@ task GrepCountUniqueBamRecords {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
@@ -583,7 +583,7 @@ task BamToTable {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,

@@ -70,7 +70,7 @@ task Assemble {
     RuntimeAttr default_attr = object {
         cpu_cores:          48,
         mem_gb:             384,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
@@ -113,7 +113,7 @@ task AlignAsPAF {
     RuntimeAttr default_attr = object {
         cpu_cores:          "~{num_cpus}",
         mem_gb:             20,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        3,
@@ -156,7 +156,7 @@ task CallWithPaftools {
     RuntimeAttr default_attr = object {
         cpu_cores:          "~{num_cpus}",
         mem_gb:             20,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        3,

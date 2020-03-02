@@ -95,7 +95,7 @@ task FlagStats {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             4,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
@@ -147,7 +147,7 @@ task ReadMetrics {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             40,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
@@ -189,7 +189,7 @@ task ReadNamesAndLengths {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             4,
-        disk_gb:            disk_size,
+        disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
