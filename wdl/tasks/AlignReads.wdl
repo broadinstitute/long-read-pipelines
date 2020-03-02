@@ -15,7 +15,7 @@ task Minimap2 {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10*ceil(size(reads, "GB"))
+    Int disk_size = 10*ceil(size(reads, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -82,7 +82,7 @@ task MergeBams {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(bams, "GB"))
+    Int disk_size = 4*ceil(size(bams, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -130,7 +130,7 @@ task SAMtoPAF {
     # currently we only support bam (not sam or cram)
     String prefix = basename(sam_formatted_file, ".bam")
 
-    Int disk_size = 2*ceil(size(sam_formatted_file, "GB"))
+    Int disk_size = 2*ceil(size(sam_formatted_file, "GiB"))
 
     command <<<
         set -eu

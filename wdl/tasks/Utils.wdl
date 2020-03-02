@@ -11,7 +11,7 @@ task ShardLongReads {
     }
 
     Int nr = select_first([num_reads_per_split, 200000])
-    Int disk_size = 4*ceil(size(unmapped_files, "GB"))
+    Int disk_size = 4*ceil(size(unmapped_files, "GiB"))
     Int num_files = length(unmapped_files)
 
     command <<<
@@ -568,7 +568,7 @@ task BamToTable {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB"))
 
     command <<<
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`

@@ -29,7 +29,7 @@ task ConvertToFastq {
     }
 
     String fqname = basename(reads, ".bam") + ".fastq.gz"
-    Int disk_size = 4*ceil(size(reads, "GB"))
+    Int disk_size = 4*ceil(size(reads, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -76,7 +76,7 @@ task Minimap2PAF {
     String map_preset = if (PL == "ONT") then "ava-ont" else "ava-pb"
 
     Int cpus = 4
-    Int disk_size = 4*ceil(size(reads_fq, "GB"))
+    Int disk_size = 4*ceil(size(reads_fq, "GiB"))
     String paf_name = sub(reads_fq, ".fastq.gz", ".paf.gz")
 
     command <<<

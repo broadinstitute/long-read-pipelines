@@ -236,7 +236,7 @@ task MosDepth {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB") + size(bai, "GiB"))
     Int ws = select_first([window_size, 500])
     String basename = basename(bam, ".bam")
     String prefix = "~{basename}.coverage.~{chr}"
@@ -297,7 +297,7 @@ task SummarizeDepth {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(regions, "GB"))
+    Int disk_size = 2*ceil(size(regions, "GiB"))
     String chrName = sub(basename(regions, ".regions.bed.gz"), "out.coverage.", "")
 
     command <<<
@@ -346,7 +346,7 @@ task CoverageTrack {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB") + size(bai, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -390,7 +390,7 @@ task FlagStats {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -432,7 +432,7 @@ task ReadNamesAndLengths {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -476,7 +476,7 @@ task RnaSeqMetrics {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB") + size(ref_flat, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB") + size(bai, "GiB") + size(ref_flat, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -523,7 +523,7 @@ task ReadMetrics {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -580,7 +580,7 @@ task CollectSamErrorMetrics {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(bam, "GB") + size(bai, "GB") + size(ref_fasta, "GB") + size(dbsnp_vcf, "GB"))
+    Int disk_size = 4*ceil(size(bam, "GiB") + size(bai, "GiB") + size(ref_fasta, "GiB") + size(dbsnp_vcf, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -648,7 +648,7 @@ task BamToBed {
     }
 
     String bed = basename(bam, ".bam") + ".bed"
-    Int disk_size = 4*ceil(size(bam, "GB") + size(bai, "GB"))
+    Int disk_size = 4*ceil(size(bam, "GiB") + size(bai, "GiB"))
 
     command <<<
         set -euxo pipefail

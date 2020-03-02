@@ -43,7 +43,7 @@ workflow CollectParentsKmerStats {
                 meryl_count_script = ParentalReadsRepartitionAndMerylConfigure.count_script,
                 kmerSize = kmerSize,
                 meryl_operations_threads_est = meryl_operations_threads_est,
-                meryl_memory_in_GB = PrintMerylMemory.meryl_memory_in_GB
+                meryl_memory_in_GiB = PrintMerylMemory.meryl_memory_in_GiB
         }
     }
 
@@ -53,7 +53,7 @@ workflow CollectParentsKmerStats {
             meryl_subtract_script = ParentalReadsRepartitionAndMerylConfigure.subtract_script,
             meryl_count_batches = MerylCount.count_output,
             meryl_operations_threads_est = meryl_operations_threads_est,
-            meryl_memory_in_GB = PrintMerylMemory.meryl_memory_in_GB,
+            meryl_memory_in_GiB = PrintMerylMemory.meryl_memory_in_GiB,
             run_with_debug = run_with_debug
     }
 
@@ -215,7 +215,7 @@ task PrintMerylMemory {
     >>>
 
     output {
-        Int meryl_memory_in_GB = read_int(stdout())
+        Int meryl_memory_in_GiB = read_int(stdout())
     }
 
     runtime {
@@ -238,7 +238,7 @@ task MerylCount {
 
         Int? kmerSize
         Int meryl_operations_threads_est
-        Int meryl_memory_in_GB
+        Int meryl_memory_in_GiB
 
         RuntimeAttr? runtime_attr_override
     }
@@ -246,7 +246,7 @@ task MerylCount {
     String postfix = basename(batch_id_hold_file, ".txt")
 
     Int emperical_memory_lower_limit = 18
-    Int memory_to_use = if (meryl_memory_in_GB < emperical_memory_lower_limit) then emperical_memory_lower_limit else meryl_memory_in_GB
+    Int memory_to_use = if (meryl_memory_in_GiB < emperical_memory_lower_limit) then emperical_memory_lower_limit else meryl_memory_in_GiB
 
     Int emperical_thread_cout = 4 # based on monitor, the task is not CPU intensive (but memory intensive), and higher available CPU improved runtime only marginally
 
@@ -259,7 +259,7 @@ task MerylCount {
         mkdir -p workdir/haplotype/0-kmers/reads-Father workdir/haplotype/0-kmers/reads-Mother
 
         cp ~{meryl_count_script} workdir/haplotype/0-kmers/
-        echo ~{meryl_memory_in_GB} > workdir/haplotype/0-kmers/meryl-count.memory
+        echo ~{meryl_memory_in_GiB} > workdir/haplotype/0-kmers/meryl-count.memory
 
         echo "==================================="
         echo "BEGIN UNPACKING REPARTITIONED PARENTAL READS TO THE DESIRED LOCATIONS"
@@ -350,7 +350,7 @@ task MerylMergeAndSubtract {
         Array[File] meryl_count_batches
 
         Int meryl_operations_threads_est
-        Int meryl_memory_in_GB
+        Int meryl_memory_in_GiB
 
         Boolean run_with_debug = false
 
@@ -367,7 +367,7 @@ task MerylMergeAndSubtract {
         cp ~{meryl_merge_script} \
            ~{meryl_subtract_script} \
            workdir/haplotype/0-kmers/
-        echo ~{meryl_memory_in_GB} > workdir/haplotype/0-kmers/meryl-count.memory
+        echo ~{meryl_memory_in_GiB} > workdir/haplotype/0-kmers/meryl-count.memory
         for zipped_count in `ls ~{sep=' ' meryl_count_batches}`; do
             out_log_prefix=$(basename ${zipped_count})
             (tar xzfv ${zipped_count} -C workdir/haplotype/0-kmers/ > ${out_log_prefix}".unpacking.log" && rm -rf ${zipped_count}) &
@@ -446,8 +446,8 @@ task MerylMergeAndSubtract {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2 * meryl_operations_threads_est + 6, # a bit more threads, a bit more concurrency for decompression at the beginning
-        mem_gb:             3 * meryl_memory_in_GB + 6, # choosing this specification so that two parallel jobs can be executed at the same time
-        disk_gb:            3000, # we strongly recommend you NOT change this number: 1) we've seen close to full disk peak usage, and 2) local SSD's increase by unit of 375GB, this is the maximum
+        mem_gb:             3 * meryl_memory_in_GiB + 6, # choosing this specification so that two parallel jobs can be executed at the same time
+        disk_gb:            3000, # we strongly recommend you NOT change this number: 1) we've seen close to full disk peak usage, and 2) local SSD's increase by unit of 375GiB, this is the maximum
         boot_disk_gb:       10,
         preemptible_tries:  0, # explicitly turn off as this takes a long time
         max_retries:        0,

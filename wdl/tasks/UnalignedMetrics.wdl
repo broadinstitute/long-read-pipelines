@@ -79,7 +79,7 @@ task FlagStats {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -121,7 +121,7 @@ task ReadMetrics {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -173,7 +173,7 @@ task ReadNamesAndLengths {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB"))
 
     command <<<
         set -euxo pipefail

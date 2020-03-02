@@ -11,7 +11,7 @@ task NanoPlotFromSummary {
     }
 
     Int num_cpus = 4
-    Int disk_size = 2*ceil(size(summary_files, "GB"))
+    Int disk_size = 2*ceil(size(summary_files, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -55,7 +55,7 @@ task NanoPlotFromAlignedBam {
     }
 
     Int num_cpus = 4
-    Int disk_size = 2*ceil(size(unaligned_bam, "GB"))
+    Int disk_size = 2*ceil(size(unaligned_bam, "GiB"))
 
     command <<<
         set -euxo pipefail

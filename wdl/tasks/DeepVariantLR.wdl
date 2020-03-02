@@ -19,7 +19,7 @@ task DeepVariant {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(size(bam, "GB")) + 50
+    Int disk_size = ceil(size(bam, "GiB")) + 50
 
     String extra_args = if defined(intervals) then "--regions=~{intervals}" else " "
 

@@ -53,7 +53,7 @@ task Longshot {
     }
 
     Int cpus = 4
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB") + size(bai, "GiB") + size(ref_fasta, "GiB") + size(ref_fasta_fai, "GiB"))
     String prefix = basename(bam, ".bam")
 
     command <<<
@@ -98,7 +98,7 @@ task MergeLongshotCalls {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(vcfs, "GB")) + 1
+    Int disk_size = 2*ceil(size(vcfs, "GiB")) + 1
 
     command <<<
         set -x

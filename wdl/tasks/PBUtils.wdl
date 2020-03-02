@@ -100,7 +100,7 @@ task CCS {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(subreads, "GB"))
+    Int disk_size = 2*ceil(size(subreads, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -156,7 +156,7 @@ task CCSWithClasses {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(subreads, "GB"))
+    Int disk_size = 4*ceil(size(subreads, "GiB"))
 
     command <<<
         set -x
@@ -219,7 +219,7 @@ task MergeCCSReports {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(reports, "GB")) + 1
+    Int disk_size = 2*ceil(size(reports, "GiB")) + 1
 
     command <<<
         set -euxo pipefail
@@ -260,7 +260,7 @@ task MergeCCSClasses {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(classes, "GB")) + 1
+    Int disk_size = 2*ceil(size(classes, "GiB")) + 1
 
     command <<<
         set -euxo pipefail

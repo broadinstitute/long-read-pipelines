@@ -63,7 +63,7 @@ task GetSRAIDs {
 
     runtime {
         cpu: 1
-        memory: "2GB"
+        memory: "2GiB"
         disks: "local-disk 1 LOCAL"
         preemptible: 1
         maxRetries: 0
@@ -92,7 +92,7 @@ task FastqDump {
     Int minimum_disk_size_gb = 10
     Int compressed_disk_space_gb = ceil(uncompressed_disk_space_mb / disk_space_divisor)
 
-    # We're going to request a LOCAL disk which comes in minimum increments of 375 GB and ignores our disk space
+    # We're going to request a LOCAL disk which comes in minimum increments of 375 GiB and ignores our disk space
     # request.  But we're going to compute it anyway should we decide to change our request to an HDD/SSD later.
     Int final_disk_space_gb = if (compressed_disk_space_gb < minimum_disk_size_gb) then minimum_disk_size_gb else compressed_disk_space_gb
 
@@ -130,7 +130,7 @@ task FastqDump {
 
     runtime {
         cpu: cpus
-        memory: "4GB"
+        memory: "4GiB"
         disks: "local-disk ~{final_disk_space_gb} LOCAL"
         preemptible: 0
         maxRetries: 0

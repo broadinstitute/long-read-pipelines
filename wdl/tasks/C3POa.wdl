@@ -86,7 +86,7 @@ task Processing {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(preprocessed_fastq, "GB"))
+    Int disk_size = 2*ceil(size(preprocessed_fastq, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -132,7 +132,7 @@ task Postprocessing {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(consensus, "GB"))
+    Int disk_size = 2*ceil(size(consensus, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -182,7 +182,7 @@ task Cat {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*ceil(size(files, "GB"))
+    Int disk_size = 3*ceil(size(files, "GiB"))
 
     command <<<
         set -euxo pipefail

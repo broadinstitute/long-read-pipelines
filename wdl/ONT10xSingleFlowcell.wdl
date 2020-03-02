@@ -256,7 +256,7 @@ task AnnotateAdapters {
     }
 
     Int cpus = 2
-    Int disk_size = 4*ceil(size(bam, "GB"))
+    Int disk_size = 4*ceil(size(bam, "GiB"))
 
     String output_name = basename(bam, ".bam")
 

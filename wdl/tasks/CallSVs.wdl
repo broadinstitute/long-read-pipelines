@@ -120,7 +120,7 @@ task Sniffles {
     }
 
     Int cpus = 8
-    Int disk_size = 4*ceil(size(bam, "GB"))
+    Int disk_size = 4*ceil(size(bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -176,7 +176,7 @@ task SVIM {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(size(bam, "GB")) + 10
+    Int disk_size = ceil(size(bam, "GiB")) + 10
 
     command <<<
         set -euo pipefail

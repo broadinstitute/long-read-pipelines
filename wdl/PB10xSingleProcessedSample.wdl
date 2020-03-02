@@ -204,7 +204,7 @@ task RevertBam {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*ceil(size(input_bam, "GB"))
+    Int disk_size = 3*ceil(size(input_bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -247,7 +247,7 @@ task SplitBam {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(input_bam, "GB"))
+    Int disk_size = 2*ceil(size(input_bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -288,7 +288,7 @@ task GetRunInfo {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(input_bam, "GB"))
+    Int disk_size = 2*ceil(size(input_bam, "GiB"))
 
     command <<<
         set -euxo pipefail

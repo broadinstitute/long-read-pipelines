@@ -43,7 +43,7 @@ task Assemble {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10*ceil(size(bam, "GB"))
+    Int disk_size = 10*ceil(size(bam, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -96,7 +96,7 @@ task AlignAsPAF {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(ref_fasta, "GB") + size(final_fa, "GB"))
+    Int disk_size = 4*ceil(size(ref_fasta, "GiB") + size(final_fa, "GiB"))
     Int num_cpus = 4
 
     command <<<
@@ -141,7 +141,7 @@ task CallWithPaftools {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(ref_fasta, "GB") + size(paf, "GB"))
+    Int disk_size = 2*ceil(size(ref_fasta, "GiB") + size(paf, "GiB"))
     Int num_cpus = 1
 
     command <<<

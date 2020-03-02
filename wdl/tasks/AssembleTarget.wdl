@@ -11,7 +11,7 @@ task SelectReadsFromRegion {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB") + size(bai, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -53,7 +53,7 @@ task CombineReads {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(reads, "GB"))
+    Int disk_size = 2*ceil(size(reads, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -102,7 +102,7 @@ task CorrectAndTrimReadsWithCanu {
     Int readSamplingCoverage = select_first([max_coverage, 500])
     Boolean correct = select_first([is_corrected, false])
     String data_type = "-" + (if platform == "PACBIO" then "pacbio" else "nanopore") + "-" + (if correct then "corrected" else "raw")
-    Int disk_size = 4*ceil(size(reads, "GB"))
+    Int disk_size = 4*ceil(size(reads, "GiB"))
     Int cpus = 8
 
     command <<<
@@ -162,7 +162,7 @@ task AssembleReadsWithCanu {
     String canutask = if correct then "-assemble" else ""
     String errorrate = if correct then "" else "correctedErrorRate=0.105"
 
-    Int disk_size = 4*ceil(size(reads, "GB"))
+    Int disk_size = 4*ceil(size(reads, "GiB"))
     Int cpus = 8
 
     command <<<
@@ -227,7 +227,7 @@ task AlignContigs {
     String correction_arg = if (correct) then "asm20" else map_arg
 
     Int cpus = 4
-    Int disk_size = ceil(size(ref_fasta, "GB")) + 4*ceil(size(contigs, "GB"))
+    Int disk_size = ceil(size(ref_fasta, "GiB")) + 4*ceil(size(contigs, "GiB"))
 
     String aligned_name = "~{prefix}.aligned.bam"
 
@@ -276,7 +276,7 @@ task CallHaploidVariants {
     }
 
     Int cpus = 2
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB") + size(ref_fasta, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GiB") + size(bai, "GiB") + size(ref_fasta, "GiB"))
 
     command <<<
         set -euxo pipefail
