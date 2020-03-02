@@ -62,7 +62,7 @@ task PBSV {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(size(bam, "GiB")) + ceil(size(ref_fasta, "GiB")) + 20
+    Int disk_size = ceil(size(bam, "GiB")) + ceil(size(ref_fasta, "GiB")) + 50
 
     # purely experiential
     Int memory = if (ceil(size(bam, "GiB")) > 20) then 96 else 64
