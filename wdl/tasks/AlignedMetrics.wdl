@@ -551,8 +551,8 @@ task ReadMetrics {
         mem_gb:             50,
         disk_gb:            ceil(1.07 * disk_size),
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
+        preemptible_tries:  1,
+        max_retries:        0,
         docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.07"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
