@@ -130,7 +130,7 @@ task Sniffles {
         sniffles -t ~{cpus} -m ~{bam} -v ~{prefix}.sniffles.pre.vcf -s ~{min_read_support} -r ~{min_read_length} -q ~{min_mq} --genotype --report_seq --report_read_strands
         sniffles-filter -v ~{prefix}.sniffles.pre.vcf -m ~{min_read_support} -t DEL INS DUP --strand-support 0.001 -l 50 --min-af 0.10 --max-length 400000 -o ~{prefix}.sniffles.filtered.vcf
 
-        cat ~{prefix}.sniffles.filtered.vcf | sed 's/FORMAT\t\/cromwell_root.*.bam/FORMAT\t${SM}/' > ~{prefix}.sniffles.vcf
+        cat ~{prefix}.sniffles.filtered.vcf | sed 's/FORMAT\t\/cromwell_root.*.bam/FORMAT\t'"${SM}"'/' > ~{prefix}.sniffles.vcf
 
         bcftools sort ~{prefix}.sniffles.vcf | bgzip > ~{prefix}.sniffles.vcf.gz
         tabix -p vcf ~{prefix}.sniffles.vcf.gz
