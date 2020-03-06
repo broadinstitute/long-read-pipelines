@@ -13,10 +13,7 @@ cromwellBaseUrl = "https://cromwell-v47.dsde-methods.broadinstitute.org"
 gcpProject = "broad-dsde-methods"
 cromwellTaskMonitorBqDirectory = "/Users/bshifaw/work/Broadinstitute/cromwell-task-monitor-bq/metadata/submit/"
 
-
-
-
-#obtain workflow id
+#Obtain workflow id
 print("/n" + "## Obtaining Wokflow IDs ##")
 HOME = os.getenv('HOME')
 cromshellDatabase = HOME + '/.cromshell/all.workflow.database.tsv'
@@ -24,13 +21,7 @@ pythonScriptPath = sys.path[0]
 workflowID = pythonScriptPath + '/workflowIds.txt'
 workflowIDTemp = pythonScriptPath + '/workflowIds_temp.txt'
 
-
-######### read timefile
-# what was the last time that was created 
-# grep that time in the databasetsve and copy workflowids after that match. 
-# if nothing was updated then exit with message.
-
-
+# Over writes workflowID if it exist, if  it doesn't exist create a new one
 if path.exists(workflowID) and os.stat(workflowID).st_size > 0:
 	print("Grep last wokflow ID") 
 	with open(workflowID, "r") as f:
@@ -67,17 +58,11 @@ else:
 				f.write(line[2] + "\n")
 f.close
 
-############ overwrite timefile to say this was last time i checked
-
 #Run command to upload metadata to bq.
 metadataUploadCommand = 'CROMWELL_BASEURL=' + cromwellBaseUrl + ' GCP_PROJECT=' + gcpProject + ' DATASET_ID=cromwell_monitoring ./cromwell_metadata_bq < ' + workflowID 
 print("/n" + "## Upload the cromshell metadata ##")
 print("Running the following command:")
 print(metadataUploadCommand)
-#shell=True is said to be a security risk, may need to change https://stackoverflow.com/questions/18962785/oserror-errno-2-no-such-file-or-directory-while-using-python-subprocess-in-dj
-#subprocess.Popen(metadataUploadCommand, cwd=cromwellTaskMonitorBqDirectory, shell=True)
+shell=True is said to be a security risk, may need to change https://stackoverflow.com/questions/18962785/oserror-errno-2-no-such-file-or-directory-while-using-python-subprocess-in-dj
+subprocess.Popen(metadataUploadCommand, cwd=cromwellTaskMonitorBqDirectory, shell=True)
 
-
-
-
-# useful code for timeing line[1:]-time.strftime('%Y%m%d_%H%M%S')
