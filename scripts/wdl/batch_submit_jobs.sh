@@ -124,7 +124,8 @@ keep_submitting_and_alias() {
 
     # keep trying until got submited
     echo "Cannot communicate with Cromwell server" > temp.stderr
-    while  grep -qF 'Cannot communicate with Cromwell server' temp.stderr
+    while  grep -qF 'Cannot communicate with Cromwell server' temp.stderr || \
+           grep -qF 'job was not properly submitted' temp.stderr
     do
         cromshell \
             submit "$@" \
