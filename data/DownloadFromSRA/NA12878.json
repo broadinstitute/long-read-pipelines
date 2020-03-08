@@ -1,4 +1,0 @@
-{
-    "DownloadFromSRA.SRA_IDs": ["SRX5780566", "SRX5780565", "SRX5780564", "SRX5780563", "SRX5780562", "SRX5780561"],
-    "DownloadFromSRA.gcs_output_dir": "gs://broad-dsde-methods-kiran/scratch/sra/NA12878/"
-}
