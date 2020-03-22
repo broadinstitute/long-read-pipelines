@@ -1,20 +1,45 @@
-FROM continuumio/miniconda3
+FROM ubuntu:latest
+
+# install base packages
+RUN apt-get update --fix-missing
+RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libssl-dev curl python python3.6 time wget \
+	&& rm -rf /var/lib/apt/lists/*
+
+# install libdeflate
+RUN git clone https://github.com/ebiggers/libdeflate.git \
+	&& cd libdeflate \
+	&& make \
+	&& make install
+
+# install miniconda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh \
+	&& bash /miniconda.sh -b -p /miniconda
+ENV PATH=/miniconda/bin/:/miniconda/envs/lr-bri/bin/:/root/google-cloud-sdk/bin/:$PATH
+
+# install conda packages
+COPY environment.yml /
+RUN conda env create -f /environment.yml \
+	&& conda clean -a
 
 # install htslib
-RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libdeflate-dev libssl-dev vim \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN git clone https://github.com/samtools/htslib.git \
-    && cd htslib \
-    && autoheader \
-    && autoconf \
-    && ./configure \
-    && make \
-    && make install
+	&& cd htslib \
+	&& autoheader \
+	&& autoconf \
+	&& ./configure --enable-gcs \
+	&& make \
+	&& make install
 
 # install bri
 RUN git clone https://github.com/jts/bri.git \
-    && cd bri \
-    && make \
-    && cp bri /usr/local/bin/
+	&& cd bri \
+	&& git checkout 6004b6a3ce16b459ec135cc2798308ff7910bc3e \
+	&& make \
+	&& cp bri /usr/local/bin/
 ENV LD_LIBRARY_PATH=/usr/local/lib/
+
+# install gsutil
+RUN curl https://sdk.cloud.google.com | bash
+
+# copy other resources
+COPY merge_ccs_reports.py /usr/local/bin/

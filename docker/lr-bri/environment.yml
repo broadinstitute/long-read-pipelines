@@ -1,0 +1,10 @@
+name: lr-bri
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - pbccs
+  - pbbam
+  - jq
