@@ -1,11 +1,16 @@
-TAG1 = quay.io/broad-long-read-pipelines/lr-align:0.01.25
+VERSION = 0.01.26
+TAG1 = quay.io/broad-long-read-pipelines/lr-align:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-align:latest
+TAG3 = us.gcr.io/broad-dsp-lrma/lr-align:$(VERSION)
+TAG4 = us.gcr.io/broad-dsp-lrma/lr-align:latest
 
 all: build push
 
 build:
-	docker build -t $(TAG1) -t $(TAG2) .
+	docker build -t $(TAG1) -t $(TAG2) -t $(TAG3) -t $(TAG4) .
 
 push:
 	docker push $(TAG1)
 	docker push $(TAG2)
+	docker push $(TAG3)
+	docker push $(TAG4)
