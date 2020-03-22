@@ -9,15 +9,17 @@ COPY ./environment.yml /
 RUN conda env create -f /environment.yml && conda clean -a
 ENV PATH=/opt/conda/envs/lr-align/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
-# install gsutil
+# install packages
 RUN apt update
-RUN apt install -y python2.7 curl
+RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libdeflate-dev libssl-dev curl git-lfs \
+    && rm -rf /var/lib/apt/lists/*
+
+# install gsutil
 RUN curl https://sdk.cloud.google.com | bash
 
 # copy other resources
 COPY prepare_run.py /usr/local/bin/
 COPY merge_read_group_tags.py /usr/local/bin/
-COPY gatk.jar /usr/local/bin/
 COPY cat_as_fastq.py /usr/local/bin/
 
 # install minimap2
@@ -28,9 +30,6 @@ RUN wget https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x
         && cp minimap2 /usr/local/bin/
 
 # install htslib
-RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libdeflate-dev libssl-dev vim \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN git clone https://github.com/samtools/htslib.git \
     && cd htslib \
     && autoheader \
@@ -45,3 +44,12 @@ RUN git clone https://github.com/jts/bri.git \
     && make \
     && cp bri /usr/local/bin/
 ENV LD_LIBRARY_PATH=/usr/local/lib/
+
+# install gatk
+RUN git clone https://github.com/broadinstitute/gatk.git \
+    && cd gatk \
+    && git checkout kvg_pbeap \
+    && ./gradlew \
+    && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
+    && cd .. \
+    && rm -rf /gatk
