@@ -5,3 +5,4 @@ channels:
   - bioconda
 dependencies:
   - samtools
+  - minimap2
