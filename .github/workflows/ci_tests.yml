@@ -26,6 +26,7 @@ jobs:
     - name: Run a multi-line script
       run: |
         echo "Ref: ${{ github.ref }} Actor: ${{ github.actor }}"
-        echo "Pwd: ${{ env.PWD }}"
         echo Add other actions to build,
         echo test, and deploy your project.
+        ls -lah
+        pwd
