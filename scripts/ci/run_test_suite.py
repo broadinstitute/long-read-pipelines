@@ -114,7 +114,6 @@ for input_json in input_jsons:
     wdl_path = find_wdl_path(wdl_name)
 
     if wdl_path is None:
-        ret = 1
         print_test_warning(test, f'Requested WDL does not exist.')
     else:
         if 'TestCromwell' in wdl_path:
@@ -133,6 +132,7 @@ if len(jobs) > 0:
         jobs = update_status(jobs)
 
         if jobs_are_running(jobs):
+            num_finished = len(jobs)
             num_failed = 0
             num_succeeded = 0
 
