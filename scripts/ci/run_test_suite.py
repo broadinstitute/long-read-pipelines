@@ -70,6 +70,11 @@ def run_curl_cmd(curl_cmd):
     for i in range(3):
         out = subprocess.Popen(curl_cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, stderr = out.communicate()
+
+        if not stdout:
+            print_failure(f"Unable to dispatch command '{curl_cmd}' to '{server_url}'")
+            exit(1)
+
         j = json.loads(stdout)
 
         if 'id' in j:
@@ -116,6 +121,7 @@ print_info(f'Found {len(input_jsons)} tests.')
 ret = 0
 
 jobs = {}
+times = {}
 for input_json in input_jsons:
     test = os.path.basename(input_json)
     p = test.split(".")
@@ -131,6 +137,7 @@ for input_json in input_jsons:
 
             print_test_progress(test, f'{j["id"]}, {j["status"]}')
             jobs[test] = j
+            times[test] = {'start': datetime.datetime.now(), 'stop': None}
 
 if len(jobs) > 0:
     num_finished = len(jobs)
@@ -149,10 +156,16 @@ if len(jobs) > 0:
             for test in jobs:
                 if jobs[test]['status'] == 'Running':
                     num_finished = num_finished - 1
+                    if times[test]['stop'] is None:
+                        times[test]['stop'] = datetime.datetime.now()
                 elif jobs[test]['status'] == 'Failed':
                     num_failed = num_failed + 1
+                    if times[test]['stop'] is None:
+                        times[test]['stop'] = datetime.datetime.now()
                 elif jobs[test]['status'] == 'Succeeded':
                     num_succeeded = num_succeeded + 1
+                    if times[test]['stop'] is None:
+                        times[test]['stop'] = datetime.datetime.now()
 
             print_info(f'Running {len(jobs)} tests. {num_finished} tests complete, {num_succeeded} succeeded, {num_failed} failed.')
         else:
@@ -161,18 +174,25 @@ if len(jobs) > 0:
     for test in jobs:
         if jobs[test]['status'] == 'Running':
             num_finished = num_finished - 1
+            if times[test]['stop'] is None:
+                times[test]['stop'] = datetime.datetime.now()
         elif jobs[test]['status'] == 'Failed':
             num_failed = num_failed + 1
+            if times[test]['stop'] is None:
+                times[test]['stop'] = datetime.datetime.now()
         elif jobs[test]['status'] == 'Succeeded':
             num_succeeded = num_succeeded + 1
+            if times[test]['stop'] is None:
+                times[test]['stop'] = datetime.datetime.now()
 
     print_info(f'Ran {len(jobs)} tests. {num_finished} tests complete, {num_succeeded} succeeded, {num_failed} failed.')
 
     for test in jobs:
+        diff = (times[test]['stop'] - times[test]['start']).total_seconds()
         if jobs[test]['status'] == 'Succeeded':
-            print_test_success(test, jobs[test]['status'])
+            print_test_success(test, f"{jobs[test]['status']} ({diff}s)")
         else:
-            print_test_failure(test, jobs[test]['status'])
+            print_test_failure(test, f"{jobs[test]['status']} ({diff}s)")
             ret = 1
 
 if ret == 0:
