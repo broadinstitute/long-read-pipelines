@@ -35,6 +35,16 @@ def print_test_progress(test, message):
     print(f'[{ts} INFO] {test}: {message}')
 
 
+def print_failure(message):
+    ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+    print(f'\033[1;31;40m[{ts} FAIL] {message}\033[0m')
+
+
+def print_success(message):
+    ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+    print(f'\033[1;32;40m[{ts} PASS] {message}\033[0m')
+
+
 def print_info(message):
     ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     print(f'[{ts} INFO] {message}')
@@ -148,6 +158,14 @@ if len(jobs) > 0:
         else:
             break
 
+    for test in jobs:
+        if jobs[test]['status'] == 'Running':
+            num_finished = num_finished - 1
+        elif jobs[test]['status'] == 'Failed':
+            num_failed = num_failed + 1
+        elif jobs[test]['status'] == 'Succeeded':
+            num_succeeded = num_succeeded + 1
+
     print_info(f'Ran {len(jobs)} tests. {num_finished} tests complete, {num_succeeded} succeeded, {num_failed} failed.')
 
     for test in jobs:
@@ -158,6 +176,8 @@ if len(jobs) > 0:
             ret = 1
 
 if ret == 0:
-    print_info('ALL TESTS SUCCEEDED.')
+    print_success('ALL TESTS SUCCEEDED.')
+else:
+    print_failure('SOME TESTS FAILED.')
 
 exit(ret)
