@@ -107,7 +107,7 @@ def jobs_are_running(jobs):
     running = False
 
     for test in jobs:
-        if jobs[test]["status"] == "Running":
+        if jobs[test]["status"] == "Running" or jobs[test]["status"] == "Submitted":
             running = True
 
     return running
