@@ -174,16 +174,13 @@ if len(jobs) > 0:
     for test in jobs:
         if jobs[test]['status'] == 'Running':
             num_finished = num_finished - 1
-            if times[test]['stop'] is None:
-                times[test]['stop'] = datetime.datetime.now()
         elif jobs[test]['status'] == 'Failed':
             num_failed = num_failed + 1
-            if times[test]['stop'] is None:
-                times[test]['stop'] = datetime.datetime.now()
         elif jobs[test]['status'] == 'Succeeded':
             num_succeeded = num_succeeded + 1
-            if times[test]['stop'] is None:
-                times[test]['stop'] = datetime.datetime.now()
+
+        if times[test]['stop'] is None:
+            times[test]['stop'] = datetime.datetime.now()
 
     print_info(f'Ran {len(jobs)} tests. {num_finished} tests complete, {num_succeeded} succeeded, {num_failed} failed.')
 
