@@ -154,7 +154,7 @@ if len(jobs) > 0:
             num_succeeded = 0
 
             for test in jobs:
-                if jobs[test]['status'] == 'Running':
+                if jobs[test]['status'] == 'Running' or jobs[test]['status'] == 'Submitted':
                     num_finished = num_finished - 1
                     if times[test]['stop'] is None:
                         times[test]['stop'] = datetime.datetime.now()
@@ -172,7 +172,7 @@ if len(jobs) > 0:
             break
 
     for test in jobs:
-        if jobs[test]['status'] == 'Running':
+        if jobs[test]['status'] == 'Running' or jobs[test]['status'] == 'Submitted':
             num_finished = num_finished - 1
         elif jobs[test]['status'] == 'Failed':
             num_failed = num_failed + 1
