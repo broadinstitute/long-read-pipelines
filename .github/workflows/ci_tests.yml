@@ -18,10 +18,6 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    # Runs a single command using the runners shell
-    - name: Branch and user info
-      run: echo "Ref: ${{ github.ref }} Actor: ${{ github.actor }}"
-
     # Runs a set of commands using the runners shell
     - name: Continuous integration test suite
       run: |
