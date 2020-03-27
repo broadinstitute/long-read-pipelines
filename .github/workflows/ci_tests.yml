@@ -21,5 +21,6 @@ jobs:
     # Runs a set of commands using the runners shell
     - name: Continuous integration test suite
       run: |
+        cd wdl/; rm lr_wdls.zip; zip -r lr_wdls.zip *; cd ..
         python3 scripts/ci/run_test_suite.py
 
