@@ -156,8 +156,6 @@ if len(jobs) > 0:
             for test in jobs:
                 if jobs[test]['status'] == 'Running' or jobs[test]['status'] == 'Submitted':
                     num_finished = num_finished - 1
-                    if times[test]['stop'] is None:
-                        times[test]['stop'] = datetime.datetime.now()
                 elif jobs[test]['status'] == 'Failed':
                     num_failed = num_failed + 1
                     if times[test]['stop'] is None:
@@ -172,12 +170,10 @@ if len(jobs) > 0:
             break
 
     for test in jobs:
-        if jobs[test]['status'] == 'Running' or jobs[test]['status'] == 'Submitted':
-            num_finished = num_finished - 1
-        elif jobs[test]['status'] == 'Failed':
-            num_failed = num_failed + 1
-        elif jobs[test]['status'] == 'Succeeded':
+        if jobs[test]['status'] == 'Succeeded':
             num_succeeded = num_succeeded + 1
+        else:
+            num_failed = num_failed + 1
 
         if times[test]['stop'] is None:
             times[test]['stop'] = datetime.datetime.now()
@@ -187,9 +183,9 @@ if len(jobs) > 0:
     for test in jobs:
         diff = (times[test]['stop'] - times[test]['start']).total_seconds()
         if jobs[test]['status'] == 'Succeeded':
-            print_test_success(test, f"{jobs[test]['status']} ({diff}s)")
+            print_test_success(test, f"{jobs[test]['status']} ({diff}s -- {str(diff)})")
         else:
-            print_test_failure(test, f"{jobs[test]['status']} ({diff}s)")
+            print_test_failure(test, f"{jobs[test]['status']} ({diff}s -- {str(diff)})")
             ret = 1
 
 if ret == 0:
