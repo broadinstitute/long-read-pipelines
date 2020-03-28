@@ -15,26 +15,6 @@ if len(sys.argv) == 2:
     server_url = sys.argv[1]
 
 
-def print_test_failure(test, message):
-    ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-    print(f'\033[1;31;40m[{ts} FAIL] {test}: {message}\033[0m')
-
-
-def print_test_success(test, message):
-    ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-    print(f'\033[1;32;40m[{ts} PASS] {test}: {message}\033[0m')
-
-
-def print_test_warning(test, message):
-    ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-    print(f'\033[1;33;40m[{ts} WARN] {test}: {message}\033[0m')
-
-
-def print_test_progress(test, message):
-    ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-    print(f'[{ts} INFO] {test}: {message}')
-
-
 def print_failure(message):
     ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     print(f'\033[1;31;40m[{ts} FAIL] {message}\033[0m')
@@ -43,6 +23,11 @@ def print_failure(message):
 def print_success(message):
     ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     print(f'\033[1;32;40m[{ts} PASS] {message}\033[0m')
+
+
+def print_warning(message):
+    ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+    print(f'\033[1;33;40m[{ts} WARN] {message}\033[0m')
 
 
 def print_info(message):
@@ -81,6 +66,10 @@ def run_curl_cmd(curl_cmd):
             return j
 
         time.sleep(30)
+
+    if 'id' not in j:
+        print_failure(f"No valid response from '{server_url}' for command '{curl_cmd}' after three tries.")
+        exit(1)
 
     return j
 
@@ -130,14 +119,13 @@ for input_json in input_jsons:
     wdl_path = find_wdl_path(wdl_name)
 
     if wdl_path is None:
-        print_test_warning(test, f'Requested WDL does not exist.')
+        print_warning(f'{test}: Requested WDL does not exist.')
     else:
-        if 'TestCromwell' in wdl_path:
-            j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
+        j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
 
-            print_test_progress(test, f'{j["id"]}, {j["status"]}')
-            jobs[test] = j
-            times[test] = {'start': datetime.datetime.now(), 'stop': None}
+        print_info(f'{test}: {j["id"]}, {j["status"]}')
+        jobs[test] = j
+        times[test] = {'start': datetime.datetime.now(), 'stop': None}
 
 if len(jobs) > 0:
     num_finished = len(jobs)
@@ -184,9 +172,9 @@ if len(jobs) > 0:
     for test in jobs:
         diff = times[test]['stop'] - times[test]['start']
         if jobs[test]['status'] == 'Succeeded':
-            print_test_success(test, f"{jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_success(f"{test}: {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
         else:
-            print_test_failure(test, f"{jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_failure(f"{test}: {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
             ret = 1
 
 if ret == 0:

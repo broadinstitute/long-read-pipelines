@@ -1,5 +1,5 @@
 {
-    "ONTWholeGenomeSingleFlowcell.gcs_input_dir":     "gs://broad-gp-oxfordnano/Human_38/20191010_1605_2-E9-H9_PAE07696_c6e8f895/",
+    "ONTWholeGenomeSingleFlowcell.gcs_input_dir":     "gs://broad-dsde-methods-long-reads/resources/test_data/ONT/PromethION/Human_38/20191010_1605_2-E9-H9_PAE07696_c6e8f895/",
 
     "ONTWholeGenomeSingleFlowcell.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
     "ONTWholeGenomeSingleFlowcell.ref_fasta_fai":     "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa.fai",
@@ -13,5 +13,5 @@
     "ONTWholeGenomeSingleFlowcell.mt_chr_name":       "chrM",
     "ONTWholeGenomeSingleFlowcell.metrics_locus":     "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/metric_intervals.interval_list",
 
-    "ONTWholeGenomeSingleFlowcell.gcs_out_root_dir":  "gs://broad-dsde-methods-long-reads-outgoing/ONTWholeGenomeSingleFlowcell"
+    "ONTWholeGenomeSingleFlowcell.gcs_out_root_dir":  "gs://broad-dsp-lrma-ci/ONTWholeGenomeSingleFlowcell"
 }
