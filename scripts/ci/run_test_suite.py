@@ -169,6 +169,7 @@ if len(jobs) > 0:
         else:
             break
 
+    num_finished = len(jobs)
     for test in jobs:
         if jobs[test]['status'] == 'Succeeded':
             num_succeeded = num_succeeded + 1
