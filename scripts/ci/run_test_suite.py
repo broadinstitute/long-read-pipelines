@@ -181,11 +181,11 @@ if len(jobs) > 0:
     print_info(f'Ran {len(jobs)} tests. {num_finished} tests complete, {num_succeeded} succeeded, {num_failed} failed.')
 
     for test in jobs:
-        diff = (times[test]['stop'] - times[test]['start']).total_seconds()
+        diff = times[test]['stop'] - times[test]['start']
         if jobs[test]['status'] == 'Succeeded':
-            print_test_success(test, f"{jobs[test]['status']} ({diff}s -- {str(diff)})")
+            print_test_success(test, f"{jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
         else:
-            print_test_failure(test, f"{jobs[test]['status']} ({diff}s -- {str(diff)})")
+            print_test_failure(test, f"{jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
             ret = 1
 
 if ret == 0:
