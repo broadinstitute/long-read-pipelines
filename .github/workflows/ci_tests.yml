@@ -22,5 +22,5 @@ jobs:
     - name: Continuous integration test suite
       run: |
         cd wdl/; zip -r lr_wdls.zip *; cd ..
-        python3 scripts/ci/run_test_suite.py https://cromwell-v47.dsde-methods.broadinstitute.org
+        python3 scripts/ci/run_test_suite.py
 
