@@ -149,10 +149,6 @@ for input_json in input_jsons:
 # Monitor tests
 ret = 0
 if len(jobs) > 0:
-    num_finished = len(jobs)
-    num_failed = 0
-    num_succeeded = 0
-
     while True:
         time.sleep(60)
         jobs = update_status(jobs)
@@ -179,6 +175,9 @@ if len(jobs) > 0:
             break
 
     num_finished = len(jobs)
+    num_failed = 0
+    num_succeeded = 0
+
     for test in jobs:
         if jobs[test]['status'] == 'Succeeded':
             num_succeeded = num_succeeded + 1
