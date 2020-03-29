@@ -116,6 +116,7 @@ def jobs_are_running(jobs):
 
 print_info(f'Cromwell server: {server_url}')
 
+# List tests
 input_jsons = list_test_inputs()
 disabled_tests = list_disabled_tests()
 print_info(f'Found {len(input_jsons)} tests, {len(disabled_tests)} disabled.')
@@ -125,27 +126,28 @@ for input_json in input_jsons:
     else:
         print_info(f'[*] {input_json}')
 
-ret = 0
-
+# Dispatch tests
 jobs = {}
 times = {}
 for input_json in input_jsons:
-    test = os.path.basename(input_json)
-    p = test.split(".")
+    if input_json not in disabled_tests:
+        test = os.path.basename(input_json)
+        p = test.split(".")
 
-    wdl_name = f'{p[0]}.wdl'
-    wdl_path = find_wdl_path(wdl_name)
+        wdl_name = f'{p[0]}.wdl'
+        wdl_path = find_wdl_path(wdl_name)
 
-    if wdl_path is None:
-        print_warning(f'{test}: Requested WDL does not exist.')
-    else:
-        if wdl_path not in disabled_tests:
+        if wdl_path is None:
+            print_warning(f'{test}: Requested WDL does not exist.')
+        else:
             j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
 
             print_info(f'{test}: {j["id"]}, {j["status"]}')
             jobs[test] = j
             times[test] = {'start': datetime.datetime.now(), 'stop': None}
 
+# Monitor tests
+ret = 0
 if len(jobs) > 0:
     num_finished = len(jobs)
     num_failed = 0
