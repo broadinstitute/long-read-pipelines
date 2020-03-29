@@ -39,6 +39,18 @@ def list_test_inputs():
     return glob.glob("test/test_json/*.json")
 
 
+def list_disabled_tests():
+    disabled_tests = set()
+
+    disabled_tests_path = "test/test_json/all_disabled_tests.txt"
+    if os.path.exists(disabled_tests_path):
+        with open(disabled_tests_path) as f:
+            for line in f:
+                disabled_tests.add(line.strip())
+
+    return disabled_tests
+
+
 def find_wdl_path(wdl):
     for (root, dirs, files) in os.walk("wdl/"):
         for file in files:
@@ -105,7 +117,13 @@ def jobs_are_running(jobs):
 print_info(f'Cromwell server: {server_url}')
 
 input_jsons = list_test_inputs()
-print_info(f'Found {len(input_jsons)} tests.')
+disabled_tests = list_disabled_tests()
+print_info(f'Found {len(input_jsons)} tests, {len(disabled_tests)} disabled.')
+for input_json in input_jsons:
+    if input_json in disabled_tests:
+        print_warning(f'[ ] {input_json}')
+    else:
+        print_info(f'[*] {input_json}')
 
 ret = 0
 
@@ -121,7 +139,7 @@ for input_json in input_jsons:
     if wdl_path is None:
         print_warning(f'{test}: Requested WDL does not exist.')
     else:
-        if 'TestCromwell' in wdl_path:
+        if wdl_path not in disabled_tests:
             j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
 
             print_info(f'{test}: {j["id"]}, {j["status"]}')
