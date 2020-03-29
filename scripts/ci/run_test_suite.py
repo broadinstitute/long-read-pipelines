@@ -121,11 +121,12 @@ for input_json in input_jsons:
     if wdl_path is None:
         print_warning(f'{test}: Requested WDL does not exist.')
     else:
-        j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
+        if 'TestCromwell' in wdl_path:
+            j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
 
-        print_info(f'{test}: {j["id"]}, {j["status"]}')
-        jobs[test] = j
-        times[test] = {'start': datetime.datetime.now(), 'stop': None}
+            print_info(f'{test}: {j["id"]}, {j["status"]}')
+            jobs[test] = j
+            times[test] = {'start': datetime.datetime.now(), 'stop': None}
 
 if len(jobs) > 0:
     num_finished = len(jobs)

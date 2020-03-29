@@ -1,10 +1,10 @@
 {
-  "write_to_cache": false,
-  "read_from_cache": false,
+  "write_to_cache": true,
+  "read_from_cache": true,
 
   "workflow_failure_mode": "NoNewCalls",
 
-  "jes_gcs_root": "gs://broad-dsp-lrma-ci",
+  "jes_gcs_root": "gs://broad-dsp-lrma-ci-intermediate",
 
   "monitoring_script": "gs://broad-dsde-methods-long-reads/resources/scripts/cromwell_monitoring_script.sh",
 
