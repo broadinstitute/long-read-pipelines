@@ -163,7 +163,7 @@ def compare_outputs(test, outs):
     ret = 0
     for b in outs:
         if outs[b]['exp'] != outs[b]['act']:
-            print_failure(f"{test}: {outs['exp_path']} ({outs['exp']} != {outs['act_path']} ({outs['act']}")
+            print_failure(f"{test}: {outs[b]['exp_path']} ({outs[b]['exp']} != {outs[b]['act_path']} ({outs[b]['act']}")
             ret = 1
 
     return ret
