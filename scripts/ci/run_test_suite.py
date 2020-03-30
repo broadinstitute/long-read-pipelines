@@ -196,10 +196,10 @@ for input_json in input_jsons:
         if wdl_path is None:
             print_warning(f'{test}: Requested WDL does not exist.')
         else:
-            #j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
+            j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
 
-            #print_info(f'{test}: {j["id"]}, {j["status"]}')
-            #jobs[test] = j
+            print_info(f'{test}: {j["id"]}, {j["status"]}')
+            jobs[test] = j
             times[test] = {'start': datetime.datetime.now(), 'stop': None}
             input[test] = input_json
 
