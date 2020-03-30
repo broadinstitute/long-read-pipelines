@@ -114,6 +114,61 @@ def jobs_are_running(jobs):
     return running
 
 
+def find_outputs(input_json):
+    b = os.path.basename(input_json).replace(".json", "")
+    reference_output_dir = f'gs://broad-dsp-lrma-ci-resources/test_data/{b}/output_data'
+    p1 = subprocess.Popen(f'gsutil hash {reference_output_dir}/**'.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p2 = subprocess.Popen(f'paste - - -'.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    stdout, stderr = p2.communicate()
+
+    outs = {}
+    for f in stdout.decode('utf-8').split('\n'):
+        g = re.split("\s+", f.strip())
+
+        if len(g) > 1:
+            bn = os.path.basename(g[3].replace(":", ""))
+            ha = g[len(g) - 1]
+            outs[bn] = {'exp': ha, 'exp_path': g[3], 'act': None, 'act_path': None}
+
+    with open(input_json) as jf:
+        for l in jf:
+            if 'gs://broad-dsp-lrma-ci' in l:
+                m = re.split(":\\s+", re.sub("[\",]+", "", l.strip()))
+                if len(m) > 1:
+                    n = re.sub("/+$", "", m[1])
+
+                    p1 = subprocess.Popen(f'gsutil hash {n}/**'.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    p2 = subprocess.Popen(f'paste - - -'.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    stdout, stderr = p2.communicate()
+
+                    for h in stdout.decode('utf-8').split('\n'):
+                        i = re.split("\s+", h.strip())
+
+                        if len(i) > 1:
+                            bm = os.path.basename(i[3].replace(":", ""))
+                            hb = i[len(i) - 1]
+
+                            if bm in outs:
+                                outs[bm]['act'] = hb
+                                outs[bm]['act_path'] = i[3]
+                            else:
+                                outs[bm] = {'exp': None, 'exp_path': None, 'act': hb, 'act_path': i[3]}
+
+    outs.pop('matched', None)
+
+    return outs
+
+
+def compare_outputs(test, outs):
+    ret = 0
+    for b in outs:
+        if b['exp'] != b['act']:
+            print_failure(f"{test}: {outs['exp_path']} ({outs['exp']} != {outs['act_path']} ({outs['act']}")
+            ret = 1
+
+    return ret
+
+
 print_info(f'Cromwell server: {server_url}')
 
 # List tests
@@ -129,6 +184,7 @@ for input_json in input_jsons:
 # Dispatch tests
 jobs = {}
 times = {}
+input = {}
 for input_json in input_jsons:
     if input_json not in disabled_tests:
         test = os.path.basename(input_json)
@@ -140,11 +196,12 @@ for input_json in input_jsons:
         if wdl_path is None:
             print_warning(f'{test}: Requested WDL does not exist.')
         else:
-            j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
+            #j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
 
-            print_info(f'{test}: {j["id"]}, {j["status"]}')
-            jobs[test] = j
+            #print_info(f'{test}: {j["id"]}, {j["status"]}')
+            #jobs[test] = j
             times[test] = {'start': datetime.datetime.now(), 'stop': None}
+            input[test] = input_json
 
 # Monitor tests
 ret = 0
@@ -193,9 +250,13 @@ if len(jobs) > 0:
         diff = times[test]['stop'] - times[test]['start']
         if jobs[test]['status'] == 'Succeeded':
             print_success(f"{test}: {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+
+            outs = find_outputs(input[test])
+            ret = compare_outputs(test, outs)
         else:
             print_failure(f"{test}: {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
             ret = 1
+
 
 if ret == 0:
     print_success('ALL TESTS SUCCEEDED.')
