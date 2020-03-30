@@ -170,7 +170,7 @@ if len(jobs) > 0:
                     if times[test]['stop'] is None:
                         times[test]['stop'] = datetime.datetime.now()
 
-            print_info(f'Running {len(jobs)} tests. {num_finished} tests complete, {num_succeeded} succeeded, {num_failed} failed.')
+            print_info(f'Running {len(jobs)} tests, {num_finished} tests complete. {num_succeeded} succeeded, {num_failed} failed.')
         else:
             break
 
@@ -187,7 +187,7 @@ if len(jobs) > 0:
         if times[test]['stop'] is None:
             times[test]['stop'] = datetime.datetime.now()
 
-    print_info(f'Ran {len(jobs)} tests. {num_finished} tests complete, {num_succeeded} succeeded, {num_failed} failed.')
+    print_info(f'Finished {num_finished} tests. {num_succeeded} succeeded, {num_failed} failed.')
 
     for test in jobs:
         diff = times[test]['stop'] - times[test]['start']

@@ -6,7 +6,7 @@ name: Nightly
 # events but only for the master branch
 on:
   schedule:
-    - cron: '0 5 * * *' # run at 5AM UTC
+    - cron: '0 7 * * *' # run at 7AM UTC
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
