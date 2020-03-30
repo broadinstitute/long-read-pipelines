@@ -155,6 +155,7 @@ def find_outputs(input_json):
                                 outs[bm] = {'exp': None, 'exp_path': None, 'act': hb, 'act_path': i[3]}
 
     outs.pop('matched', None)
+    outs.pop('version', None)
 
     return outs
 
@@ -163,7 +164,7 @@ def compare_outputs(test, outs):
     ret = 0
     for b in outs:
         if outs[b]['exp'] != outs[b]['act']:
-            print_failure(f"{test}: {outs[b]['exp_path']} ({outs[b]['exp']} != {outs[b]['act_path']} ({outs[b]['act']}")
+            print_failure(f"{test}: {b}: {outs[b]['exp_path']} ({outs[b]['exp']}) != {outs[b]['act_path']} ({outs[b]['act']})")
             ret = 1
 
     return ret
@@ -249,12 +250,12 @@ if len(jobs) > 0:
     for test in jobs:
         diff = times[test]['stop'] - times[test]['start']
         if jobs[test]['status'] == 'Succeeded':
-            print_success(f"{test}: {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_success(f"{test}: workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
 
             outs = find_outputs(input[test])
             ret = compare_outputs(test, outs)
         else:
-            print_failure(f"{test}: {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_failure(f"{test}: workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
             ret = 1
 
 
