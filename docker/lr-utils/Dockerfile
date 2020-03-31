@@ -16,9 +16,8 @@ RUN apt install -y curl git-lfs
 RUN curl https://sdk.cloud.google.com | bash
 
 # install gatk
-RUN git clone https://github.com/broadinstitute/gatk.git \
+RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
     && cd gatk \
-    && git checkout kvg_pbeap \
     && ./gradlew \
     && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
     && cd .. \

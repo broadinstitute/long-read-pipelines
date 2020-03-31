@@ -1,4 +1,4 @@
-VERSION = 0.01.01
+VERSION = 0.1.1
 TAG1 = quay.io/broad-long-read-pipelines/lr-sv:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-sv:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-sv:$(VERSION)

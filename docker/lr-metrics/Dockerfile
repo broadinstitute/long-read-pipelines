@@ -22,9 +22,8 @@ RUN conda env create -f /environment.yml && conda clean -a
 #    && clir validate vroom
 
 # install gatk
-RUN git clone https://github.com/broadinstitute/gatk.git \
+RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
     && cd gatk \
-    && git checkout kvg_pbeap \
     && ./gradlew \
     && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar / \
     && cd .. \

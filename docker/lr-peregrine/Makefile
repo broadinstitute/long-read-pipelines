@@ -1,4 +1,4 @@
-VERSION = 0.01.06
+VERSION = 0.1.6
 TAG1 = quay.io/broad-long-read-pipelines/lr-peregrine:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-peregrine:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-peregrine:$(VERSION)
