@@ -1,5 +1,0 @@
-steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--network=cloudbuild', '-t', 'gcr.io/broad-dsp-lrma/lr-align:0.01.27', '-t', 'gcr.io/broad-dsp-lrma/lr-align:latest', 'lr-align']
-
-images: ['gcr.io/broad-dsp-lrma/lr-align:0.01.27', 'gcr.io/broad-dsp-lrma/lr-align:latest']
