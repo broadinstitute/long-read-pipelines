@@ -1,0 +1,9 @@
+name: lr-guppy
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - minimap2
+  - libidn
