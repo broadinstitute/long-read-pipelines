@@ -1,0 +1,10 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'build'
+  - '--tag=gcr.io/broad-dsp-lrma/lr-align:0.01.26'
+  - 'lr-align'
+  id: '0.01.26'
+
+images:
+- 'gcr.io/broad-dsp-lrma/lr-align:0.01.26'
