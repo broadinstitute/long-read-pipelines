@@ -25,7 +25,7 @@ RUN conda env create -f /environment.yml && conda clean -a
 RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
     && cd gatk \
     && ./gradlew \
-    && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar / \
+    && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
     && cd .. \
     && rm -rf /gatk
 

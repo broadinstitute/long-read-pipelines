@@ -126,7 +126,7 @@ task ReadMetrics {
     command <<<
         set -euxo pipefail
 
-        java -jar /gatk.jar ComputeLongReadMetrics -I ~{bam} -O ~{basename}.read_metrics -DF WellformedReadFilter
+        java -jar /usr/local/bin/gatk.jar ComputeLongReadMetrics -I ~{bam} -O ~{basename}.read_metrics -DF WellformedReadFilter
     >>>
 
     output {
