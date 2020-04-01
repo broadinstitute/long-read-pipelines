@@ -163,7 +163,9 @@ def find_outputs(input_json):
 def compare_outputs(test, outs):
     ret = 0
     for b in outs:
-        if outs[b]['exp'] != outs[b]['act']:
+        if outs[b]['exp'] == outs[b]['act']:
+            print_failure(f"{test}: {b}: {outs[b]['exp_path']} ({outs[b]['exp']}) == {outs[b]['act_path']} ({outs[b]['act']})")
+        else:
             print_failure(f"{test}: {b}: {outs[b]['exp_path']} ({outs[b]['exp']}) != {outs[b]['act_path']} ({outs[b]['act']})")
             ret = 1
 
