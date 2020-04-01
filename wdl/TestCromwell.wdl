@@ -33,7 +33,7 @@ task TestCromwellOnGCS {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
+        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
