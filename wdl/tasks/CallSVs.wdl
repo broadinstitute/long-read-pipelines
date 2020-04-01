@@ -184,6 +184,9 @@ task SVIM {
         SM=`samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g'`
 
         svim alignment --sample ${SM} --insertion_sequences --read_names ~{prefix}_svim_files ~{bam} ~{ref_fasta}
+
+        find . -type f -exec ls -lah {} \;
+
         mv ~{prefix}_svim_files/final_results.vcf ~{prefix}.svim.vcf
 
         #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
