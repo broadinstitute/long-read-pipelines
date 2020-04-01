@@ -120,6 +120,7 @@ def find_outputs(input_json):
     p1 = subprocess.Popen(f'gsutil hash {reference_output_dir}/**'.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p2 = subprocess.Popen(f'paste - - -'.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = p2.communicate()
+    print_info(stdout)
 
     outs = {}
     for f in stdout.decode('utf-8').split('\n'):
@@ -127,26 +128,28 @@ def find_outputs(input_json):
 
         if len(g) > 1:
             bn = os.path.basename(g[3].replace(":", ""))
-            ha = g[len(g) - 1]
+            ha = g[-1]
             outs[bn] = {'exp': ha, 'exp_path': g[3], 'act': None, 'act_path': None}
 
     with open(input_json) as jf:
         for l in jf:
             if 'gs://broad-dsp-lrma-ci' in l:
                 m = re.split(":\\s+", re.sub("[\",]+", "", l.strip()))
+
                 if len(m) > 1:
                     n = re.sub("/+$", "", m[1])
 
                     p1 = subprocess.Popen(f'gsutil hash {n}/**'.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     p2 = subprocess.Popen(f'paste - - -'.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     stdout, stderr = p2.communicate()
+                    print_info(stdout)
 
                     for h in stdout.decode('utf-8').split('\n'):
                         i = re.split("\\s+", h.strip())
 
                         if len(i) > 1:
                             bm = os.path.basename(i[3].replace(":", ""))
-                            hb = i[len(i) - 1]
+                            hb = i[-1]
 
                             if bm in outs:
                                 outs[bm]['act'] = hb
