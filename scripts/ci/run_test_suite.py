@@ -123,7 +123,7 @@ def find_outputs(input_json):
 
     outs = {}
     for f in stdout.decode('utf-8').split('\n'):
-        g = re.split("\s+", f.strip())
+        g = re.split("\\s+", f.strip())
 
         if len(g) > 1:
             bn = os.path.basename(g[3].replace(":", ""))
@@ -142,7 +142,7 @@ def find_outputs(input_json):
                     stdout, stderr = p2.communicate()
 
                     for h in stdout.decode('utf-8').split('\n'):
-                        i = re.split("\s+", h.strip())
+                        i = re.split("\\s+", h.strip())
 
                         if len(i) > 1:
                             bm = os.path.basename(i[3].replace(":", ""))
