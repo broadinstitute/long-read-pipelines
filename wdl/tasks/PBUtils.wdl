@@ -29,7 +29,7 @@ task FindBams {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -71,7 +71,7 @@ task GetRunInfo {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -127,7 +127,7 @@ task CCS {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -198,7 +198,7 @@ task CCSWithClasses {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -239,7 +239,7 @@ task MergeCCSReports {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -280,7 +280,7 @@ task MergeCCSClasses {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

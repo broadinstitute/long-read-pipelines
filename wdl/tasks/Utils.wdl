@@ -32,7 +32,7 @@ task ShardLongReads {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -69,7 +69,7 @@ task PrepareManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -108,7 +108,7 @@ task EchoManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -148,7 +148,7 @@ task ChunkManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -247,7 +247,7 @@ task MakeChrIntervalList {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -287,7 +287,7 @@ task FastaToSam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -333,7 +333,7 @@ task CountFastqRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -372,7 +372,7 @@ task CountFastaRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -411,7 +411,7 @@ task CountBamRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -459,7 +459,7 @@ task GrepCountBamRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -507,7 +507,7 @@ task GrepCountUniqueBamRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -546,7 +546,7 @@ task Sum {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -587,7 +587,7 @@ task BamToTable {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
