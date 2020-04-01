@@ -1,4 +1,4 @@
-VERSION = 0.1.1
+VERSION = 0.1.2
 TAG1 = quay.io/broad-long-read-pipelines/lr-finalize:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-finalize:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-finalize:$(VERSION)
