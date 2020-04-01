@@ -187,7 +187,7 @@ task SVIM {
 
         find . -type f -exec ls -lah {} \;
 
-        mv ~{prefix}_svim_files/final_results.vcf ~{prefix}.svim.vcf
+        mv ~{prefix}_svim_files/variants.vcf ~{prefix}.svim.vcf
 
         #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
 
