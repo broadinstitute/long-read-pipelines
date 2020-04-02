@@ -91,7 +91,7 @@ task PBSV {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv.0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -149,7 +149,7 @@ task Sniffles {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv.0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -187,7 +187,7 @@ task SVIM {
 
         find . -type f -exec ls -lah {} \;
 
-        mv ~{prefix}_svim_files/variants.vcf ~{prefix}.svim.vcf
+        grep -v '##fileDate' ~{prefix}_svim_files/variants.vcf > ~{prefix}.svim.vcf
 
         #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
 
@@ -210,7 +210,7 @@ task SVIM {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv.0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

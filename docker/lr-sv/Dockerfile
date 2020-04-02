@@ -22,4 +22,5 @@ RUN git clone https://github.com/nanoporetech/pipeline-structural-variation.git 
 RUN pip3 install --upgrade setuptools cython
 RUN git clone https://github.com/eldariont/svim.git \
 	&& cd svim \
+    && git checkout fa3c93ac41ab202a3f347747f7f62880d8202858 \
 	&& pip3 install .
