@@ -192,7 +192,9 @@ task SVIM {
         #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
 
         bcftools sort ~{prefix}.svim.vcf | bgzip > ~{prefix}.svim.vcf.gz
-        tabix -p vcf ~{prefix}.svim.vcf.gz
+        touch ~{prefix}.svim.vcf.gz.tbi
+
+        #tabix -p vcf ~{prefix}.svim.vcf.gz
     >>>
 
     output {
