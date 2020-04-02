@@ -254,9 +254,9 @@ if len(jobs) > 0:
             num_mismatch = compare_outputs(test, outs)
 
             if num_mismatch == 0:
-                print_success(f"{test}: {len(outs)} files checked, {num_mismatch} files mismatch")
+                print_success(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
             else:
-                print_failure(f"{test}: {len(outs)} files checked, {num_mismatch} files mismatch")
+                print_failure(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
                 ret = 1
         else:
             print_failure(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
