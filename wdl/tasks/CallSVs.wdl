@@ -185,16 +185,14 @@ task SVIM {
 
         svim alignment --sample ${SM} --insertion_sequences --read_names ~{prefix}_svim_files ~{bam} ~{ref_fasta}
 
-        find . -type f -exec ls -lah {} \;
-
-        grep -v '##fileDate' ~{prefix}_svim_files/variants.vcf > ~{prefix}.svim.vcf
-
-        #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
+        grep -v -e '##fileDate' -e '^chrM' ~{prefix}_svim_files/variants.vcf > ~{prefix}.svim.vcf
 
         bcftools sort ~{prefix}.svim.vcf | bgzip > ~{prefix}.svim.vcf.gz
-        touch ~{prefix}.svim.vcf.gz.tbi
+        tabix -p vcf ~{prefix}.svim.vcf.gz
 
-        #tabix -p vcf ~{prefix}.svim.vcf.gz
+        find . -type f -exec ls -lah {} \;
+        #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
+        #touch ~{prefix}.svim.vcf.gz.tbi
     >>>
 
     output {
