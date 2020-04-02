@@ -43,7 +43,7 @@ task Minimap2 {
             exit 1
         fi
 
-        samtools sort -@~{cpus} -m4G -o ~{prefix}.bam tmp.sam
+        samtools sort -@~{cpus} -m4G --no-PG -o ~{prefix}.bam tmp.sam
         samtools index ~{prefix}.bam
     >>>
 
@@ -87,7 +87,7 @@ task MergeBams {
     command <<<
         set -euxo pipefail
 
-        samtools merge -p -c -@2 ~{prefix}.bam ~{sep=" " bams}
+        samtools merge -p -c -@2 --no-PG ~{prefix}.bam ~{sep=" " bams}
         samtools index ~{prefix}.bam
     >>>
 

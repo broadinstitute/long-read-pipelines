@@ -487,6 +487,8 @@ task RnaSeqMetrics {
             STRAND=NONE \
             VALIDATION_STRINGENCY=LENIENT \
             O=~{basename}.rna_metrics.txt
+
+        sed -i 1,5d ~{basename}.rna_metrics.txt
     >>>
 
     output {
@@ -586,6 +588,8 @@ task CollectSamErrorMetrics {
         set -euxo pipefail
 
         java -jar /picard.jar CollectSamErrorMetrics R=~{ref_fasta} I=~{bam} V=~{dbsnp_vcf} O=csem L=~{region}
+
+        find . -name 'csem.*' -exec sed -i 1,5d '{}' \;
     >>>
 
     output {
