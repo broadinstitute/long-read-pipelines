@@ -16,9 +16,12 @@ task Assemble {
 
         samtools fasta ~{bam} > reads.fasta
         shasta-Linux-0.2.0 --input reads.fasta
+
+        find . -type f -exec ls -lah '{}' ';'
     >>>
 
     output {
+        String out = read_lines(stdout())
         File assembled_fasta = "./ShastaRun/Assembly.fasta"
     }
 
