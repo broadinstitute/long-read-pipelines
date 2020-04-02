@@ -8,6 +8,7 @@ import "tasks/CallSVs.wdl" as SV
 import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 import "tasks/CallSmallVariants.wdl" as SMV
+import "tasks/Shasta.wdl" as Shasta
 
 workflow ONTPfSingleFlowcell {
     input {
@@ -119,13 +120,18 @@ workflow ONTPfSingleFlowcell {
             gcs_output_dir = outdir + "/" + DIR[0]
     }
 
+    call Shasta.Assemble {
+        input:
+            bam = MergeRuns.merged_bam
+    }
+
     ##########
     # Finalize
     ##########
 
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
-            files = [ MergeRuns.merged_bam, MergeRuns.merged_bai ],
+            files = [ MergeRuns.merged_bam, MergeRuns.merged_bai, Assemble.assembled_fasta ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 }
