@@ -137,6 +137,7 @@ task Sniffles {
     >>>
 
     output {
+        File tmp = "~{prefix}.sniffles.pre.vcf"
         File vcf = "~{prefix}.sniffles.vcf.gz"
         File tbi = "~{prefix}.sniffles.vcf.gz.tbi"
     }
