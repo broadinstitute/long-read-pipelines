@@ -43,7 +43,7 @@ task Minimap2 {
             exit 1
         fi
 
-        samtools sort -@~{cpus} -m4G -o ~{prefix}.bam tmp.sam
+        samtools sort -@~{cpus} -m4G --no-PG -o ~{prefix}.bam tmp.sam
         samtools index ~{prefix}.bam
     >>>
 
@@ -60,7 +60,7 @@ task Minimap2 {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -87,7 +87,7 @@ task MergeBams {
     command <<<
         set -euxo pipefail
 
-        samtools merge -p -c -@2 ~{prefix}.bam ~{sep=" " bams}
+        samtools merge -p -c -@2 --no-PG ~{prefix}.bam ~{sep=" " bams}
         samtools index ~{prefix}.bam
     >>>
 
@@ -104,7 +104,7 @@ task MergeBams {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -169,7 +169,7 @@ task SAMtoPAF {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-align:0.01.25"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

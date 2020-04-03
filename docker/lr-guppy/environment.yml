@@ -1,4 +1,4 @@
-name: lr-peregrine
+name: lr-guppy
 channels:
   - defaults
   - conda-forge
@@ -6,3 +6,4 @@ channels:
 dependencies:
   - samtools
   - minimap2
+  - libidn
