@@ -9,6 +9,7 @@ import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 import "tasks/CallSmallVariants.wdl" as SMV
 import "tasks/Shasta.wdl" as Shasta
+import "tasks/Quast.wdl" as Quast
 
 workflow ONTPfSingleFlowcell {
     input {
@@ -125,6 +126,12 @@ workflow ONTPfSingleFlowcell {
             bam = MergeRuns.merged_bam
     }
 
+    call Quast.Quast {
+        input:
+            ref = ref_fasta,
+            assembled_fasta = Assemble.assembled_fasta
+    }
+
     ##########
     # Finalize
     ##########
@@ -133,5 +140,11 @@ workflow ONTPfSingleFlowcell {
         input:
             files = [ MergeRuns.merged_bam, MergeRuns.merged_bai, Assemble.assembled_fasta ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
+    }
+
+    call FF.FinalizeToDir as SaveQuast {
+        input:
+            files = [ Quast.report ],
+            outdir = outdir + "/" + DIR[0] + "/quast"
     }
 }
