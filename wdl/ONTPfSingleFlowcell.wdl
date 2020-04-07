@@ -138,13 +138,19 @@ workflow ONTPfSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
-            files = [ MergeRuns.merged_bam, MergeRuns.merged_bai, Assemble.assembled_fasta ],
+            files = [ MergeRuns.merged_bam, MergeRuns.merged_bai ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 
-    call FF.FinalizeToDir as SaveQuast {
+    call FF.FinalizeToDir as FinalizeAssembly {
         input:
-            files = [ Quast.report ],
-            outdir = outdir + "/" + DIR[0] + "/quast"
+            files = [ Assemble.assembled_fasta ],
+            outdir = outdir + "/" + DIR[0] + "/assembly"
+    }
+
+    call FF.FinalizeToDir as FinalizeQuast {
+        input:
+            files = [ Quast.results ],
+            outdir = outdir + "/" + DIR[0] + "/metrics/quast"
     }
 }

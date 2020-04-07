@@ -16,10 +16,12 @@ task Quast {
         set -euxo pipefail
 
         quast --no-icarus -r ~{ref} ~{assembled_fasta}
+
+        tar czf quast_results.tgz quast_results/
     >>>
 
     output {
-        File report = "./quast_results/latest/report.pdf"
+        File results = "quast_results.tgz"
     }
 
     ###################
