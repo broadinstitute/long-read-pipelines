@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from google.cloud import storage
 import glob
 import os
 import re
@@ -114,60 +115,56 @@ def jobs_are_running(jobs):
     return running
 
 
-def find_outputs(input_json):
+def list_blobs(bucket_name, prefix, delimiter=None):
+    storage_client = storage.Client()
+    blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
+
+    return blobs
+
+
+def find_outputs(input_json, exp_bucket='broad-dsp-lrma-ci-resources', act_bucket='broad-dsp-lrma-ci'):
     b = os.path.basename(input_json).replace(".json", "")
-    reference_output_dir = f'gs://broad-dsp-lrma-ci-resources/test_data/{b}/output_data'
-    p1 = subprocess.Popen(f'gsutil hash {reference_output_dir}/**'.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    p2 = subprocess.Popen(f'paste - - -'.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    stdout, stderr = p2.communicate()
-
     outs = {}
-    for f in stdout.decode('utf-8').split('\n'):
-        g = re.split("\s+", f.strip())
 
-        if len(g) > 1:
-            bn = os.path.basename(g[3].replace(":", ""))
-            ha = g[len(g) - 1]
-            outs[bn] = {'exp': ha, 'exp_path': g[3], 'act': None, 'act_path': None}
+    blobs = list_blobs(exp_bucket, f'test_data/{b}/output_data')
+    for blob in blobs:
+        bn = os.path.basename(blob.name)
+
+        outs[bn] = {'exp': blob.md5_hash, 'exp_path': f'gs://{exp_bucket}/{blob.name}', 'act': None, 'act_path': None}
 
     with open(input_json) as jf:
         for l in jf:
-            if 'gs://broad-dsp-lrma-ci' in l:
+            if f'gs://{act_bucket}/' in l:
                 m = re.split(":\\s+", re.sub("[\",]+", "", l.strip()))
                 if len(m) > 1:
-                    n = re.sub("/+$", "", m[1])
+                    n = re.sub("/$", "", m[-1].replace(f'gs://{act_bucket}/', ""))
 
-                    p1 = subprocess.Popen(f'gsutil hash {n}/**'.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    p2 = subprocess.Popen(f'paste - - -'.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    stdout, stderr = p2.communicate()
+                    blobs = list_blobs(act_bucket, n)
+                    for blob in blobs:
+                        bn = os.path.basename(blob.name)
 
-                    for h in stdout.decode('utf-8').split('\n'):
-                        i = re.split("\s+", h.strip())
+                        outs[bn]['act'] = blob.md5_hash
+                        outs[bn]['act_path'] = f'gs://{act_bucket}/{blob.name}'
 
-                        if len(i) > 1:
-                            bm = os.path.basename(i[3].replace(":", ""))
-                            hb = i[len(i) - 1]
-
-                            if bm in outs:
-                                outs[bm]['act'] = hb
-                                outs[bm]['act_path'] = i[3]
-                            else:
-                                outs[bm] = {'exp': None, 'exp_path': None, 'act': hb, 'act_path': i[3]}
-
-    outs.pop('matched', None)
-    outs.pop('version', None)
+                        if bn not in outs:
+                            outs[bn]['exp'] = None
+                            outs[bn]['exp_path'] = None
 
     return outs
 
 
 def compare_outputs(test, outs):
-    ret = 0
+    print_info(f'{test}')
+
+    bad_md5s = 0
     for b in outs:
         if outs[b]['exp'] != outs[b]['act']:
-            print_failure(f"{test}: {b}: {outs[b]['exp_path']} ({outs[b]['exp']}) != {outs[b]['act_path']} ({outs[b]['act']})")
-            ret = 1
+            print_info(f'- {b} md5s are different:')
+            print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
+            print_failure(f"    act: ({outs[b]['act']}) {outs[b]['act_path']}")
+            bad_md5s += 1
 
-    return ret
+    return bad_md5s
 
 
 print_info(f'Cromwell server: {server_url}')
@@ -203,6 +200,7 @@ for input_json in input_jsons:
             jobs[test] = j
             times[test] = {'start': datetime.datetime.now(), 'stop': None}
             input[test] = input_json
+
 
 # Monitor tests
 ret = 0
@@ -250,12 +248,18 @@ if len(jobs) > 0:
     for test in jobs:
         diff = times[test]['stop'] - times[test]['start']
         if jobs[test]['status'] == 'Succeeded':
-            print_success(f"{test}: workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_success(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
 
             outs = find_outputs(input[test])
-            ret = compare_outputs(test, outs)
+            num_mismatch = compare_outputs(test, outs)
+
+            if num_mismatch == 0:
+                print_success(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
+            else:
+                print_failure(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
+                ret = 1
         else:
-            print_failure(f"{test}: workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_failure(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
             ret = 1
 
 

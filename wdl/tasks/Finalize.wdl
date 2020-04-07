@@ -14,7 +14,7 @@ task FinalizeToDir {
     command <<<
         set -euxo pipefail
 
-        gsutil -m cp -r ~{sep=' ' files} ~{gcs_output_dir}
+        gsutil -m cp ~{sep=' ' files} ~{gcs_output_dir}
     >>>
 
     output { }
@@ -26,7 +26,7 @@ task FinalizeToDir {
         bootDiskSizeGb:         10
         preemptible:            2
         maxRetries:             2
-        docker:                 "quay.io/broad-long-read-pipelines/lr-finalize:0.01.00"
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
     }
 }
 

@@ -99,7 +99,7 @@ task FlagStats {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.07"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -126,7 +126,7 @@ task ReadMetrics {
     command <<<
         set -euxo pipefail
 
-        java -jar /gatk.jar ComputeLongReadMetrics -I ~{bam} -O ~{basename}.read_metrics -DF WellformedReadFilter
+        java -jar /usr/local/bin/gatk.jar ComputeLongReadMetrics -I ~{bam} -O ~{basename}.read_metrics -DF WellformedReadFilter
     >>>
 
     output {
@@ -151,7 +151,7 @@ task ReadMetrics {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.07"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -193,7 +193,7 @@ task ReadNamesAndLengths {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-metrics:0.01.07"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

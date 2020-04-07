@@ -4,8 +4,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - google-cloud-storage
   - samtools
   - java-jdk
-  - bcftools
-  - ont-fast5-api
