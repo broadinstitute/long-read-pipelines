@@ -10,7 +10,7 @@ task Quast {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 5 * ceil(size(ref, "GB") + size(assembled_fasta, "GB"))
+    Int disk_size = ceil(size(ref, "GB") + size(assembled_fasta, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -26,8 +26,8 @@ task Quast {
 
     ###################
     RuntimeAttr default_attr = object {
-        cpu_cores:      8,
-        mem_gb:         64,
+        cpu_cores:      2,
+        mem_gb:         4,
         disk_gb:        disk_size,
         boot_disk_gb:   10,
         preemptible_tries:  0,
