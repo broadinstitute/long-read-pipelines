@@ -9,6 +9,7 @@ import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 import "tasks/CallSmallVariants.wdl" as SMV
 import "tasks/Shasta.wdl" as Shasta
+import "tasks/Canu.wdl" as Canu
 import "tasks/Quast.wdl" as Quast
 
 workflow ONTPfSingleFlowcell {
@@ -132,6 +133,20 @@ workflow ONTPfSingleFlowcell {
             assembled_fasta = Assemble.assembled_fasta
     }
 
+    call Canu.CorrectTrimAssemble {
+        input:
+            file_prefix = "malaria",
+            genome_size = "22.9m",
+            reads_bam = MergeRuns.merged_bam,
+            corrected_error_rate = 0.039
+    }
+
+   call Quast.Quast as CanuQuast {
+        input:
+            ref = ref_fasta,
+            assembled_fasta = CorrectTrimAssemble.assembly
+    }
+
     ##########
     # Finalize
     ##########
@@ -142,15 +157,28 @@ workflow ONTPfSingleFlowcell {
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 
-    call FF.FinalizeToDir as FinalizeAssembly {
+    call FF.FinalizeToDir as FinalizeShastaAssembly {
         input:
             files = [ Assemble.assembled_fasta ],
-            outdir = outdir + "/" + DIR[0] + "/assembly"
+            outdir = outdir + "/" + DIR[0] + "/shasta/assembly"
     }
 
-    call FF.FinalizeToDir as FinalizeQuast {
+    call FF.FinalizeToDir as FinalizeShastaQuast {
         input:
             files = [ Quast.results ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/quast"
+            outdir = outdir + "/" + DIR[0] + "/shasta/quast"
     }
+
+    call FF.FinalizeToDir as FinalizeCanuAssembly {
+        input:
+            files = [ CorrectTrimAssemble.assembly ],
+            outdir = outdir + "/" + DIR + "/canu/assembly"
+    }
+
+    call FF.FinalizeToDir as FinalizeCanuQuast {
+        input:
+            files = [ CanuQuast.results ],
+            outdir = outdir + "/" + DIR + "/canu/quast"
+    }
+
 }
