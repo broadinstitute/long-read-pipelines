@@ -11,7 +11,7 @@ workflow PBCCSOnlySingleFlowcell {
         String gcs_input_dir
 
         String? sample_name
-        Int num_reads_per_split = 100000
+        Int num_shards = 200
 
         String gcs_out_root_dir
     }
@@ -29,42 +29,39 @@ workflow PBCCSOnlySingleFlowcell {
         String DIR = SM + "." + ID
 
         call SU.IndexUnalignedBam { input: input_bam = subread_bam }
-        call SU.MakeReadNameManifests { input: input_bri = IndexUnalignedBam.bri }
+        call SU.MakeReadNameManifests { input: input_bri = IndexUnalignedBam.bri, N = num_shards }
 
         scatter (manifest in MakeReadNameManifests.manifest_chunks) {
             call CCS {
                 input:
                     input_bam          = subread_bam,
                     input_bri          = IndexUnalignedBam.bri,
-                    read_name_manifest = manifest
+                    read_name_manifest = manifest,
             }
         }
 
         call AR.MergeBams as MergeChunks { input: bams = CCS.consensus }
-
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
     }
 
     call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
-
     call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
 
     ##########
     # Finalize
     ##########
 
-#    call FF.FinalizeToDir as FinalizeMergedRuns {
-#        input:
-#            files = [ MergeRuns.merged_bam ],
-#            outdir = outdir + "/" + DIR[0] + "/alignments"
-#    }
-#
-#    call FF.FinalizeToDir as FinalizeCCSMetrics {
-#        input:
-#            files = [ MergeAllCCSReports.report ],
-#            #files = [ MergeAllCCSWithClassesReports.report, MergeAllCCSWithClassesClasses.classes ],
-#            outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
-#    }
+    call FF.FinalizeToDir as FinalizeMergedRuns {
+        input:
+            files = [ MergeRuns.merged_bam ],
+            outdir = outdir + "/" + DIR[0] + "/alignments"
+    }
+
+    call FF.FinalizeToDir as FinalizeCCSMetrics {
+        input:
+            files = [ MergeAllCCSReports.report ],
+            outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
+    }
 }
 
 task CCS {
@@ -80,7 +77,7 @@ task CCS {
         Float min_rq = 0.99
 
         Int cpus = 4
-        Int mem = 8
+        Int mem = 40
 
         RuntimeAttr? runtime_attr_override
     }
