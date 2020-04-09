@@ -6,25 +6,22 @@ task CorrectTrimAssemble {
     input {
         String file_prefix
         String genome_size
-        File reads_bam
+        Array[File] reads_fastq
         Float corrected_error_rate
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 * ceil(size(reads_bam, "GB"))
+    Int disk_size = 10 * ceil(size(reads_fastq, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        samtools fasta ~{reads_bam} > reads.fasta
-        rm ~{reads_bam}
-
         /canu-2.0/Linux-amd64/bin/canu -correct \
             -p ~{file_prefix} -d ~{file_prefix}_correct \
             genomeSize=~{genome_size} \
-            -nanopore-raw \
-            reads.fasta
+            -nanopore \
+            ~{sep=' ' reads_fastq}
 
         /canu-2.0/Linux-amd64/bin/canu -trim \
             -p ~{file_prefix} -d ~{file_prefix}_trim \

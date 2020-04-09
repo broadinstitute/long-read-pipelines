@@ -49,6 +49,7 @@ workflow ONTPfSingleFlowcell {
         String DIR = GetRunInfo.run_info["protocol_group_id"] + "." + SM + "." + ID
         String SID = ID + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
         String RG = "@RG\\tID:~{SID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+        Array[String] fastq_reads = read_lines(ListFastqs.manifest)
 
         #call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = 4  }
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = 50 }
@@ -137,7 +138,7 @@ workflow ONTPfSingleFlowcell {
         input:
             file_prefix = "malaria",
             genome_size = "22.9m",
-            reads_bam = MergeRuns.merged_bam,
+            reads_fastq = flatten(fastq_reads),
             corrected_error_rate = 0.039
     }
 
@@ -172,13 +173,13 @@ workflow ONTPfSingleFlowcell {
     call FF.FinalizeToDir as FinalizeCanuAssembly {
         input:
             files = [ CorrectTrimAssemble.assembly ],
-            outdir = outdir + "/" + DIR + "/canu/assembly"
+            outdir = outdir + "/" + DIR[0] + "/canu/assembly"
     }
 
     call FF.FinalizeToDir as FinalizeCanuQuast {
         input:
             files = [ CanuQuast.results ],
-            outdir = outdir + "/" + DIR + "/canu/quast"
+            outdir = outdir + "/" + DIR[0] + "/canu/quast"
     }
 
 }
