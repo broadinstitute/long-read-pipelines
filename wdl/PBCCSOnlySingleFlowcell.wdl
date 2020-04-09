@@ -11,7 +11,7 @@ workflow PBCCSOnlySingleFlowcell {
         String gcs_input_dir
 
         String? sample_name
-        Int num_shards = 200
+        Int num_shards = 300
 
         String gcs_out_root_dir
     }
