@@ -1,6 +1,7 @@
 version 1.0
 
 import "tasks/PBUtils.wdl" as PB
+import "tasks/ShardUtils.wdl" as SU
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
@@ -12,7 +13,9 @@ import "tasks/CallSmallVariants.wdl" as SMV
 workflow PBCLRWholeGenomeSingleFlowcell {
     input {
         String gcs_input_dir
+
         String? sample_name
+        Int num_shards = 100
 
         File ref_fasta
         File ref_fasta_fai
@@ -45,12 +48,15 @@ workflow PBCLRWholeGenomeSingleFlowcell {
         String DIR = SM + "." + ID
         String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
+        call SU.IndexUnalignedBam { input: input_bam = subread_bam }
+        call SU.MakeReadNameManifests { input: input_bri = IndexUnalignedBam.bri, N = num_shards }
 
-        scatter (subreads in ShardLongReads.unmapped_shards) {
+        scatter (manifest_chunk in MakeReadNameManifests.manifest_chunks) {
+            call SU.ExtractReadsInManifest { input: input_bam = subread_bam, input_bri = IndexUnalignedBam.bri, read_name_manifest = manifest_chunk }
+
             call AR.Minimap2 as AlignChunk {
                 input:
-                    reads      = [ subreads ],
+                    reads      = [ ExtractReadsInManifest.reads ],
                     ref_fasta  = ref_fasta,
                     RG         = RG,
                     map_preset = "map-pb"

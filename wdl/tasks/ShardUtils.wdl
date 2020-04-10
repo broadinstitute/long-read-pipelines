@@ -14,8 +14,9 @@ task IndexUnalignedBam {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        bri index -v -i ~{bri_path} ~{input_bam}
+        mkfifo /tmp/token_fifo
+        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+        HTS_AUTH_LOCATION=/tmp/token_fifo bri index -v -i ~{bri_path} ~{input_bam}
     >>>
 
     output {
@@ -62,6 +63,56 @@ task MakeReadNameManifests {
     output {
         File manifest_full = "read_list.txt"
         Array[File] manifest_chunks = glob("chunk_*.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            10,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-bri:0.1.19"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+
+task ExtractReadsInManifest {
+    input {
+        String input_bam
+        File input_bri
+        File read_name_manifest
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        sed 's/,/\n/g' ~{read_name_manifest} | sort -t'/' -n -k2 > readnames.txt
+
+        mkfifo /tmp/token_fifo
+        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+        ((HTS_AUTH_LOCATION=/tmp/token_fifo samtools view -H ~{input_bam}) && \
+         (HTS_AUTH_LOCATION=/tmp/token_fifo cat readnames.txt | bri get -i ~{input_bri} ~{input_bam})) | samtools view -b > reads.bam
+
+        wc -l readnames.txt
+        samtools view reads.bam | wc -l
+    >>>
+
+    output {
+        File reads = "reads.bam"
     }
 
     #########################
