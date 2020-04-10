@@ -1,0 +1,16 @@
+name: lr-sv
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - minimap2
+  - java-jdk
+  - htslib
+  - bcftools
+  - bedtools
+  - truvari
+  - sniffles
+  - pbsv
+  - cython

@@ -65,7 +65,7 @@ task Preprocessing {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-c3poa:0.01.03"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -111,7 +111,7 @@ task Processing {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-c3poa:0.01.03"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -160,7 +160,7 @@ task Postprocessing {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-c3poa:0.01.03"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -202,7 +202,7 @@ task Cat {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-c3poa:0.01.03"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

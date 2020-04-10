@@ -91,7 +91,7 @@ task PBSV {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-sv:0.1.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -130,7 +130,7 @@ task Sniffles {
         sniffles -t ~{cpus} -m ~{bam} -v ~{prefix}.sniffles.pre.vcf -s ~{min_read_support} -r ~{min_read_length} -q ~{min_mq} --genotype --report_seq --report_read_strands
         sniffles-filter -v ~{prefix}.sniffles.pre.vcf -m ~{min_read_support} -t DEL INS DUP --strand-support 0.001 -l 50 --min-af 0.10 --max-length 400000 -o ~{prefix}.sniffles.filtered.vcf
 
-        cat ~{prefix}.sniffles.filtered.vcf | sed 's/FORMAT\t\/cromwell_root.*.bam/FORMAT\t'"${SM}"'/' > ~{prefix}.sniffles.vcf
+        cat ~{prefix}.sniffles.filtered.vcf | sed 's/FORMAT\t\/cromwell_root.*.bam/FORMAT\t'"${SM}"'/' | grep -v -e '^chrM' -e '##fileDate' > ~{prefix}.sniffles.vcf
 
         bcftools sort ~{prefix}.sniffles.vcf | bgzip > ~{prefix}.sniffles.vcf.gz
         tabix -p vcf ~{prefix}.sniffles.vcf.gz
@@ -149,7 +149,7 @@ task Sniffles {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-sv:0.1.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -184,12 +184,15 @@ task SVIM {
         SM=`samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g'`
 
         svim alignment --sample ${SM} --insertion_sequences --read_names ~{prefix}_svim_files ~{bam} ~{ref_fasta}
-        mv ~{prefix}_svim_files/final_results.vcf ~{prefix}.svim.vcf
 
-        #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
+        grep -v -e '##fileDate' -e '^chrM' ~{prefix}_svim_files/variants.vcf > ~{prefix}.svim.vcf
 
         bcftools sort ~{prefix}.svim.vcf | bgzip > ~{prefix}.svim.vcf.gz
         tabix -p vcf ~{prefix}.svim.vcf.gz
+
+        find . -type f -exec ls -lah {} \;
+        #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
+        #touch ~{prefix}.svim.vcf.gz.tbi
     >>>
 
     output {
@@ -205,7 +208,7 @@ task SVIM {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-sv:0.1.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -1,5 +1,5 @@
 {
-    "PBCCSWholeGenomeSingleFlowcell.gcs_input_dir":     "gs://broad-dsde-methods-long-reads/resources/test_data/PacBio/Sequel_II/unaligned_subreads/NA12878rep1_chrM_and_chr20_tiny_subset/",
+    "PBCCSWholeGenomeSingleFlowcell.gcs_input_dir":     "gs://broad-dsp-lrma-ci-resources/test_data/PBCCSWholeGenomeSingleFlowcell.test.ChrMAndChr20SubsetGRCh38/input_data/NA12878rep1_chrM_and_chr20_tiny_subset/",
 
     "PBCCSWholeGenomeSingleFlowcell.ref_fasta":         "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
     "PBCCSWholeGenomeSingleFlowcell.ref_fasta_fai":     "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa.fai",
@@ -13,5 +13,5 @@
     "PBCCSWholeGenomeSingleFlowcell.mt_chr_name":       "chrM",
     "PBCCSWholeGenomeSingleFlowcell.metrics_locus":     "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/metric_intervals.interval_list",
 
-    "PBCCSWholeGenomeSingleFlowcell.gcs_out_root_dir":  "gs://broad-dsde-methods-long-reads-outgoing/PBCCSWholeGenomeSingleFlowcell"
+    "PBCCSWholeGenomeSingleFlowcell.gcs_out_root_dir":  "gs://broad-dsp-lrma-ci/PBCCSWholeGenomeSingleFlowcell"
 }

@@ -4,3 +4,4 @@ scratch
 .Rproj.user
 .RData
 .bak
+venv/
