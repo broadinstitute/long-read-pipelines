@@ -82,14 +82,17 @@ task CCS {
         RuntimeAttr? runtime_attr_override
     }
 
-    Array[String] read_names = read_lines(read_name_manifest)
     Int disk_size = 10 + 4*ceil(size(input_bri, "GB"))
 
     command <<<
-        set -o pipefail
+        set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        ((samtools view -H ~{input_bam}) && (sed 's/,/\n/g' ~{read_name_manifest} | sort -t'/' -n -k2 | bri get -i ~{input_bri} ~{input_bam})) | samtools view -b > subreads.bam
+        sed 's/,/\n/g' ~{read_name_manifest} | sort -t'/' -n -k2 > readnames.txt
+
+        mkfifo /tmp/token_fifo
+        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+        ((HTS_AUTH_LOCATION=/tmp/token_fifo samtools view -H ~{input_bam}) && \
+         (HTS_AUTH_LOCATION=/tmp/token_fifo cat readnames.txt | bri get -i ~{input_bri} ~{input_bam})) | samtools view -b > reads.bam
 
         ccs --min-passes ~{min_passes} \
             --min-snr ~{min_snr} \
@@ -98,7 +101,7 @@ task CCS {
             --min-rq ~{min_rq} \
             --num-threads ~{cpus} \
             --report-file ccs_report.txt \
-            subreads.bam \
+            reads.bam \
             ccs_unmapped.bam
     >>>
 
