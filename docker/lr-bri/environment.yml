@@ -4,7 +4,8 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - samtools
+  - samtools=1.10
   - pbccs
   - pbbam
   - jq
+  - parallel

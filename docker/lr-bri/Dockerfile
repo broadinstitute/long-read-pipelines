@@ -42,3 +42,7 @@ RUN curl https://sdk.cloud.google.com | bash
 
 # copy other resources
 COPY merge_ccs_reports.py /usr/local/bin/
+
+# configure parallel
+RUN echo 'will cite' | parallel --citation; exit 0
+
