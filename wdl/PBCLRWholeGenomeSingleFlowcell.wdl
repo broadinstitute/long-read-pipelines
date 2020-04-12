@@ -51,6 +51,9 @@ workflow PBCLRWholeGenomeSingleFlowcell {
         call SU.IndexUnalignedBam { input: input_bam = subread_bam }
         call SU.MakeReadNameManifests { input: input_bri = IndexUnalignedBam.bri, N = num_shards }
 
+#        scatter (i in [0]) {
+#            call SU.ExtractReadsInManifest { input: input_bam = subread_bam, input_bri = IndexUnalignedBam.bri, read_name_manifest = MakeReadNameManifests.manifest_chunks[i] }
+
         scatter (manifest_chunk in MakeReadNameManifests.manifest_chunks) {
             call SU.ExtractReadsInManifest { input: input_bam = subread_bam, input_bri = IndexUnalignedBam.bri, read_name_manifest = manifest_chunk }
 
