@@ -12,7 +12,7 @@ task CorrectTrimAssemble {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 * ceil(size(reads_fastq, "GB"))
+    Int disk_size = 50 * ceil(size(reads_fastq, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -21,20 +21,23 @@ task CorrectTrimAssemble {
             -p ~{file_prefix} -d ~{file_prefix}_correct \
             genomeSize=~{genome_size} \
             -nanopore \
-            ~{sep=' ' reads_fastq}
+            ~{sep=' ' reads_fastq} \
+            || cat /cromwell_root/monitoring.log
 
         /canu-2.0/Linux-amd64/bin/canu -trim \
             -p ~{file_prefix} -d ~{file_prefix}_trim \
             genomeSize=~{genome_size} \
             -nanopore-corrected \
-            ~{file_prefix}_correct/~{file_prefix}.correctedReads.fasta.gz
+            ~{file_prefix}_correct/~{file_prefix}.correctedReads.fasta.gz \
+            || cat /cromwell_root/monitoring.log
 
         /canu-2.0/Linux-amd64/bin/canu -assemble \
             -p ~{file_prefix} -d ~{file_prefix}_assemble \
             genomeSize=~{genome_size} \
             corErrorRate=~{corrected_error_rate} \
             -nanopore-corrected \
-            ~{file_prefix}_trim/~{file_prefix}.trimmedReads.fasta.gz
+            ~{file_prefix}_trim/~{file_prefix}.trimmedReads.fasta.gz \
+            || cat /cromwell_root/monitoring.log
     >>>
 
     output {
