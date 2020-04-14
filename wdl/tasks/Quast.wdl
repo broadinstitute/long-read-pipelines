@@ -5,7 +5,7 @@ import "Structs.wdl"
 task Quast {
     input {
         File ref
-        File assembled_fasta
+        Array[File] assembled_fasta
 
         RuntimeAttr? runtime_attr_override
     }
@@ -15,7 +15,7 @@ task Quast {
     command <<<
         set -euxo pipefail
 
-        quast --no-icarus -r ~{ref} ~{assembled_fasta}
+        quast --no-icarus -r ~{ref}  ~{sep=' ' assembled_fasta}
 
         tar czf quast_results.tgz quast_results/
     >>>

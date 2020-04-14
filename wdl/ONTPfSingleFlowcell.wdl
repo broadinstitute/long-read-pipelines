@@ -75,6 +75,7 @@ workflow ONTPfSingleFlowcell {
                 ref_flat       = ref_flat,
                 dbsnp_vcf      = dbsnp_vcf,
                 dbsnp_tbi      = dbsnp_tbi,
+
                 metrics_locus  = metrics_locus,
                 per            = "flowcell",
                 type           = "subrun",
@@ -123,29 +124,18 @@ workflow ONTPfSingleFlowcell {
             gcs_output_dir = outdir + "/" + DIR[0]
     }
 
-    call Shasta.Assemble {
-        input:
-            bam = MergeRuns.merged_bam
-    }
-
-    call Quast.Quast {
-        input:
-            ref = ref_fasta,
-            assembled_fasta = Assemble.assembled_fasta
-    }
-
-    call Canu.CorrectTrimAssemble {
+    call Canu.CorrectTrimAssemble  {
         input:
             file_prefix = "malaria",
             genome_size = "22.9m",
             reads_fastq = flatten(fastq_reads),
-            corrected_error_rate = 0.039
+            corrected_error_rates = [0.039, 0.075, 0.15, 0.3, 0.6]
     }
 
-   call Quast.Quast as CanuQuast {
+   call Quast.Quast {
         input:
             ref = ref_fasta,
-            assembled_fasta = CorrectTrimAssemble.assembly
+            assembled_fasta = CorrectTrimAssemble.assemblies
     }
 
     ##########
@@ -158,28 +148,16 @@ workflow ONTPfSingleFlowcell {
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 
-    call FF.FinalizeToDir as FinalizeShastaAssembly {
+    call FF.FinalizeToDir as FinalizeAssembly {
         input:
-            files = [ Assemble.assembled_fasta ],
-            outdir = outdir + "/" + DIR[0] + "/shasta/assembly"
+            files = CorrectTrimAssemble.assemblies,
+            outdir = outdir + "/" + DIR[0] + "/assembly"
     }
 
-    call FF.FinalizeToDir as FinalizeShastaQuast {
+    call FF.FinalizeToDir as FinalizeQuast {
         input:
             files = [ Quast.results ],
-            outdir = outdir + "/" + DIR[0] + "/shasta/quast"
-    }
-
-    call FF.FinalizeToDir as FinalizeCanuAssembly {
-        input:
-            files = [ CorrectTrimAssemble.assembly ],
-            outdir = outdir + "/" + DIR[0] + "/canu/assembly"
-    }
-
-    call FF.FinalizeToDir as FinalizeCanuQuast {
-        input:
-            files = [ CanuQuast.results ],
-            outdir = outdir + "/" + DIR[0] + "/canu/quast"
+            outdir = outdir + "/" + DIR[0] + "/quast"
     }
 
 }
