@@ -1,4 +1,4 @@
-VERSION = 0.1.0
+VERSION = 0.2.0
 TAG1 = quay.io/broad-long-read-pipelines/lr-guppy:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-guppy:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-guppy:$(VERSION)
