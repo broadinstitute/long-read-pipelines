@@ -51,9 +51,6 @@ workflow PBCLRWholeGenomeSingleFlowcell {
         call SU.IndexUnalignedBam { input: input_bam = subread_bam }
         call SU.MakeReadNameManifests { input: input_bri = IndexUnalignedBam.bri, N = num_shards }
 
-#        scatter (i in [0]) {
-#            call SU.ExtractReadsInManifest { input: input_bam = subread_bam, input_bri = IndexUnalignedBam.bri, read_name_manifest = MakeReadNameManifests.manifest_chunks[i] }
-
         scatter (manifest_chunk in MakeReadNameManifests.manifest_chunks) {
             call SU.ExtractReadsInManifest { input: input_bam = subread_bam, input_bri = IndexUnalignedBam.bri, read_name_manifest = manifest_chunk }
 
@@ -149,13 +146,25 @@ workflow PBCLRWholeGenomeSingleFlowcell {
     # Finalize
     ##########
 
+#    call FF.FinalizeToDir as FinalizePBSV {
+#        input:
+#            files = [ CallSVs.pbsv_vcf ],
+#            outdir = outdir + "/" + DIR[0] + "/variants"
+#    }
+#
     call FF.FinalizeToDir as FinalizeSVs {
         input:
-            files = [ CallSVs.pbsv_vcf,       CallSVs.pbsv_tbi,
-                      CallSVs.sniffles_vcf,   CallSVs.sniffles_tbi,
-                      CallSVs.svim_vcf,       CallSVs.svim_tbi ],
+            files = [ CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
             outdir = outdir + "/" + DIR[0] + "/variants"
     }
+
+#    call FF.FinalizeToDir as FinalizeSVs {
+#        input:
+#            files = [ CallSVs.pbsv_vcf, CallSVs.pbsv_tbi,
+#                      CallSVs.sniffles_vcf, CallSVs.sniffles_tbi,
+#                      CallSVs.svim_vcf,     CallSVs.svim_tbi ],
+#            outdir = outdir + "/" + DIR[0] + "/variants"
+#    }
 
     call FF.FinalizeToDir as FinalizeSmallVariants {
         input:
