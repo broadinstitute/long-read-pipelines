@@ -297,9 +297,9 @@ task MergeCCSClasses {
 task Demultiplex {
     input {
         File bam
-        String prefix           = "demux"
-        Boolean ccs             = true
-        Boolean isoseq          = false
+        String prefix  = "demux"
+        Boolean ccs    = true
+        Boolean isoseq = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -337,6 +337,89 @@ task Demultiplex {
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.6"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MakeDetailedDemultiplexingReport {
+    input {
+        File report
+        String type = "png"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 2*ceil(size(report, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        Rscript /lima_report_detail.R ~{report} ~{type}
+    >>>
+
+    output {
+        Array[File] report_files = glob("detail_*~{type}")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MakeSummarizedDemultiplexingReport {
+    input {
+        File report
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 2*ceil(size(report, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        Rscript /lima_report_summary.R ~{report}
+    >>>
+
+    output {
+        Array[File] report_files = glob("summary_*.png")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

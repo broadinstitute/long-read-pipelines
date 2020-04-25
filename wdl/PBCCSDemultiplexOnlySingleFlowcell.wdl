@@ -54,6 +54,10 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
 
     call PB.Demultiplex { input: bam = ccs_bam, prefix = "~{SM[0]}.~{ID[0]}" }
 
+    call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
+    call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
+    call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
+
     ##########
     # Finalize
     ##########
@@ -64,16 +68,34 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
             outdir = outdir + "/" + DIR[0] + "/reads"
     }
 
-    call FF.FinalizeToDir as FinalizeLimaMetrics {
-        input:
-            files = [ Demultiplex.counts, Demultiplex.guess, Demultiplex.report, Demultiplex.summary ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/lima_metrics"
-    }
-
     call FF.FinalizeToDir as FinalizeCCSMetrics {
         input:
             files = [ ccs_report ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
+            outdir = outdir + "/" + DIR[0] + "/metrics/ccs"
+    }
+
+    call FF.FinalizeToDir as FinalizeLimaMetrics {
+        input:
+            files = [ Demultiplex.counts, Demultiplex.guess, Demultiplex.report, Demultiplex.summary ],
+            outdir = outdir + "/" + DIR[0] + "/metrics/lima"
+    }
+
+    call FF.FinalizeToDir as FinalizeLimaSummary {
+        input:
+            files = SummarizedDemuxReportPNG.report_files,
+            outdir = outdir + "/" + DIR[0] + "/figures/lima/summary/png"
+    }
+
+    call FF.FinalizeToDir as FinalizeLimaDetailedPNG {
+        input:
+            files = DetailedDemuxReportPNG.report_files,
+            outdir = outdir + "/" + DIR[0] + "/figures/lima/detailed/png"
+    }
+
+    call FF.FinalizeToDir as FinalizeLimaDetailedPDF {
+        input:
+            files = DetailedDemuxReportPDF.report_files,
+            outdir = outdir + "/" + DIR[0] + "/figures/lima/detailed/pdf"
     }
 }
 
@@ -92,7 +114,7 @@ task CCS {
         Int batch_size = 10000
 
         Int cpus = 2
-        Int mem = 8
+        Int mem = 16
 
         RuntimeAttr? runtime_attr_override
     }
@@ -155,8 +177,8 @@ task CCS {
         mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  4,
-        max_retries:        0,
+        preemptible_tries:  7,
+        max_retries:        3,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-bri:0.1.22"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
