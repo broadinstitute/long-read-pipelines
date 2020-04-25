@@ -212,7 +212,7 @@ task MakeChrIntervalList {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -320,7 +320,7 @@ task SummarizeDepth {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -368,7 +368,7 @@ task CoverageTrack {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -410,7 +410,7 @@ task FlagStats {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -452,7 +452,7 @@ task ReadNamesAndLengths {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -481,7 +481,7 @@ task RnaSeqMetrics {
     command <<<
         set -euxo pipefail
 
-        java -jar /picard.jar CollectRnaSeqMetrics \
+        java -jar /usr/local/bin/picard.jar CollectRnaSeqMetrics \
             I=~{bam} \
             REF_FLAT=~{ref_flat} \
             STRAND=NONE \
@@ -503,7 +503,7 @@ task RnaSeqMetrics {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -555,7 +555,7 @@ task ReadMetrics {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -587,7 +587,7 @@ task CollectSamErrorMetrics {
     command <<<
         set -euxo pipefail
 
-        java -jar /picard.jar CollectSamErrorMetrics R=~{ref_fasta} I=~{bam} V=~{dbsnp_vcf} O=csem L=~{region}
+        java -jar /usr/local/bin/picard.jar CollectSamErrorMetrics R=~{ref_fasta} I=~{bam} V=~{dbsnp_vcf} O=csem L=~{region}
 
         find . -name 'csem.*' -exec sed -i 1,5d '{}' \;
     >>>
@@ -629,7 +629,7 @@ task CollectSamErrorMetrics {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -672,7 +672,7 @@ task BamToBed {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
