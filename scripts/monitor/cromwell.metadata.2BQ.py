@@ -21,11 +21,11 @@ workflowIDTemp = pythonScriptPath + '/workflowIds_temp.txt'
 cromwellTaskMonitorBqDirectory = pythonScriptPath + "/cromwell-task-monitor-bq/metadata/submit/"
 #Clones the cromwell-task-monitor-bq repo if not present
 if not path.exists(cromwellTaskMonitorBqDirectory):
-	print("/n" + "## Clone cromwell-task-monitor-bq##")
+	print("\n" + "## Clone cromwell-task-monitor-bq##")
 	os.system('git clone https://github.com/broadinstitute/cromwell-task-monitor-bq.git')
 	copyfile(pythonScriptPath + "/cromwell_metadata_bq", cromwellTaskMonitorBqDirectory + "/cromwell_metadata_bq")
 #Get cromwell server info from cromshell files
-with open(os.getenv('HOME')+"/.cromshell/cromwell_server.config", "r") as f:
+with open(HOME + "/.cromshell/cromwell_server.config", "r") as f:
     cromwellBaseUrl = f.readline().rstrip()
 f.close
 
@@ -35,7 +35,7 @@ f.close
 ###################################
 
 # Over writes workflowID if it exist, if  it doesn't exist create a new one
-print("/n" + "## Obtaining Wokflow IDs ##")
+print("\n" + "## Obtaining Wokflow IDs ##")
 if path.exists(workflowID) and os.stat(workflowID).st_size > 0:
 	print("Grep last wokflow ID") 
 	with open(workflowID, "r") as f:
@@ -78,7 +78,7 @@ f.close
 #########################################
 
 metadataUploadCommand = 'CROMWELL_BASEURL=' + cromwellBaseUrl + ' GCP_PROJECT=' + gcpProject + ' DATASET_ID=cromwell_monitoring ./cromwell_metadata_bq < ' + workflowID 
-print("/n" + "## Upload the cromshell metadata ##")
+print("\n" + "## Upload the cromshell metadata ##")
 print("Running the following command:")
 print(metadataUploadCommand)
 #seting shell=True is said to be a security risk, may need to change https://stackoverflow.com/questions/18962785/oserror-errno-2-no-such-file-or-directory-while-using-python-subprocess-in-dj
