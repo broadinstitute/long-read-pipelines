@@ -60,7 +60,6 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         }
 
         call AR.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
-
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
 
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
