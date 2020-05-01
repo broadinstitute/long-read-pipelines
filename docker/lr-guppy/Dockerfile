@@ -6,4 +6,4 @@ RUN apt-get install -y wget lsb-release
 RUN wget -O- https://mirror.oxfordnanoportal.com/apt/ont-repo.pub | apt-key add -
 RUN echo "deb http://mirror.oxfordnanoportal.com/apt xenial-stable non-free" | tee /etc/apt/sources.list.d/nanoporetech.sources.list
 RUN apt-get update
-RUN apt-get install -yq ont-guppy --no-install-recommends
+RUN apt-get install -yq ont-guppy=3.6.0-1~xenial -V --no-install-recommends

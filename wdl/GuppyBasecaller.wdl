@@ -83,7 +83,7 @@ task Basecall {
         gpuType:            "nvidia-tesla-p100",
         gpuCount:           1,
         nvidiaDriverVersion: "418.87.00",
-        docker:             "quay.io/broad-long-read-pipelines/lr-guppy:0.2.0"
+        docker:             "quay.io/broad-long-read-pipelines/lr-guppy:0.4.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
