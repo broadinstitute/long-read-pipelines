@@ -87,7 +87,7 @@ task NanopolishIndex {
     RuntimeAttr default_attr = object {
         cpu_cores:          8,
         mem_gb:             30,
-        disk_gb:            250, # this should be dynamic
+        disk_gb:            500, # this should be dynamic
         boot_disk_gb:       10,
         preemptible_tries:  0, # change
         max_retries:        0, # change
@@ -120,10 +120,10 @@ task NanopolishVariants {
     command <<<
         set -euxo pipefail
 
-        ls -ahl
+        tar -xvf ~{fast5_tar}
 
         cat ~{nanopolish_range} | parallel --results nanopolish.results -P 4 \
-            nanpolish variants --consensus -o polished.{1}.vcf \
+            nanopolish variants --consensus -o polished.{1}.vcf \
               -w {1} \
               -r ~{combined_read_fasta} \
               -b ~{draft_alignment_bam} \
@@ -138,13 +138,13 @@ task NanopolishVariants {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          8,
-        mem_gb:             32,
+        cpu_cores:          4,
+        mem_gb:             8,
         disk_gb:            250,
         boot_disk_gb:       10,
         preemptible_tries:  0, #change
         max_retries:        0, #change
-        docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.1.0"
+        docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -186,7 +186,7 @@ task MergeVcfs {
         boot_disk_gb:       10,
         preemptible_tries:  0, #change
         max_retries:        0, #change
-        docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.1.0"
+        docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
