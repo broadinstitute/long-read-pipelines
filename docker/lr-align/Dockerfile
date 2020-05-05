@@ -17,6 +17,11 @@ RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf 
 # install gsutil
 RUN curl https://sdk.cloud.google.com | bash
 
+# Setup crcmodc for gsutil:
+RUN apt-get install -y gcc python3-dev python3-setuptools && \
+			pip3 uninstall -y crcmod && \
+			pip3 install --no-cache-dir -U crcmod
+
 # copy other resources
 COPY prepare_run.py /usr/local/bin/
 COPY merge_read_group_tags.py /usr/local/bin/

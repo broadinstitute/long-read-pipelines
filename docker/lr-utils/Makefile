@@ -1,8 +1,10 @@
-VERSION = 0.1.6
-TAG1 = quay.io/broad-long-read-pipelines/lr-utils:$(VERSION)
-TAG2 = quay.io/broad-long-read-pipelines/lr-utils:latest
-TAG3 = us.gcr.io/broad-dsp-lrma/lr-utils:$(VERSION)
-TAG4 = us.gcr.io/broad-dsp-lrma/lr-utils:latest
+IMAGE_NAME = lr-utils
+VERSION = 0.1.9.beta
+
+TAG1 = quay.io/broad-long-read-pipelines/$(IMAGE_NAME):$(VERSION)
+TAG2 = quay.io/broad-long-read-pipelines/$(IMAGE_NAME):latest
+TAG3 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
+TAG4 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
 
 all: build push
 

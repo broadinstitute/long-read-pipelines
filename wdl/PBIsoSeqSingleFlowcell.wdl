@@ -19,15 +19,14 @@ workflow PBIsoSeqSingleFlowcell {
         String? sample_name
 
         File ref_fasta
-        File ref_fasta_fai
+        File ref_fasta_index
         File ref_dict
-        File ref_flat
 
-        File barcode_file
+        File barcode_file = "gs://broad-dsde-methods-long-reads/resources/multiplexing/isoseq_primers_broad.fasta"
 
         Int num_shards = 300
 
-        String gcs_out_root_dir
+        String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/PBIsoSeqSingleFlowcell"
     }
 
     parameter_meta {
@@ -37,7 +36,6 @@ workflow PBIsoSeqSingleFlowcell {
         ref_fasta:            "Reference fasta file"
         ref_fasta_fai:        "Index (.fai) for the reference fasta file"
         ref_dict:             "Sequence dictionary (.dict) for the reference fasta file"
-        ref_flat:             "Gene predictions in refFlat format (https://genome.ucsc.edu/goldenpath/gbdDescriptions.html)"
 
         barcode_file:         "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
 
@@ -65,11 +63,20 @@ workflow PBIsoSeqSingleFlowcell {
 
         # break one raw BAM into fixed number of shards
         File subread_pbi = sub(subread_bam, ".bam$", ".bam.pbi")
-        call Utils.ShardLongReads { input: unaligned_bam = subread_bam, unaligned_pbi = subread_pbi, num_shards = num_shards }
+        call PB.ShardLongReads {
+            input:
+                unaligned_bam = subread_bam,
+                unaligned_pbi = subread_pbi,
+                num_shards = num_shards
+        }
 
         # then perform correction on each of the shard
+        RuntimeAttr ccs_runtime_attrs = object {
+            mem_gb: 16,
+            preemptible_tries: 0
+        }
         scatter (subreads in ShardLongReads.unmapped_shards) {
-            call PB.CCS { input: subreads = subreads }
+            call PB.CCS { input: subreads = subreads, runtime_attr_override = ccs_runtime_attrs }
         }
 
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM

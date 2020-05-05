@@ -1,0 +1,15 @@
+ohA_10x_Adapter,3_prime_Adapter 
+ohB_10x_Adapter,3_prime_Adapter
+ohC_10x_Adapter,3_prime_Adapter
+ohD_10x_Adapter,3_prime_Adapter
+ohE_10x_Adapter,3_prime_Adapter
+ohF_10x_Adapter,3_prime_Adapter
+ohG_10x_Adapter,3_prime_Adapter
+ohH_10x_Adapter,3_prime_Adapter
+ohI_10x_Adapter,3_prime_Adapter
+ohJ_10x_Adapter,3_prime_Adapter
+ohK_10x_Adapter,3_prime_Adapter
+ohL_10x_Adapter,3_prime_Adapter
+ohM_10x_Adapter,3_prime_Adapter
+ohN_10x_Adapter,3_prime_Adapter
+ohO_10x_Adapter,3_prime_Adapter_ohP

@@ -41,7 +41,7 @@ def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
     # from the original read of the index file.  If this exception is thrown, it may indicate
     # that reads from the same ZMW have been erroneously sharded to separate files.
     if zmw_counts_act[zmw] != zmw_counts_exp[zmw]:
-        raise Exception(f'Number of reads from a specific ZMW mismatches between the original data'
+        raise Exception(f'Number of reads from a specific ZMW mismatches between the original data '
                         f'and the sharded data ({zmw}: {zmw_counts_exp[zmw]} != {zmw_counts_act[zmw]})')
 
     return num_reads

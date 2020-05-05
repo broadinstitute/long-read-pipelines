@@ -1,0 +1,8 @@
+ohA_10x_Adapter,TSO
+ohB_10x_Adapter,TSO
+ohC_10x_Adapter,TSO
+ohD_10x_Adapter,TSO
+ohE_10x_Adapter,TSO
+ohF_10x_Adapter,TSO
+ohG_10x_Adapter,TSO
+ohH_10x_Adapter,TSO

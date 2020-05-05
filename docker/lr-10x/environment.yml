@@ -7,10 +7,10 @@ dependencies:
   - python=3.6
   - cython
   - numpy
-  - samtools
   - bwapy
   - cigar
   - pip
   - pip:
     - pysam
     - biopython
+  - tqdm

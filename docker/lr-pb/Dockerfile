@@ -19,6 +19,14 @@ COPY detect_run_info.py /usr/local/bin/
 COPY merge_ccs_reports.py /usr/local/bin/
 COPY shard_bam.py /usr/local/bin/
 COPY extract_uncorrected_reads.py /usr/local/bin/
+COPY collect_zmw_subread_stats.py /usr/local/bin/
+COPY collect_polymerase_read_lengths.py /usr/local/bin/
+
+# Setup crcmodc for gsutil:
+RUN apt-get install -y gcc python3-dev python3-setuptools && \
+			pip3 uninstall -y crcmod && \
+			pip3 install --no-cache-dir -U crcmod
 
 # activate conda environment
 RUN echo "source activate lr-pb" > ~/.bashrc
+

@@ -1,0 +1,588 @@
+LOCUS       cDNA_array_8x           1137 bp    DNA     linear   UNA 24-APR-2020
+DEFINITION  Ligation of 8 sequences.
+ACCESSION   urn.local...g-bu982oh
+VERSION     urn.local...g-bu982oh
+KEYWORDS    .
+SOURCE      
+  ORGANISM  .
+FEATURES             Location/Qualifiers
+     misc_feature    1..150
+                     /Source="referenceToDocument: urn:local:.:j3-b74nc3z"
+                     /label="10x cDNA 2' A_B extraction (concatenated sequence
+                     1)"
+                     /note="Geneious type: Concatenated sequence"
+     misc_feature    1..9
+                     /created_by="aalkhafa"
+                     /label="ohA"
+     primer_bind     10..31
+                     /Sequence="CTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="61.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="54.5"
+                     /created_by="primer3"
+                     /label="partial_read_1"
+     misc_feature    32..47
+                     /created_by="aalkhafa"
+                     /label="10x barcode"
+     misc_feature    48..59
+                     /created_by="aalkhafa"
+                     /label="UMI"
+     misc_feature    60..90
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="poly_dt"
+     gene            91..111
+                     /created_by="aalkhafa"
+                     /label="captured_cDNA"
+     misc_feature    112..141
+                     /modified_by="aalkhafa"
+                     /label="TSO"
+     primer_bind     complement(120..150)
+                     /Sequence="ATGCAGTTTAAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="46.4"
+                     /Tm="67.3"
+                     /Self_Dimer_Tm="20.8"
+                     /%GC="45.2"
+                     /created_by="primer3"
+                     /label="A_B-R 10x"
+     primer_bind     complement(120..141)
+                     /Sequence="AAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="60.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="50.0"
+                     /created_by="primer3"
+                     /label="partial TSO"
+     modified_base   142
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="U"
+     ligation        142..150
+                     /label="Ligation"
+     misc_feature    142..291
+                     /Source="referenceToDocument: urn:local:.:j5-b74nc3z"
+                     /label="10x cDNA 2' B_C extraction (concatenated sequence
+                     2)"
+                     /note="Geneious type: Concatenated sequence"
+     misc_feature    142
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     primer_bind     142..172
+                     /Sequence="AAACTGCATCTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="30.8"
+                     /Tm="69.1"
+                     /Self_Dimer_Tm="None"
+                     /%GC="48.4"
+                     /created_by="primer3"
+                     /modified_by="aalkhafa"
+                     /label="B_C-F 10x"
+     misc_feature    143..149
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ohB"
+     misc_feature    150
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     misc_feature    150
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ovr_1"
+     primer_bind     151..172
+                     /Sequence="CTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="61.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="54.5"
+                     /created_by="primer3"
+                     /label="partial_read_1"
+     misc_feature    173..188
+                     /created_by="aalkhafa"
+                     /label="10x barcode"
+     misc_feature    189..200
+                     /created_by="aalkhafa"
+                     /label="UMI"
+     misc_feature    201..231
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="poly_dt"
+     gene            232..252
+                     /created_by="aalkhafa"
+                     /label="captured_cDNA"
+     misc_feature    253..282
+                     /modified_by="aalkhafa"
+                     /label="TSO"
+     primer_bind     complement(261..291)
+                     /Sequence="AGTGACTCTAAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="33.5"
+                     /Tm="67.5"
+                     /Self_Dimer_Tm="11.1"
+                     /%GC="48.4"
+                     /created_by="primer3"
+                     /modified_by="aalkhafa"
+                     /label="B_C-R 10x"
+     primer_bind     complement(261..282)
+                     /Sequence="AAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="60.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="50.0"
+                     /created_by="primer3"
+                     /label="partial TSO"
+     ligation        283..291
+                     /label="Ligation"
+     misc_feature    283..432
+                     /Source="referenceToDocument: urn:local:.:j6-b74nc3z"
+                     /label="10x cDNA 2' C_D extraction (concatenated sequence
+                     3)"
+                     /note="Geneious type: Concatenated sequence"
+     misc_feature    283
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     primer_bind     283..313
+                     /Sequence="AGAGTCACTCTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="39.3"
+                     /Tm="69.3"
+                     /Self_Dimer_Tm="5.2"
+                     /%GC="51.6"
+                     /created_by="primer3"
+                     /label="C_D-F 10x"
+     misc_feature    283
+                     /created_by="aalkhafa"
+                     /label="U"
+     misc_feature    284..290
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ohC"
+     misc_feature    291
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     misc_feature    291
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ovr_1"
+     primer_bind     292..313
+                     /Sequence="CTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="61.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="54.5"
+                     /created_by="primer3"
+                     /label="partial_read_1"
+     misc_feature    314..329
+                     /created_by="aalkhafa"
+                     /label="10x barcode"
+     misc_feature    330..341
+                     /created_by="aalkhafa"
+                     /label="UMI"
+     misc_feature    342..372
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="poly_dt"
+     gene            373..393
+                     /created_by="aalkhafa"
+                     /label="captured_cDNA"
+     misc_feature    394..423
+                     /modified_by="aalkhafa"
+                     /label="TSO"
+     primer_bind     complement(402..432)
+                     /Sequence="AAACTTGCTAAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="40.6"
+                     /Tm="67.3"
+                     /Self_Dimer_Tm="None"
+                     /%GC="45.2"
+                     /created_by="primer3"
+                     /label="C_D-R 10x"
+     primer_bind     complement(402..423)
+                     /Sequence="AAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="60.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="50.0"
+                     /created_by="primer3"
+                     /label="partial TSO"
+     ligation        424..432
+                     /label="Ligation"
+     misc_feature    424..573
+                     /Source="referenceToDocument: urn:local:.:j7-b74nc3z"
+                     /label="10x cDNA 2' D_E extraction (concatenated sequence
+                     4)"
+                     /note="Geneious type: Concatenated sequence"
+     misc_feature    424
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     primer_bind     424..454
+                     /Sequence="AGCAAGTTTCTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="69.1"
+                     /Self_Dimer_Tm="None"
+                     /%GC="48.4"
+                     /created_by="primer3"
+                     /label="D_E-F 10x"
+     misc_feature    424
+                     /created_by="aalkhafa"
+                     /label="U"
+     misc_feature    425..431
+                     /created_by="aalkhafa"
+                     /label="ohD"
+     misc_feature    432
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     misc_feature    432
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ovr_1"
+     primer_bind     433..454
+                     /Sequence="CTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="61.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="54.5"
+                     /created_by="primer3"
+                     /label="partial_read_1"
+     misc_feature    455..470
+                     /created_by="aalkhafa"
+                     /label="10x barcode"
+     misc_feature    471..482
+                     /created_by="aalkhafa"
+                     /label="UMI"
+     misc_feature    483..513
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="poly_dt"
+     gene            514..534
+                     /created_by="aalkhafa"
+                     /label="captured_cDNA"
+     misc_feature    535..564
+                     /modified_by="aalkhafa"
+                     /label="TSO"
+     primer_bind     complement(543..573)
+                     /Sequence="ACACCACTTAAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="70.9"
+                     /Tm="68.3"
+                     /Self_Dimer_Tm="22.9"
+                     /%GC="48.4"
+                     /created_by="primer3"
+                     /label="D_E-R 10x"
+     primer_bind     complement(543..564)
+                     /Sequence="AAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="60.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="50.0"
+                     /created_by="primer3"
+                     /label="partial TSO"
+     ligation        565..573
+                     /label="Ligation"
+     misc_feature    565..714
+                     /Source="referenceToDocument: urn:local:.:j8-b74nc3z"
+                     /label="10x cDNA 2' E_F extraction (concatenated sequence
+                     5)"
+                     /note="Geneious type: Concatenated sequence"
+     misc_feature    565
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     primer_bind     565..595
+                     /Sequence="AAGTGGTGTCTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="52.3"
+                     /Tm="70.1"
+                     /Self_Dimer_Tm="18.6"
+                     /%GC="51.6"
+                     /created_by="primer3"
+                     /label="E_F-F 10x"
+     misc_feature    565
+                     /created_by="aalkhafa"
+                     /label="U"
+     misc_feature    566..572
+                     /created_by="aalkhafa"
+                     /label="ohE"
+     misc_feature    573
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     misc_feature    573
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ovr_1"
+     primer_bind     574..595
+                     /Sequence="CTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="61.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="54.5"
+                     /created_by="primer3"
+                     /label="partial_read_1"
+     misc_feature    596..611
+                     /created_by="aalkhafa"
+                     /label="10x barcode"
+     misc_feature    612..623
+                     /created_by="aalkhafa"
+                     /label="UMI"
+     misc_feature    624..654
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="poly_dt"
+     gene            655..675
+                     /created_by="aalkhafa"
+                     /label="captured_cDNA"
+     misc_feature    676..705
+                     /modified_by="aalkhafa"
+                     /label="TSO"
+     primer_bind     complement(684..714)
+                     /Sequence="AAGTCCACTAAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="60.9"
+                     /Tm="67.9"
+                     /Self_Dimer_Tm="19.7"
+                     /%GC="48.4"
+                     /created_by="primer3"
+                     /label="E_F-R 10x"
+     primer_bind     complement(684..705)
+                     /Sequence="AAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="60.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="50.0"
+                     /created_by="primer3"
+                     /label="partial TSO"
+     ligation        706..714
+                     /label="Ligation"
+     misc_feature    706..855
+                     /Source="referenceToDocument: urn:local:.:j9-b74nc3z"
+                     /label="10x cDNA 2' F_G extraction (concatenated sequence
+                     6)"
+                     /note="Geneious type: Concatenated sequence"
+     misc_feature    706
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     primer_bind     706..736
+                     /Sequence="AGTGGACTTCTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="42.3"
+                     /Tm="69.7"
+                     /Self_Dimer_Tm="None"
+                     /%GC="51.6"
+                     /created_by="primer3"
+                     /label="F_G-F 10x"
+     misc_feature    706
+                     /created_by="aalkhafa"
+                     /label="U"
+     misc_feature    707..713
+                     /created_by="aalkhafa"
+                     /label="ohF"
+     misc_feature    714
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     misc_feature    714
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ovr_1"
+     primer_bind     715..736
+                     /Sequence="CTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="61.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="54.5"
+                     /created_by="primer3"
+                     /label="partial_read_1"
+     misc_feature    737..752
+                     /created_by="aalkhafa"
+                     /label="10x barcode"
+     misc_feature    753..764
+                     /created_by="aalkhafa"
+                     /label="UMI"
+     misc_feature    765..795
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="poly_dt"
+     gene            796..816
+                     /created_by="aalkhafa"
+                     /label="captured_cDNA"
+     misc_feature    817..846
+                     /modified_by="aalkhafa"
+                     /label="TSO"
+     primer_bind     complement(825..855)
+                     /Sequence="ATAACCTGTAAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="41.0"
+                     /Tm="66.4"
+                     /Self_Dimer_Tm="None"
+                     /%GC="45.2"
+                     /created_by="primer3"
+                     /label="F_G-R 10x"
+     primer_bind     complement(825..846)
+                     /Sequence="AAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="60.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="50.0"
+                     /created_by="primer3"
+                     /label="partial TSO"
+     ligation        847..855
+                     /label="Ligation"
+     misc_feature    847..996
+                     /Source="referenceToDocument: urn:local:.:ja-b74nc3z"
+                     /label="10x cDNA 2' G_H extraction (concatenated sequence
+                     7)"
+                     /note="Geneious type: Concatenated sequence"
+     misc_feature    847
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     primer_bind     847..877
+                     /Sequence="ACAGGTTATCTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="68.2"
+                     /Self_Dimer_Tm="None"
+                     /%GC="48.4"
+                     /created_by="primer3"
+                     /label="G_H-F 10x"
+     misc_feature    847
+                     /created_by="aalkhafa"
+                     /label="U"
+     misc_feature    848..854
+                     /created_by="aalkhafa"
+                     /label="ohG"
+     misc_feature    855
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     misc_feature    855
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ovr_1"
+     primer_bind     856..877
+                     /Sequence="CTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="61.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="54.5"
+                     /created_by="primer3"
+                     /label="partial_read_1"
+     misc_feature    878..893
+                     /created_by="aalkhafa"
+                     /label="10x barcode"
+     misc_feature    894..905
+                     /created_by="aalkhafa"
+                     /label="UMI"
+     misc_feature    906..936
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="poly_dt"
+     gene            937..957
+                     /created_by="aalkhafa"
+                     /label="captured_cDNA"
+     misc_feature    958..987
+                     /modified_by="aalkhafa"
+                     /label="TSO"
+     primer_bind     complement(966..996)
+                     /Sequence="ATGTGAGATAAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="66.4"
+                     /Self_Dimer_Tm="None"
+                     /%GC="45.2"
+                     /created_by="primer3"
+                     /label="G_H-R 10x"
+     primer_bind     complement(966..987)
+                     /Sequence="AAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="60.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="50.0"
+                     /created_by="primer3"
+                     /label="partial TSO"
+     ligation        988..996
+                     /label="Ligation"
+     misc_feature    988..1137
+                     /Source="referenceToDocument: urn:local:.:jb-b74nc3z"
+                     /label="10x cDNA 2' H_A extraction (concatenated sequence
+                     8)"
+                     /note="Geneious type: Concatenated sequence"
+     misc_feature    988
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     primer_bind     988..1018
+                     /Sequence="ATCTCACATCTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="68.2"
+                     /Self_Dimer_Tm="None"
+                     /%GC="48.4"
+                     /created_by="primer3"
+                     /label="H_A-F 10x"
+     misc_feature    988
+                     /created_by="aalkhafa"
+                     /label="U"
+     misc_feature    989..995
+                     /created_by="aalkhafa"
+                     /label="ohH"
+     misc_feature    996
+                     /Original_Bases
+                     /label
+                     /note="Geneious type: Editing History Insertion"
+     misc_feature    996
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="ovr_1"
+     primer_bind     997..1018
+                     /Sequence="CTACACGACGCTCTTCCGATCT"
+                     /Hairpin_Tm="None"
+                     /Tm="61.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="54.5"
+                     /created_by="primer3"
+                     /label="partial_read_1"
+     misc_feature    1019..1034
+                     /created_by="aalkhafa"
+                     /label="10x barcode"
+     misc_feature    1035..1046
+                     /created_by="aalkhafa"
+                     /label="UMI"
+     misc_feature    1047..1077
+                     /created_by="aalkhafa"
+                     /modified_by="aalkhafa"
+                     /label="poly_dt"
+     gene            1078..1098
+                     /created_by="aalkhafa"
+                     /label="captured_cDNA"
+     misc_feature    1099..1128
+                     /modified_by="aalkhafa"
+                     /label="TSO"
+     primer_bind     complement(1107..1128)
+                     /Sequence="AAGCAGTGGTATCAACGCAGAG"
+                     /Hairpin_Tm="None"
+                     /Tm="60.9"
+                     /Self_Dimer_Tm="None"
+                     /%GC="50.0"
+                     /created_by="primer3"
+                     /label="partial TSO"
+     misc_feature    1129..1137
+                     /created_by="aalkhafa"
+                     /label="ohA"
+ORIGIN      
+        1 acgtacagtc tacacgacgc tcttccgatc tnnnnnnnnn nnnnnnnnnn nnnnnnnnnt
+       61 tttttttttt tttttttttt tttttttttv nnnnnnnnnn nnnnnnnnnn ncccatgtac
+      121 tctgcgttga taccactgct taaactgcat ctacacgacg ctcttccgat ctnnnnnnnn
+      181 nnnnnnnnnn nnnnnnnnnn tttttttttt tttttttttt tttttttttt vnnnnnnnnn
+      241 nnnnnnnnnn nncccatgta ctctgcgttg ataccactgc ttagagtcac tctacacgac
+      301 gctcttccga tctnnnnnnn nnnnnnnnnn nnnnnnnnnn nttttttttt tttttttttt
+      361 tttttttttt tvnnnnnnnn nnnnnnnnnn nnncccatgt actctgcgtt gataccactg
+      421 cttagcaagt ttctacacga cgctcttccg atctnnnnnn nnnnnnnnnn nnnnnnnnnn
+      481 nntttttttt tttttttttt tttttttttt ttvnnnnnnn nnnnnnnnnn nnnncccatg
+      541 tactctgcgt tgataccact gcttaagtgg tgtctacacg acgctcttcc gatctnnnnn
+      601 nnnnnnnnnn nnnnnnnnnn nnnttttttt tttttttttt tttttttttt tttvnnnnnn
+      661 nnnnnnnnnn nnnnncccat gtactctgcg ttgataccac tgcttagtgg acttctacac
+      721 gacgctcttc cgatctnnnn nnnnnnnnnn nnnnnnnnnn nnnntttttt tttttttttt
+      781 tttttttttt ttttvnnnnn nnnnnnnnnn nnnnnnccca tgtactctgc gttgatacca
+      841 ctgcttacag gttatctaca cgacgctctt ccgatctnnn nnnnnnnnnn nnnnnnnnnn
+      901 nnnnnttttt tttttttttt tttttttttt tttttvnnnn nnnnnnnnnn nnnnnnnccc
+      961 atgtactctg cgttgatacc actgcttatc tcacatctac acgacgctct tccgatctnn
+     1021 nnnnnnnnnn nnnnnnnnnn nnnnnntttt tttttttttt tttttttttt ttttttvnnn
+     1081 nnnnnnnnnn nnnnnnnncc catgtactct gcgttgatac cactgcttac tgtacgt
+//
