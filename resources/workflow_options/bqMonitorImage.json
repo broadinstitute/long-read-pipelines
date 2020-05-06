@@ -1,0 +1,6 @@
+{
+  "monitoring_image": "bshifaw/cromwell-task-monitor-bq:latest",
+  "final_workflow_log_dir": "gs://broad-methods-cromwell-exec-bucket-v47/cromwell_call_logs/",
+  "read_from_cache": false,
+  "write_to_cache": false
+}
