@@ -9,6 +9,7 @@ workflow PolishAssembly {
         File sequencing_summary
         File draft_assembly_fasta
         File output_dir
+        Int parallel_instances
     }
 
     call NanopolishIndex {
@@ -16,17 +17,18 @@ workflow PolishAssembly {
             fast5_gcs_dir = fast5_gcs_dir,
             combined_read_fasta = combined_read_fasta,
             sequencing_summary = sequencing_summary,
-            draft_assembly_fasta = draft_assembly_fasta
+            draft_assembly_fasta = draft_assembly_fasta,
+            parallel_instances = parallel_instances
     }
 
     scatter (nanopolish_range in NanopolishIndex.nanopolish_job_ranges) {
         call NanopolishVariants {
             input:
-                fast5_tar = NanopolishIndex.fast5_tar,
+                fast5_and_indexes = NanopolishIndex.fast5_and_indexes,
                 draft_assembly_fasta = draft_assembly_fasta,
+                draft_assembly_fai = NanopolishIndex.draft_assembly_fai,
                 draft_alignment_bam = NanopolishIndex.draft_alignment_bam,
                 draft_alignment_bai = NanopolishIndex.draft_alignment_bai,
-                combined_read_fasta = combined_read_fasta,
                 nanopolish_range = nanopolish_range
         }
     }
@@ -48,11 +50,13 @@ task NanopolishIndex {
         File combined_read_fasta
         File sequencing_summary
         File draft_assembly_fasta
+        Int parallel_instances
 
         RuntimeAttr? runtime_attr_override
     }
 
     String fast5_dir = sub(fast5_gcs_dir, "/$", "")
+    String draft_basename = basename(draft_assembly_fasta)
 
     command <<<
         set -euxo pipefail
@@ -60,37 +64,38 @@ task NanopolishIndex {
         mkdir fast5
         gsutil -m cp ~{fast5_dir}/* fast5/
         cp ~{sequencing_summary} fast5/sequencing_summary.txt
+        cp ~{combined_read_fasta} fast5/combined_reads.fasta
 
-        nanopolish index -d fast5/ -s fast5/sequencing_summary.txt ~{combined_read_fasta}
+        cp ~{draft_assembly_fasta} .
+        samtools faidx ~{draft_basename}
 
-        minimap2 -ax map-ont -t 8 ~{draft_assembly_fasta} ~{combined_read_fasta} | samtools sort -o draft_alignment.sorted.bam
+        nanopolish index -d fast5/ -s fast5/sequencing_summary.txt fast5/combined_reads.fasta
+
+        minimap2 -ax map-ont -t 8 ~{draft_basename} ~{combined_read_fasta} | samtools sort -o draft_alignment.sorted.bam
         samtools index draft_alignment.sorted.bam
 
-        # python3 /nanopolish/scripts/nanopolish_makerange.py ~{draft_assembly_fasta} > nanopolish_intervals.txt
+        python3 /nanopolish/scripts/nanopolish_makerange.py ~{draft_basename} > nanopolish_intervals.txt
 
-        tar -cf fast5.tar fast5
-
-        echo "tig00000001:250000-300200" >> nanopolish_job_1_ranges.txt
-        echo "tig00000611:800000-850200" >> nanopolish_job_2_ranges.txt
-        echo "tig00000618:0-30854" >> nanopolish_job_2_ranges.txt
+        split -n r/~{parallel_instances} -d -a 3 --additional-suffix=".txt" nanopolish_intervals.txt nanopolish_job_
     >>>
 
     output {
-        File fast5_tar = "fast5.tar"
+        Array[File] fast5_and_indexes = glob("fast5/*")
+        File draft_assembly_fai = "~{draft_basename}.fai"
         File draft_alignment_bam = "draft_alignment.sorted.bam"
         File draft_alignment_bai = "draft_alignment.sorted.bam.bai"
 
-        Array[File] nanopolish_job_ranges =  glob("nanopolish_job_*_ranges.txt")
+        Array[File] nanopolish_job_ranges =  glob("nanopolish_job_*.txt")
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          8,
-        mem_gb:             30,
+        cpu_cores:          4,
+        mem_gb:             16,
         disk_gb:            500, # this should be dynamic
         boot_disk_gb:       10,
-        preemptible_tries:  0, # change
-        max_retries:        0, # change
+        preemptible_tries:  0,
+        max_retries:        1,
         docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -107,27 +112,34 @@ task NanopolishIndex {
 
 task NanopolishVariants {
     input {
-        File fast5_tar
+        Array[File] fast5_and_indexes
         File draft_assembly_fasta
+        File draft_assembly_fai
         File draft_alignment_bam
         File draft_alignment_bai
-        File combined_read_fasta
 
         File nanopolish_range
         RuntimeAttr? runtime_attr_override
     }
 
+    Int disk_size = 4 * ceil(size(fast5_and_indexes, "GB"))
+
     command <<<
         set -euxo pipefail
 
-        tar -xvf ~{fast5_tar}
+        fast5_dir=$(dirname ~{fast5_and_indexes[0]})
+        mv $fast5_dir fast5
+
+        cp ~{draft_assembly_fasta} draft_assembly.fasta
+        cp ~{draft_assembly_fai} draft_assembly.fasta.fai
 
         cat ~{nanopolish_range} | parallel --results nanopolish.results -P 4 \
             nanopolish variants --consensus -o polished.{1}.vcf \
+              --max-haplotypes=5000 \
               -w {1} \
-              -r ~{combined_read_fasta} \
+              -r fast5/combined_reads.fasta \
               -b ~{draft_alignment_bam} \
-              -g ~{draft_assembly_fasta} \
+              -g draft_assembly.fasta \
               -t 2 \
               --min-candidate-frequency 0.1
     >>>
@@ -139,11 +151,11 @@ task NanopolishVariants {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             8,
-        disk_gb:            250,
+        mem_gb:             20,
+        disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0, #change
-        max_retries:        0, #change
+        max_retries:        1, #change
         docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -166,10 +178,10 @@ task MergeVcfs {
         RuntimeAttr? runtime_attr_override
     }
 
+    Int disk_size = 2*ceil(size(vcfs, "GB")) + 2*ceil(size(draft_assembly_fasta, "GB"))
+
     command <<<
         set -euxo pipefail
-
-        ls -ahl
 
         nanopolish vcf2fasta -g ~{draft_assembly_fasta} ~{sep=" " vcfs} > polished_assembly.fasta
     >>>
@@ -181,11 +193,11 @@ task MergeVcfs {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             20,
-        disk_gb:            250,
+        mem_gb:             16,
+        disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0, #change
-        max_retries:        0, #change
+        preemptible_tries:  0,
+        max_retries:        2,
         docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

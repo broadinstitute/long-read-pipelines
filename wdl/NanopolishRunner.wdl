@@ -10,6 +10,7 @@ workflow NanopolishRunner {
         File sequencing_summary
         File draft_assembly_fasta
         File output_dir
+        Int parallel_instances
     }
 
     call Nanopolish.PolishAssembly {
@@ -18,7 +19,8 @@ workflow NanopolishRunner {
             combined_read_fasta = combined_read_fasta,
             sequencing_summary =  sequencing_summary,
             draft_assembly_fasta = draft_assembly_fasta,
-            output_dir = output_dir
+            output_dir = output_dir,
+            parallel_instances = parallel_instances
     }
 
     call FF.FinalizeToDir {

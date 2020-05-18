@@ -81,7 +81,7 @@ task RemovePalindromes {
     command <<<
         set -euxo pipefail
 
-        python /pacasus/pacasus.py --device_type=GPU --platform_name=NVIDIA --framework=cuda ~{read_fasta} -o ~{read_basename}.processed.fasta
+        python /pacasus/pacasus.py --device_type=GPU --platform_name=NVIDIA --framework=cuda --minimum_read_length=0 ~{read_fasta} -o ~{read_basename}.processed.fasta
     >>>
 
     output {
@@ -91,10 +91,10 @@ task RemovePalindromes {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             3,
+        mem_gb:             6,
         disk_gb:            disk_size,
         boot_disk_gb:       15,
-        preemptible_tries:  3,
+        preemptible_tries:  0,
         max_retries:        0
     }
 
