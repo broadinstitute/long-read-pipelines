@@ -5,8 +5,8 @@ import "tasks/Finalize.wdl" as FF
 
 workflow NanopolishRunner {
     input {
-        String fast5_gcs_dir
-        File combined_read_fasta
+        String fast5_dir
+        File reads_fasta
         File sequencing_summary
         File draft_assembly_fasta
         File output_dir
@@ -15,11 +15,10 @@ workflow NanopolishRunner {
 
     call Nanopolish.PolishAssembly {
         input:
-            fast5_gcs_dir = fast5_gcs_dir,
-            combined_read_fasta = combined_read_fasta,
+            fast5_dir = fast5_dir,
+            reads_fasta = reads_fasta,
             sequencing_summary =  sequencing_summary,
             draft_assembly_fasta = draft_assembly_fasta,
-            output_dir = output_dir,
             parallel_instances = parallel_instances
     }
 

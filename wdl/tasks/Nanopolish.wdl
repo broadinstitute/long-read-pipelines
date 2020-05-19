@@ -4,18 +4,17 @@ import "Structs.wdl"
 
 workflow PolishAssembly {
     input {
-        String fast5_gcs_dir
-        File combined_read_fasta
-        File sequencing_summary
+        String fast5_dir
+        File reads_fasta
+        File sequencing_summary # From basecalled output directory
         File draft_assembly_fasta
-        File output_dir
         Int parallel_instances
     }
 
     call NanopolishIndex {
         input:
-            fast5_gcs_dir = fast5_gcs_dir,
-            combined_read_fasta = combined_read_fasta,
+            fast5_dir = fast5_dir,
+            reads_fasta = reads_fasta,
             sequencing_summary = sequencing_summary,
             draft_assembly_fasta = draft_assembly_fasta,
             parallel_instances = parallel_instances
@@ -46,8 +45,8 @@ workflow PolishAssembly {
 
 task NanopolishIndex {
     input {
-        String fast5_gcs_dir
-        File combined_read_fasta
+        String fast5_dir
+        File reads_fasta
         File sequencing_summary
         File draft_assembly_fasta
         Int parallel_instances
@@ -55,7 +54,7 @@ task NanopolishIndex {
         RuntimeAttr? runtime_attr_override
     }
 
-    String fast5_dir = sub(fast5_gcs_dir, "/$", "")
+    String fast5_dir = sub(fast5_dir, "/$", "")
     String draft_basename = basename(draft_assembly_fasta)
 
     command <<<
@@ -64,14 +63,14 @@ task NanopolishIndex {
         mkdir fast5
         gsutil -m cp ~{fast5_dir}/* fast5/
         cp ~{sequencing_summary} fast5/sequencing_summary.txt
-        cp ~{combined_read_fasta} fast5/combined_reads.fasta
+        cp ~{reads_fasta} fast5/reads.fasta
 
         cp ~{draft_assembly_fasta} .
         samtools faidx ~{draft_basename}
 
-        nanopolish index -d fast5/ -s fast5/sequencing_summary.txt fast5/combined_reads.fasta
+        nanopolish index -d fast5/ -s fast5/sequencing_summary.txt fast5/reads.fasta
 
-        minimap2 -ax map-ont -t 8 ~{draft_basename} ~{combined_read_fasta} | samtools sort -o draft_alignment.sorted.bam
+        minimap2 -ax map-ont -t 8 ~{draft_basename} ~{reads_fasta} | samtools sort -o draft_alignment.sorted.bam
         samtools index draft_alignment.sorted.bam
 
         python3 /nanopolish/scripts/nanopolish_makerange.py ~{draft_basename} > nanopolish_intervals.txt
@@ -137,7 +136,7 @@ task NanopolishVariants {
             nanopolish variants --consensus -o polished.{1}.vcf \
               --max-haplotypes=5000 \
               -w {1} \
-              -r fast5/combined_reads.fasta \
+              -r fast5/reads.fasta \
               -b ~{draft_alignment_bam} \
               -g draft_assembly.fasta \
               -t 2 \
