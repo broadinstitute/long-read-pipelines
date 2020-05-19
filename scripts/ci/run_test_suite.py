@@ -177,18 +177,13 @@ def compare_contents(exp_path, act_path):
     else:
         print(f'Unknown file extension {ext}')
 
-    print(exp_path)
-    print(act_path)
-    print(exp)
-    print(act)
-    print(r)
-
     os.remove(exp)
     os.remove(act)
 
     if r is not None:
-        print(r.stdout)
-        print(r.returncode)
+        if r.returncode != 0:
+            print_warning(f'diffing "{exp_path}" vs "{act_path}"')
+            print_warning(str(r.stdout))
 
         return r.returncode
 
