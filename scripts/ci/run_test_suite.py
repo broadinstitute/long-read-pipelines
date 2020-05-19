@@ -171,19 +171,20 @@ def compare_contents(exp_path, act_path):
     if ext == '.bam':
         r = subprocess.run(['diff', f'<(samtools view {exp})', f'<(samtools view {act})'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     elif ext == '.gz':
-        r = subprocess.run(['zdiff', exp, act], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        r = subprocess.run(['diff', f'<(zcat {exp} | grep -v -e fileDate)', f'<(zcat {act} | grep -v -e fileDate)'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     elif ext == '.pdf':
         r = subprocess.run(['diff', f'<(pdftotext {exp})', f'<(pdftotext {act})'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     else:
-        print(f'Unknown file extension {ext}')
+        print_warning(f'Unknown file extension {ext} for file {exp_path} and {act_path}')
 
     os.remove(exp)
     os.remove(act)
 
     if r is not None:
         if r.returncode != 0:
-            print_warning(f'diffing "{exp_path}" vs "{act_path}"')
-            print_warning(str(r.stdout))
+            print_warning(f'comparing "{exp_path}" vs "{act_path}"')
+            print_warning(r.stdout.decode('utf-8'))
+            print_warning(r.returncode)
 
         return r.returncode
 
