@@ -187,9 +187,6 @@ def compare_contents(exp_path, act_path):
     os.remove(exp)
     os.remove(act)
 
-    print_warning(r.stdout.decode('utf-8'))
-    print_warning(r.stderr.decode('utf-8'))
-
     if r is not None:
         if r.stdout != b'' or r.stderr != b'':
             print_warning(f'comparing "{exp_path}" vs "{act_path}"')
