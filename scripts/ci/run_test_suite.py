@@ -161,10 +161,10 @@ def compare_contents(exp_path, act_path):
     exp = f'exp{ext}'
     act = f'act{ext}'
 
-    with open(exp) as exp_obj:
+    with open(exp, "wb") as exp_obj:
         storage_client.download_blob_to_file(exp_path, exp_obj)
 
-    with open(act) as act_obj:
+    with open(act, "wb") as act_obj:
         storage_client.download_blob_to_file(act_path, act_obj)
 
     r = 1
