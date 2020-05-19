@@ -158,8 +158,8 @@ def compare_contents(exp_path, act_path):
 
     fn, ext = os.path.splitext(exp_path)
 
-    exp = f'exp.{ext}'
-    act = f'act.{ext}'
+    exp = f'exp{ext}'
+    act = f'act{ext}'
 
     with open(exp) as exp_obj:
         storage_client.download_blob_to_file(exp_path, exp_obj)
