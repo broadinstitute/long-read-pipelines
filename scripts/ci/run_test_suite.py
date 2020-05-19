@@ -153,18 +153,43 @@ def find_outputs(input_json, exp_bucket='broad-dsp-lrma-ci-resources', act_bucke
     return outs
 
 
+def compare_contents(exp_path, act_path):
+    storage_client = storage.Client()
+
+    fn, ext = os.path.splitext(exp_path)
+
+    exp = f'exp.{ext}'
+    act = f'act.{ext}'
+
+    storage_client.download_blob_to_file(exp_path, f'exp.{ext}')
+    storage_client.download_blob_to_file(act_path, f'act.{ext}')
+
+    ret = 1
+    if ext == 'bam':
+        ret = os.system(f'diff <(samtools view {exp}) <(samtools view {act})')
+    elif ext == 'gz':
+        ret = os.system(f'zdiff {exp} {act}')
+    elif ext == 'pdf':
+        ret = os.system(f'diff <(pdftotext {exp} /dev/stdout) <(pdftotext {act} /dev/stdout)')
+
+    os.remove(f'exp.{ext}')
+    os.remove(f'act.{ext}')
+
+    return ret
+
+
 def compare_outputs(test, outs):
     print_info(f'{test}')
 
-    bad_md5s = 0
+    num_mismatch = 0
     for b in outs:
-        if outs[b]['exp'] != outs[b]['act']:
-            print_info(f'- {b} md5s are different:')
+        if outs[b]['exp'] != outs[b]['act'] or compare_contents(outs[b]['exp'], outs[b]['act']) != 0:
+            print_info(f'- {b} versions are different:')
             print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
             print_failure(f"    act: ({outs[b]['act']}) {outs[b]['act_path']}")
-            bad_md5s += 1
+            num_mismatch += 1
 
-    return bad_md5s
+    return num_mismatch
 
 
 print_info(f'Cromwell server: {server_url}')
