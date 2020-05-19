@@ -161,21 +161,24 @@ def compare_contents(exp_path, act_path):
     exp = f'exp.{ext}'
     act = f'act.{ext}'
 
-    storage_client.download_blob_to_file(exp_path, f'exp.{ext}')
-    storage_client.download_blob_to_file(act_path, f'act.{ext}')
+    with open(exp) as exp_obj:
+        storage_client.download_blob_to_file(exp_path, exp_obj)
 
-    ret = 1
+    with open(act) as act_obj:
+        storage_client.download_blob_to_file(act_path, act_obj)
+
+    r = 1
     if ext == 'bam':
-        ret = os.system(f'diff <(samtools view {exp}) <(samtools view {act})')
+        r = os.system(f'diff <(samtools view {exp}) <(samtools view {act})')
     elif ext == 'gz':
-        ret = os.system(f'zdiff {exp} {act}')
+        r = os.system(f'zdiff {exp} {act}')
     elif ext == 'pdf':
-        ret = os.system(f'diff <(pdftotext {exp} /dev/stdout) <(pdftotext {act} /dev/stdout)')
+        r = os.system(f'diff <(pdftotext {exp} /dev/stdout) <(pdftotext {act} /dev/stdout)')
 
-    os.remove(f'exp.{ext}')
-    os.remove(f'act.{ext}')
+    os.remove(exp)
+    os.remove(act)
 
-    return ret
+    return r
 
 
 def compare_outputs(test, outs):
