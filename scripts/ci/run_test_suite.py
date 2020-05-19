@@ -183,7 +183,7 @@ def compare_outputs(test, outs):
 
     num_mismatch = 0
     for b in outs:
-        if outs[b]['exp'] != outs[b]['act'] or compare_contents(outs[b]['exp'], outs[b]['act']) != 0:
+        if outs[b]['exp'] != outs[b]['act'] or compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
             print_info(f'- {b} versions are different:')
             print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
             print_failure(f"    act: ({outs[b]['act']}) {outs[b]['act_path']}")
