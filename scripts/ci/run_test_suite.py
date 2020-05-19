@@ -168,12 +168,20 @@ def compare_contents(exp_path, act_path):
         storage_client.download_blob_to_file(act_path, act_obj)
 
     r = None
-    if ext == 'bam':
+    if ext == '.bam':
         r = subprocess.run(['diff', f'<(samtools view {exp})', f'<(samtools view {act})'], capture_output=True)
-    elif ext == 'gz':
+    elif ext == '.gz':
         r = subprocess.run(['zdiff', exp, act], capture_output=True)
-    elif ext == 'pdf':
+    elif ext == '.pdf':
         r = subprocess.run(['diff', f'<(pdftotext {exp})', f'<(pdftotext {act})'], capture_output=True)
+    else:
+        print(f'Unknown file extension {ext}')
+
+    print(exp_path)
+    print(act_path)
+    print(exp)
+    print(act)
+    print(r)
 
     os.remove(exp)
     os.remove(act)
@@ -181,6 +189,7 @@ def compare_contents(exp_path, act_path):
     if r is not None:
         print(r.stdout)
         print(r.returncode)
+
         return r.returncode
 
     return 1
