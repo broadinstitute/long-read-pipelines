@@ -184,7 +184,7 @@ def compare_contents(exp_path, act_path):
     print_warning(r.stderr.decode('utf-8'))
 
     if r is not None:
-        if r.returncode != 0:
+        if r.stdout != b'' or r.stderr != b'':
             print_warning(f'comparing "{exp_path}" vs "{act_path}"')
             print_warning(r.stdout.decode('utf-8'))
             print_warning(r.stderr.decode('utf-8'))
@@ -200,7 +200,7 @@ def compare_outputs(test, outs):
 
     num_mismatch = 0
     for b in outs:
-        if outs[b]['exp'] != outs[b]['act']:
+        if not b.endswith(".png") and outs[b]['exp'] != outs[b]['act']:
             if compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
                 print_info(f'- {b} versions are different:')
                 print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
