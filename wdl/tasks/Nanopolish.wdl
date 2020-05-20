@@ -54,6 +54,8 @@ task NanopolishIndex {
         RuntimeAttr? runtime_attr_override
     }
 
+    # The 16 multiplier is to estimate the space needed for the fast5 files
+    Int disk_size = 2 * ceil((16 * size(reads_fasta, "GB")) + size(draft_assembly_fasta, "GB") + size(sequencing_summary, "GB"))
     String fast5_dir = sub(fast5_dir, "/$", "")
     String draft_basename = basename(draft_assembly_fasta)
 
@@ -91,7 +93,7 @@ task NanopolishIndex {
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             16,
-        disk_gb:            500, # this should be dynamic
+        disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
@@ -153,8 +155,11 @@ task NanopolishVariants {
         mem_gb:             20,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0, #change
-        max_retries:        1, #change
+        # We should try to find a way to support this to reduce costs.
+        # Right now, it is almost always preempted with the amount of
+        # time it takes to localize the fast5 files
+        preemptible_tries:  0,
+        max_retries:        1,
         docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -177,7 +182,7 @@ task MergeVcfs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(vcfs, "GB")) + 2*ceil(size(draft_assembly_fasta, "GB"))
+    Int disk_size = 2 * ceil(size(vcfs, "GB") + size(draft_assembly_fasta, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -196,7 +201,7 @@ task MergeVcfs {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
-        max_retries:        2,
+        max_retries:        1,
         docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
