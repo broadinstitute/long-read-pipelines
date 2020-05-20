@@ -25,7 +25,7 @@ jobs:
       env:
         SLACK_MESSAGE: 'Nightly test of the master branch failed.'
         SLACK_COLOR: '#DF5A49'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
         SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
         SLACK_USERNAME: long-read-pipelines
 
@@ -36,6 +36,6 @@ jobs:
       env:
         SLACK_MESSAGE: 'Nightly test of the master branch successful!'
         SLACK_COLOR: '#50D9C9'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
         SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
         SLACK_USERNAME: long-read-pipelines
