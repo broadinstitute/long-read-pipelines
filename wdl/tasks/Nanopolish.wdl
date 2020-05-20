@@ -56,14 +56,14 @@ task NanopolishIndex {
 
     # The 16 multiplier is to estimate the space needed for the fast5 files
     Int disk_size = 2 * ceil((16 * size(reads_fasta, "GB")) + size(draft_assembly_fasta, "GB") + size(sequencing_summary, "GB"))
-    String fast5_dir = sub(fast5_dir, "/$", "")
+    String fast5_dir_cleaned = sub(fast5_dir, "/$", "")
     String draft_basename = basename(draft_assembly_fasta)
 
     command <<<
         set -euxo pipefail
 
         mkdir fast5
-        gsutil -m cp ~{fast5_dir}/* fast5/
+        gsutil -m cp ~{fast5_dir_cleaned}/* fast5/
         cp ~{sequencing_summary} fast5/sequencing_summary.txt
         cp ~{reads_fasta} fast5/reads.fasta
 
