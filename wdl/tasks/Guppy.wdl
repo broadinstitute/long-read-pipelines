@@ -78,7 +78,7 @@ task Basecall {
         gpuType:                "nvidia-tesla-p100"
         gpuCount:               1
         nvidiaDriverVersion:    "418.87.00"
-        zones:                  ["us-central1-c"]
+        zones:                  ["us-east1-c"]
         cpuPlatform:            "Intel Haswell"
         docker:                 "quay.io/broad-long-read-pipelines/lr-guppy:3.6.0"
     }
