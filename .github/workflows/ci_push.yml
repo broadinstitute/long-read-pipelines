@@ -23,7 +23,6 @@ jobs:
       if: failure()
       uses: rtCamp/action-slack-notify@v2.0.2
       env:
-        SLACK_MESSAGE: 'Continuous integration test failed.'
         SLACK_COLOR: '#DF5A49'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
@@ -34,7 +33,6 @@ jobs:
       if: success()
       uses: rtCamp/action-slack-notify@v2.0.2
       env:
-        SLACK_MESSAGE: 'Continuous integration test succeeded!'
         SLACK_COLOR: '#50D9C9'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
