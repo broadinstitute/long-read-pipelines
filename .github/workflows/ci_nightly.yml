@@ -5,7 +5,6 @@ on:
   schedule:
     - cron: '0 7 * * *' # run at 7AM UTC
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   nightly_test:
     # The type of runner that the job will run on
@@ -19,25 +18,24 @@ jobs:
         cd wdl/; zip -r lr_wdls.zip *; cd ..
         python3 scripts/ci/run_test_suite.py
 
-    # Notify on failure
+    # Send Slack message on workflow failure
     - name: Slack Failure Notification
       if: failure()
-      uses: rtCamp/action-slack-notify@v2.0.0
+      uses: rtCamp/action-slack-notify@v2.0.2
       env:
+        SLACK_MESSAGE: 'Nightly test of the master branch failed.'
         SLACK_COLOR: '#DF5A49'
-        SLACK_TITLE: Nightly Test Failed
-        SLACK_MESSAGE: 'Nightly test of the long-read-pipelines master branch has failed.'
-        SLACK_USERNAME: rtCamp
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
 
-    # Notify on success
+    # Send Slack message on workflow success
     - name: Slack Success Notification
       if: success()
-      uses: rtCamp/action-slack-notify@v2.0.0
+      uses: rtCamp/action-slack-notify@v2.0.2
       env:
-        SLACK_COLOR: '#45B29D'
-        SLACK_TITLE: Nightly Test Succeeded
-        SLACK_MESSAGE: 'Nightly test of the long-read-pipelines master branch succeeded.'
-        SLACK_USERNAME: rtCamp
+        SLACK_MESSAGE: 'Nightly test of the master branch successful!'
+        SLACK_COLOR: '#50D9C9'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
