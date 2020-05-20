@@ -1,4 +1,3 @@
 steps:
-- name: gcr.io/google.com/cloudsdktool/cloud-sdk
-  entrypoint: 'bash'
-  args: ['ls']
+- name: 'ubuntu'
+  args: [ "echo", "Cloud building placeholder." ]
