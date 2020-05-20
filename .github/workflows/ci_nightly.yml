@@ -1,23 +1,16 @@
-# This is a basic workflow to help you get started with Actions
+# Nightly test of the master branch.
 
 name: Nightly
-
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   schedule:
     - cron: '0 7 * * *' # run at 7AM UTC
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  nightly_test:
     # The type of runner that the job will run on
     runs-on: self-hosted
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
     # Runs a set of commands using the runners shell
@@ -25,4 +18,26 @@ jobs:
       run: |
         cd wdl/; zip -r lr_wdls.zip *; cd ..
         python3 scripts/ci/run_test_suite.py
+
+    # Notify on failure
+    - name: Slack Failure Notification
+      if: failure()
+      uses: rtCamp/action-slack-notify@v2.0.0
+      env:
+        SLACK_COLOR: '#DF5A49'
+        SLACK_TITLE: Nightly Test Failed
+        SLACK_MESSAGE: 'Nightly test of the long-read-pipelines master branch has failed.'
+        SLACK_USERNAME: rtCamp
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+    # Notify on success
+    - name: Slack Success Notification
+      if: success()
+      uses: rtCamp/action-slack-notify@v2.0.0
+      env:
+        SLACK_COLOR: '#45B29D'
+        SLACK_TITLE: Nightly Test Succeeded
+        SLACK_MESSAGE: 'Nightly test of the long-read-pipelines master branch succeeded.'
+        SLACK_USERNAME: rtCamp
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
