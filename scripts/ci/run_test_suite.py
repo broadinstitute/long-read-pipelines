@@ -153,18 +153,65 @@ def find_outputs(input_json, exp_bucket='broad-dsp-lrma-ci-resources', act_bucke
     return outs
 
 
+def compare_contents(exp_path, act_path):
+    storage_client = storage.Client()
+
+    fn, ext = os.path.splitext(exp_path)
+
+    exp = f'exp{ext}'
+    act = f'act{ext}'
+
+    with open(exp, "wb") as exp_obj:
+        storage_client.download_blob_to_file(exp_path, exp_obj)
+
+    with open(act, "wb") as act_obj:
+        storage_client.download_blob_to_file(act_path, act_obj)
+
+    if ext == '.bam':
+        subprocess.run(f'samtools view {exp} > exp.tmp', shell=True)
+        subprocess.run(f'samtools view {act} > act.tmp', shell=True)
+    elif ext == '.gz':
+        subprocess.run(f'zcat {exp} | grep -v -e fileDate > exp.tmp', shell=True)
+        subprocess.run(f'zcat {act} | grep -v -e fileDate > act.tmp', shell=True)
+    elif ext == '.pdf':
+        subprocess.run(f'pdftotext {exp} > exp.tmp', shell=True)
+        subprocess.run(f'pdftotext {act} > act.tmp', shell=True)
+    else:
+        print_warning(f'Unknown file extension {ext} for file {exp_path} and {act_path}')
+        return 1
+
+    r = subprocess.run(f'diff exp.tmp act.tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    os.remove('exp.tmp')
+    os.remove('act.tmp')
+    os.remove(exp)
+    os.remove(act)
+
+    if r is not None:
+        if r.stdout != b'' or r.stderr != b'':
+            print_warning(f'comparing "{exp_path}" vs "{act_path}"')
+            print_warning(r.stdout.decode('utf-8'))
+            print_warning(r.stderr.decode('utf-8'))
+            print_warning(r.returncode)
+
+        return r.returncode
+
+    return 1
+
+
 def compare_outputs(test, outs):
     print_info(f'{test}')
 
-    bad_md5s = 0
+    num_mismatch = 0
     for b in outs:
-        if outs[b]['exp'] != outs[b]['act']:
-            print_info(f'- {b} md5s are different:')
-            print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
-            print_failure(f"    act: ({outs[b]['act']}) {outs[b]['act_path']}")
-            bad_md5s += 1
+        if not b.endswith(".png") and outs[b]['exp'] != outs[b]['act']:
+            if compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
+                print_info(f'- {b} versions are different:')
+                print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
+                print_failure(f"    act: ({outs[b]['act']}) {outs[b]['act_path']}")
+                num_mismatch += 1
 
-    return bad_md5s
+    return num_mismatch
 
 
 print_info(f'Cromwell server: {server_url}')
