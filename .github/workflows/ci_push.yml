@@ -15,11 +15,8 @@ jobs:
     # Runs a set of commands using the runners shell
     - name: Continuous integration test suite
       run: |
-        whoami
-        ls -lah
-#      run: |
-#        cd wdl/; zip -r lr_wdls.zip *; cd ..
-#        python3 scripts/ci/run_test_suite.py
+        cd wdl/; zip -r lr_wdls.zip *; cd ..
+        python3 scripts/ci/run_test_suite.py
 
     # Send Slack message on workflow failure
     - name: Slack Failure Notification
