@@ -3,8 +3,8 @@
 name: Delivery
 on:
   push:
-    branches:
-    - master
+#    branches:
+#    - master
 
 jobs:
   master_test:
@@ -63,3 +63,15 @@ jobs:
 
     - name: New version
       run: echo ${{ steps.bump_version.outputs.next-version }}
+
+    - name: Remove existing version file
+      uses: JesseTG/rm@v1.0.0
+      with:
+        path: 'VERSION'
+
+    - name: Write new version
+      uses: christian-draeger/write-properties@1.0.0
+      with:
+        path: 'VERSION'
+        property: 'version'
+        value: ${{ steps.bump_version.outputs.next-version }}
