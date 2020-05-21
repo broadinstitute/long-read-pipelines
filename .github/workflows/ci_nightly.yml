@@ -1,41 +1,41 @@
-# Nightly test of the master branch.
-
-name: Nightly
-on:
-  schedule:
-    - cron: '0 7 * * *' # run at 7AM UTC
-
-jobs:
-  nightly_test:
-    # The type of runner that the job will run on
-    runs-on: self-hosted
-    steps:
-    - uses: actions/checkout@v2
-
-    # Runs a set of commands using the runners shell
-    - name: Continuous integration test suite
-      run: |
-        cd wdl/; zip -r lr_wdls.zip *; cd ..
-        python3 scripts/ci/run_test_suite.py
-
-    # Send Slack message on workflow failure
-    - name: Slack Failure Notification
-      if: failure()
-      uses: rtCamp/action-slack-notify@v2.0.2
-      env:
-        SLACK_MESSAGE: 'Nightly test of the master branch failed.'
-        SLACK_COLOR: '#DF5A49'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
-        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
-        SLACK_USERNAME: long-read-pipelines
-
-    # Send Slack message on workflow success
-    - name: Slack Success Notification
-      if: success()
-      uses: rtCamp/action-slack-notify@v2.0.2
-      env:
-        SLACK_MESSAGE: 'Nightly test of the master branch successful!'
-        SLACK_COLOR: '#50D9C9'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
-        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
-        SLACK_USERNAME: long-read-pipelines
+## Nightly test of the master branch.
+#
+#name: Nightly
+#on:
+#  schedule:
+#    - cron: '0 7 * * *' # run at 7AM UTC
+#
+#jobs:
+#  nightly_test:
+#    # The type of runner that the job will run on
+#    runs-on: self-hosted
+#    steps:
+#    - uses: actions/checkout@v2
+#
+#    # Runs a set of commands using the runners shell
+#    - name: Continuous integration test suite
+#      run: |
+#        cd wdl/; zip -r lr_wdls.zip *; cd ..
+#        python3 scripts/ci/run_test_suite.py
+#
+#    # Send Slack message on workflow failure
+#    - name: Slack Failure Notification
+#      if: failure()
+#      uses: rtCamp/action-slack-notify@v2.0.2
+#      env:
+#        SLACK_MESSAGE: 'Nightly test of the master branch failed.'
+#        SLACK_COLOR: '#DF5A49'
+#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
+#        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
+#        SLACK_USERNAME: long-read-pipelines
+#
+#    # Send Slack message on workflow success
+#    - name: Slack Success Notification
+#      if: success()
+#      uses: rtCamp/action-slack-notify@v2.0.2
+#      env:
+#        SLACK_MESSAGE: 'Nightly test of the master branch successful!'
+#        SLACK_COLOR: '#50D9C9'
+#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
+#        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
+#        SLACK_USERNAME: long-read-pipelines
