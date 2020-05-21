@@ -81,8 +81,18 @@ jobs:
     - name: Confirm version number
       run: cat VERSION
 
-    - name: Git commit changes version number
-      uses: matheusalbino/git-commit@v1.0.1
+#    - name: Git commit changes version number
+#      uses: matheusalbino/git-commit@v1.0.1
+#      with:
+#        github-token: ${{ secrets.GITHUB_TOKEN }}
+#        message: 'Bump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
+
+    - name: Commit changes
+      uses: EndBug/add-and-commit@v4
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        author_name: Kiran V Garimella
+        author_email: kiran@broadinstitute.org
         message: 'Bump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
+        add: "VERSION"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
