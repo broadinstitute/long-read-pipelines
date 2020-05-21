@@ -48,7 +48,7 @@ jobs:
       id: read_property
       uses: christian-draeger/read-properties@1.0.0
       with:
-        path: './VERSION'
+        path: '.github/workflows/VERSION'
         property: 'version'
 
     - name: Current version
@@ -67,11 +67,11 @@ jobs:
     - name: Remove existing version file
       uses: JesseTG/rm@v1.0.0
       with:
-        path: './VERSION'
+        path: '.github/workflows/VERSION'
 
     - name: Write new version
       uses: christian-draeger/write-properties@1.0.0
       with:
-        path: './VERSION'
+        path: '.github/workflows/VERSION'
         property: 'version'
         value: ${{ steps.bump_version.outputs.next-version }}
