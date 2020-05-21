@@ -7,6 +7,7 @@ workflow RaconRunner {
     input {
         String reads
         String draft_assembly
+        Int n_rounds
 
         String outdir
     }
@@ -14,12 +15,13 @@ workflow RaconRunner {
     call Racon.RaconPolish {
         input:
             reads = reads,
-            draft_assembly = draft_assembly
+            draft_assembly = draft_assembly,
+            n_rounds = n_rounds
     }
 
     call FF.FinalizeToDir {
         input:
-            files = [RaconPolish.polished_assembly],
+            files = RaconPolish.incremental_polished_assemblies,
             outdir = outdir
     }
     
