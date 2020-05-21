@@ -72,9 +72,14 @@ jobs:
         path: 'VERSION'
 
     - name: Write new version
-      uses: christian-draeger/write-properties@1.0.0
+      uses: christian-draeger/write-properties@1.0.1
       with:
         path: 'VERSION'
         property: 'version'
         value: ${{ steps.bump_version.outputs.next-version }}
 
+    - name: Git commit changes version number
+      uses: matheusalbino/git-commit@v1.0.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        message: 'Bump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
