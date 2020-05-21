@@ -24,9 +24,8 @@ jobs:
 #      if: failure()
 #      uses: rtCamp/action-slack-notify@v2.0.2
 #      env:
-#        SLACK_MESSAGE: 'Nightly test of the master branch failed.'
 #        SLACK_COLOR: '#DF5A49'
-#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
+#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 #        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
 #        SLACK_USERNAME: long-read-pipelines
 #
@@ -35,9 +34,8 @@ jobs:
 #      if: success()
 #      uses: rtCamp/action-slack-notify@v2.0.2
 #      env:
-#        SLACK_MESSAGE: 'Nightly test of the master branch successful!'
 #        SLACK_COLOR: '#50D9C9'
-#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
+#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 #        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
 #        SLACK_USERNAME: long-read-pipelines
 
@@ -86,7 +84,30 @@ jobs:
       with:
         author_name: Kiran V Garimella
         author_email: kiran@broadinstitute.org
-        message: 'Bump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
+        message: 'Autobump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
         add: "VERSION README.md"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Make Dockstore-compatible release
+      run: ./scripts/wdl/create_dockstore_release_branch.sh lrp-release-testing-do-not-use-${{ steps.bump_version.outputs.next-version }}
+
+    - name: Slack Failure Notification
+      if: failure()
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_MESSAGE: 'Failed to release version ${{ steps.bump_version.outputs.next-version }}'
+        SLACK_COLOR: '#DF5A49'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
+
+    - name: Slack Success Notification
+      if: success()
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_MESSAGE: 'Successfully released version ${{ steps.bump_version.outputs.next-version }}'
+        SLACK_COLOR: '#50D9C9'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
