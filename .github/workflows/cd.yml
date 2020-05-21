@@ -78,14 +78,8 @@ jobs:
         property: 'version'
         value: ${{ steps.bump_version.outputs.next-version }}
 
-    - name: Confirm version number
-      run: cat VERSION
-
-#    - name: Git commit changes version number
-#      uses: matheusalbino/git-commit@v1.0.1
-#      with:
-#        github-token: ${{ secrets.GITHUB_TOKEN }}
-#        message: 'Bump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
+    - name: Update version badge
+      run: sed -i s/version-${{ steps.read_property.outputs.value }}/version-${{ steps.bump_version.outputs.next-version }}/' VERSION
 
     - name: Commit changes
       uses: EndBug/add-and-commit@v4
