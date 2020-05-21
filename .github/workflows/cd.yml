@@ -1,0 +1,65 @@
+# Deployment of the master branch.
+
+name: Delivery
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  master_test:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v2
+
+#    # Runs a set of commands using the runners shell
+#    - name: Continuous integration test suite
+#      run: |
+#        cd wdl/; zip -r lr_wdls.zip *; cd ..
+#        python3 scripts/ci/run_test_suite.py
+#
+#    # Send Slack message on workflow failure
+#    - name: Slack Failure Notification
+#      if: failure()
+#      uses: rtCamp/action-slack-notify@v2.0.2
+#      env:
+#        SLACK_MESSAGE: 'Nightly test of the master branch failed.'
+#        SLACK_COLOR: '#DF5A49'
+#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
+#        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
+#        SLACK_USERNAME: long-read-pipelines
+#
+#    # Send Slack message on workflow success
+#    - name: Slack Success Notification
+#      if: success()
+#      uses: rtCamp/action-slack-notify@v2.0.2
+#      env:
+#        SLACK_MESSAGE: 'Nightly test of the master branch successful!'
+#        SLACK_COLOR: '#50D9C9'
+#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NIGHTLY }}
+#        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
+#        SLACK_USERNAME: long-read-pipelines
+
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Read current version
+      id: read_property
+      uses: christian-draeger/read-properties@1.0.0
+      with:
+        path: 'VERSION'
+        property: 'version'
+
+    - name: Current version
+      run: echo ${{ steps.read_property.outputs.value }}
+
+    - name: Bump release version
+      id: bump_version
+      uses: christian-draeger/increment-semantic-version@1.0.0
+      with:
+        current-version: ${{ steps.read_property.outputs.value }}
+        version-fragment: 'bug'
+
+    - name: New version
+      run: echo ${{ steps.bump_version.outputs.next-version }}
