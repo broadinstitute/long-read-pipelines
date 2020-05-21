@@ -91,13 +91,13 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Make Dockstore-compatible release
-      run: ./scripts/wdl/create_dockstore_release_branch.sh lrp-${{ steps.bump_version.outputs.next-version }}
+      run: ./scripts/wdl/create_dockstore_release_branch.sh lrp_${{ steps.bump_version.outputs.next-version }}
 
     - name: Slack Failure Notification
       if: failure()
       uses: rtCamp/action-slack-notify@v2.0.2
       env:
-        SLACK_MESSAGE: 'Failed to release version lrp-${{ steps.bump_version.outputs.next-version }}'
+        SLACK_MESSAGE: 'Failed to release version lrp_${{ steps.bump_version.outputs.next-version }}'
         SLACK_COLOR: '#DF5A49'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
@@ -107,7 +107,7 @@ jobs:
       if: success()
       uses: rtCamp/action-slack-notify@v2.0.2
       env:
-        SLACK_MESSAGE: 'Successfully released version lrp-${{ steps.bump_version.outputs.next-version }}'
+        SLACK_MESSAGE: 'Successfully released version lrp_${{ steps.bump_version.outputs.next-version }}'
         SLACK_COLOR: '#50D9C9'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
