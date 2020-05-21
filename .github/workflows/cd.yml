@@ -87,6 +87,6 @@ jobs:
         author_name: Kiran V Garimella
         author_email: kiran@broadinstitute.org
         message: 'Bump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
-        add: "VERSION"
+        add: "VERSION README.md"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
