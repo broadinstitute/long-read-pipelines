@@ -35,7 +35,7 @@ task RaconPolish {
         nvidiaDriverVersion:    "418.87.00"
         zones:                  ["us-east1-c"]
         cpuPlatform:            "Intel Haswell"
-        docker:                 "quay.io/broad-long-read-pipelines/lr-racon:3.6.0"
+        docker:                 "quay.io/broad-long-read-pipelines/lr-racon:0.1.0"
     }
 
 }
