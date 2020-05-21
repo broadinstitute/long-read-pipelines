@@ -1,20 +1,14 @@
-FROM nvidia/cuda:10.2-base-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
 RUN apt-get update
-RUN apt-get install -y wget
+RUN apt-get install -y bzip2 g++ zlib1g-dev libbz2-dev liblzma-dev libffi-dev libncurses5-dev libcurl4-gnutls-dev libssl-dev curl make cmake wget python3-all-dev python-virtualenv git-lfs
+RUN git lfs install
+RUN git clone https://github.com/nanoporetech/medaka.git
+WORKDIR medaka
 
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-RUN bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
-RUN rm Miniconda3-latest-Linux-x86_64.sh
-ENV PATH=/miniconda/bin:${PATH}
+RUN sed -i 's/tensorflow/tensorflow-gpu/' requirements.txt
+RUN make install
 
-RUN conda init bash
+RUN echo "source /medaka/venv/bin/activate" >> ~/.bashrc
 
-RUN conda update -n base -c defaults conda
-RUN conda config --add channels bioconda
-RUN conda config --add channels conda-forge
-
-RUN conda create -n medaka -c conda-forge -c bioconda medaka
-
-RUN echo "source activate medaka" > ~/.bashrc
-RUN /bin/bash -c "bash activate medaka"
+WORKDIR /home/root

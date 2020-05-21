@@ -20,13 +20,13 @@ task MedakaPolish {
     >>>
 
     output {
-        File assembled_fasta = "./output/consensus.fasta"
+        File polished_assembly = "./output/consensus.fasta"
     }
 
     ###################
     RuntimeAttr default_attr = object {
         cpu_cores:      8,
-        mem_gb:         64, # figuring this out now
+        mem_gb:         24,
         disk_gb:        disk_size,
         boot_disk_gb:   10,
         preemptible_tries:  0,
