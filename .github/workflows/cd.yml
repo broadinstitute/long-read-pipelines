@@ -44,6 +44,8 @@ jobs:
   deliver:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
+
     - name: Where am I?
       run: |
         pwd
