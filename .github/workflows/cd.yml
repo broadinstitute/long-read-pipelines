@@ -58,7 +58,7 @@ jobs:
 
     - name: Bump release version
       id: bump_version
-      uses: christian-draeger/increment-semantic-version@1.0.0
+      uses: christian-draeger/increment-semantic-version@1.0.1
       with:
         current-version: ${{ steps.read_property.outputs.value }}
         version-fragment: 'bug'
