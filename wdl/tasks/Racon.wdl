@@ -6,8 +6,8 @@ task RaconPolish {
         File draft_assembly
     }
 
-    Int mem_size = 2 * ceil(size(reads, "GB"))
-    Int disk_size = 4 * ceil(size(reads, "GB") + size(draft_assembly, "GB"))
+    Int mem_size = 4 * ceil(size(reads, "GB") + size(draft_assembly, "GB"))
+    Int disk_size = mem_size
 
     command <<<
         set -euxo pipefail
