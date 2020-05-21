@@ -3,8 +3,8 @@
 name: Delivery
 on:
   push:
-#    branches:
-#    - master
+    branches:
+    - master
 
 jobs:
   master_test:
