@@ -5,6 +5,7 @@ on:
   schedule:
     - cron: '0 7 * * *' # run at 7AM UTC
 
+
 jobs:
   nightly_test:
     # The type of runner that the job will run on

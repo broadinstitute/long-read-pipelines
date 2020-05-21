@@ -1,9 +1,10 @@
 # Continuous integration test of any branch.
 
 name: CI
-on: [push]
-
-
+on:
+  push:
+    branches-ignore:
+    - master
 
 jobs:
   branch_test:
