@@ -78,6 +78,9 @@ jobs:
         property: 'version'
         value: ${{ steps.bump_version.outputs.next-version }}
 
+    - name: Confirm version number
+      run: cat VERSION
+
     - name: Git commit changes version number
       uses: matheusalbino/git-commit@v1.0.1
       with:
