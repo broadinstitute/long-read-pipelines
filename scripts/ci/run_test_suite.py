@@ -162,11 +162,11 @@ def compare_contents(exp_path, act_path):
     act = f'act{ext}'
 
     with open(exp, "wb") as exp_obj:
-        print_info(f'Downloading {exp}')
+        print_info(f'Downloading {exp_path}')
         storage_client.download_blob_to_file(exp_path, exp_obj)
 
     with open(act, "wb") as act_obj:
-        print_info(f'Downloading {act}')
+        print_info(f'Downloading {act_path}')
         storage_client.download_blob_to_file(act_path, act_obj)
 
     if ext == '.bam':
