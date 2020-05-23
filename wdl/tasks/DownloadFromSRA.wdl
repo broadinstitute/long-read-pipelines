@@ -117,9 +117,9 @@ task FastqDump {
             echo "-----"
             du -sh *
             echo "=========="; df -h; echo "==========";
-            gsutil -o "GSUtil:parallel_process_count=~{cpus}" \
-                   -o "GSUtil:parallel_thread_count=1" \
-                   -m cp *.gz ~{gcs_output_dir}
+#            gsutil -o "GSUtil:parallel_process_count=~{cpus}" \
+#                   -o "GSUtil:parallel_thread_count=1" \
+#                   -m cp *.gz ~{gcs_output_dir}
             gsutil ls -lh ~{gcs_output_dir} > upload_list.txt
         fi
     >>>
