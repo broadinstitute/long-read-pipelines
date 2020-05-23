@@ -1,0 +1,4 @@
+test/test_json/ONTWholeGenomeSingleFlowcell.test.json
+test/test_json/PBCCSOnlySingleFlowcell.test.ChrMAndChr20SubsetGRCh38.json
+test/test_json/PBCCSWholeGenomeSingleFlowcell.test.ChrMAndChr20SubsetGRCh38.json
+test/test_json/TestCromwell.json

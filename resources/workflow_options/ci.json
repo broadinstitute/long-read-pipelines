@@ -1,6 +1,6 @@
 {
   "write_to_cache": true,
-  "read_from_cache": false,
+  "read_from_cache": true,
 
   "workflow_failure_mode": "NoNewCalls",
 

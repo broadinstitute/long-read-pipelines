@@ -62,11 +62,15 @@ def find_wdl_path(wdl):
     return None
 
 
-def run_curl_cmd(curl_cmd):
+def run_curl_cmd(curl_cmd, shell=False):
     j = {}
 
     for i in range(3):
-        out = subprocess.Popen(curl_cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if shell:
+            out = subprocess.Popen(curl_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        else:
+            out = subprocess.Popen(curl_cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         stdout, stderr = out.communicate()
 
         if not stdout:
@@ -94,6 +98,12 @@ def submit_job(wdl, input_json, options, dependencies):
 
 def get_job_status(id):
     curl_cmd = f'curl -s {server_url}/api/workflows/v1/{id}/status'
+    return run_curl_cmd(curl_cmd)
+
+
+def get_job_failure_metadata(id):
+    curl_cmd = f'curl -s {server_url}/api/workflows/v1/{id}/metadata?expandSubWorkflows=true" -H "accept: application/json" | jq ".failures"'
+
     return run_curl_cmd(curl_cmd)
 
 
@@ -162,11 +172,9 @@ def compare_contents(exp_path, act_path):
     act = f'act{ext}'
 
     with open(exp, "wb") as exp_obj:
-        print_info(f'Downloading {exp_path}')
         storage_client.download_blob_to_file(exp_path, exp_obj)
 
     with open(act, "wb") as act_obj:
-        print_info(f'Downloading {act_path}')
         storage_client.download_blob_to_file(act_path, act_obj)
 
     if ext == '.bam':
@@ -207,7 +215,7 @@ def compare_outputs(test, outs):
     num_mismatch = 0
     for b in outs:
         if not b.endswith(".png") and outs[b]['exp'] != outs[b]['act']:
-            if compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
+            if outs[b]['act_path'] is None or compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
                 print_info(f'- {b} versions are different:')
                 print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
                 print_failure(f"    act: ({outs[b]['act']}) {outs[b]['act_path']}")
@@ -254,6 +262,8 @@ for input_json in input_jsons:
 # Monitor tests
 ret = 0
 if len(jobs) > 0:
+    old_num_finished = -1
+
     while True:
         time.sleep(60)
         jobs = update_status(jobs)
@@ -275,7 +285,10 @@ if len(jobs) > 0:
                     if times[test]['stop'] is None:
                         times[test]['stop'] = datetime.datetime.now()
 
-            print_info(f'Running {len(jobs)} tests, {num_finished} tests complete. {num_succeeded} succeeded, {num_failed} failed.')
+            if old_num_finished != num_finished:
+                print_info(f'Running {len(jobs)} tests, {num_finished} tests complete. {num_succeeded} succeeded, {num_failed} failed.')
+
+            old_num_finished = num_finished
         else:
             break
 
@@ -306,6 +319,8 @@ if len(jobs) > 0:
                 print_success(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
             else:
                 print_failure(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
+                print_failure(get_job_failure_metadata(jobs[test]["id"]))
+
                 ret = 1
         else:
             print_failure(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
