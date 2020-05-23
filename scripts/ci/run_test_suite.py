@@ -319,11 +319,11 @@ if len(jobs) > 0:
                 print_success(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
             else:
                 print_failure(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
-                print_failure(get_job_failure_metadata(jobs[test]["id"]))
 
                 ret = 1
         else:
             print_failure(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_failure(get_job_failure_metadata(jobs[test]["id"]))
             ret = 1
 
 
