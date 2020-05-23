@@ -74,17 +74,12 @@ def run_curl_cmd(curl_cmd, shell=False):
         stdout, stderr = out.communicate()
 
         if not stdout:
-            print_failure(f"Unable to dispatch command '{curl_cmd}' to '{server_url}'")
+            time.sleep(30)
             exit(1)
+        else:
+            return json.loads(stdout)
 
-        j = json.loads(stdout)
-
-        if 'id' in j:
-            return j
-
-        time.sleep(30)
-
-    if 'id' not in j:
+    if not j:
         print_failure(f"No valid response from '{server_url}' for command '{curl_cmd}' after three tries.")
         exit(1)
 
@@ -102,9 +97,9 @@ def get_job_status(id):
 
 
 def get_job_failure_metadata(id):
-    curl_cmd = f'curl -s {server_url}/api/workflows/v1/{id}/metadata?expandSubWorkflows=true" -H "accept: application/json" | jq ".failures"'
+    curl_cmd = f'curl -s "{server_url}/api/workflows/v1/{id}/metadata?excludeKey=submittedFiles&expandSubWorkflows=true" | jq ".failures"'
 
-    return run_curl_cmd(curl_cmd)
+    return run_curl_cmd(curl_cmd, shell=True)
 
 
 def update_status(jobs):
@@ -130,6 +125,19 @@ def list_blobs(bucket_name, prefix, delimiter=None):
     blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
 
     return blobs
+
+
+def upload_metadata(test, id):
+    md_cmd = f'curl -s "{server_url}/api/workflows/v1/{id}/metadata?excludeKey=submittedFiles&expandSubWorkflows=true" | jq . > md.txt'
+    subprocess.run(md_cmd, shell=True)
+
+    storage_client = storage.Client()
+    bucket = storage_client.bucket('broad-dsp-lrma-ci')
+    blob = bucket.blob(f'metadata/{test}/{id}.metadata.txt')
+
+    blob.upload_from_filename('md.txt')
+
+    return f'gs://broad-dsp-lrma-ci/metadata/{test}/{id}.metadata.txt'
 
 
 def find_outputs(input_json, exp_bucket='broad-dsp-lrma-ci-resources', act_bucket='broad-dsp-lrma-ci'):
@@ -310,7 +318,10 @@ if len(jobs) > 0:
     for test in jobs:
         diff = times[test]['stop'] - times[test]['start']
         if jobs[test]['status'] == 'Succeeded':
+            mdpath = upload_metadata(test, jobs[test]["id"])
+
             print_success(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_success(f"{test}: Workflow metadata uploaded to {mdpath}")
 
             outs = find_outputs(input[test])
             num_mismatch = compare_outputs(test, outs)
@@ -322,8 +333,12 @@ if len(jobs) > 0:
 
                 ret = 1
         else:
+            mdpath = upload_metadata(test, jobs[test]["id"])
+
             print_failure(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
-            print_failure(get_job_failure_metadata(jobs[test]["id"]))
+            print_failure(f"{test}: Workflow metadata uploaded to {mdpath}")
+            print_failure(f"{test}: Workflow failure messages:\n{json.dumps(get_job_failure_metadata(jobs[test]['id']), sort_keys=True, indent=4)}")
+
             ret = 1
 
 
