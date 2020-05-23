@@ -122,8 +122,6 @@ task FastqDump {
                    -m cp *.gz ~{gcs_output_dir}
             gsutil ls -lh ~{gcs_output_dir} > upload_list.txt
         fi
-
-        exit 1
     >>>
 
     output {
