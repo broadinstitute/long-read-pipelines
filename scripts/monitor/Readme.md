@@ -11,3 +11,5 @@ We collect these data from:
 * a BigQuery database where the cost information is updated periodically
 
 Currently the first two tasks are documented in "get\_metadata\_and\_runtime\_metrics.md", while cost data retrieval is documented in "get\_cost\_from\_big\_query.md".
+
+We document viewing&mdash;in the SQL and visualization terms&mdash;the non-cost part of data in "viewing_the_monitor_dataset.md".
