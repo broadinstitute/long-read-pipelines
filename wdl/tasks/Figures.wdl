@@ -1,8 +1,8 @@
 version 1.0
 
-import "Structs.wdl"
-import "NanoPlot.wdl" as NP
-import "Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.10/wdl/tasks/Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.10/wdl/tasks/NanoPlot.wdl" as NP
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.10/wdl/tasks/Finalize.wdl" as FF
 
 workflow Figures {
     input {

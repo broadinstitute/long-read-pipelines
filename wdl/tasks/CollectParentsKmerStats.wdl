@@ -1,6 +1,6 @@
 version 1.0
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.10/wdl/tasks/Structs.wdl"
 
 # A workflow that performs kmer stats collection on parental reads (short or long)
 workflow CollectParentsKmerStats {
