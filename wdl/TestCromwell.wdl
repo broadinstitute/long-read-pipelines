@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.8/wdl/tasks/Structs.wdl"
 
 workflow TestCromwell {
     input {
