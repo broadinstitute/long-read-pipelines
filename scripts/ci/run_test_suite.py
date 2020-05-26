@@ -62,25 +62,24 @@ def find_wdl_path(wdl):
     return None
 
 
-def run_curl_cmd(curl_cmd):
+def run_curl_cmd(curl_cmd, shell=False):
     j = {}
 
     for i in range(3):
-        out = subprocess.Popen(curl_cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if shell:
+            out = subprocess.Popen(curl_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        else:
+            out = subprocess.Popen(curl_cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         stdout, stderr = out.communicate()
 
         if not stdout:
-            print_failure(f"Unable to dispatch command '{curl_cmd}' to '{server_url}'")
+            time.sleep(30)
             exit(1)
+        else:
+            return json.loads(stdout)
 
-        j = json.loads(stdout)
-
-        if 'id' in j:
-            return j
-
-        time.sleep(30)
-
-    if 'id' not in j:
+    if not j:
         print_failure(f"No valid response from '{server_url}' for command '{curl_cmd}' after three tries.")
         exit(1)
 
@@ -95,6 +94,12 @@ def submit_job(wdl, input_json, options, dependencies):
 def get_job_status(id):
     curl_cmd = f'curl -s {server_url}/api/workflows/v1/{id}/status'
     return run_curl_cmd(curl_cmd)
+
+
+def get_job_failure_metadata(id):
+    curl_cmd = f'curl -s "{server_url}/api/workflows/v1/{id}/metadata?excludeKey=submittedFiles&expandSubWorkflows=true" | jq ".failures"'
+
+    return run_curl_cmd(curl_cmd, shell=True)
 
 
 def update_status(jobs):
@@ -120,6 +125,19 @@ def list_blobs(bucket_name, prefix, delimiter=None):
     blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
 
     return blobs
+
+
+def upload_metadata(test, id):
+    md_cmd = f'curl -s "{server_url}/api/workflows/v1/{id}/metadata?excludeKey=submittedFiles&expandSubWorkflows=true" | jq . > md.txt'
+    subprocess.run(md_cmd, shell=True)
+
+    storage_client = storage.Client()
+    bucket = storage_client.bucket('broad-dsp-lrma-ci')
+    blob = bucket.blob(f'metadata/{test}/{id}.metadata.txt')
+
+    blob.upload_from_filename('md.txt')
+
+    return f'gs://broad-dsp-lrma-ci/metadata/{test}/{id}.metadata.txt'
 
 
 def find_outputs(input_json, exp_bucket='broad-dsp-lrma-ci-resources', act_bucket='broad-dsp-lrma-ci'):
@@ -153,18 +171,65 @@ def find_outputs(input_json, exp_bucket='broad-dsp-lrma-ci-resources', act_bucke
     return outs
 
 
+def compare_contents(exp_path, act_path):
+    storage_client = storage.Client()
+
+    fn, ext = os.path.splitext(exp_path)
+
+    exp = f'exp{ext}'
+    act = f'act{ext}'
+
+    with open(exp, "wb") as exp_obj:
+        storage_client.download_blob_to_file(exp_path, exp_obj)
+
+    with open(act, "wb") as act_obj:
+        storage_client.download_blob_to_file(act_path, act_obj)
+
+    if ext == '.bam':
+        subprocess.run(f'samtools view {exp} > exp.tmp', shell=True)
+        subprocess.run(f'samtools view {act} > act.tmp', shell=True)
+    elif ext == '.gz':
+        subprocess.run(f'zcat {exp} | grep -v -e fileDate > exp.tmp', shell=True)
+        subprocess.run(f'zcat {act} | grep -v -e fileDate > act.tmp', shell=True)
+    elif ext == '.pdf':
+        subprocess.run(f'pdftotext {exp} > exp.tmp', shell=True)
+        subprocess.run(f'pdftotext {act} > act.tmp', shell=True)
+    else:
+        print_warning(f'Unknown file extension {ext} for file {exp_path} and {act_path}')
+        return 1
+
+    r = subprocess.run(f'diff exp.tmp act.tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    os.remove('exp.tmp')
+    os.remove('act.tmp')
+    os.remove(exp)
+    os.remove(act)
+
+    if r is not None:
+        if r.stdout != b'' or r.stderr != b'':
+            print_warning(f'comparing "{exp_path}" vs "{act_path}"')
+            print_warning(r.stdout.decode('utf-8'))
+            print_warning(r.stderr.decode('utf-8'))
+            print_warning(r.returncode)
+
+        return r.returncode
+
+    return 1
+
+
 def compare_outputs(test, outs):
     print_info(f'{test}')
 
-    bad_md5s = 0
+    num_mismatch = 0
     for b in outs:
-        if outs[b]['exp'] != outs[b]['act']:
-            print_info(f'- {b} md5s are different:')
-            print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
-            print_failure(f"    act: ({outs[b]['act']}) {outs[b]['act_path']}")
-            bad_md5s += 1
+        if not b.endswith(".png") and outs[b]['exp'] != outs[b]['act']:
+            if outs[b]['act_path'] is None or compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
+                print_info(f'- {b} versions are different:')
+                print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
+                print_failure(f"    act: ({outs[b]['act']}) {outs[b]['act_path']}")
+                num_mismatch += 1
 
-    return bad_md5s
+    return num_mismatch
 
 
 print_info(f'Cromwell server: {server_url}')
@@ -205,6 +270,8 @@ for input_json in input_jsons:
 # Monitor tests
 ret = 0
 if len(jobs) > 0:
+    old_num_finished = -1
+
     while True:
         time.sleep(60)
         jobs = update_status(jobs)
@@ -226,7 +293,10 @@ if len(jobs) > 0:
                     if times[test]['stop'] is None:
                         times[test]['stop'] = datetime.datetime.now()
 
-            print_info(f'Running {len(jobs)} tests, {num_finished} tests complete. {num_succeeded} succeeded, {num_failed} failed.')
+            if old_num_finished != num_finished:
+                print_info(f'Running {len(jobs)} tests, {num_finished} tests complete. {num_succeeded} succeeded, {num_failed} failed.')
+
+            old_num_finished = num_finished
         else:
             break
 
@@ -248,7 +318,10 @@ if len(jobs) > 0:
     for test in jobs:
         diff = times[test]['stop'] - times[test]['start']
         if jobs[test]['status'] == 'Succeeded':
+            mdpath = upload_metadata(test, jobs[test]["id"])
+
             print_success(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_success(f"{test}: Workflow metadata uploaded to {mdpath}")
 
             outs = find_outputs(input[test])
             num_mismatch = compare_outputs(test, outs)
@@ -257,9 +330,15 @@ if len(jobs) > 0:
                 print_success(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
             else:
                 print_failure(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
+
                 ret = 1
         else:
+            mdpath = upload_metadata(test, jobs[test]["id"])
+
             print_failure(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
+            print_failure(f"{test}: Workflow metadata uploaded to {mdpath}")
+            print_failure(f"{test}: Workflow failure messages:\n{json.dumps(get_job_failure_metadata(jobs[test]['id']), sort_keys=True, indent=4)}")
+
             ret = 1
 
 

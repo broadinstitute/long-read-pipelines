@@ -1,68 +1,99 @@
 #!/usr/bin/env python3
+
 import os
-from os import path
-from shutil import copyfile
-import csv
-import time
 import sys
+import errno
 import subprocess
 import pandas as pd
+from shutil import copyfile
 
-#cromwell-task-monitor-bq Variables
-cromwellBaseUrl = "https://cromwell-v47.dsde-methods.broadinstitute.org"
-gcpProject = "broad-dsde-methods"
-cromwellTaskMonitorBqDirectory = "/Users/bshifaw/work/Broadinstitute/cromwell-task-monitor-bq/metadata/submit/"
-
-#Obtain workflow id
-print("/n" + "## Obtaining Wokflow IDs ##")
 HOME = os.getenv('HOME')
-cromshellDatabase = HOME + '/.cromshell/all.workflow.database.tsv'
-pythonScriptPath = sys.path[0]
-workflowID = pythonScriptPath + '/workflowIds.txt'
-workflowIDTemp = pythonScriptPath + '/workflowIds_temp.txt'
 
-# Over writes workflowID if it exist, if  it doesn't exist create a new one
-if path.exists(workflowID) and os.stat(workflowID).st_size > 0:
-	print("Grep last wokflow ID") 
-	with open(workflowID, "r") as f:
-	    for line in f:
-	        pass
-	    last_workflowID = line.rstrip()
-	f.close
-	print("Last recorded wokflow ID was " + last_workflowID)
+###############################
+# user-configurable variables #
+###############################
 
-	print("Creating new workflowIds.txt in " + pythonScriptPath + " directory using " + cromshellDatabase)
-	
-	workflow_database = pd.read_csv(cromshellDatabase, sep='\t')
-    
-	print(workflow_database.iloc[:,2].str.match(last_workflowID))
+gcp_project = "broad-dsde-methods"
+work_dir = f"{HOME}/Desktop/cromwell_monitoring"
 
-	index_match = workflow_database.index[workflow_database.iloc[:,2].str.match(last_workflowID)].tolist()[0]
-	
-	with open(workflowIDTemp, "w") as the_file:
-		for id in workflow_database.iloc[(1+index_match):,2]:
-			the_file.write(id+'\n')
+#####################
+# derived variables #
+#####################
 
-	print("Deleting previous workflowIds.txt file and replace with temp workflowID")
-	if path.exists(workflowID):
-		os.remove(workflowID)
-		copyfile(workflowIDTemp, workflowID)
-		os.remove(workflowIDTemp)
-else: 
-	f = open(workflowID, "a")
-	with open(cromshellDatabase) as tsvfile:
-		tsvreader = csv.reader(tsvfile, delimiter="\t")
-	
-		for line in tsvreader:
-			if line[2] != "RUN_ID":
-				f.write(line[2] + "\n")
-f.close
+# throw an error if cromwell-task-monitor-bq is unavailable
+try:
+    with open("/dev/null", "w") as hide: # pipe output to /dev/null for silence
+        subprocess.Popen("cromwell_metadata_bq", stdout=hide, stderr=hide)
+except OSError:
+    print("cromwell_metadata_bq not found")
 
-#Run command to upload metadata to bq.
-metadataUploadCommand = 'CROMWELL_BASEURL=' + cromwellBaseUrl + ' GCP_PROJECT=' + gcpProject + ' DATASET_ID=cromwell_monitoring ./cromwell_metadata_bq < ' + workflowID 
-print("/n" + "## Upload the cromshell metadata ##")
+# check requested files exist
+if ( not os.path.exists(work_dir) ):
+    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT),
+                            work_dir)
+
+cromshell_database = f"{HOME}/.cromshell/all.workflow.database.tsv"
+if ( not os.path.exists(cromshell_database) ):
+    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT),
+                            cromshell_database)
+
+# Get cromwell server info from cromshell files
+with open(HOME + "/.cromshell/cromwell_server.config", "r") as f:
+    cromwell_base_url = f.readline().rstrip()
+
+###################################
+# Create or Update WorkflowID.txt #
+###################################
+
+workflow_id_file = work_dir + '/workflowIds.txt'
+workflow_id_tmp_file = work_dir + '/workflowIds_temp.txt'
+
+# Overwrite workflow_id_file if it exists, othewise create a new one
+print("\n## Obtaining Wokflow IDs ##")
+if (os.path.exists(workflow_id_file) and
+    0 < len(open(workflow_id_file).readlines())):
+
+    print("Grab last wokflow ID whose metadata was already pushed")
+    last_workflow_id = ""
+    with open(workflow_id_file, "r") as f:
+        for line in f:
+            pass
+        last_workflow_id = line.rstrip()
+    print(f"Last recorded wokflow ID was {last_workflow_id}")
+
+    print(f"Creating new workflowIds.txt in {work_dir} directory using {cromshell_database}")
+    workflow_database = pd.read_csv(cromshell_database, sep='\t')
+    index_match = workflow_database[workflow_database["RUN_ID"] == last_workflow_id]["RUN_ID"].index[0]
+    job_ids = workflow_database["RUN_ID"][ (1 + index_match): ].tolist()
+    with open(workflow_id_tmp_file, "w") as output:
+        output.writelines(id + '\n' for id in job_ids)
+
+    print("Deleting previous workflowIds.txt file and replace with temp workflow_id")
+    if os.path.exists(workflow_id_file):
+        os.remove(workflow_id_file)
+        copyfile(workflow_id_tmp_file, workflow_id_file)
+        os.remove(workflow_id_tmp_file)
+else:
+    db = pd.read_csv(cromshell_database, sep='\t')
+    job_ids = db["RUN_ID"].tolist()
+    with open(workflow_id_file, "a") as output:
+        output.writelines(id + '\n' for id in job_ids)
+
+#########################################
+# Run command to upload metadata to bq. #
+#########################################
+
+my_env = os.environ.copy()
+my_env["CROMWELL_BASEURL"] = cromwell_base_url
+my_env["GCP_PROJECT"] = gcp_project
+my_env["DATASET_ID"] = "cromwell_monitoring"
+
+metadata_upload_command = f"cromwell_metadata_bq < {workflow_id_file}"
+
+print("\n## Upload the cromshell metadata ##")
+print("Env. vars. set to:")
+print(my_env)
 print("Running the following command:")
-print(metadataUploadCommand)
-shell=True is said to be a security risk, may need to change https://stackoverflow.com/questions/18962785/oserror-errno-2-no-such-file-or-directory-while-using-python-subprocess-in-dj
-subprocess.Popen(metadataUploadCommand, cwd=cromwellTaskMonitorBqDirectory, shell=True)
+print(metadata_upload_command)
 
+subprocess.Popen(metadata_upload_command, cwd = work_dir, env = my_env)
