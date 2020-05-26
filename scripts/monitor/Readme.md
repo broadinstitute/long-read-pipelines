@@ -10,4 +10,4 @@ We collect these data from:
 * an output of a monitoring docker that was specified as an option when the job was launched
 * a BigQuery database where the cost information is updated periodically
 
-Currently the first two tasks are documented in "get\_metadata\_and\_runtime\_metrics.md", while cost data retrieval is documented in "get\_cost\_from\_big\_query.md".
+Currently the first two tasks are documented in "get\_metadata\_and\_runtime\_metrics.md", while cost data retrieval is documented in "collecting\_cost\_from\_big\_query.md".

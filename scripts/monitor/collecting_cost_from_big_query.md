@@ -4,7 +4,11 @@ This instruction only works for **successfully** executed runs. The billing data
 completes before running the query, as there is a risk you retrieve only partial results. Double check that costs for 
 all expected tasks are present.
 
-## How to get billed workflow costs:
+## How to get billed workflow costs via an API:
+
+Refer to the help message via `Rscript visualization/summarize_big_query_cromwell_cost.R`
+
+## How to get billed workflow costs manually:
 
 1. Open BigQuery
 2. Copy and paste this into the query box:
@@ -36,9 +40,8 @@ all expected tasks are present.
       UNNEST(labels) AS label
     
     WHERE
-      cost > 0.0
-      AND usage_start_time>='2020-05-08 00:00:00'
-      AND usage_start_time<='2020-05-09 00:00:00'
+      _PARTITIONTIME BETWEEN TIMESTAMP('2020-05-07') AND TIMESTAMP('2020-05-09')
+      AND cost > 0.0
       AND label.key IN ("cromwell-workflow-id",
                         "cromwell-workflow-name",
                         "cromwell-sub-workflow-name",
@@ -52,4 +55,5 @@ all expected tasks are present.
 4. Replace the workflow ID in the last line with your workflow ID (DO NOT MOVE THIS LINE)
 5. Hit RUN QUERY
 6. Download as JSON (if your workflow is unrealistically big, the JSON file may be limited in row count)
-7. Run the script `summarize_big_query_cromwell_cost.R` and provide the appropriate arguments to the function to get summarized costs, broken down by task and SKU.
+7. Run the script `legacy/summarize_big_query_cromwell_cost.R` and provide the appropriate arguments to the function to get summarized costs, broken down by task and SKU.
+
