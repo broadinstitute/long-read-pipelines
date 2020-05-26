@@ -1,8 +1,8 @@
 version 1.0
 
-import "tasks/CollectParentsKmerStats.wdl" as stats
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.6/wdl/tasks/CollectParentsKmerStats.wdl" as stats
 
-import "tasks/AssignChildLongReads.wdl" as asign
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.6/wdl/tasks/AssignChildLongReads.wdl" as asign
 
 # A workflow that performs triobinning of child long reads given parental short reads
 workflow TrioBinChildLongReads {

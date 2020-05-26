@@ -1,9 +1,9 @@
 version 1.0
 
-import "../tasks/GermlineVariantDiscovery.wdl" as Calling
-import "../tasks/Qc.wdl" as QC
-import "../tasks/Utilities.wdl" as Utils
-import "../tasks/BamProcessing.wdl" as BamProcessing
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.6/wdl/tasks/dsde_pipelines_tasks/../tasks/GermlineVariantDiscovery.wdl" as Calling
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.6/wdl/tasks/dsde_pipelines_tasks/../tasks/Qc.wdl" as QC
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.6/wdl/tasks/dsde_pipelines_tasks/../tasks/Utilities.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.6/wdl/tasks/dsde_pipelines_tasks/../tasks/BamProcessing.wdl" as BamProcessing
 
 workflow VariantCalling {
 
