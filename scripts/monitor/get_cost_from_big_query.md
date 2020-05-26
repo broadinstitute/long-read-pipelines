@@ -52,4 +52,4 @@ all expected tasks are present.
 4. Replace the workflow ID in the last line with your workflow ID (DO NOT MOVE THIS LINE)
 5. Hit RUN QUERY
 6. Download as JSON (if your workflow is unrealistically big, the JSON file may be limited in row count)
-7. Source the script `func_big_query_cromwell_cost.R` and provide the appropriate arguments to the function to get summarized costs, broken down by task and SKU.
+7. Run the script `summarize_big_query_cromwell_cost.R` and provide the appropriate arguments to the function to get summarized costs, broken down by task and SKU.
