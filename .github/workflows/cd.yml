@@ -1,0 +1,114 @@
+# Continuous integration and delivery of the master branch.
+
+name: CI/CD
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  master_test:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v2
+
+    # Runs a set of commands using the runners shell
+    - name: Continuous integration test suite
+      run: |
+        cd wdl/; zip -r lr_wdls.zip *; cd ..
+        python3 scripts/ci/run_test_suite.py
+
+    # Send Slack message on workflow failure
+    - name: Slack Failure Notification
+      if: failure()
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_COLOR: '#DF5A49'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
+
+    # Send Slack message on workflow success
+    - name: Slack Success Notification
+      if: success()
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_COLOR: '#50D9C9'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
+
+  deliver:
+    needs: master_test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Read current version
+      id: read_property
+      uses: christian-draeger/read-properties@1.0.0
+      with:
+        path: 'VERSION'
+        property: 'version'
+
+    - name: Current version
+      run: echo ${{ steps.read_property.outputs.value }}
+
+    - name: Bump release version
+      id: bump_version
+      uses: christian-draeger/increment-semantic-version@1.0.1
+      with:
+        current-version: ${{ steps.read_property.outputs.value }}
+        version-fragment: 'bug'
+
+    - name: New version
+      run: echo ${{ steps.bump_version.outputs.next-version }}
+
+    - name: Remove existing version file
+      uses: JesseTG/rm@v1.0.0
+      with:
+        path: 'VERSION'
+
+    - name: Write new version
+      uses: christian-draeger/write-properties@1.0.1
+      with:
+        path: 'VERSION'
+        property: 'version'
+        value: ${{ steps.bump_version.outputs.next-version }}
+
+    - name: Update version badge
+      run: sed -i 's/version-.*-blue/version-${{ steps.bump_version.outputs.next-version }}-blue/' README.md
+
+    - name: Commit changes
+      uses: EndBug/add-and-commit@v4
+      with:
+        author_name: Kiran V Garimella
+        author_email: kiran@broadinstitute.org
+        message: 'Autobump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
+        add: "VERSION README.md"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Make Dockstore-compatible release
+      run: ./scripts/wdl/create_dockstore_release_branch.sh lrp_${{ steps.bump_version.outputs.next-version }}
+
+    - name: Slack Failure Notification
+      if: failure()
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_MESSAGE: 'Failed to release version lrp_${{ steps.bump_version.outputs.next-version }}'
+        SLACK_COLOR: '#DF5A49'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
+
+    - name: Slack Success Notification
+      if: success()
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_MESSAGE: 'Successfully released version lrp_${{ steps.bump_version.outputs.next-version }}'
+        SLACK_COLOR: '#50D9C9'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
