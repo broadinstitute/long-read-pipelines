@@ -1,49 +1,148 @@
 #!/usr/bin/env Rscript
 # "Script to pretty-display cost of runnning a cromwell job retrieved from Big Query"
 
+################################################################################
 library("optparse", warn.conflicts = F, quietly = T)
 
 parser <- OptionParser()
-parser <- add_option(parser, c("-j", "--json"), type='character',
-                     help="JSON file downloaded from BigQuery on costs of a particular job run")
+parser <- add_option(parser, c("--wid"), type='character',
+                     help="workflow id (root level) to query for cost")
+parser <- add_option(parser, c("-b","--startDate"), type='character',
+                     help="Year-Month-Day formatted date when the job started (allow some slack)")
+parser <- add_option(parser, c("-e", "--endDate"), type='character',
+                     help="Year-Month-Day formatted date when the job ended (allow some slack)")
 
-parser <- add_option(parser, c("-p", "--plot"), type='character',
+parser <- add_option(parser, c("--plot"), type='character',
                      help="File name to store the cost plot")
-
-parser <- add_option(parser, c("-w", "--width"), type='double',
+parser <- add_option(parser, c("--width"), type='double',
                      default = 10,
                      help="Width of the plot")
-
 parser <- add_option(parser, c("--height"), type='double',
                      default = 10,
                      help="Height of the plot")
 
-parser <- add_option(parser, c("-m", "--md"), type='character',
+parser <- add_option(parser, c("--json"), type='character',
+                     default = NA,
+                     help="File name to store the BQ result JSON file (optional)")
+parser <- add_option(parser, c("--md"), type='character',
                      default = NA,
                      help="File name to store the detailed cost, formated in markdown (optional)")
+
 ################################################################################
-summarize_cost <- function(big.query.json.file,
-                           plot.pdf,
-                           width, height,
+summarize_cost <- function(workflow.id, start.date, end.date,
+                           plot.pdf, width, height,
                            markdown.table.md = NA) {
-    library("jsonlite", warn.conflicts = F, quietly = T)
+
+    sql = get_query_sql(workflow.id, start.date, end.date)
+    cost.df = run_query(sql)
+    visualize(cost.df, plot.pdf, width, height, markdown.table.md)
+}
+
+################################################################################
+# generate query SQL
+get_query_sql <- function(workflow.id, start.date, end.date) {
+
+    time.restriction = sprintf("_PARTITIONTIME BETWEEN TIMESTAMP(\'%s\') AND TIMESTAMP(\'%s\')",
+                               start.date, end.date)
+
+    wid.restriction = sprintf("label.value LIKE \"%%%s%%\"",
+                              workflow.id)
+
+    query = sprintf(
+        "
+        SELECT
+          (SELECT value FROM UNNEST(labels) WHERE key = 'cromwell-workflow-id') AS workflow_id,
+          (SELECT value FROM UNNEST(labels) WHERE key = 'cromwell-workflow-name') AS workflow_name,
+          (SELECT value FROM UNNEST(labels) WHERE key = 'cromwell-sub-workflow-name') AS sub_workflow_id,
+          (SELECT value FROM UNNEST(labels) WHERE key = 'wdl-task-name') AS task_name,
+          (SELECT value FROM UNNEST(labels) WHERE key = 'wdl-call-alias') AS task_alias,
+          (SELECT value FROM UNNEST(labels) WHERE key = 'goog-gke-node') AS node,
+
+          sku.description AS sku_description,
+          cost,
+          cost_type,
+
+          usage_start_time,
+          usage_end_time,
+          (SELECT value FROM UNNEST(system_labels) WHERE key = 'compute.googleapis.com/cores') AS cores,
+          (SELECT value FROM UNNEST(system_labels) WHERE key = 'compute.googleapis.com/memory') AS memory,
+          usage
+
+        FROM
+          `broad-dsde-methods.Methods_billing_dump.gcp_billing_export_v1_009C7D_923007_219A6F`
+
+        LEFT JOIN
+        UNNEST(labels) AS label
+
+        WHERE
+          %s
+          AND cost > 0.0
+          AND label.key IN (\"cromwell-workflow-id\",
+                            \"cromwell-workflow-name\",
+                            \"cromwell-sub-workflow-name\",
+                            \"wdl-task-name\",
+                            \"wdl-call-alias\",
+                            \"goog-gke-node\")
+          AND %s
+        ",
+        time.restriction,
+        wid.restriction
+    )
+    query
+}
+
+################################################################################
+# run the query, and slighly preprocess the returned data (data.frame)
+run_query <- function(sql.query,
+                      project.id = "broad-dsde-methods") {
+
+    library("bigrquery", warn.conflicts = F, quietly = T)
+
+    # TODO: this download approach is appropriate only for small tables
+    # use API call to directly parse the result
+    my.bq.table = bq_project_query(project.id, sql.query)
+    df = bq_table_download(my.bq.table)
+
+    df$"sku_description" = gsub(" running in Americas", "", df$"sku_description")
+
+    df$"cost" = as.numeric(df$"cost")
+    df = df[order(df$"cost", decreasing = T), ]
+
+    df
+
+    ## old solution that relies on forking out to a system command
+    # temp.sql = tempfile(pattern = "bq.query", tmpdir = tempdir(), fileext = "sql")
+    # if (is.null(query.json.file) || is.na(query.json.file)) {
+    #     store.json = tempfile(pattern = "bq.result", tmpdir = tempdir(), fileext = "json")
+    # } else {
+    #     store.json = query.json.file
+    # }
+
+
+    # store.json
+    # cmd = sprintf("bq --format=prettyjson query --nouse_legacy_sql \\
+    #                   --flagfile=%s \\
+    #                   > %s",
+    #               temp.sql,
+    #               store.json)
+    # system(cmd)
+}
+
+################################################################################
+visualize <- function(cost.df,
+                      plot.pdf,
+                      width, height,
+                      markdown.table.md = NA) {
+
     library("knitr", warn.conflicts = F, quietly = T)
     library("dplyr", warn.conflicts = F, quietly = T)
     library("ggplot2", warn.conflicts = F, quietly = T)
-    library("gridExtra", warn.conflicts = F, quietly = T)
 
-    json = fromJSON(big.query.json.file)
-
-    json$"sku_description" = gsub(" running in Americas", "", json$"sku_description")
-
-    json$"cost" = as.numeric(json$"cost")
-    json = json[order(json$"cost", decreasing = T), ]
-
-    total.cost = sum(json$"cost")
+    total.cost = sum(cost.df$"cost")
 
     # cut down, but other info maybe useful later
-    presentation = json[,c('cost', 'sku_description')]
-    names.arr = apply(json, 1,
+    presentation = cost.df[,c('cost', 'sku_description')]
+    names.arr = apply(cost.df, 1,
                       function(e) {
                           if (is.na(e[['task_alias']])) e[['task_name']] else e[['task_alias']]
                       })
@@ -135,8 +234,12 @@ summarize_cost <- function(big.query.json.file,
     ggsave(plot.pdf, plot = q, width = width, height = height)
 }
 ################################################################################
-parsed.args = parse_args(parser)
-# print(parsed.args)
-summarize_cost(parsed.args$"json",
-               parsed.args$"plot", parsed.args$"width", parsed.args$"height",
-               parsed.args$"md")
+
+if (0 == length(commandArgs(trailingOnly=TRUE))) {
+    parsed.args = parse_args(parser, args = c("--help"))
+} else {
+    parsed.args = parse_args(parser)
+    summarize_cost(parsed.args$"wid", parsed.args$"startDate", parsed.args$"endDate",
+                   parsed.args$"plot", parsed.args$"width", parsed.args$"height",
+                   parsed.args$"md")
+}
