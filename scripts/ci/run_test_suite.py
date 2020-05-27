@@ -88,7 +88,7 @@ def run_curl_cmd(curl_cmd, shell=False):
 
 def submit_job(wdl, input_json, options, dependencies):
     curl_cmd = f'curl -s -F workflowSource=@{wdl} -F workflowInputs=@{input_json} -F workflowOptions=@{options} -F workflowDependencies=@{dependencies} {server_url}/api/workflows/v1'
-    return (curl_cmd)
+    return run_curl_cmd(curl_cmd)
 
 
 def get_job_status(id):
