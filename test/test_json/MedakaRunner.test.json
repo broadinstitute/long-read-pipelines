@@ -1,6 +1,6 @@
 {
   "MedakaRunner.medaka_model": "r941_prom_high_g360",
-  "MedakaRunner.draft_assembly": "gs://broad-dsp-lrma-ci-resources/test_data/medaka/input_data/draft_assembly.fasta",
-  "MedakaRunner.outdir": "gs://broad-dsp-lrma-ci/test_data/medaka/output_data",
-  "MedakaRunner.basecalled_reads": "gs://broad-dsp-lrma-ci-resources/test_data/medaka/input_data/ecoli_nanopore_reads.fasta"
+  "MedakaRunner.draft_assembly": "gs://broad-dsp-lrma-ci-resources/test_data/MedakaRunner.test/input_data/draft_assembly.fasta",
+  "MedakaRunner.outdir": "gs://broad-dsp-lrma-ci/test_data/MedakaRunner.test/output_data",
+  "MedakaRunner.basecalled_reads": "gs://broad-dsp-lrma-ci-resources/test_data/MedakaRunner.test/input_data/ecoli_nanopore_reads.fasta"
 }
