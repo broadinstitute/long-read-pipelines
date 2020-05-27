@@ -261,7 +261,6 @@ for input_json in input_jsons:
         else:
             j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
 
-            print(j)
             print_info(f'{test}: {j["id"]}, {j["status"]}')
             jobs[test] = j
             times[test] = {'start': datetime.datetime.now(), 'stop': None}
