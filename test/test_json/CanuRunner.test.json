@@ -6,4 +6,4 @@
   "CanuRunner.genome_size": "4.8m",
   "CanuRunner.out_dir": "gs://broad-dsp-lrma-ci/test_data/CanuRunner.test/output_data",
   "CanuRunner.reads": "gs://broad-dsp-lrma-ci-resources/test_data/CanuRunner.test/input_data/ecoli_nanopore_reads.fasta"
-}s
+}
