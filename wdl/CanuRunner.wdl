@@ -29,6 +29,6 @@ workflow CanuRunner {
     call FF.FinalizeToDir as FinalizeAssembly {
         input:
             files = [CorrectTrimAssemble.canu_contigs_fasta],
-            outdir = out_dir + "/assembly"
+            outdir = out_dir
     }
 }

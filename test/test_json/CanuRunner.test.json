@@ -4,6 +4,6 @@
   "CanuRunner.assemble_correctedErrorRate": 0.15,
   "CanuRunner.output_file_prefix": "ecoli",
   "CanuRunner.genome_size": "4.8m",
-  "CanuRunner.out_dir": "gs://broad-dsp-lrma-ci-resources/test_data/canu/output_data",
+  "CanuRunner.out_dir": "gs://broad-dsp-lrma-ci/test_data/canu/output_data",
   "CanuRunner.reads": "gs://broad-dsp-lrma-ci-resources/test_data/canu/input_data/ecoli_nanopore_reads.fasta"
 }

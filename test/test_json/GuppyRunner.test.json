@@ -1,5 +1,5 @@
 {
-  "GuppyRunner.gcs_output_dir": "gs://broad-dsp-lrma-ci-resources/test_data/guppy/output_data",
+  "GuppyRunner.gcs_output_dir": "gs://broad-dsp-lrma-ci/test_data/guppy/output_data",
   "GuppyRunner.gcs_fast5_dir": "gs://broad-dsp-lrma-ci-resources/test_data/guppy/input_data"
 }
 
