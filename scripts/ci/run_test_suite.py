@@ -186,8 +186,8 @@ def compare_contents(exp_path, act_path):
         storage_client.download_blob_to_file(act_path, act_obj)
 
     if ext == '.bam':
-        subprocess.run(f'samtools view {exp} > exp.tmp', shell=True)
-        subprocess.run(f'samtools view {act} > act.tmp', shell=True)
+        subprocess.run(f'samtools view {exp} | sort > exp.tmp', shell=True)
+        subprocess.run(f'samtools view {act} | sort > act.tmp', shell=True)
     elif ext == '.gz':
         subprocess.run(f'zcat {exp} | grep -v -e fileDate > exp.tmp', shell=True)
         subprocess.run(f'zcat {act} | grep -v -e fileDate > act.tmp', shell=True)
