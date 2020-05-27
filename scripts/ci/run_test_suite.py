@@ -88,7 +88,7 @@ def run_curl_cmd(curl_cmd, shell=False):
 
 def submit_job(wdl, input_json, options, dependencies):
     curl_cmd = f'curl -s -F workflowSource=@{wdl} -F workflowInputs=@{input_json} -F workflowOptions=@{options} -F workflowDependencies=@{dependencies} {server_url}/api/workflows/v1'
-    return run_curl_cmd(curl_cmd)
+    return (curl_cmd)
 
 
 def get_job_status(id):
@@ -261,6 +261,7 @@ for input_json in input_jsons:
         else:
             j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
 
+            print(j)
             print_info(f'{test}: {j["id"]}, {j["status"]}')
             jobs[test] = j
             times[test] = {'start': datetime.datetime.now(), 'stop': None}
