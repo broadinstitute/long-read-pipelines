@@ -6,6 +6,8 @@ import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/Finalize.wdl" as FF
+import "tasks/CallSVs.wdl" as SV
+import "tasks/CallSmallVariants.wdl" as SMV
 
 workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
     input {
@@ -109,6 +111,26 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
                 type           = "barcode",
                 label          = BC,
                 gcs_output_dir = outdir + "/" + DIR[0]
+        }
+
+        call SV.CallSVs as CallSVs {
+            input:
+                bam               = AlignBarcode.aligned_bam,
+                bai               = AlignBarcode.aligned_bai,
+
+                ref_fasta         = ref_fasta,
+                ref_fasta_fai     = ref_fasta_fai,
+                tandem_repeat_bed = tandem_repeat_bed
+        }
+
+        call SMV.CallSmallVariants as CallSmallVariants {
+            input:
+                bam               = AlignBarcode.aligned_bam,
+                bai               = AlignBarcode.aligned_bai,
+
+                ref_fasta         = ref_fasta,
+                ref_fasta_fai     = ref_fasta_fai,
+                ref_dict          = ref_dict
         }
     }
 
