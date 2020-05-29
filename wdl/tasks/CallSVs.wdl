@@ -12,26 +12,26 @@ workflow CallSVs {
         File tandem_repeat_bed
     }
 
-#    call PBSVDiscover {
-#        input:
-#            bam = bam,
-#            bai = bai,
-#            ref_fasta = ref_fasta,
-#            ref_fasta_fai = ref_fasta_fai,
-#            tandem_repeat_bed = tandem_repeat_bed,
-#            prefix = basename(bam, ".bam")
-#    }
-#
-#    call PBSVCall {
-#        input:
-#            bam = bam,
-#            bai = bai,
-#            ref_fasta = ref_fasta,
-#            ref_fasta_fai = ref_fasta_fai,
-#            svsig = PBSVDiscover.svsig,
-#            prefix = basename(bam, ".bam")
-#    }
-#
+    call PBSVDiscover {
+        input:
+            bam = bam,
+            bai = bai,
+            ref_fasta = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            tandem_repeat_bed = tandem_repeat_bed,
+            prefix = basename(bam, ".bam")
+    }
+
+    call PBSVCall {
+        input:
+            bam = bam,
+            bai = bai,
+            ref_fasta = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            svsig = PBSVDiscover.svsig,
+            prefix = basename(bam, ".bam")
+    }
+
 #    call PostprocessCalls as PostprocessPBSVCalls { input: input_vcf = PBSVCall.vcf }
 
     call Sniffles {
@@ -55,7 +55,7 @@ workflow CallSVs {
 #    call PostprocessCalls as PostprocessSVIMCalls { input: input_vcf = SVIM.vcf }
 
     output {
-#        File pbsv_vcf = PBSVCall.vcf
+        File pbsv_vcf = PBSVCall.vcf
         File sniffles_vcf = Sniffles.vcf
         File svim_vcf = SVIM.vcf
 

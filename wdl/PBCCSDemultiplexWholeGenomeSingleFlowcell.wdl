@@ -91,12 +91,6 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
                 prefix     = BCID + ".aligned"
         }
 
-        call FF.FinalizeToDir as FinalizeDemuxAlignedReads {
-            input:
-                files  = [ AlignBarcode.aligned_bam, AlignBarcode.aligned_bai ],
-                outdir = outdir + "/" + DIR[0] + "/alignments/" + BC
-        }
-
         call AM.AlignedMetrics as PerBarcodeMetrics {
             input:
                 aligned_bam    = AlignBarcode.aligned_bam,
@@ -112,6 +106,8 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
                 label          = BC,
                 gcs_output_dir = outdir + "/" + DIR[0]
         }
+
+        call Utils.BamToBed { input: bam = AlignBarcode.aligned_bam, prefix = "~{SM[0]}.~{ID[0]}.~{BC}" }
 
         call SV.CallSVs as CallSVs {
             input:
@@ -131,6 +127,24 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
                 ref_fasta         = ref_fasta,
                 ref_fasta_fai     = ref_fasta_fai,
                 ref_dict          = ref_dict
+        }
+
+        call FF.FinalizeToDir as FinalizeDemuxAlignedReads {
+            input:
+                files  = [ AlignBarcode.aligned_bam, AlignBarcode.aligned_bai, BamToBed.bed ],
+                outdir = outdir + "/" + DIR[0] + "/alignments/" + BC
+        }
+
+        call FF.FinalizeToDir as FinalizeSVs {
+            input:
+                files = [ CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
+                outdir = outdir + "/" + DIR[0] + "/variants/" + BC
+        }
+
+        call FF.FinalizeToDir as FinalizeSmallVariants {
+            input:
+                files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
+                outdir = outdir + "/" + DIR[0] + "/variants/" + BC
         }
     }
 
