@@ -144,8 +144,8 @@ def find_outputs(input_json, exp_bucket='broad-dsp-lrma-ci-resources', act_bucke
     b = os.path.basename(input_json).replace(".json", "")
     outs = {}
 
-    blobs = list_blobs(exp_bucket, f'test_data/{b}/output_data')
-    for blob in blobs:
+    expected_blobs = list_blobs(exp_bucket, f'test_data/{b}/output_data')
+    for blob in expected_blobs:
         bn = os.path.basename(blob.name)
 
         outs[bn] = {'exp': blob.md5_hash, 'exp_path': f'gs://{exp_bucket}/{blob.name}', 'act': None, 'act_path': None}
@@ -161,12 +161,12 @@ def find_outputs(input_json, exp_bucket='broad-dsp-lrma-ci-resources', act_bucke
                     for blob in blobs:
                         bn = os.path.basename(blob.name)
 
+                        if bn not in outs:
+                            print_warning(f"Found an actual output file {bn} that is not in the expected directory")
+                            continue
+
                         outs[bn]['act'] = blob.md5_hash
                         outs[bn]['act_path'] = f'gs://{act_bucket}/{blob.name}'
-
-                        if bn not in outs:
-                            outs[bn]['exp'] = None
-                            outs[bn]['exp_path'] = None
 
     return outs
 
