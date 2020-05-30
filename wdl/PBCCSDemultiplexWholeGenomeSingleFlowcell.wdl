@@ -107,7 +107,7 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
                 gcs_output_dir = outdir + "/" + DIR[0]
         }
 
-        call Utils.BamToBed { input: bam = AlignBarcode.aligned_bam, prefix = "~{SM[0]}.~{ID[0]}.~{BC}" }
+        call Utils.BamToBed { input: bam = AlignBarcode.aligned_bam, prefix = BCID }
 
         call SV.CallSVs as CallSVs {
             input:
@@ -137,7 +137,7 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
 
         call FF.FinalizeToDir as FinalizeSVs {
             input:
-                files = [ CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
+                files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
                 outdir = outdir + "/" + DIR[0] + "/variants/" + BC
         }
 
