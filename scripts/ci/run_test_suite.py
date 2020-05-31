@@ -187,24 +187,25 @@ def compare_contents(exp_path, act_path):
 
     if ext == '.fastq' or exp_path.endswith('.fastq.gz') or exp_path.endswith('.fq.gz') or ext == '.fasta' or exp_path.endswith('.fasta.gz') or exp_path.endswith('.fa.gz'):
         r = subprocess.run(f'mash dist -t {exp} {act} | grep -v "query" | awk "{{ exit $2 }}"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    elif ext == '.bam':
-        subprocess.run(f'samtools view {exp} | sort > exp.tmp', shell=True)
-        subprocess.run(f'samtools view {act} | sort > act.tmp', shell=True)
-        r = subprocess.run(f'diff exp.tmp act.tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    elif ext == '.gz':
-        subprocess.run(f'zcat {exp} | grep -v -e fileDate > exp.tmp', shell=True)
-        subprocess.run(f'zcat {act} | grep -v -e fileDate > act.tmp', shell=True)
-        r = subprocess.run(f'diff exp.tmp act.tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    elif ext == '.pdf':
-        subprocess.run(f'pdftotext {exp} > exp.tmp', shell=True)
-        subprocess.run(f'pdftotext {act} > act.tmp', shell=True)
-        r = subprocess.run(f'diff exp.tmp act.tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     else:
-        print_warning(f'Unknown file extension {ext} for file {exp_path} and {act_path}')
-        return 1
+        if ext == '.bam':
+            subprocess.run(f'samtools view {exp} | sort > exp.tmp', shell=True)
+            subprocess.run(f'samtools view {act} | sort > act.tmp', shell=True)
+        elif ext == '.gz':
+            subprocess.run(f'zcat {exp} | grep -v -e fileDate > exp.tmp', shell=True)
+            subprocess.run(f'zcat {act} | grep -v -e fileDate > act.tmp', shell=True)
+        elif ext == '.pdf':
+            subprocess.run(f'pdftotext {exp} > exp.tmp', shell=True)
+            subprocess.run(f'pdftotext {act} > act.tmp', shell=True)
+        else:
+            print_warning(f'Unknown file extension {ext} for file {exp_path} and {act_path}')
+            return 1
 
-    os.remove('exp.tmp')
-    os.remove('act.tmp')
+        r = subprocess.run(f'diff exp.tmp act.tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+        os.remove('exp.tmp')
+        os.remove('act.tmp')
+
     os.remove(exp)
     os.remove(act)
 
