@@ -1,7 +1,7 @@
 version 1.0
 
-import "tasks/Medaka.wdl" as Medaka
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.15/wdl/tasks/Medaka.wdl" as Medaka
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.15/wdl/tasks/Finalize.wdl" as FF
 
 workflow MedakaRunner {
     input {
