@@ -185,23 +185,27 @@ def compare_contents(exp_path, act_path):
     with open(act, "wb") as act_obj:
         storage_client.download_blob_to_file(act_path, act_obj)
 
-    if ext == '.bam':
-        subprocess.run(f'samtools view {exp} | sort > exp.tmp', shell=True)
-        subprocess.run(f'samtools view {act} | sort > act.tmp', shell=True)
-    elif ext == '.gz':
-        subprocess.run(f'zcat {exp} | grep -v -e fileDate > exp.tmp', shell=True)
-        subprocess.run(f'zcat {act} | grep -v -e fileDate > act.tmp', shell=True)
-    elif ext == '.pdf':
-        subprocess.run(f'pdftotext {exp} > exp.tmp', shell=True)
-        subprocess.run(f'pdftotext {act} > act.tmp', shell=True)
+    if ext == '.fastq' or exp_path.endswith('.fastq.gz') or exp_path.endswith('.fq.gz') or ext == '.fasta' or exp_path.endswith('.fasta.gz') or exp_path.endswith('.fa.gz'):
+        r = subprocess.run(f'mash dist -t {exp} {act} 2>/dev/null | grep -v "query" | awk "{{ exit $2 }}"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     else:
-        print_warning(f'Unknown file extension {ext} for file {exp_path} and {act_path}')
-        return 1
+        if ext == '.bam':
+            subprocess.run(f'samtools view {exp} | sort > exp.tmp', shell=True)
+            subprocess.run(f'samtools view {act} | sort > act.tmp', shell=True)
+        elif ext == '.gz':
+            subprocess.run(f'zcat {exp} | grep -v -e fileDate > exp.tmp', shell=True)
+            subprocess.run(f'zcat {act} | grep -v -e fileDate > act.tmp', shell=True)
+        elif ext == '.pdf':
+            subprocess.run(f'pdftotext {exp} > exp.tmp', shell=True)
+            subprocess.run(f'pdftotext {act} > act.tmp', shell=True)
+        else:
+            print_warning(f'Unknown file extension {ext} for file {exp_path} and {act_path}')
+            return 1
 
-    r = subprocess.run(f'diff exp.tmp act.tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        r = subprocess.run(f'diff exp.tmp act.tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
-    os.remove('exp.tmp')
-    os.remove('act.tmp')
+        os.remove('exp.tmp')
+        os.remove('act.tmp')
+
     os.remove(exp)
     os.remove(act)
 
@@ -217,12 +221,10 @@ def compare_contents(exp_path, act_path):
     return 1
 
 
-def compare_outputs(test, outs):
-    print_info(f'{test}')
-
+def compare_outputs(outs):
     num_mismatch = 0
     for b in outs:
-        if not b.endswith(".png") and outs[b]['exp'] != outs[b]['act']:
+        if not b.endswith(".png") and not b.endswith("sequencing_summary.txt") and outs[b]['exp'] != outs[b]['act']:
             if outs[b]['act_path'] is None or compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
                 print_info(f'- {b} versions are different:')
                 print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
@@ -320,11 +322,12 @@ if len(jobs) > 0:
         if jobs[test]['status'] == 'Succeeded':
             mdpath = upload_metadata(test, jobs[test]["id"])
 
+            print_info("")
             print_success(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
-            print_success(f"{test}: Workflow metadata uploaded to {mdpath}")
+            print_success(f"{test}: Metadata uploaded to {mdpath}")
 
             outs = find_outputs(input[test])
-            num_mismatch = compare_outputs(test, outs)
+            num_mismatch = compare_outputs(outs)
 
             if num_mismatch == 0:
                 print_success(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
@@ -335,9 +338,10 @@ if len(jobs) > 0:
         else:
             mdpath = upload_metadata(test, jobs[test]["id"])
 
+            print_info("")
             print_failure(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
-            print_failure(f"{test}: Workflow metadata uploaded to {mdpath}")
-            print_failure(f"{test}: Workflow failure messages:\n{json.dumps(get_job_failure_metadata(jobs[test]['id']), sort_keys=True, indent=4)}")
+            print_failure(f"{test}: Metadata uploaded to {mdpath}")
+            print_failure(f"{test}: Failure messages:\n{json.dumps(get_job_failure_metadata(jobs[test]['id']), sort_keys=True, indent=4)}")
 
             ret = 1
 
