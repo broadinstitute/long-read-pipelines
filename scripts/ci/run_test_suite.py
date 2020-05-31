@@ -186,7 +186,7 @@ def compare_contents(exp_path, act_path):
         storage_client.download_blob_to_file(act_path, act_obj)
 
     if ext == '.fastq' or exp_path.endswith('.fastq.gz') or exp_path.endswith('.fq.gz') or ext == '.fasta' or exp_path.endswith('.fasta.gz') or exp_path.endswith('.fa.gz'):
-        r = subprocess.run(f'mash dist -t {exp} {act} | grep -v "query" | awk "{{ exit $2 }}"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        r = subprocess.run(f'mash dist -t {exp} {act} 2>/dev/null | grep -v "query" | awk "{{ exit $2 }}"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     else:
         if ext == '.bam':
             subprocess.run(f'samtools view {exp} | sort > exp.tmp', shell=True)
@@ -226,7 +226,7 @@ def compare_outputs(test, outs):
 
     num_mismatch = 0
     for b in outs:
-        if not b.endswith(".png") and outs[b]['exp'] != outs[b]['act']:
+        if not b.endswith(".png") and not b.endswith(".sequencing_summary.txt") and outs[b]['exp'] != outs[b]['act']:
             if outs[b]['act_path'] is None or compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
                 print_info(f'- {b} versions are different:')
                 print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
