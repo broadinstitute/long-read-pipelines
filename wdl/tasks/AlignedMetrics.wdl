@@ -734,4 +734,3 @@ task BamToBed {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
-

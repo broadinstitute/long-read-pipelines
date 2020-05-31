@@ -97,7 +97,7 @@ task NanopolishIndex {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -160,7 +160,7 @@ task NanopolishVariants {
         # time it takes to localize the fast5 files
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -202,7 +202,7 @@ task MergeVcfs {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-nanopolish:0.3.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-nanopolish:0.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
