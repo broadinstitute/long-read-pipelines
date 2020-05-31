@@ -221,9 +221,7 @@ def compare_contents(exp_path, act_path):
     return 1
 
 
-def compare_outputs(test, outs):
-    print_info(f'{test}')
-
+def compare_outputs(outs):
     num_mismatch = 0
     for b in outs:
         if not b.endswith(".png") and not b.endswith("sequencing_summary.txt") and outs[b]['exp'] != outs[b]['act']:
@@ -324,11 +322,12 @@ if len(jobs) > 0:
         if jobs[test]['status'] == 'Succeeded':
             mdpath = upload_metadata(test, jobs[test]["id"])
 
+            print_info("")
             print_success(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
-            print_success(f"{test}: Workflow metadata uploaded to {mdpath}")
+            print_success(f"{test}: Metadata uploaded to {mdpath}")
 
             outs = find_outputs(input[test])
-            num_mismatch = compare_outputs(test, outs)
+            num_mismatch = compare_outputs(outs)
 
             if num_mismatch == 0:
                 print_success(f"{test}: {len(outs)} files checked, {num_mismatch} failures")
@@ -339,9 +338,10 @@ if len(jobs) > 0:
         else:
             mdpath = upload_metadata(test, jobs[test]["id"])
 
+            print_info("")
             print_failure(f"{test}: Workflow {jobs[test]['status']} ({diff.total_seconds()}s -- {str(diff)})")
-            print_failure(f"{test}: Workflow metadata uploaded to {mdpath}")
-            print_failure(f"{test}: Workflow failure messages:\n{json.dumps(get_job_failure_metadata(jobs[test]['id']), sort_keys=True, indent=4)}")
+            print_failure(f"{test}: Metadata uploaded to {mdpath}")
+            print_failure(f"{test}: Failure messages:\n{json.dumps(get_job_failure_metadata(jobs[test]['id']), sort_keys=True, indent=4)}")
 
             ret = 1
 
