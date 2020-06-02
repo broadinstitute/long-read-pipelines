@@ -1,4 +1,4 @@
-[![Generic badge](https://img.shields.io/badge/version-2.1.15-blue.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/version-2.1.16-blue.svg)](https://shields.io/)
 ![CI](https://github.com/broadinstitute/long-read-pipelines/workflows/CI/badge.svg?branch=master&event=push)
 
 # Long read pipelines
