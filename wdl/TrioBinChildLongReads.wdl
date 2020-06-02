@@ -1,8 +1,8 @@
 version 1.0
 
-import "CollectParentsKmerStats.wdl" as stats
+import "tasks/CollectParentsKmerStats.wdl" as stats
 
-import "AssignChildLongReads.wdl" as asign
+import "tasks/AssignChildLongReads.wdl" as asign
 
 # A workflow that performs triobinning of child long reads given parental short reads
 workflow TrioBinChildLongReads {
@@ -10,6 +10,7 @@ workflow TrioBinChildLongReads {
 
         String workdir_name
 
+        String genome_size
         Int? kmerSize
 
         String father_short_reads_bucket
@@ -34,6 +35,7 @@ workflow TrioBinChildLongReads {
 
         input:
             workdir_name = workdir_name,
+            genome_size = genome_size,
             kmerSize = kmerSize,
             father_short_reads_bucket = father_short_reads_bucket,
             mother_short_reads_bucket = mother_short_reads_bucket,

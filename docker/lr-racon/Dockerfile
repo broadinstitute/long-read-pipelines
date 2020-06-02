@@ -17,5 +17,5 @@ RUN apt-get -qqy update && \
         .. && \
     make && make install
 
-ADD polish.racon.sh  polish.racon.wrapper.sh /tmp/racon/build/bin/
-WORKDIR /tmp/racon/build/bin/
+RUN curl -L https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x64-linux.tar.bz2 | tar -jxvf -  && \
+    mv minimap2-2.17_x64-linux/minimap2 /usr/local/bin

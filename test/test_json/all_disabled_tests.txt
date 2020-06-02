@@ -1,0 +1,2 @@
+test/test_json/DownloadFromSRA.test.json
+test/test_json/NanopolishRunner.test.json
