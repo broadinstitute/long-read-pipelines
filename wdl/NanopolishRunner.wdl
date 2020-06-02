@@ -1,7 +1,7 @@
 version 1.0
 
-import "tasks/Nanopolish.wdl" as Nanopolish
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.16/wdl/tasks/Nanopolish.wdl" as Nanopolish
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.16/wdl/tasks/Finalize.wdl" as FF
 
 workflow NanopolishRunner {
     input {
