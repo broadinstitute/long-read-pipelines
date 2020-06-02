@@ -105,13 +105,19 @@ task CCS {
     command <<<
         set -euxo pipefail
 
+        # Move the file from the UUID share to the current folder.
+        # This will remove the UUID from the file path and allow call caching to work.
+        infile=$( basename ~{subreads} )
+        mv ~{subreads} $infile
+
+        # Run CCS:
         ccs --min-passes ~{min_passes} \
             --min-snr ~{min_snr} \
             --min-length ~{min_length} \
             --max-length ~{max_length} \
             --min-rq ~{min_rq} \
             --num-threads ~{cpus} \
-            ~{subreads} ccs_unmapped.bam
+            $infile ccs_unmapped.bam
     >>>
 
     output {
