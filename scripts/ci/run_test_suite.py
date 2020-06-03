@@ -60,7 +60,7 @@ def list_disabled_tests():
 
 
 def prepare_dependencies():
-    subprocess.Popen("cd wdl; rm lr_wdls.zip; zip -r lr_wdls.zip *; cd ..", shell=True)
+    subprocess.Popen("cd wdl; rm lr_wdls.zip; zip -r lr_wdls.zip *; cd ..", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
 
 def remove_old_final_outputs(input_json):
@@ -96,7 +96,7 @@ def run_curl_cmd(curl_cmd):
         out = subprocess.Popen(curl_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         stdout, stderr = out.communicate()
 
-        if stdout is not None and not stdout:
+        if stdout is None or not stdout:
             time.sleep(30)
             exit(1)
         else:
