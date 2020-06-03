@@ -1,7 +1,7 @@
 version 1.0
 
-import "Structs.wdl"
-import "Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.17/wdl/tasks/Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.17/wdl/tasks/Finalize.wdl" as FF
 
 workflow UnalignedMetrics {
     input {
