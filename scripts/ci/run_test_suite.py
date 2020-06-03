@@ -73,7 +73,7 @@ def remove_old_final_outputs(input_json):
     num_removed = 0
 
     for blob in blobs:
-        #blob.delete()
+        blob.delete()
         num_removed += 1
 
     return num_removed
