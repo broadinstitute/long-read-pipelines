@@ -15,6 +15,7 @@ for line in sys.stdin:
     sam_flag = int(tokens[1])
     ref_seq = tokens[2]
     start_locus = tokens[3]
+    mapq = tokens[4]
     primary_cigar = tokens[5]
     seq = tokens[9]
 
@@ -38,4 +39,4 @@ for line in sys.stdin:
     end_locus = int(start_locus) + get_cigar_length(primary_cigar)
 
     alignment_direction = '+' if is_positive_direction_alignment(sam_flag) else '-'
-    print(f'{read_id}\t{alignment_direction}\t{primary_cigar}\t{edit_distance}\t{ref_seq}\t{start_locus}-{end_locus}\t{";".join(supplementary_alignments)}')
+    print(f'{read_id}\t{alignment_direction}\t{primary_cigar}\t{edit_distance}\t{ref_seq}\t{start_locus}-{end_locus}\t{mapq}\t{len(seq)}\t{";".join(supplementary_alignments)}')
