@@ -182,7 +182,7 @@ task Cat {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*ceil(size(files, "GB"))
+    Int disk_size = 1 + 3*ceil(size(files, "GB"))
 
     command <<<
         set -euxo pipefail

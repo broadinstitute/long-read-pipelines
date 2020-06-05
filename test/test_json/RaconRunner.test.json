@@ -1,0 +1,6 @@
+{
+  "RaconRunner.n_rounds": "5",
+  "RaconRunner.outdir": "gs://broad-dsp-lrma-ci/test_data/RaconRunner.test/output_data",
+  "RaconRunner.reads": "gs://broad-dsp-lrma-ci-resources/test_data/RaconRunner.test/input_data/ecoli_nanopore_reads.fasta",
+  "RaconRunner.draft_assembly": "gs://broad-dsp-lrma-ci-resources/test_data/RaconRunner.test/input_data/draft_assembly.fasta"
+}

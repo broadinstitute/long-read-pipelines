@@ -308,7 +308,7 @@ task CountFastqRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(fastq, "GiB"))
+    Int disk_size = 1 + ceil(2 * size(fastq, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -354,10 +354,12 @@ task CountFastaRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(fasta, "GiB"))
+    Int disk_size = 1 + 2*ceil(size(fasta, "GiB"))
 
     command <<<
         grep -c '>' ~{fasta}
+
+        exit 0
     >>>
 
     output {
@@ -393,7 +395,7 @@ task CountBamRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(bam, "GiB"))
+    Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
 
     command <<<
         samtools view ~{bam} | wc -l
@@ -436,7 +438,7 @@ task GrepCountBamRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(bam, "GiB"))
+    Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
     String arg = if invert then "-vc" else "-c"
 
     command <<<
@@ -484,7 +486,7 @@ task GrepCountUniqueBamRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(bam, "GiB"))
+    Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
     String arg = if invert then "-v" else ""
 
     command <<<
@@ -568,7 +570,7 @@ task BamToTable {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 1 + 2*ceil(size(bam, "GB"))
 
     command <<<
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`

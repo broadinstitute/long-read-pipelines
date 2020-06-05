@@ -15,7 +15,7 @@ task Minimap2 {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10*ceil(size(reads, "GB"))
+    Int disk_size = 1 + 10*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
 
     command <<<
         set -euxo pipefail
