@@ -5,15 +5,15 @@ import "tasks/Finalize.wdl" as FF
 
 workflow PacasusRunner {
     input {
-        File input_fasta
-        Int parallel_instances
+        File reads
+        Int chunk_size_mb
         String output_dir
     }
 
     call Pacasus.Process {
         input:
-            input_fasta = input_fasta,
-            parallel_instances = parallel_instances
+            reads = reads,
+            chunk_size_mb = chunk_size_mb
     }
 
     call FF.FinalizeToDir {

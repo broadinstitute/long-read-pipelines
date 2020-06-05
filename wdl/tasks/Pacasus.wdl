@@ -4,14 +4,26 @@ import "Structs.wdl"
 
 workflow Process {
     input {
-        File input_fasta
-        Int parallel_instances
+        File reads
+        Int chunk_size_mb
+    }
+
+    call ConvertReads {
+        input:
+            reads = reads,
+            output_format = "fasta"
+    }
+
+    call SplitReadsByLength {
+        input:
+            reads_fasta = ConvertReads.converted_reads,
+            length = 55000
     }
 
     call SplitReads {
         input:
-            combined_read_fasta = input_fasta,
-            parallel_instances = parallel_instances
+            reads_fasta = SplitReadsByLength.shorter_reads,
+            chunk_size_mb = chunk_size_mb
     }
 
     scatter (split_read_fasta in SplitReads.split_reads_fasta) {
@@ -23,7 +35,7 @@ workflow Process {
 
     call MergeFasta {
         input:
-            processed_fastas = RemovePalindromes.processed_fasta
+            processed_fastas = flatten([RemovePalindromes.processed_fasta, [SplitReadsByLength.longer_reads]])
     }
 
     output {
@@ -31,41 +43,110 @@ workflow Process {
     }
 }
 
-task SplitReads {
+task ConvertReads {
     input {
-        File combined_read_fasta
-        Int parallel_instances
+        File reads
+        String output_format
     }
 
-    Int disk_size = 3 * ceil(size(combined_read_fasta, "GB"))
+    Int disk_size = 3 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        seqkit split2 ~{combined_read_fasta} -p ~{parallel_instances} -O splits
+        filename=~{reads}
+        input_filetype=${filename##*.}
+        output_filetype=~{output_format}
+
+        if [[ ($input_filetype == "fastq" || $input_filetype == "fq") && $output_filetype == "fasta" ]]; then
+            echo "Converting $input_filetype to $output_filetype"
+            seqkit fq2fa $filename -o tmp.out
+        elif [ $input_filetype == $output_filetype ]; then
+            echo "Input filetype is the output filetype"
+            mv $filename tmp.out
+        else
+            echo "ConvertReads does not know how to convert $input_filetype to $output_filetype"
+            exit 1
+        fi
+
+        mv tmp.out converted_reads.$output_filetype
+    >>>
+
+    output {
+        File converted_reads = "converted_reads.~{output_format}"
+    }
+
+    runtime {
+        cpu:                    4
+        memory:                 "8 GiB"
+        disks:                  "local-disk " +  disk_size + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            2
+        maxRetries:             0
+        docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
+    }
+}
+
+task SplitReadsByLength {
+    input {
+        File reads_fasta
+        Int length
+    }
+
+    Int disk_size = 3 * ceil(size(reads_fasta, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        seqkit seq ~{reads_fasta} --max-len $(expr ~{length} + 1) > shorter_reads.fasta
+        seqkit seq ~{reads_fasta} --min-len ~{length} > longer_reads.fasta
+    >>>
+
+    output {
+        File shorter_reads = "shorter_reads.fasta"
+        File longer_reads = "longer_reads.fasta"
+    }
+
+    runtime {
+        cpu:                    4
+        memory:                 "8 GiB"
+        disks:                  "local-disk " +  disk_size + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            2
+        maxRetries:             0
+        docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
+    }
+}
+
+task SplitReads {
+    input {
+        File reads_fasta
+        Int chunk_size_mb
+    }
+
+    Int mem_size = 2 * cd
+    ceil(size(reads_fasta, "GB"))
+    Int disk_size = 4 * ceil(size(reads_fasta, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        reads_size_mb=$(ls -s --b=M ~{reads_fasta} | cut -d'M' -f1)
+        n_chunks=$(expr $reads_size_mb / ~{chunk_size_mb})
+        cat ~{reads_fasta} | seqkit split -p $n_chunks -O splits
     >>>
 
     output {
         Array[File] split_reads_fasta = glob("splits/*")
     }
 
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             4,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        0
-    }
-
     runtime {
-        cpu:                    default_attr.cpu_cores
-        memory:                 default_attr.mem_gb + " GiB"
-        disks: "local-disk " +  default_attr.disk_gb + " HDD"
-        bootDiskSizeGb:         default_attr.boot_disk_gb
-        preemptible:            default_attr.preemptible_tries
-        maxRetries:             default_attr.max_retries
+        cpu:                    4
+        memory:                 mem_size + " GiB"
+        disks:                  "local-disk " +  disk_size + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            0
+        maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
     }
 }
@@ -81,7 +162,7 @@ task RemovePalindromes {
     command <<<
         set -euxo pipefail
 
-        python /pacasus/pacasus.py --device_type=GPU --platform_name=NVIDIA --framework=cuda --minimum_read_length=0 ~{read_fasta} -o ~{read_basename}.processed.fasta
+        python /pacasus/pacasus.py --device_type=GPU --platform_name=NVIDIA --framework=cuda ~{read_fasta} -o ~{read_basename}.processed.fasta
     >>>
 
     output {
@@ -130,23 +211,13 @@ task MergeFasta {
        File processed_fasta = "pacasus_processed.fasta"
     }
 
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             4,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        0
-    }
-
     runtime {
-        cpu:                    default_attr.cpu_cores
-        memory:                 default_attr.mem_gb + " GiB"
-        disks: "local-disk " +  default_attr.disk_gb + " HDD"
-        bootDiskSizeGb:         default_attr.boot_disk_gb
-        preemptible:            default_attr.preemptible_tries
-        maxRetries:             default_attr.max_retries
+        cpu:                    4
+        memory:                 "8 GiB"
+        disks:                  "local-disk " +  disk_size + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            2
+        maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
     }
 }
