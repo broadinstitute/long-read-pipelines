@@ -1,8 +1,5 @@
-import sys
-import statistics
-import plotille
+import sys, math, re
 import matplotlib.pyplot as plt
-import re
 
 print_plots = len(sys.argv) > 2 and sys.argv[2] == "--plot"
 f = open(sys.argv[1])
@@ -41,9 +38,12 @@ misaligned_bases_regex = r"(\d+)([DIHX])"
 misaligned_bp_sum = 0
 total_soft_clips_length = 0
 total_reads_length = 0
+read_lengths = []
+primary_alignment_lengths = []
 per_read_nucleotide_identity = []
 
 unaligned_count = 0
+unaligned_bp_sum = 0
 
 for min_clipping_len in MIN_CLIPPING_LENGTHS:
     no_clipping[min_clipping_len] = 0
@@ -91,16 +91,19 @@ for line in f.readlines():
 
     if cigar == "*" and ref_seq == "*":
         unaligned_count = unaligned_count + 1
+        unaligned_bp_sum = unaligned_bp_sum + int(primary_seq_len)
         continue
 
     num_primary_alignments = num_primary_alignments + 1
     total_reads_length = total_reads_length + int(primary_seq_len)
+    read_lengths.append(int(primary_seq_len))
 
     left_clip_match = re.search('^(\d+)S', cigar)
     left_clip_len = 0 if left_clip_match is None else int(left_clip_match.groups()[0])
     right_clip_match = re.search('(\d+)S$', cigar)
     right_clip_len = 0 if right_clip_match is None else int(right_clip_match.groups()[0])
     total_soft_clips_length = total_soft_clips_length + left_clip_len + right_clip_len
+    primary_alignment_lengths.append(int(primary_seq_len) - left_clip_len - right_clip_len)
 
     for MIN_CLIPPING_LENGTH in MIN_CLIPPING_LENGTHS:
         if left_clip_len < MIN_CLIPPING_LENGTH and right_clip_len < MIN_CLIPPING_LENGTH:
@@ -162,88 +165,50 @@ for line in f.readlines():
             aligns_far_away.append(chimera_dir == primary_direction)
 
 
-
-print(f"Average # of chimeras out of alignments with at least one: {total_chimeras / num_has_chimeras}")
-
-print("")
-print(f"Total number of Chimeras: {total_chimeras}")
-print(f"Total Chimeras overlapping onto primary alignment: {len(chimeric_overlap_percentages)} ({len(chimeric_overlap_percentages) * 100 / total_chimeras} %)")
-print(f"\tAverage % of overlap. (How much of the chimeric alignment is in the primary): {statistics.mean(chimeric_overlap_percentages)} %")
-if print_plots:
-    print(plotille.histogram(chimeric_overlap_percentages))
-
-print(f"Total Chimeras with no overlap: {len(chimeric_gap_distance) + num_chimeras_aligned_to_different_ref_seq} ({(len(chimeric_gap_distance) + num_chimeras_aligned_to_different_ref_seq) * 100 / total_chimeras} %)")
-print(f"\tTotal Chimeras aligning to same chromosome: {len(chimeric_gap_distance)}")
-print(f"\tAverage gap distance between chimeras aligned to same chromosome: {statistics.mean(get_chimeric_gaps_by_direction(['+', '-']))}")
-
-if print_plots:
-    positive_plot = plt.figure(1)
-    plt.title("Positive Alignments")
-    plt.xlim(0, 5000)
-    plt.xlabel("Gap Distance (bp)")
-    plt.ylabel("Count")
-    plt.hist(get_chimeric_gaps_by_direction(['+']), bins="auto")
-
-    negative_plot = plt.figure(2)
-    plt.title("Reversed Alignments")
-    plt.xlim(0, 5000)
-    plt.xlabel("Gap Distance (bp)")
-    plt.ylabel("Count")
-    plt.hist(get_chimeric_gaps_by_direction(['-']), bins="auto")
-
-    all_plot = plt.figure(3)
-    plt.title("All Alignments")
-    plt.xlim(0, 5000)
-    plt.xlabel("Gap Distance (bp)")
-    plt.ylabel("Count")
-    all_gaps = get_chimeric_gaps_by_direction(['-', '+'])
-    plt.hist(all_gaps, bins=range(min(all_gaps), max(all_gaps) + 100, 100))
-
-    plt.show()
-
-print(f"\tTotal Chimeras aligning to different chromosome: {num_chimeras_aligned_to_different_ref_seq}")
-
 def percent_string(num, denom):
     return f"{format(num * 100 / denom, '.2f')}% ({num})"
 
 print("\n\n\n")
 print(f"Number of reads: {num_primary_alignments + unaligned_count}")
-print(f"Aligned reads: {percent_string(num_primary_alignments, num_primary_alignments + unaligned_count)} ({num_primary_alignments})")
-print(f"Unaligned reads: {percent_string(unaligned_count, unaligned_count + num_primary_alignments)} ({unaligned_count})")
+print(f"Aligned reads: {percent_string(num_primary_alignments, num_primary_alignments + unaligned_count)}")
+print(f"Unaligned reads: {percent_string(unaligned_count, unaligned_count + num_primary_alignments)}")
+print(f"Average Read length (including unaligned): {math.floor((total_reads_length + unaligned_bp_sum)/(num_primary_alignments + unaligned_count))}")
+print(f"Average Read length (aligned only): {math.floor(total_reads_length / num_primary_alignments)}")
+print(f"Average Primary alignment length (no soft clips): {math.floor((total_reads_length - total_soft_clips_length) / num_primary_alignments)}")
 
 print("Clipping Summary")
 print(f"Clipping Threshold\tNo Clipping\t\tOne Sided Clip\t\tTwo Sided Clips")
 for MIN_CLIPPING_LENGTH in MIN_CLIPPING_LENGTHS:
     print(f"{MIN_CLIPPING_LENGTH}"
-          f"\t\t\t{percent_string(no_clipping[MIN_CLIPPING_LENGTH], num_primary_alignments)} ({no_clipping[MIN_CLIPPING_LENGTH]})"
-          f"\t\t{percent_string(one_end_clipping[MIN_CLIPPING_LENGTH], num_primary_alignments)} ({one_end_clipping[MIN_CLIPPING_LENGTH]}) "
-          f"\t\t{percent_string(two_end_clipping[MIN_CLIPPING_LENGTH], num_primary_alignments)} ({two_end_clipping[MIN_CLIPPING_LENGTH]})")
+          f"\t\t\t{percent_string(no_clipping[MIN_CLIPPING_LENGTH], num_primary_alignments)}"
+          f"\t\t{percent_string(one_end_clipping[MIN_CLIPPING_LENGTH], num_primary_alignments)}"
+          f"\t\t{percent_string(two_end_clipping[MIN_CLIPPING_LENGTH], num_primary_alignments)}")
 
 print("\n")
 
 print("Supplementary Reads Summary")
-print(f"Reads with supplementary alignments: {percent_string(num_has_chimeras, num_primary_alignments)} ({num_has_chimeras})")
-print(f"Aligns back to primary: {percent_string(len(aligns_back_to_primary), total_chimeras)} ({len(aligns_back_to_primary)})")
+print(f"Reads with supplementary alignments: {percent_string(num_has_chimeras, num_primary_alignments)}")
+print(f"Aligns back to primary: {percent_string(len(aligns_back_to_primary), total_chimeras)}")
 print(f"   in same direction: "
-      f"{percent_string(aligns_back_to_primary.count(True), len(aligns_back_to_primary))} ({aligns_back_to_primary.count(True)})")
+      f"{percent_string(aligns_back_to_primary.count(True), len(aligns_back_to_primary))}")
 print(f"   in reverse direction: "
-      f"{percent_string(aligns_back_to_primary.count(False), len(aligns_back_to_primary))} ({aligns_back_to_primary.count(False)})")
+      f"{percent_string(aligns_back_to_primary.count(False), len(aligns_back_to_primary))}")
 print("")
 
 
-print(f"Aligns close by: {percent_string(len(aligns_close_by), total_chimeras)} ({len(aligns_close_by)})")
+print(f"Aligns close by: {percent_string(len(aligns_close_by), total_chimeras)}")
 print(f"   in same direction: "
-      f"{percent_string(aligns_close_by.count(True), len(aligns_close_by))} ({aligns_close_by.count(True)})")
+      f"{percent_string(aligns_close_by.count(True), len(aligns_close_by))}")
 print(f"   in reverse direction: "
-      f"{percent_string(aligns_close_by.count(False), len(aligns_close_by))} ({aligns_close_by.count(False)})")
+      f"{percent_string(aligns_close_by.count(False), len(aligns_close_by))}")
 print("")
 
 
-print(f"Aligns far away: {percent_string(len(aligns_far_away), total_chimeras)} ({len(aligns_far_away)})")
+print(f"Aligns far away: {percent_string(len(aligns_far_away), total_chimeras)}")
 print(f"   in same direction: "
-      f"{percent_string(aligns_far_away.count(True), len(aligns_far_away))} ({aligns_far_away.count(True)})")
+      f"{percent_string(aligns_far_away.count(True), len(aligns_far_away))}")
 print(f"   in reverse direction: "
-      f"{percent_string(aligns_far_away.count(False), len(aligns_far_away))} ({aligns_far_away.count(False)})")
+      f"{percent_string(aligns_far_away.count(False), len(aligns_far_away))}")
 print("")
 
 print("\n")
@@ -256,3 +221,12 @@ print(f">85%: {percent_string(sum(p >= 85 for p in per_read_nucleotide_identity)
 print(f">90%: {percent_string(sum(p >= 90 for p in per_read_nucleotide_identity), num_primary_alignments)}")
 print(f">95%: {percent_string(sum(p >= 95 for p in per_read_nucleotide_identity), num_primary_alignments)}")
 print("* edit distance to ref / read length")
+
+plt.hist(read_lengths, 50)
+plt.title("Read Lengths")
+plt.show()
+
+#fig, axs = plt.subplots(2)
+#axs[0].hist(read_lengths, 50)
+#axs[1].hist(primary_alignment_lengths, 50)
+#plt.show()
