@@ -124,8 +124,7 @@ task SplitReads {
         Int chunk_size_mb
     }
 
-    Int mem_size = 2 * cd
-    ceil(size(reads_fasta, "GB"))
+    Int mem_size = 2 * ceil(size(reads_fasta, "GB"))
     Int disk_size = 4 * ceil(size(reads_fasta, "GB"))
 
     command <<<
