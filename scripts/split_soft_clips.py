@@ -1,42 +1,43 @@
 import re
 import sys
 
-#The read length of a CIGAR is equal to the sum of all numbers excluding soft clips
-def get_cigar_length(s):
-    return sum(map(int, filter(None, re.sub(r'\D', " ", re.sub(r'\d+S', "", s)).split(" "))))
-
-def is_positive_direction_alignment(sam_flag):
-    return not (sam_flag & (1 << (5 - 1)))
+CLIPPING_THRESHOLD = 100
 
 for line in sys.stdin:
     tokens = line.split("\t")
-  
     read_id = tokens[0]
     sam_flag = int(tokens[1])
     ref_seq = tokens[2]
     start_locus = tokens[3]
     mapq = tokens[4]
-    primary_cigar = tokens[5]
+    cigar = tokens[5]
     seq = tokens[9]
+    quality = tokens[10]
 
-    supplementary_alignments = []
-    for i in range(11, len(tokens)):
-        # Assumption - is there only 1 SA flag per primary alignment?
-        if tokens[i].startswith("SA:Z:"):
-            for st in filter(None, tokens[i][5:].split(";")):
-                s_tokens = st.split(",")
-                supp_ref = s_tokens[0]
-                direction = s_tokens[2]
-                locus = s_tokens[1]
-                cigar = s_tokens[3]
-                mapq = s_tokens[4]
+    left_clip_match = re.search('^(\d+)S', cigar)
+    left_clip_len = 0 if left_clip_match is None else int(left_clip_match.groups()[0])
+    right_clip_match = re.search('(\d+)S$', cigar)
+    right_clip_len = 0 if right_clip_match is None else int(right_clip_match.groups()[0])
 
-                # Assumption - is the end of the locus always the length of the sequence + the start of the locus?
-                supplementary_alignments.append(f'{supp_ref},{direction},{locus}-{int(locus) + int(get_cigar_length(cigar))},{mapq}')
-        elif tokens[i].startswith("NM:i"):
-            edit_distance = tokens[i].split(":")[2]
+    seq_len = len(seq)
+    new_primary_start = 0
+    new_primary_end = seq_len
 
-    end_locus = int(start_locus) + get_cigar_length(primary_cigar)
+    if left_clip_len >= CLIPPING_THRESHOLD:
+        print(f"@{read_id}_l\n"
+              f"{seq[:left_clip_len]}\n"
+              f"+\n"
+              f"{quality[:left_clip_len]}")
+        new_primary_start = left_clip_len
 
-    alignment_direction = '+' if is_positive_direction_alignment(sam_flag) else '-'
-    print(f'{read_id}\t{alignment_direction}\t{primary_cigar}\t{edit_distance}\t{ref_seq}\t{start_locus}-{end_locus}\t{mapq}\t{len(seq)}\t{";".join(supplementary_alignments)}')
+    if right_clip_len >= CLIPPING_THRESHOLD:
+        print(f"@{read_id}_r\n"
+              f"{seq[seq_len - right_clip_len:]}\n"
+              f"+\n"
+              f"{quality[seq_len - right_clip_len:]}")
+        new_primary_end = seq_len - right_clip_len
+
+    print(f"@{read_id}\n"
+          f"{seq[new_primary_start:new_primary_end]}\n"
+          f"+\n"
+          f"{quality[new_primary_start:new_primary_end]}")
