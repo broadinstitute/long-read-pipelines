@@ -40,11 +40,11 @@ workflow CallSVs {
 
     output {
         File pbsv_vcf = PBSV.vcf
-        File pbsv_tbi = PBSV.tbi
+#        File pbsv_tbi = PBSV.tbi
         File sniffles_vcf = Sniffles.vcf
-        File sniffles_tbi = Sniffles.tbi
+#        File sniffles_tbi = Sniffles.tbi
         File svim_vcf = SVIM.vcf
-        File svim_tbi = SVIM.tbi
+#        File svim_tbi = SVIM.tbi
     }
 }
 
@@ -62,7 +62,7 @@ task PBSV {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(size(bam, "GiB")) + ceil(size(ref_fasta, "GiB")) + 20
+    Int disk_size = 10*ceil(size([bam, bai, ref_fasta, ref_fasta_fai, tandem_repeat_bed], "GB"))
 
     # purely experiential
     Int memory = if (ceil(size(bam, "GiB")) > 20) then 96 else 64
@@ -74,13 +74,14 @@ task PBSV {
         pbsv discover --tandem-repeats ~{tandem_repeat_bed} ~{bam} ~{prefix}.svsig.gz
         pbsv call --num-threads ~{cpus} ~{ref_fasta} ~{prefix}.svsig.gz ~{prefix}.pbsv.vcf
 
-        bcftools sort ~{prefix}.pbsv.vcf | bgzip > ~{prefix}.pbsv.vcf.gz
-        tabix -p vcf ~{prefix}.pbsv.vcf.gz
+#        bcftools sort ~{prefix}.pbsv.vcf | bgzip > ~{prefix}.pbsv.vcf.gz
+#        tabix -p vcf ~{prefix}.pbsv.vcf.gz
     >>>
 
     output {
-        File vcf = "~{prefix}.pbsv.vcf.gz"
-        File tbi = "~{prefix}.pbsv.vcf.gz.tbi"
+        File vcf = "~{prefix}.pbsv.vcf"
+#        File vcf = "~{prefix}.pbsv.vcf.gz"
+#        File tbi = "~{prefix}.pbsv.vcf.gz.tbi"
     }
 
     #########################
@@ -89,7 +90,7 @@ task PBSV {
         mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.2"
     }
@@ -132,13 +133,14 @@ task Sniffles {
 
         cat ~{prefix}.sniffles.filtered.vcf | sed 's/FORMAT\t\/cromwell_root.*.bam/FORMAT\t'"${SM}"'/' | grep -v -e '^chrM' -e '##fileDate' > ~{prefix}.sniffles.vcf
 
-        bcftools sort ~{prefix}.sniffles.vcf | bgzip > ~{prefix}.sniffles.vcf.gz
-        tabix -p vcf ~{prefix}.sniffles.vcf.gz
+#        bcftools sort ~{prefix}.sniffles.vcf | bgzip > ~{prefix}.sniffles.vcf.gz
+#        tabix -p vcf ~{prefix}.sniffles.vcf.gz
     >>>
 
     output {
-        File vcf = "~{prefix}.sniffles.vcf.gz"
-        File tbi = "~{prefix}.sniffles.vcf.gz.tbi"
+        File vcf = "~{prefix}.sniffles.vcf"
+#        File vcf = "~{prefix}.sniffles.vcf.gz"
+#        File tbi = "~{prefix}.sniffles.vcf.gz.tbi"
     }
 
     #########################
@@ -187,17 +189,18 @@ task SVIM {
 
         grep -v -e '##fileDate' -e '^chrM' ~{prefix}_svim_files/variants.vcf > ~{prefix}.svim.vcf
 
-        bcftools sort ~{prefix}.svim.vcf | bgzip > ~{prefix}.svim.vcf.gz
-        tabix -p vcf ~{prefix}.svim.vcf.gz
+#        bcftools sort ~{prefix}.svim.vcf | bgzip > ~{prefix}.svim.vcf.gz
+#        tabix -p vcf ~{prefix}.svim.vcf.gz
 
-        find . -type f -exec ls -lah {} \;
+        #find . -type f -exec ls -lah {} \;
         #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
         #touch ~{prefix}.svim.vcf.gz.tbi
     >>>
 
     output {
-        File vcf = "~{prefix}.svim.vcf.gz"
-        File tbi = "~{prefix}.svim.vcf.gz.tbi"
+        File vcf = "~{prefix}.svim.vcf"
+#        File vcf = "~{prefix}.svim.vcf.gz"
+#        File tbi = "~{prefix}.svim.vcf.gz.tbi"
     }
 
     #########################

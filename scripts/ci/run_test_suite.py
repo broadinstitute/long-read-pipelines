@@ -247,7 +247,7 @@ def compare_contents(exp_path, act_path):
 def compare_outputs(outs):
     num_mismatch = 0
     for b in outs:
-        if not b.endswith(".png") and not b.endswith("sequencing_summary.txt") and outs[b]['exp'] != outs[b]['act']:
+        if not b.endswith(".png") and not b.endswith("sequencing_summary.txt") and not b.endswith(".tbi") and outs[b]['exp'] != outs[b]['act']:
             if outs[b]['act_path'] is None or compare_contents(outs[b]['exp_path'], outs[b]['act_path']) != 0:
                 print_info(f'- {b} versions are different:')
                 print_failure(f"    exp: ({outs[b]['exp']}) {outs[b]['exp_path']}")
