@@ -145,9 +145,7 @@ workflow ONTWholeGenomeSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeSVs {
         input:
-            files = [ CallSVs.pbsv_vcf,       CallSVs.pbsv_tbi,
-                      CallSVs.sniffles_vcf,   CallSVs.sniffles_tbi,
-                      CallSVs.svim_vcf,       CallSVs.svim_tbi ],
+            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
             outdir = outdir + "/" + DIR[0] + "/variants"
     }
 
