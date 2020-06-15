@@ -51,7 +51,7 @@ task Correct {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 30 * ceil(size(reads, "GB"))
+    Int disk_size = 50 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail

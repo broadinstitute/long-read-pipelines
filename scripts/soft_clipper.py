@@ -1,7 +1,13 @@
 import re
+import argparse
 import sys
 
-CLIPPING_THRESHOLD = 100
+parser = argparse.ArgumentParser()
+parser.add_argument('--clipping-threshold', dest='clipping_threshold', type=int,
+                    help='Minimum soft clip length for read splitting')
+args = parser.parse_args()
+
+CLIPPING_THRESHOLD = args.clipping_threshold
 
 for line in sys.stdin:
     tokens = line.split("\t")
