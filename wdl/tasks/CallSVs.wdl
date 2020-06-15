@@ -40,11 +40,8 @@ workflow CallSVs {
 
     output {
         File pbsv_vcf = PBSV.vcf
-#        File pbsv_tbi = PBSV.tbi
         File sniffles_vcf = Sniffles.vcf
-#        File sniffles_tbi = Sniffles.tbi
         File svim_vcf = SVIM.vcf
-#        File svim_tbi = SVIM.tbi
     }
 }
 
@@ -72,16 +69,13 @@ task PBSV {
         set -euxo pipefail
 
         pbsv discover --tandem-repeats ~{tandem_repeat_bed} ~{bam} ~{prefix}.svsig.gz
-        pbsv call --num-threads ~{cpus} ~{ref_fasta} ~{prefix}.svsig.gz ~{prefix}.pbsv.vcf
+        pbsv call --num-threads ~{cpus} ~{ref_fasta} ~{prefix}.svsig.gz ~{prefix}.pbsv.pre.vcf
 
-#        bcftools sort ~{prefix}.pbsv.vcf | bgzip > ~{prefix}.pbsv.vcf.gz
-#        tabix -p vcf ~{prefix}.pbsv.vcf.gz
+        cat ~{prefix}.pbsv.pre.vcf | grep -v -e '^chrM' -e '##fileDate' > ~{prefix}.pbsv.vcf
     >>>
 
     output {
         File vcf = "~{prefix}.pbsv.vcf"
-#        File vcf = "~{prefix}.pbsv.vcf.gz"
-#        File tbi = "~{prefix}.pbsv.vcf.gz.tbi"
     }
 
     #########################
@@ -132,15 +126,10 @@ task Sniffles {
         sniffles-filter -v ~{prefix}.sniffles.pre.vcf -m ~{min_read_support} -t DEL INS DUP --strand-support 0.001 -l 50 --min-af 0.10 --max-length 400000 -o ~{prefix}.sniffles.filtered.vcf
 
         cat ~{prefix}.sniffles.filtered.vcf | sed 's/FORMAT\t\/cromwell_root.*.bam/FORMAT\t'"${SM}"'/' | grep -v -e '^chrM' -e '##fileDate' > ~{prefix}.sniffles.vcf
-
-#        bcftools sort ~{prefix}.sniffles.vcf | bgzip > ~{prefix}.sniffles.vcf.gz
-#        tabix -p vcf ~{prefix}.sniffles.vcf.gz
     >>>
 
     output {
         File vcf = "~{prefix}.sniffles.vcf"
-#        File vcf = "~{prefix}.sniffles.vcf.gz"
-#        File tbi = "~{prefix}.sniffles.vcf.gz.tbi"
     }
 
     #########################
@@ -188,19 +177,10 @@ task SVIM {
         svim alignment --sample ${SM} --insertion_sequences --read_names ~{prefix}_svim_files ~{bam} ~{ref_fasta}
 
         grep -v -e '##fileDate' -e '^chrM' ~{prefix}_svim_files/variants.vcf > ~{prefix}.svim.vcf
-
-#        bcftools sort ~{prefix}.svim.vcf | bgzip > ~{prefix}.svim.vcf.gz
-#        tabix -p vcf ~{prefix}.svim.vcf.gz
-
-        #find . -type f -exec ls -lah {} \;
-        #tar -zcf ~{prefix}.svim.tar.gz ~{prefix}_svim_files
-        #touch ~{prefix}.svim.vcf.gz.tbi
     >>>
 
     output {
         File vcf = "~{prefix}.svim.vcf"
-#        File vcf = "~{prefix}.svim.vcf.gz"
-#        File tbi = "~{prefix}.svim.vcf.gz.tbi"
     }
 
     #########################
