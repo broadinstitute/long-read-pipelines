@@ -600,3 +600,47 @@ task BamToTable {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task ConvertReads {
+    input {
+        File reads
+        String output_format
+    }
+
+    Int disk_size = 3 * ceil(size(reads, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        filename=~{reads}
+        input_filetype=${filename##*.}
+        output_filetype=~{output_format}
+
+        if [[ ($input_filetype == "fastq" || $input_filetype == "fq") && $output_filetype == "fasta" ]]; then
+            echo "Converting $input_filetype to $output_filetype"
+            seqkit fq2fa $filename -o tmp.out
+        elif [ $input_filetype == $output_filetype ]; then
+            echo "Input filetype is the output filetype"
+            mv $filename tmp.out
+        else
+            echo "ConvertReads does not know how to convert $input_filetype to $output_filetype"
+            exit 1
+        fi
+
+        mv tmp.out converted_reads.$output_filetype
+    >>>
+
+    output {
+        File converted_reads = "converted_reads.~{output_format}"
+    }
+
+    runtime {
+        cpu:                    4
+        memory:                 "8 GiB"
+        disks:                  "local-disk " +  disk_size + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            2
+        maxRetries:             0
+        docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
+    }
+}
