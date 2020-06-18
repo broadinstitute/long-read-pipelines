@@ -1,4 +1,5 @@
 import re
+import sys
 import argparse
 import pysam
 
@@ -41,11 +42,26 @@ if using_ref:
 
         soft_clips[alignment.query_name] = (left_clip_len, right_clip_len)
 
+for line in sys.stdin:
+    tokens = line.split("\t")
+
+    read_id = tokens[0]
+    sam_flag = int(tokens[1])
+    cigar = tokens[5]
+    seq = tokens[9]
+    qual = tokens[10]
+    is_reverse = sam_flag & (1 << 5) != 0 #Is this right?
+
+
 for alignment in pysam.AlignmentFile("-", "r"):
     if not is_primary(alignment.flag):
         continue
 
+    read_id = alignment.query_name
     cigar = alignment.cigarstring
+    seq = alignment.seq
+    is_reverse = alignment.is_reverse
+    qual = alignment.qual
 
     left_clip_len = 0
     right_clip_len = 0
@@ -55,20 +71,20 @@ for alignment in pysam.AlignmentFile("-", "r"):
         right_clip_match = re.search('(\d+)S$', cigar)
         right_clip_len = 0 if right_clip_match is None else int(right_clip_match.groups()[0])
 
-    seq_len = len(alignment.seq)
+    seq_len = len(seq)
     new_primary_start = 0
     new_primary_end = seq_len
 
-    if alignment.query_name not in soft_clips and alignment.query_name in ref_unmapped_reads:
+    if read_id not in soft_clips and read_id in ref_unmapped_reads:
         ref_left_clip_len = 0
         ref_right_clip_len = 0
     else:
-        if alignment.is_reverse:
-            ref_left_clip_len = soft_clips[alignment.query_name][1]
-            ref_right_clip_len = soft_clips[alignment.query_name][0]
+        if is_reverse:
+            ref_left_clip_len = soft_clips[read_id][1]
+            ref_right_clip_len = soft_clips[read_id][0]
         else:
-            ref_left_clip_len = soft_clips[alignment.query_name][0]
-            ref_right_clip_len = soft_clips[alignment.query_name][1]
+            ref_left_clip_len = soft_clips[read_id][0]
+            ref_right_clip_len = soft_clips[read_id][1]
 
     if left_clip_len >= CLIPPING_THRESHOLD:
         if using_ref and abs(ref_left_clip_len - left_clip_len) >= CLIPPING_THRESHOLD:
@@ -79,10 +95,10 @@ for alignment in pysam.AlignmentFile("-", "r"):
                 #print("Skipping where ref says to clip more")
                 pass
         else:
-            print(f"@{alignment.query_name}_l\n"
-                  f"{alignment.seq[:left_clip_len]}\n"
+            print(f"@{read_id}_l\n"
+                  f"{seq[:left_clip_len]}\n"
                   f"+\n"
-                  f"{alignment.qual[:left_clip_len]}")
+                  f"{qual[:left_clip_len]}")
             new_primary_start = left_clip_len
 
     if right_clip_len >= CLIPPING_THRESHOLD:
@@ -94,14 +110,14 @@ for alignment in pysam.AlignmentFile("-", "r"):
                 #print("Skipping where ref says to clip more")
                 pass
         else:
-            print(f"@{alignment.query_name}_r\n"
-                  f"{alignment.seq[seq_len - right_clip_len:]}\n"
+            print(f"@{read_id}_r\n"
+                  f"{seq[seq_len - right_clip_len:]}\n"
                   f"+\n"
-                  f"{alignment.qual[seq_len - right_clip_len:]}")
+                  f"{qual[seq_len - right_clip_len:]}")
             new_primary_end = seq_len - right_clip_len
 
-    print(f"@{alignment.query_name}\n"
-          f"{alignment.seq[new_primary_start:new_primary_end]}\n"
+    print(f"@{read_id}\n"
+          f"{seq[new_primary_start:new_primary_end]}\n"
           f"+\n"
-          f"{alignment.qual[new_primary_start:new_primary_end]}")
+          f"{qual[new_primary_start:new_primary_end]}")
 
