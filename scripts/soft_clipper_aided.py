@@ -10,13 +10,10 @@ parser.add_argument('--ref', dest='ref', type=str,
                     help='Assisting reference')
 parser.add_argument('--ref-diff-threshold', dest='ref_diff_threshold', type=int,
                     help='Minimum clipping distance from reference alignment to ignore clipping')
-parser.add_argument('--keep-all-ref-conflicts', dest='keep_all_ref_conflicts', action='store_true',
-                    help='Still soft clips regions that differ from the aided reference IF the reference wants to cut a greater region')
 args = parser.parse_args()
 
 CLIPPING_THRESHOLD = args.clipping_threshold
 REF_DIFF_THRESHOLD = args.ref_diff_threshold
-keep_all_ref_conflicts = args.keep_all_ref_conflicts
 using_ref = args.ref is not None
 
 def is_primary(flag):
@@ -83,7 +80,7 @@ for line in sys.stdin:
                 ref_right_clip_len = soft_clips[read_id][1]
 
     if left_clip_len >= CLIPPING_THRESHOLD:
-        if using_ref and abs(ref_left_clip_len - left_clip_len) >= REF_DIFF_THRESHOLD and (ref_left_clip_len < left_clip_len or keep_all_ref_conflicts):
+        if using_ref and abs(ref_left_clip_len - left_clip_len) >= REF_DIFF_THRESHOLD:
             #print(f"Skipping due to conflict with aid alignment. Reference wants to cut less")
             pass
         else:
@@ -94,7 +91,7 @@ for line in sys.stdin:
             new_primary_start = left_clip_len
 
     if right_clip_len >= CLIPPING_THRESHOLD:
-        if using_ref and abs(ref_right_clip_len - right_clip_len) >= REF_DIFF_THRESHOLD and (ref_right_clip_len < right_clip_len or keep_all_ref_conflicts):
+        if using_ref and abs(ref_right_clip_len - right_clip_len) >= REF_DIFF_THRESHOLD:
             #print(f"Skipping due to conflict with aid alignment. Reference wants to cut less")
             pass
         else:
