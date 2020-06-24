@@ -47,16 +47,10 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
         String DIR = SM + "." + ID
         String RG  = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        call SU.IndexUnalignedBam { input: input_bam = subread_bam }
-        call SU.MakeReadNameManifests { input: input_bri = IndexUnalignedBam.bri, N = num_shards }
+        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 200000 }
 
-        scatter (manifest in MakeReadNameManifests.manifest_chunks) {
-            call CCS {
-                input:
-                    input_bam          = subread_bam,
-                    input_bri          = IndexUnalignedBam.bri,
-                    read_name_manifest = manifest,
-            }
+        scatter (subreads in ShardLongReads.unmapped_shards) {
+            call PB.CCS { input: subreads = subreads }
         }
 
         call AR.MergeBams as MergeChunks { input: bams = CCS.consensus }
@@ -76,6 +70,8 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
     call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
     call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
     call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
+    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
+    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
 
     scatter (demux_bam in Demultiplex.demux_bams) {
         String BC   = sub(basename(demux_bam, ".bam"), "~{SM[0]}.~{ID[0]}.", "")
@@ -186,6 +182,18 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
         input:
             files = DetailedDemuxReportPDF.report_files,
             outdir = outdir + "/" + DIR[0] + "/figures/lima/detailed/pdf"
+    }
+
+    call FF.FinalizeToDir as FinalizeLimaPerBarcodeDetailedPNG {
+        input:
+            files = PerBarcodeDetailedDemuxReportPNG.report_files,
+            outdir = outdir + "/" + DIR[0] + "/figures/lima/per_barcode/png"
+    }
+
+    call FF.FinalizeToDir as FinalizeLimaPerBarcodeDetailedPDF {
+        input:
+            files = PerBarcodeDetailedDemuxReportPDF.report_files,
+            outdir = outdir + "/" + DIR[0] + "/figures/lima/per_barcode/pdf"
     }
 }
 

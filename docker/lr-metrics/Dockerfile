@@ -34,3 +34,4 @@ COPY lima_report_summary.R /
 COPY prl_plots.R /
 COPY utils.R /
 COPY yield.R /
+COPY Sequel_96_barcodes_v2.fasta /
