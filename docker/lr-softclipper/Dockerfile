@@ -8,6 +8,5 @@ RUN conda install -c bioconda samtools=1.9
 RUN conda install -c bioconda minimap2
 
 COPY soft_clipper.py .
-COPY soft_clipper_aided.py .
 
 RUN pip install pysam

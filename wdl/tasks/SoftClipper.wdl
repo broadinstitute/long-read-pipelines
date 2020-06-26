@@ -24,8 +24,7 @@ task SplitSoftClippedReads {
           fi
 
           minimap2 --eqx -ax map-ont ~{reference_fasta} ${input_fn} \
-            | samtools view -F 0x900 - \
-            | python /soft_clipper.py --clipping-threshold ~{clipping_threshold} \
+            | python /soft_clipper.py --split-read-prefix=x${i} --clipping-threshold=~{clipping_threshold} \
             > ~{basename}_softclipped_x${i}.fastq
 
         done
@@ -43,32 +42,25 @@ task SplitSoftClippedReads {
         bootDiskSizeGb:         10
         preemptible:            0
         maxRetries:             0
-        docker:                 "quay.io/broad-long-read-pipelines/lr-softclipper:0.1.0"
+        docker:                 "quay.io/broad-long-read-pipelines/lr-softclipper:0.5.0"
     }
 }
 
-task SplitSoftClippedReadsAided {
+task SplitSoftClippedReadsAssisted {
     input {
         File reads_fastq
         File reference_fasta
-        File aid_reference_fasta
         Int rounds
         Int clipping_threshold
-        Boolean keep_all_ref_conflicts
+        Int ref_conflict_threshold
+        File aid_reference_fasta
     }
 
-    Int disk_size = (6 + rounds) * ceil(size(reads_fastq, "GB"))
+    Int disk_size = (14 + 6 + rounds) * ceil(size(reads_fastq, "GB"))
     String basename = basename(reads_fastq, ".fastq")
 
     command <<<
         set -euxo pipefail
-
-        if [ ~{keep_all_ref_conflicts} == 'true' ]
-        then
-          flag='--keep-all-ref-conflicts'
-        else
-          flag=''
-        fi
 
         for i in {1..~{rounds}}
         do
@@ -80,14 +72,14 @@ task SplitSoftClippedReadsAided {
           fi
 
           minimap2 --eqx -ax map-ont ~{aid_reference_fasta} ${input_fn} > aid_ref.sam
+          minimap2 --eqx -ax map-ont ~{reference_fasta} ${input_fn} > ref.sam
 
-          minimap2 --eqx -ax map-ont ~{reference_fasta} ${input_fn} \
-            | samtools view -F 0x900 - \
-            | python /soft_clipper_aided.py \
+          cat ref.sam | python /soft_clipper.py \
                --clipping-threshold=~{clipping_threshold} \
-               --ref aid_ref.sam \
-               --ref-diff-threshold=100 \
-               ${flag} \
+               --split-read-prefix=x${i} \
+               --ref=aid_ref.sam \
+               --ref-diff-threshold=~{ref_conflict_threshold} \
+               --write-ref-conflicts-prefix=conflicts_x${i} \
             > ~{basename}_softclipped_x${i}.fastq
 
         done
@@ -95,16 +87,17 @@ task SplitSoftClippedReadsAided {
 
     output {
        Array[File] split_reads = glob("*_softclipped_*.fastq")
+       Array[File] conflicting_alignments = glob("conflicts_*.bam")
        File most_split_read = "~{basename}_softclipped_x~{rounds}.fastq"
     }
 
     runtime {
         cpu:                    8
-        memory:                 "32 GiB"
+        memory:                 "60 GiB"
         disks:                  "local-disk " +  disk_size + " HDD"
         bootDiskSizeGb:         10
         preemptible:            0
         maxRetries:             0
-        docker:                 "quay.io/broad-long-read-pipelines/lr-softclipper:0.2.0"
+        docker:                 "quay.io/broad-long-read-pipelines/lr-softclipper:0.5.0"
     }
 }
