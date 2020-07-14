@@ -1,8 +1,16 @@
 version 1.0
 
+##########################################################################################
+## A workflow that performs trio-binning of child long reads given parental (short) reads.
+## Based on the trio-canu publication
+##    De novo assembly of haplotype-resolved genomes with trio binning
+##    https://www.nature.com/articles/nbt.4277
+## This holds the sub-workflow for
+##   part one: collect k-mer stats given parental (short) reads
+##########################################################################################
+
 import "Structs.wdl"
 
-# A workflow that performs kmer stats collection on parental reads (short or long)
 workflow CollectParentsKmerStats {
     input{
 
@@ -14,12 +22,26 @@ workflow CollectParentsKmerStats {
         String father_short_reads_bucket
         String mother_short_reads_bucket
 
-        # these numbers will be used to request VMs on which all meryl jobs are run, in stages
         Int meryl_operations_threads_est = 8
 
         Boolean? run_with_debug = false
     }
 
+    parameter_meta {
+        workdir_name:                 "name of working directory"
+        genome_size:                  "an esimate on genome size of the specicies (affects k-value picking)"
+        kmerSize:                     "[optional] force specifying k-value in collecting k-mer stats on parents"
+
+        father_short_reads_bucket:    "GCS bucket path holding FASTA/FASTQ of (short) reads of paternal origin"
+        mother_short_reads_bucket:    "GCS bucket path holding FASTA/FASTQ of (short) reads of maternal origin"
+
+        meryl_operations_threads_est: "[default-valued] estimate on how many threads to allocate to k-mer stats collection step"
+        run_with_debug:               "[optional] whether to run in debug mode (takes significantly more disk space and more logs); defaults to false"
+    }
+
+    ############################################################################
+    # we based the implementation of this workflow on a forked canu v1.9
+    # the original canu 1.9 is not cloud-friendly
     call ParentalReadsRepartitionAndMerylConfigure {
         input:
             workdir_name = workdir_name,
@@ -69,7 +91,9 @@ workflow CollectParentsKmerStats {
 }
 
 ###############################################################
-# repartition the parental short reads, IO bound
+
+# repartition the parental short reads for easier batch-processing by canu/meryl itself
+# note that this step is IO bound
 task ParentalReadsRepartitionAndMerylConfigure {
     input{
 
@@ -208,6 +232,9 @@ task ParentalReadsRepartitionAndMerylConfigure {
     }
 }
 
+# a hackish step to simply print out memory configuration from the above step
+# this value is used for configuring the VMs for actual batch Meryl count processing
+#   as well as memory allocation for the merging and subtracting step
 task PrintMerylMemory {
     input {
         File meryl_memory_file
