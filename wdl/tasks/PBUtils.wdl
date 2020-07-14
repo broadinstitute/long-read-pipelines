@@ -94,6 +94,7 @@ task CCS {
         Int min_length = 10
         Int max_length = 50000
         Float min_rq = 0.99
+        Boolean by_strand = false
 
         Int cpus = 4
 
@@ -111,7 +112,8 @@ task CCS {
             --max-length ~{max_length} \
             --min-rq ~{min_rq} \
             --num-threads ~{cpus} \
-            ~{subreads} ccs_unmapped.bam
+            --report-file ccs_report.txt \
+            ~{if by_strand then "--by-strand" else ""} ~{subreads} ccs_unmapped.bam
     >>>
 
     output {
@@ -239,7 +241,7 @@ task MergeCCSReports {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
