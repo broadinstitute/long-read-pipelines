@@ -57,7 +57,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
             }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
+        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
 
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
             input:
@@ -87,7 +87,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
 #        }
     }
 
-    call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
 
     call AM.AlignedMetrics as PerFlowcellRunMetrics {
         input:

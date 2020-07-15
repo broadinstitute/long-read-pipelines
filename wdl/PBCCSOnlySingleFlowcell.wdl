@@ -2,7 +2,6 @@ version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSOnlySingleFlowcell {
@@ -33,11 +32,13 @@ workflow PBCCSOnlySingleFlowcell {
             call PB.CCS { input: subreads = subreads }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = CCS.consensus }
+        # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
+        call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
     }
 
-    call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    # gather across (potential multiple) input raw BAMs
+    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
     call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
 
     ##########
