@@ -1,5 +1,9 @@
 version 1.0
 
+##########################################################################################
+# This pipeline calls small variants using DeepVariant on PacBio CCS BAM.
+##########################################################################################
+
 import "Structs.wdl"
 
 task DeepVariant {
@@ -17,6 +21,20 @@ task DeepVariant {
         String? intervals
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam: "input BAM from which to call variants"
+        bai: "index accompanying the BAM"
+
+        ref_fasta: "reference to which the BAM was aligned to"
+        ref_fai:   "index accompanying the reference"
+
+        model_class: "class of model to be applied; currently only 'PACBIO' is accepted"
+
+        intervals: "[optional] interval on which to call, '<chr>:<start>-<end>'; if ommited, the whole genome"
+
+        output_prefix: "prefix to output files"
     }
 
     Int disk_size = ceil(size(bam, "GB")) + 50
@@ -78,29 +96,5 @@ task DeepVariant {
         nvidiaDriverVersion:    "418.87.00"
         zones:                  ["us-east1-b", "us-east1-c"]
         cpuPlatform:            "Intel Skylake"
-    }
-}
-
-workflow TestCallDeepVariant {
-    input {
-        File bam
-        File bai
-
-        File ref_fasta
-        File ref_fasta_fai
-
-        String test_out_name_prefix
-
-        String? intervals
-    }
-
-    call DeepVariant {
-        input:
-            bam = bam,
-            bai = bai,
-            ref_fasta = ref_fasta,
-            ref_fai = ref_fasta_fai,
-            output_prefix = test_out_name_prefix,
-            intervals = intervals
     }
 }
