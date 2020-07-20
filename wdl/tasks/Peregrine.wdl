@@ -1,5 +1,12 @@
 version 1.0
 
+##########################################################################################
+# This pipeline assembles sequences an PacBio HiFi BAM using Peregrine
+#  https://github.com/cschin/Peregrine
+# and aligns the assembly to a reference, followed by variant calling using paftools
+#  https://github.com/lh3/minimap2/tree/master/misc#asmvar
+##########################################################################################
+
 import "Structs.wdl"
 
 workflow Peregrine {
@@ -8,6 +15,13 @@ workflow Peregrine {
         File bam
         String sample_name
         String output_prefix
+    }
+
+    parameter_meta {
+        bam           : "CCS BAM file containing sequences to be assembled"
+        ref_fasta     : "reference to which the draft assembly will be aligned to"
+        sample_name   : "name of the sample in the BAM"
+        output_prefix : "prefix to output VCF"
     }
 
     call Assemble {
