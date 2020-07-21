@@ -1,7 +1,7 @@
 version 1.0
 
-import "Structs.wdl"
-import "AssembleTarget.wdl" as AT
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.20/wdl/tasks/Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.20/wdl/tasks/AssembleTarget.wdl" as AT
 
 workflow AssembleMT {
     input {

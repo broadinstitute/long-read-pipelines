@@ -1,7 +1,7 @@
 version 1.0
 
-import "tasks/Guppy.wdl" as Guppy
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.20/wdl/tasks/Guppy.wdl" as Guppy
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.20/wdl/tasks/Finalize.wdl" as FF
 
 workflow GuppyRunner {
     input {
