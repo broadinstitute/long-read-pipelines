@@ -14,6 +14,8 @@ task MedakaPolish {
     Int disk_size = 2 * ceil(size(basecalled_reads, "GB") + size(draft_assembly, "GB"))
 
     command <<<
+        source /medaka/venv/bin/activate
+
         set -euxo pipefail
 
         medaka_consensus -i ~{basecalled_reads} -d ~{draft_assembly} -o output -t 8 -m ~{model}
