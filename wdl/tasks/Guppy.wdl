@@ -80,7 +80,7 @@ task Basecall {
         nvidiaDriverVersion:    "418.87.00"
         zones:                  ["us-east1-c"]
         cpuPlatform:            "Intel Haswell"
-        docker:                 "quay.io/broad-long-read-pipelines/lr-guppy:3.6.0"
+        docker:                 "quay.io/broad-long-read-pipelines/lr-guppy:4.0.14"
     }
 
 }
