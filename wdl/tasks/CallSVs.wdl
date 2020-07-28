@@ -1,5 +1,11 @@
 version 1.0
 
+##########################################################################################
+# This pipeline calls SVs on an input LR BAM using various known SV algorithms
+# that are specifically designed to work with long read data.
+# Each individual task/algo. is directly callable, if so desired.
+##########################################################################################
+
 import "Structs.wdl"
 
 workflow CallSVs {
@@ -10,6 +16,15 @@ workflow CallSVs {
         File ref_fasta
         File ref_fasta_fai
         File tandem_repeat_bed
+    }
+
+    parameter_meta {
+        bam: "input BAM from which to call SVs"
+        bai: "index accompanying the BAM"
+
+        ref_fasta:         "reference to which the BAM was aligned to"
+        ref_fasta_fai:     "index accompanying the reference"
+        tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 
     call PBSV {
@@ -45,6 +60,7 @@ workflow CallSVs {
     }
 }
 
+# Given BAM, call SVs using PBSV
 task PBSV {
     input {
         File bam
@@ -57,6 +73,17 @@ task PBSV {
         String prefix
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam: "input BAM from which to call SVs"
+        bai: "index accompanying the BAM"
+
+        ref_fasta:         "reference to which the BAM was aligned to"
+        ref_fasta_fai:     "index accompanying the reference"
+        tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+
+        prefix: "prefix for output"
     }
 
     Int disk_size = 10*ceil(size([bam, bai, ref_fasta, ref_fasta_fai, tandem_repeat_bed], "GB"))
@@ -100,6 +127,7 @@ task PBSV {
     }
 }
 
+# Given BAM, call SVs using Sniffles
 task Sniffles {
     input {
         File bam
@@ -112,6 +140,17 @@ task Sniffles {
         String prefix
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam: "input BAM from which to call SVs"
+        bai: "index accompanying the BAM"
+
+        min_read_support: "argument to the parameter '-s' to sniffles, and '-m' to sniffles-filter"
+        min_read_length:  "argument to the parameter '-r' to sniffles"
+        min_mq:           "argument to the parameter '-q' to sniffles"
+
+        prefix: "prefix for output"
     }
 
     Int cpus = 8
@@ -154,6 +193,7 @@ task Sniffles {
     }
 }
 
+# Given BAM, call SVs using SVIM
 task SVIM {
     input {
         File bam
@@ -165,6 +205,16 @@ task SVIM {
         String prefix
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam: "input BAM from which to call SVs"
+        bai: "index accompanying the BAM"
+
+        ref_fasta:         "reference to which the BAM was aligned to"
+        ref_fasta_fai:     "index accompanying the reference"
+
+        prefix: "prefix for output"
     }
 
     Int disk_size = ceil(size(bam, "GB")) + 10

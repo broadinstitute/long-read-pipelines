@@ -1,5 +1,10 @@
 version 1.0
 
+##########################################################################################
+# This pipeline calls small variants (currently only SNVs) on an input LR BAM using
+# known algorithms that are specifically designed to work with long read data.
+##########################################################################################
+
 import "Structs.wdl"
 import "Utils.wdl" as Utils
 
@@ -11,6 +16,15 @@ workflow CallSmallVariants {
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
+    }
+
+    parameter_meta {
+        bam: "input BAM from which to call SNVs"
+        bai: "index accompanying the BAM"
+
+        ref_fasta:     "reference to which the BAM was aligned to"
+        ref_fasta_fai: "index accompanying the reference"
+        ref_dict:      "dictionary accompanying the reference"
     }
 
     call Utils.MakeChrIntervalList { input: ref_dict = ref_dict }
@@ -39,6 +53,7 @@ workflow CallSmallVariants {
     }
 }
 
+# performs Longshot algo on one particular chromosome
 task Longshot {
     input {
         File bam
@@ -89,6 +104,7 @@ task Longshot {
     }
 }
 
+# gathers Longshot VCFs on individual chromosomes into a single VCF named with given prefix
 task MergeLongshotCalls {
     input {
         Array[File] vcfs

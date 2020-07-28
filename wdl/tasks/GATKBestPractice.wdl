@@ -1,10 +1,12 @@
 version 1.0
 
-##################################################
+##########################################################################################
+# Calls (small) variants on an input LR BAM with GATK4 HaplotypeCaller pipeline.
+
 # This is essentially copying "dsde_pipelines_tasks/VariantCalling.wdl"
-# with some customization to fit the process described in 
+# with some customization to fit the process described in
 # "https://github.com/PacificBiosciences/hg002-ccs/"
-##################################################
+##########################################################################################
 
 import "dsde_pipelines_tasks/GermlineVariantDiscovery.wdl" as Calling
 import "dsde_pipelines_tasks/Qc.wdl" as QC
@@ -42,7 +44,27 @@ workflow GATKBestPraciceForLR {
     }
 
     parameter_meta {
-        make_bamout: "For CNNScoreVariants to run with a 2D model, a bamout must be created by HaplotypeCaller. The bamout is a bam containing information on how HaplotypeCaller remapped reads while it was calling variants. See https://gatkforums.broadinstitute.org/gatk/discussion/5484/howto-generate-a-bamout-file-showing-how-haplotypecaller-has-remapped-sequence-reads for more details."
+        calling_interval_list :                         "an interval list file holding intervals on which to call variants"
+        calling_intervals_scatter_count :               "a run-time performance tunning integer indicating how many scatters to have on the intervals"
+        calling_intervals_break_bands_at_multiples_of : "if > 0, reference bands will be broken up at genomic positions that are multiples of this number"
+
+        contamination :    "[optional] a floating number in range [0,1] indicating fraction of contamination in sequencing data (for all samples) to aggressively remove"
+        input_bam :        "BAM on which to call variants"
+        sample_is_female : "boolean indicating if the sample is a female or not"
+
+        ref_fasta :       "reference to which the BAM was aligned to"
+        ref_fasta_index : "index accompanying the reference"
+        ref_dict :        "dictionary accompanying the reference"
+        par_regions_bed : "BED file holding PAR region of the reference genome"
+
+        output_prefix : "prefix to output files"
+
+        run_qc_on_variants : "boolean indicating to run QC on the output variants or not"
+        dbsnp_vcf :          "DBSNP vcf for quality control purposes"
+        dbsnp_vcf_index :    "index accompanying the DBSNP vcf"
+        var_calling_metrics_eval_interval_list : "[optional] an interval_list file telling us where to run variant QC"
+
+        make_bamout: "[default-valued] For CNNScoreVariants to run with a 2D model, a bamout must be created by HaplotypeCaller. The bamout is a bam containing information on how HaplotypeCaller remapped reads while it was calling variants. See https://gatkforums.broadinstitute.org/gatk/discussion/5484/howto-generate-a-bamout-file-showing-how-haplotypecaller-has-remapped-sequence-reads for more details."
     }
 
     ###########################################################################
