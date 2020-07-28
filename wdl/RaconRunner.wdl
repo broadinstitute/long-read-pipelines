@@ -1,7 +1,7 @@
 version 1.0
 
-import "tasks/Racon.wdl" as Racon
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.25/wdl/tasks/Racon.wdl" as Racon
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.25/wdl/tasks/Finalize.wdl" as FF
 
 workflow RaconRunner {
     input {
