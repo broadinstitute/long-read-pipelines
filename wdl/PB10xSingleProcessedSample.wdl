@@ -95,9 +95,9 @@ workflow PB10xSingleProcessedSample {
         call Utils.Sum as CountConsensusReads { input: ints = CountConsensusReadsInShard.num_records, prefix = "num_consensus" }
         call Utils.Sum as CountAnnotatedReads { input: ints = CountAnnotatedReadsInShard.num_records, prefix = "num_annotated" }
 
-        call AR.MergeBams as MergeSubreads  { input: bams = AlignSubreads.aligned_bam, prefix = "~{SM}.~{ID}.subreads" }
-        call AR.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam, prefix = "~{SM}.~{ID}.consensus" }
-        call AR.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam, prefix = "~{SM}.~{ID}.annotated" }
+        call Utils.MergeBams as MergeSubreads  { input: bams = AlignSubreads.aligned_bam, prefix = "~{SM}.~{ID}.subreads" }
+        call Utils.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam, prefix = "~{SM}.~{ID}.consensus" }
+        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam, prefix = "~{SM}.~{ID}.annotated" }
 
         call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
             input:

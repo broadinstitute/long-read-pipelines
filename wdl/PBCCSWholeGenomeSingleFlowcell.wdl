@@ -59,7 +59,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
             }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
+        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
 
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
 
@@ -91,7 +91,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
 #        }
     }
 
-    call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
 
     call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
 

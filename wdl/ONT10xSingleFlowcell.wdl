@@ -84,9 +84,9 @@ workflow ONT10xSingleFlowcell {
         call Utils.Sum as CountConsensusReadsInRun { input: ints = CountConsensusReadsInPartition.num_records }
         call Utils.Sum as CountAnnotatedReadsInRun { input: ints = CountAnnotatedReadsInPartition.num_records }
 
-        call AR.MergeBams as MergeSubreads  { input: bams = AlignSubreads.aligned_bam }
-        call AR.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam }
-        call AR.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
+        call Utils.MergeBams as MergeSubreads  { input: bams = AlignSubreads.aligned_bam }
+        call Utils.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam }
+        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
 
 #        call AM.AlignedMetrics as PerFlowcellSubRunSubreadMetrics {
 #            input:
@@ -136,9 +136,9 @@ workflow ONT10xSingleFlowcell {
     call Utils.Sum as CountConsensusReads { input: ints = CountConsensusReadsInRun.sum, prefix = "num_consensus" }
     call Utils.Sum as CountAnnotatedReads { input: ints = CountAnnotatedReadsInRun.sum, prefix = "num_annotated" }
 
-    #call AR.MergeBams as MergeAllSubreads  { input: bams = MergeSubreads.merged_bam,  prefix = "~{SM[0]}.~{ID[0]}.subreads"  }
-    call AR.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.consensus" }
-    call AR.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.annotated" }
+    #call Utils.MergeBams as MergeAllSubreads  { input: bams = MergeSubreads.merged_bam,  prefix = "~{SM[0]}.~{ID[0]}.subreads"  }
+    call Utils.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.consensus" }
+    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.annotated" }
 
 #    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
 #        input:

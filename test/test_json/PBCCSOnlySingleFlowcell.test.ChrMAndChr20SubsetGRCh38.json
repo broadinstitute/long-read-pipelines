@@ -1,5 +1,5 @@
 {
-    "PBCCSOnlySingleFlowcell.gcs_input_dir":     "gs://broad-dsp-lrma-ci-resources/test_data/PBCCSOnlySingleFlowcell.test.ChrMAndChr20SubsetGRCh38/input_data/NA12878rep1_chrM_and_chr20_tiny_subset/",
+    "PBCCSOnlySingleFlowcell.raw_reads_gcs_bucket":     "gs://broad-dsp-lrma-ci-resources/test_data/PBCCSOnlySingleFlowcell.test.ChrMAndChr20SubsetGRCh38/input_data/NA12878rep1_chrM_and_chr20_tiny_subset/",
 
     "PBCCSOnlySingleFlowcell.gcs_out_root_dir":  "gs://broad-dsp-lrma-ci/PBCCSOnlySingleFlowcell"
 }
