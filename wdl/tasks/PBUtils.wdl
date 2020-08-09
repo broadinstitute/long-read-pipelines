@@ -299,6 +299,7 @@ task MergeCCSClasses {
 task Demultiplex {
     input {
         File bam
+        File barcode_file
         String prefix  = "demux"
         Boolean ccs    = true
         Boolean isoseq = false
@@ -320,7 +321,7 @@ task Demultiplex {
             --dump-removed \
             --split-bam-named \
             ~{bam} \
-            /Sequel_96_barcodes_v2.fasta \
+            ~{barcode_file} \
             ~{prefix}.bam
     >>>
 
