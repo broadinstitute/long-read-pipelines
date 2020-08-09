@@ -59,7 +59,8 @@ workflow PBCCSWholeGenomeSingleFlowcell {
             }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
+        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
+
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
 
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
@@ -90,7 +91,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
 #        }
     }
 
-    call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
 
     call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
 
@@ -147,9 +148,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeSVs {
         input:
-            files = [ CallSVs.pbsv_vcf,       CallSVs.pbsv_tbi,
-                      CallSVs.sniffles_vcf,   CallSVs.sniffles_tbi,
-                      CallSVs.svim_vcf,       CallSVs.svim_tbi ],
+            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
             outdir = outdir + "/" + DIR[0] + "/variants"
     }
 

@@ -6,7 +6,7 @@ workflow CorrectTrimAssemble {
     input {
         String output_file_prefix
         String genome_size
-        Array[File] reads_fastq
+        File reads
         Float correct_corrected_error_rate
         Float trim_corrected_error_rate
         Float assemble_corrected_error_rate
@@ -16,7 +16,7 @@ workflow CorrectTrimAssemble {
         input:
             output_file_prefix = output_file_prefix,
             genome_size = genome_size,
-            reads_fastq = reads_fastq,
+            reads = reads,
             corrected_error_rate = correct_corrected_error_rate
     }
 
@@ -45,24 +45,24 @@ task Correct {
     input {
         String output_file_prefix
         String genome_size
-        Array[File] reads_fastq
+        File reads
         Float corrected_error_rate
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 30 * ceil(size(reads_fastq, "GB"))
+    Int disk_size = 30 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        /canu-2.0/Linux-amd64/bin/canu -correct \
+        canu -correct \
             -p ~{output_file_prefix} -d canu_correct_output \
             genomeSize=~{genome_size} \
             corMaxEvidenceErate=0.15 \
             correctedErrorRate=~{corrected_error_rate} \
             -nanopore \
-            ~{sep=' ' reads_fastq} \
+            ~{reads} \
             || cat /cromwell_root/monitoring.log
     >>>
 
@@ -78,7 +78,7 @@ task Correct {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-canu:0.1.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-canu:0.1.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -107,7 +107,7 @@ task Trim {
     command <<<
        set -euxo pipefail
 
-       /canu-2.0/Linux-amd64/bin/canu -trim \
+       canu -trim \
              -p ~{output_file_prefix} -d canu_trim_output \
             genomeSize=~{genome_size} \
             correctedErrorRate=~{corrected_error_rate} \
@@ -128,7 +128,7 @@ task Trim {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-canu:0.1.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-canu:0.1.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -157,7 +157,7 @@ task Assemble {
     command <<<
         set -euxo pipefail
 
-        /canu-2.0/Linux-amd64/bin/canu -assemble \
+        canu -assemble \
             -p ~{output_file_prefix} -d canu_assemble_output \
             genomeSize=~{genome_size} \
             correctedErrorRate=~{corrected_error_rate} \
@@ -178,7 +178,7 @@ task Assemble {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "quay.io/broad-long-read-pipelines/lr-canu:0.1.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-canu:0.1.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -1,0 +1,9 @@
+{
+  "NanopolishRunner.output_dir": "gs://broad-dsp-lrma-ci/test_data/NanopolishRunner.test/output_data",
+  "NanopolishRunner.reads_fasta": "gs://broad-dsp-lrma-ci-resources/test_data/NanopolishRunner.test/input_data/leptospira_reads.fasta",
+  "NanopolishRunner.sequencing_summary": "gs://broad-dsp-lrma-ci-resources/test_data/NanopolishRunner.test/input_data/sequencing_summary.txt",
+  "NanopolishRunner.fast5_dir": "gs://broad-dsp-lrma-ci-resources/test_data/NanopolishRunner.test/input_data/fast5",
+  "NanopolishRunner.draft_assembly_fasta": "gs://broad-dsp-lrma-ci-resources/test_data/NanopolishRunner.test/input_data/draft_assembly.fasta",
+  "NanopolishRunner.parallel_instances": 25
+}
+

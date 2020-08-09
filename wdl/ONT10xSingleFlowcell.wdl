@@ -84,9 +84,9 @@ workflow ONT10xSingleFlowcell {
         call Utils.Sum as CountConsensusReadsInRun { input: ints = CountConsensusReadsInPartition.num_records }
         call Utils.Sum as CountAnnotatedReadsInRun { input: ints = CountAnnotatedReadsInPartition.num_records }
 
-        call AR.MergeBams as MergeSubreads  { input: bams = AlignSubreads.aligned_bam }
-        call AR.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam }
-        call AR.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
+        call Utils.MergeBams as MergeSubreads  { input: bams = AlignSubreads.aligned_bam }
+        call Utils.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam }
+        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
 
 #        call AM.AlignedMetrics as PerFlowcellSubRunSubreadMetrics {
 #            input:
@@ -104,21 +104,21 @@ workflow ONT10xSingleFlowcell {
 #                gcs_output_dir = outdir + "/" + DIR
 #        }
 
-        call AM.AlignedMetrics as PerFlowcellSubRunConsensusMetrics {
-            input:
-                aligned_bam    = MergeConsensus.merged_bam,
-                aligned_bai    = MergeConsensus.merged_bai,
-                ref_fasta      = ref_fasta,
-                ref_dict       = ref_dict,
-                ref_flat       = ref_flat,
-                dbsnp_vcf      = dbsnp_vcf,
-                dbsnp_tbi      = dbsnp_tbi,
-                metrics_locus  = metrics_locus,
-                per            = "flowcell",
-                type           = "subrun",
-                label          = SID + ".consensus",
-                gcs_output_dir = outdir + "/" + DIR
-        }
+#        call AM.AlignedMetrics as PerFlowcellSubRunConsensusMetrics {
+#            input:
+#                aligned_bam    = MergeConsensus.merged_bam,
+#                aligned_bai    = MergeConsensus.merged_bai,
+#                ref_fasta      = ref_fasta,
+#                ref_dict       = ref_dict,
+#                ref_flat       = ref_flat,
+#                dbsnp_vcf      = dbsnp_vcf,
+#                dbsnp_tbi      = dbsnp_tbi,
+#                metrics_locus  = metrics_locus,
+#                per            = "flowcell",
+#                type           = "subrun",
+#                label          = SID + ".consensus",
+#                gcs_output_dir = outdir + "/" + DIR
+#        }
 
         call FIG.Figures as PerFlowcellSubRunFigures {
             input:
@@ -136,24 +136,24 @@ workflow ONT10xSingleFlowcell {
     call Utils.Sum as CountConsensusReads { input: ints = CountConsensusReadsInRun.sum, prefix = "num_consensus" }
     call Utils.Sum as CountAnnotatedReads { input: ints = CountAnnotatedReadsInRun.sum, prefix = "num_annotated" }
 
-    #call AR.MergeBams as MergeAllSubreads  { input: bams = MergeSubreads.merged_bam,  prefix = "~{SM[0]}.~{ID[0]}.subreads"  }
-    call AR.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.consensus" }
-    call AR.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.annotated" }
+    #call Utils.MergeBams as MergeAllSubreads  { input: bams = MergeSubreads.merged_bam,  prefix = "~{SM[0]}.~{ID[0]}.subreads"  }
+    call Utils.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.consensus" }
+    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.annotated" }
 
-    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
-        input:
-            bam = MergeAllAnnotated.merged_bam,
-            prefix = "num_annotated_with_cbc",
-            regex = "CB:Z:[ACGT]"
-    }
+#    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
+#        input:
+#            bam = MergeAllAnnotated.merged_bam,
+#            prefix = "num_annotated_with_cbc",
+#            regex = "CB:Z:[ACGT]"
+#    }
 
-    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBCAndUniqueAlignment {
-        input:
-            bam = MergeAllAnnotated.merged_bam,
-            samfilter = "-F 0x100",
-            prefix = "num_annotated_with_cbc_and_unique_alignment",
-            regex = "CB:Z:[ACGT]"
-    }
+#    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBCAndUniqueAlignment {
+#        input:
+#            bam = MergeAllAnnotated.merged_bam,
+#            samfilter = "-F 0x100",
+#            prefix = "num_annotated_with_cbc_and_unique_alignment",
+#            regex = "CB:Z:[ACGT]"
+#    }
 
     call Utils.BamToTable { input: bam = MergeAllAnnotated.merged_bam, prefix = "reads_aligned_annotated.table" }
 
@@ -173,21 +173,21 @@ workflow ONT10xSingleFlowcell {
 #            gcs_output_dir = outdir + "/" + DIR[0]
 #    }
 
-    call AM.AlignedMetrics as PerFlowcellRunConsensusMetrics {
-        input:
-            aligned_bam    = MergeAllConsensus.merged_bam,
-            aligned_bai    = MergeAllConsensus.merged_bai,
-            ref_fasta      = ref_fasta,
-            ref_dict       = ref_dict,
-            ref_flat       = ref_flat,
-            dbsnp_vcf      = dbsnp_vcf,
-            dbsnp_tbi      = dbsnp_tbi,
-            metrics_locus  = metrics_locus,
-            per            = "flowcell",
-            type           = "run",
-            label          = ID[0] + ".consensus",
-            gcs_output_dir = outdir + "/" + DIR[0]
-    }
+#    call AM.AlignedMetrics as PerFlowcellRunConsensusMetrics {
+#        input:
+#            aligned_bam    = MergeAllConsensus.merged_bam,
+#            aligned_bai    = MergeAllConsensus.merged_bai,
+#            ref_fasta      = ref_fasta,
+#            ref_dict       = ref_dict,
+#            ref_flat       = ref_flat,
+#            dbsnp_vcf      = dbsnp_vcf,
+#            dbsnp_tbi      = dbsnp_tbi,
+#            metrics_locus  = metrics_locus,
+#            per            = "flowcell",
+#            type           = "run",
+#            label          = ID[0] + ".consensus",
+#            gcs_output_dir = outdir + "/" + DIR[0]
+#    }
 
 #    call AM.AlignedMetrics as PerFlowcellRunAnnotatedMetrics {
 #        input:
@@ -222,9 +222,9 @@ workflow ONT10xSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeReadCounts {
         input:
-            files = [ CountSubreads.sum_file, CountConsensusReads.sum_file, CountAnnotatedReads.sum_file,
-                      GrepAnnotatedReadsWithCBC.num_records_file,
-                      GrepAnnotatedReadsWithCBCAndUniqueAlignment.num_records_file ],
+            files = [ CountSubreads.sum_file, CountConsensusReads.sum_file, CountAnnotatedReads.sum_file ],
+                      #GrepAnnotatedReadsWithCBC.num_records_file,
+                      #GrepAnnotatedReadsWithCBCAndUniqueAlignment.num_records_file ],
             outdir = outdir + "/" + DIR[0] + "/metrics/read_counts"
     }
 
@@ -293,7 +293,7 @@ task AnnotateAdapters {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "quay.io/broad-long-read-pipelines/lr-10x:0.01.08"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

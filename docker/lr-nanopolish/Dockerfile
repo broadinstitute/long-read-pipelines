@@ -1,6 +1,8 @@
 FROM continuumio/miniconda3
 
-RUN apt-get install -y build-essential make gcc libz-dev libncurses5-dev libbz2-dev zlib1g-dev liblzma-dev libcurl4-openssl-dev parallel curl
+RUN apt-get -qqy update --fix-missing && \
+    apt-get -qqy dist-upgrade && \
+    apt-get install -y build-essential make gcc libz-dev libncurses5-dev libbz2-dev zlib1g-dev liblzma-dev libcurl4-openssl-dev parallel curl
 
 RUN curl https://sdk.cloud.google.com | bash
 ENV PATH="/root/google-cloud-sdk/bin:${PATH}"

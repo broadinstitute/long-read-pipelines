@@ -1,25 +1,39 @@
 version 1.0
 
+##########################################################################################
+## A workflow that performs CCS correction on PacBio HiFi reads from a single flow cell.
+## The workflow shards the subreads into clusters and performs CCS in parallel on each cluster.
+## Ultimately, all the corrected reads (and uncorrected) are gathered into a single BAM.
+## Various metrics are produced along the way.
+##########################################################################################
+
 import "tasks/PBUtils.wdl" as PB
 import "tasks/ShardUtils.wdl" as SU
 import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSOnlySingleFlowcell {
     input {
-        String gcs_input_dir
+        String raw_reads_gcs_bucket
 
         String? sample_name
-        Int num_shards = 300
+        Int num_reads_per_split = 100000
 
         String gcs_out_root_dir
     }
 
+    parameter_meta {
+        raw_reads_gcs_bucket: "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be CCS-ed"
+        sample_name:          "[optional] name of sample this FC is sequencing"
+        num_reads_per_split:  "[default-valued] number of subreads each sharded BAM contains (tune for performance)"
+        gcs_out_root_dir :    "GCS bucket to store the corrected/uncorrected reads and metrics files"
+    }
+
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call PB.FindBams { input: gcs_input_dir = gcs_input_dir }
+    call PB.FindBams { input: gcs_input_dir = raw_reads_gcs_bucket }
 
+    # double scatter: one FC may generate multiple raw BAMs, we perform another layer scatter on each of these BAMs
     scatter (subread_bam in FindBams.subread_bams) {
         call PB.GetRunInfo { input: subread_bam = subread_bam }
 
@@ -28,27 +42,25 @@ workflow PBCCSOnlySingleFlowcell {
         String ID  = PU
         String DIR = SM + "." + ID
 
-        call SU.IndexUnalignedBam { input: input_bam = subread_bam }
-        call SU.MakeReadNameManifests { input: input_bri = IndexUnalignedBam.bri, N = num_shards }
+        # shard one raw BAM into fixed chunk size (num_reads_per_split)
+        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = num_reads_per_split }
 
-        scatter (manifest in MakeReadNameManifests.manifest_chunks) {
-            call CCS {
-                input:
-                    input_bam          = subread_bam,
-                    input_bri          = IndexUnalignedBam.bri,
-                    read_name_manifest = manifest,
-            }
+        # then perform correction on each of the shard
+        scatter (subreads in ShardLongReads.unmapped_shards) {
+            call PB.CCS { input: subreads = subreads }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = CCS.consensus }
+        # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
+        call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
     }
 
-    call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    # gather across (potential multiple) input raw BAMs
+    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
     call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
 
     ##########
-    # Finalize
+    # store the results into designated bucket
     ##########
 
     call FF.FinalizeToDir as FinalizeMergedRuns {

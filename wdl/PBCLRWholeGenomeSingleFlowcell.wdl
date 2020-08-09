@@ -63,7 +63,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
             }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
+        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
 
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
             input:
@@ -93,7 +93,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
 #        }
     }
 
-    call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
 
     call AM.AlignedMetrics as PerFlowcellRunMetrics {
         input:
@@ -154,7 +154,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
 #
     call FF.FinalizeToDir as FinalizeSVs {
         input:
-            files = [ CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
+            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
             outdir = outdir + "/" + DIR[0] + "/variants"
     }
 

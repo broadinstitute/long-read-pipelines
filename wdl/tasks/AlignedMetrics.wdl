@@ -49,16 +49,16 @@ workflow AlignedMetrics {
             ref_flat = ref_flat
     }
 
-    call CollectSamErrorMetrics {
-        input:
-            bam = aligned_bam,
-            bai = aligned_bai,
-            ref_fasta = ref_fasta,
-            ref_dict = ref_dict,
-            dbsnp_vcf = dbsnp_vcf,
-            dbsnp_tbi = dbsnp_tbi,
-            region = metrics_locus,
-    }
+#    call CollectSamErrorMetrics {
+#        input:
+#            bam = aligned_bam,
+#            bai = aligned_bai,
+#            ref_fasta = ref_fasta,
+#            ref_dict = ref_dict,
+#            dbsnp_vcf = dbsnp_vcf,
+#            dbsnp_tbi = dbsnp_tbi,
+#            region = metrics_locus,
+#    }
 
     if (defined(gcs_output_dir)) {
         String outdir = sub(gcs_output_dir + "", "/$", "") + "/metrics/~{per}_~{type}_~{label}"
@@ -96,38 +96,38 @@ workflow AlignedMetrics {
         call FF.FinalizeToDir as FFRnaSeqMetrics { input: outdir = outdir + "/rnaseq/", files = [ RnaSeqMetrics.rna_metrics ] }
         call FF.FinalizeToDir as FFReadNamesAndLengths { input: outdir = outdir + "/read_names_and_lengths/", files = [ ReadNamesAndLengths.read_names_and_lengths ] }
 
-        call FF.FinalizeToDir as FFErrorStats {
-            input:
-                outdir = outdir + "/error_rate/",
-                files = [
-                    CollectSamErrorMetrics.error_by_all,
-                    CollectSamErrorMetrics.error_by_base_quality,
-                    CollectSamErrorMetrics.error_by_binned_length_homopolymer_and_following_ref_base,
-                    CollectSamErrorMetrics.error_by_cycle,
-                    CollectSamErrorMetrics.error_by_gc,
-                    CollectSamErrorMetrics.error_by_homopolymer_and_following_ref_base,
-                    CollectSamErrorMetrics.error_by_insert_length,
-                    CollectSamErrorMetrics.error_by_mapping_quality,
-                    CollectSamErrorMetrics.error_by_mismatches_in_read,
-                    CollectSamErrorMetrics.error_by_one_base_padded_context,
-                    CollectSamErrorMetrics.error_by_pair_orientation,
-                    CollectSamErrorMetrics.error_by_read_direction,
-                    CollectSamErrorMetrics.error_by_read_group,
-                    CollectSamErrorMetrics.error_by_read_ordinality,
-                    CollectSamErrorMetrics.error_by_read_ordinality_and_cycle,
-                    CollectSamErrorMetrics.error_by_read_ordinality_and_gc,
-                    CollectSamErrorMetrics.error_by_read_ordinality_and_homopolymer_and_following_ref_base,
-                    CollectSamErrorMetrics.error_by_read_ordinality_and_pre_dinuc,
-                    CollectSamErrorMetrics.indel_error_by_all,
-                    CollectSamErrorMetrics.overlapping_error_by_all,
-                    CollectSamErrorMetrics.overlapping_error_by_base_quality,
-                    CollectSamErrorMetrics.overlapping_error_by_insert_length,
-                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality,
-                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_cycle,
-                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_gc,
-                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base
-                ]
-        }
+#        call FF.FinalizeToDir as FFErrorStats {
+#            input:
+#                outdir = outdir + "/error_rate/",
+#                files = [
+#                    CollectSamErrorMetrics.error_by_all,
+#                    CollectSamErrorMetrics.error_by_base_quality,
+#                    CollectSamErrorMetrics.error_by_binned_length_homopolymer_and_following_ref_base,
+#                    CollectSamErrorMetrics.error_by_cycle,
+#                    CollectSamErrorMetrics.error_by_gc,
+#                    CollectSamErrorMetrics.error_by_homopolymer_and_following_ref_base,
+#                    CollectSamErrorMetrics.error_by_insert_length,
+#                    CollectSamErrorMetrics.error_by_mapping_quality,
+#                    CollectSamErrorMetrics.error_by_mismatches_in_read,
+#                    CollectSamErrorMetrics.error_by_one_base_padded_context,
+#                    CollectSamErrorMetrics.error_by_pair_orientation,
+#                    CollectSamErrorMetrics.error_by_read_direction,
+#                    CollectSamErrorMetrics.error_by_read_group,
+#                    CollectSamErrorMetrics.error_by_read_ordinality,
+#                    CollectSamErrorMetrics.error_by_read_ordinality_and_cycle,
+#                    CollectSamErrorMetrics.error_by_read_ordinality_and_gc,
+#                    CollectSamErrorMetrics.error_by_read_ordinality_and_homopolymer_and_following_ref_base,
+#                    CollectSamErrorMetrics.error_by_read_ordinality_and_pre_dinuc,
+#                    CollectSamErrorMetrics.indel_error_by_all,
+#                    CollectSamErrorMetrics.overlapping_error_by_all,
+#                    CollectSamErrorMetrics.overlapping_error_by_base_quality,
+#                    CollectSamErrorMetrics.overlapping_error_by_insert_length,
+#                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality,
+#                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_cycle,
+#                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_gc,
+#                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base
+#                ]
+#        }
     }
 
     output {
@@ -156,32 +156,32 @@ workflow AlignedMetrics {
 
         File rna_metrics = RnaSeqMetrics.rna_metrics
 
-        File error_by_all = CollectSamErrorMetrics.error_by_all
-        File error_by_base_quality = CollectSamErrorMetrics.error_by_base_quality
-        File error_by_binned_length_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_binned_length_homopolymer_and_following_ref_base
-        File error_by_cycle = CollectSamErrorMetrics.error_by_cycle
-        File error_by_gc = CollectSamErrorMetrics.error_by_gc
-        File error_by_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_homopolymer_and_following_ref_base
-        File error_by_insert_length = CollectSamErrorMetrics.error_by_insert_length
-        File error_by_mapping_quality = CollectSamErrorMetrics.error_by_mapping_quality
-        File error_by_mismatches_in_read = CollectSamErrorMetrics.error_by_mismatches_in_read
-        File error_by_one_base_padded_context = CollectSamErrorMetrics.error_by_one_base_padded_context
-        File error_by_pair_orientation = CollectSamErrorMetrics.error_by_pair_orientation
-        File error_by_read_direction = CollectSamErrorMetrics.error_by_read_direction
-        File error_by_read_group = CollectSamErrorMetrics.error_by_read_group
-        File error_by_read_ordinality = CollectSamErrorMetrics.error_by_read_ordinality
-        File error_by_read_ordinality_and_cycle = CollectSamErrorMetrics.error_by_read_ordinality_and_cycle
-        File error_by_read_ordinality_and_gc = CollectSamErrorMetrics.error_by_read_ordinality_and_gc
-        File error_by_read_ordinality_and_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_read_ordinality_and_homopolymer_and_following_ref_base
-        File error_by_read_ordinality_and_pre_dinuc = CollectSamErrorMetrics.error_by_read_ordinality_and_pre_dinuc
-        File indel_error_by_all = CollectSamErrorMetrics.indel_error_by_all
-        File overlapping_error_by_all = CollectSamErrorMetrics.overlapping_error_by_all
-        File overlapping_error_by_base_quality = CollectSamErrorMetrics.overlapping_error_by_base_quality
-        File overlapping_error_by_insert_length = CollectSamErrorMetrics.overlapping_error_by_insert_length
-        File overlapping_error_by_read_ordinality = CollectSamErrorMetrics.overlapping_error_by_read_ordinality
-        File overlapping_error_by_read_ordinality_and_cycle = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_cycle
-        File overlapping_error_by_read_ordinality_and_gc = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_gc
-        File overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base
+#        File error_by_all = CollectSamErrorMetrics.error_by_all
+#        File error_by_base_quality = CollectSamErrorMetrics.error_by_base_quality
+#        File error_by_binned_length_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_binned_length_homopolymer_and_following_ref_base
+#        File error_by_cycle = CollectSamErrorMetrics.error_by_cycle
+#        File error_by_gc = CollectSamErrorMetrics.error_by_gc
+#        File error_by_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_homopolymer_and_following_ref_base
+#        File error_by_insert_length = CollectSamErrorMetrics.error_by_insert_length
+#        File error_by_mapping_quality = CollectSamErrorMetrics.error_by_mapping_quality
+#        File error_by_mismatches_in_read = CollectSamErrorMetrics.error_by_mismatches_in_read
+#        File error_by_one_base_padded_context = CollectSamErrorMetrics.error_by_one_base_padded_context
+#        File error_by_pair_orientation = CollectSamErrorMetrics.error_by_pair_orientation
+#        File error_by_read_direction = CollectSamErrorMetrics.error_by_read_direction
+#        File error_by_read_group = CollectSamErrorMetrics.error_by_read_group
+#        File error_by_read_ordinality = CollectSamErrorMetrics.error_by_read_ordinality
+#        File error_by_read_ordinality_and_cycle = CollectSamErrorMetrics.error_by_read_ordinality_and_cycle
+#        File error_by_read_ordinality_and_gc = CollectSamErrorMetrics.error_by_read_ordinality_and_gc
+#        File error_by_read_ordinality_and_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_read_ordinality_and_homopolymer_and_following_ref_base
+#        File error_by_read_ordinality_and_pre_dinuc = CollectSamErrorMetrics.error_by_read_ordinality_and_pre_dinuc
+#        File indel_error_by_all = CollectSamErrorMetrics.indel_error_by_all
+#        File overlapping_error_by_all = CollectSamErrorMetrics.overlapping_error_by_all
+#        File overlapping_error_by_base_quality = CollectSamErrorMetrics.overlapping_error_by_base_quality
+#        File overlapping_error_by_insert_length = CollectSamErrorMetrics.overlapping_error_by_insert_length
+#        File overlapping_error_by_read_ordinality = CollectSamErrorMetrics.overlapping_error_by_read_ordinality
+#        File overlapping_error_by_read_ordinality_and_cycle = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_cycle
+#        File overlapping_error_by_read_ordinality_and_gc = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_gc
+#        File overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base
     }
 }
 
@@ -266,6 +266,55 @@ task MosDepth {
         File quantized_dist = "~{prefix}.quantized.mosdepth.global.dist.txt"
         File quantized      = "~{prefix}.quantized.quantized.bed.gz"
         File quantized_csi  = "~{prefix}.quantized.quantized.bed.gz.csi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "quay.io/biocontainers/mosdepth:0.2.4--he527e40_0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MosDepthOverBed {
+    input {
+        File bam
+        File bai
+        File bed
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    String basename = basename(bam, ".bam")
+    String bedname = basename(bed, ".bed")
+    String prefix = "~{basename}.coverage_over_bed.~{bedname}"
+
+    command <<<
+        set -euxo pipefail
+
+        mosdepth -t 4 -b ~{bed} -n -x -Q 1 ~{prefix} ~{bam}
+    >>>
+
+    output {
+        File global_dist      = "~{prefix}.mosdepth.global.dist.txt"
+        File region_dist      = "~{prefix}.mosdepth.region.dist.txt"
+        File regions          = "~{prefix}.regions.bed.gz"
+        File regions_csi      = "~{prefix}.regions.bed.gz.csi"
     }
 
     #########################
@@ -685,4 +734,3 @@ task BamToBed {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
-

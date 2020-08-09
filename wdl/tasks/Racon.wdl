@@ -4,21 +4,28 @@ task RaconPolish {
     input {
         File reads
         File draft_assembly
+
+        Int n_rounds
     }
 
-    Int mem_size = 2 * ceil(size(reads, "GB"))
-    Int disk_size = 4 * ceil(size(reads, "GB") + size(draft_assembly, "GB"))
+    Int mem_size = 4 * ceil(size(reads, "GB") + size(draft_assembly, "GB"))
+    Int disk_size = mem_size
 
     command <<<
         set -euxo pipefail
-        minimap2 -ax map-ont ~{draft_assembly} ~{reads} > aln.sam
 
-        # -c turns on CUDA
-        racon -c 1 -m 8 -x -6 -g -8 -w 500 -t 8 ~{reads} aln.sam ~{draft_assembly} > racon_polished.fasta
+        cp ~{draft_assembly} input_draft.fasta
+        for i in {1..~{n_rounds}}
+        do
+          minimap2 -ax map-ont input_draft.fasta ~{reads} > aln.sam
+          racon -c 1 -m 8 -x -6 -g -8 -w 500 -t 8 ~{reads} aln.sam input_draft.fasta > polished_${i}_draft.fasta
+          cp polished_${i}_draft.fasta input_draft.fasta
+        done
     >>>
 
     output {
-        File polished_assembly = "racon_polished.fasta"
+        File final_polished_assembly = "input_draft.fasta"
+        Array[File] incremental_polished_assemblies = glob("polished_*_draft.fasta")
     }
 
     runtime {
@@ -35,7 +42,7 @@ task RaconPolish {
         nvidiaDriverVersion:    "418.87.00"
         zones:                  ["us-east1-c"]
         cpuPlatform:            "Intel Haswell"
-        docker:                 "quay.io/broad-long-read-pipelines/lr-racon:0.1.0"
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-racon:0.1.0"
     }
 
 }

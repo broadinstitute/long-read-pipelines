@@ -6,7 +6,7 @@ if [[ "$#" -eq 1 ]]; then
   cd $1
 fi
 
-echo "VALIDATING WDL FILES IN THE CURRENT DIRECTORY"
+echo "VALIDATING WDL FILES IN $PWD"
 (womtool --version || echo "I need womtool to run" ) && echo
 
 for wdl in *.wdl; do
