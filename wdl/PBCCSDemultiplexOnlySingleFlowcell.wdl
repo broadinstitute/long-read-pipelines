@@ -11,8 +11,6 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
         String gcs_input_dir
         String? sample_name
 
-#        Int num_shards = 300
-
         String gcs_out_root_dir
     }
 
@@ -28,30 +26,18 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
         String ID  = PU
         String DIR = SM + "." + ID
 
-#        call SU.IndexUnalignedBam { input: input_bam = subread_bam }
-#        call SU.MakeReadNameManifests { input: input_bri = IndexUnalignedBam.bri, N = num_shards }
-#
-#        scatter (manifest in MakeReadNameManifests.manifest_chunks) {
-#            call CCS {
-#                input:
-#                    input_bam          = subread_bam,
-#                    input_bri          = IndexUnalignedBam.bri,
-#                    read_name_manifest = manifest,
-#            }
-#        }
-
         call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
 
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = CCS.consensus }
+        call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
     }
 
     if (length(FindBams.subread_bams) > 1) {
-        call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+        call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
         call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
     }
 

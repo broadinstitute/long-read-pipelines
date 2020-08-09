@@ -27,7 +27,6 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
         File metrics_locus
 
         File barcode_file
-        Int num_shards = 300
 
         String gcs_out_root_dir
     }
@@ -54,12 +53,12 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
             call PB.CCS { input: subreads = subreads }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = CCS.consensus }
+        call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
     }
 
     if (length(FindBams.subread_bams) > 1) {
-        call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+        call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
         call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
     }
 
@@ -145,7 +144,7 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
         }
     }
 
-    call AR.MergeBams as MergeBCRuns { input: bams = AlignBarcode.aligned_bam, prefix = "barcodes" }
+    call Utils.MergeBams as MergeBCRuns { input: bams = AlignBarcode.aligned_bam, prefix = "barcodes" }
 
     ##########
     # Finalize
