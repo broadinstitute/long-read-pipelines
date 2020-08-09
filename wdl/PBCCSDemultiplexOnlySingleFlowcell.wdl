@@ -10,6 +10,7 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
     input {
         String gcs_input_dir
         String? sample_name
+        File barcode_file
 
         String gcs_out_root_dir
     }
@@ -44,7 +45,7 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
     File ccs_bam = select_first([ MergeRuns.merged_bam, MergeChunks.merged_bam[0] ])
     File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
 
-    call PB.Demultiplex { input: bam = ccs_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    call PB.Demultiplex { input: bam = ccs_bam, prefix = "~{SM[0]}.~{ID[0]}", barcode_file = barcode_file }
 
     call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
     call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
