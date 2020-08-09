@@ -31,9 +31,8 @@ RUN git clone https://github.com/samtools/htslib.git \
 	&& make install
 
 # install bri
-RUN git clone https://github.com/jts/bri.git \
+RUN git clone https://github.com/broadinstitute/bri.git -b kvg_read_names_from_stdin \
 	&& cd bri \
-	&& git checkout 6004b6a3ce16b459ec135cc2798308ff7910bc3e \
 	&& make \
 	&& cp bri /usr/local/bin/
 ENV LD_LIBRARY_PATH=/usr/local/lib/
@@ -43,3 +42,7 @@ RUN curl https://sdk.cloud.google.com | bash
 
 # copy other resources
 COPY merge_ccs_reports.py /usr/local/bin/
+
+# configure parallel
+RUN echo 'will cite' | parallel --citation; exit 0
+
