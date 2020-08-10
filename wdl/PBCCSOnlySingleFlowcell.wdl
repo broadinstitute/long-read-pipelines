@@ -56,8 +56,13 @@ workflow PBCCSOnlySingleFlowcell {
     }
 
     # gather across (potential multiple) input raw BAMs
-    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
-    call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+    if (length(FindBams.subread_bams) > 1) {
+        call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+        call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+    }
+
+    File ccs_bam = select_first([ MergeRuns.merged_bam, MergeChunks.merged_bam[0] ])
+    File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
 
     ##########
     # store the results into designated bucket
@@ -65,13 +70,13 @@ workflow PBCCSOnlySingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
-            files = [ MergeRuns.merged_bam ],
+            files = [ ccs_bam ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 
     call FF.FinalizeToDir as FinalizeCCSMetrics {
         input:
-            files = [ MergeAllCCSReports.report ],
+            files = [ ccs_report ],
             outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
     }
 }
