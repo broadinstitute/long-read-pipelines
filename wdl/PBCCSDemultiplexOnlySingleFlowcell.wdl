@@ -54,7 +54,7 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
         }
 
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-        call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus }
+        call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus, prefix = "~{SM}.~{ID}" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
     }
 
@@ -93,7 +93,7 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeLimaMetrics {
         input:
-            files = [ Demultiplex.counts, Demultiplex.guess, Demultiplex.report, Demultiplex.summary ],
+            files = [ Demultiplex.counts, Demultiplex.report, Demultiplex.summary ],
             outdir = outdir + "/" + DIR[0] + "/metrics/lima"
     }
 

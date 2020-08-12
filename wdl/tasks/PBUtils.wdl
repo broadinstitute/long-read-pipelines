@@ -320,8 +320,7 @@ task Demultiplex {
     command <<<
         set -euxo pipefail
 
-        lima ~{if ccs then "--ccs" else ""} \
-            --peek 50000 \
+        lima ~{if ccs then "--ccs --peek 50000" else ""} \
             --guess ~{guess} \
             --guess-min-count 1 \
             --dump-removed \
@@ -334,7 +333,7 @@ task Demultiplex {
     output {
         Array[File] demux_bams = glob("~{prefix}.bc*.bam")
         File counts = "~{prefix}.lima.counts"
-        File guess = "~{prefix}.lima.guess"
+        #File guess = "~{prefix}.lima.guess"
         File report = "~{prefix}.lima.report"
         File summary = "~{prefix}.lima.summary"
     }

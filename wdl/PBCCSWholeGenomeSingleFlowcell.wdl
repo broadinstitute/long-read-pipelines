@@ -93,7 +93,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         }
 
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
+        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam, prefix = "~{SM}.~{ID}" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
 
         # compute alignment metrics
@@ -209,7 +209,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeCCSMetrics {
         input:
-            files = [ MergeAllCCSReports.report ],
+            files = [ ccs_report ],
             outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
     }
 }

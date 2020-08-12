@@ -219,7 +219,7 @@ workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeLimaMetrics {
         input:
-            files = [ Demultiplex.counts, Demultiplex.guess, Demultiplex.report, Demultiplex.summary ],
+            files = [ Demultiplex.counts, Demultiplex.report, Demultiplex.summary ],
             outdir = outdir + "/" + DIR[0] + "/metrics/lima"
     }
 
