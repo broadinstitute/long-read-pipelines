@@ -4,7 +4,7 @@ version 1.0
 # This pipeline calls small variants using DeepVariant on PacBio CCS BAM.
 ##########################################################################################
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.27/wdl/tasks/Structs.wdl"
 
 task DeepVariant {
     input {
