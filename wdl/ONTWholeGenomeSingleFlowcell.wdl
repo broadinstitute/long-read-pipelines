@@ -11,7 +11,7 @@ import "tasks/CallSmallVariants.wdl" as SMV
 
 workflow ONTWholeGenomeSingleFlowcell {
     input {
-        String gcs_input_dir
+        String raw_reads_gcs_bucket
         String? sample_name
 
         File ref_fasta
@@ -31,7 +31,7 @@ workflow ONTWholeGenomeSingleFlowcell {
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call ONT.FindSequencingSummaryFiles { input: gcs_input_dir = gcs_input_dir }
+    call ONT.FindSequencingSummaryFiles { input: gcs_input_dir = raw_reads_gcs_bucket}
 
     scatter (summary_file in FindSequencingSummaryFiles.summary_files) {
         call ONT.GetRunInfo { input: summary_file = summary_file }

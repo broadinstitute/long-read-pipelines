@@ -1,5 +1,12 @@
 version 1.0
 
+##########################################################################################
+## A workflow that performs CCS correction and variant calling on PacBio HiFi reads from a
+## single flow cell. The workflow shards the subreads into clusters and performs CCS in
+## parallel on each cluster.  Error-corrected reads are then variant-called.  A number of
+## metrics and figures are produced along the way.
+##########################################################################################
+
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
@@ -11,7 +18,7 @@ import "tasks/CallSmallVariants.wdl" as SMV
 
 workflow PBCCSWholeGenomeSingleFlowcell {
     input {
-        String gcs_input_dir
+        String raw_reads_gcs_bucket
         String? sample_name
 
         File ref_fasta
@@ -26,13 +33,37 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         String mt_chr_name
         File metrics_locus
 
+        Int? num_reads_per_split = 2000000
+
         String gcs_out_root_dir
+    }
+
+    parameter_meta {
+        raw_reads_gcs_bucket: "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be CCS-ed"
+        sample_name:          "[optional] name of sample this FC is sequencing"
+
+        ref_fasta:            "Reference fasta file"
+        ref_fasta_fai:        "Index (.fai) for the reference fasta file"
+        ref_dict:             "Sequence dictionary (.dict) for the reference fasta file"
+
+        tandem_repeat_bed:    "BED file specifying the location of tandem repeats in the reference"
+        ref_flat:             "Gene predictions in refFlat format (https://genome.ucsc.edu/goldenpath/gbdDescriptions.html)"
+        dbsnp_vcf:            "dbSNP vcf"
+        dbsnp_tbi:            "Index (.tbi) for dbSNP vcf"
+
+        mt_chr_name:          "Contig name for the mitochondrial sequence in the reference"
+        metrics_locus:        "Loci over which some summary metrics should be computed"
+
+        num_reads_per_split:  "[default-valued] number of subreads each sharded BAM contains (tune for performance)"
+
+        gcs_out_root_dir :    "GCS bucket to store the corrected/uncorrected reads and metrics files"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call PB.FindBams { input: gcs_input_dir = gcs_input_dir }
+    call PB.FindBams { input: gcs_input_dir = raw_reads_gcs_bucket}
 
+    # double scatter: one FC may generate multiple raw BAMs, we perform another layer scatter on each of these BAMs
     scatter (subread_bam in FindBams.subread_bams) {
         call PB.GetRunInfo { input: subread_bam = subread_bam }
 
@@ -45,8 +76,10 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         String DIR = SM + "." + ID
         String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
+        # shard one raw BAM into fixed chunk size (num_reads_per_split)
+        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = num_reads_per_split }
 
+        # then perform correction and alignment on each of the shard
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }
 
@@ -59,10 +92,11 @@ workflow PBCCSWholeGenomeSingleFlowcell {
             }
         }
 
-        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
-
+        # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
+        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam, prefix = "~{SM}.~{ID}" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
 
+        # compute alignment metrics
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
             input:
                 aligned_bam    = MergeChunks.merged_bam,
@@ -91,14 +125,21 @@ workflow PBCCSWholeGenomeSingleFlowcell {
 #        }
     }
 
-    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    # gather across (potential multiple) input raw BAMs
+    if (length(FindBams.subread_bams) > 1) {
+        call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+        call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+    }
 
-    call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+    File ccs_bam = select_first([ MergeRuns.merged_bam, MergeChunks.merged_bam[0] ])
+    File ccs_bai = select_first([ MergeRuns.merged_bai, MergeChunks.merged_bai[0] ])
+    File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
 
+    # compute alignment metrics
     call AM.AlignedMetrics as PerFlowcellRunMetrics {
         input:
-            aligned_bam    = MergeRuns.merged_bam,
-            aligned_bai    = MergeRuns.merged_bai,
+            aligned_bam    = ccs_bam,
+            aligned_bai    = ccs_bai,
             ref_fasta      = ref_fasta,
             ref_dict       = ref_dict,
             ref_flat       = ref_flat,
@@ -122,20 +163,22 @@ workflow PBCCSWholeGenomeSingleFlowcell {
 #            gcs_output_dir = outdir + "/" + DIR[0]
 #    }
 
+    # call SVs
     call SV.CallSVs as CallSVs {
         input:
-            bam               = MergeRuns.merged_bam,
-            bai               = MergeRuns.merged_bai,
+            bam               = ccs_bam,
+            bai               = ccs_bai,
 
             ref_fasta         = ref_fasta,
             ref_fasta_fai     = ref_fasta_fai,
             tandem_repeat_bed = tandem_repeat_bed
     }
 
+    # call SNVs and small indels
     call SMV.CallSmallVariants as CallSmallVariants {
         input:
-            bam               = MergeRuns.merged_bam,
-            bai               = MergeRuns.merged_bai,
+            bam               = ccs_bam,
+            bai               = ccs_bai,
 
             ref_fasta         = ref_fasta,
             ref_fasta_fai     = ref_fasta_fai,
@@ -143,7 +186,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
     }
 
     ##########
-    # Finalize
+    # store the results into designated bucket
     ##########
 
     call FF.FinalizeToDir as FinalizeSVs {
@@ -160,13 +203,13 @@ workflow PBCCSWholeGenomeSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
-            files = [ MergeRuns.merged_bam, MergeRuns.merged_bai ],
+            files = [ ccs_bam, ccs_bai ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 
     call FF.FinalizeToDir as FinalizeCCSMetrics {
         input:
-            files = [ MergeAllCCSReports.report ],
+            files = [ ccs_report ],
             outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
     }
 }
