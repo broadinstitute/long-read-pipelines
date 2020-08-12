@@ -6,11 +6,11 @@ version 1.0
 ## produced along the way.
 ##########################################################################################
 
-import "tasks/PBUtils.wdl" as PB
-import "tasks/ShardUtils.wdl" as SU
-import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/PBUtils.wdl" as PB
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/ShardUtils.wdl" as SU
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/AlignReads.wdl" as AR
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/Finalize.wdl" as FF
 
 workflow PBCLRDemultiplexOnlySingleFlowcell {
     input {

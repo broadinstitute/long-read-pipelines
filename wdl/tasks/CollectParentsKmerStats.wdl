@@ -9,7 +9,7 @@ version 1.0
 ##   part one: collect k-mer stats given parental (short) reads
 ##########################################################################################
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/Structs.wdl"
 
 workflow CollectParentsKmerStats {
     input{

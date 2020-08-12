@@ -1,12 +1,12 @@
 version 1.0
 
-import "tasks/Utils.wdl" as Utils
-import "tasks/ONTUtils.wdl" as ONT
-import "tasks/C3POa.wdl" as C3
-import "tasks/AlignReads.wdl" as AR
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/Figures.wdl" as FIG
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/ONTUtils.wdl" as ONT
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/C3POa.wdl" as C3
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/AlignReads.wdl" as AR
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/AlignedMetrics.wdl" as AM
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/Figures.wdl" as FIG
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.28/wdl/tasks/Finalize.wdl" as FF
 
 workflow ONT10xSingleFlowcell {
     input {
