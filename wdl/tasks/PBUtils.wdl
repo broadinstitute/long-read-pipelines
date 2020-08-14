@@ -94,6 +94,7 @@ task CCS {
         Int min_length = 10
         Int max_length = 50000
         Float min_rq = 0.99
+        Boolean by_strand = false
 
         Int cpus = 4
 
@@ -117,7 +118,8 @@ task CCS {
             --max-length ~{max_length} \
             --min-rq ~{min_rq} \
             --num-threads ~{cpus} \
-            $infile ccs_unmapped.bam
+            --report-file ccs_report.txt \
+            ~{if by_strand then "--by-strand" else ""} $infile ccs_unmapped.bam
     >>>
 
     output {
@@ -245,7 +247,7 @@ task MergeCCSReports {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -287,6 +289,195 @@ task MergeCCSClasses {
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.5"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task Demultiplex {
+    input {
+        File bam
+        File barcode_file
+        String prefix  = "demux"
+        Boolean ccs    = true
+        Boolean isoseq = false
+        Int min_score  = 26
+        Int guess      = 75
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        lima ~{if ccs then "--ccs --peek 50000" else ""} \
+            --guess ~{guess} \
+            --guess-min-count 1 \
+            --dump-removed \
+            --split-bam-named \
+            ~{bam} \
+            ~{barcode_file} \
+            ~{prefix}.bam
+    >>>
+
+    output {
+        Array[File] demux_bams = glob("~{prefix}.bc*.bam")
+        File counts = "~{prefix}.lima.counts"
+        #File guess = "~{prefix}.lima.guess"
+        File report = "~{prefix}.lima.report"
+        File summary = "~{prefix}.lima.summary"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.6"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MakeDetailedDemultiplexingReport {
+    input {
+        File report
+        String type = "png"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 2*ceil(size(report, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        Rscript /lima_report_detail.R ~{report} ~{type}
+    >>>
+
+    output {
+        Array[File] report_files = glob("detail_*~{type}")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MakeSummarizedDemultiplexingReport {
+    input {
+        File report
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 2*ceil(size(report, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        Rscript /lima_report_summary.R ~{report}
+    >>>
+
+    output {
+        Array[File] report_files = glob("summary_*.png")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MakePerBarcodeDemultiplexingReports {
+    input {
+        File report
+        String type = "png"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 2*ceil(size(report, "GB"))
+
+    command <<<
+        set -x
+
+        grep '>' /Sequel_96_barcodes_v2.fasta | sed 's/>//' | while read -r line ; do
+            Rscript /lima_report_detail.R ~{report} ~{type} $line
+
+            if [ -f "detail_hq_length_hist_barcoded_or_not.~{type}" ]; then
+                for f in detail_*; do mv $f $line.$f; done
+            fi
+        done
+    >>>
+
+    output {
+        Array[File] report_files = glob("*.~{type}")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
