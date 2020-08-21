@@ -1,13 +1,13 @@
 version 1.0
 
-import "tasks/Utils.wdl" as Utils
-import "tasks/PBUtils.wdl" as PB
-import "tasks/HiFi.wdl" as HIFI
-import "tasks/AlignReads.wdl" as AR
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/AnnotateAdapters.wdl" as AA
-import "tasks/Figures.wdl" as FIG
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.29/wdl/tasks/Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.29/wdl/tasks/PBUtils.wdl" as PB
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.29/wdl/tasks/HiFi.wdl" as HIFI
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.29/wdl/tasks/AlignReads.wdl" as AR
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.29/wdl/tasks/AlignedMetrics.wdl" as AM
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.29/wdl/tasks/AnnotateAdapters.wdl" as AA
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.29/wdl/tasks/Figures.wdl" as FIG
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.29/wdl/tasks/Finalize.wdl" as FF
 
 workflow PB10xSingleFlowcell {
     input {
