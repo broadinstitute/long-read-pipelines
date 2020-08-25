@@ -2,6 +2,7 @@ version 1.0
 
 import "Structs.wdl"
 
+# A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference
 task Minimap2 {
     input {
         Array[File] reads
@@ -11,11 +12,20 @@ task Minimap2 {
         String map_preset
 
         String prefix = "out"
-        Int cpus = 4
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10*ceil(size(reads, "GB"))
+    parameter_meta {
+        reads:      "query sequences to be mapped and aligned"
+        ref_fasta:  "reference fasta"
+        RG:         "read group information to be supplied to parameter '-R' (note that tabs should be input as '\t')"
+        map_preset: "preset to be used for minimap2 parameter '-x'"
+        prefix:     "[default-valued] prefix for output BAM"
+    }
+
+    Int disk_size = 1 + 10*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
+
+    Int cpus = 4
 
     command <<<
         set -euxo pipefail
@@ -58,8 +68,8 @@ task Minimap2 {
         mem_gb:             30,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
+        preemptible_tries:  3,
+        max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -74,51 +84,7 @@ task Minimap2 {
     }
 }
 
-task MergeBams {
-    input {
-        Array[File] bams
-
-        String prefix = "out"
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 4*ceil(size(bams, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        samtools merge -p -c -@2 --no-PG ~{prefix}.bam ~{sep=" " bams}
-        samtools index ~{prefix}.bam
-    >>>
-
-    output {
-        File merged_bam = "~{prefix}.bam"
-        File merged_bai = "~{prefix}.bam.bai"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             20,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-# A simple task to covert SAM-format alignment to PAF format
+# A simple task to covert SAM-formatted alignment to PAF format
 task SAMtoPAF {
     input {
         File sam_formatted_file
@@ -127,8 +93,12 @@ task SAMtoPAF {
         RuntimeAttr? runtime_attr_override
     }
 
-    # currently we only support bam (not sam or cram)
-    String prefix = basename(sam_formatted_file, ".bam")
+    parameter_meta {
+        sam_formatted_file: "SAM-formated input file to be converted to PAF (note currently we only support SAM or BAM, not CRAM)"
+        index:              "[optional] index for sam_formatted_file"
+    }
+
+    String prefix = basename(basename(sam_formatted_file, ".bam"), ".sam") # we have hack like this because WDL stdlib doesn't provide endsWith stuff
 
     Int disk_size = 2*ceil(size(sam_formatted_file, "GB"))
 

@@ -247,7 +247,7 @@ task MakeChrIntervalList {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -308,7 +308,7 @@ task CountFastqRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(fastq, "GiB"))
+    Int disk_size = 1 + ceil(2 * size(fastq, "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -354,10 +354,12 @@ task CountFastaRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(fasta, "GiB"))
+    Int disk_size = 1 + 2*ceil(size(fasta, "GiB"))
 
     command <<<
         grep -c '>' ~{fasta}
+
+        exit 0
     >>>
 
     output {
@@ -393,7 +395,7 @@ task CountBamRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(bam, "GiB"))
+    Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
 
     command <<<
         samtools view ~{bam} | wc -l
@@ -436,7 +438,7 @@ task GrepCountBamRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(bam, "GiB"))
+    Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
     String arg = if invert then "-vc" else "-c"
 
     command <<<
@@ -484,7 +486,7 @@ task GrepCountUniqueBamRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(2 * size(bam, "GiB"))
+    Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
     String arg = if invert then "-v" else ""
 
     command <<<
@@ -568,7 +570,7 @@ task BamToTable {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 1 + 2*ceil(size(bam, "GB"))
 
     command <<<
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
@@ -642,5 +644,96 @@ task ConvertReads {
         preemptible:            2
         maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
+    }
+}
+
+task BamToBed {
+    input {
+        File bam
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+        bedtools genomecov -ibam ~{bam} -bg > ~{prefix}.bed
+    >>>
+
+    output {
+        File bed = "~{prefix}.bed"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+# A utility to merge several input BAMs into a single BAM.
+task MergeBams {
+    input {
+        Array[File] bams
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bams:   "input array of BAMs to be merged"
+        prefix: "[default-valued] prefix for output BAM"
+    }
+
+    Int disk_size = 4*ceil(size(bams, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools merge -p -c -@2 --no-PG ~{prefix}.bam ~{sep=" " bams}
+        samtools index ~{prefix}.bam
+    >>>
+
+    output {
+        File merged_bam = "~{prefix}.bam"
+        File merged_bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             20,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }

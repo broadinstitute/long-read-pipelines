@@ -1,4 +1,0 @@
-{
-    "DownloadFromSRA.SRA_IDs": ["SRR9973685"],
-    "DownloadFromSRA.gcs_output_dir": "gs://broad-dsp-lrma-ci/DownloadFromSRA/ecoli_test/",
-}

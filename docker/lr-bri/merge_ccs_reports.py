@@ -14,10 +14,10 @@ for ccs_report in args.ccs_report:
             a = line.rstrip().split(":")
 
             k = a[0].rstrip()
-            v = int(re.sub(" ", "", re.sub(" \(.*$", "", a[1])))
+            v = float(re.sub(" ", "", re.sub(" \(.*$", "", a[1])))
 
             if k not in d:
-                d[k] = 0;
+                d[k] = 0.0;
 
             d[k] = d[k] + v
 

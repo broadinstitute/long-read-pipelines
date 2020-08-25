@@ -25,3 +25,4 @@ RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
 # copy other resources
 COPY detect_run_info.py /usr/local/bin/
 COPY merge_ccs_reports.py /usr/local/bin/
+COPY Sequel_96_barcodes_v2.fasta /

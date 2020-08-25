@@ -11,7 +11,7 @@ import "tasks/CallSmallVariants.wdl" as SMV
 
 workflow ONTWholeGenomeSingleFlowcell {
     input {
-        String gcs_input_dir
+        String raw_reads_gcs_bucket
         String? sample_name
 
         File ref_fasta
@@ -31,7 +31,7 @@ workflow ONTWholeGenomeSingleFlowcell {
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call ONT.FindSequencingSummaryFiles { input: gcs_input_dir = gcs_input_dir }
+    call ONT.FindSequencingSummaryFiles { input: gcs_input_dir = raw_reads_gcs_bucket}
 
     scatter (summary_file in FindSequencingSummaryFiles.summary_files) {
         call ONT.GetRunInfo { input: summary_file = summary_file }
@@ -60,7 +60,7 @@ workflow ONTWholeGenomeSingleFlowcell {
             }
         }
 
-        call AR.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
+        call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam }
 
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
             input:
@@ -90,7 +90,7 @@ workflow ONTWholeGenomeSingleFlowcell {
         }
     }
 
-    call AR.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
+    call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
 
     call AM.AlignedMetrics as PerFlowcellRunMetrics {
         input:
@@ -145,9 +145,7 @@ workflow ONTWholeGenomeSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeSVs {
         input:
-            files = [ CallSVs.pbsv_vcf,       CallSVs.pbsv_tbi,
-                      CallSVs.sniffles_vcf,   CallSVs.sniffles_tbi,
-                      CallSVs.svim_vcf,       CallSVs.svim_tbi ],
+            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
             outdir = outdir + "/" + DIR[0] + "/variants"
     }
 
