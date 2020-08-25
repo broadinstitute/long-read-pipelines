@@ -22,7 +22,7 @@ two_end_clipping = {}
 
 # Supplementary Alignment Counts
 ALIGN_BACK_OVERLAP_THRESHOLD_PERCENT = 80
-CLOSE_BY_GAP_DISTANCE_THRESHOLD_BP = 1000
+CLOSE_BY_GAP_DISTANCE_THRESHOLD_BP = 10000
 # true = align in same direction
 # false = aligns in opposite direction
 aligns_back_to_primary = []
