@@ -17,6 +17,7 @@ workflow PBCLRDemultiplexOnlySingleFlowcell {
         String raw_reads_gcs_bucket
         String? sample_name
         File barcode_file
+        Int? num_reads_per_split = 2000000
         String gcs_out_root_dir
     }
 
@@ -24,6 +25,7 @@ workflow PBCLRDemultiplexOnlySingleFlowcell {
         raw_reads_gcs_bucket: "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be processed"
         sample_name:          "[optional] name of sample this FC is sequencing"
         barcode_file:         "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
+        num_reads_per_split:  "[default-valued] number of subreads each sharded BAM contains (tune for performance)"
         gcs_out_root_dir :    "GCS bucket to store the corrected/uncorrected reads and metrics files"
     }
 
@@ -40,48 +42,57 @@ workflow PBCLRDemultiplexOnlySingleFlowcell {
         String ID  = PU
         String DIR = SM + "." + ID
 
-        # demultiplex CLR BAM
-        call PB.Demultiplex { input: bam = subread_bam, ccs = false, guess = 0, prefix = "~{SM}.~{ID}", barcode_file = barcode_file }
+        # shard one raw BAM into fixed chunk size (num_reads_per_split)
+        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = num_reads_per_split }
 
-        # make reports on demultiplexing
-        call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
-        call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
-        call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
-        call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
-        call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
-
-        ##########
-        # store the results into designated bucket
-        ##########
-
-        call FF.FinalizeToDir as FinalizeDemuxReads {
-            input:
-                files = Demultiplex.demux_bams,
-                outdir = outdir + "/" + DIR + "/reads"
+        # then perform correction and alignment on each of the shard
+        scatter (subreads in ShardLongReads.unmapped_shards) {
+            # demultiplex CLR BAM shard
+            call PB.Demultiplex { input: bam = subreads, ccs = false, guess = 0, prefix = "~{SM}.~{ID}", barcode_file = barcode_file }
         }
 
-        call FF.FinalizeToDir as FinalizeLimaMetrics {
-            input:
-                files = [ Demultiplex.counts, Demultiplex.report, Demultiplex.summary ],
-                outdir = outdir + "/" + DIR + "/metrics/lima"
-        }
-
-        call FF.FinalizeToDir as FinalizeLimaSummary {
-            input:
-                files = SummarizedDemuxReportPNG.report_files,
-                outdir = outdir + "/" + DIR + "/figures/lima/summary/png"
-        }
-
-        call FF.FinalizeToDir as FinalizeLimaDetailedPNG {
-            input:
-                files = DetailedDemuxReportPNG.report_files,
-                outdir = outdir + "/" + DIR + "/figures/lima/detailed/png"
-        }
-
-        call FF.FinalizeToDir as FinalizeLimaDetailedPDF {
-            input:
-                files = DetailedDemuxReportPDF.report_files,
-                outdir = outdir + "/" + DIR + "/figures/lima/detailed/pdf"
-        }
+#        # merge the per-shard demultiplexed BAMs into one, corresponding to one raw input BAM
+#        call Utils.MergeBarcodeBams as MergeChunks { input: bams = Demultiplex.demux_bams }
+#
+#        # make reports on demultiplexing
+#        call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
+#        call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
+#        call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
+#        call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
+#        call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
+#
+#        ##########
+#        # store the results into designated bucket
+#        ##########
+#
+#        call FF.FinalizeToDir as FinalizeDemuxReads {
+#            input:
+#                files = Demultiplex.demux_bams,
+#                outdir = outdir + "/" + DIR + "/reads"
+#        }
+#
+#        call FF.FinalizeToDir as FinalizeLimaMetrics {
+#            input:
+#                files = [ Demultiplex.counts, Demultiplex.report, Demultiplex.summary ],
+#                outdir = outdir + "/" + DIR + "/metrics/lima"
+#        }
+#
+#        call FF.FinalizeToDir as FinalizeLimaSummary {
+#            input:
+#                files = SummarizedDemuxReportPNG.report_files,
+#                outdir = outdir + "/" + DIR + "/figures/lima/summary/png"
+#        }
+#
+#        call FF.FinalizeToDir as FinalizeLimaDetailedPNG {
+#            input:
+#                files = DetailedDemuxReportPNG.report_files,
+#                outdir = outdir + "/" + DIR + "/figures/lima/detailed/png"
+#        }
+#
+#        call FF.FinalizeToDir as FinalizeLimaDetailedPDF {
+#            input:
+#                files = DetailedDemuxReportPDF.report_files,
+#                outdir = outdir + "/" + DIR + "/figures/lima/detailed/pdf"
+#        }
     }
 }
