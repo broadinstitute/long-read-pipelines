@@ -8,6 +8,7 @@ task MedakaPolish {
         File draft_assembly
         String model #Run `medaka tools list_models` and pick string with the correct pore type, machine, and guppy version
 
+        Int n_rounds
         RuntimeAttr? runtime_attr_override
     }
 
@@ -19,10 +20,20 @@ task MedakaPolish {
         set -euxo pipefail
 
         medaka_consensus -i ~{basecalled_reads} -d ~{draft_assembly} -o output -t 8 -m ~{model}
+
+        mkdir output_0_rounds
+        cp ~{draft_assembly} output_0_rounds/consensus.fasta
+
+        for i in {1..~{n_rounds}}
+        do
+          medaka_consensus -i ~{basecalled_reads} -d output_$((i-1))_rounds -o output_${i}_rounds -t 8 -m ~{model}
+        done
+
+        cp output_~{n_rounds}_rounds/consensus.fast consensus.fasta
     >>>
 
     output {
-        File polished_assembly = "./output/consensus.fasta"
+        File polished_assembly = "consensus.fasta"
     }
 
     ###################
@@ -51,3 +62,4 @@ task MedakaPolish {
         docker:             select_first([runtime_attr.docker, default_attr.docker])
     }
 }
+
