@@ -1,5 +1,10 @@
 version 1.0
 
+##########################################################################################
+# This pipeline polishes input draft assembly generated from ONT reads,
+# with Nanopolish.
+##########################################################################################
+
 import "Structs.wdl"
 
 workflow PolishAssembly {
@@ -52,6 +57,14 @@ task NanopolishIndex {
         Int parallel_instances
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        fast5_dir:              "GCS path to \"directory\" holding the fast5 files"
+        reads_fasta:            "Basecalled reads"
+        sequencing_summary:     "summary file produced by the sequencer"
+        draft_assembly_fasta:   "FASTA holding the draft assembly"
+        parallel_instances:     "how many ways to split the work"
     }
 
     # The 16 multiplier is to estimate the space needed for the fast5 files
@@ -123,6 +136,14 @@ task NanopolishVariants {
         RuntimeAttr? runtime_attr_override
     }
 
+    parameter_meta {
+        fast5_and_indexes:      ""
+        draft_assembly_fasta:   ""
+        draft_assembly_fai:     ""
+        draft_alignment_bam:    ""
+        draft_alignment_bai:    ""
+    }
+
     Int disk_size = 4 * ceil(size(fast5_and_indexes, "GB"))
 
     command <<<
@@ -180,6 +201,11 @@ task MergeVcfs {
         File draft_assembly_fasta
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        vcfs:                   ""
+        draft_assembly_fasta:   ""
     }
 
     Int disk_size = 2 * ceil(size(vcfs, "GB") + size(draft_assembly_fasta, "GB"))

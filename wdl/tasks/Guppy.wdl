@@ -1,5 +1,9 @@
 version 1.0
 
+##########################################################################################
+# A workflow that runs the Guppy basecaller on ONT FAST5 files.
+##########################################################################################
+
 import "Finalize.wdl" as FF
 
 workflow Guppy {

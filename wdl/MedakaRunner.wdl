@@ -1,5 +1,9 @@
 version 1.0
 
+##########################################################################################
+# A workflow that polishes a draft ONT assembly with Medaka.
+##########################################################################################
+
 import "tasks/Medaka.wdl" as Medaka
 import "tasks/Finalize.wdl" as FF
 

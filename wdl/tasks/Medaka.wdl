@@ -1,14 +1,24 @@
 version 1.0
 
+##########################################################################################
+# Runs Medaka on an ONT draft assembly with basecalled ONT reads
+##########################################################################################
+
 import "Structs.wdl"
 
 task MedakaPolish {
     input {
         File basecalled_reads
         File draft_assembly
-        String model #Run `medaka tools list_models` and pick string with the correct pore type, machine, and guppy version
+        String model
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        basecalled_reads:   "basecalled reads to be used with polishing"
+        draft_assembly:     "draft assembly to be polished"
+        model:              "Run `medaka tools list_models` and pick string with the correct pore type, machine, and guppy version"
     }
 
     Int disk_size = 2 * ceil(size(basecalled_reads, "GB") + size(draft_assembly, "GB"))

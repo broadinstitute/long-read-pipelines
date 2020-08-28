@@ -1,5 +1,10 @@
 version 1.0
 
+##########################################################################################
+# A workflow that runs QUAST to evaluate a given set of assemblies
+# on a species with existing reference assembly.
+##########################################################################################
+
 import "tasks/Quast.wdl" as Quast
 import "tasks/Finalize.wdl" as FF
 

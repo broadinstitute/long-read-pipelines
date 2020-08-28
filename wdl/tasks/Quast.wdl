@@ -1,5 +1,10 @@
 version 1.0
 
+##########################################################################################
+# A task that runs QUAST to evaluate a given set of assemblies
+# on a species with existing reference assembly.
+##########################################################################################
+
 import "Structs.wdl"
 
 task Quast {
@@ -8,6 +13,11 @@ task Quast {
         Array[File] assemblies
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        ref:        "reference assembly of the species"
+        assemblies: "list of assemblies to evaluate"
     }
 
     Int disk_size = ceil(size(ref, "GB") + size(assemblies, "GB"))

@@ -1,5 +1,10 @@
 version 1.0
 
+##########################################################################################
+# A workflow that runs the Canu 3-step assembly (correct, trim, assemble)
+# on a (presummably small) genome.
+##########################################################################################
+
 import "tasks/Canu.wdl" as Canu
 import "tasks/Quast.wdl" as Quast
 import "tasks/Finalize.wdl" as FF

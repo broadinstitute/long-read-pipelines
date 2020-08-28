@@ -1,5 +1,10 @@
 version 1.0
 
+##########################################################################################
+# A workflow that runs the Canu 3-step assembly (correct, trim, assemble)
+# on a (presummably small) genome.
+##########################################################################################
+
 import "Structs.wdl"
 
 workflow CorrectTrimAssemble {
@@ -41,6 +46,7 @@ workflow CorrectTrimAssemble {
     }
 }
 
+# performs canu correct on raw reads, currently assumes ONT reads
 task Correct {
     input {
         String output_file_prefix
@@ -49,6 +55,13 @@ task Correct {
         Float corrected_error_rate
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        reads:                  "reads to be canu-corrected"
+        genome_size:            "estimate on genome size (parameter to canu's \'genomeSize\')"
+        output_file_prefix:     "prefix to output files"
+        corrected_error_rate:   "parameter to canu's \'correctedErrorRate\'"
     }
 
     Int disk_size = 100 * ceil(size(reads, "GB"))
@@ -92,6 +105,7 @@ task Correct {
     }
 }
 
+# performs canu trim on corrected reads
 task Trim {
     input {
         String output_file_prefix
@@ -100,6 +114,13 @@ task Trim {
         Float corrected_error_rate
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        corrected_reads_fasta_gz:   "reads that have been canu-corrected"
+        genome_size:                "estimate on genome size (parameter to canu's \'genomeSize\')"
+        output_file_prefix:         "prefix to output files"
+        corrected_error_rate:       "parameter to canu's \'correctedErrorRate\'"
     }
 
     Int disk_size = 50 * ceil(size(corrected_reads_fasta_gz, "GB"))
@@ -142,6 +163,7 @@ task Trim {
     }
 }
 
+# performs assembly on corrected, then trimmmed reads
 task Assemble {
     input {
         String output_file_prefix
@@ -150,6 +172,13 @@ task Assemble {
         Float corrected_error_rate
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        trimmed_reads_fasta_gz:     "reads that have been canu-corrected-trimmed"
+        genome_size:                "estimate on genome size (parameter to canu's \'genomeSize\')"
+        output_file_prefix:         "prefix to output files"
+        corrected_error_rate:       "parameter to canu's \'correctedErrorRate\'"
     }
 
     Int disk_size = 50 * ceil(size(trimmed_reads_fasta_gz, "GB"))
