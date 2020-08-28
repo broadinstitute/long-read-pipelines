@@ -63,7 +63,7 @@ $ cromwell_metadata_bq < workflow_ids.txt
 where "workflow_ids.txt" holds a list of workflow-ids (and nothing else) that have "succeeded" (according to `cromshell status`).
 
 ### automated upload using a python script
-To automate the chore of checking execution status of jobs and pushing the metadata to the BQ dataset `cromwell_monitoring`, we offer a python3 script "cromwell.metadata.2BQ.py" that uploads the metadata of to a BQDS&mdash;preferably the same BQDS as above. We intend to have a cron job in the background that will periodically check the status of recently submitted jobs, and upload their metadata when possible.
+To automate the chore of checking execution status of jobs and pushing the metadata to the BQ dataset `cromwell_monitoring`, we offer a python3 script "cromwell.metadata.2BQ.py" (in the "utilities" sub-directory) that uploads the metadata of to a BQDS&mdash;preferably the same BQDS as above. We intend to have a cron job in the background that will periodically check the status of recently submitted jobs, and upload their metadata when possible.
 
 First set the user-configurable variables in the script:
 
