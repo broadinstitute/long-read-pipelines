@@ -1,10 +1,10 @@
 version 1.0
 
 ##########################################################################################
-## A workflow that performs CCS correction and demultiplexing on PacBio HiFi reads from a
-## single flow cell. The workflow shards the subreads into clusters and performs CCS in
-## parallel on each cluster.  Error-corrected reads are then demultiplexed.  A number of
-## metrics and figures are produced along the way.
+## A workflow that performs CCS correction and IsoSeq processing on PacBio HiFi reads from
+## a single flow cell. The workflow shards the subreads into clusters and performs CCS in
+## parallel on each cluster.  Error-corrected reads are then processed with PacBio's
+## IsoSeq software.  A number of metrics and figures are produced along the way.
 ##########################################################################################
 
 import "tasks/PBUtils.wdl" as PB
@@ -12,14 +12,19 @@ import "tasks/ShardUtils.wdl" as SU
 import "tasks/Utils.wdl" as Utils
 import "tasks/Finalize.wdl" as FF
 
-workflow PBCCSDemultiplexOnlySingleFlowcell {
+workflow PBCCSTranscriptomeSingleFlowcell {
     input {
         String raw_reads_gcs_bucket
-
         String? sample_name
-        Int num_reads_per_split = 2000000
+
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+        File ref_flat
 
         File barcode_file
+
+        Int num_reads_per_split = 100000
 
         String gcs_out_root_dir
     }
@@ -27,8 +32,15 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
     parameter_meta {
         raw_reads_gcs_bucket: "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be CCS-ed"
         sample_name:          "[optional] name of sample this FC is sequencing"
-        num_reads_per_split:  "[default-valued] number of subreads each sharded BAM contains (tune for performance)"
+
+        ref_fasta:            "Reference fasta file"
+        ref_fasta_fai:        "Index (.fai) for the reference fasta file"
+        ref_dict:             "Sequence dictionary (.dict) for the reference fasta file"
+        ref_flat:             "Gene predictions in refFlat format (https://genome.ucsc.edu/goldenpath/gbdDescriptions.html)"
+
         barcode_file:         "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
+
+        num_reads_per_split:  "[default-valued] number of subreads each sharded BAM contains (tune for performance)"
         gcs_out_root_dir :    "GCS bucket to store the corrected/uncorrected reads and metrics files"
     }
 
@@ -73,55 +85,23 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
             bam = ccs_bam,
             prefix = "~{SM[0]}.~{ID[0]}",
             barcode_file = barcode_file,
-            ccs = true,
-            guess = 75,
-            guess_min_count = 1,
-            dump_removed = true,
-            split_bam_named = true
+            isoseq = true,
+            peek_guess = true
     }
-
-    # make reports on demultiplexing
-    call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
-    call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
-    call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
 
     ##########
     # store the results into designated bucket
     ##########
 
-    call FF.FinalizeToDir as FinalizeDemuxReads {
-        input:
-            files = Demultiplex.demux_bams,
-            outdir = outdir + "/" + DIR[0] + "/reads"
-    }
-
-    call FF.FinalizeToDir as FinalizeCCSMetrics {
-        input:
-            files = [ ccs_report ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/ccs"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaMetrics {
-        input:
-            files = [ Demultiplex.counts, Demultiplex.report, Demultiplex.summary ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/lima"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaSummary {
-        input:
-            files = SummarizedDemuxReportPNG.report_files,
-            outdir = outdir + "/" + DIR[0] + "/figures/lima/summary/png"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaDetailedPNG {
-        input:
-            files = DetailedDemuxReportPNG.report_files,
-            outdir = outdir + "/" + DIR[0] + "/figures/lima/detailed/png"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaDetailedPDF {
-        input:
-            files = DetailedDemuxReportPDF.report_files,
-            outdir = outdir + "/" + DIR[0] + "/figures/lima/detailed/pdf"
-    }
+#    call FF.FinalizeToDir as FinalizeMergedRuns {
+#        input:
+#            files = [ ccs_bam ],
+#            outdir = outdir + "/" + DIR[0] + "/alignments"
+#    }
+#
+#    call FF.FinalizeToDir as FinalizeCCSMetrics {
+#        input:
+#            files = [ ccs_report ],
+#            outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
+#    }
 }

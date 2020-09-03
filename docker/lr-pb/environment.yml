@@ -8,4 +8,5 @@ dependencies:
   - samtools
   - pbccs
   - lima
+  - isoseq3
   - java-jdk

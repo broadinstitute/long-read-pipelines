@@ -306,11 +306,16 @@ task Demultiplex {
     input {
         File bam
         File barcode_file
-        String prefix  = "demux"
-        Boolean ccs    = true
-        Boolean isoseq = false
-        Int min_score  = 26
-        Int guess      = 75
+        String prefix           = "demux"
+        Boolean ccs             = false
+        Boolean isoseq          = false
+        Boolean peek_guess      = false
+        Boolean dump_removed    = false
+        Boolean split_bam_named = false
+        Int peek                = 0
+        Int min_score           = 0
+        Int guess               = 0
+        Int guess_min_count     = 0
 
         RuntimeAttr? runtime_attr_override
     }
@@ -320,18 +325,69 @@ task Demultiplex {
     command <<<
         set -euxo pipefail
 
-        lima ~{if ccs then "--ccs --peek 50000" else ""} \
-            --guess ~{guess} \
-            --guess-min-count 1 \
-            --dump-removed \
-            --split-bam-named \
+        lima \
+            ~{if ccs then "--ccs" else ""} \
+            ~{if isoseq then "--isoseq" else ""} \
+            ~{if peek_guess then "--peek-guess" else ""} \
+            ~{if guess > 0 then "--guess ~{guess}" else ""} \
+            ~{if guess_min_count > 0 then "--guess-min-count ~{guess_min_count}" else ""} \
+            ~{if peek > 0 then "--peek ~{peek}" else ""} \
+            ~{if dump_removed then "--dump-removed" else ""} \
+            ~{if split_bam_named then "--split-bam-named" else ""} \
             ~{bam} \
             ~{barcode_file} \
             ~{prefix}.bam
     >>>
 
     output {
-        Array[File] demux_bams = glob("~{prefix}.bc*.bam")
+        Array[File] demux_bams = glob("~{prefix}.*.bam")
+        File counts = "~{prefix}.lima.counts"
+        #File guess = "~{prefix}.lima.guess"
+        File report = "~{prefix}.lima.report"
+        File summary = "~{prefix}.lima.summary"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.6"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task RefineTranscriptReads {
+    input {
+        File bam
+        File barcode_file
+        String prefix = ""
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        isoseq refine ~{bam} ~{barcode_file} movieX.flnc.bam
+    >>>
+
+    output {
+        Array[File] demux_bams = glob("~{prefix}.*.bam")
         File counts = "~{prefix}.lima.counts"
         #File guess = "~{prefix}.lima.guess"
         File report = "~{prefix}.lima.report"
