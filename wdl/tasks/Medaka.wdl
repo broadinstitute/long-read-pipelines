@@ -27,7 +27,7 @@ task MedakaPolish {
           medaka_consensus -i ~{basecalled_reads} -d output_$((i-1))_rounds/consensus.fasta -o output_${i}_rounds -t 8 -m ~{model}
         done
 
-        cp output_~{n_rounds}_rounds/consensus.fast consensus.fasta
+        cp output_~{n_rounds}_rounds/consensus.fasta consensus.fasta
     >>>
 
     output {
