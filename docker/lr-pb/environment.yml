@@ -9,6 +9,7 @@ dependencies:
   - pbbam
   - isoseq3
   - lima
+  - isoseq3
   - java-jdk
   - pysam
   - construct
