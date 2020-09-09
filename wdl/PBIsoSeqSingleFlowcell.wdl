@@ -10,9 +10,10 @@ version 1.0
 import "tasks/PBUtils.wdl" as PB
 import "tasks/ShardUtils.wdl" as SU
 import "tasks/Utils.wdl" as Utils
+import "tasks/AlignReads.wdl" as AR
 import "tasks/Finalize.wdl" as FF
 
-workflow PBCCSTranscriptomeSingleFlowcell {
+workflow PBIsoSeqSingleFlowcell {
     input {
         String raw_reads_gcs_bucket
         String? sample_name
@@ -53,9 +54,13 @@ workflow PBCCSTranscriptomeSingleFlowcell {
         call PB.GetRunInfo { input: subread_bam = subread_bam }
 
         String SM  = select_first([sample_name, GetRunInfo.run_info["SM"]])
+        String PL  = "PACBIO"
         String PU  = GetRunInfo.run_info["PU"]
+        String DT  = GetRunInfo.run_info["DT"]
         String ID  = PU
+        String DS  = GetRunInfo.run_info["DS"]
         String DIR = SM + "." + ID
+        String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
         # shard one raw BAM into fixed chunk size (num_reads_per_split)
         call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = num_reads_per_split }
@@ -63,11 +68,21 @@ workflow PBCCSTranscriptomeSingleFlowcell {
         # then perform correction on each of the shard
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }
+
+            call AR.Minimap2 as AlignChunk {
+                input:
+                    reads      = [ CCS.consensus ],
+                    ref_fasta  = ref_fasta,
+                    RG         = RG,
+                    map_preset = "splice"
+            }
         }
 
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
         call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus, prefix = "~{SM}.~{ID}" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
+
+        call Utils.MergeBams as MergeAlignedChunks { input: bams = AlignChunk.aligned_bam, prefix = "~{SM}.~{ID}" }
     }
 
     # gather across (potential multiple) input raw BAMs
@@ -86,8 +101,10 @@ workflow PBCCSTranscriptomeSingleFlowcell {
             prefix = "~{SM[0]}.~{ID[0]}",
             barcode_file = barcode_file,
             isoseq = true,
-            peek_guess = true
+            peek_guess = false
     }
+
+
 
     ##########
     # store the results into designated bucket

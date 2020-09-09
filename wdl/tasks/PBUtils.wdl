@@ -314,7 +314,7 @@ task RefineTranscriptReads {
     input {
         File bam
         File barcode_file
-        String prefix = ""
+        String prefix = "flnc"
 
         RuntimeAttr? runtime_attr_override
     }
@@ -324,7 +324,7 @@ task RefineTranscriptReads {
     command <<<
         set -euxo pipefail
 
-        isoseq refine ~{bam} ~{barcode_file} movieX.flnc.bam
+        isoseq refine ~{bam} ~{barcode_file} ~{prefix}.bam
     >>>
 
     output {
