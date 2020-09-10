@@ -4,35 +4,43 @@ import "Structs.wdl"
 
 task ShardLongReads {
     input {
-        Array[String] unmapped_files
-        Int? num_reads_per_split
+        File unaligned_bam
+        File unaligned_pbi
+
+        Int num_shards = 300
+        Int num_threads = 4
+
+        String prefix = "shard"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int nr = select_first([num_reads_per_split, 200000])
-    Int disk_size = 4*ceil(size(unmapped_files, "GB"))
-    Int num_files = length(unmapped_files)
+    Int disk_size = 3*ceil(size(unaligned_bam, "GB") + size(unaligned_bam, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        java -Dsamjdk.compression_level=0 -jar /usr/local/bin/gatk.jar ShardLongReads -I ~{sep=' -I ' unmapped_files} -nr ~{nr} -O ./ -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
+        python3 /usr/local/bin/shard_bam.py \
+            -n ~{num_shards} \
+            -t ~{num_threads} \
+            -i ~{unaligned_pbi} \
+            -p ~{prefix} \
+            ~{unaligned_bam}
     >>>
 
     output {
-        Array[File] unmapped_shards = glob("*.bam")
+        Array[File] unmapped_shards = glob("~{prefix}*.bam")
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
+        cpu_cores:          num_threads,
         mem_gb:             4,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

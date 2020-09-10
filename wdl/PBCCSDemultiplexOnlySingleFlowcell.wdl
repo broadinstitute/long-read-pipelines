@@ -8,7 +8,6 @@ version 1.0
 ##########################################################################################
 
 import "tasks/PBUtils.wdl" as PB
-import "tasks/ShardUtils.wdl" as SU
 import "tasks/Utils.wdl" as Utils
 import "tasks/Finalize.wdl" as FF
 
@@ -17,7 +16,7 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
         String raw_reads_gcs_bucket
 
         String? sample_name
-        Int num_reads_per_split = 2000000
+        Int num_shards = 300
 
         File barcode_file
 
@@ -27,7 +26,7 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
     parameter_meta {
         raw_reads_gcs_bucket: "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be CCS-ed"
         sample_name:          "[optional] name of sample this FC is sequencing"
-        num_reads_per_split:  "[default-valued] number of subreads each sharded BAM contains (tune for performance)"
+        num_shards:           "[default-valued] number of sharded BAMs to create (tune for performance)"
         barcode_file:         "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
         gcs_out_root_dir :    "GCS bucket to store the corrected/uncorrected reads and metrics files"
     }
@@ -45,8 +44,9 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
         String ID  = PU
         String DIR = SM + "." + ID
 
-        # shard one raw BAM into fixed chunk size (num_reads_per_split)
-        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = num_reads_per_split }
+        # break one raw BAM into fixed number of shards
+        File subread_pbi = sub(subread_bam, ".bam$", ".bam.pbi")
+        call Utils.ShardLongReads { input: unaligned_bam = subread_bam, unaligned_pbi = subread_pbi, num_shards = num_shards }
 
         # then perform correction on each of the shard
         scatter (subreads in ShardLongReads.unmapped_shards) {

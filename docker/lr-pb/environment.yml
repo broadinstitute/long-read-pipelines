@@ -7,5 +7,9 @@ dependencies:
   - google-cloud-storage
   - samtools
   - pbccs
+  - pbbam
+  - isoseq3
   - lima
   - java-jdk
+  - pysam
+  - construct

@@ -18,11 +18,11 @@ RUN curl https://sdk.cloud.google.com | bash
 RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
     && cd gatk \
     && ./gradlew \
-    && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
+    && cp /gatk/build/libs/gatk-package-4.1.0.0-*-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
     && cd .. \
     && rm -rf /gatk
 
 # copy other resources
 COPY detect_run_info.py /usr/local/bin/
 COPY merge_ccs_reports.py /usr/local/bin/
-COPY Sequel_96_barcodes_v2.fasta /
+COPY shard_bam.py /usr/local/bin/
