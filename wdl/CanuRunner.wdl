@@ -6,7 +6,7 @@ import "tasks/Finalize.wdl" as FF
 
 workflow CanuRunner {
     input {
-        String reads
+        File reads
         String output_file_prefix
         String genome_size
         Float correct_correctedErrorRate

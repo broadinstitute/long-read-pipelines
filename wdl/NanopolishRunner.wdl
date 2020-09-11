@@ -2,21 +2,28 @@ version 1.0
 
 import "tasks/Nanopolish.wdl" as Nanopolish
 import "tasks/Finalize.wdl" as FF
+import "tasks/Utils.wdl" as Utils
 
 workflow NanopolishRunner {
     input {
         String fast5_dir
-        File reads_fasta
+        File reads
         File sequencing_summary
         File draft_assembly_fasta
         File output_dir
         Int parallel_instances
     }
 
+    call Utils.ConvertReads {
+        input:
+            reads = reads,
+            output_format = "fasta"
+    }
+
     call Nanopolish.PolishAssembly {
         input:
             fast5_dir = fast5_dir,
-            reads_fasta = reads_fasta,
+            reads_fasta = ConvertReads.converted_reads,
             sequencing_summary =  sequencing_summary,
             draft_assembly_fasta = draft_assembly_fasta,
             parallel_instances = parallel_instances
