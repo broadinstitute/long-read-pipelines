@@ -8,11 +8,11 @@ version 1.0
 # "https://github.com/PacificBiosciences/hg002-ccs/"
 ##########################################################################################
 
-import "dsde_pipelines_tasks/GermlineVariantDiscovery.wdl" as Calling
-import "dsde_pipelines_tasks/Qc.wdl" as QC
-import "dsde_pipelines_tasks/Utilities.wdl" as DSDEPipelinesUtils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.30/wdl/tasks/dsde_pipelines_tasks/GermlineVariantDiscovery.wdl" as Calling
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.30/wdl/tasks/dsde_pipelines_tasks/Qc.wdl" as QC
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.30/wdl/tasks/dsde_pipelines_tasks/Utilities.wdl" as DSDEPipelinesUtils
 
-import "Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.30/wdl/tasks/Utils.wdl" as Utils
 
 workflow GATKBestPraciceForLR {
     input {
