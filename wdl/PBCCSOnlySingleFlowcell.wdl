@@ -7,10 +7,10 @@ version 1.0
 ## Various metrics are produced along the way.
 ##########################################################################################
 
-import "tasks/PBUtils.wdl" as PB
-import "tasks/ShardUtils.wdl" as SU
-import "tasks/Utils.wdl" as Utils
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.32/wdl/tasks/PBUtils.wdl" as PB
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.32/wdl/tasks/ShardUtils.wdl" as SU
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.32/wdl/tasks/Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.32/wdl/tasks/Finalize.wdl" as FF
 
 workflow PBCCSOnlySingleFlowcell {
     input {

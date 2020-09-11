@@ -9,7 +9,7 @@ version 1.0
 ##   part two: given the k-mer stats database from part one, classify child long reads
 ##########################################################################################
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.32/wdl/tasks/Structs.wdl"
 
 # we separate this out based on two concerns:
 #  1. we can test out using different k-value when collecting parental k-mer states
