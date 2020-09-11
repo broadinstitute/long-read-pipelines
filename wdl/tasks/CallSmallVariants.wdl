@@ -5,8 +5,8 @@ version 1.0
 # known algorithms that are specifically designed to work with long read data.
 ##########################################################################################
 
-import "Structs.wdl"
-import "Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.31/wdl/tasks/Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.31/wdl/tasks/Utils.wdl" as Utils
 
 workflow CallSmallVariants {
     input {
