@@ -20,5 +20,6 @@ workflow GuppyRunner {
             outdir = gcs_output_dir
     }
 
+
 }
 

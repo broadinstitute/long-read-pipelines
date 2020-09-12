@@ -59,7 +59,7 @@ else:
 
     # First, populate run info (ri) hash with information gleaned from run metadata
     for blob in blobs:
-        if blob.name.endswith(".bam") and not blob.name.endswith(".scraps.bam"):
+        if blob.name.endswith(".subreads.bam") and not blob.name.endswith(".scraps.bam"):
             bams.append(blob.name)
 
         if not "fail" in blob.name and bool(re.search('(f(ast)?q)(.gz)?', blob.name)):
