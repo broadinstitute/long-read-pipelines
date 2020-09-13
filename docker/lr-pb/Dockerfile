@@ -26,3 +26,6 @@ RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
 COPY detect_run_info.py /usr/local/bin/
 COPY merge_ccs_reports.py /usr/local/bin/
 COPY shard_bam.py /usr/local/bin/
+
+# activate conda environment
+RUN echo "source activate lr-pb" > ~/.bashrc

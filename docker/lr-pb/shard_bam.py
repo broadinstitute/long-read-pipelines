@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     pbi = args.bam + ".pbi" if args.index is None else args.index
 
-    print(f"Reading index ({pbi}). This may take a few minutes...")
+    print(f"Reading index ({pbi}). This may take a few minutes...", flush=True)
 
     # Decode PacBio .pbi file.  This is not a full decode of the index, only the parts we need for sharding.
     # More on index format at https://pacbiofileformats.readthedocs.io/en/9.0/PacBioBamIndex.html .
@@ -61,12 +61,20 @@ if __name__ == "__main__":
         "reserved" / Padding(18),
 
         # Basic information section (columnar format)
-        "rgId" / Array(this.n_reads, Int32sl),
-        "qStart" / Array(this.n_reads, Int32sl),
-        "qEnd" / Array(this.n_reads, Int32sl),
+        # "rgId" / LazyArray(this.n_reads, Int32sl),
+        # "qStart" / LazyArray(this.n_reads, Int32sl),
+        # "qEnd" / LazyArray(this.n_reads, Int32sl),
+        # "holeNumber" / Array(this.n_reads, Int32sl),
+        # "readQual" / LazyArray(this.n_reads, Float32b),
+        # "ctxtFlag" / LazyArray(this.n_reads, Int8ul),
+        # "fileOffset" / Array(this.n_reads, Int64sl),
+
+        "rgId" / Padding(this.n_reads * 4),
+        "qStart" / Padding(this.n_reads * 4),
+        "qEnd" / Padding(this.n_reads * 4),
         "holeNumber" / Array(this.n_reads, Int32sl),
-        "readQual" / Array(this.n_reads, Float32b),
-        "ctxtFlag" / Array(this.n_reads, Int8ul),
+        "readQual" / Padding(this.n_reads * 4),
+        "ctxtFlag" / Padding(this.n_reads * 1),
         "fileOffset" / Array(this.n_reads, Int64sl),
     )
 
@@ -100,7 +108,7 @@ if __name__ == "__main__":
     idx = list(range(0, len(shard_offsets) - 1))
 
     # Write the shards using the specified number of threads.
-    print(f"Writing {len(idx)} shards using {args.num_threads} threads...")
+    print(f"Writing {len(idx)} shards using {args.num_threads} threads...", flush=True)
     res = ThreadPool(args.num_threads).imap_unordered(func, idx)
 
     # Emit final stats on the sharding.
@@ -108,9 +116,9 @@ if __name__ == "__main__":
     count = 0
     for i in range(len(all_num_reads_written)):
         count += all_num_reads_written[i]
-        print(f'  - wrote {all_num_reads_written[i]} reads to {args.prefix}{i}.bam')
+        print(f'  - wrote {all_num_reads_written[i]} reads to {args.prefix}{i}.bam', flush=True)
 
     assert count == a.n_reads
 
-    print(f'Expected {a.n_reads} reads; sharded {count} reads to {len(idx)} shards.')
+    print(f'Expected {a.n_reads} reads; sharded {count} reads to {len(idx)} shards.', flush=True)
 

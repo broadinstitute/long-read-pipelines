@@ -18,7 +18,7 @@ task ShardLongReads {
     Int disk_size = 3*ceil(size(unaligned_bam, "GB") + size(unaligned_bam, "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         python3 /usr/local/bin/shard_bam.py \
             -n ~{num_shards} \
@@ -35,12 +35,12 @@ task ShardLongReads {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_threads,
-        mem_gb:             4,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.9"
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.13"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
