@@ -2,7 +2,7 @@ We document here how runtime metrics and metadata are collected in a single BigQ
 
 ## Prerequisite and assumptions
 
-We assume the the job was submitted using [cromshell](https://github.com/broadinstitute/cromshell) and controlled under a cromwell server.
+We assume the job was submitted using [cromshell](https://github.com/broadinstitute/cromshell) and controlled under a cromwell server.
 
 --------------------------------------
 ## How does it work? Quick glance
@@ -11,10 +11,10 @@ We assume the the job was submitted using [cromshell](https://github.com/broadin
 The concurrent monitoring relies on a monitoring docker that can be specified via a workflow option when the job is submitted. The collected data (e.g. CPU/memory/disk percentage, etc) will be automatically sent to a BigQuery dataset. 
 
 ### Collecting job metadata
-Metadata are relatively less volatile and are stored on the cromwell server that controlled the execution of the job. The metadata will be synced up to the same BQDS when the job is done.
+Metadata is relatively less volatile and are stored on the cromwell server that controlled the execution of the job. The metadata will be synced up to the same BQDS when the job is done.
 
 ### And ...
-Much of these two functionalities have been implemented the repo [cromwell-task-monitor-bq](https://github.com/broadinstitute/cromwell-task-monitor-bq). We customize on top of that.
+Much of these two functionalities have been implemented in the repo [cromwell-task-monitor-bq](https://github.com/broadinstitute/cromwell-task-monitor-bq). We customize on top of that.
 
 --------------------------------------
 ## Automated resources monitoring via WDL options
@@ -38,10 +38,10 @@ When the monitoring image is used for the first time, it will automatically crea
 --------------------------------------
 ## (Semi-)Automated Cromwell metadata upload
  
-If the cromwell server that controls the job were configured appropriately, metadata should be sent to the BQDS `cromwell_monitoring` automatically once a job is finished.
+If the cromwell server that controls the job was configured appropriately, metadata should be sent to the BQDS `cromwell_monitoring` automatically once a job is finished.
 However sometimes that server configuration is beyond our control, hence we need to upload the metadata from the cromwell server to the dataset, separately.
 
-To setup, clone the [cromwell-task-monitor-bq](https://github.com/broadinstitute/cromwell-task-monitor-bq) repo. Then in its sub-directory "metadata/submit", compile a binary by `go build -o cromwell_metadata_bq`. Move the binary to a place in you `$PATH`.
+To setup, clone the [cromwell-task-monitor-bq](https://github.com/broadinstitute/cromwell-task-monitor-bq) repo. Then in its sub-directory "metadata/submit", compile a binary by `go build -o cromwell_metadata_bq`. Move the binary to a place in your `$PATH`.
 
 A `metadata` table will appear under the BQDS `cromwell_monitoring` after either of the following commands ran for the first time. 
 
