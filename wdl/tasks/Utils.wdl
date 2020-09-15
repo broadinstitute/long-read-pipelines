@@ -8,14 +8,14 @@ task ShardLongReads {
         File unaligned_pbi
 
         Int num_shards = 300
-        Int num_threads = 4
+        Int num_threads = 8
 
         String prefix = "shard"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*ceil(size(unaligned_bam, "GB") + size(unaligned_bam, "GB"))
+    Int disk_size = 2*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
 
     command <<<
         set -x
@@ -35,7 +35,7 @@ task ShardLongReads {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_threads,
-        mem_gb:             8,
+        mem_gb:             4,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
