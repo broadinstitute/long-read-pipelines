@@ -16,6 +16,7 @@ task ShardLongReads {
     }
 
     Int disk_size = 2*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
+    Int mem = ceil(20*size(unaligned_pbi, "MB"))
 
     command <<<
         set -x
@@ -35,12 +36,12 @@ task ShardLongReads {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_threads,
-        mem_gb:             4,
+        mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.14"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.15"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

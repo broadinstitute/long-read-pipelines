@@ -1,7 +1,7 @@
 import argparse
 import gzip
 from collections import OrderedDict
-from math import floor
+from math import ceil
 import pysam
 from construct import *
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     file_offsets = list(file_offsets_hash.values())
 
     shard_offsets = []
-    for i in range(0, len(file_offsets), floor(len(file_offsets)/args.num_shards)):
+    for i in range(0, len(file_offsets), ceil(len(file_offsets)/args.num_shards)):
         shard_offsets.append(file_offsets[i])
 
     # For the last read in the file, pad the offset so the final comparison in write_shard() retains the final read.
