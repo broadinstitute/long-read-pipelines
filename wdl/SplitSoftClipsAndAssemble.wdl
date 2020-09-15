@@ -1,8 +1,8 @@
 version 1.0
 
-import "tasks/Canu.wdl" as Canu
-import "tasks/SoftClipper.wdl" as SoftClipper
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.34/wdl/tasks/Canu.wdl" as Canu
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.34/wdl/tasks/SoftClipper.wdl" as SoftClipper
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.34/wdl/tasks/Finalize.wdl" as FF
 
 workflow SplitSoftClipsAndAssemble {
     input {
