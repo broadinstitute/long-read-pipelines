@@ -15,8 +15,8 @@ task ShardLongReads {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
-    Int mem = ceil(20*size(unaligned_pbi, "MB"))
+    Int disk_size = 3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
+    Int mem = ceil(25*size(unaligned_pbi, "MB")/1000)
 
     command <<<
         set -x
