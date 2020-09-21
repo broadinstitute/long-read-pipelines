@@ -21,6 +21,7 @@ workflow DownloadFromFTP {
     parameter_meta {
         ftp_dirs:                   "The FTP directories to download"
         num_simultaneous_downloads: "The number of files to fetch simultaneously."
+        prepend_dir_name:           "If true, place the files in a subdirectory based on the basename of the FTP dir."
         gcs_output_dir:             "GCS path for storing output"
     }
 
