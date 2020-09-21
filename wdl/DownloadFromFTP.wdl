@@ -66,12 +66,10 @@ task GetFileManifest {
             lftp -e 'find -l >> all_files.txt; exit' $FTP_DIR
             grep -v '^d' all_files.txt | awk -v ftp_dir=$FTP_DIR '{ print ftp_dir, $6, $3 }' >> manifest.txt
         done
-
-        head -4 manifest.txt > manifest.small.txt
     >>>
 
     output {
-        File manifest = "manifest.small.txt"
+        File manifest = "manifest.txt"
     }
 
     #########################
@@ -201,7 +199,7 @@ task DownloadFTPFile {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
-        max_retries:        0,
+        max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
