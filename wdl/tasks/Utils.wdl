@@ -4,35 +4,44 @@ import "Structs.wdl"
 
 task ShardLongReads {
     input {
-        Array[String] unmapped_files
-        Int? num_reads_per_split
+        File unaligned_bam
+        File unaligned_pbi
+
+        Int num_shards = 300
+        Int num_threads = 8
+
+        String prefix = "shard"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int nr = select_first([num_reads_per_split, 200000])
-    Int disk_size = 4*ceil(size(unmapped_files, "GB"))
-    Int num_files = length(unmapped_files)
+    Int disk_size = 3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
+    Int mem = ceil(25*size(unaligned_pbi, "MB")/1000)
 
     command <<<
-        set -euxo pipefail
+        set -x
 
-        java -Dsamjdk.compression_level=0 -jar /usr/local/bin/gatk.jar ShardLongReads -I ~{sep=' -I ' unmapped_files} -nr ~{nr} -O ./ -DF WellformedReadFilter --use-jdk-deflater --use-jdk-inflater
+        python3 /usr/local/bin/shard_bam.py \
+            -n ~{num_shards} \
+            -t ~{num_threads} \
+            -i ~{unaligned_pbi} \
+            -p ~{prefix} \
+            ~{unaligned_bam}
     >>>
 
     output {
-        Array[File] unmapped_shards = glob("*.bam")
+        Array[File] unmapped_shards = glob("~{prefix}*.bam")
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             4,
+        cpu_cores:          num_threads,
+        mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.15"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -600,6 +609,50 @@ task BamToTable {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ConvertReads {
+    input {
+        File reads
+        String output_format
+    }
+
+    Int disk_size = 3 * ceil(size(reads, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        filename=~{reads}
+        input_filetype=${filename##*.}
+        output_filetype=~{output_format}
+
+        if [[ ($input_filetype == "fastq" || $input_filetype == "fq") && $output_filetype == "fasta" ]]; then
+            echo "Converting $input_filetype to $output_filetype"
+            seqkit fq2fa $filename -o tmp.out
+        elif [ $input_filetype == $output_filetype ]; then
+            echo "Input filetype is the output filetype"
+            mv $filename tmp.out
+        else
+            echo "ConvertReads does not know how to convert $input_filetype to $output_filetype"
+            exit 1
+        fi
+
+        mv tmp.out converted_reads.$output_filetype
+    >>>
+
+    output {
+        File converted_reads = "converted_reads.~{output_format}"
+    }
+
+    runtime {
+        cpu:                    4
+        memory:                 "8 GiB"
+        disks:                  "local-disk " +  disk_size + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            2
+        maxRetries:             0
+        docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
     }
 }
 

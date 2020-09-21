@@ -21,7 +21,7 @@ Much of these two functionalities have been implemented in [this repo](https://g
 
 Users are expected to run an automated monitoring image along side their job when it is launched using cromshell.
 
-  1. Before running the workflow, specify `monitoring_image` in the workflow options json accompanying the submission (see [doc](https://cromwell.readthedocs.io/en/stable/wf_options/Google/)). An image known to be working is `bshifaw/cromwell-task-monitor-bq:latest` (this should be moved to gcr for reliability soon). 
+  1. Before running the workflow, specify `monitoring_image` in the workflow options json accompanying the submission (see [doc](https://cromwell.readthedocs.io/en/stable/wf_options/Google/)). An image known to be working is `us.gcr.io/broad-dsde-methods/cromwell-task-monitor-bq:latest` (this should be moved to gcr for reliability soon). 
 
   2. Launch the job via cromshell as you normally would
     

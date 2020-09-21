@@ -7,7 +7,6 @@ version 1.0
 ##########################################################################################
 
 import "tasks/PBUtils.wdl" as PB
-import "tasks/ShardUtils.wdl" as SU
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/Finalize.wdl" as FF
