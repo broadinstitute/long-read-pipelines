@@ -4,7 +4,8 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - sra-tools=2.9.1
-  - entrez-direct=7.70
-  - parallel-fastq-dump=0.6.3
-  - readline=6.2
+  - sra-tools
+  - entrez-direct
+  - parallel-fastq-dump
+  - readline
+  - lftp

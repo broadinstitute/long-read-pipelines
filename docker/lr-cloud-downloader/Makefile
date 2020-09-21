@@ -1,4 +1,4 @@
-VERSION = 0.2.1
+VERSION = 0.2.2
 TAG1 = quay.io/broad-long-read-pipelines/lr-cloud-downloader:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-cloud-downloader:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:$(VERSION)
