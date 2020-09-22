@@ -6,7 +6,7 @@ This repository contains pipelines for processing of long read data from PacBio 
 
 High level workflows can be found in the wdl/ directory.
 
-# Testing of Python scripts
+## Testing of Python scripts
 Python scripts included here require some packages that can be installed in a virtual environment using the following commands:
 
 ```bash
