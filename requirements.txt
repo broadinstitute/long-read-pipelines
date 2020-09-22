@@ -1,0 +1,5 @@
+construct
+pysam
+pytest
+pytest-console-scripts
+tox

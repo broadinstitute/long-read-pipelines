@@ -6,3 +6,6 @@ scratch
 .bak
 venv/
 *.swp
+.tox
+reports/
+runners/
