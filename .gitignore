@@ -7,5 +7,3 @@ scratch
 venv/
 *.swp
 .tox
-reports/
-runners/

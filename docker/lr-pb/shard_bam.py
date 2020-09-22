@@ -11,7 +11,7 @@ from functools import partial
 
 def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
     """
-    Write subsection of bam to a shard.
+    Write subsection of PacBio bam to a shard.
     """
 
     bf = pysam.Samfile(bam, 'rb', check_sq=False)
@@ -27,6 +27,7 @@ def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
             read = bf.__next__()
             out.write(read)
 
+            # Count the ZMW numbers seen.
             zmw = read.get_tag("zm")
             zmw_counts_act[zmw] = zmw_counts_act.get(zmw, 0) + 1
             num_reads += 1
@@ -34,6 +35,9 @@ def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
             if bf.tell() >= sharding_offsets[index+1]:
                 break
 
+    # Verify that the count for ZMWs written to this shard match the ZMW count determined
+    # from the original read of the index file.  If these assertions fail, it may indicate
+    # that reads from the same ZMW have been erroneously sharded to separate files.
     for zmw in zmw_counts_act:
         assert zmw_counts_act[zmw] == zmw_counts_exp[zmw]
 
