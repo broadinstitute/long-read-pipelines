@@ -105,7 +105,20 @@ workflow PBIsoSeqSingleFlowcell {
             peek_guess = false
     }
 
+    scatter (demux_bam in Demultiplex.demux_bams) {
+        call PB.RefineTranscriptReads {
+            input:
+                bam = demux_bam,
+                barcode_file = barcode_file,
+                prefix = "~{SM[0]}.~{ID[0]}.flnc"
+        }
 
+        call PB.ClusterTranscripts {
+            input:
+                bam = RefineTranscriptReads.refined_bam,
+                prefix = "~{SM[0]}.~{ID[0]}.clustered"
+        }
+    }
 
     ##########
     # store the results into designated bucket
