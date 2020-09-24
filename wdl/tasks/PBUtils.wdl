@@ -461,13 +461,12 @@ task RefineTranscriptReads {
 
     output {
         File refined_bam = "~{prefix}.bam"
-        File transcriptset_xml = "~{prefix}.transcriptset.xml"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             8,
+        cpu_cores:          8,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
@@ -507,14 +506,20 @@ task ClusterTranscripts {
         File clustered_bam = "~{prefix}.bam"
         File clustered_pbi = "~{prefix}.bam.pbi"
         File hq_fasta = "~{prefix}.hq.fasta.gz"
+        File hq_bam = "~{prefix}.hq.bam"
+        File hq_pbi = "~{prefix}.hq.bam.pbi"
         File lq_fasta = "~{prefix}.lq.fasta.gz"
+        File lq_bam = "~{prefix}.lq.bam"
+        File lq_pbi = "~{prefix}.lq.bam.pbi"
+        File cluster = "~{prefix}.cluster"
+        File cluster_report_csv = "~{prefix}.cluster_report.csv"
         File transcriptset_xml = "~{prefix}.transcriptset.xml"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
-        mem_gb:             32,
+        cpu_cores:          64,
+        mem_gb:             70,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
