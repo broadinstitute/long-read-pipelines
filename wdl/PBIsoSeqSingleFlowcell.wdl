@@ -120,6 +120,21 @@ workflow PBIsoSeqSingleFlowcell {
         }
     }
 
+    scatter (p in zip(["refined", "clustered", "hq", "lq"],
+                      [RefineTranscriptReads.refined_bam, ClusterTranscripts.clustered_bam, ClusterTranscripts.hq_bam, ClusterTranscripts.lq_bam])) {
+        String RGA = "@RG\\tID:~{ID[0]}.~{p.left}\\tSM:~{SM[0]}\\tPL:~{PL[0]}\\tPU:~{PU[0]}\\tDT:~{DT[0]}"
+
+        call AR.Minimap2 as AlignBAM {
+            input:
+                reads      = p.right,
+                ref_fasta  = ref_fasta,
+                RG         = RGA,
+                map_preset = "splice",
+                prefix     = "~{SM[0]}.~{ID[0]}.~{p.left}",
+                runtime_attr_override = { "cpu_cores": 16 }
+        }
+    }
+
     ##########
     # store the results into designated bucket
     ##########
