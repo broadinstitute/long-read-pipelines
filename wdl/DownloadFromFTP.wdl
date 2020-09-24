@@ -162,7 +162,7 @@ task DownloadFTPFile {
     Int disk_size = 2 + ceil((max_size_bytes / gb_bytes))
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         RET=0
 
