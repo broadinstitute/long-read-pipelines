@@ -14,6 +14,7 @@ workflow DownloadFromFTP {
 
         Int num_simultaneous_downloads = 10
         Boolean prepend_dir_name = true
+        Array[String] exclude = []
 
         String gcs_out_root_dir
     }
@@ -27,7 +28,7 @@ workflow DownloadFromFTP {
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call GetFileManifest { input: ftp_dirs = ftp_dirs }
+    call GetFileManifest { input: ftp_dirs = ftp_dirs, exclude = exclude }
 
     scatter (n in range(num_simultaneous_downloads)) {
         call ComputeDiskSize {
@@ -55,18 +56,27 @@ workflow DownloadFromFTP {
 task GetFileManifest {
     input {
         Array[String] ftp_dirs
+        Array[String] exclude
 
         RuntimeAttr? runtime_attr_override
     }
+
+    Int num_excludes = length(exclude)
 
     command <<<
         set -euxo pipefail
 
         for FTP_DIR in ~{sep=' ' ftp_dirs}
         do
-            lftp -e 'find -l >> all_files.txt; exit' $FTP_DIR
+            lftp -e 'find -l > all_files.txt; exit' $FTP_DIR
             grep -v '^d' all_files.txt | awk -v ftp_dir=$FTP_DIR '{ print ftp_dir, $6, $3 }' >> manifest.txt
         done
+
+        if [[ ~{num_excludes} -gt 0 ]]
+        then
+            grep -v -e ~{sep=' -e ' exclude} manifest.txt > manifest.new.txt
+            mv manifest.new.txt manifest.txt
+        fi
     >>>
 
     output {
