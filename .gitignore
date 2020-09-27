@@ -7,3 +7,5 @@ scratch
 venv/
 *.swp
 .tox
+test/test_output/
+__pycache__
