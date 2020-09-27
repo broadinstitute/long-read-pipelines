@@ -123,6 +123,7 @@ workflow PBIsoSeqSingleFlowcell {
             input:
                 bam = ClusterTranscripts.clustered_bam,
                 subreads_bam = FindBams.subread_bams[0],
+                subreads_pbi = subread_pbi[0],
                 prefix = "~{SM[0]}.~{ID[0]}.polished"
         }
     }
