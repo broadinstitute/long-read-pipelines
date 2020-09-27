@@ -489,6 +489,7 @@ task PolishTranscripts {
     input {
         File bam
         File subreads_bam
+        File subreads_pbi
         String prefix = "polished"
 
         RuntimeAttr? runtime_attr_override
