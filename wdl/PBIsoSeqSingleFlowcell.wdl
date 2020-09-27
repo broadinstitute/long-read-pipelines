@@ -118,10 +118,19 @@ workflow PBIsoSeqSingleFlowcell {
                 bam = RefineTranscriptReads.refined_bam,
                 prefix = "~{SM[0]}.~{ID[0]}.clustered"
         }
+
+        call PB.PolishTranscripts {
+            input:
+                bam = ClusterTranscripts.clustered_bam,
+                subreads_bam = FindBams.subread_bams[0],
+                prefix = "~{SM[0]}.~{ID[0]}.polished"
+        }
     }
 
-    scatter (p in zip(["refined", "clustered", "hq", "lq"],
-                      [RefineTranscriptReads.refined_bam, ClusterTranscripts.clustered_bam, ClusterTranscripts.hq_bam, ClusterTranscripts.lq_bam])) {
+    scatter (p in zip(["refined", "clustered", "hq", "lq", "polished"],
+                      [RefineTranscriptReads.refined_bam, ClusterTranscripts.clustered_bam,
+                       ClusterTranscripts.hq_bam, ClusterTranscripts.lq_bam, PolishTranscripts.polished_bam])
+    ) {
         String RGA = "@RG\\tID:~{ID[0]}.~{p.left}\\tSM:~{SM[0]}\\tPL:~{PL[0]}\\tPU:~{PU[0]}\\tDT:~{DT[0]}"
 
         call AR.Minimap2 as AlignBAM {
