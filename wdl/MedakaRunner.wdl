@@ -1,7 +1,7 @@
 version 1.0
 
 ##########################################################################################
-# A workflow that polishes a draft ONT assembly with Medaka.
+# Top level workflow runner for Medaka.wdl, see there for more documentation
 ##########################################################################################
 
 import "tasks/Medaka.wdl" as Medaka

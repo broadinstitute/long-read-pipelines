@@ -1,8 +1,8 @@
 version 1.0
 
 ##########################################################################################
-# This pipeline polishes input draft assembly generated from ONT reads,
-# with Nanopolish.
+# Workflow that runs Nanopolish to polish an ONT genome assembly. Quite computationally
+# expensive so there's a parallelization factor parameter.
 ##########################################################################################
 
 import "Structs.wdl"

@@ -1,8 +1,7 @@
 version 1.0
 
 ##########################################################################################
-# A workflow that runs the Canu 3-step assembly (correct, trim, assemble)
-# on a (presummably small) genome.
+# Top level workflow runner for Canu.wdl, see there for more documentation.
 ##########################################################################################
 
 import "tasks/Canu.wdl" as Canu

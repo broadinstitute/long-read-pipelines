@@ -3,6 +3,7 @@ version 1.0
 ##########################################################################################
 # A task that runs QUAST to evaluate a given set of assemblies
 # on a species with existing reference assembly.
+# - Entire Quast output will be tarballed
 ##########################################################################################
 
 import "Structs.wdl"

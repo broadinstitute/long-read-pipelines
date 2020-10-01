@@ -1,7 +1,8 @@
 version 1.0
 
 ##########################################################################################
-# Runs Medaka on an ONT draft assembly with basecalled ONT reads
+# Runs Medaka on an ONT draft assembly with GUPPY basecalled ONT reads
+# - Runs within a few hours with 18GB basecalled_reads and a 23Mb genome
 ##########################################################################################
 
 import "Structs.wdl"

@@ -1,7 +1,7 @@
 version 1.0
 
 ##########################################################################################
-# A workflow that runs Nanopolish on a draft ONT assembly.
+# Top level workflow runner for Nanopolish.wdl, see there for more documentation
 ##########################################################################################
 
 import "tasks/Nanopolish.wdl" as Nanopolish

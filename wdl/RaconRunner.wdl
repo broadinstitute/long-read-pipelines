@@ -1,7 +1,7 @@
 version 1.0
 
 ##########################################################################################
-# A task that polishes a draft assembly with long reads using Racon.
+# Top level workflow runner for Racon.wdl, see there for more documentation 
 ##########################################################################################
 
 import "tasks/Racon.wdl" as Racon
