@@ -429,7 +429,7 @@ task CountBamRecords {
 
 task GrepCountBamRecords {
     input {
-        String bam
+        File bam
         String samfilter = ""
         String regex
         Boolean invert = false
@@ -444,7 +444,6 @@ task GrepCountBamRecords {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
         samtools view ~{samfilter} ~{bam} | grep ~{arg} ~{regex} > ~{prefix}.txt
     >>>
 
@@ -564,7 +563,7 @@ task Sum {
 
 task BamToTable {
     input {
-        String bam
+        File bam
         String prefix
 
         RuntimeAttr? runtime_attr_override
@@ -573,7 +572,6 @@ task BamToTable {
     Int disk_size = 1 + 2*ceil(size(bam, "GB"))
 
     command <<<
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
         samtools view ~{bam} | perl -n -e '($nm) = $_ =~ /NM:i:(\d+)/; ($as) = $_ =~ /AS:i:(\d+)/; ($za) = $_ =~ /ZA:Z:(\w+|\.)/; ($zu) = $_ =~ /ZU:Z:(\w+|\.)/; ($cr) = $_ =~ /CR:Z:(\w+|\.)/; ($cb) = $_ =~ /CB:Z:(\w+|\.)/; @a = split(/\s+/); print join("\t", $a[0], $a[1], $a[2], $a[3], $a[4], length($a[9]), $nm, $as, $za, $zu, $cr, $cb, $a[1], ($a[1] & 0x1 ? "paired" : "unpaired"), ($a[1] & 0x4 ? "unmapped" : "mapped"), ($a[1] & 0x10 ? "rev" : "fwd"), ($a[1] & 0x100 ? "secondary" : "primary"), ($a[1] & 0x800 ? "supplementary" : "non_supplementary")) . "\n"' | gzip > ~{prefix}.txt.gz
     >>>
 
