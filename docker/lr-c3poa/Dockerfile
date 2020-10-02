@@ -8,17 +8,26 @@ COPY c3poa.config.txt /
 
 # install conda packages
 RUN conda env create -f /environment.yml && conda clean -a
-ENV PATH=/opt/conda/envs/lr-c3poa/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install git
 RUN apt-get -y update \
-	&& apt-get -y install git make cmake protobuf-compiler gcc g++ zlib1g-dev libcurl4-openssl-dev tree curl libncurses-dev \
+	&& apt-get -y install git make cmake protobuf-compiler gcc g++ zlib1g-dev libcurl4-openssl-dev tree curl libncurses-dev wget \
 	&& apt-get clean 
+
+# install Go
+RUN wget https://dl.google.com/go/go1.13.3.linux-amd64.tar.gz \
+    && tar -xvf go1.13.3.linux-amd64.tar.gz \
+    && mv go /usr/local
+ENV GOROOT=/usr/local/go
+ENV GOPATH=$HOME/Projects/Proj1
+ENV PATH=$GOPATH/bin:$GOROOT/bin:/opt/conda/envs/lr-c3poa/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install C3POa
 RUN git clone https://github.com/rvolden/C3POa.git \
-        && cd C3POa \
-        && ./setup.sh
+    && cd C3POa \
+    && git checkout dfb1c71b05199a74bee51ade1a7f16b47617cf04 \
+    && git reset --hard \
+    && ./setup.sh
 
 # install gsutil
 RUN curl https://sdk.cloud.google.com | bash
