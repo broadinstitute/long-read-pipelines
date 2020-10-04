@@ -1,5 +1,9 @@
 version 1.0
 
+##########################################################################################
+# Top level workflow runner for Medaka.wdl, see there for more documentation
+##########################################################################################
+
 import "tasks/Medaka.wdl" as Medaka
 import "tasks/Finalize.wdl" as FF
 
