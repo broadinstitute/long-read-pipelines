@@ -144,7 +144,7 @@ task RemovePalindromes {
         maxRetries:             default_attr.max_retries
         gpuType:                "nvidia-tesla-t4"
         gpuCount:               1
-        nvidiaDriverVersion:    "418.87.00"
+        nvidiaDriverVersion:    "418.152.00"
         zones:                  ["us-east1-c"]
         docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
     }
