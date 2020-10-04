@@ -66,11 +66,13 @@ task GetFileManifest {
     command <<<
         set -euxo pipefail
 
-        for FTP_DIR in ~{sep=' ' ftp_dirs}
+        cat ~{write_lines(ftp_dirs)} > manifest.txt
+
+        while read FTP_DIR
         do
             lftp -e 'find -l > all_files.txt; exit' $FTP_DIR
             grep -v '^d' all_files.txt | awk -v ftp_dir=$FTP_DIR '{ print ftp_dir, $6, $3 }' >> manifest.txt
-        done
+        done < manifest.txt
 
         if [[ ~{num_excludes} -gt 0 ]]
         then
@@ -187,12 +189,11 @@ task DownloadFTPFile {
                 echo "$gcsfile already exists."
             else
                 mkdir -p $(dirname $ftp_file)
-                lftp -e "get $ftp_file -o $ftp_file; exit" $ftp_dir
 
-                gsutil -m cp $ftp_file $gcsfile
+                lftp -e "get $ftp_file -o $ftp_file; exit" $ftp_dir || RET=1
+                gsutil -m cp $ftp_file $gcsfile || RET=1
+
                 rm $ftp_file
-
-                RET=1
             fi
         done
 
