@@ -225,6 +225,8 @@ task Demultiplex {
             ~{bam} \
             ~{barcode_file} \
             ~{prefix}.bam
+
+        find . -type f -exec ls -lah {} \;
     >>>
 
     output {
@@ -233,6 +235,7 @@ task Demultiplex {
         #File guess = "~{prefix}.lima.guess"
         File report = "~{prefix}.lima.report"
         File summary = "~{prefix}.lima.summary"
+        File clips   = "~{prefix}.lima.clips"
     }
 
     #########################
