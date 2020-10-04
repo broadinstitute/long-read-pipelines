@@ -530,58 +530,95 @@ task PolishTranscripts {
     }
 }
 
-#task CollapseTranscripts {
-#    input {
-#        File bam
-#        String prefix = "clustered"
-#        Boolean use_qvs = true
-#
-#        RuntimeAttr? runtime_attr_override
-#    }
-#
-#    Int disk_size = 4*ceil(size(bam, "GB")) + 1
-#
-#    command <<<
-#        set -euxo pipefail
-#
-#        isoseq3 collapse aligned.sorted.bam movie.ccs.bam out.gff
-#
-#        isoseq3 cluster ~{bam} ~{prefix}.bam --verbose ~{true='--use-qvs' false='' use_qvs}
-#    >>>
-#
-#    output {
-#        File clustered_bam = "~{prefix}.bam"
-#        File clustered_pbi = "~{prefix}.bam.pbi"
-#        File hq_fasta = "~{prefix}.hq.fasta.gz"
-#        File hq_bam = "~{prefix}.hq.bam"
-#        File hq_pbi = "~{prefix}.hq.bam.pbi"
-#        File lq_fasta = "~{prefix}.lq.fasta.gz"
-#        File lq_bam = "~{prefix}.lq.bam"
-#        File lq_pbi = "~{prefix}.lq.bam.pbi"
-#        File cluster = "~{prefix}.cluster"
-#        File cluster_report_csv = "~{prefix}.cluster_report.csv"
-#        File transcriptset_xml = "~{prefix}.transcriptset.xml"
-#    }
-#
-#    #########################
-#    RuntimeAttr default_attr = object {
-#        cpu_cores:          64,
-#        mem_gb:             70,
-#        disk_gb:            disk_size,
-#        boot_disk_gb:       10,
-#        preemptible_tries:  0,
-#        max_retries:        0,
-#        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.15"
-#    }
-#    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-#    runtime {
-#        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-#        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-#        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-#        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-#        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-#        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-#        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-#    }
-#}
-#
+task Align {
+    input {
+        File bam
+        File ref_fasta
+
+        String sample_name
+        String map_preset
+
+        String prefix = "out"
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.bam --preset ~{map_preset} --sort
+
+        find . -type f -exec ls -lah {} \;
+    >>>
+
+    output {
+        File aligned_bam = "~{prefix}.bam"
+        File aligned_bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.18"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CollapseTranscripts {
+    input {
+        File bam
+        String prefix = "out"
+        Boolean use_qvs = true
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        isoseq3 collapse ~{bam} ~{prefix}.gff
+    >>>
+
+    output {
+        File gff = "~{prefix}.gff"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.15"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+

@@ -10,6 +10,7 @@ version 1.0
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
+import "tasks/Tama.wdl" as TAMA
 import "tasks/Finalize.wdl" as FF
 
 workflow PBIsoSeqSingleFlowcell {
@@ -69,21 +70,11 @@ workflow PBIsoSeqSingleFlowcell {
         # then perform correction on each of the shard
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }
-
-            call AR.Minimap2 as AlignChunk {
-                input:
-                    reads      = [ CCS.consensus ],
-                    ref_fasta  = ref_fasta,
-                    RG         = RG,
-                    map_preset = "splice"
-            }
         }
 
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
         call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus, prefix = "~{SM}.~{ID}" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
-
-        call Utils.MergeBams as MergeAlignedChunks { input: bams = AlignChunk.aligned_bam, prefix = "~{SM}.~{ID}" }
     }
 
     # gather across (potential multiple) input raw BAMs
@@ -98,50 +89,48 @@ workflow PBIsoSeqSingleFlowcell {
     # demultiplex CCS-ed BAM
     call PB.Demultiplex {
         input:
-            bam = ccs_bam,
-            prefix = "~{SM[0]}.~{ID[0]}",
+            bam          = ccs_bam,
+            prefix       = "~{SM[0]}.~{ID[0]}",
             barcode_file = barcode_file,
-            isoseq = true,
-            peek_guess = false
+            isoseq       = true,
+            peek_guess   = false
     }
 
     scatter (demux_bam in Demultiplex.demux_bams) {
         call PB.RefineTranscriptReads {
             input:
-                bam = demux_bam,
+                bam          = demux_bam,
                 barcode_file = barcode_file,
-                prefix = "~{SM[0]}.~{ID[0]}.flnc"
+                prefix       = "~{SM[0]}.~{ID[0]}.flnc"
         }
 
         call PB.ClusterTranscripts {
             input:
-                bam = RefineTranscriptReads.refined_bam,
-                prefix = "~{SM[0]}.~{ID[0]}.clustered"
+                bam          = RefineTranscriptReads.refined_bam,
+                prefix       = "~{SM[0]}.~{ID[0]}.clustered"
         }
 
-        call PB.PolishTranscripts {
+        call PB.Align as AlignTranscripts {
             input:
-                bam = ClusterTranscripts.clustered_bam,
-                subreads_bam = FindBams.subread_bams[0],
-                subreads_pbi = subread_pbi[0],
-                prefix = "~{SM[0]}.~{ID[0]}.polished"
+                bam          = ClusterTranscripts.clustered_bam,
+                ref_fasta    = ref_fasta,
+                sample_name  = SM[0],
+                map_preset   = "ISOSEQ",
+                prefix       = "~{SM[0]}.~{ID[0]}",
+                runtime_attr_override = { "cpu_cores": 32 }
         }
-    }
 
-    scatter (p in zip(["refined", "clustered", "hq", "lq", "polished"],
-                      [RefineTranscriptReads.refined_bam, ClusterTranscripts.clustered_bam,
-                       ClusterTranscripts.hq_bam, ClusterTranscripts.lq_bam, PolishTranscripts.polished_bam])
-    ) {
-        String RGA = "@RG\\tID:~{ID[0]}.~{p.left}\\tSM:~{SM[0]}\\tPL:~{PL[0]}\\tPU:~{PU[0]}\\tDT:~{DT[0]}"
-
-        call AR.Minimap2 as AlignBAM {
+        call PB.CollapseTranscripts {
             input:
-                reads      = p.right,
-                ref_fasta  = ref_fasta,
-                RG         = RGA,
-                map_preset = "splice",
-                prefix     = "~{SM[0]}.~{ID[0]}.~{p.left}",
-                runtime_attr_override = { "cpu_cores": 16 }
+                bam          = AlignTranscripts.aligned_bam,
+                prefix       = "~{SM[0]}.~{ID[0]}.collapsed"
+        }
+
+        call TAMA.CollapseIsoforms {
+            input:
+                bam          = AlignTranscripts.aligned_bam,
+                ref_fasta    = ref_fasta,
+                prefix       = "~{SM[0]}.~{ID[0]}.collapsed"
         }
     }
 
