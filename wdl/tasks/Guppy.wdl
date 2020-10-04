@@ -77,7 +77,7 @@ task Basecall {
         maxRetries:             0
         gpuType:                "nvidia-tesla-p100"
         gpuCount:               1
-        nvidiaDriverVersion:    "418.87.00"
+        nvidiaDriverVersion:    "418.152.00"
         zones:                  ["us-east1-c"]
         cpuPlatform:            "Intel Haswell"
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-guppy:4.0.14"
