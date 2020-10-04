@@ -168,7 +168,7 @@ task DownloadFTPFile {
     }
 
     # estimate required disk size in GB
-    Float gb_bytes = 1073741824
+    Float gb_bytes = 1024 * 1024 * 1024
     Int disk_size = 2 + ceil((max_size_bytes / gb_bytes))
 
     command <<<
