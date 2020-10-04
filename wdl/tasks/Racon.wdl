@@ -1,11 +1,22 @@
 version 1.0
 
+##########################################################################################
+# A task that polishes a draft assembly with long reads using Racon.
+# - Recommended to run a few times
+##########################################################################################
+
 task RaconPolish {
     input {
         File reads
         File draft_assembly
 
         Int n_rounds
+    }
+
+    parameter_meta {
+        reads:          "long reads to polish the draft assembly with"
+        draft_assembly: "draft to be polished"
+        n_rounds: "Number of times to run Racon"
     }
 
     Int mem_size = 4 * ceil(size(reads, "GB") + size(draft_assembly, "GB"))
