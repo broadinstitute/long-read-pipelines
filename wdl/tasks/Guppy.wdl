@@ -1,5 +1,14 @@
 version 1.0
 
+##########################################################################################
+# A workflow that runs the Guppy basecaller on ONT FAST5 files.
+# - The docker tag number will match the version of Guppy that is being run. You can change
+#   this value to run a different version of Guppy. Currently supports... [3.5.2, 3.6.0, 4.0.14]
+# - All fast5 files within the given GCS dir, gcs_fast5_dir, will be processed
+# - Takes a few hours to process 130GB. Best guess is that the processing time scales
+#   linearly but untested.
+##########################################################################################
+
 import "Finalize.wdl" as FF
 
 workflow Guppy {
@@ -7,14 +16,14 @@ workflow Guppy {
         String gcs_fast5_dir
     }
 
-    call ListFastqFiles {
+    call ListFast5Files {
         input:
             gcs_fast5_dir = gcs_fast5_dir
     }
 
     call Basecall {
         input:
-           fast5_files = ListFastqFiles.fast5_files
+           fast5_files = ListFast5Files.fast5_files
     }
 
     output  {
@@ -22,7 +31,7 @@ workflow Guppy {
     }
 }
 
-task ListFastqFiles {
+task ListFast5Files {
     input {
         String gcs_fast5_dir
     }
