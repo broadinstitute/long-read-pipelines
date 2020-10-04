@@ -1,17 +1,29 @@
 version 1.0
 
+##########################################################################################
+# Runs Medaka on an ONT draft assembly with GUPPY basecalled ONT reads
+# - Runs within a few hours with 18GB basecalled_reads and a 23Mb genome
+##########################################################################################
+
 import "Structs.wdl"
 
 task MedakaPolish {
     input {
         File basecalled_reads
         File draft_assembly
-        String model #Run `medaka tools list_models` and pick string with the correct pore type, machine, and guppy version
+        String model
 
         Int n_rounds
         RuntimeAttr? runtime_attr_override
     }
 
+    parameter_meta {
+        basecalled_reads:   "basecalled reads to be used with polishing"
+        draft_assembly:     "draft assembly to be polished"
+        model:              "Run `medaka tools list_models` and pick string with the correct pore type, machine, and guppy version"
+    }
+
+    Int disk_size = 2 * ceil(size(basecalled_reads, "GB") + size(draft_assembly, "GB"))
     Int disk_size = (2 * ceil(size(basecalled_reads, "GB") + size(draft_assembly, "GB"))) * n_rounds
 
     command <<<
@@ -54,7 +66,7 @@ task MedakaPolish {
         maxRetries:         select_first([runtime_attr.max_retries, default_attr.max_retries])
         gpuType:                "nvidia-tesla-t4"
         gpuCount:               1
-        nvidiaDriverVersion:    "418.87.00"
+        nvidiaDriverVersion:    "418.152.00"
         zones:                  ["us-east1-c"]
         cpuPlatform:            "Intel Haswell"
         docker:             select_first([runtime_attr.docker, default_attr.docker])
