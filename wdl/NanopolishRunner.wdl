@@ -1,5 +1,9 @@
 version 1.0
 
+##########################################################################################
+# Top level workflow runner for Nanopolish.wdl, see there for more documentation
+##########################################################################################
+
 import "tasks/Nanopolish.wdl" as Nanopolish
 import "tasks/Finalize.wdl" as FF
 import "tasks/Utils.wdl" as Utils
