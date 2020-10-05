@@ -6,7 +6,7 @@ set -eu
 #
 # this script does this following:
 #
-# - create a new branch (requires that you currently have master checked out) with the name dockstore_release_${releaseName}
+# - create a new branch (requires that you currently have main checked out) with the name dockstore_release_${releaseName}
 # - re-write all imports in the wdls with raw.githubusercontent/broadinstitute/long-read-pipelines/${releaseName} URLs
 # - commits those to the branch, and creates a tag marking ${releaseName}
 # - pushes the branch and tag to github
@@ -18,9 +18,9 @@ set -eu
 releaseName=$1
 
 currentBranch=$(git rev-parse --abbrev-ref HEAD)
-if [ "${currentBranch}" != "master" ]
+if [ "${currentBranch}" != "main" ]
 then
-  echo "Current branch is ${currentBranch}. Please release only from master"
+  echo "Current branch is ${currentBranch}. Please release only from main"
   exit 1
 fi
 
