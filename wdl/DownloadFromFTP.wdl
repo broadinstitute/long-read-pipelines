@@ -75,13 +75,13 @@ task GetFileManifest {
     command <<<
         set -euxo pipefail
 
-        cat ~{write_lines(ftp_dirs)} > manifest.txt
+        cat ~{write_lines(ftp_dirs)} > ftp_dirs.txt
 
         while read FTP_DIR
         do
             lftp -e 'find -l > all_files.txt; exit' $FTP_DIR
             grep -v '^d' all_files.txt | awk -v ftp_dir=$FTP_DIR '{ print ftp_dir, $6, $3 }' >> manifest.txt
-        done < manifest.txt
+        done < ftp_dirs.txt
 
         if [[ ~{num_excludes} -gt 0 ]]
         then
