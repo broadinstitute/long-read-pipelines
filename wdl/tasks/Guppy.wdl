@@ -57,6 +57,35 @@ task ListFast5Files {
     }
 }
 
+task MergeFastq {
+    input {
+        Array[File] guppy_output_files
+    }
+
+    Int disk_size = 3 * ceil(size(guppy_output_files, "GB"))
+
+    command <<<
+        mkdir tmp
+        mv -t tmp ~{sep=' ' guppy_output_files}
+
+        cat tmp/*.fastq > merged.fastq
+    >>>
+
+    output {
+        File merged_fastq = "merged.fastq"
+    }
+
+     runtime {
+        cpu:                    1
+        memory:                 "4 GiB"
+        disks:                  "local-disk " + disk_size + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            0
+        maxRetries:             0
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+    }
+}
+
 task Basecall {
     input {
         Array[File] fast5_files
