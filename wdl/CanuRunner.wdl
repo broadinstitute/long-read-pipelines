@@ -1,5 +1,9 @@
 version 1.0
 
+##########################################################################################
+# Top level workflow runner for Canu.wdl, see there for more documentation.
+##########################################################################################
+
 import "tasks/Canu.wdl" as Canu
 import "tasks/Quast.wdl" as Quast
 import "tasks/Finalize.wdl" as FF

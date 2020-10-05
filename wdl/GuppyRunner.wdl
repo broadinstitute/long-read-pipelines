@@ -1,5 +1,9 @@
 version 1.0
 
+##########################################################################################
+# Top level workflow runner for Guppy.wdl, see there for more documentation 
+##########################################################################################
+
 import "tasks/Guppy.wdl" as Guppy
 import "tasks/Finalize.wdl" as FF
 

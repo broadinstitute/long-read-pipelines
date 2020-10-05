@@ -93,7 +93,7 @@ task DeepVariant {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
         gpuType:                "nvidia-tesla-p100"
         gpuCount:               2
-        nvidiaDriverVersion:    "418.87.00"
+        nvidiaDriverVersion:    "418.152.00"
         zones:                  ["us-east1-b", "us-east1-c"]
         cpuPlatform:            "Intel Skylake"
     }
