@@ -23,7 +23,6 @@ task MedakaPolish {
         model:              "Run `medaka tools list_models` and pick string with the correct pore type, machine, and guppy version"
     }
 
-    Int disk_size = 2 * ceil(size(basecalled_reads, "GB") + size(draft_assembly, "GB"))
     Int disk_size = (2 * ceil(size(basecalled_reads, "GB") + size(draft_assembly, "GB"))) * n_rounds
 
     command <<<
