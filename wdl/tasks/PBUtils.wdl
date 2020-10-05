@@ -288,7 +288,7 @@ task Demultiplex {
         #File guess = "~{prefix}.lima.guess"
         File report = "~{prefix}.lima.report"
         File summary = "~{prefix}.lima.summary"
-        File clips   = "~{prefix}.lima.clips"
+        File? clips = "~{prefix}.lima.clips"
     }
 
     #########################
