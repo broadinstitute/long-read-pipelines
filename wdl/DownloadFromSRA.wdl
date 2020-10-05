@@ -60,7 +60,7 @@ task GetSRAIDs {
         disks: "local-disk 1 LOCAL"
         preemptible: 1
         maxRetries: 0
-        docker: "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.1"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"
     }
 }
 
@@ -127,6 +127,6 @@ task FastqDump {
         disks: "local-disk ~{final_disk_space_gb} LOCAL"
         preemptible: 0
         maxRetries: 0
-        docker: "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.1"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"
     }
 }
