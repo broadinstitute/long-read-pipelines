@@ -7,7 +7,7 @@ version 1.0
 # - Currently assumes nanopore reads
 ##########################################################################################
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.36/wdl/tasks/Structs.wdl"
 
 workflow CorrectTrimAssemble {
     input {

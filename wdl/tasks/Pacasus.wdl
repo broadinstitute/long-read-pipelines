@@ -1,7 +1,7 @@
 version 1.0
 
-import "Utils.wdl" as Utils
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.36/wdl/tasks/Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.36/wdl/tasks/Structs.wdl"
 
 workflow Process {
     input {
