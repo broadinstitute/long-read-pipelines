@@ -21,16 +21,24 @@ workflow DownloadFromFTP {
 
     parameter_meta {
         ftp_dirs:                   "The FTP directories to download"
-        num_simultaneous_downloads: "The number of files to fetch simultaneously."
+        num_simultaneous_downloads: "[default-valued] The number of files to fetch simultaneously."
         prepend_dir_name:           "If true, place the files in a subdirectory based on the basename of the FTP dir."
+        exclude:                    "[default-valued] Simple substring patterns to exclude from the download."
         gcs_output_dir:             "GCS path for storing output"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
+    # Get a manifest of every single file to be downloaded, including file sizes.
     call GetFileManifest { input: ftp_dirs = ftp_dirs, exclude = exclude }
 
+    # Parallelize downloads over num_simultaneous_downloads jobs.
     scatter (n in range(num_simultaneous_downloads)) {
+        # Each of these jobs below will process (1/num_simultaneous_downloads)-th of the manifest.
+        # We needn't actually shard the manifest beforehand; that'll be done within each of these
+        # tasks using a nice awk idiom from Khalid Shakir.
+
+        # Calculate the maximum amount of disk space the largest file in this manifest shard will need.
         call ComputeDiskSize {
             input:
                 manifest = GetFileManifest.manifest,
@@ -38,6 +46,7 @@ workflow DownloadFromFTP {
                 num_jobs = num_simultaneous_downloads,
         }
 
+        # Assuming we have something in the manifest to download, download the files.
         if (ComputeDiskSize.max_size_bytes > 0) {
             call DownloadFTPFile {
                 input:
