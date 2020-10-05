@@ -1,13 +1,13 @@
-# Continuous integration and delivery of the master branch.
+# Continuous integration and delivery of the main branch.
 
 name: CI/CD
 on:
   push:
     branches:
-    - master
+    - main
 
 jobs:
-  master_test:
+  main_test:
     # The type of runner that the job will run on
     runs-on: self-hosted
     steps:
@@ -25,7 +25,7 @@ jobs:
       env:
         SLACK_COLOR: '#DF5A49'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnabad.png?raw=true
         SLACK_USERNAME: long-read-pipelines
 
     # Send Slack message on workflow success
@@ -35,11 +35,11 @@ jobs:
       env:
         SLACK_COLOR: '#50D9C9'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnagood.png?raw=true
         SLACK_USERNAME: long-read-pipelines
 
   deliver:
-    needs: master_test
+    needs: main_test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -99,7 +99,7 @@ jobs:
         SLACK_MESSAGE: 'Failed to release version lrp_${{ steps.bump_version.outputs.next-version }}'
         SLACK_COLOR: '#DF5A49'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnabad.png?raw=true
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnabad.png?raw=true
         SLACK_USERNAME: long-read-pipelines
 
     - name: Slack Success Notification
@@ -109,5 +109,5 @@ jobs:
         SLACK_MESSAGE: 'Successfully released version lrp_${{ steps.bump_version.outputs.next-version }}'
         SLACK_COLOR: '#50D9C9'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/master/.github/workflows/dnagood.png?raw=true
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnagood.png?raw=true
         SLACK_USERNAME: long-read-pipelines
