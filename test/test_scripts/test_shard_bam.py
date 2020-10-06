@@ -16,7 +16,7 @@ def get_read_zmw_counts(file):
 
 
 def test_shard_bam(script_runner):
-    bam = "test/test_data/tiny.bam"
+    bam = "test/test_data/for_scripts/shard_bam_test_file.bam"
     testdir = "test/test_output"
     prefix = f"{testdir}/shard"
     num_shards = 2

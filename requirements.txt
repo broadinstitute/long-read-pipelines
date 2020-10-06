@@ -3,3 +3,4 @@ pysam
 pytest
 pytest-console-scripts
 tox
+google-cloud-storage

@@ -11,7 +11,9 @@ from functools import partial
 
 def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
     """
-    Write subsection of PacBio bam to a shard.
+    Write subset of PacBio bam to a shard, taking care not to split reads
+    from the same ZMW across separate files.  These shards are thus suitable
+    for correction via CCS.
     """
 
     bf = pysam.Samfile(bam, 'rb', check_sq=False)
@@ -36,15 +38,16 @@ def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
                 break
 
     # Verify that the count for ZMWs written to this shard match the ZMW count determined
-    # from the original read of the index file.  If these assertions fail, it may indicate
+    # from the original read of the index file.  If this exception is thrown, it may indicate
     # that reads from the same ZMW have been erroneously sharded to separate files.
-    for zmw in zmw_counts_act:
-        assert zmw_counts_act[zmw] == zmw_counts_exp[zmw]
+    if zmw_counts_act[zmw] != zmw_counts_exp[zmw]:
+        raise Exception(f'Number of reads from a specific ZMW mismatches between the original data'
+                        f'and the sharded data ({zmw}: {zmw_counts_exp[zmw]} != {zmw_counts_act[zmw]})')
 
     return num_reads
 
 
-def compute_shard_offsets(pbi_file):
+def compute_shard_offsets(pbi_file, num_shards):
     """
     Compute all possible shard offsets (keeping adjacent reads from the ZMW together)
     """
@@ -92,7 +95,7 @@ def compute_shard_offsets(pbi_file):
 
     file_offsets = list(file_offsets_hash.values())
     shard_offsets = []
-    for j in range(0, len(file_offsets), ceil(len(file_offsets) / args.num_shards)):
+    for j in range(0, len(file_offsets), ceil(len(file_offsets) / num_shards)):
         shard_offsets.append(file_offsets[j])
 
     # For the last read in the file, pad the offset so the final comparison in write_shard() retains the final read.
@@ -102,7 +105,7 @@ def compute_shard_offsets(pbi_file):
     return shard_offsets, zmw_count_hash, idx_contents.n_reads
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Shard .bam file using the .pbi index', prog='shard_bam')
     parser.add_argument('-p', '--prefix', type=str, default="shard", help="Shard filename prefix")
     parser.add_argument('-n', '--num_shards', type=int, default=4, help="Number of shards")
@@ -115,7 +118,7 @@ if __name__ == "__main__":
 
     # Decode PacBio .pbi file and determine the shard offsets.
     print(f"Reading index ({pbi}). This may take a few minutes...", flush=True)
-    offsets, zmw_counts, read_count = compute_shard_offsets(pbi)
+    offsets, zmw_counts, read_count = compute_shard_offsets(pbi, args.num_shards)
 
     # Prepare a function with arguments partially filled in.
     func = partial(write_shard, args.bam, offsets, zmw_counts, args.prefix)
@@ -132,6 +135,8 @@ if __name__ == "__main__":
         count += all_num_reads_written[i]
         print(f'  - wrote {all_num_reads_written[i]} reads to {args.prefix}{i}.bam', flush=True)
 
-    assert count == read_count
-
     print(f'Sharded {count}/{read_count} reads across {len(idx)} shards.', flush=True)
+
+
+if __name__ == "__main__":
+    main()
