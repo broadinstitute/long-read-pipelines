@@ -1,5 +1,7 @@
 import pysam
 import pathlib
+import tempfile
+import shutil
 
 
 def get_read_zmw_counts(file):
@@ -17,14 +19,13 @@ def get_read_zmw_counts(file):
 
 def test_shard_bam(script_runner):
     bam = "test/test_data/for_scripts/shard_bam_test_file.bam"
-    testdir = "test/test_output"
+    testdir = tempfile.mkdtemp()
+
     prefix = f"{testdir}/shard"
     num_shards = 2
 
     pathlib.Path(testdir).mkdir(parents=True, exist_ok=True)
     ret = script_runner.run("../../docker/lr-pb/shard_bam.py", "-p", prefix, "-n", str(num_shards), bam)
-
-    assert ret.success
 
     files_with_zmws = {}
     zmw_counts_orig = get_read_zmw_counts(bam)
@@ -39,9 +40,14 @@ def test_shard_bam(script_runner):
 
             files_with_zmws[zmw].add(i)
 
+    shutil.rmtree(testdir)
+
+    assert ret.success
+
     for zmw in files_with_zmws:
         # Verify that ZMWs only ever appear in one shard.
         assert len(files_with_zmws[zmw]) == 1
 
         # Verify that every instance of a ZMW seen in the original file are accounted for in the shards.
         assert zmw_counts_orig[zmw] == 0
+
