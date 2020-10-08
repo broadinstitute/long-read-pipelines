@@ -5,7 +5,7 @@ version 1.0
 # - Runs within a few hours with 18GB basecalled_reads and a 23Mb genome
 ##########################################################################################
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.37/wdl/tasks/Structs.wdl"
 
 task MedakaPolish {
     input {

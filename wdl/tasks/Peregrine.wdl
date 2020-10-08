@@ -7,7 +7,7 @@ version 1.0
 #  https://github.com/lh3/minimap2/tree/master/misc#asmvar
 ##########################################################################################
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.37/wdl/tasks/Structs.wdl"
 
 workflow Peregrine {
     input {

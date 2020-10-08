@@ -9,7 +9,7 @@ version 1.0
 #   linearly but untested.
 ##########################################################################################
 
-import "Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.37/wdl/tasks/Finalize.wdl" as FF
 
 workflow Guppy {
     input {

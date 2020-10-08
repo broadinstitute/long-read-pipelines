@@ -4,9 +4,9 @@ version 1.0
 # Top level workflow runner for Nanopolish.wdl, see there for more documentation
 ##########################################################################################
 
-import "tasks/Nanopolish.wdl" as Nanopolish
-import "tasks/Finalize.wdl" as FF
-import "tasks/Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.37/wdl/tasks/Nanopolish.wdl" as Nanopolish
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.37/wdl/tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.37/wdl/tasks/Utils.wdl" as Utils
 
 workflow NanopolishRunner {
     input {
