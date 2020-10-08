@@ -13,7 +13,7 @@ workflow PB10xSingleFlowcell {
     input {
         String gcs_input_dir
         String? sample_name
-        Int fastq_shards = 50
+        Int num_shards = 300
 
         File ref_fasta
         File ref_fasta_fai
@@ -46,7 +46,9 @@ workflow PB10xSingleFlowcell {
         String rg_subreads  = "@RG\\tID:~{ID}.subreads\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
         String rg_consensus = "@RG\\tID:~{ID}.consensus\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        call PB.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = 2000000 }
+        # break one raw BAM into fixed number of shards
+        File subread_pbi = sub(subread_bam, ".bam$", ".bam.pbi")
+        call PB.ShardLongReads { input: unaligned_bam = subread_bam, unaligned_pbi = subread_pbi, num_shards = num_shards }
 
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }
