@@ -13,5 +13,7 @@
     "PBCCSWholeGenomeSingleFlowcell.mt_chr_name":          "chrM",
     "PBCCSWholeGenomeSingleFlowcell.metrics_locus":        "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/metric_intervals.interval_list",
 
+    "PBCCSWholeGenomeSingleFlowcell.num_shards":           4,
+
     "PBCCSWholeGenomeSingleFlowcell.gcs_out_root_dir":     "gs://broad-dsp-lrma-ci/PBCCSWholeGenomeSingleFlowcell"
 }

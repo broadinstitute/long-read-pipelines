@@ -8,7 +8,6 @@ version 1.0
 ##########################################################################################
 
 import "tasks/PBUtils.wdl" as PB
-import "tasks/ShardUtils.wdl" as SU
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
@@ -34,7 +33,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
         String mt_chr_name
         File metrics_locus
 
-        Int? num_reads_per_split = 2000000
+        Int num_shards = 300
 
         String gcs_out_root_dir
     }
@@ -55,7 +54,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
         mt_chr_name:          "Contig name for the mitochondrial sequence in the reference"
         metrics_locus:        "Loci over which some summary metrics should be computed"
 
-        num_reads_per_split:  "[default-valued] number of subreads each sharded BAM contains (tune for performance)"
+        num_shards:           "[default-valued] number of sharded BAMs to create (tune for performance)"
 
         gcs_out_root_dir :    "GCS bucket to store the corrected/uncorrected reads and metrics files"
     }
@@ -77,8 +76,9 @@ workflow PBCLRWholeGenomeSingleFlowcell {
         String DIR = SM + "." + ID
         String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        # shard one raw BAM into fixed chunk size (num_reads_per_split)
-        call Utils.ShardLongReads { input: unmapped_files = [ subread_bam ], num_reads_per_split = num_reads_per_split }
+        # break one raw BAM into fixed number of shards
+        File subread_pbi = sub(subread_bam, ".bam$", ".bam.pbi")
+        call PB.ShardLongReads { input: unaligned_bam = subread_bam, unaligned_pbi = subread_pbi, num_shards = num_shards }
 
         # then perform correction and alignment on each of the shard
         scatter (subreads in ShardLongReads.unmapped_shards) {
