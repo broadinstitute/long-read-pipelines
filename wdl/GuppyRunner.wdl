@@ -4,8 +4,8 @@ version 1.0
 # Top level workflow runner for Guppy.wdl, see there for more documentation 
 ##########################################################################################
 
-import "tasks/Guppy.wdl" as Guppy
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.35/wdl/tasks/Guppy.wdl" as Guppy
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.35/wdl/tasks/Finalize.wdl" as FF
 
 workflow GuppyRunner {
     input {
