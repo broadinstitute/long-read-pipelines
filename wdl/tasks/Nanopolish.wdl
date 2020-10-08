@@ -5,7 +5,7 @@ version 1.0
 # Quite computationally expensive so there's a parallelization factor parameter.
 ##########################################################################################
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/Structs.wdl"
 
 workflow PolishAssembly {
     input {

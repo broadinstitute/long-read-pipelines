@@ -1,7 +1,7 @@
 version 1.0
 
-import "tasks/SoftClipper.wdl" as SoftClipper
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/SoftClipper.wdl" as SoftClipper
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/Finalize.wdl" as FF
 
 workflow AssistedSoftClipperRunner {
     input {

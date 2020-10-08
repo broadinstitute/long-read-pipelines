@@ -8,13 +8,13 @@ version 1.0
 ## and figures are produced along the way.
 ##########################################################################################
 
-import "tasks/PBUtils.wdl" as PB
-import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/Finalize.wdl" as FF
-import "tasks/CallSVs.wdl" as SV
-import "tasks/CallSmallVariants.wdl" as SMV
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/PBUtils.wdl" as PB
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/AlignReads.wdl" as AR
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/AlignedMetrics.wdl" as AM
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/CallSVs.wdl" as SV
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/CallSmallVariants.wdl" as SMV
 
 workflow PBCCSDemultiplexWholeGenomeSingleFlowcell {
     input {

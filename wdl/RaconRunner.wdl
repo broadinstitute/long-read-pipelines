@@ -4,8 +4,8 @@ version 1.0
 # Top level workflow runner for Racon.wdl, see there for more documentation 
 ##########################################################################################
 
-import "tasks/Racon.wdl" as Racon
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/Racon.wdl" as Racon
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/Finalize.wdl" as FF
 
 workflow RaconRunner {
     input {

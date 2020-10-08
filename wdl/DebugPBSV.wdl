@@ -1,9 +1,9 @@
 version 1.0
 
-import "tasks/PBUtils.wdl" as PB
-import "tasks/Utils.wdl" as Utils
-import "tasks/CallSVs.wdl" as SV
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/PBUtils.wdl" as PB
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/Utils.wdl" as Utils
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/CallSVs.wdl" as SV
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.39/wdl/tasks/Finalize.wdl" as FF
 
 workflow DebugPBSV {
     input {
