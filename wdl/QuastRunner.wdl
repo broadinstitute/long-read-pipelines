@@ -4,8 +4,8 @@ version 1.0
 # Top level workflow for running Quast.wdl, see there for more documentation
 ##########################################################################################
 
-import "tasks/Quast.wdl" as Quast
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.38/wdl/tasks/Quast.wdl" as Quast
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.38/wdl/tasks/Finalize.wdl" as FF
 
 workflow QuastRunner {
     input {

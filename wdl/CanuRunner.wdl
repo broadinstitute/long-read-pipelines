@@ -4,9 +4,9 @@ version 1.0
 # Top level workflow runner for Canu.wdl, see there for more documentation.
 ##########################################################################################
 
-import "tasks/Canu.wdl" as Canu
-import "tasks/Quast.wdl" as Quast
-import "tasks/Finalize.wdl" as FF
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.38/wdl/tasks/Canu.wdl" as Canu
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.38/wdl/tasks/Quast.wdl" as Quast
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.38/wdl/tasks/Finalize.wdl" as FF
 
 workflow CanuRunner {
     input {

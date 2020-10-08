@@ -6,7 +6,7 @@ version 1.0
 # Each individual task/algo. is directly callable, if so desired.
 ##########################################################################################
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/lrp_2.1.38/wdl/tasks/Structs.wdl"
 
 workflow CallSVs {
     input {
