@@ -79,6 +79,21 @@ jobs:
     - name: Update version badge
       run: sed -i 's/version-.*-blue/version-${{ steps.bump_version.outputs.next-version }}-blue/' README.md
 
+    - name: Get the latest commit on PR
+      id: get-latest-commit
+      uses: ActionsRML/get-PR-latest-commit@v1
+
+    - name: print the info of the latest commit
+      run: |
+        echo "The commit message:"
+        echo "${{ steps.get-latest-commit.outputs.latest_commit_message }}"
+
+        echo "The commit sha:"
+        echo "${{ steps.get-latest-commit.outputs.latest_commit_sha }}"
+
+        echo "The commit context:"
+        cat ${{ steps.get-latest-commit.outputs.latest_commit_context }}
+
     - name: Commit changes
       uses: EndBug/add-and-commit@v4
       with:
@@ -89,8 +104,21 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Make Dockstore-compatible release
-      run: ./scripts/wdl/create_dockstore_release_branch.sh lrp_${{ steps.bump_version.outputs.next-version }}
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.bump_version.outputs.next-version }}
+        release_name: 'Release lrp_${{ steps.bump_version.outputs.next-version }}'
+        body: |
+          Release ${{ steps.bump_version.outputs.next-version }}
+
+          Changes:
+          ${{ steps.get-latest-commit.outputs.latest_commit_message }}
+        draft: false
+        prerelease: false
 
     - name: Slack Failure Notification
       if: failure()

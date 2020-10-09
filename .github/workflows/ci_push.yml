@@ -13,65 +13,27 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Get the latest commit on PR
-      id: get-latest-commit
-      uses: ActionsRML/get-PR-latest-commit@v1
-
-    - name: print the info of the latest commit
+    # Runs a set of commands using the runners shell
+    - name: Continuous integration test suite
       run: |
-        echo "The commit message:"
-        echo "${{ steps.get-latest-commit.outputs.latest_commit_message }}"
+        python3 scripts/ci/run_test_suite.py
 
-        echo "The commit sha:"
-        echo "${{ steps.get-latest-commit.outputs.latest_commit_sha }}"
-
-        echo "The commit context:"
-        cat ${{ steps.get-latest-commit.outputs.latest_commit_context }}
-
-    - name: Read current version
-      id: read_property
-      uses: christian-draeger/read-properties@1.0.0
-      with:
-        path: 'VERSION'
-        property: 'version'
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+    # Send Slack message on workflow failure
+    - name: Slack Failure Notification
+      if: failure()
+      uses: rtCamp/action-slack-notify@v2.0.2
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.read_property.outputs.value }}
-        release_name: 'Release lrp_${{ steps.read_property.outputs.value }}'
-        body: |
-          Release ${{ steps.read_property.outputs.value }} (test)
+        SLACK_COLOR: '#DF5A49'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnabad.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
 
-          Changes:
-          ${{ steps.get-latest-commit.outputs.latest_commit_message }}
-        draft: true
-        prerelease: true
-
-#    # Runs a set of commands using the runners shell
-#    - name: Continuous integration test suite
-#      run: |
-#        python3 scripts/ci/run_test_suite.py
-#
-#    # Send Slack message on workflow failure
-#    - name: Slack Failure Notification
-#      if: failure()
-#      uses: rtCamp/action-slack-notify@v2.0.2
-#      env:
-#        SLACK_COLOR: '#DF5A49'
-#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-#        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnabad.png?raw=true
-#        SLACK_USERNAME: long-read-pipelines
-#
-#    # Send Slack message on workflow success
-#    - name: Slack Success Notification
-#      if: success()
-#      uses: rtCamp/action-slack-notify@v2.0.2
-#      env:
-#        SLACK_COLOR: '#50D9C9'
-#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-#        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnagood.png?raw=true
-#        SLACK_USERNAME: long-read-pipelines
+    # Send Slack message on workflow success
+    - name: Slack Success Notification
+      if: success()
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_COLOR: '#50D9C9'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnagood.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
