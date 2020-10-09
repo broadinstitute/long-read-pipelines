@@ -39,6 +39,7 @@ jobs:
         SLACK_USERNAME: long-read-pipelines
 
   deliver:
+    # Automatic delivery will run on a Github-hosted machine
     needs: main_test
     runs-on: ubuntu-latest
     steps:
@@ -79,6 +80,9 @@ jobs:
     - name: Update version badge
       run: sed -i 's/version-.*-blue/version-${{ steps.bump_version.outputs.next-version }}-blue/' README.md
 
+    - name: Write commit message
+      run: git log --format=%B -n 1 ${{ github.event.after }} > release_notes.txt
+
     - name: Commit changes
       uses: EndBug/add-and-commit@v4
       with:
@@ -89,8 +93,17 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Make Dockstore-compatible release
-      run: ./scripts/wdl/create_dockstore_release_branch.sh lrp_${{ steps.bump_version.outputs.next-version }}
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.bump_version.outputs.next-version }}
+        release_name: 'lrp_${{ steps.bump_version.outputs.next-version }}'
+        body_path: "release_notes.txt"
+        draft: false
+        prerelease: false
 
     - name: Slack Failure Notification
       if: failure()

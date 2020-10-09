@@ -1,0 +1,1 @@
+shard_bam_test_file.bam filter=lfs diff=lfs merge=lfs -text
