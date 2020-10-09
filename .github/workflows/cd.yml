@@ -39,6 +39,7 @@ jobs:
         SLACK_USERNAME: long-read-pipelines
 
   deliver:
+    # Automatic delivery will run on a Github-hosted machine
     needs: main_test
     runs-on: ubuntu-latest
     steps:
@@ -79,20 +80,8 @@ jobs:
     - name: Update version badge
       run: sed -i 's/version-.*-blue/version-${{ steps.bump_version.outputs.next-version }}-blue/' README.md
 
-    - name: Get the latest commit on PR
-      id: get-latest-commit
-      uses: ActionsRML/get-PR-latest-commit@v1
-
-    - name: print the info of the latest commit
-      run: |
-        echo "The commit message:"
-        echo "${{ steps.get-latest-commit.outputs.latest_commit_message }}"
-
-        echo "The commit sha:"
-        echo "${{ steps.get-latest-commit.outputs.latest_commit_sha }}"
-
-        echo "The commit context:"
-        cat ${{ steps.get-latest-commit.outputs.latest_commit_context }}
+    - name: Get commit message
+      run: echo ::set-env name=commitmsg::$(git log --format=%B -n 1 ${{ github.event.after }})
 
     - name: Commit changes
       uses: EndBug/add-and-commit@v4
@@ -104,6 +93,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Write release note
+      run: echo $commitmsg > release_note.txt
+
     - name: Create release
       id: create_release
       uses: actions/create-release@v1
@@ -112,11 +104,7 @@ jobs:
       with:
         tag_name: ${{ steps.bump_version.outputs.next-version }}
         release_name: 'Release lrp_${{ steps.bump_version.outputs.next-version }}'
-        body: |
-          Release ${{ steps.bump_version.outputs.next-version }}
-
-          Changes:
-          ${{ steps.get-latest-commit.outputs.latest_commit_message }}
+        body_path: "release_note.txt"
         draft: false
         prerelease: false
 
