@@ -80,8 +80,8 @@ jobs:
     - name: Update version badge
       run: sed -i 's/version-.*-blue/version-${{ steps.bump_version.outputs.next-version }}-blue/' README.md
 
-    - name: Get commit message
-      run: echo ::set-env name=commitmsg::$(git log --format=%B -n 1 ${{ github.event.after }})
+    - name: Write commit message
+      run: git log --format=%B -n 1 ${{ github.event.after }} > release_notes.txt
 
     - name: Commit changes
       uses: EndBug/add-and-commit@v4
@@ -93,9 +93,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Write release note
-      run: echo $commitmsg > release_note.txt
-
     - name: Create release
       id: create_release
       uses: actions/create-release@v1
@@ -103,8 +100,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.bump_version.outputs.next-version }}
-        release_name: 'Release lrp_${{ steps.bump_version.outputs.next-version }}'
-        body_path: "release_note.txt"
+        release_name: 'lrp_${{ steps.bump_version.outputs.next-version }}'
+        body_path: "release_notes.txt"
         draft: false
         prerelease: false
 
