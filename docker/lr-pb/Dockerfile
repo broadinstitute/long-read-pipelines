@@ -18,7 +18,7 @@ RUN curl https://sdk.cloud.google.com | bash
 RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
     && cd gatk \
     && ./gradlew \
-    && cp /gatk/build/libs/gatk-package-4.1.0.0-*-local.jar /usr/local/bin/gatk.jar \
+    && cp /gatk/build/libs/gatk-package-4.1.0.0-*-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
     && cd .. \
     && rm -rf /gatk
 
