@@ -34,21 +34,17 @@ jobs:
         pip install -r requirements.txt
 
     - name: Test with tox
-      run: |
-        pwd
-        ls -lah
-        ls -lah test/test_data/for_scripts/
-        tox
+      run: tox
 
-#    # Send Slack message on workflow failure
-#    - name: Slack Failure Notification
-#      if: failure()
-#      uses: rtCamp/action-slack-notify@v2.0.2
-#      env:
-#        SLACK_COLOR: '#DF5A49'
-#        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-#        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnabad.png?raw=true
-#        SLACK_USERNAME: long-read-pipelines
+    # Send Slack message on workflow failure
+    - name: Slack Failure Notification
+      if: failure()
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_COLOR: '#DF5A49'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnabad.png?raw=true
+        SLACK_USERNAME: long-read-pipelines
 
   # Run WDL tests on self-hosted runner
   branch_test:
