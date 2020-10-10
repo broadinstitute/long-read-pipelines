@@ -68,7 +68,17 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
     File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
 
     # demultiplex CCS-ed BAM
-    call PB.Demultiplex { input: bam = ccs_bam, prefix = "~{SM[0]}.~{ID[0]}", barcode_file = barcode_file }
+    call PB.Demultiplex {
+        input:
+            bam = ccs_bam,
+            prefix = "~{SM[0]}.~{ID[0]}",
+            barcode_file = barcode_file,
+            ccs = true,
+            guess = 75,
+            guess_min_count = 1,
+            dump_removed = true,
+            split_bam_named = true
+    }
 
     # make reports on demultiplexing
     call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }

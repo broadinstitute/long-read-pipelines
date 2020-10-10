@@ -247,11 +247,16 @@ task Demultiplex {
     input {
         File bam
         File barcode_file
-        String prefix  = "demux"
-        Boolean ccs    = true
-        Boolean isoseq = false
-        Int min_score  = 26
-        Int guess      = 75
+        String prefix           = "demux"
+        Boolean ccs             = false
+        Boolean isoseq          = false
+        Boolean peek_guess      = false
+        Boolean dump_removed    = false
+        Boolean split_bam_named = false
+        Int peek                = 0
+        Int min_score           = 0
+        Int guess               = 0
+        Int guess_min_count     = 0
 
         RuntimeAttr? runtime_attr_override
     }
@@ -261,22 +266,29 @@ task Demultiplex {
     command <<<
         set -euxo pipefail
 
-        lima ~{if ccs then "--ccs --peek 50000" else ""} \
-            --guess ~{guess} \
-            --guess-min-count 1 \
-            --dump-removed \
-            --split-bam-named \
+        lima \
+            ~{if ccs then "--ccs" else ""} \
+            ~{if isoseq then "--isoseq" else ""} \
+            ~{if peek_guess then "--peek-guess" else ""} \
+            ~{if guess > 0 then "--guess ~{guess}" else ""} \
+            ~{if guess_min_count > 0 then "--guess-min-count ~{guess_min_count}" else ""} \
+            ~{if peek > 0 then "--peek ~{peek}" else ""} \
+            ~{if dump_removed then "--dump-removed" else ""} \
+            ~{if split_bam_named then "--split-bam-named" else ""} \
             ~{bam} \
             ~{barcode_file} \
             ~{prefix}.bam
+
+        find . -type f -exec ls -lah {} \;
     >>>
 
     output {
-        Array[File] demux_bams = glob("~{prefix}.bc*.bam")
+        Array[File] demux_bams = glob("~{prefix}.*.bam")
         File counts = "~{prefix}.lima.counts"
         #File guess = "~{prefix}.lima.guess"
         File report = "~{prefix}.lima.report"
         File summary = "~{prefix}.lima.summary"
+        File? clips = "~{prefix}.lima.clips"
     }
 
     #########################
@@ -431,3 +443,238 @@ task MakePerBarcodeDemultiplexingReports {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task RefineTranscriptReads {
+    input {
+        File bam
+        File barcode_file
+        String prefix = "flnc"
+        Boolean require_polya = true
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        isoseq3 refine ~{bam} ~{barcode_file} ~{prefix}.bam ~{true='--require-polya' false='' require_polya}
+    >>>
+
+    output {
+        File refined_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          8,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.15"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ClusterTranscripts {
+    input {
+        File bam
+        String prefix = "clustered"
+        Boolean use_qvs = true
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        isoseq3 cluster ~{bam} ~{prefix}.bam --verbose ~{true='--use-qvs' false='' use_qvs}
+    >>>
+
+    output {
+        File clustered_bam = "~{prefix}.bam"
+        File clustered_pbi = "~{prefix}.bam.pbi"
+        File hq_fasta = "~{prefix}.hq.fasta.gz"
+        File hq_bam = "~{prefix}.hq.bam"
+        File hq_pbi = "~{prefix}.hq.bam.pbi"
+        File lq_fasta = "~{prefix}.lq.fasta.gz"
+        File lq_bam = "~{prefix}.lq.bam"
+        File lq_pbi = "~{prefix}.lq.bam.pbi"
+        File cluster = "~{prefix}.cluster"
+        File cluster_report_csv = "~{prefix}.cluster_report.csv"
+        File transcriptset_xml = "~{prefix}.transcriptset.xml"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          64,
+        mem_gb:             70,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.15"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task PolishTranscripts {
+    input {
+        File bam
+        File subreads_bam
+        File subreads_pbi
+        String prefix = "polished"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size([bam, subreads_bam], "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        isoseq3 polish ~{bam} ~{subreads_bam} ~{prefix}.bam
+    >>>
+
+    output {
+        File polished_bam = "~{prefix}.bam"
+        File polished_fastq = "~{prefix}.hq.fastq.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          24,
+        mem_gb:             64,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.15"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task Align {
+    input {
+        File bam
+        File ref_fasta
+
+        String sample_name
+        String map_preset
+
+        String prefix = "out"
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.bam --preset ~{map_preset} --sort
+
+        find . -type f -exec ls -lah {} \;
+    >>>
+
+    output {
+        File aligned_bam = "~{prefix}.bam"
+        File aligned_bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.18"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CollapseTranscripts {
+    input {
+        File bam
+        String prefix = "out"
+        Boolean use_qvs = true
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        isoseq3 collapse ~{bam} ~{prefix}.gff
+    >>>
+
+    output {
+        File gff = "~{prefix}.gff"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.15"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
