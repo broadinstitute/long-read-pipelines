@@ -9,7 +9,8 @@ workflow C3POa {
         File ref_fasta
     }
 
-    call Preprocessing { input: manifest_chunk = manifest_chunk }
+    call Cat as CatRawReads { input: files = read_lines(manifest_chunk), out = "chunk.fastq" }
+    call Preprocessing { input: fastq = CatRawReads.merged }
 
     scatter (fastq in Preprocessing.fastqs) {
         call Processing { input: preprocessed_fastq = fastq }
@@ -26,24 +27,19 @@ workflow C3POa {
 
 task Preprocessing {
     input {
-        File manifest_chunk
+        File fastq
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Array[String] fastqs = read_lines(manifest_chunk)
-
-    Int disk_size = 1000
+    Int disk_size = 3*ceil(size(fastq, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        gsutil cat ~{sep=' ' fastqs} > chunk.fastq
-
         mkdir pre
 
-        python3 /C3POa/C3POa_preprocessing.py -i chunk.fastq \
+        python3 /C3POa/C3POa_preprocessing.py -i ~{fastq} \
                                               -o pre \
                                               -q 9 \
                                               -l 1000 \
@@ -65,7 +61,7 @@ task Preprocessing {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -91,10 +87,10 @@ task Processing {
     command <<<
         set -euxo pipefail
 
-        python3 /C3POa/C3POa.py -z -d 500 -l 1000 -p ./ \
-                                -r ~{preprocessed_fastq} \
+        python3 /C3POa/C3POa.py -z -d 500 -l 1000 -p . \
                                 -m /C3POa/NUC.4.4.mat \
                                 -c /c3poa.config.txt \
+                                -r ~{preprocessed_fastq} \
                                 -o consensus.fasta
     >>>
 
@@ -106,12 +102,12 @@ task Processing {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             2,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.4"
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -137,13 +133,7 @@ task Postprocessing {
     command <<<
         set -euxo pipefail
 
-        df -h .
-        tree -h .
-
         python3 /C3POa/C3POa_postprocessing.py -i ~{consensus} -c /c3poa.config.txt -a /C3POa/adapter.fasta -o ./
-
-        df -h .
-        tree -h .
     >>>
 
     output {
@@ -160,7 +150,7 @@ task Postprocessing {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -202,7 +192,7 @@ task Cat {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
