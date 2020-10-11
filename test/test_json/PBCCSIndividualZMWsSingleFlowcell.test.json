@@ -1,0 +1,6 @@
+{
+    "PBCCSIndividualZMWsSingleFlowcell.raw_reads_gcs_bucket": "gs://broad-dsp-lrma-ci-resources/test_data/PBCCSOnlySingleFlowcell.test.ChrMAndChr20SubsetGRCh38/input_data/NA12878rep1_chrM_and_chr20_tiny_subset/",
+    "PBCCSIndividualZMWsSingleFlowcell.num_shards":           10,
+
+    "PBCCSIndividualZMWsSingleFlowcell.gcs_out_root_dir":     "gs://broad-dsp-lrma-ci/PBCCSIndividualZMWsSingleFlowcell"
+}

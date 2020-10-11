@@ -7,6 +7,7 @@ dependencies:
   - samtools
   - pbccs
   - pbbam
+  - pbmm2
   - isoseq3
   - lima
   - isoseq3

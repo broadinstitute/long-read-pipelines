@@ -11,16 +11,8 @@ ENV PATH=/opt/conda/envs/lr-pb/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install gsutil
 RUN apt update
-RUN apt install -y curl git-lfs
+RUN apt install -y curl git-lfs time datamash
 RUN curl https://sdk.cloud.google.com | bash
-
-# install gatk
-RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
-    && cd gatk \
-    && ./gradlew \
-    && cp /gatk/build/libs/gatk-package-4.1.0.0-*-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
-    && cd .. \
-    && rm -rf /gatk
 
 # copy other resources
 COPY detect_run_info.py /usr/local/bin/
