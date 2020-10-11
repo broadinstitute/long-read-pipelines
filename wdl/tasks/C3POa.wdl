@@ -9,7 +9,8 @@ workflow C3POa {
         File ref_fasta
     }
 
-    call Preprocessing { input: manifest_chunk = manifest_chunk }
+    call Cat as CatRawReads { input: files = read_lines(manifest_chunk), out = "chunk.fastq" }
+    call Preprocessing { input: fastq = CatRawReads.merged }
 
     scatter (fastq in Preprocessing.fastqs) {
         call Processing { input: preprocessed_fastq = fastq }
@@ -26,24 +27,19 @@ workflow C3POa {
 
 task Preprocessing {
     input {
-        File manifest_chunk
+        File fastq
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Array[String] fastqs = read_lines(manifest_chunk)
-
-    Int disk_size = 1000
+    Int disk_size = 3*ceil(size(fastq, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        gsutil cat ~{sep=' ' fastqs} > chunk.fastq
-
         mkdir pre
 
-        python3 /C3POa/C3POa_preprocessing.py -i chunk.fastq \
+        python3 /C3POa/C3POa_preprocessing.py -i ~{fastq} \
                                               -o pre \
                                               -q 9 \
                                               -l 1000 \

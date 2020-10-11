@@ -33,6 +33,7 @@ workflow ONT10xSingleFlowcell {
 
     scatter (summary_file in FindSequencingSummaryFiles.summary_files) {
         call ONT.GetRunInfo { input: summary_file = summary_file }
+
         #call ONT.ListFiles as ListFast5s { input: summary_file = summary_file, suffix = "fast5" }
         call ONT.ListFiles as ListFastqs { input: summary_file = summary_file, suffix = "fastq" }
 
@@ -48,7 +49,6 @@ workflow ONT10xSingleFlowcell {
         String rg_subreads  = "@RG\\tID:~{SID}.subreads\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
         String rg_consensus = "@RG\\tID:~{SID}.consensus\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        #call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = 4  }
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = fastq_shards }
 
         scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
