@@ -46,7 +46,7 @@ workflow PBCCSDemultiplexOnlySingleFlowcell {
 
         # break one raw BAM into fixed number of shards
         File subread_pbi = sub(subread_bam, ".bam$", ".bam.pbi")
-        call Utils.ShardLongReads { input: unaligned_bam = subread_bam, unaligned_pbi = subread_pbi, num_shards = num_shards }
+        call PB.ShardLongReads { input: unaligned_bam = subread_bam, unaligned_pbi = subread_pbi, num_shards = num_shards }
 
         # then perform correction on each of the shard
         scatter (subreads in ShardLongReads.unmapped_shards) {

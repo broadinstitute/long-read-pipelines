@@ -7,6 +7,45 @@ on:
     - main
 
 jobs:
+  # Run Python tests on Github runner
+  tox_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+      - name: Checkout github repo (+ download lfs dependencies)
+        uses: actions/checkout@v2
+        with:
+          lfs: true
+
+      - name: Checkout LFS objects
+        run: git lfs checkout
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test with tox
+        run: tox
+
+      # Send Slack message on workflow failure
+      - name: Slack Failure Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2.0.2
+        env:
+          SLACK_COLOR: '#DF5A49'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnabad.png?raw=true
+          SLACK_USERNAME: long-read-pipelines
+
   main_test:
     # The type of runner that the job will run on
     runs-on: self-hosted
@@ -39,6 +78,7 @@ jobs:
         SLACK_USERNAME: long-read-pipelines
 
   deliver:
+    # Automatic delivery will run on a Github-hosted machine
     needs: main_test
     runs-on: ubuntu-latest
     steps:
@@ -79,6 +119,9 @@ jobs:
     - name: Update version badge
       run: sed -i 's/version-.*-blue/version-${{ steps.bump_version.outputs.next-version }}-blue/' README.md
 
+    - name: Write commit message
+      run: git log --format=%B -n 1 ${{ github.event.after }} > release_notes.txt
+
     - name: Commit changes
       uses: EndBug/add-and-commit@v4
       with:
@@ -89,8 +132,17 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Make Dockstore-compatible release
-      run: ./scripts/wdl/create_dockstore_release_branch.sh lrp_${{ steps.bump_version.outputs.next-version }}
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.bump_version.outputs.next-version }}
+        release_name: 'lrp_${{ steps.bump_version.outputs.next-version }}'
+        body_path: "release_notes.txt"
+        draft: false
+        prerelease: false
 
     - name: Slack Failure Notification
       if: failure()

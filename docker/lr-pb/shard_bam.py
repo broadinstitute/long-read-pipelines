@@ -9,42 +9,48 @@ from multiprocessing.pool import ThreadPool
 from functools import partial
 
 
-def write_shard(bam, offsets, prefix, index):
+def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
     """
-    Write subsection of bam to a shard.
+    Write subset of PacBio bam to a shard, taking care not to split reads
+    from the same ZMW across separate files.  These shards are thus suitable
+    for correction via CCS.
     """
 
     bf = pysam.Samfile(bam, 'rb', check_sq=False)
 
     # Advance to the specified virtual file offset.
-    bf.seek(offsets[index])
+    bf.seek(sharding_offsets[index])
 
     num_reads = 0
+    zmw_counts_act = {}
     with pysam.Samfile(f'{prefix}{index}.bam', 'wb', header=bf.header) as out:
         # Write until we've advanced to (but haven't written) the read that begins the next shard.
         while True:
             read = bf.__next__()
             out.write(read)
 
+            # Count the ZMW numbers seen.
+            zmw = read.get_tag("zm")
+            zmw_counts_act[zmw] = zmw_counts_act.get(zmw, 0) + 1
             num_reads += 1
-            if bf.tell() >= offsets[index+1]:
+
+            if bf.tell() >= sharding_offsets[index+1]:
                 break
+
+    # Verify that the count for ZMWs written to this shard match the ZMW count determined
+    # from the original read of the index file.  If this exception is thrown, it may indicate
+    # that reads from the same ZMW have been erroneously sharded to separate files.
+    if zmw_counts_act[zmw] != zmw_counts_exp[zmw]:
+        raise Exception(f'Number of reads from a specific ZMW mismatches between the original data'
+                        f'and the sharded data ({zmw}: {zmw_counts_exp[zmw]} != {zmw_counts_act[zmw]})')
 
     return num_reads
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Shard .bam file using the .pbi index', prog='shard_bam')
-    parser.add_argument('-p', '--prefix', type=str, default="shard", help="Shard filename prefix")
-    parser.add_argument('-n', '--num_shards', type=int, default=4, help="Number of shards")
-    parser.add_argument('-t', '--num_threads', type=int, default=2, help="Number of threads to use during sharding")
-    parser.add_argument('-i', '--index', type=str, required=False, help="Index filename")
-    parser.add_argument('bam', type=str, help="BAM")
-    args = parser.parse_args()
-
-    pbi = args.bam + ".pbi" if args.index is None else args.index
-
-    print(f"Reading index ({pbi}). This may take a few minutes...", flush=True)
+def compute_shard_offsets(pbi_file, num_shards):
+    """
+    Compute all possible shard offsets (keeping adjacent reads from the ZMW together)
+    """
 
     # Decode PacBio .pbi file.  This is not a full decode of the index, only the parts we need for sharding.
     # More on index format at https://pacbiofileformats.readthedocs.io/en/9.0/PacBioBamIndex.html .
@@ -61,14 +67,6 @@ if __name__ == "__main__":
         "reserved" / Padding(18),
 
         # Basic information section (columnar format)
-        # "rgId" / LazyArray(this.n_reads, Int32sl),
-        # "qStart" / LazyArray(this.n_reads, Int32sl),
-        # "qEnd" / LazyArray(this.n_reads, Int32sl),
-        # "holeNumber" / Array(this.n_reads, Int32sl),
-        # "readQual" / LazyArray(this.n_reads, Float32b),
-        # "ctxtFlag" / LazyArray(this.n_reads, Int8ul),
-        # "fileOffset" / Array(this.n_reads, Int64sl),
-
         "rgId" / Padding(this.n_reads * 4),
         "qStart" / Padding(this.n_reads * 4),
         "qEnd" / Padding(this.n_reads * 4),
@@ -78,34 +76,53 @@ if __name__ == "__main__":
         "fileOffset" / Array(this.n_reads, Int64sl),
     )
 
-    # Make a list of bgzf virtual file offsets for sharding.
+    # Make a list of bgzf virtual file offsets for sharding and store ZMW counts.
     file_offsets_hash = OrderedDict()
-
     last_offset = 0
-    with gzip.open(pbi, "rb") as f:
-        a = fmt.parse_stream(f)
+    zmw_count_hash = {}
+    with gzip.open(pbi_file, "rb") as f:
+        idx_contents = fmt.parse_stream(f)
 
-        for i in range(0, a.n_reads):
-            # Save only the virtual file offset for the first ZMW hole number, so that shard boundaries
-            # always keep reads from the same ZMW together.
-            if a.holeNumber[i] not in file_offsets_hash:
-                file_offsets_hash[a.holeNumber[i]] = a.fileOffset[i]
+        for j in range(0, idx_contents.n_reads):
+            # Save only the virtual file offset for the first ZMW hole number, so
+            # that shard boundaries always keep reads from the same ZMW together.
+            if idx_contents.holeNumber[j] not in file_offsets_hash:
+                file_offsets_hash[idx_contents.holeNumber[j]] = idx_contents.fileOffset[j]
 
-            last_offset = a.fileOffset[i]
+            last_offset = idx_contents.fileOffset[j]
+
+            zmw_count_hash[idx_contents.holeNumber[j]] = zmw_count_hash.get(idx_contents.holeNumber[j], 0) + 1
 
     file_offsets = list(file_offsets_hash.values())
-
     shard_offsets = []
-    for i in range(0, len(file_offsets), ceil(len(file_offsets)/args.num_shards)):
-        shard_offsets.append(file_offsets[i])
+    for j in range(0, len(file_offsets), ceil(len(file_offsets) / num_shards)):
+        shard_offsets.append(file_offsets[j])
 
     # For the last read in the file, pad the offset so the final comparison in write_shard() retains the final read.
-    shard_offsets.append(last_offset + 100)
+    offset_padding = 100
+    shard_offsets.append(last_offset + offset_padding)
 
-    # Prepare a function with arguments partially filled in (the later imap_unordered() call requires functions that
-    # only have one remaining argument to be specified).
-    func = partial(write_shard, args.bam, shard_offsets, args.prefix)
-    idx = list(range(0, len(shard_offsets) - 1))
+    return shard_offsets, zmw_count_hash, idx_contents.n_reads
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Shard .bam file using the .pbi index', prog='shard_bam')
+    parser.add_argument('-p', '--prefix', type=str, default="shard", help="Shard filename prefix")
+    parser.add_argument('-n', '--num_shards', type=int, default=4, help="Number of shards")
+    parser.add_argument('-t', '--num_threads', type=int, default=2, help="Number of threads to use during sharding")
+    parser.add_argument('-i', '--index', type=str, required=False, help="PBI index filename")
+    parser.add_argument('bam', type=str, help="BAM")
+    args = parser.parse_args()
+
+    pbi = args.bam + ".pbi" if args.index is None else args.index
+
+    # Decode PacBio .pbi file and determine the shard offsets.
+    print(f"Reading index ({pbi}). This may take a few minutes...", flush=True)
+    offsets, zmw_counts, read_count = compute_shard_offsets(pbi, args.num_shards)
+
+    # Prepare a function with arguments partially filled in.
+    func = partial(write_shard, args.bam, offsets, zmw_counts, args.prefix)
+    idx = list(range(0, len(offsets) - 1))
 
     # Write the shards using the specified number of threads.
     print(f"Writing {len(idx)} shards using {args.num_threads} threads...", flush=True)
@@ -118,7 +135,8 @@ if __name__ == "__main__":
         count += all_num_reads_written[i]
         print(f'  - wrote {all_num_reads_written[i]} reads to {args.prefix}{i}.bam', flush=True)
 
-    assert count == a.n_reads
+    print(f'Sharded {count}/{read_count} reads across {len(idx)} shards.', flush=True)
 
-    print(f'Expected {a.n_reads} reads; sharded {count} reads to {len(idx)} shards.', flush=True)
 
+if __name__ == "__main__":
+    main()
