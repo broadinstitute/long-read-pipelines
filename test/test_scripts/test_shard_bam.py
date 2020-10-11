@@ -25,7 +25,7 @@ def test_shard_bam(script_runner):
     num_shards = 2
 
     pathlib.Path(testdir).mkdir(parents=True, exist_ok=True)
-    ret = script_runner.run("../../docker/lr-pb/shard_bam.py", "-p", prefix, "-n", str(num_shards), bam)
+    ret = script_runner.run("docker/lr-pb/shard_bam.py", "-p", prefix, "-n", str(num_shards), bam)
 
     files_with_zmws = {}
     zmw_counts_orig = get_read_zmw_counts(bam)
