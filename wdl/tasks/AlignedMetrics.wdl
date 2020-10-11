@@ -49,6 +49,28 @@ workflow AlignedMetrics {
             ref_flat = ref_flat
     }
 
+    call FilterMQ0Reads { input: bam = aligned_bam }
+
+    Map[String, File] beds = {
+        "3utr":       "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/3utr.grch38.sorted.bed",
+        "5utr":       "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/5utr.grch38.sorted.bed",
+        "coding":     "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/coding.grch38.sorted.bed",
+        "exons":      "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/exons.grch38.sorted.bed",
+        "genes":      "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/genes.grch38.sorted.bed",
+        "intergenic": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/intergenic.grch38.sorted.bed",
+        "introns":    "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/introns.grch38.sorted.bed"
+    }
+
+    scatter (category in ["3utr", "5utr", "coding", "exons", "genes", "intergenic", "introns"]) {
+        call ComputeBedCoverage {
+            input:
+                bam    = FilterMQ0Reads.no_mq0_bam,
+                bai    = FilterMQ0Reads.no_mq0_bai,
+                bed    = beds[category],
+                prefix = basename(FilterMQ0Reads.no_mq0_bam, ".bam") + "." + category
+        }
+    }
+
 #    call CollectSamErrorMetrics {
 #        input:
 #            bam = aligned_bam,
@@ -95,6 +117,9 @@ workflow AlignedMetrics {
 
         call FF.FinalizeToDir as FFRnaSeqMetrics { input: outdir = outdir + "/rnaseq/", files = [ RnaSeqMetrics.rna_metrics ] }
         call FF.FinalizeToDir as FFReadNamesAndLengths { input: outdir = outdir + "/read_names_and_lengths/", files = [ ReadNamesAndLengths.read_names_and_lengths ] }
+
+        call FF.FinalizeToDir as FFBedCoverages { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.coverage }
+        call FF.FinalizeToDir as FFBedCoverageCounts { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.counts_file }
 
 #        call FF.FinalizeToDir as FFErrorStats {
 #            input:
@@ -548,6 +573,97 @@ task RnaSeqMetrics {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FilterMQ0Reads {
+    input {
+        File bam
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(bam, "GB"))
+    String prefix = basename(bam, ".bam")
+
+    command <<<
+        set -euxo pipefail
+
+        samtools view -q 1 -b ~{bam} > ~{prefix}.no_mq0.bam
+        samtools index ~{prefix}.no_mq0.bam
+    >>>
+
+    output {
+        File no_mq0_bam = "~{prefix}.no_mq0.bam"
+        File no_mq0_bai = "~{prefix}.no_mq0.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ComputeBedCoverage {
+    input {
+        File bam
+        File bai
+        File bed
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB") + size(bed, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        bedtools coverage -b ~{bed} -a ~{bam} -nobuf | gzip > ~{prefix}.txt.gz
+        zcat ~{prefix}.txt.gz | awk '{ sum += sprintf("%f", $15*$16) } END { printf("%f\n", sum) }' > ~{prefix}.count.txt
+    >>>
+
+    output {
+        File coverage = "~{prefix}.txt.gz"
+        Float counts = read_float("~{prefix}.count.txt")
+        File counts_file = "~{prefix}.count.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
