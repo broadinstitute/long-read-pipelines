@@ -171,8 +171,7 @@ workflow ONT10xSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
-            files = [ MergeAllAnnotated.merged_bam, MergeAllAnnotated.merged_bai,
-                      MergeAllConsensus.merged_bam, MergeAllConsensus.merged_bai ],
+            files = [ MergeAllConsensus.merged_bam, MergeAllConsensus.merged_bai ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 }
