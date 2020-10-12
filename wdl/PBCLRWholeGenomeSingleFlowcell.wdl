@@ -167,7 +167,9 @@ workflow PBCLRWholeGenomeSingleFlowcell {
 
             ref_fasta         = ref_fasta,
             ref_fasta_fai     = ref_fasta_fai,
-            tandem_repeat_bed = tandem_repeat_bed
+            tandem_repeat_bed = tandem_repeat_bed,
+
+            preset            = "clr"
     }
 
     # call SNVs and small indels
@@ -178,7 +180,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
 
             ref_fasta         = ref_fasta,
             ref_fasta_fai     = ref_fasta_fai,
-            ref_dict          = ref_dict
+            ref_dict          = ref_dict,
     }
 
     ##########
@@ -187,7 +189,7 @@ workflow PBCLRWholeGenomeSingleFlowcell {
 
     call FF.FinalizeToDir as FinalizeSVs {
         input:
-            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
+            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
             outdir = outdir + "/" + DIR[0] + "/variants"
     }
 
