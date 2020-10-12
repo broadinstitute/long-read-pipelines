@@ -15,11 +15,19 @@ RUN apt-get -y update \
 	&& apt-get clean
 
 RUN git clone https://github.com/nanoporetech/pipeline-structural-variation.git \
-        && cd pipeline-structural-variation/lib \
-        && python3 setup.py build \
-        && python3 setup.py install
+    && cd pipeline-structural-variation/lib \
+    && python3 setup.py build \
+    && python3 setup.py install
 
 RUN pip3 install --upgrade setuptools cython
 RUN git clone https://github.com/eldariont/svim.git \
 	&& cd svim \
 	&& pip3 install .
+
+RUN git clone https://github.com/tjiangHIT/cuteSV.git \
+    && cd cuteSV \
+    && git checkout 5775340c54eef33baabdd7c227fba828d75691f3 \
+    && git reset --hard \
+    && python3 setup.py install
+
+RUN echo "source activate lr-sv" > ~/.bashrc
