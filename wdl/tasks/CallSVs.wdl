@@ -311,7 +311,7 @@ task CuteSV {
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
         cuteSV --sample $SM \
-               --report_readid \
+        #      --report_readid \
                --genotype \
                --min_support ~{min_support} \
                --min_size ~{min_size} \
