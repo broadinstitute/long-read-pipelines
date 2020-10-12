@@ -98,8 +98,8 @@ workflow AlignedMetrics {
         call FF.FinalizeToDir as FFRnaSeqMetrics { input: outdir = outdir + "/rnaseq/", files = [ RnaSeqMetrics.rna_metrics ] }
         call FF.FinalizeToDir as FFReadNamesAndLengths { input: outdir = outdir + "/read_names_and_lengths/", files = [ ReadNamesAndLengths.read_names_and_lengths ] }
 
-        call FF.FinalizeToDir as FFBedCoverages { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.coverage }
-        call FF.FinalizeToDir as FFBedCoverageCounts { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.counts_file }
+#        call FF.FinalizeToDir as FFBedCoverages { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.coverage }
+#        call FF.FinalizeToDir as FFBedCoverageCounts { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.counts_file }
 
 #        call FF.FinalizeToDir as FFErrorStats {
 #            input:
