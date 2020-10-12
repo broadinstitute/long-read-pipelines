@@ -51,26 +51,6 @@ workflow AlignedMetrics {
 
     call FilterMQ0Reads { input: bam = aligned_bam }
 
-    Map[String, File] beds = {
-        "3utr":       "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/3utr.grch38.sorted.bed",
-        "5utr":       "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/5utr.grch38.sorted.bed",
-        "coding":     "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/coding.grch38.sorted.bed",
-        "exons":      "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/exons.grch38.sorted.bed",
-        "genes":      "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/genes.grch38.sorted.bed",
-        "intergenic": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/intergenic.grch38.sorted.bed",
-        "introns":    "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/introns.grch38.sorted.bed"
-    }
-
-    scatter (category in ["3utr", "5utr", "coding", "exons", "genes", "intergenic", "introns"]) {
-        call ComputeBedCoverage {
-            input:
-                bam    = FilterMQ0Reads.no_mq0_bam,
-                bai    = FilterMQ0Reads.no_mq0_bai,
-                bed    = beds[category],
-                prefix = basename(FilterMQ0Reads.no_mq0_bam, ".bam") + "." + category
-        }
-    }
-
 #    call CollectSamErrorMetrics {
 #        input:
 #            bam = aligned_bam,
