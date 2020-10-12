@@ -274,8 +274,7 @@ task CuteSV {
 
         File ref_fasta
 
-        Boolean report_readid = true
-        Boolean genotype = true
+        Boolean report_readid = false
 
         Int min_support	 = 1
         Int min_size = 30
@@ -311,8 +310,8 @@ task CuteSV {
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
         cuteSV --sample $SM \
-        #      --report_readid \
                --genotype \
+               ~{if report_readid then "--report_readid" else ""} \
                --min_support ~{min_support} \
                --min_size ~{min_size} \
                ~{preset_values[preset]} \
