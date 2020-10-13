@@ -1,0 +1,7 @@
+{
+    "DownloadFromFTP.ftp_dirs": [
+        "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/historical_data/former_toplevel/alignment_indices"
+    ],
+
+    "DownloadFromFTP.gcs_out_root_dir": "gs://broad-dsp-lrma-ci/DownloadFromFTP"
+}
