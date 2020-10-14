@@ -290,7 +290,7 @@ for input_json in input_jsons:
             print_warning(f'{test}: Requested WDL does not exist.')
         else:
             # Clear old final outputs (but leave intermediates intact)
-            num_removed = remove_old_final_outputs(input_json)
+            num_removed = remove_old_final_outputs(input_json) if "Download" in input_json else 0
             if num_removed == 0:
                 print_warning(f'{test}: Old final output not automatically removed')
 
