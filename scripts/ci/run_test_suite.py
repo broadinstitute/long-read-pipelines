@@ -17,7 +17,7 @@ cromwell_config = os.path.expanduser('~/.cromshell/cromwell_server.config')
 if os.path.exists(cromwell_config):
     file1 = open(cromwell_config, 'r')
     lines = file1.readlines()
-    server_url = lines[0].strip()
+    server_url = re.sub("/*$", "", lines[0].strip())
 
 if len(sys.argv) == 2:
     server_url = sys.argv[1]
@@ -97,7 +97,7 @@ def run_curl_cmd(curl_cmd):
         stdout, stderr = out.communicate()
 
         if stdout is None or not stdout:
-            time.sleep(30)
+            print_failure(f"Failed to submit curl command ({curl_cmd}).")
             exit(1)
         else:
             return json.loads(stdout)
@@ -290,7 +290,7 @@ for input_json in input_jsons:
             print_warning(f'{test}: Requested WDL does not exist.')
         else:
             # Clear old final outputs (but leave intermediates intact)
-            num_removed = remove_old_final_outputs(input_json) if "Download" in input_json else 0
+            num_removed = remove_old_final_outputs(input_json) if "Download" not in input_json else 0
             if num_removed == 0:
                 print_warning(f'{test}: Old final output not automatically removed')
 
