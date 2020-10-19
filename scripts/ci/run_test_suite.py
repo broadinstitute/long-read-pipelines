@@ -290,12 +290,15 @@ for input_json in input_jsons:
             print_warning(f'{test}: Requested WDL does not exist.')
         else:
             # Clear old final outputs (but leave intermediates intact)
-            num_removed = remove_old_final_outputs(input_json) if "Download" not in input_json else 0
+            num_removed = remove_old_final_outputs(input_json)
             if num_removed == 0:
                 print_warning(f'{test}: Old final output not automatically removed')
 
             # Dispatch workflow
-            j = submit_job(wdl_path, input_json, 'resources/workflow_options/ci.json', 'wdl/lr_wdls.zip')
+            caching_resource_json = 'resources/workflow_options/ci.json'
+            nocaching_resource_json = 'resources/workflow_options/ci.fresh.run.json'
+            resource_json = caching_resource_json if "Download" not in input_json else nocaching_resource_json
+            j = submit_job(wdl_path, input_json, resource_json, 'wdl/lr_wdls.zip')
 
             print_info(f'{test}: {j["id"]}, {j["status"]}')
             jobs[test] = j
