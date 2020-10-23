@@ -17,15 +17,17 @@ workflow PBCCSOnlySingleFlowcell {
 
         String? sample_name
         Int num_shards = 300
+        Boolean extract_uncorrected_reads = false
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        raw_reads_gcs_bucket: "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be CCS-ed"
-        sample_name:          "[optional] name of sample this FC is sequencing"
-        num_shards:           "[default-valued] number of sharded BAMs to create (tune for performance)"
-        gcs_out_root_dir :    "GCS bucket to store the corrected/uncorrected reads and metrics files"
+        raw_reads_gcs_bucket:      "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be CCS-ed"
+        sample_name:               "[optional] name of sample this FC is sequencing"
+        num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
+        extract_uncorrected_reads: "[default-valued] extract reads that were not CCS-corrected to a separate file"
+        gcs_out_root_dir :         "GCS bucket to store the corrected/uncorrected reads and metrics files"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
@@ -48,35 +50,64 @@ workflow PBCCSOnlySingleFlowcell {
         # then perform correction on each of the shard
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }
+
+            if (extract_uncorrected_reads) {
+                call PB.ExtractUncorrectedReads { input: subreads = subreads, consensus = CCS.consensus }
+            }
         }
 
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
         call Utils.MergeBams as MergeChunks { input: bams = CCS.consensus, prefix = "~{SM}.~{ID}" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
+
+        if (length(select_all(ExtractUncorrectedReads.uncorrected)) > 0) {
+            call Utils.MergeBams as MergeUncorrectedChunks {
+                input:
+                    bams = select_all(ExtractUncorrectedReads.uncorrected),
+                    prefix = "~{SM}.~{ID}.uncorrected"
+            }
+        }
     }
 
     # gather across (potential multiple) input raw BAMs
     if (length(FindBams.subread_bams) > 1) {
         call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
         call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+
+        if (length(select_all(MergeUncorrectedChunks.merged_bam)) > 0) {
+            call Utils.MergeBams as MergeAllUncorrectedChunks {
+                input:
+                    bams = select_all(MergeUncorrectedChunks.merged_bam),
+                    prefix = "~{SM}.~{ID}.uncorrected"
+            }
+        }
     }
 
     File ccs_bam = select_first([ MergeRuns.merged_bam, MergeChunks.merged_bam[0] ])
     File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
+    File? uncorrected_bam = select_first([ MergeAllUncorrectedChunks.merged_bam, MergeUncorrectedChunks.merged_bam[0] ])
 
     ##########
     # store the results into designated bucket
     ##########
 
-    call FF.FinalizeToDir as FinalizeMergedRuns {
-        input:
-            files = [ ccs_bam ],
-            outdir = outdir + "/" + DIR[0] + "/alignments"
-    }
-
     call FF.FinalizeToDir as FinalizeCCSMetrics {
         input:
             files = [ ccs_report ],
             outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
+    }
+
+    call FF.FinalizeToDir as FinalizeMergedRuns {
+        input:
+            files = [ ccs_bam ],
+            outdir = outdir + "/" + DIR[0] + "/reads"
+    }
+
+    if (defined(uncorrected_bam)) {
+        call FF.FinalizeToDir as FinalizeMergedUncorrectedRuns {
+            input:
+                files = select_all([ uncorrected_bam ]),
+                outdir = outdir + "/" + DIR[0] + "/reads"
+        }
     }
 }
