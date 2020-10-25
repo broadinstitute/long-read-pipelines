@@ -89,13 +89,14 @@ workflow PBCCSWholeGenomeSingleFlowcell {
             if (extract_uncorrected_reads) {
                 call PB.ExtractUncorrectedReads { input: subreads = subreads, consensus = CCS.consensus }
 
-#                call AR.Minimap2 as AlignUncorrected {
-#                    input:
-#                        reads      = [ ExtractUncorrectedReads.uncorrected ],
-#                        ref_fasta  = ref_fasta,
-#                        RG         = RG,
-#                        map_preset = "asm20"
-#                }
+                call PB.Align as AlignUncorrected {
+                    input:
+                        bam         = ExtractUncorrectedReads.uncorrected,
+                        ref_fasta   = ref_fasta,
+                        sample_name = SM,
+                        map_preset  = "SUBREAD",
+                        runtime_attr_override = { 'mem_gb': 64 }
+                }
             }
 
             call AR.Minimap2 as AlignChunk {
@@ -111,13 +112,13 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam, prefix = "~{SM}.~{ID}" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
 
-#        if (length(select_all(AlignUncorrected.aligned_bam)) > 0) {
-#            call Utils.MergeBams as MergeUncorrectedChunks {
-#                input:
-#                    bams = select_all(AlignUncorrected.aligned_bam),
-#                    prefix = "~{SM}.~{ID}.uncorrected"
-#            }
-#        }
+        if (length(select_all(AlignUncorrected.aligned_bam)) > 0) {
+            call Utils.MergeBams as MergeUncorrectedChunks {
+                input:
+                    bams = select_all(AlignUncorrected.aligned_bam),
+                    prefix = "~{SM}.~{ID}.uncorrected"
+            }
+        }
 
         # compute alignment metrics
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
@@ -153,19 +154,20 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
         call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
 
-#        if (length(select_all(MergeUncorrectedChunks.merged_bam)) > 0) {
-#            call Utils.MergeBams as MergeAllUncorrectedChunks {
-#                input:
-#                    bams = select_all(MergeUncorrectedChunks.merged_bam),
-#                    prefix = "~{SM}.~{ID}.uncorrected"
-#            }
-#        }
+        if (length(select_all(MergeUncorrectedChunks.merged_bam)) > 0) {
+            call Utils.MergeBams as MergeAllUncorrectedChunks {
+                input:
+                    bams = select_all(MergeUncorrectedChunks.merged_bam),
+                    prefix = "~{SM[0]}.~{ID[0]}.uncorrected"
+            }
+        }
     }
 
     File ccs_bam = select_first([ MergeRuns.merged_bam, MergeChunks.merged_bam[0] ])
     File ccs_bai = select_first([ MergeRuns.merged_bai, MergeChunks.merged_bai[0] ])
     File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
-#    File? uncorrected_bam = select_first([ MergeAllUncorrectedChunks.merged_bam, MergeUncorrectedChunks.merged_bam[0] ])
+    File? uncorrected_bam = select_first([ MergeAllUncorrectedChunks.merged_bam, MergeUncorrectedChunks.merged_bam[0] ])
+    File? uncorrected_bai = select_first([ MergeAllUncorrectedChunks.merged_bai, MergeUncorrectedChunks.merged_bai[0] ])
 
     # compute alignment metrics
     call AM.AlignedMetrics as PerFlowcellRunMetrics {
@@ -248,11 +250,11 @@ workflow PBCCSWholeGenomeSingleFlowcell {
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 
-#    if (defined(uncorrected_bam)) {
-#        call FF.FinalizeToDir as FinalizeMergedUncorrectedRuns {
-#            input:
-#                files = select_all([ uncorrected_bam ]),
-#                outdir = outdir + "/" + DIR[0] + "/alignments"
-#        }
-#    }
+    if (defined(uncorrected_bam)) {
+        call FF.FinalizeToDir as FinalizeMergedUncorrectedRuns {
+            input:
+                files = select_all([ uncorrected_bam, uncorrected_bai ]),
+                outdir = outdir + "/" + DIR[0] + "/alignments"
+        }
+    }
 }
