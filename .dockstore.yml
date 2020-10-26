@@ -37,4 +37,12 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCLRWholeGenomeSingleFlowcell.wdl
   testParameterFiles:
-
+- name: GuppyRunner
+  subclass: wdl
+  primaryDescriptorPath: /wdl/GuppyRunner.wdl
+  testParameterFiles:
+  - /test/test_json/GuppyRunner.test.json
+- name: MalariaAssembly
+  subclass: wdl
+  primaryDescriptorPath: /wdl/MalariaAssembly.wdl
+  testParameterFiles:
