@@ -1,4 +1,1 @@
 test/test_json/NanopolishRunner.test.json
-test/test_json/MedakaRunner.test.json
-test/test_json/RaconRunner.test.json
-test/test_json/GuppyRunner.test.json
