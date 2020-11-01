@@ -26,6 +26,7 @@ task Minimap2 {
     Int disk_size = 1 + 10*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
 
     Int cpus = 4
+    Int mem = 30
 
     command <<<
         set -euxo pipefail
@@ -53,7 +54,7 @@ task Minimap2 {
             exit 1
         fi
 
-        samtools sort -@~{cpus} -m4G --no-PG -o ~{prefix}.bam tmp.sam
+        samtools sort -@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam tmp.sam
         samtools index ~{prefix}.bam
     >>>
 
@@ -65,7 +66,7 @@ task Minimap2 {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
-        mem_gb:             30,
+        mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,

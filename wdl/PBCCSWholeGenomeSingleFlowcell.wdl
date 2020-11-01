@@ -34,29 +34,31 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         File metrics_locus
 
         Int num_shards = 300
+        Boolean extract_uncorrected_reads = false
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        raw_reads_gcs_bucket: "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be CCS-ed"
-        sample_name:          "[optional] name of sample this FC is sequencing"
+        raw_reads_gcs_bucket:      "GCS bucket holding subreads BAMs (and other related files) holding the sequences to be CCS-ed"
+        sample_name:               "[optional] name of sample this FC is sequencing"
 
-        ref_fasta:            "Reference fasta file"
-        ref_fasta_fai:        "Index (.fai) for the reference fasta file"
-        ref_dict:             "Sequence dictionary (.dict) for the reference fasta file"
+        ref_fasta:                 "Reference fasta file"
+        ref_fasta_fai:             "Index (.fai) for the reference fasta file"
+        ref_dict:                  "Sequence dictionary (.dict) for the reference fasta file"
 
-        tandem_repeat_bed:    "BED file specifying the location of tandem repeats in the reference"
-        ref_flat:             "Gene predictions in refFlat format (https://genome.ucsc.edu/goldenpath/gbdDescriptions.html)"
-        dbsnp_vcf:            "dbSNP vcf"
-        dbsnp_tbi:            "Index (.tbi) for dbSNP vcf"
+        tandem_repeat_bed:         "BED file specifying the location of tandem repeats in the reference"
+        ref_flat:                  "Gene predictions in refFlat format (https://genome.ucsc.edu/goldenpath/gbdDescriptions.html)"
+        dbsnp_vcf:                 "dbSNP vcf"
+        dbsnp_tbi:                 "Index (.tbi) for dbSNP vcf"
 
-        mt_chr_name:          "Contig name for the mitochondrial sequence in the reference"
-        metrics_locus:        "Loci over which some summary metrics should be computed"
+        mt_chr_name:               "Contig name for the mitochondrial sequence in the reference"
+        metrics_locus:             "Loci over which some summary metrics should be computed"
 
-        num_shards:           "[default-valued] number of sharded BAMs to create (tune for performance)"
+        num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
+        extract_uncorrected_reads: "[default-valued] extract reads that were not CCS-corrected to a separate file"
 
-        gcs_out_root_dir :    "GCS bucket to store the corrected/uncorrected reads and metrics files"
+        gcs_out_root_dir :         "GCS bucket to store the corrected/uncorrected reads and metrics files"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
@@ -84,6 +86,19 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }
 
+            if (extract_uncorrected_reads) {
+                call PB.ExtractUncorrectedReads { input: subreads = subreads, consensus = CCS.consensus }
+
+                call PB.Align as AlignUncorrected {
+                    input:
+                        bam         = ExtractUncorrectedReads.uncorrected,
+                        ref_fasta   = ref_fasta,
+                        sample_name = SM,
+                        map_preset  = "SUBREAD",
+                        runtime_attr_override = { 'mem_gb': 64 }
+                }
+            }
+
             call AR.Minimap2 as AlignChunk {
                 input:
                     reads      = [ CCS.consensus ],
@@ -96,6 +111,14 @@ workflow PBCCSWholeGenomeSingleFlowcell {
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
         call Utils.MergeBams as MergeChunks { input: bams = AlignChunk.aligned_bam, prefix = "~{SM}.~{ID}" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
+
+        if (length(select_all(AlignUncorrected.aligned_bam)) > 0) {
+            call Utils.MergeBams as MergeUncorrectedChunks {
+                input:
+                    bams = select_all(AlignUncorrected.aligned_bam),
+                    prefix = "~{SM}.~{ID}.uncorrected"
+            }
+        }
 
         # compute alignment metrics
         call AM.AlignedMetrics as PerFlowcellSubRunMetrics {
@@ -130,11 +153,24 @@ workflow PBCCSWholeGenomeSingleFlowcell {
     if (length(FindBams.subread_bams) > 1) {
         call Utils.MergeBams as MergeRuns { input: bams = MergeChunks.merged_bam, prefix = "~{SM[0]}.~{ID[0]}" }
         call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+
+        if (length(select_all(MergeUncorrectedChunks.merged_bam)) > 0) {
+            call Utils.MergeBams as MergeAllUncorrectedChunks {
+                input:
+                    bams = select_all(MergeUncorrectedChunks.merged_bam),
+                    prefix = "~{SM[0]}.~{ID[0]}.uncorrected"
+            }
+        }
     }
 
     File ccs_bam = select_first([ MergeRuns.merged_bam, MergeChunks.merged_bam[0] ])
     File ccs_bai = select_first([ MergeRuns.merged_bai, MergeChunks.merged_bai[0] ])
     File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
+
+    if (extract_uncorrected_reads) {
+        File? uncorrected_bam = select_first([ MergeAllUncorrectedChunks.merged_bam, MergeUncorrectedChunks.merged_bam[0] ])
+        File? uncorrected_bai = select_first([ MergeAllUncorrectedChunks.merged_bai, MergeUncorrectedChunks.merged_bai[0] ])
+    }
 
     # compute alignment metrics
     call AM.AlignedMetrics as PerFlowcellRunMetrics {
@@ -204,15 +240,24 @@ workflow PBCCSWholeGenomeSingleFlowcell {
             outdir = outdir + "/" + DIR[0] + "/variants"
     }
 
+    call FF.FinalizeToDir as FinalizeCCSMetrics {
+        input:
+            files = [ ccs_report ],
+            outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
+    }
+
+
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
             files = [ ccs_bam, ccs_bai ],
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 
-    call FF.FinalizeToDir as FinalizeCCSMetrics {
-        input:
-            files = [ ccs_report ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/ccs_metrics"
+    if (extract_uncorrected_reads) {
+        call FF.FinalizeToDir as FinalizeMergedUncorrectedRuns {
+            input:
+                files = select_all([ uncorrected_bam, uncorrected_bai ]),
+                outdir = outdir + "/" + DIR[0] + "/alignments"
+        }
     }
 }
