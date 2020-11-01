@@ -166,8 +166,11 @@ workflow PBCCSWholeGenomeSingleFlowcell {
     File ccs_bam = select_first([ MergeRuns.merged_bam, MergeChunks.merged_bam[0] ])
     File ccs_bai = select_first([ MergeRuns.merged_bai, MergeChunks.merged_bai[0] ])
     File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
-    File? uncorrected_bam = select_first([ MergeAllUncorrectedChunks.merged_bam, MergeUncorrectedChunks.merged_bam[0] ])
-    File? uncorrected_bai = select_first([ MergeAllUncorrectedChunks.merged_bai, MergeUncorrectedChunks.merged_bai[0] ])
+
+    if (extract_uncorrected_reads) {
+        File? uncorrected_bam = select_first([ MergeAllUncorrectedChunks.merged_bam, MergeUncorrectedChunks.merged_bam[0] ])
+        File? uncorrected_bai = select_first([ MergeAllUncorrectedChunks.merged_bai, MergeUncorrectedChunks.merged_bai[0] ])
+    }
 
     # compute alignment metrics
     call AM.AlignedMetrics as PerFlowcellRunMetrics {
@@ -250,7 +253,7 @@ workflow PBCCSWholeGenomeSingleFlowcell {
             outdir = outdir + "/" + DIR[0] + "/alignments"
     }
 
-    if (defined(uncorrected_bam)) {
+    if (extract_uncorrected_reads) {
         call FF.FinalizeToDir as FinalizeMergedUncorrectedRuns {
             input:
                 files = select_all([ uncorrected_bam, uncorrected_bai ]),

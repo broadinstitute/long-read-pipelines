@@ -85,7 +85,10 @@ workflow PBCCSOnlySingleFlowcell {
 
     File ccs_bam = select_first([ MergeRuns.merged_bam, MergeChunks.merged_bam[0] ])
     File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
-    File? uncorrected_bam = select_first([ MergeAllUncorrectedChunks.merged_bam, MergeUncorrectedChunks.merged_bam[0] ])
+
+    if (extract_uncorrected_reads) {
+        File? uncorrected_bam = select_first([ MergeAllUncorrectedChunks.merged_bam, MergeUncorrectedChunks.merged_bam[0] ])
+    }
 
     ##########
     # store the results into designated bucket
@@ -103,7 +106,7 @@ workflow PBCCSOnlySingleFlowcell {
             outdir = outdir + "/" + DIR[0] + "/reads"
     }
 
-    if (defined(uncorrected_bam)) {
+    if (extract_uncorrected_reads) {
         call FF.FinalizeToDir as FinalizeMergedUncorrectedRuns {
             input:
                 files = select_all([ uncorrected_bam ]),
