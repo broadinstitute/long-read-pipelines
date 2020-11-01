@@ -14,6 +14,7 @@ import "Finalize.wdl" as FF
 workflow Guppy {
     input {
         String gcs_fast5_dir
+        String config = "dna_r9.4.1_450bps_hac_prom.cfg"
     }
 
     call ListFast5Files {
@@ -23,7 +24,8 @@ workflow Guppy {
 
     call Basecall {
         input:
-           fast5_files = ListFast5Files.fast5_files
+           fast5_files = ListFast5Files.fast5_files,
+           config      = config
     }
 
     output  {
@@ -39,7 +41,7 @@ task ListFast5Files {
     String indir = sub(gcs_fast5_dir, "/$", "")
 
     command <<<
-        gsutil ls ~{indir}/*.fast5> fast5_files.txt
+        gsutil ls ~{indir}/**.fast5 > fast5_files.txt
     >>>
 
     output {
@@ -89,6 +91,7 @@ task MergeFastq {
 task Basecall {
     input {
         Array[File] fast5_files
+        String config = "dna_r9.4.1_450bps_hac_prom.cfg"
 
         RuntimeAttr? runtime_attr_override
     }
@@ -99,7 +102,7 @@ task Basecall {
         mkdir fast5
         mv -t fast5/ ~{sep=' ' fast5_files}
 
-        guppy_basecaller -i fast5/ -s guppy_output/ -x "cuda:all" -c dna_r9.4.1_450bps_hac_prom.cfg
+        guppy_basecaller -i fast5/ -s guppy_output/ -x "cuda:all" -c ~{config}
     >>>
 
     output {
