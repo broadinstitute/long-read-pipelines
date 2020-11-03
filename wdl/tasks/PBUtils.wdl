@@ -45,17 +45,17 @@ task FindBams {
 
 task GetRunInfo {
     input {
-        String subread_bam
+        String bam
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String gcs_dir = sub(subread_bam, basename(subread_bam), "")
+    String gcs_dir = sub(bam, basename(bam), "")
 
     command <<<
         set -x
 
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         python /usr/local/bin/detect_run_info.py ~{gcs_dir} > run_info.txt
     >>>
 
@@ -205,6 +205,7 @@ task CCS {
 task MergeCCSReports {
     input {
         Array[File] reports
+        String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
     }
@@ -214,11 +215,11 @@ task MergeCCSReports {
     command <<<
         set -euxo pipefail
 
-        python /usr/local/bin/merge_ccs_reports.py ~{sep=' ' reports} > ccs_report.txt
+        python /usr/local/bin/merge_ccs_reports.py ~{sep=' ' reports} > ~{prefix}.ccs_report.txt
     >>>
 
     output {
-        File report = "ccs_report.txt"
+        File report = "~{prefix}.ccs_report.txt"
     }
 
     #########################
@@ -644,12 +645,16 @@ task Align {
 
     Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
 
+    Int cpus = 4
+    Int mem = 30
+
     command <<<
         set -euxo pipefail
 
-        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.bam --preset ~{map_preset} --sort
+        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam --preset ~{map_preset} --sort
 
-        find . -type f -exec ls -lah {} \;
+        samtools calmd -eb --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
+        samtools index ~{prefix}.bam
     >>>
 
     output {
@@ -659,12 +664,12 @@ task Align {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             8,
+        cpu_cores:          cpus,
+        mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
+        preemptible_tries:  3,
+        max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.21"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

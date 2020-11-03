@@ -16,10 +16,6 @@ workflow AlignedMetrics {
         File dbsnp_tbi
         File metrics_locus
 
-        String per
-        String type
-        String label
-
         String? gcs_output_dir
     }
 
@@ -42,28 +38,17 @@ workflow AlignedMetrics {
 
     call ReadNamesAndLengths { input: bam = aligned_bam }
 
-    call RnaSeqMetrics {
-        input:
-            bam = aligned_bam,
-            bai = aligned_bai,
-            ref_flat = ref_flat
-    }
-
-    call FilterMQ0Reads { input: bam = aligned_bam }
-
-#    call CollectSamErrorMetrics {
+#    call RnaSeqMetrics {
 #        input:
 #            bam = aligned_bam,
 #            bai = aligned_bai,
-#            ref_fasta = ref_fasta,
-#            ref_dict = ref_dict,
-#            dbsnp_vcf = dbsnp_vcf,
-#            dbsnp_tbi = dbsnp_tbi,
-#            region = metrics_locus,
+#            ref_flat = ref_flat
 #    }
 
+#    call FilterMQ0Reads { input: bam = aligned_bam }
+
     if (defined(gcs_output_dir)) {
-        String outdir = sub(gcs_output_dir + "", "/$", "") + "/metrics/~{per}_~{type}_~{label}"
+        String outdir = sub(gcs_output_dir + "", "/$", "")
 
         call FF.FinalizeToDir as FFYieldAligned {
             input:
@@ -95,9 +80,9 @@ workflow AlignedMetrics {
 
         call FF.FinalizeToDir as FFDepthSummaries { input: outdir = outdir + "/coverage_summaries/", files = SummarizeDepth.cov_summary }
 
-        call FF.FinalizeToDir as FFRnaSeqMetrics { input: outdir = outdir + "/rnaseq/", files = [ RnaSeqMetrics.rna_metrics ] }
         call FF.FinalizeToDir as FFReadNamesAndLengths { input: outdir = outdir + "/read_names_and_lengths/", files = [ ReadNamesAndLengths.read_names_and_lengths ] }
 
+#        call FF.FinalizeToDir as FFRnaSeqMetrics { input: outdir = outdir + "/rnaseq/", files = [ RnaSeqMetrics.rna_metrics ] }
 #        call FF.FinalizeToDir as FFBedCoverages { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.coverage }
 #        call FF.FinalizeToDir as FFBedCoverageCounts { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.counts_file }
 
@@ -159,7 +144,7 @@ workflow AlignedMetrics {
         File aligned_rl_nx = AlignedReadMetrics.rl_nx
         File aligned_rl_yield_hist = AlignedReadMetrics.rl_yield_hist
 
-        File rna_metrics = RnaSeqMetrics.rna_metrics
+#        File rna_metrics = RnaSeqMetrics.rna_metrics
 
 #        File error_by_all = CollectSamErrorMetrics.error_by_all
 #        File error_by_base_quality = CollectSamErrorMetrics.error_by_base_quality
