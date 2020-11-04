@@ -653,7 +653,7 @@ task Align {
 
         pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam --preset ~{map_preset} --sort
 
-        samtools calmd -eb --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
+        samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
         samtools index ~{prefix}.bam
     >>>
 

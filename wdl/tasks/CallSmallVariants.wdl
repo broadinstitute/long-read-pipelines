@@ -90,7 +90,7 @@ task Longshot {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -119,7 +119,7 @@ task MergeLongshotCalls {
     command <<<
         set -x
 
-        VCF_WITH_HEADER=`ls -S ~{sep=' ' vcfs} | head -1`
+        VCF_WITH_HEADER=$(ls -S ~{sep=' ' vcfs} | head -1)
 
         grep '^#' $VCF_WITH_HEADER | grep -v CHROM > header
         grep '^@SQ' ~{ref_dict} | awk '{ print "##contig=<ID=" $2 ",length=" $3 ">" }' | sed 's/[SL]N://g' >> header
@@ -142,7 +142,7 @@ task MergeLongshotCalls {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

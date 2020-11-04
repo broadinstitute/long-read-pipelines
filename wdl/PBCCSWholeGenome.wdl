@@ -208,4 +208,40 @@ workflow PBCCSWholeGenome {
                 outdir = outdir + "/alignments"
         }
     }
+
+    output {
+        File corrected_bam = ccs_bam
+        File corrected_bai = ccs_bai
+
+        File pbsv_vcf = CallSVs.pbsv_vcf
+        File sniffles_vcf = CallSVs.sniffles_vcf
+        File svim_vcf = CallSVs.svim_vcf
+        File cutesv_vcf = CallSVs.cutesv_vcf
+
+        File longshot_vcf = CallSmallVariants.longshot_vcf
+        File longshot_tbi = CallSmallVariants.longshot_tbi
+
+        File aligned_flag_stats = PerSampleMetrics.aligned_flag_stats
+
+        Array[File] coverage_full_dist      = PerSampleMetrics.coverage_full_dist
+        Array[File] coverage_global_dist    = PerSampleMetrics.coverage_global_dist
+        Array[File] coverage_region_dist    = PerSampleMetrics.coverage_region_dist
+        Array[File] coverage_regions        = PerSampleMetrics.coverage_regions
+        Array[File] coverage_regions_csi    = PerSampleMetrics.coverage_regions_csi
+        Array[File] coverage_quantized_dist = PerSampleMetrics.coverage_quantized_dist
+        Array[File] coverage_quantized      = PerSampleMetrics.coverage_quantized
+        Array[File] coverage_quantized_csi  = PerSampleMetrics.coverage_quantized_csi
+
+        File aligned_np_hist        = PerSampleMetrics.aligned_np_hist
+        File aligned_range_gap_hist = PerSampleMetrics.aligned_range_gap_hist
+        File aligned_zmw_hist       = PerSampleMetrics.aligned_zmw_hist
+        File aligned_prl_counts     = PerSampleMetrics.aligned_prl_counts
+        File aligned_prl_hist       = PerSampleMetrics.aligned_prl_hist
+        File aligned_prl_nx         = PerSampleMetrics.aligned_prl_nx
+        File aligned_prl_yield_hist = PerSampleMetrics.aligned_prl_yield_hist
+        File aligned_rl_counts      = PerSampleMetrics.aligned_rl_counts
+        File aligned_rl_hist        = PerSampleMetrics.aligned_rl_hist
+        File aligned_rl_nx          = PerSampleMetrics.aligned_rl_nx
+        File aligned_rl_yield_hist  = PerSampleMetrics.aligned_rl_yield_hist
+    }
 }
