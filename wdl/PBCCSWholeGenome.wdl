@@ -212,11 +212,11 @@ workflow PBCCSWholeGenome {
         }
     }
 
-#    output {
-#        # BAMs
-#        File corrected_bam = ccs_bam
-#        File corrected_bai = ccs_bai
-#
+    output {
+        # BAMs
+        File corrected_bam = ccs_bam
+        File corrected_bai = ccs_bai
+
 #        # SVs
 #        File pbsv_vcf = CallSVs.pbsv_vcf
 #        File sniffles_vcf = CallSVs.sniffles_vcf
@@ -274,5 +274,5 @@ workflow PBCCSWholeGenome {
 #        Array[File] per_flowcell_aligned_rl_hist        = PerFlowcellMetrics.aligned_rl_hist
 #        Array[File] per_flowcell_aligned_rl_nx          = PerFlowcellMetrics.aligned_rl_nx
 #        Array[File] per_flowcell_aligned_rl_yield_hist  = PerFlowcellMetrics.aligned_rl_yield_hist
-#    }
+    }
 }
