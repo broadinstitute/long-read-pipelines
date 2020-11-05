@@ -212,67 +212,67 @@ workflow PBCCSWholeGenome {
         }
     }
 
-    output {
-        # BAMs
-        File corrected_bam = ccs_bam
-        File corrected_bai = ccs_bai
-
-        # SVs
-        File pbsv_vcf = CallSVs.pbsv_vcf
-        File sniffles_vcf = CallSVs.sniffles_vcf
-        File svim_vcf = CallSVs.svim_vcf
-        File cutesv_vcf = CallSVs.cutesv_vcf
-
-        # SNPs/indels
-        File longshot_vcf = CallSmallVariants.longshot_vcf
-        File longshot_tbi = CallSmallVariants.longshot_tbi
-
-        # Per-sample metrics
-        File per_sample_aligned_flag_stats = PerSampleMetrics.aligned_flag_stats
-
-        Array[File] per_sample_coverage_full_dist      = PerSampleMetrics.coverage_full_dist
-        Array[File] per_sample_coverage_global_dist    = PerSampleMetrics.coverage_global_dist
-        Array[File] per_sample_coverage_region_dist    = PerSampleMetrics.coverage_region_dist
-        Array[File] per_sample_coverage_regions        = PerSampleMetrics.coverage_regions
-        Array[File] per_sample_coverage_regions_csi    = PerSampleMetrics.coverage_regions_csi
-        Array[File] per_sample_coverage_quantized_dist = PerSampleMetrics.coverage_quantized_dist
-        Array[File] per_sample_coverage_quantized      = PerSampleMetrics.coverage_quantized
-        Array[File] per_sample_coverage_quantized_csi  = PerSampleMetrics.coverage_quantized_csi
-
-        File per_sample_aligned_np_hist        = PerSampleMetrics.aligned_np_hist
-        File per_sample_aligned_range_gap_hist = PerSampleMetrics.aligned_range_gap_hist
-        File per_sample_aligned_zmw_hist       = PerSampleMetrics.aligned_zmw_hist
-        File per_sample_aligned_prl_counts     = PerSampleMetrics.aligned_prl_counts
-        File per_sample_aligned_prl_hist       = PerSampleMetrics.aligned_prl_hist
-        File per_sample_aligned_prl_nx         = PerSampleMetrics.aligned_prl_nx
-        File per_sample_aligned_prl_yield_hist = PerSampleMetrics.aligned_prl_yield_hist
-        File per_sample_aligned_rl_counts      = PerSampleMetrics.aligned_rl_counts
-        File per_sample_aligned_rl_hist        = PerSampleMetrics.aligned_rl_hist
-        File per_sample_aligned_rl_nx          = PerSampleMetrics.aligned_rl_nx
-        File per_sample_aligned_rl_yield_hist  = PerSampleMetrics.aligned_rl_yield_hist
-
-        # Per-flowcell metrics
-        Array[File] per_flowcell_aligned_flag_stats = PerFlowcellMetrics.aligned_flag_stats
-
-        Array[Array[File]] per_flowcell_coverage_full_dist      = PerFlowcellMetrics.coverage_full_dist
-        Array[Array[File]] per_flowcell_coverage_global_dist    = PerFlowcellMetrics.coverage_global_dist
-        Array[Array[File]] per_flowcell_coverage_region_dist    = PerFlowcellMetrics.coverage_region_dist
-        Array[Array[File]] per_flowcell_coverage_regions        = PerFlowcellMetrics.coverage_regions
-        Array[Array[File]] per_flowcell_coverage_regions_csi    = PerFlowcellMetrics.coverage_regions_csi
-        Array[Array[File]] per_flowcell_coverage_quantized_dist = PerFlowcellMetrics.coverage_quantized_dist
-        Array[Array[File]] per_flowcell_coverage_quantized      = PerFlowcellMetrics.coverage_quantized
-        Array[Array[File]] per_flowcell_coverage_quantized_csi  = PerFlowcellMetrics.coverage_quantized_csi
-
-        Array[File] per_flowcell_aligned_np_hist        = PerFlowcellMetrics.aligned_np_hist
-        Array[File] per_flowcell_aligned_range_gap_hist = PerFlowcellMetrics.aligned_range_gap_hist
-        Array[File] per_flowcell_aligned_zmw_hist       = PerFlowcellMetrics.aligned_zmw_hist
-        Array[File] per_flowcell_aligned_prl_counts     = PerFlowcellMetrics.aligned_prl_counts
-        Array[File] per_flowcell_aligned_prl_hist       = PerFlowcellMetrics.aligned_prl_hist
-        Array[File] per_flowcell_aligned_prl_nx         = PerFlowcellMetrics.aligned_prl_nx
-        Array[File] per_flowcell_aligned_prl_yield_hist = PerFlowcellMetrics.aligned_prl_yield_hist
-        Array[File] per_flowcell_aligned_rl_counts      = PerFlowcellMetrics.aligned_rl_counts
-        Array[File] per_flowcell_aligned_rl_hist        = PerFlowcellMetrics.aligned_rl_hist
-        Array[File] per_flowcell_aligned_rl_nx          = PerFlowcellMetrics.aligned_rl_nx
-        Array[File] per_flowcell_aligned_rl_yield_hist  = PerFlowcellMetrics.aligned_rl_yield_hist
-    }
+#    output {
+#        # BAMs
+#        File corrected_bam = ccs_bam
+#        File corrected_bai = ccs_bai
+#
+#        # SVs
+#        File pbsv_vcf = CallSVs.pbsv_vcf
+#        File sniffles_vcf = CallSVs.sniffles_vcf
+#        File svim_vcf = CallSVs.svim_vcf
+#        File cutesv_vcf = CallSVs.cutesv_vcf
+#
+#        # SNPs/indels
+#        File longshot_vcf = CallSmallVariants.longshot_vcf
+#        File longshot_tbi = CallSmallVariants.longshot_tbi
+#
+#        # Per-sample metrics
+#        File per_sample_aligned_flag_stats = PerSampleMetrics.aligned_flag_stats
+#
+#        Array[File] per_sample_coverage_full_dist      = PerSampleMetrics.coverage_full_dist
+#        Array[File] per_sample_coverage_global_dist    = PerSampleMetrics.coverage_global_dist
+#        Array[File] per_sample_coverage_region_dist    = PerSampleMetrics.coverage_region_dist
+#        Array[File] per_sample_coverage_regions        = PerSampleMetrics.coverage_regions
+#        Array[File] per_sample_coverage_regions_csi    = PerSampleMetrics.coverage_regions_csi
+#        Array[File] per_sample_coverage_quantized_dist = PerSampleMetrics.coverage_quantized_dist
+#        Array[File] per_sample_coverage_quantized      = PerSampleMetrics.coverage_quantized
+#        Array[File] per_sample_coverage_quantized_csi  = PerSampleMetrics.coverage_quantized_csi
+#
+#        File per_sample_aligned_np_hist        = PerSampleMetrics.aligned_np_hist
+#        File per_sample_aligned_range_gap_hist = PerSampleMetrics.aligned_range_gap_hist
+#        File per_sample_aligned_zmw_hist       = PerSampleMetrics.aligned_zmw_hist
+#        File per_sample_aligned_prl_counts     = PerSampleMetrics.aligned_prl_counts
+#        File per_sample_aligned_prl_hist       = PerSampleMetrics.aligned_prl_hist
+#        File per_sample_aligned_prl_nx         = PerSampleMetrics.aligned_prl_nx
+#        File per_sample_aligned_prl_yield_hist = PerSampleMetrics.aligned_prl_yield_hist
+#        File per_sample_aligned_rl_counts      = PerSampleMetrics.aligned_rl_counts
+#        File per_sample_aligned_rl_hist        = PerSampleMetrics.aligned_rl_hist
+#        File per_sample_aligned_rl_nx          = PerSampleMetrics.aligned_rl_nx
+#        File per_sample_aligned_rl_yield_hist  = PerSampleMetrics.aligned_rl_yield_hist
+#
+#        # Per-flowcell metrics
+#        Array[File] per_flowcell_aligned_flag_stats = PerFlowcellMetrics.aligned_flag_stats
+#
+#        Array[Array[File]] per_flowcell_coverage_full_dist      = PerFlowcellMetrics.coverage_full_dist
+#        Array[Array[File]] per_flowcell_coverage_global_dist    = PerFlowcellMetrics.coverage_global_dist
+#        Array[Array[File]] per_flowcell_coverage_region_dist    = PerFlowcellMetrics.coverage_region_dist
+#        Array[Array[File]] per_flowcell_coverage_regions        = PerFlowcellMetrics.coverage_regions
+#        Array[Array[File]] per_flowcell_coverage_regions_csi    = PerFlowcellMetrics.coverage_regions_csi
+#        Array[Array[File]] per_flowcell_coverage_quantized_dist = PerFlowcellMetrics.coverage_quantized_dist
+#        Array[Array[File]] per_flowcell_coverage_quantized      = PerFlowcellMetrics.coverage_quantized
+#        Array[Array[File]] per_flowcell_coverage_quantized_csi  = PerFlowcellMetrics.coverage_quantized_csi
+#
+#        Array[File] per_flowcell_aligned_np_hist        = PerFlowcellMetrics.aligned_np_hist
+#        Array[File] per_flowcell_aligned_range_gap_hist = PerFlowcellMetrics.aligned_range_gap_hist
+#        Array[File] per_flowcell_aligned_zmw_hist       = PerFlowcellMetrics.aligned_zmw_hist
+#        Array[File] per_flowcell_aligned_prl_counts     = PerFlowcellMetrics.aligned_prl_counts
+#        Array[File] per_flowcell_aligned_prl_hist       = PerFlowcellMetrics.aligned_prl_hist
+#        Array[File] per_flowcell_aligned_prl_nx         = PerFlowcellMetrics.aligned_prl_nx
+#        Array[File] per_flowcell_aligned_prl_yield_hist = PerFlowcellMetrics.aligned_prl_yield_hist
+#        Array[File] per_flowcell_aligned_rl_counts      = PerFlowcellMetrics.aligned_rl_counts
+#        Array[File] per_flowcell_aligned_rl_hist        = PerFlowcellMetrics.aligned_rl_hist
+#        Array[File] per_flowcell_aligned_rl_nx          = PerFlowcellMetrics.aligned_rl_nx
+#        Array[File] per_flowcell_aligned_rl_yield_hist  = PerFlowcellMetrics.aligned_rl_yield_hist
+#    }
 }
