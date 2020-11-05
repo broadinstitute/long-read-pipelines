@@ -4,13 +4,15 @@ import "Structs.wdl"
 
 task GetDefaultDir {
     input {
+        String workflow_name
+
         RuntimeAttr? runtime_attr_override
     }
 
     command <<<
         NAME=$(cat gcs_localization.sh | grep 'source bucket' | sed 's/# Localize files from source bucket //' | sed 's/ to container.*//' | sed "s/'//g")
 
-        echo "gs://$NAME/results"
+        echo "gs://$NAME/~{workflow_name}/results"
     >>>
 
     output {
