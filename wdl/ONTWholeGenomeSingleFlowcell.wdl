@@ -47,7 +47,7 @@ workflow ONTWholeGenomeSingleFlowcell {
         String SID = ID + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
         String RG = "@RG\\tID:~{SID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = 4  }
+        #call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = 4  }
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = 50 }
 
         scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
