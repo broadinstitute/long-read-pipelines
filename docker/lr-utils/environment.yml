@@ -1,8 +1,23 @@
 name: lr-utils
 channels:
-  - defaults
   - conda-forge
   - bioconda
+  - defaults
 dependencies:
-  - samtools
-  - java-jdk
+  - _libgcc_mutex=0.1=main
+  - bzip2=1.0.8=h7b6447c_0
+  - ca-certificates=2020.10.14=0
+  - htslib=1.10.2=hd3b49d5_1
+  - krb5=1.18.2=h173b8e3_0
+  - libcurl=7.71.1=h20c2e04_1
+  - libdeflate=1.6=h516909a_0
+  - libedit=3.1.20191231=h14c3975_1
+  - libgcc-ng=9.1.0=hdf63c60_0
+  - libssh2=1.9.0=h1ba5d50_1
+  - libstdcxx-ng=9.1.0=hdf63c60_0
+  - ncurses=6.2=he6710b0_1
+  - openssl=1.1.1h=h7b6447c_0
+  - pbbam=1.6.0=h5b7e6e0_0
+  - samtools=1.10=h2e538c0_3
+  - xz=5.2.5=h7b6447c_0
+  - zlib=1.2.11=h7b6447c_3

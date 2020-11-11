@@ -12,7 +12,7 @@ task GetDefaultDir {
     command <<<
         NAME=$(cat gcs_localization.sh | grep 'source bucket' | sed 's/# Localize files from source bucket //' | sed 's/ to container.*//' | sed "s/'//g")
 
-        echo "gs://$NAME/~{workflow_name}/results"
+        echo "gs://$NAME/results/~{workflow_name}"
     >>>
 
     output {
@@ -27,7 +27,7 @@ task GetDefaultDir {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -64,7 +64,7 @@ task PrepareManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -103,7 +103,7 @@ task EchoManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -143,7 +143,7 @@ task ChunkManifest {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -455,7 +455,7 @@ task GrepCountBamRecords {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dspglrma/lr-align:0.1.26"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -717,7 +717,61 @@ task MergeBams {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+# A utility to subset a BAM to specifed loci
+task SubsetBam {
+    input {
+        File bam
+        File bai
+        String locus
+        String prefix = "subset"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam:    "bam to subset"
+        bai:    "index for bam file"
+        locus:  "genomic locus to select"
+        prefix: "prefix for output bam and bai file names"
+    }
+
+    Int disk_size = 4*ceil(size([bam, bai], "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools view -bh ~{bam} ~{locus} > ~{prefix}.bam
+        samtools index ~{prefix}.bam
+    >>>
+
+    output {
+        File subset_bam = "~{prefix}.bam"
+        File subset_bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             10,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

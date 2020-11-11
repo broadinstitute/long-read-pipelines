@@ -55,7 +55,7 @@ task ListFast5Files {
         bootDiskSizeGb:         10
         preemptible:            0
         maxRetries:             0
-        docker:                 "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
 }
 
@@ -84,7 +84,7 @@ task MergeFastq {
         bootDiskSizeGb:         10
         preemptible:            0
         maxRetries:             0
-        docker:                 "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
 }
 

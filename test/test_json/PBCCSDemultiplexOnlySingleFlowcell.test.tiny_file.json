@@ -1,7 +1,0 @@
-{
-    "PBCCSDemultiplexOnlySingleFlowcell.raw_reads_gcs_bucket": "gs://broad-dsp-lrma-ci-resources/test_data/PBCCSDemultiplexOnlySingleFlowcell.test.tiny_file/input_data/SM-JOTZQ.tiny_subset/",
-    "PBCCSDemultiplexOnlySingleFlowcell.num_shards":           4,
-    "PBCCSDemultiplexOnlySingleFlowcell.barcode_file":         "gs://broad-dsde-methods-long-reads/resources/multiplexing/Sequel_96_barcodes_v2.fasta",
-
-    "PBCCSDemultiplexOnlySingleFlowcell.gcs_out_root_dir":     "gs://broad-dsp-lrma-ci/PBCCSDemultiplexOnlySingleFlowcell"
-}
