@@ -50,3 +50,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCSWholeGenome.wdl
   testParameterFiles:
+- name: PBCCSIsoSeq
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBCCSIsoSeq.wdl
+  testParameterFiles:
