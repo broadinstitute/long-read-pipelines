@@ -16,7 +16,7 @@ import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 import "tasks/CallSmallVariants.wdl" as SMV
 
-workflow MakePacbioTestData {
+workflow MakePBTestData {
     input {
         File subreads_bam
         File subreads_pbi
@@ -43,7 +43,7 @@ workflow MakePacbioTestData {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call Utils.GetDefaultDir { input: workflow_name = "MakePacbioTestData" }
+    call Utils.GetDefaultDir { input: workflow_name = "MakePBTestData" }
     String outdir = sub(select_first([gcs_out_root_dir, GetDefaultDir.path]), "/$", "") + "/" + participant_name
 
 #    # break one raw BAM into fixed number of shards
