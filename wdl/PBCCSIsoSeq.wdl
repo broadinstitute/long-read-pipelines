@@ -80,7 +80,7 @@ workflow PBCCSIsoSeq {
             ccs = true,
             guess = 75,
             guess_min_count = 1,
-            dump_removed = true,
+            dump_removed = false,
             split_bam_named = true
     }
 
