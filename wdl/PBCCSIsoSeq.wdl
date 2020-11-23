@@ -88,8 +88,8 @@ workflow PBCCSIsoSeq {
     call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
     call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
     call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
-    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
-    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
+#    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
+#    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
 
     scatter (demux_bam in Demultiplex.demux_bams) {
         String BC = sub(basename(demux_bam, ".bam"), "~{participant_name}.corrected", "")
@@ -186,15 +186,15 @@ workflow PBCCSIsoSeq {
             outdir = outdir + "/figures/combined/" + participant_name + "/lima/detailed/pdf"
     }
 
-    call FF.FinalizeToDir as FinalizeLimaPerBarcodeDetailedPNG {
-        input:
-            files = PerBarcodeDetailedDemuxReportPNG.report_files,
-            outdir = outdir + "/figures/per_barcode/lima/png"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaPerBarcodeDetailedPDF {
-        input:
-            files = PerBarcodeDetailedDemuxReportPDF.report_files,
-            outdir = outdir + "/figures/per_barcode/lima/pdf"
-    }
+#    call FF.FinalizeToDir as FinalizeLimaPerBarcodeDetailedPNG {
+#        input:
+#            files = PerBarcodeDetailedDemuxReportPNG.report_files,
+#            outdir = outdir + "/figures/per_barcode/lima/png"
+#    }
+#
+#    call FF.FinalizeToDir as FinalizeLimaPerBarcodeDetailedPDF {
+#        input:
+#            files = PerBarcodeDetailedDemuxReportPDF.report_files,
+#            outdir = outdir + "/figures/per_barcode/lima/pdf"
+#    }
 }
