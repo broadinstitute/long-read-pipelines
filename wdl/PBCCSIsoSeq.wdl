@@ -150,10 +150,16 @@ workflow PBCCSIsoSeq {
     # store the results into designated bucket
     ##########
 
+    call FF.FinalizeToDir as FinalizeMergedRuns {
+        input:
+            files = [ ccs_bam, ccs_bai ],
+            outdir = outdir + "/reads"
+    }
+
     call FF.FinalizeToDir as FinalizeDemuxCombinedReads {
         input:
             files = [ MergeBarcodeBams.merged_bam, MergeBarcodeBams.merged_bai ],
-            outdir = outdir + "/combined/alignments"
+            outdir = outdir + "/alignments/per_barcode"
     }
 
     call FF.FinalizeToDir as FinalizeCCSMetrics {
