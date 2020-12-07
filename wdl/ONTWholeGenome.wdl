@@ -155,7 +155,7 @@ workflow ONTWholeGenome {
 
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
-            files = [ MergeReads.merged_bam, MergeReads.merged_bai ],
+            files = [ bam, bai ],
             outdir = outdir + "/alignments"
     }
 }
