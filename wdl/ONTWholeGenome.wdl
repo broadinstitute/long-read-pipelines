@@ -18,7 +18,7 @@ workflow ONTWholeGenome {
         String participant_name
         Int num_shards = 50
 
-        String gcs_out_root_dir
+        String? gcs_out_root_dir
     }
 
     parameter_meta {
