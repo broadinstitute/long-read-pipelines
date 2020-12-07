@@ -12,9 +12,9 @@ import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/Finalize.wdl" as FF
 import "tasks/CallSVs.wdl" as SV
 import "tasks/CallSmallVariants.wdl" as SMV
+import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSDemultiplexWholeGenome {
     input {

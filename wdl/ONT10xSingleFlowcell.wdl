@@ -84,11 +84,6 @@ workflow ONT10xSingleFlowcell {
         call FIG.Figures as PerFlowcellSubRunFigures {
             input:
                 summary_files  = [ summary_file ],
-
-                per            = "flowcell",
-                type           = "subrun",
-                label          = SID,
-
                 gcs_output_dir = outdir + "/" + DIR
         }
     }
@@ -129,20 +124,12 @@ workflow ONT10xSingleFlowcell {
             dbsnp_vcf      = dbsnp_vcf,
             dbsnp_tbi      = dbsnp_tbi,
             metrics_locus  = metrics_locus,
-            per            = "flowcell",
-            type           = "run",
-            label          = ID[0] + ".consensus",
             gcs_output_dir = outdir + "/" + DIR[0]
     }
 
     call FIG.Figures as PerFlowcellRunFigures {
         input:
             summary_files  = FindSequencingSummaryFiles.summary_files,
-
-            per            = "flowcell",
-            type           = "run",
-            label          = ID[0],
-
             gcs_output_dir = outdir + "/" + DIR[0]
     }
 

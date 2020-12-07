@@ -1,7 +1,9 @@
 version 1.0
 
+import "tasks/Guppy.wdl" as Guppy
 import "tasks/Canu.wdl" as Canu
 import "tasks/Quast.wdl" as Quast
+import "tasks/Medaka.wdl" as Medaka
 import "tasks/Finalize.wdl" as FF
 
 workflow MalariaAssembly {
