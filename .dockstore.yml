@@ -46,6 +46,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/MalariaAssembly.wdl
   testParameterFiles:
+- name: ONTWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTWholeGenome.wdl
+  testParameterFiles:
 - name: PBCCSWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCSWholeGenome.wdl
