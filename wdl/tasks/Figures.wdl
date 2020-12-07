@@ -8,10 +8,6 @@ workflow Figures {
     input {
         Array[File] summary_files
 
-        String per
-        String type
-        String label
-
         String? gcs_output_dir
     }
 
@@ -19,12 +15,9 @@ workflow Figures {
     call NP.NanoPlotFromSummary as NanoPlotFromSummaryPNG { input: summary_files = summary_files, plot_type = "png" }
 
     if (defined(gcs_output_dir)) {
-        String plotdir  = sub(sub(gcs_output_dir + "/", "/+", "/"), "gs:/", "gs://") + "/figures/~{per}_~{type}_~{label}"
-        String statsdir = sub(sub(gcs_output_dir + "/", "/+", "/"), "gs:/", "gs://") + "/metrics/~{per}_~{type}_~{label}"
-
-        call FF.FinalizeToDir as FinalizeNanoPlotFromSummaryPDFs  { input: files = NanoPlotFromSummaryPDF.plots, outdir = plotdir + "/pdf/" }
-        call FF.FinalizeToDir as FinalizeNanoPlotFromSummaryPNGs  { input: files = NanoPlotFromSummaryPNG.plots, outdir = plotdir + "/png/" }
-        call FF.FinalizeToDir as FinalizeNanoPlotFromSummaryStats { input: files = [ NanoPlotFromSummaryPNG.stats ], outdir = statsdir + "/nanostats/" }
+        call FF.FinalizeToDir as FinalizeNanoPlotFromSummaryPDFs  { input: files = NanoPlotFromSummaryPDF.plots, outdir = gcs_output_dir + "/figures/pdf/" }
+        call FF.FinalizeToDir as FinalizeNanoPlotFromSummaryPNGs  { input: files = NanoPlotFromSummaryPNG.plots, outdir = gcs_output_dir + "/figures/png/" }
+        call FF.FinalizeToDir as FinalizeNanoPlotFromSummaryStats { input: files = [ NanoPlotFromSummaryPNG.stats ], outdir = gcs_output_dir + "/nanostats/" }
     }
 
     output {

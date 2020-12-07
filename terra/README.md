@@ -1,0 +1,1 @@
+This directory holds notebooks designed to operate within Terra's notebook environments.  As they specifically interact with data tables and output files from workflows executed within Terra, these notebooks may not function properly in other environments.
