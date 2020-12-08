@@ -183,7 +183,7 @@ task CCS {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
-        mem_gb:             8,
+        mem_gb:             12,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
