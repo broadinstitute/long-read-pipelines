@@ -1,60 +1,50 @@
 version: 1.2
 workflows:
-- name: ONT10xSingleFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/ONT10xSingleFlowcell.wdl
-  testParameterFiles:
-  - /test/test_json/ONT10xSingleFlowcell.test.json
-- name: ONTWholeGenomeSingleFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/ONTWholeGenomeSingleFlowcell.wdl
-  testParameterFiles:
-  - /test/test_json/ONTWholeGenomeSingleFlowcell.test.json
-- name: PBCCSOnlySingleFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/PBCCSOnlySingleFlowcell.wdl
-  testParameterFiles:
-  - /test/test_json/PBCCSOnlySingleFlowcell.test.ChrMAndChr20SubsetGRCh38.json
-- name: PBCCSWholeGenomeSingleFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/PBCCSWholeGenomeSingleFlowcell.wdl
-  testParameterFiles:
-  - /test/test_json/PBCCSWholeGenomeSingleFlowcell.test.ChrMAndChr20SubsetGRCh38.json
-- name: PBCCSDemultiplexOnlySingleFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/PBCCSDemultiplexOnlySingleFlowcell.wdl
-  testParameterFiles:
-  - /test/test_json/PBCCSDemultiplexOnlySingleFlowcell.test.tiny_file.json
-- name: PBCCSDemultiplexWholeGenomeSingleFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/PBCCSDemultiplexWholeGenomeSingleFlowcell.wdl
-  testParameterFiles:
-- name: PBCLRDemultiplexOnlySingleFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/PBCLRDemultiplexOnlySingleFlowcell.wdl
-  testParameterFiles:
-- name: PBCLRWholeGenomeSingleFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/PBCLRWholeGenomeSingleFlowcell.wdl
-  testParameterFiles:
 - name: GuppyRunner
   subclass: wdl
   primaryDescriptorPath: /wdl/GuppyRunner.wdl
   testParameterFiles:
-  - /test/test_json/GuppyRunner.test.json
 - name: MalariaAssembly
   subclass: wdl
   primaryDescriptorPath: /wdl/MalariaAssembly.wdl
+  testParameterFiles:
+- name: ONT10x
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONT10x.wdl
   testParameterFiles:
 - name: ONTWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTWholeGenome.wdl
   testParameterFiles:
-- name: PBCCSWholeGenome
+- name: PBCCS
   subclass: wdl
-  primaryDescriptorPath: /wdl/PBCCSWholeGenome.wdl
+  primaryDescriptorPath: /wdl/PBCCS.wdl
+  testParameterFiles:
+- name: PBCCS10x
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBCCS10x.wdl
+  testParameterFiles:
+- name: PBCCSDemultiplex
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBCCSDemultiplex.wdl
+  testParameterFiles:
+- name: PBCCSDemultiplexWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBCCSDemultiplexWholeGenome.wdl
   testParameterFiles:
 - name: PBCCSIsoSeq
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCSIsoSeq.wdl
+  testParameterFiles:
+- name: PBCCSWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBCCSWholeGenome.wdl
+  testParameterFiles:
+- name: PBCLRDemultiplexWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBCLRDemultiplexWholeGenome.wdl
+  testParameterFiles:
+- name: PBCLRWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBCLRWholeGenome.wdl
   testParameterFiles:

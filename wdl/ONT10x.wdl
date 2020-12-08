@@ -8,36 +8,42 @@ import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 
-workflow ONT10xSingleFlowcell {
+workflow ONT10x {
     input {
-        String gcs_input_dir
-        String? sample_name
-        Int fastq_shards = 50
+        Array[File] final_summaries
+        Array[File] sequencing_summaries
+        File ref_map_file
 
-        File ref_fasta
-        File ref_fasta_fai
-        File ref_dict
-
-        File ref_flat
-        File dbsnp_vcf
-        File dbsnp_tbi
-
-        File metrics_locus
+        String participant_name
+        Int num_shards = 50
 
         String gcs_out_root_dir
     }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "")
+    parameter_meta {
+        final_summaries:           "GCS path to '*final_summary*.txt*' files for basecalled fastq files"
+        sequencing_summaries:      "GCS path to '*sequencing_summary*.txt*' files for basecalled fastq files"
+        ref_map_file:              "table indicating reference sequence and auxillary file locations"
 
-    call ONT.FindSequencingSummaryFiles { input: gcs_input_dir = gcs_input_dir }
+        participant_name:          "name of the participant from whom these samples were obtained"
+        num_shards:                "[default-valued] number of shards into which fastq files should be batched"
 
-    scatter (summary_file in FindSequencingSummaryFiles.summary_files) {
-        call ONT.GetRunInfo { input: summary_file = summary_file }
+        gcs_out_root_dir:          "[optional] GCS bucket to store the reads, variants, and metrics files"
+    }
 
-        #call ONT.ListFiles as ListFast5s { input: summary_file = summary_file, suffix = "fast5" }
-        call ONT.ListFiles as ListFastqs { input: summary_file = summary_file, suffix = "fastq" }
+    Map[String, String] ref_map = read_map(ref_map_file)
 
-        String SM  = select_first([sample_name, GetRunInfo.run_info["sample_id"]])
+    call Utils.GetDefaultDir { input: workflow_name = "ONT10x" }
+    String outdir = sub(select_first([gcs_out_root_dir, GetDefaultDir.path]), "/$", "") + "/" + participant_name
+
+    scatter (p in zip(final_summaries, sequencing_summaries)) {
+        File final_summary = p.left
+        File sequencing_summary = p.right
+
+        call ONT.GetRunInfo { input: summary_file = final_summary }
+        call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
+
+        String SM  = participant_name
         String PL  = "ONT"
         String PU  = GetRunInfo.run_info["instrument"]
         String DT  = GetRunInfo.run_info["started"]
@@ -49,19 +55,19 @@ workflow ONT10xSingleFlowcell {
         String rg_subreads  = "@RG\\tID:~{SID}.subreads\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
         String rg_consensus = "@RG\\tID:~{SID}.consensus\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = fastq_shards }
+        call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
         scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
-            call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_fasta }
+            call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
 
             call Utils.FastaToSam as FastaToSam { input: fasta = C3POa.consensus }
             call AnnotateAdapters { input: bam = FastaToSam.output_bam }
 
             call AR.Minimap2 as AlignConsensus {
                 input:
-                    reads = [ AnnotateAdapters.annotated_fq ],
-                    ref_fasta = ref_fasta,
-                    RG = rg_consensus,
+                    reads      = [ AnnotateAdapters.annotated_fq ],
+                    ref_fasta  = ref_map['fasta'],
+                    RG         = rg_consensus,
                     map_preset = "splice"
             }
 
@@ -83,7 +89,7 @@ workflow ONT10xSingleFlowcell {
 
         call FIG.Figures as PerFlowcellSubRunFigures {
             input:
-                summary_files  = [ summary_file ],
+                summary_files  = [ sequencing_summary ],
                 gcs_output_dir = outdir + "/" + DIR
         }
     }
@@ -94,8 +100,8 @@ workflow ONT10xSingleFlowcell {
     call Utils.Sum as CountAnnotatedReads { input: ints = CountAnnotatedReadsInRun.sum, prefix = "num_annotated" }
     call Utils.Sum as CountConsensusReads { input: ints = CountConsensusReadsInRun.sum, prefix = "num_consensus" }
 
-    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.annotated" }
-    call Utils.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{SM[0]}.~{ID[0]}.consensus" }
+    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
+    call Utils.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{participant_name}.consensus" }
 
     call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
         input:
@@ -118,18 +124,18 @@ workflow ONT10xSingleFlowcell {
         input:
             aligned_bam    = MergeAllConsensus.merged_bam,
             aligned_bai    = MergeAllConsensus.merged_bai,
-            ref_fasta      = ref_fasta,
-            ref_dict       = ref_dict,
-            ref_flat       = ref_flat,
-            dbsnp_vcf      = dbsnp_vcf,
-            dbsnp_tbi      = dbsnp_tbi,
-            metrics_locus  = metrics_locus,
-            gcs_output_dir = outdir + "/" + DIR[0]
+            ref_fasta      = ref_map['fasta'],
+            ref_dict       = ref_map['dict'],
+            ref_flat       = ref_map['flat'],
+            dbsnp_vcf      = ref_map['dbsnp_vcf'],
+            dbsnp_tbi      = ref_map['dbsnp_tbi'],
+            metrics_locus  = ref_map['metrics_locus'],
+            gcs_output_dir = outdir + "/metrics/per_flowcell/" + SID
     }
 
     call FIG.Figures as PerFlowcellRunFigures {
         input:
-            summary_files  = FindSequencingSummaryFiles.summary_files,
+            summary_files  = sequencing_summaries,
             gcs_output_dir = outdir + "/" + DIR[0]
     }
 
@@ -141,25 +147,25 @@ workflow ONT10xSingleFlowcell {
         input:
             files = [ CountSubreads.sum_file, CountAnnotatedReads.sum_file, CountConsensusReads.sum_file,
                       GrepAnnotatedReadsWithCBC.num_records_file, GrepAnnotatedReadsWithCBCAndUniqueAlignment.num_records_file ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/read_counts"
+            outdir = outdir + "/metrics/read_counts"
     }
 
     call FF.FinalizeToDir as FinalizeNumPasses {
         input:
             files = [ CountNumPassesAll.merged ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/num_passes"
+            outdir = outdir + "/metrics/num_passes"
     }
 
     call FF.FinalizeToDir as FinalizeBamTable {
         input:
             files = [ BamToTable.table ],
-            outdir = outdir + "/" + DIR[0] + "/metrics/bam_tables"
+            outdir = outdir + "/metrics/bam_tables"
     }
 
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
             files = [ MergeAllConsensus.merged_bam, MergeAllConsensus.merged_bai ],
-            outdir = outdir + "/" + DIR[0] + "/alignments"
+            outdir = outdir + "/alignments"
     }
 }
 
