@@ -366,7 +366,7 @@ task MakeDetailedDemultiplexingReport {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 2*ceil(size(report, "GB"))
+    Int disk_size = 1 + 4*ceil(size(report, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -381,7 +381,7 @@ task MakeDetailedDemultiplexingReport {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             8,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,
