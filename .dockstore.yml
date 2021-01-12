@@ -48,3 +48,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCLRWholeGenome.wdl
   testParameterFiles:
+- name: DownloadFromHA
+  subclass: wdl
+  primaryDescriptorPath: /wdl/DownloadFromHA.wdl
+  testParameterFiles:
