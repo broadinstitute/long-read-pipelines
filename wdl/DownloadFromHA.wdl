@@ -48,7 +48,7 @@ task GetFileInfo {
     }
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         timeout --preserve-status 1 wget -S "~{wget_url}" 2> test.txt; grep '^Length' test.txt | awk '{ print $2 }' > size.txt
         echo '~{wget_url}' | sed 's/?.*//g' | awk -F"/" '{ print $NF }' > path.txt
