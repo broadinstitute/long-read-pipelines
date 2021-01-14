@@ -41,26 +41,22 @@ task VerifyAndExtractTarball {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1024
+    Int disk_size = 3*ceil(size([gs_path, gs_md5], "GB"))
     String bn = sub(basename(gs_path), "_[1234]_[ABCD]0[1234]_rawdata.tar.gz", "")
 
     command <<<
         set -euxo pipefail
 
-        echo ~{disk_size}
-        echo ~{bn}
-        du -hcs .
+        mkdir -p /dls/storage/longreadtemp/
+        mv ~{gs_path} /dls/storage/longreadtemp/
+        md5sum --check ~{gs_md5}
 
-#        mkdir -p /dls/storage/longreadtemp/
-#        mv ~{gs_path} /dls/storage/longreadtemp/
-#        md5sum --check ~{gs_md5}
-#
-#        tar zxvf ~{gs_path}
-#
-#        find . -exec ls -lah {} \;
-#        find . \( -name \*.bam -or -name \*.pbi -or -name \*.xml \) mv {} \.
-#
-#        ls -lah
+        tar zxvf ~{gs_path}
+
+        find . -exec ls -lah {} \;
+        find . \( -name \*.bam -or -name \*.pbi -or -name \*.xml \) mv {} \.
+
+        ls -lah
     >>>
 
     output {
@@ -83,7 +79,7 @@ task VerifyAndExtractTarball {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "/mnt/data " +   select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
