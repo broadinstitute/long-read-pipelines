@@ -62,7 +62,7 @@ task VerifyAndExtractTarball {
     output {
         File bam = "~{bn}.subreads.bam"
         File pbi = "~{bn}.subreads.bam.pbi"
-        File pbi = "~{bn}.subreadsset.xml"
+        File xml = "~{bn}.subreadsset.xml"
     }
 
     #########################
