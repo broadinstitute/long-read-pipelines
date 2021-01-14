@@ -41,7 +41,7 @@ task VerifyAndExtractTarball {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*size(gs_path, "GB")
+    Int disk_size = 3*ceil(size(gs_path, "GB"))
     String bn = sub(basename(gs_path), "_[1234]_[ABCD]0[1234]", "")
 
     command <<<
