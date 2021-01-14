@@ -42,7 +42,7 @@ task DownloadFile {
         RuntimeAttr? runtime_attr_override
     }
 
-    String file_path = basename(sub(wget_rawdata_url, "?.*", ""))
+    String file_path = basename(sub(wget_rawdata_url, "\?.*", ""))
     Int disk_size = 1
 
     command <<<
