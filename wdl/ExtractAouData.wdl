@@ -8,7 +8,7 @@ version 1.0
 
 import "tasks/Structs.wdl"
 
-workflow DownloadFromHA {
+workflow ExtractAouData {
     input {
         File gs_path
         File gs_md5
