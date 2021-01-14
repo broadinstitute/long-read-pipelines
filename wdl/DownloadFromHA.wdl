@@ -10,52 +10,59 @@ import "tasks/Structs.wdl"
 
 workflow DownloadFromHA {
     input {
-        String participant_id
-        String sample_id
-        String wget_rawdata_url
-        String wget_md5_url
+        File gs_path
+        File gs_md5
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        participant_id: "ID of the participant"
-        sample_id:      "ID of the dataset belonging to the participant"
-        wget_url:       "The wget-able URLs to download"
-        gcs_output_dir: "GCS path for storing output"
+        gs_path:          "Path to tarball"
+        gs_md5:           "Path to MD5 file for tarball"
+        gcs_out_root_dir: "GCS path for storing output"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call DownloadFile {
+    call VerifyAndExtractTarball {
         input:
-            wget_rawdata_url = wget_rawdata_url,
+            gs_path          = gs_path,
+            gs_md5           = gs_md5,
             gcs_out_root_dir = outdir
     }
 }
 
-task DownloadFile {
+task VerifyAndExtractTarball {
     input {
-        String wget_rawdata_url
+        File gs_path
+        File gs_md5
         String gcs_out_root_dir
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String file_path = basename(sub(wget_rawdata_url, "\?.*", ""))
-    Int disk_size = 1
+    Int disk_size = 3*size(gs_path, "GB")
+    String bn = sub(basename(gs_path), "_[1234]_[ABCD]0[1234]", "")
 
     command <<<
         set -euxo pipefail
 
-        #wget -O /mnt/data/~{file_path} ~{wget_rawdata_url}
-        echo ~{file_path}
-        echo ~{wget_rawdata_url}
-        ls /mnt/data/
+        mkdir -p /dls/storage/longreadtemp/
+        mv ~{gs_path} /dls/storage/longreadtemp/
+        md5sum --check ~{gs_md5}
+
+        tar zxvf ~{gs_path}
+
+        find . -exec ls -lah {} \;
+        find . \( -name \*.bam -or -name \*.pbi -or -name \*.xml \) mv {} \.
+
+        ls -lah
     >>>
 
     output {
-        File out = stdout()
+        File bam = "~{bn}.subreads.bam"
+        File pbi = "~{bn}.subreads.bam.pbi"
+        File pbi = "~{bn}.subreadsset.xml"
     }
 
     #########################
