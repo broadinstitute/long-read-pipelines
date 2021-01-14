@@ -41,7 +41,7 @@ task VerifyAndExtractTarball {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size([gs_path, gs_md5], "GB"))
+    Int disk_size = 1024
     String bn = sub(basename(gs_path), "_[1234]_[ABCD]0[1234]_rawdata.tar.gz", "")
 
     command <<<
