@@ -34,7 +34,7 @@ workflow ExtractAouData {
 
 task VerifyAndExtractTarball {
     input {
-        String gs_path
+        File gs_path
         File gs_md5
         String gcs_out_root_dir
 
@@ -42,12 +42,13 @@ task VerifyAndExtractTarball {
     }
 
     Int disk_size = 4*ceil(size([gs_path, gs_md5], "GB"))
-    String bn = sub(basename(gs_path), "_[1234]_[ABCD]0[1234]", "")
+    String bn = sub(basename(gs_path), "_[1234]_[ABCD]0[1234]_rawdata.tar.gz", "")
 
     command <<<
         set -euxo pipefail
 
         echo ~{disk_size}
+        echo ~{bn}
         du -hcs .
 
 #        mkdir -p /dls/storage/longreadtemp/
