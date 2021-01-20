@@ -15,6 +15,7 @@ workflow Guppy {
     input {
         String gcs_fast5_dir
         String config = "dna_r9.4.1_450bps_hac_prom.cfg"
+        Boolean merge_fastqs = false
     }
 
     call ListFast5Files {
@@ -28,8 +29,15 @@ workflow Guppy {
            config      = config
     }
 
+    if (merge_fastqs) {
+        call MergeFastq {
+            input:
+                guppy_output_files = Basecall.guppy_output_files
+        }
+    }
+
     output  {
-        Array[File] output_files = Basecall.guppy_output_files
+        Array[File] output_files = if merge_fastqs then [select_first([MergeFastq.merged_fastq])] else Basecall.guppy_output_files
     }
 }
 
