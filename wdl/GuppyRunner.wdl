@@ -27,5 +27,9 @@ workflow GuppyRunner {
             files = Guppy.output_files,
             outdir = gcs_output_dir
     }
+
+    output {
+        Array[File] fastqs = Guppy.output_files
+    }
 }
 
