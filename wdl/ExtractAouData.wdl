@@ -41,15 +41,11 @@ task VerifyAndExtractTarball {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*ceil(size([gs_path, gs_md5], "GB"))
+    Int disk_size = 4*ceil(size([gs_path, gs_md5], "GB"))
     String bn = sub(basename(gs_path), "_[1234]_[ABCD]0[1234]_rawdata.tar.gz", "")
 
     command <<<
         set -euxo pipefail
-
-        mkdir -p /dls/storage/longreadtemp/
-        mv ~{gs_path} /dls/storage/longreadtemp/
-        md5sum --check ~{gs_md5}
 
         tar zxvf ~{gs_path}
 
