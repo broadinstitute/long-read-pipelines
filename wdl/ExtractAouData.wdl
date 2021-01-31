@@ -50,15 +50,15 @@ task VerifyAndExtractTarball {
         tar zxvf ~{gs_path}
 
         find . -exec ls -lah {} \;
-        find . \( -name \*.bam -or -name \*.pbi -or -name \*.xml \) mv {} \.
 
-        ls -lah
+        find . \( -name \*.bam -or -name \*.pbi -or -name \*.xml \) \
+            gsutil cp {} ~{gcs_out_root_dir}/inputs/~{bn}/
     >>>
 
     output {
-        File bam = "~{bn}.subreads.bam"
-        File pbi = "~{bn}.subreads.bam.pbi"
-        File xml = "~{bn}.subreadsset.xml"
+        String bam = "~{gcs_out_root_dir}/inputs/~{bn}/~{bn}.subreads.bam"
+        String pbi = "~{gcs_out_root_dir}/inputs/~{bn}/~{bn}.subreads.bam.pbi"
+        String xml = "~{gcs_out_root_dir}/inputs/~{bn}/~{bn}.subreadsset.xml"
     }
 
     #########################
