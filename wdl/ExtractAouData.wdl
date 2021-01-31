@@ -52,7 +52,7 @@ task VerifyAndExtractTarball {
         find . -exec ls -lah {} \;
 
         find . \( -name \*.bam -or -name \*.pbi -or -name \*.xml \) \
-            gsutil cp {} ~{gcs_out_root_dir}/inputs/~{bn}/
+            -exec gsutil cp {} ~{gcs_out_root_dir}/inputs/~{bn}/ \;
     >>>
 
     output {
