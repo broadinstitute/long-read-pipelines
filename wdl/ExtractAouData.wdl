@@ -30,6 +30,12 @@ workflow ExtractAouData {
             gs_md5           = gs_md5,
             gcs_out_root_dir = outdir
     }
+
+    output {
+        String bam = VerifyAndExtractTarball.bam
+        String pbi = VerifyAndExtractTarball.pbi
+        String xml = VerifyAndExtractTarball.xml
+    }
 }
 
 task VerifyAndExtractTarball {
