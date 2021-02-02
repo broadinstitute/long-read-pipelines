@@ -48,7 +48,7 @@ task VerifyAndExtractTarball {
     }
 
     Int disk_size = 4*ceil(size([gs_path, gs_md5], "GB"))
-    String bn = sub(basename(gs_path), "_[1234]_[ABCD]0[1234]_rawdata.tar.gz", "")
+    String bn = sub(basename(gs_path), "_rawdata.tar.gz", "")
 
     command <<<
         set -euxo pipefail
@@ -59,12 +59,16 @@ task VerifyAndExtractTarball {
 
         find . \( -name \*.bam -or -name \*.pbi -or -name \*.xml \) \
             -exec gsutil cp {} ~{gcs_out_root_dir}/inputs/~{bn}/ \;
+
+        gsutil ls ~{gcs_out_root_dir}/inputs/~{bn}/*.bam > bam.txt
+        gsutil ls ~{gcs_out_root_dir}/inputs/~{bn}/*.pbi > pbi.txt
+        gsutil ls ~{gcs_out_root_dir}/inputs/~{bn}/*.xml > xml.txt
     >>>
 
     output {
-        String bam = "~{gcs_out_root_dir}/inputs/~{bn}/~{bn}.subreads.bam"
-        String pbi = "~{gcs_out_root_dir}/inputs/~{bn}/~{bn}.subreads.bam.pbi"
-        String xml = "~{gcs_out_root_dir}/inputs/~{bn}/~{bn}.subreadsset.xml"
+        String bam = read_string("bam.txt")
+        String pbi = read_string("pbi.txt")
+        String xml = read_string("xml.txt")
     }
 
     #########################
