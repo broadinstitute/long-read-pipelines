@@ -65,7 +65,6 @@ else:
         if not "fail" in blob.name and bool(re.search('(f(ast)?q)(.gz)?', blob.name)):
             fqs.append(blob.name)
 
-        #if not "fail" in blob.name and bool(re.search('(f(ast)?5)(.gz)?', blob.name)):
         if not "fail" in blob.name and blob.name.endswith(".fast5"):
             f5s.append(blob.name)
 
@@ -85,10 +84,10 @@ else:
             ri['ID'] = info['flow_cell_id'] + "." + info['position'] + "." + info['sample_id']
             ri['SO'] = 'unsorted'
 
-        if blob.name.endswith(".metadata.xml"):
-            blob.download_to_filename("metadata.xml")
+        if blob.name.endswith(".subreadset.xml"):
+            blob.download_to_filename("subreadset.xml")
 
-            a = etree.parse("metadata.xml")
+            a = etree.parse("subreadset.xml")
             for e in a.iter():
                 if bool(e.attrib):
                     tag = re.sub(r"{.+}", "", e.tag)
