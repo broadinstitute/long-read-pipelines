@@ -42,7 +42,6 @@ task DeepVariant {
     String extra_args = if defined(intervals) then "--regions=~{intervals}" else " "
 
     command <<<
-
         # example from https://github.com/google/deepvariant/blob/r0.8/docs/deepvariant-quick-start.md
         set -euo pipefail
 
@@ -80,7 +79,7 @@ task DeepVariant {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "gcr.io/deepvariant-docker/deepvariant:0.8.0-gpu"
+        docker:             "gcr.io/deepvariant-docker/deepvariant:1.1.0-gpu"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

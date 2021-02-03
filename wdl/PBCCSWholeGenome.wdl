@@ -25,7 +25,7 @@ workflow PBCCSWholeGenome {
         Int num_shards = 300
         Boolean extract_uncorrected_reads = false
 
-        String? gcs_out_root_dir
+        String gcs_out_root_dir
     }
 
     parameter_meta {
@@ -41,8 +41,7 @@ workflow PBCCSWholeGenome {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call Utils.GetDefaultDir { input: workflow_name = "PBCCSWholeGenome" }
-    String outdir = sub(select_first([gcs_out_root_dir, GetDefaultDir.path]), "/$", "") + "/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/" + participant_name
 
     # scatter over all sample BAMs
     scatter (bam in bams) {
