@@ -10,11 +10,6 @@ workflow AlignedMetrics {
 
         File ref_fasta
         File ref_dict
-        File ref_flat
-
-        File dbsnp_vcf
-        File dbsnp_tbi
-        File metrics_locus
 
         String? gcs_output_dir
     }
@@ -37,15 +32,6 @@ workflow AlignedMetrics {
     call FlagStats as AlignedFlagStats { input: bam = aligned_bam }
 
     call ReadNamesAndLengths { input: bam = aligned_bam }
-
-#    call RnaSeqMetrics {
-#        input:
-#            bam = aligned_bam,
-#            bai = aligned_bai,
-#            ref_flat = ref_flat
-#    }
-
-#    call FilterMQ0Reads { input: bam = aligned_bam }
 
     if (defined(gcs_output_dir)) {
         String outdir = sub(gcs_output_dir + "", "/$", "")
@@ -81,43 +67,6 @@ workflow AlignedMetrics {
         call FF.FinalizeToDir as FFDepthSummaries { input: outdir = outdir + "/coverage_summaries/", files = SummarizeDepth.cov_summary }
 
         call FF.FinalizeToDir as FFReadNamesAndLengths { input: outdir = outdir + "/read_names_and_lengths/", files = [ ReadNamesAndLengths.read_names_and_lengths ] }
-
-#        call FF.FinalizeToDir as FFRnaSeqMetrics { input: outdir = outdir + "/rnaseq/", files = [ RnaSeqMetrics.rna_metrics ] }
-#        call FF.FinalizeToDir as FFBedCoverages { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.coverage }
-#        call FF.FinalizeToDir as FFBedCoverageCounts { input: outdir = outdir + "/coverage_over_beds/", files = ComputeBedCoverage.counts_file }
-
-#        call FF.FinalizeToDir as FFErrorStats {
-#            input:
-#                outdir = outdir + "/error_rate/",
-#                files = [
-#                    CollectSamErrorMetrics.error_by_all,
-#                    CollectSamErrorMetrics.error_by_base_quality,
-#                    CollectSamErrorMetrics.error_by_binned_length_homopolymer_and_following_ref_base,
-#                    CollectSamErrorMetrics.error_by_cycle,
-#                    CollectSamErrorMetrics.error_by_gc,
-#                    CollectSamErrorMetrics.error_by_homopolymer_and_following_ref_base,
-#                    CollectSamErrorMetrics.error_by_insert_length,
-#                    CollectSamErrorMetrics.error_by_mapping_quality,
-#                    CollectSamErrorMetrics.error_by_mismatches_in_read,
-#                    CollectSamErrorMetrics.error_by_one_base_padded_context,
-#                    CollectSamErrorMetrics.error_by_pair_orientation,
-#                    CollectSamErrorMetrics.error_by_read_direction,
-#                    CollectSamErrorMetrics.error_by_read_group,
-#                    CollectSamErrorMetrics.error_by_read_ordinality,
-#                    CollectSamErrorMetrics.error_by_read_ordinality_and_cycle,
-#                    CollectSamErrorMetrics.error_by_read_ordinality_and_gc,
-#                    CollectSamErrorMetrics.error_by_read_ordinality_and_homopolymer_and_following_ref_base,
-#                    CollectSamErrorMetrics.error_by_read_ordinality_and_pre_dinuc,
-#                    CollectSamErrorMetrics.indel_error_by_all,
-#                    CollectSamErrorMetrics.overlapping_error_by_all,
-#                    CollectSamErrorMetrics.overlapping_error_by_base_quality,
-#                    CollectSamErrorMetrics.overlapping_error_by_insert_length,
-#                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality,
-#                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_cycle,
-#                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_gc,
-#                    CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base
-#                ]
-#        }
     }
 
     output {
@@ -143,35 +92,6 @@ workflow AlignedMetrics {
         File aligned_rl_hist = AlignedReadMetrics.rl_hist
         File aligned_rl_nx = AlignedReadMetrics.rl_nx
         File aligned_rl_yield_hist = AlignedReadMetrics.rl_yield_hist
-
-#        File rna_metrics = RnaSeqMetrics.rna_metrics
-
-#        File error_by_all = CollectSamErrorMetrics.error_by_all
-#        File error_by_base_quality = CollectSamErrorMetrics.error_by_base_quality
-#        File error_by_binned_length_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_binned_length_homopolymer_and_following_ref_base
-#        File error_by_cycle = CollectSamErrorMetrics.error_by_cycle
-#        File error_by_gc = CollectSamErrorMetrics.error_by_gc
-#        File error_by_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_homopolymer_and_following_ref_base
-#        File error_by_insert_length = CollectSamErrorMetrics.error_by_insert_length
-#        File error_by_mapping_quality = CollectSamErrorMetrics.error_by_mapping_quality
-#        File error_by_mismatches_in_read = CollectSamErrorMetrics.error_by_mismatches_in_read
-#        File error_by_one_base_padded_context = CollectSamErrorMetrics.error_by_one_base_padded_context
-#        File error_by_pair_orientation = CollectSamErrorMetrics.error_by_pair_orientation
-#        File error_by_read_direction = CollectSamErrorMetrics.error_by_read_direction
-#        File error_by_read_group = CollectSamErrorMetrics.error_by_read_group
-#        File error_by_read_ordinality = CollectSamErrorMetrics.error_by_read_ordinality
-#        File error_by_read_ordinality_and_cycle = CollectSamErrorMetrics.error_by_read_ordinality_and_cycle
-#        File error_by_read_ordinality_and_gc = CollectSamErrorMetrics.error_by_read_ordinality_and_gc
-#        File error_by_read_ordinality_and_homopolymer_and_following_ref_base = CollectSamErrorMetrics.error_by_read_ordinality_and_homopolymer_and_following_ref_base
-#        File error_by_read_ordinality_and_pre_dinuc = CollectSamErrorMetrics.error_by_read_ordinality_and_pre_dinuc
-#        File indel_error_by_all = CollectSamErrorMetrics.indel_error_by_all
-#        File overlapping_error_by_all = CollectSamErrorMetrics.overlapping_error_by_all
-#        File overlapping_error_by_base_quality = CollectSamErrorMetrics.overlapping_error_by_base_quality
-#        File overlapping_error_by_insert_length = CollectSamErrorMetrics.overlapping_error_by_insert_length
-#        File overlapping_error_by_read_ordinality = CollectSamErrorMetrics.overlapping_error_by_read_ordinality
-#        File overlapping_error_by_read_ordinality_and_cycle = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_cycle
-#        File overlapping_error_by_read_ordinality_and_gc = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_gc
-#        File overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base = CollectSamErrorMetrics.overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base
     }
 }
 
@@ -243,8 +163,6 @@ task MosDepth {
         export MOSDEPTH_Q3=HIGH_COVERAGE # 150 ...
 
         mosdepth -t 4 -c ~{chr} -n -x -Q 1 --quantize 0:1:5:150: ~{prefix}.quantized ~{bam}
-
-        ls -lah
     >>>
 
     output {
@@ -505,57 +423,6 @@ task ReadNamesAndLengths {
     }
 }
 
-task RnaSeqMetrics {
-    input {
-        File bam
-        File bai
-        File ref_flat
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB") + size(ref_flat, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        java -jar /usr/local/bin/picard.jar CollectRnaSeqMetrics \
-            I=~{bam} \
-            REF_FLAT=~{ref_flat} \
-            STRAND=NONE \
-            VALIDATION_STRINGENCY=LENIENT \
-            O=~{basename}.rna_metrics.txt
-
-        sed -i 1,5d ~{basename}.rna_metrics.txt
-    >>>
-
-    output {
-        File rna_metrics = "~{basename}.rna_metrics.txt"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             8,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
 task FilterMQ0Reads {
     input {
         File bam
@@ -681,80 +548,6 @@ task ReadMetrics {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             50,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task CollectSamErrorMetrics {
-    input {
-        File bam
-        File bai
-        File ref_fasta
-        File ref_dict
-        File dbsnp_vcf
-        File dbsnp_tbi
-        File region
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 4*ceil(size(bam, "GB") + size(bai, "GB") + size(ref_fasta, "GB") + size(dbsnp_vcf, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        java -jar /usr/local/bin/picard.jar CollectSamErrorMetrics R=~{ref_fasta} I=~{bam} V=~{dbsnp_vcf} O=csem L=~{region}
-
-        find . -name 'csem.*' -exec sed -i 1,5d '{}' \;
-    >>>
-
-    output {
-        File error_by_all = "csem.error_by_all"
-        File error_by_base_quality = "csem.error_by_base_quality"
-        File error_by_binned_length_homopolymer_and_following_ref_base = "csem.error_by_binned_length_homopolymer_and_following_ref_base"
-        File error_by_cycle = "csem.error_by_cycle"
-        File error_by_gc = "csem.error_by_gc"
-        File error_by_homopolymer_and_following_ref_base = "csem.error_by_homopolymer_and_following_ref_base"
-        File error_by_insert_length = "csem.error_by_insert_length"
-        File error_by_mapping_quality = "csem.error_by_mapping_quality"
-        File error_by_mismatches_in_read = "csem.error_by_mismatches_in_read"
-        File error_by_one_base_padded_context = "csem.error_by_one_base_padded_context"
-        File error_by_pair_orientation = "csem.error_by_pair_orientation"
-        File error_by_read_direction = "csem.error_by_read_direction"
-        File error_by_read_group = "csem.error_by_read_group"
-        File error_by_read_ordinality = "csem.error_by_read_ordinality"
-        File error_by_read_ordinality_and_cycle = "csem.error_by_read_ordinality_and_cycle"
-        File error_by_read_ordinality_and_gc = "csem.error_by_read_ordinality_and_gc"
-        File error_by_read_ordinality_and_homopolymer_and_following_ref_base = "csem.error_by_read_ordinality_and_homopolymer_and_following_ref_base"
-        File error_by_read_ordinality_and_pre_dinuc = "csem.error_by_read_ordinality_and_pre_dinuc"
-        File indel_error_by_all = "csem.indel_error_by_all"
-        File overlapping_error_by_all = "csem.overlapping_error_by_all"
-        File overlapping_error_by_base_quality = "csem.overlapping_error_by_base_quality"
-        File overlapping_error_by_insert_length = "csem.overlapping_error_by_insert_length"
-        File overlapping_error_by_read_ordinality = "csem.overlapping_error_by_read_ordinality"
-        File overlapping_error_by_read_ordinality_and_cycle = "csem.overlapping_error_by_read_ordinality_and_cycle"
-        File overlapping_error_by_read_ordinality_and_gc = "csem.overlapping_error_by_read_ordinality_and_gc"
-        File overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base = "csem.overlapping_error_by_read_ordinality_and_homopolymer_and_following_ref_base"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             20,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,

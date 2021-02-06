@@ -172,6 +172,8 @@ workflow PBCCSWholeGenome {
             ref_fasta         = ref_map['fasta'],
             ref_fasta_fai     = ref_map['fai'],
             ref_dict          = ref_map['dict'],
+
+            preset            = "hifi"
     }
 
     ##########
