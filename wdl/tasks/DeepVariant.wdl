@@ -60,7 +60,7 @@ task DeepVariant {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          32,
+        cpu_cores:          16,
         mem_gb:             120,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
