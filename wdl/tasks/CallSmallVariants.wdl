@@ -50,7 +50,7 @@ workflow CallSmallVariants {
                 ref_fasta     = ref_fasta,
                 ref_fai       = ref_fasta_fai,
                 model_class   = "PACBIO",
-                intervals     = chr_info[0]
+                chr           = chr_info[0]
         }
     }
 
