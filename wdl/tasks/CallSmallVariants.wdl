@@ -54,21 +54,21 @@ workflow CallSmallVariants {
         }
     }
 
-    call MergeSNVCalls as MergeLongshotCalls {
+    call MergeSNVCalls as MergeLongshotVCFs {
         input:
             vcfs = Longshot.vcf,
             ref_dict = ref_dict,
             prefix = basename(bam, ".bam") + ".longshot"
     }
 
-    call MergeSNVCalls as MergeDeepVariantCalls {
+    call MergeSNVCalls as MergeDeepVariantVCFs {
         input:
             vcfs = DeepVariant.vcf,
             ref_dict = ref_dict,
             prefix = basename(bam, ".bam") + ".deepvariant"
     }
 
-    call MergeSNVCalls as MergeDeepVariantGVCFCalls {
+    call MergeSNVCalls as MergeDeepVariantGVCFs {
         input:
             vcfs = DeepVariant.gvcf,
             ref_dict = ref_dict,
@@ -76,12 +76,14 @@ workflow CallSmallVariants {
     }
 
     output {
-        File longshot_vcf = MergeLongshotCalls.vcf
-        File longshot_tbi = MergeLongshotCalls.tbi
-#        File vcf = DeepVariant.vcf
-#        File vcf_tbi = DeepVariant.vcf_tbi
-#        File gvcf = DeepVariant.gvcf
-#        File gvcf_tbi = DeepVariant.gvcf_tbi
+        File longshot_vcf = MergeLongshotVCFs.vcf
+        File longshot_tbi = MergeLongshotVCFs.tbi
+
+        File deepvariant_vcf = MergeDeepVariantVCFs.vcf
+        File deepvariant_vcf_tbi = MergeDeepVariantVCFs.vcf_tbi
+
+        File deepvariant_gvcf = MergeDeepVariantGVCFs.vcf
+        File deepvariant_gvcf_tbi = MergeDeepVariantGVCFs.vcf_tbi
     }
 }
 
@@ -99,13 +101,17 @@ task MergeSNVCalls {
     command <<<
         set -x
 
-        VCF_WITH_HEADER=$(ls -S ~{sep=' ' vcfs} | head -1)
+        VCF_WITH_HEADER=~{vcfs[0]}
+        GREPCMD="grep"
+        if [[ $file =~ \.gz$ ]]; then
+            GREPCMD="zgrep"
+        fi
 
-        grep '^#' $VCF_WITH_HEADER | grep -v CHROM > header
+        $GREPCMD '^#' $VCF_WITH_HEADER | grep -v '^##contig' -e CHROM > header
         grep '^@SQ' ~{ref_dict} | awk '{ print "##contig=<ID=" $2 ",length=" $3 ">" }' | sed 's/[SL]N://g' >> header
-        grep -m1 CHROM $VCF_WITH_HEADER >> header
+        $GREPCMD -m1 CHROM $VCF_WITH_HEADER >> header
 
-        ((cat header) && (grep -h -v '^#' ~{sep=' ' vcfs})) | bcftools sort | bgzip > ~{prefix}.vcf.gz
+        ((cat header) && ($GREPCMD -h -v '^#' ~{sep=' ' vcfs})) | bcftools sort | bgzip > ~{prefix}.vcf.gz
         tabix -p vcf ~{prefix}.vcf.gz
     >>>
 
@@ -116,14 +122,14 @@ task MergeSNVCalls {
 
     #########################
     RuntimeAttr default_attr = object {
-                                   cpu_cores:          4,
-                                   mem_gb:             24,
-                                   disk_gb:            disk_size,
-                                   boot_disk_gb:       10,
-                                   preemptible_tries:  1,
-                                   max_retries:        0,
-                                   docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
-                               }
+        cpu_cores:          4,
+        mem_gb:             24,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
+    }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
