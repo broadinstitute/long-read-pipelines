@@ -114,10 +114,6 @@ workflow PBCCSDemultiplexWholeGenome {
                 aligned_bai    = AlignBarcode.aligned_bai,
                 ref_fasta      = ref_map['fasta'],
                 ref_dict       = ref_map['dict'],
-                ref_flat       = ref_map['flat'],
-                dbsnp_vcf      = ref_map['dbsnp_vcf'],
-                dbsnp_tbi      = ref_map['dbsnp_tbi'],
-                metrics_locus  = ref_map['metrics_locus'],
                 gcs_output_dir = outdir + "/" + BC + "/metrics/per_barcode"
         }
 
