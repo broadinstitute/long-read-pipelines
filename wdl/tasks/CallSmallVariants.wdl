@@ -103,11 +103,11 @@ task MergeSNVCalls {
 
         VCF_WITH_HEADER=~{vcfs[0]}
         GREPCMD="grep"
-        if [[ $file =~ \.gz$ ]]; then
+        if [[ ~{vcfs[0]} =~ \.gz$ ]]; then
             GREPCMD="zgrep"
         fi
 
-        $GREPCMD '^#' $VCF_WITH_HEADER | grep -v '^##contig' -e CHROM > header
+        $GREPCMD '^#' $VCF_WITH_HEADER | grep -v -e '^##contig' -e CHROM > header
         grep '^@SQ' ~{ref_dict} | awk '{ print "##contig=<ID=" $2 ",length=" $3 ">" }' | sed 's/[SL]N://g' >> header
         $GREPCMD -m1 CHROM $VCF_WITH_HEADER >> header
 
