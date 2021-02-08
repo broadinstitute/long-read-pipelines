@@ -80,10 +80,10 @@ workflow CallSmallVariants {
         File longshot_tbi = MergeLongshotVCFs.tbi
 
         File deepvariant_vcf = MergeDeepVariantVCFs.vcf
-        File deepvariant_vcf_tbi = MergeDeepVariantVCFs.vcf_tbi
+        File deepvariant_vcf_tbi = MergeDeepVariantVCFs.tbi
 
         File deepvariant_gvcf = MergeDeepVariantGVCFs.vcf
-        File deepvariant_gvcf_tbi = MergeDeepVariantGVCFs.vcf_tbi
+        File deepvariant_gvcf_tbi = MergeDeepVariantGVCFs.tbi
     }
 }
 
