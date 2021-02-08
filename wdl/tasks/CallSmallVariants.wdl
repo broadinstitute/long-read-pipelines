@@ -49,8 +49,7 @@ workflow CallSmallVariants {
                 bai           = bai,
                 ref_fasta     = ref_fasta,
                 ref_fai       = ref_fasta_fai,
-                model_class   =
-                output_prefix =
+                model_class   = "PACBIO",
                 intervals     = chr_info[0]
         }
     }
@@ -65,5 +64,9 @@ workflow CallSmallVariants {
     output {
         File longshot_vcf = MergeLongshotCalls.vcf
         File longshot_tbi = MergeLongshotCalls.tbi
+#        File vcf = DeepVariant.vcf
+#        File vcf_tbi = DeepVariant.vcf_tbi
+#        File gvcf = DeepVariant.gvcf
+#        File gvcf_tbi = DeepVariant.gvcf_tbi
     }
 }
