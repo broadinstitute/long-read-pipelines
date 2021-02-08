@@ -60,7 +60,7 @@ task DeepVariant {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
+        cpu_cores:          32,
         mem_gb:             120,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
@@ -78,7 +78,7 @@ task DeepVariant {
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
         gpuType:                "nvidia-tesla-p100"
-        gpuCount:               1
+        gpuCount:               2
         nvidiaDriverVersion:    "418.152.00"
         zones:                  ["us-east1-b", "us-east1-c"]
         cpuPlatform:            "Intel Skylake"
