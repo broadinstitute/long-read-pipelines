@@ -212,6 +212,12 @@ workflow PBCCSWholeGenome {
             outdir = outdir + "/variants"
     }
 
+    call FF.FinalizeToDir as FinalizeAssemblyVariants {
+        input:
+            files = [ CallAssemblyVariants.paftools_vcf ],
+            outdir = outdir + "/variants"
+    }
+
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
             files = [ ccs_bam, ccs_bai ],
@@ -230,5 +236,11 @@ workflow PBCCSWholeGenome {
                 files = select_all([ uncorrected_bam, uncorrected_bai ]),
                 outdir = outdir + "/alignments"
         }
+    }
+
+    call FF.FinalizeToDir as FinalizeAssembly {
+        input:
+            files = [ Hifiasm.gfa, Hifiasm.fa, CallAssemblyVariants.paf ],
+            outdir = outdir + "/assembly"
     }
 }

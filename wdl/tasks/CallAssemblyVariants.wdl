@@ -37,8 +37,8 @@ workflow CallAssemblyVariants {
     }
 
     output {
-        File paf      = AlignAsPAF.paf
-        File variants = Paftools.variants
+        File paf = AlignAsPAF.paf
+        File paftools_vcf = Paftools.variants
     }
 }
 
