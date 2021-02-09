@@ -15,6 +15,7 @@ import "tasks/CallSVs.wdl" as SV
 import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 import "tasks/CallSmallVariants.wdl" as SMV
+import "tasks/Hifiasm.wdl" as HA
 
 workflow PBCCSWholeGenome {
     input {
@@ -77,9 +78,11 @@ workflow PBCCSWholeGenome {
                     sample_name = participant_name,
                     map_preset  = "CCS"
             }
+
+            call Utils.BamToFastq { input: bam = CCS.consensus, prefix = basename(CCS.consensus, ".bam") }
         }
 
-        # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
+        # merge the corrected per-shard BAM/report/fastq into one, corresponding to one raw input BAM
         call Utils.MergeBams as MergeCorrected { input: bams = AlignCorrected.aligned_bam, prefix = "~{participant_name}.~{ID}.corrected" }
 
         if (length(select_all(AlignUncorrected.aligned_bam)) > 0) {
@@ -107,6 +110,8 @@ workflow PBCCSWholeGenome {
                 files = [ MergeCCSReports.report ],
                 outdir = outdir + "/metrics/per_flowcell/" + ID + "/ccs_metrics"
         }
+
+        call Utils.MergeFastqs { input: fqs = [BamToFastq.reads_fq], prefix = "~{participant_name}.~{ID}" }
     }
 
     # gather across (potential multiple) input raw BAMs
@@ -121,6 +126,8 @@ workflow PBCCSWholeGenome {
                     prefix = "~{participant_name}.uncorrected"
             }
         }
+
+        call Utils.MergeFastqs as MergeAllFastqs { input: fqs = MergeFastqs.merged_fq, prefix = "~{participant_name}.corrected" }
     }
 
     File ccs_bam = select_first([ MergeAllCorrected.merged_bam, MergeCorrected.merged_bam[0] ])
@@ -131,6 +138,8 @@ workflow PBCCSWholeGenome {
         File? uncorrected_bam = select_first([ MergeAllUncorrected.merged_bam, MergeUncorrected.merged_bam[0] ])
         File? uncorrected_bai = select_first([ MergeAllUncorrected.merged_bai, MergeUncorrected.merged_bai[0] ])
     }
+
+    File ccs_fq = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
 
     # compute alignment metrics
     call AM.AlignedMetrics as PerSampleMetrics {
@@ -168,6 +177,13 @@ workflow PBCCSWholeGenome {
             preset            = "hifi"
     }
 
+    # assemble genome
+    call HA.Hifiasm {
+        input:
+            reads = ccs_fq,
+            prefix = participant_name
+    }
+
     ##########
     # store the results into designated bucket
     ##########
@@ -180,7 +196,9 @@ workflow PBCCSWholeGenome {
 
     call FF.FinalizeToDir as FinalizeSmallVariants {
         input:
-            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
+            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi,
+                      CallSmallVariants.deepvariant_vcf, CallSmallVariants.deepvariant_tbi,
+                      CallSmallVariants.deepvariant_gvcf, CallSmallVariants.deepvariant_gtbi ],
             outdir = outdir + "/variants"
     }
 

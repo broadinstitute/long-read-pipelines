@@ -681,6 +681,48 @@ task BamToBed {
     }
 }
 
+task BamToFastq {
+    input {
+        File bam
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 3*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools fastq ~{bam} | gzip > ~{prefix}.fq.gz
+    >>>
+
+    output {
+        File reads_fq = "~{prefix}.fq.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 # A utility to merge several input BAMs into a single BAM.
 task MergeBams {
     input {
@@ -717,6 +759,54 @@ task MergeBams {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+# A utility to merge several input fastqs into a single fastq
+task MergeFastqs {
+    input {
+        Array[File] fqs
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        fqs:    "input array of fq.gz files to be merged"
+        prefix: "[default-valued] prefix for output BAM"
+    }
+
+    Int disk_size = 3*ceil(size(fqs, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        cat ~{sep=" " fqs} > ~{prefix}.fq.gz
+    >>>
+
+    output {
+        File merged_fq = "~{prefix}.fq.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
