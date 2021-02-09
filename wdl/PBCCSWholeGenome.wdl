@@ -10,12 +10,13 @@ version 1.0
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/CallSVs.wdl" as SV
-import "tasks/Figures.wdl" as FIG
-import "tasks/Finalize.wdl" as FF
-import "tasks/CallSmallVariants.wdl" as SMV
 import "tasks/Hifiasm.wdl" as HA
+import "tasks/AlignedMetrics.wdl" as AM
+import "tasks/Figures.wdl" as FIG
+import "tasks/CallSVs.wdl" as SV
+import "tasks/CallSmallVariants.wdl" as SMV
+import "tasks/CallAssemblyVariants.wdl" as AV
+import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSWholeGenome {
     input {
@@ -139,8 +140,6 @@ workflow PBCCSWholeGenome {
         File? uncorrected_bai = select_first([ MergeAllUncorrected.merged_bai, MergeUncorrected.merged_bai[0] ])
     }
 
-    File ccs_fq = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
-
     # compute alignment metrics
     call AM.AlignedMetrics as PerSampleMetrics {
         input:
@@ -149,6 +148,15 @@ workflow PBCCSWholeGenome {
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics/combined/" + participant_name
+    }
+
+    File ccs_fq = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
+
+    # assemble genome
+    call HA.Hifiasm {
+        input:
+            reads = ccs_fq,
+            prefix = participant_name
     }
 
     # call SVs
@@ -177,11 +185,13 @@ workflow PBCCSWholeGenome {
             preset            = "hifi"
     }
 
-    # assemble genome
-    call HA.Hifiasm {
+    # call variants in assemblies
+    call AV.CallAssemblyVariants {
         input:
-            reads = ccs_fq,
-            prefix = participant_name
+            asm_fasta = Hifiasm.fa,
+            ref_fasta = ref_map['fasta'],
+            participant_name = participant_name,
+            prefix = "~{participant_name}.hifiasm"
     }
 
     ##########

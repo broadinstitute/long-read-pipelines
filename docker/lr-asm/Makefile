@@ -1,4 +1,4 @@
-VERSION = 0.1.12
+VERSION = 0.1.13
 TAG1 = quay.io/broad-long-read-pipelines/lr-asm:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-asm:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-asm:$(VERSION)
