@@ -111,7 +111,7 @@ workflow PBCCSWholeGenome {
                 outdir = outdir + "/metrics/per_flowcell/" + ID + "/ccs_metrics"
         }
 
-        call Utils.MergeFastqs { input: fqs = [BamToFastq.reads_fq], prefix = "~{participant_name}.~{ID}" }
+        call Utils.MergeFastqs { input: fqs = BamToFastq.reads_fq, prefix = "~{participant_name}.~{ID}" }
     }
 
     # gather across (potential multiple) input raw BAMs
