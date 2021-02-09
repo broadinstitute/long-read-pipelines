@@ -60,7 +60,7 @@ task AlignAsPAF {
 
         minimap2 --paf-no-hit -cx asm20 --cs -r 2k -t ~{num_cpus} \
             ~{ref_fasta} ~{asm_fasta} | \
-            gzip -1 > ~{participant_name}.paf.gz
+            gzip -1 > ~{prefix}.paf.gz
     >>>
 
     output {

@@ -61,7 +61,7 @@ task DeepVariant {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          12,
-        mem_gb:             120,
+        mem_gb:             64,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  2,
@@ -80,7 +80,7 @@ task DeepVariant {
         gpuType:                "nvidia-tesla-p100"
         gpuCount:               1
         nvidiaDriverVersion:    "418.152.00"
-        zones:                  ["us-east1-b", "us-east1-c", "us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
+        zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
         cpuPlatform:            "Intel Skylake"
     }
 }
