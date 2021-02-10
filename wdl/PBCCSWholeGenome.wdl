@@ -140,6 +140,13 @@ workflow PBCCSWholeGenome {
         File? uncorrected_bai = select_first([ MergeAllUncorrected.merged_bai, MergeUncorrected.merged_bai[0] ])
     }
 
+    # assemble genome
+    call HA.Hifiasm {
+        input:
+            reads = ccs_fq,
+            prefix = participant_name
+    }
+
     # compute alignment metrics
     call AM.AlignedMetrics as PerSampleMetrics {
         input:
@@ -151,13 +158,6 @@ workflow PBCCSWholeGenome {
     }
 
     File ccs_fq = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
-
-    # assemble genome
-    call HA.Hifiasm {
-        input:
-            reads = ccs_fq,
-            prefix = participant_name
-    }
 
     # call SVs
     call SV.CallSVs as CallSVs {
@@ -191,7 +191,7 @@ workflow PBCCSWholeGenome {
             asm_fasta = Hifiasm.fa,
             ref_fasta = ref_map['fasta'],
             participant_name = participant_name,
-            prefix = "~{participant_name}.hifiasm"
+            prefix = basename(ccs_bam, ".bam") + ".hifiasm"
     }
 
     ##########

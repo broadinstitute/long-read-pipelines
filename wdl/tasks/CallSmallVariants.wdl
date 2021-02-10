@@ -19,7 +19,7 @@ workflow CallSmallVariants {
         File ref_fasta_fai
         File ref_dict
 
-        String preset
+        String preset = "clr"
     }
 
     parameter_meta {
