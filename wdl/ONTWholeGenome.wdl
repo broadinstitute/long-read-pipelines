@@ -8,6 +8,7 @@ import "tasks/CallSVs.wdl" as SV
 import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 import "tasks/CallSmallVariants.wdl" as SMV
+import "tasks/Methylation.wdl" as Meth
 
 workflow ONTWholeGenome {
     input {
@@ -42,6 +43,7 @@ workflow ONTWholeGenome {
         File sequencing_summary = p.right
 
         call ONT.GetRunInfo { input: summary_file = final_summary }
+        call ONT.ListFiles as ListFast5s { input: summary_file = final_summary, suffix = "fast5" }
         call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
 
         String SM  = participant_name
@@ -66,6 +68,21 @@ workflow ONTWholeGenome {
         }
 
         call Utils.MergeBams as MergeReads { input: bams = AlignReads.aligned_bam }
+
+        call Meth.Methylation {
+            input:
+                fast5s = read_lines(ListFast5s.manifest),
+                fastqs = read_lines(ListFastqs.manifest),
+                sequencing_summary = sequencing_summary,
+
+                bam = MergeReads.merged_bam,
+                bai = MergeReads.merged_bai,
+
+                ref_fasta = ref_map['fasta'],
+                ref_fai   = ref_map['fai'],
+
+                prefix = "~{SM}.~{ID}.methylation"
+        }
 
         call AM.AlignedMetrics as PerFlowcellMetrics {
             input:
@@ -129,6 +146,11 @@ workflow ONTWholeGenome {
             ref_dict          = ref_map['dict'],
     }
 
+    if (length(Methylation.freq_tsv) > 1) {
+        call Meth.FreqMerge { input: freq_tsvs = Methylation.freq_tsv, prefix = "~{SM[0]}.~{ID[0]}.methylation" }
+    }
+    File freq_tsv = select_first([ FreqMerge.freq_tsv , Methylation.freq_tsv[0] ])
+
     ##########
     # Finalize
     ##########
@@ -149,5 +171,11 @@ workflow ONTWholeGenome {
         input:
             files = [ bam, bai ],
             outdir = outdir + "/alignments"
+    }
+
+    call FF.FinalizeToDir as FinalizeMethylation {
+        input:
+            files = [ freq_tsv ],
+            outdir = outdir + "/" + DIR[0] + "/methylation"
     }
 }
