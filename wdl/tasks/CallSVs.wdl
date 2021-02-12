@@ -80,6 +80,7 @@ task PBSV {
 
         File ref_fasta
         File ref_fasta_fai
+
         File? tandem_repeat_bed
 
         String prefix
