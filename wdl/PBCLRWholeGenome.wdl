@@ -24,23 +24,22 @@ workflow PBCLRWholeGenome {
         String participant_name
         Int num_shards = 300
 
-        String? gcs_out_root_dir
+        String gcs_out_root_dir
     }
 
     parameter_meta {
-        bams:                      "GCS path to raw subreads or CCS data"
-        ref_map_file:              "table indicating reference sequence and auxillary file locations"
+        bams:             "GCS path to raw subreads or CCS data"
+        ref_map_file:     "table indicating reference sequence and auxillary file locations"
 
-        participant_name:          "name of the participant from whom these samples were obtained"
-        num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
+        participant_name: "name of the participant from whom these samples were obtained"
+        num_shards:       "[default-valued] number of sharded BAMs to create (tune for performance)"
 
-        gcs_out_root_dir:          "[optional] GCS bucket to store the reads, variants, and metrics files"
+        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call Utils.GetDefaultDir { input: workflow_name = "PBCLRWholeGenome" }
-    String outdir = sub(select_first([gcs_out_root_dir, GetDefaultDir.path]), "/$", "") + "/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/" + participant_name
 
     # scatter over all sample BAMs
     scatter (bam in bams) {

@@ -17,24 +17,23 @@ workflow ONT10x {
         String participant_name
         Int num_shards = 50
 
-        String? gcs_out_root_dir
+        String gcs_out_root_dir
     }
 
     parameter_meta {
-        final_summaries:           "GCS path to '*final_summary*.txt*' files for basecalled fastq files"
-        sequencing_summaries:      "GCS path to '*sequencing_summary*.txt*' files for basecalled fastq files"
-        ref_map_file:              "table indicating reference sequence and auxillary file locations"
+        final_summaries:      "GCS path to '*final_summary*.txt*' files for basecalled fastq files"
+        sequencing_summaries: "GCS path to '*sequencing_summary*.txt*' files for basecalled fastq files"
+        ref_map_file:         "table indicating reference sequence and auxillary file locations"
 
-        participant_name:          "name of the participant from whom these samples were obtained"
-        num_shards:                "[default-valued] number of shards into which fastq files should be batched"
+        participant_name:     "name of the participant from whom these samples were obtained"
+        num_shards:           "[default-valued] number of shards into which fastq files should be batched"
 
-        gcs_out_root_dir:          "[optional] GCS bucket to store the reads, variants, and metrics files"
+        gcs_out_root_dir:     "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call Utils.GetDefaultDir { input: workflow_name = "ONT10x" }
-    String outdir = sub(select_first([gcs_out_root_dir, GetDefaultDir.path]), "/$", "") + "/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONT10x/" + participant_name
 
     scatter (p in zip(final_summaries, sequencing_summaries)) {
         File final_summary = p.left

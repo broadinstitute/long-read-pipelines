@@ -19,7 +19,7 @@ workflow PBCCS {
         Int num_shards = 300
         Boolean extract_uncorrected_reads = false
 
-        String? gcs_out_root_dir
+        String gcs_out_root_dir
     }
 
     parameter_meta {
@@ -29,11 +29,10 @@ workflow PBCCS {
         num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
         extract_uncorrected_reads: "[default-valued] extract reads that were not CCS-corrected to a separate file"
 
-        gcs_out_root_dir:          "[optional] GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+        gcs_out_root_dir:          "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
     }
 
-    call Utils.GetDefaultDir { input: workflow_name = "PBCCS" }
-    String outdir = sub(select_first([gcs_out_root_dir, GetDefaultDir.path]), "/$", "") + "/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCS/" + participant_name
 
     # scatter over all sample BAMs
     scatter (bam in bams) {

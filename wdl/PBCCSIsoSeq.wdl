@@ -22,7 +22,7 @@ workflow PBCCSIsoSeq {
         File barcode_file
         Int num_shards = 300
 
-        String? gcs_out_root_dir
+        String gcs_out_root_dir
     }
 
     parameter_meta {
@@ -33,13 +33,12 @@ workflow PBCCSIsoSeq {
         barcode_file:     "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
         num_shards:       "[default-valued] number of sharded BAMs to create (tune for performance)"
 
-        gcs_out_root_dir: "[optional] GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call Utils.GetDefaultDir { input: workflow_name = "PBCCSIsoSeq" }
-    String outdir = sub(select_first([gcs_out_root_dir, GetDefaultDir.path]), "/$", "") + "/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSIsoSeq/" + participant_name
 
     # scatter over all sample BAMs
     scatter (bam in bams) {

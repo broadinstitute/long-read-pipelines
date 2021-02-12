@@ -38,7 +38,7 @@ workflow PBCCSWholeGenome {
         num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
         extract_uncorrected_reads: "[default-valued] extract reads that were not CCS-corrected to a separate file"
 
-        gcs_out_root_dir:          "[optional] GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+        gcs_out_root_dir:          "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
