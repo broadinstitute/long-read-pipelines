@@ -46,8 +46,8 @@ workflow PBCCSNoSharding {
         call PB.CCS {
             input:
                 subreads = bam,
+                cpus = 48,
                 runtime_attr_override = {
-                    'cpu_cores': 48,
                     'memory': 192,
                     'preemptible_tries': 0,
                     'max_retries': 0,
