@@ -228,12 +228,12 @@ workflow PBCCSWholeGenome {
             prefix = basename(ccs_bam, ".bam") + ".hifiasm"
     }
 
-    if (defined(alt_map_file)) {
+    if (defined(alt_bam) && defined(alt_bai)) {
         # call SVs
         call SV.CallSVs as CallAltSVs {
             input:
-                bam               = alt_bam,
-                bai               = alt_bai,
+                bam               = select_first([alt_bam]),
+                bai               = select_first([alt_bai]),
 
                 ref_fasta         = alt_map['fasta'],
                 ref_fasta_fai     = alt_map['fai'],
@@ -244,8 +244,8 @@ workflow PBCCSWholeGenome {
         # call SNVs and small indels
         call SMV.CallSmallVariants as CallAltSmallVariants {
             input:
-                bam               = alt_bam,
-                bai               = alt_bai,
+                bam               = select_first([alt_bam]),
+                bai               = select_first([alt_bai]),
 
                 ref_fasta         = alt_map['fasta'],
                 ref_fasta_fai     = alt_map['fai'],
