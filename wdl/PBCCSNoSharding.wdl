@@ -45,7 +45,7 @@ workflow PBCCSNoSharding {
         # perform correction on each BAM
         call PB.CCS {
             input:
-                bam = bam,
+                subreads = bam,
                 runtime_attr_override = {
                     'cpu_cores': 48,
                     'memory': 192,

@@ -20,6 +20,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCS.wdl
   testParameterFiles:
+- name: PBCCSNoSharding
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBCCSNoSharding.wdl
+  testParameterFiles:
 - name: PBCCS10x
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCS10x.wdl
