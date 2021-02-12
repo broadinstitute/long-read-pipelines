@@ -80,7 +80,7 @@ task PBSV {
 
         File ref_fasta
         File ref_fasta_fai
-        File tandem_repeat_bed
+        File? tandem_repeat_bed
 
         String prefix
 
@@ -107,7 +107,10 @@ task PBSV {
     command <<<
         set -euxo pipefail
 
-        pbsv discover --tandem-repeats ~{tandem_repeat_bed} ~{bam} ~{prefix}.svsig.gz
+        pbsv discover \
+            ~{if defined(tandem_repeat_bed) then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
+            ~{bam} \
+            ~{prefix}.svsig.gz
         pbsv call --num-threads ~{cpus} ~{ref_fasta} ~{prefix}.svsig.gz ~{prefix}.pbsv.pre.vcf
 
         cat ~{prefix}.pbsv.pre.vcf | grep -v -e '^chrM' -e '##fileDate' > ~{prefix}.pbsv.vcf

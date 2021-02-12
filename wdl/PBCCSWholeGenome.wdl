@@ -22,6 +22,7 @@ workflow PBCCSWholeGenome {
     input {
         Array[File] bams
         File ref_map_file
+        File? alt_map_file
 
         String participant_name
         Int num_shards = 300
@@ -33,6 +34,7 @@ workflow PBCCSWholeGenome {
     parameter_meta {
         bams:                      "GCS path to raw subreads or CCS data"
         ref_map_file:              "table indicating reference sequence and auxillary file locations"
+        alt_map_file:              "table indicating alternate reference sequence and auxillary file locations"
 
         participant_name:          "name of the participant from whom these samples were obtained"
         num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
@@ -42,6 +44,7 @@ workflow PBCCSWholeGenome {
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
+    Map[String, String] alt_map = if defined(alt_map_file) then read_map(select_first([alt_map_file])) else {'fasta': 'none'}
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/" + participant_name
 
@@ -58,6 +61,8 @@ workflow PBCCSWholeGenome {
         # then perform correction and alignment on each of the shard
         scatter (subreads in ShardLongReads.unmapped_shards) {
             call PB.CCS { input: subreads = subreads }
+
+            call Utils.BamToFastq { input: bam = CCS.consensus, prefix = basename(CCS.consensus, ".bam") }
 
             if (extract_uncorrected_reads) {
                 call PB.ExtractUncorrectedReads { input: subreads = subreads, consensus = CCS.consensus }
@@ -80,7 +85,15 @@ workflow PBCCSWholeGenome {
                     map_preset  = "CCS"
             }
 
-            call Utils.BamToFastq { input: bam = CCS.consensus, prefix = basename(CCS.consensus, ".bam") }
+            if (defined(alt_map_file)) {
+                call PB.Align as AlignAltCorrected {
+                    input:
+                        bam         = CCS.consensus,
+                        ref_fasta   = alt_map['fasta'],
+                        sample_name = participant_name,
+                        map_preset  = "CCS"
+                }
+            }
         }
 
         # merge the corrected per-shard BAM/report/fastq into one, corresponding to one raw input BAM
@@ -93,6 +106,16 @@ workflow PBCCSWholeGenome {
                     prefix = "~{participant_name}.~{ID}.uncorrected"
             }
         }
+
+        if (length(select_all(AlignAltCorrected.aligned_bam)) > 0) {
+            call Utils.MergeBams as MergeAltCorrected {
+                input:
+                    bams = AlignCorrected.aligned_bam,
+                    prefix = "~{participant_name}.~{ID}.alt.corrected"
+            }
+        }
+
+        call Utils.MergeFastqs { input: fqs = BamToFastq.reads_fq, prefix = "~{participant_name}.~{ID}" }
 
         # compute alignment metrics
         call AM.AlignedMetrics as PerFlowcellMetrics {
@@ -111,8 +134,6 @@ workflow PBCCSWholeGenome {
                 files = [ MergeCCSReports.report ],
                 outdir = outdir + "/metrics/per_flowcell/" + ID + "/ccs_metrics"
         }
-
-        call Utils.MergeFastqs { input: fqs = BamToFastq.reads_fq, prefix = "~{participant_name}.~{ID}" }
     }
 
     # gather across (potential multiple) input raw BAMs
@@ -128,6 +149,14 @@ workflow PBCCSWholeGenome {
             }
         }
 
+        if (length(select_all(MergeAltCorrected.merged_bam)) > 0) {
+            call Utils.MergeBams as MergeAllAltCorrected {
+                input:
+                    bams = select_all(MergeAltCorrected.merged_bam),
+                    prefix = "~{participant_name}.alt.corrected"
+            }
+        }
+
         call Utils.MergeFastqs as MergeAllFastqs { input: fqs = MergeFastqs.merged_fq, prefix = "~{participant_name}.corrected" }
     }
 
@@ -139,6 +168,13 @@ workflow PBCCSWholeGenome {
         File? uncorrected_bam = select_first([ MergeAllUncorrected.merged_bam, MergeUncorrected.merged_bam[0] ])
         File? uncorrected_bai = select_first([ MergeAllUncorrected.merged_bai, MergeUncorrected.merged_bai[0] ])
     }
+
+    if (defined(alt_map_file)) {
+        File? alt_bam = select_first([ MergeAllAltCorrected.merged_bam, MergeAltCorrected.merged_bam[0] ])
+        File? alt_bai = select_first([ MergeAllAltCorrected.merged_bai, MergeAltCorrected.merged_bai[0] ])
+    }
+
+    File ccs_fq = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
 
     # assemble genome
     call HA.Hifiasm {
@@ -156,8 +192,6 @@ workflow PBCCSWholeGenome {
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics/combined/" + participant_name
     }
-
-    File ccs_fq = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
 
     # call SVs
     call SV.CallSVs as CallSVs {
@@ -192,6 +226,47 @@ workflow PBCCSWholeGenome {
             ref_fasta = ref_map['fasta'],
             participant_name = participant_name,
             prefix = basename(ccs_bam, ".bam") + ".hifiasm"
+    }
+
+    if (defined(alt_map_file)) {
+        # call SVs
+        call SV.CallSVs as CallAltSVs {
+            input:
+                bam               = ccs_bam,
+                bai               = ccs_bai,
+
+                ref_fasta         = alt_map['fasta'],
+                ref_fasta_fai     = alt_map['fai'],
+
+                preset            = "hifi"
+        }
+
+        # call SNVs and small indels
+        call SMV.CallSmallVariants as CallAltSmallVariants {
+            input:
+                bam               = ccs_bam,
+                bai               = ccs_bai,
+
+                ref_fasta         = alt_map['fasta'],
+                ref_fasta_fai     = alt_map['fai'],
+                ref_dict          = alt_map['dict'],
+
+                preset            = "hifi"
+        }
+
+        call FF.FinalizeToDir as FinalizeAltSVs {
+            input:
+                files = [ CallAltSVs.pbsv_vcf, CallAltSVs.sniffles_vcf, CallAltSVs.svim_vcf, CallAltSVs.cutesv_vcf ],
+                outdir = outdir + "/alt_variants"
+        }
+
+        call FF.FinalizeToDir as FinalizeAltSmallVariants {
+            input:
+                files = [ CallAltSmallVariants.longshot_vcf, CallAltSmallVariants.longshot_tbi,
+                        CallAltSmallVariants.deepvariant_vcf, CallAltSmallVariants.deepvariant_tbi,
+                        CallAltSmallVariants.deepvariant_gvcf, CallAltSmallVariants.deepvariant_gtbi ],
+                outdir = outdir + "/alt_variants"
+        }
     }
 
     ##########
