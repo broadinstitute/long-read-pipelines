@@ -15,7 +15,7 @@ workflow CallSVs {
 
         File ref_fasta
         File ref_fasta_fai
-        File tandem_repeat_bed
+        File? tandem_repeat_bed
 
         String preset = "clr"
     }
