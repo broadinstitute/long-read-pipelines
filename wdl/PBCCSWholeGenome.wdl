@@ -232,8 +232,8 @@ workflow PBCCSWholeGenome {
         # call SVs
         call SV.CallSVs as CallAltSVs {
             input:
-                bam               = ccs_bam,
-                bai               = ccs_bai,
+                bam               = alt_bam,
+                bai               = alt_bai,
 
                 ref_fasta         = alt_map['fasta'],
                 ref_fasta_fai     = alt_map['fai'],
@@ -244,8 +244,8 @@ workflow PBCCSWholeGenome {
         # call SNVs and small indels
         call SMV.CallSmallVariants as CallAltSmallVariants {
             input:
-                bam               = ccs_bam,
-                bai               = ccs_bai,
+                bam               = alt_bam,
+                bai               = alt_bai,
 
                 ref_fasta         = alt_map['fasta'],
                 ref_fasta_fai     = alt_map['fai'],
