@@ -110,7 +110,7 @@ workflow PBCCSWholeGenome {
         if (length(select_all(AlignAltCorrected.aligned_bam)) > 0) {
             call Utils.MergeBams as MergeAltCorrected {
                 input:
-                    bams = AlignCorrected.aligned_bam,
+                    bams = AlignAltCorrected.aligned_bam,
                     prefix = "~{participant_name}.~{ID}.alt.corrected"
             }
         }
