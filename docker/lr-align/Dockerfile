@@ -30,7 +30,7 @@ RUN wget https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x
         && cp minimap2 /usr/local/bin/
 
 # install htslib
-RUN git clone https://github.com/samtools/htslib.git \
+RUN git clone --recursive https://github.com/samtools/htslib.git \
     && cd htslib \
     && autoheader \
     && autoconf \
@@ -45,10 +45,11 @@ RUN git clone https://github.com/jts/bri.git \
     && cp bri /usr/local/bin/
 ENV LD_LIBRARY_PATH=/usr/local/lib/
 
-# install gatk
-RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
-    && cd gatk \
-    && ./gradlew \
-    && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
-    && cd .. \
-    && rm -rf /gatk
+# install samtools
+RUN wget https://github.com/samtools/samtools/releases/download/1.11/samtools-1.11.tar.bz2 \
+    && tar xjf samtools-1.11.tar.bz2 \
+    && rm samtools-1.11.tar.bz2 \
+    && cd samtools-1.11 \
+    && ./configure --without-curses \
+    && make \
+    && make install
