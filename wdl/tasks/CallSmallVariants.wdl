@@ -9,6 +9,7 @@ import "Structs.wdl"
 import "Utils.wdl" as Utils
 import "Longshot.wdl" as Longshot
 import "DeepVariant.wdl" as DV
+import "Clair.wdl" as Clair
 
 workflow CallSmallVariants {
     input {
@@ -34,6 +35,16 @@ workflow CallSmallVariants {
     call Utils.MakeChrIntervalList { input: ref_dict = ref_dict }
 
     scatter (chr_info in MakeChrIntervalList.chrs) {
+        call Clair.Clair {
+            input:
+                bam           = bam,
+                bai           = bai,
+                ref_fasta     = ref_fasta,
+                ref_fai       = ref_fasta_fai,
+                model_class   = "PACBIO",
+                chr           = chr_info[0]
+        }
+
         call Longshot.Longshot {
             input:
                 bam           = bam,
@@ -52,6 +63,13 @@ workflow CallSmallVariants {
                 model_class   = "PACBIO",
                 chr           = chr_info[0]
         }
+    }
+
+    call MergeSNVCalls as MergeClairVCFs {
+        input:
+            vcfs = Clair.vcf,
+            ref_dict = ref_dict,
+            prefix = basename(bam, ".bam") + ".clair"
     }
 
     call MergeSNVCalls as MergeLongshotVCFs {
