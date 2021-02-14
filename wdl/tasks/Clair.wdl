@@ -48,7 +48,7 @@ task Clair {
             --ctgName ~{chr} \
             --threads ~{num_cpus} \
             --sampleName $SAMPLE_NAME \
-            --call_fn ~{prefix}.clair.~{chr}.vcf
+            --call_fn ~{prefix}.clair.~{chr}.vcf 2> /dev/null
     >>>
 
     output {

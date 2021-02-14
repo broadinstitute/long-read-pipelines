@@ -56,3 +56,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ExtractAouData.wdl
   testParameterFiles:
+- name: LRCNVs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LRCNVs.wdl
+  testParameterFiles:
