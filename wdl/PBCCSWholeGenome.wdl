@@ -263,8 +263,8 @@ workflow PBCCSWholeGenome {
         call FF.FinalizeToDir as FinalizeAltSmallVariants {
             input:
                 files = [ CallAltSmallVariants.longshot_vcf, CallAltSmallVariants.longshot_tbi,
-                        CallAltSmallVariants.deepvariant_vcf, CallAltSmallVariants.deepvariant_tbi,
-                        CallAltSmallVariants.deepvariant_gvcf, CallAltSmallVariants.deepvariant_gtbi ],
+                          CallAltSmallVariants.deepvariant_vcf, CallAltSmallVariants.deepvariant_tbi,
+                          CallAltSmallVariants.deepvariant_gvcf, CallAltSmallVariants.deepvariant_gtbi ],
                 outdir = outdir + "/alt_variants"
         }
     }
@@ -317,5 +317,10 @@ workflow PBCCSWholeGenome {
         input:
             files = [ Hifiasm.gfa, Hifiasm.fa, CallAssemblyVariants.paf ],
             outdir = outdir + "/assembly"
+    }
+
+    output {
+        File corrected_bam = ccs_bam
+        File corrected_bai = ccs_bai
     }
 }
