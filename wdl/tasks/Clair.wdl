@@ -42,7 +42,7 @@ task Clair {
         MODEL=$(echo ~{model_class} | tr 'A-Z' 'a-z')
 
         python3 $CLAIR callVarBam \
-            --chkpnt_fn models/$MODEL/model \
+            --chkpnt_fn /opt/clair/models/$MODEL/model \
             --ref_fn ~{ref_fasta} \
             --bam_fn ~{bam} \
             --ctgName ~{chr} \
@@ -52,8 +52,7 @@ task Clair {
     >>>
 
     output {
-        # save both VCF and gVCF
-        File vcf = "~{prefix}.deepvariant.~{chr}.vcf"
+        File vcf = "~{prefix}.clair.~{chr}.vcf"
     }
 
     #########################
