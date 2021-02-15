@@ -50,18 +50,14 @@ workflow PBFlowcell {
 
     call SummarizeCCSReport { input: report = ccs_report }
 
-    ##########
-    # store the results into designated bucket
-    ##########
-
     output {
         File corrected_bam = ccs_bam
         File corrected_pbi = ccs_pbi
         File corrected_report = ccs_report
 
-        Int zmws_input = SummarizeCCSReport.zmws_input
-        Int zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
-        Int zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
+        Float zmws_input = SummarizeCCSReport.zmws_input
+        Float zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
+        Float zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
         Float zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
         Float zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
     }
@@ -87,9 +83,9 @@ task SummarizeCCSReport {
     >>>
 
     output {
-        Int zmws_input = read_int("zmws_input.txt")
-        Int zmws_pass_filters = read_int("zmws_pass_filters.txt")
-        Int zmws_fail_filters = read_int("zmws_fail_filters.txt")
+        Float zmws_input = read_float("zmws_input.txt")
+        Float zmws_pass_filters = read_float("zmws_pass_filters.txt")
+        Float zmws_fail_filters = read_float("zmws_fail_filters.txt")
         Float zmws_pass_filters_pct = read_float("zmws_pass_filters_pct.txt")
         Float zmws_fail_filters_pct = read_float("zmws_fail_filters_pct.txt")
     }
