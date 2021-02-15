@@ -16,6 +16,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTWholeGenome.wdl
   testParameterFiles:
+- name: PBFlowcell
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBFlowcell.wdl
+  testParameterFiles:
 - name: PBCCS
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCS.wdl
