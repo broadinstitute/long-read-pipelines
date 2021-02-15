@@ -4,11 +4,11 @@ import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/CallSVs.wdl" as SV
 import "tasks/Figures.wdl" as FIG
-import "tasks/Finalize.wdl" as FF
+import "tasks/CallSVsONT.wdl" as SV
 import "tasks/CallSmallVariantsONT.wdl" as SMV
 import "tasks/Methylation.wdl" as Meth
+import "tasks/Finalize.wdl" as FF
 
 workflow ONTWholeGenome {
     input {
@@ -123,19 +123,17 @@ workflow ONTWholeGenome {
             gcs_output_dir = outdir + "/metrics/combined/" + participant_name
     }
 
-#    call SV.CallSVs as CallSVs {
-#        input:
-#            bam               = bam,
-#            bai               = bai,
-#
-#            ref_fasta         = ref_map['fasta'],
-#            ref_fasta_fai     = ref_map['fai'],
-#            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-#
-#            preset            = "ont"
-#    }
+    call SV.CallSVsONT as CallSVs {
+        input:
+            bam               = bam,
+            bai               = bai,
 
-    call SMV.CallSmallVariants as CallSmallVariants {
+            ref_fasta         = ref_map['fasta'],
+            ref_fasta_fai     = ref_map['fai'],
+            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+    }
+
+    call SMV.CallSmallVariantsONT as CallSmallVariants {
         input:
             bam               = bam,
             bai               = bai,
@@ -154,15 +152,17 @@ workflow ONTWholeGenome {
     # Finalize
     ##########
 
-#    call FF.FinalizeToDir as FinalizeSVs {
-#        input:
+    call FF.FinalizeToDir as FinalizeSVs {
+        input:
 #            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
-#            outdir = outdir + "/variants"
-#    }
+            files = [ CallSVs.sniffles_vcf, CallSVs.svim_vcf ],
+            outdir = outdir + "/variants"
+    }
 
     call FF.FinalizeToDir as FinalizeSmallVariants {
         input:
-            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
+            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi,
+                      CallSmallVariants.clair_vcf, CallSmallVariants.clair_tbi ],
             outdir = outdir + "/variants"
     }
 

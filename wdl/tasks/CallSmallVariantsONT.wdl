@@ -11,7 +11,7 @@ import "Longshot.wdl" as Longshot
 import "DeepVariant.wdl" as DV
 import "Clair.wdl" as Clair
 
-workflow CallSmallVariants {
+workflow CallSmallVariantsONT {
     input {
         File bam
         File bai
@@ -42,13 +42,24 @@ workflow CallSmallVariants {
                 chr           = chr_info[0]
         }
 
-        call DV.PEPPER {
+#        call DV.PEPPER {
+#            input:
+#                bam           = bam,
+#                bai           = bai,
+#                ref_fasta     = ref_fasta,
+#                ref_fai       = ref_fasta_fai,
+#                chr           = chr_info[0]
+#        }
+
+        call Clair.Clair {
             input:
                 bam           = bam,
                 bai           = bai,
                 ref_fasta     = ref_fasta,
                 ref_fai       = ref_fasta_fai,
+                model_class   = "ont",
                 chr           = chr_info[0]
+
         }
     }
 
@@ -59,29 +70,39 @@ workflow CallSmallVariants {
             prefix = basename(bam, ".bam") + ".longshot"
     }
 
-    call MergeSNVCalls as MergeDeepVariantVCFs {
-        input:
-            vcfs = PEPPER.vcf,
-            ref_dict = ref_dict,
-            prefix = basename(bam, ".bam") + ".deepvariant"
-    }
+#    call MergeSNVCalls as MergeDeepVariantVCFs {
+#        input:
+#            vcfs = PEPPER.vcf,
+#            ref_dict = ref_dict,
+#            prefix = basename(bam, ".bam") + ".deepvariant"
+#    }
+#
+#    call MergeSNVCalls as MergeDeepVariantGVCFs {
+#        input:
+#            vcfs = PEPPER.gvcf,
+#            ref_dict = ref_dict,
+#            prefix = basename(bam, ".bam") + ".deepvariant.g"
+#    }
 
-    call MergeSNVCalls as MergeDeepVariantGVCFs {
+    call MergeSNVCalls as MergeClairVCFs {
         input:
-            vcfs = PEPPER.gvcf,
+            vcfs = Clair.vcf,
             ref_dict = ref_dict,
-            prefix = basename(bam, ".bam") + ".deepvariant.g"
+            prefix = basename(bam, ".bam") + ".clair"
     }
 
     output {
         File longshot_vcf = MergeLongshotVCFs.vcf
         File longshot_tbi = MergeLongshotVCFs.tbi
 
-        File deepvariant_vcf = MergeDeepVariantVCFs.vcf
-        File deepvariant_tbi = MergeDeepVariantVCFs.tbi
+#        File deepvariant_vcf = MergeDeepVariantVCFs.vcf
+#        File deepvariant_tbi = MergeDeepVariantVCFs.tbi
+#
+#        File deepvariant_gvcf = MergeDeepVariantGVCFs.vcf
+#        File deepvariant_gtbi = MergeDeepVariantGVCFs.tbi
 
-        File deepvariant_gvcf = MergeDeepVariantGVCFs.vcf
-        File deepvariant_gtbi = MergeDeepVariantGVCFs.tbi
+        File clair_vcf = MergeClairVCFs.vcf
+        File clair_tbi = MergeClairVCFs.tbi
     }
 }
 
