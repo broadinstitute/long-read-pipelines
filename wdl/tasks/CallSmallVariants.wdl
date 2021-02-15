@@ -35,15 +35,15 @@ workflow CallSmallVariants {
     call Utils.MakeChrIntervalList { input: ref_dict = ref_dict }
 
     scatter (chr_info in MakeChrIntervalList.chrs) {
-        call Clair.Clair {
-            input:
-                bam           = bam,
-                bai           = bai,
-                ref_fasta     = ref_fasta,
-                ref_fai       = ref_fasta_fai,
-                model_class   = "PACBIO",
-                chr           = chr_info[0]
-        }
+#        call Clair.Clair {
+#            input:
+#                bam           = bam,
+#                bai           = bai,
+#                ref_fasta     = ref_fasta,
+#                ref_fai       = ref_fasta_fai,
+#                model_class   = "PACBIO",
+#                chr           = chr_info[0]
+#        }
 
         call Longshot.Longshot {
             input:
@@ -65,12 +65,12 @@ workflow CallSmallVariants {
         }
     }
 
-    call MergeSNVCalls as MergeClairVCFs {
-        input:
-            vcfs = Clair.vcf,
-            ref_dict = ref_dict,
-            prefix = basename(bam, ".bam") + ".clair"
-    }
+#    call MergeSNVCalls as MergeClairVCFs {
+#        input:
+#            vcfs = Clair.vcf,
+#            ref_dict = ref_dict,
+#            prefix = basename(bam, ".bam") + ".clair"
+#    }
 
     call MergeSNVCalls as MergeLongshotVCFs {
         input:

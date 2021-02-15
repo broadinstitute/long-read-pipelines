@@ -23,7 +23,7 @@ task Minimap2 {
         prefix:     "[default-valued] prefix for output BAM"
     }
 
-    Int disk_size = 1 + 10*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
+    Int disk_size = 1 + 3*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
 
     Int cpus = 4
     Int mem = 30
@@ -35,10 +35,6 @@ task Minimap2 {
         SORT_PARAMS="-@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
         FILES="~{sep=' ' reads}"
-
-        # We write to a SAM file before sorting and indexing because rarely, doing everything
-        # in a single one-liner leads to a truncated file error and segmentation fault of unknown
-        # origin.  Separating these commands requires more resources, but is more reliable overall.
 
         if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
             cat $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
