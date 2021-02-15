@@ -7,7 +7,7 @@ import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/CallSVs.wdl" as SV
 import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
-import "tasks/CallSmallVariants.wdl" as SMV
+import "tasks/CallSmallVariantsONT.wdl" as SMV
 import "tasks/Methylation.wdl" as Meth
 
 workflow ONTWholeGenome {
@@ -123,17 +123,17 @@ workflow ONTWholeGenome {
             gcs_output_dir = outdir + "/metrics/combined/" + participant_name
     }
 
-    call SV.CallSVs as CallSVs {
-        input:
-            bam               = bam,
-            bai               = bai,
-
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-            preset            = "ont"
-    }
+#    call SV.CallSVs as CallSVs {
+#        input:
+#            bam               = bam,
+#            bai               = bai,
+#
+#            ref_fasta         = ref_map['fasta'],
+#            ref_fasta_fai     = ref_map['fai'],
+#            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+#
+#            preset            = "ont"
+#    }
 
     call SMV.CallSmallVariants as CallSmallVariants {
         input:
@@ -154,11 +154,11 @@ workflow ONTWholeGenome {
     # Finalize
     ##########
 
-    call FF.FinalizeToDir as FinalizeSVs {
-        input:
-            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
-            outdir = outdir + "/variants"
-    }
+#    call FF.FinalizeToDir as FinalizeSVs {
+#        input:
+#            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
+#            outdir = outdir + "/variants"
+#    }
 
     call FF.FinalizeToDir as FinalizeSmallVariants {
         input:

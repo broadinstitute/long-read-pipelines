@@ -84,3 +84,81 @@ task DeepVariant {
         cpuPlatform:            "Intel Skylake"
     }
 }
+
+task PEPPER {
+    input {
+        File bam
+        File bai
+
+        File ref_fasta
+        File ref_fai
+
+        String chr
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam: "input BAM from which to call variants"
+        bai: "index accompanying the BAM"
+
+        ref_fasta: "reference to which the BAM was aligned to"
+        ref_fai:   "index accompanying the reference"
+
+        chr: "chromsome on which to call variants"
+    }
+
+    Int disk_size = ceil(size(bam, "GB")) + 50
+    String prefix = basename(bam, ".bam")
+
+    command <<<
+        # example from https://github.com/kishwarshafin/pepper/blob/r0.1/docs/PEPPER_variant_calling.md#Quickstart
+        set -euo pipefail
+
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        sh /opt/run_pepper_deepvariant.sh \
+          -b ~{bam} \
+          -f ~{ref_fasta} \
+          -o ./ \
+          -t ${num_core} \
+          -r ~{chr}
+          -x 1
+
+        find . -type f -exec ls -lah {} \;
+    >>>
+
+    output {
+        # save both VCF and gVCF
+        File vcf = "~{prefix}.deepvariant.~{chr}.vcf.gz"
+        File vcf_tbi = "~{prefix}.deepvariant.~{chr}.vcf.gz.tbi"
+        File gvcf = "~{prefix}.deepvariant.~{chr}.g.vcf.gz"
+        File gvcf_tbi = "~{prefix}.deepvariant.~{chr}.g.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          12,
+        mem_gb:             64,
+        disk_gb:            disk_size,
+        boot_disk_gb:       100,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "kishwars/pepper_deepvariant_gpu:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        gpuType:                "nvidia-tesla-p100"
+        gpuCount:               1
+        nvidiaDriverVersion:    "418.152.00"
+        zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
+        cpuPlatform:            "Intel Skylake"
+    }
+}
