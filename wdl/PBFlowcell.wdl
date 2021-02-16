@@ -198,6 +198,8 @@ task SummarizePBI {
         set -euxo pipefail
 
         python3 /usr/local/bin/compute_pbi_stats.py -q ~{qual_threshold} ~{pbi} > map.txt
+
+        cat map.txt
     >>>
 
     output {
@@ -210,8 +212,8 @@ task SummarizePBI {
         mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
+        preemptible_tries:  0,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.25"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
