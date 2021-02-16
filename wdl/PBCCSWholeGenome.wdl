@@ -320,7 +320,55 @@ workflow PBCCSWholeGenome {
     }
 
     output {
+        # CCS report
+        File corrected_report = ccs_report
+
+        # Assembly
+        File hifiasm_gfa = Hifiasm.gfa
+        File hifiasm_fa = Hifiasm.fa
+        File hifiasm_paf = CallAssemblyVariants.paf
+
+        # Assembly-based variants
+        File paftools_vcf = CallAssemblyVariants.paftools_vcf
+
+        ### Ref
+        ### ===
+        # BAMs
         File corrected_bam = ccs_bam
         File corrected_bai = ccs_bai
+
+        # SVs
+        File pbsv_vcf = CallSVs.pbsv_vcf
+        File sniffles_vcf = CallSVs.sniffles_vcf
+        File svim_vcf = CallSVs.svim_vcf
+        File cutesv_vcf = CallSVs.cutesv_vcf
+
+        # SNVs/indels
+        File longshot_vcf = CallSmallVariants.longshot_vcf
+        File longshot_tbi = CallSmallVariants.longshot_tbi
+        File deepvariant_vcf = CallSmallVariants.deepvariant_vcf
+        File deepvariant_tbi = CallSmallVariants.deepvariant_tbi
+        File deepvariant_gvcf = CallSmallVariants.deepvariant_gvcf
+        File deepvariant_gtbi = CallSmallVariants.deepvariant_gtbi
+
+        ### Alt
+        ### ===
+        # BAMs
+        File? alt_corrected_bam = alt_bam
+        File? alt_corrected_bai = alt_bai
+
+        # SVs
+        File? alt_pbsv_vcf = CallAltSVs.pbsv_vcf
+        File? alt_sniffles_vcf = CallAltSVs.sniffles_vcf
+        File? alt_svim_vcf = CallAltSVs.svim_vcf
+        File? alt_cutesv_vcf = CallAltSVs.cutesv_vcf
+
+        # SNVs/indels
+        File? alt_longshot_vcf = CallAltSmallVariants.longshot_vcf
+        File? alt_longshot_tbi = CallAltSmallVariants.longshot_tbi
+        File? alt_deepvariant_vcf = CallAltSmallVariants.deepvariant_vcf
+        File? alt_deepvariant_tbi = CallAltSmallVariants.deepvariant_tbi
+        File? alt_deepvariant_gvcf = CallAltSmallVariants.deepvariant_gvcf
+        File? alt_deepvariant_gtbi = CallAltSmallVariants.deepvariant_gtbi
     }
 }
