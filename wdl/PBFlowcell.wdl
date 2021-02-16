@@ -203,7 +203,7 @@ task SummarizePBI {
     >>>
 
     output {
-        Map[String, Int] results = read_map("map.txt")
+        Map[String, Float] results = read_map("map.txt")
     }
 
     #########################
