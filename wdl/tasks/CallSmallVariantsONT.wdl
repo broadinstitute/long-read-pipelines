@@ -51,16 +51,16 @@ workflow CallSmallVariantsONT {
 #                chr           = chr_info[0]
 #        }
 
-        call Clair.Clair {
-            input:
-                bam           = bam,
-                bai           = bai,
-                ref_fasta     = ref_fasta,
-                ref_fai       = ref_fasta_fai,
-                model_class   = "ont",
-                chr           = chr_info[0]
-
-        }
+#        call Clair.Clair {
+#            input:
+#                bam           = bam,
+#                bai           = bai,
+#                ref_fasta     = ref_fasta,
+#                ref_fai       = ref_fasta_fai,
+#                model_class   = "ont",
+#                chr           = chr_info[0]
+#
+#        }
     }
 
     call MergeSNVCalls as MergeLongshotVCFs {
@@ -101,8 +101,8 @@ workflow CallSmallVariantsONT {
 #        File deepvariant_gvcf = MergeDeepVariantGVCFs.vcf
 #        File deepvariant_gtbi = MergeDeepVariantGVCFs.tbi
 
-        File clair_vcf = MergeClairVCFs.vcf
-        File clair_tbi = MergeClairVCFs.tbi
+#        File clair_vcf = MergeClairVCFs.vcf
+#        File clair_tbi = MergeClairVCFs.tbi
     }
 }
 
