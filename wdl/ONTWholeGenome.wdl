@@ -161,8 +161,8 @@ workflow ONTWholeGenome {
 
     call FF.FinalizeToDir as FinalizeSmallVariants {
         input:
-            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi,
-                      CallSmallVariants.clair_vcf, CallSmallVariants.clair_tbi ],
+            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
+#                      CallSmallVariants.clair_vcf, CallSmallVariants.clair_tbi ],
             outdir = outdir + "/variants"
     }
 
