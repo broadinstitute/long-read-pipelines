@@ -83,13 +83,13 @@ workflow CallSmallVariantsONT {
 #            ref_dict = ref_dict,
 #            prefix = basename(bam, ".bam") + ".deepvariant.g"
 #    }
-
-    call MergeSNVCalls as MergeClairVCFs {
-        input:
-            vcfs = Clair.vcf,
-            ref_dict = ref_dict,
-            prefix = basename(bam, ".bam") + ".clair"
-    }
+#
+#    call MergeSNVCalls as MergeClairVCFs {
+#        input:
+#            vcfs = Clair.vcf,
+#            ref_dict = ref_dict,
+#            prefix = basename(bam, ".bam") + ".clair"
+#    }
 
     output {
         File longshot_vcf = MergeLongshotVCFs.vcf
