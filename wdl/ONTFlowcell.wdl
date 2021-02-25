@@ -79,48 +79,71 @@ workflow ONTFlowcell {
             gcs_output_dir = outdir + "/metrics/per_flowcell/" + SID
     }
 
-#    File bam = MergeReads.merged_bam
-#    File bai = MergeReads.merged_bai
-#
-#    call FF.FinalizeToDir as FinalizeMergedRuns {
-#        input:
-#            files = [ bam, bai ],
-#            outdir = outdir + "/alignments"
-#    }
+    call SummarizeNanoStats { input: report = PerFlowcellFigures.NanoPlotFromSummaryStats }
 
     output {
-#        String gcs_outdir = outdir
-
         File aligned_bam = MergeReads.merged_bam
         File aligned_bai = MergeReads.merged_bai
 
-#        #Float xml_num_records = SummarizeXMLMetadata.xml_num_records
-#        #Float xml_total_length = SummarizeXMLMetadata.xml_total_length
-#
-#        Float num_records = SummarizeSubreadsPBI.results['reads']
-#        Float total_length = SummarizeSubreadsPBI.results['bases']
-#        Float raw_yield = SummarizeSubreadsPBI.results['yield']
-#
-#        Float polymerase_mean = SummarizeSubreadsPBI.results['polymerase_mean']
-#        Float polymerase_n50 = SummarizeSubreadsPBI.results['polymerase_n50']
-#
-#        Float subread_mean = SummarizeSubreadsPBI.results['subread_mean']
-#        Float subread_n50 = SummarizeSubreadsPBI.results['subread_n50']
-#
-#        Float ccs_num_records = SummarizeCCSPBI.results['reads']
-#        Float ccs_total_length = SummarizeCCSPBI.results['bases']
-#        Float ccs_mean_qual = SummarizeCCSPBI.results['mean_qual']
-#        Float ccs_yield = SummarizeCCSPBI.results['yield']
-#
-#        Float ccs_num_records_q20 = SummarizeCCSQ20PBI.results['reads']
-#        Float ccs_total_length_q20 = SummarizeCCSQ20PBI.results['bases']
-#        Float ccs_mean_qual_q20 = SummarizeCCSQ20PBI.results['mean_qual']
-#        Float ccs_yield_q20 = SummarizeCCSQ20PBI.results['yield']
-#
-#        Float zmws_input = SummarizeCCSReport.zmws_input
-#        Float zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
-#        Float zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
-#        Float zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
-#        Float zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
+        Float active_channels = SummarizeNanoStats.results['Active_channels']
+
+        Float num_reads = SummarizeNanoStats.results['Number_of_reads']
+        Float total_bases = SummarizeNanoStats.results['Total_bases']
+        Float raw_yield = SummarizeNanoStats.results['Total_bases']/3088286401.0
+
+        Float read_length_mean = SummarizeNanoStats.results['Mean_read_length']
+        Float read_length_N50 = SummarizeNanoStats.results['Read_length_N50']
+        Float read_length_median = SummarizeNanoStats.results['Median_read_length']
+
+        Float read_qual_mean = SummarizeNanoStats.results['Mean_read_quality']
+        Float read_qual_median = SummarizeNanoStats.results['Mean_read_quality']
+
+        Float num_reads_gt_Q5 = SummarizeNanoStats.results['Number_of_reads_gt_Q5']
+        Float num_reads_gt_Q7 = SummarizeNanoStats.results['Number_of_reads_gt_Q7']
+        Float num_reads_gt_Q10 = SummarizeNanoStats.results['Number_of_reads_gt_Q10']
+        Float num_reads_gt_Q12 = SummarizeNanoStats.results['Number_of_reads_gt_Q12']
+        Float num_reads_gt_Q15 = SummarizeNanoStats.results['Number_of_reads_gt_Q15']
+    }
+}
+
+task SummarizeNanoStats {
+    input {
+        File report
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(report, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        cat ~{report} | grep -v -e '^General' -e '^Number,' | head -13 | sed 's/:\s\+/\t/g' | sed 's/,//g' | sed 's/ /_/g' | awk '{ print $1 "\t" $2 }' | sed 's/_(.*//g' | sed 's/>/Number_of_reads_gt_/' > map.txt
+        cat map.txt
+    >>>
+
+    output {
+        Map[String, Float] results = read_map("map.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-ont:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
