@@ -130,7 +130,7 @@ workflow ONTWholeGenome {
 
             ref_fasta         = ref_map['fasta'],
             ref_fasta_fai     = ref_map['fai'],
-            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+            #tandem_repeat_bed = ref_map['tandem_repeat_bed'],
     }
 
     call SMV.CallSmallVariantsONT as CallSmallVariants {

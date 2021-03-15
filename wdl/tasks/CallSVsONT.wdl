@@ -19,7 +19,7 @@ workflow CallSVsONT {
 
         File ref_fasta
         File ref_fasta_fai
-        File? tandem_repeat_bed
+        #File? tandem_repeat_bed
     }
 
     parameter_meta {
@@ -28,7 +28,7 @@ workflow CallSVsONT {
 
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
-        tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+        #tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 
 #    call PBSV.PBSV {
