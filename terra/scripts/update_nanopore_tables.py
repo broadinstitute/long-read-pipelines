@@ -116,7 +116,7 @@ for e in ts:
         e["fastq_files_in_fallback"],
         e["fastq_files_in_final_dest"]
     ])
-    
+
 tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
 tbl_new["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["final_summary_file"]))
 
@@ -127,6 +127,8 @@ if len(ent_old) > 0:
 
 merged_tbl = pd.merge(tbl_old, tbl_new, how='outer') if len(ent_old) > 0 else tbl_new
 merged_tbl = merged_tbl[['entity:sample_id'] + tbl_header]
+merged_tbl = merged_tbl.drop_duplicates(subset=['flow_cell_id', 'instrument', 'original_participant_name', 'acquisition_stopped', 'processing_stopped', 'fast5_files_in_fallback', 'fast5_files_in_final_dest', 'fastq_files_in_fallback', 'fastq_files_in_final_dest'])
+merged_tbl = merged_tbl[merged_tbl.fast5_files_in_final_dest != "0"]
 
 a = fapi.upload_entities(namespace, workspace, entity_data=merged_tbl.to_csv(index=False, sep="\t"), model='flexible')
 
@@ -136,7 +138,3 @@ else:
     print(a.json())
 
 upload_sample_set(namespace, workspace, merged_tbl)
-
-
-#ent_old = fapi.get_entities('broad-firecloud-dsde-methods', 'dsp-oxfordnano', 'sample').json()
-#print(ent_old)
