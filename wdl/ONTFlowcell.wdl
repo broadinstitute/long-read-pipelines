@@ -41,7 +41,7 @@ workflow ONTFlowcell {
     call ONT.ListFiles as ListFast5s { input: summary_file = final_summary, suffix = "fast5" }
     call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/{participant_name}/{GetRunInfo.run_info['flow_cell_id']}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{participant_name}/~{GetRunInfo.run_info['flow_cell_id']}"
 
     String SM  = participant_name
     String PL  = "ONT"
