@@ -47,7 +47,7 @@ workflow ONTFlowcell {
     String PL  = "ONT"
     String PU  = GetRunInfo.run_info["instrument"]
     String DT  = GetRunInfo.run_info["started"]
-    String ID  = GetRunInfo.run_info["flow_cell_id"]
+    String ID  = GetRunInfo.run_info["flow_cell_id"] + "." + GetRunInfo.run_info["position"]
     String DIR = GetRunInfo.run_info["protocol_group_id"] + "." + SM + "." + ID
     String SID = ID + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
     String RG = "@RG\\tID:~{SID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
@@ -72,13 +72,13 @@ workflow ONTFlowcell {
             aligned_bai    = MergeReads.merged_bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/" + GetRunInfo.run_info["flow_cell_id"]
+            gcs_output_dir = outdir + "/metrics/" + SID
     }
 
     call FIG.Figures as PerFlowcellFigures {
         input:
             summary_files  = [ sequencing_summary ],
-            gcs_output_dir = outdir + "/metrics/" + GetRunInfo.run_info["flow_cell_id"]
+            gcs_output_dir = outdir + "/metrics/" + SID
     }
 
     call SummarizeNanoStats { input: report = PerFlowcellFigures.NanoPlotFromSummaryStats }
