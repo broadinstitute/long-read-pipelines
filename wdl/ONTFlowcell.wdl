@@ -19,6 +19,8 @@ workflow ONTFlowcell {
         String participant_name
         Int num_shards = 50
 
+        Float genome_length = 3088286401.0
+
         String gcs_out_root_dir
     }
 
@@ -35,17 +37,17 @@ workflow ONTFlowcell {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/" + participant_name
-
     call ONT.GetRunInfo { input: summary_file = final_summary }
     call ONT.ListFiles as ListFast5s { input: summary_file = final_summary, suffix = "fast5" }
     call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
+
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/{participant_name}/{GetRunInfo.run_info['flow_cell_id']}"
 
     String SM  = participant_name
     String PL  = "ONT"
     String PU  = GetRunInfo.run_info["instrument"]
     String DT  = GetRunInfo.run_info["started"]
-    String ID  = GetRunInfo.run_info["flow_cell_id"] + "." + GetRunInfo.run_info["position"]
+    String ID  = GetRunInfo.run_info["flow_cell_id"]
     String DIR = GetRunInfo.run_info["protocol_group_id"] + "." + SM + "." + ID
     String SID = ID + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
     String RG = "@RG\\tID:~{SID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
@@ -62,7 +64,7 @@ workflow ONTFlowcell {
         }
     }
 
-    call Utils.MergeBams as MergeReads { input: bams = AlignReads.aligned_bam, prefix = "~{participant_name}.~{ID}" }
+    call Utils.MergeBams as MergeReads { input: bams = AlignReads.aligned_bam, prefix = "~{SM}.~{ID}" }
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
         input:
@@ -70,26 +72,38 @@ workflow ONTFlowcell {
             aligned_bai    = MergeReads.merged_bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/per_flowcell/" + SID
+            gcs_output_dir = outdir + "/metrics/" + GetRunInfo.run_info["flow_cell_id"]
     }
 
     call FIG.Figures as PerFlowcellFigures {
         input:
             summary_files  = [ sequencing_summary ],
-            gcs_output_dir = outdir + "/metrics/per_flowcell/" + SID
+            gcs_output_dir = outdir + "/metrics/" + GetRunInfo.run_info["flow_cell_id"]
     }
 
     call SummarizeNanoStats { input: report = PerFlowcellFigures.NanoPlotFromSummaryStats }
 
+    call FF.FinalizeToFile as FinalizeAlignedBam {
+        input:
+            file    = MergeReads.merged_bam,
+            outfile = outdir + "/alignments/" + basename(MergeReads.merged_bam)
+    }
+
+    call FF.FinalizeToFile as FinalizeAlignedBai {
+        input:
+            file    = MergeReads.merged_bai,
+            outfile = outdir + "/alignments/" + basename(MergeReads.merged_bai)
+    }
+
     output {
-        File aligned_bam = MergeReads.merged_bam
-        File aligned_bai = MergeReads.merged_bai
+        File aligned_bam = FinalizeAlignedBam.gcs_path
+        File aligned_bai = FinalizeAlignedBai.gcs_path
 
         Float active_channels = SummarizeNanoStats.results['Active_channels']
 
         Float num_reads = SummarizeNanoStats.results['Number_of_reads']
         Float total_bases = SummarizeNanoStats.results['Total_bases']
-        Float raw_yield = SummarizeNanoStats.results['Total_bases']/3088286401.0
+        Float raw_yield = SummarizeNanoStats.results['Total_bases']/genome_length
 
         Float read_length_mean = SummarizeNanoStats.results['Mean_read_length']
         Float read_length_N50 = SummarizeNanoStats.results['Read_length_N50']

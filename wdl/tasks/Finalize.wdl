@@ -20,6 +20,7 @@ task FinalizeToFile {
     >>>
 
     output {
+        String gcs_path = gcs_output_file
     }
 
     #########################
