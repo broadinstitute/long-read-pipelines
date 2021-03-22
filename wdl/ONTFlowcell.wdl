@@ -41,8 +41,6 @@ workflow ONTFlowcell {
     call ONT.ListFiles as ListFast5s { input: summary_file = final_summary, suffix = "fast5" }
     call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{participant_name}/~{GetRunInfo.run_info['flow_cell_id']}"
-
     String SM  = participant_name
     String PL  = "ONT"
     String PU  = GetRunInfo.run_info["instrument"]
@@ -51,6 +49,8 @@ workflow ONTFlowcell {
     String DIR = GetRunInfo.run_info["protocol_group_id"] + "." + SM + "." + ID
     String SID = ID + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
     String RG = "@RG\\tID:~{SID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{participant_name}/~{GetRunInfo.run_info['flow_cell_id']}/~{GetRunInfo.run_info['protocol_run_id']}"
 
     call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
@@ -64,7 +64,7 @@ workflow ONTFlowcell {
         }
     }
 
-    call Utils.MergeBams as MergeReads { input: bams = AlignReads.aligned_bam, prefix = "~{SM}.~{ID}" }
+    call Utils.MergeBams as MergeReads { input: bams = AlignReads.aligned_bam, prefix = "~{SM}.~{SID}" }
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
         input:
