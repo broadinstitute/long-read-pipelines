@@ -12,16 +12,16 @@ task FindSequencingSummaryFiles {
     String indir = sub(gcs_input_dir, "/$", "")
 
     command <<<
-        for summary_file in $(gsutil ls ~{indir}/**sequencing_summary*.txt*)
+        for summary_file in $(gsutil ls "~{indir}/**sequencing_summary*.txt*")
         do
             DIR=$(dirname $summary_file)
             echo ${DIR}
 
-            gsutil ls ${DIR} | grep fastq_pass && gsutil ls ${DIR} | grep fast5_pass
+            gsutil ls "${DIR}" | grep fastq_pass && gsutil ls "${DIR}" | grep fast5_pass
 
             if [ $? -eq 0 ]; then
-                FASTQ_COUNT=$(gsutil ls ${DIR}/fastq_pass/*.fastq* | wc -l)
-                FAST5_COUNT=$(gsutil ls ${DIR}/fast5_pass/*.fast5* | wc -l)
+                FASTQ_COUNT=$(gsutil ls "${DIR}/fastq_pass/*.fastq*" | wc -l)
+                FAST5_COUNT=$(gsutil ls "${DIR}/fast5_pass/*.fast5*" | wc -l)
 
                 echo "${FASTQ_COUNT} ${FAST5_COUNT}"
 
@@ -76,7 +76,7 @@ task GetRunInfo {
     command <<<
         set -euxo pipefail
 
-        gsutil cat ~{indir}/final_summary*.txt | sed 's/=/\t/g' > run_info.txt
+        gsutil cat "~{indir}/final_summary*.txt" | sed 's/=/\t/g' > run_info.txt
     >>>
 
     output {
@@ -118,7 +118,7 @@ task ListFiles {
     command <<<
         set -euxo pipefail
 
-        gsutil ls ~{indir}/**.~{suffix}* | grep -v fail > files.txt
+        gsutil ls "~{indir}/**.~{suffix}*" | grep -v fail > files.txt
         cat files.txt | wc -l > lc.txt
     >>>
 

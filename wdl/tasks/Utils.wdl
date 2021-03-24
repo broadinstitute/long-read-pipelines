@@ -742,7 +742,13 @@ task MergeBams {
     command <<<
         set -euxo pipefail
 
-        samtools merge -p -c -@2 --no-PG ~{prefix}.bam ~{sep=" " bams}
+        if [[ ~{len(bams)} -gt 0 ]]
+        then
+            samtools merge -p -c -@2 --no-PG ~{prefix}.bam ~{sep=" " bams}
+        else
+            cp ~{bams[0]} ~{prefix}.bam
+        fi
+
         samtools index ~{prefix}.bam
     >>>
 
