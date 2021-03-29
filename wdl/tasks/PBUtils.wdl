@@ -14,7 +14,7 @@ task FindBams {
     command <<<
         set -euxo pipefail
 
-        gsutil ls ~{indir}/**subreads.bam > subread_bams.txt
+        gsutil ls "~{indir}/**subreads.bam" > subread_bams.txt
     >>>
 
     output {

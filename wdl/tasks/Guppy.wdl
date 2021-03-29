@@ -41,7 +41,7 @@ task ListFast5Files {
     String indir = sub(gcs_fast5_dir, "/$", "")
 
     command <<<
-        gsutil ls ~{indir}/**.fast5 > fast5_files.txt
+        gsutil ls "~{indir}/**.fast5" > fast5_files.txt
     >>>
 
     output {

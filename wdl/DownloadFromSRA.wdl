@@ -90,7 +90,7 @@ task FastqDump {
     Int final_disk_space_gb = if (compressed_disk_space_gb < minimum_disk_size_gb) then minimum_disk_size_gb else compressed_disk_space_gb
 
     command <<<
-        if gsutil ls -lh ~{gcs_output_dir}/~{SRR_ID}.fastq.gz ; then
+        if gsutil ls -lh "~{gcs_output_dir}/~{SRR_ID}.fastq.gz" ; then
             echo "~{gcs_output_dir}/~{SRR_ID} already exists."
         else
             set -eu # we place this here because the gsutil check up above will error us out were we to place it at the very beginning
@@ -112,8 +112,8 @@ task FastqDump {
             echo "=========="; df -h; echo "==========";
             gsutil -o "GSUtil:parallel_process_count=~{cpus}" \
                    -o "GSUtil:parallel_thread_count=1" \
-                   -m cp *.gz ~{gcs_output_dir}
-            gsutil ls -lh ~{gcs_output_dir} > upload_list.txt
+                   -m cp *.gz "~{gcs_output_dir}"
+            gsutil ls -lh "~{gcs_output_dir}" > upload_list.txt
         fi
     >>>
 

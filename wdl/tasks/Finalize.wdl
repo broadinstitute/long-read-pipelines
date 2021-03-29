@@ -16,7 +16,7 @@ task FinalizeToFile {
     command <<<
         set -euxo pipefail
 
-        gsutil -m cp ~{file} ~{gcs_output_file}
+        gsutil -m cp "~{file}" "~{gcs_output_file}"
     >>>
 
     output {
@@ -59,7 +59,7 @@ task FinalizeToDir {
     command <<<
         set -euxo pipefail
 
-        gsutil -m cp ~{sep=' ' files} ~{gcs_output_dir}
+        gsutil -m cp "~{sep=' ' files}" "~{gcs_output_dir}"
     >>>
 
     output {

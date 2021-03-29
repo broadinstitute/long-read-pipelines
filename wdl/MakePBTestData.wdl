@@ -243,7 +243,7 @@ task ListPBInputFiles {
     command <<<
         set -euxo pipefail
 
-        gsutil ls ~{dir} | awk '{ a=$1; sub(".*/m[0-9]+_[0-9]+_[0-9]+.", "", a); print a "\t" $1 }' > files_map.txt
+        gsutil ls "~{dir}" | awk '{ a=$1; sub(".*/m[0-9]+_[0-9]+_[0-9]+.", "", a); print a "\t" $1 }' > files_map.txt
     >>>
 
     output {
