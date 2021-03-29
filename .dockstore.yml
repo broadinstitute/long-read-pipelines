@@ -1,9 +1,5 @@
 version: 1.2
 workflows:
-- name: GuppyRunner
-  subclass: wdl
-  primaryDescriptorPath: /wdl/GuppyRunner.wdl
-  testParameterFiles:
 - name: MalariaAssembly
   subclass: wdl
   primaryDescriptorPath: /wdl/MalariaAssembly.wdl
@@ -67,4 +63,8 @@ workflows:
 - name: LRCNVs
   subclass: wdl
   primaryDescriptorPath: /wdl/LRCNVs.wdl
+  testParameterFiles:
+- name: ONTBasecall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTBasecall.wdl
   testParameterFiles:
