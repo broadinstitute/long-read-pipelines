@@ -59,7 +59,7 @@ else:
 
     # First, populate run info (ri) hash with information gleaned from run metadata
     for blob in blobs:
-        if blob.name.endswith(".subreads.bam") and not blob.name.endswith(".scraps.bam"):
+        if blob.name.endswith(".subreads.bam") or blob.name.endswith(".reads.bam") and not blob.name.endswith(".scraps.bam"):
             bams.append(blob.name)
 
         if not "fail" in blob.name and bool(re.search('(f(ast)?q)(.gz)?', blob.name)):
@@ -84,10 +84,10 @@ else:
             ri['ID'] = info['flow_cell_id'] + "." + info['position'] + "." + info['sample_id']
             ri['SO'] = 'unsorted'
 
-        if blob.name.endswith(".subreadset.xml"):
-            blob.download_to_filename("subreadset.xml")
+        if blob.name.endswith(".subreadset.xml") or blob.name.endswith(".consensusreadset.xml"):
+            blob.download_to_filename("data.xml")
 
-            a = etree.parse("subreadset.xml")
+            a = etree.parse("data.xml")
             for e in a.iter():
                 if bool(e.attrib):
                     tag = re.sub(r"{.+}", "", e.tag)

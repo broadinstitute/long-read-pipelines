@@ -57,7 +57,7 @@ workflow PBCCSWholeGenome {
         File bam = p.left
         File pbi = p.right
 
-        call PB.GetRunInfo { input: bam = bam }
+        call PB.GetRunInfo { input: bam = bam, SM = participant_name }
         String ID = GetRunInfo.run_info["PU"]
 
         # break one raw BAM into fixed number of shards
