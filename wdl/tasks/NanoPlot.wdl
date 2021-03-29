@@ -16,7 +16,12 @@ task NanoPlotFromSummary {
     command <<<
         set -euxo pipefail
 
-        /usr/bin/time -v python3 /usr/local/lib/python3.7/site-packages/nanoplot/NanoPlot.py -t ~{num_cpus} -c orangered --N50 -f ~{plot_type} --summary ~{sep=' ' summary_files}
+        python3 /usr/local/lib/python3.7/site-packages/nanoplot/NanoPlot.py \
+            -t ~{num_cpus} \
+            -c orangered \
+            --N50 \
+            -f ~{plot_type} \
+            --summary "~{sep=' ' summary_files}"
     >>>
 
     output {
