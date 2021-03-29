@@ -63,6 +63,7 @@ task FinalizeToDir {
     >>>
 
     output {
+        String gcs_dir = gcs_output_dir
     }
 
     #########################
