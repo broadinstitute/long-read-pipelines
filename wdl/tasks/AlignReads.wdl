@@ -34,16 +34,15 @@ task Minimap2 {
         MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
         SORT_PARAMS="-@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
-        FILES=$(echo ~{sep=',' reads} | sed 's/^\|$/"/g' | sed 's/,/" "/g')
 
         if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
-            cat $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+            find . -name '*.fastq' or -name '*.fq' -exec cat {} \; | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.fastq.gz$ ]] || [[ "$FILE" =~ \.fq.gz$ ]]; then
-            zcat $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+            find . -name '*.fastq.gz' or -name '*.fq.gz' -exec zcat {} \; | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.fasta$ ]] || [[ "$FILE" =~ \.fa$ ]]; then
-            cat $FILES | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+            find . \( -name '*.fasta' or -name '*.fa' \) -and -path -not \*~{ref_fasta} -exec cat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.fasta.gz$ ]] || [[ "$FILE" =~ \.fa.gz$ ]]; then
-            zcat $FILES | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+            find . \( -name '*.fasta' or -name '*.fa' \) -and -path -not \*~{ref_fasta} -exec zcat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.bam$ ]]; then
             samtools fastq $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         else
