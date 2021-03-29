@@ -34,7 +34,7 @@ task Minimap2 {
         MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
         SORT_PARAMS="-@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
-        FILES=$(echo ~{sep='\t' reads} | sed 's/ /\\ /g')
+        FILES=$(echo ~{sep=',' reads} | sed 's/ /\\ /g' | sed 's/,/ /g')
 
         if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
             cat $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
