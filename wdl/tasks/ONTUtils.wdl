@@ -118,7 +118,7 @@ task ListFiles {
     command <<<
         set -euxo pipefail
 
-        gsutil ls "~{indir}/**.~{suffix}*" | grep -v fail > files.txt
+        gsutil ls "~{indir}/**.~{suffix}*" | grep -v fail | 's/^/"/;s/$/"/' > files.txt
         cat files.txt | wc -l > lc.txt
     >>>
 
