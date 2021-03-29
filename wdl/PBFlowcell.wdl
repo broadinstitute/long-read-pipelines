@@ -15,7 +15,6 @@ workflow PBFlowcell {
     input {
         File bam
         File pbi
-        #File xml
 
         String participant_name
         Int num_shards = 300
@@ -50,7 +49,6 @@ workflow PBFlowcell {
     File ccs_report = MergeCCSReports.report
 
     call SummarizeCCSReport { input: report = ccs_report }
-    #call SummarizeXMLMetadata { input: xml = xml }
 
     call SummarizePBI as SummarizeSubreadsPBI { input: pbi = pbi }
     call SummarizePBI as SummarizeCCSPBI { input: pbi = ccs_pbi }
@@ -60,9 +58,6 @@ workflow PBFlowcell {
         File corrected_bam = ccs_bam
         File corrected_pbi = ccs_pbi
         File corrected_report = ccs_report
-
-        #Float xml_num_records = SummarizeXMLMetadata.xml_num_records
-        #Float xml_total_length = SummarizeXMLMetadata.xml_total_length
 
         Float num_records = SummarizeSubreadsPBI.results['reads']
         Float total_length = SummarizeSubreadsPBI.results['bases']

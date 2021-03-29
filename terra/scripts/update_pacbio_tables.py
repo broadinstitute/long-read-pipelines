@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 import os
 import re
@@ -27,7 +27,7 @@ def traverse_xml(key, xml):
 
         v = xml[k]
 
-        k = re.sub('^@|^#|^pbds:|^pbbase:', '', k)
+        k = re.sub('^@|^#|^pbds:|^pbbase:|^pbmeta:|^pbsample:', '', k)
 
         l = []
         if isinstance(v, str) or isinstance(v, dict):
@@ -62,7 +62,7 @@ def combine(tables):
 
 
 def load_xmls(gcs_buckets):
-    storage_client = storage.Client(project='broad-dsp-lrma')
+    storage_client = storage.Client()
     schemas = OrderedDict()
 
     ts = []
@@ -76,13 +76,47 @@ def load_xmls(gcs_buckets):
 
                 t = combine(traverse_xml('root', doc))
                 t['Files'] = {
+                    'input_dir': os.path.dirname(gcs_bucket + "/" + blob.name),
+                    
                     'subreadset.xml': gcs_bucket + "/" + blob.name,
                     'subreads.bam': gcs_bucket + "/" + re.sub("et.xml", ".bam", blob.name),
-                    'subreads.bam.pbi': gcs_bucket + "/" + re.sub("et.xml", ".bam.pbi", blob.name)
+                    'subreads.bam.pbi': gcs_bucket + "/" + re.sub("et.xml", ".bam.pbi", blob.name),
+                    
+                    'consensusreadset.xml': "",
+                    'ccs_reports.txt': "",
+                    'reads.bam': "",
+                    'reads.bam.pbi': ""
+                }
+                ts.append(t)
+            elif 'consensusreadset.xml' in blob.name:
+                xml = blob.download_as_string()
+                doc = xmltodict.parse(xml)
+
+                t = combine(traverse_xml('root', doc))
+                t['Files'] = {
+                    'input_dir': os.path.dirname(gcs_bucket + "/" + blob.name),
+                    
+                    'subreadset.xml': "",
+                    'subreads.bam': "",
+                    'subreads.bam.pbi': "",
+
+                    'consensusreadset.xml': gcs_bucket + "/" + blob.name,
+                    'ccs_reports.txt': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".ccs_reports.txt", blob.name),
+                    'reads.bam': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam", blob.name),
+                    'reads.bam.pbi': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam.pbi", blob.name)
                 }
                 ts.append(t)
 
     return ts
+
+
+def upload_samples(namespace, workspace, tbl):
+    a = fapi.upload_entities(namespace, workspace, entity_data=tbl.to_csv(index=False, sep="\t"), model='flexible')
+
+    if a.status_code == 200:
+        print(f'Uploaded {len(tbl)} rows successfully.')
+    else:
+        print(a.json())
 
 
 def upload_sample_set(namespace, workspace, tbl):
@@ -92,7 +126,7 @@ def upload_sample_set(namespace, workspace, tbl):
     f = [fapi.delete_sample_set(namespace, workspace, sample_set_index) for sample_set_index in sample_sets]
 
     # upload new sample set
-    ss = tbl.filter(['participant'], axis=1).drop_duplicates()
+    ss = tbl.filter(['bio_sample'], axis=1).drop_duplicates()
     ss.columns = [f'entity:sample_set_id']
     
     b = fapi.upload_entities(namespace, workspace, entity_data=ss.to_csv(index=False, sep="\t"), model='flexible')
@@ -102,9 +136,9 @@ def upload_sample_set(namespace, workspace, tbl):
         print(b.json())
     
     # upload membership set
-    ms = tbl.filter(['participant', 'entity:sample_id'], axis=1).drop_duplicates()
+    ms = tbl.filter(['bio_sample', 'entity:sample_id'], axis=1).drop_duplicates()
     ms.columns = [f'membership:sample_set_id', f'sample']
-
+    
     c = fapi.upload_entities(namespace, workspace, entity_data=ms.to_csv(index=False, sep="\t"), model='flexible')
     if c.status_code == 200:
         print(f'Uploaded {len(ms)} sample set members successfully.')
@@ -112,8 +146,62 @@ def upload_sample_set(namespace, workspace, tbl):
         print(c.json())
 
 
-namespace = 'broad-firecloud-dsde-methods'
-workspace = 'dsp-pacbio'
+def load_ccs_report(ccs_report_path):
+    d = {
+        'ZMWs input': "",
+        'ZMWs pass filters': "",
+        'ZMWs fail filters': "",
+        'ZMWs shortcut filters': "",
+        'ZMWs with tandem repeats': "",
+        'Below SNR threshold': "",
+        'Median length filter': "",
+        'Lacking full passes': "",
+        'Heteroduplex insertions': "",
+        'Coverage drops': "",
+        'Insufficient draft cov': "",
+        'Draft too different': "",
+        'Draft generation error': "",
+        'Draft above --max-length': "",
+        'Draft below --min-length': "",
+        'Reads failed polishing': "",
+        'Empty coverage windows': "",
+        'CCS did not converge': "",
+        'CCS below minimum RQ': "",
+        'Unknown error': ""
+    }
+    
+    if ccs_report_path != "":
+        storage_client = storage.Client()
+
+        ccs_report = re.sub("^gs://", "", e['Files']['ccs_reports.txt']).split("/")
+        blobs = storage_client.list_blobs(ccs_report[0], prefix="/".join(ccs_report[1:]))
+
+        for blob in blobs:
+            blob.download_to_filename("ccs_report.txt")
+
+            file = open("ccs_report.txt", "r")
+
+            d = {}
+            for line in file:
+                if len(line) > 1 and 'Exclusive counts for ZMWs' not in line:
+                    a = line.rstrip().split(":")
+
+                    k = a[0].rstrip()
+                    v = float(re.sub(" ", "", re.sub(" \(.*$", "", a[1])))
+
+                    if k not in d:
+                        d[k] = 0.0;
+
+                    d[k] = d[k] + v
+
+            break
+            
+    return d
+
+
+namespace = os.environ['GOOGLE_PROJECT']
+workspace = os.environ['WORKSPACE_NAME']
+default_bucket = os.environ['WORKSPACE_BUCKET']
 gcs_buckets_pb = ['gs://broad-gp-pacbio']
 
 ent_old = fapi.get_entities(namespace, workspace, 'sample').json()
@@ -124,42 +212,49 @@ if len(ent_old) > 0:
 
 ts = load_xmls(gcs_buckets_pb)
 
-tbl_header = ["subreads_bam", "subreads_pbi", "movie_name", "well_name", "created_at", "original_participant_name", "participant", "insert_size", "is_ccs", "isoseq"]
+tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi"]
 tbl_rows = []
 
 for e in ts:
+    r = load_ccs_report(e['Files']['ccs_reports.txt'])
+    
     tbl_rows.append([
-        e['Files']['subreads.bam'],
-        e['Files']['subreads.bam.pbi'],
+        e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
+
+        e['CollectionMetadata'][0]['InstrumentName'] if 'Context' in e['CollectionMetadata'][0] else "UnknownInstrument",
         e['CollectionMetadata'][0]['Context'] if 'Context' in e['CollectionMetadata'][0] else "UnknownFlowcell",
         e['WellSample'][0]['WellName'] if 'WellName' in e['WellSample'][0] else "Z00",
         e['WellSample'][0]['CreatedAt'] if 'CreatedAt' in e['WellSample'][0] else "0001-01-01T00:00:00",
-        re.sub("[# ]", "", e['WellSample'][0]['Name']) if 'Name' in e['WellSample'][0] else "UnknownSample",
-        re.sub("[# ]", "", e['WellSample'][0]['Name']) if 'Name' in e['WellSample'][0] else "UnknownSample",        
+        re.sub("[# ]", "", e['BioSample'][0]['Name']) if 'BioSample' in e else "UnknownBioSample",
+        re.sub("[# ]", "", e['WellSample'][0]['Name']) if 'Name' in e['WellSample'][0] else "UnknownWellSample",
         e['WellSample'][0]['InsertSize'] if 'InsertSize' in e['WellSample'][0] else "0",
         e['WellSample'][0]['IsCCS'] if 'IsCCS' in e['WellSample'][0] else "unknown",
-        e['WellSample'][0]['IsoSeq'] if 'IsoSeq' in e['WellSample'][0] else "unknown"
+        e['WellSample'][0]['IsoSeq'] if 'IsoSeq' in e['WellSample'][0] else "unknown",
+        
+        e['DataSetMetadata'][0]['NumRecords'],
+        e['DataSetMetadata'][0]['TotalLength'],
+        
+        r['ZMWs input'],
+        r['ZMWs pass filters'],
+        r['ZMWs fail filters'],
+        r['ZMWs shortcut filters'],
+
+        e['Files']['input_dir'],
+        e['Files']['subreads.bam'],
+        e['Files']['subreads.bam.pbi'],
+        e['Files']['reads.bam'],
+        e['Files']['reads.bam.pbi'],
     ])
     
 tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
-tbl_new["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["subreads_bam"]))
-tbl_new["entity:ccs_sample"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["subreads_bam"]))
-tbl_new["entity:clr_sample"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["subreads_bam"]))
-tbl_new["entity:isoseq_sample"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["subreads_bam"]))
 
 if len(ent_old) > 0:
     for sample_id in tbl_old.merge(tbl_new, how='outer', indicator=True).loc[lambda x : x['_merge']=='left_only']['entity:sample_id'].tolist():
         print(f'Entry for sample {sample_id} has been modified.  Keeping changes.')
         tbl_new = tbl_new[tbl_new['entity:sample_id'] != sample_id]
-
+        
 merged_tbl = pd.merge(tbl_old, tbl_new, how='outer') if len(ent_old) > 0 else tbl_new
-merged_tbl = merged_tbl[['entity:sample_id'] + tbl_header]
+merged_tbl = merged_tbl.drop_duplicates(subset=['entity:sample_id'])
 
-a = fapi.upload_entities(namespace, workspace, entity_data=merged_tbl.to_csv(index=False, sep="\t"), model='flexible')
-
-if a.status_code == 200:
-    print(f'Uploaded {len(merged_tbl)} rows successfully.')
-else:
-    print(a.json())
-
+upload_samples(namespace, workspace, merged_tbl)
 upload_sample_set(namespace, workspace, merged_tbl)
