@@ -24,7 +24,6 @@ workflow PBCCSWholeGenome {
         Array[File] pbis
 
         File ref_map_file
-        File? alt_map_file
 
         String participant_name
         Int num_shards = 25
@@ -38,7 +37,6 @@ workflow PBCCSWholeGenome {
         pbis:                      "GCS path to .pbi index for CCS-corrected data"
 
         ref_map_file:              "table indicating reference sequence and auxillary file locations"
-        alt_map_file:              "table indicating alternate reference sequence and auxillary file locations"
 
         participant_name:          "name of the participant from whom these samples were obtained"
         num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
@@ -48,7 +46,6 @@ workflow PBCCSWholeGenome {
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
-    Map[String, String] alt_map = if defined(alt_map_file) then read_map(select_first([alt_map_file])) else {'fasta': 'none'}
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/" + participant_name
 
@@ -74,29 +71,10 @@ workflow PBCCSWholeGenome {
                     sample_name = participant_name,
                     map_preset  = "CCS"
             }
-
-            if (defined(alt_map_file)) {
-                call PB.Align as AlignAltCorrected {
-                    input:
-                        bam         = reads,
-                        ref_fasta   = alt_map['fasta'],
-                        sample_name = participant_name,
-                        map_preset  = "CCS"
-                }
-            }
         }
 
         # merge the corrected per-shard BAM/fastq into one, corresponding to one raw input BAM
         call Utils.MergeBams as MergeCorrected { input: bams = AlignCorrected.aligned_bam, prefix = "~{participant_name}.~{ID}.corrected" }
-
-        if (length(select_all(AlignAltCorrected.aligned_bam)) > 0) {
-            call Utils.MergeBams as MergeAltCorrected {
-                input:
-                    bams = select_all(AlignAltCorrected.aligned_bam),
-                    prefix = "~{participant_name}.~{ID}.alt.corrected"
-            }
-        }
-
         call Utils.MergeFastqs { input: fqs = BamToFastq.reads_fq, prefix = "~{participant_name}.~{ID}" }
 
         # compute alignment metrics
@@ -113,27 +91,12 @@ workflow PBCCSWholeGenome {
     # gather across (potential multiple) input raw BAMs
     if (length(bams) > 1) {
         call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, prefix = "~{participant_name}.corrected" }
-
-        if (length(select_all(MergeAltCorrected.merged_bam)) > 0) {
-            call Utils.MergeBams as MergeAllAltCorrected {
-                input:
-                    bams = select_all(MergeAltCorrected.merged_bam),
-                    prefix = "~{participant_name}.alt.corrected"
-            }
-        }
-
         call Utils.MergeFastqs as MergeAllFastqs { input: fqs = MergeFastqs.merged_fq, prefix = "~{participant_name}.corrected" }
     }
 
     File ccs_bam = select_first([ MergeAllCorrected.merged_bam, MergeCorrected.merged_bam[0] ])
     File ccs_bai = select_first([ MergeAllCorrected.merged_bai, MergeCorrected.merged_bai[0] ])
-
-    if (defined(alt_map_file)) {
-        File? alt_bam = select_first([ MergeAllAltCorrected.merged_bam, MergeAltCorrected.merged_bam[0] ])
-        File? alt_bai = select_first([ MergeAllAltCorrected.merged_bai, MergeAltCorrected.merged_bai[0] ])
-    }
-
-    File ccs_fq = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
+    File ccs_fq  = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
 
     # assemble genome
     call HA.Hifiasm {
@@ -185,47 +148,6 @@ workflow PBCCSWholeGenome {
             ref_fasta = ref_map['fasta'],
             participant_name = participant_name,
             prefix = basename(ccs_bam, ".bam") + ".hifiasm"
-    }
-
-    if (defined(alt_bam) && defined(alt_bai)) {
-        # call SVs
-        call SV.CallSVs as CallAltSVs {
-            input:
-                bam               = select_first([alt_bam]),
-                bai               = select_first([alt_bai]),
-
-                ref_fasta         = alt_map['fasta'],
-                ref_fasta_fai     = alt_map['fai'],
-
-                preset            = "hifi"
-        }
-
-        # call SNVs and small indels
-        call SMV.CallSmallVariants as CallAltSmallVariants {
-            input:
-                bam               = select_first([alt_bam]),
-                bai               = select_first([alt_bai]),
-
-                ref_fasta         = alt_map['fasta'],
-                ref_fasta_fai     = alt_map['fai'],
-                ref_dict          = alt_map['dict'],
-
-                preset            = "hifi"
-        }
-
-        call FF.FinalizeToDir as FinalizeAltSVs {
-            input:
-                files = [ CallAltSVs.pbsv_vcf, CallAltSVs.sniffles_vcf, CallAltSVs.svim_vcf, CallAltSVs.cutesv_vcf ],
-                outdir = outdir + "/alt_variants"
-        }
-
-        call FF.FinalizeToDir as FinalizeAltSmallVariants {
-            input:
-                files = [ CallAltSmallVariants.longshot_vcf, CallAltSmallVariants.longshot_tbi,
-                          CallAltSmallVariants.deepvariant_vcf, CallAltSmallVariants.deepvariant_tbi,
-                          CallAltSmallVariants.deepvariant_gvcf, CallAltSmallVariants.deepvariant_gtbi ],
-                outdir = outdir + "/alt_variants"
-        }
     }
 
     ##########
@@ -292,25 +214,5 @@ workflow PBCCSWholeGenome {
         File deepvariant_tbi = CallSmallVariants.deepvariant_tbi
         File deepvariant_gvcf = CallSmallVariants.deepvariant_gvcf
         File deepvariant_gtbi = CallSmallVariants.deepvariant_gtbi
-
-        ### Alt
-        ### ===
-        # BAMs
-        File? alt_corrected_bam = alt_bam
-        File? alt_corrected_bai = alt_bai
-
-        # SVs
-        File? alt_pbsv_vcf = CallAltSVs.pbsv_vcf
-        File? alt_sniffles_vcf = CallAltSVs.sniffles_vcf
-        File? alt_svim_vcf = CallAltSVs.svim_vcf
-        File? alt_cutesv_vcf = CallAltSVs.cutesv_vcf
-
-        # SNVs/indels
-        File? alt_longshot_vcf = CallAltSmallVariants.longshot_vcf
-        File? alt_longshot_tbi = CallAltSmallVariants.longshot_tbi
-        File? alt_deepvariant_vcf = CallAltSmallVariants.deepvariant_vcf
-        File? alt_deepvariant_tbi = CallAltSmallVariants.deepvariant_tbi
-        File? alt_deepvariant_gvcf = CallAltSmallVariants.deepvariant_gvcf
-        File? alt_deepvariant_gtbi = CallAltSmallVariants.deepvariant_gtbi
     }
 }
