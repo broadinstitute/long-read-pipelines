@@ -20,6 +20,7 @@ workflow ONTFlowcell {
         Int num_shards = 50
 
         Float genome_length = 3088286401.0
+        String map_preset = "map-ont"
 
         String gcs_out_root_dir
     }
@@ -57,7 +58,7 @@ workflow ONTFlowcell {
                 reads      = read_lines(manifest_chunk),
                 ref_fasta  = ref_map['fasta'],
                 RG         = RG,
-                map_preset = "map-ont"
+                map_preset = map_preset
         }
     }
 
