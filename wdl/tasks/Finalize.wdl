@@ -59,11 +59,9 @@ task FinalizeToDir {
     command <<<
         set -euxo pipefail
 
-        echo -e ~{sep='\\n' files} > files.txt
-
         while read p; do
             gsutil -m cp "$p" "~{gcs_output_dir}"
-        done <files.txt
+        done <~{write_lines(files)}
     >>>
 
     output {
