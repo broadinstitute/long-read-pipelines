@@ -38,7 +38,6 @@ workflow ONTFlowcell {
     Map[String, String] ref_map = read_map(ref_map_file)
 
     call ONT.GetRunInfo { input: summary_file = final_summary }
-    call ONT.ListFiles as ListFast5s { input: summary_file = final_summary, suffix = "fast5" }
     call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
 
     String SM  = participant_name
