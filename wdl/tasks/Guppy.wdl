@@ -30,6 +30,7 @@ workflow Guppy {
 
     output  {
         Array[File] output_files = Basecall.guppy_output_files
+        File sequencing_summary = Basecall.sequencing_summary
     }
 }
 
@@ -106,7 +107,9 @@ task Basecall {
     >>>
 
     output {
-        Array[File] guppy_output_files = glob("guppy_output/*")
+        #Array[File] guppy_output_files = glob("guppy_output/*")
+        Array[File] guppy_output_files = glob("guppy_output/*.fastq")
+        File sequencing_summary = "guppy_output/sequencing_summary.txt"
     }
 
     runtime {
@@ -123,5 +126,4 @@ task Basecall {
         cpuPlatform:            "Intel Haswell"
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-guppy:4.0.14"
     }
-
 }
