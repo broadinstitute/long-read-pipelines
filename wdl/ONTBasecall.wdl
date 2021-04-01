@@ -16,14 +16,21 @@ workflow ONTBasecall {
             config        = config
     }
 
-    call FF.FinalizeToDir {
+    call FF.FinalizeToDir as FinalizeFastqs {
         input:
             files = Guppy.output_files,
             outdir = gcs_out_root_dir
     }
 
+    call FF.FinalizeToFile as FinalizeSequencingSummary {
+        input:
+            file = Guppy.sequencing_summary,
+            outfile = gcs_out_root_dir + "/sequencing_summary.txt"
+    }
+
     output {
-        String gcs_basecall_dir = FinalizeToDir.gcs_dir
+        String gcs_basecall_dir = FinalizeFastqs.gcs_dir
+        File sequencing_summary = FinalizeSequencingSummary.gcs_path
     }
 }
 
