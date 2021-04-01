@@ -98,12 +98,12 @@ workflow PBCCSWholeGenome {
     File ccs_bai = select_first([ MergeAllCorrected.merged_bai, MergeCorrected.merged_bai[0] ])
     File ccs_fq  = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
 
-    # assemble genome
-    call HA.Hifiasm {
-        input:
-            reads = ccs_fq,
-            prefix = participant_name
-    }
+#    # assemble genome
+#    call HA.Hifiasm {
+#        input:
+#            reads = ccs_fq,
+#            prefix = participant_name
+#    }
 
     # compute alignment metrics
     call AM.AlignedMetrics as PerSampleMetrics {
