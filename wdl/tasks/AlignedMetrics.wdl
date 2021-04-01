@@ -31,8 +31,6 @@ workflow AlignedMetrics {
 
     call FlagStats as AlignedFlagStats { input: bam = aligned_bam }
 
-    call ReadNamesAndLengths { input: bam = aligned_bam }
-
     if (defined(gcs_output_dir)) {
         String outdir = sub(gcs_output_dir + "", "/$", "")
 
@@ -65,8 +63,6 @@ workflow AlignedMetrics {
         call FF.FinalizeToDir as FFCoverageQuantizedCsi { input: outdir = outdir + "/coverage/", files = MosDepth.quantized_csi }
 
         call FF.FinalizeToDir as FFDepthSummaries { input: outdir = outdir + "/coverage_summaries/", files = SummarizeDepth.cov_summary }
-
-        call FF.FinalizeToDir as FFReadNamesAndLengths { input: outdir = outdir + "/read_names_and_lengths/", files = [ ReadNamesAndLengths.read_names_and_lengths ] }
     }
 
     output {

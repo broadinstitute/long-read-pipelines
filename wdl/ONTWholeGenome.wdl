@@ -80,23 +80,47 @@ workflow ONTWholeGenome {
     # Finalize
     ##########
 
-#    call FF.FinalizeToDir as FinalizeSVs {
+    call FF.FinalizeToFile as FinalizeBam {
+        input:
+            file = bam,
+            outfile = outdir + "/alignments/" + basename(bam)
+    }
+
+    call FF.FinalizeToFile as FinalizeBai {
+        input:
+            file = bai,
+            outfile = outdir + "/alignments/" + basename(bai)
+    }
+
+#    call FF.FinalizeToFile as FinalizePBSV {
 #        input:
-##            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
-#            files = [ CallSVs.sniffles_vcf ],
-#            outdir = outdir + "/variants"
+#            file = CallSVs.pbsv_vcf,
+#            outfile = outdir + "/variants/" + basename(CallSVs.pbsv_vcf)
 #    }
-#
-#    call FF.FinalizeToDir as FinalizeSmallVariants {
-#        input:
-#            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
-##                      CallSmallVariants.clair_vcf, CallSmallVariants.clair_tbi ],
-#            outdir = outdir + "/variants"
-#    }
-#
-#    call FF.FinalizeToDir as FinalizeMergedRuns {
-#        input:
-#            files = [ bam, bai ],
-#            outdir = outdir + "/alignments"
-#    }
+
+    call FF.FinalizeToFile as FinalizeSniffles {
+        input:
+            file = CallSVs.sniffles_vcf,
+            outfile = outdir + "/variants/" + basename(CallSVs.sniffles_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeSVIM {
+        input:
+            file = CallSVs.svim_vcf,
+            outfile = outdir + "/variants/" + basename(CallSVs.svim_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeLongshot {
+        input:
+            file = CallSmallVariants.longshot_vcf,
+            outfile = outdir + "/variants/" + basename(CallSmallVariants.longshot_vcf)
+    }
+
+    output {
+        File aligned_bam = FinalizeBam.gcs_path
+        File aligned_bai = FinalizeBai.gcs_path
+        File sniffles_vcf = FinalizeSniffles.gcs_path
+        File svim_vcf = FinalizeSVIM.gcs_path
+        File longshot_vcf = FinalizeLongshot.gcs_path
+    }
 }
