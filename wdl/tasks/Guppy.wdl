@@ -15,6 +15,11 @@ workflow Guppy {
     input {
         String gcs_fast5_dir
         String config = "dna_r9.4.1_450bps_hac_prom.cfg"
+
+        String instrument = "unknown"
+        String started = "1970-01-01T12:00:00.000000-04:00"
+        String flow_cell_id = "unknown"
+        String protocol_run_id = "unknown"
     }
 
     call ListFast5Files {
@@ -24,13 +29,22 @@ workflow Guppy {
 
     call Basecall {
         input:
-           fast5_files = ListFast5Files.fast5_files,
-           config      = config
+            fast5_files = ListFast5Files.fast5_files,
+            config      = config
+    }
+
+    call GenerateSummary {
+        input:
+            instrument = instrument,
+            started = started,
+            flow_cell_id = flow_cell_id,
+            protocol_run_id = protocol_run_id
     }
 
     output  {
         Array[File] output_files = Basecall.guppy_output_files
         File sequencing_summary = Basecall.sequencing_summary
+        File final_summary = GenerateSummary.final_summary
     }
 }
 
@@ -125,5 +139,39 @@ task Basecall {
         zones:                  ["us-east1-c"]
         cpuPlatform:            "Intel Haswell"
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-guppy:4.0.14"
+    }
+}
+
+task GenerateSummary {
+    input {
+        String instrument
+        String started
+        String flow_cell_id
+        String protocol_run_id
+    }
+
+    Int disk_size = 1
+
+    command <<<
+        set -euxo pipefail
+
+        echo 'instrument=~{instrument}' > final_summary.txt
+        echo 'started=~{started}' >> final_summary.txt
+        echo 'flow_cell_id=~{flow_cell_id}' >> final_summary.txt
+        echo 'protocol_run_id=~{protocol_run_id}' >> final_summary.txt
+    >>>
+
+    output {
+        File final_summary = "final_summary.txt"
+    }
+
+    runtime {
+        cpu:                    1
+        memory:                 "4 GiB"
+        disks:                  "local-disk " + disk_size + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            0
+        maxRetries:             0
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
     }
 }

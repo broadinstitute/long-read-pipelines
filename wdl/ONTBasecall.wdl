@@ -28,9 +28,16 @@ workflow ONTBasecall {
             outfile = gcs_out_root_dir + "/sequencing_summary.txt"
     }
 
+    call FF.FinalizeToFile as FinalizeFinalSummary {
+        input:
+            file = Guppy.sequencing_summary,
+            outfile = gcs_out_root_dir + "/final_summary.txt"
+    }
+
     output {
         String gcs_basecall_dir = FinalizeFastqs.gcs_dir
         File sequencing_summary = FinalizeSequencingSummary.gcs_path
+        File final_summary = FinalizeFinalSummary.gcs_path
     }
 }
 
