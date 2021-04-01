@@ -141,14 +141,14 @@ workflow PBCCSWholeGenome {
             preset            = "hifi"
     }
 
-    # call variants in assemblies
-    call AV.CallAssemblyVariants {
-        input:
-            asm_fasta = Hifiasm.fa,
-            ref_fasta = ref_map['fasta'],
-            participant_name = participant_name,
-            prefix = basename(ccs_bam, ".bam") + ".hifiasm"
-    }
+#    # call variants in assemblies
+#    call AV.CallAssemblyVariants {
+#        input:
+#            asm_fasta = Hifiasm.fa,
+#            ref_fasta = ref_map['fasta'],
+#            participant_name = participant_name,
+#            prefix = basename(ccs_bam, ".bam") + ".hifiasm"
+#    }
 
     ##########
     # store the results into designated bucket
@@ -168,11 +168,11 @@ workflow PBCCSWholeGenome {
             outdir = outdir + "/variants"
     }
 
-    call FF.FinalizeToDir as FinalizeAssemblyVariants {
-        input:
-            files = [ CallAssemblyVariants.paftools_vcf ],
-            outdir = outdir + "/variants"
-    }
+#    call FF.FinalizeToDir as FinalizeAssemblyVariants {
+#        input:
+#            files = [ CallAssemblyVariants.paftools_vcf ],
+#            outdir = outdir + "/variants"
+#    }
 
     call FF.FinalizeToDir as FinalizeMergedRuns {
         input:
@@ -180,20 +180,20 @@ workflow PBCCSWholeGenome {
             outdir = outdir + "/alignments"
     }
 
-    call FF.FinalizeToDir as FinalizeAssembly {
-        input:
-            files = [ Hifiasm.gfa, Hifiasm.fa, CallAssemblyVariants.paf ],
-            outdir = outdir + "/assembly"
-    }
+#    call FF.FinalizeToDir as FinalizeAssembly {
+#        input:
+#            files = [ Hifiasm.gfa, Hifiasm.fa, CallAssemblyVariants.paf ],
+#            outdir = outdir + "/assembly"
+#    }
 
     output {
-        # Assembly
-        File hifiasm_gfa = Hifiasm.gfa
-        File hifiasm_fa = Hifiasm.fa
-        File hifiasm_paf = CallAssemblyVariants.paf
-
-        # Assembly-based variants
-        File paftools_vcf = CallAssemblyVariants.paftools_vcf
+#        # Assembly
+#        File hifiasm_gfa = Hifiasm.gfa
+#        File hifiasm_fa = Hifiasm.fa
+#        File hifiasm_paf = CallAssemblyVariants.paf
+#
+#        # Assembly-based variants
+#        File paftools_vcf = CallAssemblyVariants.paftools_vcf
 
         ### Ref
         ### ===
