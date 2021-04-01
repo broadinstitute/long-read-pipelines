@@ -30,7 +30,7 @@ workflow ONTBasecall {
 
     call FF.FinalizeToFile as FinalizeFinalSummary {
         input:
-            file = Guppy.sequencing_summary,
+            file = Guppy.final_summary,
             outfile = gcs_out_root_dir + "/final_summary.txt"
     }
 
