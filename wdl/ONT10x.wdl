@@ -89,7 +89,7 @@ workflow ONT10x {
         call FIG.Figures as PerFlowcellSubRunFigures {
             input:
                 summary_files  = [ sequencing_summary ],
-                gcs_output_dir = outdir + "/" + DIR
+                gcs_output_dir = outdir + "/" + DIR[0]
         }
     }
 
