@@ -773,6 +773,65 @@ task MergeBams {
     }
 }
 
+# A utility to split a BAM into individual chromosome BAMs.
+task SplitBam {
+    input {
+        File bam
+        File bai
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam:    "input BAM to be split"
+        prefix: "[default-valued] prefix for output BAMs"
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools view -H ~{bam} | grep '^@SQ' | awk '{ print $2 }' | sed 's/SN://' > chrs.txt
+
+        while read c; do
+            samtools view -hb ~{bam} $c > $c.bam
+            samtools index $c.bam
+
+            echo $c.bam >> bams.txt
+            echo $c.bam.bai >> bais.txt
+        done <chrs.txt
+    >>>
+
+    output {
+        Array[File] split_bams = read_lines("bams.txt")
+        Array[File] split_bais = read_lines("bais.txt")
+        Array[String] chrs = read_lines("chrs.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 # A utility to merge several input fastqs into a single fastq
 task MergeFastqs {
     input {
