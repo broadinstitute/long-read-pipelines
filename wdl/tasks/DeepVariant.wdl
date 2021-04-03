@@ -112,28 +112,31 @@ task PEPPER {
     String prefix = basename(bam, ".bam")
 
     command <<<
-        # example from https://github.com/kishwarshafin/pepper/blob/r0.1/docs/PEPPER_variant_calling.md#Quickstart
+        # example from https://github.com/kishwarshafin/pepper/blob/r0.4/docs/pipeline_docker/ONT_variant_calling.md
         set -euo pipefail
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        sh /opt/run_pepper_deepvariant.sh \
-          -b ~{bam} \
-          -f ~{ref_fasta} \
-          -o ./ \
-          -t ${num_core} \
-          -r ~{chr}
-          -x 1
+        run_pepper_margin_deepvariant call_variant \
+            -b "~{bam}" \
+            -f "~{ref_fasta}" \
+            -o ./ \
+            -p "~{prefix}" \
+            -r "~{chr}" \
+            -t ${num_core} \
+            --gvcf \
+            --phased_output \
+            --ont
 
         find . -type f -exec ls -lah {} \;
     >>>
 
     output {
         # save both VCF and gVCF
-        File vcf = "~{prefix}.deepvariant.~{chr}.vcf.gz"
-        File vcf_tbi = "~{prefix}.deepvariant.~{chr}.vcf.gz.tbi"
-        File gvcf = "~{prefix}.deepvariant.~{chr}.g.vcf.gz"
-        File gvcf_tbi = "~{prefix}.deepvariant.~{chr}.g.vcf.gz.tbi"
+        File vcf = "~{prefix}.deepvariant_pepper.~{chr}.vcf.gz"
+        File vcf_tbi = "~{prefix}.deepvariant_pepper.~{chr}.vcf.gz.tbi"
+        File gvcf = "~{prefix}.deepvariant_pepper.~{chr}.g.vcf.gz"
+        File gvcf_tbi = "~{prefix}.deepvariant_pepper.~{chr}.g.vcf.gz.tbi"
     }
 
     #########################
@@ -144,7 +147,7 @@ task PEPPER {
         boot_disk_gb:       100,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "kishwars/pepper_deepvariant_gpu:latest"
+        docker:             "kishwars/pepper_deepvariant:r0.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
