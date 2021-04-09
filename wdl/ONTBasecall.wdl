@@ -7,37 +7,23 @@ workflow ONTBasecall {
     input {
         String gcs_fast5_dir
         String config = "dna_r9.4.1_450bps_hac.cfg"
+        Array[String] barcode_kits = []
         String gcs_out_root_dir
     }
 
     call Guppy.Guppy {
         input:
-            gcs_fast5_dir = gcs_fast5_dir,
-            config        = config
-    }
-
-    call FF.FinalizeToDir as FinalizeFastqs {
-        input:
-            files = Guppy.output_files,
-            outdir = gcs_out_root_dir
-    }
-
-    call FF.FinalizeToFile as FinalizeSequencingSummary {
-        input:
-            file = Guppy.sequencing_summary,
-            outfile = gcs_out_root_dir + "/sequencing_summary.txt"
-    }
-
-    call FF.FinalizeToFile as FinalizeFinalSummary {
-        input:
-            file = Guppy.final_summary,
-            outfile = gcs_out_root_dir + "/final_summary.txt"
+            gcs_fast5_dir    = gcs_fast5_dir,
+            config           = config,
+            barcode_kits     = barcode_kits,
+            gcs_out_root_dir = gcs_out_root_dir
     }
 
     output {
-        String gcs_basecall_dir = FinalizeFastqs.gcs_dir
-        File sequencing_summary = FinalizeSequencingSummary.gcs_path
-        File final_summary = FinalizeFinalSummary.gcs_path
+        String gcs_dir = Guppy.gcs_dir
+        Array[File] sequencing_summaries = Guppy.sequencing_summaries
+        Array[File] final_summaries = Guppy.final_summaries
+        Array[String] barcodes = Guppy.barcodes
     }
 }
 
