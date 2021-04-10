@@ -173,7 +173,7 @@ task Basecall {
 
     Int disk_size = 3 * ceil(size(fast5_files, "GB"))
 
-    String barcode_arg = if barcode_kit != "NA" then "--barcode_kits \"~{barcode_kits[0]}\" --trim_barcodes" else ""
+    String barcode_arg = if barcode_kit != "NA" then "--barcode_kits \"~{barcode_kit}\" --trim_barcodes" else ""
 
     command <<<
         set -euxo pipefail

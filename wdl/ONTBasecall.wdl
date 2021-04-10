@@ -19,7 +19,7 @@ workflow ONTBasecall {
             gcs_fast5_dir    = gcs_fast5_dir,
             config           = config,
             barcode_kit      = barcode_kit,
-            gcs_out_root_dir = gcs_out_root_dir
+            gcs_out_root_dir = outdir
     }
 
     output {
@@ -27,7 +27,6 @@ workflow ONTBasecall {
         Array[File] sequencing_summaries = Guppy.sequencing_summaries
         Array[File] final_summaries = Guppy.final_summaries
         Array[String] barcodes = Guppy.barcodes
-        Int num_fast5s = Guppy.num_fast5s
         Int num_pass_fastqs = Guppy.num_pass_fastqs
         Int num_fail_fastqs = Guppy.num_fail_fastqs
     }
