@@ -12,5 +12,5 @@ ENV PATH=/opt/conda/envs/lr-utils/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install gsutil
 RUN apt update
-RUN apt install -y curl git-lfs
+RUN apt install -y curl git-lfs parallel
 RUN curl https://sdk.cloud.google.com | bash

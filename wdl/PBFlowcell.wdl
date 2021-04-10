@@ -15,6 +15,7 @@ workflow PBFlowcell {
     input {
         File bam
         File pbi
+        File ref_map_file
 
         String participant_name
         Int num_shards = 300
@@ -23,10 +24,13 @@ workflow PBFlowcell {
     parameter_meta {
         bam:              "GCS path to raw subread bam"
         pbi:              "GCS path to pbi index for raw subread bam"
+        ref_map_file:     "table indicating reference sequence and auxillary file locations"
 
         participant_name: "name of the participant from whom these samples were obtained"
         num_shards:       "[default-valued] number of sharded BAMs to create (tune for performance)"
     }
+
+    Map[String, String] ref_map = read_map(ref_map_file)
 
     call PB.GetRunInfo { input: bam = bam }
     String ID = GetRunInfo.run_info["PU"]
@@ -122,7 +126,7 @@ task SummarizeCCSReport {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -165,7 +169,7 @@ task SummarizeXMLMetadata {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

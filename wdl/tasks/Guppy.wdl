@@ -43,6 +43,8 @@ workflow Guppy {
     }
 
     call Utils.Timestamp as TimestampStopped { input: dummy_dependencies = Basecall.sequencing_summary }
+    call Utils.Sum as SumPassingFastqs { input: ints = Basecall.num_pass_fastqs }
+    call Utils.Sum as SumFailingFastqs { input: ints = Basecall.num_fail_fastqs }
 
     call MakeSequencingSummary { input: sequencing_summaries = Basecall.sequencing_summary }
 
@@ -61,7 +63,6 @@ workflow Guppy {
     call FinalizeBasecalls {
         input:
             pass_fastqs        = flatten(Basecall.pass_fastqs),
-            fail_fastqs        = flatten(Basecall.fail_fastqs),
             sequencing_summary = MakeSequencingSummary.sequencing_summary,
             final_summary      = MakeFinalSummary.final_summary,
             barcodes           = UniqueBarcodes.unique_strings,
@@ -73,6 +74,9 @@ workflow Guppy {
         Array[File] sequencing_summaries = FinalizeBasecalls.sequencing_summaries
         Array[File] final_summaries = FinalizeBasecalls.final_summaries
         Array[String] barcodes = UniqueBarcodes.unique_strings
+        Int num_fast5s = length(read_lines(ListFast5s.manifest))
+        Int num_pass_fastqs = SumPassingFastqs.sum
+        Int num_fail_fastqs = SumFailingFastqs.sum
     }
 }
 
@@ -101,7 +105,7 @@ task ListFast5s {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -143,7 +147,7 @@ task MergeFastq {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -183,32 +187,42 @@ task Basecall {
             ~{barcode_arg} \
             --compress_fastq
 
+        # Make a list of the barcodes that were seen in the data
         find guppy_output/ -name '*fastq*' -not -path '*fail*' -type f | \
             awk -F"/" '{ a=NF-1; a=$a; gsub(/pass/, "unclassified", a); print a }' | \
             sort -n | \
             uniq > barcodes.txt
 
+        # Reorganize and rename the passing filter data to include the barcode in the filename
         mkdir pass
         find guppy_output/ -name '*fastq*' -not -path '*fail*' -type f | \
             awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/pass/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " pass/" a ".chunk_~{index}." b); }'
 
+        # Reorganize and rename the failing filter data to include the barcode in the filename
         mkdir fail
         find guppy_output/ -name '*fastq*' -not -path '*pass*' -type f | \
             awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/pass/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " fail/" a ".chunk_~{index}." b); }'
 
-        find pass -name '*fastq.gz' -exec zcat {} \; | \
-            head -1 2>/dev/null | \
+        # Extract relevant metadata (e.g. sample id, run id, etc.) from the first fastq file
+        find pass -name '*fastq.gz' | \
+            head -1 | \
+            xargs -n1 zgrep -m1 '^@' | \
             sed 's/ /\n/g' | \
             grep -v '^@' | \
             sed 's/=/\t/g' > metadata.txt
+
+        # Count passing and failing files
+        find pass -name '*fastq.gz' | wc -l > num_pass.txt
+        find fail -name '*fastq.gz' | wc -l > num_fail.txt
     >>>
 
     output {
         Array[File] pass_fastqs = glob("pass/*.fastq.gz")
-        Array[File] fail_fastqs = glob("fail/*.fastq.gz")
         File sequencing_summary = "guppy_output/sequencing_summary.txt"
         Array[String] barcodes = read_lines("barcodes.txt")
         Map[String, String] metadata = read_map("metadata.txt")
+        Int num_pass_fastqs = read_int("num_pass.txt")
+        Int num_fail_fastqs = read_int("num_fail.txt")
     }
 
     #########################
@@ -269,7 +283,7 @@ task MakeSequencingSummary {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -322,7 +336,7 @@ task MakeFinalSummary {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.7"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -339,7 +353,6 @@ task MakeFinalSummary {
 task FinalizeBasecalls {
     input {
         Array[String] pass_fastqs
-        Array[String] fail_fastqs
         File sequencing_summary
         File final_summary
         Array[String] barcodes
@@ -355,15 +368,12 @@ task FinalizeBasecalls {
         set -x
 
         PASS_FASTQ="~{write_lines(pass_fastqs)}"
-        FAIL_FASTQ="~{write_lines(fail_fastqs)}"
 
         while read b; do
             OUT_DIR="~{gcs_output_dir}/$b"
             PASS_DIR="$OUT_DIR/fastq_pass/"
-            FAIL_DIR="$OUT_DIR/fastq_fail/"
 
             grep -w $b $PASS_FASTQ | gsutil -m cp -I $PASS_DIR
-            grep -w $b $FAIL_FASTQ | gsutil -m cp -I $FAIL_DIR
 
             if [ ~{length(barcodes)} -eq 1 ]; then
                 cp ~{sequencing_summary} sequencing_summary.$b.txt

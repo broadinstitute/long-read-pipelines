@@ -4,10 +4,7 @@ import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/CallSVs.wdl" as SV
-import "tasks/CallSmallVariants.wdl" as SMV
 import "tasks/Figures.wdl" as FIG
-import "tasks/Methylation.wdl" as Meth
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTFlowcell {
@@ -19,7 +16,6 @@ workflow ONTFlowcell {
         String participant_name
         Int num_shards = 50
 
-        Float genome_length = 3088286401.0
         String map_preset = "map-ont"
 
         String gcs_out_root_dir
@@ -81,6 +77,8 @@ workflow ONTFlowcell {
 
     call SummarizeNanoStats { input: report = PerFlowcellFigures.NanoPlotFromSummaryStats }
 
+    call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
+
     call FF.FinalizeToFile as FinalizeAlignedBam {
         input:
             file    = MergeReads.merged_bam,
@@ -101,7 +99,7 @@ workflow ONTFlowcell {
 
         Float num_reads = SummarizeNanoStats.results['Number_of_reads']
         Float total_bases = SummarizeNanoStats.results['Total_bases']
-        Float raw_yield = SummarizeNanoStats.results['Total_bases']/genome_length
+        Float raw_yield = SummarizeNanoStats.results['Total_bases']/ComputeGenomeLength.length
 
         Float read_length_mean = SummarizeNanoStats.results['Mean_read_length']
         Float read_length_N50 = SummarizeNanoStats.results['Read_length_N50']

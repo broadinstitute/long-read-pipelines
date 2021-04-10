@@ -93,7 +93,7 @@ task PEPPER {
         File ref_fasta
         File ref_fai
 
-        String chr
+        String contig
 
         RuntimeAttr? runtime_attr_override
     }
@@ -105,24 +105,26 @@ task PEPPER {
         ref_fasta: "reference to which the BAM was aligned to"
         ref_fai:   "index accompanying the reference"
 
-        chr: "chromsome on which to call variants"
+        contig: "contig on which to call variants"
     }
 
     Int disk_size = ceil(size(bam, "GB")) + 50
-    String prefix = basename(bam, ".bam")
+    String prefix = basename(bam, ".bam") + ".deepvariant_pepper"
 
     command <<<
         # example from https://github.com/kishwarshafin/pepper/blob/r0.4/docs/pipeline_docker/ONT_variant_calling.md
-        set -euo pipefail
+        set -euxo pipefail
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        mv ~{bam} contig.bam
+        mv ~{bai} contig.bam.bai
 
         run_pepper_margin_deepvariant call_variant \
-            -b "~{bam}" \
+            -b "contig.bam" \
             -f "~{ref_fasta}" \
             -o ./ \
             -p "~{prefix}" \
-            -r "~{chr}" \
+            -r "~{contig}" \
             -t ${num_core} \
             --gvcf \
             --phased_output \
@@ -133,10 +135,16 @@ task PEPPER {
 
     output {
         # save both VCF and gVCF
-        File vcf = "~{prefix}.deepvariant_pepper.~{chr}.vcf.gz"
-        File vcf_tbi = "~{prefix}.deepvariant_pepper.~{chr}.vcf.gz.tbi"
-        File gvcf = "~{prefix}.deepvariant_pepper.~{chr}.g.vcf.gz"
-        File gvcf_tbi = "~{prefix}.deepvariant_pepper.~{chr}.g.vcf.gz.tbi"
+        File phased_vcf = "~{prefix}.phased.vcf.gz"
+        File phased_vcf_tbi = "~{prefix}.phased.vcf.gz.tbi"
+
+        File vcf = "~{prefix}.vcf.gz"
+        File vcf_tbi = "~{prefix}.vcf.gz.tbi"
+        File gvcf = "~{prefix}.g.vcf.gz"
+        File gvcf_tbi = "~{prefix}.g.vcf.gz.tbi"
+
+        File report = "~{prefix}.visual_report.html"
+        File phaseset_bed = "~{prefix}.phaseset.bed"
     }
 
     #########################
