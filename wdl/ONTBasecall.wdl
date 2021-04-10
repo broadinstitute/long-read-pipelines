@@ -7,7 +7,7 @@ workflow ONTBasecall {
     input {
         String gcs_fast5_dir
         String config = "dna_r9.4.1_450bps_hac.cfg"
-        Array[String] barcode_kits = []
+        String barcode_kit = "NA"
         String gcs_out_root_dir
         String prefix
     }
@@ -18,7 +18,7 @@ workflow ONTBasecall {
         input:
             gcs_fast5_dir    = gcs_fast5_dir,
             config           = config,
-            barcode_kits     = barcode_kits,
+            barcode_kit      = barcode_kit,
             gcs_out_root_dir = gcs_out_root_dir
     }
 

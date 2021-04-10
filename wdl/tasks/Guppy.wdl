@@ -19,12 +19,12 @@ workflow Guppy {
 
         Int num_shards = 4
         String config
-        Array[String] barcode_kits = []
+        String barcode_kit
 
         String instrument = "unknown"
         String flow_cell_id = "unknown"
-        String? sample_id
         String? protocol_run_id
+        String? sample_name
 
         String gcs_out_root_dir
     }
@@ -37,7 +37,7 @@ workflow Guppy {
             input:
                 fast5_files  = read_lines(PartitionFast5Manifest.manifest_chunks[chunk_index]),
                 config       = config,
-                barcode_kits = barcode_kits,
+                barcode_kit  = barcode_kit,
                 index        = chunk_index
         }
     }
@@ -52,7 +52,7 @@ workflow Guppy {
         input:
             instrument      = instrument,
             flow_cell_id    = flow_cell_id,
-            sample_id       = select_first([sample_id, Basecall.metadata[0]['sampleid']]),
+            sample_id       = select_first([sample_name, Basecall.metadata[0]['sampleid']]),
             protocol_run_id = select_first([protocol_run_id, Basecall.metadata[0]['runid']]),
             started         = Basecall.metadata[0]['start_time'],
             stopped         = TimestampStopped.timestamp
@@ -165,7 +165,7 @@ task Basecall {
     input {
         Array[File] fast5_files
         String config = "dna_r9.4.1_450bps_hac_prom.cfg"
-        Array[String] barcode_kits = []
+        String barcode_kit = "NA"
         Int index = 0
 
         RuntimeAttr? runtime_attr_override
@@ -173,7 +173,7 @@ task Basecall {
 
     Int disk_size = 3 * ceil(size(fast5_files, "GB"))
 
-    String barcode_arg = if length(barcode_kits) > 0 then "--barcode_kits \"~{barcode_kits[0]}\" --trim_barcodes" else ""
+    String barcode_arg = if barcode_kit != "NA" then "--barcode_kits \"~{barcode_kits[0]}\" --trim_barcodes" else ""
 
     command <<<
         set -euxo pipefail
