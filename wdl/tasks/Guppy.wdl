@@ -191,7 +191,7 @@ task Basecall {
         find guppy_output/ -name '*fastq*' -not -path '*fail*' -type f | \
             awk -F"/" '{ a=NF-1; a=$a; gsub(/pass/, "unclassified", a); print a }' | \
             sort -n | \
-            uniq > barcodes.txt
+            uniq | tee barcodes.txt
 
         # Reorganize and rename the passing filter data to include the barcode in the filename
         mkdir pass
@@ -203,17 +203,17 @@ task Basecall {
         find guppy_output/ -name '*fastq*' -not -path '*pass*' -type f | \
             awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/pass/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " fail/" a ".chunk_~{index}." b); }'
 
+        # Count passing and failing files
+        find pass -name '*fastq.gz' | wc -l | tee num_pass.txt
+        find fail -name '*fastq.gz' | wc -l | tee num_fail.txt
+
         # Extract relevant metadata (e.g. sample id, run id, etc.) from the first fastq file
-        find pass -name '*fastq.gz' | \
+        find pass -name '*fastq.gz' -type f | \
             head -1 | \
             xargs -n1 zgrep -m1 '^@' | \
             sed 's/ /\n/g' | \
             grep -v '^@' | \
-            sed 's/=/\t/g' > metadata.txt
-
-        # Count passing and failing files
-        find pass -name '*fastq.gz' | wc -l > num_pass.txt
-        find fail -name '*fastq.gz' | wc -l > num_fail.txt
+            sed 's/=/\t/g' | tee metadata.txt
     >>>
 
     output {
