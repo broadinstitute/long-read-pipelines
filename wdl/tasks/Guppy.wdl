@@ -231,7 +231,7 @@ task Basecall {
         mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       30,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:4.5.2"
     }

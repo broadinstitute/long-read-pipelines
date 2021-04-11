@@ -19,18 +19,29 @@ workflow PBFlowcell {
 
         String participant_name
         Int num_shards = 300
+        String experiment_type
+
+        String gcs_out_root_dir
     }
 
     parameter_meta {
-        bam:              "GCS path to raw subread bam"
-        pbi:              "GCS path to pbi index for raw subread bam"
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        bam:                "GCS path to raw subread bam"
+        pbi:                "GCS path to pbi index for raw subread bam"
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
-        participant_name: "name of the participant from whom these samples were obtained"
-        num_shards:       "[default-valued] number of sharded BAMs to create (tune for performance)"
+        participant_name:   "name of the participant from whom these samples were obtained"
+        num_shards:         "[default-valued] number of sharded BAMs to create (tune for performance)"
+        experiment_type:    "type of experiment run (CLR, CCS, IsoSeq)"
+
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
+    Map[String, String] map_presets = {
+        'CLR': 'SUBREAD',
+        'CCS': 'CCS',
+        'IsoSeq': 'ISOSEQ'
+    }
 
     call PB.GetRunInfo { input: bam = bam }
     String ID = GetRunInfo.run_info["PU"]
@@ -40,7 +51,27 @@ workflow PBFlowcell {
 
     # then perform correction on each of the shard
     scatter (subreads in ShardLongReads.unmapped_shards) {
-        call PB.CCS { input: subreads = subreads }
+        if (experiment_type == "CLR") {
+            call PB.Align as AlignUncorrected {
+                input:
+                    bam         = subreads,
+                    ref_fasta   = ref_map['fasta'],
+                    sample_name = participant_name,
+                    map_preset  = map_presets[experiment_type]
+            }
+        }
+
+        if (experiment_type == "CCS" || experiment_type == "IsoSeq") {
+            call PB.CCS { input: subreads = subreads }
+
+            call PB.Align as AlignCorrected {
+                input:
+                    bam         = CCS.consensus,
+                    ref_fasta   = ref_map['fasta'],
+                    sample_name = participant_name,
+                    map_preset  = map_presets[experiment_type]
+            }
+        }
     }
 
     # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
@@ -48,20 +79,16 @@ workflow PBFlowcell {
     call PB.PBIndex as IndexCorrected { input: bam = MergeCorrected.merged_bam }
     call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report, prefix = "~{participant_name}.~{ID}" }
 
-    File ccs_bam = MergeCorrected.merged_bam
-    File ccs_pbi = IndexCorrected.pbi
-    File ccs_report = MergeCCSReports.report
-
-    call SummarizeCCSReport { input: report = ccs_report }
+    call SummarizeCCSReport { input: report = MergeCCSReports.report }
 
     call SummarizePBI as SummarizeSubreadsPBI { input: pbi = pbi }
-    call SummarizePBI as SummarizeCCSPBI { input: pbi = ccs_pbi }
-    call SummarizePBI as SummarizeCCSQ20PBI { input: pbi = ccs_pbi, qual_threshold = 20 }
+    call SummarizePBI as SummarizeCCSPBI { input: pbi = IndexCorrected.pbi }
+    call SummarizePBI as SummarizeCCSQ20PBI { input: pbi = IndexCorrected.pbi, qual_threshold = 20 }
 
     output {
-        File corrected_bam = ccs_bam
-        File corrected_pbi = ccs_pbi
-        File corrected_report = ccs_report
+        File corrected_bam = MergeCorrected.merged_bam
+        File corrected_pbi = IndexCorrected.pbi
+        File corrected_report = MergeCCSReports.report
 
         Float num_records = SummarizeSubreadsPBI.results['reads']
         Float total_length = SummarizeSubreadsPBI.results['bases']

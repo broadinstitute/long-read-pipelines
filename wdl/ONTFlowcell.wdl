@@ -15,8 +15,7 @@ workflow ONTFlowcell {
 
         String participant_name
         Int num_shards = 50
-
-        String map_preset = "map-ont"
+        String experiment_type
 
         String gcs_out_root_dir
     }
@@ -28,11 +27,16 @@ workflow ONTFlowcell {
 
         participant_name:   "name of the participant from whom these samples were obtained"
         num_shards:         "[default-valued] number of shards into which fastq files should be batched"
+        experiment_type:    "type of experiment run (DNA, RNA)"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
+    Map[String, String] map_presets = {
+        'DNA': 'map-ont',
+        'RNA': 'splice'
+    }
 
     call ONT.GetRunInfo { input: summary_file = final_summary }
     call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
@@ -54,16 +58,16 @@ workflow ONTFlowcell {
                 reads      = read_lines(manifest_chunk),
                 ref_fasta  = ref_map['fasta'],
                 RG         = RG,
-                map_preset = map_preset
+                map_preset = map_presets[experiment_type]
         }
     }
 
-    call Utils.MergeBams as MergeReads { input: bams = AlignReads.aligned_bam, prefix = ID }
+    call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = ID }
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
         input:
-            aligned_bam    = MergeReads.merged_bam,
-            aligned_bai    = MergeReads.merged_bai,
+            aligned_bam    = MergeAlignedReads.merged_bam,
+            aligned_bai    = MergeAlignedReads.merged_bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics/" + ID
@@ -81,14 +85,14 @@ workflow ONTFlowcell {
 
     call FF.FinalizeToFile as FinalizeAlignedBam {
         input:
-            file    = MergeReads.merged_bam,
-            outfile = outdir + "/alignments/" + basename(MergeReads.merged_bam)
+            file    = MergeAlignedReads.merged_bam,
+            outfile = outdir + "/alignments/" + basename(MergeAlignedReads.merged_bam)
     }
 
     call FF.FinalizeToFile as FinalizeAlignedBai {
         input:
-            file    = MergeReads.merged_bai,
-            outfile = outdir + "/alignments/" + basename(MergeReads.merged_bai)
+            file    = MergeAlignedReads.merged_bai,
+            outfile = outdir + "/alignments/" + basename(MergeAlignedReads.merged_bai)
     }
 
     output {
