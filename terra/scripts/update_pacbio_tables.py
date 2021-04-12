@@ -208,7 +208,7 @@ ent_old = fapi.get_entities(namespace, workspace, 'sample').json()
 
 if len(ent_old) > 0:
     tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
-    tbl_old["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_old["subreads_bam"]))
+    tbl_old["entity:sample_id"] = list(map(lambda f: f['name'], k))
 
 ts = load_xmls(gcs_buckets_pb)
 
