@@ -199,16 +199,15 @@ def load_ccs_report(ccs_report_path):
     return d
 
 
-namespace = os.environ['GOOGLE_PROJECT']
-workspace = os.environ['WORKSPACE_NAME']
-default_bucket = os.environ['WORKSPACE_BUCKET']
+namespace = "broad-firecloud-dsde-methods" 
+workspace = "dsp-pacbio"
 gcs_buckets_pb = ['gs://broad-gp-pacbio']
 
 ent_old = fapi.get_entities(namespace, workspace, 'sample').json()
 
 if len(ent_old) > 0:
     tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
-    tbl_old["entity:sample_id"] = list(map(lambda f: f['name'], k))
+    tbl_old["entity:sample_id"] = list(map(lambda f: f['name'], ent_old))
 
 ts = load_xmls(gcs_buckets_pb)
 
@@ -255,6 +254,11 @@ if len(ent_old) > 0:
         
 merged_tbl = pd.merge(tbl_old, tbl_new, how='outer') if len(ent_old) > 0 else tbl_new
 merged_tbl = merged_tbl.drop_duplicates(subset=['entity:sample_id'])
+
+l = list(merged_tbl.columns)
+l.remove("entity:sample_id")
+l = ["entity:sample_id"] + l
+merged_tbl = merged_tbl[l]
 
 upload_samples(namespace, workspace, merged_tbl)
 upload_sample_set(namespace, workspace, merged_tbl)
