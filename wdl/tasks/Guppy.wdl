@@ -71,8 +71,6 @@ workflow Guppy {
 
     output {
         String gcs_dir = FinalizeBasecalls.gcs_dir
-        Array[File] sequencing_summaries = FinalizeBasecalls.sequencing_summaries
-        Array[File] final_summaries = FinalizeBasecalls.final_summaries
         Array[String] barcodes = UniqueBarcodes.unique_strings
         Int num_fast5s = length(read_lines(ListFast5s.manifest))
         Int num_pass_fastqs = SumPassingFastqs.sum

@@ -39,7 +39,7 @@ workflow ONTFlowcell {
     }
 
     call ONT.GetRunInfo { input: final_summary = final_summary }
-    call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
+    call ONT.ListFiles as ListFastqs { input: sequencing_summary = sequencing_summary, suffix = "fastq" }
 
     String SM  = participant_name
     String PL  = "ONT"

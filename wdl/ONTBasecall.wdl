@@ -23,7 +23,7 @@ workflow ONTBasecall {
     }
 
     output {
-        String gcs_basecall_dir = outdir
+        String gcs_basecall_dir = Guppy.gcs_dir
     }
 }
 

@@ -105,13 +105,13 @@ task GetRunInfo {
 
 task ListFiles {
     input {
-        String summary_file
+        String sequencing_summary
         String suffix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String indir = sub(sub(summary_file, basename(summary_file), ""), "/$", "")
+    String indir = sub(sub(sequencing_summary, basename(sequencing_summary), ""), "/$", "")
 
     command <<<
         set -euxo pipefail

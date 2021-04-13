@@ -39,8 +39,8 @@ workflow ONT10x {
         File final_summary = p.left
         File sequencing_summary = p.right
 
-        call ONT.GetRunInfo { input: summary_file = final_summary }
-        call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
+        call ONT.GetRunInfo { input: final_summary = final_summary }
+        call ONT.ListFiles as ListFastqs { input: sequencing_summary = sequencing_summary, suffix = "fastq" }
 
         String SM  = participant_name
         String PL  = "ONT"
