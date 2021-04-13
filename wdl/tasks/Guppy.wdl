@@ -385,13 +385,16 @@ task FinalizeBasecalls {
 
             gsutil cp sequencing_summary.$b.txt $OUT_DIR/
             gsutil cp final_summary.$b.txt $OUT_DIR/
+
+            echo $OUT_DIR/sequencing_summary.$b.txt >> sequencing_summaries.txt
+            echo $OUT_DIR/final_summary.$b.txt >> final_summaries.txt
         done <~{write_lines(barcodes)}
     >>>
 
     output {
         String gcs_dir = gcs_output_dir
-        Array[File] sequencing_summaries = glob("sequencing_summary.*.txt")
-        Array[File] final_summaries = glob("final_summary.*.txt")
+        Array[File] sequencing_summaries = read_lines("sequencing_summary.txt")
+        Array[File] final_summaries = read_lines("final_summary.txt")
     }
 
     #########################
