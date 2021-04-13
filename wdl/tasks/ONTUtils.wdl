@@ -66,17 +66,15 @@ task FindSequencingSummaryFiles {
 
 task GetRunInfo {
     input {
-        String summary_file
+        String final_summary
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String indir = sub(sub(summary_file, basename(summary_file), ""), "/$", "")
-
     command <<<
         set -euxo pipefail
 
-        gsutil cat "~{indir}/final_summary*.txt" | sed 's/=/\t/g' > run_info.txt
+        gsutil cat "~{final_summary}" | sed 's/=/\t/g' > run_info.txt
     >>>
 
     output {

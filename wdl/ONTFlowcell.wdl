@@ -38,7 +38,7 @@ workflow ONTFlowcell {
         'RNA': 'splice'
     }
 
-    call ONT.GetRunInfo { input: summary_file = final_summary }
+    call ONT.GetRunInfo { input: final_summary = final_summary }
     call ONT.ListFiles as ListFastqs { input: summary_file = final_summary, suffix = "fastq" }
 
     String SM  = participant_name
