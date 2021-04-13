@@ -24,8 +24,8 @@ workflow ONTBasecall {
 
     output {
         String gcs_dir = Guppy.gcs_dir
-        Array[File] sequencing_summaries = Guppy.sequencing_summaries
-        Array[File] final_summaries = Guppy.final_summaries
+        Array[String] sequencing_summaries = Guppy.sequencing_summaries
+        Array[String] final_summaries = Guppy.final_summaries
         Array[String] barcodes = Guppy.barcodes
         Int num_pass_fastqs = Guppy.num_pass_fastqs
         Int num_fail_fastqs = Guppy.num_fail_fastqs

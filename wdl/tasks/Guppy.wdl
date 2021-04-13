@@ -393,8 +393,8 @@ task FinalizeBasecalls {
 
     output {
         String gcs_dir = gcs_output_dir
-        Array[File] sequencing_summaries = read_lines("sequencing_summary.txt")
-        Array[File] final_summaries = read_lines("final_summary.txt")
+        Array[String] sequencing_summaries = read_lines("sequencing_summaries.txt")
+        Array[String] final_summaries = read_lines("final_summaries.txt")
     }
 
     #########################
