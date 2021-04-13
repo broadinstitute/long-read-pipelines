@@ -15,7 +15,7 @@ workflow ONTFlowcell {
 
         String participant_name
         Int num_shards = 50
-        String experiment_type
+        String experiment_type = "DNA"
 
         String gcs_out_root_dir
     }
@@ -110,7 +110,7 @@ workflow ONTFlowcell {
         Float read_length_median = SummarizeNanoStats.results['Median_read_length']
 
         Float read_qual_mean = SummarizeNanoStats.results['Mean_read_quality']
-        Float read_qual_median = SummarizeNanoStats.results['Mean_read_quality']
+        Float read_qual_median = SummarizeNanoStats.results['Median_read_quality']
 
         Float num_reads_gt_Q5 = SummarizeNanoStats.results['Number_of_reads_gt_Q5']
         Float num_reads_gt_Q7 = SummarizeNanoStats.results['Number_of_reads_gt_Q7']
