@@ -7,7 +7,7 @@ workflow ONTBasecall {
     input {
         String gcs_fast5_dir
         String config = "dna_r9.4.1_450bps_hac.cfg"
-        String barcode_kit = "NA"
+        String? barcode_kit
         String gcs_out_root_dir
         String prefix
     }
@@ -23,12 +23,7 @@ workflow ONTBasecall {
     }
 
     output {
-        String gcs_dir = Guppy.gcs_dir
-        Array[String] sequencing_summaries = Guppy.sequencing_summaries
-        Array[String] final_summaries = Guppy.final_summaries
-        Array[String] barcodes = Guppy.barcodes
-        Int num_pass_fastqs = Guppy.num_pass_fastqs
-        Int num_fail_fastqs = Guppy.num_fail_fastqs
+        String gcs_basecall_dir = outdir
     }
 }
 

@@ -19,7 +19,7 @@ workflow Guppy {
 
         Int num_shards = 4
         String config
-        String barcode_kit
+        String? barcode_kit
 
         String instrument = "unknown"
         String flow_cell_id = "unknown"
@@ -165,7 +165,7 @@ task Basecall {
     input {
         Array[File] fast5_files
         String config = "dna_r9.4.1_450bps_hac_prom.cfg"
-        String barcode_kit = "NA"
+        String? barcode_kit
         Int index = 0
 
         RuntimeAttr? runtime_attr_override
@@ -173,7 +173,7 @@ task Basecall {
 
     Int disk_size = 3 * ceil(size(fast5_files, "GB"))
 
-    String barcode_arg = if barcode_kit != "NA" then "--barcode_kits \"~{barcode_kit}\" --trim_barcodes" else ""
+    String barcode_arg = if defined(barcode_kit) then "--barcode_kits \"~{barcode_kit}\" --trim_barcodes" else ""
 
     command <<<
         set -euxo pipefail
@@ -365,7 +365,7 @@ task FinalizeBasecalls {
     String gcs_output_dir = sub(outdir + "/", "/+$", "")
 
     command <<<
-        set -x
+        set -euxo pipefail
 
         PASS_FASTQ="~{write_lines(pass_fastqs)}"
 
@@ -379,22 +379,17 @@ task FinalizeBasecalls {
                 cp ~{sequencing_summary} sequencing_summary.$b.txt
                 cp ~{final_summary} final_summary.$b.txt
             else
-                grep -e filename -e "$b[[:space:]]\+" ~{sequencing_summary} > sequencing_summary.$b.txt
+                grep -w -e filename -e $b ~{sequencing_summary} > sequencing_summary.$b.txt
                 sed "s/sample_id=/sample_id=$b./" ~{final_summary} > final_summary.$b.txt
             fi
 
             gsutil cp sequencing_summary.$b.txt $OUT_DIR/
             gsutil cp final_summary.$b.txt $OUT_DIR/
-
-            echo $OUT_DIR/sequencing_summary.$b.txt >> sequencing_summaries.txt
-            echo $OUT_DIR/final_summary.$b.txt >> final_summaries.txt
         done <~{write_lines(barcodes)}
     >>>
 
     output {
         String gcs_dir = gcs_output_dir
-        Array[String] sequencing_summaries = read_lines("sequencing_summaries.txt")
-        Array[String] final_summaries = read_lines("final_summaries.txt")
     }
 
     #########################
