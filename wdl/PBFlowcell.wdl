@@ -43,7 +43,7 @@ workflow PBFlowcell {
         'IsoSeq': 'ISOSEQ'
     }
 
-    call PB.GetRunInfo { input: bam = bam }
+    call PB.GetRunInfo { input: bam = bam, SM = participant_name }
     String ID = GetRunInfo.run_info["PU"]
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{ID}"
