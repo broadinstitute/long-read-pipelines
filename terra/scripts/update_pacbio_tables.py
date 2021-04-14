@@ -63,7 +63,7 @@ def combine(tables):
 
 
 def load_xmls(gcs_buckets):
-    storage_client = storage.Client()
+    storage_client = storage.Client(project='broad-dsp-lrma')
     schemas = OrderedDict()
 
     ts = []
@@ -176,7 +176,7 @@ def load_ccs_report(ccs_report_path):
     }
     
     if ccs_report_path != "":
-        storage_client = storage.Client()
+        storage_client = storage.Client(project='broad-dsp-lrma')
 
         ccs_report = re.sub("^gs://", "", e['Files']['ccs_reports.txt']).split("/")
         blobs = storage_client.list_blobs(ccs_report[0], prefix="/".join(ccs_report[1:]))
