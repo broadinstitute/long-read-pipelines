@@ -315,6 +315,7 @@ task MakeFinalSummary {
         echo 'instrument=~{instrument}' > final_summary.txt
         echo 'flow_cell_id=~{flow_cell_id}' >> final_summary.txt
         echo 'sample_id=~{sample_id}' >> final_summary.txt
+        echo 'protocol_run_id=~{protocol_run_id}' >> final_summary.txt
         echo 'started=~{started}' >> final_summary.txt
         echo 'acquisition_stopped=~{stopped}' >> final_summary.txt
         echo 'processing_stopped=~{stopped}' >> final_summary.txt

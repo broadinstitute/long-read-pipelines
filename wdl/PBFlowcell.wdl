@@ -22,6 +22,7 @@ workflow PBFlowcell {
 
         Int num_shards = 300
 
+        Boolean is_corrected
         Boolean is_ccs
         Boolean is_isoseq
 
@@ -35,7 +36,10 @@ workflow PBFlowcell {
 
         participant_name:   "name of the participant from whom these samples were obtained"
         num_shards:         "[default-valued] number of sharded BAMs to create (tune for performance)"
-        experiment_type:    "type of experiment run (CLR, CCS, IsoSeq)"
+
+        is_corrected:       "indicates whether input has already been CCS-corrected"
+        is_ccs:             "indicates whether input represents HiFi data (that might not have been corrected yet)"
+        is_isoseq:          "indicates whether input represents IsoSeq data"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
@@ -46,6 +50,20 @@ workflow PBFlowcell {
         'CCS': 'CCS',
         'IsoSeq': 'ISOSEQ'
     }
+
+    # is_corrected  is_ccs  is_isoseq    correct      align
+    # 0             0       0            no           SUBREAD
+    # 0             1       0            yes          CCS
+    # 1             0       0            no           CCS
+    # 1             1       0            no           CCS
+    # 0             0       1            no           ISOSEQ
+    # 0             1       1            yes          ISOSEQ
+    # 1             0       1            no           ISOSEQ
+    # 1             1       1            no           ISOSEQ
+
+    Boolean correct = !is_corrected && is_ccs
+    String experiment_type = "SUBREAD"
+
 
     call PB.GetRunInfo { input: bam = bam, SM = sample_name }
     String ID = GetRunInfo.run_info["PU"]
@@ -131,8 +149,8 @@ workflow PBFlowcell {
     }
 
     output {
-        File? ccs_unaligned_bam = MergeCCSUnalignedReads.merged_bam
-        File? ccs_unaligned_pbi = IndexCCSUnalignedReads.pbi
+        File? ccs_bam = MergeCCSUnalignedReads.merged_bam
+        File? ccs_pbi = IndexCCSUnalignedReads.pbi
 
         File aligned_bam = MergeAlignedReads.merged_bam
         File aligned_pbi = IndexAlignedReads.pbi
