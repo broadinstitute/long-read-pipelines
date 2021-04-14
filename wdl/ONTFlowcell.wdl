@@ -83,6 +83,8 @@ workflow ONTFlowcell {
 
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
+    # Finalize data
+
     call FF.FinalizeToFile as FinalizeAlignedBam {
         input:
             file    = MergeAlignedReads.merged_bam,
@@ -101,9 +103,10 @@ workflow ONTFlowcell {
 
         Float active_channels = SummarizeNanoStats.results['Active_channels']
 
-        Float num_reads = SummarizeNanoStats.results['Number_of_reads']
+        Float num_records = SummarizeNanoStats.results['Number_of_reads']
         Float total_bases = SummarizeNanoStats.results['Total_bases']
-        Float raw_yield = SummarizeNanoStats.results['Total_bases']/ComputeGenomeLength.length
+        Float raw_yield = SummarizeNanoStats.results['Total_bases']
+        Float raw_est_fold_cov = SummarizeNanoStats.results['Total_bases']/ComputeGenomeLength.length
 
         Float read_length_mean = SummarizeNanoStats.results['Mean_read_length']
         Float read_length_N50 = SummarizeNanoStats.results['Read_length_N50']

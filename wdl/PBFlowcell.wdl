@@ -46,53 +46,97 @@ workflow PBFlowcell {
     call PB.GetRunInfo { input: bam = bam }
     String ID = GetRunInfo.run_info["PU"]
 
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{ID}"
+
     # break one raw BAM into fixed number of shards
     call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
 
     # then perform correction on each of the shard
     scatter (subreads in ShardLongReads.unmapped_shards) {
-        if (experiment_type == "CLR") {
-            call PB.Align as AlignUncorrected {
-                input:
-                    bam         = subreads,
-                    ref_fasta   = ref_map['fasta'],
-                    sample_name = participant_name,
-                    map_preset  = map_presets[experiment_type]
-            }
+        if (experiment_type != "CLR") {
+            call PB.CCS { input: subreads = subreads }
         }
 
-        if (experiment_type == "CCS" || experiment_type == "IsoSeq") {
-            call PB.CCS { input: subreads = subreads }
+        File unaligned_bam = select_first([CCS.consensus, subreads])
 
-            call PB.Align as AlignCorrected {
-                input:
-                    bam         = CCS.consensus,
-                    ref_fasta   = ref_map['fasta'],
-                    sample_name = participant_name,
-                    map_preset  = map_presets[experiment_type]
-            }
+        call PB.Align as AlignReads {
+            input:
+                bam         = unaligned_bam,
+                ref_fasta   = ref_map['fasta'],
+                sample_name = participant_name,
+                map_preset  = map_presets[experiment_type]
+        }
+    }
+
+    # merge corrected, unaligned reads
+    if (experiment_type != "CLR") {
+        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(CCS.consensus) }
+        call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
+
+        call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = ID }
+        call PB.SummarizeCCSReport { input: report = MergeCCSReports.report }
+
+        call FF.FinalizeToFile as FinalizeCCSUnalignedBam {
+            input:
+                file    = MergeAlignedReads.merged_bam,
+                outfile = outdir + "/reads/ccs/unaligned" + basename(MergeCCSUnalignedReads.merged_bam)
+        }
+
+        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
+            input:
+                file    = IndexCCSUnalignedReads.pbi,
+                outfile = outdir + "/reads/ccs/unaligned/" + basename(IndexCCSUnalignedReads.pbi)
+        }
+
+        call FF.FinalizeToFile as FinalizeCCSReport {
+            input:
+                file    = MergeCCSReports.report,
+                outfile = outdir + "/reads/ccs/unaligned/" + basename(MergeCCSReports.report)
         }
     }
 
     # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-    call Utils.MergeBams as MergeCorrected { input: bams = CCS.consensus, prefix = "~{participant_name}.~{ID}.corrected" }
-    call PB.PBIndex as IndexCorrected { input: bam = MergeCorrected.merged_bam }
-    call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report, prefix = "~{participant_name}.~{ID}" }
+    call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = ID }
+    call PB.PBIndex as IndexAlignedReads { input: bam = MergeAlignedReads.merged_bam }
 
-    call SummarizeCCSReport { input: report = MergeCCSReports.report }
+    call PB.SummarizePBI as SummarizeSubreadsPBI { input: pbi = pbi }
+    call PB.SummarizePBI as SummarizeAlignedPBI { input: pbi = IndexAlignedReads.pbi }
+    call PB.SummarizePBI as SummarizeAlignedQ20PBI { input: pbi = IndexAlignedReads.pbi, qual_threshold = 20 }
 
-    call SummarizePBI as SummarizeSubreadsPBI { input: pbi = pbi }
-    call SummarizePBI as SummarizeCCSPBI { input: pbi = IndexCorrected.pbi }
-    call SummarizePBI as SummarizeCCSQ20PBI { input: pbi = IndexCorrected.pbi, qual_threshold = 20 }
+    call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
+
+    # Finalize data
+    String dir_prefix = if (experiment_type != "CLR") then "reads/ccs/aligned" else "reads/subreads/aligned"
+
+    call FF.FinalizeToFile as FinalizeAlignedBam {
+        input:
+            file    = MergeAlignedReads.merged_bam,
+            outfile = outdir + "/" + dir_prefix + "/" + basename(MergeAlignedReads.merged_bam)
+    }
+
+    call FF.FinalizeToFile as FinalizeAlignedBai {
+        input:
+            file    = MergeAlignedReads.merged_bai,
+            outfile = outdir + "/" + dir_prefix + "/" + basename(MergeAlignedReads.merged_bai)
+    }
+
+    call FF.FinalizeToFile as FinalizeAlignedPbi {
+        input:
+            file    = IndexAlignedReads.pbi,
+            outfile = outdir + "/" + dir_prefix + "/" + basename(IndexAlignedReads.pbi)
+    }
 
     output {
-        File corrected_bam = MergeCorrected.merged_bam
-        File corrected_pbi = IndexCorrected.pbi
-        File corrected_report = MergeCCSReports.report
+        File? ccs_unaligned_bam = MergeCCSUnalignedReads.merged_bam
+        File? ccs_unaligned_pbi = IndexCCSUnalignedReads.pbi
+
+        File aligned_bam = MergeAlignedReads.merged_bam
+        File aligned_pbi = IndexAlignedReads.pbi
 
         Float num_records = SummarizeSubreadsPBI.results['reads']
-        Float total_length = SummarizeSubreadsPBI.results['bases']
+        Float total_bases = SummarizeSubreadsPBI.results['bases']
         Float raw_yield = SummarizeSubreadsPBI.results['yield']
+        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['yield']/ComputeGenomeLength.length
 
         Float polymerase_mean = SummarizeSubreadsPBI.results['polymerase_mean']
         Float polymerase_n50 = SummarizeSubreadsPBI.results['polymerase_n50']
@@ -100,156 +144,22 @@ workflow PBFlowcell {
         Float subread_mean = SummarizeSubreadsPBI.results['subread_mean']
         Float subread_n50 = SummarizeSubreadsPBI.results['subread_n50']
 
-        Float ccs_num_records = SummarizeCCSPBI.results['reads']
-        Float ccs_total_length = SummarizeCCSPBI.results['bases']
-        Float ccs_mean_qual = SummarizeCCSPBI.results['mean_qual']
-        Float ccs_yield = SummarizeCCSPBI.results['yield']
+        Float ccs_num_records = SummarizeAlignedPBI.results['reads']
+        Float ccs_total_length = SummarizeAlignedPBI.results['bases']
+        Float ccs_mean_qual = SummarizeAlignedPBI.results['mean_qual']
+        Float ccs_yield = SummarizeAlignedPBI.results['yield']
+        Float ccs_est_fold_cov = SummarizeAlignedPBI.results['yield']/ComputeGenomeLength.length
 
-        Float ccs_num_records_q20 = SummarizeCCSQ20PBI.results['reads']
-        Float ccs_total_length_q20 = SummarizeCCSQ20PBI.results['bases']
-        Float ccs_mean_qual_q20 = SummarizeCCSQ20PBI.results['mean_qual']
-        Float ccs_yield_q20 = SummarizeCCSQ20PBI.results['yield']
+        Float ccs_num_records_q20 = SummarizeAlignedQ20PBI.results['reads']
+        Float ccs_total_length_q20 = SummarizeAlignedQ20PBI.results['bases']
+        Float ccs_mean_qual_q20 = SummarizeAlignedQ20PBI.results['mean_qual']
+        Float ccs_yield_q20 = SummarizeAlignedQ20PBI.results['yield']
 
-        Float zmws_input = SummarizeCCSReport.zmws_input
-        Float zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
-        Float zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
-        Float zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
-        Float zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
-    }
-}
-
-task SummarizeCCSReport {
-    input {
-        File report
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 2*ceil(size(report, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        cat ~{report} | grep 'ZMWs input' | awk -F": " '{ print $2 }' > zmws_input.txt
-        cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_pass_filters.txt
-        cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_fail_filters.txt
-        cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_pass_filters_pct.txt
-        cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_fail_filters_pct.txt
-    >>>
-
-    output {
-        Float zmws_input = read_float("zmws_input.txt")
-        Float zmws_pass_filters = read_float("zmws_pass_filters.txt")
-        Float zmws_fail_filters = read_float("zmws_fail_filters.txt")
-        Float zmws_pass_filters_pct = read_float("zmws_pass_filters_pct.txt")
-        Float zmws_fail_filters_pct = read_float("zmws_fail_filters_pct.txt")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task SummarizeXMLMetadata {
-    input {
-        File xml
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 2*ceil(size(xml, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        cat ~{xml} | grep '<pbds:TotalLength>' | sed 's/<pbds:TotalLength>//g' | sed 's/<\/pbds:TotalLength>//' | sed 's/\s*//g' > xml_total_length.txt
-        cat ~{xml} | grep '<pbds:NumRecords>' | sed 's/<pbds:NumRecords>//g' | sed 's/<\/pbds:NumRecords>//' | sed 's/\s*//g' > xml_num_records.txt
-    >>>
-
-    output {
-        Float xml_total_length = read_float("xml_total_length.txt")
-        Float xml_num_records = read_float("xml_num_records.txt")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task SummarizePBI {
-    input {
-        File pbi
-        Int qual_threshold = 0
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 2*ceil(size(pbi, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        python3 /usr/local/bin/compute_pbi_stats.py -q ~{qual_threshold} ~{pbi} > map.txt
-
-        cat map.txt
-    >>>
-
-    output {
-        Map[String, Float] results = read_map("map.txt")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             12,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        File? ccs_report = MergeCCSReports.report
+        Float? zmws_input = SummarizeCCSReport.zmws_input
+        Float? zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
+        Float? zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
+        Float? zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
+        Float? zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
     }
 }
