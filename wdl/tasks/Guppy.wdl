@@ -174,7 +174,7 @@ task Basecall {
     String barcode_arg = if defined(barcode_kit) then "--barcode_kits \"~{barcode_kit}\" --trim_barcodes" else ""
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         guppy_basecaller \
             -r \

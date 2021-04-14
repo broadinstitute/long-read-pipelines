@@ -18,8 +18,12 @@ workflow PBFlowcell {
         File ref_map_file
 
         String participant_name
+        String sample_name
+
         Int num_shards = 300
-        String experiment_type = "CCS"
+
+        Boolean is_ccs
+        Boolean is_isoseq
 
         String gcs_out_root_dir
     }
@@ -43,7 +47,7 @@ workflow PBFlowcell {
         'IsoSeq': 'ISOSEQ'
     }
 
-    call PB.GetRunInfo { input: bam = bam, SM = participant_name }
+    call PB.GetRunInfo { input: bam = bam, SM = sample_name }
     String ID = GetRunInfo.run_info["PU"]
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{ID}"
