@@ -2,6 +2,7 @@
 
 import os
 import re
+import math
 import hashlib
 
 import pandas as pd
@@ -110,20 +111,24 @@ def load_xmls(gcs_buckets):
     return ts
 
 
-def upload_samples(namespace, workspace, tbl):
+def upload_data(namespace, workspace, tbl):
+    # delete old sample set
+    ss_old = fapi.get_entities(namespace, workspace, f'sample_set').json()
+    sample_sets = list(map(lambda e: e['name'], ss_old))
+    f = [fapi.delete_sample_set(namespace, workspace, sample_set_index) for sample_set_index in sample_sets]
+    
+    # delete old samples
+    s_old = fapi.get_entities(namespace, workspace, 'sample').json()
+    samples = list(map(lambda e: e['name'], s_old))
+    f = [fapi.delete_sample(namespace, workspace, sample_index) for sample_index in samples]
+
+    # upload new samples
     a = fapi.upload_entities(namespace, workspace, entity_data=tbl.to_csv(index=False, sep="\t"), model='flexible')
 
     if a.status_code == 200:
         print(f'Uploaded {len(tbl)} rows successfully.')
     else:
         print(a.json())
-
-
-def upload_sample_set(namespace, workspace, tbl):
-    # delete old sample set
-    ss_old = fapi.get_entities(namespace, workspace, f'sample_set').json()
-    sample_sets = list(map(lambda e: e['name'], ss_old))
-    f = [fapi.delete_sample_set(namespace, workspace, sample_set_index) for sample_set_index in sample_sets]
 
     # upload new sample set
     ss = tbl.filter(['bio_sample'], axis=1).drop_duplicates()
@@ -199,7 +204,7 @@ def load_ccs_report(ccs_report_path):
     return d
 
 
-namespace = "broad-firecloud-dsde-methods" 
+namespace = "broad-firecloud-dsde-methods"
 workspace = "dsp-pacbio"
 gcs_buckets_pb = ['gs://broad-gp-pacbio']
 
@@ -211,7 +216,7 @@ if len(ent_old) > 0:
 
 ts = load_xmls(gcs_buckets_pb)
 
-tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi"]
+tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi"]
 tbl_rows = []
 
 for e in ts:
@@ -229,6 +234,10 @@ for e in ts:
         e['WellSample'][0]['InsertSize'] if 'InsertSize' in e['WellSample'][0] else "0",
         e['WellSample'][0]['IsCCS'] if 'IsCCS' in e['WellSample'][0] else "unknown",
         e['WellSample'][0]['IsoSeq'] if 'IsoSeq' in e['WellSample'][0] else "unknown",
+
+        "true" if 'ConsensusReadSet' in e else "false",
+        e['WellSample'][0]['Description'] if 'Description' in e['WellSample'][0] else "unknown",
+        e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else "unknown",
         
         e['DataSetMetadata'][0]['NumRecords'],
         e['DataSetMetadata'][0]['TotalLength'],
@@ -247,18 +256,18 @@ for e in ts:
     
 tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
 
-if len(ent_old) > 0:
-    for sample_id in tbl_old.merge(tbl_new, how='outer', indicator=True).loc[lambda x : x['_merge']=='left_only']['entity:sample_id'].tolist():
-        print(f'Entry for sample {sample_id} has been modified.  Keeping changes.')
-        tbl_new = tbl_new[tbl_new['entity:sample_id'] != sample_id]
-        
-merged_tbl = pd.merge(tbl_old, tbl_new, how='outer') if len(ent_old) > 0 else tbl_new
-merged_tbl = merged_tbl.drop_duplicates(subset=['entity:sample_id'])
+cols_new = ['entity:sample_id'] + list(set(tbl_new.columns).difference(set(tbl_old.columns)))
+cols_int = list(set(tbl_new.columns).intersection(set(tbl_old.columns)))
+tbl_new1 = pd.merge(tbl_old, tbl_new, how='left', on=cols_int, sort=True)
+tbl_new2 = pd.merge(tbl_new1, tbl_new[cols_new], left_on='entity:sample_id', right_on='entity:sample_id', suffixes=['_trash', ''])
+cols_final = list(filter(lambda e: not e.endswith("_trash"), list(tbl_new2.columns)))
+
+merged_tbl = tbl_new2[cols_final]
+merged_tbl = merged_tbl.drop_duplicates()
 
 l = list(merged_tbl.columns)
 l.remove("entity:sample_id")
 l = ["entity:sample_id"] + l
 merged_tbl = merged_tbl[l]
 
-upload_samples(namespace, workspace, merged_tbl)
-upload_sample_set(namespace, workspace, merged_tbl)
+upload_data(namespace, workspace, merged_tbl)
