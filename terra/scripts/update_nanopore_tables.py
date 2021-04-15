@@ -54,14 +54,27 @@ def load_summaries(gcs_buckets):
     return ts
 
 
-def upload_sample_set(namespace, workspace, tbl):
+def upload_data(namespace, workspace, tbl):
     # delete old sample set
     ss_old = fapi.get_entities(namespace, workspace, f'sample_set').json()
     sample_sets = list(map(lambda e: e['name'], ss_old))
     f = [fapi.delete_sample_set(namespace, workspace, sample_set_index) for sample_set_index in sample_sets]
+    
+    # delete old samples
+    s_old = fapi.get_entities(namespace, workspace, 'sample').json()
+    samples = list(map(lambda e: e['name'], s_old))
+    f = [fapi.delete_sample(namespace, workspace, sample_index) for sample_index in samples]
+
+    # upload new samples
+    a = fapi.upload_entities(namespace, workspace, entity_data=tbl.to_csv(index=False, sep="\t"), model='flexible')
+
+    if a.status_code == 200:
+        print(f'Uploaded {len(tbl)} rows successfully.')
+    else:
+        print(a.json())
 
     # upload new sample set
-    ss = tbl.filter(['participant'], axis=1).drop_duplicates()
+    ss = tbl.filter(['sample_name'], axis=1).drop_duplicates()
     ss.columns = [f'entity:sample_set_id']
     
     b = fapi.upload_entities(namespace, workspace, entity_data=ss.to_csv(index=False, sep="\t"), model='flexible')
@@ -71,7 +84,7 @@ def upload_sample_set(namespace, workspace, tbl):
         print(b.json())
     
     # upload membership set
-    ms = tbl.filter(['participant', 'entity:sample_id'], axis=1).drop_duplicates()
+    ms = tbl.filter(['sample_name', 'entity:sample_id'], axis=1).drop_duplicates()
     ms.columns = [f'membership:sample_set_id', f'sample']
     
     c = fapi.upload_entities(namespace, workspace, entity_data=ms.to_csv(index=False, sep="\t"), model='flexible')
@@ -129,11 +142,4 @@ merged_tbl = merged_tbl[['entity:sample_id'] + tbl_header]
 merged_tbl = merged_tbl.drop_duplicates(subset=['flow_cell_id', 'instrument', 'sample_name', 'acquisition_stopped', 'processing_stopped', 'fast5_files_in_fallback', 'fast5_files_in_final_dest', 'fastq_files_in_fallback', 'fastq_files_in_final_dest'])
 merged_tbl = merged_tbl[merged_tbl.fast5_files_in_final_dest != "0"]
 
-a = fapi.upload_entities(namespace, workspace, entity_data=merged_tbl.to_csv(index=False, sep="\t"), model='flexible')
-
-if a.status_code == 200:
-    print(f'Uploaded {len(merged_tbl)} rows successfully.')
-else:
-    print(a.json())
-
-upload_sample_set(namespace, workspace, merged_tbl)
+upload_data(namespace, workspace, merged_tbl)
