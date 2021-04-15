@@ -34,8 +34,8 @@ workflow PBFlowcell {
         pbi:                "GCS path to pbi index for raw subread bam"
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
-        participant_name:   "name of the participant from whom these samples were obtained"
-        num_shards:         "[default-valued] number of sharded BAMs to create (tune for performance)"
+        SM:                 "the value to place in the BAM read group's SM field"
+        ID:                 "the value to place in the BAM read group's ID field"
 
         is_corrected:       "indicates whether input has already been CCS-corrected"
         is_ccs:             "indicates whether input represents HiFi data (that might not have been corrected yet)"

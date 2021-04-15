@@ -68,3 +68,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTBasecall.wdl
   testParameterFiles:
+- name: ONTAssembleWithCanu
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTAssembleWithCanu.wdl
+  testParameterFiles:
