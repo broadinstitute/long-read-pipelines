@@ -35,7 +35,7 @@ workflow ONTAssembleWithCanu {
         input:
             reads = MergeFastqs.merged_fastq,
             prefix = prefix,
-            genome_size = ComputeGenomeLength.length,
+            genome_size = ceil(ComputeGenomeLength.length/1000000.0),
             correct_error_rate = correct_error_rate,
             trim_error_rate = trim_error_rate,
             assemble_error_rate = assemble_error_rate

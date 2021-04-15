@@ -13,7 +13,7 @@ workflow Canu {
     input {
         File reads
 
-        String genome_size
+        Int genome_size
         Float correct_error_rate
         Float trim_error_rate
         Float assemble_error_rate
@@ -54,7 +54,7 @@ workflow Canu {
 task Correct {
     input {
         File reads
-        String genome_size
+        Int genome_size
         Float error_rate
         String prefix
 
@@ -75,7 +75,7 @@ task Correct {
 
         canu -correct \
              -p ~{prefix} -d canu_correct_output \
-             genomeSize=~{genome_size} \
+             genomeSize=~{genome_size}m \
              corMaxEvidenceErate=0.15 \
              correctedErrorRate=~{error_rate} \
              -nanopore \
@@ -112,7 +112,7 @@ task Correct {
 task Trim {
     input {
         File corrected_reads
-        String genome_size
+        Int genome_size
         Float error_rate
         String prefix
 
@@ -133,7 +133,7 @@ task Trim {
 
        canu -trim \
             -p ~{prefix} -d canu_trim_output \
-            genomeSize=~{genome_size} \
+            genomeSize=~{genome_size}m \
             correctedErrorRate=~{error_rate} \
             -nanopore-corrected \
             ~{corrected_reads}
@@ -168,7 +168,7 @@ task Trim {
 # performs assembly on corrected, then trimmmed reads
 task Assemble {
     input {
-        String genome_size
+        Int genome_size
         File trimmed_reads
         Float error_rate
         String prefix
@@ -190,7 +190,7 @@ task Assemble {
 
         canu -assemble \
              -p ~{prefix} -d canu_assemble_output \
-             genomeSize=~{genome_size} \
+             genomeSize=~{genome_size}m \
              correctedErrorRate=~{error_rate} \
              -nanopore-corrected \
              ~{trimmed_reads}
