@@ -1114,8 +1114,8 @@ task ListFilesOfType {
     }
 
     parameter_meta {
-        gcs_dir: "input directory"
-        suffix:  "suffix for files"
+        gcs_dir:  "input directory"
+        suffixes: "suffix(es) for files"
     }
 
     Int disk_size = 1
