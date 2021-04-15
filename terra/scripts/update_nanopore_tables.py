@@ -94,7 +94,7 @@ if len(ent_old) > 0:
 
 ts = load_summaries(gcs_buckets_ont)
 
-tbl_header = ["final_summary_file", "sequencing_summary_file", "protocol_group_id", "instrument", "position", "flow_cell_id", "original_participant_name", "participant", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
+tbl_header = ["final_summary_file", "sequencing_summary_file", "protocol_group_id", "instrument", "position", "flow_cell_id", "sample_name", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
 tbl_rows = []
 
 for e in ts:
@@ -105,7 +105,6 @@ for e in ts:
         e["instrument"],
         e["position"],
         e["flow_cell_id"],
-        e["sample_id"],
         e["sample_id"],
         e["basecalling_enabled"],
         e["started"],
@@ -127,7 +126,7 @@ if len(ent_old) > 0:
 
 merged_tbl = pd.merge(tbl_old, tbl_new, how='outer') if len(ent_old) > 0 else tbl_new
 merged_tbl = merged_tbl[['entity:sample_id'] + tbl_header]
-merged_tbl = merged_tbl.drop_duplicates(subset=['flow_cell_id', 'instrument', 'original_participant_name', 'acquisition_stopped', 'processing_stopped', 'fast5_files_in_fallback', 'fast5_files_in_final_dest', 'fastq_files_in_fallback', 'fastq_files_in_final_dest'])
+merged_tbl = merged_tbl.drop_duplicates(subset=['flow_cell_id', 'instrument', 'sample_name', 'acquisition_stopped', 'processing_stopped', 'fast5_files_in_fallback', 'fast5_files_in_final_dest', 'fastq_files_in_fallback', 'fastq_files_in_final_dest'])
 merged_tbl = merged_tbl[merged_tbl.fast5_files_in_final_dest != "0"]
 
 a = fapi.upload_entities(namespace, workspace, entity_data=merged_tbl.to_csv(index=False, sep="\t"), model='flexible')
