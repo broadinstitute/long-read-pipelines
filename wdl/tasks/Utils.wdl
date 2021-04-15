@@ -1123,13 +1123,21 @@ task ListFilesOfType {
     command <<<
         set -x
 
+        RET=0
+
         while read s; do
             gsutil ls ~{gcs_dir}/**$s >> files.txt
         done <~{write_lines(suffixes)}
+
+        if [[ $(wc -l files.txt) -eq 0 ]]; then
+            RET=1
+        fi
+
+        exit $RET
     >>>
 
     output {
-        Array[String] files = read_string("files.txt")
+        Array[String] files = read_lines("files.txt")
     }
 
     #########################
