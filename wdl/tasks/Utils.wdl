@@ -1108,7 +1108,7 @@ task ComputeGenomeLength {
 task ListFilesOfType {
     input {
         String gcs_dir
-        String suffix
+        Array[String] suffixes
 
         RuntimeAttr? runtime_attr_override
     }
@@ -1123,7 +1123,9 @@ task ListFilesOfType {
     command <<<
         set -euxo pipefail
 
-        gsutil ls ~{gcs_dir}/**.~{suffix}* > files.txt
+        while read s; do
+            gsutil ls ~{gcs_dir}/**$s >> files.txt
+        done <~{write_lines(suffixes)}
     >>>
 
     output {

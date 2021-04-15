@@ -26,10 +26,10 @@ workflow ONTAssembleWithCanu {
     Map[String, String] ref_map = read_map(ref_map_file)
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTAssembleWithCanu/~{prefix}"
 
-    call Utils.ListFilesOfType { input: gcs_dir = gcs_fastq_dir, suffix = ".fastq" }
-    call AU.MergeFastqs { input: fastqs = ListFilesOfType.files }
-
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
+
+    call Utils.ListFilesOfType { input: gcs_dir = gcs_fastq_dir, suffixes = [".fastq", ".fq", ".fastq.gz", ".fq.gz"] }
+    call AU.MergeFastqs { input: fastqs = ListFilesOfType.files }
 
     call Canu.Canu {
         input:
