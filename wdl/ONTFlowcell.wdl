@@ -13,7 +13,9 @@ workflow ONTFlowcell {
         File sequencing_summary
         File ref_map_file
 
-        String participant_name
+        String SM
+        String ID
+
         Int num_shards = 50
         String experiment_type = "DNA"
 
@@ -25,7 +27,9 @@ workflow ONTFlowcell {
         sequencing_summary: "GCS path to '*sequencing_summary*.txt*' file for basecalled fastq files"
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
-        participant_name:   "name of the participant from whom these samples were obtained"
+        SM:                 "the value to place in the BAM read group's SM field"
+        ID:                 "the value to place in the BAM read group's ID field"
+
         num_shards:         "[default-valued] number of shards into which fastq files should be batched"
         experiment_type:    "type of experiment run (DNA, RNA)"
 
@@ -41,11 +45,9 @@ workflow ONTFlowcell {
     call ONT.GetRunInfo { input: final_summary = final_summary }
     call ONT.ListFiles as ListFastqs { input: sequencing_summary = sequencing_summary, suffix = "fastq" }
 
-    String SM  = participant_name
     String PL  = "ONT"
     String PU  = GetRunInfo.run_info["instrument"]
     String DT  = GetRunInfo.run_info["started"]
-    String ID  = GetRunInfo.run_info["flow_cell_id"] + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
     String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{ID}"

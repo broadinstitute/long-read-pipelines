@@ -634,7 +634,6 @@ task Timestamp {
     }
 }
 
-
 task BamToTable {
     input {
         File bam
@@ -1082,6 +1081,63 @@ task ComputeGenomeLength {
 
     output {
         Float length = read_float("length.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ListFilesOfType {
+    input {
+        String gcs_dir
+        Array[String] suffixes
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        gcs_dir:  "input directory"
+        suffixes: "suffix(es) for files"
+    }
+
+    Int disk_size = 1
+
+    command <<<
+        set -x
+
+        RET=0
+
+        while read s; do
+            gsutil ls ~{gcs_dir}/**$s >> files.txt
+        done <~{write_lines(suffixes)}
+
+        if [[ $(wc -l files.txt) -eq 0 ]]; then
+            RET=1
+        fi
+
+        exit $RET
+    >>>
+
+    output {
+        Array[String] files = read_lines("files.txt")
     }
 
     #########################
