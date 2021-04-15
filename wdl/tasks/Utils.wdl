@@ -1121,7 +1121,7 @@ task ListFilesOfType {
     Int disk_size = 1
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         while read s; do
             gsutil ls ~{gcs_dir}/**$s >> files.txt
