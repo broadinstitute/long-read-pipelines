@@ -21,7 +21,7 @@ workflow PBFlowcell {
         String ID
 
         Int num_shards = 50
-        String experiment_type = "CCS"
+        String experiment_type
 
         String gcs_out_root_dir
     }

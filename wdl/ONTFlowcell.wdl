@@ -17,7 +17,7 @@ workflow ONTFlowcell {
         String ID
 
         Int num_shards = 50
-        String experiment_type = "DNA"
+        String experiment_type
 
         String gcs_out_root_dir
     }
