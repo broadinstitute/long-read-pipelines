@@ -31,7 +31,7 @@ task Minimap2 {
     command <<<
         set -euxo pipefail
 
-        MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
+        MAP_PARAMS="-ayYL --MD -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
         SORT_PARAMS="-@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
 

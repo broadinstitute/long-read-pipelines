@@ -31,16 +31,19 @@ workflow ONTFlowcell {
         ID:                 "the value to place in the BAM read group's ID field"
 
         num_shards:         "[default-valued] number of shards into which fastq files should be batched"
-        experiment_type:    "type of experiment run (DNA, RNA)"
+        experiment_type:    "[default-valued] type of experiment run (DNA, RNA, R2C2)"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
     Map[String, String] map_presets = {
-        'DNA': 'map-ont',
-        'RNA': 'splice'
+        'DNA':  'map-ont',
+        'RNA':  'splice',
+        'R2C2': 'splice'
     }
+
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{ID}"
 
     call ONT.GetRunInfo { input: final_summary = final_summary }
     call ONT.ListFiles as ListFastqs { input: sequencing_summary = sequencing_summary, suffix = "fastq" }
@@ -49,8 +52,6 @@ workflow ONTFlowcell {
     String PU  = GetRunInfo.run_info["instrument"]
     String DT  = GetRunInfo.run_info["started"]
     String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
-
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{ID}"
 
     call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 

@@ -17,14 +17,11 @@ workflow PBFlowcell {
         File pbi
         File ref_map_file
 
-        String participant_name
-        String sample_name
+        String SM
+        String ID
 
-        Int num_shards = 300
-
-        Boolean is_corrected
-        Boolean is_ccs
-        Boolean is_isoseq
+        Int num_shards = 50
+        String experiment_type = "CCS"
 
         String gcs_out_root_dir
     }
@@ -37,55 +34,41 @@ workflow PBFlowcell {
         SM:                 "the value to place in the BAM read group's SM field"
         ID:                 "the value to place in the BAM read group's ID field"
 
-        is_corrected:       "indicates whether input has already been CCS-corrected"
-        is_ccs:             "indicates whether input represents HiFi data (that might not have been corrected yet)"
-        is_isoseq:          "indicates whether input represents IsoSeq data"
+        num_shards:         "[default-valued] number of shards into which fastq files should be batched"
+        experiment_type:    "[default-valued] type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
     Map[String, String] map_presets = {
-        'CLR': 'SUBREAD',
-        'CCS': 'CCS',
-        'IsoSeq': 'ISOSEQ'
+        'CLR':    'SUBREAD',
+        'CCS':    'CCS',
+        'ISOSEQ': 'ISOSEQ',
+        'MASSEQ': 'ISOSEQ',
     }
-
-    # is_corrected  is_ccs  is_isoseq    correct      align
-    # 0             0       0            no           SUBREAD
-    # 0             1       0            yes          CCS
-    # 1             0       0            no           CCS
-    # 1             1       0            no           CCS
-    # 0             0       1            no           ISOSEQ
-    # 0             1       1            yes          ISOSEQ
-    # 1             0       1            no           ISOSEQ
-    # 1             1       1            no           ISOSEQ
-
-    Boolean correct = !is_corrected && is_ccs
-    String experiment_type = "SUBREAD"
-
-
-    call PB.GetRunInfo { input: bam = bam, SM = sample_name }
-    String ID = GetRunInfo.run_info["PU"]
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{ID}"
 
+    call PB.GetRunInfo { input: bam = bam, SM = SM }
+    Int shard_mult = if (GetRunInfo.is_corrected) then 1 else 6
+
     # break one raw BAM into fixed number of shards
-    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
+    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = shard_mult*num_shards }
 
     # then perform correction on each of the shard
-    scatter (subreads in ShardLongReads.unmapped_shards) {
-        if (experiment_type != "CLR") {
-            call PB.CCS { input: subreads = subreads }
+    scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
+        if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
+            call PB.CCS { input: subreads = unmapped_shard }
         }
 
-        File unaligned_bam = select_first([CCS.consensus, subreads])
+        File unaligned_bam = select_first([CCS.consensus, unmapped_shard])
 
         call PB.Align as AlignReads {
             input:
                 bam         = unaligned_bam,
                 ref_fasta   = ref_map['fasta'],
-                sample_name = participant_name,
+                sample_name = SM,
                 map_preset  = map_presets[experiment_type]
         }
     }
@@ -153,6 +136,7 @@ workflow PBFlowcell {
         File? ccs_pbi = IndexCCSUnalignedReads.pbi
 
         File aligned_bam = MergeAlignedReads.merged_bam
+        File aligned_bai = MergeAlignedReads.merged_bai
         File aligned_pbi = IndexAlignedReads.pbi
 
         Float num_records = SummarizeSubreadsPBI.results['reads']

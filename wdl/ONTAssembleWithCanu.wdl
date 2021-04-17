@@ -46,7 +46,7 @@ workflow ONTAssembleWithCanu {
             basecalled_reads = MergeFastqs.merged_fastq,
             draft_assembly = Canu.fa,
             model = medaka_model,
-            prefix = basename(Canu.fa, ".fasta") + ".consensus.fasta",
+            prefix = basename(Canu.fa, ".fasta") + ".consensus",
             n_rounds = 3
     }
 
