@@ -17,6 +17,7 @@ import "tasks/Finalize.wdl" as FF
 workflow PBCLRWholeGenome {
     input {
         Array[File] aligned_bams
+        Array[File] aligned_bais
 
         File ref_map_file
 
@@ -41,12 +42,12 @@ workflow PBCLRWholeGenome {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/~{participant_name}"
 
     # gather across (potential multiple) input raw BAMs
-    call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
-    call PB.PBIndex as IndexMergedReads { input: bam = MergeAllReads.merged_bam }
+    if (length(aligned_bams) > 1) {
+        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
+    }
 
-    File bam = MergeAllReads.merged_bam
-    File bai = MergeAllReads.merged_bai
-    File pbi = IndexMergedReads.pbi
+    File bam = select_first(MergeAllReads.merged_bam, aligned_bams[0])
+    File bai = select_first(MergeAllReads.merged_bai, aligned_bais[0])
 
     call VAR.CallVariants {
         input:
@@ -66,19 +67,13 @@ workflow PBCLRWholeGenome {
     call FF.FinalizeToFile as FinalizeBam {
         input:
             file = bam,
-            outfile = outdir + "/alignments/" + basename(bam)
+            outfile = outdir + "/alignments/~{participant_name}.bam"
     }
 
     call FF.FinalizeToFile as FinalizeBai {
         input:
             file = bai,
-            outfile = outdir + "/alignments/" + basename(bai)
-    }
-
-    call FF.FinalizeToFile as FinalizePbi {
-        input:
-            file = pbi,
-            outfile = outdir + "/alignments/" + basename(pbi)
+            outfile = outdir + "/alignments/~{participant_name}.bai"
     }
 
     call FF.FinalizeToFile as FinalizePBSV {
@@ -124,7 +119,6 @@ workflow PBCLRWholeGenome {
     output {
         File merged_bam = FinalizeBam.gcs_path
         File merged_bai = FinalizeBai.gcs_path
-        File merged_pbi = FinalizePbi.gcs_path
 
         File pbsv_vcf = FinalizePBSV.gcs_path
         File sniffles_vcf = FinalizeSniffles.gcs_path
