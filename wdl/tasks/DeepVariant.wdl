@@ -94,6 +94,7 @@ task PEPPER {
         File ref_fai
 
         String contig
+        String preset
 
         RuntimeAttr? runtime_attr_override
     }
@@ -106,10 +107,12 @@ task PEPPER {
         ref_fai:   "index accompanying the reference"
 
         contig: "contig on which to call variants"
+        preset: "calling preset (CCS, ONT)"
     }
 
     Int disk_size = ceil(size(bam, "GB")) + 50
     String prefix = basename(bam, ".bam") + ".deepvariant_pepper"
+    String mode = if preset == "CCS" then "--ccs" else "--ont"
 
     command <<<
         # example from https://github.com/kishwarshafin/pepper/blob/r0.4/docs/pipeline_docker/ONT_variant_calling.md
@@ -128,7 +131,7 @@ task PEPPER {
             -t ${num_core} \
             --gvcf \
             --phased_output \
-            --ont
+            ~{mode}
     >>>
 
     output {
