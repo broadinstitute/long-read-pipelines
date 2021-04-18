@@ -14,11 +14,11 @@ task CuteSV {
         File bai
         File ref_fasta
 
-        Boolean report_readid = true
+        String preset
 
+        Boolean report_readid = true
         Int min_support	 = 1
         Int min_size = 30
-	    String preset = "CLR"
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
@@ -29,11 +29,11 @@ task CuteSV {
         bai:           "index accompanying the BAM"
         ref_fasta:     "reference to which the BAM was aligned to"
 
+        preset:        "calling preset (CLR, HIFI, or ONT)"
+
         report_readid: "report supporting read ids for each SV"
         min_support:   "minimum number of reads that support a SV to be reported"
         min_size:      "minimum length of SV to be reported"
-        preset:        "calling preset (CLR, HIFI, or ONT)"
-
         prefix:        "prefix for output"
     }
 
@@ -46,7 +46,7 @@ task CuteSV {
     }
 
     command <<<
-        set -euo pipefail
+        set -euxo pipefail
 
         mkdir work
 

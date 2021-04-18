@@ -1,11 +1,10 @@
 version 1.0
 
-##########################################################################################
-## A workflow that performs CCS correction and variant calling on PacBio HiFi reads from a
-## single flow cell. The workflow shards the subreads into clusters and performs CCS in
-## parallel on each cluster.  Error-corrected reads are then variant-called.  A number of
-## metrics and figures are produced along the way.
-##########################################################################################
+######################################################################################
+## A workflow that performs single sample variant calling on PacBio CLR reads from one
+## or more flow cells. The workflow merges multiple samples into a single BAM prior to
+## variant calling.
+######################################################################################
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
@@ -20,19 +19,17 @@ workflow PBCLRWholeGenome {
         Array[File] aligned_bais
 
         File ref_map_file
-
         String participant_name
-        Int num_shards = 50
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        bams:               "GCS path to raw subreads or CCS data"
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        aligned_bams:       "GCS path to aligned BAM files"
+        aligned_bais:       "GCS path to aligned BAM file indices"
 
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
         participant_name:   "name of the participant from whom these samples were obtained"
-        num_shards:         "[default-valued] number of sharded BAMs to create (tune for performance)"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }

@@ -1,72 +1,52 @@
 version 1.0
 
+######################################################################################
+## A workflow that performs single sample variant calling on Oxford Nanopore reads
+## from one or more flow cells. The workflow merges multiple samples into a single BAM
+## prior to variant calling.
+######################################################################################
+
 import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
+import "tasks/CallVariantsONT.wdl" as VAR
 import "tasks/Figures.wdl" as FIG
-import "tasks/CallSVsONT.wdl" as SV
-import "tasks/CallSmallVariantsONT.wdl" as SMV
-import "tasks/Methylation.wdl" as Meth
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTWholeGenome {
     input {
         Array[File] aligned_bams
-        File ref_map_file
+        Array[File] aligned_bais
 
+        File ref_map_file
         String participant_name
-        Int num_shards = 50
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        aligned_bams:     "aligned bam files"
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        aligned_bams:       "GCS path to aligned BAM files"
+        aligned_bais:       "GCS path to aligned BAM file indices"
 
-        participant_name: "name of the participant from whom these samples were obtained"
-        num_shards:       "[default-valued] number of shards into which fastq files should be batched"
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        participant_name:   "name of the participant from whom these samples were obtained"
 
-        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTWholeGenome/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTWholeGenome/~{participant_name}"
 
-    call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
-
-    File bam = MergeAllReads.merged_bam
-    File bai = MergeAllReads.merged_bai
-
-    call AM.AlignedMetrics as PerFlowcellRunMetrics {
-        input:
-            aligned_bam    = bam,
-            aligned_bai    = bai,
-            ref_fasta      = ref_map['fasta'],
-            ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/" + participant_name
+    # gather across (potential multiple) input raw BAMs
+    if (length(aligned_bams) > 1) {
+        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
-#    call FIG.Figures as PerSampleFigures {
-#        input:
-#            summary_files  = sequencing_summaries,
-#
-#            gcs_output_dir = outdir + "/metrics/combined/" + participant_name
-#    }
+    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
+    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
-    call SV.CallSVsONT as CallSVs {
-        input:
-            bam               = bam,
-            bai               = bai,
-
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-    }
-
-    call SMV.CallSmallVariantsONT as CallSmallVariants {
+    call VAR.CallVariants {
         input:
             bam               = bam,
             bai               = bai,
@@ -74,6 +54,7 @@ workflow ONTWholeGenome {
             ref_fasta         = ref_map['fasta'],
             ref_fasta_fai     = ref_map['fai'],
             ref_dict          = ref_map['dict'],
+            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
     }
 
     ##########
@@ -83,44 +64,94 @@ workflow ONTWholeGenome {
     call FF.FinalizeToFile as FinalizeBam {
         input:
             file = bam,
-            outfile = outdir + "/alignments/" + basename(bam)
+            outfile = outdir + "/alignments/~{participant_name}.bam"
     }
 
     call FF.FinalizeToFile as FinalizeBai {
         input:
             file = bai,
-            outfile = outdir + "/alignments/" + basename(bai)
+            outfile = outdir + "/alignments/~{participant_name}.bai"
     }
 
-#    call FF.FinalizeToFile as FinalizePBSV {
-#        input:
-#            file = CallSVs.pbsv_vcf,
-#            outfile = outdir + "/variants/" + basename(CallSVs.pbsv_vcf)
-#    }
+    call FF.FinalizeToFile as FinalizePBSV {
+        input:
+            file = CallVariants.pbsv_vcf,
+            outfile = outdir + "/variants/sv/" + basename(CallVariants.pbsv_vcf)
+    }
 
     call FF.FinalizeToFile as FinalizeSniffles {
         input:
-            file = CallSVs.sniffles_vcf,
-            outfile = outdir + "/variants/" + basename(CallSVs.sniffles_vcf)
+            file = CallVariants.sniffles_vcf,
+            outfile = outdir + "/variants/sv/" + basename(CallVariants.sniffles_vcf)
     }
 
     call FF.FinalizeToFile as FinalizeSVIM {
         input:
-            file = CallSVs.svim_vcf,
-            outfile = outdir + "/variants/" + basename(CallSVs.svim_vcf)
+            file = CallVariants.svim_vcf,
+            outfile = outdir + "/variants/sv/" + basename(CallVariants.svim_vcf)
     }
 
-    call FF.FinalizeToFile as FinalizeLongshot {
+    call FF.FinalizeToFile as FinalizeCuteSV {
         input:
-            file = CallSmallVariants.longshot_vcf,
-            outfile = outdir + "/variants/" + basename(CallSmallVariants.longshot_vcf)
+            file = CallVariants.cutesv_vcf,
+            outfile = outdir + "/variants/sv/" + basename(CallVariants.cutesv_vcf)
     }
+
+    call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf {
+        input:
+            file = CallVariants.dvp_phased_vcf,
+            outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_phased_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi {
+        input:
+            file = CallVariants.dvp_phased_tbi,
+            outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_phased_tbi)
+    }
+
+    call FF.FinalizeToFile as FinalizeDVPEPPERGVcf {
+        input:
+            file = CallVariants.dvp_g_vcf,
+            outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_g_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeDVPEPPERGTbi {
+        input:
+            file = CallVariants.dvp_g_tbi,
+            outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_g_tbi)
+    }
+
+    call FF.FinalizeToFile as FinalizeDVPEPPERVcf {
+        input:
+            file = CallVariants.dvp_vcf,
+            outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeDVPEPPERTbi {
+        input:
+            file = CallVariants.dvp_tbi,
+            outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_tbi)
+    }
+
+    ##########
+    # store the results into designated bucket
+    ##########
 
     output {
-        File aligned_bam = FinalizeBam.gcs_path
-        File aligned_bai = FinalizeBai.gcs_path
+        File merged_bam = FinalizeBam.gcs_path
+        File merged_bai = FinalizeBai.gcs_path
+
+        File pbsv_vcf = FinalizePBSV.gcs_path
         File sniffles_vcf = FinalizeSniffles.gcs_path
         File svim_vcf = FinalizeSVIM.gcs_path
-        File longshot_vcf = FinalizeLongshot.gcs_path
+        File cutesv_vcf = FinalizeCuteSV.gcs_path
+
+        File dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
+        File dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
+        File dvp_g_vcf = FinalizeDVPEPPERGVcf.gcs_path
+        File dvp_g_tbi = FinalizeDVPEPPERGTbi.gcs_path
+        File dvp_vcf = FinalizeDVPEPPERVcf.gcs_path
+        File dvp_tbi = FinalizeDVPEPPERTbi.gcs_path
     }
+
 }

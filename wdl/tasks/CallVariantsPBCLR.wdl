@@ -27,8 +27,6 @@ workflow CallVariants {
         File ref_dict
 
         File? tandem_repeat_bed
-
-        String preset = "clr"
     }
 
     parameter_meta {

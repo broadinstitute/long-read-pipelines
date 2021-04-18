@@ -35,7 +35,7 @@ task SVIM {
     Int disk_size = 2 * ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB"))
 
     command <<<
-        set -euo pipefail
+        set -euxo pipefail
 
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
