@@ -65,7 +65,7 @@ task FindFingerprint {
         gsutil cp ~{fpdir}/$SM.vcf fingerprint.vcf
 
         cat fingerprint.vcf | \
-            grep -v -e 'placeholder' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
+            grep -v -e 'placeholder' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} \
             > fingerprint.fixed.vcf
     >>>
 
@@ -132,7 +132,7 @@ task CheckFingerprint {
                     }
                     print str
                 }
-            }' | sed 's/ /=/' > metrics_map.txt
+            }' | sed 's/ /\t/' > metrics_map.txt
     >>>
 
     output {
