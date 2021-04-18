@@ -25,14 +25,14 @@ task PBSV {
     }
 
     parameter_meta {
-        bam: "input BAM from which to call SVs"
-        bai: "index accompanying the BAM"
+        bam:               "input BAM from which to call SVs"
+        bai:               "index accompanying the BAM"
 
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
 
-        prefix: "prefix for output"
+        prefix:            "prefix for output"
     }
 
     Int disk_size = 10*ceil(size([bam, bai, ref_fasta, ref_fasta_fai, tandem_repeat_bed], "GB"))

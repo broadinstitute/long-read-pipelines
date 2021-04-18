@@ -56,8 +56,7 @@ workflow PBCLRWholeGenome {
             gcs_output_dir = outdir + "/metrics/" + participant_name
     }
 
-    # call SVs
-    call SV.CallSVs as CallSVs {
+    call VAR.CallVariants {
         input:
             bam               = bam,
             bai               = bai,
@@ -65,19 +64,6 @@ workflow PBCLRWholeGenome {
             ref_fasta         = ref_map['fasta'],
             ref_fasta_fai     = ref_map['fai'],
             tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-            preset            = "hifi"
-    }
-
-    # call SNVs and small indels
-    call SMV.CallSmallVariants as CallSmallVariants {
-        input:
-            bam               = bam,
-            bai               = bai,
-
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            ref_dict          = ref_map['dict'],
     }
 
     ##########

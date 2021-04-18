@@ -111,8 +111,8 @@ workflow ONTFlowcell {
         Float raw_est_fold_cov = SummarizeNanoStats.results['Total_bases']/ComputeGenomeLength.length
 
         Float read_length_mean = SummarizeNanoStats.results['Mean_read_length']
-        Float read_length_N50 = SummarizeNanoStats.results['Read_length_N50']
         Float read_length_median = SummarizeNanoStats.results['Median_read_length']
+        Float read_length_N50 = SummarizeNanoStats.results['Read_length_N50']
 
         Float read_qual_mean = SummarizeNanoStats.results['Mean_read_quality']
         Float read_qual_median = SummarizeNanoStats.results['Median_read_quality']

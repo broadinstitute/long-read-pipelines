@@ -134,7 +134,13 @@ workflow PBFlowcell {
     output {
         File? ccs_bam = FinalizeCCSUnalignedBam.gcs_path
         File? ccs_pbi = FinalizeCCSUnalignedPbi.gcs_path
+
         File? ccs_report = FinalizeCCSReport.gcs_path
+        Float? ccs_zmws_input = SummarizeCCSReport.zmws_input
+        Float? ccs_zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
+        Float? ccs_zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
+        Float? ccs_zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
+        Float? ccs_zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
 
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path
@@ -151,20 +157,14 @@ workflow PBFlowcell {
         Float mean_qual = SummarizeSubreadsPBI.results['mean_qual']
         Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/ComputeGenomeLength.length
 
-        Float ccs_num_records = SummarizeAlignedPBI.results['reads']
-        Float ccs_total_bases = SummarizeAlignedPBI.results['bases']
-        Float ccs_mean_qual = SummarizeAlignedPBI.results['mean_qual']
-        Float ccs_est_fold_cov = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
+        Float aligned_num_records = SummarizeAlignedPBI.results['reads']
+        Float aligned_total_bases = SummarizeAlignedPBI.results['bases']
+        Float aligned_mean_qual = SummarizeAlignedPBI.results['mean_qual']
+        Float aligned_est_fold_cov = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
 
-        Float ccs_num_records_q20 = SummarizeAlignedQ20PBI.results['reads']
-        Float ccs_total_bases_q20 = SummarizeAlignedQ20PBI.results['bases']
-        Float ccs_mean_qual_q20 = SummarizeAlignedQ20PBI.results['mean_qual']
-        Float ccs_est_fold_cov_q20 = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
-
-        Float? zmws_input = SummarizeCCSReport.zmws_input
-        Float? zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
-        Float? zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
-        Float? zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
-        Float? zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
+        Float aligned_num_records_q20 = SummarizeAlignedQ20PBI.results['reads']
+        Float aligned_total_bases_q20 = SummarizeAlignedQ20PBI.results['bases']
+        Float aligned_mean_qual_q20 = SummarizeAlignedQ20PBI.results['mean_qual']
+        Float aligned_est_fold_cov_q20 = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
     }
 }
