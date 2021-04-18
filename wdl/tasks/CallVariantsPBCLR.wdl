@@ -46,17 +46,14 @@ workflow CallVariants {
     # Call small variants
     ##########################
 
-    call Utils.SplitBam {
-        input:
-            bam    = bam,
-            bai    = bai,
-            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'chrEBV', 'chrM']
+    call Utils.MakeChrIntervalList {
+         input:
+            ref_dict = ref_dict,
+            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
     }
 
-    scatter (p in zip(SplitBam.subset_bams, SplitBam.subset_bais)) {
-        File subset_bam = p.left
-        File subset_bai = p.right
-        String contig = basename(subset_bam, ".bam")
+    scatter (c in MakeChrIntervalList.chrs) {
+        String contig = c[0]
 
         call Longshot.Longshot {
             input:

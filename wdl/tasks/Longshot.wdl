@@ -5,8 +5,8 @@ import "Structs.wdl"
 # performs Longshot algo on one particular chromosome
 task Longshot {
     input {
-        File bam
-        File bai
+        String bam
+        String bai
 
         File ref_fasta
         File ref_fasta_fai
@@ -23,8 +23,12 @@ task Longshot {
     command <<<
         set -euxo pipefail
 
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
+        samtools index ~{chr}.bam
+
         touch ~{prefix}.longshot.~{chr}.vcf
-        longshot -F -r ~{chr} --bam ~{bam} --ref ~{ref_fasta} --out ~{prefix}.longshot.~{chr}.vcf
+        longshot -F -r ~{chr} --bam ~{chr}.bam --ref ~{ref_fasta} --out ~{prefix}.longshot.~{chr}.vcf
     >>>
 
     output {
@@ -39,7 +43,7 @@ task Longshot {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
