@@ -12,35 +12,37 @@ task CuteSV {
     input {
         File bam
         File bai
-
         File ref_fasta
 
-        Boolean report_readid = false
+        Boolean report_readid = true
 
         Int min_support	 = 1
         Int min_size = 30
-	    String preset = "clr"
-
-        String prefix
+	    String preset = "CLR"
+        String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        bam: "input BAM from which to call SVs"
-        bai: "index accompanying the BAM"
-        ref_fasta: "reference to which the BAM was aligned to"
+        bam:           "input BAM from which to call SVs"
+        bai:           "index accompanying the BAM"
+        ref_fasta:     "reference to which the BAM was aligned to"
 
-        prefix: "prefix for output"
+        report_readid: "report supporting read ids for each SV"
+        min_support:   "minimum number of reads that support a SV to be reported"
+        min_size:      "minimum length of SV to be reported"
+        preset:        "calling preset (CLR, HIFI, or ONT)"
+
+        prefix:        "prefix for output"
     }
 
     Int disk_size = 2 * ceil(size([bam, bai, ref_fasta], "GB"))
 
-    # todo: there has to be a better way to do this
     Map[String, String] preset_values = {
-        "clr":  "--max_cluster_bias_INS 100  --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 200  --diff_ratio_merging_DEL 0.5",
-        "hifi": "--max_cluster_bias_INS 1000 --diff_ratio_merging_INS 0.9 --max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL 0.5",
-        "ont":  "--max_cluster_bias_INS 100  --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 100  --diff_ratio_merging_DEL 0.3",
+        "CLR": "--max_cluster_bias_INS 100  --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 200  --diff_ratio_merging_DEL 0.5",
+        "CCS": "--max_cluster_bias_INS 1000 --diff_ratio_merging_INS 0.9 --max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL 0.5",
+        "ONT": "--max_cluster_bias_INS 100  --diff_ratio_merging_INS 0.3 --max_cluster_bias_DEL 100  --diff_ratio_merging_DEL 0.3",
     }
 
     command <<<
@@ -61,7 +63,7 @@ task CuteSV {
                out.vcf \
                work
 
-        grep -v -e '##fileDate' -e '##CommandLine' -e '^chrM' out.vcf > ~{prefix}.cutesv.vcf
+        grep -v -e '##fileDate' -e '##CommandLine' out.vcf > ~{prefix}.cutesv.vcf
     >>>
 
     output {

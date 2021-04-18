@@ -50,7 +50,7 @@ task PBSV {
             ~{prefix}.svsig.gz
         pbsv call --num-threads ~{cpus} ~{ref_fasta} ~{prefix}.svsig.gz ~{prefix}.pbsv.pre.vcf
 
-        cat ~{prefix}.pbsv.pre.vcf | grep -v -e '^chrM' -e '##fileDate' > ~{prefix}.pbsv.vcf
+        cat ~{prefix}.pbsv.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.pbsv.vcf
     >>>
 
     output {

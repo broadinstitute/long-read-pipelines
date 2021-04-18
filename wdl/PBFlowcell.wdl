@@ -9,6 +9,7 @@ version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
+import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/Finalize.wdl" as FF
 
 workflow PBFlowcell {
@@ -84,7 +85,7 @@ workflow PBFlowcell {
         call FF.FinalizeToFile as FinalizeCCSUnalignedBam {
             input:
                 file    = MergeAlignedReads.merged_bam,
-                outfile = outdir + "/reads/ccs/unaligned" + basename(MergeCCSUnalignedReads.merged_bam)
+                outfile = outdir + "/reads/ccs/unaligned/" + basename(MergeCCSUnalignedReads.merged_bam)
         }
 
         call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
@@ -103,6 +104,15 @@ workflow PBFlowcell {
     # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
     call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = ID }
     call PB.PBIndex as IndexAlignedReads { input: bam = MergeAlignedReads.merged_bam }
+
+    call AM.AlignedMetrics as PerFlowcellMetrics {
+        input:
+            aligned_bam    = MergeAlignedReads.merged_bam,
+            aligned_bai    = MergeAlignedReads.merged_bai,
+            ref_fasta      = ref_map['fasta'],
+            ref_dict       = ref_map['dict'],
+            gcs_output_dir = outdir + "/metrics/" + ID
+    }
 
     call PB.SummarizePBI as SummarizeSubreadsPBI { input: pbi = pbi }
     call PB.SummarizePBI as SummarizeAlignedPBI { input: pbi = IndexAlignedReads.pbi }

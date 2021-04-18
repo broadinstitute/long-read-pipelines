@@ -68,16 +68,22 @@ workflow ONTAssembleWithCanu {
             outfile = outdir + "/assembly/" + basename(MedakaPolish.polished_assembly)
     }
 
-    call FF.FinalizeToFile as FinalizeQuastReport {
-        input:
-            file    = Quast.report,
-            outfile = outdir + "/assembly/" + basename(Quast.report)
-    }
-
     call FF.FinalizeToFile as FinalizeQuastResults {
         input:
             file    = Quast.results,
             outfile = outdir + "/assembly/" + basename(Quast.results)
+    }
+
+    call FF.FinalizeToFile as FinalizeQuastReportHtml {
+        input:
+            file    = Quast.report_html,
+            outfile = outdir + "/assembly/" + basename(Quast.report_html)
+    }
+
+    call FF.FinalizeToFile as FinalizeQuastReportTxt{
+        input:
+            file    = Quast.report_txt,
+            outfile = outdir + "/assembly/" + basename(Quast.report_txt)
     }
 
     output {

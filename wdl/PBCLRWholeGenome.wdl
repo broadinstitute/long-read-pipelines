@@ -38,23 +38,15 @@ workflow PBCLRWholeGenome {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/~{SM}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/~{participant_name}"
 
     # gather across (potential multiple) input raw BAMs
     call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
+    call PB.PBIndex as IndexMergedReads { input: bam = MergeAllReads.merged_bam }
 
     File bam = MergeAllReads.merged_bam
     File bai = MergeAllReads.merged_bai
-
-    # compute alignment metrics
-    call AM.AlignedMetrics as PerSampleMetrics {
-        input:
-            aligned_bam    = bam,
-            aligned_bai    = bai,
-            ref_fasta      = ref_map['fasta'],
-            ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/" + participant_name
-    }
+    File pbi = IndexMergedReads.pbi
 
     call VAR.CallVariants {
         input:
@@ -82,43 +74,63 @@ workflow PBCLRWholeGenome {
             outfile = outdir + "/alignments/" + basename(bai)
     }
 
+    call FF.FinalizeToFile as FinalizePbi {
+        input:
+            file = pbi,
+            outfile = outdir + "/alignments/" + basename(pbi)
+    }
+
     call FF.FinalizeToFile as FinalizePBSV {
         input:
-            file = CallSVs.pbsv_vcf,
-            outfile = outdir + "/variants/" + basename(CallSVs.pbsv_vcf)
+            file = CallVariants.pbsv_vcf,
+            outfile = outdir + "/variants/sv/" + basename(CallVariants.pbsv_vcf)
     }
 
     call FF.FinalizeToFile as FinalizeSniffles {
         input:
-            file = CallSVs.sniffles_vcf,
-            outfile = outdir + "/variants/" + basename(CallSVs.sniffles_vcf)
+            file = CallVariants.sniffles_vcf,
+            outfile = outdir + "/variants/sv/" + basename(CallVariants.sniffles_vcf)
     }
 
     call FF.FinalizeToFile as FinalizeSVIM {
         input:
-            file = CallSVs.svim_vcf,
-            outfile = outdir + "/variants/" + basename(CallSVs.svim_vcf)
+            file = CallVariants.svim_vcf,
+            outfile = outdir + "/variants/sv/" + basename(CallVariants.svim_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeCuteSV {
+        input:
+            file = CallVariants.cutesv_vcf,
+            outfile = outdir + "/variants/sv/" + basename(CallVariants.cutesv_vcf)
     }
 
     call FF.FinalizeToFile as FinalizeLongshot {
         input:
-            file = CallSmallVariants.longshot_vcf,
-            outfile = outdir + "/variants/" + basename(CallSmallVariants.longshot_vcf)
+            file = CallVariants.longshot_vcf,
+            outfile = outdir + "/variants/small/" + basename(CallVariants.longshot_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeLongshotTbi {
+        input:
+            file = CallVariants.longshot_tbi,
+            outfile = outdir + "/variants/small/" + basename(CallVariants.longshot_tbi)
     }
 
     ##########
     # store the results into designated bucket
     ##########
 
-    call FF.FinalizeToDir as FinalizeSVs {
-        input:
-            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
-            outdir = outdir + "/variants"
-    }
+    output {
+        File merged_bam = FinalizeBam.gcs_path
+        File merged_bai = FinalizeBai.gcs_path
+        File merged_pbi = FinalizePbi.gcs_path
 
-    call FF.FinalizeToDir as FinalizeSmallVariants {
-        input:
-            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
-            outdir = outdir + "/variants"
+        File pbsv_vcf = FinalizePBSV.gcs_path
+        File sniffles_vcf = FinalizeSniffles.gcs_path
+        File svim_vcf = FinalizeSVIM.gcs_path
+        File cutesv_vcf = FinalizeCuteSV.gcs_path
+
+        File longshot_vcf = FinalizeLongshot.gcs_path
+        File longshot_tbi = FinalizeLongshotTbi.gcs_path
     }
 }

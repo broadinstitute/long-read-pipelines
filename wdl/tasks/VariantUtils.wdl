@@ -2,61 +2,48 @@ version 1.0
 
 import "Structs.wdl"
 
-# Given BAM, call SVs using Sniffles
-task Sniffles {
+task MergePerChrCalls {
     input {
-        File bam
-        File bai
-
-        Int min_read_support = 2
-        Int min_read_length = 1000
-        Int min_mq = 20
-
+        Array[File] vcfs
+        File ref_dict
         String prefix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        bam:              "input BAM from which to call SVs"
-        bai:              "index accompanying the BAM"
-
-        min_read_support: "[default-valued] minimum reads required to make a call"
-        min_read_length:  "[default-valued] filter out reads below minimum read length"
-        min_mq:           "[default-valued] minimum mapping quality to accept"
-
-        prefix:           "prefix for output"
-    }
-
-    Int cpus = 8
-    Int disk_size = 4*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(vcfs, "GB")) + 1
 
     command <<<
-        set -euxo pipefail
+        set -x
 
-        sniffles -t ~{cpus} \
-                 -m ~{bam} \
-                 -v ~{prefix}.sniffles.vcf \
-                 -s ~{min_read_support} \
-                 -r ~{min_read_length} \
-                 -q ~{min_mq} \
-                 --num_reads_report -1 \
-                 --genotype
+        VCF_WITH_HEADER=~{vcfs[0]}
+        GREPCMD="grep"
+        if [[ ~{vcfs[0]} =~ \.gz$ ]]; then
+            GREPCMD="zgrep"
+        fi
+
+        $GREPCMD '^#' $VCF_WITH_HEADER | grep -v -e '^##contig' -e CHROM > header
+        grep '^@SQ' ~{ref_dict} | awk '{ print "##contig=<ID=" $2 ",length=" $3 ">" }' | sed 's/[SL]N://g' >> header
+        $GREPCMD -m1 CHROM $VCF_WITH_HEADER >> header
+
+        ((cat header) && ($GREPCMD -h -v '^#' ~{sep=' ' vcfs})) | bcftools sort | bgzip > ~{prefix}.vcf.gz
+        tabix -p vcf ~{prefix}.vcf.gz
     >>>
 
     output {
-        File vcf = "~{prefix}.sniffles.vcf"
+        File vcf = "~{prefix}.vcf.gz"
+        File tbi = "~{prefix}.vcf.gz.tbi"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          cpus,
-        mem_gb:             15,
+        cpu_cores:          4,
+        mem_gb:             24,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -218,6 +218,7 @@ task SortSam {
 task MakeChrIntervalList {
     input {
         File ref_dict
+        Array[String] filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
 
         RuntimeAttr? runtime_attr_override
     }
@@ -227,7 +228,11 @@ task MakeChrIntervalList {
     command <<<
         set -euxo pipefail
 
-        grep '^@SQ' ~{ref_dict} | awk '{ print $2 "\t" 1 "\t" $3 }' | sed 's/[SL]N://g' | grep -v -e random -e chrUn -e decoy -e alt -e HLA -e EBV > chrs.txt
+        grep '^@SQ' ~{ref_dict} | \
+            grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
+            awk '{ print $2 "\t" 1 "\t" $3 }' | \
+            sed 's/[SL]N://g' |
+            > chrs.txt
     >>>
 
     output {

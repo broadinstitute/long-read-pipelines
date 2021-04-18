@@ -37,11 +37,16 @@ task SVIM {
     command <<<
         set -euo pipefail
 
-        SM=`samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g'`
+        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
-        svim alignment --sample ${SM} --insertion_sequences --read_names ~{prefix}_svim_files ~{bam} ~{ref_fasta}
+        svim alignment \
+            --sample ${SM} \
+            --insertion_sequences \
+            --read_names ~{prefix}_svim_files \
+            ~{bam} \
+            ~{ref_fasta}
 
-        grep -v -e '##fileDate' -e '^chrM' ~{prefix}_svim_files/variants.vcf > ~{prefix}.svim.vcf
+        grep -v -e '##fileDate' ~{prefix}_svim_files/variants.vcf > ~{prefix}.svim.vcf
     >>>
 
     output {
