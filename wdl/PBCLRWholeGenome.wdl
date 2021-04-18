@@ -9,97 +9,58 @@ version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/CallSVs.wdl" as SV
+import "tasks/CallVariantsPBCLR.wdl" as VAR
 import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
-import "tasks/CallSmallVariants.wdl" as SMV
 
 workflow PBCLRWholeGenome {
     input {
-        Array[File] bams
+        Array[File] aligned_bams
+
         File ref_map_file
 
         String participant_name
-        Int num_shards = 300
+        Int num_shards = 50
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        bams:             "GCS path to raw subreads or CCS data"
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        bams:               "GCS path to raw subreads or CCS data"
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
-        participant_name: "name of the participant from whom these samples were obtained"
-        num_shards:       "[default-valued] number of sharded BAMs to create (tune for performance)"
+        participant_name:   "name of the participant from whom these samples were obtained"
+        num_shards:         "[default-valued] number of sharded BAMs to create (tune for performance)"
 
-        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/" + participant_name
-
-    # scatter over all sample BAMs
-    scatter (bam in bams) {
-        File pbi = sub(bam, ".bam$", ".bam.pbi")
-
-        call PB.GetRunInfo { input: bam = bam }
-        String ID = GetRunInfo.run_info["PU"]
-
-        # break one raw BAM into fixed number of shards
-        call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
-
-        # then perform correction and alignment on each of the shard
-        scatter (subreads in ShardLongReads.unmapped_shards) {
-            call PB.Align as AlignUncorrected {
-                input:
-                    bam         = subreads,
-                    ref_fasta   = ref_map['fasta'],
-                    sample_name = participant_name,
-                    map_preset  = "SUBREAD",
-                    runtime_attr_override = { 'mem_gb': 64 }
-            }
-        }
-
-        # merge the aligned per-shard BAM into one, corresponding to one raw input BAM
-        call Utils.MergeBams as MergeUncorrected { input: bams = AlignUncorrected.aligned_bam }
-
-        # compute alignment metrics
-        call AM.AlignedMetrics as PerFlowcellMetrics {
-            input:
-                aligned_bam    = MergeUncorrected.merged_bam,
-                aligned_bai    = MergeUncorrected.merged_bai,
-                ref_fasta      = ref_map['fasta'],
-                ref_dict       = ref_map['dict'],
-                gcs_output_dir = outdir + "/metrics/per_flowcell/" + ID
-        }
-    }
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/~{SM}"
 
     # gather across (potential multiple) input raw BAMs
-    if (length(bams) > 1) {
-        call Utils.MergeBams as MergeAllUncorrected { input: bams = MergeUncorrected.merged_bam, prefix = "~{participant_name}.uncorrected" }
-    }
+    call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
 
-    File uncorrected_bam = select_first([ MergeAllUncorrected.merged_bam, MergeUncorrected.merged_bam[0] ])
-    File uncorrected_bai = select_first([ MergeAllUncorrected.merged_bai, MergeUncorrected.merged_bai[0] ])
+    File bam = MergeAllReads.merged_bam
+    File bai = MergeAllReads.merged_bai
 
     # compute alignment metrics
     call AM.AlignedMetrics as PerSampleMetrics {
         input:
-            aligned_bam    = uncorrected_bam,
-            aligned_bai    = uncorrected_bai,
+            aligned_bam    = bam,
+            aligned_bai    = bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/combined/" + participant_name
+            gcs_output_dir = outdir + "/metrics/" + participant_name
     }
 
     # call SVs
     call SV.CallSVs as CallSVs {
         input:
-            bam               = uncorrected_bam,
-            bai               = uncorrected_bai,
+            bam               = bam,
+            bai               = bai,
 
             ref_fasta         = ref_map['fasta'],
             ref_fasta_fai     = ref_map['fai'],
@@ -111,12 +72,52 @@ workflow PBCLRWholeGenome {
     # call SNVs and small indels
     call SMV.CallSmallVariants as CallSmallVariants {
         input:
-            bam               = uncorrected_bam,
-            bai               = uncorrected_bai,
+            bam               = bam,
+            bai               = bai,
 
             ref_fasta         = ref_map['fasta'],
             ref_fasta_fai     = ref_map['fai'],
             ref_dict          = ref_map['dict'],
+    }
+
+    ##########
+    # Finalize
+    ##########
+
+    call FF.FinalizeToFile as FinalizeBam {
+        input:
+            file = bam,
+            outfile = outdir + "/alignments/" + basename(bam)
+    }
+
+    call FF.FinalizeToFile as FinalizeBai {
+        input:
+            file = bai,
+            outfile = outdir + "/alignments/" + basename(bai)
+    }
+
+    call FF.FinalizeToFile as FinalizePBSV {
+        input:
+            file = CallSVs.pbsv_vcf,
+            outfile = outdir + "/variants/" + basename(CallSVs.pbsv_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeSniffles {
+        input:
+            file = CallSVs.sniffles_vcf,
+            outfile = outdir + "/variants/" + basename(CallSVs.sniffles_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeSVIM {
+        input:
+            file = CallSVs.svim_vcf,
+            outfile = outdir + "/variants/" + basename(CallSVs.svim_vcf)
+    }
+
+    call FF.FinalizeToFile as FinalizeLongshot {
+        input:
+            file = CallSmallVariants.longshot_vcf,
+            outfile = outdir + "/variants/" + basename(CallSmallVariants.longshot_vcf)
     }
 
     ##########
@@ -133,11 +134,5 @@ workflow PBCLRWholeGenome {
         input:
             files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
             outdir = outdir + "/variants"
-    }
-
-    call FF.FinalizeToDir as FinalizeMergedRuns {
-        input:
-            files = [ uncorrected_bam, uncorrected_bai ],
-            outdir = outdir + "/alignments"
     }
 }

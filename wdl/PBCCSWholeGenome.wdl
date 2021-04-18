@@ -26,7 +26,7 @@ workflow PBCCSWholeGenome {
         File ref_map_file
 
         String participant_name
-        Int num_shards = 25
+        Int num_shards = 50
         Boolean extract_uncorrected_reads = false
 
         String gcs_out_root_dir

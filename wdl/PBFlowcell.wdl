@@ -132,17 +132,13 @@ workflow PBFlowcell {
     }
 
     output {
-        File? ccs_bam = MergeCCSUnalignedReads.merged_bam
-        File? ccs_pbi = IndexCCSUnalignedReads.pbi
-        File? ccs_report = MergeCCSReports.report
+        File? ccs_bam = FinalizeCCSUnalignedBam.gcs_path
+        File? ccs_pbi = FinalizeCCSUnalignedPbi.gcs_path
+        File? ccs_report = FinalizeCCSReport.gcs_path
 
-        File aligned_bam = MergeAlignedReads.merged_bam
-        File aligned_bai = MergeAlignedReads.merged_bai
-        File aligned_pbi = IndexAlignedReads.pbi
-
-        Float num_records = SummarizeSubreadsPBI.results['reads']
-        Float total_bases = SummarizeSubreadsPBI.results['bases']
-        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/ComputeGenomeLength.length
+        File aligned_bam = FinalizeAlignedBam.gcs_path
+        File aligned_bai = FinalizeAlignedBai.gcs_path
+        File aligned_pbi = FinalizeAlignedPbi.gcs_path
 
         Float polymerase_mean = SummarizeSubreadsPBI.results['polymerase_mean']
         Float polymerase_n50 = SummarizeSubreadsPBI.results['polymerase_n50']
@@ -150,13 +146,18 @@ workflow PBFlowcell {
         Float subread_mean = SummarizeSubreadsPBI.results['subread_mean']
         Float subread_n50 = SummarizeSubreadsPBI.results['subread_n50']
 
+        Float num_records = SummarizeSubreadsPBI.results['reads']
+        Float total_bases = SummarizeSubreadsPBI.results['bases']
+        Float mean_qual = SummarizeSubreadsPBI.results['mean_qual']
+        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/ComputeGenomeLength.length
+
         Float ccs_num_records = SummarizeAlignedPBI.results['reads']
-        Float ccs_total_length = SummarizeAlignedPBI.results['bases']
+        Float ccs_total_bases = SummarizeAlignedPBI.results['bases']
         Float ccs_mean_qual = SummarizeAlignedPBI.results['mean_qual']
         Float ccs_est_fold_cov = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
 
         Float ccs_num_records_q20 = SummarizeAlignedQ20PBI.results['reads']
-        Float ccs_total_length_q20 = SummarizeAlignedQ20PBI.results['bases']
+        Float ccs_total_bases_q20 = SummarizeAlignedQ20PBI.results['bases']
         Float ccs_mean_qual_q20 = SummarizeAlignedQ20PBI.results['mean_qual']
         Float ccs_est_fold_cov_q20 = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
 
