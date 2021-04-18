@@ -55,6 +55,7 @@ workflow PBCLRWholeGenome {
 
             ref_fasta         = ref_map['fasta'],
             ref_fasta_fai     = ref_map['fai'],
+            ref_dict          = ref_map['dict'],
             tandem_repeat_bed = ref_map['tandem_repeat_bed'],
     }
 
