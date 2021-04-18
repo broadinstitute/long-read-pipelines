@@ -52,6 +52,7 @@ def load_index(pbi_file, qual_threshold):
         "readQual" / Array(this.n_reads, Float32l),
     )
 
+    n_reads = 0
     polymerase_read_lengths = {}
     subread_lengths = []
     quals = []
@@ -67,18 +68,18 @@ def load_index(pbi_file, qual_threshold):
                 if idx_contents.holeNumber[j] not in polymerase_read_lengths:
                     polymerase_read_lengths[idx_contents.holeNumber[j]] = 0
 
+                n_reads += 1
                 polymerase_read_lengths[idx_contents.holeNumber[j]] += length
                 subread_lengths.append(length)
                 quals.append(to_phred_score(idx_contents.readQual[j]))
                 total_bases += length
 
-    return idx_contents.n_reads, total_bases, numpy.mean(quals), polymerase_read_lengths, subread_lengths
+    return n_reads, total_bases, numpy.mean(quals), polymerase_read_lengths, subread_lengths
 
 
 def main():
     parser = argparse.ArgumentParser(description='Compute .pbi stats', prog='compute_pbi_stats')
     parser.add_argument('-q', '--qual-threshold', type=int, default=0, help="Phred-scale quality threshold")
-    parser.add_argument('-g', '--genome-length', type=int, default=3088286401, help="Genome length for yield estimates (default GRCh38 primary assembly length)")
     parser.add_argument('pbi', type=str, help=".pbi index")
     args = parser.parse_args()
 
@@ -90,12 +91,11 @@ def main():
 
     print(f'reads\t{n_reads}')
     print(f'bases\t{n_bases}')
-    print(f'yield\t{n_bases/args.genome_length}')
-    print(f'mean_qual\t{mean_qual}')
-    print(f'polymerase_mean\t{int(numpy.mean(prl))}')
-    print(f'polymerase_n50\t{n50(prl)}')
-    print(f'subread_mean\t{int(numpy.mean(subread_lengths))}')
-    print(f'subread_n50\t{n50(subread_lengths)}')
+    print(f'mean_qual\t{mean_qual if len(prl) else 0}')
+    print(f'polymerase_mean\t{int(numpy.mean(prl)) if len(prl) else 0}')
+    print(f'polymerase_n50\t{n50(prl) if len(prl) else 0}')
+    print(f'subread_mean\t{int(numpy.mean(subread_lengths)) if len(subread_lengths) else 0}')
+    print(f'subread_n50\t{n50(subread_lengths) if len(subread_lengths) else 0}')
 
 
 if __name__ == "__main__":

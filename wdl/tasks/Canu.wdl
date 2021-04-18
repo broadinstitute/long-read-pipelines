@@ -68,7 +68,7 @@ task Correct {
         prefix:       "prefix to output files"
     }
 
-    Int disk_size = 100 * ceil(size(reads, "GB"))
+    Int disk_size = 150 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail

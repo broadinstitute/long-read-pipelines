@@ -129,8 +129,6 @@ task PEPPER {
             --gvcf \
             --phased_output \
             --ont
-
-        find . -type f -exec ls -lah {} \;
     >>>
 
     output {

@@ -108,7 +108,6 @@ workflow ONTFlowcell {
 
         Float num_records = SummarizeNanoStats.results['Number_of_reads']
         Float total_bases = SummarizeNanoStats.results['Total_bases']
-        Float raw_yield = SummarizeNanoStats.results['Total_bases']
         Float raw_est_fold_cov = SummarizeNanoStats.results['Total_bases']/ComputeGenomeLength.length
 
         Float read_length_mean = SummarizeNanoStats.results['Mean_read_length']

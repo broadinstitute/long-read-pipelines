@@ -134,6 +134,7 @@ workflow PBFlowcell {
     output {
         File? ccs_bam = MergeCCSUnalignedReads.merged_bam
         File? ccs_pbi = IndexCCSUnalignedReads.pbi
+        File? ccs_report = MergeCCSReports.report
 
         File aligned_bam = MergeAlignedReads.merged_bam
         File aligned_bai = MergeAlignedReads.merged_bai
@@ -141,8 +142,7 @@ workflow PBFlowcell {
 
         Float num_records = SummarizeSubreadsPBI.results['reads']
         Float total_bases = SummarizeSubreadsPBI.results['bases']
-        Float raw_yield = SummarizeSubreadsPBI.results['yield']
-        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['yield']/ComputeGenomeLength.length
+        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/ComputeGenomeLength.length
 
         Float polymerase_mean = SummarizeSubreadsPBI.results['polymerase_mean']
         Float polymerase_n50 = SummarizeSubreadsPBI.results['polymerase_n50']
@@ -153,15 +153,13 @@ workflow PBFlowcell {
         Float ccs_num_records = SummarizeAlignedPBI.results['reads']
         Float ccs_total_length = SummarizeAlignedPBI.results['bases']
         Float ccs_mean_qual = SummarizeAlignedPBI.results['mean_qual']
-        Float ccs_yield = SummarizeAlignedPBI.results['yield']
-        Float ccs_est_fold_cov = SummarizeAlignedPBI.results['yield']/ComputeGenomeLength.length
+        Float ccs_est_fold_cov = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
 
         Float ccs_num_records_q20 = SummarizeAlignedQ20PBI.results['reads']
         Float ccs_total_length_q20 = SummarizeAlignedQ20PBI.results['bases']
         Float ccs_mean_qual_q20 = SummarizeAlignedQ20PBI.results['mean_qual']
-        Float ccs_yield_q20 = SummarizeAlignedQ20PBI.results['yield']
+        Float ccs_est_fold_cov_q20 = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
 
-        File? ccs_report = MergeCCSReports.report
         Float? zmws_input = SummarizeCCSReport.zmws_input
         Float? zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
         Float? zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
