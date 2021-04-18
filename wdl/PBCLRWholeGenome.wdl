@@ -46,8 +46,8 @@ workflow PBCLRWholeGenome {
         call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
-    File bam = select_first(MergeAllReads.merged_bam, aligned_bams[0])
-    File bai = select_first(MergeAllReads.merged_bai, aligned_bais[0])
+    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
+    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
     call VAR.CallVariants {
         input:
