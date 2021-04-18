@@ -85,18 +85,6 @@ workflow PBCLRWholeGenome {
             outfile = outdir + "/variants/sv/" + basename(CallVariants.sniffles_vcf)
     }
 
-    call FF.FinalizeToFile as FinalizeSVIM {
-        input:
-            file = CallVariants.svim_vcf,
-            outfile = outdir + "/variants/sv/" + basename(CallVariants.svim_vcf)
-    }
-
-    call FF.FinalizeToFile as FinalizeCuteSV {
-        input:
-            file = CallVariants.cutesv_vcf,
-            outfile = outdir + "/variants/sv/" + basename(CallVariants.cutesv_vcf)
-    }
-
     call FF.FinalizeToFile as FinalizeLongshot {
         input:
             file = CallVariants.longshot_vcf,
@@ -119,8 +107,6 @@ workflow PBCLRWholeGenome {
 
         File pbsv_vcf = FinalizePBSV.gcs_path
         File sniffles_vcf = FinalizeSniffles.gcs_path
-        File svim_vcf = FinalizeSVIM.gcs_path
-        File cutesv_vcf = FinalizeCuteSV.gcs_path
 
         File longshot_vcf = FinalizeLongshot.gcs_path
         File longshot_tbi = FinalizeLongshotTbi.gcs_path

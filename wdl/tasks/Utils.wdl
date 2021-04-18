@@ -964,7 +964,7 @@ task SplitBam {
     input {
         File bam
         File bai
-        Array[String] filter = ['random', 'chrUn']
+        Array[String] filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA']
 
         RuntimeAttr? runtime_attr_override
     }

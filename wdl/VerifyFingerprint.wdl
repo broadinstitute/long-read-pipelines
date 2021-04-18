@@ -40,6 +40,7 @@ workflow VerifyFingerprint {
 
     output {
         Float lod_expected_sample = CheckFingerprint.metrics_map['LOD_EXPECTED_SAMPLE']
+        Map[String, String] fingerprint_metrics = CheckFingerprint.metrics_map
     }
 }
 
