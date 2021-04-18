@@ -231,8 +231,7 @@ task MakeChrIntervalList {
         grep '^@SQ' ~{ref_dict} | \
             grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
             awk '{ print $2 "\t" 1 "\t" $3 }' | \
-            sed 's/[SL]N://g' |
-            > chrs.txt
+            sed 's/[SL]N://g' > chrs.txt
     >>>
 
     output {
@@ -491,7 +490,7 @@ task GrepCountUniqueBamRecords {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         samtools view ~{samfilter} ~{bam} | grep ~{arg} ~{regex} | > ~{prefix}.txt
     >>>
 
