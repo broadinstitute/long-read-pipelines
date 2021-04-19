@@ -16,6 +16,9 @@ RUN apt update
 RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libdeflate-dev libssl-dev curl git-lfs \
     && rm -rf /var/lib/apt/lists/*
 
+# install gsutil
+RUN curl https://sdk.cloud.google.com | bash
+
 # install samtools
 RUN wget https://github.com/samtools/samtools/releases/download/1.11/samtools-1.11.tar.bz2 \
     && tar xjf samtools-1.11.tar.bz2 \
