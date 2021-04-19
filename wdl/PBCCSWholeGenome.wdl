@@ -10,12 +10,11 @@ version 1.0
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
-import "tasks/Hifiasm.wdl" as HA
 import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/Figures.wdl" as FIG
-import "tasks/CallSVs.wdl" as SV
-import "tasks/CallSmallVariants.wdl" as SMV
+import "tasks/Hifiasm.wdl" as HA
 import "tasks/CallAssemblyVariants.wdl" as AV
+import "tasks/CallVariantsPBCCS.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSWholeGenome {
@@ -115,21 +114,7 @@ workflow PBCCSWholeGenome {
             gcs_output_dir = outdir + "/metrics/combined/" + participant_name
     }
 
-    # call SVs
-    call SV.CallSVs as CallSVs {
-        input:
-            bam               = ccs_bam,
-            bai               = ccs_bai,
-
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-            preset            = "hifi"
-    }
-
-    # call SNVs and small indels
-    call SMV.CallSmallVariants as CallSmallVariants {
+    call VAR.CallVariants {
         input:
             bam               = ccs_bam,
             bai               = ccs_bai,
@@ -137,8 +122,7 @@ workflow PBCCSWholeGenome {
             ref_fasta         = ref_map['fasta'],
             ref_fasta_fai     = ref_map['fai'],
             ref_dict          = ref_map['dict'],
-
-            preset            = "hifi"
+            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
     }
 
 #    # call variants in assemblies
@@ -154,19 +138,19 @@ workflow PBCCSWholeGenome {
     # store the results into designated bucket
     ##########
 
-    call FF.FinalizeToDir as FinalizeSVs {
-        input:
-            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
-            outdir = outdir + "/variants"
-    }
-
-    call FF.FinalizeToDir as FinalizeSmallVariants {
-        input:
-            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi,
-                      CallSmallVariants.deepvariant_vcf, CallSmallVariants.deepvariant_tbi,
-                      CallSmallVariants.deepvariant_gvcf, CallSmallVariants.deepvariant_gtbi ],
-            outdir = outdir + "/variants"
-    }
+#    call FF.FinalizeToDir as FinalizeSVs {
+#        input:
+#            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
+#            outdir = outdir + "/variants"
+#    }
+#
+#    call FF.FinalizeToDir as FinalizeSmallVariants {
+#        input:
+#            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi,
+#                      CallSmallVariants.deepvariant_vcf, CallSmallVariants.deepvariant_tbi,
+#                      CallSmallVariants.deepvariant_gvcf, CallSmallVariants.deepvariant_gtbi ],
+#            outdir = outdir + "/variants"
+#    }
 
 #    call FF.FinalizeToDir as FinalizeAssemblyVariants {
 #        input:
@@ -201,18 +185,18 @@ workflow PBCCSWholeGenome {
         File corrected_bam = ccs_bam
         File corrected_bai = ccs_bai
 
-        # SVs
-        File pbsv_vcf = CallSVs.pbsv_vcf
-        File sniffles_vcf = CallSVs.sniffles_vcf
-        File svim_vcf = CallSVs.svim_vcf
-        File cutesv_vcf = CallSVs.cutesv_vcf
-
-        # SNVs/indels
-        File longshot_vcf = CallSmallVariants.longshot_vcf
-        File longshot_tbi = CallSmallVariants.longshot_tbi
-        File deepvariant_vcf = CallSmallVariants.deepvariant_vcf
-        File deepvariant_tbi = CallSmallVariants.deepvariant_tbi
-        File deepvariant_gvcf = CallSmallVariants.deepvariant_gvcf
-        File deepvariant_gtbi = CallSmallVariants.deepvariant_gtbi
+#        # SVs
+#        File pbsv_vcf = CallSVs.pbsv_vcf
+#        File sniffles_vcf = CallSVs.sniffles_vcf
+#        File svim_vcf = CallSVs.svim_vcf
+#        File cutesv_vcf = CallSVs.cutesv_vcf
+#
+#        # SNVs/indels
+#        File longshot_vcf = CallSmallVariants.longshot_vcf
+#        File longshot_tbi = CallSmallVariants.longshot_tbi
+#        File deepvariant_vcf = CallSmallVariants.deepvariant_vcf
+#        File deepvariant_tbi = CallSmallVariants.deepvariant_tbi
+#        File deepvariant_gvcf = CallSmallVariants.deepvariant_gvcf
+#        File deepvariant_gtbi = CallSmallVariants.deepvariant_gtbi
     }
 }

@@ -10,8 +10,7 @@ import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/CallSVs.wdl" as SV
-import "tasks/CallSmallVariants.wdl" as SMV
+import "tasks/CallVariantsPBCLR.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCLRDemultiplexWholeGenome {
@@ -94,21 +93,7 @@ workflow PBCLRDemultiplexWholeGenome {
         # create a BED file that indicates where the BAM file has coverage
         call Utils.BamToBed { input: bam = AlignBarcode.aligned_bam, prefix = BC }
 
-        # call SVs
-        call SV.CallSVs as CallSVs {
-            input:
-                bam               = AlignBarcode.aligned_bam,
-                bai               = AlignBarcode.aligned_bai,
-
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-                preset            = "clr"
-        }
-
-        # call SNVs and small indels
-        call SMV.CallSmallVariants as CallSmallVariants {
+        call VAR.CallVariants {
             input:
                 bam               = AlignBarcode.aligned_bam,
                 bai               = AlignBarcode.aligned_bai,
@@ -116,6 +101,7 @@ workflow PBCLRDemultiplexWholeGenome {
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
+                tandem_repeat_bed = ref_map['tandem_repeat_bed'],
         }
 
         ##########
@@ -128,17 +114,17 @@ workflow PBCLRDemultiplexWholeGenome {
                 outdir = outdir + "/" + BC + "/alignments"
         }
 
-        call FF.FinalizeToDir as FinalizeSVs {
-            input:
-                files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
-                outdir = outdir + "/" + BC + "/variants"
-        }
-
-        call FF.FinalizeToDir as FinalizeSmallVariants {
-            input:
-                files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
-                outdir = outdir + "/" + BC + "/variants"
-        }
+#        call FF.FinalizeToDir as FinalizeSVs {
+#            input:
+#                files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
+#                outdir = outdir + "/" + BC + "/variants"
+#        }
+#
+#        call FF.FinalizeToDir as FinalizeSmallVariants {
+#            input:
+#                files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
+#                outdir = outdir + "/" + BC + "/variants"
+#        }
     }
 
     # merge demultiplexed BAMs into a single BAM (one readgroup per file)
