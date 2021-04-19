@@ -87,27 +87,27 @@ task DeepVariant {
 
 task PEPPER {
     input {
-        File bam
-        File bai
+        String bam
+        String bai
 
         File ref_fasta
         File ref_fai
 
-        String contig
+        String chr
         String preset
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        bam: "input BAM from which to call variants"
-        bai: "index accompanying the BAM"
+        bam:       "input BAM from which to call variants"
+        bai:       "index accompanying the BAM"
 
         ref_fasta: "reference to which the BAM was aligned to"
         ref_fai:   "index accompanying the reference"
 
-        contig: "contig on which to call variants"
-        preset: "calling preset (CCS, ONT)"
+        chr:       "chr on which to call variants"
+        preset:    "calling preset (CCS, ONT)"
     }
 
     Int disk_size = ceil(size(bam, "GB")) + 50
@@ -119,16 +119,20 @@ task PEPPER {
         set -euxo pipefail
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-        mv ~{bam} contig.bam
-        mv ~{bai} contig.bam.bai
+        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
+
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
+        samtools index ~{chr}.bam
 
         run_pepper_margin_deepvariant call_variant \
-            -b "contig.bam" \
+            -b "~{chr}.bam" \
             -f "~{ref_fasta}" \
             -o ./ \
             -p "~{prefix}" \
-            -r "~{contig}" \
+            -r "~{chr}" \
             -t ${num_core} \
+            -s $SM \
             --gvcf \
             --phased_output \
             ~{mode}
@@ -156,7 +160,7 @@ task PEPPER {
         boot_disk_gb:       100,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "kishwars/pepper_deepvariant:r0.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-dvpepper:r0.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
