@@ -226,7 +226,7 @@ task MakeChrIntervalList {
     Int disk_size = 10
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         grep '^@SQ' ~{ref_dict} | \
             grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
