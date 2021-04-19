@@ -122,6 +122,9 @@ task PEPPER {
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        echo $GCS_OAUTH_TOKEN
+        gcloud config list
+
         samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
         samtools index ~{chr}.bam
 

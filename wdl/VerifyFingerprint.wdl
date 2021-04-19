@@ -12,6 +12,8 @@ workflow VerifyFingerprint {
 
         File ref_map_file
         String fingerprint_dir
+
+        String gcs_out_root_dir
     }
 
     parameter_meta {
@@ -20,9 +22,13 @@ workflow VerifyFingerprint {
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         fingerprint_dir:    "GCS directory in which fingerprint files are stored"
+
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
+
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/VerifyFingerprint"
 
     call FindFingerprint {
         input:
@@ -38,9 +44,22 @@ workflow VerifyFingerprint {
             haplotype_map   = ref_map['haplotype_map']
     }
 
+    call FF.FinalizeToFile as FinalizeFingerprintSummaryMetrics {
+        input:
+            file = CheckFingerprint.summary_metrics,
+            outfile = outdir + "/" + basename(CheckFingerprint.summary_metrics)
+    }
+
+    call FF.FinalizeToFile as FinalizeFingerprintDetailMetrics {
+        input:
+            file = CheckFingerprint.detail_metrics,
+            outfile = outdir + "/" + basename(CheckFingerprint.detail_metrics)
+    }
+
     output {
         Float lod_expected_sample = CheckFingerprint.metrics_map['LOD_EXPECTED_SAMPLE']
-        Map[String, String] fingerprint_metrics = CheckFingerprint.metrics_map
+        File fingerprint_summary_metrics = FinalizeFingerprintSummaryMetrics.gcs_path
+        File fingerprint_detail_metrics = FinalizeFingerprintSummaryMetrics.gcs_path
     }
 }
 
@@ -138,7 +157,7 @@ task CheckFingerprint {
 
     output {
         File summary_metrics = "~{prefix}.fingerprinting_summary_metrics"
-        File detailed_metrics = "~{prefix}.fingerprinting_detail_metrics"
+        File detail_metrics = "~{prefix}.fingerprinting_detail_metrics"
         Map[String, String] metrics_map = read_map("metrics_map.txt")
     }
 
