@@ -226,12 +226,12 @@ task MakeChrIntervalList {
     Int disk_size = 10
 
     command <<<
-        set -x
+        set -euxo pipefail
 
         grep '^@SQ' ~{ref_dict} | \
-            grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
             awk '{ print $2 "\t" 1 "\t" $3 }' | \
             sed 's/[SL]N://g' | \
+            grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
             tee chrs.txt
     >>>
 
