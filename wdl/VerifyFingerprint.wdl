@@ -59,7 +59,7 @@ workflow VerifyFingerprint {
     output {
         Float lod_expected_sample = CheckFingerprint.metrics_map['LOD_EXPECTED_SAMPLE']
         File fingerprint_metrics = FinalizeFingerprintSummaryMetrics.gcs_path
-        File fingerprint_details = FinalizeFingerprintSummaryMetrics.gcs_path
+        File fingerprint_details = FinalizeFingerprintDetailMetrics.gcs_path
     }
 }
 
