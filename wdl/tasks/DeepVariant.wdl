@@ -116,7 +116,7 @@ task PEPPER {
 
     command <<<
         # example from https://github.com/kishwarshafin/pepper/blob/r0.4/docs/pipeline_docker/ONT_variant_calling.md
-        set -euxo pipefail
+        set -x
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
@@ -136,6 +136,10 @@ task PEPPER {
             --gvcf \
             --phased_output \
             ~{mode}
+
+        touch ~{prefix}.phased.vcf.gz ~{prefix}.vcf.gz ~{prefix}.g.vcf.gz
+        touch ~{prefix}.phased.vcf.gz.tbi ~{prefix}.vcf.gz.tbi ~{prefix}.g.vcf.gz.tbi
+        touch ~{prefix}.visual_report.html ~{prefix}.phaseset.bed
     >>>
 
     output {
