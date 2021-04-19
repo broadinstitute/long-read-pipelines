@@ -53,7 +53,7 @@ workflow CallVariants {
     }
 
 #    scatter (c in MakeChrIntervalList.chrs) {
-    scatter (i in [23]) {
+    scatter (i in [21, 23]) {
         Array[String] c = MakeChrIntervalList.chrs[i]
         String contig = c[0]
 
