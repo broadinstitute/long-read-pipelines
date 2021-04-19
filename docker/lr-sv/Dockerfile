@@ -11,13 +11,8 @@ ENV PATH=/opt/conda/envs/lr-sv/bin/:/root/google-cloud-sdk/bin/:${PATH}
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/lr-sv/lib/
 
 RUN apt-get -y update \
-	&& apt-get -y install git make cmake protobuf-compiler gcc g++ zlib1g-dev libcurl4-openssl-dev libbz2-dev tree python3-pip liblzma-dev \
+	&& apt-get -y install git make cmake protobuf-compiler gcc g++ zlib1g-dev libcurl4-openssl-dev libbz2-dev tree python3-pip liblzma-dev wget \
 	&& apt-get clean
-
-RUN git clone https://github.com/nanoporetech/pipeline-structural-variation.git \
-    && cd pipeline-structural-variation/lib \
-    && python3 setup.py build \
-    && python3 setup.py install
 
 RUN pip3 install --upgrade setuptools cython
 RUN git clone https://github.com/eldariont/svim.git \
@@ -29,5 +24,8 @@ RUN git clone https://github.com/tjiangHIT/cuteSV.git \
     && git checkout 5775340c54eef33baabdd7c227fba828d75691f3 \
     && git reset --hard \
     && python3 setup.py install
+
+RUN wget -O /bin/pbsv https://github.com/PacificBiosciences/pbsv/releases/download/v2.6.0/pbsv \
+    && chmod 755 /bin/pbsv
 
 RUN echo "source activate lr-sv" > ~/.bashrc
