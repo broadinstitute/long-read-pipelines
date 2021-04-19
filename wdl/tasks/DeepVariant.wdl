@@ -91,7 +91,7 @@ task PEPPER {
         String bai
 
         File ref_fasta
-        File ref_fai
+        File ref_fasta_fai
 
         String chr
         String preset
@@ -100,14 +100,14 @@ task PEPPER {
     }
 
     parameter_meta {
-        bam:       "input BAM from which to call variants"
-        bai:       "index accompanying the BAM"
+        bam:             "input BAM from which to call variants"
+        bai:             "index accompanying the BAM"
 
-        ref_fasta: "reference to which the BAM was aligned to"
-        ref_fai:   "index accompanying the reference"
+        ref_fasta:       "reference to which the BAM was aligned to"
+        ref_fasta_fai:   "index accompanying the reference"
 
-        chr:       "chr on which to call variants"
-        preset:    "calling preset (CCS, ONT)"
+        chr:             "chr on which to call variants"
+        preset:          "calling preset (CCS, ONT)"
     }
 
     Int disk_size = ceil(size(bam, "GB")) + 50

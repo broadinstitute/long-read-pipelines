@@ -46,26 +46,23 @@ workflow CallVariants {
     # Call small variants
     ##########################
 
-    call Utils.SplitBam {
+    call Utils.MakeChrIntervalList {
         input:
-            bam    = bam,
-            bai    = bai,
-            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'chrEBV', 'chrM']
+            ref_dict = ref_dict,
+            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
     }
 
-    scatter (p in zip(SplitBam.subset_bams, SplitBam.subset_bais)) {
-        File subset_bam = p.left
-        File subset_bai = p.right
-        String contig = basename(subset_bam, ".bam")
+    scatter (c in MakeChrIntervalList.chrs) {
+        String contig = c[0]
 
         call DV.PEPPER {
             input:
-                bam       = subset_bam,
-                bai       = subset_bai,
-                ref_fasta = ref_fasta,
-                ref_fai   = ref_fasta_fai,
-                contig    = contig,
-                preset    = "ONT"
+                bam           = bam,
+                bai           = bai,
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                chr           = contig,
+                preset        = "ONT"
         }
     }
 
