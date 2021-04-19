@@ -153,11 +153,14 @@ task CheckFingerprint {
                     print str
                 }
             }' | sed 's/ /\t/' > metrics_map.txt
+
+        mv ~{prefix}.fingerprinting_summary_metrics ~{prefix}.fingerprinting_summary_metrics.txt
+        mv ~{prefix}.fingerprinting_detail_metrics ~{prefix}.fingerprinting_detail_metrics.txt
     >>>
 
     output {
-        File summary_metrics = "~{prefix}.fingerprinting_summary_metrics"
-        File detail_metrics = "~{prefix}.fingerprinting_detail_metrics"
+        File summary_metrics = "~{prefix}.fingerprinting_summary_metrics.txt"
+        File detail_metrics = "~{prefix}.fingerprinting_detail_metrics.txt"
         Map[String, String] metrics_map = read_map("metrics_map.txt")
     }
 
