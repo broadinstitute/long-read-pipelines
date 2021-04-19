@@ -231,7 +231,8 @@ task MakeChrIntervalList {
         grep '^@SQ' ~{ref_dict} | \
             grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
             awk '{ print $2 "\t" 1 "\t" $3 }' | \
-            sed 's/[SL]N://g' > chrs.txt
+            sed 's/[SL]N://g' | \
+            tee chrs.txt
     >>>
 
     output {
