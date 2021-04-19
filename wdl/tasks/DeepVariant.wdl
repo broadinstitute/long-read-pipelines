@@ -119,12 +119,9 @@ task PEPPER {
         set -euxo pipefail
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
-
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        echo $GCS_OAUTH_TOKEN
-        gcloud config list
 
+        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
         samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
         samtools index ~{chr}.bam
 
