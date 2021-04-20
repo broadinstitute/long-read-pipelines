@@ -52,9 +52,7 @@ workflow CallVariants {
             filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
     }
 
-#    scatter (c in MakeChrIntervalList.chrs) {
-    scatter (i in [21, 23]) {
-        Array[String] c = MakeChrIntervalList.chrs[i]
+    scatter (c in MakeChrIntervalList.chrs) {
         String contig = c[0]
 
         call DV.PEPPER {
