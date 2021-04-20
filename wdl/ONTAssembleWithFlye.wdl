@@ -52,6 +52,7 @@ workflow ONTAssembleWithFlye {
     call Flye.Flye {
         input:
             reads = MergeFastqs.merged_fastq,
+            genome_size = ComputeGenomeLength.length,
             prefix = prefix,
     }
 

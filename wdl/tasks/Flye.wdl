@@ -5,13 +5,15 @@ import "Structs.wdl"
 workflow Flye {
     input {
         File reads
+        Float genome_size
         String prefix
     }
 
     call Assemble {
         input:
             reads  = reads,
-            prefix = prefix
+            prefix = prefix,
+            runtime_attr_override = { 'mem_gb': 100.0 + (genome_size/10000000.0) }
     }
 
     output {
@@ -25,15 +27,12 @@ task Assemble {
         File reads
         String prefix = "out"
 
-        Int num_cpus = 32
-
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        reads:    "reads (in fasta or fastq format, compressed or uncompressed"
+        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
         prefix:   "prefix to apply to assembly output filenames"
-        num_cpus: "number of CPUs to parallelize over"
     }
 
     Int disk_size = 10 * ceil(size(reads, "GB"))
@@ -41,28 +40,23 @@ task Assemble {
     command <<<
         set -euxo pipefail
 
-#        flye (--pacbio-raw | --pacbio-corr | --pacbio-hifi | --nano-raw |
-#             --nano-corr | --subassemblies) file1 [file_2 ...]
-#             --out-dir PATH
-#
-#             [--genome-size SIZE] [--threads int] [--iterations int]
-#             [--meta] [--plasmids] [--trestle] [--polish-target]
-#             [--keep-haplotypes] [--debug] [--version] [--help]
-#             [--resume] [--resume-from] [--stop-after]
-#             [--hifi-error] [--min-overlap SIZE]
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        flye -h
+        flye --nano-raw ~{reads} --threads $num_core --out-dir asm
+
+        mv asm/assembly.fasta ~{prefix}.flye.fa
+        mv asm/assembly_graph.gfa ~{prefix}.flye.gfa
     >>>
 
     output {
-        File gfa = "~{prefix}.p_ctg.gfa"
-        File fa = "~{prefix}.p_ctg.fa"
+        File gfa = "~{prefix}.flye.gfa"
+        File fa = "~{prefix}.flye.fa"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          num_cpus,
-        mem_gb:             150,
+        cpu_cores:          16,
+        mem_gb:             100,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,

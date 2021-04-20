@@ -72,6 +72,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTAssembleWithCanu.wdl
   testParameterFiles:
+- name: ONTAssembleWithFlye
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTAssembleWithFlye.wdl
+  testParameterFiles:
 - name: VerifyFingerprint
   subclass: wdl
   primaryDescriptorPath: /wdl/VerifyFingerprint.wdl
