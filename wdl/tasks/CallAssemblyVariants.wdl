@@ -24,7 +24,6 @@ workflow CallAssemblyVariants {
         input:
             ref_fasta = ref_fasta,
             asm_fasta = asm_fasta,
-            participant_name = participant_name,
             prefix = prefix
     }
 
@@ -46,7 +45,6 @@ task AlignAsPAF {
     input {
         File ref_fasta
         File asm_fasta
-        String participant_name
         String prefix
 
         RuntimeAttr? runtime_attr_override

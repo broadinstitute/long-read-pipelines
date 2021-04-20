@@ -8,9 +8,7 @@ version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
-import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/CallVariantsPBCLR.wdl" as VAR
-import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCLRWholeGenome {
@@ -20,6 +18,8 @@ workflow PBCLRWholeGenome {
 
         File ref_map_file
         String participant_name
+
+        Boolean call_variants = true
 
         String gcs_out_root_dir
     }
@@ -38,7 +38,7 @@ workflow PBCLRWholeGenome {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/~{participant_name}"
 
-    # gather across (potential multiple) input raw BAMs
+    # gather across (potential multiple) input CLR BAMs
     if (length(aligned_bams) > 1) {
         call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
@@ -46,16 +46,42 @@ workflow PBCLRWholeGenome {
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
-#    call VAR.CallVariants {
-#        input:
-#            bam               = bam,
-#            bai               = bai,
-#
-#            ref_fasta         = ref_map['fasta'],
-#            ref_fasta_fai     = ref_map['fai'],
-#            ref_dict          = ref_map['dict'],
-#            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-#    }
+    if (call_variants) {
+        call VAR.CallVariants {
+            input:
+                bam               = bam,
+                bai               = bai,
+
+                ref_fasta         = ref_map['fasta'],
+                ref_fasta_fai     = ref_map['fai'],
+                ref_dict          = ref_map['dict'],
+                tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+        }
+
+        call FF.FinalizeToFile as FinalizePBSV {
+            input:
+                file = CallVariants.pbsv_vcf,
+                outfile = outdir + "/variants/sv/" + basename(CallVariants.pbsv_vcf)
+        }
+
+        call FF.FinalizeToFile as FinalizeSniffles {
+            input:
+                file = CallVariants.sniffles_vcf,
+                outfile = outdir + "/variants/sv/" + basename(CallVariants.sniffles_vcf)
+        }
+
+        call FF.FinalizeToFile as FinalizeLongshot {
+            input:
+                file = CallVariants.longshot_vcf,
+                outfile = outdir + "/variants/small/" + basename(CallVariants.longshot_vcf)
+        }
+
+        call FF.FinalizeToFile as FinalizeLongshotTbi {
+            input:
+                file = CallVariants.longshot_tbi,
+                outfile = outdir + "/variants/small/" + basename(CallVariants.longshot_tbi)
+        }
+    }
 
     ##########
     # Finalize
@@ -73,30 +99,6 @@ workflow PBCLRWholeGenome {
             outfile = outdir + "/alignments/~{participant_name}.bai"
     }
 
-#    call FF.FinalizeToFile as FinalizePBSV {
-#        input:
-#            file = CallVariants.pbsv_vcf,
-#            outfile = outdir + "/variants/sv/" + basename(CallVariants.pbsv_vcf)
-#    }
-#
-#    call FF.FinalizeToFile as FinalizeSniffles {
-#        input:
-#            file = CallVariants.sniffles_vcf,
-#            outfile = outdir + "/variants/sv/" + basename(CallVariants.sniffles_vcf)
-#    }
-#
-#    call FF.FinalizeToFile as FinalizeLongshot {
-#        input:
-#            file = CallVariants.longshot_vcf,
-#            outfile = outdir + "/variants/small/" + basename(CallVariants.longshot_vcf)
-#    }
-#
-#    call FF.FinalizeToFile as FinalizeLongshotTbi {
-#        input:
-#            file = CallVariants.longshot_tbi,
-#            outfile = outdir + "/variants/small/" + basename(CallVariants.longshot_tbi)
-#    }
-
     ##########
     # store the results into designated bucket
     ##########
@@ -105,10 +107,10 @@ workflow PBCLRWholeGenome {
         File merged_bam = FinalizeBam.gcs_path
         File merged_bai = FinalizeBai.gcs_path
 
-#        File pbsv_vcf = FinalizePBSV.gcs_path
-#        File sniffles_vcf = FinalizeSniffles.gcs_path
-#
-#        File longshot_vcf = FinalizeLongshot.gcs_path
-#        File longshot_tbi = FinalizeLongshotTbi.gcs_path
+        File? pbsv_vcf = FinalizePBSV.gcs_path
+        File? sniffles_vcf = FinalizeSniffles.gcs_path
+
+        File? longshot_vcf = FinalizeLongshot.gcs_path
+        File? longshot_tbi = FinalizeLongshotTbi.gcs_path
     }
 }

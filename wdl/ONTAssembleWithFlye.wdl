@@ -7,21 +7,18 @@ version 1.0
 ######################################################################################
 
 import "tasks/Utils.wdl" as Utils
-import "tasks/Canu.wdl" as Canu
+import "tasks/Flye.wdl" as Flye
 import "tasks/Medaka.wdl" as Medaka
 import "tasks/CallAssemblyVariants.wdl" as AV
 import "tasks/Quast.wdl" as Quast
 import "tasks/Finalize.wdl" as FF
 
-workflow ONTAssembleWithCanu {
+workflow ONTAssembleWithFlye {
     input {
         String gcs_fastq_dir
 
         File ref_map_file
 
-        Float correct_error_rate = 0.15
-        Float trim_error_rate = 0.15
-        Float assemble_error_rate = 0.15
         String medaka_model = "r941_prom_high_g360"
 
         String participant_name
@@ -35,9 +32,6 @@ workflow ONTAssembleWithCanu {
 
         ref_map_file:        "table indicating reference sequence and auxillary file locations"
 
-        correct_error_rate:  "stringency for overlaps in Canu's correction step"
-        trim_error_rate:     "stringency for overlaps in Canu's trim step"
-        assemble_error_rate: "stringency for overlaps in Canu's assemble step"
         medaka_model:        "Medaka polishing model name"
 
         participant_name:    "name of the participant from whom these samples were obtained"
@@ -48,29 +42,25 @@ workflow ONTAssembleWithCanu {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTAssembleWithCanu/~{prefix}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTAssembleWithFlye/~{prefix}"
 
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
     call Utils.ListFilesOfType { input: gcs_dir = gcs_fastq_dir, suffixes = [".fastq", ".fq", ".fastq.gz", ".fq.gz"] }
     call Utils.MergeFastqs { input: fastqs = ListFilesOfType.files }
 
-    call Canu.Canu {
+    call Flye.Flye {
         input:
             reads = MergeFastqs.merged_fastq,
             prefix = prefix,
-            genome_size = ceil(ComputeGenomeLength.length/1000000.0),
-            correct_error_rate = correct_error_rate,
-            trim_error_rate = trim_error_rate,
-            assemble_error_rate = assemble_error_rate
     }
 
     call Medaka.MedakaPolish {
         input:
             basecalled_reads = MergeFastqs.merged_fastq,
-            draft_assembly = Canu.fa,
+            draft_assembly = Flye.fa,
             model = medaka_model,
-            prefix = basename(Canu.fa, ".fasta") + ".polished",
+            prefix = basename(Flye.fa, ".fasta") + ".consensus",
             n_rounds = 3
     }
 
@@ -90,8 +80,8 @@ workflow ONTAssembleWithCanu {
 
     call FF.FinalizeToFile as FinalizeAsmUnpolished {
         input:
-            file    = Canu.fa,
-            outfile = outdir + "/assembly/" + basename(Canu.fa)
+            file    = Flye.fa,
+            outfile = outdir + "/assembly/" + basename(Flye.fa)
     }
 
     call FF.FinalizeToFile as FinalizeAsmPolished {

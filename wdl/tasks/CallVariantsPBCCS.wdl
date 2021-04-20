@@ -91,22 +91,22 @@ workflow CallVariants {
     # Call structural variants
     ##########################
 
-#    call PBSV.PBSV {
-#        input:
-#            bam               = bam,
-#            bai               = bai,
-#            ref_fasta         = ref_fasta,
-#            ref_fasta_fai     = ref_fasta_fai,
-#            tandem_repeat_bed = tandem_repeat_bed,
-#            prefix            = prefix
-#    }
-#
-#    call Sniffles.Sniffles {
-#        input:
-#            bam    = bam,
-#            bai    = bai,
-#            prefix = prefix
-#    }
+    call PBSV.PBSV {
+        input:
+            bam               = bam,
+            bai               = bai,
+            ref_fasta         = ref_fasta,
+            ref_fasta_fai     = ref_fasta_fai,
+            tandem_repeat_bed = tandem_repeat_bed,
+            prefix            = prefix
+    }
+
+    call Sniffles.Sniffles {
+        input:
+            bam    = bam,
+            bai    = bai,
+            prefix = prefix
+    }
 
     output {
         File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
@@ -116,7 +116,7 @@ workflow CallVariants {
         File dvp_vcf = MergeDeepVariantVCFs.vcf
         File dvp_tbi = MergeDeepVariantVCFs.tbi
 
-#        File pbsv_vcf = PBSV.vcf
-#        File sniffles_vcf = Sniffles.vcf
+        File pbsv_vcf = PBSV.vcf
+        File sniffles_vcf = Sniffles.vcf
     }
 }

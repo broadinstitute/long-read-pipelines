@@ -2,7 +2,7 @@ version 1.0
 
 import "Structs.wdl"
 
-workflow Hifiasm {
+workflow Flye {
     input {
         File reads
         String prefix
@@ -31,7 +31,7 @@ task Assemble {
     }
 
     parameter_meta {
-        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
+        reads:    "reads (in fasta or fastq format, compressed or uncompressed"
         prefix:   "prefix to apply to assembly output filenames"
         num_cpus: "number of CPUs to parallelize over"
     }
@@ -41,8 +41,17 @@ task Assemble {
     command <<<
         set -euxo pipefail
 
-        hifiasm -o ~{prefix} -t~{num_cpus} ~{reads}
-        awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
+#        flye (--pacbio-raw | --pacbio-corr | --pacbio-hifi | --nano-raw |
+#             --nano-corr | --subassemblies) file1 [file_2 ...]
+#             --out-dir PATH
+#
+#             [--genome-size SIZE] [--threads int] [--iterations int]
+#             [--meta] [--plasmids] [--trestle] [--polish-target]
+#             [--keep-haplotypes] [--debug] [--version] [--help]
+#             [--resume] [--resume-from] [--stop-after]
+#             [--hifi-error] [--min-overlap SIZE]
+
+        flye -h
     >>>
 
     output {
@@ -58,7 +67,7 @@ task Assemble {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-flye:2.8.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

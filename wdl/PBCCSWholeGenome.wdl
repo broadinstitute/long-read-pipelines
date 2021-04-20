@@ -1,202 +1,140 @@
 version 1.0
 
-##########################################################################################
-## A workflow that performs CCS correction and variant calling on PacBio HiFi reads from a
-## single flow cell. The workflow shards the subreads into clusters and performs CCS in
-## parallel on each cluster.  Error-corrected reads are then variant-called.  A number of
-## metrics and figures are produced along the way.
-##########################################################################################
+######################################################################################
+## A workflow that performs single sample variant calling on PacBio HiFi reads from
+## one or more flow cells. The workflow merges multiple samples into a single BAM
+## prior to variant calling.
+######################################################################################
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/Figures.wdl" as FIG
-import "tasks/Hifiasm.wdl" as HA
-import "tasks/CallAssemblyVariants.wdl" as AV
 import "tasks/CallVariantsPBCCS.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSWholeGenome {
     input {
-        Array[File] bams
-        Array[File] pbis
+        Array[File] aligned_bams
+        Array[File] aligned_bais
 
         File ref_map_file
-
         String participant_name
-        Int num_shards = 50
-        Boolean extract_uncorrected_reads = false
+
+        Boolean call_variants = true
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        bams:                      "GCS path to CCS-corrected data"
-        pbis:                      "GCS path to .pbi index for CCS-corrected data"
+        aligned_bams:       "GCS path to aligned BAM files"
+        aligned_bais:       "GCS path to aligned BAM file indices"
 
-        ref_map_file:              "table indicating reference sequence and auxillary file locations"
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        participant_name:   "name of the participant from whom these samples were obtained"
 
-        participant_name:          "name of the participant from whom these samples were obtained"
-        num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
-        extract_uncorrected_reads: "[default-valued] extract reads that were not CCS-corrected to a separate file"
-
-        gcs_out_root_dir:          "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/~{participant_name}"
 
-    # scatter over all sample BAMs
-    scatter (p in zip(bams, pbis)) {
-        File bam = p.left
-        File pbi = p.right
+    # gather across (potential multiple) input CCS BAMs
+    if (length(aligned_bams) > 1) {
+        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
+    }
 
-        call PB.GetRunInfo { input: bam = bam, SM = participant_name }
-        String ID = GetRunInfo.run_info["PU"]
+    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
+    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
-        # break one raw BAM into fixed number of shards
-        call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
-
-        # then perform correction and alignment on each of the shard
-        scatter (reads in ShardLongReads.unmapped_shards) {
-            call Utils.BamToFastq { input: bam = reads, prefix = basename(reads, ".bam") }
-
-            call PB.Align as AlignCorrected {
-                input:
-                    bam         = reads,
-                    ref_fasta   = ref_map['fasta'],
-                    sample_name = participant_name,
-                    map_preset  = "CCS"
-            }
-        }
-
-        # merge the corrected per-shard BAM/fastq into one, corresponding to one raw input BAM
-        call Utils.MergeBams as MergeCorrected { input: bams = AlignCorrected.aligned_bam, prefix = "~{participant_name}.~{ID}.corrected" }
-        call Utils.MergeFastqs { input: fqs = BamToFastq.reads_fq, prefix = "~{participant_name}.~{ID}" }
-
-        # compute alignment metrics
-        call AM.AlignedMetrics as PerFlowcellMetrics {
+    if (call_variants) {
+        call VAR.CallVariants {
             input:
-                aligned_bam    = MergeCorrected.merged_bam,
-                aligned_bai    = MergeCorrected.merged_bai,
-                ref_fasta      = ref_map['fasta'],
-                ref_dict       = ref_map['dict'],
-                gcs_output_dir = outdir + "/metrics/per_flowcell/" + ID
+                bam               = bam,
+                bai               = bai,
+
+                ref_fasta         = ref_map['fasta'],
+                ref_fasta_fai     = ref_map['fai'],
+                ref_dict          = ref_map['dict'],
+                tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+        }
+
+        call FF.FinalizeToFile as FinalizePBSV {
+            input:
+                file = CallVariants.pbsv_vcf,
+                outfile = outdir + "/variants/sv/" + basename(CallVariants.pbsv_vcf)
+        }
+
+        call FF.FinalizeToFile as FinalizeSniffles {
+            input:
+                file = CallVariants.sniffles_vcf,
+                outfile = outdir + "/variants/sv/" + basename(CallVariants.sniffles_vcf)
+        }
+
+        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf {
+            input:
+                file = CallVariants.dvp_phased_vcf,
+                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_phased_vcf)
+        }
+
+        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi {
+            input:
+                file = CallVariants.dvp_phased_tbi,
+                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_phased_tbi)
+        }
+
+        call FF.FinalizeToFile as FinalizeDVPEPPERGVcf {
+            input:
+                file = CallVariants.dvp_g_vcf,
+                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_g_vcf)
+        }
+
+        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi {
+            input:
+                file = CallVariants.dvp_g_tbi,
+                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_g_tbi)
+        }
+
+        call FF.FinalizeToFile as FinalizeDVPEPPERVcf {
+            input:
+                file = CallVariants.dvp_vcf,
+                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_vcf)
+        }
+
+        call FF.FinalizeToFile as FinalizeDVPEPPERTbi {
+            input:
+                file = CallVariants.dvp_tbi,
+                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_tbi)
         }
     }
 
-    # gather across (potential multiple) input raw BAMs
-    if (length(bams) > 1) {
-        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, prefix = "~{participant_name}.corrected" }
-        call Utils.MergeFastqs as MergeAllFastqs { input: fqs = MergeFastqs.merged_fq, prefix = "~{participant_name}.corrected" }
-    }
+    ##########
+    # Finalize
+    ##########
 
-    File ccs_bam = select_first([ MergeAllCorrected.merged_bam, MergeCorrected.merged_bam[0] ])
-    File ccs_bai = select_first([ MergeAllCorrected.merged_bai, MergeCorrected.merged_bai[0] ])
-    File ccs_fq  = select_first([ MergeAllFastqs.merged_fq, MergeFastqs.merged_fq[0] ])
-
-#    # assemble genome
-#    call HA.Hifiasm {
-#        input:
-#            reads = ccs_fq,
-#            prefix = participant_name
-#    }
-
-    # compute alignment metrics
-    call AM.AlignedMetrics as PerSampleMetrics {
+    call FF.FinalizeToFile as FinalizeBam {
         input:
-            aligned_bam    = ccs_bam,
-            aligned_bai    = ccs_bai,
-            ref_fasta      = ref_map['fasta'],
-            ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/combined/" + participant_name
+            file = bam,
+            outfile = outdir + "/alignments/~{participant_name}.bam"
     }
 
-    call VAR.CallVariants {
+    call FF.FinalizeToFile as FinalizeBai {
         input:
-            bam               = ccs_bam,
-            bai               = ccs_bai,
-
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            ref_dict          = ref_map['dict'],
-            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+            file = bai,
+            outfile = outdir + "/alignments/~{participant_name}.bai"
     }
-
-#    # call variants in assemblies
-#    call AV.CallAssemblyVariants {
-#        input:
-#            asm_fasta = Hifiasm.fa,
-#            ref_fasta = ref_map['fasta'],
-#            participant_name = participant_name,
-#            prefix = basename(ccs_bam, ".bam") + ".hifiasm"
-#    }
 
     ##########
     # store the results into designated bucket
     ##########
 
-#    call FF.FinalizeToDir as FinalizeSVs {
-#        input:
-#            files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
-#            outdir = outdir + "/variants"
-#    }
-#
-#    call FF.FinalizeToDir as FinalizeSmallVariants {
-#        input:
-#            files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi,
-#                      CallSmallVariants.deepvariant_vcf, CallSmallVariants.deepvariant_tbi,
-#                      CallSmallVariants.deepvariant_gvcf, CallSmallVariants.deepvariant_gtbi ],
-#            outdir = outdir + "/variants"
-#    }
-
-#    call FF.FinalizeToDir as FinalizeAssemblyVariants {
-#        input:
-#            files = [ CallAssemblyVariants.paftools_vcf ],
-#            outdir = outdir + "/variants"
-#    }
-
-    call FF.FinalizeToDir as FinalizeMergedRuns {
-        input:
-            files = [ ccs_bam, ccs_bai ],
-            outdir = outdir + "/alignments"
-    }
-
-#    call FF.FinalizeToDir as FinalizeAssembly {
-#        input:
-#            files = [ Hifiasm.gfa, Hifiasm.fa, CallAssemblyVariants.paf ],
-#            outdir = outdir + "/assembly"
-#    }
-
     output {
-#        # Assembly
-#        File hifiasm_gfa = Hifiasm.gfa
-#        File hifiasm_fa = Hifiasm.fa
-#        File hifiasm_paf = CallAssemblyVariants.paf
-#
-#        # Assembly-based variants
-#        File paftools_vcf = CallAssemblyVariants.paftools_vcf
+        File merged_bam = FinalizeBam.gcs_path
+        File merged_bai = FinalizeBai.gcs_path
 
-        ### Ref
-        ### ===
-        # BAMs
-        File corrected_bam = ccs_bam
-        File corrected_bai = ccs_bai
+        File? pbsv_vcf = FinalizePBSV.gcs_path
+        File? sniffles_vcf = FinalizeSniffles.gcs_path
 
-#        # SVs
-#        File pbsv_vcf = CallSVs.pbsv_vcf
-#        File sniffles_vcf = CallSVs.sniffles_vcf
-#        File svim_vcf = CallSVs.svim_vcf
-#        File cutesv_vcf = CallSVs.cutesv_vcf
-#
-#        # SNVs/indels
-#        File longshot_vcf = CallSmallVariants.longshot_vcf
-#        File longshot_tbi = CallSmallVariants.longshot_tbi
-#        File deepvariant_vcf = CallSmallVariants.deepvariant_vcf
-#        File deepvariant_tbi = CallSmallVariants.deepvariant_tbi
-#        File deepvariant_gvcf = CallSmallVariants.deepvariant_gvcf
-#        File deepvariant_gtbi = CallSmallVariants.deepvariant_gtbi
+        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
+        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
     }
 }

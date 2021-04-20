@@ -114,17 +114,6 @@ workflow PBCLRDemultiplexWholeGenome {
                 outdir = outdir + "/" + BC + "/alignments"
         }
 
-#        call FF.FinalizeToDir as FinalizeSVs {
-#            input:
-#                files = [ CallSVs.pbsv_vcf, CallSVs.sniffles_vcf, CallSVs.svim_vcf, CallSVs.cutesv_vcf ],
-#                outdir = outdir + "/" + BC + "/variants"
-#        }
-#
-#        call FF.FinalizeToDir as FinalizeSmallVariants {
-#            input:
-#                files = [ CallSmallVariants.longshot_vcf, CallSmallVariants.longshot_tbi ],
-#                outdir = outdir + "/" + BC + "/variants"
-#        }
     }
 
     # merge demultiplexed BAMs into a single BAM (one readgroup per file)
