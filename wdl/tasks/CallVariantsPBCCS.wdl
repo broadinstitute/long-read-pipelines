@@ -110,26 +110,6 @@ workflow CallVariants {
 #            prefix = prefix
 #    }
 
-    # Commented out for now; SVIM and CuteSV are just not
-    # sufficiently reliable for production use.
-#    call SVIM.SVIM {
-#        input:
-#            bam           = bam,
-#            bai           = bai,
-#            ref_fasta     = ref_fasta,
-#            ref_fasta_fai = ref_fasta_fai,
-#            prefix        = prefix
-#    }
-#
-#    call CuteSV.CuteSV {
-#        input:
-#            bam       = bam,
-#            bai       = bai,
-#            ref_fasta = ref_fasta,
-#            prefix    = prefix,
-#            preset    = "ONT"
-#    }
-
     output {
         File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
         File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
@@ -140,7 +120,5 @@ workflow CallVariants {
 
 #        File pbsv_vcf = PBSV.vcf
 #        File sniffles_vcf = Sniffles.vcf
-#        File svim_vcf = SVIM.vcf
-#        File cutesv_vcf = CuteSV.vcf
     }
 }
