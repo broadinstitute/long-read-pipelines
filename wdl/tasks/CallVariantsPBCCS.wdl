@@ -53,8 +53,6 @@ workflow CallVariants {
     }
 
     scatter (c in MakeChrIntervalList.chrs) {
-#    scatter (i in [22, 23, 24, 25]) {
-#        Array[String] c = MakeChrIntervalList.chrs[i]
         String contig = c[0]
 
         call DV.PEPPER {
@@ -72,21 +70,21 @@ workflow CallVariants {
         input:
             vcfs     = PEPPER.phased_vcf,
             ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper.phased.vcf.gz"
+            prefix   = prefix + ".deepvariant_pepper.phased"
     }
 
     call VariantUtils.MergePerChrCalls as MergeDeepVariantGVCFs {
         input:
             vcfs     = PEPPER.gvcf,
             ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper.g.vcf.gz"
+            prefix   = prefix + ".deepvariant_pepper.g"
     }
 
     call VariantUtils.MergePerChrCalls as MergeDeepVariantVCFs {
         input:
             vcfs     = PEPPER.vcf,
             ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper.vcf.gz"
+            prefix   = prefix + ".deepvariant_pepper"
     }
 
     ##########################
