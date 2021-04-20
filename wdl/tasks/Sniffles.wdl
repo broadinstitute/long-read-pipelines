@@ -5,13 +5,14 @@ import "Structs.wdl"
 # Given BAM, call SVs using Sniffles
 task Sniffles {
     input {
-        File bam
-        File bai
+        String bam
+        String bai
 
         Int min_read_support = 2
         Int min_read_length = 1000
         Int min_mq = 20
 
+        String chr
         String prefix
 
         RuntimeAttr? runtime_attr_override
@@ -25,6 +26,7 @@ task Sniffles {
         min_read_length:  "[default-valued] filter out reads below minimum read length"
         min_mq:           "[default-valued] minimum mapping quality to accept"
 
+        chr:              "chr on which to call variants"
         prefix:           "prefix for output"
     }
 
@@ -34,18 +36,24 @@ task Sniffles {
     command <<<
         set -euxo pipefail
 
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
+        samtools index ~{chr}.bam
+
         sniffles -t ~{cpus} \
                  -m ~{bam} \
-                 -v ~{prefix}.sniffles.vcf \
+                 -v ~{prefix}.~{chr}.sniffles.pre.vcf \
                  -s ~{min_read_support} \
                  -r ~{min_read_length} \
                  -q ~{min_mq} \
                  --num_reads_report -1 \
                  --genotype
+
+        cat ~{prefix}.~{chr}.sniffles.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.~{chr}.sniffles.vcf
     >>>
 
     output {
-        File vcf = "~{prefix}.sniffles.vcf"
+        File vcf = "~{prefix}.~{chr}.sniffles.vcf"
     }
 
     #########################
@@ -56,7 +64,7 @@ task Sniffles {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

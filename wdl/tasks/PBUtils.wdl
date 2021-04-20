@@ -651,15 +651,16 @@ task Align {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
+    String median_filter = if map_preset == "SUBREAD" then "--median-filter" else ""
 
+    Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
     Int cpus = 4
     Int mem = 30
 
     command <<<
         set -euxo pipefail
 
-        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam --preset ~{map_preset} --sort
+        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam --preset ~{map_preset} ~{median_filter} --sort
 
         samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
         samtools index ~{prefix}.bam

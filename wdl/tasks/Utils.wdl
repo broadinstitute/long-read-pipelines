@@ -1120,6 +1120,7 @@ task ListFilesOfType {
     }
 
     Int disk_size = 1
+    String in_dir = sub(gcs_dir, "/$", "")
 
     command <<<
         set -x
@@ -1127,7 +1128,7 @@ task ListFilesOfType {
         RET=0
 
         while read s; do
-            gsutil ls ~{gcs_dir}/**$s >> files.txt
+            gsutil ls ~{in_dir}/**$s >> files.txt
         done <~{write_lines(suffixes)}
 
         if [[ $(wc -l files.txt) -eq 0 ]]; then

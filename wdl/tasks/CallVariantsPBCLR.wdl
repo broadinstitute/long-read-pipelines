@@ -55,6 +55,25 @@ workflow CallVariants {
     scatter (c in MakeChrIntervalList.chrs) {
         String contig = c[0]
 
+        call PBSV.Discover {
+            input:
+                bam               = bam,
+                bai               = bai,
+                ref_fasta         = ref_fasta,
+                ref_fasta_fai     = ref_fasta_fai,
+                tandem_repeat_bed = tandem_repeat_bed,
+                chr               = contig,
+                prefix            = prefix
+        }
+
+        call Sniffles.Sniffles {
+            input:
+                bam    = bam,
+                bai    = bai,
+                chr    = contig,
+                prefix = prefix
+        }
+
         call Longshot.Longshot {
             input:
                 bam           = bam,
@@ -65,6 +84,21 @@ workflow CallVariants {
         }
     }
 
+    call PBSV.Call {
+        input:
+            svsigs        = Discover.svsig,
+            ref_fasta     = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            prefix        = prefix
+    }
+
+    call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
+        input:
+            vcfs     = Sniffles.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".sniffles"
+    }
+
     call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
         input:
             vcfs     = Longshot.vcf,
@@ -72,32 +106,11 @@ workflow CallVariants {
             prefix   = prefix + ".longshot"
     }
 
-    ##########################
-    # Call structural variants
-    ##########################
-
-    call PBSV.PBSV {
-        input:
-            bam               = bam,
-            bai               = bai,
-            ref_fasta         = ref_fasta,
-            ref_fasta_fai     = ref_fasta_fai,
-            tandem_repeat_bed = tandem_repeat_bed,
-            prefix            = prefix
-    }
-
-    call Sniffles.Sniffles {
-        input:
-            bam    = bam,
-            bai    = bai,
-            prefix = prefix
-    }
-
     output {
         File longshot_vcf = MergeLongshotVCFs.vcf
         File longshot_tbi = MergeLongshotVCFs.tbi
 
-        File pbsv_vcf = PBSV.vcf
-        File sniffles_vcf = Sniffles.vcf
+        File pbsv_vcf = Call.vcf
+        File sniffles_vcf = MergeSnifflesVCFs.vcf
     }
 }

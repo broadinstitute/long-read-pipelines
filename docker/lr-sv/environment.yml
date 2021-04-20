@@ -1,7 +1,7 @@
 name: lr-sv
 channels:
-  - conda-forge
   - bioconda
+  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -11,8 +11,8 @@ dependencies:
   - bcftools=1.11=h7c999a4_0
   - bedtools=2.29.2=hc088bd4_0
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2020.7.22=0
-  - certifi=2019.11.28=py27_0
+  - ca-certificates=2021.4.13=h06a4308_1
+  - certifi=2020.6.20=pyhd3eb1b0_3
   - configparser=4.0.2=py27_0
   - contextlib2=0.6.0.post1=py_0
   - cython=0.29.14=py27he6710b0_0
@@ -40,9 +40,10 @@ dependencies:
   - ncrf=1.00.06=py27h470a237_0
   - ncurses=6.2=he6710b0_1
   - openjdk=8.0.112=zulu8.19.0.1_3
-  - openssl=1.1.1h=h7b6447c_0
+  - openssl=1.1.1k=h27cfd23_0
   - packaging=20.4=py_0
   - pathlib2=2.3.5=py27_0
+  - pbsv=2.6.0=h9ee0642_0
   - perl=5.26.2=h14c3975_0
   - pip=19.3.1=py27_0
   - pluggy=0.13.1=py27_0
@@ -72,4 +73,4 @@ dependencies:
   - xz=5.2.5=h7b6447c_0
   - zipp=0.6.0=py_0
   - zlib=1.2.11=h7b6447c_3
-
+prefix: /opt/conda/envs/lr-sv
