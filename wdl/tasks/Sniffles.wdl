@@ -34,7 +34,7 @@ task Sniffles {
     Int disk_size = ceil(size(bam, "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
@@ -48,6 +48,8 @@ task Sniffles {
                  -q ~{min_mq} \
                  --num_reads_report -1 \
                  --genotype
+
+        touch ~{prefix}.~{chr}.sniffles.pre.vcf
 
         cat ~{prefix}.~{chr}.sniffles.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.~{chr}.sniffles.vcf
     >>>
