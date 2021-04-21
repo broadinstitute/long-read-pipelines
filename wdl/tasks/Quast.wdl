@@ -34,12 +34,9 @@ task Quast {
             sed 's/>=/gt/g' | \
             tail -47 | \
             > report_map.txt
-
-        tar czf quast_results.tgz quast_results/
     >>>
 
     output {
-        File results = "quast_results.tgz"
         File report_html = "quast_results/latest/report.html"
         File report_txt = "quast_results/latest/report.txt"
         Map[String, String] metrics = read_map("report_map.txt")

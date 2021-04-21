@@ -100,12 +100,6 @@ workflow ONTAssembleWithCanu {
             outfile = outdir + "/assembly/" + basename(MedakaPolish.polished_assembly)
     }
 
-    call FF.FinalizeToFile as FinalizeQuastResults {
-        input:
-            file    = Quast.results,
-            outfile = outdir + "/assembly/" + basename(Quast.results)
-    }
-
     call FF.FinalizeToFile as FinalizeQuastReportHtml {
         input:
             file    = Quast.report_html,
@@ -125,8 +119,8 @@ workflow ONTAssembleWithCanu {
         File paf = CallAssemblyVariants.paf
         File paftools_vcf = CallAssemblyVariants.paftools_vcf
 
-        File quast_report_html = FinalizeQuastResults.gcs_path
-        File quast_report_txt = FinalizeQuastResults.gcs_path
+        File quast_report_html = FinalizeQuastReportHtml.gcs_path
+        File quast_report_txt = FinalizeQuastReportTxt.gcs_path
 
         Int num_contigs = Quast.metrics['#_contigs']
         Int largest_contigs = Quast.metrics['Largest_contig']
