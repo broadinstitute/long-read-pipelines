@@ -35,11 +35,7 @@ task Discover {
         prefix:            "prefix for output"
     }
 
-    Int disk_size = 2*ceil(size([bam, bai, ref_fasta, ref_fasta_fai, tandem_repeat_bed], "GB"))
-
-    # purely experiential
-    Int memory = if (ceil(size(bam, "GiB")) > 20) then 96 else 64
-    Int cpus = ceil( memory / 6 ) # a range of, approximately, [1,6] ratio between mem/cpu allowed from cloud service provider
+    Int disk_size = ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -60,8 +56,8 @@ task Discover {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          cpus,
-        mem_gb:             memory,
+        cpu_cores:          4,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
@@ -109,9 +105,15 @@ task Call {
     command <<<
         set -euxo pipefail
 
-        pbsv call ~{true='--ccs' false='' ccs} ~{ref_fasta} ~{sep=' ' svsigs} ~{prefix}.pbsv.pre.vcf
+        pbsv call \
+            --annotations ~{true='--ccs' false='' ccs} \
+            ~{ref_fasta} \
+            ~{sep=' ' svsigs} \
+            ~{prefix}.pbsv.pre.vcf
 
         cat ~{prefix}.pbsv.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.pbsv.vcf
+
+        find . -type f -exec ls -lah {} \;
     >>>
 
     output {
@@ -120,7 +122,7 @@ task Call {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          32,
+        cpu_cores:          64,
         mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,

@@ -31,7 +31,7 @@ task Sniffles {
     }
 
     Int cpus = 8
-    Int disk_size = 4*ceil(size(bam, "GB"))
+    Int disk_size = ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -41,7 +41,7 @@ task Sniffles {
         samtools index ~{chr}.bam
 
         sniffles -t ~{cpus} \
-                 -m ~{bam} \
+                 -m ~{chr}.bam \
                  -v ~{prefix}.~{chr}.sniffles.pre.vcf \
                  -s ~{min_read_support} \
                  -r ~{min_read_length} \
@@ -59,11 +59,11 @@ task Sniffles {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
-        mem_gb:             15,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
-        max_retries:        0,
+        preemptible_tries:  3,
+        max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

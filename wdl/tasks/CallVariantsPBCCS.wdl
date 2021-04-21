@@ -42,10 +42,6 @@ workflow CallVariants {
 
     String prefix = basename(bam, ".bam")
 
-    ##########################
-    # Call small variants
-    ##########################
-
     call Utils.MakeChrIntervalList {
         input:
             ref_dict = ref_dict,

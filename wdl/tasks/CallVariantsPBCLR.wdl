@@ -42,12 +42,8 @@ workflow CallVariants {
 
     String prefix = basename(bam, ".bam")
 
-    ##########################
-    # Call small variants
-    ##########################
-
     call Utils.MakeChrIntervalList {
-         input:
+        input:
             ref_dict = ref_dict,
             filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
     }
@@ -86,7 +82,7 @@ workflow CallVariants {
 
     call PBSV.Call {
         input:
-            svsigs        = Discover.svsig,
+            svsigs        = [ Discover.svsig[0] ],
             ref_fasta     = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             prefix        = prefix
