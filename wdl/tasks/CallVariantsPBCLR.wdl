@@ -82,7 +82,7 @@ workflow CallVariants {
 
     call PBSV.Call {
         input:
-            svsigs        = [ Discover.svsig[0] ],
+            svsigs        = Discover.svsig,
             ref_fasta     = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             prefix        = prefix

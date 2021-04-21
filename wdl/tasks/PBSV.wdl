@@ -105,15 +105,12 @@ task Call {
     command <<<
         set -euxo pipefail
 
-        pbsv call \
-            --annotations ~{true='--ccs' false='' ccs} \
+        pbsv call ~{true='--ccs' false='' ccs} \
             ~{ref_fasta} \
             ~{sep=' ' svsigs} \
             ~{prefix}.pbsv.pre.vcf
 
         cat ~{prefix}.pbsv.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.pbsv.vcf
-
-        find . -type f -exec ls -lah {} \;
     >>>
 
     output {
