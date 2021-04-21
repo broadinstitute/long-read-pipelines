@@ -121,7 +121,6 @@ workflow ONTFlowcell {
         Float num_reads_gt_Q7 = SummarizeNanoStats.results['Number_of_reads_gt_Q7']
         Float num_reads_gt_Q10 = SummarizeNanoStats.results['Number_of_reads_gt_Q10']
         Float num_reads_gt_Q12 = SummarizeNanoStats.results['Number_of_reads_gt_Q12']
-        Float num_reads_gt_Q15 = SummarizeNanoStats.results['Number_of_reads_gt_Q15']
     }
 }
 
