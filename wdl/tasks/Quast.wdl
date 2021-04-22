@@ -28,12 +28,13 @@ task Quast {
 
         quast --no-icarus -r ~{ref}  ~{sep=' ' assemblies}
 
-        sed 's/ /_/g' quast_results/latest/report.txt | \
-            sed 's/__\+/=/g' | \
-            sed 's/=$//g' | \
+        cat quast_results/latest/report.txt | \
+            grep -v -e '^All statistics' -e '^$' | \
+            sed 's/ /_/g' | \
+            sed 's/__\+/\t/g' | \
+            sed 's/\s\+$//g' | \
             sed 's/>=/gt/g' | \
-            tail -47 | \
-            > report_map.txt
+            tee report_map.txt
     >>>
 
     output {
