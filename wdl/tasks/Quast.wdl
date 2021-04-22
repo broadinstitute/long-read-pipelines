@@ -24,7 +24,7 @@ task Quast {
     Int disk_size = ceil(size(ref, "GB") + size(assemblies, "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         quast --no-icarus -r ~{ref}  ~{sep=' ' assemblies}
 
