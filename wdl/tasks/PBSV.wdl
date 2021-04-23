@@ -105,7 +105,9 @@ task Call {
     command <<<
         set -euxo pipefail
 
-        pbsv call ~{true='--ccs' false='' ccs} \
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        pbsv call -j $num_core --log-level INFO ~{true='--ccs' false='' ccs} \
             ~{ref_fasta} \
             ~{sep=' ' svsigs} \
             ~{prefix}.pbsv.pre.vcf

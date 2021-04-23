@@ -256,18 +256,29 @@ for e in ts:
     
 tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
 
-cols_new = ['entity:sample_id'] + list(set(tbl_new.columns).difference(set(tbl_old.columns)))
-cols_int = list(set(tbl_new.columns).intersection(set(tbl_old.columns)))
-tbl_new1 = pd.merge(tbl_old, tbl_new, how='left', on=cols_int, sort=True)
-tbl_new2 = pd.merge(tbl_new1, tbl_new[cols_new], left_on='entity:sample_id', right_on='entity:sample_id', suffixes=['_trash', ''])
-cols_final = list(filter(lambda e: not e.endswith("_trash"), list(tbl_new2.columns)))
+outer_tbl = pd.merge(tbl_old, tbl_new, how='outer', sort=True, indicator=True)
 
-merged_tbl = tbl_new2[cols_final]
-merged_tbl = merged_tbl.drop_duplicates()
+hs = []
+for l in list(outer_tbl['entity:sample_id'].unique()):
+    g = outer_tbl.loc[outer_tbl['entity:sample_id'] == l]
 
-l = list(merged_tbl.columns)
-l.remove("entity:sample_id")
-l = ["entity:sample_id"] + l
-merged_tbl = merged_tbl[l]
+    if len(g) == 1:
+        hs.append(g.iloc[0].to_dict())
+    else:
+        h = {}
+        for col_name in list(outer_tbl.columns):
+            side = "left_only" if col_name in list(tbl_old.columns) else "right_only"
+            q = list(g.loc[g['_merge'] == side][col_name])
+            h[col_name] = q[0]
 
-upload_data(namespace, workspace, merged_tbl)
+        hs.append(h)
+
+joined_tbl = pd.DataFrame(hs)
+del joined_tbl['_merge']
+
+c = list(joined_tbl.columns)
+c.remove("entity:sample_id")
+c = ["entity:sample_id"] + c
+joined_tbl = joined_tbl[c]
+
+upload_data(namespace, workspace, joined_tbl)
