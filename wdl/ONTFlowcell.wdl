@@ -4,7 +4,7 @@ import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/Figures.wdl" as FIG
+import "tasks/NanoPlot.wdl" as NP
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTFlowcell {
@@ -16,7 +16,7 @@ workflow ONTFlowcell {
         String SM
         String ID
 
-        Int num_shards = 50
+        Int? num_shards
         String experiment_type
 
         String gcs_out_root_dir
@@ -46,6 +46,8 @@ workflow ONTFlowcell {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{ID}"
 
     call ONT.GetRunInfo { input: final_summary = final_summary }
+    Int nshards = select_first([num_shards, 50])
+
     call ONT.ListFiles as ListFastqs { input: sequencing_summary = sequencing_summary, suffix = "fastq" }
 
     String PL  = "ONT"
@@ -53,7 +55,7 @@ workflow ONTFlowcell {
     String DT  = GetRunInfo.run_info["started"]
     String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-    call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
+    call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = nshards }
 
     scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
         call AR.Minimap2 as AlignReads {
@@ -73,95 +75,58 @@ workflow ONTFlowcell {
             aligned_bai    = MergeAlignedReads.merged_bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/" + ID
+            gcs_output_dir = outdir + "/metrics"
     }
 
-    call FIG.Figures as PerFlowcellFigures {
-        input:
-            summary_files  = [ sequencing_summary ],
-            gcs_output_dir = outdir + "/metrics/" + ID
-    }
-
-    call SummarizeNanoStats { input: report = PerFlowcellFigures.NanoPlotFromSummaryStats }
-
+    call NP.NanoPlotFromSummary { input: summary_files = [sequencing_summary] }
+    call NP.NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
     # Finalize data
+    String dir = outdir + "/alignments"
 
-    call FF.FinalizeToFile as FinalizeAlignedBam {
-        input:
-            file    = MergeAlignedReads.merged_bam,
-            outfile = outdir + "/alignments/" + basename(MergeAlignedReads.merged_bam)
-    }
-
-    call FF.FinalizeToFile as FinalizeAlignedBai {
-        input:
-            file    = MergeAlignedReads.merged_bai,
-            outfile = outdir + "/alignments/" + basename(MergeAlignedReads.merged_bai)
-    }
+    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = MergeAlignedReads.merged_bam }
+    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = MergeAlignedReads.merged_bai }
 
     output {
+        # Flowcell stats
+        Float active_channels = NanoPlotFromSummary.stats_map['active_channels']
+
+        # Aligned BAM file
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path
 
-        Float active_channels = SummarizeNanoStats.results['Active_channels']
+        # Unaligned read stats
+        Float num_reads = NanoPlotFromSummary.stats_map['number_of_reads']
+        Float num_bases = NanoPlotFromSummary.stats_map['number_of_bases']
+        Float raw_est_fold_cov = NanoPlotFromSummary.stats_map['number_of_bases']/ComputeGenomeLength.length
 
-        Float num_records = SummarizeNanoStats.results['Number_of_reads']
-        Float total_bases = SummarizeNanoStats.results['Total_bases']
-        Float raw_est_fold_cov = SummarizeNanoStats.results['Total_bases']/ComputeGenomeLength.length
+        Float read_length_mean = NanoPlotFromSummary.stats_map['mean_read_length']
+        Float read_length_median = NanoPlotFromSummary.stats_map['median_read_length']
+        Float read_length_stdev = NanoPlotFromSummary.stats_map['read_length_stdev']
+        Float read_length_N50 = NanoPlotFromSummary.stats_map['n50']
 
-        Float read_length_mean = SummarizeNanoStats.results['Mean_read_length']
-        Float read_length_median = SummarizeNanoStats.results['Median_read_length']
-        Float read_length_N50 = SummarizeNanoStats.results['Read_length_N50']
+        Float read_qual_mean = NanoPlotFromSummary.stats_map['mean_qual']
+        Float read_qual_median = NanoPlotFromSummary.stats_map['median_qual']
 
-        Float read_qual_mean = SummarizeNanoStats.results['Mean_read_quality']
-        Float read_qual_median = SummarizeNanoStats.results['Median_read_quality']
+        Float num_reads_Q5 = NanoPlotFromSummary.stats_map['Reads_Q5']
+        Float num_reads_Q7 = NanoPlotFromSummary.stats_map['Reads_Q7']
+        Float num_reads_Q10 = NanoPlotFromSummary.stats_map['Reads_Q10']
+        Float num_reads_Q12 = NanoPlotFromSummary.stats_map['Reads_Q12']
+        Float num_reads_Q15 = NanoPlotFromSummary.stats_map['Reads_Q15']
 
-        Float num_reads_gt_Q5 = SummarizeNanoStats.results['Number_of_reads_gt_Q5']
-        Float num_reads_gt_Q7 = SummarizeNanoStats.results['Number_of_reads_gt_Q7']
-        Float num_reads_gt_Q10 = SummarizeNanoStats.results['Number_of_reads_gt_Q10']
-        Float num_reads_gt_Q12 = SummarizeNanoStats.results['Number_of_reads_gt_Q12']
-    }
-}
+        # Aligned read stats
+        Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
+        Float aligned_num_bases = NanoPlotFromBam.stats_map['number_of_bases_aligned']
+        Float aligned_frac_bases = NanoPlotFromBam.stats_map['fraction_bases_aligned']
+        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/ComputeGenomeLength.length
 
-task SummarizeNanoStats {
-    input {
-        File report
+        Float aligned_read_length_mean = NanoPlotFromBam.stats_map['mean_read_length']
+        Float aligned_read_length_median = NanoPlotFromBam.stats_map['median_read_length']
+        Float aligned_read_length_stdev = NanoPlotFromBam.stats_map['read_length_stdev']
+        Float aligned_read_length_N50 = NanoPlotFromBam.stats_map['n50']
 
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 2*ceil(size(report, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        cat ~{report} | grep -v -e '^General' -e '^Number,' | head -13 | sed 's/:\s\+/\t/g' | sed 's/,//g' | sed 's/ /_/g' | awk '{ print $1 "\t" $2 }' | sed 's/_(.*//g' | sed 's/>/Number_of_reads_gt_/' > map.txt
-        cat map.txt
-    >>>
-
-    output {
-        Map[String, Float] results = read_map("map.txt")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             2,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-ont:0.1.1"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        Float average_identity = NanoPlotFromBam.stats_map['average_identity']
+        Float median_identity = NanoPlotFromBam.stats_map['median_identity']
     }
 }

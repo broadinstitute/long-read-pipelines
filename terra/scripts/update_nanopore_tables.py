@@ -3,6 +3,7 @@
 import os
 import re
 import hashlib
+import argparse
 
 import pandas as pd
 import firecloud.api as fapi
@@ -94,52 +95,76 @@ def upload_data(namespace, workspace, tbl):
         print(c.json())
 
 
-namespace = 'broad-firecloud-dsde-methods'
-workspace = 'dsp-oxfordnano'
+def main():
+    parser = argparse.ArgumentParser(description='Update Terra workspace sample table', prog='update_pacbio_tables')
+    parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
+    parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
+    parser.add_argument('buckets', metavar='B', type=str, nargs='+', help='GCS buckets to scan')
+    args = parser.parse_args()
 
-gcs_buckets_ont = ['gs://broad-gp-oxfordnano', 'gs://broad-dsde-methods-long-reads-deepseq']
+    ent_old = fapi.get_entities(args.namespace, args.workspace, 'sample').json()
 
-ent_old = fapi.get_entities(namespace, workspace, 'sample').json()
+    if len(ent_old) > 0:
+        tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
+        tbl_old["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_old["final_summary_file"]))
 
-if len(ent_old) > 0:
-    tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
-    tbl_old["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_old["final_summary_file"]))
+    ts = load_summaries(args.buckets)
 
-ts = load_summaries(gcs_buckets_ont)
+    tbl_header = ["final_summary_file", "sequencing_summary_file", "protocol_group_id", "instrument", "position", "flow_cell_id", "sample_name", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
+    tbl_rows = []
 
-tbl_header = ["final_summary_file", "sequencing_summary_file", "protocol_group_id", "instrument", "position", "flow_cell_id", "sample_name", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
-tbl_rows = []
+    for e in ts:
+        tbl_rows.append([
+            e["Files"]["final_summary.txt"],
+            e["Files"]["sequencing_summary.txt"],
+            e["protocol_group_id"],
+            e["instrument"],
+            e["position"],
+            e["flow_cell_id"],
+            e["sample_id"],
+            e["basecalling_enabled"],
+            e["started"],
+            e["acquisition_stopped"],
+            e["processing_stopped"],
+            e["fast5_files_in_fallback"],
+            e["fast5_files_in_final_dest"],
+            e["fastq_files_in_fallback"],
+            e["fastq_files_in_final_dest"]
+        ])
 
-for e in ts:
-    tbl_rows.append([
-        e["Files"]["final_summary.txt"],
-        e["Files"]["sequencing_summary.txt"],
-        e["protocol_group_id"],
-        e["instrument"],
-        e["position"],
-        e["flow_cell_id"],
-        e["sample_id"],
-        e["basecalling_enabled"],
-        e["started"],
-        e["acquisition_stopped"],
-        e["processing_stopped"],
-        e["fast5_files_in_fallback"],
-        e["fast5_files_in_final_dest"],
-        e["fastq_files_in_fallback"],
-        e["fastq_files_in_final_dest"]
-    ])
+    tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
+    tbl_new["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["final_summary_file"]))
 
-tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
-tbl_new["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["final_summary_file"]))
+    if len(ent_old) > 0:
+        outer_tbl = pd.merge(tbl_old, tbl_new, how='outer', sort=True, indicator=True)
+    else:
+        outer_tbl = tbl_new
 
-if len(ent_old) > 0:
-    for sample_id in tbl_old.merge(tbl_new, how='outer', indicator=True).loc[lambda x : x['_merge']=='left_only']['entity:sample_id'].tolist():
-        print(f'Entry for sample {sample_id} has been modified.  Keeping changes.')
-        tbl_new = tbl_new[tbl_new['entity:sample_id'] != sample_id]
+    hs = []
+    for l in list(outer_tbl['entity:sample_id'].unique()):
+        g = outer_tbl.loc[outer_tbl['entity:sample_id'] == l]
 
-merged_tbl = pd.merge(tbl_old, tbl_new, how='outer') if len(ent_old) > 0 else tbl_new
-merged_tbl = merged_tbl[['entity:sample_id'] + tbl_header]
-merged_tbl = merged_tbl.drop_duplicates(subset=['flow_cell_id', 'instrument', 'sample_name', 'acquisition_stopped', 'processing_stopped', 'fast5_files_in_fallback', 'fast5_files_in_final_dest', 'fastq_files_in_fallback', 'fastq_files_in_final_dest'])
-merged_tbl = merged_tbl[merged_tbl.fast5_files_in_final_dest != "0"]
+        if len(g) == 1:
+            hs.append(g.iloc[0].to_dict())
+        else:
+            h = {}
+            for col_name in list(outer_tbl.columns):
+                side = "left_only" if col_name in list(tbl_old.columns) else "right_only"
+                q = list(g.loc[g['_merge'] == side][col_name])
+                h[col_name] = q[0]
 
-upload_data(namespace, workspace, merged_tbl)
+            hs.append(h)
+
+    joined_tbl = pd.DataFrame(hs)
+    del joined_tbl['_merge']
+
+    c = list(joined_tbl.columns)
+    c.remove("entity:sample_id")
+    c = ["entity:sample_id"] + c
+    joined_tbl = joined_tbl[c]
+
+    upload_data(args.namespace, args.workspace, joined_tbl)
+
+
+if __name__ == "__main__":
+    main()

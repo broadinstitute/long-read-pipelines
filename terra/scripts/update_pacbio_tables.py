@@ -4,6 +4,7 @@ import os
 import re
 import math
 import hashlib
+import argparse
 
 import pandas as pd
 import firecloud.api as fapi
@@ -78,11 +79,9 @@ def load_xmls(gcs_buckets):
                 t = combine(traverse_xml('root', doc))
                 t['Files'] = {
                     'input_dir': os.path.dirname(gcs_bucket + "/" + blob.name),
-                    
                     'subreadset.xml': gcs_bucket + "/" + blob.name,
                     'subreads.bam': gcs_bucket + "/" + re.sub("et.xml", ".bam", blob.name),
                     'subreads.bam.pbi': gcs_bucket + "/" + re.sub("et.xml", ".bam.pbi", blob.name),
-                    
                     'consensusreadset.xml': "",
                     'ccs_reports.txt': "",
                     'reads.bam': "",
@@ -96,11 +95,9 @@ def load_xmls(gcs_buckets):
                 t = combine(traverse_xml('root', doc))
                 t['Files'] = {
                     'input_dir': os.path.dirname(gcs_bucket + "/" + blob.name),
-                    
                     'subreadset.xml': "",
                     'subreads.bam': "",
                     'subreads.bam.pbi': "",
-
                     'consensusreadset.xml': gcs_bucket + "/" + blob.name,
                     'ccs_reports.txt': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".ccs_reports.txt", blob.name),
                     'reads.bam': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam", blob.name),
@@ -151,7 +148,7 @@ def upload_data(namespace, workspace, tbl):
         print(c.json())
 
 
-def load_ccs_report(ccs_report_path):
+def load_ccs_report(ccs_report_path, e):
     d = {
         'ZMWs input': "",
         'ZMWs pass filters': "",
@@ -204,81 +201,91 @@ def load_ccs_report(ccs_report_path):
     return d
 
 
-namespace = "broad-firecloud-dsde-methods"
-workspace = "dsp-pacbio"
-gcs_buckets_pb = ['gs://broad-gp-pacbio']
+def main():
+    parser = argparse.ArgumentParser(description='Update Terra workspace sample table', prog='update_pacbio_tables')
+    parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
+    parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
+    parser.add_argument('buckets', metavar='B', type=str, nargs='+', help='GCS buckets to scan')
+    args = parser.parse_args()
 
-ent_old = fapi.get_entities(namespace, workspace, 'sample').json()
+    ent_old = fapi.get_entities(args.namespace, args.workspace, 'sample').json()
 
-if len(ent_old) > 0:
-    tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
-    tbl_old["entity:sample_id"] = list(map(lambda f: f['name'], ent_old))
+    if len(ent_old) > 0:
+        tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
+        tbl_old["entity:sample_id"] = list(map(lambda f: f['name'], ent_old))
 
-ts = load_xmls(gcs_buckets_pb)
+    ts = load_xmls(args.buckets)
 
-tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi"]
-tbl_rows = []
+    tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi"]
+    tbl_rows = []
 
-for e in ts:
-    r = load_ccs_report(e['Files']['ccs_reports.txt'])
-    
-    tbl_rows.append([
-        e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
+    for e in ts:
+        r = load_ccs_report(e['Files']['ccs_reports.txt'], e)
 
-        e['CollectionMetadata'][0]['InstrumentName'] if 'Context' in e['CollectionMetadata'][0] else "UnknownInstrument",
-        e['CollectionMetadata'][0]['Context'] if 'Context' in e['CollectionMetadata'][0] else "UnknownFlowcell",
-        e['WellSample'][0]['WellName'] if 'WellName' in e['WellSample'][0] else "Z00",
-        e['WellSample'][0]['CreatedAt'] if 'CreatedAt' in e['WellSample'][0] else "0001-01-01T00:00:00",
-        re.sub("[# ]", "", e['BioSample'][0]['Name']) if 'BioSample' in e else "UnknownBioSample",
-        re.sub("[# ]", "", e['WellSample'][0]['Name']) if 'Name' in e['WellSample'][0] else "UnknownWellSample",
-        e['WellSample'][0]['InsertSize'] if 'InsertSize' in e['WellSample'][0] else "0",
-        e['WellSample'][0]['IsCCS'] if 'IsCCS' in e['WellSample'][0] else "unknown",
-        e['WellSample'][0]['IsoSeq'] if 'IsoSeq' in e['WellSample'][0] else "unknown",
+        tbl_rows.append([
+            e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
 
-        "true" if 'ConsensusReadSet' in e else "false",
-        e['WellSample'][0]['Description'] if 'Description' in e['WellSample'][0] else "unknown",
-        e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else "unknown",
-        
-        e['DataSetMetadata'][0]['NumRecords'],
-        e['DataSetMetadata'][0]['TotalLength'],
-        
-        r['ZMWs input'],
-        r['ZMWs pass filters'],
-        r['ZMWs fail filters'],
-        r['ZMWs shortcut filters'],
+            e['CollectionMetadata'][0]['InstrumentName'] if 'Context' in e['CollectionMetadata'][0] else "UnknownInstrument",
+            e['CollectionMetadata'][0]['Context'] if 'Context' in e['CollectionMetadata'][0] else "UnknownFlowcell",
+            e['WellSample'][0]['WellName'] if 'WellName' in e['WellSample'][0] else "Z00",
+            e['WellSample'][0]['CreatedAt'] if 'CreatedAt' in e['WellSample'][0] else "0001-01-01T00:00:00",
+            re.sub("[# ]", "", e['BioSample'][0]['Name']) if 'BioSample' in e else "UnknownBioSample",
+            re.sub("[# ]", "", e['WellSample'][0]['Name']) if 'Name' in e['WellSample'][0] else "UnknownWellSample",
+            e['WellSample'][0]['InsertSize'] if 'InsertSize' in e['WellSample'][0] else "0",
+            e['WellSample'][0]['IsCCS'] if 'IsCCS' in e['WellSample'][0] else "unknown",
+            e['WellSample'][0]['IsoSeq'] if 'IsoSeq' in e['WellSample'][0] else "unknown",
 
-        e['Files']['input_dir'],
-        e['Files']['subreads.bam'],
-        e['Files']['subreads.bam.pbi'],
-        e['Files']['reads.bam'],
-        e['Files']['reads.bam.pbi'],
-    ])
-    
-tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
+            "true" if 'ConsensusReadSet' in e else "false",
+            e['WellSample'][0]['Description'] if 'Description' in e['WellSample'][0] else "unknown",
+            e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else "unknown",
 
-outer_tbl = pd.merge(tbl_old, tbl_new, how='outer', sort=True, indicator=True)
+            e['DataSetMetadata'][0]['NumRecords'],
+            e['DataSetMetadata'][0]['TotalLength'],
 
-hs = []
-for l in list(outer_tbl['entity:sample_id'].unique()):
-    g = outer_tbl.loc[outer_tbl['entity:sample_id'] == l]
+            r['ZMWs input'],
+            r['ZMWs pass filters'],
+            r['ZMWs fail filters'],
+            r['ZMWs shortcut filters'],
 
-    if len(g) == 1:
-        hs.append(g.iloc[0].to_dict())
+            e['Files']['input_dir'],
+            e['Files']['subreads.bam'],
+            e['Files']['subreads.bam.pbi'],
+            e['Files']['reads.bam'],
+            e['Files']['reads.bam.pbi'],
+        ])
+
+    tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
+
+    if len(ent_old) > 0:
+        outer_tbl = pd.merge(tbl_old, tbl_new, how='outer', sort=True, indicator=True)
     else:
-        h = {}
-        for col_name in list(outer_tbl.columns):
-            side = "left_only" if col_name in list(tbl_old.columns) else "right_only"
-            q = list(g.loc[g['_merge'] == side][col_name])
-            h[col_name] = q[0]
+        outer_tbl = tbl_new
 
-        hs.append(h)
+    hs = []
+    for l in list(outer_tbl['entity:sample_id'].unique()):
+        g = outer_tbl.loc[outer_tbl['entity:sample_id'] == l]
 
-joined_tbl = pd.DataFrame(hs)
-del joined_tbl['_merge']
+        if len(g) == 1:
+            hs.append(g.iloc[0].to_dict())
+        else:
+            h = {}
+            for col_name in list(outer_tbl.columns):
+                side = "left_only" if col_name in list(tbl_old.columns) else "right_only"
+                q = list(g.loc[g['_merge'] == side][col_name])
+                h[col_name] = q[0]
 
-c = list(joined_tbl.columns)
-c.remove("entity:sample_id")
-c = ["entity:sample_id"] + c
-joined_tbl = joined_tbl[c]
+            hs.append(h)
 
-upload_data(namespace, workspace, joined_tbl)
+    joined_tbl = pd.DataFrame(hs)
+    del joined_tbl['_merge']
+
+    c = list(joined_tbl.columns)
+    c.remove("entity:sample_id")
+    c = ["entity:sample_id"] + c
+    joined_tbl = joined_tbl[c]
+
+    upload_data(args.namespace, args.workspace, joined_tbl)
+
+
+if __name__ == "__main__":
+    main()

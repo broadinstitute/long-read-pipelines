@@ -88,29 +88,13 @@ workflow ONTAssembleWithCanu {
             prefix = prefix + ".canu"
     }
 
-    call FF.FinalizeToFile as FinalizeAsmUnpolished {
-        input:
-            file    = Canu.fa,
-            outfile = outdir + "/assembly/" + basename(Canu.fa)
-    }
+    # Finalize data
+    String dir = outdir + "/assembly"
 
-    call FF.FinalizeToFile as FinalizeAsmPolished {
-        input:
-            file    = MedakaPolish.polished_assembly,
-            outfile = outdir + "/assembly/" + basename(MedakaPolish.polished_assembly)
-    }
-
-    call FF.FinalizeToFile as FinalizeQuastReportHtml {
-        input:
-            file    = Quast.report_html,
-            outfile = outdir + "/assembly/" + basename(Quast.report_html)
-    }
-
-    call FF.FinalizeToFile as FinalizeQuastReportTxt{
-        input:
-            file    = Quast.report_txt,
-            outfile = outdir + "/assembly/" + basename(Quast.report_txt)
-    }
+    call FF.FinalizeToFile as FinalizeAsmUnpolished   { input: outdir = dir, file = Canu.fa }
+    call FF.FinalizeToFile as FinalizeAsmPolished     { input: outdir = dir, file = MedakaPolish.polished_assembly }
+    call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
+    call FF.FinalizeToFile as FinalizeQuastReportTxt  { input: outdir = dir, file = Quast.report_txt }
 
     output {
         File asm_unpolished = FinalizeAsmUnpolished.gcs_path

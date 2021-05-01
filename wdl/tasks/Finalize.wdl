@@ -5,13 +5,14 @@ import "Structs.wdl"
 task FinalizeToFile {
     input {
         String file
-        String outfile
+        String outdir
+        String? name
 
         RuntimeAttr? runtime_attr_override
     }
 
-    # This idiom ensures that we don't accidentally have double-slashes in our GCS paths
-    String gcs_output_file = sub(sub(outfile, "/+", "/"), "gs:/", "gs://")
+    String gcs_output_dir = sub(outdir, "/+$", "")
+    String gcs_output_file = gcs_output_dir + "/" + select_first([name, basename(file)])
 
     command <<<
         set -euxo pipefail
@@ -26,7 +27,7 @@ task FinalizeToFile {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             2,
+        mem_gb:             1,
         disk_gb:            10,
         boot_disk_gb:       10,
         preemptible_tries:  2,
@@ -53,15 +54,12 @@ task FinalizeToDir {
         RuntimeAttr? runtime_attr_override
     }
 
-    # This idiom ensures that we don't accidentally have double-slashes in our GCS paths
-    String gcs_output_dir = sub(sub(outdir + "/", "/+", "/"), "gs:/", "gs://")
+    String gcs_output_dir = sub(outdir, "/+$", "")
 
     command <<<
         set -euxo pipefail
 
-        while read p; do
-            gsutil -m cp "$p" "~{gcs_output_dir}"
-        done <~{write_lines(files)}
+        cat ~{write_lines(files)} | gsutil -m cp -I "~{gcs_output_dir}"
     >>>
 
     output {
@@ -71,7 +69,7 @@ task FinalizeToDir {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             2,
+        mem_gb:             1,
         disk_gb:            10,
         boot_disk_gb:       10,
         preemptible_tries:  2,

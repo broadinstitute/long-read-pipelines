@@ -15,65 +15,45 @@ import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSIsoSeq {
     input {
-        Array[File] bams
-        File ref_map_file
+        Array[File] ccs_bams
+        Array[File] ccs_pbis
 
+        File ref_map_file
         String participant_name
         File barcode_file
-        Int num_shards = 300
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        bams:             "GCS path to raw subreads or CCS data"
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        ccs_bams:         "GCS path to CCS BAM files"
+        ccs_pbis:         "GCS path to CCS BAM .pbi indices"
 
+        ref_map_file:     "table indicating reference sequence and auxillary file locations"
         participant_name: "name of the participant from whom these samples were obtained"
         barcode_file:     "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
-        num_shards:       "[default-valued] number of sharded BAMs to create (tune for performance)"
 
         gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSIsoSeq/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSIsoSeq/~{participant_name}"
 
-    # scatter over all sample BAMs
-    scatter (bam in bams) {
-        File pbi = sub(bam, ".bam$", ".bam.pbi")
-
-        call PB.GetRunInfo { input: bam = bam }
-        String ID = GetRunInfo.run_info["PU"]
-
-        # break one raw BAM into fixed number of shards
-        call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
-
-        # then perform correction on each of the shard
-        scatter (subreads in ShardLongReads.unmapped_shards) {
-            call PB.CCS { input: subreads = subreads }
-        }
-
-        # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-        call Utils.MergeBams as MergeCorrected { input: bams = CCS.consensus, prefix = "~{participant_name}.~{ID}.corrected" }
-        call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
+    # gather across (potential multiple) input CCS BAMs
+    if (length(ccs_bams) > 1) {
+        call Utils.MergeBams as MergeAllReads { input: bams = ccs_bams, prefix = participant_name }
     }
 
-    # gather across (potential multiple) input raw BAMs
-    if (length(bams) > 1) {
-        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, prefix = "~{participant_name}.corrected" }
-        call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
-    }
+    File bam = select_first([MergeAllReads.merged_bam, ccs_bams[0]])
 
-    File ccs_bam = select_first([ MergeAllCorrected.merged_bam, MergeCorrected.merged_bam[0] ])
-    File ccs_bai = select_first([ MergeAllCorrected.merged_bai, MergeCorrected.merged_bai[0] ])
-    File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
+    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
+    File pbi = IndexCCSUnalignedReads.pbi
 
     # demultiplex CCS-ed BAM
     call PB.Demultiplex {
         input:
-            bam = ccs_bam,
+            bam = bam,
             prefix = participant_name,
             barcode_file = barcode_file,
             ccs = true,
@@ -86,9 +66,6 @@ workflow PBCCSIsoSeq {
     # make reports on demultiplexing
     call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
     call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
-    call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
-#    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
-#    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
 
     scatter (demux_bam in Demultiplex.demux_bams) {
         String BC = sub(basename(demux_bam, ".bam"), "~{participant_name}.corrected", "")
@@ -129,77 +106,50 @@ workflow PBCCSIsoSeq {
         # store the demultiplexing results into designated bucket
         ##########
 
-        call FF.FinalizeToDir as FinalizeDemuxAlignedReads {
-            input:
-                files  = [ AlignTranscripts.aligned_bam, AlignTranscripts.aligned_bai, BamToBed.bed ],
-                outdir = outdir + "/" + BC + "/alignments"
-        }
+        String adir = outdir + "/" + BC + "/alignments"
+        String tdir = outdir + "/" + BC + "/transcripts"
 
-        call FF.FinalizeToDir as FinalizeCollapsedTranscripts {
-            input:
-                files = [ CollapseTranscripts.gff ],
-                outdir = outdir + "/" + BC + "/transcripts"
-        }
+        call FF.FinalizeToFile as FinalizeAlignedTranscriptsBam { input: outdir = adir, file = AlignTranscripts.aligned_bam }
+        call FF.FinalizeToFile as FinalizeAlignedTranscriptsBai { input: outdir = adir, file = AlignTranscripts.aligned_bai }
+        call FF.FinalizeToFile as FinalizeAlignedTranscriptsBed { input: outdir = adir, file = BamToBed.bed }
+        call FF.FinalizeToFile as FinalizeCollapsedTranscripts { input: outdir = tdir, file = CollapseTranscripts.gff }
     }
 
     # merge demultiplexed BAMs into a single BAM (one readgroup per file)
     call Utils.MergeBams as MergeBarcodeBams { input: bams = AlignTranscripts.aligned_bam, prefix = "barcodes" }
 
-    ##########
-    # store the results into designated bucket
-    ##########
+    call PB.PBIndex as IndexAlignedReads { input: bam = MergeBarcodeBams.merged_bam }
 
-    call FF.FinalizeToDir as FinalizeMergedRuns {
-        input:
-            files = [ ccs_bam, ccs_bai ],
-            outdir = outdir + "/reads"
+    # Finalize
+    String rdir = outdir + "/reads"
+    String bdir = outdir + "/alignments/all_barcodes"
+    String mdir = outdir + "/metrics/combined/lima"
+    String fdir = outdir + "/figures"
+
+    call FF.FinalizeToFile as FinalizeBam { input: outdir = rdir, file = bam }
+    call FF.FinalizeToFile as FinalizePbi { input: outdir = rdir, file = pbi }
+
+    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bdir, file = MergeBarcodeBams.merged_bam }
+    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bdir, file = MergeBarcodeBams.merged_bai }
+    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bdir, file = IndexAlignedReads.pbi }
+
+    call FF.FinalizeToFile as FinalizeDemultiplexCounts { input: outdir = mdir, file = Demultiplex.counts }
+    call FF.FinalizeToFile as FinalizeDemultiplexReport { input: outdir = mdir, file = Demultiplex.report }
+    call FF.FinalizeToFile as FinalizeDemultiplexSummary { input: outdir = mdir, file = Demultiplex.summary }
+
+    call FF.FinalizeToDir as FinalizeLimaSummary { input: outdir = fdir + "/summary/png", files = SummarizedDemuxReportPNG.report_files }
+    call FF.FinalizeToDir as FinalizeLimaDetailedPNG { input: outdir = fdir + "/detailed/png", files = DetailedDemuxReportPNG.report_files }
+
+    output {
+        File ccs_bam = FinalizeBam.gcs_path
+        File ccs_pbi = FinalizePbi.gcs_path
+
+        File aligned_bam = FinalizeAlignedBam.gcs_path
+        File aligned_bai = FinalizeAlignedBai.gcs_path
+        File aligned_pbi = FinalizeAlignedPbi.gcs_path
+
+        File demux_counts = FinalizeDemultiplexCounts.gcs_path
+        File demux_reports = FinalizeDemultiplexReport.gcs_path
+        File demux_summary = FinalizeDemultiplexSummary.gcs_path
     }
-
-    call FF.FinalizeToDir as FinalizeDemuxCombinedReads {
-        input:
-            files = [ MergeBarcodeBams.merged_bam, MergeBarcodeBams.merged_bai ],
-            outdir = outdir + "/alignments/per_barcode"
-    }
-
-    call FF.FinalizeToDir as FinalizeCCSMetrics {
-        input:
-            files = [ ccs_report ],
-            outdir = outdir + "/metrics/combined/" + participant_name + "/ccs_metrics"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaMetrics {
-        input:
-            files = [ Demultiplex.counts, Demultiplex.report, Demultiplex.summary ],
-            outdir = outdir + "/metrics/combined/" + participant_name + "/lima"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaSummary {
-        input:
-            files = SummarizedDemuxReportPNG.report_files,
-            outdir = outdir + "/figures/combined/" + participant_name + "/lima/summary/png"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaDetailedPNG {
-        input:
-            files = DetailedDemuxReportPNG.report_files,
-            outdir = outdir + "/figures/combined/" + participant_name + "/lima/detailed/png"
-    }
-
-    call FF.FinalizeToDir as FinalizeLimaDetailedPDF {
-        input:
-            files = DetailedDemuxReportPDF.report_files,
-            outdir = outdir + "/figures/combined/" + participant_name + "/lima/detailed/pdf"
-    }
-
-#    call FF.FinalizeToDir as FinalizeLimaPerBarcodeDetailedPNG {
-#        input:
-#            files = PerBarcodeDetailedDemuxReportPNG.report_files,
-#            outdir = outdir + "/figures/per_barcode/lima/png"
-#    }
-#
-#    call FF.FinalizeToDir as FinalizeLimaPerBarcodeDetailedPDF {
-#        input:
-#            files = PerBarcodeDetailedDemuxReportPDF.report_files,
-#            outdir = outdir + "/figures/per_barcode/lima/pdf"
-#    }
 }

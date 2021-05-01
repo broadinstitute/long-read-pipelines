@@ -72,36 +72,22 @@ workflow PBAssembleWithHifiasm {
             prefix = prefix + ".hifiasm"
     }
 
-    call FF.FinalizeToFile as FinalizeHifiasmGfa {
-        input:
-            file    = Hifiasm.gfa,
-            outfile = outdir + "/assembly/" + basename(Hifiasm.gfa)
-    }
+    # Finalize data
+    String dir = outdir + "/assembly"
 
-    call FF.FinalizeToFile as FinalizeHifiasmFa {
-        input:
-            file    = Hifiasm.fa,
-            outfile = outdir + "/assembly/" + basename(Hifiasm.fa)
-    }
-
-    call FF.FinalizeToFile as FinalizeQuastReportHtml {
-        input:
-            file    = Quast.report_html,
-            outfile = outdir + "/assembly/" + basename(Quast.report_html)
-    }
-
-    call FF.FinalizeToFile as FinalizeQuastReportTxt{
-        input:
-            file    = Quast.report_txt,
-            outfile = outdir + "/assembly/" + basename(Quast.report_txt)
-    }
+    call FF.FinalizeToFile as FinalizeHifiasmGfa { input: outdir = dir, file = Hifiasm.gfa }
+    call FF.FinalizeToFile as FinalizeHifiasmFa { input: outdir = dir, file = Hifiasm.fa }
+    call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
+    call FF.FinalizeToFile as FinalizeQuastReportTxt { input: outdir = dir, file = Quast.report_txt }
+    call FF.FinalizeToFile as FinalizePaf { input: outdir = dir, file = CallAssemblyVariants.paf }
+    call FF.FinalizeToFile as FinalizePafToolsVcf { input: outdir = dir, file = CallAssemblyVariants.paftools_vcf }
 
     output {
         File hifiasm_gfa = FinalizeHifiasmGfa.gcs_path
         File hifiasm_fa = FinalizeHifiasmFa.gcs_path
 
-        File paf = CallAssemblyVariants.paf
-        File paftools_vcf = CallAssemblyVariants.paftools_vcf
+        File paf = FinalizePaf.gcs_path
+        File paftools_vcf = FinalizePafToolsVcf.gcs_path
 
         File quast_report_html = FinalizeQuastReportHtml.gcs_path
         File quast_report_txt = FinalizeQuastReportTxt.gcs_path

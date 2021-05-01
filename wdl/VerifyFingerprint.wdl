@@ -44,17 +44,8 @@ workflow VerifyFingerprint {
             haplotype_map   = ref_map['haplotype_map']
     }
 
-    call FF.FinalizeToFile as FinalizeFingerprintSummaryMetrics {
-        input:
-            file = CheckFingerprint.summary_metrics,
-            outfile = outdir + "/" + basename(CheckFingerprint.summary_metrics)
-    }
-
-    call FF.FinalizeToFile as FinalizeFingerprintDetailMetrics {
-        input:
-            file = CheckFingerprint.detail_metrics,
-            outfile = outdir + "/" + basename(CheckFingerprint.detail_metrics)
-    }
+    call FF.FinalizeToFile as FinalizeFingerprintSummaryMetrics { input: outdir = outdir, file = CheckFingerprint.summary_metrics }
+    call FF.FinalizeToFile as FinalizeFingerprintDetailMetrics { input: outdir = outdir, file = CheckFingerprint.detail_metrics }
 
     output {
         Float lod_expected_sample = CheckFingerprint.metrics_map['LOD_EXPECTED_SAMPLE']

@@ -13,108 +13,50 @@ import "tasks/Finalize.wdl" as FF
 
 workflow PBCCS {
     input {
-        Array[File] bams
+        Array[File] aligned_bams
+        Array[File] aligned_bais
 
         String participant_name
-        Int num_shards = 300
-        Boolean extract_uncorrected_reads = false
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        bams:                      "GCS path to raw subreads or CCS data"
+        aligned_bams:       "GCS path to aligned BAM files"
+        aligned_bais:       "GCS path to aligned BAM file indices"
 
-        participant_name:          "name of the participant from whom these samples were obtained"
-        num_shards:                "[default-valued] number of sharded BAMs to create (tune for performance)"
-        extract_uncorrected_reads: "[default-valued] extract reads that were not CCS-corrected to a separate file"
+        participant_name:   "name of the participant from whom these samples were obtained"
 
-        gcs_out_root_dir:          "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCS/" + participant_name
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCS/~{participant_name}"
 
-    # scatter over all sample BAMs
-    scatter (bam in bams) {
-        File pbi = sub(bam, ".bam$", ".bam.pbi")
-
-        call PB.GetRunInfo { input: bam = bam }
-        String ID = GetRunInfo.run_info["PU"]
-
-        # break one raw BAM into fixed number of shards
-        call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
-
-        # then perform correction on each of the shard
-        scatter (subreads in ShardLongReads.unmapped_shards) {
-            call PB.CCS { input: subreads = subreads }
-
-            if (extract_uncorrected_reads) {
-                call PB.ExtractUncorrectedReads { input: subreads = subreads, consensus = CCS.consensus }
-            }
-        }
-
-        # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-        call Utils.MergeBams as MergeCorrected { input: bams = CCS.consensus, prefix = "~{participant_name}.~{ID}.corrected" }
-
-        if (length(select_all(ExtractUncorrectedReads.uncorrected)) > 0) {
-            call Utils.MergeBams as MergeUncorrected {
-                input:
-                    bams = select_all(ExtractUncorrectedReads.uncorrected),
-                    prefix = "~{participant_name}.~{ID}.uncorrected"
-            }
-        }
-
-        call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report, prefix = "~{participant_name}.~{ID}" }
-
-        call FF.FinalizeToDir as FinalizeCCSReport {
-            input:
-                files = [ MergeCCSReports.report ],
-                outdir = outdir + "/metrics/per_flowcell/" + ID + "/ccs_metrics"
-        }
+    # gather across (potential multiple) input CCS BAMs
+    if (length(aligned_bams) > 1) {
+        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
-    # gather across (potential multiple) input raw BAMs
-    if (length(bams) > 1) {
-        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, prefix = "~{participant_name}.corrected" }
-        call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
+    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
+    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
-        if (length(select_all(MergeUncorrected.merged_bam)) > 0) {
-            call Utils.MergeBams as MergeAllUncorrected {
-                input:
-                    bams = select_all(MergeUncorrected.merged_bam),
-                    prefix = "~{participant_name}.uncorrected"
-            }
-        }
-    }
+    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
+    File pbi = IndexCCSUnalignedReads.pbi
 
-    File ccs_bam = select_first([ MergeAllCorrected.merged_bam, MergeCorrected.merged_bam[0] ])
-    File ccs_report = select_first([ MergeAllCCSReports.report, MergeCCSReports.report[0] ])
+    # Finalize
+    String dir = outdir + "/alignments"
 
-    if (extract_uncorrected_reads) {
-        File? uncorrected_bam = select_first([ MergeAllUncorrected.merged_bam, MergeUncorrected.merged_bam[0] ])
-    }
+    call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = bam, name = "~{participant_name}.bam" }
+    call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = bai, name = "~{participant_name}.bam.bai" }
+    call FF.FinalizeToFile as FinalizePbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
 
     ##########
     # store the results into designated bucket
     ##########
 
-    call FF.FinalizeToDir as FinalizeCCSMetrics {
-        input:
-            files = [ ccs_report ],
-            outdir = outdir + "/metrics/combined/" + participant_name + "/ccs_metrics"
-    }
-
-    call FF.FinalizeToDir as FinalizeMergedRuns {
-        input:
-            files = [ ccs_bam ],
-            outdir = outdir + "/reads"
-    }
-
-    if (extract_uncorrected_reads) {
-        call FF.FinalizeToDir as FinalizeMergedUncorrectedRuns {
-            input:
-                files = select_all([ uncorrected_bam ]),
-                outdir = outdir + "/reads"
-        }
+    output {
+        File aligned_bam = FinalizeBam.gcs_path
+        File aligned_bai = FinalizeBai.gcs_path
+        File aligned_pbi = FinalizePbi.gcs_path
     }
 }

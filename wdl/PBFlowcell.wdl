@@ -10,6 +10,7 @@ version 1.0
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignedMetrics.wdl" as AM
+import "tasks/NanoPlot.wdl" as NP
 import "tasks/Finalize.wdl" as FF
 
 workflow PBFlowcell {
@@ -21,7 +22,7 @@ workflow PBFlowcell {
         String SM
         String ID
 
-        Int num_shards = 50
+        Int? num_shards
         String experiment_type
 
         String gcs_out_root_dir
@@ -52,10 +53,10 @@ workflow PBFlowcell {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{ID}"
 
     call PB.GetRunInfo { input: bam = bam, SM = SM }
-    Int shard_mult = if (GetRunInfo.is_corrected) then 1 else 6
+    Int nshards = select_first([num_shards, if GetRunInfo.is_corrected then 300 else 50])
 
     # break one raw BAM into fixed number of shards
-    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = shard_mult*num_shards }
+    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = nshards }
 
     # then perform correction on each of the shard
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
@@ -82,23 +83,10 @@ workflow PBFlowcell {
         call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = ID }
         call PB.SummarizeCCSReport { input: report = MergeCCSReports.report }
 
-        call FF.FinalizeToFile as FinalizeCCSUnalignedBam {
-            input:
-                file    = MergeAlignedReads.merged_bam,
-                outfile = outdir + "/reads/ccs/unaligned/" + basename(MergeCCSUnalignedReads.merged_bam)
-        }
-
-        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
-            input:
-                file    = IndexCCSUnalignedReads.pbi,
-                outfile = outdir + "/reads/ccs/unaligned/" + basename(IndexCCSUnalignedReads.pbi)
-        }
-
-        call FF.FinalizeToFile as FinalizeCCSReport {
-            input:
-                file    = MergeCCSReports.report,
-                outfile = outdir + "/reads/ccs/unaligned/" + basename(MergeCCSReports.report)
-        }
+        String cdir = outdir + "/reads/ccs/unaligned"
+        call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam }
+        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi { input: outdir = cdir, file = IndexCCSUnalignedReads.pbi }
+        call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report }
     }
 
     # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
@@ -111,40 +99,29 @@ workflow PBFlowcell {
             aligned_bai    = MergeAlignedReads.merged_bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/" + ID
+            gcs_output_dir = outdir + "/metrics"
     }
 
-    call PB.SummarizePBI as SummarizeSubreadsPBI { input: pbi = pbi }
-    call PB.SummarizePBI as SummarizeAlignedPBI { input: pbi = IndexAlignedReads.pbi }
-    call PB.SummarizePBI as SummarizeAlignedQ20PBI { input: pbi = IndexAlignedReads.pbi, qual_threshold = 20 }
+    call PB.SummarizePBI as SummarizeSubreadsPBI   { input: pbi = pbi }
+    call PB.SummarizePBI as SummarizeAlignedPBI    { input: pbi = IndexAlignedReads.pbi }
+    call PB.SummarizePBI as SummarizeAlignedQ5PBI  { input: pbi = IndexAlignedReads.pbi, qual_threshold = 5 }
+    call PB.SummarizePBI as SummarizeAlignedQ7PBI  { input: pbi = IndexAlignedReads.pbi, qual_threshold = 7 }
+    call PB.SummarizePBI as SummarizeAlignedQ10PBI { input: pbi = IndexAlignedReads.pbi, qual_threshold = 10 }
+    call PB.SummarizePBI as SummarizeAlignedQ12PBI { input: pbi = IndexAlignedReads.pbi, qual_threshold = 12 }
+    call PB.SummarizePBI as SummarizeAlignedQ15PBI { input: pbi = IndexAlignedReads.pbi, qual_threshold = 15 }
 
+    call NP.NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
     # Finalize data
-    String dir_prefix = if (experiment_type != "CLR") then "reads/ccs/aligned" else "reads/subreads/aligned"
+    String dir = outdir + "/" + if (experiment_type != "CLR") then "reads/ccs/aligned" else "reads/subreads/aligned"
 
-    call FF.FinalizeToFile as FinalizeAlignedBam {
-        input:
-            file    = MergeAlignedReads.merged_bam,
-            outfile = outdir + "/" + dir_prefix + "/" + basename(MergeAlignedReads.merged_bam)
-    }
-
-    call FF.FinalizeToFile as FinalizeAlignedBai {
-        input:
-            file    = MergeAlignedReads.merged_bai,
-            outfile = outdir + "/" + dir_prefix + "/" + basename(MergeAlignedReads.merged_bai)
-    }
-
-    call FF.FinalizeToFile as FinalizeAlignedPbi {
-        input:
-            file    = IndexAlignedReads.pbi,
-            outfile = outdir + "/" + dir_prefix + "/" + basename(IndexAlignedReads.pbi)
-    }
+    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = MergeAlignedReads.merged_bam }
+    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = MergeAlignedReads.merged_bai }
+    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = dir, file = IndexAlignedReads.pbi }
 
     output {
-        File? ccs_bam = FinalizeCCSUnalignedBam.gcs_path
-        File? ccs_pbi = FinalizeCCSUnalignedPbi.gcs_path
-
+        # Flowcell stats
         File? ccs_report = FinalizeCCSReport.gcs_path
         Float? ccs_zmws_input = SummarizeCCSReport.zmws_input
         Float? ccs_zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
@@ -152,29 +129,52 @@ workflow PBFlowcell {
         Float? ccs_zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
         Float? ccs_zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
 
+        Float polymerase_read_length_mean = SummarizeSubreadsPBI.results['polymerase_mean']
+        Float polymerase_read_length_N50 = SummarizeSubreadsPBI.results['polymerase_n50']
+
+        Float subread_read_length_mean = SummarizeSubreadsPBI.results['subread_mean']
+        Float subread_read_length_N50 = SummarizeSubreadsPBI.results['subread_n50']
+
+        # Unaligned BAM file
+        File? ccs_bam = FinalizeCCSUnalignedBam.gcs_path
+        File? ccs_pbi = FinalizeCCSUnalignedPbi.gcs_path
+
+        # Aligned BAM file
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path
         File aligned_pbi = FinalizeAlignedPbi.gcs_path
 
-        Float polymerase_mean = SummarizeSubreadsPBI.results['polymerase_mean']
-        Float polymerase_n50 = SummarizeSubreadsPBI.results['polymerase_n50']
-
-        Float subread_mean = SummarizeSubreadsPBI.results['subread_mean']
-        Float subread_n50 = SummarizeSubreadsPBI.results['subread_n50']
-
-        Float num_records = SummarizeSubreadsPBI.results['reads']
-        Float total_bases = SummarizeSubreadsPBI.results['bases']
-        Float mean_qual = SummarizeSubreadsPBI.results['mean_qual']
+        # Unaligned read stats
+        Float num_reads = SummarizeSubreadsPBI.results['reads']
+        Float num_bases = SummarizeSubreadsPBI.results['bases']
         Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/ComputeGenomeLength.length
 
-        Float aligned_num_records = SummarizeAlignedPBI.results['reads']
-        Float aligned_total_bases = SummarizeAlignedPBI.results['bases']
-        Float aligned_mean_qual = SummarizeAlignedPBI.results['mean_qual']
-        Float aligned_est_fold_cov = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
+        Float read_length_mean = SummarizeSubreadsPBI.results['subread_mean']
+        Float read_length_median = SummarizeSubreadsPBI.results['subread_median']
+        Float read_length_stdev = SummarizeSubreadsPBI.results['subread_stdev']
+        Float read_length_N50 = SummarizeSubreadsPBI.results['subread_n50']
 
-        Float aligned_num_records_q20 = SummarizeAlignedQ20PBI.results['reads']
-        Float aligned_total_bases_q20 = SummarizeAlignedQ20PBI.results['bases']
-        Float aligned_mean_qual_q20 = SummarizeAlignedQ20PBI.results['mean_qual']
-        Float aligned_est_fold_cov_q20 = SummarizeAlignedPBI.results['bases']/ComputeGenomeLength.length
+        Float read_qual_mean = SummarizeSubreadsPBI.results['mean_qual']
+        Float read_qual_median = SummarizeSubreadsPBI.results['median_qual']
+
+        Float num_reads_Q5 = SummarizeAlignedQ5PBI.results['reads']
+        Float num_reads_Q7 = SummarizeAlignedQ7PBI.results['reads']
+        Float num_reads_Q10 = SummarizeAlignedQ10PBI.results['reads']
+        Float num_reads_Q12 = SummarizeAlignedQ12PBI.results['reads']
+        Float num_reads_Q15 = SummarizeAlignedQ15PBI.results['reads']
+
+        # Aligned read stats
+        Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
+        Float aligned_num_bases = NanoPlotFromBam.stats_map['number_of_bases_aligned']
+        Float aligned_frac_bases = NanoPlotFromBam.stats_map['fraction_bases_aligned']
+        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/ComputeGenomeLength.length
+
+        Float aligned_read_length_mean = NanoPlotFromBam.stats_map['mean_read_length']
+        Float aligned_read_length_median = NanoPlotFromBam.stats_map['median_read_length']
+        Float aligned_read_length_stdev = NanoPlotFromBam.stats_map['read_length_stdev']
+        Float aligned_read_length_N50 = NanoPlotFromBam.stats_map['n50']
+
+        Float average_identity = NanoPlotFromBam.stats_map['average_identity']
+        Float median_identity = NanoPlotFromBam.stats_map['median_identity']
     }
 }

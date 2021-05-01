@@ -79,36 +79,22 @@ workflow ONTAssembleWithFlye {
             prefix = prefix + ".canu"
     }
 
-    call FF.FinalizeToFile as FinalizeAsmUnpolished {
-        input:
-            file    = Flye.fa,
-            outfile = outdir + "/assembly/" + basename(Flye.fa)
-    }
+    # Finalize data
+    String dir = outdir + "/assembly"
 
-    call FF.FinalizeToFile as FinalizeAsmPolished {
-        input:
-            file    = MedakaPolish.polished_assembly,
-            outfile = outdir + "/assembly/" + basename(MedakaPolish.polished_assembly)
-    }
-
-    call FF.FinalizeToFile as FinalizeQuastReportHtml {
-        input:
-            file    = Quast.report_html,
-            outfile = outdir + "/assembly/" + basename(Quast.report_html)
-    }
-
-    call FF.FinalizeToFile as FinalizeQuastReportTxt{
-        input:
-            file    = Quast.report_txt,
-            outfile = outdir + "/assembly/" + basename(Quast.report_txt)
-    }
+    call FF.FinalizeToFile as FinalizeAsmUnpolished { input: outdir = dir, file = Flye.fa }
+    call FF.FinalizeToFile as FinalizeAsmPolished { input: outdir = dir, file = MedakaPolish.polished_assembly }
+    call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
+    call FF.FinalizeToFile as FinalizeQuastReportTxt { input: outdir = dir, file = Quast.report_txt }
+    call FF.FinalizeToFile as FinalizePaf { input: outdir = dir, file = CallAssemblyVariants.paf }
+    call FF.FinalizeToFile as FinalizePafToolsVcf { input: outdir = dir, file = CallAssemblyVariants.paftools_vcf }
 
     output {
         File asm_unpolished = FinalizeAsmUnpolished.gcs_path
         File asm_polished = FinalizeAsmPolished.gcs_path
 
-        File paf = CallAssemblyVariants.paf
-        File paftools_vcf = CallAssemblyVariants.paftools_vcf
+        File paf = FinalizePaf.gcs_path
+        File paftools_vcf = FinalizePafToolsVcf.gcs_path
 
         File quast_report_html = FinalizeQuastReportHtml.gcs_path
         File quast_report_txt = FinalizeQuastReportTxt.gcs_path

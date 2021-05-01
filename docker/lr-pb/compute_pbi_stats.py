@@ -74,7 +74,7 @@ def load_index(pbi_file, qual_threshold):
                 quals.append(to_phred_score(idx_contents.readQual[j]))
                 total_bases += length
 
-    return n_reads, total_bases, numpy.mean(quals), polymerase_read_lengths, subread_lengths
+    return n_reads, total_bases, numpy.mean(quals), numpy.median(quals), polymerase_read_lengths, subread_lengths
 
 
 def main():
@@ -85,16 +85,23 @@ def main():
 
     # Decode PacBio .pbi file and determine the polymerase and subread lengths
     eprint(f"Reading index ({args.pbi}). This may take a few minutes...", flush=True)
-    n_reads, n_bases, mean_qual, polymerase_read_lengths, subread_lengths = load_index(args.pbi, args.qual_threshold)
+    n_reads, n_bases, mean_qual, median_qual, polymerase_read_lengths, subread_lengths = load_index(args.pbi, args.qual_threshold)
 
     prl = list(polymerase_read_lengths.values())
 
     print(f'reads\t{n_reads}')
     print(f'bases\t{n_bases}')
     print(f'mean_qual\t{mean_qual if len(prl) else 0}')
+    print(f'median_qual\t{median_qual if len(prl) else 0}')
+
     print(f'polymerase_mean\t{int(numpy.mean(prl)) if len(prl) else 0}')
+    print(f'polymerase_median\t{int(numpy.median(prl)) if len(prl) else 0}')
+    print(f'polymerase_stdev\t{int(numpy.std(prl)) if len(prl) else 0}')
     print(f'polymerase_n50\t{n50(prl) if len(prl) else 0}')
+
     print(f'subread_mean\t{int(numpy.mean(subread_lengths)) if len(subread_lengths) else 0}')
+    print(f'subread_median\t{int(numpy.median(subread_lengths)) if len(subread_lengths) else 0}')
+    print(f'subread_stdev\t{int(numpy.std(subread_lengths)) if len(subread_lengths) else 0}')
     print(f'subread_n50\t{n50(subread_lengths) if len(subread_lengths) else 0}')
 
 

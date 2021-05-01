@@ -5,7 +5,6 @@ import "tasks/ONTUtils.wdl" as ONT
 import "tasks/C3POa.wdl" as C3
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 
 workflow ONT10x {
@@ -85,12 +84,6 @@ workflow ONT10x {
 
         call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
         call Utils.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam }
-
-        call FIG.Figures as PerFlowcellSubRunFigures {
-            input:
-                summary_files  = [ sequencing_summary ],
-                gcs_output_dir = outdir + "/" + DIR
-        }
     }
 
     call C3.Cat as CountNumPassesAll { input: files = CountNumPassesInRun.merged, out = "num_passes.txt" }
@@ -126,12 +119,6 @@ workflow ONT10x {
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics/combined/" + participant_name
-    }
-
-    call FIG.Figures as PerFlowcellRunFigures {
-        input:
-            summary_files  = sequencing_summaries,
-            gcs_output_dir = outdir + "/" + DIR[0]
     }
 
     ##########

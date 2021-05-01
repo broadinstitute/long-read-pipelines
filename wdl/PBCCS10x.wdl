@@ -5,7 +5,6 @@ import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/AnnotateAdapters.wdl" as AA
-import "tasks/Figures.wdl" as FIG
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCS10x {

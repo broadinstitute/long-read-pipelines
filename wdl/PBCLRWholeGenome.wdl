@@ -46,6 +46,9 @@ workflow PBCLRWholeGenome {
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
+    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
+    File pbi = IndexCCSUnalignedReads.pbi
+
     if (call_variants) {
         call VAR.CallVariants {
             input:
@@ -58,54 +61,26 @@ workflow PBCLRWholeGenome {
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
         }
 
-        call FF.FinalizeToFile as FinalizePBSV {
-            input:
-                file = CallVariants.pbsv_vcf,
-                outfile = outdir + "/variants/sv/" + basename(CallVariants.pbsv_vcf)
-        }
+        String svdir = outdir + "/variants/sv"
+        String smalldir = outdir + "/variants/small"
 
-        call FF.FinalizeToFile as FinalizeSniffles {
-            input:
-                file = CallVariants.sniffles_vcf,
-                outfile = outdir + "/variants/sv/" + basename(CallVariants.sniffles_vcf)
-        }
-
-        call FF.FinalizeToFile as FinalizeLongshot {
-            input:
-                file = CallVariants.longshot_vcf,
-                outfile = outdir + "/variants/small/" + basename(CallVariants.longshot_vcf)
-        }
-
-        call FF.FinalizeToFile as FinalizeLongshotTbi {
-            input:
-                file = CallVariants.longshot_tbi,
-                outfile = outdir + "/variants/small/" + basename(CallVariants.longshot_tbi)
-        }
+        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
+        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
+        call FF.FinalizeToFile as FinalizeLongshot { input: outdir = smalldir, file = CallVariants.longshot_vcf }
+        call FF.FinalizeToFile as FinalizeLongshotTbi { input: outdir = smalldir, file = CallVariants.longshot_tbi }
     }
 
-    ##########
     # Finalize
-    ##########
+    String dir = outdir + "/alignments"
 
-    call FF.FinalizeToFile as FinalizeBam {
-        input:
-            file = bam,
-            outfile = outdir + "/alignments/~{participant_name}.bam"
-    }
-
-    call FF.FinalizeToFile as FinalizeBai {
-        input:
-            file = bai,
-            outfile = outdir + "/alignments/~{participant_name}.bai"
-    }
-
-    ##########
-    # store the results into designated bucket
-    ##########
+    call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = bam, name = "~{participant_name}.bam" }
+    call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = bai, name = "~{participant_name}.bam.bai" }
+    call FF.FinalizeToFile as FinalizePbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
 
     output {
         File merged_bam = FinalizeBam.gcs_path
         File merged_bai = FinalizeBai.gcs_path
+        File merged_pbi = FinalizePbi.gcs_path
 
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? sniffles_vcf = FinalizeSniffles.gcs_path

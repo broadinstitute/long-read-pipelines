@@ -46,6 +46,9 @@ workflow PBCCSWholeGenome {
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
+    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
+    File pbi = IndexCCSUnalignedReads.pbi
+
     if (call_variants) {
         call VAR.CallVariants {
             input:
@@ -58,78 +61,31 @@ workflow PBCCSWholeGenome {
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
         }
 
-        call FF.FinalizeToFile as FinalizePBSV {
-            input:
-                file = CallVariants.pbsv_vcf,
-                outfile = outdir + "/variants/sv/" + basename(CallVariants.pbsv_vcf)
-        }
+        String svdir = outdir + "/variants/sv"
+        String smalldir = outdir + "/variants/small"
 
-        call FF.FinalizeToFile as FinalizeSniffles {
-            input:
-                file = CallVariants.sniffles_vcf,
-                outfile = outdir + "/variants/sv/" + basename(CallVariants.sniffles_vcf)
-        }
+        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
+        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
 
-        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf {
-            input:
-                file = CallVariants.dvp_phased_vcf,
-                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_phased_vcf)
-        }
-
-        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi {
-            input:
-                file = CallVariants.dvp_phased_tbi,
-                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_phased_tbi)
-        }
-
-        call FF.FinalizeToFile as FinalizeDVPEPPERGVcf {
-            input:
-                file = CallVariants.dvp_g_vcf,
-                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_g_vcf)
-        }
-
-        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi {
-            input:
-                file = CallVariants.dvp_g_tbi,
-                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_g_tbi)
-        }
-
-        call FF.FinalizeToFile as FinalizeDVPEPPERVcf {
-            input:
-                file = CallVariants.dvp_vcf,
-                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_vcf)
-        }
-
-        call FF.FinalizeToFile as FinalizeDVPEPPERTbi {
-            input:
-                file = CallVariants.dvp_tbi,
-                outfile = outdir + "/variants/small/" + basename(CallVariants.dvp_tbi)
-        }
+        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
+        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = CallVariants.dvp_phased_tbi }
+        call FF.FinalizeToFile as FinalizeDVPEPPERGVcf { input: outdir = smalldir, file = CallVariants.dvp_g_vcf }
+        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi { input: outdir = smalldir, file = CallVariants.dvp_g_tbi }
+        call FF.FinalizeToFile as FinalizeDVPEPPERVcf { input: outdir = smalldir, file = CallVariants.dvp_vcf }
+        call FF.FinalizeToFile as FinalizeDVPEPPERTbi { input: outdir = smalldir, file = CallVariants.dvp_tbi }
     }
 
-    ##########
     # Finalize
-    ##########
+    String dir = outdir + "/alignments"
 
-    call FF.FinalizeToFile as FinalizeBam {
-        input:
-            file = bam,
-            outfile = outdir + "/alignments/~{participant_name}.bam"
-    }
-
-    call FF.FinalizeToFile as FinalizeBai {
-        input:
-            file = bai,
-            outfile = outdir + "/alignments/~{participant_name}.bai"
-    }
-
-    ##########
-    # store the results into designated bucket
-    ##########
+    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = bam, name = "~{participant_name}.bam" }
+    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = bai, name = "~{participant_name}.bam.bai" }
+    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
 
     output {
-        File merged_bam = FinalizeBam.gcs_path
-        File merged_bai = FinalizeBai.gcs_path
+        File aligned_bam = FinalizeAlignedBam.gcs_path
+        File aligned_bai = FinalizeAlignedBai.gcs_path
+        File aligned_pbi = FinalizeAlignedPbi.gcs_path
 
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? sniffles_vcf = FinalizeSniffles.gcs_path
