@@ -10,31 +10,105 @@ import "tasks/Structs.wdl"
 
 workflow DownloadFromHudsonAlpha {
     input {
-        File gs_path
-        File gs_md5
+        Array[File] urls
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        gs_path:          "Path to tarball"
-        gs_md5:           "Path to MD5 file for tarball"
+        urls:             "Files to download"
         gcs_out_root_dir: "GCS path for storing output"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call VerifyAndExtractTarball {
-        input:
-            gs_path          = gs_path,
-            gs_md5           = gs_md5,
-            gcs_out_root_dir = outdir
+    scatter (url in urls) {
+        call GetFileSize { input: url = url }
+        call DownloadFile { input: url = url, size = GetFileSize.size }
+    }
+}
+
+task GetFileSize {
+    input {
+        String url
+
+        RuntimeAttr? runtime_attr_override
     }
 
+    String fn = sub(basename(url), "?.*", "")
+
+    command <<<
+        set -x
+
+        timeout 2 wget -O /dev/null "~{url}" 2> header.txt
+        grep 'Length' header.txt | awk '{ print int(($2/1e9)+1) }' > size.txt
+    >>>
+
     output {
-        String bam = VerifyAndExtractTarball.bam
-        String pbi = VerifyAndExtractTarball.pbi
-        String xml = VerifyAndExtractTarball.xml
+        Int size = read_int("size.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            1,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task DownloadFile {
+    input {
+        String url
+        Int size
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String fn = sub(basename(url), "?.*", "")
+
+    command <<<
+        set -euxo pipefail
+
+        wget -O "~{fn}" "~{url}"
+    >>>
+
+    output {
+        File outfile = fn
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
 
