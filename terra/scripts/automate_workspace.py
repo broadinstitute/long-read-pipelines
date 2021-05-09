@@ -20,7 +20,8 @@ def main():
     )
     parser.add_argument('-n', '--namespace', required=True, type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', required=True, type=str, help="Terra workspace")
-    parser.add_argument('-m', '--min-date', default='2021-05-01T00:00:00', type=str, help="Lower date cutoff")
+    parser.add_argument('-m', '--min-date', default='2021-03-01T00:00:00', type=str, help="Lower date cutoff")
+    parser.add_argument('-d', '--dry-run', action='store_true', help="Show actions, but do not submit jobs")
     args = parser.parse_args()
 
     allowed_states = ['Failed', 'Aborted']
@@ -48,20 +49,25 @@ def main():
             flowcell_date = parse(re.sub("[TZ\.].*", "", tbl['created_at'][i]))
             sample_id = tbl["entity:sample_id"][i]
 
-            if flowcell_date > min_date and sample_id not in s:
-                response = fapi.create_submission(
-                    args.namespace,
-                    args.workspace,
-                    args.namespace,
-                    'PBFlowcell',
-                    tbl["entity:sample_id"][i],
-                    'sample',
-                    use_callcache=True
-                )
-                submission_result = response.json()
-                submission_id = submission_result['submissionId']
+            if flowcell_date > min_date:
+                if sample_id in s:
+                    print(f'bio_sample={tbl["bio_sample"][i]} well_sample={tbl["well_sample"][i]} experiment_type={tbl["experiment_type"][i]} submission_id=done')
+                else:
+                    submission_id = "dry-run"
+                    if not args.dry_run:
+                        response = fapi.create_submission(
+                            args.namespace,
+                            args.workspace,
+                            args.namespace,
+                            'PBFlowcell',
+                            tbl["entity:sample_id"][i],
+                            'sample',
+                            use_callcache=True
+                        )
+                        submission_result = response.json()
+                        submission_id = submission_result['submissionId']
 
-                print(f'sample_id={tbl["entity:sample_id"][i]} bio_sample={tbl["bio_sample"][i]} well_sample={tbl["well_sample"][i]} experiment_type={tbl["experiment_type"][i]} submission_id={submission_id}')
+                    print(f'bio_sample={tbl["bio_sample"][i]} well_sample={tbl["well_sample"][i]} experiment_type={tbl["experiment_type"][i]} submission_id={submission_id}')
 
 
 if __name__ == "__main__":
