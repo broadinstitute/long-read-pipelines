@@ -153,8 +153,7 @@ def main():
             for col_name in list(outer_tbl.columns):
                 side = "left_only" if col_name in list(tbl_old.columns) else "right_only"
                 q = list(g.loc[g['_merge'] == side][col_name])
-
-                if col_name in h:
+                if len(q) > 0:
                     h[col_name] = q[0]
 
             hs.append(h)
