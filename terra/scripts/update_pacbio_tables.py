@@ -217,7 +217,7 @@ def main():
 
     ts = load_xmls(args.buckets, args.project)
 
-    tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application", "experiment_type", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi"]
+    tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application", "experiment_type", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi", "input_bam", "input_pbi"]
     tbl_rows = []
 
     for e in ts:
@@ -228,6 +228,9 @@ def main():
             experiment_type = "CCS"
         if 'IsoSeq' in e['WellSample'][0] and e['WellSample'][0]['IsoSeq'] == 'true':
             experiment_type = "ISOSEQ"
+
+        input_bam = e['Files']['subreads.bam'] if e['Files']['subreads.bam'] != "" else e['Files']['reads.bam']
+        input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files']['reads.bam.pbi']
 
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
@@ -260,6 +263,9 @@ def main():
             e['Files']['subreads.bam.pbi'],
             e['Files']['reads.bam'],
             e['Files']['reads.bam.pbi'],
+
+            input_bam,
+            input_pbi
         ])
 
     tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
