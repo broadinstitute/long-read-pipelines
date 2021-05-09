@@ -224,9 +224,9 @@ def main():
         r = load_ccs_report(e['Files']['ccs_reports.txt'], e)
 
         experiment_type = "CLR"
-        if 'IsCCS' in e['WellSample'][0] or e['Files']['reads.bam'] != "":
+        if ('IsCCS' in e['WellSample'][0] and e['WellSample'][0]['IsCCS'] == 'true') or e['Files']['reads.bam'] != "":
             experiment_type = "CCS"
-        if 'IsoSeq' in e['WellSample'][0]:
+        if 'IsoSeq' in e['WellSample'][0] and e['WellSample'][0]['IsoSeq'] == 'true':
             experiment_type = "ISOSEQ"
 
         tbl_rows.append([
