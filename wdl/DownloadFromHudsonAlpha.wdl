@@ -10,7 +10,7 @@ import "tasks/Structs.wdl"
 
 workflow DownloadFromHudsonAlpha {
     input {
-        Array[File] urls
+        File manifest
 
         String gcs_out_root_dir
     }
@@ -22,25 +22,37 @@ workflow DownloadFromHudsonAlpha {
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    scatter (url in urls) {
-        call GetFileSize { input: url = url }
-        call DownloadFile { input: url = url, size = GetFileSize.size }
+    scatter (l in read_tsv(manifest)) {
+        call GetFileSize {
+            input:
+                url = l[0],
+                temp_url_sig = l[1],
+                temp_url_expires = l[2]
+        }
+
+        call DownloadFile {
+            input:
+                url = l[0],
+                temp_url_sig = l[1],
+                temp_url_expires = l[2],
+                size = GetFileSize.size
+        }
     }
 }
 
 task GetFileSize {
     input {
         String url
+        String temp_url_sig
+        String temp_url_expires
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String fn = sub(basename(url), "?.*", "")
-
     command <<<
         set -x
 
-        timeout 2 wget -O /dev/null "~{url}" 2> header.txt
+        timeout 2 wget -O /dev/null "~{url}?temp_url_sig=~{temp_url_sig}&temp_url_expires=~{temp_url_expires}" 2> header.txt
         grep 'Length' header.txt | awk '{ print int(($2/1e9)+1) }' > size.txt
     >>>
 
@@ -73,17 +85,19 @@ task GetFileSize {
 task DownloadFile {
     input {
         String url
+        String temp_url_sig
+        String temp_url_expires
         Int size
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String fn = sub(basename(url), "?.*", "")
+    String fn = basename(url)
 
     command <<<
         set -euxo pipefail
 
-        wget -O "~{fn}" "~{url}"
+        wget -O "~{fn}" "~{url}?temp_url_sig=~{temp_url_sig}&temp_url_expires=~{temp_url_expires}"
     >>>
 
     output {

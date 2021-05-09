@@ -96,13 +96,15 @@ def upload_data(namespace, workspace, tbl):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Update Terra workspace sample table', prog='update_pacbio_tables')
+    parser = argparse.ArgumentParser(description='Update Terra workspace sample table', prog='update_nanopore_tables')
+    parser.add_argument('-p', '--project', type=str, help="GCP project")
     parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
     parser.add_argument('buckets', metavar='B', type=str, nargs='+', help='GCS buckets to scan')
     args = parser.parse_args()
 
     ent_old = fapi.get_entities(args.namespace, args.workspace, 'sample').json()
+    tbl_old = None
 
     if len(ent_old) > 0:
         tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
@@ -135,7 +137,7 @@ def main():
     tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
     tbl_new["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["final_summary_file"]))
 
-    if len(ent_old) > 0:
+    if tbl_old is not None:
         outer_tbl = pd.merge(tbl_old, tbl_new, how='outer', sort=True, indicator=True)
     else:
         outer_tbl = tbl_new
@@ -151,12 +153,15 @@ def main():
             for col_name in list(outer_tbl.columns):
                 side = "left_only" if col_name in list(tbl_old.columns) else "right_only"
                 q = list(g.loc[g['_merge'] == side][col_name])
-                h[col_name] = q[0]
+
+                if col_name in h:
+                    h[col_name] = q[0]
 
             hs.append(h)
 
     joined_tbl = pd.DataFrame(hs)
-    del joined_tbl['_merge']
+    if '_merge' in joined_tbl:
+        del joined_tbl['_merge']
 
     c = list(joined_tbl.columns)
     c.remove("entity:sample_id")

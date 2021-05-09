@@ -1140,6 +1140,7 @@ task ListFilesOfType {
 
     output {
         Array[String] files = read_lines("files.txt")
+        File manifest = "files.txt"
     }
 
     #########################

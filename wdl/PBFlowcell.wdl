@@ -22,8 +22,9 @@ workflow PBFlowcell {
         String SM
         String ID
 
-        Int? num_shards
+        Int num_shards = 50
         String experiment_type
+        String dir_prefix
 
         String gcs_out_root_dir
     }
@@ -37,7 +38,8 @@ workflow PBFlowcell {
         ID:                 "the value to place in the BAM read group's ID field"
 
         num_shards:         "[default-valued] number of shards into which fastq files should be batched"
-        experiment_type:    "[default-valued] type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
+        experiment_type:    "type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
+        dir_prefix:         "directory prefix for output files"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
@@ -50,13 +52,12 @@ workflow PBFlowcell {
         'MASSEQ': 'ISOSEQ',
     }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{ID}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}"
 
     call PB.GetRunInfo { input: bam = bam, SM = SM }
-    Int nshards = select_first([num_shards, if GetRunInfo.is_corrected then 300 else 50])
 
     # break one raw BAM into fixed number of shards
-    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = nshards }
+    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
 
     # then perform correction on each of the shard
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {

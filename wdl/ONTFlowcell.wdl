@@ -16,7 +16,7 @@ workflow ONTFlowcell {
         String SM
         String ID
 
-        Int? num_shards
+        Int num_shards = 50
         String experiment_type
 
         String gcs_out_root_dir
@@ -46,7 +46,6 @@ workflow ONTFlowcell {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{ID}"
 
     call ONT.GetRunInfo { input: final_summary = final_summary }
-    Int nshards = select_first([num_shards, 50])
 
     call ONT.ListFiles as ListFastqs { input: sequencing_summary = sequencing_summary, suffix = "fastq" }
 
@@ -55,7 +54,7 @@ workflow ONTFlowcell {
     String DT  = GetRunInfo.run_info["started"]
     String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-    call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = nshards }
+    call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
     scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
         call AR.Minimap2 as AlignReads {

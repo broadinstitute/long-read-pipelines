@@ -63,9 +63,8 @@ def combine(tables):
     return combined_tables
 
 
-def load_xmls(gcs_buckets):
-    storage_client = storage.Client(project='broad-dsp-lrma')
-    schemas = OrderedDict()
+def load_xmls(gcs_buckets, project):
+    storage_client = storage.Client(project=project)
 
     ts = []
     for gcs_bucket in gcs_buckets:
@@ -203,24 +202,32 @@ def load_ccs_report(ccs_report_path, e):
 
 def main():
     parser = argparse.ArgumentParser(description='Update Terra workspace sample table', prog='update_pacbio_tables')
+    parser.add_argument('-p', '--project', type=str, help="GCP project")
     parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
     parser.add_argument('buckets', metavar='B', type=str, nargs='+', help='GCS buckets to scan')
     args = parser.parse_args()
 
     ent_old = fapi.get_entities(args.namespace, args.workspace, 'sample').json()
+    tbl_old = None
 
     if len(ent_old) > 0:
         tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
         tbl_old["entity:sample_id"] = list(map(lambda f: f['name'], ent_old))
 
-    ts = load_xmls(args.buckets)
+    ts = load_xmls(args.buckets, args.project)
 
-    tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi"]
+    tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample", "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application", "experiment_type", "num_records", "total_length", "zmws_input", "zmws_pass", "zmws_fail", "zmws_shortcut_filters", "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi"]
     tbl_rows = []
 
     for e in ts:
         r = load_ccs_report(e['Files']['ccs_reports.txt'], e)
+
+        experiment_type = "CLR"
+        if 'IsCCS' in e['WellSample'][0] or e['Files']['reads.bam'] != "":
+            experiment_type = "CCS"
+        if 'IsoSeq' in e['WellSample'][0]:
+            experiment_type = "ISOSEQ"
 
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
@@ -238,6 +245,7 @@ def main():
             "true" if 'ConsensusReadSet' in e else "false",
             e['WellSample'][0]['Description'] if 'Description' in e['WellSample'][0] else "unknown",
             e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else "unknown",
+            experiment_type,
 
             e['DataSetMetadata'][0]['NumRecords'],
             e['DataSetMetadata'][0]['TotalLength'],
@@ -256,7 +264,7 @@ def main():
 
     tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
 
-    if len(ent_old) > 0:
+    if tbl_old is not None:
         outer_tbl = pd.merge(tbl_old, tbl_new, how='outer', sort=True, indicator=True)
     else:
         outer_tbl = tbl_new
@@ -272,12 +280,15 @@ def main():
             for col_name in list(outer_tbl.columns):
                 side = "left_only" if col_name in list(tbl_old.columns) else "right_only"
                 q = list(g.loc[g['_merge'] == side][col_name])
-                h[col_name] = q[0]
+
+                if col_name in h:
+                    h[col_name] = q[0]
 
             hs.append(h)
 
     joined_tbl = pd.DataFrame(hs)
-    del joined_tbl['_merge']
+    if '_merge' in joined_tbl:
+        del joined_tbl['_merge']
 
     c = list(joined_tbl.columns)
     c.remove("entity:sample_id")

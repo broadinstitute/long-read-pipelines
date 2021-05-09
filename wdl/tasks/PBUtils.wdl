@@ -150,19 +150,14 @@ task CCS {
     input {
         File subreads
 
-        Int min_passes = 3
-        Float min_snr = 2.5
-        Int min_length = 10
-        Int max_length = 50000
-        Float min_rq = 0.99
         Boolean by_strand = false
-
         Int cpus = 4
 
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 2*ceil(size(subreads, "GB"))
+    String bn = basename(subreads, ".bam")
 
     command <<<
         set -euxo pipefail
@@ -173,19 +168,25 @@ task CCS {
         mv ~{subreads} $infile
 
         # Run CCS:
-        ccs --min-passes ~{min_passes} \
-            --min-snr ~{min_snr} \
-            --min-length ~{min_length} \
-            --max-length ~{max_length} \
-            --min-rq ~{min_rq} \
+        ccs --all --all-kinetics --subread-fallback ~{if by_strand then "--by-strand" else ""} \
             --num-threads ~{cpus} \
-            --report-file ccs_report.txt \
-            ~{if by_strand then "--by-strand" else ""} $infile ccs_unmapped.bam
+            --log-level INFO \
+            --log-file ~{bn}.ccs.log \
+            --stderr-json-log \
+            --suppress-reports \
+            --report-file ~{bn}.ccs_reports.txt \
+            --report-json ~{bn}.ccs_reports.json \
+            --metrics-json ~{bn}.zmw_metrics.json.gz \
+            --hifi-summary-json ~{bn}.hifi_summary.json \
+            $infile ~{bn}.ccs_unmapped.bam
     >>>
 
     output {
-        File consensus = "ccs_unmapped.bam"
-        File report = "ccs_report.txt"
+        File consensus = "~{bn}.ccs_unmapped.bam"
+        File report = "~{bn}.ccs_report.txt"
+        File report_json = "~{bn}.ccs_reports.json"
+        File metrics_json = "~{bn}.zmw_metrics.json.gz"
+        File hifi_summary_json = "~{bn}.hifi_summary.json"
     }
 
     #########################
