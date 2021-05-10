@@ -183,7 +183,7 @@ task CCS {
 
     output {
         File consensus = "~{bn}.ccs_unmapped.bam"
-        File report = "~{bn}.ccs_report.txt"
+        File report = "~{bn}.ccs_reports.txt"
         File report_json = "~{bn}.ccs_reports.json"
         File metrics_json = "~{bn}.zmw_metrics.json.gz"
         File hifi_summary_json = "~{bn}.hifi_summary.json"
