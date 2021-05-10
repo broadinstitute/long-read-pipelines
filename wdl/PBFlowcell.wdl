@@ -77,7 +77,7 @@ workflow PBFlowcell {
     }
 
     # merge corrected, unaligned reads
-    if (experiment_type != "CLR") {
+    if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
         call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(CCS.consensus) }
         call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 
