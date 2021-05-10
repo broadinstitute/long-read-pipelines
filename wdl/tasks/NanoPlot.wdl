@@ -141,29 +141,29 @@ task NanoPlotFromBam {
         Map[String, Float] stats_map = read_map("map.txt")
 
         Array[File] plots = glob("*.png")
-        File AlignedReadlengthvsSequencedReadLength_dot = "AlignedReadlengthvsSequencedReadLength_dot.png"
-        File AlignedReadlengthvsSequencedReadLength_kde = "AlignedReadlengthvsSequencedReadLength_kde.png"
-        File LengthvsQualityScatterPlot_dot = "LengthvsQualityScatterPlot_dot.png"
-        File LengthvsQualityScatterPlot_kde = "LengthvsQualityScatterPlot_kde.png"
-        File? MappingQualityvsAverageBaseQuality_dot = "MappingQualityvsAverageBaseQuality_dot.png"
-        File? MappingQualityvsAverageBaseQuality_kde = "MappingQualityvsAverageBaseQuality_kde.png"
-        File MappingQualityvsReadLength_dot = "MappingQualityvsReadLength_dot.png"
-        File MappingQualityvsReadLength_kde = "MappingQualityvsReadLength_kde.png"
-        File Non_weightedHistogramReadlength = "Non_weightedHistogramReadlength.png"
-        File Non_weightedLogTransformed_HistogramReadlength = "Non_weightedLogTransformed_HistogramReadlength.png"
-        File PercentIdentityHistogramDynamic_Histogram_percent_identity = "PercentIdentityHistogramDynamic_Histogram_percent_identity.png"
-        File PercentIdentityvsAlignedReadLength_dot = "PercentIdentityvsAlignedReadLength_dot.png"
-        File PercentIdentityvsAlignedReadLength_kde = "PercentIdentityvsAlignedReadLength_kde.png"
-        File? PercentIdentityvsAverageBaseQuality_dot = "PercentIdentityvsAverageBaseQuality_dot.png"
-        File? PercentIdentityvsAverageBaseQuality_kde = "PercentIdentityvsAverageBaseQuality_kde.png"
-        File WeightedHistogramReadlength = "WeightedHistogramReadlength.png"
-        File WeightedLogTransformed_HistogramReadlength = "WeightedLogTransformed_HistogramReadlength.png"
-        File Yield_By_Length = "Yield_By_Length.png"
+#        File AlignedReadlengthvsSequencedReadLength_dot = "AlignedReadlengthvsSequencedReadLength_dot.png"
+#        File AlignedReadlengthvsSequencedReadLength_kde = "AlignedReadlengthvsSequencedReadLength_kde.png"
+#        File LengthvsQualityScatterPlot_dot = "LengthvsQualityScatterPlot_dot.png"
+#        File LengthvsQualityScatterPlot_kde = "LengthvsQualityScatterPlot_kde.png"
+#        File MappingQualityvsAverageBaseQuality_dot = "MappingQualityvsAverageBaseQuality_dot.png"
+#        File MappingQualityvsAverageBaseQuality_kde = "MappingQualityvsAverageBaseQuality_kde.png"
+#        File MappingQualityvsReadLength_dot = "MappingQualityvsReadLength_dot.png"
+#        File MappingQualityvsReadLength_kde = "MappingQualityvsReadLength_kde.png"
+#        File Non_weightedHistogramReadlength = "Non_weightedHistogramReadlength.png"
+#        File Non_weightedLogTransformed_HistogramReadlength = "Non_weightedLogTransformed_HistogramReadlength.png"
+#        File PercentIdentityHistogramDynamic_Histogram_percent_identity = "PercentIdentityHistogramDynamic_Histogram_percent_identity.png"
+#        File PercentIdentityvsAlignedReadLength_dot = "PercentIdentityvsAlignedReadLength_dot.png"
+#        File PercentIdentityvsAlignedReadLength_kde = "PercentIdentityvsAlignedReadLength_kde.png"
+#        File PercentIdentityvsAverageBaseQuality_dot = "PercentIdentityvsAverageBaseQuality_dot.png"
+#        File PercentIdentityvsAverageBaseQuality_kde = "PercentIdentityvsAverageBaseQuality_kde.png"
+#        File WeightedHistogramReadlength = "WeightedHistogramReadlength.png"
+#        File WeightedLogTransformed_HistogramReadlength = "WeightedLogTransformed_HistogramReadlength.png"
+#        File Yield_By_Length = "Yield_By_Length.png"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
+        cpu_cores:          16,
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
