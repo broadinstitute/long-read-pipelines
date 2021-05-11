@@ -31,7 +31,14 @@ def main():
 
     samples_to_process = set()
     if args.sample_ids is not None:
-        samples_to_process = set(args.sample_ids)
+        for s in args.sample_ids:
+            if os.path.isfile(s):
+                with open(s) as fp:
+                    lines = fp.readlines()
+                    for line in lines:
+                        samples_to_process.add(line.strip())
+            else:
+                samples_to_process.add(s)
 
     allowed_states = ['Failed', 'Aborted']
     min_date = parse(args.min_date)
