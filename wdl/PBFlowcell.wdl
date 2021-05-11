@@ -63,13 +63,21 @@ workflow PBFlowcell {
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
         if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
             call PB.CCS { input: subreads = unmapped_shard }
+
         }
 
         File unaligned_bam = select_first([CCS.consensus, unmapped_shard])
 
-        call PB.Align as AlignReads {
+        call Utils.FilterBamOnTag {
             input:
                 bam         = unaligned_bam,
+                tag         = "rq",
+                expression  = ">=0.99"
+        }
+
+        call PB.Align as AlignReads {
+            input:
+                bam         = FilterBamOnTag.filtered_bam,
                 ref_fasta   = ref_map['fasta'],
                 sample_name = SM,
                 map_preset  = map_presets[experiment_type]
@@ -77,16 +85,19 @@ workflow PBFlowcell {
     }
 
     # merge corrected, unaligned reads
-    if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
-        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(CCS.consensus) }
+    String cdir = outdir + "/reads/ccs/unaligned"
+    if (experiment_type != "CLR") {
+        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = FilterBamOnTag.filtered_bam }
         call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 
+        call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam }
+        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi { input: outdir = cdir, file = IndexCCSUnalignedReads.pbi }
+    }
+
+    if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
         call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = ID }
         call PB.SummarizeCCSReport { input: report = MergeCCSReports.report }
 
-        String cdir = outdir + "/reads/ccs/unaligned"
-        call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam }
-        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi { input: outdir = cdir, file = IndexCCSUnalignedReads.pbi }
         call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report }
     }
 

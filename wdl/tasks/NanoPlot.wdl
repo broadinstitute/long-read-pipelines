@@ -167,8 +167,8 @@ task NanoPlotFromBam {
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
+        preemptible_tries:  0,
+        max_retries:        0,
         docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

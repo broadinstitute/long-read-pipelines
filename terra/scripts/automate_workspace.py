@@ -58,7 +58,7 @@ def main():
 
             if flowcell_date > min_date or sample_id in samples_to_process:
                 if sample_id in processed_samples and sample_id not in samples_to_process:
-                    print(f'bio_sample={tbl["bio_sample"][i]} well_sample={tbl["well_sample"][i]} experiment_type={tbl["experiment_type"][i]} submission_id=done')
+                    print(f'sample_id={tbl["entity:sample_id"][i]} bio_sample={tbl["bio_sample"][i]} well_sample={tbl["well_sample"][i]} experiment_type={tbl["experiment_type"][i]} submission_id=done')
                 else:
                     submission_id = "dry-run"
                     if args.run:
