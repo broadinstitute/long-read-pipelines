@@ -152,7 +152,7 @@ task Merge {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(dbs, "GB")) + 1
+    Int disk_size = 4*ceil(size(dbs, "GB")) + 1
 
     command <<<
         set -x
