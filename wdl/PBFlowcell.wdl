@@ -49,7 +49,7 @@ workflow PBFlowcell {
         'CLR':    'SUBREAD',
         'CCS':    'CCS',
         'ISOSEQ': 'ISOSEQ',
-        'MASSEQ': 'ISOSEQ',
+        'MASSEQ': 'SUBREAD',
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}"

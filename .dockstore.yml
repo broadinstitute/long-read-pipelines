@@ -84,3 +84,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/DownloadFromHudsonAlpha.wdl
   testParameterFiles:
+- name: PBAssembleWithHifiasm
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBAssembleWithHifiasm.wdl
+  testParameterFiles:

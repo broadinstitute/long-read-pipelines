@@ -78,9 +78,9 @@ workflow PBCLRWholeGenome {
     call FF.FinalizeToFile as FinalizePbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
 
     output {
-        File merged_bam = FinalizeBam.gcs_path
-        File merged_bai = FinalizeBai.gcs_path
-        File merged_pbi = FinalizePbi.gcs_path
+        File aligned_bam = FinalizeBam.gcs_path
+        File aligned_bai = FinalizeBai.gcs_path
+        File aligned_pbi = FinalizePbi.gcs_path
 
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? sniffles_vcf = FinalizeSniffles.gcs_path

@@ -205,6 +205,7 @@ def main():
     parser.add_argument('-p', '--project', type=str, help="GCP project")
     parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
+    parser.add_argument('-r', '--run', action='store_true', help="Turn off the default dry-run mode")
     parser.add_argument('buckets', metavar='B', type=str, nargs='+', help='GCS buckets to scan')
     args = parser.parse_args()
 
@@ -300,7 +301,8 @@ def main():
     c = ["entity:sample_id"] + c
     joined_tbl = joined_tbl[c]
 
-    upload_data(args.namespace, args.workspace, joined_tbl)
+    if args.run:
+        upload_data(args.namespace, args.workspace, joined_tbl)
 
 
 if __name__ == "__main__":
