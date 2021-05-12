@@ -36,7 +36,13 @@ workflow ONTMethylation {
         call Utils.SortBam as SortVarMappings { input: input_bam = Megalodon.variant_mappings_bam }
     }
 
-    call Merge as MergeVariantDBs { input: dbs = Megalodon.per_read_variant_calls_db, merge_type = "variants" }
+    call Merge as MergeVariantDBs {
+        input:
+            dbs = Megalodon.per_read_variant_calls_db,
+            merge_type = "variants",
+            runtime_attr_override = { 'mem_gb': 48 }
+    }
+
     call Merge as MergeModifiedBaseCallDBs {
         input:
             dbs = Megalodon.per_read_modified_base_calls_db,
