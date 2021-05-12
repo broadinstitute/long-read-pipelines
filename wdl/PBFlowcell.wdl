@@ -55,6 +55,7 @@ workflow PBFlowcell {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}"
 
     call PB.GetRunInfo { input: bam = bam, SM = SM }
+    String PU = GetRunInfo.run_info['PU']
 
     # break one raw BAM into fixed number of shards
     call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
@@ -86,7 +87,7 @@ workflow PBFlowcell {
     # merge corrected, unaligned reads
     String cdir = outdir + "/reads/ccs/unaligned"
     if (experiment_type != "CLR") {
-        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(FilterBamOnTag.filtered_bam), prefix = "~{ID}.reads" }
+        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(FilterBamOnTag.filtered_bam), prefix = "~{PU}.reads" }
         call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 
         call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam }
@@ -94,14 +95,14 @@ workflow PBFlowcell {
     }
 
     if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
-        call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = ID }
+        call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
         call PB.SummarizeCCSReport { input: report = MergeCCSReports.report }
 
         call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report }
     }
 
     # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-    call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = ID }
+    call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = PU }
     call PB.PBIndex as IndexAlignedReads { input: bam = MergeAlignedReads.merged_bam }
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
