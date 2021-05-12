@@ -59,16 +59,16 @@ workflow PBFlowcell {
     # break one raw BAM into fixed number of shards
     call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
 
-    # then perform correction on each of the shard
+    # then perform correction and alignment on each of the shard
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
         if (experiment_type != "CLR") {
             if (!GetRunInfo.is_corrected) { call PB.CCS { input: subreads = unmapped_shard } }
 
             call Utils.FilterBamOnTag {
                 input:
-                    bam         = select_first([CCS.consensus, unmapped_shard]),
-                    tag         = "rq",
-                    expression  = ">=0.99"
+                    bam        = select_first([CCS.consensus, unmapped_shard]),
+                    tag        = "rq",
+                    expression = ">=0.99"
             }
         }
 
@@ -86,7 +86,7 @@ workflow PBFlowcell {
     # merge corrected, unaligned reads
     String cdir = outdir + "/reads/ccs/unaligned"
     if (experiment_type != "CLR") {
-        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(FilterBamOnTag.filtered_bam) }
+        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(FilterBamOnTag.filtered_bam), prefix = "~{ID}.reads" }
         call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 
         call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam }

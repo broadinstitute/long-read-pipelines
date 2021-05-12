@@ -156,7 +156,7 @@ task CCS {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(subreads, "GB"))
+    Int disk_size = 4*ceil(size(subreads, "GB"))
     String bn = basename(subreads, ".bam")
 
     command <<<

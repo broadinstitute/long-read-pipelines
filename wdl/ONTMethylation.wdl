@@ -21,13 +21,7 @@ workflow ONTMethylation {
 
     #String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTMethylation/~{prefix}"
 
-    # gcloud compute disks create megassd --size 4TB --type pd-ssd --zone us-central1-a
-    # gcloud compute instances attach-disk dsp-lrma-kvg-megalodon-3 --disk megassd --zone us-central1-a
-    # sudo mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdc
-    # sudo mount -o discard,defaults /dev/sdc /mnt/mega_ssd/
-
     call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ 'fast5' ] }
-    #call ONTUtils.PartitionManifest { input: manifest = ListFilesOfType.manifest, N = 100 }
 
     scatter (fast5_file in ListFilesOfType.files) {
         call Megalodon {
@@ -36,6 +30,44 @@ workflow ONTMethylation {
                 ref_fasta   = ref_map['fasta'],
                 variants    = variants
         }
+
+        call Utils.SortBam as SortMappings { input: input_bam = Megalodon.mappings_bam }
+        call Utils.SortBam as SortModMappings { input: input_bam = Megalodon.mod_mappings_bam }
+        call Utils.SortBam as SortVarMappings { input: input_bam = Megalodon.variant_mappings_bam }
+    }
+
+    call Merge as MergeVariantDBs { input: dbs = Megalodon.per_read_variant_calls_db, merge_type = "variants" }
+    call Merge as MergeModifiedBaseCallDBs {
+        input:
+            dbs = Megalodon.per_read_modified_base_calls_db,
+            merge_type = "modified_bases"
+    }
+
+    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
+
+    call Utils.MergeBams as MergeMappings { input: bams = SortMappings.sorted_bam }
+    call Utils.MergeBams as MergeModMappings { input: bams = SortModMappings.sorted_bam }
+    call Utils.MergeBams as MergeVarMappings { input: bams = SortVarMappings.sorted_bam }
+
+    call Utils.Cat as CatModifiedBases5mC {
+         input:
+            files = Megalodon.modified_bases_5mC,
+            has_header = false,
+            out = "modified_bases.5mC.bed"
+    }
+
+    call Utils.Cat as CatMappingSummaries {
+        input:
+            files = Megalodon.mappings_summary,
+            has_header = true,
+            out = "mappings_summary.txt"
+    }
+
+    call Utils.Cat as CatSequencingSummaries {
+        input:
+            files = Megalodon.sequencing_summary,
+            has_header = true,
+            out = "sequencing_summary.txt"
     }
 
     output {
@@ -109,5 +141,50 @@ task Megalodon {
         nvidiaDriverVersion:    "418.152.00"
         zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
         cpuPlatform:            "Intel Haswell"
+    }
+}
+
+task Merge {
+    input {
+        Array[File] dbs
+        String merge_type
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(dbs, "GB")) + 1
+
+    command <<<
+        set -x
+
+        DIRS=$(find /cromwell_root/ -name '*.db' -exec dirname {} \; | tr '\n' ' ')
+
+        megalodon_extras merge ~{merge_type} $DIRS
+    >>>
+
+    output {
+        File? per_read_variant_calls_db = "megalodon_merge_vars_results/per_read_variant_calls.db"
+        File? per_read_modified_base_calls_db = "megalodon_merge_mods_results/per_read_modified_base_calls.db"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
