@@ -11,6 +11,17 @@ workflow ONTMethylation {
 
         File ref_map_file
         File variants
+        File variants_tbi
+
+        File per_read_modified_base_calls_db = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModifiedBaseCallDBs/megalodon_merge_mods_results/per_read_modified_base_calls.db"
+        File per_read_variant_calls_db = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVariantDBs/megalodon_merge_vars_results/per_read_variant_calls.db"
+
+        File mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeMappings/cacheCopy/out.bam"
+        File mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeMappings/cacheCopy/out.bam.bai"
+        File mod_mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModMappings/cacheCopy/out.bam"
+        File mod_mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModMappings/cacheCopy/out.bam.bai"
+        File var_mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVarMappings/cacheCopy/out.bam"
+        File var_mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVarMappings/cacheCopy/out.bam.bai"
 
         #String prefix
 
@@ -19,62 +30,92 @@ workflow ONTMethylation {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    #String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTMethylation/~{prefix}"
+#    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTMethylation/~{prefix}"
 
-    call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ 'fast5' ] }
+#    call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ 'fast5' ] }
+#
+#    scatter (fast5_file in ListFilesOfType.files) {
+#        call Megalodon {
+#            input:
+#                fast5_files = [ fast5_file ],
+#                ref_fasta   = ref_map['fasta'],
+#                variants    = variants
+#        }
+#
+#        call Utils.SortBam as SortMappings { input: input_bam = Megalodon.mappings_bam }
+#        call Utils.SortBam as SortModMappings { input: input_bam = Megalodon.mod_mappings_bam }
+#        call Utils.SortBam as SortVarMappings { input: input_bam = Megalodon.variant_mappings_bam }
+#    }
+#
+#    call Merge as MergeVariantDBs {
+#        input:
+#            dbs = Megalodon.per_read_variant_calls_db,
+#            merge_type = "variants",
+#            runtime_attr_override = { 'mem_gb': 48 }
+#    }
+#
+#    call Merge as MergeModifiedBaseCallDBs {
+#        input:
+#            dbs = Megalodon.per_read_modified_base_calls_db,
+#            merge_type = "modified_bases"
+#    }
+#
+#    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
+#
+#    call Utils.MergeBams as MergeMappings { input: bams = SortMappings.sorted_bam }
+#    call Utils.MergeBams as MergeModMappings { input: bams = SortModMappings.sorted_bam }
+#    call Utils.MergeBams as MergeVarMappings { input: bams = SortVarMappings.sorted_bam }
+#
+#    call Utils.Cat as CatModifiedBases5mC {
+#         input:
+#            files = Megalodon.modified_bases_5mC,
+#            has_header = false,
+#            out = "modified_bases.5mC.bed"
+#    }
+#
+#    call Utils.Cat as CatMappingSummaries {
+#        input:
+#            files = Megalodon.mappings_summary,
+#            has_header = true,
+#            out = "mappings_summary.txt"
+#    }
+#
+#    call Utils.Cat as CatSequencingSummaries {
+#        input:
+#            files = Megalodon.sequencing_summary,
+#            has_header = true,
+#            out = "sequencing_summary.txt"
+#    }
 
-    scatter (fast5_file in ListFilesOfType.files) {
-        call Megalodon {
-            input:
-                fast5_files = [ fast5_file ],
-                ref_fasta   = ref_map['fasta'],
-                variants    = variants
+    call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
+    call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
+
+    call Utils.MakeChrIntervalList {
+        input:
+            ref_dict = ref_map['dict'],
+            filter = ['GL', 'JH']
+    }
+
+    scatter (c in MakeChrIntervalList.chrs) {
+        String contig = c[0]
+
+        call PhaseVariants {
+             input:
+                variants = IndexVariants.vcf_gz,
+                variants_tbi = IndexVariants.vcf_tbi,
+                variant_mappings_bam = var_mappings_bam,
+                variant_mappings_bai = var_mappings_bai,
+                chr = contig
         }
-
-        call Utils.SortBam as SortMappings { input: input_bam = Megalodon.mappings_bam }
-        call Utils.SortBam as SortModMappings { input: input_bam = Megalodon.mod_mappings_bam }
-        call Utils.SortBam as SortVarMappings { input: input_bam = Megalodon.variant_mappings_bam }
     }
 
-    call Merge as MergeVariantDBs {
-        input:
-            dbs = Megalodon.per_read_variant_calls_db,
-            merge_type = "variants",
-            runtime_attr_override = { 'mem_gb': 48 }
-    }
-
-    call Merge as MergeModifiedBaseCallDBs {
-        input:
-            dbs = Megalodon.per_read_modified_base_calls_db,
-            merge_type = "modified_bases"
-    }
-
-    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
-
-    call Utils.MergeBams as MergeMappings { input: bams = SortMappings.sorted_bam }
-    call Utils.MergeBams as MergeModMappings { input: bams = SortModMappings.sorted_bam }
-    call Utils.MergeBams as MergeVarMappings { input: bams = SortVarMappings.sorted_bam }
-
-    call Utils.Cat as CatModifiedBases5mC {
-         input:
-            files = Megalodon.modified_bases_5mC,
-            has_header = false,
-            out = "modified_bases.5mC.bed"
-    }
-
-    call Utils.Cat as CatMappingSummaries {
-        input:
-            files = Megalodon.mappings_summary,
-            has_header = true,
-            out = "mappings_summary.txt"
-    }
-
-    call Utils.Cat as CatSequencingSummaries {
-        input:
-            files = Megalodon.sequencing_summary,
-            has_header = true,
-            out = "sequencing_summary.txt"
-    }
+#    call Haplotag {
+#        input:
+#            variants_phased = PhaseVariants.phased_vcf_gz,
+#            variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
+#            variant_mappings_bam = var_mappings_bam,
+#            variant_mappings_bai = var_mappings_bai
+#    }
 
     output {
         #String gcs_basecall_dir = Guppy.gcs_dir
@@ -182,6 +223,212 @@ task Merge {
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task WhatsHapFilter {
+    input {
+        File variants
+        File variants_tbi
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 100*ceil(size([variants, variants_tbi], "GB")) + 1
+
+    command <<<
+        set -x
+
+        gunzip -c ~{variants} > variants.sorted.vcf
+
+        # filter whatshap incompatible variants and create indices
+        megalodon_extras \
+            phase_variants whatshap_filter \
+            variants.sorted.vcf \
+            variants.sorted.whatshap_filt.vcf \
+            --filtered-records whatshap_filt.txt
+    >>>
+
+    output {
+        File whatshap_filt_vcf = "variants.sorted.whatshap_filt.vcf"
+        File whatshap_filt_txt = "whatshap_filt.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task IndexVariants {
+    input {
+        File variants
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(variants, "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        mv ~{variants} variants.vcf
+
+        bgzip variants.vcf
+        tabix variants.vcf.gz
+    >>>
+
+    output {
+        File vcf_gz = "variants.vcf.gz"
+        File vcf_tbi = "variants.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task PhaseVariants {
+    input {
+        File variants
+        File variants_tbi
+        String variant_mappings_bam
+        File variant_mappings_bai
+        String chr
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size([variants, variants_tbi, variant_mappings_bam, variant_mappings_bai], "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -hb ~{variant_mappings_bam} ~{chr} > ~{chr}.bam
+        samtools index ~{chr}.bam
+
+        # run whatshap with produced mappings and variants
+        whatshap phase \
+            --distrust-genotypes \
+            --ignore-read-groups \
+            --sample 129S1_SvImJ \
+            --chromosome ~{chr} \
+            -o variants.phased.~{chr}.vcf \
+            ~{variants} \
+            ~{chr}.bam
+
+        # assign haplotypes to reads
+        bgzip variants.phased.~{chr}.vcf
+        tabix variants.phased.~{chr}.vcf.gz
+    >>>
+
+    output {
+        File phased_vcf_gz = "variants.phased.~{chr}.vcf.gz"
+        File phased_vcf_tbi = "variants.phased.~{chr}.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             48,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task Haplotag {
+    input {
+        File variants_phased
+        File variants_phased_tbi
+        File variant_mappings_bam
+        File variant_mappings_bai
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size([variants_phased, variants_phased_tbi, variant_mappings_bam, variant_mappings_bai], "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        whatshap \
+            haplotag ~{variants_phased} \
+            variant_mappings.sorted.bam \
+            -o variant_mappings.haplotagged.bam
+
+        tree -h
+    >>>
+
+    output {
+        File variant_mappings_haplotagged_bam = "variant_mappings.haplotagged.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

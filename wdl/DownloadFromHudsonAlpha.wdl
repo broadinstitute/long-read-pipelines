@@ -22,7 +22,7 @@ workflow DownloadFromHudsonAlpha {
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    scatter (l in read_tsv(manifest)) {
+    scatter (l in [ read_tsv(manifest)[52] ]) {
         call GetFileSize {
             input:
                 url = l[0],
@@ -37,6 +37,8 @@ workflow DownloadFromHudsonAlpha {
                 temp_url_expires = l[2],
                 size = GetFileSize.size
         }
+
+        call ExtractFiles { input: file = DownloadFile.outfile, gcs_out_root_dir = outdir }
     }
 }
 
@@ -157,6 +159,58 @@ task VerifyAndExtractTarball {
         String bam = read_string("bam.txt")
         String pbi = read_string("pbi.txt")
         String xml = read_string("xml.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ExtractFiles {
+    input {
+        File file
+        String gcs_out_root_dir
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10*ceil(size(file, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        mkdir out
+
+        if [[ "~{file}" =~ \.tar.gz$ ]]; then
+            tar zxvf ~{file} -C out/
+        else
+            mv ~{file} out/~{basename(file)}
+        fi
+
+        gsutil -m cp -r out ~{gcs_out_root_dir}
+
+        touch .done
+    >>>
+
+    output {
+        File done = ".done"
     }
 
     #########################

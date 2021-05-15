@@ -795,16 +795,20 @@ task SummarizeCCSReport {
         cat ~{report} | grep 'ZMWs input' | awk -F": " '{ print $2 }' > zmws_input.txt
         cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_pass_filters.txt
         cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_fail_filters.txt
+        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_shortcut_filters.txt
         cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_pass_filters_pct.txt
         cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_fail_filters_pct.txt
+        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_shortcut_filters_pct.txt
     >>>
 
     output {
         Float zmws_input = read_float("zmws_input.txt")
         Float zmws_pass_filters = read_float("zmws_pass_filters.txt")
         Float zmws_fail_filters = read_float("zmws_fail_filters.txt")
+        Float zmws_shortcut_filters = read_float("zmws_shortcut_filters.txt")
         Float zmws_pass_filters_pct = read_float("zmws_pass_filters_pct.txt")
         Float zmws_fail_filters_pct = read_float("zmws_fail_filters_pct.txt")
+        Float zmws_shortcut_filters_pct = read_float("zmws_shortcut_filters_pct.txt")
     }
 
     #########################
@@ -895,7 +899,7 @@ task SummarizePBI {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             30,
+        mem_gb:             48,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,

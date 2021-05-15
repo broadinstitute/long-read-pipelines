@@ -91,7 +91,12 @@ workflow PBFlowcell {
         call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 
         call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam }
-        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi { input: outdir = cdir, file = IndexCCSUnalignedReads.pbi }
+        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
+            input:
+                outdir = cdir,
+                file = IndexCCSUnalignedReads.pbi,
+                name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi"
+        }
     }
 
     if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
@@ -130,7 +135,12 @@ workflow PBFlowcell {
 
     call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = MergeAlignedReads.merged_bam }
     call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = MergeAlignedReads.merged_bai }
-    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = dir, file = IndexAlignedReads.pbi }
+    call FF.FinalizeToFile as FinalizeAlignedPbi {
+        input:
+            outdir = dir,
+            file = IndexAlignedReads.pbi,
+            name = basename(MergeAlignedReads.merged_bam) + ".pbi"
+    }
 
     output {
         # Flowcell stats
@@ -138,8 +148,10 @@ workflow PBFlowcell {
         Float? ccs_zmws_input = SummarizeCCSReport.zmws_input
         Float? ccs_zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
         Float? ccs_zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
+        Float? ccs_zmws_shortcut_filters = SummarizeCCSReport.zmws_shortcut_filters
         Float? ccs_zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
         Float? ccs_zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
+        Float? ccs_zmws_shortcut_filters_pct = SummarizeCCSReport.zmws_shortcut_filters_pct
 
         Float polymerase_read_length_mean = SummarizeSubreadsPBI.results['polymerase_mean']
         Float polymerase_read_length_N50 = SummarizeSubreadsPBI.results['polymerase_n50']
