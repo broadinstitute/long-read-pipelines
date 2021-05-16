@@ -1,4 +1,4 @@
-VERSION = 0.1.3
+VERSION = 0.13 # This should match the WhatsHap version number
 TAG1 = quay.io/broad-long-read-pipelines/lr-whatshap:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-whatshap:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-whatshap:$(VERSION)

@@ -55,100 +55,108 @@ workflow ONT10x {
 
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
-        scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
-            call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
-
-            call Utils.FastaToSam as FastaToSam { input: fasta = C3POa.consensus }
-            call AnnotateAdapters { input: bam = FastaToSam.output_bam }
-
-            call AR.Minimap2 as AlignConsensus {
+        scatter (manifest_chunk in [ PartitionFastqManifest.manifest_chunks[0] ]) {
+            call AR.Minimap2 as AlignDebug {
                 input:
-                    reads      = [ AnnotateAdapters.annotated_fq ],
+                    reads      = read_lines(manifest_chunk),
                     ref_fasta  = ref_map['fasta'],
-                    RG         = rg_consensus,
+                    RG         = RG,
                     map_preset = "splice"
             }
 
-            call CountNumPasses { input: fastq = C3POa.subreads }
-
-            call Utils.CountFastqRecords as CountSubreadsInPartition { input: fastq = C3POa.subreads }
-            call Utils.CountFastqRecords as CountAnnotatedReadsInPartition { input: fastq = AnnotateAdapters.annotated_fq }
-            call Utils.CountFastaRecords as CountConsensusReadsInPartition { input: fasta = C3POa.consensus }
+#            call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
+#
+#            call Utils.FastaToSam as FastaToSam { input: fasta = C3POa.consensus }
+#            call AnnotateAdapters { input: bam = FastaToSam.output_bam }
+#
+#            call AR.Minimap2 as AlignConsensus {
+#                input:
+#                    reads      = [ AnnotateAdapters.annotated_fq ],
+#                    ref_fasta  = ref_map['fasta'],
+#                    RG         = rg_consensus,
+#                    map_preset = "splice"
+#            }
+#
+#            call CountNumPasses { input: fastq = C3POa.subreads }
+#
+#            call Utils.CountFastqRecords as CountSubreadsInPartition { input: fastq = C3POa.subreads }
+#            call Utils.CountFastqRecords as CountAnnotatedReadsInPartition { input: fastq = AnnotateAdapters.annotated_fq }
+#            call Utils.CountFastaRecords as CountConsensusReadsInPartition { input: fasta = C3POa.consensus }
         }
 
-        call C3.Cat as CountNumPassesInRun { input: files = CountNumPasses.num_passes, out = "num_passes.txt" }
-
-        call Utils.Sum as CountSubreadsInRun { input: ints = CountSubreadsInPartition.num_records }
-        call Utils.Sum as CountAnnotatedReadsInRun { input: ints = CountAnnotatedReadsInPartition.num_records }
-        call Utils.Sum as CountConsensusReadsInRun { input: ints = CountConsensusReadsInPartition.num_records }
-
-        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
-        call Utils.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam }
+#        call C3.Cat as CountNumPassesInRun { input: files = CountNumPasses.num_passes, out = "num_passes.txt" }
+#
+#        call Utils.Sum as CountSubreadsInRun { input: ints = CountSubreadsInPartition.num_records }
+#        call Utils.Sum as CountAnnotatedReadsInRun { input: ints = CountAnnotatedReadsInPartition.num_records }
+#        call Utils.Sum as CountConsensusReadsInRun { input: ints = CountConsensusReadsInPartition.num_records }
+#
+#        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
+#        call Utils.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam }
     }
 
-    call C3.Cat as CountNumPassesAll { input: files = CountNumPassesInRun.merged, out = "num_passes.txt" }
-
-    call Utils.Sum as CountSubreads { input: ints = CountSubreadsInRun.sum, prefix = "num_subreads" }
-    call Utils.Sum as CountAnnotatedReads { input: ints = CountAnnotatedReadsInRun.sum, prefix = "num_annotated" }
-    call Utils.Sum as CountConsensusReads { input: ints = CountConsensusReadsInRun.sum, prefix = "num_consensus" }
-
-    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
-    call Utils.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{participant_name}.consensus" }
-
-    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
-        input:
-            bam = MergeAllAnnotated.merged_bam,
-            prefix = "num_annotated_with_cbc",
-            regex = "CB:Z:[ACGT]"
-    }
-
-    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBCAndUniqueAlignment {
-        input:
-            bam = MergeAllAnnotated.merged_bam,
-            samfilter = "-F 0x100",
-            prefix = "num_annotated_with_cbc_and_unique_alignment",
-            regex = "CB:Z:[ACGT]"
-    }
-
-    call Utils.BamToTable { input: bam = MergeAllAnnotated.merged_bam, prefix = "reads_aligned_annotated.table" }
-
-    call AM.AlignedMetrics as PerFlowcellRunConsensusMetrics {
-        input:
-            aligned_bam    = MergeAllConsensus.merged_bam,
-            aligned_bai    = MergeAllConsensus.merged_bai,
-            ref_fasta      = ref_map['fasta'],
-            ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics/combined/" + participant_name
-    }
-
-    ##########
-    # Finalize
-    ##########
-
-    call FF.FinalizeToDir as FinalizeConsensusReadCounts {
-        input:
-            files = [ CountSubreads.sum_file, CountAnnotatedReads.sum_file, CountConsensusReads.sum_file,
-                      GrepAnnotatedReadsWithCBC.num_records_file, GrepAnnotatedReadsWithCBCAndUniqueAlignment.num_records_file ],
-            outdir = outdir + "/metrics/read_counts"
-    }
-
-    call FF.FinalizeToDir as FinalizeNumPasses {
-        input:
-            files = [ CountNumPassesAll.merged ],
-            outdir = outdir + "/metrics/num_passes"
-    }
-
-    call FF.FinalizeToDir as FinalizeBamTable {
-        input:
-            files = [ BamToTable.table ],
-            outdir = outdir + "/metrics/bam_tables"
-    }
-
-    call FF.FinalizeToDir as FinalizeMergedRuns {
-        input:
-            files = [ MergeAllConsensus.merged_bam, MergeAllConsensus.merged_bai ],
-            outdir = outdir + "/alignments"
-    }
+#    call C3.Cat as CountNumPassesAll { input: files = CountNumPassesInRun.merged, out = "num_passes.txt" }
+#
+#    call Utils.Sum as CountSubreads { input: ints = CountSubreadsInRun.sum, prefix = "num_subreads" }
+#    call Utils.Sum as CountAnnotatedReads { input: ints = CountAnnotatedReadsInRun.sum, prefix = "num_annotated" }
+#    call Utils.Sum as CountConsensusReads { input: ints = CountConsensusReadsInRun.sum, prefix = "num_consensus" }
+#
+#    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
+#    call Utils.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{participant_name}.consensus" }
+#
+#    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
+#        input:
+#            bam = MergeAllAnnotated.merged_bam,
+#            prefix = "num_annotated_with_cbc",
+#            regex = "CB:Z:[ACGT]"
+#    }
+#
+#    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBCAndUniqueAlignment {
+#        input:
+#            bam = MergeAllAnnotated.merged_bam,
+#            samfilter = "-F 0x100",
+#            prefix = "num_annotated_with_cbc_and_unique_alignment",
+#            regex = "CB:Z:[ACGT]"
+#    }
+#
+#    call Utils.BamToTable { input: bam = MergeAllAnnotated.merged_bam, prefix = "reads_aligned_annotated.table" }
+#
+#    call AM.AlignedMetrics as PerFlowcellRunConsensusMetrics {
+#        input:
+#            aligned_bam    = MergeAllConsensus.merged_bam,
+#            aligned_bai    = MergeAllConsensus.merged_bai,
+#            ref_fasta      = ref_map['fasta'],
+#            ref_dict       = ref_map['dict'],
+#            gcs_output_dir = outdir + "/metrics/combined/" + participant_name
+#    }
+#
+#    ##########
+#    # Finalize
+#    ##########
+#
+#    call FF.FinalizeToDir as FinalizeConsensusReadCounts {
+#        input:
+#            files = [ CountSubreads.sum_file, CountAnnotatedReads.sum_file, CountConsensusReads.sum_file,
+#                      GrepAnnotatedReadsWithCBC.num_records_file, GrepAnnotatedReadsWithCBCAndUniqueAlignment.num_records_file ],
+#            outdir = outdir + "/metrics/read_counts"
+#    }
+#
+#    call FF.FinalizeToDir as FinalizeNumPasses {
+#        input:
+#            files = [ CountNumPassesAll.merged ],
+#            outdir = outdir + "/metrics/num_passes"
+#    }
+#
+#    call FF.FinalizeToDir as FinalizeBamTable {
+#        input:
+#            files = [ BamToTable.table ],
+#            outdir = outdir + "/metrics/bam_tables"
+#    }
+#
+#    call FF.FinalizeToDir as FinalizeMergedRuns {
+#        input:
+#            files = [ MergeAllConsensus.merged_bam, MergeAllConsensus.merged_bai ],
+#            outdir = outdir + "/alignments"
+#    }
 }
 
 task AnnotateAdapters {

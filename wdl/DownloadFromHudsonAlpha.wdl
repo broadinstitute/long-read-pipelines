@@ -22,7 +22,7 @@ workflow DownloadFromHudsonAlpha {
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    scatter (l in [ read_tsv(manifest)[52] ]) {
+    scatter (l in read_tsv(manifest)) {
         call GetFileSize {
             input:
                 url = l[0],
@@ -38,7 +38,11 @@ workflow DownloadFromHudsonAlpha {
                 size = GetFileSize.size
         }
 
-        call ExtractFiles { input: file = DownloadFile.outfile, gcs_out_root_dir = outdir }
+        call ExtractFiles {
+            input:
+                file = DownloadFile.outfile,
+                gcs_out_root_dir = outdir
+        }
     }
 }
 
@@ -194,23 +198,25 @@ task ExtractFiles {
     Int disk_size = 10*ceil(size(file, "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -euxo
 
         mkdir out
 
         if [[ "~{file}" =~ \.tar.gz$ ]]; then
-            tar zxvf ~{file} -C out/
+            tar zxvf ~{file} -C out/ || tar xvf ~{file} -C out/
         else
             mv ~{file} out/~{basename(file)}
         fi
 
-        gsutil -m cp -r out ~{gcs_out_root_dir}
+        cd out
+        gsutil -m cp -r * ~{gcs_out_root_dir}/
 
-        touch .done
+        cd ..
+        touch done
     >>>
 
     output {
-        File done = ".done"
+        File done = "done"
     }
 
     #########################

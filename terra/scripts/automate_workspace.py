@@ -25,9 +25,9 @@ def main():
     parser.add_argument('-s', '--sample_ids', type=str, nargs='*', help='Additional samples to process')
     args = parser.parse_args()
 
-    # current_config = fapi.get_workspace_config(args.namespace, args.workspace, args.namespace, 'PBFlowcell')
-    # current_config_json = current_config.json()
-    # print(json.dumps(current_config_json, indent=4, sort_keys=True))
+    current_config = fapi.get_workspace_config(args.namespace, args.workspace, args.namespace, 'PBFlowcell')
+    current_config_json = current_config.json()
+    print(json.dumps(current_config_json, indent=4, sort_keys=True))
 
     samples_to_process = set()
     if args.sample_ids is not None:

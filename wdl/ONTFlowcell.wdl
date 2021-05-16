@@ -18,6 +18,7 @@ workflow ONTFlowcell {
 
         Int num_shards = 50
         String experiment_type
+        String dir_prefix
 
         String gcs_out_root_dir
     }
@@ -32,6 +33,7 @@ workflow ONTFlowcell {
 
         num_shards:         "[default-valued] number of shards into which fastq files should be batched"
         experiment_type:    "[default-valued] type of experiment run (DNA, RNA, R2C2)"
+        dir_prefix:         "directory prefix for output files"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
@@ -43,7 +45,7 @@ workflow ONTFlowcell {
         'R2C2': 'splice'
     }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{ID}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{dir_prefix}"
 
     call ONT.GetRunInfo { input: final_summary = final_summary }
 
