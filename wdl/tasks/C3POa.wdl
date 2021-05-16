@@ -46,13 +46,13 @@ task Processing {
 
         tree -h
 
-        find out/ -name '*.fasta' | awk -F"/" '{ print $2, $0 }' > consensus_map.txt
-        find out/ -name '*.fastq' | awk -F"/" '{ print $2, $0 }' > subreads_map.txt
+        find out/ -name '*.fasta' | awk -F"/" '{ system(sprintf("mv %s %s.consensus.fasta", $0, $2)) }'
+        find out/ -name '*.fastq' | awk -F"/" '{ system(sprintf("mv %s %s.subreads.fastq", $0, $2)) }'
     >>>
 
     output {
-        Map[String, File] consensus = read_map("consensus_map.txt")
-        Map[String, File] subreads = read_map("subreads_map.txt")
+        Array[File] consensus = glob("*.consensus.fasta")
+        Array[File] subreads = glob("*.subreads.fastq")
     }
 
     #########################
