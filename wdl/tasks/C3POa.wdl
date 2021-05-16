@@ -43,11 +43,13 @@ task Processing {
             -c /c3poa.config.txt \
             -l 1000 -d 500 -n 32 -g 1000 \
             -o out
+
+        tree -h
     >>>
 
     output {
-        Array[File] consensus = "out/*/R2C2_Consensus.fasta"
-        Array[File] subreads = "out/*/R2C2_Subreads.fastq"
+        Array[File] consensus = glob("out/*/R2C2_Consensus.fasta")
+        Array[File] subreads = glob("out/*/R2C2_Subreads.fastq")
     }
 
     #########################

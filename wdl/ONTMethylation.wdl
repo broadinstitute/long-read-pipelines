@@ -2,6 +2,7 @@ version 1.0
 
 import "tasks/Utils.wdl" as Utils
 import "tasks/ONTUtils.wdl" as ONTUtils
+import "tasks/VariantUtils.wdl"
 import "tasks/Guppy.wdl" as Guppy
 import "tasks/Finalize.wdl" as FF
 
@@ -107,6 +108,13 @@ workflow ONTMethylation {
                 variant_mappings_bai = var_mappings_bai,
                 chr = contig
         }
+    }
+
+    call VariantUtils.MergePerChrCalls {
+        input:
+            vcfs = PhaseVariants.phased_vcf_gz,
+            ref_dict = ref_map['dict'],
+            prefix = "phased.merged"
     }
 
 #    call Haplotag {
