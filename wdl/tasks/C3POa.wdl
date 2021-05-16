@@ -37,11 +37,12 @@ task Processing {
         set -euxo pipefail
 
         mkdir out
-        python3 C3POa.py -r ~{fastq} \
-                         -s ~{splint_fasta} \
-                         -c /c3poa.config.txt \
-                         -l 1000 -d 500 -n 32 -g 1000 \
-                         -o out
+        python3 /C3POa/C3POa.py \
+            -r ~{fastq} \
+            -s ~{splint_fasta} \
+            -c /c3poa.config.txt \
+            -l 1000 -d 500 -n 32 -g 1000 \
+            -o out
     >>>
 
     output {
