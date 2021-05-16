@@ -119,7 +119,7 @@ workflow PBFlowcell {
             gcs_output_dir = outdir + "/metrics"
     }
 
-    call PB.SummarizePBI as SummarizeSubreadsPBI   { input: pbi = pbi }
+    call PB.SummarizePBI as SummarizeSubreadsPBI   { input: pbi = pbi, runtime_attr_override = { 'mem_gb': 72 } }
     call PB.SummarizePBI as SummarizeAlignedPBI    { input: pbi = IndexAlignedReads.pbi }
     call PB.SummarizePBI as SummarizeAlignedQ5PBI  { input: pbi = IndexAlignedReads.pbi, qual_threshold = 5 }
     call PB.SummarizePBI as SummarizeAlignedQ7PBI  { input: pbi = IndexAlignedReads.pbi, qual_threshold = 7 }
