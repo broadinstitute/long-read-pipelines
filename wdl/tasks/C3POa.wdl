@@ -12,17 +12,15 @@ workflow C3POa {
 
     call Cat as CatRawReads { input: files = read_lines(manifest_chunk), out = "chunk.fastq" }
 
-    scatter (fastq in CatRawReads.merged) {
-        call Processing { input: fastq = fastq, splint_fasta = splint_fasta }
-    }
+    call Processing { input: fastq = CatRawReads.merged, splint_fasta = splint_fasta }
 
 #    call Cat as CatSubreads { input: files = Processing.subreads, out = "subreads.fastq" }
 #    call Cat as CatConsensus { input: files = Processing.consensus, out = "consensus.fasta" }
 #
-#    output {
-#        File subreads = CatSubreads.merged
-#        File consensus = CatConsensus.merged
-#    }
+    output {
+        Array[File] consensus = Processing.consensus
+        Array[File] subreads = Processing.subreads
+    }
 }
 
 task Processing {
