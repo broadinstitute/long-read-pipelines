@@ -45,11 +45,14 @@ task Processing {
             -o out
 
         tree -h
+
+        find out/ -name '*.fasta' | awk -F"/" '{ print $2, $0 }' > consensus_map.txt
+        find out/ -name '*.fastq' | awk -F"/" '{ print $2, $0 }' > subreads_map.txt
     >>>
 
     output {
-        Array[File] consensus = glob("out/*/R2C2_Consensus.fasta")
-        Array[File] subreads = glob("out/*/R2C2_Subreads.fastq")
+        Map[String, File] consensus = read_map("consensus_map.txt")
+        Map[String, File] subreads = read_map("subreads_map.txt")
     }
 
     #########################
