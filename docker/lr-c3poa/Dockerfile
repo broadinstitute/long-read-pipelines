@@ -25,8 +25,9 @@ ENV PATH=$GOPATH/bin:$GOROOT/bin:/opt/conda/envs/lr-c3poa/bin/:/root/google-clou
 # install C3POa
 RUN git clone https://github.com/rvolden/C3POa.git \
     && cd C3POa \
-    && git checkout dfb1c71b05199a74bee51ade1a7f16b47617cf04 \
+    && git checkout 053bcb0ed7940abf0dcd40ceef7a8e190e948a94 \
     && git reset --hard \
+    && chmod +x setup.sh \
     && ./setup.sh
 
 # install gsutil
@@ -37,3 +38,6 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/lr-c3poa/lib/
 
 # activate conda environment
 RUN echo "source activate lr-c3poa" > ~/.bashrc
+
+# install Pip packages
+RUN pip install --upgrade scipy numpy pyabpoa mappy Cython tqdm setuptools wheel

@@ -64,8 +64,8 @@ workflow ONT10x {
                     map_preset = "splice"
             }
 
-#            call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
-#
+            call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
+
 #            call Utils.FastaToSam as FastaToSam { input: fasta = C3POa.consensus }
 #            call AnnotateAdapters { input: bam = FastaToSam.output_bam }
 #

@@ -7,96 +7,48 @@ workflow C3POa {
     input {
         File manifest_chunk
         File ref_fasta
+        File splint_fasta
     }
 
     call Cat as CatRawReads { input: files = read_lines(manifest_chunk), out = "chunk.fastq" }
-    call Preprocessing { input: fastq = CatRawReads.merged }
 
-    scatter (fastq in Preprocessing.fastqs) {
-        call Processing { input: preprocessed_fastq = fastq }
+    scatter (fastq in CatRawReads.merged) {
+        call Processing { input: fastq = fastq, splint_fasta = splint_fasta }
     }
 
-    call Cat as CatSubreads { input: files = Processing.subreads, out = "subreads.fastq" }
-    call Cat as CatConsensus { input: files = Processing.consensus, out = "consensus.fasta" }
-
-    output {
-        File subreads = CatSubreads.merged
-        File consensus = CatConsensus.merged
-    }
-}
-
-task Preprocessing {
-    input {
-        File fastq
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 3*ceil(size(fastq, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        mkdir pre
-
-        python3 /C3POa/C3POa_preprocessing.py -i ~{fastq} \
-                                              -o pre \
-                                              -q 9 \
-                                              -l 1000 \
-                                              -s /C3POa/splint.fasta \
-                                              -c /c3poa.config.txt
-
-        find pre -name 'R2C2_raw_reads.fastq' | awk -F"/" '{ print $0, "pre_" $2 "_" $4 }' | xargs -L 1 cp
-    >>>
-
-    output {
-        Array[File] fastqs = glob("pre_*.fastq")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             2,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
+#    call Cat as CatSubreads { input: files = Processing.subreads, out = "subreads.fastq" }
+#    call Cat as CatConsensus { input: files = Processing.consensus, out = "consensus.fasta" }
+#
+#    output {
+#        File subreads = CatSubreads.merged
+#        File consensus = CatConsensus.merged
+#    }
 }
 
 task Processing {
     input {
-        File preprocessed_fastq
+        File fastq
+        File splint_fasta
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(preprocessed_fastq, "GB"))
+    Int disk_size = 2*ceil(size(fastq, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        python3 /C3POa/C3POa.py -z -d 500 -l 1000 -p . \
-                                -m /C3POa/NUC.4.4.mat \
-                                -c /c3poa.config.txt \
-                                -r ~{preprocessed_fastq} \
-                                -o consensus.fasta
+        mkdir out
+        python3 C3POa.py -r ~{fastq} \
+                         -s ~{splint_fasta} \
+                         -c /c3poa.config.txt \
+                         -l 1000 -d 500 -n 32 -g 1000 \
+                         -o out
     >>>
 
     output {
-        File consensus = "consensus.fasta"
-        File subreads = "subreads.fastq"
+        Array[File] consensus = "out/*/R2C2_Consensus.fasta"
+        Array[File] subreads = "out/*/R2C2_Subreads.fastq"
     }
 
     #########################
@@ -107,7 +59,7 @@ task Processing {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:2.2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
