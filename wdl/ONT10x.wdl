@@ -118,14 +118,14 @@ workflow ONT10x {
         call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, prefix = "~{participant_name}.consensus4" }
     }
 
-    File bam1 = select_first([MergeAllConsensus1.merged_bam, MergeConsensus1.merged_bam])
-    File bai1 = select_first([MergeAllConsensus1.merged_bai, MergeConsensus1.merged_bai])
-    File bam2 = select_first([MergeAllConsensus2.merged_bam, MergeConsensus2.merged_bam])
-    File bai2 = select_first([MergeAllConsensus2.merged_bai, MergeConsensus2.merged_bai])
-    File bam3 = select_first([MergeAllConsensus3.merged_bam, MergeConsensus3.merged_bam])
-    File bai3 = select_first([MergeAllConsensus3.merged_bai, MergeConsensus3.merged_bai])
-    File bam4 = select_first([MergeAllConsensus4.merged_bam, MergeConsensus4.merged_bam])
-    File bai4 = select_first([MergeAllConsensus4.merged_bai, MergeConsensus4.merged_bai])
+    File bam1 = select_first([MergeAllConsensus1.merged_bam, MergeConsensus1.merged_bam[0]])
+    File bai1 = select_first([MergeAllConsensus1.merged_bai, MergeConsensus1.merged_bai[0]])
+    File bam2 = select_first([MergeAllConsensus2.merged_bam, MergeConsensus2.merged_bam[0]])
+    File bai2 = select_first([MergeAllConsensus2.merged_bai, MergeConsensus2.merged_bai[0]])
+    File bam3 = select_first([MergeAllConsensus3.merged_bam, MergeConsensus3.merged_bam[0]])
+    File bai3 = select_first([MergeAllConsensus3.merged_bai, MergeConsensus3.merged_bai[0]])
+    File bam4 = select_first([MergeAllConsensus4.merged_bam, MergeConsensus4.merged_bam[0]])
+    File bai4 = select_first([MergeAllConsensus4.merged_bai, MergeConsensus4.merged_bai[0]])
 
 #    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
 #        input:
