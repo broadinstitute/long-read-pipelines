@@ -75,8 +75,9 @@ workflow ONTFlowcell {
 
     String PL  = "ONT"
     String PU  = if defined(final_summary) then GetRunInfo.run_info["instrument"] else "unknown"
-    String DT  = if defined(final_summary) then GetRunInfo.run_info["started"] else "2021-01-01T12:00:00.000000-05:00"
-    String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+    #String DT  = if defined(final_summary) then GetRunInfo.run_info["started"] else "2021-01-01T12:00:00.000000-05:00"
+    #String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+    String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}"
 
     call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = manifest, N = num_shards }
 
