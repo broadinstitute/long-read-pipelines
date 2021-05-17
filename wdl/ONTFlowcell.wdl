@@ -51,8 +51,12 @@ workflow ONTFlowcell {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{dir_prefix}"
 
+    String PU = "unknown"
+    String DT = "2021-01-01T12:00:00.000000-05:00"
     if (defined(final_summary)) {
         call ONT.GetRunInfo { input: final_summary = select_first([final_summary]) }
+        String PU = GetRunInfo.run_info['instrument']
+        String DT = GetRunInfo.run_info['started']
     }
 
     if (defined(sequencing_summary)) {
@@ -74,10 +78,9 @@ workflow ONTFlowcell {
     File manifest = select_first([ListFastqs.manifest, ListFilesOfType.manifest])
 
     String PL  = "ONT"
-    String PU  = if defined(final_summary) then GetRunInfo.run_info["instrument"] else "unknown"
+    #String PU  = if defined(final_summary) then GetRunInfo.run_info["instrument"] else "unknown"
     #String DT  = if defined(final_summary) then GetRunInfo.run_info["started"] else "2021-01-01T12:00:00.000000-05:00"
-    #String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
-    String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}"
+    String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
     call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = manifest, N = num_shards }
 

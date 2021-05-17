@@ -64,8 +64,8 @@ task Minimap2 {
         mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
+        preemptible_tries:  3,
+        max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.27"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
