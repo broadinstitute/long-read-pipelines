@@ -40,9 +40,9 @@ task Minimap2 {
         elif [[ "$FILE" =~ \.fastq.gz$ ]] || [[ "$FILE" =~ \.fq.gz$ ]]; then
             find . \( -name '*.fastq.gz' -or -name '*.fq.gz' \) -exec zcat {} \; | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.fasta$ ]] || [[ "$FILE" =~ \.fa$ ]]; then
-            find . \( -name '*.fasta' -or -name '*.fa' \) -and -name -not '~{basename(ref_fasta)}' -exec cat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+            find . \( -name '*.fasta' -or -name '*.fa' \) -name -not '~{basename(ref_fasta)}' -exec cat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.fasta.gz$ ]] || [[ "$FILE" =~ \.fa.gz$ ]]; then
-            find . \( -name '*.fasta.gz' -or -name '*.fa.gz' \) -and -name -not '~{basename(ref_fasta)}' -exec zcat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+            find . \( -name '*.fasta.gz' -or -name '*.fa.gz' \) -name -not '~{basename(ref_fasta)}' -exec zcat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.bam$ ]]; then
             samtools fastq $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         else
@@ -64,8 +64,8 @@ task Minimap2 {
         mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        2,
+        preemptible_tries:  0,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.27"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
