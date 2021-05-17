@@ -9,14 +9,16 @@ import "tasks/Finalize.wdl" as FF
 
 workflow ONTFlowcell {
     input {
-        File final_summary
-        File sequencing_summary
+        File? final_summary
+        File? sequencing_summary
+        String? fastq_dir
+
         File ref_map_file
 
         String SM
         String ID
 
-        Int num_shards = 50
+        Int num_shards = 300
         String experiment_type
         String dir_prefix
 
@@ -26,6 +28,8 @@ workflow ONTFlowcell {
     parameter_meta {
         final_summary:      "GCS path to '*final_summary*.txt*' file for basecalled fastq files"
         sequencing_summary: "GCS path to '*sequencing_summary*.txt*' file for basecalled fastq files"
+        fastq_dir:          "GCS path to fastq directory"
+
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
         SM:                 "the value to place in the BAM read group's SM field"
@@ -47,16 +51,24 @@ workflow ONTFlowcell {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{dir_prefix}"
 
-    call ONT.GetRunInfo { input: final_summary = final_summary }
+    if (defined(final_summary)) { call ONT.GetRunInfo { input: final_summary = final_summary } }
 
-    call ONT.ListFiles as ListFastqs { input: sequencing_summary = sequencing_summary, suffix = "fastq" }
+    if (defined(sequencing_summary)) {
+        call ONT.ListFiles as ListFastqs { input: sequencing_summary = sequencing_summary, suffix = "fastq" }
+    }
+
+    if (defined(fastq_dir)) {
+        call Utils.ListFilesOfType { input: gcs_dir = fastq_dir, suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz' ] }
+    }
+
+    File manifest = select_first([ListFastqs.manifest, ListFilesOfType.manifest])
 
     String PL  = "ONT"
-    String PU  = GetRunInfo.run_info["instrument"]
-    String DT  = GetRunInfo.run_info["started"]
+    String PU  = select_first([GetRunInfo.run_info["instrument"], "unknown"])
+    String DT  = select_first([GetRunInfo.run_info["started"], ""])
     String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-    call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
+    call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = manifest, N = num_shards }
 
     scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
         call AR.Minimap2 as AlignReads {
@@ -79,7 +91,9 @@ workflow ONTFlowcell {
             gcs_output_dir = outdir + "/metrics"
     }
 
-    call NP.NanoPlotFromSummary { input: summary_files = [sequencing_summary] }
+    if (defined(sequencing_summary)) {
+        call NP.NanoPlotFromSummary { input: summary_files = [sequencing_summary] }
+    }
     call NP.NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
