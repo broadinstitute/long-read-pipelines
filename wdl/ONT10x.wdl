@@ -74,6 +74,11 @@ workflow ONT10x {
                 }
             }
 
+            File align_consensus_bam1 = AlignConsensus.aligned_bam[0]
+            File align_consensus_bam2 = AlignConsensus.aligned_bam[1]
+            File align_consensus_bam3 = AlignConsensus.aligned_bam[2]
+            File align_consensus_bam4 = AlignConsensus.aligned_bam[3]
+
 #            call CountNumPasses { input: fastq = C3POa.subreads }
 #
 #            call Utils.CountFastqRecords as CountSubreadsInPartition { input: fastq = C3POa.subreads }
@@ -88,7 +93,11 @@ workflow ONT10x {
 #        call Utils.Sum as CountConsensusReadsInRun { input: ints = CountConsensusReadsInPartition.num_records }
 #
 #        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
-#        call Utils.MergeBams as MergeConsensus { input: bams = AlignConsensus.aligned_bam }
+
+        call Utils.MergeBams as MergeConsensus1 { input: bams = align_consensus_bam1 }
+        call Utils.MergeBams as MergeConsensus2 { input: bams = align_consensus_bam2 }
+        call Utils.MergeBams as MergeConsensus3 { input: bams = align_consensus_bam3 }
+        call Utils.MergeBams as MergeConsensus4 { input: bams = align_consensus_bam4 }
     }
 
 #    call C3.Cat as CountNumPassesAll { input: files = CountNumPassesInRun.merged, out = "num_passes.txt" }
