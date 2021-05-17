@@ -80,6 +80,9 @@ workflow ONT10x {
             File align_consensus_bam4 = AlignConsensus.aligned_bam[3]
 
 #            call CountNumPasses { input: fastq = C3POa.subreads }
+#            call CountNumPasses { input: fastq = C3POa.subreads }
+#            call CountNumPasses { input: fastq = C3POa.subreads }
+#            call CountNumPasses { input: fastq = C3POa.subreads }
 #
 #            call Utils.CountFastqRecords as CountSubreadsInPartition { input: fastq = C3POa.subreads }
 #            call Utils.CountFastqRecords as CountAnnotatedReadsInPartition { input: fastq = AnnotateAdapters.annotated_fq }
@@ -107,8 +110,23 @@ workflow ONT10x {
 #    call Utils.Sum as CountConsensusReads { input: ints = CountConsensusReadsInRun.sum, prefix = "num_consensus" }
 #
 #    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
-#    call Utils.MergeBams as MergeAllConsensus { input: bams = MergeConsensus.merged_bam, prefix = "~{participant_name}.consensus" }
-#
+
+    if (length(MergeConsensus1.merged_bam) > 1) {
+        call Utils.MergeBams as MergeAllConsensus1 { input: bams = MergeConsensus1.merged_bam, prefix = "~{participant_name}.consensus1" }
+        call Utils.MergeBams as MergeAllConsensus2 { input: bams = MergeConsensus2.merged_bam, prefix = "~{participant_name}.consensus2" }
+        call Utils.MergeBams as MergeAllConsensus3 { input: bams = MergeConsensus3.merged_bam, prefix = "~{participant_name}.consensus3" }
+        call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, prefix = "~{participant_name}.consensus4" }
+    }
+
+    File bam1 = select_first([MergeAllConsensus1.merged_bam, MergeConsensus1.merged_bam])
+    File bai1 = select_first([MergeAllConsensus1.merged_bai, MergeConsensus1.merged_bai])
+    File bam2 = select_first([MergeAllConsensus2.merged_bam, MergeConsensus2.merged_bam])
+    File bai2 = select_first([MergeAllConsensus2.merged_bai, MergeConsensus2.merged_bai])
+    File bam3 = select_first([MergeAllConsensus3.merged_bam, MergeConsensus3.merged_bam])
+    File bai3 = select_first([MergeAllConsensus3.merged_bai, MergeConsensus3.merged_bai])
+    File bam4 = select_first([MergeAllConsensus4.merged_bam, MergeConsensus4.merged_bam])
+    File bai4 = select_first([MergeAllConsensus4.merged_bai, MergeConsensus4.merged_bai])
+
 #    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
 #        input:
 #            bam = MergeAllAnnotated.merged_bam,
