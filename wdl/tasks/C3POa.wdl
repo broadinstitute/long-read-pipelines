@@ -14,12 +14,26 @@ workflow C3POa {
 
     call Processing { input: fastq = CatRawReads.merged, splint_fasta = splint_fasta }
 
-#    call Cat as CatSubreads { input: files = Processing.subreads, out = "subreads.fastq" }
-#    call Cat as CatConsensus { input: files = Processing.consensus, out = "consensus.fasta" }
-#
+    call Cat as CatSubreads1 { input: files = Processing.subreads1, out = "subreads1.fastq" }
+    call Cat as CatSubreads2 { input: files = Processing.subreads2, out = "subreads2.fastq" }
+    call Cat as CatSubreads3 { input: files = Processing.subreads3, out = "subreads3.fastq" }
+    call Cat as CatSubreads4 { input: files = Processing.subreads4, out = "subreads4.fastq" }
+
+    call Cat as CatConsensus1 { input: files = Processing.consensus1, out = "consensus1.fasta" }
+    call Cat as CatConsensus2 { input: files = Processing.consensus2, out = "consensus2.fasta" }
+    call Cat as CatConsensus3 { input: files = Processing.consensus3, out = "consensus3.fasta" }
+    call Cat as CatConsensus4 { input: files = Processing.consensus4, out = "consensus4.fasta" }
+
     output {
-        Array[File] consensus = Processing.consensus
-        Array[File] subreads = Processing.subreads
+        Array[File] subreads1 = CatSubreads1.merged
+        Array[File] subreads2 = CatSubreads2.merged
+        Array[File] subreads3 = CatSubreads3.merged
+        Array[File] subreads4 = CatSubreads4.merged
+
+        Array[File] consensus1 = CatConsensus1.merged
+        Array[File] consensus2 = CatConsensus2.merged
+        Array[File] consensus3 = CatConsensus3.merged
+        Array[File] consensus4 = CatConsensus4.merged
     }
 }
 
@@ -45,14 +59,18 @@ task Processing {
             -o out
 
         tree -h
-
-        find out/ -name '*.fasta' | awk -F"/" '{ system(sprintf("mv %s %s.consensus.fasta", $0, $2)) }'
-        find out/ -name '*.fastq' | awk -F"/" '{ system(sprintf("mv %s %s.subreads.fastq", $0, $2)) }'
     >>>
 
     output {
-        Array[File] consensus = glob("*.consensus.fasta")
-        Array[File] subreads = glob("*.subreads.fastq")
+        File consensus1 = "out/10x_Splint_1/R2C2_Consensus.fasta"
+        File consensus2 = "out/10x_Splint_2/R2C2_Consensus.fasta"
+        File consensus3 = "out/10x_Splint_3/R2C2_Consensus.fasta"
+        File consensus4 = "out/10x_Splint_4/R2C2_Consensus.fasta"
+
+        File subreads1 = "out/10x_Splint_1/R2C2_Subreads.fastq"
+        File subreads2 = "out/10x_Splint_2/R2C2_Subreads.fastq"
+        File subreads3 = "out/10x_Splint_3/R2C2_Subreads.fastq"
+        File subreads4 = "out/10x_Splint_4/R2C2_Subreads.fastq"
     }
 
     #########################

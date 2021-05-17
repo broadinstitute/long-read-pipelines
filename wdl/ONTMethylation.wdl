@@ -117,13 +117,13 @@ workflow ONTMethylation {
             prefix = "phased.merged"
     }
 
-#    call Haplotag {
-#        input:
-#            variants_phased = PhaseVariants.phased_vcf_gz,
-#            variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
-#            variant_mappings_bam = var_mappings_bam,
-#            variant_mappings_bai = var_mappings_bai
-#    }
+    call Haplotag {
+        input:
+            variants_phased = MergePerChrCalls.vcf,
+            variants_phased_tbi = MergePerChrCalls.tbi,
+            variant_mappings_bam = var_mappings_bam,
+            variant_mappings_bai = var_mappings_bai
+    }
 
     output {
         #String gcs_basecall_dir = Guppy.gcs_dir
@@ -418,7 +418,7 @@ task Haplotag {
 
         whatshap \
             haplotag ~{variants_phased} \
-            variant_mappings.sorted.bam \
+            ~{variant_mappings_bam} \
             -o variant_mappings.haplotagged.bam
 
         tree -h
