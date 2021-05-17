@@ -50,9 +50,19 @@ workflow ONT10x {
         String SID = ID + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
         String RG = "@RG\\tID:~{SID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
+        String rg_subreads  = "@RG\\tID:~{SID}.subreads\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
         scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
+            call AR.Minimap2 as AlignSubreads {
+                input:
+                    reads      = read_lines(manifest_chunk),
+                    ref_fasta  = ref_map['fasta'],
+                    RG         = rg_subreads,
+                    map_preset = "splice"
+            }
+
             call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
 
             scatter (a in zip([1, 2, 3, 4], [ C3POa.consensus1, C3POa.consensus2, C3POa.consensus3, C3POa.consensus4 ])) {
@@ -62,7 +72,6 @@ workflow ONT10x {
 #                call Utils.FastaToSam as FastaToSam { input: fasta = C3POa.consensus }
 #                call AnnotateAdapters { input: bam = FastaToSam.output_bam }
 
-                String rg_subreads  = "@RG\\tID:~{SID}.subreads~{splint_num}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
                 String rg_consensus = "@RG\\tID:~{SID}.consensus~{splint_num}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
                 call AR.Minimap2 as AlignConsensus {
@@ -73,6 +82,8 @@ workflow ONT10x {
                         map_preset = "splice"
                 }
             }
+
+            File align_subreads_bam = AlignSubreads.aligned_bam
 
             File align_consensus_bam1 = AlignConsensus.aligned_bam[0]
             File align_consensus_bam2 = AlignConsensus.aligned_bam[1]
@@ -97,10 +108,12 @@ workflow ONT10x {
 #
 #        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
 
-        call Utils.MergeBams as MergeConsensus1 { input: bams = align_consensus_bam1 }
-        call Utils.MergeBams as MergeConsensus2 { input: bams = align_consensus_bam2 }
-        call Utils.MergeBams as MergeConsensus3 { input: bams = align_consensus_bam3 }
-        call Utils.MergeBams as MergeConsensus4 { input: bams = align_consensus_bam4 }
+        call Utils.MergeBams as MergeSubreads { input: bams = align_subreads_bam, prefix = "~{participant_name}.subreads" }
+
+        call Utils.MergeBams as MergeConsensus1 { input: bams = align_consensus_bam1, prefix = "~{participant_name}.consensus1" }
+        call Utils.MergeBams as MergeConsensus2 { input: bams = align_consensus_bam2, prefix = "~{participant_name}.consensus2" }
+        call Utils.MergeBams as MergeConsensus3 { input: bams = align_consensus_bam3, prefix = "~{participant_name}.consensus3" }
+        call Utils.MergeBams as MergeConsensus4 { input: bams = align_consensus_bam4, prefix = "~{participant_name}.consensus4" }
     }
 
 #    call C3.Cat as CountNumPassesAll { input: files = CountNumPassesInRun.merged, out = "num_passes.txt" }
@@ -112,20 +125,25 @@ workflow ONT10x {
 #    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
 
     if (length(MergeConsensus1.merged_bam) > 1) {
+        call Utils.MergeBams as MergeAllSubreads { input: bams = MergeSubreads.merged_bam, prefix = "~{participant_name}.subreads" }
+
         call Utils.MergeBams as MergeAllConsensus1 { input: bams = MergeConsensus1.merged_bam, prefix = "~{participant_name}.consensus1" }
         call Utils.MergeBams as MergeAllConsensus2 { input: bams = MergeConsensus2.merged_bam, prefix = "~{participant_name}.consensus2" }
         call Utils.MergeBams as MergeAllConsensus3 { input: bams = MergeConsensus3.merged_bam, prefix = "~{participant_name}.consensus3" }
         call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, prefix = "~{participant_name}.consensus4" }
     }
 
-    File bam1 = select_first([MergeAllConsensus1.merged_bam, MergeConsensus1.merged_bam[0]])
-    File bai1 = select_first([MergeAllConsensus1.merged_bai, MergeConsensus1.merged_bai[0]])
-    File bam2 = select_first([MergeAllConsensus2.merged_bam, MergeConsensus2.merged_bam[0]])
-    File bai2 = select_first([MergeAllConsensus2.merged_bai, MergeConsensus2.merged_bai[0]])
-    File bam3 = select_first([MergeAllConsensus3.merged_bam, MergeConsensus3.merged_bam[0]])
-    File bai3 = select_first([MergeAllConsensus3.merged_bai, MergeConsensus3.merged_bai[0]])
-    File bam4 = select_first([MergeAllConsensus4.merged_bam, MergeConsensus4.merged_bam[0]])
-    File bai4 = select_first([MergeAllConsensus4.merged_bai, MergeConsensus4.merged_bai[0]])
+    File subreads_bam = select_first([MergeAllSubreads.merged_bam, MergeSubreads.merged_bam[0]])
+    File subreads_bai = select_first([MergeAllSubreads.merged_bai, MergeSubreads.merged_bai[0]])
+
+    File consensus_bam1 = select_first([MergeAllConsensus1.merged_bam, MergeConsensus1.merged_bam[0]])
+    File consensus_bai1 = select_first([MergeAllConsensus1.merged_bai, MergeConsensus1.merged_bai[0]])
+    File consensus_bam2 = select_first([MergeAllConsensus2.merged_bam, MergeConsensus2.merged_bam[0]])
+    File consensus_bai2 = select_first([MergeAllConsensus2.merged_bai, MergeConsensus2.merged_bai[0]])
+    File consensus_bam3 = select_first([MergeAllConsensus3.merged_bam, MergeConsensus3.merged_bam[0]])
+    File consensus_bai3 = select_first([MergeAllConsensus3.merged_bai, MergeConsensus3.merged_bai[0]])
+    File consensus_bam4 = select_first([MergeAllConsensus4.merged_bam, MergeConsensus4.merged_bam[0]])
+    File consensus_bai4 = select_first([MergeAllConsensus4.merged_bai, MergeConsensus4.merged_bai[0]])
 
 #    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
 #        input:
@@ -156,7 +174,18 @@ workflow ONT10x {
 #    ##########
 #    # Finalize
 #    ##########
-#
+
+    call FF.FinalizeToDir as FinalizeReads {
+        input:
+            files = [ subreads_bam, subreads_bai,
+                      consensus_bam1, consensus_bai1,
+                      consensus_bam2, consensus_bai2,
+                      consensus_bam3, consensus_bai3,
+                      consensus_bam4, consensus_bai4
+                    ],
+            outdir = outdir + "/alignments"
+    }
+
 #    call FF.FinalizeToDir as FinalizeConsensusReadCounts {
 #        input:
 #            files = [ CountSubreads.sum_file, CountAnnotatedReads.sum_file, CountConsensusReads.sum_file,
