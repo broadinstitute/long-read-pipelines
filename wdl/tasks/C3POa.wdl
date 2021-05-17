@@ -14,26 +14,16 @@ workflow C3POa {
 
     call Processing { input: fastq = CatRawReads.merged, splint_fasta = splint_fasta }
 
-    call Cat as CatSubreads1 { input: files = Processing.subreads1, out = "subreads1.fastq" }
-    call Cat as CatSubreads2 { input: files = Processing.subreads2, out = "subreads2.fastq" }
-    call Cat as CatSubreads3 { input: files = Processing.subreads3, out = "subreads3.fastq" }
-    call Cat as CatSubreads4 { input: files = Processing.subreads4, out = "subreads4.fastq" }
-
-    call Cat as CatConsensus1 { input: files = Processing.consensus1, out = "consensus1.fasta" }
-    call Cat as CatConsensus2 { input: files = Processing.consensus2, out = "consensus2.fasta" }
-    call Cat as CatConsensus3 { input: files = Processing.consensus3, out = "consensus3.fasta" }
-    call Cat as CatConsensus4 { input: files = Processing.consensus4, out = "consensus4.fasta" }
-
     output {
-        Array[File] subreads1 = CatSubreads1.merged
-        Array[File] subreads2 = CatSubreads2.merged
-        Array[File] subreads3 = CatSubreads3.merged
-        Array[File] subreads4 = CatSubreads4.merged
+        File subreads1 = Processing.subreads1
+        File subreads2 = Processing.subreads2
+        File subreads3 = Processing.subreads3
+        File subreads4 = Processing.subreads4
 
-        Array[File] consensus1 = CatConsensus1.merged
-        Array[File] consensus2 = CatConsensus2.merged
-        Array[File] consensus3 = CatConsensus3.merged
-        Array[File] consensus4 = CatConsensus4.merged
+        File consensus1 = Processing.consensus1
+        File consensus2 = Processing.consensus2
+        File consensus3 = Processing.consensus3
+        File consensus4 = Processing.consensus4
     }
 }
 

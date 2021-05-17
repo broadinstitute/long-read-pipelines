@@ -14,7 +14,7 @@ workflow ONT10x {
         File ref_map_file
 
         String participant_name
-        Int num_shards = 50
+        Int num_shards = 300
 
         String gcs_out_root_dir
     }
@@ -50,9 +50,6 @@ workflow ONT10x {
         String SID = ID + "." + sub(GetRunInfo.run_info["protocol_run_id"], "-.*", "")
         String RG = "@RG\\tID:~{SID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-        String rg_subreads  = "@RG\\tID:~{SID}.subreads\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
-        String rg_consensus = "@RG\\tID:~{SID}.consensus\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
-
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
         scatter (manifest_chunk in [ PartitionFastqManifest.manifest_chunks[0] ]) {
@@ -66,16 +63,24 @@ workflow ONT10x {
 
             call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
 
-#            call Utils.FastaToSam as FastaToSam { input: fasta = C3POa.consensus }
-#            call AnnotateAdapters { input: bam = FastaToSam.output_bam }
-#
-#            call AR.Minimap2 as AlignConsensus {
-#                input:
-#                    reads      = [ AnnotateAdapters.annotated_fq ],
-#                    ref_fasta  = ref_map['fasta'],
-#                    RG         = rg_consensus,
-#                    map_preset = "splice"
-#            }
+            scatter (a in zip([1, 2, 3, 4], [ C3POa.consensus1, C3POa.consensus2, C3POa.consensus3, C3POa.consensus4 ])) {
+                Int splint_num = a.left
+                File fq = a.right
+
+#                call Utils.FastaToSam as FastaToSam { input: fasta = C3POa.consensus }
+#                call AnnotateAdapters { input: bam = FastaToSam.output_bam }
+
+                String rg_subreads  = "@RG\\tID:~{SID}.subreads~{splint_num}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+                String rg_consensus = "@RG\\tID:~{SID}.consensus~{splint_num}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+
+                call AR.Minimap2 as AlignConsensus {
+                    input:
+                        reads      = [ fq ],
+                        ref_fasta  = ref_map['fasta'],
+                        RG         = rg_consensus,
+                        map_preset = "splice"
+                }
+            }
 #
 #            call CountNumPasses { input: fastq = C3POa.subreads }
 #
