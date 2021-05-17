@@ -52,14 +52,14 @@ workflow ONT10x {
 
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
-        scatter (manifest_chunk in [ PartitionFastqManifest.manifest_chunks[0] ]) {
-            call AR.Minimap2 as AlignDebug {
-                input:
-                    reads      = read_lines(manifest_chunk),
-                    ref_fasta  = ref_map['fasta'],
-                    RG         = RG,
-                    map_preset = "splice"
-            }
+        scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
+#            call AR.Minimap2 as AlignDebug {
+#                input:
+#                    reads      = read_lines(manifest_chunk),
+#                    ref_fasta  = ref_map['fasta'],
+#                    RG         = RG,
+#                    map_preset = "splice"
+#            }
 
             call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
 
