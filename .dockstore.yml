@@ -80,3 +80,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/VerifyFingerprint.wdl
   testParameterFiles:
+- name: CallTranslocator
+  subclass: wdl
+  primaryDescriptorPath: /wdl/CallTranslocator.wdl
+  testParameterFiles:
