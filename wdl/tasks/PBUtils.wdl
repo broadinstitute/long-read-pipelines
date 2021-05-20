@@ -150,8 +150,9 @@ task CCS {
     input {
         File subreads
 
+        Boolean all       = true    # see https://ccs.how/faq/mode-all.html for details
+        Boolean kinetics  = false   # see https://ccs.how/faq/sqiie.html for details
         Boolean by_strand = false
-        Int cpus = 4
 
         RuntimeAttr? runtime_attr_override
     }
@@ -162,15 +163,18 @@ task CCS {
     command <<<
         set -euxo pipefail
 
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
         # Move the file from the UUID share to the current folder.
         # This will remove the UUID from the file path and allow call caching to work.
         infile=$( basename ~{subreads} )
         mv ~{subreads} $infile
 
         # Run CCS:
-        ccs --all --all-kinetics --subread-fallback ~{if by_strand then "--by-strand" else ""} \
-            --num-threads ~{cpus} \
-            --log-level INFO \
+        ccs ~{true='--all' false='' all} \
+            ~{true='--all-kinetics --subread-fallback' false='' kinetics} \
+            ~{true='--by-strand' false='' by_strand} \
+            --num-threads $num_core \
             --log-file ~{bn}.ccs.log \
             --stderr-json-log \
             --suppress-reports \
@@ -197,7 +201,50 @@ task CCS {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.32"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ExtractHifiReads {
+    input {
+        File reads
+        String prefix = "hifi"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 3*ceil(size(reads, "GB"))
+    String bn = basename(reads, ".bam")
+
+    command <<<
+        set -euxo pipefail
+
+        extracthifi ~{reads} ~{prefix}.bam
+    >>>
+
+    output {
+        File hifi_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.32"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
