@@ -64,7 +64,7 @@ workflow PBFlowcell {
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
         if (experiment_type != "CLR") {
             if (!GetRunInfo.is_corrected) { call PB.CCS { input: subreads = unmapped_shard } }
-            call PBUtils.ExtractHifiReads { input: bam = select_first([CCS.consensus, unmapped_shard]) }
+            call PB.ExtractHifiReads { input: bam = select_first([CCS.consensus, unmapped_shard]) }
         }
 
         File unaligned_bam = select_first([ExtractHifiReads.hifi_bam, unmapped_shard])

@@ -217,19 +217,19 @@ task CCS {
 
 task ExtractHifiReads {
     input {
-        File reads
+        File bam
         String prefix = "hifi"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*ceil(size(reads, "GB"))
-    String bn = basename(reads, ".bam")
+    Int disk_size = 3*ceil(size(bam, "GB"))
+    String bn = basename(bam, ".bam")
 
     command <<<
         set -euxo pipefail
 
-        extracthifi ~{reads} ~{prefix}.bam
+        extracthifi ~{bam} ~{prefix}.bam
     >>>
 
     output {

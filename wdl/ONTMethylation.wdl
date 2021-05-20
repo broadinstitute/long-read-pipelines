@@ -14,27 +14,25 @@ workflow ONTMethylation {
         File variants
         File variants_tbi
 
-        File per_read_modified_base_calls_db = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModifiedBaseCallDBs/megalodon_merge_mods_results/per_read_modified_base_calls.db"
-        File per_read_variant_calls_db = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVariantDBs/megalodon_merge_vars_results/per_read_variant_calls.db"
+#        File per_read_modified_base_calls_db = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModifiedBaseCallDBs/megalodon_merge_mods_results/per_read_modified_base_calls.db"
+#        File per_read_variant_calls_db = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVariantDBs/megalodon_merge_vars_results/per_read_variant_calls.db"
+#
+#        File mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeMappings/cacheCopy/out.bam"
+#        File mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeMappings/cacheCopy/out.bam.bai"
+#        File mod_mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModMappings/cacheCopy/out.bam"
+#        File mod_mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModMappings/cacheCopy/out.bam.bai"
+#        File var_mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVarMappings/cacheCopy/out.bam"
+#        File var_mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVarMappings/cacheCopy/out.bam.bai"
 
-        File mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeMappings/cacheCopy/out.bam"
-        File mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeMappings/cacheCopy/out.bam.bai"
-        File mod_mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModMappings/cacheCopy/out.bam"
-        File mod_mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeModMappings/cacheCopy/out.bam.bai"
-        File var_mappings_bam = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVarMappings/cacheCopy/out.bam"
-        File var_mappings_bai = "gs://broad-dsde-methods-long-reads-intermediate/ONTMethylation/b3d18e11-3145-4428-978a-c6ec523cb5e2/call-MergeVarMappings/cacheCopy/out.bam.bai"
+#        String prefix
 
-        #String prefix
-
-        #String gcs_out_root_dir
+#        String gcs_out_root_dir
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
 #    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTMethylation/~{prefix}"
 
-#    call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ 'fast5' ] }
-#
 #    scatter (fast5_file in ListFilesOfType.files) {
 #        call Megalodon {
 #            input:
@@ -87,43 +85,43 @@ workflow ONTMethylation {
 #            has_header = true,
 #            out = "sequencing_summary.txt"
 #    }
-
-    call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
-    call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
-
-    call Utils.MakeChrIntervalList {
-        input:
-            ref_dict = ref_map['dict'],
-            filter = ['GL', 'JH']
-    }
-
-    scatter (c in MakeChrIntervalList.chrs) {
-        String contig = c[0]
-
-        call PhaseVariants {
-             input:
-                variants = IndexVariants.vcf_gz,
-                variants_tbi = IndexVariants.vcf_tbi,
-                variant_mappings_bam = var_mappings_bam,
-                variant_mappings_bai = var_mappings_bai,
-                chr = contig
-        }
-    }
-
-    call VariantUtils.MergePerChrCalls {
-        input:
-            vcfs = PhaseVariants.phased_vcf_gz,
-            ref_dict = ref_map['dict'],
-            prefix = "phased.merged"
-    }
-
-    call Haplotag {
-        input:
-            variants_phased = MergePerChrCalls.vcf,
-            variants_phased_tbi = MergePerChrCalls.tbi,
-            variant_mappings_bam = var_mappings_bam,
-            variant_mappings_bai = var_mappings_bai
-    }
+#
+#    call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
+#    call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
+#
+#    call Utils.MakeChrIntervalList {
+#        input:
+#            ref_dict = ref_map['dict'],
+#            filter = ['GL', 'JH']
+#    }
+#
+#    scatter (c in MakeChrIntervalList.chrs) {
+#        String contig = c[0]
+#
+#        call PhaseVariants {
+#             input:
+#                variants = IndexVariants.vcf_gz,
+#                variants_tbi = IndexVariants.vcf_tbi,
+#                variant_mappings_bam = var_mappings_bam,
+#                variant_mappings_bai = var_mappings_bai,
+#                chr = contig
+#        }
+#    }
+#
+#    call VariantUtils.MergePerChrCalls {
+#        input:
+#            vcfs = PhaseVariants.phased_vcf_gz,
+#            ref_dict = ref_map['dict'],
+#            prefix = "phased.merged"
+#    }
+#
+#    call Haplotag {
+#        input:
+#            variants_phased = MergePerChrCalls.vcf,
+#            variants_phased_tbi = MergePerChrCalls.tbi,
+#            variant_mappings_bam = var_mappings_bam,
+#            variant_mappings_bai = var_mappings_bai
+#    }
 
     output {
         #String gcs_basecall_dir = Guppy.gcs_dir
