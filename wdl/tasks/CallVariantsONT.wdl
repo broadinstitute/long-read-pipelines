@@ -62,6 +62,14 @@ workflow CallVariants {
                 prefix            = prefix
         }
 
+        call PBSV.Call {
+            input:
+                svsigs        = [ Discover.svsig ],
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                prefix        = prefix
+        }
+
         call Sniffles.Sniffles {
             input:
                 bam    = bam,
@@ -81,12 +89,11 @@ workflow CallVariants {
         }
     }
 
-    call PBSV.Call {
+    call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
         input:
-            svsigs        = Discover.svsig,
-            ref_fasta     = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            prefix        = prefix
+            vcfs     = Call.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".pbsv"
     }
 
     call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
@@ -125,7 +132,7 @@ workflow CallVariants {
         File dvp_vcf = MergeDeepVariantVCFs.vcf
         File dvp_tbi = MergeDeepVariantVCFs.tbi
 
-        File pbsv_vcf = Call.vcf
+        File pbsv_vcf = MergePBSVVCFs.vcf
         File sniffles_vcf = MergeSnifflesVCFs.vcf
     }
 }

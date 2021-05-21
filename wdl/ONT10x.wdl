@@ -55,13 +55,13 @@ workflow ONT10x {
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
         scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
-            call AR.Minimap2 as AlignSubreads {
-                input:
-                    reads      = read_lines(manifest_chunk),
-                    ref_fasta  = ref_map['fasta'],
-                    RG         = rg_subreads,
-                    map_preset = "splice"
-            }
+#            call AR.Minimap2 as AlignSubreads {
+#                input:
+#                    reads      = read_lines(manifest_chunk),
+#                    ref_fasta  = ref_map['fasta'],
+#                    RG         = rg_subreads,
+#                    map_preset = "splice"
+#            }
 
             call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
 
@@ -83,7 +83,7 @@ workflow ONT10x {
                 }
             }
 
-            File align_subreads_bam = AlignSubreads.aligned_bam
+#            File align_subreads_bam = AlignSubreads.aligned_bam
 
             File align_consensus_bam1 = AlignConsensus.aligned_bam[0]
             File align_consensus_bam2 = AlignConsensus.aligned_bam[1]
@@ -108,7 +108,7 @@ workflow ONT10x {
 #
 #        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
 
-        call Utils.MergeBams as MergeSubreads { input: bams = align_subreads_bam, prefix = "~{participant_name}.subreads" }
+#        call Utils.MergeBams as MergeSubreads { input: bams = align_subreads_bam, prefix = "~{participant_name}.subreads" }
 
         call Utils.MergeBams as MergeConsensus1 { input: bams = align_consensus_bam1, prefix = "~{participant_name}.consensus1" }
         call Utils.MergeBams as MergeConsensus2 { input: bams = align_consensus_bam2, prefix = "~{participant_name}.consensus2" }
@@ -125,7 +125,7 @@ workflow ONT10x {
 #    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
 
     if (length(MergeConsensus1.merged_bam) > 1) {
-        call Utils.MergeBams as MergeAllSubreads { input: bams = MergeSubreads.merged_bam, prefix = "~{participant_name}.subreads" }
+#        call Utils.MergeBams as MergeAllSubreads { input: bams = MergeSubreads.merged_bam, prefix = "~{participant_name}.subreads" }
 
         call Utils.MergeBams as MergeAllConsensus1 { input: bams = MergeConsensus1.merged_bam, prefix = "~{participant_name}.consensus1" }
         call Utils.MergeBams as MergeAllConsensus2 { input: bams = MergeConsensus2.merged_bam, prefix = "~{participant_name}.consensus2" }
@@ -133,8 +133,8 @@ workflow ONT10x {
         call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, prefix = "~{participant_name}.consensus4" }
     }
 
-    File subreads_bam = select_first([MergeAllSubreads.merged_bam, MergeSubreads.merged_bam[0]])
-    File subreads_bai = select_first([MergeAllSubreads.merged_bai, MergeSubreads.merged_bai[0]])
+#    File subreads_bam = select_first([MergeAllSubreads.merged_bam, MergeSubreads.merged_bam[0]])
+#    File subreads_bai = select_first([MergeAllSubreads.merged_bai, MergeSubreads.merged_bai[0]])
 
     File consensus_bam1 = select_first([MergeAllConsensus1.merged_bam, MergeConsensus1.merged_bam[0]])
     File consensus_bai1 = select_first([MergeAllConsensus1.merged_bai, MergeConsensus1.merged_bai[0]])
@@ -177,8 +177,7 @@ workflow ONT10x {
 
     call FF.FinalizeToDir as FinalizeReads {
         input:
-            files = [ subreads_bam, subreads_bai,
-                      consensus_bam1, consensus_bai1,
+            files = [ consensus_bam1, consensus_bai1,
                       consensus_bam2, consensus_bai2,
                       consensus_bam3, consensus_bai3,
                       consensus_bam4, consensus_bai4
