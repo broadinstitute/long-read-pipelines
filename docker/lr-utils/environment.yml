@@ -4,20 +4,26 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - _libgcc_mutex=0.1=main
-  - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2020.10.14=0
-  - htslib=1.10.2=hd3b49d5_1
-  - krb5=1.18.2=h173b8e3_0
-  - libcurl=7.71.1=h20c2e04_1
-  - libdeflate=1.6=h516909a_0
-  - libedit=3.1.20191231=h14c3975_1
-  - libgcc-ng=9.1.0=hdf63c60_0
-  - libssh2=1.9.0=h1ba5d50_1
-  - libstdcxx-ng=9.1.0=hdf63c60_0
-  - ncurses=6.2=he6710b0_1
-  - openssl=1.1.1h=h7b6447c_0
-  - pbbam=1.6.0=h5b7e6e0_0
-  - samtools=1.10=h2e538c0_3
-  - xz=5.2.5=h7b6447c_0
-  - zlib=1.2.11=h7b6447c_3
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=1_gnu
+  - bzip2=1.0.8=h7f98852_4
+  - c-ares=1.17.1=h7f98852_1
+  - ca-certificates=2020.12.5=ha878542_0
+  - htslib=1.12=h9093b5e_1
+  - krb5=1.19.1=hcc1bbae_0
+  - libcurl=7.76.1=h2574ce0_2
+  - libdeflate=1.7=h7f98852_5
+  - libedit=3.1.20191231=he28a2e2_2
+  - libev=4.33=h516909a_1
+  - libgcc-ng=9.3.0=h2828fa1_19
+  - libgomp=9.3.0=h2828fa1_19
+  - libnghttp2=1.43.0=h812cca2_0
+  - libssh2=1.9.0=ha56f1ee_6
+  - libstdcxx-ng=9.3.0=h6de172a_19
+  - ncurses=6.2=h58526e2_4
+  - openssl=1.1.1k=h7f98852_0
+  - pbbam=1.6.0=h058f120_1
+  - samtools=1.12=h9aed4be_1
+  - tk=8.6.10=h21135ba_1
+  - xz=5.2.5=h516909a_1
+  - zlib=1.2.11=h516909a_1010

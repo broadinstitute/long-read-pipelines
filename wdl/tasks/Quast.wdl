@@ -21,7 +21,7 @@ task Quast {
         assemblies: "list of assemblies to evaluate"
     }
 
-    Int disk_size = ceil(size(ref, "GB") + size(assemblies, "GB"))
+    Int disk_size = ceil(1.1 * (size(ref, "GB") + size(assemblies, "GB")))
 
     command <<<
         set -x

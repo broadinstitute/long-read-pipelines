@@ -1,51 +1,55 @@
 version 1.0
 
-##########################################################################################
-# A workflow that runs Translocator
-##########################################################################################
+######################################################################################
+## A pipeline for running the Wtdbg2 assembler
+######################################################################################
 
 import "Structs.wdl"
 
-task Translocator {
+task Assemble {
     input {
-        File aligned_bam
-        File ref_fasta
-
+        File reads
+        String genome_size
         String prefix
-        Float? min_het_af = 0.2
+
+        Int? min_depth_edge = 3
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        aligned_bam: "sorted input BAM, preferably aligned with NGMLR or minimap2"
-        ref_fasta: "reference to which the BAM was aligned"
+        reads:           "Raw reads in either fa or fq format"
+        genome_size:     "Estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
+        prefix:          "Output file prefix"
 
-        prefix: "prefix for output"
-        min_het_af: "Minimum het allele frequency (default 0.2)"
+        min_depth_edge:  "Minimum read support for valid edges. Default is 3, can set to 2 for low sequence depth or 4 for very high sequence depth"
     }
 
-    Int disk_size = 2 * ceil(size([aligned_bam, ref_fasta], "GB"))
+    Int disk_size = 10 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        translocator -m ~{aligned_bam} -a ~{ref_fasta} -v ~{prefix}.translocator.vcf --min_het_af ~{min_het_af} --global_remap
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        wtdbg2 -t $num_core -x ont -g ~{genome_size} -e ~{min_depth_edge} -i ~{reads} -fo ~{prefix}
+        wtpoa-cns -t $num_core -i ~{prefix}.ctg.lay.gz -fo ~{prefix}.ctg.fa
     >>>
 
     output {
-        File vcf="~{prefix}.translocator.vcf"
+ #       File lay = "~{prefix}.ctg.lay.gz"
+        File fa = "~{prefix}.ctg.fa"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          3,
-        mem_gb:             60,
+        cpu_cores:          16,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:   1,
+        preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-translocator:0.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-wtdbg2:2.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
