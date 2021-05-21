@@ -39,6 +39,8 @@ workflow CallVariants {
         ref_fasta_fai:     "index accompanying the reference"
         ref_dict:          "sequence dictionary accompanying the reference"
 
+        prefix:            "prefix for output files"
+
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 

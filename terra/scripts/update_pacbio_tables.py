@@ -274,6 +274,8 @@ def delete_table(namespace, workspace, table_name):
     names = list(map(lambda e: e['name'], t_old))
     f = [fapi.delete_sample_set(namespace, workspace, name) for name in names]
 
+    return f
+
 
 def upload_table(namespace, workspace, table):
     # upload new samples
