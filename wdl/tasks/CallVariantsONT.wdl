@@ -26,6 +26,8 @@ workflow CallVariants {
         File ref_fasta_fai
         File ref_dict
 
+        String prefix
+
         File? tandem_repeat_bed
     }
 
@@ -39,8 +41,6 @@ workflow CallVariants {
 
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
-
-    String prefix = basename(bam, ".bam")
 
     call Utils.MakeChrIntervalList {
         input:

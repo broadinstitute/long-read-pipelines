@@ -56,6 +56,8 @@ workflow ONTWholeGenome {
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+
+                prefix = participant_name
         }
 
         String svdir = outdir + "/variants/sv"
