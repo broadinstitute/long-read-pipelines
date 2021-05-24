@@ -26,6 +26,6 @@ workflow Translocator {
     }
 
     output {
-        translocator_vcf = Translocator.vcf
+        File translocator_vcf = Translocator.vcf
     }
 }
