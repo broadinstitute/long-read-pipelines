@@ -17,5 +17,15 @@ workflow Translocator {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call Tr.Translocator {input: aligned_bam = aligned_bam, ref_fasta = ref_map['fasta'], prefix = prefix, min_het_af = min_het_af}
+    call Tr.Translocator as Translocator {
+        input:
+            aligned_bam = aligned_bam,
+            ref_fasta = ref_map['fasta'],
+            prefix = prefix,
+            min_het_af = min_het_af
+    }
+
+    output {
+        translocator_vcf = Translocator.vcf
+    }
 }
