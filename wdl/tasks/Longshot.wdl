@@ -5,8 +5,8 @@ import "Structs.wdl"
 # performs Longshot algo on one particular chromosome
 task Longshot {
     input {
-        String bam
-        String bai
+        File bam
+        File bai
 
         File ref_fasta
         File ref_fasta_fai
@@ -23,12 +23,13 @@ task Longshot {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
-        samtools index ~{chr}.bam
-
         touch ~{prefix}.longshot.~{chr}.vcf
-        longshot -F -r ~{chr} --bam ~{chr}.bam --ref ~{ref_fasta} --out ~{prefix}.longshot.~{chr}.vcf
+        longshot \
+            -F \
+            -r ~{chr} \
+            --bam ~{bam} \
+            --ref ~{ref_fasta} \
+            --out ~{prefix}.longshot.~{chr}.vcf
     >>>
 
     output {

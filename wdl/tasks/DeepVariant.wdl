@@ -87,8 +87,8 @@ task DeepVariant {
 
 task PEPPER {
     input {
-        String bam
-        String bai
+        File bam
+        File bai
 
         File ref_fasta
         File ref_fasta_fai
@@ -121,12 +121,8 @@ task PEPPER {
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
 
-        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
-        samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
-        samtools index ~{chr}.bam
-
         run_pepper_margin_deepvariant call_variant \
-            -b "~{chr}.bam" \
+            -b "~{bam}" \
             -f "~{ref_fasta}" \
             -o ./ \
             -p "~{prefix}" \

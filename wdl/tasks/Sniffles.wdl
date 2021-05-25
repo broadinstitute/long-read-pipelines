@@ -5,8 +5,8 @@ import "Structs.wdl"
 # Given BAM, call SVs using Sniffles
 task Sniffles {
     input {
-        String bam
-        String bai
+        File bam
+        File bai
 
         Int min_read_support = 2
         Int min_read_length = 1000
@@ -36,12 +36,8 @@ task Sniffles {
     command <<<
         set -x
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
-        samtools index ~{chr}.bam
-
         sniffles -t ~{cpus} \
-                 -m ~{chr}.bam \
+                 -m ~{bam} \
                  -v ~{prefix}.~{chr}.sniffles.pre.vcf \
                  -s ~{min_read_support} \
                  -r ~{min_read_length} \

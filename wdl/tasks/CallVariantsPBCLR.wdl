@@ -53,10 +53,17 @@ workflow CallVariants {
     scatter (c in MakeChrIntervalList.chrs) {
         String contig = c[0]
 
+        call Utils.SubsetBam {
+             input:
+                 bam = bam,
+                 bai = bai,
+                 locus = contig
+        }
+
         call PBSV.Discover {
             input:
-                bam               = bam,
-                bai               = bai,
+                bam               = SubsetBam.subset_bam,
+                bai               = SubsetBam.subset_bai,
                 ref_fasta         = ref_fasta,
                 ref_fasta_fai     = ref_fasta_fai,
                 tandem_repeat_bed = tandem_repeat_bed,
@@ -74,16 +81,16 @@ workflow CallVariants {
 
         call Sniffles.Sniffles {
             input:
-                bam    = bam,
-                bai    = bai,
+                bam    = SubsetBam.subset_bam,
+                bai    = SubsetBam.subset_bai,
                 chr    = contig,
                 prefix = prefix
         }
 
         call Longshot.Longshot {
             input:
-                bam           = bam,
-                bai           = bai,
+                bam           = SubsetBam.subset_bam,
+                bai           = SubsetBam.subset_bai,
                 ref_fasta     = ref_fasta,
                 ref_fasta_fai = ref_fasta_fai,
                 chr           = contig

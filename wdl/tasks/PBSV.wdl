@@ -10,8 +10,8 @@ import "Structs.wdl"
 
 task Discover {
     input {
-        String bam
-        String bai
+        File bam
+        File bai
 
         File ref_fasta
         File ref_fasta_fai
@@ -40,13 +40,9 @@ task Discover {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
-        samtools index ~{chr}.bam
-
         pbsv discover \
-            ~{if defined(tandem_repeat_bed) then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
-            ~{chr}.bam \
+            ~{if defined(tandem_repeat_bed) && tandem_repeat_bed != "NA" then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
+            ~{bam} \
             ~{prefix}.~{chr}.svsig.gz
     >>>
 
