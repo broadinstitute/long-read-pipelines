@@ -31,7 +31,7 @@ task Sniffles {
     }
 
     Int cpus = 8
-    Int disk_size = ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size([bam, bai], "GB"))
 
     command <<<
         set -x

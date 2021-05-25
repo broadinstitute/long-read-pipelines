@@ -119,7 +119,7 @@ task PEPPER {
         set -x
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
         run_pepper_margin_deepvariant call_variant \
             -b "~{bam}" \
