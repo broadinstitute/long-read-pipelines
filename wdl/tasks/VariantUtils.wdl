@@ -14,7 +14,7 @@ task MergePerChrCalls {
     Int disk_size = 2*ceil(size(vcfs, "GB")) + 1
 
     command <<<
-        set -x
+        set -euxo pipefail
 
         VCF_WITH_HEADER=~{vcfs[0]}
         GREPCMD="grep"

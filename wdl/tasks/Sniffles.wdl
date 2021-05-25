@@ -47,7 +47,10 @@ task Sniffles {
 
         touch ~{prefix}.~{chr}.sniffles.pre.vcf
 
-        cat ~{prefix}.~{chr}.sniffles.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.~{chr}.sniffles.vcf
+        cat ~{prefix}.~{chr}.sniffles.pre.vcf | \
+            grep -v -e '##fileDate' | \
+            awk '{ if ($1 ~ "^#" || $7 == "PASS") print $0 }' \
+            > ~{prefix}.~{chr}.sniffles.vcf
     >>>
 
     output {
