@@ -50,7 +50,7 @@ workflow CallVariants {
             filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
     }
 
-    scatter (c in [ MakeChrIntervalList.chrs[0] ]) {
+    scatter (c in MakeChrIntervalList.chrs) {
         String contig = c[0]
 
         call Utils.SubsetBam {
