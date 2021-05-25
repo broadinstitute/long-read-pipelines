@@ -35,7 +35,7 @@ task Discover {
         prefix:            "prefix for output"
     }
 
-    Int disk_size = ceil(size(bam, "GB"))
+    Int disk_size = 2*(ceil(size(select_all([bam, bai, ref_fasta, ref_fasta_fai, tandem_repeat_bed]), "GB")) + 1)
 
     command <<<
         set -euxo pipefail
