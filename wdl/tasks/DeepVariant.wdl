@@ -155,7 +155,7 @@ task PEPPER {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          12,
-        mem_gb:             64,
+        mem_gb:             72,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  2,

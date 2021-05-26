@@ -990,7 +990,7 @@ task MergeBams {
 # A utility to subset a BAM to specifed loci
 task SubsetBam {
     input {
-        String bam
+        File bam
         File bai
         String locus
         String prefix = "subset"
@@ -999,7 +999,10 @@ task SubsetBam {
     }
 
     parameter_meta {
-        bam:    "bam to subset"
+        bam: {
+            description: "bam to subset",
+            localization_optional: true
+        }
         bai:    "index for bam file"
         locus:  "genomic locus to select"
         prefix: "prefix for output bam and bai file names"
