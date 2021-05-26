@@ -13,36 +13,42 @@ workflow Canu {
     input {
         File reads
 
-        Int genome_size
-        Float correct_error_rate
-        Float trim_error_rate
-        Float assemble_error_rate
+        String genome_size
+#        Float? error_rate_override
 
         String prefix
+        String preset
     }
+
+#    if (preset=="nanopore") { default_error_rate = 0.144 }
+ #   if (preset=="pacbio") { default_error_rate = 0.045 }
+#    Float error_rate = select_first([error_rate_override, default_error_rate])
 
     call Correct {
         input:
             reads = reads,
             genome_size = genome_size,
-            error_rate = correct_error_rate,
-            prefix = prefix
+ #          error_rate = error_rate,
+            prefix = prefix,
+            preset = preset,
     }
 
     call Trim {
         input:
             genome_size = genome_size,
             corrected_reads = Correct.corrected_reads,
-            error_rate = trim_error_rate,
+  #          error_rate = error_rate,
             prefix = prefix,
+            preset = preset
     }
 
     call Assemble {
         input:
             genome_size = genome_size,
             trimmed_reads = Trim.trimmed_reads,
-            error_rate = assemble_error_rate,
+       #     error_rate = error_rate,
             prefix = prefix,
+            preset = preset
     }
 
     output {
@@ -54,18 +60,19 @@ workflow Canu {
 task Correct {
     input {
         File reads
-        Int genome_size
-        Float error_rate
+        String genome_size
+    #    Float error_rate
         String prefix
+        String preset
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         reads:        "reads to be canu-corrected"
-        genome_size:  "estimate on genome size (parameter to canu's 'genomeSize')"
-        error_rate:   "parameter to canu's 'correctedErrorRate'"
+        genome_size:  "estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
         prefix:       "prefix to output files"
+        preset:       "data type preset: nanopore or pacbio"
     }
 
     Int disk_size = 150 * ceil(size(reads, "GB"))
@@ -75,10 +82,9 @@ task Correct {
 
         canu -correct \
              -p ~{prefix} -d canu_correct_output \
-             genomeSize=~{genome_size}m \
+             genomeSize=~{genome_size} \
              corMaxEvidenceErate=0.15 \
-             correctedErrorRate=~{error_rate} \
-             -nanopore \
+             -~{preset} \
              ~{reads}
     >>>
 
@@ -112,18 +118,19 @@ task Correct {
 task Trim {
     input {
         File corrected_reads
-        Int genome_size
-        Float error_rate
+        String genome_size
+ #       Float error_rate
         String prefix
+        String preset
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         corrected_reads:   "reads that have been canu-corrected"
-        genome_size:       "estimate on genome size (parameter to canu's 'genomeSize')"
-        corrected_reads:   "parameter to canu's 'correctedErrorRate'"
+        genome_size:       "estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
         prefix:            "prefix to output files"
+        preset:            "data type preset: nanopore or pacbio"
     }
 
     Int disk_size = 50 * ceil(size(corrected_reads, "GB"))
@@ -133,9 +140,8 @@ task Trim {
 
        canu -trim \
             -p ~{prefix} -d canu_trim_output \
-            genomeSize=~{genome_size}m \
-            correctedErrorRate=~{error_rate} \
-            -nanopore-corrected \
+            genomeSize=~{genome_size} \
+            -corrected -~{preset}  \
             ~{corrected_reads}
     >>>
 
@@ -168,19 +174,21 @@ task Trim {
 # performs assembly on corrected, then trimmmed reads
 task Assemble {
     input {
-        Int genome_size
+        String genome_size
         File trimmed_reads
-        Float error_rate
+#        Float error_rate
         String prefix
+        String preset
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         trimmed_reads:  "reads that have been canu-corrected-trimmed"
-        genome_size:    "estimate on genome size (parameter to canu's 'genomeSize')"
-        error_rate:     "parameter to canu's 'correctedErrorRate'"
+        genome_size:    "estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
+ #       error_rate:     "parameter to canu's 'correctedErrorRate'"
         prefix:         "prefix to output files"
+        preset:         "data type preset: nanopore or pacbio"
     }
 
     Int disk_size = 50 * ceil(size(trimmed_reads, "GB"))
@@ -190,9 +198,9 @@ task Assemble {
 
         canu -assemble \
              -p ~{prefix} -d canu_assemble_output \
-             genomeSize=~{genome_size}m \
-             correctedErrorRate=~{error_rate} \
-             -nanopore-corrected \
+             genomeSize=~{genome_size} \
+             -corrected -trimmed \
+             -~{preset} \
              ~{trimmed_reads}
     >>>
 

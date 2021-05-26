@@ -84,3 +84,11 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/CallTranslocator.wdl
   testParameterFiles:
+- name: LocalAssembly
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LocalAssembly.wdl
+  testParameterFiles:
+- name: LocalAssemblyCanu
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LocalAssemblyCanu.wdl
+  testParameterFiles:

@@ -21,12 +21,14 @@ task Quast {
         assemblies: "list of assemblies to evaluate"
     }
 
-    Int disk_size = ceil(1.1 * (size(ref, "GB") + size(assemblies, "GB")))
+    Int disk_size = ceil(2.2 * (size(ref, "GB") + size(assemblies, "GB")))
 
     command <<<
         set -x
 
-        quast --no-icarus -r ~{ref}  ~{sep=' ' assemblies}
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        quast --no-icarus --threads ${num_core} -r ~{ref}  ~{sep=' ' assemblies}
 
         cat quast_results/latest/report.txt | \
             grep -v -e '^All statistics' -e '^$' | \
@@ -46,7 +48,7 @@ task Quast {
     ###################
     RuntimeAttr default_attr = object {
         cpu_cores:             2,
-        mem_gb:                4,
+        mem_gb:                40,
         disk_gb:               disk_size,
         boot_disk_gb:          10,
         preemptible_tries:     0,

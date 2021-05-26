@@ -1,12 +1,12 @@
 version 1.0
 
 ######################################################################################
-## A pipeline for running the Wtdbg2 assembler
+## A pipeline for running the Winnowmap aligner
 ######################################################################################
 
 import "Structs.wdl"
 
-task Assemble {
+task Align {
     input {
         File reads
         String genome_size
@@ -51,7 +51,7 @@ task Assemble {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-wtdbg2:2.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-winnowmap:2.03"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

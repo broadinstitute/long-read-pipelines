@@ -1,9 +1,7 @@
 version 1.0
 
 import "tasks/Utils.wdl" as Utils
-#import "tasks/Structs.wdl"
-#import "tasks/AlignReads.wdl"
-import "tasks/Wtdbg.wdl" as Wtdbg
+import "tasks/Canu.wdl" as Canu
 import "tasks/Quast.wdl" as Quast
 import "tasks/CallAssemblyVariants.wdl" as AV
 
@@ -15,22 +13,22 @@ workflow LocalAssembly {
         File   aligned_bai
         String prefix
         String preset
-#        Boolean? add_unaligned_reads = false
-#        Boolean? run_quast = false
+#        Boolean add_unaligned_reads = false
+        Boolean run_quast = false
 
         File ref_map_file
     }
 
     parameter_meta {
         loci:          "Loci to assemble. At least one is required. Reads from all loci will be merged for assembly. Format: [\"chr1:1000-2000\", \"chr1:5000-10000\"]"
-        region_size:   "Estimated size of region to assemble. Can use k/m/g suffixes (e.g. 3g for the human genome)"
+        region_size:   "Estimated size of region to assemble, in mb"
         aligned_bam:   "aligned file"
         aligned_bai:   "index file"
         prefix:        "prefix for output files"
-        preset:        "data preset (\"rs\" for PacBio RSII, \"sq\" for PacBio Sequel, \"ccs\" for PacBio CCS reads and \"ont\" for Oxford Nanopore)"
+        preset:        "data preset (pacbio or nanopore)"
 
 #        add_unaligned_reads: "set to true to include unaligned reads in the assembly (default: false)"
-#        run_quast:           "set to true to run Quast on the assembly (default: false)"
+        run_quast:           "set to true to run Quast on the assembly (default: false)"
 
         ref_map_file:  "table indicating reference sequence and auxillary file locations"
     }
@@ -62,7 +60,8 @@ workflow LocalAssembly {
             prefix = prefix
     }
 
-    call Wtdbg.Assemble {
+    ######## Call 3 stages of Canu #########
+    call Canu.Correct as Correct {
         input:
             reads = BamToFastq.reads_fq,
             genome_size = region_size,
@@ -70,22 +69,37 @@ workflow LocalAssembly {
             preset = preset
     }
 
-    Boolean run_quast=false
+    call Canu.Trim as Trim {
+        input:
+            genome_size = region_size,
+            corrected_reads = Correct.corrected_reads,
+            prefix = prefix,
+            preset = preset
+    }
+
+    call Canu.Assemble as Assemble {
+        input:
+            genome_size = region_size,
+            trimmed_reads = Trim.trimmed_reads,
+            prefix = prefix,
+            preset = preset
+    }
+    ######## Done calling Canu #########
 
     if (run_quast) {
         call Quast.Quast {
             input:
                 ref = ref_map['fasta'],
-                assemblies = [ Assemble.fa ]
+                assemblies = [ Assemble.canu_contigs_fasta ]
         }
     }
 
     call AV.CallAssemblyVariants {
         input:
-            asm_fasta = Assemble.fa,
+            asm_fasta = Assemble.canu_contigs_fasta,
             ref_fasta = ref_map['fasta'],
             participant_name = prefix,
-            prefix = prefix + ".wtdbg"
+            prefix = prefix + ".canu"
     }
 
 #    output {
