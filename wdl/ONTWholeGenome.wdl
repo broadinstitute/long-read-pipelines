@@ -84,9 +84,9 @@ workflow ONTWholeGenome {
         File merged_bam = FinalizeBam.gcs_path
         File merged_bai = FinalizeBai.gcs_path
 
-#        File? pbsv_vcf = FinalizePBSV.gcs_path
-#        File? sniffles_vcf = FinalizeSniffles.gcs_path
-#
+        File? pbsv_vcf = FinalizePBSV.gcs_path
+        File? sniffles_vcf = FinalizeSniffles.gcs_path
+
 #        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
 #        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
     }
