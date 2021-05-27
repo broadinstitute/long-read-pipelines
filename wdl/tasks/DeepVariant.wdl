@@ -158,8 +158,8 @@ task PEPPER {
         mem_gb:             72,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
-        preemptible_tries:  2,
-        max_retries:        1,
+        preemptible_tries:  0,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-dvpepper:r0.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

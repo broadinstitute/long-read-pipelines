@@ -11,6 +11,15 @@ task FinalizeToFile {
         RuntimeAttr? runtime_attr_override
     }
 
+    parameter_meta {
+        file: {
+            description: "file to finalize",
+            localization_optional: true
+        }
+        outdir: "directory to which files should be uploaded"
+        name:   "name to set for uploaded file"
+    }
+
     String gcs_output_dir = sub(outdir, "/+$", "")
     String gcs_output_file = gcs_output_dir + "/" + select_first([name, basename(file)])
 
@@ -52,6 +61,14 @@ task FinalizeToDir {
         String outdir
 
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        files: {
+            description: "files to finalize",
+            localization_optional: true
+        }
+        outdir: "directory to which files should be uploaded"
     }
 
     String gcs_output_dir = sub(outdir, "/+$", "")
