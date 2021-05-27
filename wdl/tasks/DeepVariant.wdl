@@ -116,7 +116,9 @@ task PEPPER {
 
     command <<<
         # example from https://github.com/kishwarshafin/pepper/blob/r0.4/docs/pipeline_docker/ONT_variant_calling.md
-        set -x
+        set -euxo pipefail
+
+        touch ~{bai}
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
