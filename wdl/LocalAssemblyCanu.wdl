@@ -94,7 +94,7 @@ workflow LocalAssembly {
         }
     }
 
-    call AV.CallAssemblyVariants {
+    call AV.CallAssemblyVariants as CallAssemblyVariants {
         input:
             asm_fasta = Assemble.canu_contigs_fasta,
             ref_fasta = ref_map['fasta'],
@@ -102,8 +102,10 @@ workflow LocalAssembly {
             prefix = prefix + ".canu"
     }
 
-#    output {
-#        File local_bam = subset_bam
-#        File asm_wtdbg_fa = Assemble.fa
-#    }
+    output {
+        File local_bam = subset_bam
+        File canu_fa = Assemble.canu_contigs_fasta
+        File variants = CallAssemblyVariants.variants
+        File paf_aln = CallAssemblyVariants.paf
+    }
 }

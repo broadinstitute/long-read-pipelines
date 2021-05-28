@@ -80,7 +80,7 @@ workflow LocalAssembly {
         }
     }
 
-    call AV.CallAssemblyVariants {
+    call AV.CallAssemblyVariants as CallAssemblyVariants {
         input:
             asm_fasta = Assemble.fa,
             ref_fasta = ref_map['fasta'],
@@ -88,8 +88,9 @@ workflow LocalAssembly {
             prefix = prefix + ".wtdbg"
     }
 
-#    output {
-#        File local_bam = subset_bam
-#        File asm_wtdbg_fa = Assemble.fa
-#    }
+    output {
+        File local_bam = subset_bam
+        File asm_wtdbg_fa = Assemble.fa
+        File variants = CallAssemblyVariants.variants
+    }
 }
