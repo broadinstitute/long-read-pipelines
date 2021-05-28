@@ -105,7 +105,7 @@ workflow LocalAssembly {
     output {
         File local_bam = subset_bam
         File canu_fa = Assemble.canu_contigs_fasta
-        File variants = CallAssemblyVariants.variants
+        File variants = CallAssemblyVariants.paftools_vcf
         File paf_aln = CallAssemblyVariants.paf
     }
 }

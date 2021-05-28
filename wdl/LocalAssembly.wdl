@@ -91,6 +91,6 @@ workflow LocalAssembly {
     output {
         File local_bam = subset_bam
         File asm_wtdbg_fa = Assemble.fa
-        File variants = CallAssemblyVariants.variants
+        File variants = CallAssemblyVariants.paftools_vcf
     }
 }
