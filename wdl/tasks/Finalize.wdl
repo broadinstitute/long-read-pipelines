@@ -4,7 +4,7 @@ import "Structs.wdl"
 
 task FinalizeToFile {
     input {
-        String file
+        File file
         String outdir
         String? name
 
@@ -57,7 +57,7 @@ task FinalizeToFile {
 
 task FinalizeToDir {
     input {
-        Array[String] files
+        Array[File] files
         String outdir
 
         RuntimeAttr? runtime_attr_override
