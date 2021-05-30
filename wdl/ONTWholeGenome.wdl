@@ -20,6 +20,7 @@ workflow ONTWholeGenome {
         String participant_name
 
         Boolean call_variants = true
+        File? sites_vcf
 
         String gcs_out_root_dir
     }
@@ -56,6 +57,8 @@ workflow ONTWholeGenome {
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+
+                sites_vcf         = sites_vcf,
 
                 prefix = participant_name
         }
