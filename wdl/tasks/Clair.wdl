@@ -60,17 +60,17 @@ task Clair {
     >>>
 
     output {
-        # save both VCF and gVCF
-        File phased_vcf = "~{prefix}.phased.vcf.gz"
-        File phased_vcf_tbi = "~{prefix}.phased.vcf.gz.tbi"
-
-        File vcf = "~{prefix}.vcf.gz"
-        File vcf_tbi = "~{prefix}.vcf.gz.tbi"
-        File gvcf = "~{prefix}.g.vcf.gz"
-        File gvcf_tbi = "~{prefix}.g.vcf.gz.tbi"
-
-        File report = "~{prefix}.visual_report.html"
-        File phaseset_bed = "~{prefix}.phaseset.bed"
+#        # save both VCF and gVCF
+#        File phased_vcf = "~{prefix}.phased.vcf.gz"
+#        File phased_vcf_tbi = "~{prefix}.phased.vcf.gz.tbi"
+#
+#        File vcf = "~{prefix}.vcf.gz"
+#        File vcf_tbi = "~{prefix}.vcf.gz.tbi"
+#        File gvcf = "~{prefix}.g.vcf.gz"
+#        File gvcf_tbi = "~{prefix}.g.vcf.gz.tbi"
+#
+#        File report = "~{prefix}.visual_report.html"
+#        File phaseset_bed = "~{prefix}.phaseset.bed"
     }
 
     #########################
