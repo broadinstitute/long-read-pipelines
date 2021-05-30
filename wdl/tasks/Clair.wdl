@@ -30,8 +30,11 @@ task Clair {
         ref_fasta:       "reference to which the BAM was aligned to"
         ref_fasta_fai:   "index accompanying the reference"
 
-        sites_vcf:       { description: "sites VCF", localization_optional: false }
-        sites_vcf_tbi:   { description: "sites VCF index", localization_optional: false }
+        sites_vcf:       "sites VCF"
+        sites_vcf_tbi:   "sites VCF index"
+
+#        sites_vcf:       { description: "sites VCF", localization_optional: false }
+#        sites_vcf_tbi:   { description: "sites VCF index", localization_optional: false }
 
         chr:             "chr on which to call variants"
         preset:          "calling preset (CCS, ONT)"
@@ -39,7 +42,6 @@ task Clair {
 
     Int disk_size = 2*ceil(size(select_all([bam, bai, ref_fasta, ref_fasta_fai, sites_vcf]), "GB"))
     String platform = if preset == "CCS" then "hifi" else "ont"
-    String vcf_fn = if defined(sites_vcf) then "--vcf_fn=" + select_first([sites_vcf]) else ""
 
     command <<<
         # example from https://github.com/HKU-BAL/Clair3#option-1--docker-pre-built-image
@@ -50,8 +52,9 @@ task Clair {
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
-        /opt/bin/run_clair3.sh \
-            --bam_fn=~{bam} --ref_fn=~{ref_fasta} ~{vcf_fn} \
+        /opt/bin/run_clair3.sh ~{true='--vcf_fn=' false='' defined(sites_vcf)}~{select_first([sites_vcf, ""])} \
+            --bam_fn=~{bam} \
+            --ref_fn=~{ref_fasta} \
             --threads=${num_core} \
             --platform=~{platform} \
             --model_path="/opt/models/~{platform}" \
