@@ -30,6 +30,9 @@ task Clair {
         ref_fasta:       "reference to which the BAM was aligned to"
         ref_fasta_fai:   "index accompanying the reference"
 
+        sites_vcf:       { description: "sites VCF", localization_optional: false }
+        sites_vcf_tbi:   { description: "sites VCF index", localization_optional: false }
+
         chr:             "chr on which to call variants"
         preset:          "calling preset (CCS, ONT)"
     }
