@@ -21,6 +21,7 @@ workflow ONTWholeGenome {
 
         Boolean call_variants = true
         File? sites_vcf
+        File? sites_vcf_tbi
 
         String gcs_out_root_dir
     }
@@ -59,6 +60,7 @@ workflow ONTWholeGenome {
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
 
                 sites_vcf         = sites_vcf,
+                sites_vcf_tbi     = sites_vcf_tbi,
 
                 prefix = participant_name
         }

@@ -15,6 +15,7 @@ task Clair {
         File ref_fasta_fai
 
         File? sites_vcf
+        File? sites_vcf_tbi
 
         String chr
         String preset

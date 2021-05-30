@@ -28,6 +28,7 @@ workflow CallVariants {
         File ref_dict
 
         File? sites_vcf
+        File? sites_vcf_tbi
 
         String prefix
 
@@ -110,6 +111,7 @@ workflow CallVariants {
                     ref_fasta     = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
                     sites_vcf     = sites_vcf,
+                    sites_vcf_tbi = sites_vcf_tbi,
                     chr           = contig,
                     preset        = "ONT"
             }
