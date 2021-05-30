@@ -123,8 +123,14 @@ task PEPPER {
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
+        samtools view --no-PG -H ~{bam} | sed 's/\tPU:.\+//g' > header.txt
+        samtools reheader -P header.txt ~{bam} > fixed.bam
+        samtools index fixed.bam
+
+        samtools view -H fixed.bam
+
         run_pepper_margin_deepvariant call_variant \
-            -b "~{bam}" \
+            -b "fixed.bam" \
             -f "~{ref_fasta}" \
             -o ./ \
             -p "~{prefix}" \
@@ -163,6 +169,7 @@ task PEPPER {
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "kishwars/pepper_deepvariant:r0.4.1"
+        #docker:             "us.gcr.io/broad-dsp-lrma/lr-dvpepper:r0.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
