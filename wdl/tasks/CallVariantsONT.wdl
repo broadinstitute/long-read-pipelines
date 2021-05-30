@@ -102,7 +102,7 @@ workflow CallVariants {
 #            }
 #        }
 
-        if (contig == "chr22") {
+        if (contig == "19") {
             call Clair.Clair {
                 input:
                     bam           = SubsetBam.subset_bam,
