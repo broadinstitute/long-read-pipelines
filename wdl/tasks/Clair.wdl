@@ -82,8 +82,7 @@ task Clair {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "kishwars/pepper_deepvariant:r0.4.1"
-        #docker:             "us.gcr.io/broad-dsp-lrma/lr-dvpepper:r0.4.1"
+        docker:             "hkubal/clair3:v0.1-r2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -94,10 +93,5 @@ task Clair {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        gpuType:                "nvidia-tesla-p100"
-        gpuCount:               1
-        nvidiaDriverVersion:    "418.152.00"
-        zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
-        cpuPlatform:            "Intel Skylake"
     }
 }
