@@ -867,11 +867,16 @@ task MergeFastqs {
     Int disk_size = 3 * ceil(size(fastqs, "GB"))
 
     command <<<
-        cat ~{sep=' ' fastqs} > ~{prefix}.fastq
+        FILE="~{fastqs[0]}"
+        if [[ "$FILE" =~ \.gz$ ]]; then
+            cat ~{sep=' ' fastqs} > ~{prefix}.fq.gz
+        else
+            cat ~{sep=' ' fastqs} | gzip > ~{prefix}.fq.gz
+        fi
     >>>
 
     output {
-        File merged_fastq = "~{prefix}.fastq"
+        File merged_fastq = "~{prefix}.fq.gz"
     }
 
     #########################

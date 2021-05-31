@@ -111,8 +111,8 @@ workflow ONTMethylation {
         input:
             variants_phased = MergePerChrCalls.vcf,
             variants_phased_tbi = MergePerChrCalls.tbi,
-            variant_mappings_bam = MergeVarMappings.var_mappings_bam,
-            variant_mappings_bai = MergeVarMappings.var_mappings_bai
+            variant_mappings_bam = MergeVarMappings.merged_bam,
+            variant_mappings_bai = MergeVarMappings.merged_bai
     }
 
     output {

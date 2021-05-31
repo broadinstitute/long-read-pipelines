@@ -76,7 +76,11 @@ workflow PBFlowcell {
                 sample_name = SM,
                 map_preset  = map_presets[experiment_type]
         }
+
+        call Utils.BamToFastq { input: bam = unaligned_bam, prefix = basename(unaligned_bam, ".bam") }
     }
+
+    call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = BamToFastq.reads_fq }
 
     # merge corrected, unaligned reads
     String cdir = outdir + "/reads/ccs/unaligned"
@@ -136,6 +140,14 @@ workflow PBFlowcell {
             name = basename(MergeAlignedReads.merged_bam) + ".pbi"
     }
 
+    String fqdir = outdir + "/" + if (experiment_type != "CLR") then "reads/ccs/unaligned" else "reads/subreads/unaligned"
+    call FF.FinalizeToFile as FinalizeFastq {
+        input:
+            outdir = fqdir,
+            file = MergeAllFastqs.merged_fastq,
+            name = basename(MergeAlignedReads.merged_bam, ".bam") + ".fq.gz"
+    }
+
     output {
         # Flowcell stats
         File? ccs_report = FinalizeCCSReport.gcs_path
@@ -152,6 +164,9 @@ workflow PBFlowcell {
 
         Float subread_read_length_mean = SummarizeSubreadsPBI.results['subread_mean']
         Float subread_read_length_N50 = SummarizeSubreadsPBI.results['subread_n50']
+
+        # Unaligned reads
+        File? fq = FinalizeFastq.gcs_path
 
         # Unaligned BAM file
         File? ccs_bam = FinalizeCCSUnalignedBam.gcs_path
