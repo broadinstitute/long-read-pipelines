@@ -92,14 +92,22 @@ workflow ONT10x {
             File align_consensus_bam3 = AlignConsensus.aligned_bam[2]
             File align_consensus_bam4 = AlignConsensus.aligned_bam[3]
 
-#            call CountNumPasses { input: fastq = C3POa.subreads }
-#            call CountNumPasses { input: fastq = C3POa.subreads }
-#            call CountNumPasses { input: fastq = C3POa.subreads }
-#            call CountNumPasses { input: fastq = C3POa.subreads }
-#
-#            call Utils.CountFastqRecords as CountSubreadsInPartition { input: fastq = C3POa.subreads }
+            call CountNumPasses as CountNumPasses1 { input: fastq = C3POa.subreads1 }
+            call CountNumPasses as CountNumPasses2 { input: fastq = C3POa.subreads2 }
+            call CountNumPasses as CountNumPasses3 { input: fastq = C3POa.subreads3 }
+            call CountNumPasses as CountNumPasses4 { input: fastq = C3POa.subreads4 }
+
+            call Utils.CountFastqRecords as CountSubreadsInPartition1 { input: fastq = C3POa.subreads1 }
+            call Utils.CountFastqRecords as CountSubreadsInPartition2 { input: fastq = C3POa.subreads2 }
+            call Utils.CountFastqRecords as CountSubreadsInPartition3 { input: fastq = C3POa.subreads3 }
+            call Utils.CountFastqRecords as CountSubreadsInPartition4 { input: fastq = C3POa.subreads4 }
+
 #            call Utils.CountFastqRecords as CountAnnotatedReadsInPartition { input: fastq = AnnotateAdapters.annotated_fq }
-#            call Utils.CountFastaRecords as CountConsensusReadsInPartition { input: fasta = C3POa.consensus }
+
+            call Utils.CountFastaRecords as CountConsensusReadsInPartition1 { input: fasta = C3POa.consensus1 }
+            call Utils.CountFastaRecords as CountConsensusReadsInPartition2 { input: fasta = C3POa.consensus2 }
+            call Utils.CountFastaRecords as CountConsensusReadsInPartition3 { input: fasta = C3POa.consensus3 }
+            call Utils.CountFastaRecords as CountConsensusReadsInPartition4 { input: fasta = C3POa.consensus4 }
         }
 
 #        call C3.Cat as CountNumPassesInRun { input: files = CountNumPasses.num_passes, out = "num_passes.txt" }
