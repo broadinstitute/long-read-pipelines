@@ -60,21 +60,21 @@ task Clair {
             --gvcf \
             --output="./"
 
-        find . -type f -exec ls -lah {} \;
+        bgzip merge_output.gvcf
+        tabix -p vcf merge_output.gvcf.gz
     >>>
 
     output {
-#        # save both VCF and gVCF
-#        File phased_vcf = "~{prefix}.phased.vcf.gz"
-#        File phased_vcf_tbi = "~{prefix}.phased.vcf.gz.tbi"
-#
-#        File vcf = "~{prefix}.vcf.gz"
-#        File vcf_tbi = "~{prefix}.vcf.gz.tbi"
-#        File gvcf = "~{prefix}.g.vcf.gz"
-#        File gvcf_tbi = "~{prefix}.g.vcf.gz.tbi"
-#
-#        File report = "~{prefix}.visual_report.html"
-#        File phaseset_bed = "~{prefix}.phaseset.bed"
+        # save both VCF and gVCF
+        File pileup_vcf = "pileup.vcf.gz"
+        File pileup_vcf_tbi = "pileup.vcf.gz.tbi"
+        File full_alignment_vcf = "full_alignment.vcf.gz"
+        File full_alignment_tbi = "full_alignment.vcf.gz.tbi"
+
+        File vcf = "merge_output.vcf.gz"
+        File vcf_tbi = "merge_output.vcf.gz.tbi"
+        File gvcf = "merge_output.gvcf.gz"
+        File gvcf_tbi = "merge_output.gvcf.gz.tbi"
     }
 
     #########################
@@ -83,8 +83,8 @@ task Clair {
         mem_gb:             72,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
-        preemptible_tries:  0,
-        max_retries:        0,
+        preemptible_tries:  2,
+        max_retries:        1,
         docker:             "hkubal/clair3:v0.1-r2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
