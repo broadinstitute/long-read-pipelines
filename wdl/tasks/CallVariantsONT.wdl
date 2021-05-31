@@ -102,18 +102,17 @@ workflow CallVariants {
 #                    preset        = "ONT"
 #            }
 #        }
+    }
 
-        call Clair.Clair {
-            input:
-                bam           = SubsetBam.subset_bam,
-                bai           = SubsetBam.subset_bai,
-                ref_fasta     = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                sites_vcf     = sites_vcf,
-                sites_vcf_tbi = sites_vcf_tbi,
-                chr           = contig,
-                preset        = "ONT"
-        }
+    call Clair.Clair {
+        input:
+            bam           = bam,
+            bai           = bai,
+            ref_fasta     = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            sites_vcf     = sites_vcf,
+            sites_vcf_tbi = sites_vcf_tbi,
+            preset        = "ONT"
     }
 
     call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
@@ -151,19 +150,19 @@ workflow CallVariants {
 #            prefix   = prefix + ".deepvariant_pepper"
 #    }
 
-    call VariantUtils.MergePerChrCalls as MergeClairGVCFs {
-        input:
-            vcfs     = Clair.gvcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".clair.g"
-    }
-
-    call VariantUtils.MergePerChrCalls as MergeClairVCFs {
-        input:
-            vcfs     = Clair.vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".clair"
-    }
+#    call VariantUtils.MergePerChrCalls as MergeClairGVCFs {
+#        input:
+#            vcfs     = Clair.gvcf,
+#            ref_dict = ref_dict,
+#            prefix   = prefix + ".clair.g"
+#    }
+#
+#    call VariantUtils.MergePerChrCalls as MergeClairVCFs {
+#        input:
+#            vcfs     = Clair.vcf,
+#            ref_dict = ref_dict,
+#            prefix   = prefix + ".clair"
+#    }
 
     output {
 #        File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
@@ -173,10 +172,10 @@ workflow CallVariants {
 #        File dvp_vcf = MergeDeepVariantVCFs.vcf
 #        File dvp_tbi = MergeDeepVariantVCFs.tbi
 
-        File clair_g_vcf = MergeClairGVCFs.vcf
-        File clair_g_tbi = MergeClairGVCFs.tbi
-        File clair_vcf = MergeClairVCFs.vcf
-        File clair_tbi = MergeClairVCFs.tbi
+        File clair_g_vcf = Clair.gvcf
+        File clair_g_tbi = Clair.gvcf_tbi
+        File clair_vcf = Clair.vcf
+        File clair_tbi = Clair.vcf_tbi
 
         File pbsv_vcf = MergePBSVVCFs.vcf
 #        File sniffles_vcf = MergeSnifflesVCFs.vcf
