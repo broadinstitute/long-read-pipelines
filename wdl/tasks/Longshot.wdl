@@ -11,34 +11,44 @@ task Longshot {
         File ref_fasta
         File ref_fasta_fai
 
+        File? sites_vcf
+        File? sites_vcf_tbi
+
         String chr
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int cpus = 4
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB") + size(ref_fasta, "GB") + size(ref_fasta_fai, "GB"))
+    Int disk_size = 2*ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB"))
     String prefix = basename(bam, ".bam")
 
     command <<<
         set -euxo pipefail
 
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
+
         touch ~{prefix}.longshot.~{chr}.vcf
-        longshot \
+        longshot ~{true='-v' false='' defined(sites_vcf)} ~{select_first([sites_vcf, ""])} \
             -F \
             -r ~{chr} \
+            -s $SM \
             --bam ~{bam} \
             --ref ~{ref_fasta} \
             --out ~{prefix}.longshot.~{chr}.vcf
+
+        bgzip ~{prefix}.longshot.~{chr}.vcf
+        tabix -p vcf ~{prefix}.longshot.~{chr}.vcf.gz
     >>>
 
     output {
-        File vcf = "~{prefix}.longshot.~{chr}.vcf"
+        File vcf = "~{prefix}.longshot.~{chr}.vcf.gz"
+        File vcf_tbi = "~{prefix}.longshot.~{chr}.vcf.gz.tbi"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          cpus,
+        cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,

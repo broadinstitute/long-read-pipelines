@@ -12,6 +12,7 @@ import "VariantUtils.wdl"
 
 import "DeepVariant.wdl" as DV
 import "Clair.wdl"
+import "Longshot.wdl"
 
 import "PBSV.wdl"
 import "Sniffles.wdl"
@@ -102,18 +103,29 @@ workflow CallVariants {
 #                    preset        = "ONT"
 #            }
 #        }
+
+        call Longshot.Longshot {
+            input:
+                bam           = SubsetBam.subset_bam,
+                bai           = SubsetBam.subset_bai,
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                sites_vcf     = sites_vcf,
+                sites_vcf_tbi = sites_vcf_tbi,
+                chr           = contig
+        }
     }
 
-    call Clair.Clair {
-        input:
-            bam           = bam,
-            bai           = bai,
-            ref_fasta     = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            sites_vcf     = sites_vcf,
-            sites_vcf_tbi = sites_vcf_tbi,
-            preset        = "ONT"
-    }
+#    call Clair.Clair {
+#        input:
+#            bam           = bam,
+#            bai           = bai,
+#            ref_fasta     = ref_fasta,
+#            ref_fasta_fai = ref_fasta_fai,
+#            sites_vcf     = sites_vcf,
+#            sites_vcf_tbi = sites_vcf_tbi,
+#            preset        = "ONT"
+#    }
 
     call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
         input:
@@ -164,6 +176,13 @@ workflow CallVariants {
 #            prefix   = prefix + ".clair"
 #    }
 
+    call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
+        input:
+            vcfs     = Longshot.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".clair"
+    }
+
     output {
 #        File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
 #        File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
@@ -172,10 +191,13 @@ workflow CallVariants {
 #        File dvp_vcf = MergeDeepVariantVCFs.vcf
 #        File dvp_tbi = MergeDeepVariantVCFs.tbi
 
-        File clair_g_vcf = Clair.gvcf
-        File clair_g_tbi = Clair.gvcf_tbi
-        File clair_vcf = Clair.vcf
-        File clair_tbi = Clair.vcf_tbi
+#        File clair_g_vcf = Clair.gvcf
+#        File clair_g_tbi = Clair.gvcf_tbi
+#        File clair_vcf = Clair.vcf
+#        File clair_tbi = Clair.vcf_tbi
+
+        File longshot_vcf = MergeLongshotVCFs.vcf
+        File longshot_tbi = MergeLongshotVCFs.tbi
 
         File pbsv_vcf = MergePBSVVCFs.vcf
 #        File sniffles_vcf = MergeSnifflesVCFs.vcf
