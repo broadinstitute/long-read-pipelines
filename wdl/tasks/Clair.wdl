@@ -33,14 +33,11 @@ task Clair {
         sites_vcf:       "sites VCF"
         sites_vcf_tbi:   "sites VCF index"
 
-#        sites_vcf:       { description: "sites VCF", localization_optional: false }
-#        sites_vcf_tbi:   { description: "sites VCF index", localization_optional: false }
-
         chr:             "chr on which to call variants"
         preset:          "calling preset (CCS, ONT)"
     }
 
-    Int disk_size = 2*ceil(size(select_all([bam, bai, ref_fasta, ref_fasta_fai, sites_vcf]), "GB"))
+    Int disk_size = 10*ceil(size(select_all([bam, bai, ref_fasta, ref_fasta_fai, sites_vcf]), "GB"))
     String platform = if preset == "CCS" then "hifi" else "ont"
 
     command <<<
@@ -82,7 +79,7 @@ task Clair {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          12,
+        cpu_cores:          36,
         mem_gb:             72,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
