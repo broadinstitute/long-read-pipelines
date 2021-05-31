@@ -54,7 +54,7 @@ workflow ONT10x {
 
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
-        scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
+        scatter (manifest_chunk in [ PartitionFastqManifest.manifest_chunks[0] ]) {
 #            call AR.Minimap2 as AlignSubreads {
 #                input:
 #                    reads      = read_lines(manifest_chunk),
@@ -81,6 +81,8 @@ workflow ONT10x {
                         RG         = rg_consensus,
                         map_preset = "splice"
                 }
+
+                call Utils.CountFastaRecords as CountConsensusReadsInPartition { input: fasta = fq }
             }
 
 #            File align_subreads_bam = AlignSubreads.aligned_bam
