@@ -45,7 +45,7 @@ task Processing {
             -r ~{fastq} \
             -s ~{splint_fasta} \
             -c /c3poa.config.txt \
-            -l 1000 -d 500 -n 32 -g 1000 \
+            -l 100 -d 500 -n 32 -g 1000 \
             -o out
 
         tree -h
