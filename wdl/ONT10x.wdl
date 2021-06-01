@@ -110,6 +110,10 @@ workflow ONT10x {
             call Utils.CountFastaRecords as CountConsensusReadsInPartition4 { input: fasta = C3POa.consensus4 }
         }
 
+        call Utils.Sum as CountNoSplintReadsInRun  { input: ints = C3POa.no_splint_reads }
+        call Utils.Sum as CountUnderLenCutoffInRun { input: ints = C3POa.under_len_cutoff }
+        call Utils.Sum as CountTotalSubreadsInRun  { input: ints = C3POa.total_reads }
+
 #        call C3.Cat as CountNumPassesInRun { input: files = CountNumPasses.num_passes, out = "num_passes.txt" }
 #
 #        call Utils.Sum as CountSubreadsInRun { input: ints = CountSubreadsInPartition.num_records }
@@ -125,6 +129,10 @@ workflow ONT10x {
         call Utils.MergeBams as MergeConsensus3 { input: bams = align_consensus_bam3, prefix = "~{participant_name}.consensus3" }
         call Utils.MergeBams as MergeConsensus4 { input: bams = align_consensus_bam4, prefix = "~{participant_name}.consensus4" }
     }
+
+    call Utils.Sum as CountNoSplintReads  { input: ints = CountNoSplintReadsInRun.sum,  prefix = "~{participant_name}.no_splint_reads" }
+    call Utils.Sum as CountUnderLenCutoff { input: ints = CountUnderLenCutoffInRun.sum, prefix = "~{participant_name}.under_len_cutoff" }
+    call Utils.Sum as CountTotalSubreads  { input: ints = CountTotalSubreadsInRun.sum,  prefix = "~{participant_name}.total_subreads" }
 
 #    call C3.Cat as CountNumPassesAll { input: files = CountNumPassesInRun.merged, out = "num_passes.txt" }
 #
@@ -193,6 +201,12 @@ workflow ONT10x {
                       consensus_bam4, consensus_bai4
                     ],
             outdir = outdir + "/alignments"
+    }
+
+    call FF.FinalizeToDir as FinalizeC3POaStats {
+        input:
+            files = [ CountNoSplintReads.sum_file, CountUnderLenCutoff.sum_file, CountTotalSubreads.sum_file ],
+            outdir = outdir + "/metrics/c3poa_stats"
     }
 
 #    call FF.FinalizeToDir as FinalizeConsensusReadCounts {

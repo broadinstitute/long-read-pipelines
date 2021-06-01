@@ -24,6 +24,10 @@ workflow C3POa {
         File consensus2 = Processing.consensus2
         File consensus3 = Processing.consensus3
         File consensus4 = Processing.consensus4
+
+        Int no_splint_reads  = Processing.no_splint_reads
+        Int under_len_cutoff = Processing.under_len_cutoff
+        Int total_reads      = Processing.total_reads
     }
 }
 
