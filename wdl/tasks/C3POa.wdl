@@ -48,6 +48,10 @@ task Processing {
             -l 100 -d 500 -n 32 -g 1000 \
             -o out
 
+        grep 'No splint reads' out/c3poa.log | awk '{ print $4 }' > no_splint_reads.txt
+        grep 'Under len cutoff' out/c3poa.log | awk '{ print $4 }' > under_len_cutoff.txt
+        grep 'Total reads' out/c3poa.log | awk '{ print $3 }' > total_reads.txt
+
         tree -h
     >>>
 
@@ -63,6 +67,9 @@ task Processing {
         File subreads4 = "out/10x_Splint_4/R2C2_Subreads.fastq"
 
         File c3poa_log = "out/c3poa.log"
+        Int no_splint_reads = read_int("no_splint_reads.txt")
+        Int under_len_cutoff = read_int("under_len_cutoff.txt")
+        Int total_reads = read_int("total_reads.txt")
     }
 
     #########################
