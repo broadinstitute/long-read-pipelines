@@ -61,6 +61,8 @@ task Processing {
         File subreads2 = "out/10x_Splint_2/R2C2_Subreads.fastq"
         File subreads3 = "out/10x_Splint_3/R2C2_Subreads.fastq"
         File subreads4 = "out/10x_Splint_4/R2C2_Subreads.fastq"
+
+        File c3poa_log = "out/c3poa.log"
     }
 
     #########################

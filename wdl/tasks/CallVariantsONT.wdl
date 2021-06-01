@@ -104,15 +104,17 @@ workflow CallVariants {
 #            }
 #        }
 
-        call Longshot.Longshot {
-            input:
-                bam           = SubsetBam.subset_bam,
-                bai           = SubsetBam.subset_bai,
-                ref_fasta     = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                sites_vcf     = sites_vcf,
-                sites_vcf_tbi = sites_vcf_tbi,
-                chr           = contig
+        if (contig == "1") {
+            call Longshot.Longshot {
+                input:
+                    bam           = SubsetBam.subset_bam,
+                    bai           = SubsetBam.subset_bai,
+                    ref_fasta     = ref_fasta,
+                    ref_fasta_fai = ref_fasta_fai,
+                    sites_vcf     = sites_vcf,
+                    sites_vcf_tbi = sites_vcf_tbi,
+                    chr           = contig
+            }
         }
     }
 
@@ -178,9 +180,9 @@ workflow CallVariants {
 
     call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
         input:
-            vcfs     = Longshot.vcf,
+            vcfs     = select_all(Longshot.vcf),
             ref_dict = ref_dict,
-            prefix   = prefix + ".clair"
+            prefix   = prefix + ".longshot"
     }
 
     output {
