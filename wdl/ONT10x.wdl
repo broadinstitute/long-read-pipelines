@@ -82,7 +82,7 @@ workflow ONT10x {
                         map_preset = "splice"
                 }
 
-                call Utils.CountFastaRecords as CountConsensusReadsInPartition { input: fasta = fq }
+                #call Utils.CountFastaRecords as CountConsensusReadsInPartition { input: fasta = fq }
             }
 
 #            File align_subreads_bam = AlignSubreads.aligned_bam
@@ -114,14 +114,24 @@ workflow ONT10x {
         call Utils.Sum as CountUnderLenCutoffInRun { input: ints = C3POa.under_len_cutoff }
         call Utils.Sum as CountTotalSubreadsInRun  { input: ints = C3POa.total_reads }
 
-#        call C3.Cat as CountNumPassesInRun { input: files = CountNumPasses.num_passes, out = "num_passes.txt" }
-#
-#        call Utils.Sum as CountSubreadsInRun { input: ints = CountSubreadsInPartition.num_records }
-#        call Utils.Sum as CountAnnotatedReadsInRun { input: ints = CountAnnotatedReadsInPartition.num_records }
-#        call Utils.Sum as CountConsensusReadsInRun { input: ints = CountConsensusReadsInPartition.num_records }
-#
-#        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
+        call C3.Cat as CountNumPassesInRun1 { input: files = CountNumPasses1.num_passes, out = "~{participant_name}.num_passes1.txt" }
+        call C3.Cat as CountNumPassesInRun2 { input: files = CountNumPasses2.num_passes, out = "~{participant_name}.num_passes2.txt" }
+        call C3.Cat as CountNumPassesInRun3 { input: files = CountNumPasses3.num_passes, out = "~{participant_name}.num_passes3.txt" }
+        call C3.Cat as CountNumPassesInRun4 { input: files = CountNumPasses4.num_passes, out = "~{participant_name}.num_passes4.txt" }
 
+        call Utils.Sum as CountSubreadsInRun1 { input: ints = CountSubreadsInPartition1.num_records }
+        call Utils.Sum as CountSubreadsInRun2 { input: ints = CountSubreadsInPartition2.num_records }
+        call Utils.Sum as CountSubreadsInRun3 { input: ints = CountSubreadsInPartition3.num_records }
+        call Utils.Sum as CountSubreadsInRun4 { input: ints = CountSubreadsInPartition4.num_records }
+
+#        call Utils.Sum as CountAnnotatedReadsInRun { input: ints = CountAnnotatedReadsInPartition.num_records }
+
+        call Utils.Sum as CountConsensusReadsInRun1 { input: ints = CountConsensusReadsInPartition1.num_records }
+        call Utils.Sum as CountConsensusReadsInRun2 { input: ints = CountConsensusReadsInPartition2.num_records }
+        call Utils.Sum as CountConsensusReadsInRun3 { input: ints = CountConsensusReadsInPartition3.num_records }
+        call Utils.Sum as CountConsensusReadsInRun4 { input: ints = CountConsensusReadsInPartition4.num_records }
+
+#        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
 #        call Utils.MergeBams as MergeSubreads { input: bams = align_subreads_bam, prefix = "~{participant_name}.subreads" }
 
         call Utils.MergeBams as MergeConsensus1 { input: bams = align_consensus_bam1, prefix = "~{participant_name}.consensus1" }
@@ -134,12 +144,23 @@ workflow ONT10x {
     call Utils.Sum as CountUnderLenCutoff { input: ints = CountUnderLenCutoffInRun.sum, prefix = "~{participant_name}.under_len_cutoff" }
     call Utils.Sum as CountTotalSubreads  { input: ints = CountTotalSubreadsInRun.sum,  prefix = "~{participant_name}.total_subreads" }
 
-#    call C3.Cat as CountNumPassesAll { input: files = CountNumPassesInRun.merged, out = "num_passes.txt" }
-#
-#    call Utils.Sum as CountSubreads { input: ints = CountSubreadsInRun.sum, prefix = "num_subreads" }
+    call C3.Cat as CountNumPassesAll1 { input: files = CountNumPassesInRun1.merged, out = "~{participant_name}.num_passes1.txt" }
+    call C3.Cat as CountNumPassesAll2 { input: files = CountNumPassesInRun2.merged, out = "~{participant_name}.num_passes2.txt" }
+    call C3.Cat as CountNumPassesAll3 { input: files = CountNumPassesInRun3.merged, out = "~{participant_name}.num_passes3.txt" }
+    call C3.Cat as CountNumPassesAll4 { input: files = CountNumPassesInRun4.merged, out = "~{participant_name}.num_passes4.txt" }
+
+    call Utils.Sum as CountSubreads1 { input: ints = CountSubreadsInRun1.sum, prefix = "~{participant_name}.num_subreads1" }
+    call Utils.Sum as CountSubreads2 { input: ints = CountSubreadsInRun2.sum, prefix = "~{participant_name}.num_subreads2" }
+    call Utils.Sum as CountSubreads3 { input: ints = CountSubreadsInRun3.sum, prefix = "~{participant_name}.num_subreads3" }
+    call Utils.Sum as CountSubreads4 { input: ints = CountSubreadsInRun4.sum, prefix = "~{participant_name}.num_subreads4" }
+
 #    call Utils.Sum as CountAnnotatedReads { input: ints = CountAnnotatedReadsInRun.sum, prefix = "num_annotated" }
-#    call Utils.Sum as CountConsensusReads { input: ints = CountConsensusReadsInRun.sum, prefix = "num_consensus" }
-#
+
+    call Utils.Sum as CountConsensusReads1 { input: ints = CountConsensusReadsInRun1.sum, prefix = "~{participant_name}.num_consensus1" }
+    call Utils.Sum as CountConsensusReads2 { input: ints = CountConsensusReadsInRun2.sum, prefix = "~{participant_name}.num_consensus2" }
+    call Utils.Sum as CountConsensusReads3 { input: ints = CountConsensusReadsInRun3.sum, prefix = "~{participant_name}.num_consensus3" }
+    call Utils.Sum as CountConsensusReads4 { input: ints = CountConsensusReadsInRun4.sum, prefix = "~{participant_name}.num_consensus4" }
+
 #    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
 
     if (length(MergeConsensus1.merged_bam) > 1) {
@@ -207,6 +228,15 @@ workflow ONT10x {
         input:
             files = [ CountNoSplintReads.sum_file, CountUnderLenCutoff.sum_file, CountTotalSubreads.sum_file ],
             outdir = outdir + "/metrics/c3poa_stats"
+    }
+
+    call FF.FinalizeToDir as FinalizeConsensusReadCounts {
+        input:
+            files = [ CountNumPassesAll1.merged, CountNumPassesAll2.merged, CountNumPassesAll3.merged, CountNumPassesAll4.merged,
+                      CountSubreads1.sum_file, CountSubreads2.sum_file, CountSubreads3.sum_file, CountSubreads4.sum_file,
+                      CountConsensusReads1.sum_file, CountConsensusReads2.sum_file, CountConsensusReads3.sum_file, CountConsensusReads4.sum_file
+                    ],
+            outdir = outdir + "/metrics/read_counts"
     }
 
 #    call FF.FinalizeToDir as FinalizeConsensusReadCounts {
