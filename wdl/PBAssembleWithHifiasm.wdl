@@ -14,8 +14,7 @@ import "tasks/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
     input {
-        Array[File] ccs_bams
-        Array[File] ccs_pbis
+        Array[File] ccs_fqs
 
         File ref_map_file
         String participant_name
@@ -25,8 +24,7 @@ workflow PBAssembleWithHifiasm {
     }
 
     parameter_meta {
-        ccs_bams:           "GCS path to unaligned CCS BAM files"
-        ccs_pbis:           "GCS path to unaligned CCS BAM file indices"
+        ccs_fqs:            "GCS path to CCS fastq files"
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         participant_name:   "name of the participant from whom these samples were obtained"
@@ -41,16 +39,12 @@ workflow PBAssembleWithHifiasm {
 
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
-    scatter (ccs_bam in ccs_bams) {
-        call Utils.BamToFastq { input: bam = ccs_bam, prefix = basename(ccs_bam, ".bam") }
-    }
-
     # gather across (potential multiple) input CCS BAMs
-    if (length(ccs_bams) > 1) {
-        call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = BamToFastq.reads_fq }
+    if (length(ccs_fqs) > 1) {
+        call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = ccs_fqs }
     }
 
-    File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, BamToFastq.reads_fq ])
+    File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, ccs_fqs ])
 
     call HA.Hifiasm {
         input:

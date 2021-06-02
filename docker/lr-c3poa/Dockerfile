@@ -25,7 +25,7 @@ ENV PATH=$GOPATH/bin:$GOROOT/bin:/opt/conda/envs/lr-c3poa/bin/:/root/google-clou
 # install C3POa
 RUN git clone https://github.com/rvolden/C3POa.git \
     && cd C3POa \
-    && git checkout 053bcb0ed7940abf0dcd40ceef7a8e190e948a94 \
+    && git checkout 0dab17c69930976c209c9a8f1df8ac037e570455 \
     && git reset --hard \
     && chmod +x setup.sh \
     && ./setup.sh

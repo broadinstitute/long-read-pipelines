@@ -14,6 +14,8 @@ task Longshot {
         File? sites_vcf
         File? sites_vcf_tbi
 
+        Boolean phase = true
+
         String chr
 
         RuntimeAttr? runtime_attr_override
@@ -35,6 +37,7 @@ task Longshot {
             -s $SM \
             --bam ~{bam} \
             --ref ~{ref_fasta} \
+            ~{true='' false='--no_haps' phase} \
             --out ~{prefix}.longshot.~{chr}.vcf
 
         bgzip ~{prefix}.longshot.~{chr}.vcf
