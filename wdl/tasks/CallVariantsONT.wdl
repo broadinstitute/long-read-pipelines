@@ -92,16 +92,14 @@ workflow CallVariants {
 #                prefix = prefix
 #        }
 #
-#        if (contig != "chrM") {
-#            call DV.PEPPER {
-#                input:
-#                    bam           = SubsetBam.subset_bam,
-#                    bai           = SubsetBam.subset_bai,
-#                    ref_fasta     = ref_fasta,
-#                    ref_fasta_fai = ref_fasta_fai,
-#                    chr           = contig,
-#                    preset        = "ONT"
-#            }
+#        call DV.PEPPER {
+#            input:
+#                bam           = SubsetBam.subset_bam,
+#                bai           = SubsetBam.subset_bai,
+#                ref_fasta     = ref_fasta,
+#                ref_fasta_fai = ref_fasta_fai,
+#                chr           = contig,
+#                preset        = "ONT"
 #        }
 
         call Longshot.Longshot {
@@ -116,17 +114,6 @@ workflow CallVariants {
                 chr           = contig
         }
     }
-
-#    call Clair.Clair {
-#        input:
-#            bam           = bam,
-#            bai           = bai,
-#            ref_fasta     = ref_fasta,
-#            ref_fasta_fai = ref_fasta_fai,
-#            sites_vcf     = sites_vcf,
-#            sites_vcf_tbi = sites_vcf_tbi,
-#            preset        = "ONT"
-#    }
 
     call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
         input:
@@ -162,17 +149,17 @@ workflow CallVariants {
 #            ref_dict = ref_dict,
 #            prefix   = prefix + ".deepvariant_pepper"
 #    }
-
-#    call VariantUtils.MergePerChrCalls as MergeClairGVCFs {
+#
+#    call VariantUtils.MergePerChrCalls as MergeLongshotGVCFs {
 #        input:
-#            vcfs     = Clair.gvcf,
+#            vcfs     = Longshot.gvcf,
 #            ref_dict = ref_dict,
 #            prefix   = prefix + ".clair.g"
 #    }
 #
-#    call VariantUtils.MergePerChrCalls as MergeClairVCFs {
+#    call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
 #        input:
-#            vcfs     = Clair.vcf,
+#            vcfs     = Longshot.vcf,
 #            ref_dict = ref_dict,
 #            prefix   = prefix + ".clair"
 #    }

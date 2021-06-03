@@ -77,6 +77,9 @@ workflow ONTWholeGenome {
 #        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi { input: outdir = smalldir, file = CallVariants.dvp_g_tbi }
 #        call FF.FinalizeToFile as FinalizeDVPEPPERVcf { input: outdir = smalldir, file = CallVariants.dvp_vcf }
 #        call FF.FinalizeToFile as FinalizeDVPEPPERTbi { input: outdir = smalldir, file = CallVariants.dvp_tbi }
+
+        call FF.FinalizeToFile as FinalizeLongshotVcf { input: outdir = smalldir, file = CallVariants.longshot_vcf }
+        call FF.FinalizeToFile as FinalizeLongshotTbi { input: outdir = smalldir, file = CallVariants.longshot_tbi }
     }
 
     # Finalize data
@@ -94,5 +97,8 @@ workflow ONTWholeGenome {
 #
 #        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
 #        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
+
+        File? longshot_vcf = FinalizeLongshotVcf.gcs_path
+        File? longshot_tbi = FinalizeLongshotTbi.gcs_path
     }
 }
