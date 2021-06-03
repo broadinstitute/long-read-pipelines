@@ -88,3 +88,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBAssembleWithHifiasm.wdl
   testParameterFiles:
+- name: ONTMethylation
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTMethylation.wdl
+  testParameterFiles:
