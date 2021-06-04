@@ -133,13 +133,14 @@ task Megalodon {
     Int disk_size = 4 * ceil(size(fast5_files, "GB") + size([ref_fasta, variants], "GB"))
 
     command <<<
-        set -x
+        set -euxo pipefail
 
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
         dir=$(dirname ~{fast5_files[0]})
 
         for $fast5 in $dir/*.fast5; do
-            TMP_DIR=tmp/$(basename $fast5 .fast5)
+            BN="$(basename "$fast5")"
+            TMP_DIR=tmp/$BN
 
             mkdir -p $TMP_DIR
             mv $fast5 $TMP_DIR
