@@ -87,7 +87,7 @@ workflow PBAssembleWithHifiasm {
 
         Int num_contigs = Quast.metrics['#_contigs']
         Int largest_contigs = Quast.metrics['Largest_contig']
-        Int total_length = Quast.metrics['Total_length']
+        String total_length = Quast.metrics['Total_length']
         Float gc_pct = Quast.metrics['GC_(%)']
         Int n50 = Quast.metrics['N50']
         Int n75 = Quast.metrics['N75']
