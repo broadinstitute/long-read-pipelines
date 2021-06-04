@@ -10,7 +10,7 @@ import "Structs.wdl"
 
 task Quast {
     input {
-        File ref
+        File? ref
         Array[File] assemblies
 
         RuntimeAttr? runtime_attr_override
@@ -30,8 +30,7 @@ task Quast {
 
         quast --no-icarus \
               --threads $num_core \
-              -r ~{ref} \
-              ~{sep=' ' assemblies}
+              ~{true='-r' false='' defined(ref)} ~{select_first([ref, ""])} ~{sep=' ' assemblies}
 
         cat quast_results/latest/report.txt | \
             grep -v -e '^All statistics' -e '^$' | \
