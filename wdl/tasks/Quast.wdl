@@ -26,7 +26,12 @@ task Quast {
     command <<<
         set -x
 
-        quast --no-icarus -r ~{ref}  ~{sep=' ' assemblies}
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        quast --no-icarus \
+              --threads $num_core \
+              -r ~{ref} \
+              ~{sep=' ' assemblies}
 
         cat quast_results/latest/report.txt | \
             grep -v -e '^All statistics' -e '^$' | \
@@ -46,7 +51,7 @@ task Quast {
     ###################
     RuntimeAttr default_attr = object {
         cpu_cores:             2,
-        mem_gb:                16,
+        mem_gb:                32,
         disk_gb:               disk_size,
         boot_disk_gb:          10,
         preemptible_tries:     0,
