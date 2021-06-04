@@ -156,7 +156,8 @@ task Megalodon {
                 --devices cuda:0 \
                 --processes $num_cores \
                 --guppy-server-path /usr/bin/guppy_basecall_server \
-                --output-directory $TMP_DIR
+                --output-directory $TMP_DIR \
+                --overwrite
 
             rm $TMP_DIR/*.fast5
         done
