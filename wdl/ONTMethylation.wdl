@@ -139,11 +139,11 @@ task Megalodon {
         dir=$(dirname ~{fast5_files[0]})
 
         for fast5 in $dir/*.fast5; do
-            BN="$(basename "$fast5")"
+            BN="$(basename "$fast5" .fast5)"
             TMP_DIR=tmp/$BN
 
             mkdir -p $TMP_DIR
-            mv $fast5 $TMP_DIR
+            mv $fast5 $TMP_DIR/
 
             megalodon $TMP_DIR \
                 --guppy-params "-d /rerio/basecall_models" \
