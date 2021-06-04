@@ -45,6 +45,7 @@ task Quast {
         File report_html = "quast_results/latest/report.html"
         File report_txt = "quast_results/latest/report.txt"
         Map[String, String] metrics = read_map("report_map.txt")
+        File plots = glob("quast_results/latest/basic_stats/*.pdf")
     }
 
     ###################

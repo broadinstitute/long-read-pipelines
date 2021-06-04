@@ -54,7 +54,6 @@ workflow PBAssembleWithHifiasm {
 
     call Quast.Quast {
         input:
-            ref = ref_map['fasta'],
             assemblies = [ Hifiasm.fa ]
     }
 
