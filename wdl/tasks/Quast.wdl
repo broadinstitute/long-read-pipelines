@@ -21,7 +21,7 @@ task Quast {
         assemblies: "list of assemblies to evaluate"
     }
 
-    Int disk_size = ceil(size(ref, "GB") + size(assemblies, "GB"))
+    Int disk_size = 2*(ceil(size(ref, "GB") + size(assemblies, "GB")))
 
     command <<<
         set -x
@@ -51,7 +51,7 @@ task Quast {
     ###################
     RuntimeAttr default_attr = object {
         cpu_cores:             2,
-        mem_gb:                32,
+        mem_gb:                16,
         disk_gb:               disk_size,
         boot_disk_gb:          10,
         preemptible_tries:     0,
