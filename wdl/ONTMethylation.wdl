@@ -24,12 +24,7 @@ workflow ONTMethylation {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTMethylation/~{prefix}"
 
     call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ ".fast5" ] }
-
-    call Utils.ChunkManifest {
-         input:
-         manifest = ListFilesOfType.mamifest,
-         manifest_lines_per_chunk = 5
-    }
+    call Utils.ChunkManifest { input: manifest = ListFilesOfType.manifest, manifest_lines_per_chunk = 5 }
 
     scatter (manifest_chunk in [ ChunkManifest.manifest_chunks[0] ]) {
         call Megalodon {
@@ -135,7 +130,7 @@ task Megalodon {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4 * ceil(size(flatten([fast5_files, ref_fasta, variants], "GB")))
+    Int disk_size = 4 * ceil(size(fast5_files, "GB") + size([ref_fasta, variants], "GB"))
 
     command <<<
         set -x
