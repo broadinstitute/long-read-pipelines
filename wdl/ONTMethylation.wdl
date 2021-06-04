@@ -138,7 +138,7 @@ task Megalodon {
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
         dir=$(dirname ~{fast5_files[0]})
 
-        for $fast5 in $dir/*.fast5; do
+        for fast5 in $dir/*.fast5; do
             BN="$(basename "$fast5")"
             TMP_DIR=tmp/$BN
 
