@@ -25,99 +25,105 @@ workflow ONTMethylation {
 
     call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ ".fast5" ] }
 
-    scatter (fast5_file in ListFilesOfType.files) {
+    call Utils.ChunkManifest {
+         input:
+         manifest = ListFilesOfType.mamifest,
+         manifest_lines_per_chunk = 5
+    }
+
+    scatter (manifest_chunk in [ ChunkManifest.manifest_chunks[0] ]) {
         call Megalodon {
             input:
-                fast5_files = [ fast5_file ],
+                fast5_files = read_lines(manifest_chunk),
                 ref_fasta   = ref_map['fasta'],
                 variants    = variants
         }
-
-        call Utils.SortBam as SortMappings { input: input_bam = Megalodon.mappings_bam }
-        call Utils.SortBam as SortModMappings { input: input_bam = Megalodon.mod_mappings_bam }
-        call Utils.SortBam as SortVarMappings { input: input_bam = Megalodon.variant_mappings_bam }
+#
+#        call Utils.SortBam as SortMappings { input: input_bam = Megalodon.mappings_bam }
+#        call Utils.SortBam as SortModMappings { input: input_bam = Megalodon.mod_mappings_bam }
+#        call Utils.SortBam as SortVarMappings { input: input_bam = Megalodon.variant_mappings_bam }
     }
 
-    call Merge as MergeVariantDBs {
-        input:
-            dbs = Megalodon.per_read_variant_calls_db,
-            merge_type = "variants",
-            runtime_attr_override = { 'mem_gb': 48 }
-    }
-
-    call Merge as MergeModifiedBaseCallDBs {
-        input:
-            dbs = Megalodon.per_read_modified_base_calls_db,
-            merge_type = "modified_bases"
-    }
-
-    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
-
-    call Utils.MergeBams as MergeMappings { input: bams = SortMappings.sorted_bam }
-    call Utils.MergeBams as MergeModMappings { input: bams = SortModMappings.sorted_bam }
-    call Utils.MergeBams as MergeVarMappings { input: bams = SortVarMappings.sorted_bam }
-
-    call Utils.Cat as CatModifiedBases5mC {
-         input:
-            files = Megalodon.modified_bases_5mC,
-            has_header = false,
-            out = "modified_bases.5mC.bed"
-    }
-
-    call Utils.Cat as CatMappingSummaries {
-        input:
-            files = Megalodon.mappings_summary,
-            has_header = true,
-            out = "mappings_summary.txt"
-    }
-
-    call Utils.Cat as CatSequencingSummaries {
-        input:
-            files = Megalodon.sequencing_summary,
-            has_header = true,
-            out = "sequencing_summary.txt"
-    }
-
-    call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
-    call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
-
-    call Utils.MakeChrIntervalList {
-        input:
-            ref_dict = ref_map['dict'],
-            filter = ['GL', 'JH']
-    }
-
-    scatter (c in MakeChrIntervalList.chrs) {
-        String contig = c[0]
-
-        call PhaseVariants {
-             input:
-                variants = IndexVariants.vcf_gz,
-                variants_tbi = IndexVariants.vcf_tbi,
-                variant_mappings_bam = MergeVarMappings.merged_bam,
-                variant_mappings_bai = MergeVarMappings.merged_bai,
-                chr = contig
-        }
-    }
-
-    call VariantUtils.MergePerChrCalls {
-        input:
-            vcfs = PhaseVariants.phased_vcf_gz,
-            ref_dict = ref_map['dict'],
-            prefix = "phased.merged"
-    }
-
-    call Haplotag {
-        input:
-            variants_phased = MergePerChrCalls.vcf,
-            variants_phased_tbi = MergePerChrCalls.tbi,
-            variant_mappings_bam = MergeVarMappings.merged_bam,
-            variant_mappings_bai = MergeVarMappings.merged_bai
-    }
-
-    output {
-        #String gcs_basecall_dir = Guppy.gcs_dir
-    }
+#    call Merge as MergeVariantDBs {
+#        input:
+#            dbs = Megalodon.per_read_variant_calls_db,
+#            merge_type = "variants",
+#            runtime_attr_override = { 'mem_gb': 48 }
+#    }
+#
+#    call Merge as MergeModifiedBaseCallDBs {
+#        input:
+#            dbs = Megalodon.per_read_modified_base_calls_db,
+#            merge_type = "modified_bases"
+#    }
+#
+#    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
+#
+#    call Utils.MergeBams as MergeMappings { input: bams = SortMappings.sorted_bam }
+#    call Utils.MergeBams as MergeModMappings { input: bams = SortModMappings.sorted_bam }
+#    call Utils.MergeBams as MergeVarMappings { input: bams = SortVarMappings.sorted_bam }
+#
+#    call Utils.Cat as CatModifiedBases5mC {
+#         input:
+#            files = Megalodon.modified_bases_5mC,
+#            has_header = false,
+#            out = "modified_bases.5mC.bed"
+#    }
+#
+#    call Utils.Cat as CatMappingSummaries {
+#        input:
+#            files = Megalodon.mappings_summary,
+#            has_header = true,
+#            out = "mappings_summary.txt"
+#    }
+#
+#    call Utils.Cat as CatSequencingSummaries {
+#        input:
+#            files = Megalodon.sequencing_summary,
+#            has_header = true,
+#            out = "sequencing_summary.txt"
+#    }
+#
+#    call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
+#    call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
+#
+#    call Utils.MakeChrIntervalList {
+#        input:
+#            ref_dict = ref_map['dict'],
+#            filter = ['GL', 'JH']
+#    }
+#
+#    scatter (c in MakeChrIntervalList.chrs) {
+#        String contig = c[0]
+#
+#        call PhaseVariants {
+#             input:
+#                variants = IndexVariants.vcf_gz,
+#                variants_tbi = IndexVariants.vcf_tbi,
+#                variant_mappings_bam = MergeVarMappings.merged_bam,
+#                variant_mappings_bai = MergeVarMappings.merged_bai,
+#                chr = contig
+#        }
+#    }
+#
+#    call VariantUtils.MergePerChrCalls {
+#        input:
+#            vcfs = PhaseVariants.phased_vcf_gz,
+#            ref_dict = ref_map['dict'],
+#            prefix = "phased.merged"
+#    }
+#
+#    call Haplotag {
+#        input:
+#            variants_phased = MergePerChrCalls.vcf,
+#            variants_phased_tbi = MergePerChrCalls.tbi,
+#            variant_mappings_bam = MergeVarMappings.merged_bam,
+#            variant_mappings_bai = MergeVarMappings.merged_bai
+#    }
+#
+#    output {
+#        #String gcs_basecall_dir = Guppy.gcs_dir
+#    }
 }
 
 task Megalodon {
@@ -129,7 +135,7 @@ task Megalodon {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4 * ceil(size(fast5_files, "GB") + size([ref_fasta, variants], "GB"))
+    Int disk_size = 4 * ceil(size(flatten([fast5_files, ref_fasta, variants], "GB")))
 
     command <<<
         set -x
@@ -137,29 +143,69 @@ task Megalodon {
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
         dir=$(dirname ~{fast5_files[0]})
 
-        megalodon $dir \
-            --guppy-params "-d /rerio/basecall_models" \
-            --guppy-config res_dna_r941_prom_modbases_5mC_CpG_v001.cfg \
-            --outputs basecalls mappings mod_mappings mods variant_mappings \
-            --reference ~{ref_fasta} \
-            --mod-motif m CG 0 \
-            --variant-filename ~{variants} \
-            --devices cuda:0 \
-            --processes $num_cores \
-            --guppy-server-path /usr/bin/guppy_basecall_server
+        for $fast5 in $dir/*.fast5; do
+            TMP_DIR=tmp/$(basename $fast5 .fast5)
+
+            mkdir -p $TMP_DIR
+            mv $fast5 $TMP_DIR
+
+            megalodon $TMP_DIR \
+                --guppy-params "-d /rerio/basecall_models" \
+                --guppy-config res_dna_r941_prom_modbases_5mC_CpG_v001.cfg \
+                --outputs basecalls mappings mod_mappings mods variant_mappings \
+                --reference ~{ref_fasta} \
+                --mod-motif m CG 0 \
+                --variant-filename ~{variants} \
+                --sort-mappings \
+                --devices cuda:0 \
+                --processes $num_cores \
+                --guppy-server-path /usr/bin/guppy_basecall_server \
+                --output-directory $TMP_DIR
+
+            rm $TMP_DIR/*.fast5
+        done
+
+        mkdir megalodon_results
+
+        cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
+
+        samtools merge tmp/*/mappings.bam > megalodon_results/mappings.bam
+        samtools index megalodon_results/mappings.bam
+
+        samtools merge tmp/*/mod_mappings.bam > megalodon_results/mod_mappings.bam
+        samtools index megalodon_results/mod_mappings.bam
+
+        samtools merge tmp/*/variant_mappings.bam > megalodon_results/variant_mappings.bam
+        samtools index megalodon_results/variant_mappings.bam
+
+        megalodon_results/per_read_modified_base_calls.db
+        megalodon_results/per_read_variant_calls.db
+
+        megalodon_extras merge variants tmp/*
+        megalodon_extras merge modified_bases tmp/*
     >>>
 
     output {
         File basecalls_fastq = "megalodon_results/basecalls.fastq"
-        File log = "megalodon_results/log.txt"
+        #File log = "megalodon_results/log.txt"
+
         File mappings_bam = "megalodon_results/mappings.bam"
-        File mappings_summary = "megalodon_results/mappings.summary.txt"
+        File mappings_bai = "megalodon_results/mappings.bam.bai"
+
         File mod_mappings_bam = "megalodon_results/mod_mappings.bam"
+        File mod_mappings_bai = "megalodon_results/mod_mappings.bam.bai"
+
         File variant_mappings_bam = "megalodon_results/variant_mappings.bam"
-        File modified_bases_5mC = "megalodon_results/modified_bases.5mC.bed"
-        File per_read_modified_base_calls_db = "megalodon_results/per_read_modified_base_calls.db"
-        File per_read_variant_calls_db = "megalodon_results/per_read_variant_calls.db"
-        File sequencing_summary = "megalodon_results/sequencing_summary.txt"
+        File variant_mappings_bai = "megalodon_results/variant_mappings.bam.bai"
+
+        #File mappings_summary = "megalodon_results/mappings.summary.txt"
+        #File modified_bases_5mC = "megalodon_results/modified_bases.5mC.bed"
+        #File per_read_modified_base_calls_db = "megalodon_results/per_read_modified_base_calls.db"
+        #File per_read_variant_calls_db = "megalodon_results/per_read_variant_calls.db"
+        #File sequencing_summary = "megalodon_results/sequencing_summary.txt"
+
+        File per_read_modified_base_calls_db = "megalodon_merge_mods_results/per_read_modified_base_calls.db"
+        File per_read_variant_calls_db = "megalodon_merge_vars_results/per_read_variant_calls.db"
     }
 
     #########################
