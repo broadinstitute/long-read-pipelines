@@ -95,10 +95,18 @@ workflow ONTMethylation {
                 prefix = contig
         }
 
+        call VariantUtils.SubsetVCF {
+            input:
+                vcf = IndexVariants.vcf_gz,
+                tbi = IndexVariants.vcf_tbi,
+                locus = contig,
+                prefix = contig
+        }
+
         call PhaseVariants {
              input:
-                variants = IndexVariants.vcf_gz,
-                variants_tbi = IndexVariants.vcf_tbi,
+                variants = SubsetVCF.subset_vcf,
+                variants_tbi = SubsetVCF.subset_tbi,
                 variant_mappings_bam = SubsetBam.subset_bam,
                 variant_mappings_bai = SubsetBam.subset_bai,
                 chr = contig
