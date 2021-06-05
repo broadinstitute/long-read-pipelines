@@ -97,8 +97,8 @@ workflow ONTMethylation {
 
         call VariantUtils.SubsetVCF {
             input:
-                vcf = IndexVariants.vcf_gz,
-                tbi = IndexVariants.vcf_tbi,
+                vcf_gz = IndexVariants.vcf_gz,
+                vcf_tbi = IndexVariants.vcf_tbi,
                 locus = contig,
                 prefix = contig
         }
