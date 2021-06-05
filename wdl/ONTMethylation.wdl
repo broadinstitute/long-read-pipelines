@@ -142,10 +142,10 @@ task Megalodon {
             BN="$(basename "$fast5" .fast5)"
             TMP_DIR=tmp/$BN
 
-            mkdir -p $TMP_DIR
-            mv $fast5 $TMP_DIR/
+            mkdir f5
+            mv $fast5 f5/
 
-            megalodon $TMP_DIR \
+            megalodon f5 \
                 --guppy-params "-d /rerio/basecall_models" \
                 --guppy-config res_dna_r941_prom_modbases_5mC_CpG_v001.cfg \
                 --outputs basecalls mappings mod_mappings mods variant_mappings \
@@ -159,7 +159,7 @@ task Megalodon {
                 --output-directory $TMP_DIR \
                 --overwrite
 
-            rm $TMP_DIR/*.fast5
+            rm -rf $TMP_DIR
         done
 
         mkdir megalodon_results
