@@ -159,7 +159,9 @@ task Megalodon {
                 --processes $num_cores \
                 --guppy-server-path /usr/bin/guppy_basecall_server \
                 --output-directory $TMP_DIR \
-                --overwrite
+                --overwrite \
+                --suppress-progress-bars \
+                --suppress-queues-status
 
             rm -rf f5
         done
