@@ -87,12 +87,20 @@ workflow ONTMethylation {
     scatter (c in MakeChrIntervalList.chrs) {
         String contig = c[0]
 
+        call Utils.SubsetBam {
+            input:
+                bam = MergeVarMappings.merged_bam,
+                bai = MergeVarMappings.merged_bai,
+                locus = contig,
+                prefix = contig
+        }
+
         call PhaseVariants {
              input:
                 variants = IndexVariants.vcf_gz,
                 variants_tbi = IndexVariants.vcf_tbi,
-                variant_mappings_bam = MergeVarMappings.merged_bam,
-                variant_mappings_bai = MergeVarMappings.merged_bai,
+                variant_mappings_bam = SubsetBam.subset_bam,
+                variant_mappings_bai = SubsetBam.subset_bai,
                 chr = contig
         }
     }
