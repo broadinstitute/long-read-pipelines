@@ -126,15 +126,15 @@ workflow PBCCSIsoSeq {
     String fdir = outdir + "/figures"
 
     call FF.FinalizeToFile as FinalizeBam { input: outdir = rdir, file = bam, name = "~{participant_name}.bam" }
-    call FF.FinalizeToFile as FinalizePbi { input: outdir = rdir, file = pbi, name = "~{participant_name}.pbi" }
+    call FF.FinalizeToFile as FinalizePbi { input: outdir = rdir, file = pbi, name = "~{participant_name}.bam.pbi" }
 
-    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bdir, file = MergeBarcodeBams.merged_bam }
-    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bdir, file = MergeBarcodeBams.merged_bai }
-    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bdir, file = IndexAlignedReads.pbi }
+    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bdir, file = MergeBarcodeBams.merged_bam, name = "~{participant_name}.all_barcodes.bam" }
+    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bdir, file = MergeBarcodeBams.merged_bai, name = "~{participant_name}.all_barcodes.bam.bai"  }
+    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bdir, file = IndexAlignedReads.pbi, name = "~{participant_name}.all_barcodes.bam.pbi"  }
 
-    call FF.FinalizeToFile as FinalizeDemultiplexCounts { input: outdir = mdir, file = Demultiplex.counts }
-    call FF.FinalizeToFile as FinalizeDemultiplexReport { input: outdir = mdir, file = Demultiplex.report }
-    call FF.FinalizeToFile as FinalizeDemultiplexSummary { input: outdir = mdir, file = Demultiplex.summary }
+    call FF.FinalizeToFile as FinalizeDemultiplexCounts { input: outdir = mdir, file = Demultiplex.counts, name = "~{participant_name}.lima.counts.txt" }
+    call FF.FinalizeToFile as FinalizeDemultiplexReport { input: outdir = mdir, file = Demultiplex.report, name = "~{participant_name}.lima.report.txt" }
+    call FF.FinalizeToFile as FinalizeDemultiplexSummary { input: outdir = mdir, file = Demultiplex.summary, name = "~{participant_name}.lima.summary.txt" }
 
     call FF.FinalizeToDir as FinalizeLimaSummary { input: outdir = fdir + "/summary/png", files = SummarizedDemuxReportPNG.report_files }
     call FF.FinalizeToDir as FinalizeLimaDetailedPNG { input: outdir = fdir + "/detailed/png", files = DetailedDemuxReportPNG.report_files }
