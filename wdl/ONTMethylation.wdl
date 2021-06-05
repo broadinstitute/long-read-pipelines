@@ -168,13 +168,13 @@ task Megalodon {
 
         cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
 
-        samtools merge tmp/*/mappings.bam > megalodon_results/mappings.bam
+        samtools merge megalodon_results/mappings.bam tmp/*/mappings.bam
         samtools index megalodon_results/mappings.bam
 
-        samtools merge tmp/*/mod_mappings.bam > megalodon_results/mod_mappings.bam
+        samtools merge megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
         samtools index megalodon_results/mod_mappings.bam
 
-        samtools merge tmp/*/variant_mappings.bam > megalodon_results/variant_mappings.bam
+        samtools merge megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
         samtools index megalodon_results/variant_mappings.bam
 
         megalodon_results/per_read_modified_base_calls.db
