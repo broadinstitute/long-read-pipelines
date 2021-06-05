@@ -26,17 +26,13 @@ workflow ONTMethylation {
     call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ ".fast5" ] }
     call Utils.ChunkManifest { input: manifest = ListFilesOfType.manifest, manifest_lines_per_chunk = 5 }
 
-    scatter (manifest_chunk in [ ChunkManifest.manifest_chunks[0] ]) {
+    scatter (manifest_chunk in [ ChunkManifest.manifest_chunks[0], ChunkManifest.manifest_chunks[1] ]) {
         call Megalodon {
             input:
                 fast5_files = read_lines(manifest_chunk),
                 ref_fasta   = ref_map['fasta'],
                 variants    = variants
         }
-#
-#        call Utils.SortBam as SortMappings { input: input_bam = Megalodon.mappings_bam }
-#        call Utils.SortBam as SortModMappings { input: input_bam = Megalodon.mod_mappings_bam }
-#        call Utils.SortBam as SortVarMappings { input: input_bam = Megalodon.variant_mappings_bam }
     }
 
 #    call Merge as MergeVariantDBs {
@@ -53,11 +49,11 @@ workflow ONTMethylation {
 #    }
 #
 #    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
-#
-#    call Utils.MergeBams as MergeMappings { input: bams = SortMappings.sorted_bam }
-#    call Utils.MergeBams as MergeModMappings { input: bams = SortModMappings.sorted_bam }
-#    call Utils.MergeBams as MergeVarMappings { input: bams = SortVarMappings.sorted_bam }
-#
+
+    call Utils.MergeBams as MergeMappings { input: bams = Megalodon.mappings_bam }
+    call Utils.MergeBams as MergeModMappings { input: bams = Megalodon.mod_mappings_bam }
+    call Utils.MergeBams as MergeVarMappings { input: bams = Megalodon.variant_mappings_bam }
+
 #    call Utils.Cat as CatModifiedBases5mC {
 #         input:
 #            files = Megalodon.modified_bases_5mC,
@@ -78,44 +74,44 @@ workflow ONTMethylation {
 #            has_header = true,
 #            out = "sequencing_summary.txt"
 #    }
-#
-#    call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
-#    call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
-#
-#    call Utils.MakeChrIntervalList {
-#        input:
-#            ref_dict = ref_map['dict'],
-#            filter = ['GL', 'JH']
-#    }
-#
-#    scatter (c in MakeChrIntervalList.chrs) {
-#        String contig = c[0]
-#
-#        call PhaseVariants {
-#             input:
-#                variants = IndexVariants.vcf_gz,
-#                variants_tbi = IndexVariants.vcf_tbi,
-#                variant_mappings_bam = MergeVarMappings.merged_bam,
-#                variant_mappings_bai = MergeVarMappings.merged_bai,
-#                chr = contig
-#        }
-#    }
-#
-#    call VariantUtils.MergePerChrCalls {
-#        input:
-#            vcfs = PhaseVariants.phased_vcf_gz,
-#            ref_dict = ref_map['dict'],
-#            prefix = "phased.merged"
-#    }
-#
-#    call Haplotag {
-#        input:
-#            variants_phased = MergePerChrCalls.vcf,
-#            variants_phased_tbi = MergePerChrCalls.tbi,
-#            variant_mappings_bam = MergeVarMappings.merged_bam,
-#            variant_mappings_bai = MergeVarMappings.merged_bai
-#    }
-#
+
+    call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
+    call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
+
+    call Utils.MakeChrIntervalList {
+        input:
+            ref_dict = ref_map['dict'],
+            filter = ['GL', 'JH']
+    }
+
+    scatter (c in MakeChrIntervalList.chrs) {
+        String contig = c[0]
+
+        call PhaseVariants {
+             input:
+                variants = IndexVariants.vcf_gz,
+                variants_tbi = IndexVariants.vcf_tbi,
+                variant_mappings_bam = MergeVarMappings.merged_bam,
+                variant_mappings_bai = MergeVarMappings.merged_bai,
+                chr = contig
+        }
+    }
+
+    call VariantUtils.MergePerChrCalls {
+        input:
+            vcfs = PhaseVariants.phased_vcf_gz,
+            ref_dict = ref_map['dict'],
+            prefix = "phased.merged"
+    }
+
+    call Haplotag {
+        input:
+            variants_phased = MergePerChrCalls.vcf,
+            variants_phased_tbi = MergePerChrCalls.tbi,
+            variant_mappings_bam = MergeVarMappings.merged_bam,
+            variant_mappings_bai = MergeVarMappings.merged_bai
+    }
+
 #    output {
 #        #String gcs_basecall_dir = Guppy.gcs_dir
 #    }
