@@ -171,13 +171,13 @@ task Megalodon {
         cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
 
         samtools merge megalodon_results/mappings.bam tmp/*/mappings.bam
-        samtools index megalodon_results/mappings.bam
+        #samtools index megalodon_results/mappings.bam
 
         samtools merge megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
-        samtools index megalodon_results/mod_mappings.bam
+        #samtools index megalodon_results/mod_mappings.bam
 
         samtools merge megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
-        samtools index megalodon_results/variant_mappings.bam
+        #samtools index megalodon_results/variant_mappings.bam
 
         megalodon_results/per_read_modified_base_calls.db
         megalodon_results/per_read_variant_calls.db
@@ -191,13 +191,13 @@ task Megalodon {
         #File log = "megalodon_results/log.txt"
 
         File mappings_bam = "megalodon_results/mappings.bam"
-        File mappings_bai = "megalodon_results/mappings.bam.bai"
+        #File mappings_bai = "megalodon_results/mappings.bam.bai"
 
         File mod_mappings_bam = "megalodon_results/mod_mappings.bam"
-        File mod_mappings_bai = "megalodon_results/mod_mappings.bam.bai"
+        #File mod_mappings_bai = "megalodon_results/mod_mappings.bam.bai"
 
         File variant_mappings_bam = "megalodon_results/variant_mappings.bam"
-        File variant_mappings_bai = "megalodon_results/variant_mappings.bam.bai"
+        #File variant_mappings_bai = "megalodon_results/variant_mappings.bam.bai"
 
         #File mappings_summary = "megalodon_results/mappings.summary.txt"
         #File modified_bases_5mC = "megalodon_results/modified_bases.5mC.bed"
