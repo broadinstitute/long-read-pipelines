@@ -150,15 +150,15 @@ task MosDepth {
     command <<<
         set -euxo pipefail
 
-        mosdepth -t 4 -c ~{chr} -n -x -Q 1 ~{prefix}.full ~{bam}
-        mosdepth -t 4 -c ~{chr} -n -x -Q 1 -b ~{ws} ~{prefix} ~{bam}
+        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 ~{prefix}.full ~{bam}
+        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 -b ~{ws} ~{prefix} ~{bam}
 
         export MOSDEPTH_Q0=NO_COVERAGE   # 0 -- defined by the arguments to --quantize
         export MOSDEPTH_Q1=LOW_COVERAGE  # 1..4
         export MOSDEPTH_Q2=CALLABLE      # 5..149
         export MOSDEPTH_Q3=HIGH_COVERAGE # 150 ...
 
-        mosdepth -t 4 -c ~{chr} -n -x -Q 1 --quantize 0:1:5:150: ~{prefix}.quantized ~{bam}
+        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 --quantize 0:1:5:150: ~{prefix}.quantized ~{bam}
     >>>
 
     output {
