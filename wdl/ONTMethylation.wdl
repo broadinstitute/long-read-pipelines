@@ -188,12 +188,12 @@ task Megalodon {
         cat tmp/*/modified_bases.5mC.bed > megalodon_results/modified_bases.5mC.bed
 
         ((head -1 $(ls tmp/*/mappings.summary.txt | head -1)) \
-            && (cat tmp/*/mappings.summary.txt | xargs -n 1 tail -n +2)) \
+            && (tail -q -n +2 tmp/*/mappings.summary.txt)) \
             > megalodon_results/mappings.summary.txt
 
         ((head -1 $(ls tmp/*/sequencing_summary.txt | head -1)) \
-        && (cat tmp/*/sequencing_summary.txt | xargs -n 1 tail -n +2)) \
-        > megalodon_results/sequencing_summary.txt
+            && (tail -q -n +2 tmp/*/sequencing_summary.txt)) \
+            > megalodon_results/sequencing_summary.txt
     >>>
 
     output {
