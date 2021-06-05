@@ -43,12 +43,11 @@ workflow PBCCSIsoSeq {
     # gather across (potential multiple) input CCS BAMs
     if (length(ccs_bams) > 1) {
         call Utils.MergeBams as MergeAllReads { input: bams = ccs_bams, prefix = participant_name }
+        call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeAllReads.merged_bam }
     }
 
     File bam = select_first([MergeAllReads.merged_bam, ccs_bams[0]])
-
-    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
-    File pbi = IndexCCSUnalignedReads.pbi
+    File pbi = select_first([IndexCCSUnalignedReads.pbi, ccs_pbis[0]])
 
     # demultiplex CCS-ed BAM
     call PB.Demultiplex {
@@ -126,8 +125,8 @@ workflow PBCCSIsoSeq {
     String mdir = outdir + "/metrics/combined/lima"
     String fdir = outdir + "/figures"
 
-    call FF.FinalizeToFile as FinalizeBam { input: outdir = rdir, file = bam }
-    call FF.FinalizeToFile as FinalizePbi { input: outdir = rdir, file = pbi }
+    call FF.FinalizeToFile as FinalizeBam { input: outdir = rdir, file = bam, name = "~{participant_name}.bam" }
+    call FF.FinalizeToFile as FinalizePbi { input: outdir = rdir, file = pbi, name = "~{participant_name}.pbi" }
 
     call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bdir, file = MergeBarcodeBams.merged_bam }
     call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bdir, file = MergeBarcodeBams.merged_bai }

@@ -140,7 +140,9 @@ task Megalodon {
 
         for fast5 in $dir/*.fast5; do
             BN="$(basename "$fast5" .fast5)"
+
             TMP_DIR=tmp/$BN
+            mkdir -p $TMP_DIR
 
             mkdir f5
             mv $fast5 f5/
@@ -156,9 +158,10 @@ task Megalodon {
                 --devices cuda:0 \
                 --processes $num_cores \
                 --guppy-server-path /usr/bin/guppy_basecall_server \
-                --output-directory $TMP_DIR
+                --output-directory $TMP_DIR \
+                --overwrite
 
-            rm -rf $TMP_DIR
+            rm -rf f5
         done
 
         mkdir megalodon_results
