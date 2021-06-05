@@ -171,36 +171,46 @@ task Megalodon {
         cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
 
         samtools merge megalodon_results/mappings.bam tmp/*/mappings.bam
-        #samtools index megalodon_results/mappings.bam
+        samtools sort megalodon_results/mappings.bam > megalodon_results/mappings.sorted.bam
+        samtools index megalodon_results/mappings.sorted.bam
 
         samtools merge megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
-        #samtools index megalodon_results/mod_mappings.bam
+        samtools sort megalodon_results/mod_mappings.bam > megalodon_results/mod_mappings.sorted.bam
+        samtools index megalodon_results/mod_mappings.sorted.bam
 
         samtools merge megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
-        #samtools index megalodon_results/variant_mappings.bam
+        samtools sort megalodon_results/variant_mappings.bam > megalodon_results/variant_mappings.sorted.bam
+        samtools index megalodon_results/variant_mappings.sorted.bam
 
         megalodon_extras merge variants tmp/*
         megalodon_extras merge modified_bases tmp/*
+
+        cat tmp/*/modified_bases.5mC.bed > megalodon_results/modified_bases.5mC.bed
+
+        ((head -1 $(ls tmp/*/mappings.summary.txt | head -1)) \
+            && (cat tmp/*/mappings.summary.txt | xargs -n 1 tail -n +2)) \
+            > megalodon_results/mappings.summary.txt
+
+        ((head -1 $(ls tmp/*/sequencing_summary.txt | head -1)) \
+        && (cat tmp/*/sequencing_summary.txt | xargs -n 1 tail -n +2)) \
+        > megalodon_results/sequencing_summary.txt
     >>>
 
     output {
         File basecalls_fastq = "megalodon_results/basecalls.fastq"
-        #File log = "megalodon_results/log.txt"
 
-        File mappings_bam = "megalodon_results/mappings.bam"
-        #File mappings_bai = "megalodon_results/mappings.bam.bai"
+        File mappings_bam = "megalodon_results/mappings.sorted.bam"
+        File mappings_bai = "megalodon_results/mappings.sorted.bam.bai"
 
-        File mod_mappings_bam = "megalodon_results/mod_mappings.bam"
-        #File mod_mappings_bai = "megalodon_results/mod_mappings.bam.bai"
+        File mod_mappings_bam = "megalodon_results/mod_mappings.sorted.bam"
+        File mod_mappings_bai = "megalodon_results/mod_mappings.sorted.bam.bai"
 
-        File variant_mappings_bam = "megalodon_results/variant_mappings.bam"
-        #File variant_mappings_bai = "megalodon_results/variant_mappings.bam.bai"
+        File variant_mappings_bam = "megalodon_results/variant_mappings.sorted.bam"
+        File variant_mappings_bai = "megalodon_results/variant_mappings.sorted.bam.bai"
 
-        #File mappings_summary = "megalodon_results/mappings.summary.txt"
-        #File modified_bases_5mC = "megalodon_results/modified_bases.5mC.bed"
-        #File per_read_modified_base_calls_db = "megalodon_results/per_read_modified_base_calls.db"
-        #File per_read_variant_calls_db = "megalodon_results/per_read_variant_calls.db"
-        #File sequencing_summary = "megalodon_results/sequencing_summary.txt"
+        File modified_bases_5mC = "megalodon_results/modified_bases.5mC.bed"
+        File mappings_summary = "megalodon_results/mappings.summary.txt"
+        File sequencing_summary = "megalodon_results/sequencing_summary.txt"
 
         File per_read_modified_base_calls_db = "megalodon_merge_mods_results/per_read_modified_base_calls.db"
         File per_read_variant_calls_db = "megalodon_merge_vars_results/per_read_variant_calls.db"
