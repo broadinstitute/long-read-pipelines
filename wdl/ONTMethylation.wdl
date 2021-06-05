@@ -179,9 +179,6 @@ task Megalodon {
         samtools merge megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
         #samtools index megalodon_results/variant_mappings.bam
 
-        megalodon_results/per_read_modified_base_calls.db
-        megalodon_results/per_read_variant_calls.db
-
         megalodon_extras merge variants tmp/*
         megalodon_extras merge modified_bases tmp/*
     >>>
