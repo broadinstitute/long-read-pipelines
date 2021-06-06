@@ -169,7 +169,6 @@ task Megalodon {
                 --reference ~{ref_fasta} \
                 --mod-motif m CG 0 \
                 --variant-filename ~{variants} \
-                --sort-mappings \
                 --devices cuda:0 \
                 --processes $num_cores \
                 --guppy-server-path /usr/bin/guppy_basecall_server \
@@ -185,18 +184,21 @@ task Megalodon {
 
         cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
 
+        ((samtools dict ~{ref_fasta}) && (echo -e '@RG\tID:mappings\tSM:~{SM}')) > mappings.header.sam
         samtools cat -o megalodon_results/mappings.bam tmp/*/mappings.bam
-        samtools addreplacerg -r '@RG\tID:mappings\tSM:~{SM}' megalodon_results/mappings.bam > megalodon_results/mappings.rh.bam
+        samtools addreplacerg -r '@RG\tID:mappings\tSM:~{SM}' megalodon_results/mappings.bam | samtools reheader mappings.header.sam - > megalodon_results/mappings.rh.bam
         samtools sort megalodon_results/mappings.rh.bam > megalodon_results/mappings.sorted.bam
         samtools index megalodon_results/mappings.sorted.bam
 
+        ((samtools dict ~{ref_fasta}) && (echo -e '@RG\tID:mod_mappings\tSM:~{SM}')) > mod_mappings.header.sam
         samtools cat -o megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
-        samtools addreplacerg -r '@RG\tID:mod_mappings\tSM:~{SM}' megalodon_results/mod_mappings.bam > megalodon_results/mod_mappings.rh.bam
+        samtools addreplacerg -r '@RG\tID:mod_mappings\tSM:~{SM}' megalodon_results/mod_mappings.bam | samtools reheader mod_mappings.header.sam - > megalodon_results/mod_mappings.rh.bam
         samtools sort megalodon_results/mod_mappings.rh.bam > megalodon_results/mod_mappings.sorted.bam
         samtools index megalodon_results/mod_mappings.sorted.bam
 
+        ((samtools dict ~{ref_fasta}) && (echo -e '@RG\tID:variant_mappings\tSM:~{SM}')) > variant_mappings.header.sam
         samtools cat -o megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
-        samtools addreplacerg -r '@RG\tID:variant_mappings\tSM:~{SM}' megalodon_results/variant_mappings.bam > megalodon_results/variant_mappings.rh.bam
+        samtools addreplacerg -r '@RG\tID:variant_mappings\tSM:~{SM}' megalodon_results/variant_mappings.bam | samtools reheader variant_mappings.header.sam - > megalodon_results/variant_mappings.rh.bam
         samtools sort megalodon_results/variant_mappings.rh.bam > megalodon_results/variant_mappings.sorted.bam
         samtools index megalodon_results/variant_mappings.sorted.bam
 
