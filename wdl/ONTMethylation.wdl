@@ -183,24 +183,20 @@ task Megalodon {
 
         mkdir megalodon_results
 
-        ((samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:mappings\tSM:~{SM}')) > mappings.header.sam
-        ((samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:mod_mappings\tSM:~{SM}')) > mod_mappings.header.sam
-        ((samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:var_mappings\tSM:~{SM}')) > variant_mappings.header.sam
-
         cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
 
         samtools merge megalodon_results/mappings.bam tmp/*/mappings.bam
-        samtools reheader mappings.header.sam megalodon_results/mappings.bam > megalodon_results/mappings.rh.bam
+        samtools addreplacerg -r '@RG\t:ID:mappings\tSM:~{SM}' megalodon_results/mappings.bam > megalodon_results/mappings.rh.bam
         samtools sort megalodon_results/mappings.rh.bam > megalodon_results/mappings.sorted.bam
         samtools index megalodon_results/mappings.sorted.bam
 
         samtools merge megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
-        samtools reheader mod_mappings.header.sam megalodon_results/mod_mappings.bam > megalodon_results/mod_mappings.rh.bam
+        samtools addreplacerg -r '@RG\t:ID:mod_mappings\tSM:~{SM}' megalodon_results/mod_mappings.bam > megalodon_results/mod_mappings.rh.bam
         samtools sort megalodon_results/mod_mappings.rh.bam > megalodon_results/mod_mappings.sorted.bam
         samtools index megalodon_results/mod_mappings.sorted.bam
 
         samtools merge megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
-        samtools reheader variant_mappings.header.sam megalodon_results/variant_mappings.bam > megalodon_results/variant_mappings.rh.bam
+        samtools addreplacerg -r '@RG\t:ID:variant_mappings\tSM:~{SM}' megalodon_results/variant_mappings.bam > megalodon_results/variant_mappings.rh.bam
         samtools sort megalodon_results/variant_mappings.rh.bam > megalodon_results/variant_mappings.sorted.bam
         samtools index megalodon_results/variant_mappings.sorted.bam
 

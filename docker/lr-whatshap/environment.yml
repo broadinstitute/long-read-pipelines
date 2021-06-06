@@ -46,5 +46,5 @@ dependencies:
   - xz=5.2.5=h516909a_1
   - zlib=1.2.11=h516909a_1010
   - pip:
-    - pysam
+    - pysam==0.8.4
 prefix: /opt/conda/envs/lr-whatshap

@@ -61,8 +61,7 @@ def load_new_sample_table(buckets, project):
             experiment_type = "ISOSEQ"
 
         input_bam = e['Files']['subreads.bam'] if e['Files']['subreads.bam'] != "" else e['Files']['reads.bam']
-        input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files'][
-            'reads.bam.pbi']
+        input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files']['reads.bam.pbi']
 
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
@@ -293,8 +292,20 @@ def upload_data(namespace, workspace, s, ss, ms):
     #delete_table(namespace, workspace, 'sample')
 
     update_table(namespace, workspace, s)
-    # update_table(namespace, workspace, ss)
-    # update_table(namespace, workspace, ms)
+    #update_table(namespace, workspace, ss)
+    #update_table(namespace, workspace, ms)
+
+    ent_old = fapi.get_entities(namespace, workspace, 'sample_set').json()
+    existing_entries = list(map(lambda f: f['name'], ent_old))
+
+    if len(ent_old) > 0:
+        tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
+        tbl_old[f"entity:sample_set_id"] = list(map(lambda f: f['name'], ent_old))
+
+    t_old = fapi.get_entities(namespace, workspace, 'sample_set').json()
+
+    return
+    #f = [fapi.delete_sample_set(namespace, workspace, name) for name in names]
 
 
 def load_ccs_report(project, ccs_report_path, e):
