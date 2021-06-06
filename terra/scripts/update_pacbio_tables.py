@@ -288,8 +288,8 @@ def upload_table(namespace, workspace, table):
 
 
 def upload_data(namespace, workspace, s, ss, ms):
-    delete_table(namespace, workspace, 'sample_set')
-    delete_table(namespace, workspace, 'sample')
+    #delete_table(namespace, workspace, 'sample_set')
+    #delete_table(namespace, workspace, 'sample')
 
     upload_table(namespace, workspace, s)
     upload_table(namespace, workspace, ss)

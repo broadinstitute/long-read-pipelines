@@ -25,7 +25,7 @@ workflow ONTMethylation {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTMethylation/~{prefix}"
 
     call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ ".fast5" ] }
-    call Utils.ChunkManifest { input: manifest = ListFilesOfType.manifest, manifest_lines_per_chunk = 5 }
+    call Utils.ChunkManifest { input: manifest = ListFilesOfType.manifest, manifest_lines_per_chunk = 2 }
 
     scatter (manifest_chunk in [ ChunkManifest.manifest_chunks[0], ChunkManifest.manifest_chunks[1] ]) {
         call Megalodon {
@@ -190,17 +190,17 @@ task Megalodon {
         cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
 
         samtools merge megalodon_results/mappings.bam tmp/*/mappings.bam
-        samtools reheader -P mappings.header.sam megalodon_results/mappings.bam > megalodon_results/mappings.rh.bam
+        samtools reheader mappings.header.sam megalodon_results/mappings.bam > megalodon_results/mappings.rh.bam
         samtools sort megalodon_results/mappings.rh.bam > megalodon_results/mappings.sorted.bam
         samtools index megalodon_results/mappings.sorted.bam
 
         samtools merge megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
-        samtools reheader -P mod_mappings.header.sam megalodon_results/mod_mappings.bam > megalodon_results/mod_mappings.rh.bam
+        samtools reheader mod_mappings.header.sam megalodon_results/mod_mappings.bam > megalodon_results/mod_mappings.rh.bam
         samtools sort megalodon_results/mod_mappings.rh.bam > megalodon_results/mod_mappings.sorted.bam
         samtools index megalodon_results/mod_mappings.sorted.bam
 
         samtools merge megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
-        samtools reheader -P variant_mappings.header.sam megalodon_results/variant_mappings.bam > megalodon_results/variant_mappings.rh.bam
+        samtools reheader variant_mappings.header.sam megalodon_results/variant_mappings.bam > megalodon_results/variant_mappings.rh.bam
         samtools sort megalodon_results/variant_mappings.rh.bam > megalodon_results/variant_mappings.sorted.bam
         samtools index megalodon_results/variant_mappings.sorted.bam
 
