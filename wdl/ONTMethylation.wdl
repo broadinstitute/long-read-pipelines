@@ -32,7 +32,8 @@ workflow ONTMethylation {
             input:
                 fast5_files = read_lines(manifest_chunk),
                 ref_fasta   = ref_map['fasta'],
-                variants    = variants
+                variants    = variants,
+                SM          = participant_name
         }
     }
 
@@ -139,6 +140,7 @@ task Megalodon {
         Array[File] fast5_files
         File ref_fasta
         File variants
+        String SM
 
         RuntimeAttr? runtime_attr_override
     }
