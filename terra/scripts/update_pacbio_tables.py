@@ -277,7 +277,7 @@ def delete_table(namespace, workspace, table_name):
     return f
 
 
-def upload_table(namespace, workspace, table):
+def update_table(namespace, workspace, table):
     # upload new samples
     a = fapi.upload_entities(namespace, workspace, entity_data=table.to_csv(index=False, sep="\t"), model='flexible')
 
@@ -291,9 +291,9 @@ def upload_data(namespace, workspace, s, ss, ms):
     #delete_table(namespace, workspace, 'sample_set')
     #delete_table(namespace, workspace, 'sample')
 
-    upload_table(namespace, workspace, s)
-    upload_table(namespace, workspace, ss)
-    upload_table(namespace, workspace, ms)
+    update_table(namespace, workspace, s)
+    update_table(namespace, workspace, ss)
+    update_table(namespace, workspace, ms)
 
 
 def load_ccs_report(project, ccs_report_path, e):

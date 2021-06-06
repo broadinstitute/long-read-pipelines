@@ -183,9 +183,9 @@ task Megalodon {
 
         mkdir megalodon_results
 
-        (samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:mappings\tSM:~{SM}') > mappings.header.sam
-        (samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:mod_mappings\tSM:~{SM}') > mod_mappings.header.sam
-        (samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:var_mappings\tSM:~{SM}') > variant_mappings.header.sam
+        ((samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:mappings\tSM:~{SM}')) > mappings.header.sam
+        ((samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:mod_mappings\tSM:~{SM}')) > mod_mappings.header.sam
+        ((samtools view -H $(ls tmp/*/*.bam | head -1) | grep -v '^@RG') && (echo -e '@RG\tID:var_mappings\tSM:~{SM}')) > variant_mappings.header.sam
 
         cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
 
