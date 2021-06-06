@@ -252,15 +252,16 @@ def update_sample_table(namespace, workspace, buckets, project):
 
 def update_sample_set_table(namespace, workspace, joined_tbl):
     ss_old = load_table(namespace, workspace, 'sample_set')
-    del ss_old['samples']
 
-    # upload new sample set
+    # create sample set
     ss = joined_tbl.filter(['bio_sample'], axis=1).drop_duplicates()
     ss.columns = [f'entity:sample_set_id']
-    ss = pd.merge(ss_old, ss, how='outer', sort=True)
+    if ss_old is not None:
+        del ss_old['samples']
+        ss = pd.merge(ss_old, ss, how='outer', sort=True)
     ss = ss.replace('nan', '', regex=True)
 
-    # upload membership set
+    # create membership set
     ms = joined_tbl.filter(['bio_sample', 'entity:sample_id'], axis=1).drop_duplicates()
     ms.columns = [f'membership:sample_set_id', f'sample']
     ms = ms.replace('nan', '', regex=True)
@@ -292,8 +293,8 @@ def upload_data(namespace, workspace, s, ss, ms):
     #delete_table(namespace, workspace, 'sample')
 
     update_table(namespace, workspace, s)
-    update_table(namespace, workspace, ss)
-    update_table(namespace, workspace, ms)
+    # update_table(namespace, workspace, ss)
+    # update_table(namespace, workspace, ms)
 
 
 def load_ccs_report(project, ccs_report_path, e):

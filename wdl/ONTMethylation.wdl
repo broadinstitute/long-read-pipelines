@@ -391,7 +391,7 @@ task IndexVariants {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.13"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -409,7 +409,7 @@ task PhaseVariants {
     input {
         File variants
         File variants_tbi
-        String variant_mappings_bam
+        File variant_mappings_bam
         File variant_mappings_bai
         String chr
 
@@ -421,10 +421,6 @@ task PhaseVariants {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        samtools view -hb ~{variant_mappings_bam} ~{chr} > ~{chr}.bam
-        samtools index ~{chr}.bam
-
         # run whatshap with produced mappings and variants
         whatshap phase \
             --distrust-genotypes \
@@ -432,7 +428,7 @@ task PhaseVariants {
             --chromosome ~{chr} \
             -o variants.phased.~{chr}.vcf \
             ~{variants} \
-            ~{chr}.bam
+            ~{variant_mappings_bam}
 
         # assign haplotypes to reads
         bgzip variants.phased.~{chr}.vcf
@@ -447,7 +443,7 @@ task PhaseVariants {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             72,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
@@ -501,7 +497,7 @@ task Haplotag {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.13"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
