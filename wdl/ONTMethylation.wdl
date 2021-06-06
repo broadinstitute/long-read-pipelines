@@ -113,22 +113,22 @@ workflow ONTMethylation {
                 variant_mappings_bai = SubsetBam.subset_bai,
                 chr = contig
         }
+
+        call Haplotag {
+            input:
+                variants_phased = PhaseVariants.phased_vcf_gz,
+                variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
+                variant_mappings_bam = MergeVarMappings.merged_bam,
+                variant_mappings_bai = MergeVarMappings.merged_bai
+        }
     }
 
-    call VariantUtils.MergePerChrCalls {
-        input:
-            vcfs = PhaseVariants.phased_vcf_gz,
-            ref_dict = ref_map['dict'],
-            prefix = "phased.merged"
-    }
-
-    call Haplotag {
-        input:
-            variants_phased = MergePerChrCalls.vcf,
-            variants_phased_tbi = MergePerChrCalls.tbi,
-            variant_mappings_bam = MergeVarMappings.merged_bam,
-            variant_mappings_bai = MergeVarMappings.merged_bai
-    }
+#    call VariantUtils.MergePerChrCalls {
+#        input:
+#            vcfs = PhaseVariants.phased_vcf_gz,
+#            ref_dict = ref_map['dict'],
+#            prefix = "phased.merged"
+#    }
 
 #    output {
 #        #String gcs_basecall_dir = Guppy.gcs_dir
