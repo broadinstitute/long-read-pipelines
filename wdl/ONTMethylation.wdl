@@ -14,6 +14,7 @@ workflow ONTMethylation {
         File variants
         File variants_tbi
 
+        String participant_name
         String prefix
 
         String gcs_out_root_dir
@@ -182,15 +183,15 @@ task Megalodon {
 
         cat tmp/*/basecalls.fastq > megalodon_results/basecalls.fastq
 
-        samtools merge megalodon_results/mappings.bam tmp/*/mappings.bam
+        samtools merge -c -r '@RG\tID:mapping\tSM:~{SM}' megalodon_results/mappings.bam tmp/*/mappings.bam
         samtools sort megalodon_results/mappings.bam > megalodon_results/mappings.sorted.bam
         samtools index megalodon_results/mappings.sorted.bam
 
-        samtools merge megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
+        samtools merge -c -r '@RG\tID:mod_mapping\tSM:~{SM}' megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
         samtools sort megalodon_results/mod_mappings.bam > megalodon_results/mod_mappings.sorted.bam
         samtools index megalodon_results/mod_mappings.sorted.bam
 
-        samtools merge megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
+        samtools merge -c -r '@RG\tID:var_mapping\tSM:~{SM}' megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
         samtools sort megalodon_results/variant_mappings.bam > megalodon_results/variant_mappings.sorted.bam
         samtools index megalodon_results/variant_mappings.sorted.bam
 
