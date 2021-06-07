@@ -480,7 +480,7 @@ task Haplotag {
             ~{variant_mappings_bam} \
             -o variant_mappings.haplotagged.bam
 
-        tree -h
+        find . -type f -exec ls -lah {} \;
     >>>
 
     output {
