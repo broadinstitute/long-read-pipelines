@@ -423,7 +423,7 @@ task PhaseVariants {
 
         # run whatshap with produced mappings and variants
         whatshap phase \
-            --reference ~{ref_fasta}
+            --reference ~{ref_fasta} \
             --distrust-genotypes \
             --ignore-read-groups \
             --chromosome ~{chr} \
