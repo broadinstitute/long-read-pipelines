@@ -112,6 +112,7 @@ workflow ONTMethylation {
                 variant_mappings_bam = SubsetBam.subset_bam,
                 variant_mappings_bai = SubsetBam.subset_bai,
                 ref_fasta = ref_map['fasta'],
+                ref_fai   = ref_map['fai'],
                 chr = contig
         }
 
@@ -411,6 +412,7 @@ task PhaseVariants {
         File variant_mappings_bam
         File variant_mappings_bai
         File ref_fasta
+        File ref_fai
         String chr
 
         RuntimeAttr? runtime_attr_override
