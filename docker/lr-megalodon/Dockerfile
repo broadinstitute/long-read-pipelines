@@ -26,7 +26,7 @@ RUN yum config-manager --set-enabled powertools
 RUN yum install -y ont-guppy-4.5.4-1.el8.x86_64.rpm
 
 # Install Megalodon
-RUN pip3 install megalodon
+RUN pip3 install megalodon ont-pyguppy-client-lib==4.5.4
 
 # Install Megalodon models
 RUN git clone https://github.com/nanoporetech/rerio.git \
