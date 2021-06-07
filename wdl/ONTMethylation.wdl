@@ -111,6 +111,7 @@ workflow ONTMethylation {
                 variants_tbi = SubsetVCF.subset_tbi,
                 variant_mappings_bam = SubsetBam.subset_bam,
                 variant_mappings_bai = SubsetBam.subset_bai,
+                ref_fasta = ref_map['fasta'],
                 chr = contig
         }
 
@@ -409,6 +410,7 @@ task PhaseVariants {
         File variants_tbi
         File variant_mappings_bam
         File variant_mappings_bai
+        File ref_fasta
         String chr
 
         RuntimeAttr? runtime_attr_override
@@ -421,6 +423,7 @@ task PhaseVariants {
 
         # run whatshap with produced mappings and variants
         whatshap phase \
+            --reference ~{ref_fasta}
             --distrust-genotypes \
             --ignore-read-groups \
             --chromosome ~{chr} \
