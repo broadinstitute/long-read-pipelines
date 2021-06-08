@@ -134,18 +134,35 @@ workflow ONTMethylation {
 
     call Utils.MergeBams as MergeHaplotagBams { input: bams = Haplotag.variant_mappings_haplotagged_bam }
 
-    call CallHaploidVariants {
-         input:
-             haplotagged_bam = MergeHaplotagBams.merged_bam,
-             phased_variants_vcf = MergePerChrCalls.vcf,
-             phased_variants_tbi = MergePerChrCalls.tbi,
-             per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db])[0],
-             per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])[0]
-    }
-
-#    output {
-#        #String gcs_basecall_dir = Guppy.gcs_dir
+#    call CallHaploidVariants {
+#         input:
+#             haplotagged_bam = MergeHaplotagBams.merged_bam,
+#             phased_variants_vcf = MergePerChrCalls.vcf,
+#             phased_variants_tbi = MergePerChrCalls.tbi,
+#             per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db])[0],
+#             per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])[0]
 #    }
+
+    # Finalize
+    String vdir = outdir + "/variants/phased"
+    String adir = outdir + "/alignments/haplotagged"
+
+    File vcf = MergePerChrCalls.vcf
+    File tbi = MergePerChrCalls.tbi
+    File bam = MergeHaplotagBams.merged_bam
+    File bai = MergeHaplotagBams.merged_bai
+
+    call FF.FinalizeToFile as FinalizePhasedVcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.phased.vcf.gz" }
+    call FF.FinalizeToFile as FinalizePhasedTbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.phased.vcf.gz.tbi" }
+    call FF.FinalizeToFile as FinalizeHaplotaggedBam { input: outdir = adir, file = bam, name = "~{participant_name}.haplotagged.bam" }
+    call FF.FinalizeToFile as FinalizeHaplotaggedBai { input: outdir = adir, file = bai, name = "~{participant_name}.haplotagged.bam.bai" }
+
+    output {
+        File phased_vcf = FinalizePhasedVcf.gcs_path
+        File phased_tbi = FinalizePhasedTbi.gcs_path
+        File phased_vcf = FinalizeHaplotaggedBam.gcs_path
+        File phased_tbi = FinalizeHaplotaggedBai.gcs_path
+    }
 }
 
 task Megalodon {
