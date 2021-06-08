@@ -543,11 +543,9 @@ task CallHaploidVariants {
 
         nproc=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        mkdir in_dir
-        mv ~{per_read_variant_calls_db} in_dir
-        mv ~{per_read_modified_base_calls_db} in_dir
-
         mkdir out_dir
+        mv ~{per_read_variant_calls_db} out_dir
+        mv ~{per_read_modified_base_calls_db} out_dir
 
         # extract haplotype reads and call haploid variants
         megalodon_extras \
@@ -557,13 +555,13 @@ task CallHaploidVariants {
 
         megalodon_extras \
             aggregate run \
-            --megalodon-directory in_dir --output-suffix haplotype_1  \
+            --megalodon-directory out_dir --output-suffix haplotype_1  \
             --read-ids-filename out_dir/variant_mappings.haplotype_1_read_ids.txt \
             --outputs variants --haploid --processes $nproc
 
         megalodon_extras \
             aggregate run \
-            --megalodon-directory in_dir --output-suffix haplotype_2  \
+            --megalodon-directory out_dir --output-suffix haplotype_2  \
             --read-ids-filename out_dir/variant_mappings.haplotype_2_read_ids.txt \
             --outputs variants --haploid --processes $nproc
 
@@ -579,6 +577,7 @@ task CallHaploidVariants {
     >>>
 
     output {
+        File merged_haploid_vcf = "out_dir/variants.haploid_merged.vcf"
     }
 
     #########################
