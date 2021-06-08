@@ -137,8 +137,8 @@ workflow ONTMethylation {
     call CallHaploidVariants {
          input:
              haplotagged_bam = MergeHaplotagBams.merged_bam,
-             per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db]),
-             per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])
+             per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db])[0],
+             per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])[0]
     }
 
 #    output {
@@ -526,8 +526,8 @@ task Haplotag {
 task CallHaploidVariants {
     input {
         File haplotagged_bam
-        Array[File] per_read_variant_calls_db
-        Array[File] per_read_modified_base_calls_db
+        File per_read_variant_calls_db
+        File per_read_modified_base_calls_db
 
         RuntimeAttr? runtime_attr_override
     }
@@ -537,8 +537,11 @@ task CallHaploidVariants {
     command <<<
         set -x
 
-        DIRS=$(find /cromwell_root/ -name '*.db' -exec dirname {} \; | tr '\n' ' ')
         nproc=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        mkdir in_dir
+        mv ~{per_read_variant_calls_db} in_dir
+        mv ~{per_read_modified_base_calls_db} in_dir
 
         mkdir out_dir
 
@@ -550,7 +553,7 @@ task CallHaploidVariants {
 
         megalodon_extras \
             aggregate run \
-            --megalodon-directory /cromwell_root/ --output-suffix haplotype_1  \
+            --megalodon-directory in_dir --output-suffix haplotype_1  \
             --read-ids-filename out_dir/variant_mappings.haplotype_1_read_ids.txt \
             --outputs variants --haploid --processes $nproc
 
