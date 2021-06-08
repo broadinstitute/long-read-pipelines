@@ -137,8 +137,8 @@ workflow ONTMethylation {
     call CallHaploidVariants {
          input:
              haplotagged_bam = MergeHaplotagBams.merged_bam,
-             per_read_variant_calls_db = MergeVariantDBs.per_read_variant_calls_db,
-             per_read_modified_base_calls_db = MergeModifiedBaseCallDBs.per_read_modified_base_calls_db
+             per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db]),
+             per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])
     }
 
 #    output {
