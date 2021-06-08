@@ -37,45 +37,45 @@ workflow ONTMethylation {
         }
     }
 
-#    call Merge as MergeVariantDBs {
-#        input:
-#            dbs = Megalodon.per_read_variant_calls_db,
-#            merge_type = "variants",
-#            runtime_attr_override = { 'mem_gb': 48 }
-#    }
-#
-#    call Merge as MergeModifiedBaseCallDBs {
-#        input:
-#            dbs = Megalodon.per_read_modified_base_calls_db,
-#            merge_type = "modified_bases"
-#    }
-#
-#    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
+    call Merge as MergeVariantDBs {
+        input:
+            dbs = Megalodon.per_read_variant_calls_db,
+            merge_type = "variants",
+            runtime_attr_override = { 'mem_gb': 48 }
+    }
+
+    call Merge as MergeModifiedBaseCallDBs {
+        input:
+            dbs = Megalodon.per_read_modified_base_calls_db,
+            merge_type = "modified_bases"
+    }
+
+    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
+
+    call Utils.Cat as CatModifiedBases5mC {
+        input:
+            files = Megalodon.modified_bases_5mC,
+            has_header = false,
+            out = "modified_bases.5mC.bed"
+    }
+
+    call Utils.Cat as CatMappingSummaries {
+        input:
+            files = Megalodon.mappings_summary,
+            has_header = true,
+            out = "mappings_summary.txt"
+    }
+
+    call Utils.Cat as CatSequencingSummaries {
+        input:
+            files = Megalodon.sequencing_summary,
+            has_header = true,
+            out = "sequencing_summary.txt"
+    }
 
     call Utils.MergeBams as MergeMappings { input: bams = Megalodon.mappings_bam }
     call Utils.MergeBams as MergeModMappings { input: bams = Megalodon.mod_mappings_bam }
     call Utils.MergeBams as MergeVarMappings { input: bams = Megalodon.variant_mappings_bam }
-
-#    call Utils.Cat as CatModifiedBases5mC {
-#         input:
-#            files = Megalodon.modified_bases_5mC,
-#            has_header = false,
-#            out = "modified_bases.5mC.bed"
-#    }
-#
-#    call Utils.Cat as CatMappingSummaries {
-#        input:
-#            files = Megalodon.mappings_summary,
-#            has_header = true,
-#            out = "mappings_summary.txt"
-#    }
-#
-#    call Utils.Cat as CatSequencingSummaries {
-#        input:
-#            files = Megalodon.sequencing_summary,
-#            has_header = true,
-#            out = "sequencing_summary.txt"
-#    }
 
     call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
     call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
@@ -133,6 +133,13 @@ workflow ONTMethylation {
     }
 
     call Utils.MergeBams as MergeHaplotagBams { input: bams = Haplotag.variant_mappings_haplotagged_bam }
+
+    call CallHaploidVariants {
+         input:
+             haplotagged_bam = MergeHaplotagBams.merged_bam,
+             per_read_variant_calls_db = MergeVariantDBs.per_read_variant_calls_db,
+             per_read_modified_base_calls_db = MergeModifiedBaseCallDBs.per_read_modified_base_calls_db
+    }
 
 #    output {
 #        #String gcs_basecall_dir = Guppy.gcs_dir
@@ -503,6 +510,79 @@ task Haplotag {
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CallHaploidVariants {
+    input {
+        File haplotagged_bam
+        Array[File] per_read_variant_calls_db
+        Array[File] per_read_modified_base_calls_db
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(per_read_variant_calls_db, "GB") + size(per_read_modified_base_calls_db, "GB")) + 1
+
+    command <<<
+        set -x
+
+        DIRS=$(find /cromwell_root/ -name '*.db' -exec dirname {} \; | tr '\n' ' ')
+        nproc=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        mkdir out_dir
+
+        # extract haplotype reads and call haploid variants
+        megalodon_extras \
+            phase_variants extract_haplotype_reads \
+            ~{haplotagged_bam} \
+            out_dir/variant_mappings
+
+        megalodon_extras \
+            aggregate run \
+            --megalodon-directory /cromwell_root/ --output-suffix haplotype_1  \
+            --read-ids-filename out_dir/variant_mappings.haplotype_1_read_ids.txt \
+            --outputs variants --haploid --processes $nproc
+
+        megalodon_extras \
+            aggregate run \
+            --megalodon-directory /cromwell_root/ --output-suffix haplotype_2  \
+            --read-ids-filename out_dir/variant_mappings.haplotype_2_read_ids.txt \
+            --outputs variants --haploid --processes $nproc
+
+        # merge haploid variants to produce diploid variants
+        megalodon_extras \
+            phase_variants merge_haploid_variants \
+            out_dir/variants.sorted.vcf.gz \
+            out_dir/variants.haplotype_1.sorted.vcf.gz \
+            out_dir/variants.haplotype_2.sorted.vcf.gz \
+            --out-vcf out_dir/variants.haploid_merged.vcf
+
+        tree -h
+    >>>
+
+    output {
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
