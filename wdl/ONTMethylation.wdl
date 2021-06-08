@@ -137,6 +137,8 @@ workflow ONTMethylation {
     call CallHaploidVariants {
          input:
              haplotagged_bam = MergeHaplotagBams.merged_bam,
+             phased_variants_vcf = MergePerChrCalls.vcf,
+             phased_variants_tbi = MergePerChrCalls.tbi,
              per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db])[0],
              per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])[0]
     }
@@ -526,6 +528,8 @@ task Haplotag {
 task CallHaploidVariants {
     input {
         File haplotagged_bam
+        File phased_variants_vcf
+        File phased_variants_tbi
         File per_read_variant_calls_db
         File per_read_modified_base_calls_db
 
@@ -566,7 +570,7 @@ task CallHaploidVariants {
         # merge haploid variants to produce diploid variants
         megalodon_extras \
             phase_variants merge_haploid_variants \
-            out_dir/variants.sorted.vcf.gz \
+            ~{phased_variants_vcf} \
             out_dir/variants.haplotype_1.sorted.vcf.gz \
             out_dir/variants.haplotype_2.sorted.vcf.gz \
             --out-vcf out_dir/variants.haploid_merged.vcf
