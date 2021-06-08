@@ -27,7 +27,7 @@ workflow ONTMethylation {
     call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ ".fast5" ] }
     call Utils.ChunkManifest { input: manifest = ListFilesOfType.manifest, manifest_lines_per_chunk = 30 }
 
-    scatter (manifest_chunk in [ ChunkManifest.manifest_chunks[0], ChunkManifest.manifest_chunks[1] ]) {
+    scatter (manifest_chunk in ChunkManifest.manifest_chunks) {
         call Megalodon {
             input:
                 fast5_files = read_lines(manifest_chunk),
