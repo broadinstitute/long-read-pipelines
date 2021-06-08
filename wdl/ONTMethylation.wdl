@@ -134,14 +134,14 @@ workflow ONTMethylation {
 
     call Utils.MergeBams as MergeHaplotagBams { input: bams = Haplotag.variant_mappings_haplotagged_bam }
 
-#    call CallHaploidVariants {
-#         input:
-#             haplotagged_bam = MergeHaplotagBams.merged_bam,
-#             phased_variants_vcf = MergePerChrCalls.vcf,
-#             phased_variants_tbi = MergePerChrCalls.tbi,
-#             per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db])[0],
-#             per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])[0]
-#    }
+    call CallHaploidVariants {
+         input:
+             haplotagged_bam = MergeHaplotagBams.merged_bam,
+             phased_variants_vcf = MergePerChrCalls.vcf,
+             phased_variants_tbi = MergePerChrCalls.tbi,
+             per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db])[0],
+             per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])[0]
+    }
 
     # Finalize
     String vdir = outdir + "/variants/phased"
@@ -154,14 +154,26 @@ workflow ONTMethylation {
 
     call FF.FinalizeToFile as FinalizePhasedVcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.phased.vcf.gz" }
     call FF.FinalizeToFile as FinalizePhasedTbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.phased.vcf.gz.tbi" }
+
+    call FF.FinalizeToFile as FinalizeHaplotype1Vcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.aggregated.haplotype1.vcf.gz" }
+    call FF.FinalizeToFile as FinalizeHaplotype1Tbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.aggregated.haplotype1.vcf.gz.tbi" }
+    call FF.FinalizeToFile as FinalizeHaplotype2Vcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.aggregated.haplotype2.vcf.gz" }
+    call FF.FinalizeToFile as FinalizeHaplotype2Tbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.aggregated.haplotype2.vcf.gz.tbi" }
+
     call FF.FinalizeToFile as FinalizeHaplotaggedBam { input: outdir = adir, file = bam, name = "~{participant_name}.haplotagged.bam" }
     call FF.FinalizeToFile as FinalizeHaplotaggedBai { input: outdir = adir, file = bai, name = "~{participant_name}.haplotagged.bam.bai" }
 
     output {
         File phased_vcf = FinalizePhasedVcf.gcs_path
         File phased_tbi = FinalizePhasedTbi.gcs_path
-        File phased_vcf = FinalizeHaplotaggedBam.gcs_path
-        File phased_tbi = FinalizeHaplotaggedBai.gcs_path
+
+        File haplotype1_vcf = FinalizeHaplotype1Vcf.gcs_path
+        File haplotype1_tbi = FinalizeHaplotype1Tbi.gcs_path
+        File haplotype2_vcf = FinalizeHaplotype2Vcf.gcs_path
+        File haplotype2_tbi = FinalizeHaplotype2Tbi.gcs_path
+
+        File haplotagged_bam = FinalizeHaplotaggedBam.gcs_path
+        File haplotagged_bai = FinalizeHaplotaggedBai.gcs_path
     }
 }
 
@@ -582,21 +594,22 @@ task CallHaploidVariants {
             --read-ids-filename out_dir/variant_mappings.haplotype_2_read_ids.txt \
             --outputs variants --haploid --processes $nproc
 
-        # merge haploid variants to produce diploid variants
-        megalodon_extras \
-            phase_variants merge_haploid_variants \
-            ~{phased_variants_vcf} \
-            out_dir/variants.haplotype_1.sorted.vcf.gz \
-            out_dir/variants.haplotype_2.sorted.vcf.gz \
-            --out-vcf out_dir/variants.haploid_merged.vcf
+#        # merge haploid variants to produce diploid variants
+#        megalodon_extras \
+#            phase_variants merge_haploid_variants \
+#            ~{phased_variants_vcf} \
+#            out_dir/variants.haplotype_1.sorted.vcf.gz \
+#            out_dir/variants.haplotype_2.sorted.vcf.gz \
+#            --out-vcf out_dir/variants.haploid_merged.vcf
 
         tree -h
     >>>
 
     output {
-        #File merged_haploid_vcf = "out_dir/variants.haploid_merged.vcf"
         File haplotype_1_vcf = "out_dir/variants.haplotype_1.sorted.vcf.gz"
+        File haplotype_1_tbi = "out_dir/variants.haplotype_1.sorted.vcf.gz.tbi"
         File haplotype_2_vcf = "out_dir/variants.haplotype_2.sorted.vcf.gz"
+        File haplotype_2_tbi = "out_dir/variants.haplotype_2.sorted.vcf.gz.tbi"
     }
 
     #########################
