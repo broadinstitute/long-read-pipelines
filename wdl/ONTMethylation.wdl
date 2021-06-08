@@ -577,7 +577,9 @@ task CallHaploidVariants {
     >>>
 
     output {
-        File merged_haploid_vcf = "out_dir/variants.haploid_merged.vcf"
+        #File merged_haploid_vcf = "out_dir/variants.haploid_merged.vcf"
+        File haplotype_1_vcf = "out_dir/variants.haplotype_1.sorted.vcf.gz"
+        File haplotype_2_vcf = "out_dir/variants.haplotype_2.sorted.vcf.gz"
     }
 
     #########################
