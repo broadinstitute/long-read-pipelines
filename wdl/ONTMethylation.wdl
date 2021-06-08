@@ -125,12 +125,14 @@ workflow ONTMethylation {
         }
     }
 
-#    call VariantUtils.MergePerChrCalls {
-#        input:
-#            vcfs = PhaseVariants.phased_vcf_gz,
-#            ref_dict = ref_map['dict'],
-#            prefix = "phased.merged"
-#    }
+    call VariantUtils.MergePerChrCalls {
+        input:
+            vcfs = PhaseVariants.phased_vcf_gz,
+            ref_dict = ref_map['dict'],
+            prefix = "phased.merged"
+    }
+
+    call Utils.MergeBams as MergeHaplotagBams { input: bams = Haplotag.variant_mappings_haplotagged_bam }
 
 #    output {
 #        #String gcs_basecall_dir = Guppy.gcs_dir
