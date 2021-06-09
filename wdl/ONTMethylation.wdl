@@ -565,7 +565,7 @@ task CallHaploidVariants {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(per_read_variant_calls_db, "GB") + size(per_read_modified_base_calls_db, "GB")) + 1
+    Int disk_size = 4*ceil(size([haplotagged_bam, phased_variants_vcf, phased_variants_tbi, per_read_variant_calls_db, per_read_modified_base_calls_db], "GB")) + 1
 
     command <<<
         set -x
