@@ -91,16 +91,18 @@ workflow CallVariants {
 #                chr    = contig,
 #                prefix = prefix
 #        }
-#
-#        call DV.PEPPER {
-#            input:
-#                bam           = SubsetBam.subset_bam,
-#                bai           = SubsetBam.subset_bai,
-#                ref_fasta     = ref_fasta,
-#                ref_fasta_fai = ref_fasta_fai,
-#                chr           = contig,
-#                preset        = "ONT"
-#        }
+
+        if (contig == "chr22") {
+            call DV.PEPPER {
+                input:
+                    bam           = SubsetBam.subset_bam,
+                    bai           = SubsetBam.subset_bai,
+                    ref_fasta     = ref_fasta,
+                    ref_fasta_fai = ref_fasta_fai,
+                    chr           = contig,
+                    preset        = "ONT"
+            }
+        }
 
         call Longshot.Longshot {
             input:

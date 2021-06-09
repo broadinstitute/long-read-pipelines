@@ -116,7 +116,7 @@ task PEPPER {
 
     command <<<
         # example from https://github.com/kishwarshafin/pepper/blob/r0.4/docs/pipeline_docker/ONT_variant_calling.md
-        set -euxo pipefail
+        set -x
 
         touch ~{bai}
 
@@ -148,6 +148,8 @@ task PEPPER {
 
     output {
         # save both VCF and gVCF
+        File ouput_vcf = "PEPPER_SNP_OUPUT.vcf.gz"
+
         File phased_vcf = "~{prefix}.phased.vcf.gz"
         File phased_vcf_tbi = "~{prefix}.phased.vcf.gz.tbi"
 
