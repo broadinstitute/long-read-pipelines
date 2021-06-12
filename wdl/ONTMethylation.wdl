@@ -129,8 +129,8 @@ workflow ONTMethylation {
              haplotagged_bam = MergeHaplotagBams.merged_bam,
              phased_variants_vcf = MergePerChrCalls.vcf,
              phased_variants_tbi = MergePerChrCalls.tbi,
-             per_read_variant_calls_db = select_all([MergeVariantDBs.per_read_variant_calls_db])[0],
-             per_read_modified_base_calls_db = select_all([MergeModifiedBaseCallDBs.per_read_modified_base_calls_db])[0]
+             per_read_variant_calls_db = MergeVariantDBs.per_read_variant_calls_db,
+             per_read_modified_base_calls_db = MergeModifiedBaseCallDBs.per_read_modified_base_calls_db
     }
 
     # Finalize
