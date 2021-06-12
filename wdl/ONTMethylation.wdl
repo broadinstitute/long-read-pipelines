@@ -37,17 +37,8 @@ workflow ONTMethylation {
         }
     }
 
-    call Merge as MergeVariantDBs {
-        input:
-            dbs = Megalodon.per_read_variant_calls_db,
-            merge_type = "variants",
-    }
-
-    call Merge as MergeModifiedBaseCallDBs {
-        input:
-            dbs = Megalodon.per_read_modified_base_calls_db,
-            merge_type = "modified_bases"
-    }
+    call MergeVariantDBs { input: dbs = Megalodon.per_read_variant_calls_db }
+    call MergeModifiedBaseCallDBs { input: dbs = Megalodon.per_read_modified_base_calls_db }
 
     call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
 
@@ -304,10 +295,9 @@ task Megalodon {
     }
 }
 
-task Merge {
+task MergeVariantDBs {
     input {
         Array[File] dbs
-        String merge_type
 
         RuntimeAttr? runtime_attr_override
     }
@@ -319,12 +309,55 @@ task Merge {
 
         DIRS=$(find /cromwell_root/ -name '*.db' -exec dirname {} \; | tr '\n' ' ')
 
-        megalodon_extras merge ~{merge_type} $DIRS
+        megalodon_extras merge variants $DIRS
     >>>
 
     output {
         File? per_read_variant_calls_db = "megalodon_merge_vars_results/per_read_variant_calls.db"
         File? per_read_modified_base_calls_db = "megalodon_merge_mods_results/per_read_modified_base_calls.db"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             48,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MergeModifiedBaseCallDBs {
+    input {
+        Array[File] dbs
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(dbs, "GB")) + 1
+
+    command <<<
+        set -x
+
+        DIRS=$(find /cromwell_root/ -name '*.db' -exec dirname {} \; | tr '\n' ' ')
+
+        megalodon_extras merge modified_bases $DIRS
+    >>>
+
+    output {
+        File per_read_modified_base_calls_db = "megalodon_merge_mods_results/per_read_modified_base_calls.db"
     }
 
     #########################
