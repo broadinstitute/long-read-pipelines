@@ -134,7 +134,7 @@ workflow ONTMethylation {
 
     call Utils.MergeBams as MergeHaplotagBams { input: bams = Haplotag.variant_mappings_haplotagged_bam }
 
-    call CallHaploidVariants {
+    call ExtractHaplotypeReads {
          input:
              haplotagged_bam = MergeHaplotagBams.merged_bam,
              phased_variants_vcf = MergePerChrCalls.vcf,
@@ -155,25 +155,25 @@ workflow ONTMethylation {
     call FF.FinalizeToFile as FinalizePhasedVcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.phased.vcf.gz" }
     call FF.FinalizeToFile as FinalizePhasedTbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.phased.vcf.gz.tbi" }
 
-    call FF.FinalizeToFile as FinalizeHaplotype1Vcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.aggregated.haplotype1.vcf.gz" }
-    call FF.FinalizeToFile as FinalizeHaplotype1Tbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.aggregated.haplotype1.vcf.gz.tbi" }
-    call FF.FinalizeToFile as FinalizeHaplotype2Vcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.aggregated.haplotype2.vcf.gz" }
-    call FF.FinalizeToFile as FinalizeHaplotype2Tbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.aggregated.haplotype2.vcf.gz.tbi" }
-
     call FF.FinalizeToFile as FinalizeHaplotaggedBam { input: outdir = adir, file = bam, name = "~{participant_name}.haplotagged.bam" }
     call FF.FinalizeToFile as FinalizeHaplotaggedBai { input: outdir = adir, file = bai, name = "~{participant_name}.haplotagged.bam.bai" }
+
+#    call FF.FinalizeToFile as FinalizeHaplotype1Vcf { input: outdir = vdir, file = CallHaploidVariants.haplotype_1_vcf, name = "~{participant_name}.aggregated.haplotype1.vcf.gz" }
+#    call FF.FinalizeToFile as FinalizeHaplotype1Tbi { input: outdir = vdir, file = CallHaploidVariants.haplotype_1_tbi, name = "~{participant_name}.aggregated.haplotype1.vcf.gz.tbi" }
+#    call FF.FinalizeToFile as FinalizeHaplotype2Vcf { input: outdir = vdir, file = CallHaploidVariants.haplotype_2_vcf, name = "~{participant_name}.aggregated.haplotype2.vcf.gz" }
+#    call FF.FinalizeToFile as FinalizeHaplotype2Tbi { input: outdir = vdir, file = CallHaploidVariants.haplotype_2_tbi, name = "~{participant_name}.aggregated.haplotype2.vcf.gz.tbi" }
 
     output {
         File phased_vcf = FinalizePhasedVcf.gcs_path
         File phased_tbi = FinalizePhasedTbi.gcs_path
 
-        File haplotype1_vcf = FinalizeHaplotype1Vcf.gcs_path
-        File haplotype1_tbi = FinalizeHaplotype1Tbi.gcs_path
-        File haplotype2_vcf = FinalizeHaplotype2Vcf.gcs_path
-        File haplotype2_tbi = FinalizeHaplotype2Tbi.gcs_path
-
         File haplotagged_bam = FinalizeHaplotaggedBam.gcs_path
         File haplotagged_bai = FinalizeHaplotaggedBai.gcs_path
+
+#        File haplotype1_vcf = FinalizeHaplotype1Vcf.gcs_path
+#        File haplotype1_tbi = FinalizeHaplotype1Tbi.gcs_path
+#        File haplotype2_vcf = FinalizeHaplotype2Vcf.gcs_path
+#        File haplotype2_tbi = FinalizeHaplotype2Tbi.gcs_path
     }
 }
 
@@ -554,7 +554,7 @@ task Haplotag {
     }
 }
 
-task CallHaploidVariants {
+task ExtractHaplotypeReads {
     input {
         File haplotagged_bam
         File phased_variants_vcf
@@ -582,17 +582,19 @@ task CallHaploidVariants {
             ~{haplotagged_bam} \
             out_dir/variant_mappings
 
-        megalodon_extras \
-            aggregate run \
-            --megalodon-directory out_dir --output-suffix haplotype_1  \
-            --read-ids-filename out_dir/variant_mappings.haplotype_1_read_ids.txt \
-            --outputs variants --haploid --processes $nproc
+        tree -h
 
-        megalodon_extras \
-            aggregate run \
-            --megalodon-directory out_dir --output-suffix haplotype_2  \
-            --read-ids-filename out_dir/variant_mappings.haplotype_2_read_ids.txt \
-            --outputs variants --haploid --processes $nproc
+#        megalodon_extras \
+#            aggregate run \
+#            --megalodon-directory out_dir --output-suffix haplotype_1  \
+#            --read-ids-filename out_dir/variant_mappings.haplotype_1_read_ids.txt \
+#            --outputs variants --haploid --processes $nproc
+
+#        megalodon_extras \
+#            aggregate run \
+#            --megalodon-directory out_dir --output-suffix haplotype_2  \
+#            --read-ids-filename out_dir/variant_mappings.haplotype_2_read_ids.txt \
+#            --outputs variants --haploid --processes $nproc
 
 #        # merge haploid variants to produce diploid variants
 #        megalodon_extras \
@@ -601,8 +603,6 @@ task CallHaploidVariants {
 #            out_dir/variants.haplotype_1.sorted.vcf.gz \
 #            out_dir/variants.haplotype_2.sorted.vcf.gz \
 #            --out-vcf out_dir/variants.haploid_merged.vcf
-
-        tree -h
     >>>
 
     output {
