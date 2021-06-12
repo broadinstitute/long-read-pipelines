@@ -41,7 +41,6 @@ workflow ONTMethylation {
         input:
             dbs = Megalodon.per_read_variant_calls_db,
             merge_type = "variants",
-            runtime_attr_override = { 'mem_gb': 48 }
     }
 
     call Merge as MergeModifiedBaseCallDBs {
@@ -331,7 +330,7 @@ task Merge {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             16,
+        mem_gb:             48,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
