@@ -580,35 +580,11 @@ task ExtractHaplotypeReads {
             phase_variants extract_haplotype_reads \
             ~{haplotagged_bam} \
             out_dir/variant_mappings
-
-        tree -h
-
-#        megalodon_extras \
-#            aggregate run \
-#            --megalodon-directory out_dir --output-suffix haplotype_1  \
-#            --read-ids-filename out_dir/variant_mappings.haplotype_1_read_ids.txt \
-#            --outputs variants --haploid --processes $nproc
-
-#        megalodon_extras \
-#            aggregate run \
-#            --megalodon-directory out_dir --output-suffix haplotype_2  \
-#            --read-ids-filename out_dir/variant_mappings.haplotype_2_read_ids.txt \
-#            --outputs variants --haploid --processes $nproc
-
-#        # merge haploid variants to produce diploid variants
-#        megalodon_extras \
-#            phase_variants merge_haploid_variants \
-#            ~{phased_variants_vcf} \
-#            out_dir/variants.haplotype_1.sorted.vcf.gz \
-#            out_dir/variants.haplotype_2.sorted.vcf.gz \
-#            --out-vcf out_dir/variants.haploid_merged.vcf
     >>>
 
     output {
-        File haplotype_1_vcf = "out_dir/variants.haplotype_1.sorted.vcf.gz"
-        File haplotype_1_tbi = "out_dir/variants.haplotype_1.sorted.vcf.gz.tbi"
-        File haplotype_2_vcf = "out_dir/variants.haplotype_2.sorted.vcf.gz"
-        File haplotype_2_tbi = "out_dir/variants.haplotype_2.sorted.vcf.gz.tbi"
+        File haplotype_1_read_ids = "out_dir/variant_mappings.haplotype_1_read_ids.txt"
+        File haplotype_2_read_ids = "out_dir/variant_mappings.haplotype_2_read_ids.txt"
     }
 
     #########################
@@ -632,3 +608,86 @@ task ExtractHaplotypeReads {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+#task ExtractHaplotypeReads {
+#    input {
+#        File haplotagged_bam
+#        File phased_variants_vcf
+#        File phased_variants_tbi
+#        File per_read_variant_calls_db
+#        File per_read_modified_base_calls_db
+#
+#        RuntimeAttr? runtime_attr_override
+#    }
+#
+#    Int disk_size = 4*ceil(size([haplotagged_bam, phased_variants_vcf, phased_variants_tbi, per_read_variant_calls_db, per_read_modified_base_calls_db], "GB")) + 1
+#
+#    command <<<
+#        set -x
+#
+#        nproc=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+#
+#        mkdir out_dir
+#        mv ~{per_read_variant_calls_db} out_dir
+#        mv ~{per_read_modified_base_calls_db} out_dir
+#
+#        # extract haplotype reads and call haploid variants
+#        megalodon_extras \
+#        phase_variants extract_haplotype_reads \
+#        ~{haplotagged_bam} \
+#        out_dir/variant_mappings
+#
+#        tree -h
+#
+#        #        megalodon_extras \
+#        #            aggregate run \
+#        #            --megalodon-directory out_dir --output-suffix haplotype_1  \
+#        #            --read-ids-filename out_dir/variant_mappings.haplotype_1_read_ids.txt \
+#        #            --outputs variants --haploid --processes $nproc
+#
+#        #        megalodon_extras \
+#        #            aggregate run \
+#        #            --megalodon-directory out_dir --output-suffix haplotype_2  \
+#        #            --read-ids-filename out_dir/variant_mappings.haplotype_2_read_ids.txt \
+#        #            --outputs variants --haploid --processes $nproc
+#
+#        #        # merge haploid variants to produce diploid variants
+#        #        megalodon_extras \
+#        #            phase_variants merge_haploid_variants \
+#        #            ~{phased_variants_vcf} \
+#        #            out_dir/variants.haplotype_1.sorted.vcf.gz \
+#        #            out_dir/variants.haplotype_2.sorted.vcf.gz \
+#        #            --out-vcf out_dir/variants.haploid_merged.vcf
+#    >>>
+#
+#    output {
+#        File haplotype_1_read_ids = "out_dir/variant_mappings.haplotype_1_read_ids.txt"
+#        File haplotype_2_read_ids = "out_dir/variant_mappings.haplotype_2_read_ids.txt"
+#
+#        #        File haplotype_1_vcf = "out_dir/variants.haplotype_1.sorted.vcf.gz"
+#        #        File haplotype_1_tbi = "out_dir/variants.haplotype_1.sorted.vcf.gz.tbi"
+#        #        File haplotype_2_vcf = "out_dir/variants.haplotype_2.sorted.vcf.gz"
+#        #        File haplotype_2_tbi = "out_dir/variants.haplotype_2.sorted.vcf.gz.tbi"
+#    }
+#
+#    #########################
+#    RuntimeAttr default_attr = object {
+#        cpu_cores:          2,
+#        mem_gb:             16,
+#        disk_gb:            disk_size,
+#        boot_disk_gb:       10,
+#        preemptible_tries:  0,
+#        max_retries:        0,
+#        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+#    }
+#    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+#    runtime {
+#        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+#        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+#        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+#        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+#        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+#        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+#        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+#    }
+#}
