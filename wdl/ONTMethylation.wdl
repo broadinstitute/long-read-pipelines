@@ -313,8 +313,7 @@ task MergeVariantDBs {
     >>>
 
     output {
-        File? per_read_variant_calls_db = "megalodon_merge_vars_results/per_read_variant_calls.db"
-        File? per_read_modified_base_calls_db = "megalodon_merge_mods_results/per_read_modified_base_calls.db"
+        File per_read_variant_calls_db = "megalodon_merge_vars_results/per_read_variant_calls.db"
     }
 
     #########################
