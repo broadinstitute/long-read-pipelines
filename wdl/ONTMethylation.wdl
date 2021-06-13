@@ -659,7 +659,8 @@ task ExtractHaplotypeReads {
 
 task CallHaploidVariants {
     input {
-        File per_read_variant_calls_db File per_read_modified_base_calls_db
+        File per_read_variant_calls_db
+        File per_read_modified_base_calls_db
         File read_ids
         Int suffix
 
@@ -695,7 +696,7 @@ task CallHaploidVariants {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             16,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
