@@ -126,11 +126,27 @@ workflow ONTMethylation {
 
     call ExtractHaplotypeReads {
          input:
-             haplotagged_bam = MergeHaplotagBams.merged_bam,
-             phased_variants_vcf = MergePerChrCalls.vcf,
-             phased_variants_tbi = MergePerChrCalls.tbi,
-             per_read_variant_calls_db = MergeVariantDBs.per_read_variant_calls_db,
-             per_read_modified_base_calls_db = MergeModifiedBaseCallDBs.per_read_modified_base_calls_db
+            haplotagged_bam = MergeHaplotagBams.merged_bam,
+            phased_variants_vcf = MergePerChrCalls.vcf,
+            phased_variants_tbi = MergePerChrCalls.tbi,
+            per_read_variant_calls_db = MergeVariantDBs.per_read_variant_calls_db,
+            per_read_modified_base_calls_db = MergeModifiedBaseCallDBs.per_read_modified_base_calls_db
+    }
+
+    call CallHaploidVariants as CallHaplotype1Variants {
+        input:
+            per_read_variant_calls_db = MergeVariantDBs.per_read_variant_calls_db,
+            per_read_modified_base_calls_db = MergeModifiedBaseCallDBs.per_read_modified_base_calls_db,
+            read_ids = ExtractHaplotypeReads.haplotype_1_read_ids,
+            suffix = 1
+    }
+
+    call CallHaploidVariants as CallHaplotype2Variants {
+        input:
+            per_read_variant_calls_db = MergeVariantDBs.per_read_variant_calls_db,
+            per_read_modified_base_calls_db = MergeModifiedBaseCallDBs.per_read_modified_base_calls_db,
+            read_ids = ExtractHaplotypeReads.haplotype_2_read_ids,
+            suffix = 2
     }
 
     # Finalize
@@ -148,10 +164,10 @@ workflow ONTMethylation {
     call FF.FinalizeToFile as FinalizeHaplotaggedBam { input: outdir = adir, file = bam, name = "~{participant_name}.haplotagged.bam" }
     call FF.FinalizeToFile as FinalizeHaplotaggedBai { input: outdir = adir, file = bai, name = "~{participant_name}.haplotagged.bam.bai" }
 
-#    call FF.FinalizeToFile as FinalizeHaplotype1Vcf { input: outdir = vdir, file = CallHaploidVariants.haplotype_1_vcf, name = "~{participant_name}.aggregated.haplotype1.vcf.gz" }
-#    call FF.FinalizeToFile as FinalizeHaplotype1Tbi { input: outdir = vdir, file = CallHaploidVariants.haplotype_1_tbi, name = "~{participant_name}.aggregated.haplotype1.vcf.gz.tbi" }
-#    call FF.FinalizeToFile as FinalizeHaplotype2Vcf { input: outdir = vdir, file = CallHaploidVariants.haplotype_2_vcf, name = "~{participant_name}.aggregated.haplotype2.vcf.gz" }
-#    call FF.FinalizeToFile as FinalizeHaplotype2Tbi { input: outdir = vdir, file = CallHaploidVariants.haplotype_2_tbi, name = "~{participant_name}.aggregated.haplotype2.vcf.gz.tbi" }
+    call FF.FinalizeToFile as FinalizeHaplotype1Vcf { input: outdir = vdir, file = CallHaplotype1Variants.haploid_vcf, name = "~{participant_name}.aggregated.haplotype1.vcf.gz" }
+    call FF.FinalizeToFile as FinalizeHaplotype1Tbi { input: outdir = vdir, file = CallHaplotype1Variants.haploid_tbi, name = "~{participant_name}.aggregated.haplotype1.vcf.gz.tbi" }
+    call FF.FinalizeToFile as FinalizeHaplotype2Vcf { input: outdir = vdir, file = CallHaplotype2Variants.haploid_vcf, name = "~{participant_name}.aggregated.haplotype2.vcf.gz" }
+    call FF.FinalizeToFile as FinalizeHaplotype2Tbi { input: outdir = vdir, file = CallHaplotype2Variants.haploid_tbi, name = "~{participant_name}.aggregated.haplotype2.vcf.gz.tbi" }
 
     output {
         File phased_vcf = FinalizePhasedVcf.gcs_path
@@ -160,10 +176,10 @@ workflow ONTMethylation {
         File haplotagged_bam = FinalizeHaplotaggedBam.gcs_path
         File haplotagged_bai = FinalizeHaplotaggedBai.gcs_path
 
-#        File haplotype1_vcf = FinalizeHaplotype1Vcf.gcs_path
-#        File haplotype1_tbi = FinalizeHaplotype1Tbi.gcs_path
-#        File haplotype2_vcf = FinalizeHaplotype2Vcf.gcs_path
-#        File haplotype2_tbi = FinalizeHaplotype2Tbi.gcs_path
+        File haplotype1_vcf = FinalizeHaplotype1Vcf.gcs_path
+        File haplotype1_tbi = FinalizeHaplotype1Tbi.gcs_path
+        File haplotype2_vcf = FinalizeHaplotype2Vcf.gcs_path
+        File haplotype2_tbi = FinalizeHaplotype2Tbi.gcs_path
     }
 }
 
@@ -622,6 +638,63 @@ task ExtractHaplotypeReads {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CallHaploidVariants {
+    input {
+        File per_read_variant_calls_db File per_read_modified_base_calls_db
+        File read_ids
+        Int suffix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size([per_read_variant_calls_db, per_read_modified_base_calls_db], "GB")) + 1
+
+    command <<<
+        set -x
+
+        nproc=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        mkdir out_dir
+        mv ~{per_read_variant_calls_db} out_dir
+        mv ~{per_read_modified_base_calls_db} out_dir
+
+        # call haploid variants
+        megalodon_extras \
+            aggregate run \
+            --megalodon-directory out_dir --output-suffix haplotype_~{suffix} \
+            --read-ids-filename ~{read_ids} \
+            --outputs variants --haploid --processes $nproc
+
+        tree -h
+    >>>
+
+    output {
+        File haploid_vcf = "out_dir/variants.haplotype_~{suffix}.sorted.vcf.gz"
+        File haploid_tbi = "out_dir/variants.haplotype_~{suffix}.sorted.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
