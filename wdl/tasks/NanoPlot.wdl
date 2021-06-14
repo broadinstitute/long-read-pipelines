@@ -5,34 +5,77 @@ import "Structs.wdl"
 task NanoPlotFromSummary {
     input {
         Array[File] summary_files
-        String plot_type
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int num_cpus = 4
     Int disk_size = 2*ceil(size(summary_files, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        /usr/bin/time -v python3 /usr/local/lib/python3.7/site-packages/nanoplot/NanoPlot.py -t ~{num_cpus} -c orangered --N50 -f ~{plot_type} --summary ~{sep=' ' summary_files}
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        NanoPlot -t ${num_core} \
+                 -c orangered \
+                 --N50 \
+                 --tsv_stats \
+                 --summary "~{sep=' ' summary_files}"
+
+        cat NanoStats.txt | \
+            grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
+            sed 's/ >/_/' | \
+            sed 's/://' | \
+            awk '{ print $1 "\t" $2 }' | \
+            tee map.txt
     >>>
 
+    #number_of_reads 88000
+    #number_of_bases 467855516.0
+    #median_read_length      4086.0
+    #mean_read_length        5316.5
+    #read_length_stdev       4413.2
+    #n50     6731.0
+    #active_channels 506
+    #mean_qual       12.8
+    #median_qual     13.7
+    #Reads_Q5        85483
+    #Reads_Q7        80249
+    #Reads_Q10       71810
+    #Reads_Q12       59097
+    #Reads_Q15       26597
+
     output {
-        Array[File] plots = glob("*.~{plot_type}")
         File stats = "NanoStats.txt"
+        Map[String, Float] stats_map = read_map("map.txt")
+
+        Array[File] plots = glob("*.png")
+        File ActivePores_Over_Time = "ActivePores_Over_Time.png"
+        File ActivityMap_ReadsPerChannel = "ActivityMap_ReadsPerChannel.png"
+        File CumulativeYieldPlot_Gigabases = "CumulativeYieldPlot_Gigabases.png"
+        File CumulativeYieldPlot_NumberOfReads = "CumulativeYieldPlot_NumberOfReads.png"
+        File LengthvsQualityScatterPlot_dot = "LengthvsQualityScatterPlot_dot.png"
+        File LengthvsQualityScatterPlot_kde = "LengthvsQualityScatterPlot_kde.png"
+        File Non_weightedHistogramReadlength = "Non_weightedHistogramReadlength.png"
+        File Non_weightedLogTransformed_HistogramReadlength = "Non_weightedLogTransformed_HistogramReadlength.png"
+        File NumberOfReads_Over_Time = "NumberOfReads_Over_Time.png"
+        File TimeLengthViolinPlot = "TimeLengthViolinPlot.png"
+        File TimeQualityViolinPlot = "TimeQualityViolinPlot.png"
+        File TimeSequencingSpeed_ViolinPlot = "TimeSequencingSpeed_ViolinPlot.png"
+        File WeightedHistogramReadlength = "WeightedHistogramReadlength.png"
+        File WeightedLogTransformed_HistogramReadlength = "WeightedLogTransformed_HistogramReadlength.png"
+        File Yield_By_Length = "Yield_By_Length.png"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          "~{num_cpus}",
+        cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/biocontainers/nanoplot:1.28.0--py_0"
+        docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -46,50 +89,163 @@ task NanoPlotFromSummary {
     }
 }
 
-task NanoPlotFromAlignedBam {
+task NanoPlotFromBam {
     input {
-        File unaligned_bam
-        String plot_type
+        File bam
+        File bai
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int num_cpus = 4
-    Int disk_size = 2*ceil(size(unaligned_bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        python3 /usr/local/lib/python3.7/site-packages/nanoplot/NanoPlot.py -t ~{num_cpus} -c orangered -f ~{plot_type} --ubam ~{unaligned_bam}
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        NanoPlot -t ${num_core} \
+                 -c orangered \
+                 --N50 \
+                 --tsv_stats \
+                 --bam "~{bam}"
+
+        cat NanoStats.txt | \
+            grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
+            sed 's/ >/_/' | \
+            sed 's/://' | \
+            awk '{ print $1 "\t" $2 }' | \
+            tee map.txt
     >>>
 
+    #number_of_reads 143488
+    #number_of_bases 993469297.0
+    #number_of_bases_aligned 402067275.0
+    #fraction_bases_aligned  0.4
+    #median_read_length      5081.0
+    #mean_read_length        6923.7
+    #read_length_stdev       6116.7
+    #n50     9210.0
+    #average_identity        92.8
+    #median_identity 94.5
+    #mean_qual       14.6
+    #median_qual     15.0
+    #Reads_Q5        143488
+    #Reads_Q7        143488
+    #Reads_Q10       140551
+    #Reads_Q12       119386
+    #Reads_Q15       71164
+
     output {
-        File ActivePores_Over_Time = "ActivePores_Over_Time.~{plot_type}"
-        File ActivityMap_ReadsPerChannel = "ActivityMap_ReadsPerChannel.~{plot_type}"
-        File CumulativeYieldPlot_Gigabases = "CumulativeYieldPlot_Gigabases.~{plot_type}"
-        File CumulativeYieldPlot_NumberOfReads = "CumulativeYieldPlot_NumberOfReads.~{plot_type}"
-        File HistogramReadlength = "HistogramReadlength.~{plot_type}"
-        File LengthvsQualityScatterPlot_dot = "LengthvsQualityScatterPlot_dot.~{plot_type}"
-        File LengthvsQualityScatterPlot_kde = "LengthvsQualityScatterPlot_kde.~{plot_type}"
-        File LogTransformed_HistogramReadlength = "LogTransformed_HistogramReadlength.~{plot_type}"
-        File NumberOfReads_Over_Time = "NumberOfReads_Over_Time.~{plot_type}"
-        File TimeLengthViolinPlot = "TimeLengthViolinPlot.~{plot_type}"
-        File TimeQualityViolinPlot = "TimeQualityViolinPlot.~{plot_type}"
-        File TimeSequencingSpeed_ViolinPlot = "TimeSequencingSpeed_ViolinPlot.~{plot_type}"
-        File Weighted_HistogramReadlength = "Weighted_HistogramReadlength.~{plot_type}"
-        File Weighted_LogTransformed_HistogramReadlength = "Weighted_LogTransformed_HistogramReadlength.~{plot_type}"
-        File Yield_By_Length = "Yield_By_Length.~{plot_type}"
+        File stats = "NanoStats.txt"
+        Map[String, Float] stats_map = read_map("map.txt")
+
+        Array[File] plots = glob("*.png")
+#        File AlignedReadlengthvsSequencedReadLength_dot = "AlignedReadlengthvsSequencedReadLength_dot.png"
+#        File AlignedReadlengthvsSequencedReadLength_kde = "AlignedReadlengthvsSequencedReadLength_kde.png"
+#        File LengthvsQualityScatterPlot_dot = "LengthvsQualityScatterPlot_dot.png"
+#        File LengthvsQualityScatterPlot_kde = "LengthvsQualityScatterPlot_kde.png"
+#        File MappingQualityvsAverageBaseQuality_dot = "MappingQualityvsAverageBaseQuality_dot.png"
+#        File MappingQualityvsAverageBaseQuality_kde = "MappingQualityvsAverageBaseQuality_kde.png"
+#        File MappingQualityvsReadLength_dot = "MappingQualityvsReadLength_dot.png"
+#        File MappingQualityvsReadLength_kde = "MappingQualityvsReadLength_kde.png"
+#        File Non_weightedHistogramReadlength = "Non_weightedHistogramReadlength.png"
+#        File Non_weightedLogTransformed_HistogramReadlength = "Non_weightedLogTransformed_HistogramReadlength.png"
+#        File PercentIdentityHistogramDynamic_Histogram_percent_identity = "PercentIdentityHistogramDynamic_Histogram_percent_identity.png"
+#        File PercentIdentityvsAlignedReadLength_dot = "PercentIdentityvsAlignedReadLength_dot.png"
+#        File PercentIdentityvsAlignedReadLength_kde = "PercentIdentityvsAlignedReadLength_kde.png"
+#        File PercentIdentityvsAverageBaseQuality_dot = "PercentIdentityvsAverageBaseQuality_dot.png"
+#        File PercentIdentityvsAverageBaseQuality_kde = "PercentIdentityvsAverageBaseQuality_kde.png"
+#        File WeightedHistogramReadlength = "WeightedHistogramReadlength.png"
+#        File WeightedLogTransformed_HistogramReadlength = "WeightedLogTransformed_HistogramReadlength.png"
+#        File Yield_By_Length = "Yield_By_Length.png"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          "~{num_cpus}",
-        mem_gb:             1,
+        cpu_cores:          16,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task NanoPlotFromUBam {
+    input {
+        File bam
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        NanoPlot -t ${num_core} \
+            -c orangered \
+            --N50 \
+            --tsv_stats \
+            --ubam "~{bam}"
+
+        cat NanoStats.txt | \
+            grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
+            sed 's/ >/_/' | \
+            sed 's/://' | \
+            awk '{ print $1 "\t" $2 }' | \
+            tee map.txt
+    >>>
+
+    #number_of_reads 991
+    #number_of_bases 12949457.0
+    #median_read_length      13705.0
+    #mean_read_length        13067.1
+    #read_length_stdev       9581.3
+    #n50     18618.0
+    #mean_qual       0.0
+    #median_qual     0.0
+    #Reads_Q5        0
+    #Reads_Q7        0
+    #Reads_Q10       0
+    #Reads_Q12       0
+    #Reads_Q15       0
+
+    output {
+        File stats = "NanoStats.txt"
+        Map[String, Float] stats_map = read_map("map.txt")
+
+        Array[File] plots = glob("*.png")
+        File Non_weightedHistogramReadlength = "Non_weightedHistogramReadlength.png"
+        File Non_weightedLogTransformed_HistogramReadlength = "Non_weightedLogTransformed_HistogramReadlength.png"
+        File WeightedHistogramReadlength = "WeightedHistogramReadlength.png"
+        File WeightedLogTransformed_HistogramReadlength = "WeightedLogTransformed_HistogramReadlength.png"
+        File Yield_By_Length = "Yield_By_Length.png"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/biocontainers/nanoplot:1.28.0--py_0"
+        docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

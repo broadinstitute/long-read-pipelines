@@ -7,96 +7,73 @@ workflow C3POa {
     input {
         File manifest_chunk
         File ref_fasta
+        File splint_fasta
     }
 
     call Cat as CatRawReads { input: files = read_lines(manifest_chunk), out = "chunk.fastq" }
-    call Preprocessing { input: fastq = CatRawReads.merged }
 
-    scatter (fastq in Preprocessing.fastqs) {
-        call Processing { input: preprocessed_fastq = fastq }
-    }
-
-    call Cat as CatSubreads { input: files = Processing.subreads, out = "subreads.fastq" }
-    call Cat as CatConsensus { input: files = Processing.consensus, out = "consensus.fasta" }
+    call Processing { input: fastq = CatRawReads.merged, splint_fasta = splint_fasta }
 
     output {
-        File subreads = CatSubreads.merged
-        File consensus = CatConsensus.merged
-    }
-}
+        File subreads1 = Processing.subreads1
+        File subreads2 = Processing.subreads2
+        File subreads3 = Processing.subreads3
+        File subreads4 = Processing.subreads4
 
-task Preprocessing {
-    input {
-        File fastq
+        File consensus1 = Processing.consensus1
+        File consensus2 = Processing.consensus2
+        File consensus3 = Processing.consensus3
+        File consensus4 = Processing.consensus4
 
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 3*ceil(size(fastq, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        mkdir pre
-
-        python3 /C3POa/C3POa_preprocessing.py -i ~{fastq} \
-                                              -o pre \
-                                              -q 9 \
-                                              -l 1000 \
-                                              -s /C3POa/splint.fasta \
-                                              -c /c3poa.config.txt
-
-        find pre -name 'R2C2_raw_reads.fastq' | awk -F"/" '{ print $0, "pre_" $2 "_" $4 }' | xargs -L 1 cp
-    >>>
-
-    output {
-        Array[File] fastqs = glob("pre_*.fastq")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             2,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        Int no_splint_reads  = Processing.no_splint_reads
+        Int under_len_cutoff = Processing.under_len_cutoff
+        Int total_reads      = Processing.total_reads
     }
 }
 
 task Processing {
     input {
-        File preprocessed_fastq
+        File fastq
+        File splint_fasta
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(preprocessed_fastq, "GB"))
+    Int disk_size = 2*ceil(size(fastq, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        python3 /C3POa/C3POa.py -z -d 500 -l 1000 -p . \
-                                -m /C3POa/NUC.4.4.mat \
-                                -c /c3poa.config.txt \
-                                -r ~{preprocessed_fastq} \
-                                -o consensus.fasta
+        mkdir out
+        python3 /C3POa/C3POa.py \
+            -r ~{fastq} \
+            -s ~{splint_fasta} \
+            -c /c3poa.config.txt \
+            -l 100 -d 500 -n 32 -g 1000 \
+            -o out
+
+        grep 'No splint reads' out/c3poa.log | awk '{ print $4 }' > no_splint_reads.txt
+        grep 'Under len cutoff' out/c3poa.log | awk '{ print $4 }' > under_len_cutoff.txt
+        grep 'Total reads' out/c3poa.log | awk '{ print $3 }' > total_reads.txt
+
+        tree -h
     >>>
 
     output {
-        File consensus = "consensus.fasta"
-        File subreads = "subreads.fastq"
+        File consensus1 = "out/10x_Splint_1/R2C2_Consensus.fasta"
+        File consensus2 = "out/10x_Splint_2/R2C2_Consensus.fasta"
+        File consensus3 = "out/10x_Splint_3/R2C2_Consensus.fasta"
+        File consensus4 = "out/10x_Splint_4/R2C2_Consensus.fasta"
+
+        File subreads1 = "out/10x_Splint_1/R2C2_Subreads.fastq"
+        File subreads2 = "out/10x_Splint_2/R2C2_Subreads.fastq"
+        File subreads3 = "out/10x_Splint_3/R2C2_Subreads.fastq"
+        File subreads4 = "out/10x_Splint_4/R2C2_Subreads.fastq"
+
+        File c3poa_log = "out/c3poa.log"
+        Int no_splint_reads = read_int("no_splint_reads.txt")
+        Int under_len_cutoff = read_int("under_len_cutoff.txt")
+        Int total_reads = read_int("total_reads.txt")
     }
 
     #########################
@@ -107,7 +84,7 @@ task Processing {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:2.2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

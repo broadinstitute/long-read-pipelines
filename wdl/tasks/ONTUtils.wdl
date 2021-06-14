@@ -12,16 +12,16 @@ task FindSequencingSummaryFiles {
     String indir = sub(gcs_input_dir, "/$", "")
 
     command <<<
-        for summary_file in $(gsutil ls ~{indir}/**sequencing_summary*.txt*)
+        for summary_file in $(gsutil ls "~{indir}/**sequencing_summary*.txt*")
         do
             DIR=$(dirname $summary_file)
             echo ${DIR}
 
-            gsutil ls ${DIR} | grep fastq_pass && gsutil ls ${DIR} | grep fast5_pass
+            gsutil ls "${DIR}" | grep fastq_pass && gsutil ls "${DIR}" | grep fast5_pass
 
             if [ $? -eq 0 ]; then
-                FASTQ_COUNT=$(gsutil ls ${DIR}/fastq_pass/*.fastq* | wc -l)
-                FAST5_COUNT=$(gsutil ls ${DIR}/fast5_pass/*.fast5* | wc -l)
+                FASTQ_COUNT=$(gsutil ls "${DIR}/fastq_pass/*.fastq*" | wc -l)
+                FAST5_COUNT=$(gsutil ls "${DIR}/fast5_pass/*.fast5*" | wc -l)
 
                 echo "${FASTQ_COUNT} ${FAST5_COUNT}"
 
@@ -50,7 +50,7 @@ task FindSequencingSummaryFiles {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -66,17 +66,15 @@ task FindSequencingSummaryFiles {
 
 task GetRunInfo {
     input {
-        String summary_file
+        String final_summary
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String indir = sub(sub(summary_file, basename(summary_file), ""), "/$", "")
-
     command <<<
         set -euxo pipefail
 
-        gsutil cat ~{indir}/final_summary*.txt | sed 's/=/\t/g' > run_info.txt
+        gsutil cat "~{final_summary}" | sed 's/=[[:space:]]*$/=unknown/' | sed 's/=/\t/g' > run_info.txt
     >>>
 
     output {
@@ -91,7 +89,7 @@ task GetRunInfo {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -107,18 +105,18 @@ task GetRunInfo {
 
 task ListFiles {
     input {
-        String summary_file
+        String sequencing_summary
         String suffix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String indir = sub(sub(summary_file, basename(summary_file), ""), "/$", "")
+    String indir = sub(sub(sequencing_summary, basename(sequencing_summary), ""), "/$", "")
 
     command <<<
         set -euxo pipefail
 
-        gsutil ls ~{indir}/**.~{suffix}* | grep -v fail > files.txt
+        gsutil ls "~{indir}/**.~{suffix}*" | grep -v fail > files.txt
         cat files.txt | wc -l > lc.txt
     >>>
 
@@ -135,7 +133,7 @@ task ListFiles {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -175,7 +173,7 @@ task PartitionManifest {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

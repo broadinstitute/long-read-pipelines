@@ -9,7 +9,7 @@ from multiprocessing.pool import ThreadPool
 from functools import partial
 
 
-def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
+def write_shard(bam, sharding_offsets, zmw_counts_exp, tags_to_exclude, prefix, index):
     """
     Write subset of PacBio bam to a shard, taking care not to split reads
     from the same ZMW across separate files.  These shards are thus suitable
@@ -27,6 +27,12 @@ def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
         # Write until we've advanced to (but haven't written) the read that begins the next shard.
         while True:
             read = bf.__next__()
+
+            # Filter out any unwanted tags (e.g. kinetics tags: fi, ri, fp, rp)
+            if len(tags_to_exclude) > 0:
+                filtered_tags = list(filter(lambda x: x[0] not in tags_to_exclude, read.get_tags()))
+                read.set_tags(filtered_tags)
+
             out.write(read)
 
             # Count the ZMW numbers seen.
@@ -110,18 +116,24 @@ def main():
     parser.add_argument('-p', '--prefix', type=str, default="shard", help="Shard filename prefix")
     parser.add_argument('-n', '--num_shards', type=int, default=4, help="Number of shards")
     parser.add_argument('-t', '--num_threads', type=int, default=2, help="Number of threads to use during sharding")
+    parser.add_argument('-x', '--exclude', type=str, help='Comma-separated list of tags to exclude '
+                                                          '(note: removing ip and pw tags will break ccs)')
     parser.add_argument('-i', '--index', type=str, required=False, help="PBI index filename")
     parser.add_argument('bam', type=str, help="BAM")
     args = parser.parse_args()
 
     pbi = args.bam + ".pbi" if args.index is None else args.index
 
+    # Silence message about the .bai file not being found.
+    pysam.set_verbosity(0)
+
     # Decode PacBio .pbi file and determine the shard offsets.
     print(f"Reading index ({pbi}). This may take a few minutes...", flush=True)
     offsets, zmw_counts, read_count = compute_shard_offsets(pbi, args.num_shards)
 
     # Prepare a function with arguments partially filled in.
-    func = partial(write_shard, args.bam, offsets, zmw_counts, args.prefix)
+    tags_to_exclude = [] if args.exclude is None else args.exclude.split(",")
+    func = partial(write_shard, args.bam, offsets, zmw_counts, tags_to_exclude, args.prefix)
     idx = list(range(0, len(offsets) - 1))
 
     # Write the shards using the specified number of threads.

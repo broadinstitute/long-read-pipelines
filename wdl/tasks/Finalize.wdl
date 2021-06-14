@@ -4,28 +4,39 @@ import "Structs.wdl"
 
 task FinalizeToFile {
     input {
-        String file
-        String outfile
+        File file
+        String outdir
+        String? name
 
         RuntimeAttr? runtime_attr_override
     }
 
-    # This idiom ensures that we don't accidentally have double-slashes in our GCS paths
-    String gcs_output_file = sub(sub(outfile, "/+", "/"), "gs:/", "gs://")
+    parameter_meta {
+        file: {
+            description: "file to finalize",
+            localization_optional: true
+        }
+        outdir: "directory to which files should be uploaded"
+        name:   "name to set for uploaded file"
+    }
+
+    String gcs_output_dir = sub(outdir, "/+$", "")
+    String gcs_output_file = gcs_output_dir + "/" + select_first([name, basename(file)])
 
     command <<<
         set -euxo pipefail
 
-        gsutil -m cp ~{file} ~{gcs_output_file}
+        gsutil -m cp "~{file}" "~{gcs_output_file}"
     >>>
 
     output {
+        String gcs_path = gcs_output_file
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             2,
+        mem_gb:             1,
         disk_gb:            10,
         boot_disk_gb:       10,
         preemptible_tries:  2,
@@ -46,28 +57,36 @@ task FinalizeToFile {
 
 task FinalizeToDir {
     input {
-        Array[String] files
+        Array[File] files
         String outdir
 
         RuntimeAttr? runtime_attr_override
     }
 
-    # This idiom ensures that we don't accidentally have double-slashes in our GCS paths
-    String gcs_output_dir = sub(sub(outdir + "/", "/+", "/"), "gs:/", "gs://")
+    parameter_meta {
+        files: {
+            description: "files to finalize",
+            localization_optional: true
+        }
+        outdir: "directory to which files should be uploaded"
+    }
+
+    String gcs_output_dir = sub(outdir, "/+$", "")
 
     command <<<
         set -euxo pipefail
 
-        gsutil -m cp ~{sep=' ' files} ~{gcs_output_dir}
+        cat ~{write_lines(files)} | gsutil -m cp -I "~{gcs_output_dir}"
     >>>
 
     output {
+        String gcs_dir = gcs_output_dir
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             2,
+        mem_gb:             1,
         disk_gb:            10,
         boot_disk_gb:       10,
         preemptible_tries:  2,

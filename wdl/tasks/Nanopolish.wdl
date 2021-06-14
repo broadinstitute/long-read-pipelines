@@ -84,7 +84,7 @@ task NanopolishIndex {
         set -euxo pipefail
 
         mkdir fast5
-        gsutil -m cp ~{fast5_dir_cleaned}/* fast5/
+        gsutil -m cp "~{fast5_dir_cleaned}/*" fast5/
         cp ~{sequencing_summary} fast5/sequencing_summary.txt
         cp ~{reads_fasta} fast5/reads.fasta
 

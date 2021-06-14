@@ -23,7 +23,7 @@ task Minimap2 {
         prefix:     "[default-valued] prefix for output BAM"
     }
 
-    Int disk_size = 1 + 10*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
+    Int disk_size = 1 + 3*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
 
     Int cpus = 4
     Int mem = 30
@@ -31,30 +31,25 @@ task Minimap2 {
     command <<<
         set -euxo pipefail
 
-        MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
+        MAP_PARAMS="-ayYL --MD -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
+        SORT_PARAMS="-@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
-        FILES="~{sep=' ' reads}"
-
-        # We write to a SAM file before sorting and indexing because rarely, doing everything
-        # in a single one-liner leads to a truncated file error and segmentation fault of unknown
-        # origin.  Separating these commands requires more resources, but is more reliable overall.
 
         if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
-            cat $FILES | minimap2 $MAP_PARAMS - > tmp.sam
+            find . \( -name '*.fastq' -or -name '*.fq' \) -exec cat {} \; | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.fastq.gz$ ]] || [[ "$FILE" =~ \.fq.gz$ ]]; then
-            zcat $FILES | minimap2 $MAP_PARAMS - > tmp.sam
+            find . \( -name '*.fastq.gz' -or -name '*.fq.gz' \) -exec zcat {} \; | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.fasta$ ]] || [[ "$FILE" =~ \.fa$ ]]; then
-            cat $FILES | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - > tmp.sam
+            find . \( -name '*.fasta' -or -name '*.fa' \) -not -name '~{basename(ref_fasta)}' -exec cat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.fasta.gz$ ]] || [[ "$FILE" =~ \.fa.gz$ ]]; then
-            zcat $FILES | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - > tmp.sam
+            find . \( -name '*.fasta.gz' -or -name '*.fa.gz' \) -not -name '~{basename(ref_fasta)}' -exec zcat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.bam$ ]]; then
-            samtools fastq $FILES | minimap2 $MAP_PARAMS - > tmp.sam
+            samtools fastq $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         else
             echo "Did not understand file format for '$FILE'"
             exit 1
         fi
 
-        samtools sort -@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam tmp.sam
         samtools index ~{prefix}.bam
     >>>
 
@@ -71,7 +66,7 @@ task Minimap2 {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.27"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

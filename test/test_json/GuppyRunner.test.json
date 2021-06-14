@@ -1,5 +1,0 @@
-{
-  "GuppyRunner.gcs_output_dir": "gs://broad-dsp-lrma-ci/test_data/GuppyRunner.test/output_data",
-  "GuppyRunner.gcs_fast5_dir": "gs://broad-dsp-lrma-ci-resources/test_data/GupperRunner.test/input_data"
-}
-

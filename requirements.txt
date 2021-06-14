@@ -4,3 +4,5 @@ pytest
 pytest-console-scripts
 tox
 google-cloud-storage
+numpy
+tinydb
