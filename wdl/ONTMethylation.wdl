@@ -161,6 +161,9 @@ workflow ONTMethylation {
     call FF.FinalizeToFile as FinalizePhasedVcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.phased.vcf.gz" }
     call FF.FinalizeToFile as FinalizePhasedTbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.phased.vcf.gz.tbi" }
 
+    call FF.FinalizeToFile as FinalizeModMappedBam { input: outdir = adir, file = MergeModMappings.merged_bam, name = "~{participant_name}.mod_mapped.bam" }
+    call FF.FinalizeToFile as FinalizeModMappedBai { input: outdir = adir, file = MergeModMappings.merged_bai, name = "~{participant_name}.mod_mapped.bam.bai" }
+
     call FF.FinalizeToFile as FinalizeHaplotaggedBam { input: outdir = adir, file = bam, name = "~{participant_name}.haplotagged.bam" }
     call FF.FinalizeToFile as FinalizeHaplotaggedBai { input: outdir = adir, file = bai, name = "~{participant_name}.haplotagged.bam.bai" }
 
@@ -172,6 +175,9 @@ workflow ONTMethylation {
     output {
         File phased_vcf = FinalizePhasedVcf.gcs_path
         File phased_tbi = FinalizePhasedTbi.gcs_path
+
+        File mod_mapped_bam = FinalizeModMappedBam.gcs_path
+        File mod_mapped_bai = FinalizeModMappedBai.gcs_path
 
         File haplotagged_bam = FinalizeHaplotaggedBam.gcs_path
         File haplotagged_bai = FinalizeHaplotaggedBai.gcs_path
