@@ -11,7 +11,6 @@ import "Utils.wdl"
 import "VariantUtils.wdl"
 
 import "DeepVariant.wdl" as DV
-import "Clair.wdl"
 import "Longshot.wdl"
 
 import "PBSV.wdl"
@@ -84,25 +83,24 @@ workflow CallVariants {
                 prefix        = prefix
         }
 
-#        call Sniffles.Sniffles {
-#            input:
-#                bam    = SubsetBam.subset_bam,
-#                bai    = SubsetBam.subset_bai,
-#                chr    = contig,
-#                prefix = prefix
-#        }
-
-        if (contig == "chr22") {
-            call DV.PEPPER {
-                input:
-                    bam           = SubsetBam.subset_bam,
-                    bai           = SubsetBam.subset_bai,
-                    ref_fasta     = ref_fasta,
-                    ref_fasta_fai = ref_fasta_fai,
-                    chr           = contig,
-                    preset        = "ONT"
-            }
+        call Sniffles.Sniffles {
+            input:
+                bam    = SubsetBam.subset_bam,
+                bai    = SubsetBam.subset_bai,
+                chr    = contig,
+                prefix = prefix
         }
+
+        # Pending a bug fix
+#        call DV.PEPPER {
+#            input:
+#                bam           = SubsetBam.subset_bam,
+#                bai           = SubsetBam.subset_bai,
+#                ref_fasta     = ref_fasta,
+#                ref_fasta_fai = ref_fasta_fai,
+#                chr           = contig,
+#                preset        = "ONT"
+#        }
 
         call Longshot.Longshot {
             input:
@@ -124,13 +122,13 @@ workflow CallVariants {
             prefix   = prefix + ".pbsv"
     }
 
-#    call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
-#        input:
-#            vcfs     = Sniffles.vcf,
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".sniffles"
-#    }
-#
+    call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
+        input:
+            vcfs     = Sniffles.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".sniffles"
+    }
+
 #    call VariantUtils.MergePerChrCalls as MergeDeepVariantPhasedVCFs {
 #        input:
 #            vcfs     = select_all(PEPPER.phased_vcf),
@@ -151,20 +149,6 @@ workflow CallVariants {
 #            ref_dict = ref_dict,
 #            prefix   = prefix + ".deepvariant_pepper"
 #    }
-#
-#    call VariantUtils.MergePerChrCalls as MergeLongshotGVCFs {
-#        input:
-#            vcfs     = Longshot.gvcf,
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".clair.g"
-#    }
-#
-#    call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
-#        input:
-#            vcfs     = Longshot.vcf,
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".clair"
-#    }
 
     call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
         input:
@@ -181,15 +165,10 @@ workflow CallVariants {
 #        File dvp_vcf = MergeDeepVariantVCFs.vcf
 #        File dvp_tbi = MergeDeepVariantVCFs.tbi
 
-#        File clair_g_vcf = Clair.gvcf
-#        File clair_g_tbi = Clair.gvcf_tbi
-#        File clair_vcf = Clair.vcf
-#        File clair_tbi = Clair.vcf_tbi
-
         File longshot_vcf = MergeLongshotVCFs.vcf
         File longshot_tbi = MergeLongshotVCFs.tbi
 
         File pbsv_vcf = MergePBSVVCFs.vcf
-#        File sniffles_vcf = MergeSnifflesVCFs.vcf
+        File sniffles_vcf = MergeSnifflesVCFs.vcf
     }
 }
