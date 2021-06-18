@@ -106,12 +106,20 @@ workflow ONTMethylation {
                 chr = contig
         }
 
-        call Haplotag {
+        call Haplotag as HaplotagVariantBams {
             input:
                 variants_phased = PhaseVariants.phased_vcf_gz,
                 variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
-                variant_mappings_bam = MergeVarMappings.merged_bam,
-                variant_mappings_bai = MergeVarMappings.merged_bai
+                mappings_bam = MergeVarMappings.merged_bam,
+                mappings_bai = MergeVarMappings.merged_bai
+        }
+
+        call Haplotag as HaplotagModBams {
+            input:
+                variants_phased = PhaseVariants.phased_vcf_gz,
+                variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
+                mappings_bam = MergeModMappings.merged_bam,
+                mappings_bai = MergeModMappings.merged_bai
         }
     }
 
@@ -122,11 +130,12 @@ workflow ONTMethylation {
             prefix = "phased.merged"
     }
 
-    call Utils.MergeBams as MergeHaplotagBams { input: bams = Haplotag.variant_mappings_haplotagged_bam }
+    call Utils.MergeBams as MergeHaplotagVariantBams { input: bams = HaplotagVariantBams.haplotagged_bam }
+    call Utils.MergeBams as MergeHaplotagModBams { input: bams = HaplotagModBams.haplotagged_bam }
 
     call ExtractHaplotypeReads {
          input:
-            haplotagged_bam = MergeHaplotagBams.merged_bam,
+            haplotagged_bam = MergeHaplotagVariantBams.merged_bam,
             phased_variants_vcf = MergePerChrCalls.vcf,
             phased_variants_tbi = MergePerChrCalls.tbi,
             per_read_variant_calls_db = MergeVariantDBs.per_read_variant_calls_db,
@@ -155,8 +164,10 @@ workflow ONTMethylation {
 
     File vcf = MergePerChrCalls.vcf
     File tbi = MergePerChrCalls.tbi
-    File bam = MergeHaplotagBams.merged_bam
-    File bai = MergeHaplotagBams.merged_bai
+    File vbam = MergeHaplotagVariantBams.merged_bam
+    File vbai = MergeHaplotagVariantBams.merged_bai
+    File mbam = MergeHaplotagModBams.merged_bam
+    File mbai = MergeHaplotagModBams.merged_bai
 
     call FF.FinalizeToFile as FinalizePhasedVcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.phased.vcf.gz" }
     call FF.FinalizeToFile as FinalizePhasedTbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.phased.vcf.gz.tbi" }
@@ -164,8 +175,11 @@ workflow ONTMethylation {
     call FF.FinalizeToFile as FinalizeModMappedBam { input: outdir = adir, file = MergeModMappings.merged_bam, name = "~{participant_name}.mod_mapped.bam" }
     call FF.FinalizeToFile as FinalizeModMappedBai { input: outdir = adir, file = MergeModMappings.merged_bai, name = "~{participant_name}.mod_mapped.bam.bai" }
 
-    call FF.FinalizeToFile as FinalizeHaplotaggedBam { input: outdir = adir, file = bam, name = "~{participant_name}.haplotagged.bam" }
-    call FF.FinalizeToFile as FinalizeHaplotaggedBai { input: outdir = adir, file = bai, name = "~{participant_name}.haplotagged.bam.bai" }
+    call FF.FinalizeToFile as FinalizeHaplotaggedVariantBam { input: outdir = adir, file = vbam, name = "~{participant_name}.variants.haplotagged.bam" }
+    call FF.FinalizeToFile as FinalizeHaplotaggedVariantBai { input: outdir = adir, file = vbai, name = "~{participant_name}.variants.haplotagged.bam.bai" }
+
+    call FF.FinalizeToFile as FinalizeHaplotaggedModsBam { input: outdir = adir, file = mbam, name = "~{participant_name}.mods.haplotagged.bam" }
+    call FF.FinalizeToFile as FinalizeHaplotaggedModsBai { input: outdir = adir, file = mbai, name = "~{participant_name}.mods.haplotagged.bam.bai" }
 
     call FF.FinalizeToFile as FinalizeHaplotype1Vcf { input: outdir = vdir, file = CallHaplotype1Variants.haploid_vcf, name = "~{participant_name}.aggregated.haplotype1.vcf.gz" }
     call FF.FinalizeToFile as FinalizeHaplotype1Tbi { input: outdir = vdir, file = CallHaplotype1Variants.haploid_tbi, name = "~{participant_name}.aggregated.haplotype1.vcf.gz.tbi" }
@@ -179,8 +193,11 @@ workflow ONTMethylation {
         File mod_mapped_bam = FinalizeModMappedBam.gcs_path
         File mod_mapped_bai = FinalizeModMappedBai.gcs_path
 
-        File haplotagged_bam = FinalizeHaplotaggedBam.gcs_path
-        File haplotagged_bai = FinalizeHaplotaggedBai.gcs_path
+        File haplotagged_variant_bam = FinalizeHaplotaggedVariantBam.gcs_path
+        File haplotagged_variant_bai = FinalizeHaplotaggedVariantBai.gcs_path
+
+        File haplotagged_mods_bam = FinalizeHaplotaggedModsBam.gcs_path
+        File haplotagged_mods_bai = FinalizeHaplotaggedModsBai.gcs_path
 
         File haplotype1_vcf = FinalizeHaplotype1Vcf.gcs_path
         File haplotype1_tbi = FinalizeHaplotype1Tbi.gcs_path
@@ -562,27 +579,26 @@ task Haplotag {
     input {
         File variants_phased
         File variants_phased_tbi
-        File variant_mappings_bam
-        File variant_mappings_bai
+        File mappings_bam
+        File mappings_bai
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size([variants_phased, variants_phased_tbi, variant_mappings_bam, variant_mappings_bai], "GB")) + 1
+    Int disk_size = 4*ceil(size([variants_phased, variants_phased_tbi, mappings_bam, mappings_bai], "GB")) + 1
+    String prefix = basename(mappings_bam, ".bam")
 
     command <<<
         set -euxo pipefail
 
         whatshap \
             haplotag ~{variants_phased} \
-            ~{variant_mappings_bam} \
-            -o variant_mappings.haplotagged.bam
-
-        find . -type f -exec ls -lah {} \;
+            ~{mappings_bam} \
+            -o ~{prefix}.haplotagged.bam
     >>>
 
     output {
-        File variant_mappings_haplotagged_bam = "variant_mappings.haplotagged.bam"
+        File haplotagged_bam = "~{prefix}.haplotagged.bam"
     }
 
     #########################
