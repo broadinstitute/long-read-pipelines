@@ -8,7 +8,7 @@ import "tasks/Finalize.wdl" as FF
 
 workflow ONTMethylation {
     input {
-        String gcs_fast5_dir
+        Array[String] gcs_fast5_dirs
 
         File ref_map_file
         File variants
@@ -24,7 +24,7 @@ workflow ONTMethylation {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTMethylation/~{prefix}"
 
-    call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dir, suffixes = [ ".fast5" ] }
+    call Utils.ListFilesOfType { input: gcs_dir = gcs_fast5_dirs[0], suffixes = [ ".fast5" ] }
     call Utils.ChunkManifest { input: manifest = ListFilesOfType.manifest, manifest_lines_per_chunk = 30 }
 
     scatter (manifest_chunk in ChunkManifest.manifest_chunks) {
