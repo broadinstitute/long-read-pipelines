@@ -66,6 +66,8 @@ def load_summaries(gcs_buckets, project):
                         t[k] = v
 
                 t['Files'] = {
+                    'fast5_pass_dir': gcs_bucket + "/" + os.path.dirname(blob.name) + "/fast5_pass",
+                    'fastq_pass_dir': gcs_bucket + "/" + os.path.dirname(blob.name) + "/fastq_pass",
                     'final_summary.txt': gcs_bucket + "/" + blob.name,
                     'sequencing_summary.txt': 'missing'
                 }
@@ -87,13 +89,15 @@ def load_summaries(gcs_buckets, project):
 def load_new_sample_table(buckets, project):
     ts = load_summaries(buckets, project)
 
-    tbl_header = ["final_summary_file", "sequencing_summary_file", "protocol_group_id", "instrument", "position", "flow_cell_id", "sample_name", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
+    tbl_header = ["final_summary_file", "sequencing_summary_file", "fast5_pass_dir", "fastq_pass_dir", "protocol_group_id", "instrument", "position", "flow_cell_id", "sample_name", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
     tbl_rows = []
 
     for e in ts:
         tbl_rows.append([
             e["Files"]["final_summary.txt"],
             e["Files"]["sequencing_summary.txt"],
+            e["Files"]["fast5_pass_dir"],
+            e["Files"]["fastq_pass_dir"],
             e["protocol_group_id"],
             e["instrument"],
             e["position"],
@@ -155,7 +159,7 @@ def update_sample_table(namespace, workspace, buckets, project):
     tbl_old, _ = load_table(namespace, workspace, 'sample')
     tbl_new = load_new_sample_table(buckets, project)
     joined_tbl = merge_tables(tbl_old, tbl_new)
-    joined_tbl = joined_tbl.replace('nan', '', regex=True)
+    joined_tbl = joined_tbl.replace('^nan$', '', regex=True)
 
     return joined_tbl
 

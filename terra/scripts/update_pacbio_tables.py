@@ -304,7 +304,7 @@ def update_sample_table(namespace, workspace, buckets, project):
     tbl_old, _ = load_table(namespace, workspace, 'sample')
     tbl_new = load_new_sample_table(buckets, project)
     joined_tbl = merge_tables(tbl_old, tbl_new)
-    joined_tbl = joined_tbl.replace('nan', '', regex=True)
+    joined_tbl = joined_tbl.replace('^nan$', '', regex=True)
 
     return joined_tbl
 
