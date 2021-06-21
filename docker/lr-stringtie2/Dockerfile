@@ -19,5 +19,11 @@ RUN wget https://github.com/gpertea/stringtie/releases/download/v2.1.6/stringtie
     cd stringtie-2.1.6.Linux_x86_64 && \
     cp * /usr/local/bin/
 
+# install gffread
+RUN wget https://github.com/gpertea/gffread/releases/download/v0.12.6/gffread-0.12.6.Linux_x86_64.tar.gz && \
+    tar zxvf gffread-0.12.6.Linux_x86_64.tar.gz && \
+    cd gffread-0.12.6.Linux_x86_64 && \
+    cp gffread /usr/local/bin/
+
 # activate conda environment
 RUN echo "source activate lr-stringtie2" > ~/.bashrc
