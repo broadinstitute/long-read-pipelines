@@ -961,7 +961,7 @@ task MergeBams {
     command <<<
         set -euxo pipefail
 
-        samtools merge -p -c -@2 --no-PG -O SAM /dev/stdout ~{sep=" " bams} | \
+        samtools merge -p -c -f -@2 --no-PG -O SAM /dev/stdout ~{sep=" " bams} | \
             python3 /usr/local/bin/remove_redundant_primary_reads.py -p ~{prefix} - \
             > filter_stats.txt
 
