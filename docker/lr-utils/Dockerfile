@@ -14,3 +14,6 @@ ENV PATH=/opt/conda/envs/lr-utils/bin/:/root/google-cloud-sdk/bin/:${PATH}
 RUN apt update
 RUN apt install -y curl git-lfs parallel
 RUN curl https://sdk.cloud.google.com | bash
+
+# copy other resources
+COPY remove_redundant_primary_reads.py /usr/local/bin/
