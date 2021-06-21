@@ -454,7 +454,7 @@ task WhatsHapFilter {
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
     }
@@ -499,7 +499,7 @@ task IndexVariants {
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:1.1"
     }
@@ -559,7 +559,7 @@ task PhaseVariants {
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.13"
     }
@@ -607,7 +607,7 @@ task Haplotag {
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:1.1"
     }
