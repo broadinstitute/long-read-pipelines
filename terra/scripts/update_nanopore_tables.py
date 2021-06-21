@@ -179,7 +179,7 @@ def update_sample_set_table(namespace, workspace, joined_tbl):
 
     if ss_old is not None:
         ss = pd.merge(ss_old, ss, how='outer', sort=True)
-    ss = ss.replace('nan', '', regex=True)
+    ss = ss.replace('^nan$', '', regex=True)
 
     # create new membership set
     ms = joined_tbl.filter(['sample_name', 'entity:sample_id'], axis=1).drop_duplicates()
