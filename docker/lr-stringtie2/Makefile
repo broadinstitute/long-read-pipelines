@@ -4,7 +4,7 @@ TAG2 = quay.io/broad-long-read-pipelines/lr-stringtie2:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-stringtie2:$(VERSION)
 TAG4 = us.gcr.io/broad-dsp-lrma/lr-stringtie2:latest
 
-all: build push
+all: | build push
 
 build:
 	docker build -t $(TAG1) -t $(TAG2) -t $(TAG3) -t $(TAG4) .
