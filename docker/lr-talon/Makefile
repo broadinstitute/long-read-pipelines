@@ -4,7 +4,7 @@ TAG2 = quay.io/broad-long-read-pipelines/lr-talon:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-talon:$(VERSION)
 TAG4 = us.gcr.io/broad-dsp-lrma/lr-talon:latest
 
-all: build push
+all: | build push
 
 build:
 	docker build -t $(TAG1) -t $(TAG2) -t $(TAG3) -t $(TAG4) .
