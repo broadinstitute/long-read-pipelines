@@ -54,3 +54,47 @@ task Quantify {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task ExtractTranscriptSequences {
+    input {
+        File ref_fasta
+        File ref_fasta_fai
+        File gtf
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size([ref_fasta, ref_fasta_fai, gtf], "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        gffread -w ~{prefix}.fa -g ~{ref_fasta} ~{gtf}
+    >>>
+
+    output {
+        File transcripts_fa = "~{prefix}.fa"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.1.6"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
