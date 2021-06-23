@@ -71,10 +71,14 @@ task ExtractTranscriptSequences {
         set -euxo pipefail
 
         gffread -w ~{prefix}.fa -g ~{ref_fasta} ~{gtf}
+        samtools faidx ~{prefix}.fa
+        samtools dict ~{prefix}.fa > ~{prefix}.dict
     >>>
 
     output {
         File transcripts_fa = "~{prefix}.fa"
+        File transcripts_fai = "~{prefix}.fa.fai"
+        File transcripts_dict = "~{prefix}.dict"
     }
 
     #########################

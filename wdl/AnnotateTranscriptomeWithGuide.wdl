@@ -62,7 +62,11 @@ workflow AnnotateTranscriptomeWithGuide {
 
     # Finalize
     call FF.FinalizeToFile as FinalizeGTF { input: outdir = outdir, file = Quantify.st_gtf }
+
     call FF.FinalizeToFile as FinalizeFa { input: outdir = outdir, file = ExtractTranscriptSequences.transcripts_fa }
+    call FF.FinalizeToFile as FinalizeFai { input: outdir = outdir, file = ExtractTranscriptSequences.transcripts_fai }
+    call FF.FinalizeToFile as FinalizeDict { input: outdir = outdir, file = ExtractTranscriptSequences.transcripts_dict }
+
     call FF.FinalizeToFile as FinalizeAnnotatedGTF { input: outdir = outdir, file = CompareTranscriptomes.annotated_gtf }
     call FF.FinalizeToFile as FinalizeLoci { input: outdir = outdir, file = CompareTranscriptomes.loci }
     call FF.FinalizeToFile as FinalizeStats { input: outdir = outdir, file = CompareTranscriptomes.stats, name = basename(CompareTranscriptomes.stats) + ".stats.txt" }
@@ -72,7 +76,11 @@ workflow AnnotateTranscriptomeWithGuide {
 
     output {
         File transcriptome_gtf = FinalizeGTF.gcs_path
+
         File transcriptome_fa = FinalizeFa.gcs_path
+        File transcriptome_fai = FinalizeFai.gcs_path
+        File transcriptome_dict = FinalizeDict.gcs_path
+
         File comp_annotated_gtf = FinalizeAnnotatedGTF.gcs_path
         File comp_loci = FinalizeLoci.gcs_path
         File comp_stats = FinalizeStats.gcs_path
