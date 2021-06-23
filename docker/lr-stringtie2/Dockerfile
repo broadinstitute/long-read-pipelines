@@ -25,5 +25,11 @@ RUN wget https://github.com/gpertea/gffread/releases/download/v0.12.6/gffread-0.
     cd gffread-0.12.6.Linux_x86_64 && \
     cp gffread /usr/local/bin/
 
+# install gffcompare
+RUN wget https://github.com/gpertea/gffcompare/releases/download/v0.12.2/gffcompare-0.12.2.Linux_x86_64.tar.gz && \
+    tar zxvf gffcompare-0.12.2.Linux_x86_64.tar.gz && \
+    cd gffcompare-0.12.2.Linux_x86_64 && \
+    cp gffcompare trmap /usr/local/bin/
+
 # activate conda environment
 RUN echo "source activate lr-stringtie2" > ~/.bashrc

@@ -10,7 +10,7 @@ build:
 	docker build -t $(TAG1) -t $(TAG2) -t $(TAG3) -t $(TAG4) .
 
 build_no_cache:
-  docker build --no-cache -t $(TAG1) -t $(TAG2) -t $(TAG3) -t $(TAG4) .
+	docker build --no-cache -t $(TAG1) -t $(TAG2) -t $(TAG3) -t $(TAG4) .
   
 push:
 	docker push $(TAG1)
