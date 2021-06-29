@@ -49,7 +49,7 @@ def load_table(namespace, workspace, table_name, store_membership=False):
 
 def load_new_sample_table(buckets, project):
     ts = load_xmls(buckets, project)
-    tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample",
+    tbl_header = ["entity:sample_id", "flowcell_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample",
                   "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application",
                   "experiment_type", "num_records", "total_length", "ccs_report", "ccs_zmws_input",
                   "ccs_zmws_pass_filters", "ccs_zmws_fail_filters", "ccs_zmws_shortcut_filters",
@@ -72,9 +72,11 @@ def load_new_sample_table(buckets, project):
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
 
+            e['CellPac'][0]['Barcode'] if 'Barcode' in e['CellPac'][0] else "UnknownFlowcell",
+
             e['CollectionMetadata'][0]['InstrumentName'] if 'Context' in e['CollectionMetadata'][
                 0] else "UnknownInstrument",
-            e['CollectionMetadata'][0]['Context'] if 'Context' in e['CollectionMetadata'][0] else "UnknownFlowcell",
+            e['CollectionMetadata'][0]['Context'] if 'Context' in e['CollectionMetadata'][0] else "UnknownMovie",
             e['WellSample'][0]['WellName'] if 'WellName' in e['WellSample'][0] else "Z00",
             e['WellSample'][0]['CreatedAt'] if 'CreatedAt' in e['WellSample'][0] else "0001-01-01T00:00:00",
             re.sub("[# ]", "", e['BioSample'][0]['Name']) if 'BioSample' in e else "UnknownBioSample",
