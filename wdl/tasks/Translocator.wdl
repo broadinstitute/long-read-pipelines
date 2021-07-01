@@ -28,8 +28,6 @@ task Translocator {
     Int disk_size = 2 * ceil(size([aligned_bam, ref_fasta], "GB"))
 
     command <<<
-        set -euxo pipefail
-
         translocator -m ~{aligned_bam} -a ~{ref_fasta} -v ~{prefix}.translocator.vcf --min_het_af ~{min_het_af} --global_remap
     >>>
 
