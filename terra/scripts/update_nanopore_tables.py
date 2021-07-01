@@ -2,21 +2,15 @@
 
 import os
 import re
-import math
 import hashlib
 import argparse
+import copy
 
-import numpy as np
 import pandas as pd
 import firecloud.api as fapi
 
-from google.cloud import bigquery
 from google.cloud import storage
-from google.api_core.exceptions import NotFound
 
-from collections import OrderedDict
-
-import xmltodict
 import pprint
 
 
@@ -52,11 +46,11 @@ def load_summaries(gcs_buckets, project):
 
     ts = []
     for gcs_bucket in gcs_buckets:
-        blobs = storage_client.list_blobs(re.sub("^gs://", "", gcs_bucket))
+        blobs = storage_client.list_blobs(re.sub("^gs://", "", gcs_bucket), timeout=120)
 
         for blob in blobs:
             if 'final_summary' in blob.name:
-                doc = blob.download_as_string()
+                doc = blob.download_as_string(timeout=120)
                 t = {}
 
                 for line in doc.decode("utf-8").split("\n"):
@@ -73,7 +67,8 @@ def load_summaries(gcs_buckets, project):
                 }
 
                 bs = storage_client.list_blobs(re.sub("^gs://", "", gcs_bucket),
-                                               prefix=os.path.dirname(blob.name) + "/" + t['sequencing_summary_file'])
+                                               prefix=os.path.dirname(blob.name) + "/" + t['sequencing_summary_file'],
+                                               timeout=120)
                 for b in bs:
                     t['Files']['sequencing_summary.txt'] = gcs_bucket + "/" + b.name
 
@@ -81,6 +76,27 @@ def load_summaries(gcs_buckets, project):
                     pp = pprint.PrettyPrinter(indent=4)
                     pp.pprint(t)
 
+                # Handle barcoded datasets
+                cs = storage_client.list_blobs(re.sub("^gs://", "", gcs_bucket),
+                                               prefix=re.sub("^/", "", re.sub(gcs_bucket, "", t['Files']['fastq_pass_dir'])),
+                                               timeout=120)
+                dirs = set()
+                for c in cs:
+                    # Barcode identifier
+                    d = os.path.basename(os.path.dirname(c.name))
+
+                    if d != "fastq_pass":
+                        dirs.add(d)
+
+                for d in dirs:
+                    tb = copy.deepcopy(t)
+                    tb['Files']['fastq_pass_dir'] = t['Files']['fastq_pass_dir'] + "/" + d
+                    tb['sample_id'] = t['sample_id'] + "." + d
+                    tb["entity:sample_id"] = hashlib.md5(tb["Files"]["fastq_pass_dir"].encode("utf-8")).hexdigest()
+
+                    ts.append(tb)
+
+                t["entity:sample_id"] = hashlib.md5(t["Files"]["final_summary.txt"].encode("utf-8")).hexdigest()
                 ts.append(t)
 
     return ts
@@ -89,11 +105,12 @@ def load_summaries(gcs_buckets, project):
 def load_new_sample_table(buckets, project):
     ts = load_summaries(buckets, project)
 
-    tbl_header = ["final_summary_file", "sequencing_summary_file", "fast5_pass_dir", "fastq_pass_dir", "protocol_group_id", "instrument", "position", "flow_cell_id", "sample_name", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
+    tbl_header = ["entity:sample_id", "final_summary_file", "sequencing_summary_file", "fast5_pass_dir", "fastq_pass_dir", "protocol_group_id", "instrument", "position", "flow_cell_id", "sample_name", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
     tbl_rows = []
 
     for e in ts:
         tbl_rows.append([
+            e["entity:sample_id"],
             e["Files"]["final_summary.txt"],
             e["Files"]["sequencing_summary.txt"],
             e["Files"]["fast5_pass_dir"],
@@ -114,7 +131,6 @@ def load_new_sample_table(buckets, project):
         ])
 
     tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
-    tbl_new["entity:sample_id"] = list(map(lambda f: hashlib.md5(f.encode("utf-8")).hexdigest(), tbl_new["final_summary_file"]))
     tbl_new = tbl_new.astype(str)
 
     return tbl_new
@@ -160,6 +176,7 @@ def update_sample_table(namespace, workspace, buckets, project):
     tbl_new = load_new_sample_table(buckets, project)
     joined_tbl = merge_tables(tbl_old, tbl_new)
     joined_tbl = joined_tbl.replace('^nan$', '', regex=True)
+    joined_tbl = joined_tbl.replace('oxfordo', 'oxfordnano', regex=True)
 
     return joined_tbl
 
@@ -180,6 +197,7 @@ def update_sample_set_table(namespace, workspace, joined_tbl):
     if ss_old is not None:
         ss = pd.merge(ss_old, ss, how='outer', sort=True)
     ss = ss.replace('^nan$', '', regex=True)
+    ss = ss.replace('oxfordo', 'oxfordnano', regex=True)
 
     # create new membership set
     ms = joined_tbl.filter(['sample_name', 'entity:sample_id'], axis=1).drop_duplicates()
