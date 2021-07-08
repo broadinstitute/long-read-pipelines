@@ -28,7 +28,11 @@ task Translocator {
     Int disk_size = 2 * ceil(size([aligned_bam, ref_fasta], "GB"))
 
     command <<<
+<<<<<<< HEAD
          translocator -m ~{aligned_bam} -a ~{ref_fasta} -v ~{prefix}.translocator.vcf --min_het_af ~{min_het_af} --global_remap
+=======
+        translocator -m ~{aligned_bam} -a ~{ref_fasta} -v ~{prefix}.translocator.vcf --min_het_af ~{min_het_af} --global_remap
+>>>>>>> 1759fc26314856e93b45933cc6b8d62c03e3d8d2
     >>>
 
     output {
