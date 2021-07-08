@@ -92,3 +92,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LocalAssemblyCanu.wdl
   testParameterFiles:
+- name: Winnowmap
+  subclass: wdl
+  primaryDescriptorPath: /wdl/Winnowmap.wdl
+  testParameterFiles:
