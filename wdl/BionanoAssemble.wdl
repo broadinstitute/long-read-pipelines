@@ -1,6 +1,6 @@
 version 1.0
 
-import "Structs.wdl"
+import "tasks/Structs.wdl"
 
 workflow CallAssemble {
     input {
@@ -17,6 +17,10 @@ workflow CallAssemble {
             input_bnx = input_bnx,
             optArguments = optArguments
     }
+
+    output {
+        File assembly_dir = Assemble.assembly_dir
+    }
 }
 
 task Assemble {
@@ -28,16 +32,18 @@ task Assemble {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 50 + ceil(size([ref_cmap, input_bnx], "GB"))
+    Int disk_size = 1000 + ceil(size([ref_cmap], "GB")) + ceil(size([input_bnx], "GB"))
+
+#    Int disk_size = 1500
 
     command <<<
-        set -euxo pipefail
-
         source activate bionano_minimal
-        python /home/bionano2/tools/pipeline/1.0/Pipeline/1.0/pipelineCL.py -l /home/bionano2/output -t /home/bionano2/tools/pipeline/1.0/RefAligner/1.0 \
+        python /home/bionano2/tools/pipeline/1.0/Pipeline/1.0/pipelineCL.py -l output -t /home/bionano2/tools/pipeline/1.0/RefAligner/1.0 \
         -b ~{input_bnx} -a ~{optArguments} -r ~{ref_cmap} \
         -y -d -U -i 5 -F 1 -W 1 -c 0 --docker --autoRestart \
-        -T 64 -je 64
+        -T 64 -je 64 -z
+
+        tar czf output.tar.gz output
     >>>
 
     #########################
@@ -59,5 +65,9 @@ task Assemble {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File assembly_dir = "output.tar.gz"
     }
 }
