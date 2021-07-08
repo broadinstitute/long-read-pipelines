@@ -4,43 +4,64 @@ version 1.0
 ## A pipeline for running the Winnowmap aligner
 ######################################################################################
 
-import "Structs.wdl"
+import "tasks/Structs.wdl"
 
-task Align {
+workflow Winnowmap {
     input {
         File reads
-        String genome_size
         String prefix
-        String preset
-
-        Int? min_depth_edge = 3
-
-        RuntimeAttr? runtime_attr_override
+        String experiment_type
+        File ref_fasta
+        File ref_meryl_kmers
     }
 
     parameter_meta {
         reads:           "Raw reads in either fa or fq format"
-        genome_size:     "Estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
         prefix:          "Output file prefix"
-        preset:          "data preset (\"rs\" for PacBio RSII, \"sq\" for PacBio Sequel, \"ccs\" for PacBio CCS reads and \"ont\" for Oxford Nanopore)"
-
-        min_depth_edge:  "Minimum read support for valid edges. Default is 3, can set to 2 for low sequence depth or 4 for very high sequence depth"
+        experiment_type: "\"CLR\", \"CCS\", or \"ONT\""
     }
 
-    Int disk_size = 10 * ceil(size(reads, "GB"))
+    Map[String, String] map_presets = {
+        'CLR':    'map-pb-clr',
+        'CCS':    'map-pb',
+        'ONT':    'map-ont'
+    }
+
+    String preset = map_presets[experiment_type]
+
+    call Align { input: reads = reads, prefix = prefix, preset = preset, ref_fasta = ref_fasta, ref_meryl_kmers = ref_meryl_kmers }
+
+    output {
+        File aligned_bam = Align.aligned_bam
+        File aligned_bai = Align.aligned_bai
+    }
+}
+
+task Align {
+    input {
+        File reads
+        String prefix
+        String preset
+        File ref_fasta
+        File ref_meryl_kmers
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 3*ceil(size(reads, "GB")) + ceil(size(ref_fasta, "GB"))
 
     command <<<
         set -euxo pipefail
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        wtdbg2 -t $num_core -x ~{preset} -g ~{genome_size} -e ~{min_depth_edge} -i ~{reads} -fo ~{prefix}
-        wtpoa-cns -t $num_core -i ~{prefix}.ctg.lay.gz -fo ~{prefix}.ctg.fa
+        winnowmap -W ~{ref_meryl_kmers} -t $num_core -ax ~{preset} ~{ref_fasta} ~{reads} | samtools view -b > ~{prefix}.bam
+        samtools index ~{prefix}.bam
     >>>
 
     output {
- #       File lay = "~{prefix}.ctg.lay.gz"
-        File fa = "~{prefix}.ctg.fa"
+        File aligned_bam = "~{prefix}.bam"
+        File aligned_bai = "~{prefix}.bam.bai"
     }
 
     #########################

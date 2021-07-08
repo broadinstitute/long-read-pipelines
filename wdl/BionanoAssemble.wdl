@@ -1,49 +1,54 @@
 version 1.0
 
-##########################################################################################
-# A workflow that runs Translocator
-##########################################################################################
-
 import "Structs.wdl"
 
-task Translocator {
+workflow CallAssemble {
     input {
-        File aligned_bam
-        File ref_fasta
-
-        String prefix
-        Float? min_het_af = 0.2
+        File ref_cmap
+        File input_bnx
+        File optArguments
 
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        aligned_bam: "sorted input BAM, preferably aligned with NGMLR or minimap2"
-        ref_fasta: "reference to which the BAM was aligned"
+    call Assemble {
+        input:
+            ref_cmap = ref_cmap,
+            input_bnx = input_bnx,
+            optArguments = optArguments
+    }
+}
 
-        prefix: "prefix for output"
-        min_het_af: "Minimum het allele frequency (default 0.2)"
+task Assemble {
+    input {
+        File ref_cmap
+        File input_bnx
+        File optArguments
+
+        RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2 * ceil(size([aligned_bam, ref_fasta], "GB"))
+    Int disk_size = 50 + ceil(size([ref_cmap, input_bnx], "GB"))
 
     command <<<
-         translocator -m ~{aligned_bam} -a ~{ref_fasta} -v ~{prefix}.translocator.vcf --min_het_af ~{min_het_af} --global_remap
-    >>>
+        set -euxo pipefail
 
-    output {
-        File vcf="~{prefix}.translocator.vcf"
-    }
+        source activate bionano_minimal
+        python /home/bionano2/tools/pipeline/1.0/Pipeline/1.0/pipelineCL.py -l /home/bionano2/output -t /home/bionano2/tools/pipeline/1.0/RefAligner/1.0 \
+        -b ~{input_bnx} -a ~{optArguments} -r ~{ref_cmap} \
+        -y -d -U -i 5 -F 1 -W 1 -c 0 --docker --autoRestart \
+        -T 64 -je 64
+    >>>
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          3,
-        mem_gb:             60,
+        cpu_cores:          64,
+        mem_gb:             256,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:   1,
+        preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-translocator:0.1"
+        docker:             "quay.io/ymostovoy/bionano-pipeline:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
