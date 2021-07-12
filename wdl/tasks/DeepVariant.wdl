@@ -148,8 +148,6 @@ task PEPPER {
 
     output {
         # save both VCF and gVCF
-        File ouput_vcf = "PEPPER_SNP_OUPUT.vcf.gz"
-
         File phased_vcf = "~{prefix}.phased.vcf.gz"
         File phased_vcf_tbi = "~{prefix}.phased.vcf.gz.tbi"
 
