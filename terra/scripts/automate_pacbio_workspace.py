@@ -22,6 +22,7 @@ def main():
     parser.add_argument('-w', '--workspace', required=True, type=str, help="Terra workspace")
     parser.add_argument('-m', '--min-date', default='2021-03-01T00:00:00', type=str, help="Lower date cutoff")
     parser.add_argument('-r', '--run', action='store_true', help="Turn off the default dry-run mode")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Turn on some additional log outputs")
     parser.add_argument('-s', '--sample_ids', type=str, nargs='*', help='Additional samples to process')
     args = parser.parse_args()
 
@@ -65,7 +66,8 @@ def main():
 
             if flowcell_date > min_date or sample_id in samples_to_process:
                 if sample_id in processed_samples and sample_id not in samples_to_process:
-                    print(f'sample_id={tbl["entity:sample_id"][i]} bio_sample={tbl["bio_sample"][i]} well_sample={tbl["well_sample"][i]} experiment_type={tbl["experiment_type"][i]} submission_id=done')
+                    if args.verbose:
+                        print(f'sample_id={tbl["entity:sample_id"][i]} bio_sample={tbl["bio_sample"][i]} well_sample={tbl["well_sample"][i]} experiment_type={tbl["experiment_type"][i]} submission_id=done')
                 else:
                     submission_id = "dry-run"
                     if args.run:
