@@ -69,15 +69,21 @@ workflow PBFlowcell {
 
         File unaligned_bam = select_first([ExtractHifiReads.hifi_bam, unmapped_shard])
 
+        call PB.RemoveKinetics { input: bam = unaligned_bam }
+
         call PB.Align as AlignReads {
             input:
-                bam         = unaligned_bam,
+                bam         = RemoveKinetics.no_kinetics_bam,
                 ref_fasta   = ref_map['fasta'],
                 sample_name = SM,
                 map_preset  = map_presets[experiment_type]
         }
 
-        call Utils.BamToFastq { input: bam = unaligned_bam, prefix = basename(unaligned_bam, ".bam") }
+        call Utils.BamToFastq {
+            input:
+                bam = RemoveKinetics.no_kinetics_bam,
+                prefix = basename(RemoveKinetics.no_kinetics_bam, ".bam")
+        }
     }
 
     call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = BamToFastq.reads_fq }
