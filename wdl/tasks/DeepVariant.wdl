@@ -110,7 +110,7 @@ task PEPPER {
         preset:          "calling preset (CCS, ONT)"
     }
 
-    Int disk_size = ceil(size(bam, "GB")) + 50
+    Int disk_size = 3*ceil(size(bam, "GB")) + 50
     String prefix = basename(bam, ".bam") + ".deepvariant_pepper"
     String mode = if preset == "CCS" then "--ccs" else "--ont"
 
