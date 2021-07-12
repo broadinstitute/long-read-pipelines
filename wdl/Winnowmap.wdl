@@ -18,7 +18,7 @@ workflow Winnowmap {
     parameter_meta {
         reads:           "Raw reads in either fa or fq format"
         prefix:          "Output file prefix"
-        experiment_type: "\"CLR\", \"CCS\", or \"ONT\""
+        experiment_type: "CLR, CCS, or ONT"
     }
 
     Map[String, String] map_presets = {
@@ -55,7 +55,7 @@ task Align {
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        winnowmap -W ~{ref_meryl_kmers} -t $num_core -ax ~{preset} ~{ref_fasta} ~{reads} | samtools view -b > ~{prefix}.bam
+        winnowmap -W ~{ref_meryl_kmers} -t $num_core -ax ~{preset} ~{ref_fasta} ~{reads} | samtools sort -@ $num_core -O BAM -o ~{prefix}.bam
         samtools index ~{prefix}.bam
     >>>
 
