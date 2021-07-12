@@ -1,12 +1,16 @@
 # Continuous integration and delivery of the main branch.
 
 name: CI/CD
+
 on:
+  # Triggers the workflow on push to main branch only
   push:
-    branches:
-    - main
+    branches: [ main ]
+    paths-ignore: # ignores changes to the version tracking file when auto-bumping & releasing
+      - 'VERSION.json'
 
 jobs:
+
   # Run Python tests on Github runner
   tox_test:
     runs-on: ubuntu-latest
@@ -79,89 +83,44 @@ jobs:
         SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnagood.png?raw=true
         SLACK_USERNAME: long-read-pipelines
 
-  deliver:
-    # Automatic delivery will run on a Github-hosted machine
-    needs: main_test
+  # "tag_n_release" for auto tagging and releasing after push to main
+  # This is done following the example shown in the following medium article
+  # https://medium.com/swlh/bump-bump-bump-d0dab616e83
+  # and the examples shown in the repo
+  # https://github.com/TriPSs/conventional-changelog-action
+  tag_n_release:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@master
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.SHUANG_LR_PIPELINE_GITHUB_TOKEN_ACTION }}
 
-    - name: Read current version
-      id: read_property
-      uses: christian-draeger/read-properties@1.0.0
-      with:
-        path: 'VERSION'
-        property: 'version'
-
-    - name: Current version
-      run: echo ${{ steps.read_property.outputs.value }}
-
-    - name: Bump release version
-      id: bump_version
-      uses: christian-draeger/increment-semantic-version@1.0.1
-      with:
-        current-version: ${{ steps.read_property.outputs.value }}
-        version-fragment: 'bug'
-
-    - name: New version
-      run: echo ${{ steps.bump_version.outputs.next-version }}
-
-    - name: Remove existing version file
-      uses: JesseTG/rm@v1.0.0
-      with:
-        path: 'VERSION'
-
-    - name: Write new version
-      uses: christian-draeger/write-properties@1.0.1
-      with:
-        path: 'VERSION'
-        property: 'version'
-        value: ${{ steps.bump_version.outputs.next-version }}
-
-    - name: Update version badge
-      run: sed -i 's/version-.*-blue/version-${{ steps.bump_version.outputs.next-version }}-blue/' README.md
-
-    - name: Write commit message
-      run: git log --format=%B -n 1 ${{ github.event.after }} > release_notes.txt
-
-    - name: Commit changes
-      uses: EndBug/add-and-commit@v4
-      with:
-        author_name: Kiran V Garimella
-        author_email: kiran@broadinstitute.org
-        message: 'Autobump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
-        add: "VERSION README.md"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.bump_version.outputs.next-version }}
-        release_name: 'lrp_${{ steps.bump_version.outputs.next-version }}'
-        body_path: "release_notes.txt"
-        draft: false
-        prerelease: false
-
-    - name: Slack Failure Notification
-      if: failure()
-      uses: rtCamp/action-slack-notify@v2.0.2
-      env:
-        SLACK_MESSAGE: 'Failed to release version lrp_${{ steps.bump_version.outputs.next-version }}'
-        SLACK_COLOR: '#DF5A49'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnabad.png?raw=true
-        SLACK_USERNAME: long-read-pipelines
-
-    - name: Slack Success Notification
-      if: success()
-      uses: rtCamp/action-slack-notify@v2.0.2
-      env:
-        SLACK_MESSAGE: 'Successfully released version lrp_${{ steps.bump_version.outputs.next-version }}'
-        SLACK_COLOR: '#50D9C9'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_ICON: https://github.com/broadinstitute/long-read-pipelines/blob/main/.github/workflows/dnagood.png?raw=true
-        SLACK_USERNAME: long-read-pipelines
+      - name: Conventional Changelog Action
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v3
+        with:
+          skip-commit: 'true' # Do not create a release commit.
+          version-file: 'VERSION.json'
+          version-path: 'version'
+          tag-prefix: '' # Prefix for the git tags.
+          github-token: ${{ secrets.github_token }}
+          git-message: 'chore(release): {version}' # Commit message that is used when committing the changelog.
+          git-user-name: 'Awesome Changelog Action'
+          git-user-email: 'awesome_changelog@github.actions.com'
+          git-pull-method: --ff-only
+          preset: 'angular' # Preset that is used from conventional commits.
+          release-count: '10' # Number of releases to preserve in changelog. Default 5, use 0 to regenerate all.
+          output-file: 'false' # File to output the changelog to. Default CHANGELOG.md, when providing 'false' no file will be generated / updated.
+          skip-on-empty: 'false' # Boolean to specify if you want to skip empty release (no-changelog generated).
+          skip-version-file: 'false' # Do not update the version file.
+          
+      - name: Create Release
+        uses: actions/create-release@v1
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+        with:
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          release_name: ${{ steps.changelog.outputs.tag }}
+          body: ${{ steps.changelog.outputs.clean_changelog }}
