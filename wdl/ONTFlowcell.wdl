@@ -65,6 +65,8 @@ workflow ONTFlowcell {
                 sequencing_summary = select_first([sequencing_summary]),
                 suffix = "fastq"
         }
+
+        call NP.NanoPlotFromSummary { input: summary_files = [ select_first([sequencing_summary]) ] }
     }
 
     if (defined(fastq_dir)) {
@@ -73,9 +75,13 @@ workflow ONTFlowcell {
                 gcs_dir = select_first([fastq_dir]),
                 suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz' ]
         }
+
+        call NP.NanoPlotFromRichFastqs { input: fastqs = ListFilesOfType.files }
     }
 
-    File manifest = select_first([ListFastqs.manifest, ListFilesOfType.manifest])
+    Map[String, Float] nanoplot_map = select_first([NanoPlotFromRichFastqs.stats_map, NanoPlotFromSummary.stats_map ])
+
+    File manifest = select_first([ListFilesOfType.manifest, ListFastqs.manifest])
 
     String PL  = "ONT"
     String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
@@ -103,9 +109,6 @@ workflow ONTFlowcell {
             gcs_output_dir = outdir + "/metrics"
     }
 
-    if (defined(sequencing_summary)) {
-        call NP.NanoPlotFromSummary { input: summary_files = [ select_first([sequencing_summary]) ] }
-    }
     call NP.NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
@@ -117,30 +120,30 @@ workflow ONTFlowcell {
 
     output {
         # Flowcell stats
-#        Float active_channels = NanoPlotFromSummary.stats_map['active_channels']
+        Float active_channels = nanoplot_map['active_channels']
 
         # Aligned BAM file
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path
 
         # Unaligned read stats
-#        Float num_reads = NanoPlotFromSummary.stats_map['number_of_reads']
-#        Float num_bases = NanoPlotFromSummary.stats_map['number_of_bases']
-#        Float raw_est_fold_cov = NanoPlotFromSummary.stats_map['number_of_bases']/ComputeGenomeLength.length
-#
-#        Float read_length_mean = NanoPlotFromSummary.stats_map['mean_read_length']
-#        Float read_length_median = NanoPlotFromSummary.stats_map['median_read_length']
-#        Float read_length_stdev = NanoPlotFromSummary.stats_map['read_length_stdev']
-#        Float read_length_N50 = NanoPlotFromSummary.stats_map['n50']
-#
-#        Float read_qual_mean = NanoPlotFromSummary.stats_map['mean_qual']
-#        Float read_qual_median = NanoPlotFromSummary.stats_map['median_qual']
-#
-#        Float num_reads_Q5 = NanoPlotFromSummary.stats_map['Reads_Q5']
-#        Float num_reads_Q7 = NanoPlotFromSummary.stats_map['Reads_Q7']
-#        Float num_reads_Q10 = NanoPlotFromSummary.stats_map['Reads_Q10']
-#        Float num_reads_Q12 = NanoPlotFromSummary.stats_map['Reads_Q12']
-#        Float num_reads_Q15 = NanoPlotFromSummary.stats_map['Reads_Q15']
+        Float num_reads = nanoplot_map['number_of_reads']
+        Float num_bases = nanoplot_map['number_of_bases']
+        Float raw_est_fold_cov = nanoplot_map['number_of_bases']/ComputeGenomeLength.length
+
+        Float read_length_mean = nanoplot_map['mean_read_length']
+        Float read_length_median = nanoplot_map['median_read_length']
+        Float read_length_stdev = nanoplot_map['read_length_stdev']
+        Float read_length_N50 = nanoplot_map['n50']
+
+        Float read_qual_mean = nanoplot_map['mean_qual']
+        Float read_qual_median = nanoplot_map['median_qual']
+
+        Float num_reads_Q5 = nanoplot_map['Reads_Q5']
+        Float num_reads_Q7 = nanoplot_map['Reads_Q7']
+        Float num_reads_Q10 = nanoplot_map['Reads_Q10']
+        Float num_reads_Q12 = nanoplot_map['Reads_Q12']
+        Float num_reads_Q15 = nanoplot_map['Reads_Q15']
 
         # Aligned read stats
         Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
