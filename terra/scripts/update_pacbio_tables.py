@@ -25,26 +25,31 @@ pd.set_option('max_rows', 200)
 pd.set_option("max_colwidth", None)
 
 
-def load_table(namespace, workspace, table_name):
+def load_table(namespace, workspace, table_name, store_membership=False):
     ent_old = fapi.get_entities(namespace, workspace, table_name).json()
     tbl_old = None
 
+    membership = None
     if len(ent_old) > 0:
         tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
         tbl_old[f"entity:{table_name}_id"] = list(map(lambda f: f['name'], ent_old))
-        tbl_old = tbl_old.astype(str)
+
+        if store_membership:
+            membership = list(map(lambda g: set(map(lambda h: h['entityName'], g['items'])), tbl_old['samples']))
+            del tbl_old['samples']
 
         c = list(tbl_old.columns)
         c.remove(f"entity:{table_name}_id")
         c = [f"entity:{table_name}_id"] + c
         tbl_old = tbl_old[c]
+        tbl_old = tbl_old.astype(str)
 
-    return tbl_old
+    return tbl_old, membership
 
 
 def load_new_sample_table(buckets, project):
     ts = load_xmls(buckets, project)
-    tbl_header = ["entity:sample_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample",
+    tbl_header = ["entity:sample_id", "flowcell_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample",
                   "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application",
                   "experiment_type", "num_records", "total_length", "ccs_report", "ccs_zmws_input",
                   "ccs_zmws_pass_filters", "ccs_zmws_fail_filters", "ccs_zmws_shortcut_filters",
@@ -61,14 +66,17 @@ def load_new_sample_table(buckets, project):
             experiment_type = "ISOSEQ"
 
         input_bam = e['Files']['subreads.bam'] if e['Files']['subreads.bam'] != "" else e['Files']['reads.bam']
-        input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files']['reads.bam.pbi']
+        input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files'][
+            'reads.bam.pbi']
 
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
 
+            e['CellPac'][0]['Barcode'] if 'Barcode' in e['CellPac'][0] else "UnknownFlowcell",
+
             e['CollectionMetadata'][0]['InstrumentName'] if 'Context' in e['CollectionMetadata'][
                 0] else "UnknownInstrument",
-            e['CollectionMetadata'][0]['Context'] if 'Context' in e['CollectionMetadata'][0] else "UnknownFlowcell",
+            e['CollectionMetadata'][0]['Context'] if 'Context' in e['CollectionMetadata'][0] else "UnknownMovie",
             e['WellSample'][0]['WellName'] if 'WellName' in e['WellSample'][0] else "Z00",
             e['WellSample'][0]['CreatedAt'] if 'CreatedAt' in e['WellSample'][0] else "0001-01-01T00:00:00",
             re.sub("[# ]", "", e['BioSample'][0]['Name']) if 'BioSample' in e else "UnknownBioSample",
@@ -119,7 +127,7 @@ def merge_tables(tbl_old, tbl_new):
 
     hs = []
     for l in list(outer_tbl['entity:sample_id'].unique()):
-        g = outer_tbl.loc[outer_tbl['entity:sample_id'] == l]
+        g = outer_tbl.loc[outer_tbl['entity:sample_id'] == l].sort_values('_merge')
 
         if len(g) == 1:
             hs.append(g.iloc[0].to_dict())
@@ -141,9 +149,9 @@ def merge_tables(tbl_old, tbl_new):
     c = ["entity:sample_id"] + c
     joined_tbl = joined_tbl[c]
 
-    joined_tbl['description'] = joined_tbl['description'].str.replace(r'\s+', ' ').astype('str')
-    joined_tbl['bio_sample'] = joined_tbl['bio_sample'].str.replace(r'\s+', ' ').astype('str')
-    joined_tbl['well_sample'] = joined_tbl['well_sample'].str.replace(r'\s+', ' ').astype('str')
+    joined_tbl['description'] = joined_tbl['description'].str.replace(r'\s+', ' ', regex=True).astype('str')
+    joined_tbl['bio_sample'] = joined_tbl['bio_sample'].str.replace(r'\s+', ' ', regex=True).astype('str')
+    joined_tbl['well_sample'] = joined_tbl['well_sample'].str.replace(r'\s+', ' ', regex=True).astype('str')
 
     return joined_tbl
 
@@ -231,81 +239,14 @@ def load_xmls(gcs_buckets, project):
                     'subreads.bam.pbi': "",
 
                     'consensusreadset.xml': gcs_bucket + "/" + blob.name,
-                    'ccs_reports.txt': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".ccs_reports.txt", blob.name),
+                    'ccs_reports.txt': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".ccs_reports.txt",
+                                                                 blob.name),
                     'reads.bam': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam", blob.name),
                     'reads.bam.pbi': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam.pbi", blob.name)
                 }
                 ts.append(t)
 
     return ts
-
-
-def update_sample_table(namespace, workspace, buckets, project):
-    tbl_old = load_table(namespace, workspace, 'sample')
-    tbl_new = load_new_sample_table(buckets, project)
-    joined_tbl = merge_tables(tbl_old, tbl_new)
-    joined_tbl = joined_tbl.replace('nan', '', regex=True)
-
-    return joined_tbl
-
-
-def update_sample_set_table(namespace, workspace, joined_tbl):
-    ss_old = load_table(namespace, workspace, 'sample_set')
-
-    # create sample set
-    ss = joined_tbl.filter(['bio_sample'], axis=1).drop_duplicates()
-    ss.columns = [f'entity:sample_set_id']
-    if ss_old is not None:
-        del ss_old['samples']
-        ss = pd.merge(ss_old, ss, how='outer', sort=True)
-    ss = ss.replace('nan', '', regex=True)
-
-    # create membership set
-    ms = joined_tbl.filter(['bio_sample', 'entity:sample_id'], axis=1).drop_duplicates()
-    ms.columns = [f'membership:sample_set_id', f'sample']
-    ms = ms.replace('nan', '', regex=True)
-
-    return ss, ms
-
-
-def delete_table(namespace, workspace, table_name):
-    # delete old table
-    t_old = fapi.get_entities(namespace, workspace, table_name).json()
-    names = list(map(lambda e: e['name'], t_old))
-    f = [fapi.delete_sample_set(namespace, workspace, name) for name in names]
-
-    return f
-
-
-def update_table(namespace, workspace, table):
-    # upload new samples
-    a = fapi.upload_entities(namespace, workspace, entity_data=table.to_csv(index=False, sep="\t"), model='flexible')
-
-    if a.status_code == 200:
-        print(f'Uploaded {len(table)} rows successfully.')
-    else:
-        print(a.json())
-
-
-def upload_data(namespace, workspace, s, ss, ms):
-    #delete_table(namespace, workspace, 'sample_set')
-    #delete_table(namespace, workspace, 'sample')
-
-    update_table(namespace, workspace, s)
-    #update_table(namespace, workspace, ss)
-    #update_table(namespace, workspace, ms)
-
-    ent_old = fapi.get_entities(namespace, workspace, 'sample_set').json()
-    existing_entries = list(map(lambda f: f['name'], ent_old))
-
-    if len(ent_old) > 0:
-        tbl_old = pd.DataFrame(list(map(lambda e: e['attributes'], ent_old)))
-        tbl_old[f"entity:sample_set_id"] = list(map(lambda f: f['name'], ent_old))
-
-    t_old = fapi.get_entities(namespace, workspace, 'sample_set').json()
-
-    return
-    #f = [fapi.delete_sample_set(namespace, workspace, name) for name in names]
 
 
 def load_ccs_report(project, ccs_report_path, e):
@@ -361,6 +302,71 @@ def load_ccs_report(project, ccs_report_path, e):
     return d
 
 
+def update_sample_table(namespace, workspace, buckets, project):
+    tbl_old, _ = load_table(namespace, workspace, 'sample')
+    tbl_new = load_new_sample_table(buckets, project)
+    joined_tbl = merge_tables(tbl_old, tbl_new)
+    joined_tbl = joined_tbl.replace('^nan$', '', regex=True)
+
+    return joined_tbl
+
+
+def update_sample_set_table(namespace, workspace, joined_tbl):
+    ss_old, membership = load_table(namespace, workspace, 'sample_set', store_membership=True)
+
+    # create old membership set
+    oms = pd \
+        .DataFrame({'entity:sample_set_id': list(ss_old['entity:sample_set_id']), 'sample': membership}) \
+        .explode('sample', ignore_index=True)
+    oms.columns = ['membership:sample_set_id', 'sample']
+
+    # create sample set
+    ss = joined_tbl.filter(['bio_sample'], axis=1).drop_duplicates()
+    ss.columns = [f'entity:sample_set_id']
+
+    if ss_old is not None:
+        ss = pd.merge(ss_old, ss, how='outer', sort=True)
+    ss = ss.replace('^nan$', '', regex=True)
+
+    # create new membership set
+    ms = joined_tbl.filter(['bio_sample', 'entity:sample_id'], axis=1).drop_duplicates()
+    ms.columns = [f'membership:sample_set_id', f'sample']
+
+    # create full membership set
+    fms = pd.merge(ms, oms, how='outer', indicator=True)
+
+    # create new/modified membership set
+    nms = fms[fms['_merge'] != 'both']
+
+    return ss, nms
+
+
+def upload_table(namespace, workspace, table, label):
+    # upload new samples
+    a = fapi.upload_entities(namespace, workspace, entity_data=table.to_csv(index=False, sep="\t"), model='flexible')
+
+    if a.status_code == 200:
+        print(f'Uploaded {len(table)} {label} rows successfully.')
+    else:
+        print(a.json())
+
+
+def upload_tables(namespace, workspace, s, ss, nms):
+    for ssname in list(nms[nms['_merge'] == 'right_only']['membership:sample_set_id']):
+        a = fapi.delete_sample_set(namespace, workspace, ssname)
+
+        if a.status_code == 204:
+            print(f'Removed out-of-date sample set {ssname} successfully.')
+        else:
+            print(a.json())
+
+    lms = nms[nms['_merge'] == 'left_only'][['membership:sample_set_id', 'sample']]
+
+    upload_table(namespace, workspace, s, 'sample')
+    upload_table(namespace, workspace, ss, 'sample_set')
+    upload_table(namespace, workspace, lms, 'sample_set membership')
+
+
 def main():
     parser = argparse.ArgumentParser(description='Update Terra workspace sample table', prog='update_pacbio_tables')
     parser.add_argument('-p', '--project', type=str, help="GCP project")
@@ -371,10 +377,10 @@ def main():
     args = parser.parse_args()
 
     s = update_sample_table(args.namespace, args.workspace, args.buckets, args.project)
-    ss, ms = update_sample_set_table(args.namespace, args.workspace, s)
+    ss, nms = update_sample_set_table(args.namespace, args.workspace, s)
 
     if args.run:
-        upload_data(args.namespace, args.workspace, s, ss, ms)
+        upload_tables(args.namespace, args.workspace, s, ss, nms)
 
 
 if __name__ == "__main__":
