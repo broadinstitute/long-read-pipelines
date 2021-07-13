@@ -12,7 +12,7 @@ workflow LocalAssembly {
         String aligned_bam
         File   aligned_bai
         String prefix
-        String preset
+        String experiment_type
 #        Boolean add_unaligned_reads = false
         Boolean run_quast = false
 
@@ -25,7 +25,7 @@ workflow LocalAssembly {
         aligned_bam:   "aligned file"
         aligned_bai:   "index file"
         prefix:        "prefix for output files"
-        preset:        "data preset (pacbio or nanopore)"
+        experiment_type:  "CLR, CCS, or ONT"
 
 #        add_unaligned_reads: "set to true to include unaligned reads in the assembly (default: false)"
         run_quast:           "set to true to run Quast on the assembly (default: false)"
@@ -34,6 +34,14 @@ workflow LocalAssembly {
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
+
+    Map[String, String] map_presets = {
+        'CLR':    'pacbio',
+        'CCS':    'pacbio-hifi',
+        'ONT':    'nanopore'
+    }
+
+    String preset = map_presets[experiment_type]
 
     scatter (locus in loci) {
         call Utils.SubsetBam {

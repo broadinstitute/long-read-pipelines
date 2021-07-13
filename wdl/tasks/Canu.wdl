@@ -72,7 +72,7 @@ task Correct {
         reads:        "reads to be canu-corrected"
         genome_size:  "estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
         prefix:       "prefix to output files"
-        preset:       "data type preset: nanopore or pacbio"
+        preset:       "data type preset: nanopore, pacbio, or pacbio-hifi"
     }
 
     Int disk_size = 150 * ceil(size(reads, "GB"))
@@ -130,7 +130,7 @@ task Trim {
         corrected_reads:   "reads that have been canu-corrected"
         genome_size:       "estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
         prefix:            "prefix to output files"
-        preset:            "data type preset: nanopore or pacbio"
+        preset:            "data type preset: nanopore, pacbio, or pacbio-hifi"
     }
 
     Int disk_size = 50 * ceil(size(corrected_reads, "GB"))
@@ -188,7 +188,7 @@ task Assemble {
         genome_size:    "estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
  #       error_rate:     "parameter to canu's 'correctedErrorRate'"
         prefix:         "prefix to output files"
-        preset:         "data type preset: nanopore or pacbio"
+        preset:         "data type preset: nanopore, pacbio, or pacbio-hifi"
     }
 
     Int disk_size = 50 * ceil(size(trimmed_reads, "GB"))
