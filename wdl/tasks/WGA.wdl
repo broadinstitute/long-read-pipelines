@@ -10,7 +10,7 @@ task Minimap2 {
 
         String prefix
 
-        String? preset = "asm5"
+        String? map_preset = "asm5"
         RuntimeAttr? runtime_attr_override
     }
 
@@ -20,7 +20,7 @@ task Minimap2 {
     }
 
     command <<<
-        minimap2 -ax ~{prefix} -t ~{runtime_attr.cpu_cores} "~{ref1}" "~{ref2}" \
+        minimap2 -ax ~{map_preset} -t ~{runtime_attr.cpu_cores} "~{ref1}" "~{ref2}" \
             | samtools sort -@ ~{runtime_attr.cpu_cores} -O bam -o "~{prefix}.bam"
 
         samtools index "~{prefix}.bam"
@@ -76,7 +76,7 @@ task Nucmer {
         set -euxo pipefail
 
         nucmer "~{ref1}" "~{ref2}" -p "~{prefix}"
-        delta-filter -q "~{prefix}.delta" > "~{filtered_delta}"
+        delta-filter -q "~{prefix}.delta" > "~{prefix}.filtered.delta"
     >>>
 
     #########################
