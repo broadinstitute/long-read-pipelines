@@ -8,7 +8,7 @@ task Minimap2 {
         Array[File] reads
         File ref_fasta
 
-        String RG
+        String? RG
         String map_preset
 
         String prefix = "out"
@@ -28,10 +28,11 @@ task Minimap2 {
     Int cpus = 4
     Int mem = 30
 
+
     command <<<
         set -euxo pipefail
 
-        MAP_PARAMS="-ayYL --MD -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
+        MAP_PARAMS="-aYL --MD -x ~{map_preset} ~{if defined(RG) then "-RG ~{RG}" else ""} -t ~{cpus} ~{ref_fasta}"
         SORT_PARAMS="-@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
 

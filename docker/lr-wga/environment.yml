@@ -1,0 +1,9 @@
+name: base
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - samtools
+  - minimap2
+  - mummer4
