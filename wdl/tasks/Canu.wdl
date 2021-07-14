@@ -229,3 +229,60 @@ task Assemble {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+# runs Canu assembly in one command
+task SingleStep {
+    input {
+        String genome_size
+        File reads
+#        Float error_rate
+        String prefix
+        String preset
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        reads:          "reads to run through entire Canu pipeline"
+        genome_size:    "estimated genome size, can use k/m/g suffixes (e.g. 3g for the human genome)"
+ #       error_rate:     "parameter to canu's 'correctedErrorRate'"
+        prefix:         "prefix to output files"
+        preset:         "data type preset: nanopore, pacbio, or pacbio-hifi"
+    }
+
+    Int disk_size = 50 * ceil(size(trimmed_reads, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        canu \
+             -p ~{prefix} -d canu_assemble_output \
+             genomeSize=~{genome_size} \
+             -~{preset} ~{reads}
+    >>>
+
+    output {
+        File canu_contigs_fasta = "canu_assemble_output/~{prefix}.contigs.fasta"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          32,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-canu:0.1.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

@@ -68,31 +68,45 @@ workflow LocalAssembly {
             prefix = prefix
     }
 
-    ######## Call 3 stages of Canu #########
-    call Canu.Correct as Correct {
-        input:
-            reads = BamToFastq.reads_fq,
-            genome_size = region_size,
-            prefix = prefix,
-            preset = preset
+
+    if (experiment_type == 'CLR' || experiment_type == 'ONT') {
+        ######## Call 3 stages of Canu #########
+        call Canu.Correct as Correct {
+            input:
+                reads = BamToFastq.reads_fq,
+                genome_size = region_size,
+                prefix = prefix,
+                preset = preset
+        }
+
+        call Canu.Trim as Trim {
+            input:
+                genome_size = region_size,
+                corrected_reads = Correct.corrected_reads,
+                prefix = prefix,
+                preset = preset
+        }
+
+        call Canu.Assemble as Assemble {
+            input:
+                genome_size = region_size,
+                trimmed_reads = Trim.trimmed_reads,
+                prefix = prefix,
+                preset = preset
+        }
+        ######## Done calling Canu #########
     }
 
-    call Canu.Trim as Trim {
-        input:
-            genome_size = region_size,
-            corrected_reads = Correct.corrected_reads,
-            prefix = prefix,
-            preset = preset
+    if (experiment_type == 'CCS') {
+        ######## Call Canu in one step - this is good for CCS reads that don't need correcting and trimming #########
+        call Canu.SingleStep as Assemble {
+            input:
+                genome_size = region_size,
+                reads = BamToFastq.reads_fq,
+                prefix = prefix,
+                preset = preset
+        }
     }
-
-    call Canu.Assemble as Assemble {
-        input:
-            genome_size = region_size,
-            trimmed_reads = Trim.trimmed_reads,
-            prefix = prefix,
-            preset = preset
-    }
-    ######## Done calling Canu #########
 
     if (run_quast) {
         call Quast.Quast {
