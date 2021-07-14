@@ -250,7 +250,7 @@ task SingleStep {
         preset:         "data type preset: nanopore, pacbio, or pacbio-hifi"
     }
 
-    Int disk_size = 50 * ceil(size(trimmed_reads, "GB"))
+    Int disk_size = 50 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail
