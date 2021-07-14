@@ -95,30 +95,32 @@ workflow LocalAssembly {
                 preset = preset
         }
         ######## Done calling Canu #########
+        File assembled_contigs = Assemble.canu_contigs_fasta
     }
 
     if (experiment_type == 'CCS') {
         ######## Call Canu in one step - this is good for CCS reads that don't need correcting and trimming #########
-        call Canu.SingleStep as Assemble {
+        call Canu.SingleStep as SingleStep {
             input:
                 genome_size = region_size,
                 reads = BamToFastq.reads_fq,
                 prefix = prefix,
                 preset = preset
         }
+        File assembled_contigs = SingleStep.canu_contigs_fasta
     }
 
     if (run_quast) {
         call Quast.Quast {
             input:
                 ref = ref_map['fasta'],
-                assemblies = [ Assemble.canu_contigs_fasta ]
+                assemblies = [ assembled_contigs ]
         }
     }
 
     call AV.CallAssemblyVariants as CallAssemblyVariants {
         input:
-            asm_fasta = Assemble.canu_contigs_fasta,
+            asm_fasta = assembled_contigs,
             ref_fasta = ref_map['fasta'],
             participant_name = prefix,
             prefix = prefix + ".canu"
@@ -126,7 +128,7 @@ workflow LocalAssembly {
 
     output {
         File local_bam = subset_bam
-        File canu_fa = Assemble.canu_contigs_fasta
+        File canu_fa = assembled_contigs
         File variants = CallAssemblyVariants.paftools_vcf
         File paf_aln = CallAssemblyVariants.paf
     }
