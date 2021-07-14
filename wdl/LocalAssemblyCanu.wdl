@@ -94,9 +94,7 @@ workflow LocalAssembly {
                 prefix = prefix,
                 preset = preset
         }
-        ######## Done calling Canu #########
-        File assembled_contigs = Assemble.canu_contigs_fasta
-    }
+    } ######## Done calling Canu #########
 
     if (experiment_type == 'CCS') {
         ######## Call Canu in one step - this is good for CCS reads that don't need correcting and trimming #########
@@ -107,8 +105,9 @@ workflow LocalAssembly {
                 prefix = prefix,
                 preset = preset
         }
-        File assembled_contigs = SingleStep.canu_contigs_fasta
-    }
+    } ######## Done calling Canu #########
+
+    File assembled_contigs = select_first([Assemble.canu_contigs_fasta, SingleStep.canu_contigs_fasta])
 
     if (run_quast) {
         call Quast.Quast {
