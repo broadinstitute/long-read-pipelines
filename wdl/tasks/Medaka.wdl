@@ -27,7 +27,7 @@ task MedakaPolish {
         n_rounds:           "number of polishing rounds to apply"
     }
 
-    Int disk_size = (2 * ceil(size(basecalled_reads, "GB") + size(draft_assembly, "GB"))) * n_rounds
+    Int disk_size = 4 * n_rounds * ceil(size([basecalled_reads, draft_assembly], "GB"))
 
     ###
     # Medaka models
