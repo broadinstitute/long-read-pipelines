@@ -2,10 +2,12 @@
 
 import os
 import re
+import math
 import hashlib
 import argparse
 import copy
 
+import numpy as np
 import pandas as pd
 import firecloud.api as fapi
 
@@ -176,7 +178,6 @@ def update_sample_table(namespace, workspace, buckets, project):
     tbl_new = load_new_sample_table(buckets, project)
     joined_tbl = merge_tables(tbl_old, tbl_new)
     joined_tbl = joined_tbl.replace('^nan$', '', regex=True)
-    joined_tbl = joined_tbl.replace('oxfordo', 'oxfordnano', regex=True)
 
     return joined_tbl
 
@@ -197,7 +198,6 @@ def update_sample_set_table(namespace, workspace, joined_tbl):
     if ss_old is not None:
         ss = pd.merge(ss_old, ss, how='outer', sort=True)
     ss = ss.replace('^nan$', '', regex=True)
-    ss = ss.replace('oxfordo', 'oxfordnano', regex=True)
 
     # create new membership set
     ms = joined_tbl.filter(['sample_name', 'entity:sample_id'], axis=1).drop_duplicates()
