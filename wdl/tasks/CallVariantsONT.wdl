@@ -130,21 +130,21 @@ workflow CallVariants {
 
     call VariantUtils.MergePerChrCalls as MergeDeepVariantPhasedVCFs {
         input:
-            vcfs     = select_all(PEPPER.phased_vcf),
+            vcfs     = PEPPER.phased_vcf,
             ref_dict = ref_dict,
             prefix   = prefix + ".deepvariant_pepper.phased"
     }
 
     call VariantUtils.MergePerChrCalls as MergeDeepVariantGVCFs {
         input:
-            vcfs     = select_all(PEPPER.gvcf),
+            vcfs     = PEPPER.gvcf,
             ref_dict = ref_dict,
             prefix   = prefix + ".deepvariant_pepper.g"
     }
 
     call VariantUtils.MergePerChrCalls as MergeDeepVariantVCFs {
         input:
-            vcfs     = select_all(PEPPER.vcf),
+            vcfs     = PEPPER.vcf,
             ref_dict = ref_dict,
             prefix   = prefix + ".deepvariant_pepper"
     }
