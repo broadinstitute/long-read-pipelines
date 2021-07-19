@@ -128,26 +128,26 @@ workflow CallVariants {
             prefix   = prefix + ".sniffles"
     }
 
-#    call VariantUtils.MergePerChrCalls as MergeDeepVariantPhasedVCFs {
-#        input:
-#            vcfs     = select_all(PEPPER.phased_vcf),
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".deepvariant_pepper.phased"
-#    }
-#
-#    call VariantUtils.MergePerChrCalls as MergeDeepVariantGVCFs {
-#        input:
-#            vcfs     = select_all(PEPPER.gvcf),
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".deepvariant_pepper.g"
-#    }
-#
-#    call VariantUtils.MergePerChrCalls as MergeDeepVariantVCFs {
-#        input:
-#            vcfs     = select_all(PEPPER.vcf),
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".deepvariant_pepper"
-#    }
+    call VariantUtils.MergePerChrCalls as MergeDeepVariantPhasedVCFs {
+        input:
+            vcfs     = select_all(PEPPER.phased_vcf),
+            ref_dict = ref_dict,
+            prefix   = prefix + ".deepvariant_pepper.phased"
+    }
+
+    call VariantUtils.MergePerChrCalls as MergeDeepVariantGVCFs {
+        input:
+            vcfs     = select_all(PEPPER.gvcf),
+            ref_dict = ref_dict,
+            prefix   = prefix + ".deepvariant_pepper.g"
+    }
+
+    call VariantUtils.MergePerChrCalls as MergeDeepVariantVCFs {
+        input:
+            vcfs     = select_all(PEPPER.vcf),
+            ref_dict = ref_dict,
+            prefix   = prefix + ".deepvariant_pepper"
+    }
 
     call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
         input:
@@ -157,12 +157,12 @@ workflow CallVariants {
     }
 
     output {
-#        File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
-#        File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
-#        File dvp_g_vcf = MergeDeepVariantGVCFs.vcf
-#        File dvp_g_tbi = MergeDeepVariantGVCFs.tbi
-#        File dvp_vcf = MergeDeepVariantVCFs.vcf
-#        File dvp_tbi = MergeDeepVariantVCFs.tbi
+        File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
+        File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
+        File dvp_g_vcf = MergeDeepVariantGVCFs.vcf
+        File dvp_g_tbi = MergeDeepVariantGVCFs.tbi
+        File dvp_vcf = MergeDeepVariantVCFs.vcf
+        File dvp_tbi = MergeDeepVariantVCFs.tbi
 
         File longshot_vcf = MergeLongshotVCFs.vcf
         File longshot_tbi = MergeLongshotVCFs.tbi
