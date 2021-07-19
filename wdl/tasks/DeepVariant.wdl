@@ -110,7 +110,7 @@ task PEPPER {
         preset:          "calling preset (CCS, ONT)"
     }
 
-    Int disk_size = 3*ceil(size(bam, "GB")) + 50
+    Int disk_size = 10*ceil(size(bam, "GB")) + 1
     String prefix = basename(bam, ".bam") + ".deepvariant_pepper"
     String mode = if preset == "CCS" then "--ccs" else "--ont"
 
@@ -169,7 +169,6 @@ task PEPPER {
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "kishwars/pepper_deepvariant:r0.4.1"
-        #docker:             "us.gcr.io/broad-dsp-lrma/lr-dvpepper:r0.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
