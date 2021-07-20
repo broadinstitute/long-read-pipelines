@@ -1,4 +1,4 @@
-[![Generic badge](https://img.shields.io/badge/version-3.0.4-blue.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/version-3.0.5-blue.svg)](https://shields.io/)
 ![CI/CD](https://github.com/broadinstitute/long-read-pipelines/workflows/CI/CD/badge.svg)
 ![Nightly](https://github.com/broadinstitute/long-read-pipelines/workflows/Nightly/badge.svg)
 
