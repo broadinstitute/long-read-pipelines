@@ -18,13 +18,16 @@ workflow Winnowmap {
     parameter_meta {
         reads:           "Raw reads in either fa or fq format"
         prefix:          "Output file prefix"
-        experiment_type: "CLR, CCS, or ONT"
+        experiment_type: "CLR, CCS, ONT, asm5, asm10, or asm20"
     }
 
     Map[String, String] map_presets = {
         'CLR':    'map-pb-clr',
         'CCS':    'map-pb',
-        'ONT':    'map-ont'
+        'ONT':    'map-ont',
+        'asm5':   'asm5',
+        'asm10':   'asm10',
+        'asm20':   'asm20'
     }
 
     String preset = map_presets[experiment_type]
