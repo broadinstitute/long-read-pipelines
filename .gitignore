@@ -9,3 +9,4 @@ venv/
 .tox
 test/test_output/
 __pycache__
+.ipynb_checkpoints/
