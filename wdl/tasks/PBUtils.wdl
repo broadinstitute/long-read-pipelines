@@ -695,11 +695,14 @@ task Align {
         String sample_name
         String map_preset
 
+        Boolean drop_per_base_N_pulse_tags
+
         String prefix = "out"
         RuntimeAttr? runtime_attr_override
     }
 
     String median_filter = if map_preset == "SUBREAD" then "--median-filter" else ""
+    String extra_options = if drop_per_base_N_pulse_tags then " --strip " else ""
 
     Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
     Int cpus = 4
@@ -708,7 +711,21 @@ task Align {
     command <<<
         set -euxo pipefail
 
-        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam --preset ~{map_preset} ~{median_filter} --sort
+        # sometimes the ubam comes without sample information, so we rely on the input to this task for a fix
+        samtools view -H ~{bam} > old.header.txt
+        if grep -q -F 'SM:' old.header.txt; then
+            extra_sm_info=''
+        else
+            extra_sm_info=" --sample ~{sample_name} "
+        fi
+
+        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
+            --preset ~{map_preset} \
+            ~{median_filter} \
+            "${extra_sm_info}" \
+            ~{extra_options} \
+            --sort \
+            --unmapped
 
         samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
         samtools index ~{prefix}.bam
