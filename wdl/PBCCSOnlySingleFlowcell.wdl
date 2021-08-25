@@ -48,8 +48,17 @@ workflow PBCCSOnlySingleFlowcell {
         call PB.ShardLongReads { input: unaligned_bam = subread_bam, unaligned_pbi = subread_pbi, num_shards = num_shards }
 
         # then perform correction on each of the shard
+
+        RuntimeAttr new_pb_docker = object {
+            docker: "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.33"
+        }
+
         scatter (subreads in ShardLongReads.unmapped_shards) {
-            call PB.CCS { input: subreads = subreads }
+            call PB.CCS {
+                input:
+                    subreads = subreads,
+                    runtime_attr_override = new_pb_docker
+            }
 
             if (extract_uncorrected_reads) {
                 call PB.ExtractUncorrectedReads { input: subreads = subreads, consensus = CCS.consensus }
