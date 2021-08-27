@@ -14,14 +14,11 @@ task Annotate
 
     Int disk_size = 4*ceil(size(reads, "GB"))
 
-    String model_arg = if model == "mas15" then "" else "--m10"
-
     command <<<
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-#        longbow annotate -t8 --model ~{model} -v INFO ~{reads} -o ~{prefix}.bam
-        longbow annotate -t8 ~{model_arg} -v INFO ~{reads} -o ~{prefix}.bam
+        longbow annotate -t8 --model ~{model} -v INFO ~{reads} -o ~{prefix}.bam
     >>>
 
     output {
@@ -36,8 +33,7 @@ task Annotate
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-#        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.0"
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.2.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -85,8 +81,7 @@ task Segment
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.2.2"
-#        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -141,7 +136,7 @@ task ScSplit
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -191,7 +186,7 @@ task Inspect
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -245,8 +240,7 @@ task Demultiplex
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-#        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.0"
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.2.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -355,8 +349,7 @@ task Filter {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.2.2"
-#        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -418,8 +411,7 @@ task Extract {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.2.2"
-#        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
