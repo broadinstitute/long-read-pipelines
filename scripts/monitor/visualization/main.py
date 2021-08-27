@@ -1,9 +1,7 @@
 #!
 import pickle
 
-from template import *
-from week_one import *
-from week_two import *
+import resource_monitoring
 
 ds_meta_runtime = pickle.load(open("monitoring_dataset_50e68afe-a342-4357-9397-4de7b9300b10.metadata_runtime.pickle", "rb"))
 ds_metrics = pickle.load(open("monitoring_dataset_50e68afe-a342-4357-9397-4de7b9300b10.metrics.pickle", "rb"))

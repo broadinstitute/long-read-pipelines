@@ -7,29 +7,52 @@ import pandas as pd
 import pandas_bokeh
 from operator import truediv
 
+# 2 main functions are run and setup.
+# Once combine is run, class instance becomes solely dedicated to analyzing the multiple datasets. All unrelated methods are deleted
+#
+
 
 class ResourceUsage:
     instances = 0  # count number of class instances (can't find a way to update this when an instance is deleted)
+    _level = 0
+    # _level will be used later to determine what sort of suggestions can be automatically made based on the given data
+    # the more datasets the higher the level.
+    # For example, with only one dataset there is no way to determine how much variation there is.
 
-    def __init__(self, meta_runtime: pd.DataFrame, metrics: pd.DataFrame) -> None:
+    def __init__(self, meta_runtime: pd.DataFrame, metrics: pd.DataFrame, name: str) -> None:
         """
         initialization step: bring meta, runtime, and metrics data into scope
         :param meta_runtime: meta_runtime table
         :param metrics: metrics table
+        :param name: name for this instance (used to identify which files are created by this specific instance)
         """
+        self.name = name
+        self._id = ResourceUsage.instances
         self.meta_runtime = meta_runtime
         self.metrics = metrics
-        self.instances += 1
+        tasks_list = self.num_task_shards().keys()
+        self.max_cpu_usage = pd.DataFrame(columns=tasks_list)  # set in violin plot functions
+        self.max_mem_usage = pd.DataFrame(columns=tasks_list)
+        self.max_disk_usage = pd.DataFrame(columns=tasks_list)
+        ResourceUsage.instances += 1
+        self.setup()
 
-    def run(self) -> None:  # maybe do this as part of initialization
+    def setup(self) -> None:  # maybe do this as part of initialization
         """
-        Do everything that needs to be done to set up the webpage, and then set up the webpage
+        Load all files and information for the webpage
         :return: None
         """
         self.generate_plot_files()
+        self.generate_basic_suggestions()
+
+    def run(self) -> None:
+        """
+        display the webpage
+        :return: None
+        """
         self.generate_report_homepage()
 
-    def generate_report_homepage(self) -> None:
+    def generate_report_homepage(self) -> None:  # finish
         """
         Set up webpage
         :return: None
@@ -46,12 +69,27 @@ class ResourceUsage:
         tasks = self.num_task_shards()
         unsharded_tasks = dict([(k, v) for k, v in tasks.items() if v == 0])
         sharded_tasks = dict([(k, v) for k, v in tasks.items() if v != 0])
-        # unsharded_tasks = dict(filter(lambda elem: elem[1] == 0, tasks.items()))  # pycharm false positive?
-        # sharded_tasks = dict(filter(lambda elem: elem[1] != 0, tasks.items()))
         for task in unsharded_tasks:
             self.plot_aggregate(task, -1)
         for task in sharded_tasks:
             self.save_bokeh(task)
+
+    def generate_basic_suggestions(self):
+        tasks = self.num_task_shards().keys()
+        with open('suggestions.txt', 'a+') as suggestion_text:
+            suggestion_text.truncate(0)
+            for task in tasks:
+                # thresholds can be tweaked later
+                # cpu is trickier, since it can have multiple cores and only requested # of cores is given
+                suggestion_text.write(f"{task}'s allocated CPU can be {'reduced' if sum(self.max_cpu_usage)/len(self.max_cpu_usage)<90 else 'increased'}. \n")
+
+                suggestion_text.write(f"{task}'s allocated Memory can be "  # separate: need elif
+                                      f"{'reduced' if self.max_mem_usage<90 else 'increased'} to "
+                                      f"{((self.max_mem_usage+5)/100)*self.max_mem_usage.loc['requested', task] if self.max_mem_usage<90 else self.max_mem_usage.loc['requested',task]*1.1}. \n")
+                suggestion_text.write(f"{task}'s allocated Disk Space can be "
+                                      f"{'reduced' if self.max_disk_usage<90 else 'increased'} to "
+                                      f"{((self.max_disk_usage+5)/100)*self.max_disk_usage.loc['requested', task] if self.max_mem_usage<90 else self.max_mem_usage.loc['requested',task]*1.1}. \n")
+        pass
 
     def combine(self, *args):  # UNTESTED: NO IDEA IF THIS WORKS
         """
@@ -62,16 +100,16 @@ class ResourceUsage:
         """
         Frames = list(self.meta_runtime)
         for class_instance in args:
-            if (class_instance.meta_runtime.columns == self.meta_runtime.columns)[0]:
+            if class_instance.meta_runtime.loc[0, "meta_workflow_name"] == self.meta_runtime.loc[0, "meta_workflow_name"]:
                 #
-                # NOTE TO SELF: this is stupid. It doesn't even work. Just check the workflow IDs.
-                # But do it later, when you fix the function for real
-                # Combining the datasets like this won't really work, figure something else out later
+                # NOTE TO SELF: it's easier to just check that the workflow names are the same
                 #
-                Frames.append(class_instance.meta_runtime)
+                Frames.append(class_instance.meta_runtime)  # this is ok as long as I check the meta_workflow_id later
             else:
                 raise Exception("Not the same workflow, data cannot be combined")
         self.meta_runtime = pd.concat(Frames)
+        # Some methods will no longer be compatible after the datasets are combined
+
 
     def num_task_shards(self) -> Dict[str, int]:
         """
@@ -179,8 +217,6 @@ class ResourceUsage:
         input_ds = pd.DataFrame(data=self.meta_runtime.loc[pos, "meta_inputs"])
         return input_ds[input_ds['type'].astype(str) == "file"].loc[:, "value"].astype(float).sum()
 
-    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
     def cpu_use_violin(self, instance_id: int) -> plt.Figure:
         """
         Violin plot for CPU use
@@ -200,12 +236,13 @@ class ResourceUsage:
         axis.set_ylabel("CPU % used")
         axis.set_title(f"CPU Usage for {name[0]}, shard {name[1]}")
         plt.show()
-        # plt.savefig(f"{self.cpu_use_violin.__name__}.pdf", bbox_inches='tight')
+
+        self.max_cpu_usage.loc["max_value", name] = max(data)
         return fig
 
     def get_instance_id(self, task: str, shard_idx: int) -> numpy.int64:
         """
-        Gets instance ID given a shard
+        Gets instance ID given a shard- if task is unsharded, use -1 as shard index
         :param task: task name
         :param shard_idx: shard index #
         :return: instance ID
@@ -250,7 +287,9 @@ class ResourceUsage:
         axis.set_ylabel("% GB used")
         axis.set_title(f"Memory Usage for {name[0]}, shard {name[1]}")
         plt.show()
-        # plt.savefig(f"{self.mem_use_violin.__name__}.pdf", bbox_inches='tight')
+
+        self.max_mem_usage.loc["max_value", name] = max(data)
+        self.max_mem_usage.loc["requested", name] = requested_mem
         return fig
 
     def disk_use_violin(self, instance_id: int) -> plt.Figure:
@@ -273,7 +312,10 @@ class ResourceUsage:
         axis.set_ylabel("% GB used")
         axis.set_title(f"Disk Usage for {name[0]}, shard {name[1]}")
         plt.show()
-        # plt.savefig(f"{self.disk_use_violin.__name__}.pdf", bbox_inches='tight')
+
+        self.max_disk_usage.loc["max_value", name] = max(data)
+        self.max_disk_usage.loc["requested", name] = requested_disk
+
         return fig
 
     def get_shard_from_instance_id(self, instance_id: int) -> list:
@@ -519,9 +561,9 @@ class ResourceUsage:
             pp.savefig(c, bbox_inches='tight')
             pp.close()
         elif type_ == "svg":
-            a.savefig(f'all_plots/allPlots{task}.pdf', bbox_inches='tight')
-            b.savefig(f'all_plots/allPlots{task}.pdf', bbox_inches='tight')
-            c.savefig(f'all_plots/allPlots{task}.pdf', bbox_inches='tight')
+            a.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
+            b.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
+            c.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
         else:
             raise Exception("File type not supported")
 
@@ -552,7 +594,7 @@ class ResourceUsage:
         <script type="text/javascript"
           src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
         </script>""" + saved
-        with open(f'gridded_plots/gridded{task}.html', 'w') as writer:
+        with open(f'gridded_plots/{self.name}_gridded{task}.html', 'w') as writer:
             writer.write(html)
 
     def timed_plot_disk(self, instance_id: int):
@@ -594,3 +636,17 @@ class ResourceUsage:
                 .plot_bokeh(kind="line")
         except IndexError:
             print("instance ID not found in metrics")
+
+
+# Functions for combined instance: measuring variability, predictions, etc.
+def variation(*args: ResourceUsage):
+    frame_max_cpu = list()
+    frame_max_mem = list()
+    frame_max_disk = list()
+    for resource_usage in args:
+        frame_max_cpu.append(resource_usage.max_cpu_usage)
+        frame_max_cpu.append(resource_usage.max_mem_usage)
+        frame_max_disk.append(resource_usage.max_disk_usage)
+    total_max_cpu = pd.concat(frame_max_cpu)
+    total_max_mem = pd.concat(frame_max_mem)
+    total_max_disk = pd.concat(frame_max_disk)
