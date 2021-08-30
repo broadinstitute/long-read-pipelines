@@ -16,6 +16,8 @@ workflow PBCCS10x {
         File barcode_file
         Int num_shards = 300
 
+        Boolean drop_per_base_N_pulse_tags = true
+
         String gcs_out_root_dir
     }
 
@@ -55,6 +57,7 @@ workflow PBCCS10x {
                     bam         = AnnotateAdapters.annotated_bam,
                     ref_fasta   = ref_map['fasta'],
                     sample_name = participant_name,
+                    drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags,
                     map_preset  = "ISOSEQ"
             }
 
