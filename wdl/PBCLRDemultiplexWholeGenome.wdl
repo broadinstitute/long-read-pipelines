@@ -79,7 +79,7 @@ workflow PBCLRDemultiplexWholeGenome {
                 bam         = demux_bam,
                 ref_fasta   = ref_map['fasta'],
                 sample_name = participant_name,
-                map_preset  = "CCS",
+                map_preset  = "CLR",
                 drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags
         }
 
