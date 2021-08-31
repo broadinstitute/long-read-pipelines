@@ -20,7 +20,8 @@ workflow PBFlowcell {
         File ref_map_file
 
         String SM
-        String ID
+
+        Boolean drop_per_base_N_pulse_tags = true
 
         Int num_shards = 50
         String experiment_type
@@ -35,7 +36,6 @@ workflow PBFlowcell {
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
         SM:                 "the value to place in the BAM read group's SM field"
-        ID:                 "the value to place in the BAM read group's ID field"
 
         num_shards:         "[default-valued] number of shards into which fastq files should be batched"
         experiment_type:    "type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
@@ -74,7 +74,8 @@ workflow PBFlowcell {
                 bam         = unaligned_bam,
                 ref_fasta   = ref_map['fasta'],
                 sample_name = SM,
-                map_preset  = map_presets[experiment_type]
+                map_preset  = map_presets[experiment_type],
+                drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags
         }
 
         call Utils.BamToFastq { input: bam = unaligned_bam, prefix = basename(unaligned_bam, ".bam") }

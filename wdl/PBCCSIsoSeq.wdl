@@ -22,6 +22,8 @@ workflow PBCCSIsoSeq {
         String participant_name
         File barcode_file
 
+        Boolean drop_per_base_N_pulse_tags = true
+
         String gcs_out_root_dir
     }
 
@@ -87,6 +89,7 @@ workflow PBCCSIsoSeq {
                 bam          = ClusterTranscripts.clustered_bam,
                 ref_fasta    = ref_map['fasta'],
                 sample_name  = participant_name,
+                drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags,
                 map_preset   = "ISOSEQ",
                 prefix       = "~{participant_name}.~{BC}",
                 runtime_attr_override = { "cpu_cores": 32 }
