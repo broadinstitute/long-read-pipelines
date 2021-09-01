@@ -84,35 +84,35 @@ workflow MasSeqArraySlideSeq {
     }
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
-    call Utils.GetCurrentTimestampString as WdlExecutionStartTimestamp { input: }
+    call Utils.GetCurrentTimestampString as t_01_WdlExecutionStartTimestamp { input: }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call PB.FindBams { input: gcs_input_dir = gcs_input_dir }
+    call PB.FindBams as t_02_FindBams { input: gcs_input_dir = gcs_input_dir }
 
     # Check here if we found ccs bams or subread bams:
-    Boolean use_subreads = FindBams.has_subreads
+    Boolean use_subreads = t_02_FindBams.has_subreads
 
     # Make sure we have **EXACTLY** one bam file to run on:
-    if (length(FindBams.ccs_bams) != 1) {
-        call Utils.FailWithWarning { input: warning = "Error: Multiple BAM files found.  Cannot continue!" }
+    if (length(t_02_FindBams.ccs_bams) != 1) {
+        call Utils.FailWithWarning as t_03_FailOnMultiBamFiles { input: warning = "Error: Multiple BAM files found.  Cannot continue!" }
      }
 
     # Alias our bam file so we can work with it easier:
-    File reads_bam = FindBams.ccs_bams[0]
+    File reads_bam = t_02_FindBams.ccs_bams[0]
 
-    call PB.GetRunInfo { input: subread_bam = reads_bam }
+    call PB.GetRunInfo as t_04_GetRunInfo { input: subread_bam = reads_bam }
 
-    String SM  = select_first([sample_name, GetRunInfo.run_info["SM"]])
+    String SM  = select_first([sample_name, t_04_GetRunInfo.run_info["SM"]])
     String PL  = "PACBIO"
-    String PU  = GetRunInfo.run_info["PU"]
-    String DT  = GetRunInfo.run_info["DT"]
+    String PU  = t_04_GetRunInfo.run_info["PU"]
+    String DT  = t_04_GetRunInfo.run_info["DT"]
     String ID  = PU
-    String DS  = GetRunInfo.run_info["DS"]
+    String DS  = t_04_GetRunInfo.run_info["DS"]
     String DIR = SM + "." + ID
 
     File read_pbi = sub(reads_bam, ".bam$", ".bam.pbi")
-    call PB.ShardLongReads {
+    call PB.ShardLongReads as t_05_ShardLongReads {
         input:
             unaligned_bam = reads_bam,
             unaligned_pbi = read_pbi,
@@ -120,7 +120,7 @@ workflow MasSeqArraySlideSeq {
             num_shards = 50,
     }
 
-    scatter (sharded_reads in ShardLongReads.unmapped_shards) {
+    scatter (sharded_reads in t_05_ShardLongReads.unmapped_shards) {
 
         ## No more preemption on this sharding - takes too long otherwise.
         RuntimeAttr disable_preemption_runtime_attrs = object {
@@ -130,51 +130,51 @@ workflow MasSeqArraySlideSeq {
         String fbmrq_prefix = basename(sharded_reads, ".bam")
 
         # Filter out the kinetics tags from PB files:
-        call PB.RemoveKineticsTags {
+        call PB.RemoveKineticsTags as t_06_RemoveKineticsTags {
             input:
                 bam = sharded_reads,
                 prefix = SM + "_kinetics_removed"
         }
 
         # Handle setting up the things that we need for further processing of CCS-only reads:
-        call PB.FindCCSReport {
+        call PB.FindCCSReport as t_07_FindCCSReport {
             input:
                 gcs_input_dir = gcs_input_dir
         }
 
         # 1 - filter the reads by the minimum read quality:
-        call Utils.Bamtools as FilterByMinQual {
+        call Utils.Bamtools as t_08_FilterByMinQual {
             input:
-                bamfile = RemoveKineticsTags.bam_file,
+                bamfile = t_06_RemoveKineticsTags.bam_file,
                 prefix = fbmrq_prefix + "_good_reads",
                 cmd = "filter",
                 args = '-tag "rq":">=' + min_read_quality + '"',
                 runtime_attr_override = disable_preemption_runtime_attrs
         }
 
-        call LONGBOW.Annotate as LongbowAnnotateReads {
+        call LONGBOW.Annotate as t_09_LongbowAnnotateReads {
             input:
-                reads = FilterByMinQual.bam_out,
+                reads = t_08_FilterByMinQual.bam_out,
                 model = "slide-seq"
         }
 
-        call PB.PBIndex as PbIndexLongbowAnnotatedReads {
+        call PB.PBIndex as t_10_PbIndexLongbowAnnotatedReads {
             input:
-                bam = LongbowAnnotateReads.annotated_bam
+                bam = t_09_LongbowAnnotateReads.annotated_bam
         }
 
         # Shard these reads even wider so we can make sure we don't run out of memory:
-        call PB.ShardLongReads as ShardCorrectedReads {
+        call PB.ShardLongReads as t_11_ShardCorrectedReads {
             input:
-                unaligned_bam = LongbowAnnotateReads.annotated_bam,
-                unaligned_pbi = PbIndexLongbowAnnotatedReads.pbindex,
+                unaligned_bam = t_09_LongbowAnnotateReads.annotated_bam,
+                unaligned_pbi = t_10_PbIndexLongbowAnnotatedReads.pbindex,
                 prefix = SM + "_longbow_annotated_subshard",
                 num_shards = 10,
         }
 
         # Segment our arrays into individual array elements:
-        scatter (corrected_shard in ShardCorrectedReads.unmapped_shards) {
-            call LONGBOW.Segment as SegmentAnnotatedReads {
+        scatter (corrected_shard in t_11_ShardCorrectedReads.unmapped_shards) {
+            call LONGBOW.Segment as t_12_SegmentAnnotatedReads {
                 input:
                     annotated_reads = corrected_shard,
                     model = "slide-seq"
@@ -182,43 +182,43 @@ workflow MasSeqArraySlideSeq {
         }
 
         # Merge all outputs of Longbow Annotate / Segment:
-        call Utils.MergeBams as MergeArrayElements_1 {
+        call Utils.MergeBams as t_13_MergeArrayElements_1 {
             input:
-                bams = SegmentAnnotatedReads.segmented_bam,
+                bams = t_12_SegmentAnnotatedReads.segmented_bam,
                 prefix = SM + "_ArrayElements_intermediate_1"
         }
 
         # Align our array elements:
-        call AR.Minimap2 as AlignArrayElements {
+        call AR.Minimap2 as t_14_AlignArrayElements {
             input:
-                reads      = [ MergeArrayElements_1.merged_bam ],
+                reads      = [ t_13_MergeArrayElements_1.merged_bam ],
                 ref_fasta  = transcriptome_ref_fasta,
                 map_preset = "splice:hq"
         }
 
-        call AR.Minimap2 as AlignArrayElementsToGenome {
+        call AR.Minimap2 as t_15_AlignArrayElementsToGenome {
             input:
-                reads      = [ MergeArrayElements_1.merged_bam ],
+                reads      = [ t_13_MergeArrayElements_1.merged_bam ],
                 ref_fasta  = ref_fasta,
                 map_preset = "splice:hq"
         }
 
         # We need to restore the annotations we created with the 10x tool to the aligned reads.
-        call TENX.RestoreAnnotationstoAlignedBam as RestoreAnnotationsToTranscriptomeAlignedBam {
+        call TENX.RestoreAnnotationstoAlignedBam as t_16_RestoreAnnotationsToTranscriptomeAlignedBam {
             input:
-                annotated_bam_file = MergeArrayElements_1.merged_bam,
-                aligned_bam_file = AlignArrayElements.aligned_bam,
+                annotated_bam_file = t_13_MergeArrayElements_1.merged_bam,
+                aligned_bam_file = t_14_AlignArrayElements.aligned_bam,
                 tags_to_ignore = [],
-                mem_gb = 64,  # TODO: Debug for memory redution
+                mem_gb = 8,
         }
 
         # We need to restore the annotations we created with the 10x tool to the aligned reads.
-        call TENX.RestoreAnnotationstoAlignedBam as RestoreAnnotationsToGenomeAlignedBam {
+        call TENX.RestoreAnnotationstoAlignedBam as t_17_RestoreAnnotationsToGenomeAlignedBam {
             input:
-                annotated_bam_file = MergeArrayElements_1.merged_bam,
-                aligned_bam_file = AlignArrayElementsToGenome.aligned_bam,
+                annotated_bam_file = t_13_MergeArrayElements_1.merged_bam,
+                aligned_bam_file = t_15_AlignArrayElementsToGenome.aligned_bam,
                 tags_to_ignore = [],
-                mem_gb = 64,  # TODO: Debug for memory redution
+                mem_gb = 8,
         }
 
         # To properly count our transcripts we must throw away the non-primary and unaligned reads:
@@ -226,16 +226,16 @@ workflow MasSeqArraySlideSeq {
             cpu_cores: 4,
             preemptible_tries: 0
         }
-        call Utils.FilterReadsBySamFlags as RemoveUnmappedAndNonPrimaryTranscriptomeReads {
+        call Utils.FilterReadsBySamFlags as t_18_RemoveUnmappedAndNonPrimaryTranscriptomeReads {
             input:
-                bam = RestoreAnnotationsToTranscriptomeAlignedBam.output_bam,
+                bam = t_16_RestoreAnnotationsToTranscriptomeAlignedBam.output_bam,
                 sam_flags = "2308",
                 prefix = SM + "_ArrayElements_Annotated_Transcriptome_Aligned_PrimaryOnly",
                 runtime_attr_override = filterReadsAttrs
         }
-        call Utils.FilterReadsBySamFlags as RemoveUnmappedAndNonPrimaryGenomeReads {
+        call Utils.FilterReadsBySamFlags as t_19_RemoveUnmappedAndNonPrimaryGenomeReads {
             input:
-                bam = RestoreAnnotationsToGenomeAlignedBam.output_bam,
+                bam = t_17_RestoreAnnotationsToGenomeAlignedBam.output_bam,
                 sam_flags = "2308",
                 prefix = SM + "_ArrayElements_Annotated_Genome_Aligned_PrimaryOnly",
                 runtime_attr_override = filterReadsAttrs
@@ -256,18 +256,18 @@ workflow MasSeqArraySlideSeq {
 
     # Sequel IIe Data.
     # CCS Passed:
-    call Utils.MergeBams as MergeCCSRqFilteredReads { input: bams = FilterByMinQual.bam_out, prefix = SM + "_ccs_reads" }
-    call Utils.MergeBams as MergeAnnotatedCCSReads { input: bams = LongbowAnnotateReads.annotated_bam, prefix = SM + "_ccs_reads_annotated" }
+    call Utils.MergeBams as t_20_MergeCCSRqFilteredReads { input: bams = t_08_FilterByMinQual.bam_out, prefix = SM + "_ccs_reads" }
+    call Utils.MergeBams as t_21_MergeAnnotatedCCSReads { input: bams = t_09_LongbowAnnotateReads.annotated_bam, prefix = SM + "_ccs_reads_annotated" }
 
     # Merge all CCS bams together for this Subread BAM:
     RuntimeAttr merge_extra_cpu_attrs = object {
         cpu_cores: 4
     }
-    call Utils.MergeBams as MergeRawArrayElements { input: bams = MergeArrayElements_1.merged_bam, prefix = SM + "_raw_array_elements" }
-    call Utils.MergeBams as MergeTranscriptomeAlignedArrayElements { input: bams = RestoreAnnotationsToTranscriptomeAlignedBam.output_bam, prefix = SM + "_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as MergeGenomeAlignedArrayElements { input: bams = RestoreAnnotationsToGenomeAlignedBam.output_bam, prefix = SM + "_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as MergePrimaryTranscriptomeAlignedArrayElements { input: bams = RemoveUnmappedAndNonPrimaryTranscriptomeReads.output_bam, prefix = SM + "_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as MergePrimaryGenomeAlignedArrayElements { input: bams = RemoveUnmappedAndNonPrimaryGenomeReads.output_bam, prefix = SM + "_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_22_MergeRawArrayElements { input: bams = t_13_MergeArrayElements_1.merged_bam, prefix = SM + "_raw_array_elements" }
+    call Utils.MergeBams as t_23_MergeTranscriptomeAlignedArrayElements { input: bams = t_16_RestoreAnnotationsToTranscriptomeAlignedBam.output_bam, prefix = SM + "_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_24_MergeGenomeAlignedArrayElements { input: bams = t_17_RestoreAnnotationsToGenomeAlignedBam.output_bam, prefix = SM + "_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_25_MergePrimaryTranscriptomeAlignedArrayElements { input: bams = t_18_RemoveUnmappedAndNonPrimaryTranscriptomeReads.output_bam, prefix = SM + "_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_26_MergePrimaryGenomeAlignedArrayElements { input: bams = t_19_RemoveUnmappedAndNonPrimaryGenomeReads.output_bam, prefix = SM + "_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
 
     ######################################################################
     #             _____ _             _ _
@@ -280,61 +280,61 @@ workflow MasSeqArraySlideSeq {
 
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
-    String base_out_dir = outdir + "/" + DIR + "/" + WdlExecutionStartTimestamp.timestamp_string
+    String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
 
-    File final_ccs_report = FindCCSReport.ccs_report[0]
+    File final_ccs_report = t_07_FindCCSReport.ccs_report[0]
 
     String array_element_dir = base_out_dir + "/array_elements"
     String arrays_dir = base_out_dir + "/array_reads"
 
     ##############################################################################################################
     # Finalize the final annotated, aligned array elements:
-    call FF.FinalizeToDir as FinalizeCCSReads {
+    call FF.FinalizeToDir as t_27_FinalizeCCSReads {
         input:
             files = [
-                MergeCCSRqFilteredReads.merged_bam,
-                MergeCCSRqFilteredReads.merged_bai,
-                MergeAnnotatedCCSReads.merged_bam,
-                MergeAnnotatedCCSReads.merged_bai,
+                t_20_MergeCCSRqFilteredReads.merged_bam,
+                t_20_MergeCCSRqFilteredReads.merged_bai,
+                t_21_MergeAnnotatedCCSReads.merged_bam,
+                t_21_MergeAnnotatedCCSReads.merged_bai,
             ],
             outdir = arrays_dir,
-            keyfile = MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
     }
 
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as FinalizeArrayElements {
+    call FF.FinalizeToDir as t_28_FinalizeArrayElements {
         input:
             files = [
-                MergeRawArrayElements.merged_bam,
-                MergeRawArrayElements.merged_bai,
-                MergeTranscriptomeAlignedArrayElements.merged_bam,
-                MergeTranscriptomeAlignedArrayElements.merged_bai,
-                MergeGenomeAlignedArrayElements.merged_bam,
-                MergeGenomeAlignedArrayElements.merged_bai,
-                MergePrimaryTranscriptomeAlignedArrayElements.merged_bam,
-                MergePrimaryTranscriptomeAlignedArrayElements.merged_bai,
-                MergePrimaryGenomeAlignedArrayElements.merged_bam,
-                MergePrimaryGenomeAlignedArrayElements.merged_bai,
+                t_22_MergeRawArrayElements.merged_bam,
+                t_22_MergeRawArrayElements.merged_bai,
+                t_23_MergeTranscriptomeAlignedArrayElements.merged_bam,
+                t_23_MergeTranscriptomeAlignedArrayElements.merged_bai,
+                t_24_MergeGenomeAlignedArrayElements.merged_bam,
+                t_24_MergeGenomeAlignedArrayElements.merged_bai,
+                t_25_MergePrimaryTranscriptomeAlignedArrayElements.merged_bam,
+                t_25_MergePrimaryTranscriptomeAlignedArrayElements.merged_bai,
+                t_26_MergePrimaryGenomeAlignedArrayElements.merged_bam,
+                t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai,
             ],
             outdir = array_element_dir,
-            keyfile = MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
     }
 
-    call FF.FinalizeToDir as FinalizeCCSReport {
+    call FF.FinalizeToDir as t_29_FinalizeCCSReport {
         input:
             files = [
                 final_ccs_report
             ],
             outdir = base_out_dir + "/",
-            keyfile = MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
     }
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile {
+    call FF.WriteCompletionFile as t_30_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
-            keyfile =  MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile =  t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
     }
 }

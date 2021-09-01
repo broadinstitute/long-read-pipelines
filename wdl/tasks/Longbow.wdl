@@ -59,14 +59,11 @@ task Segment
 
     Int disk_size = 15*ceil(size(annotated_reads, "GB")) + 20
 
-    String model_arg = if model == "mas15" then "" else "--m10"
-
     command <<<
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-#        longbow segment --model ~{model} -v INFO -s ~{annotated_reads} -o ~{prefix}.bam
-        longbow segment ~{model_arg}  -v INFO -s ~{annotated_reads} -o ~{prefix}.bam
+        longbow segment --model ~{model} -v INFO -s ~{annotated_reads} -o ~{prefix}.bam
     >>>
 
     output {
@@ -314,23 +311,14 @@ task Filter {
     String pbi_arg = if defined(bam_pbi) then " --pbi " else ""
     Int disk_size = ceil(4*ceil(size(bam, "GB")) + size(bam_pbi, "GB"))
 
-    String model_arg = if model == "mas15" then "" else "--m10"
-
     command <<<
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-#        longbow filter \
-#            -v INFO \
-#            ~{pbi_arg}~{default="" sep=" --pbi " bam_pbi} \
-#            --model ~{model} \
-#            ~{bam} \
-#            -o ~{prefix} 2> >(tee longbow_filter_log.txt >&2) # Get log data from stderr and reprint to stderr
-
         longbow filter \
             -v INFO \
             ~{pbi_arg}~{default="" sep=" --pbi " bam_pbi} \
-            ~{model_arg} \
+            --model ~{model} \
             ~{bam} \
             -o ~{prefix} 2> >(tee longbow_filter_log.txt >&2) # Get log data from stderr and reprint to stderr
     >>>
