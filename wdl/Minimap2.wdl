@@ -116,5 +116,6 @@ workflow Minimap2 {
     call FF.WriteCompletionFile as t_07_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
+            keyfile = t_05_PbIndexLongbowAnnotatedReads.pbindex
     }
 }
