@@ -83,7 +83,7 @@ workflow Minimap2 {
     #################################################
 
     call Utils.MergeBams as t_04_MergeAlignedReads { input: bams = t_03_AlignReads.aligned_bam, prefix = sample_name + "_aligned_reads" }
-    call PB.PBIndex as t_05_PbIndexLongbowAnnotatedReads {
+    call PB.PBIndex as t_05_PbIndexReads {
         input:
             bam = t_04_MergeAlignedReads.merged_bam
     }
@@ -106,7 +106,7 @@ workflow Minimap2 {
             files = [
                 t_04_MergeAlignedReads.merged_bam,
                 t_04_MergeAlignedReads.merged_bai,
-                t_05_PbIndexLongbowAnnotatedReads.pbindex,
+                t_05_PbIndexReads.pbindex,
             ],
             outdir = base_out_dir + "/",
     }
@@ -116,6 +116,6 @@ workflow Minimap2 {
     call FF.WriteCompletionFile as t_07_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
-            keyfile = t_05_PbIndexLongbowAnnotatedReads.pbindex
+            keyfile = t_05_PbIndexReads.pbindex
     }
 }
