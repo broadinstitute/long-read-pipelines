@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-quast
-VERSION = 0.1.0
+VERSION = 5.2.0
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
