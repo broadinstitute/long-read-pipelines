@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-finalize
-VERSION = 0.1.2
+VERSION = 0.1.3
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest

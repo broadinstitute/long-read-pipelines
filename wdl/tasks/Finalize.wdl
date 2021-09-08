@@ -251,3 +251,112 @@ task WriteNamedFile {
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
     }
 }
+
+task CompressAndFinalize {
+    meta {
+        description: "Gzip a file and finalize"
+    }
+    input {
+        File file
+        String outdir
+        String? name
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String base = basename(file)
+    String out = sub(select_first([name, base]), ".gz$", "") +  ".gz"
+    # THIS IS ABSOLUTELY CRITICAL: DON'T CHANGE TYPE TO FILE, AS CROMWELL WILL TRY TO LOCALIZE THIS NON-EXISTENT FILE
+    String gcs_output_file = sub(outdir, "/+$", "") + "/" + out
+
+    Int disk_size = 2 * ceil(size(file, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        gzip -vkc ~{file} > "~{base}.gz"
+        tree
+        gsutil cp "~{base}.gz" "~{gcs_output_file}"
+    >>>
+
+    output {
+        String gcs_path = gcs_output_file
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FinalizeAndCompress {
+    meta {
+        description: "Gzip a bunch of files and finalize to the same \'folder\'"
+    }
+    input {
+        Array[File] files
+        String outdir
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String gcs_output_file = sub(outdir, "/+$", "") + "/" + prefix + "/"
+
+    Int disk_size = 5 * ceil(size(files, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        for ff in ~{sep=' ' files};
+        do
+            base="$(basename -- ${ff})"
+            mv "${ff}" "${base}" && gzip -vk "${base}"
+        done
+        tree
+
+        gsutil -m cp /cromwell_root/*.gz "~{gcs_output_file}"
+    >>>
+
+    output {
+        String gcs_path = gcs_output_file
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             7,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

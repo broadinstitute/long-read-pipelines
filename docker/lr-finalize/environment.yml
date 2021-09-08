@@ -1,7 +1,0 @@
-name: lr-finalize
-channels:
-  - defaults
-  - conda-forge
-  - bioconda
-dependencies:
-  - google-cloud-storage

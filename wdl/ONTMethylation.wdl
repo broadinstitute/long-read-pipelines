@@ -40,7 +40,7 @@ workflow ONTMethylation {
     call MergeVariantDBs { input: dbs = Megalodon.per_read_variant_calls_db }
     call MergeModifiedBaseCallDBs { input: dbs = Megalodon.per_read_modified_base_calls_db }
 
-    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
+    call Utils.MergeFastqs { input: fastqs = Megalodon.basecalls_fastq, prefix = "basecalls" }
 
     call Utils.Cat as CatModifiedBases5mC {
         input:
