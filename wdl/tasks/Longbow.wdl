@@ -33,7 +33,7 @@ task Annotate
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -78,7 +78,7 @@ task Segment
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -133,7 +133,7 @@ task ScSplit
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -183,7 +183,7 @@ task Inspect
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -237,7 +237,7 @@ task Demultiplex
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -337,7 +337,7 @@ task Filter {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -399,7 +399,67 @@ task Extract {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task Stats
+{
+    input {
+        File reads
+        String model = "mas15"
+        String prefix = "longbow_stats"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(reads, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        source /longbow/venv/bin/activate
+        longbow stats -s --model ~{model} -v INFO -o ~{prefix} ~{reads}
+    >>>
+
+    output {
+        File summary_stats = "~{prefix}_summary_stats.txt"
+
+        File array_length_counts_plot_png = "~{prefix}_00_MAS-seq_Array_Length_Counts_~{model}.png"
+        File array_length_counts_plot_svg = "~{prefix}_00_MAS-seq_Array_Length_Counts_~{model}.svg"
+
+        File ligation_heatmap_nn_png = "~{prefix}_01_MAS-seq_Ligations_~{model}_no_numbers.png"
+        File ligation_heatmap_nn_svg = "~{prefix}_01_MAS-seq_Ligations_~{model}_no_numbers.svg"
+
+        File ligation_heatmap_png = "~{prefix}_02_MAS-seq_Ligations_~{model}.png"
+        File ligation_heatmap_svg = "~{prefix}_02_MAS-seq_Ligations_~{model}.svg"
+
+        File ligation_heatmap_nn_reduced_png = "~{prefix}_03_MAS-seq_Ligations_~{model}_reduced_no_numbers.png"
+        File ligation_heatmap_nn_reduced_svg = "~{prefix}_03_MAS-seq_Ligations_~{model}_reduced_no_numbers.svg"
+
+        File ligation_heatmap_reduced_png = "~{prefix}_04_MAS-seq_Ligations_~{model}_reduced.png"
+        File ligation_heatmap_reduced_svg = "~{prefix}_04_MAS-seq_Ligations_~{model}_reduced.svg"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          8,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

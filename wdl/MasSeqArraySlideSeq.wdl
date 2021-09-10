@@ -53,6 +53,8 @@ workflow MasSeqArraySlideSeq {
         Float min_read_quality = 0.0
         Int max_reclamation_length = 60000
 
+        String mas_seq_model = "slide-seq"
+
         String? sample_name
     }
 
@@ -155,7 +157,7 @@ workflow MasSeqArraySlideSeq {
         call LONGBOW.Annotate as t_09_LongbowAnnotateReads {
             input:
                 reads = t_08_FilterByMinQual.bam_out,
-                model = "slide-seq"
+                model = mas_seq_model
         }
 
         call PB.PBIndex as t_10_PbIndexLongbowAnnotatedReads {
@@ -177,7 +179,7 @@ workflow MasSeqArraySlideSeq {
             call LONGBOW.Segment as t_12_SegmentAnnotatedReads {
                 input:
                     annotated_reads = corrected_shard,
-                    model = "slide-seq"
+                    model = mas_seq_model
             }
         }
 
@@ -269,6 +271,22 @@ workflow MasSeqArraySlideSeq {
     call Utils.MergeBams as t_25_MergePrimaryTranscriptomeAlignedArrayElements { input: bams = t_18_RemoveUnmappedAndNonPrimaryTranscriptomeReads.output_bam, prefix = SM + "_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
     call Utils.MergeBams as t_26_MergePrimaryGenomeAlignedArrayElements { input: bams = t_19_RemoveUnmappedAndNonPrimaryGenomeReads.output_bam, prefix = SM + "_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
 
+    #################################################
+    #   ___      ____
+    #  / _ \    / ___|
+    # | | | |  | |
+    # | |_| |  | |___
+    #  \__\_\   \____|
+    #
+    #################################################
+
+    call LONGBOW.Stats as t_27_longbow_stats {
+        input:
+            reads = t_21_MergeAnnotatedCCSReads.merged_bam,
+            model = mas_seq_model,
+            prefix = SM
+    }
+
     ######################################################################
     #             _____ _             _ _
     #            |  ___(_)_ __   __ _| (_)_______
@@ -289,7 +307,7 @@ workflow MasSeqArraySlideSeq {
 
     ##############################################################################################################
     # Finalize the final annotated, aligned array elements:
-    call FF.FinalizeToDir as t_27_FinalizeCCSReads {
+    call FF.FinalizeToDir as t_28_FinalizeCCSReads {
         input:
             files = [
                 t_20_MergeCCSRqFilteredReads.merged_bam,
@@ -303,7 +321,7 @@ workflow MasSeqArraySlideSeq {
 
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_28_FinalizeArrayElements {
+    call FF.FinalizeToDir as t_29_FinalizeArrayElements {
         input:
             files = [
                 t_22_MergeRawArrayElements.merged_bam,
@@ -321,7 +339,7 @@ workflow MasSeqArraySlideSeq {
             keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
     }
 
-    call FF.FinalizeToDir as t_29_FinalizeCCSReport {
+    call FF.FinalizeToDir as t_30_FinalizeCCSReport {
         input:
             files = [
                 final_ccs_report
@@ -330,9 +348,28 @@ workflow MasSeqArraySlideSeq {
             keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
     }
 
+    call FF.FinalizeToDir as t_31_FinalizeLongbowStats {
+        input:
+            files = [
+                t_27_longbow_stats.summary_stats,
+                t_27_longbow_stats.array_length_counts_plot_png,
+                t_27_longbow_stats.array_length_counts_plot_svg,
+                t_27_longbow_stats.ligation_heatmap_nn_png,
+                t_27_longbow_stats.ligation_heatmap_nn_svg,
+                t_27_longbow_stats.ligation_heatmap_png,
+                t_27_longbow_stats.ligation_heatmap_svg,
+                t_27_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_27_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_27_longbow_stats.ligation_heatmap_reduced_png,
+                t_27_longbow_stats.ligation_heatmap_reduced_svg,
+            ],
+            outdir = base_out_dir + "/longbow_stats/",
+            keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
+    }
+
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_30_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_32_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile =  t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
