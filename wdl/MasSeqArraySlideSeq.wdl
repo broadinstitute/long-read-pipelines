@@ -316,7 +316,7 @@ workflow MasSeqArraySlideSeq {
                 t_21_MergeAnnotatedCCSReads.merged_bai,
             ],
             outdir = arrays_dir,
-            keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile = t_27_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
@@ -336,7 +336,7 @@ workflow MasSeqArraySlideSeq {
                 t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai,
             ],
             outdir = array_element_dir,
-            keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile = t_27_longbow_stats.summary_stats
     }
 
     call FF.FinalizeToDir as t_30_FinalizeCCSReport {
@@ -345,7 +345,7 @@ workflow MasSeqArraySlideSeq {
                 final_ccs_report
             ],
             outdir = base_out_dir + "/",
-            keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile = t_27_longbow_stats.summary_stats
     }
 
     call FF.FinalizeToDir as t_31_FinalizeLongbowStats {
@@ -364,7 +364,7 @@ workflow MasSeqArraySlideSeq {
                 t_27_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = base_out_dir + "/longbow_stats/",
-            keyfile = t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile = t_27_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
@@ -372,6 +372,6 @@ workflow MasSeqArraySlideSeq {
     call FF.WriteCompletionFile as t_32_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
-            keyfile =  t_26_MergePrimaryGenomeAlignedArrayElements.merged_bai
+            keyfile =  t_27_longbow_stats.summary_stats
     }
 }
