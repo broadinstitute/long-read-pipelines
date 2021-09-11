@@ -27,10 +27,6 @@ workflow MasSeqArraySlideSeq {
         String gcs_input_dir
         String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqArraySlideSeq"
 
-        File head_adapter_fasta = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/10x_adapter.fasta"
-        File tail_adapter_fasta = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/tso_adapter.fasta"
-        File ten_x_cell_barcode_whitelist = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/10x_Barcodes_3M-february-2018.txt"
-
         # NOTE: Reference for un-split CCS reads:
         File ref_fasta =  "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta"
         File ref_fasta_index = "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai"
@@ -40,11 +36,6 @@ workflow MasSeqArraySlideSeq {
         File transcriptome_ref_fasta =  "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.fa"
         File transcriptome_ref_fasta_index = "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.fa.fai"
         File transcriptome_ref_fasta_dict = "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.dict"
-
-        File genome_annotation_gtf = "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.primary_assembly.annotation.gtf"
-
-        File jupyter_template_static = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/MAS-seq_QC_report_template-static.ipynb"
-        File workflow_dot_file = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/PB10xMasSeqArraySingleFlowcellv2.dot"
 
         # Default here is 0 because ccs uncorrected reads all seem to have RQ = -1.
         # All pathologically long reads also have RQ = -1.
@@ -62,10 +53,6 @@ workflow MasSeqArraySlideSeq {
         gcs_input_dir : "Input folder on GCS in which to search for BAM files to process."
         gcs_out_root_dir : "Root output GCS folder in which to place results of this workflow."
 
-        head_adapter_fasta : "FASTA file containing the sequence that each transcript should start with.  Typically this will be the 10x adapter sequence from the 10x library prep."
-        tail_adapter_fasta : "FASTA file containing the sequence that each transcript should end with.  Typically this will be the Template Switch Oligo (TSO) sequence from the 10x library prep."
-        ten_x_cell_barcode_whitelist : "Text file containing a whitelist of cell barcodes for the 10x library prep."
-
         ref_fasta : "FASTA file containing the reference sequence to which the input data should be aligned before splitting into array elements."
         ref_fasta_index : "FASTA index file for the given ref_fasta file."
         ref_fasta_dict : "Sequence dictionary file for the given ref_fasta file."
@@ -73,11 +60,6 @@ workflow MasSeqArraySlideSeq {
         transcriptome_ref_fasta : "FASTA file containing the reference sequence to which the array elements should be aligned."
         transcriptome_ref_fasta_index : "FASTA index file for the given transcriptome_ref_fasta file."
         transcriptome_ref_fasta_dict : "Sequence dictionary file for the given transcriptome_ref_fasta file."
-
-        genome_annotation_gtf : "Gencode GTF file containing genome annotations for the organism under study (usually humans).  This must match the given reference version (usually hg38)."
-
-        jupyter_template_static : "Jupyter notebook / ipynb file containing a template for the QC report which will contain static plots.  This should contain the same information as the jupyter_template_interactive file, but with static images."
-        workflow_dot_file : "DOT file containing the representation of this WDL to be included in the QC reports.  This can be generated with womtool."
 
         min_read_quality : "[optional] Minimum read quality for reads to have to be included in our data (Default: 0.0)."
         max_reclamation_length : "[optional] Maximum length (in bases) that a read can be to attempt to reclaim from CCS rejection (Default: 60000)."
