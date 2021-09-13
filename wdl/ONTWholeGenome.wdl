@@ -69,7 +69,7 @@ workflow ONTWholeGenome {
         String smalldir = outdir + "/variants/small"
 
         call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
-       call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
+        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
 
 #        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
 #        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = CallVariants.dvp_phased_tbi }
@@ -80,9 +80,14 @@ workflow ONTWholeGenome {
 
         call FF.FinalizeToFile as FinalizeLongshotVcf { input: outdir = smalldir, file = CallVariants.longshot_vcf }
         call FF.FinalizeToFile as FinalizeLongshotTbi { input: outdir = smalldir, file = CallVariants.longshot_tbi }
+
+        call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = CallVariants.clair_g_vcf }
+        call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = CallVariants.clair_g_tbi }
+        call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = CallVariants.clair_vcf }
+        call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = CallVariants.clair_tbi }
     }
 
-    # Finalize data
+    # Finalize
     String dir = outdir + "/alignments"
 
     call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = bam, name = "~{participant_name}.bam" }
@@ -93,12 +98,17 @@ workflow ONTWholeGenome {
         File merged_bai = FinalizeBai.gcs_path
 
         File? pbsv_vcf = FinalizePBSV.gcs_path
-       File? sniffles_vcf = FinalizeSniffles.gcs_path
+        File? sniffles_vcf = FinalizeSniffles.gcs_path
 
 #        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
 #        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
 
         File? longshot_vcf = FinalizeLongshotVcf.gcs_path
         File? longshot_tbi = FinalizeLongshotTbi.gcs_path
+
+        File? clair_g_vcf = FinalizeClairGVcf.gcs_path
+        File? clair_g_tbi = FinalizeClairGTbi.gcs_path
+        File? clair_vcf = FinalizeClairVcf.gcs_path
+        File? clair_tbi = FinalizeClairTbi.gcs_path
     }
 }

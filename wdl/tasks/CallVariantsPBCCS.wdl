@@ -89,16 +89,6 @@ workflow CallVariants {
                 prefix = prefix
         }
 
-        call DV.PEPPER {
-            input:
-                bam           = SubsetBam.subset_bam,
-                bai           = SubsetBam.subset_bai,
-                ref_fasta     = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                chr           = contig,
-                preset        = "CCS"
-        }
-
         call Clair.Clair {
             input:
                 bam           = SubsetBam.subset_bam,
@@ -126,27 +116,6 @@ workflow CallVariants {
             prefix   = prefix + ".sniffles"
     }
 
-    call VariantUtils.MergePerChrCalls as MergeDeepVariantPhasedVCFs {
-        input:
-            vcfs     = PEPPER.phased_vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper.phased"
-    }
-
-    call VariantUtils.MergePerChrCalls as MergeDeepVariantGVCFs {
-        input:
-            vcfs     = PEPPER.gvcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper.g"
-    }
-
-    call VariantUtils.MergePerChrCalls as MergeDeepVariantVCFs {
-        input:
-            vcfs     = PEPPER.vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper"
-    }
-
     call VariantUtils.MergePerChrCalls as MergeClairGVCFs {
         input:
             vcfs     = Clair.gvcf,
@@ -162,13 +131,6 @@ workflow CallVariants {
     }
 
     output {
-        File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
-        File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
-        File dvp_g_vcf = MergeDeepVariantGVCFs.vcf
-        File dvp_g_tbi = MergeDeepVariantGVCFs.tbi
-        File dvp_vcf = MergeDeepVariantVCFs.vcf
-        File dvp_tbi = MergeDeepVariantVCFs.tbi
-
         File clair_g_vcf = MergeClairGVCFs.vcf
         File clair_g_tbi = MergeClairGVCFs.tbi
         File clair_vcf = MergeClairVCFs.vcf
