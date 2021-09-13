@@ -11,6 +11,7 @@ import "Utils.wdl"
 import "VariantUtils.wdl"
 
 import "DeepVariant.wdl" as DV
+import "Clair.wdl"
 
 import "PBSV.wdl"
 import "Sniffles.wdl"
@@ -97,6 +98,18 @@ workflow CallVariants {
                 chr           = contig,
                 preset        = "CCS"
         }
+
+        call Clair.Clair {
+            input:
+                bam           = SubsetBam.subset_bam,
+                bai           = SubsetBam.subset_bai,
+
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+
+                chr           = contig,
+                preset        = "CCS"
+        }
     }
 
     call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
@@ -134,6 +147,20 @@ workflow CallVariants {
             prefix   = prefix + ".deepvariant_pepper"
     }
 
+    call VariantUtils.MergePerChrCalls as MergeClairGVCFs {
+        input:
+            vcfs     = Clair.gvcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".clair.g"
+    }
+
+    call VariantUtils.MergePerChrCalls as MergeClairVCFs {
+        input:
+            vcfs     = Clair.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".clair"
+    }
+
     output {
         File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
         File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
@@ -141,6 +168,11 @@ workflow CallVariants {
         File dvp_g_tbi = MergeDeepVariantGVCFs.tbi
         File dvp_vcf = MergeDeepVariantVCFs.vcf
         File dvp_tbi = MergeDeepVariantVCFs.tbi
+
+        File clair_g_vcf = MergeClairGVCFs.vcf
+        File clair_g_tbi = MergeClairGVCFs.tbi
+        File clair_vcf = MergeClairVCFs.vcf
+        File clair_tbi = MergeClairVCFs.tbi
 
         File pbsv_vcf = MergePBSVVCFs.vcf
         File sniffles_vcf = MergeSnifflesVCFs.vcf
