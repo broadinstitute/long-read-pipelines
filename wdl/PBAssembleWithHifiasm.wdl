@@ -16,6 +16,9 @@ workflow PBAssembleWithHifiasm {
     input {
         Array[File] ccs_fqs
 
+        Array[File]? mother_fqs
+        Array[File]? father_fqs
+
         File ref_map_file
         String participant_name
         String prefix
@@ -25,6 +28,8 @@ workflow PBAssembleWithHifiasm {
 
     parameter_meta {
         ccs_fqs:            "GCS path to CCS fastq files"
+        mother_fqs:         "GCS path to fastq files for mother (Illumina/CCS)"
+        father_fqs:         "GCS path to fastq files for father (Illumina/CCS)"
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         participant_name:   "name of the participant from whom these samples were obtained"
@@ -49,6 +54,8 @@ workflow PBAssembleWithHifiasm {
     call HA.Hifiasm {
         input:
             reads = ccs_fq,
+            mother_fqs = mother_fqs,
+            father_fqs = father_fqs,
             prefix = prefix
     }
 
