@@ -1,4 +1,4 @@
-VERSION = 4.5.2 # This version number should follow the Guppy version number
+VERSION = 5.0.14 # This version number should follow the Guppy version number
 TAG1 = quay.io/broad-long-read-pipelines/lr-guppy:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-guppy:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-guppy:$(VERSION)
