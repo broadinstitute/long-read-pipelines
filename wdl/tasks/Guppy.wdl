@@ -189,7 +189,7 @@ task Basecall {
         boot_disk_gb:       30,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:4.5.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:5.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
