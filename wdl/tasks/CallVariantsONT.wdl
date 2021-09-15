@@ -51,7 +51,7 @@ workflow CallVariants {
     call Utils.MakeChrIntervalList {
         input:
             ref_dict = ref_dict,
-            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV', '\\\.1']
+            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
     }
 
     scatter (c in MakeChrIntervalList.chrs) {
