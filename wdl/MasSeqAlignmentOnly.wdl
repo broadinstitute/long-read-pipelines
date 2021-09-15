@@ -15,17 +15,17 @@ import "tasks/Longbow.wdl" as LONGBOW
 import "tasks/TranscriptAnalysis/UMI_Tools.wdl" as UMI_TOOLS
 import "tasks/TranscriptAnalysis/Postprocessing_Tasks.wdl" as TX_POST
 
-workflow MasSeqArraySlideSeq {
+workflow MasSeqAlignmentOnly {
 
     meta {
-        description : "This workflow will process and demultiplex data from the MAS-seq Slide Seq array."
+        description : "This workflow will process and align MAS-seq data.  No UMI / CBC calculations are performed."
         author : "Jonn Smith"
         email : "jonn@broadinstitute.org"
     }
 
     input {
         String gcs_input_dir
-        String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqArraySlideSeq"
+        String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqAlignmentOnly"
 
         # NOTE: Reference for un-split CCS reads:
         File ref_fasta =  "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta"
@@ -44,7 +44,7 @@ workflow MasSeqArraySlideSeq {
         Float min_read_quality = 0.0
         Int max_reclamation_length = 60000
 
-        String mas_seq_model = "slide-seq"
+        String mas_seq_model = "mas15"
 
         String? sample_name
     }
