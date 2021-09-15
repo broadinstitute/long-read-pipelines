@@ -267,7 +267,7 @@ task SortSam {
 task MakeChrIntervalList {
     input {
         File ref_dict
-        Array[String] filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV', '\\.1']
+        Array[String] filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV', '\\\.1']
 
         RuntimeAttr? runtime_attr_override
     }
