@@ -47,6 +47,10 @@ workflow MasSeqAlignmentOnly {
         String mas_seq_model = "mas15"
 
         String? sample_name
+
+        # Set up some meta parameters here so we can adjust for when we want things to go VERY fast:
+        Int primary_scatter_width = 50
+        Int secondary_scatter_width = 10
     }
 
     parameter_meta {
@@ -65,6 +69,9 @@ workflow MasSeqAlignmentOnly {
         max_reclamation_length : "[optional] Maximum length (in bases) that a read can be to attempt to reclaim from CCS rejection (Default: 60000)."
 
         sample_name : "[optional] The name of the sample to associate with the data in this workflow."
+
+        primary_scatter_width : "[optional] Width to use for the primary scatter operation on this dataset (default: 50)."
+        secondary_scatter_width : "[optional] Width to use for the secondary (nested) scatter operation on this dataset (default: 10)."
     }
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
@@ -110,7 +117,7 @@ workflow MasSeqAlignmentOnly {
             unaligned_bam = reads_bam,
             unaligned_pbi = read_pbi,
             prefix = SM + "_shard",
-            num_shards = 50,
+            num_shards = primary_scatter_width,
     }
 
     call PB.FindCCSReport as t_06_FindCCSReport {
@@ -173,7 +180,7 @@ workflow MasSeqAlignmentOnly {
                 unaligned_bam = t_10_FilterCCSReads.passed_reads,
                 unaligned_pbi = t_11_PbIndexLongbowAnnotatedCCSPassedReads.pbindex,
                 prefix = SM + "_ccs_corrected_longbow_annotated_subshard",
-                num_shards = 10,
+                num_shards = secondary_scatter_width,
         }
 
         # Segment our arrays into individual array elements:
@@ -300,7 +307,7 @@ workflow MasSeqAlignmentOnly {
                 unaligned_bam = t_25_FilterReclaimableReads.passed_reads,
                 unaligned_pbi = t_26_PbIndexLongbowAnnotatedReclaimedPassedReads.pbindex,
                 prefix = SM + "_ccs_reclaimed_longbow_annotated_subshard",
-                num_shards = 10,
+                num_shards = secondary_scatter_width,
         }
 
         # Segment our arrays into individual array elements:
