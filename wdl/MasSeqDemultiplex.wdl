@@ -5,7 +5,7 @@ import "tasks/Utils.wdl" as Utils
 import "tasks/Finalize.wdl" as FF
 import "tasks/Longbow.wdl" as LONGBOW
 
-workflow MasSeqArrayPreProcessing {
+workflow MasSeqDemultiplex {
 
     meta {
         description : "This workflow is designed to pre-process data from the MASSeq v2 protocol.  It will first filter PacBio Sequel IIe reads to keep only the high quality reads.  Then it will create several bam files - one for each model - and populate those files with the reads that best fit those models."
@@ -15,7 +15,7 @@ workflow MasSeqArrayPreProcessing {
 
     input {
         String gcs_input_dir
-        String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqArrayPreProcessing"
+        String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqDemultiplex"
 
         # Maximum polymerase read length for reads to be included in the output files from the data being processed.
         # Used here so that the CCS reclamation process can still run in the following workflows, but so the data will
