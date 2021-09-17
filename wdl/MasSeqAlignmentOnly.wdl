@@ -429,12 +429,11 @@ workflow MasSeqAlignmentOnly {
     call Utils.MergeBams as t_55_MergeAllLongbowPassedReads { input: bams = flatten([t_10_FilterCCSReads.passed_reads, t_25_FilterReclaimableReads.passed_reads]), prefix = SM + "_all_longbow_passed_reads" }
     call Utils.MergeBams as t_56_MergeAllLongbowFailedReads { input: bams = flatten([t_10_FilterCCSReads.failed_reads, t_25_FilterReclaimableReads.failed_reads]), prefix = SM + "_all_longbow_failed_reads" }
 
-    call Utils.MergeBams as t_57_MergeAllArrayElements { input: bams = flatten([t_14_MergeCCSArrayElements_1.merged_bam, t_29_MergeReclaimedArrayElements_1.merged_bam]), prefix = SM + "_reclaimed_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_58_MergeAllTranscriptomeAlignedArrayElements { input: bams = t_32_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam.output_bam, prefix = SM + "_reclaimed_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_59_MergeAllGenomeAlignedArrayElements { input: bams = t_33_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam, prefix = SM + "_reclaimed_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_60_MergeAllPrimaryTranscriptomeAlignedArrayElements { input: bams = t_34_RemoveUnmappedAndNonPrimaryTranscriptomeReclaimedReads.output_bam, prefix = SM + "_reclaimed_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_61_MergeAllPrimaryGenomeAlignedArrayElements { input: bams = t_35_RemoveUnmappedAndNonPrimaryGenomeReclaimedReads.output_bam, prefix = SM + "_reclaimed_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
-
+    call Utils.MergeBams as t_57_MergeAllArrayElements { input: bams = flatten([t_14_MergeCCSArrayElements_1.merged_bam, t_29_MergeReclaimedArrayElements_1.merged_bam]), prefix = SM + "_all_array_elements", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_58_MergeAllTranscriptomeAlignedArrayElements { input: bams = flatten([t_17_RestoreAnnotationsToTranscriptomeAlignedCCSBam.output_bam, t_32_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam.output_bam]), prefix = SM + "_all_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_59_MergeAllGenomeAlignedArrayElements { input: bams = flatten([t_18_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam, t_33_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam]), prefix = SM + "_all_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_60_MergeAllPrimaryTranscriptomeAlignedArrayElements { input: bams = flatten([t_19_RemoveUnmappedAndNonPrimaryCCSTranscriptomeReads.output_bam, t_34_RemoveUnmappedAndNonPrimaryTranscriptomeReclaimedReads.output_bam]), prefix = SM + "_all_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_61_MergeAllPrimaryGenomeAlignedArrayElements { input: bams = flatten([t_20_RemoveUnmappedAndNonPrimaryCCSGenomeReads.output_bam, t_35_RemoveUnmappedAndNonPrimaryGenomeReclaimedReads.output_bam]), prefix = SM + "_all_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
 
     #################################################
     #   ___      ____
