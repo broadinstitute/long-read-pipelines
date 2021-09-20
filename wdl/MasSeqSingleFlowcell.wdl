@@ -34,16 +34,16 @@ workflow MasSeqSingleFlowcell {
         File ten_x_cell_barcode_whitelist = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/737K-august-2016.txt"
 
         # NOTE: Reference for un-split CCS reads:
-        File ref_fasta =  "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa"
-        File ref_fasta_index = "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa.fai"
-        File ref_fasta_dict = "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.dict"
+        File ref_fasta =  "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
+        File ref_fasta_index = "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai"
+        File ref_fasta_dict = "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict"
 
         # NOTE: Reference for array elements:
-        File transcriptome_ref_fasta =  "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.fa"
-        File transcriptome_ref_fasta_index = "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.fa.fai"
-        File transcriptome_ref_fasta_dict = "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.dict"
+        File transcriptome_ref_fasta =  "gs://broad-dsde-methods-long-reads-public/resources/gencode_v37/gencode.v37.pc_transcripts.fa"
+        File transcriptome_ref_fasta_index = "gs://broad-dsde-methods-long-reads-public/resources/gencode_v37/gencode.v37.pc_transcripts.fa.fai"
+        File transcriptome_ref_fasta_dict = "gs://broad-dsde-methods-long-reads-public/resources/gencode_v37/gencode.v37.pc_transcripts.dict"
 
-        File genome_annotation_gtf = "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.primary_assembly.annotation.gtf"
+        File genome_annotation_gtf = "gs://broad-dsde-methods-long-reads-public/resources/gencode_v37/gencode.v37.primary_assembly.annotation.gtf"
 
         File jupyter_template_static = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/MAS-seq_QC_report_template-static.ipynb"
         File workflow_dot_file = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/MasSeqSingleFlowcell.dot"

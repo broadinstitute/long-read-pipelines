@@ -4,16 +4,8 @@ import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/Finalize.wdl" as FF
 import "tasks/AlignReads.wdl" as AR
-import "tasks/Cartographer.wdl" as CART
-import "tasks/TranscriptAnalysis/Flair_Tasks.wdl" as ISO
-import "tasks/ReadsMetrics.wdl" as RM
-import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/Ten_X_Tool.wdl" as TENX
-import "tasks/JupyterNotebooks.wdl" as JUPYTER
 import "tasks/Longbow.wdl" as LONGBOW
-
-import "tasks/TranscriptAnalysis/UMI_Tools.wdl" as UMI_TOOLS
-import "tasks/TranscriptAnalysis/Postprocessing_Tasks.wdl" as TX_POST
 
 workflow MasSeqAlignmentOnly {
 
@@ -28,14 +20,14 @@ workflow MasSeqAlignmentOnly {
         String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqAlignmentOnly"
 
         # NOTE: Reference for un-split CCS reads:
-        File ref_fasta =  "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta"
-        File ref_fasta_index = "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.fasta.fai"
-        File ref_fasta_dict = "gs://broad-dsde-methods-long-reads/resources/references/grch38/Homo_sapiens_assembly38.dict"
+        File ref_fasta =  "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
+        File ref_fasta_index = "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai"
+        File ref_fasta_dict = "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict"
 
         # NOTE: Reference for array elements:
-        File transcriptome_ref_fasta =  "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.fa"
-        File transcriptome_ref_fasta_index = "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.fa.fai"
-        File transcriptome_ref_fasta_dict = "gs://broad-dsde-methods-long-reads/resources/gencode_v37/gencode.v37.pc_transcripts.dict"
+        File transcriptome_ref_fasta =  "gs://broad-dsde-methods-long-reads-public/resources/gencode_v37/gencode.v37.pc_transcripts.fa"
+        File transcriptome_ref_fasta_index = "gs://broad-dsde-methods-long-reads-public/resources/gencode_v37/gencode.v37.pc_transcripts.fa.fai"
+        File transcriptome_ref_fasta_dict = "gs://broad-dsde-methods-long-reads-public/resources/gencode_v37/gencode.v37.pc_transcripts.dict"
 
         # Default here is 0 because ccs uncorrected reads all seem to have RQ = -1.
         # All pathologically long reads also have RQ = -1.
