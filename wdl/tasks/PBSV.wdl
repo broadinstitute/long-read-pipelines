@@ -12,30 +12,26 @@ task Discover {
     input {
         File bam
         File bai
-
         File ref_fasta
         File ref_fasta_fai
         File? tandem_repeat_bed
-
-        String chr
+        String? chr
         String prefix
-
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         bam:               "input BAM from which to call SVs"
         bai:               "index accompanying the BAM"
-
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
-
         chr:               "chr on which to call variants"
         prefix:            "prefix for output"
     }
 
     Int disk_size = 2*(ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
+    String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
 
     command <<<
         set -euxo pipefail
@@ -43,7 +39,7 @@ task Discover {
         pbsv discover \
             ~{if defined(tandem_repeat_bed) && tandem_repeat_bed != "NA" then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
             ~{bam} \
-            ~{prefix}.~{chr}.svsig.gz
+            ~{fileoutput}
     >>>
 
     output {
@@ -75,14 +71,10 @@ task Discover {
 task Call {
     input {
         Array[File] svsigs
-
         File ref_fasta
         File ref_fasta_fai
-
         Boolean ccs = false
-
         String prefix
-
         RuntimeAttr? runtime_attr_override
     }
 
