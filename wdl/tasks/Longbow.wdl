@@ -203,6 +203,8 @@ task Demultiplex
         File bam
         String prefix = "longbow_demultiplex"
 
+        Array[String] models = ["mas10", "mas15"]
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -212,7 +214,7 @@ task Demultiplex
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow demultiplex -v INFO ~{bam} -o ~{prefix}
+        longbow demultiplex -v INFO --model ${sep=' --model ' models} ~{bam} -o ~{prefix}
 
         # Create a list of models - one for each bam file created:
         # Do this safely (assume there can be spaces in the names even though this is generally bad form).
@@ -224,9 +226,7 @@ task Demultiplex
     >>>
 
     output {
-        # TODO: Fix this to allow for an arbitrary number of models easily:
-        File mas10_bam = "~{prefix}_mas10.bam"
-        File mas15_bam = "~{prefix}_mas15.bam"
+        Array[File] demultiplexed_bams = glob("~{prefix}_*.bam")
     }
 
     #########################
