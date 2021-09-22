@@ -214,7 +214,7 @@ task Demultiplex
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow demultiplex -v INFO --model ${sep=' --model ' models} ~{bam} -o ~{prefix}
+        longbow demultiplex -v INFO --model ~{sep=' --model ' models} ~{bam} -o ~{prefix}
 
         # Create a list of models - one for each bam file created:
         # Do this safely (assume there can be spaces in the names even though this is generally bad form).
