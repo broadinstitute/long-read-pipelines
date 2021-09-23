@@ -39,7 +39,7 @@ workflow MasSeqDemultiplex {
     }
 
     # Version of this workflow.
-    String VERSION = "0.2"
+    String VERSION = "0.3"
 
     # Create an object to disable preemption.  This should only be used for testing.
     RuntimeAttr disable_preemption = object {
@@ -47,22 +47,22 @@ workflow MasSeqDemultiplex {
     }
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
-    call Utils.GetCurrentTimestampString as WdlExecutionStartTimestamp { input: }
+    call Utils.GetCurrentTimestampString as t_01_WdlExecutionStartTimestamp { input: }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
 
-    call PB.FindBams { input: gcs_input_dir = gcs_input_dir }
+    call PB.FindBams as t_02_FindBams { input: gcs_input_dir = gcs_input_dir }
 
-    scatter (reads_bam in FindBams.ccs_bams) {
+    scatter (reads_bam in t_02_FindBams.ccs_bams) {
 
-        call PB.GetRunInfo { input: subread_bam = reads_bam }
+        call PB.GetRunInfo as t_03_GetRunInfo { input: subread_bam = reads_bam }
 
-        String SM  = select_first([sample_name, GetRunInfo.run_info["SM"]])
+        String SM  = select_first([sample_name, t_03_GetRunInfo.run_info["SM"]])
         String PL  = "PACBIO"
-        String PU  = GetRunInfo.run_info["PU"]
-        String DT  = GetRunInfo.run_info["DT"]
+        String PU  = t_03_GetRunInfo.run_info["PU"]
+        String DT  = t_03_GetRunInfo.run_info["DT"]
         String ID  = PU
-        String DS  = GetRunInfo.run_info["DS"]
+        String DS  = t_03_GetRunInfo.run_info["DS"]
         String DIR = SM + "." + ID
 
         String RG_subreads  = "@RG\\tID:~{ID}.subreads\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
@@ -71,7 +71,7 @@ workflow MasSeqDemultiplex {
 
         # Shard widely so we can go faster:
         File read_pbi = sub(reads_bam, ".bam$", ".bam.pbi")
-        call PB.ShardLongReads {
+        call PB.ShardLongReads as t_04_ShardLongReads {
             input:
                 unaligned_bam = reads_bam,
                 unaligned_pbi = read_pbi,
@@ -80,10 +80,10 @@ workflow MasSeqDemultiplex {
                 runtime_attr_override = disable_preemption
         }
 
-        scatter (sharded_reads in ShardLongReads.unmapped_shards) {
+        scatter (sharded_reads in t_04_ShardLongReads.unmapped_shards) {
 
             # 0 - Filter out the kinetics tags from PB files:
-            call PB.RemoveKineticsTags {
+            call PB.RemoveKineticsTags as t_05_RemoveKineticsTags {
                 input:
                     bam = sharded_reads,
                     prefix = SM + "_kinetics_removed"
@@ -92,8 +92,8 @@ workflow MasSeqDemultiplex {
             # 1 - filter the reads by the maximum length.
             # NOTE: Because of the reclamation process we only limit length here and allow the following workflows to
             #       perform the actual read quality filtering.
-            String fbmrq_prefix = basename(RemoveKineticsTags.bam_file, ".bam")
-            call Utils.Bamtools as FilterByMaxReadLength {
+            String fbmrq_prefix = basename(t_05_RemoveKineticsTags.bam_file, ".bam")
+            call Utils.Bamtools as t_06_FilterByMaxReadLength {
                 input:
                     bamfile = sharded_reads,
                     prefix = fbmrq_prefix + "_good_reads",
@@ -103,10 +103,10 @@ workflow MasSeqDemultiplex {
             }
 
             # 2 - split the reads by the model:
-            String adis_prefix = basename(FilterByMaxReadLength.bam_out, ".bam")
-            call LONGBOW.Demultiplex as AssignReadsToModels {
+            String adis_prefix = basename(t_06_FilterByMaxReadLength.bam_out, ".bam")
+            call LONGBOW.Demultiplex as t_07_AssignReadsToModels {
                 input:
-                    bam = FilterByMaxReadLength.bam_out,
+                    bam = t_06_FilterByMaxReadLength.bam_out,
                     prefix = adis_prefix,
                     models = models,
                     runtime_attr_override = disable_preemption
@@ -120,46 +120,46 @@ workflow MasSeqDemultiplex {
             preemptible_tries:  0
         }
 
-        String base_out_dir = outdir + "/" + DIR + "/" + WdlExecutionStartTimestamp.timestamp_string
+        String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
 
         # NOTE: We have to do something stupid here because WDL can't seem to iterate through the nested array
         #       the way that I need it to
-        Array[File] all_demuxed_bams = flatten(AssignReadsToModels.demultiplexed_bams)
+        Array[File] all_demuxed_bams = flatten(t_07_AssignReadsToModels.demultiplexed_bams)
 
         # Scatter by each model so we can consolidate files from each one:
         scatter ( model in models ) {
 
-            call Utils.FilterListOfStrings as FilterDemuxedBamsByModel {
+            call Utils.FilterListOfStrings as t_08_FilterDemuxedBamsByModel {
                 input :
                     list_to_filter = all_demuxed_bams,
                     query = "_" + model + ".bam$"
                 }
 
-            call Utils.MergeBams as MergeModelBams {
+            call Utils.MergeBams as t_09_MergeModelBams {
                 input:
-                    bams = FilterDemuxedBamsByModel.filtered_list,
+                    bams = t_08_FilterDemuxedBamsByModel.filtered_list,
                     prefix = SM + "_" + model + ".reads",
                     runtime_attr_override = bigger_resources_for_network
             }
-            call PB.PBIndex as PbIndexModelBam {
+            call PB.PBIndex as t_10_PbIndexModelBam {
                 input:
-                    bam = MergeModelBams.merged_bam,
+                    bam = t_09_MergeModelBams.merged_bam,
                     runtime_attr_override = bigger_resources_for_network
             }
 
-            call FF.FinalizeToDir as FinalizeMergedModelBam {
+            call FF.FinalizeToDir as t_11_FinalizeMergedModelBam {
                 input:
                     files = [
-                        MergeModelBams.merged_bam,
-                        MergeModelBams.merged_bai,
-                        PbIndexModelBam.pbindex,
+                        t_09_MergeModelBams.merged_bam,
+                        t_09_MergeModelBams.merged_bai,
+                        t_10_PbIndexModelBam.pbindex,
                     ],
                     outdir = base_out_dir + "/" + SM + "_" + model,
                     runtime_attr_override = disable_preemption
             }
 
             # Copy over the metadata to our finalized folders so we can just run our workflow on it:
-            call PB.CopyMetadataFilesToNewDir as CopyMetadataForMas10Reads {
+            call PB.CopyMetadataFilesToNewDir as t_12_CopyMetadataForMas10Reads {
                 input:
                     input_gs_path = gcs_input_dir,
                     dest_gs_path = base_out_dir + "/" + SM + "_" + model

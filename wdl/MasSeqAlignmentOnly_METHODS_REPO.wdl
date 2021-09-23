@@ -68,6 +68,9 @@ workflow MasSeqAlignmentOnly {
         secondary_scatter_width : "[optional] Width to use for the secondary (nested) scatter operation on this dataset (default: 10)."
     }
 
+    # Version of this workflow.
+    String VERSION = "0.2"
+
     call FindBams as t_01_FindBams { input: gcs_input_dir = gcs_input_dir }
 
     # Check here if we found ccs bams or subread bams:

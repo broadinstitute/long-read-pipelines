@@ -66,6 +66,9 @@ workflow MasSeqAlignmentOnly {
         secondary_scatter_width : "[optional] Width to use for the secondary (nested) scatter operation on this dataset (default: 10)."
     }
 
+    # Version of this workflow.
+    String VERSION = "0.2"
+
     # Call our timestamp so we can store outputs without clobbering previous runs:
     call Utils.GetCurrentTimestampString as t_01_WdlExecutionStartTimestamp { input: }
 
