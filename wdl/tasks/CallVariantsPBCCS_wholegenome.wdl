@@ -104,7 +104,6 @@ workflow CallVariants {
             prefix   = prefix + ".sniffles"
     }
 
-
     output {
         File pbsv_vcf = MergePBSVVCFs.vcf
         File sniffles_vcf = MergeSnifflesVCFs.vcf
