@@ -64,10 +64,17 @@ workflow chromosome_condition {
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             tandem_repeat_bed = tandem_repeat_bed,
-
-            prefix = prefix,
+            ref_dict = ref_dict,
+            prefix = prefix
         }
 
+
+    }
+
+        output {
+
+        File? vcf = if (fast_less_sensitive) then run_pbsv2.pbsv_vcf else run_pbsv.Call_out
+        #File svsig = if (fast_less_sensitive) then run_pbsv2.Discover.svsig else run_pbsv.Discover_out
 
     }
 
