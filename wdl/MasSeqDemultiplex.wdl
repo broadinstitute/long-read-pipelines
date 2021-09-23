@@ -147,7 +147,7 @@ workflow MasSeqDemultiplex {
                     runtime_attr_override = bigger_resources_for_network
             }
 
-            call FF.FinalizeToDir as FinalizeMas10SplitBam {
+            call FF.FinalizeToDir as FinalizeMergedModelBam {
                 input:
                     files = [
                         MergeModelBams.merged_bam,
