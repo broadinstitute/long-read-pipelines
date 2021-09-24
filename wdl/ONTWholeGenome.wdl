@@ -20,8 +20,6 @@ workflow ONTWholeGenome {
         String participant_name
 
         Boolean call_variants = true
-        File? sites_vcf
-        File? sites_vcf_tbi
         Boolean fast_suboptimal
         String gcs_out_root_dir
     }
@@ -58,9 +56,6 @@ workflow ONTWholeGenome {
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-                sites_vcf         = sites_vcf,
-                sites_vcf_tbi     = sites_vcf_tbi,
                 fast_less_sensitive = fast_suboptimal,
                 prefix = participant_name
         }
@@ -68,7 +63,7 @@ workflow ONTWholeGenome {
         String svdir = outdir + "/variants/sv"
         String smalldir = outdir + "/variants/small"
 
-        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
+        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = select_first([CallVariants.pbsv_vcf])}
         call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
 
 #        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
