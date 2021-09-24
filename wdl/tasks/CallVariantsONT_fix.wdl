@@ -4,6 +4,8 @@ version 1.0
 # This pipeline calls SVs on an input LR BAM using various known SV algorithms
 # that are specifically designed to work with long read data.
 # Each individual task/algo. is directly callable, if so desired.
+
+## difference from CallVariantsGenome: added an optional chr var
 ##########################################################################################
 
 import "Structs.wdl"
@@ -22,17 +24,13 @@ workflow CallVariants {
     input {
         File bam
         File bai
-
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
-
         File? sites_vcf
         File? sites_vcf_tbi
         String? chr
-
         String prefix
-
         File? tandem_repeat_bed
     }
 
