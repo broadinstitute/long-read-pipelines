@@ -94,18 +94,18 @@ workflow CallVariants {
 #                chr           = contig,
 #                preset        = "ONT"
 #        }
-
-        call Longshot.Longshot {
-            input:
-                bam           = SubsetBam.subset_bam,
-                bai           = SubsetBam.subset_bai,
-                ref_fasta     = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                sites_vcf     = sites_vcf,
-                sites_vcf_tbi = sites_vcf_tbi,
-                phase         = false,
-                chr           = contig
-        }
+#
+#        call Longshot.Longshot {
+#            input:
+#                bam           = SubsetBam.subset_bam,
+#                bai           = SubsetBam.subset_bai,
+#                ref_fasta     = ref_fasta,
+#                ref_fasta_fai = ref_fasta_fai,
+#                sites_vcf     = sites_vcf,
+#                sites_vcf_tbi = sites_vcf_tbi,
+#                phase         = false,
+#                chr           = contig
+#        }
     }
 # gather step
     call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
@@ -116,19 +116,19 @@ workflow CallVariants {
     }
 
 
-    call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
-        input:
-            vcfs     = Longshot.vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".longshot"
-    }
+#    call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
+#        input:
+#            vcfs     = Longshot.vcf,
+#            ref_dict = ref_dict,
+#            prefix   = prefix + ".longshot"
+#    }
 
 
 
     output {
 
-        File longshot_vcf = MergeLongshotVCFs.vcf
-        File longshot_tbi = MergeLongshotVCFs.tbi
+#        File longshot_vcf = MergeLongshotVCFs.vcf
+#        File longshot_tbi = MergeLongshotVCFs.tbi
         File pbsv_vcf = MergePBSVVCFs.vcf
     }
 }
