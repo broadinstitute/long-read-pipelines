@@ -43,7 +43,7 @@ workflow chromosome_condition {
 
         input:
 
-            bam = bam, #assgin input to workflow
+            bam = bam, #assign input to workflow
             bai = bai,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
