@@ -8,7 +8,7 @@ version 1.0
 
 import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
-import "tasks/CallVariantsONT.wdl" as VAR
+import "tasks/tasks/meta_ONT.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTWholeGenome {
@@ -22,7 +22,7 @@ workflow ONTWholeGenome {
         Boolean call_variants = true
         File? sites_vcf
         File? sites_vcf_tbi
-
+        Boolean fast_suboptimal
         String gcs_out_root_dir
     }
 
@@ -32,7 +32,7 @@ workflow ONTWholeGenome {
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         participant_name:   "name of the participant from whom these samples were obtained"
-
+        fast_suboptimal: "true indicates fast/suboptimal processing, false indicates slower but more sensitive processing"
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
@@ -49,7 +49,7 @@ workflow ONTWholeGenome {
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
     if (call_variants) {
-        call VAR.CallVariants {
+        call VAR.chromosome_condition as CallVariants {
             input:
                 bam               = bam,
                 bai               = bai,
@@ -61,7 +61,7 @@ workflow ONTWholeGenome {
 
                 sites_vcf         = sites_vcf,
                 sites_vcf_tbi     = sites_vcf_tbi,
-
+                fast_less_sensitive = fast_suboptimal,
                 prefix = participant_name
         }
 
@@ -69,7 +69,7 @@ workflow ONTWholeGenome {
         String smalldir = outdir + "/variants/small"
 
         call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
-       call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
+        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
 
 #        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
 #        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = CallVariants.dvp_phased_tbi }
@@ -78,8 +78,8 @@ workflow ONTWholeGenome {
 #        call FF.FinalizeToFile as FinalizeDVPEPPERVcf { input: outdir = smalldir, file = CallVariants.dvp_vcf }
 #        call FF.FinalizeToFile as FinalizeDVPEPPERTbi { input: outdir = smalldir, file = CallVariants.dvp_tbi }
 
-        call FF.FinalizeToFile as FinalizeLongshotVcf { input: outdir = smalldir, file = CallVariants.longshot_vcf }
-        call FF.FinalizeToFile as FinalizeLongshotTbi { input: outdir = smalldir, file = CallVariants.longshot_tbi }
+#        call FF.FinalizeToFile as FinalizeLongshotVcf { input: outdir = smalldir, file = CallVariants.longshot_vcf }
+#        call FF.FinalizeToFile as FinalizeLongshotTbi { input: outdir = smalldir, file = CallVariants.longshot_tbi }
     }
 
     # Finalize data
@@ -89,16 +89,16 @@ workflow ONTWholeGenome {
     call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = bai, name = "~{participant_name}.bam.bai" }
 
     output {
-        File merged_bam = FinalizeBam.gcs_path
-        File merged_bai = FinalizeBai.gcs_path
+#        File merged_bam = FinalizeBam.gcs_path
+#        File merged_bai = FinalizeBai.gcs_path
 
         File? pbsv_vcf = FinalizePBSV.gcs_path
-       File? sniffles_vcf = FinalizeSniffles.gcs_path
+        File? sniffles_vcf = FinalizeSniffles.gcs_path
 
 #        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
 #        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
 
-        File? longshot_vcf = FinalizeLongshotVcf.gcs_path
-        File? longshot_tbi = FinalizeLongshotTbi.gcs_path
+#        File? longshot_vcf = FinalizeLongshotVcf.gcs_path
+#        File? longshot_tbi = FinalizeLongshotTbi.gcs_path
     }
 }
