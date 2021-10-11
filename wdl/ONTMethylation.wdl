@@ -1,5 +1,6 @@
 version 1.0
 
+import "tasks/AlignReads.wdl" as AR
 import "tasks/Utils.wdl" as Utils
 import "tasks/ONTUtils.wdl" as ONTUtils
 import "tasks/VariantUtils.wdl"
