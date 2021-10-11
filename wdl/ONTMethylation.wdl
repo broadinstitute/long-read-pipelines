@@ -129,16 +129,16 @@ workflow ONTMethylation {
             input:
                 variants_phased = PhaseVariants.phased_vcf_gz,
                 variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
-                mappings_bam = SubsetVarMappings.merged_bam,
-                mappings_bai = SubsetVarMappings.merged_bai
+                mappings_bam = SubsetVarMappings.subset_bam,
+                mappings_bai = SubsetVarMappings.subset_bai
         }
 
         call Haplotag as HaplotagModBams {
             input:
                 variants_phased = PhaseVariants.phased_vcf_gz,
                 variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
-                mappings_bam = SubsetModMappings.merged_bam,
-                mappings_bai = SubsetModMappings.merged_bai
+                mappings_bam = SubsetModMappings.subset_bam,
+                mappings_bai = SubsetModMappings.subset_bai
         }
     }
 
