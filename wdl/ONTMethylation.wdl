@@ -35,6 +35,16 @@ workflow ONTMethylation {
                 variants    = variants,
                 SM          = participant_name
         }
+
+        call AR.Minimap2 as ModRemappings {
+            input:
+                reads      = [ Megalodon.mod_mappings_bam ],
+                ref_fasta  = ref_map['fasta'],
+                RG         = '@RG\\tSM:~{participant_name}\\tID:mod_mappings',
+                map_preset = 'map-ont',
+                tags       = ['Mm', 'Ml'],
+                prefix     = prefix
+        }
     }
 
     call MergeVariantDBs { input: dbs = Megalodon.per_read_variant_calls_db }
@@ -64,7 +74,7 @@ workflow ONTMethylation {
     }
 
     call Utils.MergeBams as MergeMappings { input: bams = Megalodon.mappings_bam }
-    call Utils.MergeBams as MergeModMappings { input: bams = Megalodon.mod_mappings_bam }
+    call Utils.MergeBams as MergeModMappings { input: bams = ModRemappings.aligned_bam }
     call Utils.MergeBams as MergeVarMappings { input: bams = Megalodon.variant_mappings_bam }
 
     call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
@@ -79,10 +89,18 @@ workflow ONTMethylation {
     scatter (c in MakeChrIntervalList.chrs) {
         String contig = c[0]
 
-        call Utils.SubsetBam {
+        call Utils.SubsetBam as SubsetVarMappings {
             input:
                 bam = MergeVarMappings.merged_bam,
                 bai = MergeVarMappings.merged_bai,
+                locus = contig,
+                prefix = contig
+        }
+
+        call Utils.SubsetBam as SubsetModMappings {
+            input:
+                bam = MergeModMappings.merged_bam,
+                bai = MergeModMappings.merged_bai,
                 locus = contig,
                 prefix = contig
         }
@@ -99,8 +117,8 @@ workflow ONTMethylation {
              input:
                 variants = SubsetVCF.subset_vcf,
                 variants_tbi = SubsetVCF.subset_tbi,
-                variant_mappings_bam = SubsetBam.subset_bam,
-                variant_mappings_bai = SubsetBam.subset_bai,
+                variant_mappings_bam = SubsetVarMappings.subset_bam,
+                variant_mappings_bai = SubsetVarMappings.subset_bai,
                 ref_fasta = ref_map['fasta'],
                 ref_fai   = ref_map['fai'],
                 chr = contig
@@ -110,16 +128,16 @@ workflow ONTMethylation {
             input:
                 variants_phased = PhaseVariants.phased_vcf_gz,
                 variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
-                mappings_bam = MergeVarMappings.merged_bam,
-                mappings_bai = MergeVarMappings.merged_bai
+                mappings_bam = SubsetVarMappings.merged_bam,
+                mappings_bai = SubsetVarMappings.merged_bai
         }
 
         call Haplotag as HaplotagModBams {
             input:
                 variants_phased = PhaseVariants.phased_vcf_gz,
                 variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
-                mappings_bam = MergeModMappings.merged_bam,
-                mappings_bai = MergeModMappings.merged_bai
+                mappings_bam = SubsetModMappings.merged_bam,
+                mappings_bai = SubsetModMappings.merged_bai
         }
     }
 

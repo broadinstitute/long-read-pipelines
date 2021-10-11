@@ -11,7 +11,9 @@ task Minimap2 {
         String RG
         String map_preset
 
+        Array[String] tags = []
         String prefix = "out"
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -20,6 +22,7 @@ task Minimap2 {
         ref_fasta:  "reference fasta"
         RG:         "read group information to be supplied to parameter '-R' (note that tabs should be input as '\t')"
         map_preset: "preset to be used for minimap2 parameter '-x'"
+        tags:       "tags to preserve when realigning BAM files"
         prefix:     "[default-valued] prefix for output BAM"
     }
 
@@ -31,6 +34,7 @@ task Minimap2 {
     command <<<
         set -euxo pipefail
 
+        TAGS="~{true='-T' false='' length(tags) > 0} ~{sep=',' tags}"
         MAP_PARAMS="-ayYL --MD -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
         SORT_PARAMS="-@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
@@ -44,7 +48,7 @@ task Minimap2 {
         elif [[ "$FILE" =~ \.fasta.gz$ ]] || [[ "$FILE" =~ \.fa.gz$ ]]; then
             find . \( -name '*.fasta.gz' -or -name '*.fa.gz' \) -not -name '~{basename(ref_fasta)}' -exec zcat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.bam$ ]]; then
-            samtools fastq $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+            samtools fastq $TAGS $FILE | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         else
             echo "Did not understand file format for '$FILE'"
             exit 1
