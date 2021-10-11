@@ -714,18 +714,21 @@ task Align {
         # sometimes the ubam comes without sample information, so we rely on the input to this task for a fix
         samtools view -H ~{bam} > old.header.txt
         if grep -q -F 'SM:' old.header.txt; then
-            extra_sm_info=''
+            pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
+                --preset ~{map_preset} \
+                ~{median_filter} \
+                ~{extra_options} \
+                --sort \
+                --unmapped
         else
-            extra_sm_info=" --sample ~{sample_name} "
+            pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
+                --preset ~{map_preset} \
+                ~{median_filter} \
+                --sample ~{sample_name} \
+                ~{extra_options} \
+                --sort \
+                --unmapped
         fi
-
-        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
-            --preset ~{map_preset} \
-            ~{median_filter} \
-            "${extra_sm_info}" \
-            ~{extra_options} \
-            --sort \
-            --unmapped
 
         samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
         samtools index ~{prefix}.bam
