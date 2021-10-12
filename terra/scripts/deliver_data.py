@@ -1,26 +1,10 @@
 #!/usr/bin/env python
 
-import os
-import re
-import math
-import hashlib
 import argparse
-import tempfile
 import subprocess
-from subprocess import Popen, PIPE
 
-import numpy as np
 import pandas as pd
 import firecloud.api as fapi
-
-from google.cloud import bigquery
-from google.cloud import storage
-from google.api_core.exceptions import NotFound
-
-from collections import OrderedDict
-
-import xmltodict
-import pprint
 
 
 pd.set_option('max_columns', 200)
@@ -118,13 +102,11 @@ def main():
         if 'Kar-Tong' in row['workspace']:
             bucket_name = f"gs://{q['workspace']['bucketName']}"
             newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
-            newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/", inplace=True, regex=True)
+            newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", inplace=True, regex=True)
             newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
-            newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/", inplace=True, regex=True)
+            newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
 
             tbl_new_hash[row['workspace']] = tbl_new_hash[row['workspace']].append(newrow)
-
-            nr = newrow.to_dict()
 
             for k, v in row.to_dict().items():
                 if 'gs://' in v:
@@ -159,13 +141,7 @@ def main():
 
     for bucket in copy_lists:
         for s in copy_lists[bucket]:
-            p = Popen(f"gsutil -m cp {s} {copy_lists[bucket][s]}", shell=True)
-
-        # with open("/tmp/cpfiles.txt", "w") as tmp:
-        #     for s in copy_lists[bucket]:
-        #         tmp.write(s + "\n")
-
-        # p = Popen(f"cat /tmp/cpfiles.txt | gsutil -m cp -I {bucket}", shell=True)
+            copy_file(s, copy_lists[bucket][s])
 
 
 if __name__ == "__main__":
