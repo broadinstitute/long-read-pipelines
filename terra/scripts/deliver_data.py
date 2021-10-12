@@ -5,7 +5,9 @@ import re
 import math
 import hashlib
 import argparse
+import tempfile
 import subprocess
+from subprocess import Popen, PIPE
 
 import numpy as np
 import pandas as pd
@@ -27,29 +29,6 @@ pd.set_option("max_colwidth", None)
 
 
 def copy_file(src, dst):
-    # (bucket_name, blob_name) = re.split("/", re.sub("gs://", "", src), 1)
-    # (destination_bucket_name, destination_blob_name) = re.split("/", re.sub("gs://", "", dst), 1)
-    #
-    # storage_client = storage.Client()
-    #
-    # source_bucket = storage_client.bucket(bucket_name)
-    # source_blob = source_bucket.blob(blob_name)
-    # destination_bucket = storage_client.bucket(destination_bucket_name)
-    #
-    # blob_copy = source_bucket.copy_blob(
-    #     source_blob, destination_bucket, destination_blob_name
-    # )
-    # dst_blob.rewrite(src_blob)
-    #
-    # print(
-    #     "Blob {} in bucket {} copied to blob {} in bucket {}.".format(
-    #         source_blob.name,
-    #         source_bucket.name,
-    #         blob_copy.name,
-    #         destination_bucket.name,
-    #     )
-    # )
-
     subprocess.run(["gsutil", "cp", "-n", src, dst])
 
 
@@ -75,6 +54,22 @@ def load_table(namespace, workspace, table_name, store_membership=False):
     return tbl_old, membership
 
 
+def upload_table(namespace, workspace, table, label):
+    # upload new samples
+    a = fapi.upload_entities(namespace, workspace, entity_data=table.to_csv(index=False, sep="\t"), model='flexible')
+
+    if a.status_code == 200:
+        print(f'Uploaded {len(table)} {label} rows successfully.')
+    else:
+        print(a.json())
+
+
+def upload_tables(namespace, workspace, s, ss, nms):
+    upload_table(namespace, workspace, s, 'sample')
+    upload_table(namespace, workspace, ss, 'sample_set')
+    upload_table(namespace, workspace, nms, 'sample_set membership')
+
+
 def main():
     parser = argparse.ArgumentParser(description='Copy data to delivery workspaces', prog='deliver_data')
     parser.add_argument('-p', '--project', type=str, help="GCP project")
@@ -95,32 +90,39 @@ def main():
     for w in workspace_list:
         workspaces.add(w['workspace']['name'])
 
+    tbl_new_hash = {}
+    ss_new_hash = {}
+    membership_new_hash = {}
+
+    copy_lists = {}
+
     for index, row in tbl_filtered.iterrows():
         if row['workspace'] not in workspaces:
             a = fapi.create_workspace(args.namespace, row['workspace'])
             b = fapi.update_workspace_acl(args.namespace, row['workspace'], [
                 {"email": "kiran@broadinstitute.org", "accessLevel": "OWNER"},
                 {"email": "222581509023-compute@developer.gserviceaccount.com", "accessLevel": "OWNER"},
-                #{"email": "shuang@broadinstitute.org", "accessLevel": "OWNER"},
-                #{"email": "lholmes@broadinstitute.org", "accessLevel": "OWNER"},
+                {"email": "shuang@broadinstitute.org", "accessLevel": "OWNER"},
+                {"email": "lholmes@broadinstitute.org", "accessLevel": "OWNER"},
             ])
 
             print(f"[workspace  : {a.status_code}] Created workspace '{row['workspace']}'")
 
+        if row['workspace'] not in tbl_new_hash:
+            tbl_new_hash[row['workspace']] = pd.DataFrame(columns=tbl_filtered.columns)
+            ss_new_hash[row['workspace']] = pd.DataFrame(columns=ss_old.columns)
+            membership_new_hash[row['workspace']] = []
+
         q = fapi.get_workspace(args.namespace, row['workspace']).json()
 
-        if 'Garimella' in row['workspace']:
-            newrow = row.replace('gs://broad-gp-pacbio-outgoing/', f"gs://{q['workspace']['bucketName']}/", regex=True)
-            newrow.replace('gs://broad-gp-pacbio/', f"gs://{q['workspace']['bucketName']}/input/pacbio/", inplace=True, regex=True)
-            newrow.replace('gs://broad-gp-oxfordnano-outgoing/', f"gs://{q['workspace']['bucketName']}/", inplace=True, regex=True)
-            newrow.replace('gs://broad-gp-oxfordnano/', f"gs://{q['workspace']['bucketName']}/input/oxfordnano/", inplace=True, regex=True)
+        if 'Kar-Tong' in row['workspace']:
+            bucket_name = f"gs://{q['workspace']['bucketName']}"
+            newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
+            newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/", inplace=True, regex=True)
+            newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
+            newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/", inplace=True, regex=True)
 
-            a = fapi.copy_entities(args.namespace,
-                                   args.workspace,
-                                   args.namespace,
-                                   newrow['workspace'],
-                                   'sample',
-                                   [newrow['entity:sample_id']])
+            tbl_new_hash[row['workspace']] = tbl_new_hash[row['workspace']].append(newrow)
 
             nr = newrow.to_dict()
 
@@ -128,23 +130,42 @@ def main():
                 if 'gs://' in v:
                     if 'gs://broad-gp-pacbio/' in v or 'gs://broad-gp-oxfordnano/' in v:
                         if args.copy_inputs:
-                            copy_file(v, nr[k])
+                            if bucket_name not in copy_lists:
+                                copy_lists[bucket_name] = {}
+                            if '.' in v:
+                                copy_lists[bucket_name][v] = newrow[k]
                     else:
-                        copy_file(v, nr[k])
+                        if bucket_name not in copy_lists:
+                            copy_lists[bucket_name] = {}
+                        if '.' in v:
+                            copy_lists[bucket_name][v] = newrow[k]
 
-            print(f"[sample     : {a.status_code}] Added '{row['entity:sample_id']}' to workspace '{row['workspace']}'")
+            for ss_index, ss_row in ss_old.iterrows():
+                if row['entity:sample_id'] in membership[ss_index]:
+                    ss_new_hash[row['workspace']] = ss_new_hash[row['workspace']].append(ss_row)
+                    membership_new_hash[row['workspace']].append(membership[ss_index])
 
-            for i in range(len(membership)):
-                if row['entity:sample_id'] in membership[i]:
-                    a = fapi.copy_entities(args.namespace,
-                                           args.workspace,
-                                           args.namespace,
-                                           newrow['workspace'],
-                                           'sample_set',
-                                           [ss_old['entity:sample_set_id'][i]],
-                                           link_existing_entities=True)
+    for workspace in membership_new_hash:
+        if len(membership_new_hash[workspace]) > 0:
+            oms = pd \
+                .DataFrame({'entity:sample_set_id': list(ss_new_hash[workspace]['entity:sample_set_id']), 'sample': membership_new_hash[workspace]}) \
+                .explode('sample', ignore_index=True)
+            oms.columns = ['membership:sample_set_id', 'sample']
 
-                    print(f"[sample_set : {a.status_code}] Added '{ss_old['entity:sample_set_id'][i]}' to workspace '{row['workspace']}'")
+            for ssname in list(oms['membership:sample_set_id']):
+                a = fapi.delete_sample_set(args.namespace, workspace, ssname)
+
+            upload_tables(args.namespace, workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
+
+    for bucket in copy_lists:
+        for s in copy_lists[bucket]:
+            p = Popen(f"gsutil -m cp {s} {copy_lists[bucket][s]}", shell=True)
+
+        # with open("/tmp/cpfiles.txt", "w") as tmp:
+        #     for s in copy_lists[bucket]:
+        #         tmp.write(s + "\n")
+
+        # p = Popen(f"cat /tmp/cpfiles.txt | gsutil -m cp -I {bucket}", shell=True)
 
 
 if __name__ == "__main__":
