@@ -1,6 +1,10 @@
 {
   "monitoring_image": "us.gcr.io/broad-dsde-methods/cromwell-task-monitor-bq:latest",
-  "final_workflow_log_dir": "gs://broad-methods-cromwell-exec-bucket-v47/cromwell_call_logs/",
+
+  "workflow_failure_mode": "ContinueWhilePossible",
+
+  "final_workflow_log_dir": "gs://broad-dsp-lrma-cromwell/cromwell_call_logs/",
+
   "read_from_cache": false,
   "write_to_cache": false
 }
