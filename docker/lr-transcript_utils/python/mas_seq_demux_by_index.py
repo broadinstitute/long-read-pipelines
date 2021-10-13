@@ -37,6 +37,7 @@ index_tag = "XI"
 
 ################################################################################
 
+
 def load_read_count(pbi_file):
     """Compute file offsets for specified read names"""
 
@@ -59,6 +60,7 @@ def load_read_count(pbi_file):
         idx_contents = fmt.parse_stream(f)
 
         return idx_contents.n_reads
+
 
 ################################################################################
 
@@ -110,81 +112,82 @@ with pysam.AlignmentFile(f"{input_bam}", "rb", check_sq=False, require_index=Fal
         print(f"Creating output file for ambiguous indices: {f_name}")
         out_files.append(pysam.AlignmentFile(f_name, "wb", header=out_bam_header))
 
-        for read in bam_file:
+        with tqdm(desc="Demultiplexing indexed reads", unit="read", total=read_count) as pbar:
+            for read in bam_file:
 
-            raw_scores = [0 for s in index_sequences]
+                raw_scores = [0 for s in index_sequences]
 
-            segments = read.get_tag("SG").split(",")
-            index_containing_adapters = [s for s in segments if s.startswith('3p_Adapter')]
+                segments = read.get_tag("SG").split(",")
+                index_containing_adapters = [s for s in segments if s.startswith('3p_Adapter')]
 
-            for a in index_containing_adapters:
-                # Get indices:
-                i1, i2 = a.split(":")[1].split("-")
+                for a in index_containing_adapters:
+                    # Get indices:
+                    i1, i2 = a.split(":")[1].split("-")
 
-                # Adjust for indels:
-                i1 = int(i1)
-                i2 = i1 + 10 + window_size
-                i1 -= window_size
+                    # Adjust for indels:
+                    i1 = int(i1)
+                    i2 = i1 + 10 + window_size
+                    i1 -= window_size
 
-                # Bounds check:
-                if i1 < 0:
-                    i1 = 0
-                if i2 > len(read.query_sequence) - 1:
-                    i2 = len(read.query_sequence)
+                    # Bounds check:
+                    if i1 < 0:
+                        i1 = 0
+                    if i2 > len(read.query_sequence) - 1:
+                        i2 = len(read.query_sequence)
 
-                # Extract sequence:
-                raw_index_seq = read.query_sequence[i1:i2 + 1]
+                    # Extract sequence:
+                    raw_index_seq = read.query_sequence[i1:i2 + 1]
 
-                for i, index_seq in enumerate(index_sequences):
-                    alignment = ssw_aligner.align(raw_index_seq.upper(), index_seq)
-                    optimal_score = alignment.score
-                    max_score = len(index_seq) * ssw_aligner.matrix.get_match()
+                    for i, index_seq in enumerate(index_sequences):
+                        alignment = ssw_aligner.align(raw_index_seq.upper(), index_seq)
+                        optimal_score = alignment.score
+                        max_score = len(index_seq) * ssw_aligner.matrix.get_match()
 
-                    raw_scores[i] += optimal_score
+                        raw_scores[i] += optimal_score
 
-            # Get the best score:
-            max_score = 0
-            max_index = 0
-            approximately_equal_score_pairs = []
-            for i in range(len(index_sequences)):
-                if raw_scores[i] > max_score:
-                    max_score = raw_scores[i]
-                    max_index = i
-
-            # Check for possible ambiguities:
-            approximately_equal_score_pairs = []
-            approximately_equal_score_ratios = []
-            if max_score == 0:
+                # Get the best score:
+                max_score = 0
+                max_index = 0
+                approximately_equal_score_pairs = []
                 for i in range(len(index_sequences)):
-                    for j in range(i + 1, len(index_sequences)):
-                        approximately_equal_score_pairs.append((i, j))
-                        approximately_equal_score_ratios.append(0)
-            else:
-                for i in range(len(index_sequences)):
-                    if i == max_index:
-                        continue
-                    score_ratio = raw_scores[i] / max_score
-                    if score_ratio > epsilon:
-                        approximately_equal_score_pairs.append((i, max_index))
-                        approximately_equal_score_ratios.append(score_ratio)
+                    if raw_scores[i] > max_score:
+                        max_score = raw_scores[i]
+                        max_index = i
 
-            # Log and output reads to the right file:
-            if len(approximately_equal_score_pairs) != 0:
-                print(
-                    f"Ambiguous read: {read.query_name}: [MI={max_index}] {raw_scores} - {approximately_equal_score_pairs}: {approximately_equal_score_ratios}")
-                read.set_tag(index_tag, "AMBIGUOUS")
-                out_files[len(out_files) - 1].write(read)
-                num_ambiguous += 1
-            else:
-                read.set_tag(index_tag, index_sequences[max_index])
-                out_files[max_index].write(read)
-                num_reads_demuxed_by_index[max_index] += 1
+                # Check for possible ambiguities:
+                approximately_equal_score_pairs = []
+                approximately_equal_score_ratios = []
+                if max_score == 0:
+                    for i in range(len(index_sequences)):
+                        for j in range(i + 1, len(index_sequences)):
+                            approximately_equal_score_pairs.append((i, j))
+                            approximately_equal_score_ratios.append(0)
+                else:
+                    for i in range(len(index_sequences)):
+                        if i == max_index:
+                            continue
+                        score_ratio = raw_scores[i] / max_score
+                        if score_ratio > epsilon:
+                            approximately_equal_score_pairs.append((i, max_index))
+                            approximately_equal_score_ratios.append(score_ratio)
 
-            pbar.update(1)
-            cur_iter += 1
+                # Log and output reads to the right file:
+                if len(approximately_equal_score_pairs) != 0:
+                    print(
+                        f"Ambiguous read: {read.query_name}: [MI={max_index}] {raw_scores} - {approximately_equal_score_pairs}: {approximately_equal_score_ratios}")
+                    read.set_tag(index_tag, "AMBIGUOUS")
+                    out_files[len(out_files) - 1].write(read)
+                    num_ambiguous += 1
+                else:
+                    read.set_tag(index_tag, index_sequences[max_index])
+                    out_files[max_index].write(read)
+                    num_reads_demuxed_by_index[max_index] += 1
 
-            if cur_iter > max_iter:
-                break
+                pbar.update(1)
+                cur_iter += 1
+
+                if cur_iter > max_iter:
+                    break
     finally:
         for f in out_files:
             f.close()
