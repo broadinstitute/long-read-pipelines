@@ -114,6 +114,9 @@ RUN pip install umi_tools==1.1.1
 # NOTE: There is no versioning on this package...
 RUN pip install ssw
 
+# Get the construct package:
+RUN pip install construct
+
 # Clean up apt-get process:
 RUN apt-get clean && apt-get purge && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
