@@ -107,7 +107,7 @@ task Assemble {
         hifiasm -o ~{prefix} \
                 -t~{num_cpus} \
                 ~{true='-1' false='' defined(yak_mother)} ~{select_first([yak_mother, ''])} \
-                ~{true='-2' false='' defined(yak_father)} ~{select_first([yak_father, ''])}
+                ~{true='-2' false='' defined(yak_father)} ~{select_first([yak_father, ''])} \
                 ~{reads}
 
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
