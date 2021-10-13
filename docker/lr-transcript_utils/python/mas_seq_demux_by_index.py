@@ -75,6 +75,7 @@ except IndexError:
 
 ################################################################################
 
+pysam.set_verbosity(0)  # silence message about the .bai file not being found
 with pysam.AlignmentFile(f"{input_bam}", "rb", check_sq=False, require_index=False) as bam_file, tqdm(
         desc="Demultiplexing indexed reads", unit="read") as pbar:
 
