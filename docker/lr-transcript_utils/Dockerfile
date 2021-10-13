@@ -110,6 +110,10 @@ RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${salmon_versi
 # Get UMI-tools v1.1.1:
 RUN pip install umi_tools==1.1.1
 
+# Get the SSW package:
+# NOTE: There is no versioning on this package...
+RUN pip install ssw
+
 # Clean up apt-get process:
 RUN apt-get clean && apt-get purge && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
