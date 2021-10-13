@@ -79,7 +79,7 @@ pysam.set_verbosity(0)  # silence message about the .bai file not being found
 with pysam.AlignmentFile(f"{input_bam}", "rb", check_sq=False, require_index=False) as bam_file, tqdm(
         desc="Demultiplexing indexed reads", unit="read") as pbar:
 
-    out_base_file_name = input_bam[:input_bam.find(".bam")] + ".demux_"
+    out_base_file_name = os.path.splitext(os.path.basename(input_bam))[0] + ".demux_"
 
     pbi = f"{input_bam}.pbi"
     read_count = None
