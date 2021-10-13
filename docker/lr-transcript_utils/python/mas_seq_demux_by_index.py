@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pysam
 import time
 import math
@@ -41,7 +43,7 @@ except IndexError:
 
 ################################################################################
 
-with pysam.AlignmentFile(f"{base_folder}/{input_bam}", "rb", check_sq=False, require_index=False) as bam_file, tqdm(
+with pysam.AlignmentFile(f"{input_bam}", "rb", check_sq=False, require_index=False) as bam_file, tqdm(
         desc="Demultiplexing indexed reads", unit="read") as pbar:
 
     out_base_file_name = input_bam[:input_bam.find(".bam")] + ".demux_"
