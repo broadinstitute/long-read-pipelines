@@ -5,20 +5,22 @@ import "Structs.wdl"
 workflow Hifiasm {
     input {
         File reads
-        Array[File]? mother_fqs
-        Array[File]? father_fqs
+        File? mother_bam
+        File? father_bam
         String prefix
     }
 
-    if (defined(mother_fqs) && defined(father_fqs)) {
-        call Yak as YakMother { input: fqs = mother_fqs }
-        call Yak as YakFather { input: fqs = father_fqs }
+    if (defined(mother_bam) && defined(father_bam)) {
+        call Yak as YakMother { input: bam = select_first([mother_bam]) }
+        call Yak as YakFather { input: bam = select_first([father_bam]) }
     }
 
     call Assemble {
         input:
             reads  = reads,
-            prefix = prefix
+            prefix = prefix,
+            yak_mother = YakMother.yak,
+            yak_father = YakFather.yak,
     }
 
     output {
@@ -29,7 +31,7 @@ workflow Hifiasm {
 
 task Yak {
     input {
-        Array[File] fqs
+        File bam
         String prefix = "out"
 
         Int num_cpus = 16
@@ -38,37 +40,33 @@ task Yak {
     }
 
     parameter_meta {
-        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
+        bam:      "reads in BAM format"
         prefix:   "prefix to apply to assembly output filenames"
         num_cpus: "number of CPUs to parallelize over"
     }
 
-    Int disk_size = 10 * ceil(size(reads, "GB"))
+    Int disk_size = 10 * ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        hifiasm -o ~{prefix} -t~{num_cpus} ~{reads}
-        awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
-
-        yak count -k31 -b37 -t16 -o ~{prefix}.yak <(cat ~{sep=' ' fqs}
+        yak count -b37 -t16 -o ~{prefix}.yak <(samtools fastq ~{bam})
     >>>
 
     output {
-        File gfa = "~{prefix}.p_ctg.gfa"
-        File fa = "~{prefix}.p_ctg.fa"
+        File yak = "~{prefix}.yak"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-                                   cpu_cores:          num_cpus,
-                                   mem_gb:             150,
-                                   disk_gb:            disk_size,
-                                   boot_disk_gb:       10,
-                                   preemptible_tries:  0,
-                                   max_retries:        0,
-                                   docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.13"
-                               }
+        cpu_cores:          num_cpus,
+        mem_gb:             150,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.13"
+    }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
@@ -85,6 +83,8 @@ task Assemble {
     input {
         File reads
         String prefix = "out"
+        File? yak_mother
+        File? yak_father
 
         Int num_cpus = 32
 
@@ -92,9 +92,11 @@ task Assemble {
     }
 
     parameter_meta {
-        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
-        prefix:   "prefix to apply to assembly output filenames"
-        num_cpus: "number of CPUs to parallelize over"
+        reads:        "reads (in fasta or fastq format, compressed or uncompressed)"
+        prefix:       "prefix to apply to assembly output filenames"
+        yak_mother:   "Yak file for mother's reads"
+        yak_father:   "Yak file for father's reads"
+        num_cpus:     "number of CPUs to parallelize over"
     }
 
     Int disk_size = 10 * ceil(size(reads, "GB"))
@@ -102,7 +104,12 @@ task Assemble {
     command <<<
         set -euxo pipefail
 
-        hifiasm -o ~{prefix} -t~{num_cpus} ~{reads}
+        hifiasm -o ~{prefix} \
+                -t~{num_cpus} \
+                ~{true='-1' false='' defined(yak_mother)} ~{select_first([yak_mother, ''])} \
+                ~{true='-2' false='' defined(yak_father)} ~{select_first([yak_father, ''])}
+                ~{reads}
+
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
     >>>
 
