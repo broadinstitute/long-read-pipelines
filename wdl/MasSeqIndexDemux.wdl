@@ -3,6 +3,7 @@ version 1.0
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/TranscriptAnalysis/Preprocessing_Tasks.wdl" as TX_PRE
+import "tasks/Longbow.wdl" as LONGBOW
 import "tasks/Finalize.wdl" as FF
 
 workflow MasSeqIndexDemux {
@@ -17,6 +18,8 @@ workflow MasSeqIndexDemux {
         String gcs_input_dir
         String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqIndexDemux"
 
+        String mas_seq_model = "mas15"
+
         String? sample_name
 
         # Set up some meta parameters here so we can adjust for when we want things to go VERY fast:
@@ -26,6 +29,8 @@ workflow MasSeqIndexDemux {
     parameter_meta {
         gcs_input_dir : "Input folder on GCS in which to search for BAM files to process."
         gcs_out_root_dir : "Root output GCS folder in which to place results of this workflow."
+
+        mas_seq_model : "[optional] The name of the model to use to annotate the data in this workflow (default: mas15)."
 
         sample_name : "[optional] The name of the sample to associate with the data in this workflow."
 
@@ -82,9 +87,24 @@ workflow MasSeqIndexDemux {
     }
 
     scatter (sharded_reads in t_05_ShardLongReads.unmapped_shards) {
-        call TX_PRE.DemuxMasSeqDataByIndex as t_06_DemuxMasSeqDataByIndex {
+
+        # Filter out the kinetics tags from PB files:
+        call PB.RemoveKineticsTags as t_06_RemoveKineticsTags {
             input:
-                array_bam = sharded_reads
+                bam = sharded_reads,
+                prefix = SM + "_kinetics_removed"
+        }
+
+        # Annotate our CCS Corrected reads:
+        call LONGBOW.Annotate as t_09_LongbowAnnotateCCSReads {
+            input:
+                reads = t_06_RemoveKineticsTags.bam_file,
+                model = mas_seq_model
+        }
+
+        call TX_PRE.DemuxMasSeqDataByIndex as t_07_DemuxMasSeqDataByIndex {
+            input:
+                array_bam = t_09_LongbowAnnotateCCSReads.annotated_bam,
         }
     }
 
@@ -100,12 +120,12 @@ workflow MasSeqIndexDemux {
     # input bam file.
     #################################################
 
-    call Utils.MergeBams as t_30_MergeDemuxI1 { input: bams = t_06_DemuxMasSeqDataByIndex.demux_i1, prefix = SM + "_demux_i1" }
-    call Utils.MergeBams as t_30_MergeDemuxI2 { input: bams = t_06_DemuxMasSeqDataByIndex.demux_i2, prefix = SM + "_demux_i2" }
-    call Utils.MergeBams as t_30_MergeDemuxI3 { input: bams = t_06_DemuxMasSeqDataByIndex.demux_i3, prefix = SM + "_demux_i3" }
-    call Utils.MergeBams as t_30_MergeDemuxI4 { input: bams = t_06_DemuxMasSeqDataByIndex.demux_i4, prefix = SM + "_demux_i4" }
-    call Utils.MergeBams as t_30_MergeDemuxAmbiguous { input: bams = t_06_DemuxMasSeqDataByIndex.demux_ambiguous, prefix = SM + "_demux_ambiguous" }
-    call TX_PRE.MergeDemuxMasSeqByIndexLogs as t_31_MergeDemuxMasSeqByIndexLogs { input: demux_logs = t_06_DemuxMasSeqDataByIndex.log_file }
+    call Utils.MergeBams as t_08_MergeDemuxI1 { input: bams = t_07_DemuxMasSeqDataByIndex.demux_i1, prefix = SM + "_demux_i1" }
+    call Utils.MergeBams as t_09_MergeDemuxI2 { input: bams = t_07_DemuxMasSeqDataByIndex.demux_i2, prefix = SM + "_demux_i2" }
+    call Utils.MergeBams as t_10_MergeDemuxI3 { input: bams = t_07_DemuxMasSeqDataByIndex.demux_i3, prefix = SM + "_demux_i3" }
+    call Utils.MergeBams as t_11_MergeDemuxI4 { input: bams = t_07_DemuxMasSeqDataByIndex.demux_i4, prefix = SM + "_demux_i4" }
+    call Utils.MergeBams as t_12_MergeDemuxAmbiguous { input: bams = t_07_DemuxMasSeqDataByIndex.demux_ambiguous, prefix = SM + "_demux_ambiguous" }
+    call TX_PRE.MergeDemuxMasSeqByIndexLogs as t_13_MergeDemuxMasSeqByIndexLogs { input: demux_logs = t_07_DemuxMasSeqDataByIndex.log_file }
 
     ######################################################################
     #             _____ _             _ _
@@ -120,28 +140,28 @@ workflow MasSeqIndexDemux {
     #       This will prevent incomplete runs from being placed in the output folders.
     String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
 
-        call FF.FinalizeToDir as t_78_FinalizeOutputFiles {
+        call FF.FinalizeToDir as t_14_FinalizeOutputFiles {
         input:
             files = [
-                t_30_MergeDemuxI1.merged_bam,
-                t_30_MergeDemuxI1.merged_bai,
-                t_30_MergeDemuxI2.merged_bam,
-                t_30_MergeDemuxI2.merged_bai,
-                t_30_MergeDemuxI3.merged_bam,
-                t_30_MergeDemuxI3.merged_bai,
-                t_30_MergeDemuxI4.merged_bam,
-                t_30_MergeDemuxI4.merged_bai,
-                t_31_MergeDemuxMasSeqByIndexLogs.merged_log,
+                t_08_MergeDemuxI1.merged_bam,
+                t_08_MergeDemuxI1.merged_bai,
+                t_09_MergeDemuxI2.merged_bam,
+                t_09_MergeDemuxI2.merged_bai,
+                t_10_MergeDemuxI3.merged_bam,
+                t_10_MergeDemuxI3.merged_bai,
+                t_11_MergeDemuxI4.merged_bam,
+                t_11_MergeDemuxI4.merged_bai,
+                t_13_MergeDemuxMasSeqByIndexLogs.merged_log,
             ],
             outdir = base_out_dir + "/",
-            keyfile = t_31_MergeDemuxMasSeqByIndexLogs.merged_log
+            keyfile = t_13_MergeDemuxMasSeqByIndexLogs.merged_log
     }
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good
-    call FF.WriteCompletionFile as t_79_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_15_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
-            keyfile =  t_31_MergeDemuxMasSeqByIndexLogs.merged_log
+            keyfile =  t_13_MergeDemuxMasSeqByIndexLogs.merged_log
     }
 }
