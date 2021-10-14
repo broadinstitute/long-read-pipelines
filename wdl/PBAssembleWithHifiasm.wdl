@@ -77,6 +77,7 @@ workflow PBAssembleWithHifiasm {
 
     call FF.FinalizeToFile as FinalizeHifiasmGfa { input: outdir = dir, file = Hifiasm.gfa }
     call FF.FinalizeToFile as FinalizeHifiasmFa { input: outdir = dir, file = Hifiasm.fa }
+    call FF.FinalizeToDir  as FinalizeHifiasmHaps { input: outdir = dir, files = Hifiasm.haps }
     call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
     call FF.FinalizeToFile as FinalizeQuastReportTxt { input: outdir = dir, file = Quast.report_txt }
     call FF.FinalizeToFile as FinalizePaf { input: outdir = dir, file = CallAssemblyVariants.paf }
@@ -85,6 +86,7 @@ workflow PBAssembleWithHifiasm {
     output {
         File hifiasm_gfa = FinalizeHifiasmGfa.gcs_path
         File hifiasm_fa = FinalizeHifiasmFa.gcs_path
+        String haps = FinalizeHifiasmHaps.gcs_dir
 
         File paf = FinalizePaf.gcs_path
         File paftools_vcf = FinalizePafToolsVcf.gcs_path

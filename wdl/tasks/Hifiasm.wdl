@@ -91,7 +91,7 @@ task Assemble {
         File? yak_mother
         File? yak_father
 
-        Int num_cpus = 32
+        Int num_cpus = 64
 
         RuntimeAttr? runtime_attr_override
     }
@@ -107,31 +107,17 @@ task Assemble {
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
     command <<<
-        set -x
-
-        zcat ~{reads} | head -n 400000 | gzip > reads.fa.gz
+        set -euxo pipefail
 
         hifiasm -o ~{prefix} \
                 -t~{num_cpus} \
                 ~{true='-1' false='' defined(yak_mother)} ~{select_first([yak_mother, ''])} \
                 ~{true='-2' false='' defined(yak_father)} ~{select_first([yak_father, ''])} \
-                reads.fa.gz
-
-#        hifiasm -o ~{prefix} --primary -t ~{num_cpus} reads.fa.gz 2> ~{prefix}.pri.log
-#
-#        hifiasm -o ~{prefix} \
-#                -t ~{num_cpus} \
-#                ~{true='-1' false='' defined(yak_mother)} ~{select_first([yak_mother, ''])} \
-#                ~{true='-2' false='' defined(yak_father)} ~{select_first([yak_father, ''])} \
-#                /dev/null \
-#                2> ~{prefix}.trio.log
-
-        find . -type f -exec ls -lah {} \;
+                ~{reads}
     >>>
 
     output {
         Array[File] gfa = glob("*.p_ctg.gfa")
-        #Array[File] fa = glob("*.p_ctg.fa")
     }
 
     #########################
