@@ -55,13 +55,12 @@ workflow MasSeqIndexDemux {
         call Utils.FailWithWarning as t_03_FailOnMultiBamFiles { input: warning = "Error: Multiple BAM files found.  Cannot continue!" }
      }
 
-    # Define some attributes for later:
-    RuntimeAttr disable_preemption_runtime_attrs = object {
-        preemptible_tries: 0
-    }
-    RuntimeAttr filterReadsAttrs = object {
-        cpu_cores: 4,
-        preemptible_tries: 0
+    # Define some runtime attributes for later:
+    RuntimeAttr fast_network_attrs_preemptible = object {
+        cpu_cores:  4,
+        mem_gb:     32,
+        disk_type:  "LOCAL",
+        preemptible_tries:  1
     }
 
     # Alias our bam file so we can work with it easier:
