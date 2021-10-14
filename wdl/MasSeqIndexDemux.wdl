@@ -161,6 +161,8 @@ workflow MasSeqIndexDemux {
                 t_12_MergeDemuxI3.merged_bai,
                 t_13_MergeDemuxI4.merged_bam,
                 t_13_MergeDemuxI4.merged_bai,
+                t_14_MergeDemuxAmbiguous.merged_bam,
+                t_14_MergeDemuxAmbiguous.merged_bai,
                 t_15_MergeDemuxMasSeqByIndexLogs.merged_log,
             ],
             outdir = base_out_dir + "/",

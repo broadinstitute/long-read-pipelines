@@ -193,8 +193,8 @@ task MergeDemuxMasSeqByIndexLogs {
         awk 'BEGIN{s=0};{s+=$1};END{printf("Num ambiguous reads:  %d\n", s)}' $a >> $OUT_LOG
         awk 'BEGIN{s=0};{s+=$1};END{printf("Ambiguity percentage: %2.3f%%\n", s/NR)}' $ap >> $OUT_LOG
         echo "" >> $OUT_LOG
-        echo -e "1\t2\t3\t4" >> $OUT_LOG
         echo "Reads demuxed by index:" >> $OUT_LOG
+        echo -e "1\t2\t3\t4" >> $OUT_LOG
         awk 'BEGIN{s=0};{s+=$1};END{printf("%d\t", s)}' $i1 >> $OUT_LOG
         awk 'BEGIN{s=0};{s+=$1};END{printf("%d\t", s)}' $i2 >> $OUT_LOG
         awk 'BEGIN{s=0};{s+=$1};END{printf("%d\t", s)}' $i3 >> $OUT_LOG
