@@ -104,11 +104,15 @@ task Assemble {
     command <<<
         set -euxo pipefail
 
+        gzcat ~{reads} | head -n 400000 | gzip > reads.fa.gz
+
         hifiasm -o ~{prefix} \
                 -t~{num_cpus} \
                 ~{true='-1' false='' defined(yak_mother)} ~{select_first([yak_mother, ''])} \
                 ~{true='-2' false='' defined(yak_father)} ~{select_first([yak_father, ''])} \
-                ~{reads}
+                reads.fa.gz
+
+        find . -type f -exec ls -lah {} \;
 
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
     >>>
