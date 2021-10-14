@@ -104,7 +104,7 @@ task Assemble {
     command <<<
         set -euxo pipefail
 
-        gzcat ~{reads} | head -n 400000 | gzip > reads.fa.gz
+        zcat ~{reads} | head -n 400000 | gzip > reads.fa.gz
 
         hifiasm -o ~{prefix} \
                 -t~{num_cpus} \
