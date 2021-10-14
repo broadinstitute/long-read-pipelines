@@ -23,9 +23,14 @@ workflow Hifiasm {
             yak_father = YakFather.yak,
     }
 
+    scatter (gfa in Assemble.gfa) {
+        call GfaToFa { input: gfa = gfa }
+    }
+
     output {
-        File gfa = Assemble.gfa
-        File fa = Assemble.fa
+        File gfa = Assemble.gfa[0]
+        File fa = GfaToFa.fa[0]
+        Array[File] haps = GfaToFa.fa
     }
 }
 
@@ -112,20 +117,69 @@ task Assemble {
                 ~{true='-2' false='' defined(yak_father)} ~{select_first([yak_father, ''])} \
                 reads.fa.gz
 
-        find . -type f -exec ls -lah {} \;
+#        hifiasm -o ~{prefix} --primary -t ~{num_cpus} reads.fa.gz 2> ~{prefix}.pri.log
+#
+#        hifiasm -o ~{prefix} \
+#                -t ~{num_cpus} \
+#                ~{true='-1' false='' defined(yak_mother)} ~{select_first([yak_mother, ''])} \
+#                ~{true='-2' false='' defined(yak_father)} ~{select_first([yak_father, ''])} \
+#                /dev/null \
+#                2> ~{prefix}.trio.log
 
-        awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
+        find . -type f -exec ls -lah {} \;
     >>>
 
     output {
-        File gfa = "~{prefix}.p_ctg.gfa"
-        File fa = "~{prefix}.p_ctg.fa"
+        Array[File] gfa = glob("*.p_ctg.gfa")
+        #Array[File] fa = glob("*.p_ctg.fa")
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
         mem_gb:             150,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.13"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task GfaToFa {
+    input {
+        File gfa
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2 * ceil(size(gfa, "GB"))
+    String prefix = basename(gfa, ".gfa")
+
+    command <<<
+        set -euxo pipefail
+
+        awk '/^S/{print ">"$2; print $3}' ~{gfa} > ~{prefix}.fa
+    >>>
+
+    output {
+        File fa = "~{prefix}.fa"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
