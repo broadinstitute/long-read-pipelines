@@ -96,15 +96,15 @@ workflow MasSeqIndexDemux {
         }
 
         # Annotate our CCS Corrected reads:
-        call LONGBOW.Annotate as t_09_LongbowAnnotateCCSReads {
+        call LONGBOW.Annotate as t_07_LongbowAnnotateCCSReads {
             input:
                 reads = t_06_RemoveKineticsTags.bam_file,
                 model = mas_seq_model
         }
 
-        call TX_PRE.DemuxMasSeqDataByIndex as t_07_DemuxMasSeqDataByIndex {
+        call TX_PRE.DemuxMasSeqDataByIndex as t_08_DemuxMasSeqDataByIndex {
             input:
-                array_bam = t_09_LongbowAnnotateCCSReads.annotated_bam,
+                array_bam = t_07_LongbowAnnotateCCSReads.annotated_bam,
         }
     }
 
@@ -120,12 +120,12 @@ workflow MasSeqIndexDemux {
     # input bam file.
     #################################################
 
-    call Utils.MergeBams as t_08_MergeDemuxI1 { input: bams = t_07_DemuxMasSeqDataByIndex.demux_i1, prefix = SM + "_demux_i1" }
-    call Utils.MergeBams as t_09_MergeDemuxI2 { input: bams = t_07_DemuxMasSeqDataByIndex.demux_i2, prefix = SM + "_demux_i2" }
-    call Utils.MergeBams as t_10_MergeDemuxI3 { input: bams = t_07_DemuxMasSeqDataByIndex.demux_i3, prefix = SM + "_demux_i3" }
-    call Utils.MergeBams as t_11_MergeDemuxI4 { input: bams = t_07_DemuxMasSeqDataByIndex.demux_i4, prefix = SM + "_demux_i4" }
-    call Utils.MergeBams as t_12_MergeDemuxAmbiguous { input: bams = t_07_DemuxMasSeqDataByIndex.demux_ambiguous, prefix = SM + "_demux_ambiguous" }
-    call TX_PRE.MergeDemuxMasSeqByIndexLogs as t_13_MergeDemuxMasSeqByIndexLogs { input: demux_logs = t_07_DemuxMasSeqDataByIndex.log_file }
+    call Utils.MergeBams as t_09_MergeDemuxI1 { input: bams = t_08_DemuxMasSeqDataByIndex.demux_i1, prefix = SM + "_demux_i1" }
+    call Utils.MergeBams as t_10_MergeDemuxI2 { input: bams = t_08_DemuxMasSeqDataByIndex.demux_i2, prefix = SM + "_demux_i2" }
+    call Utils.MergeBams as t_11_MergeDemuxI3 { input: bams = t_08_DemuxMasSeqDataByIndex.demux_i3, prefix = SM + "_demux_i3" }
+    call Utils.MergeBams as t_12_MergeDemuxI4 { input: bams = t_08_DemuxMasSeqDataByIndex.demux_i4, prefix = SM + "_demux_i4" }
+    call Utils.MergeBams as t_13_MergeDemuxAmbiguous { input: bams = t_08_DemuxMasSeqDataByIndex.demux_ambiguous, prefix = SM + "_demux_ambiguous" }
+    call TX_PRE.MergeDemuxMasSeqByIndexLogs as t_14_MergeDemuxMasSeqByIndexLogs { input: demux_logs = t_08_DemuxMasSeqDataByIndex.log_file }
 
     ######################################################################
     #             _____ _             _ _
@@ -140,28 +140,28 @@ workflow MasSeqIndexDemux {
     #       This will prevent incomplete runs from being placed in the output folders.
     String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
 
-        call FF.FinalizeToDir as t_14_FinalizeOutputFiles {
+        call FF.FinalizeToDir as t_15_FinalizeOutputFiles {
         input:
             files = [
-                t_08_MergeDemuxI1.merged_bam,
-                t_08_MergeDemuxI1.merged_bai,
-                t_09_MergeDemuxI2.merged_bam,
-                t_09_MergeDemuxI2.merged_bai,
-                t_10_MergeDemuxI3.merged_bam,
-                t_10_MergeDemuxI3.merged_bai,
-                t_11_MergeDemuxI4.merged_bam,
-                t_11_MergeDemuxI4.merged_bai,
-                t_13_MergeDemuxMasSeqByIndexLogs.merged_log,
+                t_09_MergeDemuxI1.merged_bam,
+                t_09_MergeDemuxI1.merged_bai,
+                t_10_MergeDemuxI2.merged_bam,
+                t_10_MergeDemuxI2.merged_bai,
+                t_11_MergeDemuxI3.merged_bam,
+                t_11_MergeDemuxI3.merged_bai,
+                t_12_MergeDemuxI4.merged_bam,
+                t_12_MergeDemuxI4.merged_bai,
+                t_14_MergeDemuxMasSeqByIndexLogs.merged_log,
             ],
             outdir = base_out_dir + "/",
-            keyfile = t_13_MergeDemuxMasSeqByIndexLogs.merged_log
+            keyfile = t_14_MergeDemuxMasSeqByIndexLogs.merged_log
     }
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good
-    call FF.WriteCompletionFile as t_15_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_16_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
-            keyfile =  t_13_MergeDemuxMasSeqByIndexLogs.merged_log
+            keyfile =  t_14_MergeDemuxMasSeqByIndexLogs.merged_log
     }
 }
