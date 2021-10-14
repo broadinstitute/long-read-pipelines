@@ -102,7 +102,7 @@ task Assemble {
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         zcat ~{reads} | head -n 400000 | gzip > reads.fa.gz
 
