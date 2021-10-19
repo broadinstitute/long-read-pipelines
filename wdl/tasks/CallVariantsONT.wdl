@@ -22,29 +22,23 @@ workflow CallVariants {
     input {
         File bam
         File bai
-
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
-
         File? sites_vcf
         File? sites_vcf_tbi
-
         String prefix
-
         File? tandem_repeat_bed
+        String? chr
     }
 
     parameter_meta {
         bam:               "input BAM from which to call SVs"
         bai:               "index accompanying the BAM"
-
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         ref_dict:          "sequence dictionary accompanying the reference"
-
         prefix:            "prefix for output files"
-
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 
@@ -91,28 +85,6 @@ workflow CallVariants {
                 prefix = prefix
         }
 
-        # Pending a bug fix
-#        call DV.PEPPER {
-#            input:
-#                bam           = SubsetBam.subset_bam,
-#                bai           = SubsetBam.subset_bai,
-#                ref_fasta     = ref_fasta,
-#                ref_fasta_fai = ref_fasta_fai,
-#                chr           = contig,
-#                preset        = "ONT"
-#        }
-
-        call Longshot.Longshot {
-            input:
-                bam           = SubsetBam.subset_bam,
-                bai           = SubsetBam.subset_bai,
-                ref_fasta     = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                sites_vcf     = sites_vcf,
-                sites_vcf_tbi = sites_vcf_tbi,
-                phase         = false,
-                chr           = contig
-        }
     }
 
     call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
@@ -122,53 +94,8 @@ workflow CallVariants {
             prefix   = prefix + ".pbsv"
     }
 
-    call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
-        input:
-            vcfs     = Sniffles.vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".sniffles"
-    }
-
-#    call VariantUtils.MergePerChrCalls as MergeDeepVariantPhasedVCFs {
-#        input:
-#            vcfs     = select_all(PEPPER.phased_vcf),
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".deepvariant_pepper.phased"
-#    }
-#
-#    call VariantUtils.MergePerChrCalls as MergeDeepVariantGVCFs {
-#        input:
-#            vcfs     = select_all(PEPPER.gvcf),
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".deepvariant_pepper.g"
-#    }
-#
-#    call VariantUtils.MergePerChrCalls as MergeDeepVariantVCFs {
-#        input:
-#            vcfs     = select_all(PEPPER.vcf),
-#            ref_dict = ref_dict,
-#            prefix   = prefix + ".deepvariant_pepper"
-#    }
-
-    call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
-        input:
-            vcfs     = Longshot.vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".longshot"
-    }
 
     output {
-#        File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
-#        File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
-#        File dvp_g_vcf = MergeDeepVariantGVCFs.vcf
-#        File dvp_g_tbi = MergeDeepVariantGVCFs.tbi
-#        File dvp_vcf = MergeDeepVariantVCFs.vcf
-#        File dvp_tbi = MergeDeepVariantVCFs.tbi
-
-        File longshot_vcf = MergeLongshotVCFs.vcf
-        File longshot_tbi = MergeLongshotVCFs.tbi
-
         File pbsv_vcf = MergePBSVVCFs.vcf
-        File sniffles_vcf = MergeSnifflesVCFs.vcf
     }
 }
