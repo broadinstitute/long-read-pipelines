@@ -7,6 +7,14 @@ version 1.0
 ##########################################################################################
 
 import "Structs.wdl"
+import "Utils.wdl"
+import "VariantUtils.wdl"
+import "DeepVariant.wdl" as DV
+import "Sniffles.wdl"
+import "CuteSV.wdl"
+import "SVIM.wdl"
+
+
 
 task Discover {
     input {
@@ -126,5 +134,48 @@ task Call {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+workflow run_pbsv {
+    input {
+        File bam
+        File bai
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+        String prefix
+        File? tandem_repeat_bed
+    }
+
+    parameter_meta {
+        ref_dict:          "sequence dictionary accompanying the reference"
+    }
+
+
+    call Discover {
+        input:
+            bam               = bam,
+            bai               = bai,
+            ref_fasta         = ref_fasta,
+            ref_fasta_fai     = ref_fasta_fai,
+            tandem_repeat_bed = tandem_repeat_bed,
+            prefix            = prefix
+    }
+
+    call Call {
+        input:
+            svsigs        = [ Discover.svsig ],
+            ref_fasta     = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            ccs           = true,
+            prefix        = prefix
+    }
+
+
+    output {
+        File Discover_out = Discover.svsig
+        File Call_out = Call.vcf
+
     }
 }
