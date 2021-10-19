@@ -7,9 +7,11 @@ version 1.0
 ##########################################################################################
 
 import "run_pbsv.wdl" as slow
+#import PBSV.wdl
 
 import "CallVariantsONT_fix.wdl" as fast
 
+    #copy CallVariants workflow here
 
 
 workflow chromosome_condition {
