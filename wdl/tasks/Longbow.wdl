@@ -439,17 +439,20 @@ task Stats
         File array_length_counts_plot_png = "~{prefix}_00_MAS-seq_Array_Length_Counts_~{model}.png"
         File array_length_counts_plot_svg = "~{prefix}_00_MAS-seq_Array_Length_Counts_~{model}.svg"
 
-        File ligation_heatmap_nn_png = "~{prefix}_01_MAS-seq_Ligations_~{model}_no_numbers.png"
-        File ligation_heatmap_nn_svg = "~{prefix}_01_MAS-seq_Ligations_~{model}_no_numbers.svg"
+        File array_element_length_counts_plot_png = "~{prefix}_01_MAS-seq_Array_Element_Length_Counts_~{model}.png"
+        File array_element_length_counts_plot_svg = "~{prefix}_01_MAS-seq_Array_Element_Length_Counts_~{model}.svg"
 
-        File ligation_heatmap_png = "~{prefix}_02_MAS-seq_Ligations_~{model}.png"
-        File ligation_heatmap_svg = "~{prefix}_02_MAS-seq_Ligations_~{model}.svg"
+        File ligation_heatmap_nn_png = "~{prefix}_02_MAS-seq_Ligations_~{model}_no_numbers.png"
+        File ligation_heatmap_nn_svg = "~{prefix}_02_MAS-seq_Ligations_~{model}_no_numbers.svg"
 
-        File ligation_heatmap_nn_reduced_png = "~{prefix}_03_MAS-seq_Ligations_~{model}_reduced_no_numbers.png"
-        File ligation_heatmap_nn_reduced_svg = "~{prefix}_03_MAS-seq_Ligations_~{model}_reduced_no_numbers.svg"
+        File ligation_heatmap_png = "~{prefix}_03_MAS-seq_Ligations_~{model}.png"
+        File ligation_heatmap_svg = "~{prefix}_03_MAS-seq_Ligations_~{model}.svg"
 
-        File ligation_heatmap_reduced_png = "~{prefix}_04_MAS-seq_Ligations_~{model}_reduced.png"
-        File ligation_heatmap_reduced_svg = "~{prefix}_04_MAS-seq_Ligations_~{model}_reduced.svg"
+        File ligation_heatmap_nn_reduced_png = "~{prefix}_04_MAS-seq_Ligations_~{model}_reduced_no_numbers.png"
+        File ligation_heatmap_nn_reduced_svg = "~{prefix}_04_MAS-seq_Ligations_~{model}_reduced_no_numbers.svg"
+
+        File ligation_heatmap_reduced_png = "~{prefix}_05_MAS-seq_Ligations_~{model}_reduced.png"
+        File ligation_heatmap_reduced_svg = "~{prefix}_05_MAS-seq_Ligations_~{model}_reduced.svg"
     }
 
     #########################
