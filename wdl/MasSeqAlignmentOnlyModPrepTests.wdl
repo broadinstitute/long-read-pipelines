@@ -82,22 +82,20 @@ workflow MasSeqAlignmentOnlyModPrepTests {
         preemptible_tries: 0
     }
 
-    # Check to see if we need to annotate our reads:
-    call LONGBOW.CheckForAnnotatedArrayReads as t_07_CheckForAnnotatedReads {
+    call PB.PBIndex as t_02_PbIndexInputBam {
         input:
             bam = bam_file
     }
 
-    File bam_pbi = sub(bam_file, ".bam$", ".bam.pbi")
-    call PB.ShardLongReads as t_05_ShardLongReads {
+    call PB.ShardLongReads as t_03_ShardLongReads {
         input:
             unaligned_bam = bam_file,
-            unaligned_pbi = bam_pbi,
+            unaligned_pbi = t_02_PbIndexInputBam.pbindex,
             prefix = sample_name + "_shard",
             num_shards = primary_scatter_width,
     }
 
-    scatter (sharded_reads in t_05_ShardLongReads.unmapped_shards) {
+    scatter (sharded_reads in t_03_ShardLongReads.unmapped_shards) {
 
         #######################################################################
         ## Setup
@@ -110,7 +108,7 @@ workflow MasSeqAlignmentOnlyModPrepTests {
         #######################################################################
 
         # 1 - filter the reads by the minimum read quality:
-        call Utils.Bamtools as t_08_FilterByMinQual {
+        call Utils.Bamtools as t_04_FilterByMinQual {
             input:
                 bamfile = sharded_reads,
                 prefix = fbmrq_prefix + "_good_reads",
@@ -120,30 +118,30 @@ workflow MasSeqAlignmentOnlyModPrepTests {
         }
 
         # 6: Longbow filter ccs reclaimable reads
-        call LONGBOW.Filter as t_10_FilterCCSReads {
+        call LONGBOW.Filter as t_05_FilterCCSReads {
             input:
-                bam = t_08_FilterByMinQual.bam_out,
+                bam = t_04_FilterByMinQual.bam_out,
                 prefix = sample_name + "_ccs_corrected_subshard",
                 model = mas_seq_model
         }
 
-        call PB.PBIndex as t_11_PbIndexLongbowAnnotatedCCSPassedReads {
+        call PB.PBIndex as t_06_PbIndexLongbowAnnotatedCCSPassedReads {
             input:
-                bam = t_10_FilterCCSReads.passed_reads
+                bam = t_05_FilterCCSReads.passed_reads
         }
 
         # Shard these reads even wider so we can make sure we don't run out of memory:
-        call PB.ShardLongReads as t_12_ShardCorrectedReads {
+        call PB.ShardLongReads as t_07_ShardCorrectedReads {
             input:
-                unaligned_bam = t_10_FilterCCSReads.passed_reads,
-                unaligned_pbi = t_11_PbIndexLongbowAnnotatedCCSPassedReads.pbindex,
+                unaligned_bam = t_05_FilterCCSReads.passed_reads,
+                unaligned_pbi = t_06_PbIndexLongbowAnnotatedCCSPassedReads.pbindex,
                 prefix = sample_name + "_ccs_corrected_longbow_annotated_subshard",
                 num_shards = secondary_scatter_width,
         }
 
         # Segment our arrays into individual array elements:
-        scatter (corrected_shard in t_12_ShardCorrectedReads.unmapped_shards) {
-            call LONGBOW.Segment as t_13_SegmentCCSAnnotatedReads {
+        scatter (corrected_shard in t_07_ShardCorrectedReads.unmapped_shards) {
+            call LONGBOW.Segment as t_08_SegmentCCSAnnotatedReads {
                 input:
                     annotated_reads = corrected_shard,
                     model = mas_seq_model
@@ -151,59 +149,59 @@ workflow MasSeqAlignmentOnlyModPrepTests {
         }
 
         # Merge all outputs of Longbow Annotate / Segment:
-        call Utils.MergeBams as t_14_MergeCCSArrayElements_1 {
+        call Utils.MergeBams as t_09_MergeCCSArrayElements_1 {
             input:
-                bams = t_13_SegmentCCSAnnotatedReads.segmented_bam,
+                bams = t_08_SegmentCCSAnnotatedReads.segmented_bam,
                 prefix = sample_name + "_ccs_corrected_ArrayElements_intermediate_1"
         }
 
         # Align our array elements to the transcriptome:
-        call AR.Minimap2 as t_15_AlignCCSArrayElements {
+        call AR.Minimap2 as t_10_AlignCCSArrayElements {
             input:
-                reads      = [ t_14_MergeCCSArrayElements_1.merged_bam ],
+                reads      = [ t_09_MergeCCSArrayElements_1.merged_bam ],
                 ref_fasta  = transcriptome_ref_fasta,
                 map_preset = "asm20"
         }
 
         # Align our array elements to the genome in splice-aware mode:
-        call AR.Minimap2 as t_16_AlignCCSArrayElementsToGenome {
+        call AR.Minimap2 as t_11_AlignCCSArrayElementsToGenome {
             input:
-                reads      = [ t_14_MergeCCSArrayElements_1.merged_bam ],
+                reads      = [ t_09_MergeCCSArrayElements_1.merged_bam ],
                 ref_fasta  = ref_fasta,
                 map_preset = "splice:hq"
         }
 
         # We need to restore the annotations we created with the 10x tool to the transcriptome aligned reads.
-        call TENX.RestoreAnnotationstoAlignedBam as t_17_RestoreAnnotationsToTranscriptomeAlignedCCSBam {
+        call TENX.RestoreAnnotationstoAlignedBam as t_12_RestoreAnnotationsToTranscriptomeAlignedCCSBam {
             input:
-                annotated_bam_file = t_14_MergeCCSArrayElements_1.merged_bam,
-                aligned_bam_file = t_15_AlignCCSArrayElements.aligned_bam,
+                annotated_bam_file = t_09_MergeCCSArrayElements_1.merged_bam,
+                aligned_bam_file = t_10_AlignCCSArrayElements.aligned_bam,
                 tags_to_ignore = [],
                 mem_gb = 8,
         }
 
         # We need to restore the annotations we created with the 10x tool to the genome aligned reads.
-        call TENX.RestoreAnnotationstoAlignedBam as t_18_RestoreAnnotationsToGenomeAlignedCCSBam {
+        call TENX.RestoreAnnotationstoAlignedBam as t_13_RestoreAnnotationsToGenomeAlignedCCSBam {
             input:
-                annotated_bam_file = t_14_MergeCCSArrayElements_1.merged_bam,
-                aligned_bam_file = t_16_AlignCCSArrayElementsToGenome.aligned_bam,
+                annotated_bam_file = t_09_MergeCCSArrayElements_1.merged_bam,
+                aligned_bam_file = t_11_AlignCCSArrayElementsToGenome.aligned_bam,
                 tags_to_ignore = [],
                 mem_gb = 8,
         }
 
         # To properly count our transcripts we must throw away the non-primary and unaligned reads:
         # Filter out all non-primary transcriptome alignments:
-        call Utils.FilterReadsBySamFlags as t_19_RemoveUnmappedAndNonPrimaryCCSTranscriptomeReads {
+        call Utils.FilterReadsBySamFlags as t_14_RemoveUnmappedAndNonPrimaryCCSTranscriptomeReads {
             input:
-                bam = t_17_RestoreAnnotationsToTranscriptomeAlignedCCSBam.output_bam,
+                bam = t_12_RestoreAnnotationsToTranscriptomeAlignedCCSBam.output_bam,
                 sam_flags = "2308",
                 prefix = sample_name + "_ccs_corrected_ArrayElements_Annotated_Transcriptome_Aligned_PrimaryOnly",
                 runtime_attr_override = filterReadsAttrs
         }
         # Filter out all non-primary genome alignments:
-        call Utils.FilterReadsBySamFlags as t_20_RemoveUnmappedAndNonPrimaryCCSGenomeReads {
+        call Utils.FilterReadsBySamFlags as t_15_RemoveUnmappedAndNonPrimaryCCSGenomeReads {
             input:
-                bam = t_18_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam,
+                bam = t_13_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam,
                 sam_flags = "2308",
                 prefix = sample_name + "_ccs_corrected_ArrayElements_Annotated_Genome_Aligned_PrimaryOnly",
                 runtime_attr_override = filterReadsAttrs
@@ -214,7 +212,7 @@ workflow MasSeqAlignmentOnlyModPrepTests {
         #######################################################################
 
         # 1.5 - Get the "rejected" reads:
-        call Utils.Bamtools as t_21_GetCcsRejectedReads {
+        call Utils.Bamtools as t_16_GetCcsRejectedReads {
             input:
                 bamfile = sharded_reads,
                 prefix = fbmrq_prefix + "_rejected_reads",
@@ -224,7 +222,7 @@ workflow MasSeqAlignmentOnlyModPrepTests {
         }
 
         # 2 - Get reads we can reclaim:
-        call Utils.Bamtools as t_22_ExtractCcsReclaimableReads {
+        call Utils.Bamtools as t_17_ExtractCcsReclaimableReads {
             input:
                 bamfile = sharded_reads,
                 prefix = fbmrq_prefix + "_reads_for_ccs_reclamation",
@@ -233,37 +231,37 @@ workflow MasSeqAlignmentOnlyModPrepTests {
                 runtime_attr_override = disable_preemption_runtime_attrs
         }
 
-        call PB.PBIndex as t_24_PbIndexLongbowAnnotatedReclaimedReads {
+        call PB.PBIndex as t_18_PbIndexLongbowAnnotatedReclaimedReads {
             input:
-                bam = t_22_ExtractCcsReclaimableReads.bam_out
+                bam = t_17_ExtractCcsReclaimableReads.bam_out
         }
 
         # 6: Longbow filter ccs reclaimable reads
-        call LONGBOW.Filter as t_25_FilterReclaimableReads {
+        call LONGBOW.Filter as t_19_FilterReclaimableReads {
             input:
-                bam = t_22_ExtractCcsReclaimableReads.bam_out,
-                bam_pbi = t_24_PbIndexLongbowAnnotatedReclaimedReads.pbindex,
+                bam = t_17_ExtractCcsReclaimableReads.bam_out,
+                bam_pbi = t_18_PbIndexLongbowAnnotatedReclaimedReads.pbindex,
                 prefix = sample_name + "_subshard",
                 model = mas_seq_model
         }
 
-        call PB.PBIndex as t_26_PbIndexLongbowAnnotatedReclaimedPassedReads {
+        call PB.PBIndex as t_20_PbIndexLongbowAnnotatedReclaimedPassedReads {
             input:
-                bam = t_25_FilterReclaimableReads.passed_reads
+                bam = t_19_FilterReclaimableReads.passed_reads
         }
 
         # Shard these reads even wider so we can make sure we don't run out of memory:
-        call PB.ShardLongReads as t_27_ShardReclaimedReads {
+        call PB.ShardLongReads as t_21_ShardReclaimedReads {
             input:
-                unaligned_bam = t_25_FilterReclaimableReads.passed_reads,
-                unaligned_pbi = t_26_PbIndexLongbowAnnotatedReclaimedPassedReads.pbindex,
+                unaligned_bam = t_19_FilterReclaimableReads.passed_reads,
+                unaligned_pbi = t_20_PbIndexLongbowAnnotatedReclaimedPassedReads.pbindex,
                 prefix = sample_name + "_ccs_reclaimed_longbow_annotated_subshard",
                 num_shards = secondary_scatter_width,
         }
 
         # Segment our arrays into individual array elements:
-        scatter (corrected_shard in t_27_ShardReclaimedReads.unmapped_shards) {
-            call LONGBOW.Segment as t_28_SegmentReclaimedAnnotatedReads {
+        scatter (corrected_shard in t_21_ShardReclaimedReads.unmapped_shards) {
+            call LONGBOW.Segment as t_22_SegmentReclaimedAnnotatedReads {
                 input:
                     annotated_reads = corrected_shard,
                     model = mas_seq_model
@@ -271,59 +269,59 @@ workflow MasSeqAlignmentOnlyModPrepTests {
         }
 
         # Merge all outputs of Longbow Annotate / Segment:
-        call Utils.MergeBams as t_29_MergeReclaimedArrayElements_1 {
+        call Utils.MergeBams as t_23_MergeReclaimedArrayElements_1 {
             input:
-                bams = t_28_SegmentReclaimedAnnotatedReads.segmented_bam,
+                bams = t_22_SegmentReclaimedAnnotatedReads.segmented_bam,
                 prefix = sample_name + "_ccs_reclaimed_ArrayElements_intermediate_1"
         }
 
         # Align our array elements to the transcriptome:
-        call AR.Minimap2 as t_30_AlignReclaimedArrayElements {
+        call AR.Minimap2 as t_24_AlignReclaimedArrayElements {
             input:
-                reads      = [ t_29_MergeReclaimedArrayElements_1.merged_bam ],
+                reads      = [ t_23_MergeReclaimedArrayElements_1.merged_bam ],
                 ref_fasta  = transcriptome_ref_fasta,
                 map_preset = "asm20"
         }
 
         # Align our array elements to the genome in splice-aware mode:
-        call AR.Minimap2 as t_31_AlignReclaimedArrayElementsToGenome {
+        call AR.Minimap2 as t_25_AlignReclaimedArrayElementsToGenome {
             input:
-                reads      = [ t_29_MergeReclaimedArrayElements_1.merged_bam ],
+                reads      = [ t_23_MergeReclaimedArrayElements_1.merged_bam ],
                 ref_fasta  = ref_fasta,
                 map_preset = "splice:hq"
         }
 
         # We need to restore the annotations we created with the 10x tool to the transcriptome aligned reads.
-        call TENX.RestoreAnnotationstoAlignedBam as t_32_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam {
+        call TENX.RestoreAnnotationstoAlignedBam as t_26_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam {
             input:
-                annotated_bam_file = t_29_MergeReclaimedArrayElements_1.merged_bam,
-                aligned_bam_file = t_30_AlignReclaimedArrayElements.aligned_bam,
+                annotated_bam_file = t_23_MergeReclaimedArrayElements_1.merged_bam,
+                aligned_bam_file = t_24_AlignReclaimedArrayElements.aligned_bam,
                 tags_to_ignore = [],
                 mem_gb = 8,
         }
 
         # We need to restore the annotations we created with the 10x tool to the genome aligned reads.
-        call TENX.RestoreAnnotationstoAlignedBam as t_33_RestoreAnnotationsToGenomeAlignedReclaimedBam {
+        call TENX.RestoreAnnotationstoAlignedBam as t_27_RestoreAnnotationsToGenomeAlignedReclaimedBam {
             input:
-                annotated_bam_file = t_29_MergeReclaimedArrayElements_1.merged_bam,
-                aligned_bam_file = t_31_AlignReclaimedArrayElementsToGenome.aligned_bam,
+                annotated_bam_file = t_23_MergeReclaimedArrayElements_1.merged_bam,
+                aligned_bam_file = t_25_AlignReclaimedArrayElementsToGenome.aligned_bam,
                 tags_to_ignore = [],
                 mem_gb = 8,
         }
 
         # To properly count our transcripts we must throw away the non-primary and unaligned reads:
         # Filter out all non-primary transcriptome alignments:
-        call Utils.FilterReadsBySamFlags as t_34_RemoveUnmappedAndNonPrimaryTranscriptomeReclaimedReads {
+        call Utils.FilterReadsBySamFlags as t_28_RemoveUnmappedAndNonPrimaryTranscriptomeReclaimedReads {
             input:
-                bam = t_32_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam.output_bam,
+                bam = t_26_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam.output_bam,
                 sam_flags = "2308",
                 prefix = sample_name + "_ccs_reclaimed_ArrayElements_Annotated_Transcriptome_Aligned_PrimaryOnly",
                 runtime_attr_override = filterReadsAttrs
         }
         # Filter out all non-primary genome alignments:
-        call Utils.FilterReadsBySamFlags as t_35_RemoveUnmappedAndNonPrimaryGenomeReclaimedReads {
+        call Utils.FilterReadsBySamFlags as t_29_RemoveUnmappedAndNonPrimaryGenomeReclaimedReads {
             input:
-                bam = t_33_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
+                bam = t_27_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
                 sam_flags = "2308",
                 prefix = sample_name + "_ccs_reclaimed_ArrayElements_Annotated_Genome_Aligned_PrimaryOnly",
                 runtime_attr_override = filterReadsAttrs
@@ -348,40 +346,40 @@ workflow MasSeqAlignmentOnlyModPrepTests {
 
     #################################################
     # CCS Passed:
-    call Utils.MergeBams as t_36_MergeCCSReads { input: bams = t_08_FilterByMinQual.bam_out, prefix = sample_name + "_ccs_reads" }
+    call Utils.MergeBams as t_30_MergeCCSReads { input: bams = t_04_FilterByMinQual.bam_out, prefix = sample_name + "_ccs_reads" }
 
     # Merge all CCS bams together for this Subread BAM:
-    call Utils.MergeBams as t_38_MergePassedCCSReads { input: bams = t_10_FilterCCSReads.passed_reads, prefix = sample_name + "_ccs_longbow_passed_reads" }
-    call Utils.MergeBams as t_39_MergeFailedCCSReads { input: bams = t_10_FilterCCSReads.failed_reads, prefix = sample_name + "_ccs_longbow_failed_reads" }
-    call Utils.MergeBams as t_40_MergeCCSArrayElements { input: bams = t_14_MergeCCSArrayElements_1.merged_bam, prefix = sample_name + "_ccs_array_elements" }
-    call Utils.MergeBams as t_41_MergeTranscriptomeAlignedCCSArrayElements { input: bams = t_17_RestoreAnnotationsToTranscriptomeAlignedCCSBam.output_bam, prefix = sample_name + "_ccs_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_42_MergeGenomeAlignedCCSArrayElements { input: bams = t_18_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam, prefix = sample_name + "_ccs_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_43_MergePrimaryTranscriptomeAlignedCCSArrayElements { input: bams = t_19_RemoveUnmappedAndNonPrimaryCCSTranscriptomeReads.output_bam, prefix = sample_name + "_ccs_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_44_MergePrimaryGenomeAlignedCCSArrayElements { input: bams = t_20_RemoveUnmappedAndNonPrimaryCCSGenomeReads.output_bam, prefix = sample_name + "_ccs_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_31_MergePassedCCSReads { input: bams = t_05_FilterCCSReads.passed_reads, prefix = sample_name + "_ccs_longbow_passed_reads" }
+    call Utils.MergeBams as t_32_MergeFailedCCSReads { input: bams = t_05_FilterCCSReads.failed_reads, prefix = sample_name + "_ccs_longbow_failed_reads" }
+    call Utils.MergeBams as t_33_MergeCCSArrayElements { input: bams = t_09_MergeCCSArrayElements_1.merged_bam, prefix = sample_name + "_ccs_array_elements" }
+    call Utils.MergeBams as t_34_MergeTranscriptomeAlignedCCSArrayElements { input: bams = t_12_RestoreAnnotationsToTranscriptomeAlignedCCSBam.output_bam, prefix = sample_name + "_ccs_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_35_MergeGenomeAlignedCCSArrayElements { input: bams = t_13_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam, prefix = sample_name + "_ccs_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_36_MergePrimaryTranscriptomeAlignedCCSArrayElements { input: bams = t_14_RemoveUnmappedAndNonPrimaryCCSTranscriptomeReads.output_bam, prefix = sample_name + "_ccs_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_37_MergePrimaryGenomeAlignedCCSArrayElements { input: bams = t_15_RemoveUnmappedAndNonPrimaryCCSGenomeReads.output_bam, prefix = sample_name + "_ccs_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
 
     #################################################
     # CCS Reclaimed:
-    call Utils.MergeBams as t_45_MergeCCSReclaimableReads { input: bams = t_22_ExtractCcsReclaimableReads.bam_out, prefix = sample_name + "_reclaimable_reads" }
+    call Utils.MergeBams as t_38_MergeCCSReclaimableReads { input: bams = t_17_ExtractCcsReclaimableReads.bam_out, prefix = sample_name + "_reclaimable_reads" }
 
     # Merge all CCS bams together for this Subread BAM:
-    call Utils.MergeBams as t_47_MergePassedCCSReclaimedReads { input: bams = t_25_FilterReclaimableReads.passed_reads, prefix = sample_name + "_reclaimable_longbow_passed_reads" }
-    call Utils.MergeBams as t_48_MergeFailedCCSReclaimableReads { input: bams = t_25_FilterReclaimableReads.failed_reads, prefix = sample_name + "_reclaimed_longbow_failed_reads" }
-    call Utils.MergeBams as t_49_MergeCCSReclaimedArrayElements { input: bams = t_29_MergeReclaimedArrayElements_1.merged_bam, prefix = sample_name + "_reclaimed_array_elements" }
-    call Utils.MergeBams as t_50_MergeTranscriptomeAlignedCCSReclaimedArrayElements { input: bams = t_32_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam.output_bam, prefix = sample_name + "_reclaimed_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_51_MergeGenomeAlignedCCSReclaimedArrayElements { input: bams = t_33_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam, prefix = sample_name + "_reclaimed_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_52_MergePrimaryTranscriptomeAlignedCCSReclaimedArrayElements { input: bams = t_34_RemoveUnmappedAndNonPrimaryTranscriptomeReclaimedReads.output_bam, prefix = sample_name + "_reclaimed_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_53_MergePrimaryGenomeAlignedCCSReclaimedArrayElements { input: bams = t_35_RemoveUnmappedAndNonPrimaryGenomeReclaimedReads.output_bam, prefix = sample_name + "_reclaimed_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_39_MergePassedCCSReclaimedReads { input: bams = t_19_FilterReclaimableReads.passed_reads, prefix = sample_name + "_reclaimable_longbow_passed_reads" }
+    call Utils.MergeBams as t_40_MergeFailedCCSReclaimableReads { input: bams = t_19_FilterReclaimableReads.failed_reads, prefix = sample_name + "_reclaimed_longbow_failed_reads" }
+    call Utils.MergeBams as t_41_MergeCCSReclaimedArrayElements { input: bams = t_23_MergeReclaimedArrayElements_1.merged_bam, prefix = sample_name + "_reclaimed_array_elements" }
+    call Utils.MergeBams as t_42_MergeTranscriptomeAlignedCCSReclaimedArrayElements { input: bams = t_26_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam.output_bam, prefix = sample_name + "_reclaimed_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_43_MergeGenomeAlignedCCSReclaimedArrayElements { input: bams = t_27_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam, prefix = sample_name + "_reclaimed_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_44_MergePrimaryTranscriptomeAlignedCCSReclaimedArrayElements { input: bams = t_28_RemoveUnmappedAndNonPrimaryTranscriptomeReclaimedReads.output_bam, prefix = sample_name + "_reclaimed_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_45_MergePrimaryGenomeAlignedCCSReclaimedArrayElements { input: bams = t_29_RemoveUnmappedAndNonPrimaryGenomeReclaimedReads.output_bam, prefix = sample_name + "_reclaimed_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
 
     #################################################
     # Overall:
-    call Utils.MergeBams as t_55_MergeAllLongbowPassedReads { input: bams = flatten([t_10_FilterCCSReads.passed_reads, t_25_FilterReclaimableReads.passed_reads]), prefix = sample_name + "_all_longbow_passed_reads" }
-    call Utils.MergeBams as t_56_MergeAllLongbowFailedReads { input: bams = flatten([t_10_FilterCCSReads.failed_reads, t_25_FilterReclaimableReads.failed_reads]), prefix = sample_name + "_all_longbow_failed_reads" }
+    call Utils.MergeBams as t_46_MergeAllLongbowPassedReads { input: bams = flatten([t_05_FilterCCSReads.passed_reads, t_19_FilterReclaimableReads.passed_reads]), prefix = sample_name + "_all_longbow_passed_reads" }
+    call Utils.MergeBams as t_47_MergeAllLongbowFailedReads { input: bams = flatten([t_05_FilterCCSReads.failed_reads, t_19_FilterReclaimableReads.failed_reads]), prefix = sample_name + "_all_longbow_failed_reads" }
 
-    call Utils.MergeBams as t_57_MergeAllArrayElements { input: bams = flatten([t_14_MergeCCSArrayElements_1.merged_bam, t_29_MergeReclaimedArrayElements_1.merged_bam]), prefix = sample_name + "_all_array_elements", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_58_MergeAllTranscriptomeAlignedArrayElements { input: bams = flatten([t_17_RestoreAnnotationsToTranscriptomeAlignedCCSBam.output_bam, t_32_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam.output_bam]), prefix = sample_name + "_all_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_59_MergeAllGenomeAlignedArrayElements { input: bams = flatten([t_18_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam, t_33_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam]), prefix = sample_name + "_all_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_60_MergeAllPrimaryTranscriptomeAlignedArrayElements { input: bams = flatten([t_19_RemoveUnmappedAndNonPrimaryCCSTranscriptomeReads.output_bam, t_34_RemoveUnmappedAndNonPrimaryTranscriptomeReclaimedReads.output_bam]), prefix = sample_name + "_all_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
-    call Utils.MergeBams as t_61_MergeAllPrimaryGenomeAlignedArrayElements { input: bams = flatten([t_20_RemoveUnmappedAndNonPrimaryCCSGenomeReads.output_bam, t_35_RemoveUnmappedAndNonPrimaryGenomeReclaimedReads.output_bam]), prefix = sample_name + "_all_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_48_MergeAllArrayElements { input: bams = flatten([t_09_MergeCCSArrayElements_1.merged_bam, t_23_MergeReclaimedArrayElements_1.merged_bam]), prefix = sample_name + "_all_array_elements", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_49_MergeAllTranscriptomeAlignedArrayElements { input: bams = flatten([t_12_RestoreAnnotationsToTranscriptomeAlignedCCSBam.output_bam, t_26_RestoreAnnotationsToTranscriptomeAlignedReclaimedBam.output_bam]), prefix = sample_name + "_all_array_elements_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_50_MergeAllGenomeAlignedArrayElements { input: bams = flatten([t_13_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam, t_27_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam]), prefix = sample_name + "_all_array_elements_genome_aligned", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_51_MergeAllPrimaryTranscriptomeAlignedArrayElements { input: bams = flatten([t_14_RemoveUnmappedAndNonPrimaryCCSTranscriptomeReads.output_bam, t_28_RemoveUnmappedAndNonPrimaryTranscriptomeReclaimedReads.output_bam]), prefix = sample_name + "_all_array_elements_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    call Utils.MergeBams as t_52_MergeAllPrimaryGenomeAlignedArrayElements { input: bams = flatten([t_15_RemoveUnmappedAndNonPrimaryCCSGenomeReads.output_bam, t_29_RemoveUnmappedAndNonPrimaryGenomeReclaimedReads.output_bam]), prefix = sample_name + "_all_array_elements_genome_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
 
     #################################################
     #   ___      ____
@@ -393,39 +391,39 @@ workflow MasSeqAlignmentOnlyModPrepTests {
     #################################################
 
     # Get stats on CCS reads:
-    call LONGBOW.Stats as t_62_CCS_longbow_stats {
+    call LONGBOW.Stats as t_53_CCS_longbow_stats {
         input:
-            reads = t_36_MergeCCSReads.merged_bam,
+            reads = t_30_MergeCCSReads.merged_bam,
             model = mas_seq_model,
             prefix = sample_name + "_CCS_Corrected"
     }
 
     # Get stats on Reclaimable reads:
-    call LONGBOW.Stats as t_63_Reclaimable_longbow_stats {
+    call LONGBOW.Stats as t_54_Reclaimable_longbow_stats {
         input:
-            reads = t_45_MergeCCSReclaimableReads.merged_bam,
+            reads = t_38_MergeCCSReclaimableReads.merged_bam,
             model = mas_seq_model,
             prefix = sample_name + "_CCS_Reclaimable"
     }
 
     # Get stats on Reclaimed reads:
-    call LONGBOW.Stats as t_64_Reclaimed_longbow_stats {
+    call LONGBOW.Stats as t_55_Reclaimed_longbow_stats {
         input:
-            reads = t_47_MergePassedCCSReclaimedReads.merged_bam,
+            reads = t_39_MergePassedCCSReclaimedReads.merged_bam,
             model = mas_seq_model,
             prefix = sample_name + "_CCS_Reclaimed"
     }
 
     # Get stats on All reads (overall stats):
-    call LONGBOW.Stats as t_65_Passed_longbow_stats {
+    call LONGBOW.Stats as t_56_Passed_longbow_stats {
         input:
-            reads = t_55_MergeAllLongbowPassedReads.merged_bam,
+            reads = t_46_MergeAllLongbowPassedReads.merged_bam,
             model = mas_seq_model,
             prefix = sample_name + "_All_Longbow_Passed"
     }
 
     # Get stats on All reads (overall stats):
-    call LONGBOW.Stats as t_66_Overall_longbow_stats {
+    call LONGBOW.Stats as t_57_Overall_longbow_stats {
         input:
             reads = bam_file,
             model = mas_seq_model,
@@ -450,204 +448,204 @@ workflow MasSeqAlignmentOnlyModPrepTests {
 
     ##############################################################################################################
     # Finalize the CCS Array Reads
-    call FF.FinalizeToDir as t_67_FinalizeCCSReads {
+    call FF.FinalizeToDir as t_58_FinalizeCCSReads {
         input:
             files = [
-                t_36_MergeCCSReads.merged_bam,
-                t_36_MergeCCSReads.merged_bai,
+                t_30_MergeCCSReads.merged_bam,
+                t_30_MergeCCSReads.merged_bai,
             ],
             outdir = arrays_dir,
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
     # Finalize the Reclaimed Array Reads
-    call FF.FinalizeToDir as t_68_FinalizeCCSReclaimedReads {
+    call FF.FinalizeToDir as t_59_FinalizeCCSReclaimedReads {
         input:
             files = [
-                t_45_MergeCCSReclaimableReads.merged_bam,
-                t_45_MergeCCSReclaimableReads.merged_bai,
-                t_47_MergePassedCCSReclaimedReads.merged_bam,
-                t_47_MergePassedCCSReclaimedReads.merged_bai,
-                t_48_MergeFailedCCSReclaimableReads.merged_bam,
-                t_48_MergeFailedCCSReclaimableReads.merged_bai,
+                t_38_MergeCCSReclaimableReads.merged_bam,
+                t_38_MergeCCSReclaimableReads.merged_bai,
+                t_39_MergePassedCCSReclaimedReads.merged_bam,
+                t_39_MergePassedCCSReclaimedReads.merged_bai,
+                t_40_MergeFailedCCSReclaimableReads.merged_bam,
+                t_40_MergeFailedCCSReclaimableReads.merged_bai,
             ],
             outdir = arrays_dir,
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
     # Finalize the Overall Array Reads
-    call FF.FinalizeToDir as t_69_FinalizeOverallCombinedReads {
+    call FF.FinalizeToDir as t_60_FinalizeOverallCombinedReads {
         input:
             files = [
-                t_55_MergeAllLongbowPassedReads.merged_bam,
-                t_55_MergeAllLongbowPassedReads.merged_bai,
-                t_56_MergeAllLongbowFailedReads.merged_bam,
-                t_56_MergeAllLongbowFailedReads.merged_bai,
+                t_46_MergeAllLongbowPassedReads.merged_bam,
+                t_46_MergeAllLongbowPassedReads.merged_bai,
+                t_47_MergeAllLongbowFailedReads.merged_bam,
+                t_47_MergeAllLongbowFailedReads.merged_bai,
             ],
             outdir = arrays_dir,
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
     # Finalize the CCS Array Element files
-    call FF.FinalizeToDir as t_70_FinalizeCCSArrayElements {
+    call FF.FinalizeToDir as t_61_FinalizeCCSArrayElements {
         input:
             files = [
-                t_40_MergeCCSArrayElements.merged_bam,
-                t_40_MergeCCSArrayElements.merged_bai,
-                t_41_MergeTranscriptomeAlignedCCSArrayElements.merged_bam,
-                t_41_MergeTranscriptomeAlignedCCSArrayElements.merged_bai,
-                t_42_MergeGenomeAlignedCCSArrayElements.merged_bam,
-                t_42_MergeGenomeAlignedCCSArrayElements.merged_bai,
-                t_43_MergePrimaryTranscriptomeAlignedCCSArrayElements.merged_bam,
-                t_43_MergePrimaryTranscriptomeAlignedCCSArrayElements.merged_bai,
-                t_44_MergePrimaryGenomeAlignedCCSArrayElements.merged_bam,
-                t_44_MergePrimaryGenomeAlignedCCSArrayElements.merged_bai,
+                t_33_MergeCCSArrayElements.merged_bam,
+                t_33_MergeCCSArrayElements.merged_bai,
+                t_34_MergeTranscriptomeAlignedCCSArrayElements.merged_bam,
+                t_34_MergeTranscriptomeAlignedCCSArrayElements.merged_bai,
+                t_35_MergeGenomeAlignedCCSArrayElements.merged_bam,
+                t_35_MergeGenomeAlignedCCSArrayElements.merged_bai,
+                t_36_MergePrimaryTranscriptomeAlignedCCSArrayElements.merged_bam,
+                t_36_MergePrimaryTranscriptomeAlignedCCSArrayElements.merged_bai,
+                t_37_MergePrimaryGenomeAlignedCCSArrayElements.merged_bam,
+                t_37_MergePrimaryGenomeAlignedCCSArrayElements.merged_bai,
             ],
             outdir = array_element_dir,
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
     # Finalize the Reclaimed Array Element files
-    call FF.FinalizeToDir as t_71_FinalizeCCSRecaimedArrayElements {
+    call FF.FinalizeToDir as t_62_FinalizeCCSRecaimedArrayElements {
         input:
             files = [
-                t_49_MergeCCSReclaimedArrayElements.merged_bam,
-                t_49_MergeCCSReclaimedArrayElements.merged_bai,
-                t_50_MergeTranscriptomeAlignedCCSReclaimedArrayElements.merged_bam,
-                t_50_MergeTranscriptomeAlignedCCSReclaimedArrayElements.merged_bai,
-                t_51_MergeGenomeAlignedCCSReclaimedArrayElements.merged_bam,
-                t_51_MergeGenomeAlignedCCSReclaimedArrayElements.merged_bai,
-                t_52_MergePrimaryTranscriptomeAlignedCCSReclaimedArrayElements.merged_bam,
-                t_52_MergePrimaryTranscriptomeAlignedCCSReclaimedArrayElements.merged_bai,
-                t_53_MergePrimaryGenomeAlignedCCSReclaimedArrayElements.merged_bam,
-                t_53_MergePrimaryGenomeAlignedCCSReclaimedArrayElements.merged_bai,
+                t_41_MergeCCSReclaimedArrayElements.merged_bam,
+                t_41_MergeCCSReclaimedArrayElements.merged_bai,
+                t_42_MergeTranscriptomeAlignedCCSReclaimedArrayElements.merged_bam,
+                t_42_MergeTranscriptomeAlignedCCSReclaimedArrayElements.merged_bai,
+                t_43_MergeGenomeAlignedCCSReclaimedArrayElements.merged_bam,
+                t_43_MergeGenomeAlignedCCSReclaimedArrayElements.merged_bai,
+                t_44_MergePrimaryTranscriptomeAlignedCCSReclaimedArrayElements.merged_bam,
+                t_44_MergePrimaryTranscriptomeAlignedCCSReclaimedArrayElements.merged_bai,
+                t_45_MergePrimaryGenomeAlignedCCSReclaimedArrayElements.merged_bam,
+                t_45_MergePrimaryGenomeAlignedCCSReclaimedArrayElements.merged_bai,
             ],
             outdir = array_element_dir,
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
     # Finalize the Overall Array Element files
-    call FF.FinalizeToDir as t_72_FinalizeOverallArrayElements {
+    call FF.FinalizeToDir as t_63_FinalizeOverallArrayElements {
         input:
             files = [
-                t_57_MergeAllArrayElements.merged_bam,
-                t_57_MergeAllArrayElements.merged_bai,
-                t_58_MergeAllTranscriptomeAlignedArrayElements.merged_bam,
-                t_58_MergeAllTranscriptomeAlignedArrayElements.merged_bai,
-                t_59_MergeAllGenomeAlignedArrayElements.merged_bam,
-                t_59_MergeAllGenomeAlignedArrayElements.merged_bai,
-                t_60_MergeAllPrimaryTranscriptomeAlignedArrayElements.merged_bam,
-                t_60_MergeAllPrimaryTranscriptomeAlignedArrayElements.merged_bai,
-                t_61_MergeAllPrimaryGenomeAlignedArrayElements.merged_bam,
-                t_61_MergeAllPrimaryGenomeAlignedArrayElements.merged_bai,
+                t_48_MergeAllArrayElements.merged_bam,
+                t_48_MergeAllArrayElements.merged_bai,
+                t_49_MergeAllTranscriptomeAlignedArrayElements.merged_bam,
+                t_49_MergeAllTranscriptomeAlignedArrayElements.merged_bai,
+                t_50_MergeAllGenomeAlignedArrayElements.merged_bam,
+                t_50_MergeAllGenomeAlignedArrayElements.merged_bai,
+                t_51_MergeAllPrimaryTranscriptomeAlignedArrayElements.merged_bam,
+                t_51_MergeAllPrimaryTranscriptomeAlignedArrayElements.merged_bai,
+                t_52_MergeAllPrimaryGenomeAlignedArrayElements.merged_bam,
+                t_52_MergeAllPrimaryGenomeAlignedArrayElements.merged_bai,
             ],
             outdir = array_element_dir,
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
     # Finalize the different stats files to separate directories
-    call FF.FinalizeToDir as t_74_FinalizeCCSLongbowStats {
+    call FF.FinalizeToDir as t_64_FinalizeCCSLongbowStats {
         input:
             files = [
-                t_62_CCS_longbow_stats.summary_stats,
-                t_62_CCS_longbow_stats.array_length_counts_plot_png,
-                t_62_CCS_longbow_stats.array_length_counts_plot_svg,
-                t_62_CCS_longbow_stats.ligation_heatmap_nn_png,
-                t_62_CCS_longbow_stats.ligation_heatmap_nn_svg,
-                t_62_CCS_longbow_stats.ligation_heatmap_png,
-                t_62_CCS_longbow_stats.ligation_heatmap_svg,
-                t_62_CCS_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_62_CCS_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_62_CCS_longbow_stats.ligation_heatmap_reduced_png,
-                t_62_CCS_longbow_stats.ligation_heatmap_reduced_svg,
+                t_53_CCS_longbow_stats.summary_stats,
+                t_53_CCS_longbow_stats.array_length_counts_plot_png,
+                t_53_CCS_longbow_stats.array_length_counts_plot_svg,
+                t_53_CCS_longbow_stats.ligation_heatmap_nn_png,
+                t_53_CCS_longbow_stats.ligation_heatmap_nn_svg,
+                t_53_CCS_longbow_stats.ligation_heatmap_png,
+                t_53_CCS_longbow_stats.ligation_heatmap_svg,
+                t_53_CCS_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_53_CCS_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_53_CCS_longbow_stats.ligation_heatmap_reduced_png,
+                t_53_CCS_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = base_out_dir + "/longbow_stats/CCS_Corrected/",
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
-    call FF.FinalizeToDir as t_75_FinalizeReclaimableLongbowStats {
+    call FF.FinalizeToDir as t_65_FinalizeReclaimableLongbowStats {
         input:
             files = [
-                t_63_Reclaimable_longbow_stats.summary_stats,
-                t_63_Reclaimable_longbow_stats.array_length_counts_plot_png,
-                t_63_Reclaimable_longbow_stats.array_length_counts_plot_svg,
-                t_63_Reclaimable_longbow_stats.ligation_heatmap_nn_png,
-                t_63_Reclaimable_longbow_stats.ligation_heatmap_nn_svg,
-                t_63_Reclaimable_longbow_stats.ligation_heatmap_png,
-                t_63_Reclaimable_longbow_stats.ligation_heatmap_svg,
-                t_63_Reclaimable_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_63_Reclaimable_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_63_Reclaimable_longbow_stats.ligation_heatmap_reduced_png,
-                t_63_Reclaimable_longbow_stats.ligation_heatmap_reduced_svg,
+                t_54_Reclaimable_longbow_stats.summary_stats,
+                t_54_Reclaimable_longbow_stats.array_length_counts_plot_png,
+                t_54_Reclaimable_longbow_stats.array_length_counts_plot_svg,
+                t_54_Reclaimable_longbow_stats.ligation_heatmap_nn_png,
+                t_54_Reclaimable_longbow_stats.ligation_heatmap_nn_svg,
+                t_54_Reclaimable_longbow_stats.ligation_heatmap_png,
+                t_54_Reclaimable_longbow_stats.ligation_heatmap_svg,
+                t_54_Reclaimable_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_54_Reclaimable_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_54_Reclaimable_longbow_stats.ligation_heatmap_reduced_png,
+                t_54_Reclaimable_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = base_out_dir + "/longbow_stats/CCS_Reclaimable/",
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
-    call FF.FinalizeToDir as t_76_FinalizeReclaimedLongbowStats {
+    call FF.FinalizeToDir as t_66_FinalizeReclaimedLongbowStats {
         input:
             files = [
-                t_64_Reclaimed_longbow_stats.summary_stats,
-                t_64_Reclaimed_longbow_stats.array_length_counts_plot_png,
-                t_64_Reclaimed_longbow_stats.array_length_counts_plot_svg,
-                t_64_Reclaimed_longbow_stats.ligation_heatmap_nn_png,
-                t_64_Reclaimed_longbow_stats.ligation_heatmap_nn_svg,
-                t_64_Reclaimed_longbow_stats.ligation_heatmap_png,
-                t_64_Reclaimed_longbow_stats.ligation_heatmap_svg,
-                t_64_Reclaimed_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_64_Reclaimed_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_64_Reclaimed_longbow_stats.ligation_heatmap_reduced_png,
-                t_64_Reclaimed_longbow_stats.ligation_heatmap_reduced_svg,
+                t_55_Reclaimed_longbow_stats.summary_stats,
+                t_55_Reclaimed_longbow_stats.array_length_counts_plot_png,
+                t_55_Reclaimed_longbow_stats.array_length_counts_plot_svg,
+                t_55_Reclaimed_longbow_stats.ligation_heatmap_nn_png,
+                t_55_Reclaimed_longbow_stats.ligation_heatmap_nn_svg,
+                t_55_Reclaimed_longbow_stats.ligation_heatmap_png,
+                t_55_Reclaimed_longbow_stats.ligation_heatmap_svg,
+                t_55_Reclaimed_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_55_Reclaimed_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_55_Reclaimed_longbow_stats.ligation_heatmap_reduced_png,
+                t_55_Reclaimed_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = base_out_dir + "/longbow_stats/CCS_Reclaimed/",
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
-    call FF.FinalizeToDir as t_77_FinalizeOverallLongbowStats {
+    call FF.FinalizeToDir as t_67_FinalizeOverallLongbowStats {
         input:
             files = [
-                t_66_Overall_longbow_stats.summary_stats,
-                t_66_Overall_longbow_stats.array_length_counts_plot_png,
-                t_66_Overall_longbow_stats.array_length_counts_plot_svg,
-                t_66_Overall_longbow_stats.ligation_heatmap_nn_png,
-                t_66_Overall_longbow_stats.ligation_heatmap_nn_svg,
-                t_66_Overall_longbow_stats.ligation_heatmap_png,
-                t_66_Overall_longbow_stats.ligation_heatmap_svg,
-                t_66_Overall_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_66_Overall_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_66_Overall_longbow_stats.ligation_heatmap_reduced_png,
-                t_66_Overall_longbow_stats.ligation_heatmap_reduced_svg,
+                t_57_Overall_longbow_stats.summary_stats,
+                t_57_Overall_longbow_stats.array_length_counts_plot_png,
+                t_57_Overall_longbow_stats.array_length_counts_plot_svg,
+                t_57_Overall_longbow_stats.ligation_heatmap_nn_png,
+                t_57_Overall_longbow_stats.ligation_heatmap_nn_svg,
+                t_57_Overall_longbow_stats.ligation_heatmap_png,
+                t_57_Overall_longbow_stats.ligation_heatmap_svg,
+                t_57_Overall_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_57_Overall_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_57_Overall_longbow_stats.ligation_heatmap_reduced_png,
+                t_57_Overall_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = base_out_dir + "/longbow_stats/Overall/",
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
-    call FF.FinalizeToDir as t_78_FinalizeAllPassedLongbowStats {
+    call FF.FinalizeToDir as t_68_FinalizeAllPassedLongbowStats {
         input:
             files = [
-                t_65_Passed_longbow_stats.summary_stats,
-                t_65_Passed_longbow_stats.array_length_counts_plot_png,
-                t_65_Passed_longbow_stats.array_length_counts_plot_svg,
-                t_65_Passed_longbow_stats.ligation_heatmap_nn_png,
-                t_65_Passed_longbow_stats.ligation_heatmap_nn_svg,
-                t_65_Passed_longbow_stats.ligation_heatmap_png,
-                t_65_Passed_longbow_stats.ligation_heatmap_svg,
-                t_65_Passed_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_65_Passed_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_65_Passed_longbow_stats.ligation_heatmap_reduced_png,
-                t_65_Passed_longbow_stats.ligation_heatmap_reduced_svg,
+                t_56_Passed_longbow_stats.summary_stats,
+                t_56_Passed_longbow_stats.array_length_counts_plot_png,
+                t_56_Passed_longbow_stats.array_length_counts_plot_svg,
+                t_56_Passed_longbow_stats.ligation_heatmap_nn_png,
+                t_56_Passed_longbow_stats.ligation_heatmap_nn_svg,
+                t_56_Passed_longbow_stats.ligation_heatmap_png,
+                t_56_Passed_longbow_stats.ligation_heatmap_svg,
+                t_56_Passed_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_56_Passed_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_56_Passed_longbow_stats.ligation_heatmap_reduced_png,
+                t_56_Passed_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = base_out_dir + "/longbow_stats/All_Longbow_Passed/",
-            keyfile = t_66_Overall_longbow_stats.summary_stats
+            keyfile = t_57_Overall_longbow_stats.summary_stats
     }
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good
-    call FF.WriteCompletionFile as t_79_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_69_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
-            keyfile =  t_66_Overall_longbow_stats.summary_stats
+            keyfile =  t_57_Overall_longbow_stats.summary_stats
     }
 }
