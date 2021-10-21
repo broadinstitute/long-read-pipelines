@@ -8,7 +8,7 @@ version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
-import "tasks/meta_pbsv" as VAR
+import "tasks/CallVariantsPBCCS" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSWholeGenome {

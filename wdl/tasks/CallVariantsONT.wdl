@@ -11,8 +11,6 @@ import "Utils.wdl"
 import "VariantUtils.wdl"
 
 import "DeepVariant.wdl" as DV
-import "Longshot.wdl"
-
 import "PBSV.wdl"
 import "Sniffles.wdl"
 import "CuteSV.wdl"
@@ -25,12 +23,9 @@ workflow CallVariants {
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
-        File? sites_vcf
-        File? sites_vcf_tbi
         String prefix
         File? tandem_repeat_bed
         Boolean fast_less_sensitive
-
     }
 
     parameter_meta {
@@ -95,6 +90,13 @@ workflow CallVariants {
             vcfs     = Call.vcf,
             ref_dict = ref_dict,
             prefix   = prefix + ".pbsv"
+    }
+
+    call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
+        input:
+            vcfs     = Sniffles.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".sniffles"
     }
 
     }
