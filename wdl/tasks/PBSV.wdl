@@ -14,7 +14,48 @@ import "Sniffles.wdl"
 import "CuteSV.wdl"
 import "SVIM.wdl"
 
+workflow RunPBSV {
+    input {
+        File bam
+        File bai
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+        String prefix
+        File? tandem_repeat_bed
+    }
 
+    parameter_meta {
+        ref_dict:          "sequence dictionary accompanying the reference"
+    }
+
+
+    call Discover {
+        input:
+            bam               = bam,
+            bai               = bai,
+            ref_fasta         = ref_fasta,
+            ref_fasta_fai     = ref_fasta_fai,
+            tandem_repeat_bed = tandem_repeat_bed,
+            prefix            = prefix
+    }
+
+    call Call {
+        input:
+            svsigs        = [ Discover.svsig ],
+            ref_fasta     = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            ccs           = true,
+            prefix        = prefix
+    }
+
+
+    output {
+        File Discover_out = Discover.svsig
+        File Call_out = Call.vcf
+
+    }
+}
 
 task Discover {
     input {
@@ -137,45 +178,3 @@ task Call {
     }
 }
 
-workflow run_pbsv {
-    input {
-        File bam
-        File bai
-        File ref_fasta
-        File ref_fasta_fai
-        File ref_dict
-        String prefix
-        File? tandem_repeat_bed
-    }
-
-    parameter_meta {
-        ref_dict:          "sequence dictionary accompanying the reference"
-    }
-
-
-    call Discover {
-        input:
-            bam               = bam,
-            bai               = bai,
-            ref_fasta         = ref_fasta,
-            ref_fasta_fai     = ref_fasta_fai,
-            tandem_repeat_bed = tandem_repeat_bed,
-            prefix            = prefix
-    }
-
-    call Call {
-        input:
-            svsigs        = [ Discover.svsig ],
-            ref_fasta     = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            ccs           = true,
-            prefix        = prefix
-    }
-
-
-    output {
-        File Discover_out = Discover.svsig
-        File Call_out = Call.vcf
-
-    }
-}
