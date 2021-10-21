@@ -29,7 +29,8 @@ workflow CallVariants {
         File? sites_vcf_tbi
         String prefix
         File? tandem_repeat_bed
-        String? chr
+        Boolean fast_less_sensitive
+
     }
 
     parameter_meta {
@@ -42,48 +43,50 @@ workflow CallVariants {
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 
-    call Utils.MakeChrIntervalList {
+    if (fast_less_sensitive) {
+
+        call Utils.MakeChrIntervalList {
         input:
             ref_dict = ref_dict,
             filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
-    }
-
-    scatter (c in MakeChrIntervalList.chrs) {
-        String contig = c[0]
-
-        call Utils.SubsetBam {
-            input:
-                bam = bam,
-                bai = bai,
-                locus = contig
         }
 
-        call PBSV.Discover {
-            input:
-                bam               = SubsetBam.subset_bam,
-                bai               = SubsetBam.subset_bai,
-                ref_fasta         = ref_fasta,
-                ref_fasta_fai     = ref_fasta_fai,
-                tandem_repeat_bed = tandem_repeat_bed,
-                chr               = contig,
-                prefix            = prefix
-        }
+        scatter (c in MakeChrIntervalList.chrs) {
+            String contig = c[0]
 
-        call PBSV.Call {
-            input:
-                svsigs        = [ Discover.svsig ],
-                ref_fasta     = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                prefix        = prefix
-        }
+            call Utils.SubsetBam {
+                input:
+                    bam = bam,
+                    bai = bai,
+                    locus = contig
+            }
 
-        call Sniffles.Sniffles {
-            input:
-                bam    = SubsetBam.subset_bam,
-                bai    = SubsetBam.subset_bai,
-                chr    = contig,
-                prefix = prefix
-        }
+            call PBSV.Discover {
+                input:
+                    bam               = SubsetBam.subset_bam,
+                    bai               = SubsetBam.subset_bai,
+                    ref_fasta         = ref_fasta,
+                    ref_fasta_fai     = ref_fasta_fai,
+                    tandem_repeat_bed = tandem_repeat_bed,
+                    chr               = contig,
+                    prefix            = prefix
+            }
+
+            call PBSV.Call {
+                input:
+                    svsigs        = [ Discover.svsig ],
+                    ref_fasta     = ref_fasta,
+                    ref_fasta_fai = ref_fasta_fai,
+                    prefix        = prefix
+            }
+
+            call Sniffles.Sniffles {
+                input:
+                    bam    = SubsetBam.subset_bam,
+                    bai    = SubsetBam.subset_bai,
+                    chr    = contig,
+                    prefix = prefix
+            }
 
     }
 
@@ -94,8 +97,36 @@ workflow CallVariants {
             prefix   = prefix + ".pbsv"
     }
 
+    }
+
+    if (!fast_less_sensitive) {
+
+        call PBSV.RunPBSV {
+            input:
+                bam = bam,
+                bai = bai,
+                ref_fasta = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                ref_dict = ref_dict,
+                prefix = prefix,
+                tandem_repeat_bed = tandem_repeat_bed
+
+                #File ref_fasta
+                #File ref_fasta_fai
+                #File ref_dict
+                #String prefix
+                #File? tandem_repeat_bed
+        }
+
+    }
+
 
     output {
-        File pbsv_vcf = MergePBSVVCFs.vcf
+        #File pbsv_vcf = MergePBSVVCFs.vcf
+        File? vcf = if (fast_less_sensitive) then MergePBSVVCFs.vcf else RunPBSV.Call_out
     }
+
 }
+
+
+
