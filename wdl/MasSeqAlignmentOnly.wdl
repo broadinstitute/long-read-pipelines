@@ -6,6 +6,7 @@ import "tasks/Finalize.wdl" as FF
 import "tasks/AlignReads.wdl" as AR
 import "tasks/Ten_X_Tool.wdl" as TENX
 import "tasks/Longbow.wdl" as LONGBOW
+import "tasks/Structs.wdl"
 
 workflow MasSeqAlignmentOnly {
 
@@ -43,6 +44,8 @@ workflow MasSeqAlignmentOnly {
         # Set up some meta parameters here so we can adjust for when we want things to go VERY fast:
         Int primary_scatter_width = 50
         Int secondary_scatter_width = 10
+
+        String longbow_docker_version = "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.3"
     }
 
     parameter_meta {
@@ -91,6 +94,10 @@ workflow MasSeqAlignmentOnly {
     RuntimeAttr filterReadsAttrs = object {
         cpu_cores: 4,
         preemptible_tries: 0
+    }
+
+    RuntimeAttr new_longbow_attrs = object {
+        docker: longbow_docker_version
     }
 
     # Alias our bam file so we can work with it easier:
@@ -153,7 +160,8 @@ workflow MasSeqAlignmentOnly {
         call LONGBOW.Annotate as t_09_LongbowAnnotateCCSReads {
             input:
                 reads = t_08_FilterByMinQual.bam_out,
-                model = mas_seq_model
+                model = mas_seq_model,
+                runtime_attr_override = new_longbow_attrs,
         }
 
         # 6: Longbow filter ccs reclaimable reads
@@ -161,7 +169,8 @@ workflow MasSeqAlignmentOnly {
             input:
                 bam = t_09_LongbowAnnotateCCSReads.annotated_bam,
                 prefix = SM + "_ccs_corrected_subshard",
-                model = mas_seq_model
+                model = mas_seq_model,
+                runtime_attr_override = new_longbow_attrs,
         }
 
         call PB.PBIndex as t_11_PbIndexLongbowAnnotatedCCSPassedReads {
@@ -183,7 +192,8 @@ workflow MasSeqAlignmentOnly {
             call LONGBOW.Segment as t_13_SegmentCCSAnnotatedReads {
                 input:
                     annotated_reads = corrected_shard,
-                    model = mas_seq_model
+                    model = mas_seq_model,
+                    runtime_attr_override = new_longbow_attrs,
             }
         }
 
@@ -274,7 +284,8 @@ workflow MasSeqAlignmentOnly {
         call LONGBOW.Annotate as t_23_AnnotateReclaimableReads {
             input:
                 reads = t_22_ExtractCcsReclaimableReads.bam_out,
-                model = mas_seq_model
+                model = mas_seq_model,
+                runtime_attr_override = new_longbow_attrs,
         }
 
         call PB.PBIndex as t_24_PbIndexLongbowAnnotatedReclaimedReads {
@@ -288,7 +299,8 @@ workflow MasSeqAlignmentOnly {
                 bam = t_23_AnnotateReclaimableReads.annotated_bam,
                 bam_pbi = t_24_PbIndexLongbowAnnotatedReclaimedReads.pbindex,
                 prefix = SM + "_subshard",
-                model = mas_seq_model
+                model = mas_seq_model,
+                runtime_attr_override = new_longbow_attrs,
         }
 
         call PB.PBIndex as t_26_PbIndexLongbowAnnotatedReclaimedPassedReads {
@@ -310,7 +322,8 @@ workflow MasSeqAlignmentOnly {
             call LONGBOW.Segment as t_28_SegmentReclaimedAnnotatedReads {
                 input:
                     annotated_reads = corrected_shard,
-                    model = mas_seq_model
+                    model = mas_seq_model,
+                    runtime_attr_override = new_longbow_attrs,
             }
         }
 
@@ -444,7 +457,8 @@ workflow MasSeqAlignmentOnly {
         input:
             reads = t_37_MergeAnnotatedCCSReads.merged_bam,
             model = mas_seq_model,
-            prefix = SM + "_CCS_Corrected"
+            prefix = SM + "_CCS_Corrected",
+            runtime_attr_override = new_longbow_attrs,
     }
 
     # Get stats on Reclaimable reads:
@@ -452,7 +466,8 @@ workflow MasSeqAlignmentOnly {
         input:
             reads = t_46_MergeAnnotatedCCSReclaimableReads.merged_bam,
             model = mas_seq_model,
-            prefix = SM + "_CCS_Reclaimable"
+            prefix = SM + "_CCS_Reclaimable",
+            runtime_attr_override = new_longbow_attrs,
     }
 
     # Get stats on Reclaimed reads:
@@ -460,7 +475,8 @@ workflow MasSeqAlignmentOnly {
         input:
             reads = t_47_MergePassedCCSReclaimedReads.merged_bam,
             model = mas_seq_model,
-            prefix = SM + "_CCS_Reclaimed"
+            prefix = SM + "_CCS_Reclaimed",
+            runtime_attr_override = new_longbow_attrs,
     }
 
     # Get stats on All reads (overall stats):
@@ -468,7 +484,8 @@ workflow MasSeqAlignmentOnly {
         input:
             reads = t_55_MergeAllLongbowPassedReads.merged_bam,
             model = mas_seq_model,
-            prefix = SM + "_All_Longbow_Passed"
+            prefix = SM + "_All_Longbow_Passed",
+            runtime_attr_override = new_longbow_attrs,
     }
 
     # Get stats on All reads (overall stats):
@@ -476,7 +493,8 @@ workflow MasSeqAlignmentOnly {
         input:
             reads = t_54_MergeAllAnnotatedReads.merged_bam,
             model = mas_seq_model,
-            prefix = SM + "_Overall"
+            prefix = SM + "_Overall",
+            runtime_attr_override = new_longbow_attrs,
     }
 
     ######################################################################
