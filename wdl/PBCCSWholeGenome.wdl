@@ -63,13 +63,7 @@ workflow PBCCSWholeGenome {
         String smalldir = outdir + "/variants/small"
 
         call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = select_first([CallVariants.vcf]) }
-#        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
-#        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
-#        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = CallVariants.dvp_phased_tbi }
-#        call FF.FinalizeToFile as FinalizeDVPEPPERGVcf { input: outdir = smalldir, file = CallVariants.dvp_g_vcf }
-#        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi { input: outdir = smalldir, file = CallVariants.dvp_g_tbi }
-#        call FF.FinalizeToFile as FinalizeDVPEPPERVcf { input: outdir = smalldir, file = CallVariants.dvp_vcf }
-#        call FF.FinalizeToFile as FinalizeDVPEPPERTbi { input: outdir = smalldir, file = CallVariants.dvp_tbi }
+        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
     }
 
     # Finalize
@@ -80,13 +74,8 @@ workflow PBCCSWholeGenome {
     call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
 
     output {
-#        File aligned_bam = FinalizeAlignedBam.gcs_path
-#        File aligned_bai = FinalizeAlignedBai.gcs_path
         File aligned_pbi = FinalizeAlignedPbi.gcs_path
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? sniffles_vcf = FinalizeSniffles.gcs_path
-
-#        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
-#        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
     }
 }
