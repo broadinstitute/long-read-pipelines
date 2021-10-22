@@ -85,14 +85,14 @@ workflow CallVariants {
 
     }
 
-    call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
+        call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
         input:
             vcfs     = Call.vcf,
             ref_dict = ref_dict,
             prefix   = prefix + ".pbsv"
     }
 
-    call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
+        call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
         input:
             vcfs     = Sniffles.vcf,
             ref_dict = ref_dict,
