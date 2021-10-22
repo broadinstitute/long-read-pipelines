@@ -7,35 +7,74 @@ version 1.0
 ##########################################################################################
 
 import "Structs.wdl"
+import "Utils.wdl"
+import "VariantUtils.wdl"
+
+
+
+workflow RunPBSV {
+    input {
+        File bam
+        File bai
+        Boolean ccs
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+        String prefix
+        File? tandem_repeat_bed
+    }
+
+
+    call Discover {
+        input:
+            bam               = bam,
+            bai               = bai,
+            ref_fasta         = ref_fasta,
+            ref_fasta_fai     = ref_fasta_fai,
+            tandem_repeat_bed = tandem_repeat_bed,
+            prefix            = prefix
+    }
+
+    call Call {
+        input:
+            svsigs        = [ Discover.svsig ],
+            ref_fasta     = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            ccs           =  ccs,
+            prefix        = prefix
+    }
+
+
+    output {
+        File vcf = Call.vcf
+    }
+}
 
 task Discover {
     input {
         File bam
         File bai
-
         File ref_fasta
         File ref_fasta_fai
         File? tandem_repeat_bed
-
-        String chr
+        String? chr
         String prefix
-
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         bam:               "input BAM from which to call SVs"
         bai:               "index accompanying the BAM"
-
+        ccs:               "true indicates ccs input, false indicates non-ccs input such as ONT reads"
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
-
         chr:               "chr on which to call variants"
         prefix:            "prefix for output"
     }
 
     Int disk_size = 2*(ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
+    String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
 
     command <<<
         set -euxo pipefail
@@ -43,7 +82,7 @@ task Discover {
         pbsv discover \
             ~{if defined(tandem_repeat_bed) && tandem_repeat_bed != "NA" then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
             ~{bam} \
-            ~{prefix}.~{chr}.svsig.gz
+            ~{fileoutput}
     >>>
 
     output {
@@ -75,23 +114,17 @@ task Discover {
 task Call {
     input {
         Array[File] svsigs
-
         File ref_fasta
         File ref_fasta_fai
-
         Boolean ccs = false
-
         String prefix
-
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         svsigs:            "per-chromosome *.svsig.gz files"
-
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
-
         ccs:               "use optimizations for CCS data"
         prefix:            "prefix for output"
     }
@@ -118,7 +151,7 @@ task Call {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             64,
+        mem_gb:             96,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
@@ -136,3 +169,4 @@ task Call {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+

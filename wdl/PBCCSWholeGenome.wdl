@@ -15,23 +15,20 @@ workflow PBCCSWholeGenome {
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais
-
         File ref_map_file
         String participant_name
-
         Boolean call_variants = true
-
         String gcs_out_root_dir
+        Boolean fast_less_sensitive
     }
 
     parameter_meta {
         aligned_bams:       "GCS path to aligned BAM files"
         aligned_bais:       "GCS path to aligned BAM file indices"
-
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         participant_name:   "name of the participant from whom these samples were obtained"
-
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+        fast_less_sensitive:"for SV calling specifically, true indicates fast/suboptimal processing, false indicates slower but more sensitive processing"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -54,13 +51,12 @@ workflow PBCCSWholeGenome {
             input:
                 bam               = bam,
                 bai               = bai,
-
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-                prefix = participant_name
+                prefix = participant_name,
+                fast_less_sensitive = fast_less_sensitive
         }
 
         String svdir = outdir + "/variants/sv"
@@ -68,13 +64,6 @@ workflow PBCCSWholeGenome {
 
         call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
         call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
-
-        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
-        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = CallVariants.dvp_phased_tbi }
-        call FF.FinalizeToFile as FinalizeDVPEPPERGVcf { input: outdir = smalldir, file = CallVariants.dvp_g_vcf }
-        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi { input: outdir = smalldir, file = CallVariants.dvp_g_tbi }
-        call FF.FinalizeToFile as FinalizeDVPEPPERVcf { input: outdir = smalldir, file = CallVariants.dvp_vcf }
-        call FF.FinalizeToFile as FinalizeDVPEPPERTbi { input: outdir = smalldir, file = CallVariants.dvp_tbi }
     }
 
     # Finalize
@@ -88,11 +77,7 @@ workflow PBCCSWholeGenome {
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path
         File aligned_pbi = FinalizeAlignedPbi.gcs_path
-
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? sniffles_vcf = FinalizeSniffles.gcs_path
-
-        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
-        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
     }
 }
