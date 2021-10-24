@@ -4,6 +4,7 @@ MAINTAINER Kiran V Garimella
 
 # copy other resources
 COPY ./environment.yml /
+COPY propagate_tags.py /usr/local/bin/
 
 RUN apt-get -y update && \
     apt-get -y install curl zlib1g-dev libcurl4-openssl-dev libbz2-dev liblzma-dev gcc make && \

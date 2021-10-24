@@ -133,12 +133,10 @@ workflow ONTMethylation {
                 mappings_bai = SubsetVarMappings.subset_bai
         }
 
-        call Haplotag as HaplotagModBams {
+        call PropagateHaplotags {
             input:
-                variants_phased = PhaseVariants.phased_vcf_gz,
-                variants_phased_tbi = PhaseVariants.phased_vcf_tbi,
-                mappings_bam = SubsetModMappings.subset_bam,
-                mappings_bai = SubsetModMappings.subset_bai
+                var_mappings_bam = SubsetVarMappings.subset_bam,
+                mod_mappings_bam = SubsetModMappings.subset_bam,
         }
     }
 
@@ -150,7 +148,7 @@ workflow ONTMethylation {
     }
 
     call Utils.MergeBams as MergeHaplotagVariantBams { input: bams = HaplotagVariantBams.haplotagged_bam }
-    call Utils.MergeBams as MergeHaplotagModBams { input: bams = HaplotagModBams.haplotagged_bam }
+    call Utils.MergeBams as MergeHaplotagModBams { input: bams = PropagateHaplotags.tagged_bam }
 
     call ExtractHaplotypeReads {
          input:
@@ -627,6 +625,54 @@ task Haplotag {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task PropagateHaplotags {
+    input {
+        File var_mappings_bam
+        File mod_mappings_bam
+
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 3*ceil(size([var_mappings_bam, mod_mappings_bam], "GB")) + 1
+
+    command <<<
+        set -euxo pipefail
+
+        python3 /usr/local/bin/propagate_tags.py \
+            -t HP -t PC -t PS \
+            -s ~{var_mappings_bam} \
+            -d ~{mod_mappings_bam} \
+            -o ~{prefix}.bam
+    >>>
+
+    output {
+        File tagged_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:1.1"
     }
