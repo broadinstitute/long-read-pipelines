@@ -1,0 +1,7 @@
+*.pickle
+*.tsv
+*.pdf
+*.txt
+*.html
+test.py
+Yeet.ipynb

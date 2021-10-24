@@ -70,6 +70,7 @@ class ResourceUsage:
         unsharded_tasks = dict([(k, v) for k, v in tasks.items() if v == 0])
         sharded_tasks = dict([(k, v) for k, v in tasks.items() if v != 0])
         for task in unsharded_tasks:
+            print(f"Working on Task: {task}")
             self.plot_aggregate(task, -1)
         for task in sharded_tasks:
             self.save_bokeh(task)
@@ -109,7 +110,6 @@ class ResourceUsage:
                 raise Exception("Not the same workflow, data cannot be combined")
         self.meta_runtime = pd.concat(Frames)
         # Some methods will no longer be compatible after the datasets are combined
-
 
     def num_task_shards(self) -> Dict[str, int]:
         """
@@ -237,7 +237,11 @@ class ResourceUsage:
         axis.set_title(f"CPU Usage for {name[0]}, shard {name[1]}")
         plt.show()
 
-        self.max_cpu_usage.loc["max_value", name] = max(data)
+        try:
+            self.max_cpu_usage.loc["max_value", name] = max(data)
+        except ValueError:
+            print(data[0])
+            raise
         return fig
 
     def get_instance_id(self, task: str, shard_idx: int) -> numpy.int64:
@@ -544,7 +548,7 @@ class ResourceUsage:
         :param type_: pdf or svg
         :return:
         """
-        a = self.cpu_use_violin(self.get_instance_id(task, shard))
+        # a = self.cpu_use_violin(self.get_instance_id(task, shard)) #UNDO
         # d = avg_mem_across_shards(meta_runtime, metrics, task)
         b = self.mem_use_violin(self.get_instance_id(task, shard))
         # e = avg_cpu_across_shards(meta_runtime, metrics, task)
@@ -556,12 +560,12 @@ class ResourceUsage:
         # f = timed_plot_cpu(meta_runtime, metrics, get_instance_id(meta_runtime, task, shard))
         if type_ == "pdf":
             pp = PdfPages(f'all_plots/allPlots{task}.pdf')
-            pp.savefig(a, bbox_inches='tight')
+            #pp.savefig(a, bbox_inches='tight')#UNDO
             pp.savefig(b, bbox_inches='tight')
             pp.savefig(c, bbox_inches='tight')
             pp.close()
         elif type_ == "svg":
-            a.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
+            #a.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')#UNDO
             b.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
             c.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
         else:
