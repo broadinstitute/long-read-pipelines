@@ -135,7 +135,7 @@ workflow ONTMethylation {
 
         call PropagateHaplotags {
             input:
-                var_mappings_bam = SubsetVarMappings.subset_bam,
+                var_mappings_bam = HaplotagVariantBams.haplotagged_bam,
                 mod_mappings_bam = SubsetModMappings.subset_bam,
         }
     }
