@@ -36,11 +36,11 @@ def main():
 
                 for tag in args.tags:
                     if dr.query_name in srtags and tag[0] in srtags[dr.query_name]:
-                        old_tag = dr.get_tag(tag[0]) if dr.has_tag(tag[0]) else None
+                        # old_tag = dr.get_tag(tag[0]) if dr.has_tag(tag[0]) else None
                         dr.set_tag(tag[0], srtags[dr.query_name][tag[0]], replace=True)
                         is_tagged = True
 
-                        print(f'{dr.query_name} {tag[0]} {old_tag} {dr.get_tag(tag[0])}')
+                        # print(f'{dr.query_name} {tag[0]} {old_tag} {dr.get_tag(tag[0])}')
 
                 if is_tagged:
                     num_tagged += 1
