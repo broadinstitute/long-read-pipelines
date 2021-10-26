@@ -2,6 +2,7 @@
 
 import argparse
 import subprocess
+import re
 
 import pandas as pd
 import firecloud.api as fapi
@@ -81,24 +82,26 @@ def main():
     copy_lists = {}
 
     for index, row in tbl_filtered.iterrows():
-        if row['workspace'] not in workspaces:
-            a = fapi.create_workspace(args.namespace, row['workspace'])
-            b = fapi.update_workspace_acl(args.namespace, row['workspace'], [
+        rw = re.sub(" ", "_", row['workspace'])
+
+        if rw not in workspaces:
+            a = fapi.create_workspace(args.namespace, rw)
+            b = fapi.update_workspace_acl(args.namespace, rw, [
                 {"email": "kiran@broadinstitute.org", "accessLevel": "OWNER"},
                 {"email": "222581509023-compute@developer.gserviceaccount.com", "accessLevel": "OWNER"},
                 {"email": "shuang@broadinstitute.org", "accessLevel": "OWNER"},
                 {"email": "lholmes@broadinstitute.org", "accessLevel": "OWNER"},
             ])
 
-            print(f"[workspace  : {a.status_code}] Created workspace '{row['workspace']}'")
-            workspaces.add(row['workspace'])
+            print(f"[workspace  : {a.status_code}] Created workspace '{rw}'")
+            workspaces.add(rw)
 
-        if row['workspace'] not in tbl_new_hash:
-            tbl_new_hash[row['workspace']] = pd.DataFrame(columns=tbl_filtered.columns)
-            ss_new_hash[row['workspace']] = pd.DataFrame(columns=ss_old.columns)
-            membership_new_hash[row['workspace']] = []
+        if rw not in tbl_new_hash:
+            tbl_new_hash[rw] = pd.DataFrame(columns=tbl_filtered.columns)
+            ss_new_hash[rw] = pd.DataFrame(columns=ss_old.columns)
+            membership_new_hash[rw] = []
 
-        q = fapi.get_workspace(args.namespace, row['workspace']).json()
+        q = fapi.get_workspace(args.namespace, rw).json()
 
         bucket_name = f"gs://{q['workspace']['bucketName']}"
         newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
@@ -106,7 +109,7 @@ def main():
         newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
         newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
 
-        tbl_new_hash[row['workspace']] = tbl_new_hash[row['workspace']].append(newrow)
+        tbl_new_hash[rw] = tbl_new_hash[rw].append(newrow)
 
         for k, v in row.to_dict().items():
             if 'gs://' in v:
@@ -124,8 +127,8 @@ def main():
 
         for ss_index, ss_row in ss_old.iterrows():
             if row['entity:sample_id'] in membership[ss_index]:
-                ss_new_hash[row['workspace']] = ss_new_hash[row['workspace']].append(ss_row)
-                membership_new_hash[row['workspace']].append(membership[ss_index])
+                ss_new_hash[rw] = ss_new_hash[rw].append(ss_row)
+                membership_new_hash[rw].append(membership[ss_index])
 
     for workspace in membership_new_hash:
         if len(membership_new_hash[workspace]) > 0:
