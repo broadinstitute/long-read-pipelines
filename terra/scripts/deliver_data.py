@@ -71,13 +71,14 @@ def main():
     print(f"Accessing Terra as '{fapi.whoami()}'")
 
     workspace_list = fapi.list_workspaces("workspace.name,workspace.namespace").json()
-    workspaces = set()
+    workspaces = {}
     for w in workspace_list:
-        workspaces.add(w['workspace']['name'])
+        workspaces[w['workspace']['name']] = w['workspace']['namespace']
 
     tbl_new_hash = {}
     ss_new_hash = {}
     membership_new_hash = {}
+    namespace_new_hash = {}
 
     copy_lists = {}
 
@@ -94,14 +95,16 @@ def main():
             ])
 
             print(f"[workspace  : {a.status_code}] Created workspace '{rw}'")
-            workspaces.add(rw)
+            workspaces[rw] = args.namespace
+
+        ns = workspaces[rw]
 
         if rw not in tbl_new_hash:
             tbl_new_hash[rw] = pd.DataFrame(columns=tbl_filtered.columns)
             ss_new_hash[rw] = pd.DataFrame(columns=ss_old.columns)
             membership_new_hash[rw] = []
 
-        q = fapi.get_workspace(args.namespace, rw).json()
+        q = fapi.get_workspace(ns, rw).json()
 
         bucket_name = f"gs://{q['workspace']['bucketName']}"
         newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
@@ -129,6 +132,7 @@ def main():
             if row['entity:sample_id'] in membership[ss_index]:
                 ss_new_hash[rw] = ss_new_hash[rw].append(ss_row)
                 membership_new_hash[rw].append(membership[ss_index])
+                namespace_new_hash[rw] = ns
 
     for workspace in membership_new_hash:
         if len(membership_new_hash[workspace]) > 0:
@@ -138,9 +142,9 @@ def main():
             oms.columns = ['membership:sample_set_id', 'sample']
 
             for ssname in list(oms['membership:sample_set_id']):
-                a = fapi.delete_sample_set(args.namespace, workspace, ssname)
+                a = fapi.delete_sample_set(namespace_new_hash[workspace], workspace, ssname)
 
-            upload_tables(args.namespace, workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
+            upload_tables(namespace_new_hash[workspace], workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
 
     for bucket in copy_lists:
         for s in copy_lists[bucket]:
