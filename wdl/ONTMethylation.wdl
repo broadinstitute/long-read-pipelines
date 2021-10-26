@@ -39,7 +39,7 @@ workflow ONTMethylation {
 
         call AR.Minimap2 as VarRemappings {
             input:
-                reads      = [ Megalodon.var_mappings_bam ],
+                reads      = [ Megalodon.variant_mappings_bam ],
                 ref_fasta  = ref_map['fasta'],
                 RG         = '@RG\\tSM:~{participant_name}\\tID:var_mappings',
                 map_preset = 'map-ont',
