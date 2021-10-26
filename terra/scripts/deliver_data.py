@@ -91,6 +91,7 @@ def main():
             ])
 
             print(f"[workspace  : {a.status_code}] Created workspace '{row['workspace']}'")
+            workspaces.add(row['workspace'])
 
         if row['workspace'] not in tbl_new_hash:
             tbl_new_hash[row['workspace']] = pd.DataFrame(columns=tbl_filtered.columns)
@@ -99,33 +100,32 @@ def main():
 
         q = fapi.get_workspace(args.namespace, row['workspace']).json()
 
-        if 'Kar-Tong' in row['workspace']:
-            bucket_name = f"gs://{q['workspace']['bucketName']}"
-            newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
-            newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", inplace=True, regex=True)
-            newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
-            newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
+        bucket_name = f"gs://{q['workspace']['bucketName']}"
+        newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
+        newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", inplace=True, regex=True)
+        newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
+        newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
 
-            tbl_new_hash[row['workspace']] = tbl_new_hash[row['workspace']].append(newrow)
+        tbl_new_hash[row['workspace']] = tbl_new_hash[row['workspace']].append(newrow)
 
-            for k, v in row.to_dict().items():
-                if 'gs://' in v:
-                    if 'gs://broad-gp-pacbio/' in v or 'gs://broad-gp-oxfordnano/' in v:
-                        if args.copy_inputs:
-                            if bucket_name not in copy_lists:
-                                copy_lists[bucket_name] = {}
-                            if '.' in v:
-                                copy_lists[bucket_name][v] = newrow[k]
-                    else:
+        for k, v in row.to_dict().items():
+            if 'gs://' in v:
+                if 'gs://broad-gp-pacbio/' in v or 'gs://broad-gp-oxfordnano/' in v:
+                    if args.copy_inputs:
                         if bucket_name not in copy_lists:
                             copy_lists[bucket_name] = {}
                         if '.' in v:
                             copy_lists[bucket_name][v] = newrow[k]
+                else:
+                    if bucket_name not in copy_lists:
+                        copy_lists[bucket_name] = {}
+                    if '.' in v:
+                        copy_lists[bucket_name][v] = newrow[k]
 
-            for ss_index, ss_row in ss_old.iterrows():
-                if row['entity:sample_id'] in membership[ss_index]:
-                    ss_new_hash[row['workspace']] = ss_new_hash[row['workspace']].append(ss_row)
-                    membership_new_hash[row['workspace']].append(membership[ss_index])
+        for ss_index, ss_row in ss_old.iterrows():
+            if row['entity:sample_id'] in membership[ss_index]:
+                ss_new_hash[row['workspace']] = ss_new_hash[row['workspace']].append(ss_row)
+                membership_new_hash[row['workspace']].append(membership[ss_index])
 
     for workspace in membership_new_hash:
         if len(membership_new_hash[workspace]) > 0:
