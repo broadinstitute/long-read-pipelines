@@ -7,54 +7,50 @@ task Sniffles {
     input {
         File bam
         File bai
-
         Int min_read_support = 2
         Int min_read_length = 1000
         Int min_mq = 20
-
-        String chr
+        String? chr
         String prefix
-
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         bam:              "input BAM from which to call SVs"
         bai:              "index accompanying the BAM"
-
         min_read_support: "[default-valued] minimum reads required to make a call"
         min_read_length:  "[default-valued] filter out reads below minimum read length"
         min_mq:           "[default-valued] minimum mapping quality to accept"
-
         chr:              "chr on which to call variants"
         prefix:           "prefix for output"
     }
 
     Int cpus = 8
     Int disk_size = 2*ceil(size([bam, bai], "GB"))
+    String fileoutput = if defined(chr) then "~{prefix}.{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
 
     command <<<
         set -x
 
         sniffles -t ~{cpus} \
                  -m ~{bam} \
-                 -v ~{prefix}.~{chr}.sniffles.pre.vcf \
+                 -v ~{fileoutput}\
                  -s ~{min_read_support} \
                  -r ~{min_read_length} \
                  -q ~{min_mq} \
                  --num_reads_report -1 \
                  --genotype
 
-        touch ~{prefix}.~{chr}.sniffles.pre.vcf
+        touch ~{prefix}.~{fileoutput}
 
-        cat ~{prefix}.~{chr}.sniffles.pre.vcf | \
+        cat ~{prefix}.~{fileoutput}| \
             grep -v -e '##fileDate' | \
             awk '{ if ($1 ~ "^#" || $7 == "PASS") print $0 }' \
-            > ~{prefix}.~{chr}.sniffles.vcf
+            > ~{prefix}.~{fileoutput}
     >>>
 
     output {
-        File vcf = "~{prefix}.~{chr}.sniffles.vcf"
+        File vcf = "~{fileoutput}"
     }
 
     #########################
@@ -78,3 +74,4 @@ task Sniffles {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
