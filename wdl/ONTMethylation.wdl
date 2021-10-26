@@ -37,6 +37,15 @@ workflow ONTMethylation {
                 SM          = participant_name
         }
 
+        call AR.Minimap2 as VarRemappings {
+            input:
+                reads      = [ Megalodon.var_mappings_bam ],
+                ref_fasta  = ref_map['fasta'],
+                RG         = '@RG\\tSM:~{participant_name}\\tID:var_mappings',
+                map_preset = 'map-ont',
+                prefix     = prefix
+        }
+
         call AR.Minimap2 as ModRemappings {
             input:
                 reads      = [ Megalodon.mod_mappings_bam ],
@@ -76,7 +85,7 @@ workflow ONTMethylation {
 
     call Utils.MergeBams as MergeMappings { input: bams = Megalodon.mappings_bam }
     call Utils.MergeBams as MergeModMappings { input: bams = ModRemappings.aligned_bam }
-    call Utils.MergeBams as MergeVarMappings { input: bams = Megalodon.variant_mappings_bam }
+    call Utils.MergeBams as MergeVarMappings { input: bams = VarRemappings.aligned_bam }
 
     call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
     call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
