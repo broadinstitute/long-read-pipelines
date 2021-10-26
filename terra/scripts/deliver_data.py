@@ -83,7 +83,7 @@ def main():
     copy_lists = {}
 
     for index, row in tbl_filtered.iterrows():
-        rw = re.sub(" ", "_", row['workspace'])
+        rw = row['workspace']
 
         if rw not in workspaces:
             a = fapi.create_workspace(args.namespace, rw)
