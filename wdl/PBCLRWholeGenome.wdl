@@ -20,6 +20,7 @@ workflow PBCLRWholeGenome {
         String participant_name
 
         Boolean call_variants = true
+        Boolean fast_less_sensitive
 
         String gcs_out_root_dir
     }
@@ -30,6 +31,8 @@ workflow PBCLRWholeGenome {
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         participant_name:   "name of the participant from whom these samples were obtained"
+
+        fast_less_sensitive:"for SV calling specifically, true indicates fast/suboptimal processing, false indicates slower but more sensitive processing"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
@@ -60,7 +63,9 @@ workflow PBCLRWholeGenome {
                 ref_dict          = ref_map['dict'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
 
-                prefix = participant_name
+                prefix = participant_name,
+
+                fast_less_sensitive = fast_less_sensitive
         }
 
         String svdir = outdir + "/variants/sv"
@@ -68,8 +73,6 @@ workflow PBCLRWholeGenome {
 
         call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
         call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
-        call FF.FinalizeToFile as FinalizeLongshot { input: outdir = smalldir, file = CallVariants.longshot_vcf }
-        call FF.FinalizeToFile as FinalizeLongshotTbi { input: outdir = smalldir, file = CallVariants.longshot_tbi }
     }
 
     # Finalize
@@ -86,8 +89,5 @@ workflow PBCLRWholeGenome {
 
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? sniffles_vcf = FinalizeSniffles.gcs_path
-
-        File? longshot_vcf = FinalizeLongshot.gcs_path
-        File? longshot_tbi = FinalizeLongshotTbi.gcs_path
     }
 }
