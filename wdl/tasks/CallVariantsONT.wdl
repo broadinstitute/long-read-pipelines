@@ -59,10 +59,9 @@ workflow CallVariants {
                     bai = bai,
                     ref_fasta = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
-                    ref_dict = ref_dict,
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
-                    ccs = false
+                    is_ccs = false
             }
 
 
@@ -100,10 +99,9 @@ workflow CallVariants {
                 bai = bai,
                 ref_fasta = ref_fasta,
                 ref_fasta_fai = ref_fasta_fai,
-                ref_dict = ref_dict,
                 prefix = prefix,
                 tandem_repeat_bed = tandem_repeat_bed,
-                ccs = false
+                is_ccs = false
         }
 
         call Sniffles.Sniffles as SnifflesSlow {
@@ -115,13 +113,9 @@ workflow CallVariants {
 
     }
 
-
     output {
         File sniffles_vcf = select_first([MergeSnifflesVCFs.vcf, SnifflesSlow.vcf])
         File pbsv_vcf = select_first([MergePBSVVCFs.vcf, PBSVslow.vcf])
     }
 
 }
-
-
-

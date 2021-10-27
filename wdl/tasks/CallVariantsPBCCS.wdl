@@ -58,10 +58,9 @@ workflow CallVariants {
                     bai = bai,
                     ref_fasta = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
-                    ref_dict = ref_dict,
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
-                    ccs = true
+                    is_ccs = true
             }
 
             call Sniffles.Sniffles {
@@ -98,10 +97,9 @@ workflow CallVariants {
                 bai = bai,
                 ref_fasta = ref_fasta,
                 ref_fasta_fai = ref_fasta_fai,
-                ref_dict = ref_dict,
                 prefix = prefix,
                 tandem_repeat_bed = tandem_repeat_bed,
-                ccs = true
+                is_ccs = true
         }
 
 
