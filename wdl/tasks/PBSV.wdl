@@ -67,7 +67,10 @@ task Discover {
         prefix:            "prefix for output"
     }
 
-    Int disk_size = 2*(ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
+    Boolean is_big_bam = size(bam, "GB") > 100
+    Int inflation_factor = if (is_big_bam) then 3 else 2
+    Int disk_size = inflation_factor * (ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
+
     String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
 
     command <<<
@@ -80,7 +83,7 @@ task Discover {
     >>>
 
     output {
-        File svsig = "~{prefix}.~{chr}.svsig.gz"
+        File svsig = "~{fileoutput}"
     }
 
     #########################

@@ -1051,6 +1051,96 @@ task SubsetBam {
     }
 }
 
+task ResilientSubsetBam {
+
+    meta {
+        description: "For subsetting a high-coverage BAM stored in GCS, without localizing (more resilient to auth. expiration)."
+    }
+
+    input {
+        File bam
+        File bai
+
+        File interval_list_file
+        String interval_id
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam: {
+            localization_optional: true
+        }
+        interval_list_file:  "a Picard-style interval list file to subset reads with"
+        interval_id:         "an ID string for representing the intervals in the interval list file"
+        prefix: "prefix for output bam and bai file names"
+    }
+
+    Array[String] intervals = read_lines(interval_list_file)
+
+    Int disk_size = 4*ceil(size([bam, bai], "GB"))
+
+    String subset_prefix = prefix + "." + interval_id
+
+    command <<<
+
+        # the way this works is the following:
+        # 0) relying on the re-auth.sh script to export the credentials
+        # 1) perform the remote sam-view subsetting in the background
+        # 2) listen to the PID of the background process, while re-auth every 1200 seconds
+        source /opt/re-auth.sh
+        set -euxo pipefail
+
+        # see man page for what '-M' means
+        samtools view \
+            -bhX \
+            -M \
+            -@ 1 \
+            --verbosity=8 \
+            --write-index \
+            -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
+            ~{bam} ~{bai} \
+            ~{sep=" " intervals} && exit 0 || { echo "samtools seem to have failed"; exit 77; } &
+        pid=$!
+        
+        set +e
+        count=0
+        while true; do
+            sleep 1200 && date && source /opt/re-auth.sh
+            count=$(( count+1 ))
+            if [[ ${count} -gt 6 ]]; then exit 0; fi
+            if ! pgrep -x -P $pid; then exit 0; fi
+        done
+    >>>
+
+    output {
+        File subset_bam = "~{subset_prefix}.bam"
+        File subset_bai = "~{subset_prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             10,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task SplitBam {
     input {
         File bam
@@ -1150,6 +1240,71 @@ task FilterBamOnTag {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task DeduplicateBam {
+    meta {
+        description: "Utility to drop (occationally happening) duplicate records in input BAM"
+    }
+
+    input {
+        File aligned_bam
+        File aligned_bai
+
+        Boolean same_name_as_input = true
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 3 * ceil(size(aligned_bam, "GB"))
+
+    String base = basename(aligned_bam, ".bam")
+    String prefix = if (same_name_as_input) then base else (base + ".dedup")
+
+    command <<<
+        echo "==========================================================="
+        echo "collecting duplicate information"
+        time \
+            samtools view -@ 1 "~{aligned_bam}" | \
+            awk -F "\t" 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $5}' | \
+            sort | uniq -d \
+            > "~{aligned_bam}".duplicates.txt
+        echo "==========================================================="
+        echo "de-duplicating"
+        time python3 /opt/remove_duplicate_ont_aln.py \
+            --prefix "~{prefix}" \
+            --annotations "~{aligned_bam}".duplicates.txt \
+            "~{aligned_bam}"
+        echo "==========================================================="
+        echo "DONE"
+        samtools index -@ 1 "~{prefix}.bam"
+    >>>
+
+    output {
+        File corrected_bam = "~{prefix}.bam"
+        File corrected_bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -1363,5 +1518,51 @@ task ListFilesOfType {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task StopWorkflow {
+    input {
+        String reason
+    }
+    command <<<
+        echo -e "Workflow explicitly stopped because \n  ~{reason}." && exit 1
+    >>>
+    runtime {docker: "ubuntu:latest"}
+}
+
+task InferSampleName {
+    meta {
+        description: "Infer sample name encoded on the @RG line of the header sections"
+    }
+
+    input {
+        File bam
+        File bai
+    }
+
+    parameter_meta {
+        bam: {
+            localization_optional: true
+        }
+    }
+
+    command <<<
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -H ~{bam} | grep -m 1 "^@RG" | awk '{for (i=1;i<=NF;i++){if ($i ~/^SM:/) {print $i}}}' | awk -F ':' '{print $NF}'
+    >>>
+
+    output {
+        String sample_name = read_string(stdout())
+    }
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }

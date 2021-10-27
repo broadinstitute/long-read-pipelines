@@ -22,4 +22,5 @@ dependencies:
   - samtools=1.10=h2e538c0_3
   - xz=5.2.5=h7b6447c_0
   - zlib=1.2.11=h7b6447c_3
+  - pysam=0.16.0.1
 prefix: /opt/conda/envs/lr-utils
