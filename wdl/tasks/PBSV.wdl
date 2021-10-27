@@ -1,16 +1,8 @@
 version 1.0
 
-##########################################################################################
-# This pipeline calls SVs on an input LR BAM using various known SV algorithms
-# that are specifically designed to work with long read data.
-# Each individual task/algo. is directly callable, if so desired.
-##########################################################################################
-
 import "Structs.wdl"
 import "Utils.wdl"
 import "VariantUtils.wdl"
-
-
 
 workflow RunPBSV {
     input {
@@ -19,11 +11,9 @@ workflow RunPBSV {
         Boolean ccs
         File ref_fasta
         File ref_fasta_fai
-        File ref_dict
         String prefix
         File? tandem_repeat_bed
     }
-
 
     call Discover {
         input:
@@ -43,7 +33,6 @@ workflow RunPBSV {
             ccs           =  ccs,
             prefix        = prefix
     }
-
 
     output {
         File vcf = Call.vcf
