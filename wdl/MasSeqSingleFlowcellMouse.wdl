@@ -139,6 +139,7 @@ workflow MasSeqSingleFlowcellMouse {
             unaligned_pbi = read_pbi,
             prefix = SM + "_shard",
             num_shards = 300,
+            runtime_attr_override = fast_network_attrs
     }
 
     scatter (sharded_reads in t_08_ShardLongReads.unmapped_shards) {
