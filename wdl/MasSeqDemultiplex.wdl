@@ -5,6 +5,8 @@ import "tasks/Utils.wdl" as Utils
 import "tasks/Finalize.wdl" as FF
 import "tasks/Longbow.wdl" as LONGBOW
 
+import "tasks/Structs.wdl"
+
 workflow MasSeqDemultiplex {
 
     meta {
@@ -23,6 +25,8 @@ workflow MasSeqDemultiplex {
         Int max_read_length = 60000
 
         Array[String] models = ["mas10", "mas15"]
+
+        String longbow_docker_version = "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.3"
 
         String? sample_name
     }
@@ -44,6 +48,12 @@ workflow MasSeqDemultiplex {
     # Create an object to disable preemption.  This should only be used for testing.
     RuntimeAttr disable_preemption = object {
         preemptible_tries:  0
+    }
+
+    RuntimeAttr disable_preemption_with_longbow = object {
+        mem_gb: 32,
+        preemptible_tries:  0,
+        docker: longbow_docker_version
     }
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
@@ -76,7 +86,7 @@ workflow MasSeqDemultiplex {
                 unaligned_bam = reads_bam,
                 unaligned_pbi = read_pbi,
                 prefix = SM + "_shard",
-                num_shards = 1000,
+                num_shards = 2000,
                 runtime_attr_override = disable_preemption
         }
 
@@ -109,7 +119,7 @@ workflow MasSeqDemultiplex {
                     bam = t_06_FilterByMaxReadLength.bam_out,
                     prefix = adis_prefix,
                     models = models,
-                    runtime_attr_override = disable_preemption
+                    runtime_attr_override = disable_preemption_with_longbow
             }
         }
 

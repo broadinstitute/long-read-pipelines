@@ -54,6 +54,8 @@ task Segment
         String model = "mas15"
         String prefix = "longbow_segmented"
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -63,11 +65,17 @@ task Segment
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow segment --model ~{model} -v INFO -s ~{annotated_reads} -o ~{prefix}.bam
+        longbow segment ~{extra_args} --model ~{model} -v INFO -s ~{annotated_reads} -o ~{prefix}.bam
+
+        # Make sure this file exists:
+        if [[ ! -e barcode_confidence_scores.txt ]] ; then
+            touch barcode_confidence_scores.txt
+        fi
     >>>
 
     output {
         File segmented_bam = "~{prefix}.bam"
+        File barcode_conf_file = "barcode_confidence_scores.txt"
     }
 
     #########################
@@ -213,6 +221,16 @@ task Demultiplex
     command <<<
         set -euxo pipefail
 
+        #set up memory logging daemon
+        LOG_INTERVAL=5
+        while true ; do
+            echo "###################################"
+            date
+            cat /proc/meminfo
+            sleep $LOG_INTERVAL
+        done &
+        pid=$!
+
         source /longbow/venv/bin/activate
         longbow demultiplex -v INFO --model ~{sep=' --model ' models} ~{bam} -o ~{prefix}
 
@@ -223,6 +241,8 @@ task Demultiplex
         while read file_name ; do
             echo "$file_name" | sed 's#^~{prefix}_\(.*\).bam$##g'
         done < tmp.txt >> file_model_list.txt
+
+        kill -9 $pid
     >>>
 
     output {
@@ -237,14 +257,13 @@ task Demultiplex
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-#        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.0-ALPHA"
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])

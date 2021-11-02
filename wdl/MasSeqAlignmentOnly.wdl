@@ -42,7 +42,7 @@ workflow MasSeqAlignmentOnly {
         String? sample_name
 
         # Set up some meta parameters here so we can adjust for when we want things to go VERY fast:
-        Int primary_scatter_width = 50
+        Int primary_scatter_width = 200
         Int secondary_scatter_width = 10
 
         String longbow_docker_version = "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.3"
@@ -259,16 +259,6 @@ workflow MasSeqAlignmentOnly {
         #######################################################################
         ## Handle CCS Uncorrected Reads
         #######################################################################
-
-        # 1.5 - Get the "rejected" reads:
-        call Utils.Bamtools as t_21_GetCcsRejectedReads {
-            input:
-                bamfile = t_07_RemoveKineticsTags.bam_file,
-                prefix = fbmrq_prefix + "_rejected_reads",
-                cmd = "filter",
-                args = '-tag "rq":"<' + min_read_quality + '"',
-                runtime_attr_override = disable_preemption_runtime_attrs
-        }
 
         # 2 - Get reads we can reclaim:
         call Utils.Bamtools as t_22_ExtractCcsReclaimableReads {
