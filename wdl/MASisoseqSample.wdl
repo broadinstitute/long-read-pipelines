@@ -8,7 +8,7 @@ import "tasks/Ten_X_Tool.wdl" as TENX
 import "tasks/Longbow.wdl" as LONGBOW
 import "tasks/Structs.wdl"
 
-workflow MASseqSample {
+workflow MASisoseqSample {
     meta {
         description : "This workflow processes MAS-seq data.  It annotates, segments, aligns, and (optionally) processes aligned reads into count matrices for downstream gene expression analysis.  For more information on MAS-seq see the preprint on biorXiv: https://www.biorxiv.org/content/10.1101/2021.10.01.462818"
         author : "Jonn Smith"
