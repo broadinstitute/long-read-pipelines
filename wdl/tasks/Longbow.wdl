@@ -9,6 +9,8 @@ task Annotate
         String model = "mas15"
         String prefix = "longbow_annotated"
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -18,7 +20,7 @@ task Annotate
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow annotate -t8 --model ~{model} -v INFO ~{reads} -o ~{prefix}.bam
+        longbow annotate ~{extra_args} -t8 --model ~{model} -v INFO ~{reads} -o ~{prefix}.bam
     >>>
 
     output {
@@ -54,6 +56,8 @@ task Segment
         String model = "mas15"
         String prefix = "longbow_segmented"
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -63,7 +67,7 @@ task Segment
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow segment --model ~{model} -v INFO -s ~{annotated_reads} -o ~{prefix}.bam
+        longbow segment ~{extra_args} --model ~{model} -v INFO -s ~{annotated_reads} -o ~{prefix}.bam
     >>>
 
     output {
@@ -105,6 +109,8 @@ task ScSplit
 
         String prefix = "scsplit"
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -115,7 +121,7 @@ task ScSplit
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow scsplit -t4 -v INFO --model ~{model} -b ~{force_option} -o ~{prefix} -u ~{umi_length} -c ~{cbc_dummy} ~{reads_bam}
+        longbow scsplit ~{extra_args} -t4 -v INFO --model ~{model} -b ~{force_option} -o ~{prefix} -u ~{umi_length} -c ~{cbc_dummy} ~{reads_bam}
     >>>
 
     output {
@@ -158,6 +164,8 @@ task Inspect
         String model = "mas15"
         String prefix = "longbow_inspected_reads"
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -167,7 +175,7 @@ task Inspect
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow inspect --model ~{model} ~{reads} -p ~{reads_pbi} -r ~{read_names} -o ~{prefix}
+        longbow inspect ~{extra_args} --model ~{model} ~{reads} -p ~{reads_pbi} -r ~{read_names} -o ~{prefix}
         tar -zxf ~{prefix}.tar.gz ~{prefix}
     >>>
 
@@ -205,6 +213,8 @@ task Demultiplex
 
         Array[String] models = ["mas10", "mas15"]
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -224,7 +234,7 @@ task Demultiplex
         pid=$!
 
         source /longbow/venv/bin/activate
-        longbow demultiplex -v INFO --model ~{sep=' --model ' models} ~{bam} -o ~{prefix}
+        longbow demultiplex ~{extra_args} -v INFO --model ~{sep=' --model ' models} ~{bam} -o ~{prefix}
 
         # Create a list of models - one for each bam file created:
         # Do this safely (assume there can be spaces in the names even though this is generally bad form).
@@ -317,6 +327,8 @@ task Filter {
 
         File? bam_pbi
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -328,6 +340,7 @@ task Filter {
 
         source /longbow/venv/bin/activate
         longbow filter \
+            ~{extra_args} \
             -v INFO \
             ~{pbi_arg}~{default="" sep=" --pbi " bam_pbi} \
             --model ~{model} \
@@ -377,6 +390,8 @@ task Extract {
 
         File? bam_pbi
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -388,6 +403,7 @@ task Extract {
 
         source /longbow/venv/bin/activate
         longbow extract \
+            ~{extra_args} \
             -v INFO \
             --start-offset ~{start_offset} \
             --base-padding ~{base_padding} \
@@ -432,6 +448,8 @@ task Stats
         String model = "mas15"
         String prefix = "longbow_stats"
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -441,7 +459,7 @@ task Stats
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow stats -s --model ~{model} -v INFO -o ~{prefix} ~{reads}
+        longbow stats ~{extra_args} -s --model ~{model} -v INFO -o ~{prefix} ~{reads}
     >>>
 
     output {
