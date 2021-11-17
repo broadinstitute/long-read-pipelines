@@ -17,7 +17,6 @@ workflow Guppy {
     input {
         String gcs_fast5_dir
 
-        Int num_shards = 4
         String config
         String? barcode_kit
 
@@ -25,12 +24,15 @@ workflow Guppy {
         String flow_cell_id = "unknown"
         String? protocol_run_id
         String? sample_name
+        Int? num_shards
 
         String gcs_out_root_dir
     }
 
     call ListFast5s { input: gcs_fast5_dir = gcs_fast5_dir }
-    call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = num_shards }
+
+    Int ns = select_first([num_shards, ceil(length(read_lines(ListFast5s.manifest))/100)])
+    call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = ns }
 
     scatter (chunk_index in range(length(PartitionFast5Manifest.manifest_chunks))) {
         call Basecall {
@@ -189,7 +191,7 @@ task Basecall {
         boot_disk_gb:       30,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:5.0.14"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:5.0.16"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
