@@ -1479,19 +1479,10 @@ task ListFilesOfType {
     String in_dir = sub(gcs_dir, "/$", "")
 
     command <<<
-        set -x
-
-        RET=0
-
-        while read s; do
-            gsutil ls ~{in_dir}/**$s >> files.txt
-        done <~{write_lines(suffixes)}
-
-        if [[ $(wc -l files.txt) -eq 0 ]]; then
-            RET=1
-        fi
-
-        exit $RET
+        set -ex
+        gsutil ls ~{in_dir} > temp.txt
+        grep -E '(~{sep="|" suffixes})$' temp.txt > files.txt || touch files.txt
+        if [ ! -s files.txt ]; then echo "None found" && exit 1; fi
     >>>
 
     output {
