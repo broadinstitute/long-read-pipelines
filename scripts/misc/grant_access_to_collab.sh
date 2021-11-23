@@ -129,10 +129,10 @@ prefix="${prefix%/}"
 ################################################################################
 for t in "${file_types[@]}";
 do
-    echo "Granting user ${user_email} with ${access_level}-level access to file type ${t} under gs://${gcs_bucket}/${prefix}/"
+    echo -e "\nGranting user ${user_email} with ${access_level}-level access to file type ${t} under gs://${gcs_bucket}/${prefix}/"
     gsutil -mq acl \
         ch -u "${user_email}":"${access_level}" \
-        "gs://${gcs_bucket}/${prefix}/"**"${t}"
+        -R "gs://${gcs_bucket}/${prefix}/**${t}"
     sleep 10 # avoid being blocked
 done
 
