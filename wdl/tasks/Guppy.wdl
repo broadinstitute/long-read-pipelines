@@ -31,7 +31,7 @@ workflow Guppy {
 
     call ListFast5s { input: gcs_fast5_dir = gcs_fast5_dir }
 
-    Int ns = select_first([num_shards, ceil(length(read_lines(ListFast5s.manifest))/100)])
+    Int ns = 1 + select_first([num_shards, ceil(length(read_lines(ListFast5s.manifest))/100)])
     call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = ns }
 
     scatter (chunk_index in range(length(PartitionFast5Manifest.manifest_chunks))) {
