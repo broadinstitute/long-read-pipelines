@@ -6,7 +6,7 @@ import "tasks/Finalize.wdl" as FF
 workflow ONTBasecall {
     input {
         String gcs_fast5_dir
-        String config = "dna_r9.4.1_450bps_hac.cfg"
+        String config = "dna_r9.4.1_450bps_sup.cfg"
         String? barcode_kit
         String gcs_out_root_dir
         String prefix

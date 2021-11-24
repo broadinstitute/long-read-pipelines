@@ -65,7 +65,6 @@ task Discover {
     parameter_meta {
         bam:               "input BAM from which to call SVs"
         bai:               "index accompanying the BAM"
-        ccs:               "true indicates ccs input, false indicates non-ccs input such as ONT reads"
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
