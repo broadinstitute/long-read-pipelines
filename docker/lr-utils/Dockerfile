@@ -4,6 +4,8 @@ MAINTAINER Kiran V Garimella
 
 # copy other resources
 COPY ./environment.yml /
+COPY mark.ont.duplicates.naive.sh /opt/
+COPY remove_duplicate_ont_aln.py /opt/
 
 # install conda packages
 RUN conda env create -f /environment.yml && conda clean -a

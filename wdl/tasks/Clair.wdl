@@ -57,9 +57,6 @@ task Clair {
             --model_path="/opt/models/~{platform}" \
             --sample_name=$SM --gvcf ~{true='--ctg_name=' false='' defined(chr)}~{select_first([chr, ""])} \
             --output="./"
-
-        bgzip merge_output.gvcf
-        tabix -p vcf merge_output.gvcf.gz
     >>>
 
     output {
@@ -83,7 +80,7 @@ task Clair {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "hkubal/clair3:v0.1-r2"
+        docker:             "hkubal/clair3:v0.1-r6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

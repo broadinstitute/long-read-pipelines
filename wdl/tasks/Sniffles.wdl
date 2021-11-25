@@ -27,7 +27,7 @@ task Sniffles {
 
     Int cpus = 8
     Int disk_size = 2*ceil(size([bam, bai], "GB"))
-    String fileoutput = if defined(chr) then "~{prefix}.{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
+    String fileoutput = if defined(chr) then "~{prefix}.~{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
 
     command <<<
         set -x
