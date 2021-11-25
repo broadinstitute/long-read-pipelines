@@ -162,6 +162,17 @@ workflow CallVariants {
                 bams = CCSPepper.hap_tagged_bam,
                 prefix = prefix +  ".MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged"
         }
+
+        call CCSPepper.MarginPhase {
+            input:
+                bam           = bam,
+                bai           = bai,
+                unphased_vcf  = MergeDeepVariantVCFs.vcf,
+                unphased_vcf_tbi = MergeDeepVariantVCFs.tbi,
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                memory        = select_first([dvp_memory, 64])
+        }
     }
 
     ######################################################################
@@ -273,5 +284,7 @@ workflow CallVariants {
         File? dvp_g_tbi = MergeDeepVariantGVCFs.tbi
         File? dvp_vcf = MergeDeepVariantVCFs.vcf
         File? dvp_tbi = MergeDeepVariantVCFs.tbi
+        File? dvp_phased_vcf = MarginPhase.phasedVCF
+        File? dvp_phased_tbi = MarginPhase.phasedtbi
     }
 }
