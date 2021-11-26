@@ -965,7 +965,7 @@ task MergeBams {
             -p -c --no-PG \
             -@ 2 \
             --write-index \
-            -o "~{prefix}.bam##idx##~{prefix}.bam.bai"
+            "~{prefix}.bam##idx##~{prefix}.bam.bai"
             ~{sep=" " bams}
     >>>
 
