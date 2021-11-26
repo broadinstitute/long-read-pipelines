@@ -1470,6 +1470,7 @@ task ListFilesOfType {
     input {
         String gcs_dir
         Array[String] suffixes
+        Boolean recurse = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -1477,6 +1478,7 @@ task ListFilesOfType {
     parameter_meta {
         gcs_dir:  "input directory"
         suffixes: "suffix(es) for files"
+        recurse:  "if true, recurse through subdirectories"
     }
 
     Int disk_size = 1
@@ -1484,7 +1486,7 @@ task ListFilesOfType {
 
     command <<<
         set -ex
-        gsutil ls ~{in_dir} > temp.txt
+        gsutil ls ~{true='-r' false='' recurse} ~{in_dir} > temp.txt
         grep -E '(~{sep="|" suffixes})$' temp.txt > files.txt || touch files.txt
         if [ ! -s files.txt ]; then echo "None found" && exit 1; fi
     >>>
