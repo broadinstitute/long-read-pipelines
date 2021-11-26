@@ -73,7 +73,8 @@ workflow ONTFlowcell {
         call Utils.ListFilesOfType {
             input:
                 gcs_dir = select_first([fastq_dir]),
-                suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz' ]
+                suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz' ],
+                recurse = true
         }
 
         call NP.NanoPlotFromRichFastqs { input: fastqs = ListFilesOfType.files }
