@@ -225,6 +225,10 @@ task DV {
 
 task MarginPhase {
 
+    meta {
+        description: "Generates phased VCF. Note this runs fast so no need to parallize."
+    }
+
     input {
         File bam
         File bai
@@ -243,7 +247,7 @@ task MarginPhase {
     Int bam_sz = ceil(size(bam, "GB"))
 	Int disk_size = if bam_sz > 200 then 2*bam_sz else bam_sz + 200
 
-    Int cores = 16
+    Int cores = 64
 
     String prefix = basename(bam, ".bam") + ".pepper"
     String output_root = "/cromwell_root/margin_output"
@@ -251,14 +255,14 @@ task MarginPhase {
     command <<<
         set -euxo pipefail
 
-        # debug code: see if we can access the options dir on cromwell
-        find /opt/margin_dir/params/ -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g'
-
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        mkdir -p "~{output_root}" "~{output_root}/logs"
+        touch ~{bai}
 
         # note the -M option was suggested by an author of margin
         # it's unclear which phasedBAM one should use: this, or the one generated from the Pepper step
-        time margin phase \
+        margin phase \
             ~{bam} \
             ~{ref_fasta} \
             ~{unphased_vcf} \
@@ -268,24 +272,13 @@ task MarginPhase {
             -o "~{output_root}/~{prefix}" \
             2>&1 | tee "~{output_root}/logs/5_margin_phase_vcf.log"
         
-        # # make sure files are zipped
-        # if [[ ! ls "~{output_root}/~{prefix}"*.vcf.gz ]]; then
-        #     cd "~{output_root}" && ls *.vcf
-        #     for vcf in "${prefix}"*.vcf; do bgzip -c "${vcf}" > "${vcf}.gz" && tabix -p vcf "${vcf}.gz"; done
-        #     cd -
-        # fi
-
-        find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
-            > "~{output_root}/dir_structure.txt"
-        
-        cat "~{output_root}/dir_structure.txt"
+        bgzip -c "~{output_root}/~{prefix}".phased.vcf > "~{output_root}/~{prefix}".phased.vcf.gz && \
+            tabix -p vcf "~{output_root}/~{prefix}".phased.vcf.gz
     >>>
 
 
     output {
-
-        File output_dir_structure = "~{output_root}/dir_structure.txt"
-
+        File phaseset_bed = "~{output_root}/~{prefix}.phaseset.bed"
         File phasedVCF  = "~{output_root}/~{prefix}.phased.vcf.gz"
         File phasedtbi  = "~{output_root}/~{prefix}.phased.vcf.gz.tbi"
     }

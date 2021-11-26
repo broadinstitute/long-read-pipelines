@@ -138,6 +138,8 @@ workflow PBCCSWholeGenome {
             call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
             call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}
             call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_tbi])}
+            call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_vcf]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz" }
+            call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_tbi]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz.tbi" }
         }
     }
 
@@ -171,6 +173,8 @@ workflow PBCCSWholeGenome {
         File? dvp_tbi = FinalizeDVPepperTbi.gcs_path
         File? dvp_g_vcf = FinalizeDVPepperGVcf.gcs_path
         File? dvp_g_tbi = FinalizeDVPepperGTbi.gcs_path
+        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
+        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
 
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
 
