@@ -1,4 +1,4 @@
-VERSION = 0.1.33
+VERSION = 0.1.34
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-pb:$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/lr-pb:latest
 
