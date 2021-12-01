@@ -2,54 +2,53 @@ version 1.0
 
 import "tasks/Structs.wdl"
 
-workflow CallAssemble {
+workflow CallAlign {
     input {
         File ref_cmap
-        File input_bnx
-        File optArguments
+        File query_cmap
+        String output_prefix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    call Assemble {
+    call Align {
         input:
             ref_cmap = ref_cmap,
-            input_bnx = input_bnx,
-            optArguments = optArguments
+            query_cmap = query_cmap,
+            output_prefix = output_prefix,
     }
 
     output {
-        File assembly_dir = Assemble.assembly_dir
+        File align_output = Align.mapfiles
     }
 }
 
-task Assemble {
+task Align {
     input {
         File ref_cmap
-        File input_bnx
-        File optArguments
+        File query_cmap
+        String output_prefix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1000 + ceil(size([ref_cmap], "GB")) + ceil(size([input_bnx], "GB"))
-
-#    Int disk_size = 1500
+    Int disk_size = 3 * (ceil(size([ref_cmap], "GB")) + ceil(size([query_cmap], "GB")))
 
     command <<<
         source activate bionano_minimal
-        python /home/bionano2/tools/pipeline/1.0/Pipeline/1.0/pipelineCL.py -l output -t /home/bionano2/tools/pipeline/1.0/RefAligner/1.0 \
-        -b ~{input_bnx} -a ~{optArguments} -r ~{ref_cmap} \
-        -y -d -U -i 5 -F 1 -W 1 -c 0 --docker --autoRestart \
-        -T 64 -je 64 -z
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        tar czf output.tar.gz output
+        /home/bionano2/tools/pipeline/1.0/RefAligner/1.0/RefAligner -ref ~{ref_cmap} -i ~{query_cmap} \
+        -maxthreads $num_core -o ~{output_prefix} -f -stdout -stderr  -endoutlier 1e-2 -outlier 1e-4 \
+        -A 5 -M 1 -Mfast 1 -biaswt 0 -T 1e-12 -nosplit 2 -MultiMatches 5
+
+        tar czf output.tar.gz ~{output_prefix}*[cx]map
     >>>
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          64,
-        mem_gb:             256,
+        cpu_cores:          16,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
@@ -68,6 +67,7 @@ task Assemble {
     }
 
     output {
-        File assembly_dir = "output.tar.gz"
+        File stdout = output_prefix+".stdout"
+        File mapfiles = "output.tar.gz"
     }
 }
