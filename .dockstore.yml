@@ -96,6 +96,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/BionanoAssemble.wdl
   testParameterFiles:
+- name: BionanoAlign
+  subclass: wdl
+  primaryDescriptorPath: /wdl/BionanoAlign.wdl
+  testParameterFiles:
 - name: Winnowmap
   subclass: wdl
   primaryDescriptorPath: /wdl/Winnowmap.wdl
