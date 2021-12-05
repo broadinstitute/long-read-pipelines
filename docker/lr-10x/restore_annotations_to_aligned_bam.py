@@ -3,6 +3,8 @@ import sys
 import time
 import os
 
+import re
+
 import tqdm
 import pysam
 
@@ -42,6 +44,11 @@ def main(bam_name, aligned_bam_name, out_bam_name, ignore_tags=None):
     cur.execute('''CREATE TABLE read_tags (read TEXT PRIMARY KEY, contig TEXT, position INT, tag_tuple_list BLOB)''')
     con.commit()
 
+    # This is a hack to get around reads that have the same name
+    # NOTE: reads should NEVER have the same name, but this seems to happen when generating new read names.
+    read_seen_set = set()
+    read_ignore_set = set()
+
     print(f"Reading in tags from: {bam_name}")
     with pysam.AlignmentFile(
             bam_name, "rb", check_sq=False, require_index=False
@@ -65,13 +72,23 @@ def main(bam_name, aligned_bam_name, out_bam_name, ignore_tags=None):
                         tags_to_keep.append((tag_name, read.get_tag(tag_name)))
                     except KeyError:
                         pass
-            cur.execute(
-                f"INSERT INTO read_tags VALUES ("
-                f"'{read.query_name}',"
-                f"'{read.reference_name}',"
-                f"{read.reference_start},"
-                f"'{pickle.dumps(tags_to_keep, 0).decode()}')"
-            )
+
+            # Read names should always be unique so this should REALLY never happen.
+            # But sometimes it does with "artificial" read names.
+            if read.query_name in read_seen_set:
+                read_ignore_set.add(read.query_name)
+                print(f"Seen read name multiple times!  Ignoring read: {read.query_name}")
+            else:
+                read_seen_set.add(read.query_name)
+
+            if read.query_name not in read_ignore_set:
+                cur.execute(
+                    f"INSERT INTO read_tags VALUES ("
+                    f"'{read.query_name}',"
+                    f"'{read.reference_name}',"
+                    f"{read.reference_start},"
+                    f"'{pickle.dumps(tags_to_keep, 0).decode()}')"
+                )
             if i % 20000 == 0:
                 con.commit()
 
@@ -109,16 +126,20 @@ def main(bam_name, aligned_bam_name, out_bam_name, ignore_tags=None):
 
         with pysam.AlignmentFile(out_bam_name, "wb", header=out_header) as out_bam_file:
             for read in aligned_bam_file:
-                raw = cur.execute(
-                    f"SELECT tag_tuple_list FROM read_tags WHERE read=='{read.query_name}'"
-                ).fetchone()
 
-                if raw:
-                    tag_tuple_list = pickle.loads(raw[0].encode())
-                    for tag_name, tag_value in tag_tuple_list:
-                        read.set_tag(tag_name, tag_value)
+                if read.query_name in read_ignore_set:
+                    print(f"Ignoring read multi-occurrence read name: {read.query_name}")
+                else:
+                    raw = cur.execute(
+                        f"SELECT tag_tuple_list FROM read_tags WHERE read=='{read.query_name}'"
+                    ).fetchone()
 
-                out_bam_file.write(read)
+                    if raw:
+                        tag_tuple_list = pickle.loads(raw[0].encode())
+                        for tag_name, tag_value in tag_tuple_list:
+                            read.set_tag(tag_name, tag_value)
+
+                    out_bam_file.write(read)
 
                 pbar.update(1)
     con.close()
