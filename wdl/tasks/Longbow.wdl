@@ -340,7 +340,8 @@ task Filter {
             ~{pbi_arg}~{default="" sep=" --pbi " bam_pbi} \
             --model ~{model} \
             ~{bam} \
-            -o ~{prefix} 2> >(tee longbow_filter_log.txt >&2) # Get log data from stderr and reprint to stderr
+            -x ~{prefix}_longbow_filter_failed.bam \
+            -o ~{prefix}_longbow_filter_passed.bam 2> >(tee longbow_filter_log.txt >&2) # Get log data from stderr and reprint to stderr
     >>>
 
     output {
@@ -357,7 +358,7 @@ task Filter {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.4.3"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.0-BETA"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
