@@ -6,7 +6,7 @@ import "tasks/Finalize.wdl" as FF
 workflow VerifyFingerprint {
 
     meta {
-        description: "A workflow to detect potential sample swaps using Picard fingerprint verification tools"
+        description: "A workflow to check correctness of metadata on a flowcell, by genotyping it's BAM generated with its metadata, against a 'truth' genotyped VCF."
     }
 
     input {
@@ -28,7 +28,7 @@ workflow VerifyFingerprint {
         expt_type:          "There will be special treatment for 'CLR' data (minimum base quality for bases used when computing a fingerprint)"
         artificial_baseQ_for_CLR: "An artificial value for CLR reads used for fingerprint verification (CLR reads come with all 0 base qual)"
 
-        fingerprint_vcf:    "Fingerprint VCF file from local database; note that sample name must be the same as in BAM"
+        fingerprint_vcf:    "Single sample Fingerprint VCF file from local database"
 
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
@@ -40,10 +40,9 @@ workflow VerifyFingerprint {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/VerifyFingerprint"
 
-    call GetSampleName {
+    call GetVCFSampleName {
         input:
-            aligned_bam = aligned_bam,
-            aligned_bai = aligned_bai
+            fingerprint_vcf = fingerprint_vcf
     }
 
     call FilterGenotypesVCF {
@@ -56,8 +55,8 @@ workflow VerifyFingerprint {
             input:
                 aligned_bam     = aligned_bam,
                 aligned_bai     = aligned_bai,
-                sample_name     = GetSampleName.sample_name,
                 fingerprint_vcf = FilterGenotypesVCF.read_to_use_vcf,
+                vcf_sample_name = GetVCFSampleName.sample_name,
                 haplotype_map   = ref_map['haplotype_map']
         }
     }
@@ -79,8 +78,8 @@ workflow VerifyFingerprint {
                 aligned_bam     = ResetCLRBaseQual.barbequed_bam,
                 aligned_bai     = ResetCLRBaseQual.barbequed_bai,
                 min_base_q      = artificial_baseQ_for_CLR,
-                sample_name     = GetSampleName.sample_name,
                 fingerprint_vcf = FilterGenotypesVCF.read_to_use_vcf,
+                vcf_sample_name = GetVCFSampleName.sample_name,
                 haplotype_map   = ref_map['haplotype_map']
         }
     }
@@ -101,26 +100,24 @@ workflow VerifyFingerprint {
     }
 }
 
-task GetSampleName {
+task GetVCFSampleName {
     input {
-        File aligned_bam
-        File aligned_bai
+        File fingerprint_vcf
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        aligned_bam:{
-            description:  "GCS path to aligned BAM file, supposed to be of the same sample as from the fingerprinting VCF",
-            localization_optional: true
-        }
-    }
-
     command <<<
-        set -x
+        set -eux
 
-        gatk GetSampleName \
-            -I ~{aligned_bam} \
-            -O sample_name.txt
+        GREPCMD="grep"
+        if [[ ~{fingerprint_vcf} =~ \.gz$ ]]; then
+            GREPCMD="zgrep"
+        fi
+        "${GREPCMD}" \
+            "^#CHROM" \
+            ~{fingerprint_vcf} \
+            | awk '{print $10}' \
+            > sample_name.txt
     >>>
 
     output {
@@ -128,24 +125,14 @@ task GetSampleName {
     }
 
     ###################
-    RuntimeAttr default_attr = object {
-        cpu_cores:             2,
-        mem_gb:                4,
-        disk_gb:               100,
-        boot_disk_gb:          10,
-        preemptible_tries:     3,
-        max_retries:           2,
-        docker:                "us.gcr.io/broad-gatk/gatk:4.2.0.0"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
-        cpu:                   select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory:                select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:        select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible:           select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:            select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker:                select_first([runtime_attr.docker, default_attr.docker])
+        cpu: 2
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"ubuntu:20.04"
     }
 }
 
@@ -200,9 +187,8 @@ task CheckFingerprint {
         File aligned_bam
         File aligned_bai
 
-        String sample_name
-
         File fingerprint_vcf
+        String vcf_sample_name
 
         File haplotype_map
 
@@ -229,7 +215,7 @@ task CheckFingerprint {
         gatk CheckFingerprint \
             --INPUT ~{aligned_bam} \
             --GENOTYPES ~{fingerprint_vcf} \
-            --EXPECTED_SAMPLE_ALIAS ~{sample_name} \
+            --EXPECTED_SAMPLE_ALIAS ~{vcf_sample_name} \
             --HAPLOTYPE_MAP ~{haplotype_map} \
             --OUTPUT ~{prefix}
 
@@ -412,9 +398,8 @@ task CheckCLRFingerprint {
         File aligned_bai
         Int min_base_q = 0
 
-        String sample_name
-
         File fingerprint_vcf
+        String vcf_sample_name
 
         File haplotype_map
 
@@ -435,7 +420,7 @@ task CheckCLRFingerprint {
             CheckFingerprint \
             INPUT=~{aligned_bam} \
             GENOTYPES=~{fingerprint_vcf} \
-            EXPECTED_SAMPLE_ALIAS=~{sample_name} \
+            EXPECTED_SAMPLE_ALIAS=~{vcf_sample_name} \
             HAPLOTYPE_MAP=~{haplotype_map} \
             OUTPUT=~{prefix} \
             MIN_BASE_QUAL=~{min_base_q}
