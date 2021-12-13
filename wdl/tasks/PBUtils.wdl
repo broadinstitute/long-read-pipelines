@@ -138,7 +138,7 @@ task ShardLongReads {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -218,18 +218,45 @@ task CCS {
 task ExtractHifiReads {
     input {
         File bam
+
+        String sample_name
+        String library
+
         String prefix = "hifi"
 
         RuntimeAttr? runtime_attr_override
     }
 
+    parameter_meta {
+        sample_name: "we always rely explicitly on input SM name"
+        library: "this will override the LB: entry on the @RG line"
+    }
+
     Int disk_size = 3*ceil(size(bam, "GB"))
-    String bn = basename(bam, ".bam")
 
     command <<<
         set -euxo pipefail
 
-        extracthifi ~{bam} ~{prefix}.bam
+        extracthifi ~{bam} ~{prefix}.tmp.bam
+
+        samtools view --no-PG -H ~{prefix}.tmp.bam > header.txt
+        awk '$1 ~ /^@RG/' header.txt > rg_line.txt
+        # fix LB:
+        awk -v lib="~{library}" 'BEGIN {OFS="\t"} { for (i=1; i<=NF; ++i) { if ($i ~ "LB:") $i="LB:"lib } print}' \
+            rg_line.txt \
+            > fixed_rg_line.lb.txt
+        # fix SM:
+        awk -v lib="~{sample_name}" 'BEGIN {OFS="\t"} { for (i=1; i<=NF; ++i) { if ($i ~ "SM:") $i="SM:"lib } print}' \
+            fixed_rg_line.lb.txt \
+            > fixed_rg_line.txt
+        sed -n '/@RG/q;p' header.txt > first_half.txt
+        sed -n '/@RG/,$p' header.txt | sed '1d' > second_half.txt
+
+        cat first_half.txt fixed_rg_line.txt second_half.txt > fixed_header.txt
+
+        date
+        samtools reheader fixed_header.txt ~{prefix}.tmp.bam > ~{prefix}.bam
+        date
     >>>
 
     output {
@@ -250,7 +277,7 @@ task ExtractHifiReads {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -693,6 +720,7 @@ task Align {
         File ref_fasta
 
         String sample_name
+        String? library
         String map_preset
 
         Boolean drop_per_base_N_pulse_tags
@@ -701,8 +729,15 @@ task Align {
         RuntimeAttr? runtime_attr_override
     }
 
+    parameter_meta {
+        sample_name: "we always rely explicitly on input SM name"
+        library: "this will override the LB: entry on the @RG line"
+    }
+
     String median_filter = if map_preset == "SUBREAD" then "--median-filter" else ""
     String extra_options = if drop_per_base_N_pulse_tags then " --strip " else ""
+
+    Boolean fix_library_entry = if defined(library) then true else false
 
     Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
     Int cpus = 4
@@ -711,23 +746,30 @@ task Align {
     command <<<
         set -euxo pipefail
 
-        # sometimes the ubam comes without sample information, so we rely on the input to this task for a fix
-        samtools view -H ~{bam} > old.header.txt
-        if grep -q -F 'SM:' old.header.txt; then
-            pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
-                --preset ~{map_preset} \
-                ~{median_filter} \
-                ~{extra_options} \
-                --sort \
-                --unmapped
-        else
-            pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
-                --preset ~{map_preset} \
-                ~{median_filter} \
-                --sample ~{sample_name} \
-                ~{extra_options} \
-                --sort \
-                --unmapped
+        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
+            --preset ~{map_preset} \
+            ~{median_filter} \
+            --sample ~{sample_name} \
+            ~{extra_options} \
+            --sort \
+            --unmapped
+
+        if ~{fix_library_entry}; then
+            mv ~{prefix}.pre.bam ~{prefix}.pre.tmp.bam
+            samtools view --no-PG -H ~{prefix}.pre.tmp.bam > header.txt
+            awk '$1 ~ /^@RG/' header.txt > rg_line.txt
+            awk -v lib="~{library}" 'BEGIN {OFS="\t"} { for (i=1; i<=NF; ++i) { if ($i ~ "LB:") $i="LB:"lib } print}' \
+                rg_line.txt \
+                > fixed_rg_line.txt
+            sed -n '/@RG/q;p' header.txt > first_half.txt
+            sed -n '/@RG/,$p' header.txt | sed '1d' > second_half.txt
+
+            cat first_half.txt fixed_rg_line.txt second_half.txt > fixed_header.txt
+
+            date
+            samtools reheader fixed_header.txt ~{prefix}.pre.tmp.bam > ~{prefix}.pre.bam
+            rm ~{prefix}.pre.tmp.bam
+            date
         fi
 
         samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam

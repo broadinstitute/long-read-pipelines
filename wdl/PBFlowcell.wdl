@@ -20,6 +20,7 @@ workflow PBFlowcell {
         File ref_map_file
 
         String SM
+        String LB
 
         Boolean drop_per_base_N_pulse_tags = true
 
@@ -36,6 +37,7 @@ workflow PBFlowcell {
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
         SM:                 "the value to place in the BAM read group's SM field"
+        LB:                 "the value to place in the BAM read group's LB (library) field"
 
         num_shards:         "[default-valued] number of shards into which fastq files should be batched"
         experiment_type:    "type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
@@ -64,7 +66,12 @@ workflow PBFlowcell {
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
         if (experiment_type != "CLR") {
             if (!GetRunInfo.is_corrected) { call PB.CCS { input: subreads = unmapped_shard } }
-            call PB.ExtractHifiReads { input: bam = select_first([CCS.consensus, unmapped_shard]) }
+            call PB.ExtractHifiReads {
+                input:
+                    bam = select_first([CCS.consensus, unmapped_shard]),
+                    sample_name = SM,
+                    library     = LB
+            }
         }
 
         File unaligned_bam = select_first([ExtractHifiReads.hifi_bam, unmapped_shard])
@@ -74,6 +81,7 @@ workflow PBFlowcell {
                 bam         = unaligned_bam,
                 ref_fasta   = ref_map['fasta'],
                 sample_name = SM,
+                library     = LB,
                 map_preset  = map_presets[experiment_type],
                 drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags
         }
