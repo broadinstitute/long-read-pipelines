@@ -16,11 +16,10 @@ task FinalizeToFile {
     command <<<
         set -euxo pipefail
 
-        gsutil -m cp "~{file}" "~{gcs_output_file}"
+        gsutil -m cp ~{file} ~{gcs_output_file}
     >>>
 
     output {
-        String gcs_path = gcs_output_file
     }
 
     #########################
@@ -59,13 +58,10 @@ task FinalizeToDir {
     command <<<
         set -euxo pipefail
 
-        while read p; do
-            gsutil -m cp "$p" "~{gcs_output_dir}"
-        done <~{write_lines(files)}
+        gsutil -m cp ~{sep=' ' files} ~{gcs_output_dir}
     >>>
 
     output {
-        String gcs_dir = gcs_output_dir
     }
 
     #########################

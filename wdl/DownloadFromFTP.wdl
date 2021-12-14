@@ -194,12 +194,12 @@ task DownloadFTPFile {
 
             gcsfile="~{gcs_out_root_dir}/~{true="$ftp_base/" false="" prepend_dir_name}$ftp_file"
 
-            if gsutil -q stat "$gcsfile" ; then
+            if gsutil -q stat $gcsfile ; then
                 echo "$gcsfile already exists."
             else
                 mkdir -p $(dirname $ftp_file)
 
-                (lftp -e "get $ftp_file -o $ftp_file; exit" $ftp_dir && gsutil cp $ftp_file "$gcsfile") || RET=1
+                (lftp -e "get $ftp_file -o $ftp_file; exit" $ftp_dir && gsutil cp $ftp_file $gcsfile) || RET=1
 
                 rm -f $ftp_file
             fi
