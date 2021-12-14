@@ -14,8 +14,7 @@ import "tasks/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
     input {
-        Array[File] ccs_bams
-        Array[File] ccs_pbis
+        Array[File] ccs_fqs
 
         File ref_map_file
         String participant_name
@@ -25,8 +24,7 @@ workflow PBAssembleWithHifiasm {
     }
 
     parameter_meta {
-        ccs_bams:           "GCS path to unaligned CCS BAM files"
-        ccs_pbis:           "GCS path to unaligned CCS BAM file indices"
+        ccs_fqs:            "GCS path to CCS fastq files"
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         participant_name:   "name of the participant from whom these samples were obtained"
@@ -41,16 +39,12 @@ workflow PBAssembleWithHifiasm {
 
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
-    scatter (ccs_bam in ccs_bams) {
-        call Utils.BamToFastq { input: bam = ccs_bam, prefix = basename(ccs_bam, ".bam") }
-    }
-
     # gather across (potential multiple) input CCS BAMs
-    if (length(ccs_bams) > 1) {
-        call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = BamToFastq.reads_fq }
+    if (length(ccs_fqs) > 1) {
+        call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = ccs_fqs }
     }
 
-    File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, BamToFastq.reads_fq ])
+    File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, ccs_fqs[0] ])
 
     call HA.Hifiasm {
         input:
@@ -60,7 +54,6 @@ workflow PBAssembleWithHifiasm {
 
     call Quast.Quast {
         input:
-            ref = ref_map['fasta'],
             assemblies = [ Hifiasm.fa ]
     }
 
@@ -72,54 +65,44 @@ workflow PBAssembleWithHifiasm {
             prefix = prefix + ".hifiasm"
     }
 
-    call FF.FinalizeToFile as FinalizeHifiasmGfa {
-        input:
-            file    = Hifiasm.gfa,
-            outfile = outdir + "/assembly/" + basename(Hifiasm.gfa)
-    }
+    # Finalize data
+    String dir = outdir + "/assembly"
 
-    call FF.FinalizeToFile as FinalizeHifiasmFa {
-        input:
-            file    = Hifiasm.fa,
-            outfile = outdir + "/assembly/" + basename(Hifiasm.fa)
-    }
-
-    call FF.FinalizeToFile as FinalizeQuastReportHtml {
-        input:
-            file    = Quast.report_html,
-            outfile = outdir + "/assembly/" + basename(Quast.report_html)
-    }
-
-    call FF.FinalizeToFile as FinalizeQuastReportTxt{
-        input:
-            file    = Quast.report_txt,
-            outfile = outdir + "/assembly/" + basename(Quast.report_txt)
-    }
+    call FF.FinalizeToFile as FinalizeHifiasmGfa { input: outdir = dir, file = Hifiasm.gfa }
+    call FF.FinalizeToFile as FinalizeHifiasmFa { input: outdir = dir, file = Hifiasm.fa }
+    call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
+    call FF.FinalizeToFile as FinalizeQuastReportTxt { input: outdir = dir, file = Quast.report_txt }
+    call FF.FinalizeToFile as FinalizePaf { input: outdir = dir, file = CallAssemblyVariants.paf }
+    call FF.FinalizeToFile as FinalizePafToolsVcf { input: outdir = dir, file = CallAssemblyVariants.paftools_vcf }
 
     output {
         File hifiasm_gfa = FinalizeHifiasmGfa.gcs_path
         File hifiasm_fa = FinalizeHifiasmFa.gcs_path
 
-        File paf = CallAssemblyVariants.paf
-        File paftools_vcf = CallAssemblyVariants.paftools_vcf
+        File paf = FinalizePaf.gcs_path
+        File paftools_vcf = FinalizePafToolsVcf.gcs_path
 
         File quast_report_html = FinalizeQuastReportHtml.gcs_path
         File quast_report_txt = FinalizeQuastReportTxt.gcs_path
 
         Int num_contigs = Quast.metrics['#_contigs']
         Int largest_contigs = Quast.metrics['Largest_contig']
-        Int total_length = Quast.metrics['Total_length']
-        Float genome_fraction_pct = Quast.metrics['Genome_fraction_(%)']
+        String total_length = Quast.metrics['Total_length']
         Float gc_pct = Quast.metrics['GC_(%)']
         Int n50 = Quast.metrics['N50']
-        Int ng50 = Quast.metrics['NG50']
-        Int nga50 = Quast.metrics['NGA50']
-        Int total_aligned_length = Quast.metrics['Total_aligned_length']
-        Int largest_alignment = Quast.metrics['Largest_alignment']
-        Int unaligned_length = Quast.metrics['Unaligned_length']
-        Float duplication_ratio = Quast.metrics['Duplication_ratio']
-        Int num_misassemblies = Quast.metrics['#_misassemblies']
-        Float num_mismatches_per_100_kbp = Quast.metrics['#_mismatches_per_100_kbp']
-        Float num_indels_per_100_kbp = Quast.metrics['#_indels_per_100_kbp']
+        Int n75 = Quast.metrics['N75']
+        Int l50 = Quast.metrics['L50']
+        Int l75 = Quast.metrics['L75']
+
+#        Float genome_fraction_pct = Quast.metrics['Genome_fraction_(%)']
+#        Int ng50 = Quast.metrics['NG50']
+#        Int nga50 = Quast.metrics['NGA50']
+#        Int total_aligned_length = Quast.metrics['Total_aligned_length']
+#        Int largest_alignment = Quast.metrics['Largest_alignment']
+#        Int unaligned_length = Quast.metrics['Unaligned_length']
+#        Float duplication_ratio = Quast.metrics['Duplication_ratio']
+#        Int num_misassemblies = Quast.metrics['#_misassemblies']
+#        Float num_mismatches_per_100_kbp = Quast.metrics['#_mismatches_per_100_kbp']
+#        Float num_indels_per_100_kbp = Quast.metrics['#_indels_per_100_kbp']
     }
 }
