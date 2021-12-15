@@ -175,8 +175,8 @@ if __name__ == '__main__':
 
     # Options for starcode:
     optionalStarcode = parser.add_argument_group("Starcode Options")
-    optionalStarcode.add_argument("-d", "--distance", help="Defines the maximum Levenshtein distance for clustering.", required=False)
-    optionalStarcode.add_argument("-r", "--cluster-ratio", help="(Message passing only) Specifies the minimum sequence count ratio to cluster two matching sequences.",
+    optionalStarcode.add_argument("--distance", help="Defines the maximum Levenshtein distance for clustering.", required=False)
+    optionalStarcode.add_argument("--cluster-ratio", help="(Message passing only) Specifies the minimum sequence count ratio to cluster two matching sequences.",
                                   required=False)
     optionalStarcode.add_argument("--spheres", help="Use sphere clustering algorithm instead of message passing (MP).", action="store_true")
     optionalStarcode.add_argument("--connected-comp", help="Clusters are defined by the connected components.", action="store_true")
