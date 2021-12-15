@@ -1,4 +1,4 @@
-VERSION = 0.1.15
+VERSION = 0.1.16
 NAME = lr-10x
 
 TAG1 = quay.io/broad-long-read-pipelines/$(NAME):$(VERSION)
