@@ -66,7 +66,8 @@ def _process_starcode_stdout(starcode_proc, starcode_output_file = None):
 
 
 def perform_barcode_correction_starcode_with_barcode_counts(
-        barcode_count_filename, analysis_name, starcode_path
+        barcode_count_filename, analysis_name, starcode_path,
+        starcode_distance, starcode_cluster_ratio, starcode_spheres, starcode_connected_comp
 ):
     """
     Performs the barcode correction using starcode
@@ -78,6 +79,19 @@ def perform_barcode_correction_starcode_with_barcode_counts(
     """
 
     starcode_args = [starcode_path, "--print-clusters", "--quiet", "-i", barcode_count_filename]
+    if starcode_distance:
+        starcode_args.append("--distance")
+        starcode_args.append(starcode_distance)
+    if starcode_cluster_ratio:
+        starcode_args.append("--cluster-ratio")
+        starcode_args.append(starcode_cluster_ratio)
+    if starcode_spheres:
+        starcode_args.append("--spheres")
+        starcode_args.append(starcode_spheres)
+    if starcode_connected_comp:
+        starcode_args.append("--connected-comp")
+        starcode_args.append(starcode_connected_comp)
+
     print(f"Executing starcode as: {' '.join(starcode_args)}", file=sys.stderr)
     starcode_proc = subprocess.Popen(starcode_args, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     starcode_proc.stdin.close()
@@ -96,7 +110,8 @@ def perform_barcode_correction_starcode_with_barcode_counts(
     return correction_dict
 
 
-def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, starcode_path):
+def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, starcode_path,
+         starcode_distance, starcode_cluster_ratio, starcode_spheres, starcode_connected_comp):
     """
     Main function for the tool
     """
@@ -109,7 +124,8 @@ def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, s
 
     print('Performing barcode corrections...')
     correction_dict = perform_barcode_correction_starcode_with_barcode_counts(
-        counts_filename, analysis_name, starcode_path
+        counts_filename, analysis_name, starcode_path,
+        starcode_distance, starcode_cluster_ratio, starcode_spheres, starcode_connected_comp
     )
 
     correction_dict['.'] = '.'
@@ -157,11 +173,30 @@ if __name__ == '__main__':
     parser.add_argument('--whitelist-illumina', help='Illumina whitelist filename. This may be GZIP compressed (has to have extension .gz in that case)')
     parser.add_argument('--starcode-path', help='Path to the starcode executable', type=str, default='/lrma/starcode-master/starcode')
 
+    # Options for starcode:
+    optionalStarcode = parser.add_argument_group("Starcode Options")
+    optionalStarcode.add_argument("-d", "--distance", help="Defines the maximum Levenshtein distance for clustering.", required=False)
+    optionalStarcode.add_argument("-r", "--cluster-ratio", help="(Message passing only) Specifies the minimum sequence count ratio to cluster two matching sequences.",
+                                  required=False)
+    optionalStarcode.add_argument("--spheres", help="Use sphere clustering algorithm instead of message passing (MP).", action="store_true")
+    optionalStarcode.add_argument("--connected-comp", help="Clusters are defined by the connected components.", action="store_true")
+
     args = parser.parse_args()
+
+    # Process args for mutex options:
+    # Some starcode options are mutually exclusive:
+    if args.cluster_ratio and (args.spheres or args.connected_comp):
+        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--spheres`, `--connected-comp`.")
+
+    if args.spheres and (args.cluster_ratio or args.connected_comp):
+        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--spheres`, `--connected-comp`.")
+
+    if args.connected_comp and (args.spheres or args.cluster_ratio):
+        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--spheres`, `--connected-comp`.")
 
     if args.whitelist_illumina and not args.whitelist_10x:
         print('Illumina whitelist provided but no 10x whitelist provided.')
         exit(1)
 
-    main(args.bam, args.counts, args.name, args.whitelist_10x, args.starcode_path)
+    main(args.bam, args.counts, args.name, args.whitelist_10x, args.starcode_path, args.distance, args.cluster_ratio, args.spheres, args.connected_comp)
 
