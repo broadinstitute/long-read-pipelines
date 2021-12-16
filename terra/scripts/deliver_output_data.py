@@ -63,12 +63,11 @@ def upload_tables(namespace, workspace, s, ss, nms):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Copy data to delivery workspaces', prog='deliver_data')
+    parser = argparse.ArgumentParser(description='Copy data to delivery workspaces', prog='deliver_output_data')
     parser.add_argument('-p', '--project', type=str, help="GCP project")
     parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
     parser.add_argument('-u', '--user', type=str, nargs="+", help="Usernames to add as owners to the workspace")
-    parser.add_argument('-i', '--copy-inputs', action='store_true', help="Copy input files too")
     parser.add_argument('-t', '--threads', type=int, default=os.cpu_count() + 2, help="Number of threads to use to copy files")
     parser.add_argument('-r', '--run', action='store_true', help="Actually run the copying commands")
     args = parser.parse_args()
@@ -131,21 +130,15 @@ def main():
 
             bucket_name = f"gs://{q['workspace']['bucketName']}"
             newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
-            newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", inplace=True, regex=True)
+            #newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", inplace=True, regex=True)
             newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
-            newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
+            #newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
 
             tbl_new_hash[rw] = tbl_new_hash[rw].append(newrow)
 
             for k, v in row.to_dict().items():
                 if 'gs://' in v:
-                    if 'gs://broad-gp-pacbio/' in v or 'gs://broad-gp-oxfordnano/' in v:
-                        if args.copy_inputs:
-                            if bucket_name not in copy_lists:
-                                copy_lists[bucket_name] = {}
-                            if '.' in v:
-                                copy_lists[bucket_name][v] = newrow[k]
-                    else:
+                    if 'gs://broad-gp-pacbio/' not in v and 'gs://broad-gp-oxfordnano/' not in v:
                         if bucket_name not in copy_lists:
                             copy_lists[bucket_name] = {}
                         if '.' in v:
