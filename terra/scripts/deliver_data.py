@@ -169,7 +169,7 @@ def main():
 
                 upload_tables(namespace_new_hash[workspace], workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
             else:
-                print(f'Uploaded {len(tbl_new_hash[workspace])} rows successfully. [dry-run]')
+                print(f'\tUploaded {len(tbl_new_hash[workspace])} rows successfully. [dry-run]')
 
 
     num_files = 0
@@ -183,7 +183,7 @@ def main():
     pool.close()
     pool.join()
 
-    print(f"Copied {num_files} files.")
+    print(f"Copied {num_files} files using {num_threads} threads.")
 
 
 if __name__ == "__main__":
