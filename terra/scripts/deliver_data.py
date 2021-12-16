@@ -3,9 +3,13 @@
 import argparse
 import subprocess
 import re
+import os
 
 import pandas as pd
 import firecloud.api as fapi
+
+from multiprocessing.pool import Pool, ThreadPool
+from functools import partial
 
 
 pd.set_option('max_columns', 200)
@@ -13,8 +17,11 @@ pd.set_option('max_rows', 200)
 pd.set_option("max_colwidth", None)
 
 
-def copy_file(src, dst):
-    subprocess.run(["gsutil", "cp", "-n", src, dst])
+def copy_file(src, dst, run):
+    if run:
+        subprocess.run(["gsutil", "cp", "-n", src, dst])
+    else:
+        subprocess.run(["echo", "gsutil", "cp", "-n", src, dst, "[dry-run]"])
 
 
 def load_table(namespace, workspace, table_name, store_membership=False):
@@ -114,37 +121,42 @@ def main():
             ss_new_hash[rw] = pd.DataFrame(columns=ss_old.columns)
             membership_new_hash[rw] = []
 
-        q = fapi.get_workspace(ns, rw).json()
+        qa = fapi.get_workspace(ns, rw)
 
-        bucket_name = f"gs://{q['workspace']['bucketName']}"
-        newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
-        newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", inplace=True, regex=True)
-        newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
-        newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
+        if qa.status_code == 200:
+            q = qa.json()
 
-        tbl_new_hash[rw] = tbl_new_hash[rw].append(newrow)
+            bucket_name = f"gs://{q['workspace']['bucketName']}"
+            newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
+            newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", inplace=True, regex=True)
+            newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
+            newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
 
-        for k, v in row.to_dict().items():
-            if 'gs://' in v:
-                if 'gs://broad-gp-pacbio/' in v or 'gs://broad-gp-oxfordnano/' in v:
-                    if args.copy_inputs:
+            tbl_new_hash[rw] = tbl_new_hash[rw].append(newrow)
+
+            for k, v in row.to_dict().items():
+                if 'gs://' in v:
+                    if 'gs://broad-gp-pacbio/' in v or 'gs://broad-gp-oxfordnano/' in v:
+                        if args.copy_inputs:
+                            if bucket_name not in copy_lists:
+                                copy_lists[bucket_name] = {}
+                            if '.' in v:
+                                copy_lists[bucket_name][v] = newrow[k]
+                    else:
                         if bucket_name not in copy_lists:
                             copy_lists[bucket_name] = {}
                         if '.' in v:
                             copy_lists[bucket_name][v] = newrow[k]
-                else:
-                    if bucket_name not in copy_lists:
-                        copy_lists[bucket_name] = {}
-                    if '.' in v:
-                        copy_lists[bucket_name][v] = newrow[k]
 
-        for ss_index, ss_row in ss_old.iterrows():
-            if row['entity:sample_id'] in membership[ss_index]:
-                ss_new_hash[rw] = ss_new_hash[rw].append(ss_row)
-                membership_new_hash[rw].append(membership[ss_index])
-                namespace_new_hash[rw] = ns
+            for ss_index, ss_row in ss_old.iterrows():
+                if row['entity:sample_id'] in membership[ss_index]:
+                    ss_new_hash[rw] = ss_new_hash[rw].append(ss_row)
+                    membership_new_hash[rw].append(membership[ss_index])
+                    namespace_new_hash[rw] = ns
 
     for workspace in membership_new_hash:
+        print(f'Processing workspace {workspace}...')
+
         if len(membership_new_hash[workspace]) > 0:
             oms = pd \
                 .DataFrame({'entity:sample_set_id': list(ss_new_hash[workspace]['entity:sample_set_id']), 'sample': membership_new_hash[workspace]}) \
@@ -157,15 +169,21 @@ def main():
 
                 upload_tables(namespace_new_hash[workspace], workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
             else:
-                print(f'Uploaded {len(table)} {label} rows successfully. [dry-run]')
+                print(f'Uploaded {len(tbl_new_hash[workspace])} rows successfully. [dry-run]')
 
 
+    num_files = 0
+    num_threads = os.cpu_count() + 2
+    pool = Pool(num_threads)
     for bucket in copy_lists:
         for s in copy_lists[bucket]:
-            if args.run:
-                copy_file(s, copy_lists[bucket][s])
-            else:
-                print(f'gsutil cp -n {s} {copy_lists[bucket][s]} [dry-run]')
+            pool.apply_async(copy_file, args = (s, copy_lists[bucket][s], args.run, ))
+            num_files += 1
+
+    pool.close()
+    pool.join()
+
+    print(f"Copied {num_files} files.")
 
 
 if __name__ == "__main__":
