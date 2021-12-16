@@ -60,7 +60,9 @@ def main():
     parser.add_argument('-p', '--project', type=str, help="GCP project")
     parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
+    parser.add_argument('-u', '--user', type=str, nargs="+", help="Usernames to add as owners to the workspace")
     parser.add_argument('-i', '--copy-inputs', action='store_true', help="Copy input files too")
+    parser.add_argument('-r', '--run', action='store_true', help="Actually run the copying commands")
     args = parser.parse_args()
 
     tbl_old, _ = load_table(args.namespace, args.workspace, 'sample')
@@ -86,15 +88,23 @@ def main():
         rw = row['workspace']
 
         if rw not in workspaces:
-            a = fapi.create_workspace(args.namespace, rw)
-            b = fapi.update_workspace_acl(args.namespace, rw, [
-                {"email": "kiran@broadinstitute.org", "accessLevel": "OWNER"},
-                {"email": "222581509023-compute@developer.gserviceaccount.com", "accessLevel": "OWNER"},
-                {"email": "shuang@broadinstitute.org", "accessLevel": "OWNER"},
-                {"email": "lholmes@broadinstitute.org", "accessLevel": "OWNER"},
-            ])
+            owners = [{"email": u, "accessLevel": "OWNER"} for u in args.user]
 
-            print(f"[workspace  : {a.status_code}] Created workspace '{rw}'")
+            if args.run:
+                a = fapi.create_workspace(args.namespace, rw)
+                b = fapi.update_workspace_acl(args.namespace, rw, owners)
+
+                # b = fapi.update_workspace_acl(args.namespace, rw, [
+                #     {"email": "kiran@broadinstitute.org", "accessLevel": "OWNER"},
+                #     {"email": "222581509023-compute@developer.gserviceaccount.com", "accessLevel": "OWNER"},
+                #     {"email": "shuang@broadinstitute.org", "accessLevel": "OWNER"},
+                #     {"email": "lholmes@broadinstitute.org", "accessLevel": "OWNER"},
+                # ])
+
+                print(f"[workspace  : {a.status_code}] Created workspace '{rw}'")
+            else:
+                print(f"[workspace  : 000] Created workspace '{rw}' [dry-run]")
+
             workspaces[rw] = args.namespace
 
         ns = workspaces[rw]
@@ -141,14 +151,21 @@ def main():
                 .explode('sample', ignore_index=True)
             oms.columns = ['membership:sample_set_id', 'sample']
 
-            for ssname in list(oms['membership:sample_set_id']):
-                a = fapi.delete_sample_set(namespace_new_hash[workspace], workspace, ssname)
+            if args.run:
+                for ssname in list(oms['membership:sample_set_id']):
+                    a = fapi.delete_sample_set(namespace_new_hash[workspace], workspace, ssname)
 
-            upload_tables(namespace_new_hash[workspace], workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
+                upload_tables(namespace_new_hash[workspace], workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
+            else:
+                print(f'Uploaded {len(table)} {label} rows successfully. [dry-run]')
+
 
     for bucket in copy_lists:
         for s in copy_lists[bucket]:
-            copy_file(s, copy_lists[bucket][s])
+            if args.run:
+                copy_file(s, copy_lists[bucket][s])
+            else:
+                print(f'gsutil cp -n {s} {copy_lists[bucket][s]} [dry-run]')
 
 
 if __name__ == "__main__":
