@@ -69,8 +69,11 @@ def main():
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
     parser.add_argument('-u', '--user', type=str, nargs="+", help="Usernames to add as owners to the workspace")
     parser.add_argument('-i', '--copy-inputs', action='store_true', help="Copy input files too")
+    parser.add_argument('-t', '--threads', type=int, default=os.cpu_count() + 2, help="Number of threads to use to copy files")
     parser.add_argument('-r', '--run', action='store_true', help="Actually run the copying commands")
     args = parser.parse_args()
+
+    num_threads = os.cpu_count() + 2
 
     tbl_old, _ = load_table(args.namespace, args.workspace, 'sample')
     ss_old, membership = load_table(args.namespace, args.workspace, 'sample_set', store_membership=True)
@@ -173,8 +176,7 @@ def main():
 
 
     num_files = 0
-    num_threads = os.cpu_count() + 2
-    pool = Pool(num_threads)
+    pool = Pool(args.threads)
     for bucket in copy_lists:
         for s in copy_lists[bucket]:
             pool.apply_async(copy_file, args = (s, copy_lists[bucket][s], args.run, ))
@@ -183,7 +185,7 @@ def main():
     pool.close()
     pool.join()
 
-    print(f"Copied {num_files} files using {num_threads} threads.")
+    print(f"Copied {num_files} files using {args.threads} threads.")
 
 
 if __name__ == "__main__":
