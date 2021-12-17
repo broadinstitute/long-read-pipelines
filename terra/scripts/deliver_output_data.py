@@ -7,6 +7,7 @@ import os
 
 import pandas as pd
 import firecloud.api as fapi
+import tqdm
 
 from multiprocessing.pool import Pool, ThreadPool
 from functools import partial
@@ -19,9 +20,12 @@ pd.set_option("max_colwidth", None)
 
 def copy_file(src, dst, run):
     if run:
-        subprocess.run(["gsutil", "cp", "-n", src, dst])
+        result = subprocess.run(["gsutil", "cp", "-n", src, dst], capture_output=True, text=True)
+        return "Skipping" not in result.stdout
     else:
         subprocess.run(["echo", "gsutil", "cp", "-n", src, dst, "[dry-run]"])
+
+    return False
 
 
 def load_table(namespace, workspace, table_name, store_membership=False):
@@ -88,6 +92,7 @@ def main():
     ss_new_hash = {}
     membership_new_hash = {}
     namespace_new_hash = {}
+    bucket_new_hash = {}
 
     copy_lists = {}
 
@@ -124,6 +129,7 @@ def main():
             newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
 
             tbl_new_hash[rw] = tbl_new_hash[rw].append(newrow)
+            bucket_new_hash[bucket_name] = rw
 
             for k, v in row.to_dict().items():
                 if 'gs://' in v:
@@ -156,16 +162,26 @@ def main():
             else:
                 print(f'\tUploaded {len(tbl_new_hash[workspace])} rows successfully. [dry-run]')
 
-
     num_files = 0
-    pool = Pool(args.threads)
     for bucket in copy_lists:
         for s in copy_lists[bucket]:
-            pool.apply_async(copy_file, args = (s, copy_lists[bucket][s], args.run, ))
             num_files += 1
 
-    pool.close()
-    pool.join()
+    with tqdm(total=num_files) as pbar:
+        with Pool(args.threads) as pool:
+            def callback(result):
+                pbar.update()
+
+                print(result)
+
+                return
+
+            for bucket in copy_lists:
+                for s in copy_lists[bucket]:
+                    pool.apply_async(copy_file, args = (s, copy_lists[bucket][s], args.run, ), callback=callback)
+
+    #pool.close()
+    #pool.join()
 
     print(f"Copied {num_files} files using {args.threads} threads.")
 
