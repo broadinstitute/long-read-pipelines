@@ -67,7 +67,7 @@ def _process_starcode_stdout(starcode_proc, starcode_output_file = None):
 
 def perform_barcode_correction_starcode_with_barcode_counts(
         barcode_count_filename, analysis_name, starcode_path,
-        starcode_distance, starcode_cluster_ratio, starcode_spheres, starcode_connected_comp
+        starcode_dist, starcode_cluster_ratio, starcode_sphere, starcode_connected_comp
 ):
     """
     Performs the barcode correction using starcode
@@ -79,15 +79,15 @@ def perform_barcode_correction_starcode_with_barcode_counts(
     """
 
     starcode_args = [starcode_path, "--print-clusters", "--quiet", "-i", barcode_count_filename]
-    if starcode_distance:
-        starcode_args.append("--distance")
-        starcode_args.append(starcode_distance)
+    if starcode_dist:
+        starcode_args.append("--dist")
+        starcode_args.append(starcode_dist)
     if starcode_cluster_ratio:
         starcode_args.append("--cluster-ratio")
         starcode_args.append(starcode_cluster_ratio)
-    if starcode_spheres:
-        starcode_args.append("--spheres")
-        starcode_args.append(starcode_spheres)
+    if starcode_sphere:
+        starcode_args.append("--sphere")
+        starcode_args.append(starcode_sphere)
     if starcode_connected_comp:
         starcode_args.append("--connected-comp")
         starcode_args.append(starcode_connected_comp)
@@ -111,7 +111,7 @@ def perform_barcode_correction_starcode_with_barcode_counts(
 
 
 def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, starcode_path,
-         starcode_distance, starcode_cluster_ratio, starcode_spheres, starcode_connected_comp):
+         starcode_dist, starcode_cluster_ratio, starcode_sphere, starcode_connected_comp):
     """
     Main function for the tool
     """
@@ -125,7 +125,7 @@ def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, s
     print('Performing barcode corrections...')
     correction_dict = perform_barcode_correction_starcode_with_barcode_counts(
         counts_filename, analysis_name, starcode_path,
-        starcode_distance, starcode_cluster_ratio, starcode_spheres, starcode_connected_comp
+        starcode_dist, starcode_cluster_ratio, starcode_sphere, starcode_connected_comp
     )
 
     correction_dict['.'] = '.'
@@ -175,11 +175,23 @@ if __name__ == '__main__':
 
     # Options for starcode:
     optionalStarcode = parser.add_argument_group("Starcode Options")
-    optionalStarcode.add_argument("--distance", help="Defines the maximum Levenshtein distance for clustering.", required=False)
+    optionalStarcode.add_argument("--dist", help="Defines the maximum Levenshtein distance for clustering.", required=False)
     optionalStarcode.add_argument("--cluster-ratio", help="(Message passing only) Specifies the minimum sequence count ratio to cluster two matching sequences.",
                                   required=False)
-    optionalStarcode.add_argument("--spheres", help="Use sphere clustering algorithm instead of message passing (MP).", action="store_true")
+    optionalStarcode.add_argument("--sphere", help="Use sphere clustering algorithm instead of message passing (MP).", action="store_true")
     optionalStarcode.add_argument("--connected-comp", help="Clusters are defined by the connected components.", action="store_true")
+
+  # general options:
+  #   -d --dist: maximum Levenshtein distance (default auto)
+  #   -t --threads: number of concurrent threads (default 1)
+  #   -q --quiet: quiet output (default verbose)
+  #   -v --version: display version and exit
+  #
+  # cluster options: (default algorithm: message passing)
+  #   -r --cluster-ratio: min size ratio for merging clusters in
+  #              message passing (default 5.0)
+  #   -s --sphere: use sphere clustering algorithm
+  #   -c --connected-comp: cluster connected components
 
     args = parser.parse_args()
 
@@ -198,5 +210,5 @@ if __name__ == '__main__':
         print('Illumina whitelist provided but no 10x whitelist provided.')
         exit(1)
 
-    main(args.bam, args.counts, args.name, args.whitelist_10x, args.starcode_path, args.distance, args.cluster_ratio, args.spheres, args.connected_comp)
+    main(args.bam, args.counts, args.name, args.whitelist_10x, args.starcode_path, args.dist, args.cluster_ratio, args.sphere, args.connected_comp)
 
