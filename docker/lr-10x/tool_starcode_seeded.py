@@ -197,14 +197,14 @@ if __name__ == '__main__':
 
     # Process args for mutex options:
     # Some starcode options are mutually exclusive:
-    if args.cluster_ratio and (args.spheres or args.connected_comp):
-        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--spheres`, `--connected-comp`.")
+    if args.cluster_ratio and (args.sphere or args.connected_comp):
+        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--sphere`, `--connected-comp`.")
 
     if args.spheres and (args.cluster_ratio or args.connected_comp):
-        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--spheres`, `--connected-comp`.")
+        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--sphere`, `--connected-comp`.")
 
-    if args.connected_comp and (args.spheres or args.cluster_ratio):
-        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--spheres`, `--connected-comp`.")
+    if args.connected_comp and (args.sphere or args.cluster_ratio):
+        raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--sphere`, `--connected-comp`.")
 
     if args.whitelist_illumina and not args.whitelist_10x:
         print('Illumina whitelist provided but no 10x whitelist provided.')
