@@ -200,7 +200,7 @@ if __name__ == '__main__':
     if args.cluster_ratio and (args.sphere or args.connected_comp):
         raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--sphere`, `--connected-comp`.")
 
-    if args.spheres and (args.cluster_ratio or args.connected_comp):
+    if args.sphere and (args.cluster_ratio or args.connected_comp):
         raise RuntimeError("Arguments are mutually exclusive: `--cluster-ratio`, `--sphere`, `--connected-comp`.")
 
     if args.connected_comp and (args.sphere or args.cluster_ratio):
