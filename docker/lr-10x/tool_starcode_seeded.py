@@ -87,10 +87,8 @@ def perform_barcode_correction_starcode_with_barcode_counts(
         starcode_args.append(starcode_cluster_ratio)
     if starcode_sphere:
         starcode_args.append("--sphere")
-        starcode_args.append(starcode_sphere)
     if starcode_connected_comp:
         starcode_args.append("--connected-comp")
-        starcode_args.append(starcode_connected_comp)
 
     print(f"Executing starcode as: {' '.join(starcode_args)}", file=sys.stderr)
     starcode_proc = subprocess.Popen(starcode_args, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
