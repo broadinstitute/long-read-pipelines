@@ -7,10 +7,10 @@ import os
 
 import pandas as pd
 import firecloud.api as fapi
-import tqdm
 
 from multiprocessing.pool import Pool, ThreadPool
 from functools import partial
+from tqdm import tqdm
 
 
 pd.set_option('max_columns', 200)
@@ -23,7 +23,7 @@ def copy_file(src, dst, run):
         result = subprocess.run(["gsutil", "cp", "-n", src, dst], capture_output=True, text=True)
         return "Skipping" not in result.stdout
     else:
-        subprocess.run(["echo", "gsutil", "cp", "-n", src, dst, "[dry-run]"])
+        result = subprocess.run(["echo", "gsutil", "cp", "-n", src, dst, "[dry-run]"], capture_output=True, text=True)
 
     return False
 
@@ -54,10 +54,10 @@ def upload_table(namespace, workspace, table, label):
     # upload new samples
     a = fapi.upload_entities(namespace, workspace, entity_data=table.to_csv(index=False, sep="\t"), model='flexible')
 
-    if a.status_code == 200:
-        print(f'Uploaded {len(table)} {label} rows successfully.')
-    else:
-        print(a.json())
+    #if a.status_code == 200:
+    #    print(f'Uploaded {len(table)} {label} rows successfully.')
+    #else:
+    #    print(a.json())
 
 
 def upload_tables(namespace, workspace, s, ss, nms):
@@ -81,7 +81,8 @@ def main():
 
     tbl_filtered = tbl_old[~tbl_old.workspace.isin(['nan', ''])]
 
-    print(f"Accessing Terra as '{fapi.whoami()}'")
+    print(f"Accessing Terra as '{fapi.whoami()}'.")
+    print(f"Using {args.threads} threads to copy files.")
 
     workspace_list = fapi.list_workspaces("workspace.name,workspace.namespace").json()
     workspaces = {}
@@ -121,7 +122,7 @@ def main():
 
         qa = fapi.get_workspace(ns, rw)
 
-        if qa.status_code == 200:
+        if qa.status_code == 200 and "BrainBank" in rw:
             q = qa.json()
 
             bucket_name = f"gs://{q['workspace']['bucketName']}"
@@ -146,8 +147,6 @@ def main():
                     namespace_new_hash[rw] = ns
 
     for workspace in membership_new_hash:
-        print(f'Processing workspace {workspace}...')
-
         if len(membership_new_hash[workspace]) > 0:
             oms = pd \
                 .DataFrame({'entity:sample_set_id': list(ss_new_hash[workspace]['entity:sample_set_id']), 'sample': membership_new_hash[workspace]}) \
@@ -159,31 +158,36 @@ def main():
                     a = fapi.delete_sample_set(namespace_new_hash[workspace], workspace, ssname)
 
                 upload_tables(namespace_new_hash[workspace], workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
-            else:
-                print(f'\tUploaded {len(tbl_new_hash[workspace])} rows successfully. [dry-run]')
 
     num_files = 0
     for bucket in copy_lists:
         for s in copy_lists[bucket]:
             num_files += 1
 
+    print("Examining files...")
+    num_files_copied = {}
     with tqdm(total=num_files) as pbar:
-        with Pool(args.threads) as pool:
-            def callback(result):
+        pool = Pool(args.threads)
+        for bucket in copy_lists:
+            for s in copy_lists[bucket]:
+                r = pool.apply_async(copy_file, args = (s, copy_lists[bucket][s], args.run, ))
                 pbar.update()
 
-                print(result)
+                if r.get():
+                    if bucket_new_hash[bucket] not in num_files_copied:
+                        num_files_copied[bucket_new_hash[bucket]] = 0
 
-                return
+                    num_files_copied[bucket_new_hash[bucket]] += 1
 
-            for bucket in copy_lists:
-                for s in copy_lists[bucket]:
-                    pool.apply_async(copy_file, args = (s, copy_lists[bucket][s], args.run, ), callback=callback)
+        pool.close()
+        pool.join()
 
-    #pool.close()
-    #pool.join()
+    tot_files_copied = 0
+    for workspace in num_files_copied:
+        print(f"Workspace '{workspace}': copied {num_files_copied[workspace]} files. {'[dry-run]' if not args.run else ''}")
+        tot_files_copied += num_files_copied[workspace]
 
-    print(f"Copied {num_files} files using {args.threads} threads.")
+    print(f"Total files copied: {tot_files_copied}. {'[dry-run]' if not args.run else ''}")
 
 
 if __name__ == "__main__":
