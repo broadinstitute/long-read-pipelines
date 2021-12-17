@@ -72,8 +72,6 @@ def main():
     parser.add_argument('-r', '--run', action='store_true', help="Actually run the copying commands")
     args = parser.parse_args()
 
-    num_threads = os.cpu_count() + 2
-
     tbl_old, _ = load_table(args.namespace, args.workspace, 'sample')
     ss_old, membership = load_table(args.namespace, args.workspace, 'sample_set', store_membership=True)
 
@@ -103,13 +101,6 @@ def main():
                 a = fapi.create_workspace(args.namespace, rw)
                 b = fapi.update_workspace_acl(args.namespace, rw, owners)
 
-                # b = fapi.update_workspace_acl(args.namespace, rw, [
-                #     {"email": "kiran@broadinstitute.org", "accessLevel": "OWNER"},
-                #     {"email": "222581509023-compute@developer.gserviceaccount.com", "accessLevel": "OWNER"},
-                #     {"email": "shuang@broadinstitute.org", "accessLevel": "OWNER"},
-                #     {"email": "lholmes@broadinstitute.org", "accessLevel": "OWNER"},
-                # ])
-
                 print(f"[workspace  : {a.status_code}] Created workspace '{rw}'")
             else:
                 print(f"[workspace  : 000] Created workspace '{rw}' [dry-run]")
@@ -130,9 +121,7 @@ def main():
 
             bucket_name = f"gs://{q['workspace']['bucketName']}"
             newrow = row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
-            #newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", inplace=True, regex=True)
             newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", inplace=True, regex=True)
-            #newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
 
             tbl_new_hash[rw] = tbl_new_hash[rw].append(newrow)
 
