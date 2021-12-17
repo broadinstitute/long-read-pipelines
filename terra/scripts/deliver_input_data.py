@@ -54,10 +54,10 @@ def upload_table(namespace, workspace, table, label):
     # upload new samples
     a = fapi.upload_entities(namespace, workspace, entity_data=table.to_csv(index=False, sep="\t"), model='flexible')
 
-    #if a.status_code == 200:
-    #    print(f'Uploaded {len(table)} {label} rows successfully.')
-    #else:
-    #    print(a.json())
+    if a.status_code == 200:
+        print(f'Uploaded {len(table)} {label} rows successfully.')
+    else:
+        print(a.json())
 
 
 def upload_tables(namespace, workspace, s, ss, nms):
@@ -99,6 +99,8 @@ def main():
             newrow = row.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/pacbio/", regex=True)
             newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/oxfordnano/", inplace=True, regex=True)
 
+            tbl_new = tbl_new.append(newrow)
+
             for k, v in row.to_dict().items():
                 if 'gs://' in v:
                     if 'gs://broad-gp-pacbio/' in v or 'gs://broad-gp-oxfordnano/' in v:
@@ -118,7 +120,7 @@ def main():
             .explode('sample', ignore_index=True)
         oms.columns = ['membership:sample_set_id', 'sample']
 
-        if args.run:
+        if args.run or True:
             for ssname in list(oms['membership:sample_set_id']):
                 a = fapi.delete_sample_set(args.namespace, args.workspace, ssname)
 
