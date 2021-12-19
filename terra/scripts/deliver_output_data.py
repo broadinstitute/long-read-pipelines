@@ -164,10 +164,10 @@ def create_workspace(args, rw, run):
 def copy_files(src, dst, run):
     if src[-1] == '/':
         if run:
-            result = subprocess.run(["gsutil", "-m", "rsync", "-C", re.sub("/$", "", src), os.path.dirname(re.sub("/$", "", dst)) + "/"], capture_output=True, text=True)
+            result = subprocess.run(["gsutil", "-m", "rsync", "-rC", src, dst], capture_output=True, text=True)
             return len(list(filter(lambda x: 'Copying' in x, result.stderr.split("\n"))))
         else:
-            result = subprocess.run(["gsutil", "-m", "rsync", "-C", "-n", re.sub("/$", "", src), os.path.dirname(re.sub("/$", "", dst)) + "/"], capture_output=True, text=True)
+            result = subprocess.run(["gsutil", "-m", "rsync", "-nrC", src, dst], capture_output=True, text=True)
             return len(list(filter(lambda x: 'Would copy' in x, result.stderr.split("\n"))))
     else:
         if should_copy(src, dst):
