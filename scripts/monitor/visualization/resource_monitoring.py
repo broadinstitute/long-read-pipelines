@@ -6,7 +6,7 @@ import numpy
 import pandas as pd
 import pandas_bokeh
 from operator import truediv
-
+import copy
 # 2 main functions are run and setup.
 # Once combine is run, class instance becomes solely dedicated to analyzing the multiple datasets. All unrelated methods are deleted
 #
@@ -229,17 +229,29 @@ class ResourceUsage:
             axis.set_title(f"FAILED: Empty CPU Usage Plot for Failed Shard {name[0]}, shard {name[1]}")
             plt.show()
             return fig
+
         for i in range(len(by_id.iloc[0])):
-            data.append(pd.Series(list(e[i] for e in by_id)))
+                data.append(pd.Series(list(e[i] for e in by_id)))
         fig = plt.figure()
         axis = fig.add_axes([0, 0, 1, 1])
-        _ = axis.violinplot(data, showmeans=True, showextrema=True, showmedians=True)
         name = self.get_shard_from_instance_id(instance_id)
-        axis.set_xlabel("CPU core #")
-        axis.set_ylabel("CPU % used")
-        axis.set_title(f"CPU Usage for {name[0]}, shard {name[1]}")
-        plt.show()
 
+        if len(by_id.iloc[0]) > 10:
+            avg_data = list()
+
+            for i in range(len(by_id)):
+                avg_data.append(sum(list(e for e in by_id.iloc[i]))/len(by_id.iloc[0]))
+
+            _ = axis.violinplot(avg_data, showmeans=True, showextrema=True, showmedians=True)
+            axis.set_xlabel("Average CPU Core")
+            axis.set_ylabel("CPU % used")
+            axis.set_title(f"Average CPU Usage Across all {len(by_id.iloc[0])} Cores for {name[0]}, shard {name[1]}")
+        else:
+            _ = axis.violinplot(data, showmeans=True, showextrema=True, showmedians=True)
+            axis.set_xlabel("CPU core #")
+            axis.set_ylabel("CPU % used")
+            axis.set_title(f"CPU Usage for {name[0]}, shard {name[1]}")
+        plt.show()
         try:
             averaged_data = [sum(each)/len(each) for each in data]
             self.avg_max_cpu_usage.loc["avg_max_value"][name[0]] = max(averaged_data)

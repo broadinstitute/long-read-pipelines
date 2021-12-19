@@ -3,5 +3,3 @@ pandas
 numpy
 matplotlib
 pandas-bokeh
-operator
-os
