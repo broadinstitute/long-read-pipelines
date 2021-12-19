@@ -80,8 +80,12 @@ def main():
                     if 'gs://' in v and ('gs://broad-gp-pacbio/' not in v and 'gs://broad-gp-oxfordnano/' not in v):
                         if bucket_name not in copy_lists:
                             copy_lists[bucket_name] = {}
+
                         if '.' in v:
-                            copy_lists[bucket_name][v] = newrow[k]
+                            if len(re.sub("gs://", "", v).split("/")) <= 4:
+                                copy_lists[bucket_name][v] = newrow[k]
+                            else:
+                                copy_lists[bucket_name][os.path.dirname(v) + "/"] = os.path.dirname(newrow[k]) + "/"
 
             for ss_index, ss_row in ss_old.iterrows():
                 for sample_id in tbl_new_hash[rw]['entity:sample_id']:
@@ -94,8 +98,12 @@ def main():
                             if 'gs://' in vs and ('gs://broad-gp-pacbio/' not in vs and 'gs://broad-gp-oxfordnano/' not in vs):
                                 if bucket_name not in copy_lists:
                                     copy_lists[bucket_name] = {}
+
                                 if '.' in vs:
-                                    copy_lists[bucket_name][vs] = new_ss_row[ks]
+                                    if len(re.sub("gs://", "", vs).split("/")) <= 4:
+                                        copy_lists[bucket_name][vs] = new_ss_row[ks]
+                                    else:
+                                        copy_lists[bucket_name][os.path.dirname(vs) + "/"] = os.path.dirname(new_ss_row[ks] + "/")
 
                         ss_new_hash[rw] = ss_new_hash[rw].append(ss_row)
                         membership_new_hash[rw].append(membership[ss_index])
@@ -125,7 +133,7 @@ def main():
         pool = Pool(args.threads)
         for bucket in copy_lists:
             for s in copy_lists[bucket]:
-                r = pool.apply_async(copy_file, args = (s, copy_lists[bucket][s], args.run, ))
+                r = pool.apply_async(copy_files, args = (s, copy_lists[bucket][s], args.run, ))
                 pbar.update()
 
                 if bucket_new_hash[bucket] not in num_files_copied:
@@ -152,14 +160,22 @@ def create_workspace(args, rw, run):
     print(f"[workspace  : {status_code}] Created workspace '{rw}' {'[dry-run]' if run else ''}")
 
 
-def copy_file(src, dst, run):
-    if should_copy(src, dst):
+def copy_files(src, dst, run):
+    if src[-1] == '/':
         if run:
-            result = subprocess.run(["gsutil", "cp", src, dst], capture_output=True, text=True)
+            result = subprocess.run(["gsutil", "-m", "rsync", "-C", re.sub("/$", "", src), os.path.dirname(re.sub("/$", "", dst)) + "/"], capture_output=True, text=True)
+            return len(list(filter(lambda x: 'Copying' in x, result.stderr.split("\n"))))
         else:
-            result = subprocess.run(["echo", "gsutil", "cp", src, dst, "[dry-run]"], capture_output=True, text=True)
+            result = subprocess.run(["gsutil", "-m", "rsync", "-C", "-n", re.sub("/$", "", src), os.path.dirname(re.sub("/$", "", dst)) + "/"], capture_output=True, text=True)
+            return len(list(filter(lambda x: 'Would copy' in x, result.stderr.split("\n"))))
+    else:
+        if should_copy(src, dst):
+            if run:
+                result = subprocess.run(["gsutil", "cp", src, dst], capture_output=True, text=True)
+            else:
+                result = subprocess.run(["echo", "gsutil", "cp", src, dst, "[dry-run]"], capture_output=True, text=True)
 
-        return 1
+            return 1
 
     return 0
 
