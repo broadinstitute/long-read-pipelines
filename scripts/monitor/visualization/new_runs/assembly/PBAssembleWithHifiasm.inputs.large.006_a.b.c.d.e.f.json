@@ -1,0 +1,16 @@
+{
+  "PBAssembleWithHifiasm.ccs_fqs": [
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200314_045323/reads/ccs/unaligned/m64091_200314_045323.fq.gz",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200612_032612/reads/ccs/unaligned/m64091_200612_032612.fq.gz",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200326_032118/reads/ccs/unaligned/m64091_200326_032118.fq.gz",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200619_045659/reads/ccs/unaligned/m64091_200619_045659.fq.gz",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200327_095823/reads/ccs/unaligned/m64091_200327_095823.fq.gz",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200304_044908/reads/ccs/unaligned/m64091_200304_044908.fq.gz"],
+  "PBAssembleWithHifiasm.participant_name": "NA24385",
+  "PBAssembleWithHifiasm.prefix": "6061-SL-0006_a.b.c.d.e.f",
+
+  "PBAssembleWithHifiasm.ref_map_file": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt",
+
+  "PBAssembleWithHifiasm.gcs_out_root_dir": "gs://broad-dsde-methods-long-reads-intermediate"
+}
+

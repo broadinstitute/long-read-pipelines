@@ -1,0 +1,30 @@
+{
+  "PBCCSWholeGenome.aligned_bais": [
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200918_205756/reads/ccs/aligned/m64091_200918_205756.bam.bai",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64160_201028_041902/reads/ccs/aligned/m64160_201028_041902.bam.bai",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200920_031108/reads/ccs/aligned/m64091_200920_031108.bam.bai",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64160_201029_104508/reads/ccs/aligned/m64160_201029_104508.bam.bai",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_201029_104501/reads/ccs/aligned/m64091_201029_104501.bam.bai",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_201030_171116/reads/ccs/aligned/m64091_201030_171116.bam.bai"],
+  "PBCCSWholeGenome.aligned_bams": [
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200918_205756/reads/ccs/aligned/m64091_200918_205756.bam",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64160_201028_041902/reads/ccs/aligned/m64160_201028_041902.bam",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200920_031108/reads/ccs/aligned/m64091_200920_031108.bam",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64160_201029_104508/reads/ccs/aligned/m64160_201029_104508.bam",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_201029_104501/reads/ccs/aligned/m64091_201029_104501.bam",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_201030_171116/reads/ccs/aligned/m64091_201030_171116.bam"],
+
+  "PBCCSWholeGenome.participant_name": "T668639440_HiFi",
+
+  "PBCCSWholeGenome.ref_map_file": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt",
+  "PBCCSWholeGenome.ref_scatter_interval_list_ids": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists_ids.txt",
+  "PBCCSWholeGenome.ref_scatter_interval_list_locator": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists.txt",
+
+  "PBCCSWholeGenome.pepper_memory": 256,
+  
+  "PBCCSWholeGenome.gcs_out_root_dir": "gs://broad-dsde-methods-long-reads-intermediate",
+  "PBCCSWholeGenome.sort_gVCF": false
+}
+
+
+

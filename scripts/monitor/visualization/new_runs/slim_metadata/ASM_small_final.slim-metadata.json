@@ -1,0 +1,237 @@
+{
+  "calls": {
+    "PBAssembleWithHifiasm.FinalizePaf": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:48:27.392Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizePaf",
+        "attempt": 1,
+        "start": "2021-09-24T07:42:56.115Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizePafToolsVcf": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:47:54.333Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizePafToolsVcf",
+        "attempt": 1,
+        "start": "2021-09-24T07:42:56.115Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.Quast": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:20:36.334Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-Quast",
+        "attempt": 1,
+        "start": "2021-09-24T06:58:21.266Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeHifiasmHapGfas": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:15:37.322Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeHifiasmHapGfas",
+        "attempt": 1,
+        "start": "2021-09-24T06:58:21.266Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeQuastReportHtml": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:24:28.346Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeQuastReportHtml",
+        "attempt": 1,
+        "start": "2021-09-24T07:20:38.376Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.CallAssemblyVariants": [
+      {
+        "executionStatus": "Done",
+        "subWorkflowMetadata": {
+          "calls": {
+            "CallAssemblyVariants.AlignAsPAF": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T07:37:17.363Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-CallAssemblyVariants/CallAssemblyVariants/c1cc1bde-4e34-49be-ad7c-ad2806887cc8/call-AlignAsPAF",
+                "attempt": 1,
+                "start": "2021-09-24T06:58:23.445Z"
+              }
+            ],
+            "CallAssemblyVariants.Paftools": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T07:42:53.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-CallAssemblyVariants/CallAssemblyVariants/c1cc1bde-4e34-49be-ad7c-ad2806887cc8/call-Paftools",
+                "attempt": 1,
+                "start": "2021-09-24T07:37:19.306Z"
+              }
+            ]
+          },
+          "id": "c1cc1bde-4e34-49be-ad7c-ad2806887cc8",
+          "status": "Succeeded",
+          "end": "2021-09-24T07:42:54.807Z",
+          "start": "2021-09-24T06:58:21.268Z"
+        },
+        "shardIndex": -1,
+        "end": "2021-09-24T07:42:54.807Z",
+        "attempt": 1,
+        "start": "2021-09-24T06:58:21.267Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeQuastIndividualSummary": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": 0,
+        "end": "2021-09-24T07:25:38.335Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeQuastIndividualSummary/shard-0",
+        "attempt": 1,
+        "start": "2021-09-24T07:20:40.406Z"
+      },
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": 1,
+        "end": "2021-09-24T07:25:03.333Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeQuastIndividualSummary/shard-1",
+        "attempt": 1,
+        "start": "2021-09-24T07:20:40.406Z"
+      },
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": 2,
+        "end": "2021-09-24T07:25:03.333Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeQuastIndividualSummary/shard-2",
+        "attempt": 1,
+        "start": "2021-09-24T07:20:40.406Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeHifiasmAlternateFa": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:07:13.323Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeHifiasmAlternateFa",
+        "attempt": 1,
+        "start": "2021-09-24T06:58:21.266Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeHifiasmAlternateGfa": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:05:35.331Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeHifiasmAlternateGfa",
+        "attempt": 1,
+        "start": "2021-09-24T06:58:21.267Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.Hifiasm": [
+      {
+        "executionStatus": "Done",
+        "subWorkflowMetadata": {
+          "calls": {
+            "Hifiasm.AssembleForHaplotigs": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T06:58:18.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-Hifiasm/Hifiasm/358ae0a1-b76b-44ca-9714-64806724e868/call-AssembleForHaplotigs",
+                "attempt": 1,
+                "start": "2021-09-24T05:31:13.941Z"
+              }
+            ],
+            "Hifiasm.AssembleForAltContigs": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T06:51:03.453Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-Hifiasm/Hifiasm/358ae0a1-b76b-44ca-9714-64806724e868/call-AssembleForAltContigs",
+                "attempt": 1,
+                "start": "2021-09-24T05:31:13.941Z"
+              }
+            ]
+          },
+          "id": "358ae0a1-b76b-44ca-9714-64806724e868",
+          "status": "Succeeded",
+          "end": "2021-09-24T06:58:19.437Z",
+          "start": "2021-09-24T05:31:11.896Z"
+        },
+        "shardIndex": -1,
+        "end": "2021-09-24T06:58:19.437Z",
+        "attempt": 1,
+        "start": "2021-09-24T05:31:11.895Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeHifiasmPrimaryGfa": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:11:40.333Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeHifiasmPrimaryGfa",
+        "attempt": 1,
+        "start": "2021-09-24T06:58:21.266Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeHifiasmHapTigs": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:16:08.324Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeHifiasmHapTigs",
+        "attempt": 1,
+        "start": "2021-09-24T06:58:21.267Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeQuastReportTxt": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:24:31.322Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeQuastReportTxt",
+        "attempt": 1,
+        "start": "2021-09-24T07:20:38.375Z"
+      }
+    ],
+    "PBAssembleWithHifiasm.FinalizeHifiasmPrimaryFa": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:11:42.332Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBAssembleWithHifiasm/df3636ef-5815-45fa-aac6-4ba79c2a1c03/call-FinalizeHifiasmPrimaryFa",
+        "attempt": 1,
+        "start": "2021-09-24T06:58:21.267Z"
+      }
+    ]
+  },
+  "id": "df3636ef-5815-45fa-aac6-4ba79c2a1c03",
+  "status": "Succeeded",
+  "end": "2021-09-24T07:48:28.730Z",
+  "start": "2021-09-24T05:31:06.251Z"
+}
+

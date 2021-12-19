@@ -31,9 +31,9 @@ class ResourceUsage:
         self.meta_runtime = meta_runtime
         self.metrics = metrics
         tasks_list = self.num_task_shards().keys()
-        self.max_cpu_usage = pd.DataFrame(columns=tasks_list)  # set in violin plot functions
-        self.max_mem_usage = pd.DataFrame(columns=tasks_list)
-        self.max_disk_usage = pd.DataFrame(columns=tasks_list)
+        self.avg_max_cpu_usage = pd.DataFrame(index=["avg_max_value", "requested"], columns=tasks_list)  # set in violin plot functions
+        self.max_mem_usage = pd.DataFrame(index=["max_value", "requested"], columns=tasks_list)
+        self.max_disk_usage = pd.DataFrame(index=["max_value", "requested"], columns=tasks_list)
         ResourceUsage.instances += 1
         self.setup()
 
@@ -82,14 +82,9 @@ class ResourceUsage:
             for task in tasks:
                 # thresholds can be tweaked later
                 # cpu is trickier, since it can have multiple cores and only requested # of cores is given
-                suggestion_text.write(f"{task}'s allocated CPU can be {'reduced' if sum(self.max_cpu_usage)/len(self.max_cpu_usage)<90 else 'increased'}. \n")
-
-                suggestion_text.write(f"{task}'s allocated Memory can be "  # separate: need elif
-                                      f"{'reduced' if self.max_mem_usage<90 else 'increased'} to "
-                                      f"{((self.max_mem_usage+5)/100)*self.max_mem_usage.loc['requested', task] if self.max_mem_usage<90 else self.max_mem_usage.loc['requested',task]*1.1}. \n")
-                suggestion_text.write(f"{task}'s allocated Disk Space can be "
-                                      f"{'reduced' if self.max_disk_usage<90 else 'increased'} to "
-                                      f"{((self.max_disk_usage+5)/100)*self.max_disk_usage.loc['requested', task] if self.max_mem_usage<90 else self.max_mem_usage.loc['requested',task]*1.1}. \n")
+                suggestion_text.write(f"{task}'s allocated CPU can be {'reduced' if self.avg_max_cpu_usage.loc['avg_max_value'][task] > 90 else 'increased'}. \n")
+                suggestion_text.write(f"{task}'s allocated Memory can be {'reduced' if self.max_mem_usage.loc['max_value'][task] > 90 else 'increased'}. \n")
+                suggestion_text.write(f"{task}'s allocated Disk can be {'reduced' if self.max_disk_usage.loc['max_value'][task] > 90 else 'increased'}. \n")
         pass
 
     def combine(self, *args):  # UNTESTED: NO IDEA IF THIS WORKS
@@ -226,6 +221,14 @@ class ResourceUsage:
         by_id = self.metrics[self.metrics["metrics_instance_id"] == instance_id]\
             .sort_values("metrics_timestamp").loc[:, "metrics_cpu_used_percent"]
         data = list()
+        if len(by_id) == 0:
+            print(f"Instance id: {instance_id} for task: {self.get_shard_from_instance_id(instance_id)[0]} shard: {self.get_shard_from_instance_id(instance_id)[1]} was not found in metrics")
+            fig = plt.figure()
+            axis = fig.add_axes([0, 0, 1, 1])
+            name = self.get_shard_from_instance_id(instance_id)
+            axis.set_title(f"FAILED: Empty CPU Usage Plot for Failed Shard {name[0]}, shard {name[1]}")
+            plt.show()
+            return fig
         for i in range(len(by_id.iloc[0])):
             data.append(pd.Series(list(e[i] for e in by_id)))
         fig = plt.figure()
@@ -238,9 +241,12 @@ class ResourceUsage:
         plt.show()
 
         try:
-            self.max_cpu_usage.loc["max_value", name] = max(data)
+            averaged_data = [sum(each)/len(each) for each in data]
+            self.avg_max_cpu_usage.loc["avg_max_value"][name[0]] = max(averaged_data)
         except ValueError:
-            print(data[0])
+            print(name)
+            print(self.avg_max_cpu_usage.columns)
+            # print(data[0])
             raise
         return fig
 
@@ -285,16 +291,34 @@ class ResourceUsage:
         data.append(pd.Series((e / requested_mem) * 100 for e in by_id))
         fig = plt.figure()
         axis = fig.add_axes([0, 0, 1, 1])
+        if len(data[0]) == 0:
+            # print(f"Instance id: {instance_id} for task: {self.get_shard_from_instance_id(instance_id)[0]} shard: {self.get_shard_from_instance_id(instance_id)[1]} was not found in metrics")
+            fig = plt.figure()
+            axis = fig.add_axes([0, 0, 1, 1])
+            name = self.get_shard_from_instance_id(instance_id)
+            axis.set_title(f"FAILED: Empty Memory Usage Plot for Failed Shard {name[0]}, shard {name[1]}")
+            plt.show()
+            return fig
         _ = axis.violinplot(data, showmeans=True, showextrema=True, showmedians=True)
         name = self.get_shard_from_instance_id(instance_id)
         axis.set_xlabel("mem")
         axis.set_ylabel("% GB used")
         axis.set_title(f"Memory Usage for {name[0]}, shard {name[1]}")
         plt.show()
-
-        self.max_mem_usage.loc["max_value", name] = max(data)
-        self.max_mem_usage.loc["requested", name] = requested_mem
+        max = data[0].max()
+        self.max_mem_usage.loc["max_value"][name[0]] = max  # max(data[0])
+        self.max_mem_usage.loc["requested"][name[0]] = requested_mem
         return fig
+
+    # @staticmethod
+    def __get_first_val(self, row, key) -> float:
+        """
+        After getting a list from a row using the key, returns first value in list
+        :param row: row
+        :param key: key
+        :return: float
+        """
+        return row[key][0]
 
     def disk_use_violin(self, instance_id: int) -> plt.Figure:
         """
@@ -305,20 +329,28 @@ class ResourceUsage:
         by_id = self.metrics[self.metrics["metrics_instance_id"] == instance_id]\
             .sort_values("metrics_timestamp").loc[:, "metrics_disk_used_gb"]
         row = self.get_runtime_row_from_instance_id(instance_id)
-        requested_disk = float(row["meta_disk_total_gb"].iloc[0][0])
+        requested_disk = float(self.__get_first_val(row, 'meta_disk_total_gb'))
         data = list()
         data.append(pd.Series((float(e[0]) / requested_disk) * 100 for e in by_id))
         fig = plt.figure()
         axis = fig.add_axes([0, 0, 1, 1])
+        if len(data[0]) == 0:
+            # print(f"Instance id: {instance_id} for task: {self.get_shard_from_instance_id(instance_id)[0]} shard: {self.get_shard_from_instance_id(instance_id)[1]} was not found in metrics")
+            fig = plt.figure()
+            axis = fig.add_axes([0, 0, 1, 1])
+            name = self.get_shard_from_instance_id(instance_id)
+            axis.set_title(f"FAILED: Empty Disk Usage Plot for Failed Shard {name[0]}, shard {name[1]}")
+            plt.show()
+            return fig
         _ = axis.violinplot(data, showmeans=True, showextrema=True, showmedians=True)
         name = self.get_shard_from_instance_id(instance_id)
         axis.set_xlabel("disk")
         axis.set_ylabel("% GB used")
         axis.set_title(f"Disk Usage for {name[0]}, shard {name[1]}")
         plt.show()
-
-        self.max_disk_usage.loc["max_value", name] = max(data)
-        self.max_disk_usage.loc["requested", name] = requested_disk
+        max = data[0].max()
+        self.max_disk_usage.loc["max_value"][name[0]] = max
+        self.max_disk_usage.loc["requested"][name[0]] = requested_disk
 
         return fig
 
@@ -340,7 +372,7 @@ class ResourceUsage:
         :param instance_id: instance ID
         :return: row
         """
-        return self.meta_runtime[self.meta_runtime["runtime_instance_id"] == instance_id]
+        return self.meta_runtime[self.meta_runtime["runtime_instance_id"] == instance_id].iloc[0, :]  # Taking first row because the monitoring logger sometimes logs duplicate rows
 
     def get_shard_instance_id_list(self, task: str) -> list:
         """
@@ -358,20 +390,23 @@ class ResourceUsage:
         :return: plot
         """
         # pandas_bokeh.output_file(f"avg_mem_across_shards_{task}")
-        id_list = self.get_shard_instance_id_list(task)
         averages = pd.Series([], dtype="float64")
+        id_list = self.get_shard_instance_id_list(task)
+        faster = self.metrics.loc[:, "metrics_instance_id"].astype('str').tolist()
         for instance_id in id_list:
+
+            if str(instance_id) not in faster:  # 3870777233638278011 doesn't exist in metrics table
+                print(f"the instance id: {instance_id} in meta_runtime does not exist in metrics")
+                continue
+
             by_id = self.metrics[self.metrics["metrics_instance_id"] == instance_id]\
                         .sort_values("metrics_timestamp").loc[:, "metrics_mem_used_gb"]
             row = self.get_runtime_row_from_instance_id(instance_id)
             requested_mem = float(row["meta_mem_total_gb"])
             data = list()
             data.append([(e / requested_mem) * 100 for e in by_id])
-            try:
-                averages = averages.append(pd.Series([sum(data[0]) / len(by_id)]),
-                                           ignore_index=True)  # 3870777233638278011 doesn't exist in metrics table
-            except ZeroDivisionError:
-                print(f"the instance id: {instance_id} in meta_runtime does not exist in metrics")
+            averages = averages.append(pd.Series([sum(data[0]) / len(by_id)]),
+                                       ignore_index=True)
         # averages.plot_bokeh(kind="scatter", title=f"Average Memory for {task}",
         #                    xlabel="Shard #", ylabel="Memory % Usage")
         # return averages.plot.line(title=f"Average Memory for {task}",
@@ -411,18 +446,23 @@ class ResourceUsage:
         # pandas_bokeh.output_file(f"avg_disk_across_shards_{task}")
         id_list = self.get_shard_instance_id_list(task)
         averages = pd.Series([], dtype="float64")
+        faster = self.metrics.loc[:, "metrics_instance_id"].astype('str').tolist()
         for instance_id in id_list:
+
+            if str(instance_id) not in faster:  # 3870777233638278011 doesn't exist in metrics table
+                print(f"the instance id: {instance_id} in meta_runtime does not exist in metrics")
+                continue
+
             by_id = self.metrics[self.metrics["metrics_instance_id"] == instance_id]\
                         .sort_values("metrics_timestamp").loc[:, "metrics_disk_used_gb"]
             row = self.get_runtime_row_from_instance_id(instance_id)
-            requested_disk = float(row["meta_disk_total_gb"].iloc[0][0])
+            requested_disk = float(self.__get_first_val(row, 'meta_disk_total_gb'))
             data = list()
             data.append([(float(e[0]) / requested_disk) * 100 for e in by_id])
-            try:
-                averages = averages.append(pd.Series([sum(data[0]) / len(by_id)]),
-                                           ignore_index=True)  # 3870777233638278011 doesn't exist in metrics table
-            except ZeroDivisionError:
-                print(f"the instance id: {instance_id} in meta_runtime does not exist in metrics")
+            #try:
+            averages = averages.append(pd.Series([sum(data[0]) / len(by_id)]),
+                                       ignore_index=True)  # 3870777233638278011 doesn't exist in metrics table
+            #except ZeroDivisionError:
         # averages.plot_bokeh(kind="scatter", title=f"Average Disk for {task}", xlabel="Shard #", ylabel="Disk % Usage")
         # return averages.plot\
         # .line(title=f"Average Disk for {task}", xlabel="Shard #", ylabel="Disk % Usage").get_figure()
@@ -548,7 +588,7 @@ class ResourceUsage:
         :param type_: pdf or svg
         :return:
         """
-        # a = self.cpu_use_violin(self.get_instance_id(task, shard)) #UNDO
+        a = self.cpu_use_violin(self.get_instance_id(task, shard))
         # d = avg_mem_across_shards(meta_runtime, metrics, task)
         b = self.mem_use_violin(self.get_instance_id(task, shard))
         # e = avg_cpu_across_shards(meta_runtime, metrics, task)
@@ -560,12 +600,12 @@ class ResourceUsage:
         # f = timed_plot_cpu(meta_runtime, metrics, get_instance_id(meta_runtime, task, shard))
         if type_ == "pdf":
             pp = PdfPages(f'all_plots/allPlots{task}.pdf')
-            #pp.savefig(a, bbox_inches='tight')#UNDO
+            pp.savefig(a, bbox_inches='tight')
             pp.savefig(b, bbox_inches='tight')
             pp.savefig(c, bbox_inches='tight')
             pp.close()
         elif type_ == "svg":
-            #a.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')#UNDO
+            a.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
             b.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
             c.savefig(f'all_plots/{self.name}_allPlots{task}.pdf', bbox_inches='tight')
         else:
@@ -648,7 +688,7 @@ def variation(*args: ResourceUsage):
     frame_max_mem = list()
     frame_max_disk = list()
     for resource_usage in args:
-        frame_max_cpu.append(resource_usage.max_cpu_usage)
+        frame_max_cpu.append(resource_usage.avg_max_cpu_usage)
         frame_max_cpu.append(resource_usage.max_mem_usage)
         frame_max_disk.append(resource_usage.max_disk_usage)
     total_max_cpu = pd.concat(frame_max_cpu)

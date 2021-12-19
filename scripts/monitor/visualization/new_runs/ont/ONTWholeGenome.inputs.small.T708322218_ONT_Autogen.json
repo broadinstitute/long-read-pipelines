@@ -1,0 +1,14 @@
+{
+  "ONTWholeGenome.aligned_bais": ["gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0029/alignments/6061-SL-0029.bam.bai"],
+  "ONTWholeGenome.aligned_bams": ["gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0029/alignments/6061-SL-0029.bam"],
+  "ONTWholeGenome.participant_name": "T708322218_ONT_Autogen",
+
+  "ONTWholeGenome.ref_map_file": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt",
+  "ONTWholeGenome.ref_scatter_interval_list_ids": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists_ids.txt",
+  "ONTWholeGenome.ref_scatter_interval_list_locator": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists.txt",
+
+  "ONTWholeGenome.pepper_memory": 256,
+  
+  "ONTWholeGenome.gcs_out_root_dir": "gs://broad-dsde-methods-long-reads-intermediate",
+  "ONTWholeGenome.sort_gVCF": false
+}

@@ -1,0 +1,10 @@
+{
+  "PBAssembleWithHifiasm.ccs_fqs": ["gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-pacbio/PBFlowcell/m64091_200610_210152/reads/ccs/unaligned/m64091_200610_210152.fq.gz"],
+  "PBAssembleWithHifiasm.participant_name": "HG00733",
+  "PBAssembleWithHifiasm.prefix": "6061-SL-0003_b",
+
+  "PBAssembleWithHifiasm.ref_map_file": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt",
+
+  "PBAssembleWithHifiasm.gcs_out_root_dir": "gs://broad-dsde-methods-long-reads-intermediate"
+}
+

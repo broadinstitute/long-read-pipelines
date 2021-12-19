@@ -1,0 +1,26 @@
+{
+  "ONTWholeGenome.aligned_bais": [
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0027/alignments/6061-SL-0027.bam.bai",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0028/alignments/6061-SL-0028.bam.bai",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0037/alignments/6061-SL-0037.bam.bai",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0038/alignments/6061-SL-0038.bam.bai"],
+  "ONTWholeGenome.aligned_bams": [
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0027/alignments/6061-SL-0027.bam",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0028/alignments/6061-SL-0028.bam",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0037/alignments/6061-SL-0037.bam",
+    "gs://broad-dsde-methods-long-reads-outgoing/aou-long-reads-ont/ONTFlowcell/6061-SL-0038/alignments/6061-SL-0038.bam"],
+
+  "ONTWholeGenome.participant_name": "T668639440_ONT",
+
+  "ONTWholeGenome.ref_map_file": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt",
+  "ONTWholeGenome.ref_scatter_interval_list_ids": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists_ids.txt",
+  "ONTWholeGenome.ref_scatter_interval_list_locator": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists.txt",
+
+  "ONTWholeGenome.pepper_memory": 256,
+  
+  "ONTWholeGenome.gcs_out_root_dir": "gs://broad-dsde-methods-long-reads-intermediate",
+  "ONTWholeGenome.sort_gVCF": false
+}
+
+
+

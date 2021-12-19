@@ -1,0 +1,12 @@
+{
+  "DVPPipeline.bam": "gs://broad-gp-oxfordnano-outgoing/results/ONTWholeGenome/NA12878/alignments/NA12878.bam",
+  "DVPPipeline.bai": "gs://broad-gp-oxfordnano-outgoing/results/ONTWholeGenome/NA12878/alignments/NA12878.bam.bai",
+
+  "DVPPipeline.ref_scatter_interval_list_locator": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists.txt",
+  "DVPPipeline.ref_scatter_interval_list_ids": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists_ids.txt",
+
+  "DVPPipeline.ref_fasta": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa",
+  "DVPPipeline.ref_fasta_fai": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa.fai",
+  "DVPPipeline.ref_dict": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.dict"
+}
+

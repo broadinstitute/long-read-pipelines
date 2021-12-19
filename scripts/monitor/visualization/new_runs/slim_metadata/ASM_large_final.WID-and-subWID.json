@@ -1,0 +1,7 @@
+{ 'PBAssembleWithHifiasm.CallAssemblyVariants': { 'level': 1,
+                                                  'parent': 'c144b3c4-334c-48b3-9531-20feacb4eaa9',
+                                                  'wid': '22137af3-5b44-4743-b014-71ba101abe6b'},
+  'PBAssembleWithHifiasm.Hifiasm': { 'level': 1,
+                                     'parent': 'c144b3c4-334c-48b3-9531-20feacb4eaa9',
+                                     'wid': '1850eaea-4669-4453-9f83-9d6587975898'},
+  'ROOT_ID': 'c144b3c4-334c-48b3-9531-20feacb4eaa9'}

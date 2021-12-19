@@ -1,0 +1,14 @@
+{
+  "ONTWholeGenome.aligned_bais": "Array[File]",
+  "ONTWholeGenome.aligned_bams": "Array[File]",
+  "ONTWholeGenome.participant_name": "String",
+
+  "ONTWholeGenome.ref_map_file": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt",
+  "ONTWholeGenome.ref_scatter_interval_list_ids": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists_ids.txt",
+  "ONTWholeGenome.ref_scatter_interval_list_locator": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists.txt",
+
+  "ONTWholeGenome.pepper_memory": "Int",
+  
+  "ONTWholeGenome.gcs_out_root_dir": "gs://broad-dsde-methods-long-reads-intermediate",
+  "ONTWholeGenome.sort_gVCF": false
+}

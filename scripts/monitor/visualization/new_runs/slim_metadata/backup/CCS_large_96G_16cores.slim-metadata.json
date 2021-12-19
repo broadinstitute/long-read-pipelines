@@ -1,0 +1,1977 @@
+{
+  "calls": {
+    "PBCCSWholeGenome.CallVariants": [
+      {
+        "executionStatus": "Done",
+        "subWorkflowMetadata": {
+          "calls": {
+            "CallVariants.MergePBSVVCFs": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T08:54:18.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-MergePBSVVCFs",
+                "attempt": 1,
+                "start": "2021-09-24T08:49:18.597Z"
+              }
+            ],
+            "CallVariants.MakeChrIntervalList": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T08:02:54.365Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-MakeChrIntervalList",
+                "attempt": 1,
+                "start": "2021-09-24T07:57:26.495Z"
+              }
+            ],
+            "CallVariants.DVP": [
+              {
+                "executionStatus": "Done",
+                "subWorkflowMetadata": {
+                  "calls": {
+                    "DVPPipeline.PEPPER": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 0,
+                        "end": "2021-09-24T08:35:53.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-0",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:13:34.016Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T08:37:00.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-1",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:18:04.436Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T08:59:20.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-1/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:37:00.436Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T08:31:25.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-2",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:14:09.596Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T08:48:45.321Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-2/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:31:25.807Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T09:11:33.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-2/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:48:46.116Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T08:31:25.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-3",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:16:56.356Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T08:54:53.321Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-3/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:31:25.807Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 4,
+                        "end": "2021-09-24T08:39:13.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-4",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:17:29.925Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T08:30:55.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-5",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:15:14.687Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T08:47:35.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-5/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:30:56.296Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T09:06:35.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-5/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:47:36.047Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T09:26:38.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-5/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:06:36.177Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T08:31:25.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-6",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:15:14.687Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T08:48:10.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-6/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:31:25.807Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T09:04:20.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-6/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:48:10.566Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T09:26:04.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-6/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:04:20.917Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 7,
+                        "end": "2021-09-24T08:37:03.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-7",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:15:49.206Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T08:30:55.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-8",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:15:51.247Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T08:50:55.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-8/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:30:56.296Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T09:07:05.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-8/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:50:56.246Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T09:31:06.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-8/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:07:05.677Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T08:31:25.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-9",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:14:43.127Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T08:47:05.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-9/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:31:25.807Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T09:03:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-9/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:47:05.517Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T09:26:07.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-9/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:03:15.937Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 10,
+                        "end": "2021-09-24T08:23:38.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-10",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:08:00.396Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 11,
+                        "end": "2021-09-24T08:38:07.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-11",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:14:44.147Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 12,
+                        "end": "2021-09-24T08:38:08.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-12",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:15:50.227Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T08:37:35.321Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-13",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:20:54.177Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T08:55:25.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-13/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:37:36.036Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T09:14:20.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-13/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:55:25.896Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T09:43:53.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-13/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:14:20.936Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T08:31:25.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-14",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:14:45.167Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T08:52:38.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-14/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:31:25.807Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T08:30:20.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-15",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:15:17.747Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T08:48:10.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-15/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:30:20.686Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T09:03:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-15/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:48:10.566Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T09:27:13.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-15/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:03:15.936Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T08:32:35.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-16",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:16:58.396Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T08:50:55.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-16/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:32:35.977Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T09:07:40.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-16/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:50:56.246Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T09:33:18.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-16/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:07:41.306Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 17,
+                        "end": "2021-09-24T08:39:15.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-17",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:16:24.786Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T08:30:55.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-18",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:15:15.706Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T08:48:10.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-18/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:30:56.296Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T09:06:35.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-18/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:48:10.566Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T09:29:59.321Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-18/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:06:36.177Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 19,
+                        "end": "2021-09-24T08:33:07.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-19",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:14:08.577Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T08:32:35.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-20",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:16:57.376Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T08:49:15.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-20/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T08:32:35.977Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T09:06:35.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-20/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T08:49:15.615Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T09:28:20.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-PEPPER/shard-20/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T09:06:36.177Z"
+                      }
+                    ],
+                    "DVPPipeline.SubsetBam": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 0,
+                        "end": "2021-09-24T08:13:32.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-0",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T08:18:03.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-1",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T08:14:08.364Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-2",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T08:16:54.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-3",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 4,
+                        "end": "2021-09-24T08:17:28.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-4",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T08:15:13.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-5",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T08:15:13.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-6",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 7,
+                        "end": "2021-09-24T08:15:47.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-7",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T08:15:49.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-8",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T08:14:41.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-9",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.739Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 10,
+                        "end": "2021-09-24T08:07:58.395Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-10",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.737Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 11,
+                        "end": "2021-09-24T08:14:42.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-11",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.739Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 12,
+                        "end": "2021-09-24T08:15:48.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-12",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.737Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T08:20:52.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-13",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T08:14:43.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-14",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T08:15:16.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-15",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T08:16:57.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-16",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 17,
+                        "end": "2021-09-24T08:16:23.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-17",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T08:15:14.376Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-18",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.737Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 19,
+                        "end": "2021-09-24T08:14:07.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-19",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T08:16:56.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-SubsetBam/shard-20",
+                        "attempt": 1,
+                        "start": "2021-09-24T07:57:32.738Z"
+                      }
+                    ],
+                    "DVPPipeline.DV": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 0,
+                        "end": "2021-09-24T09:46:43.387Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-0",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:35:55.326Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T10:24:38.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-1",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:59:21.917Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T10:30:40.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-2",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:11:35.127Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T10:03:57.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-3",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:54:54.356Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 4,
+                        "end": "2021-09-24T10:10:08.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-4",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:39:14.726Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T10:41:48.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-5",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:26:39.796Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T10:47:58.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-6",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:26:06.247Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 7,
+                        "end": "2021-09-24T10:00:39.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-7",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:37:04.506Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T11:01:18.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-8",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:31:08.336Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T10:33:32.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-9",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:26:09.307Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 10,
+                        "end": "2021-09-24T09:31:08.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-10",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:23:39.786Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 11,
+                        "end": "2021-09-24T09:51:45.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-11",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:38:08.637Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 12,
+                        "end": "2021-09-24T09:57:52.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-12",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:38:09.656Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T11:18:33.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-13",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:43:55.097Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T10:16:13.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-14",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:52:40.066Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T10:42:56.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-15",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:27:14.397Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T10:51:53.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-16",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:33:19.516Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 17,
+                        "end": "2021-09-24T10:10:06.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-17",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:39:16.767Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T10:37:24.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-18",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:30:01.207Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 19,
+                        "end": "2021-09-24T09:42:48.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-19",
+                        "attempt": 1,
+                        "start": "2021-09-24T08:33:08.507Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T10:41:17.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-DV/shard-20",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:28:21.596Z"
+                      }
+                    ],
+                    "DVPPipeline.MergeDeepVariantVCFs": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": -1,
+                        "end": "2021-09-24T11:26:22.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-MergeDeepVariantVCFs",
+                        "attempt": 1,
+                        "start": "2021-09-24T11:18:36.096Z"
+                      }
+                    ],
+                    "DVPPipeline.MergeDeepVariantGVCFs": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": -1,
+                        "end": "2021-09-24T11:24:44.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-DVP/DVPPipeline/6eaf152e-d48a-4f89-9b56-de0604654fbe/call-MergeDeepVariantGVCFs",
+                        "attempt": 1,
+                        "start": "2021-09-24T11:18:36.096Z"
+                      }
+                    ]
+                  },
+                  "id": "6eaf152e-d48a-4f89-9b56-de0604654fbe",
+                  "status": "Succeeded",
+                  "end": "2021-09-24T11:26:24.117Z",
+                  "start": "2021-09-24T07:57:26.496Z"
+                },
+                "shardIndex": -1,
+                "end": "2021-09-24T11:26:24.117Z",
+                "attempt": 1,
+                "start": "2021-09-24T07:57:26.495Z"
+              }
+            ],
+            "CallVariants.Sniffles": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T09:33:53.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T08:16:24.447Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T08:29:46.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T08:18:03.147Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T08:25:16.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:44.797Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T08:31:58.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T08:18:39.786Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T08:24:47.331Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:09.188Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T08:22:34.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:33.579Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T08:23:38.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:35.619Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T08:23:07.321Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:34.598Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T08:19:08.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T08:11:20.417Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T08:21:57.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T08:12:29.558Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T08:22:33.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:00.078Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T08:20:16.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:03.127Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T08:17:31.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T08:10:49.937Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T08:18:38.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T08:11:22.458Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T08:15:51.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T08:09:40.747Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T09:06:33.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T08:10:49.937Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T08:17:28.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T08:11:23.478Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T08:17:28.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T08:10:46.888Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T08:13:33.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T08:08:34.586Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T08:15:13.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T08:09:43.807Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T08:14:08.364Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T08:08:02.077Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T08:14:05.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T08:09:08.196Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T08:22:31.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:10.206Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T08:11:18.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T08:06:51.878Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T08:10:13.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Sniffles/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T08:06:19.337Z"
+              }
+            ],
+            "CallVariants.Call": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T08:48:10.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T08:26:29.776Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T08:49:16.345Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T08:27:00.226Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T08:39:47.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T08:23:39.817Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T08:44:48.365Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T08:28:09.346Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T08:38:43.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T08:23:06.286Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T08:33:38.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T08:21:24.577Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T08:40:56.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T08:20:19.477Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T08:33:08.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T08:21:27.637Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T08:30:18.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T08:18:37.756Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T08:32:35.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T08:18:38.766Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T08:40:53.321Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T08:20:19.477Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T08:31:58.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T08:19:12.356Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T08:27:01.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T08:16:54.977Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T08:25:53.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T08:17:29.596Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T08:29:13.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T08:15:49.867Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T08:30:18.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T08:16:57.006Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T08:25:53.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T08:16:24.447Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T08:25:18.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T08:15:49.867Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T08:30:53.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:40.716Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T08:26:25.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:43.778Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T08:24:43.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:36.638Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T08:28:42.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:11.227Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T08:38:43.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T08:22:34.726Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T08:16:57.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T08:11:19.399Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T08:15:17.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Call/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T08:10:49.937Z"
+              }
+            ],
+            "CallVariants.SubsetBam": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T08:16:23.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T08:18:01.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T08:14:43.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T08:18:38.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T08:14:07.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T08:13:32.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T08:13:34.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T08:13:33.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T08:11:19.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T08:12:28.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T08:12:58.345Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T08:13:01.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T08:10:48.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T08:11:21.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T08:09:39.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T08:10:48.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T08:11:22.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T08:10:45.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T08:08:33.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T08:09:42.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T08:08:00.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T08:09:06.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T08:14:08.364Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T08:06:50.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.996Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T08:06:17.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-SubsetBam/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T08:02:58.997Z"
+              }
+            ],
+            "CallVariants.MergeSnifflesVCFs": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T09:38:56.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-MergeSnifflesVCFs",
+                "attempt": 1,
+                "start": "2021-09-24T09:33:55.936Z"
+              }
+            ],
+            "CallVariants.Discover": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T08:26:28.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T08:16:24.447Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T08:26:58.358Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T08:18:03.147Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T08:23:38.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:44.797Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T08:28:08.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T08:18:39.786Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T08:23:04.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:09.187Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T08:21:23.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:33.578Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T08:20:18.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:35.619Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T08:21:26.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:34.599Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T08:18:36.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T08:11:20.417Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T08:18:37.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T08:12:29.558Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T08:20:18.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:00.078Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T08:19:10.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T08:13:03.127Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T08:16:53.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T08:10:49.937Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T08:17:28.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T08:11:22.459Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T08:15:48.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T08:09:40.747Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T08:16:55.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T08:10:49.937Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T08:16:23.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T08:11:23.478Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T08:15:48.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T08:10:46.888Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T08:14:39.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T08:08:34.586Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T08:14:42.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T08:09:43.807Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T08:13:35.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T08:08:02.077Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T08:14:09.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T08:09:08.196Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T08:22:33.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T08:14:10.206Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T08:11:18.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T08:06:51.878Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T08:10:48.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-CallVariants/CallVariants/cf701424-8d5c-4acc-8e2a-69d89aba0597/call-Discover/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T08:06:19.337Z"
+              }
+            ]
+          },
+          "id": "cf701424-8d5c-4acc-8e2a-69d89aba0597",
+          "status": "Succeeded",
+          "end": "2021-09-24T11:26:25.207Z",
+          "start": "2021-09-24T07:57:24.457Z"
+        },
+        "shardIndex": -1,
+        "end": "2021-09-24T11:26:25.207Z",
+        "attempt": 1,
+        "start": "2021-09-24T07:57:24.456Z"
+      }
+    ],
+    "PBCCSWholeGenome.FinalizeDVPEPPERVcf": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T11:30:16.332Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-FinalizeDVPEPPERVcf",
+        "attempt": 1,
+        "start": "2021-09-24T11:26:26.317Z"
+      }
+    ],
+    "PBCCSWholeGenome.FinalizeAlignedBai": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T08:01:15.323Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-FinalizeAlignedBai",
+        "attempt": 1,
+        "start": "2021-09-24T07:57:24.456Z"
+      }
+    ],
+    "PBCCSWholeGenome.FinalizePBSV": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T11:30:18.333Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-FinalizePBSV",
+        "attempt": 1,
+        "start": "2021-09-24T11:26:26.316Z"
+      }
+    ],
+    "PBCCSWholeGenome.FinalizeSniffles": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T11:30:18.333Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-FinalizeSniffles",
+        "attempt": 1,
+        "start": "2021-09-24T11:26:26.316Z"
+      }
+    ],
+    "PBCCSWholeGenome.IndexCCSUnalignedReads": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T10:06:48.322Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-IndexCCSUnalignedReads",
+        "attempt": 1,
+        "start": "2021-09-24T07:57:24.456Z"
+      }
+    ],
+    "PBCCSWholeGenome.MergeAllReads": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T07:57:21.386Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-MergeAllReads",
+        "attempt": 1,
+        "start": "2021-09-24T04:46:08.197Z"
+      }
+    ],
+    "PBCCSWholeGenome.FinalizeDVPEPPERGVcf": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T11:30:48.334Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-FinalizeDVPEPPERGVcf",
+        "attempt": 1,
+        "start": "2021-09-24T11:26:26.317Z"
+      }
+    ],
+    "PBCCSWholeGenome.FinalizeDVPEPPERTbi": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T11:30:48.334Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-FinalizeDVPEPPERTbi",
+        "attempt": 1,
+        "start": "2021-09-24T11:26:26.315Z"
+      }
+    ],
+    "PBCCSWholeGenome.FinalizeAlignedPbi": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T10:11:13.332Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-FinalizeAlignedPbi",
+        "attempt": 1,
+        "start": "2021-09-24T10:06:50.496Z"
+      }
+    ],
+    "PBCCSWholeGenome.FinalizeAlignedBam": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T08:01:17.322Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/PBCCSWholeGenome/18378026-20e0-40a2-a824-341e7db9017c/call-FinalizeAlignedBam",
+        "attempt": 1,
+        "start": "2021-09-24T07:57:24.456Z"
+      }
+    ]
+  },
+  "id": "18378026-20e0-40a2-a824-341e7db9017c",
+  "status": "Succeeded",
+  "end": "2021-09-24T11:30:50.821Z",
+  "start": "2021-09-24T04:46:03.483Z"
+}
+

@@ -1,0 +1,2345 @@
+{
+  "calls": {
+    "ONTWholeGenome.FinalizeDVPEPPERVcf": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:38:48.408Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeDVPEPPERVcf",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeDVPEPPERPhasedTbi": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:38:48.408Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeDVPEPPERPhasedTbi",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ],
+    "ONTWholeGenome.MergeAllReads": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T00:30:48.398Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-MergeAllReads",
+        "attempt": 1,
+        "start": "2021-09-23T16:54:04.696Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeBai": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T00:35:17.332Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeBai",
+        "attempt": 1,
+        "start": "2021-09-24T00:30:52.406Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizePBSV": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:39:22.462Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizePBSV",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeDVPEPPERPhasedVcf": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:39:20.333Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeDVPEPPERPhasedVcf",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeDVPEPPERTbi": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:39:56.358Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeDVPEPPERTbi",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeDVPEPPERGVcf": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:39:22.462Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeDVPEPPERGVcf",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeSniffles": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:39:24.347Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeSniffles",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeBam": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T00:35:19.332Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeBam",
+        "attempt": 1,
+        "start": "2021-09-24T00:30:52.406Z"
+      }
+    ],
+    "ONTWholeGenome.CallVariants": [
+      {
+        "executionStatus": "Done",
+        "subWorkflowMetadata": {
+          "calls": {
+            "CallVariants.MergePBSVVCFs": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T07:09:28.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-MergePBSVVCFs",
+                "attempt": 1,
+                "start": "2021-09-24T07:05:02.428Z"
+              }
+            ],
+            "CallVariants.MergeLongshotVCFs": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T04:58:28.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-MergeLongshotVCFs",
+                "attempt": 1,
+                "start": "2021-09-24T04:52:25.947Z"
+              }
+            ],
+            "CallVariants.MakeChrIntervalList": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T00:36:57.350Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-MakeChrIntervalList",
+                "attempt": 1,
+                "start": "2021-09-24T00:30:54.446Z"
+              }
+            ],
+            "CallVariants.DVP": [
+              {
+                "executionStatus": "Done",
+                "subWorkflowMetadata": {
+                  "calls": {
+                    "DVPPipeline.MergeDeepVariantPhasedVCFs": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": -1,
+                        "end": "2021-09-24T09:17:10.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-MergeDeepVariantPhasedVCFs",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:10:31.956Z"
+                      }
+                    ],
+                    "DVPPipeline.PEPPER": [
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 0,
+                        "end": "2021-09-24T03:45:25.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-0",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:01:56.267Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 0,
+                        "end": "2021-09-24T04:37:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-0/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:45:25.526Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 0,
+                        "end": "2021-09-24T05:01:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-0/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:37:15.637Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 0,
+                        "end": "2021-09-24T07:57:23.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-0/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T05:01:15.546Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T03:34:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-1",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:04:44.077Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T04:04:55.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-1/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:34:16.187Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T04:37:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-1/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:04:56.097Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T07:23:57.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-1/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:37:15.637Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T03:38:10.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-2",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:07:34.977Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T04:08:20.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-2/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:38:10.336Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T05:19:05.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-2/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:08:20.467Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T08:44:48.365Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-2/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T05:19:05.436Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T03:52:10.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-3",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:02:29.807Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T04:15:00.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-3/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:52:11.316Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T04:42:50.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-3/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:15:01.066Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T07:27:18.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-3/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:42:51.326Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 4,
+                        "end": "2021-09-24T03:12:00.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-4",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:06:25.736Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 4,
+                        "end": "2021-09-24T03:36:30.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-4/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:12:00.606Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 4,
+                        "end": "2021-09-24T04:05:30.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-4/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T03:36:30.526Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 4,
+                        "end": "2021-09-24T07:22:49.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-4/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:05:30.686Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T04:10:30.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-5",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:11:25.016Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T05:04:35.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-5/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T04:10:30.586Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T06:02:00.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-5/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T05:04:35.977Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T09:01:34.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-5/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T06:02:00.517Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T03:33:45.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-6",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:05:19.686Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T04:25:35.321Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-6/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:33:45.696Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T04:50:40.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-6/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:25:35.687Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T08:07:23.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-6/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:50:41.126Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 7,
+                        "end": "2021-09-24T03:57:10.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-7",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:04:45.096Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 7,
+                        "end": "2021-09-24T04:25:00.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-7/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:57:10.476Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 7,
+                        "end": "2021-09-24T04:49:00.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-7/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:25:01.087Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 7,
+                        "end": "2021-09-24T07:22:17.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-7/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:49:00.426Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T03:29:50.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-8",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:03:04.436Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T03:58:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-8/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:29:50.666Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T04:21:40.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-8/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T03:58:15.606Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T07:12:49.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-8/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:21:40.726Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T03:39:50.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-9",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:11:30.116Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T04:06:35.321Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-9/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:39:50.957Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T05:01:50.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-9/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:06:35.736Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T07:36:14.324Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-9/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T05:01:51.186Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 10,
+                        "end": "2021-09-24T03:48:45.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-10",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:03:04.436Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 10,
+                        "end": "2021-09-24T04:27:50.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-10/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:48:45.886Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 10,
+                        "end": "2021-09-24T05:19:05.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-10/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:27:50.926Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 10,
+                        "end": "2021-09-24T07:51:13.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-10/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T05:19:05.436Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 11,
+                        "end": "2021-09-24T03:24:15.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-11",
+                        "attempt": 1,
+                        "start": "2021-09-24T02:59:09.707Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 11,
+                        "end": "2021-09-24T04:25:00.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-11/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:24:16.316Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 11,
+                        "end": "2021-09-24T04:50:40.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-11/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:25:01.086Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 11,
+                        "end": "2021-09-24T07:40:03.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-11/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:50:41.126Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 12,
+                        "end": "2021-09-24T03:33:45.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-12",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:08:04.486Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 12,
+                        "end": "2021-09-24T03:57:40.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-12/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:33:45.696Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 12,
+                        "end": "2021-09-24T04:09:25.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-12/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T03:57:41.016Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 12,
+                        "end": "2021-09-24T06:54:26.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-12/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:09:25.597Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T04:09:25.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-13",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:00:18.777Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T04:45:40.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-13/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T04:09:25.597Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T06:06:30.321Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-13/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:45:41.166Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T09:10:29.373Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-13/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T06:06:30.826Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T03:23:10.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-14",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:00:15.716Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T03:47:05.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-14/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:23:11.156Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T04:12:45.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-14/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T03:47:06.226Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T06:49:22.480Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-14/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:12:45.856Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T03:53:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-15",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:08:40.166Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T04:12:10.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-15/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:53:15.416Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T05:04:35.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-15/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:12:11.326Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T07:33:27.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-15/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T05:04:35.977Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T03:47:05.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-16",
+                        "attempt": 1,
+                        "start": "2021-09-24T02:58:36.126Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T04:10:30.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-16/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:47:06.225Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T04:37:15.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-16/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:10:30.586Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T07:06:07.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-16/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:37:15.636Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 17,
+                        "end": "2021-09-24T03:26:30.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-17",
+                        "attempt": 1,
+                        "start": "2021-09-24T02:58:39.186Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 17,
+                        "end": "2021-09-24T03:55:30.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-17/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:26:30.366Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 17,
+                        "end": "2021-09-24T05:04:05.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-17/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T03:55:30.676Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 17,
+                        "end": "2021-09-24T08:07:23.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-17/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T05:04:05.446Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T03:24:50.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-18",
+                        "attempt": 1,
+                        "start": "2021-09-24T02:59:09.707Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T03:52:40.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-18/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:24:50.885Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T04:48:25.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-18/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T03:52:40.827Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T07:45:05.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-18/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:48:25.895Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 19,
+                        "end": "2021-09-24T03:27:35.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-19",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:08:04.487Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 19,
+                        "end": "2021-09-24T04:18:20.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-19/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T03:27:35.386Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 19,
+                        "end": "2021-09-24T05:08:30.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-19/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:18:20.396Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 19,
+                        "end": "2021-09-24T07:47:22.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-19/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T05:08:30.666Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T04:03:50.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-20",
+                        "attempt": 1,
+                        "start": "2021-09-24T03:05:18.667Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T04:29:30.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-20/attempt-2",
+                        "attempt": 2,
+                        "start": "2021-09-24T04:03:51.107Z"
+                      },
+                      {
+                        "executionStatus": "RetryableFailure",
+                        "backendStatus": "Preempted",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T04:56:15.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-20/attempt-3",
+                        "attempt": 3,
+                        "start": "2021-09-24T04:29:30.586Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T07:27:15.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-PEPPER/shard-20/attempt-4",
+                        "attempt": 4,
+                        "start": "2021-09-24T04:56:15.796Z"
+                      }
+                    ],
+                    "DVPPipeline.SubsetBam": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 0,
+                        "end": "2021-09-24T03:01:54.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-0",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 1,
+                        "end": "2021-09-24T03:04:42.333Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-1",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 2,
+                        "end": "2021-09-24T03:07:33.331Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-2",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.848Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 3,
+                        "end": "2021-09-24T03:02:28.350Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-3",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 4,
+                        "end": "2021-09-24T03:06:24.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-4",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 5,
+                        "end": "2021-09-24T03:11:23.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-5",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 6,
+                        "end": "2021-09-24T03:05:18.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-6",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 7,
+                        "end": "2021-09-24T03:04:43.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-7",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 8,
+                        "end": "2021-09-24T03:03:03.336Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-8",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.846Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 9,
+                        "end": "2021-09-24T03:11:28.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-9",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 10,
+                        "end": "2021-09-24T03:03:03.336Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-10",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.848Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 11,
+                        "end": "2021-09-24T02:59:08.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-11",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 12,
+                        "end": "2021-09-24T03:08:03.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-12",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.848Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 13,
+                        "end": "2021-09-24T03:00:17.324Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-13",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 14,
+                        "end": "2021-09-24T03:00:14.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-14",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.848Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 15,
+                        "end": "2021-09-24T03:08:38.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-15",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 16,
+                        "end": "2021-09-24T02:58:34.414Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-16",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.846Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 17,
+                        "end": "2021-09-24T02:58:37.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-17",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.847Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 18,
+                        "end": "2021-09-24T02:59:08.323Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-18",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.848Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 19,
+                        "end": "2021-09-24T03:08:03.334Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-19",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.846Z"
+                      },
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": 20,
+                        "end": "2021-09-24T03:05:17.391Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-SubsetBam/shard-20",
+                        "attempt": 1,
+                        "start": "2021-09-24T00:31:00.848Z"
+                      }
+                    ],
+                    "DVPPipeline.MergeDeepVariantVCFs": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": -1,
+                        "end": "2021-09-24T09:16:03.322Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-MergeDeepVariantVCFs",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:10:31.956Z"
+                      }
+                    ],
+                    "DVPPipeline.MergeDeepVariantGVCFs": [
+                      {
+                        "executionStatus": "Done",
+                        "backendStatus": "Success",
+                        "shardIndex": -1,
+                        "end": "2021-09-24T09:22:12.332Z",
+                        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-DVP/DVPPipeline/20383457-6d38-43e5-adf3-33fabe800ae4/call-MergeDeepVariantGVCFs",
+                        "attempt": 1,
+                        "start": "2021-09-24T09:10:31.956Z"
+                      }
+                    ]
+                  },
+                  "id": "20383457-6d38-43e5-adf3-33fabe800ae4",
+                  "status": "Succeeded",
+                  "end": "2021-09-24T09:22:13.507Z",
+                  "start": "2021-09-24T00:30:54.446Z"
+                },
+                "shardIndex": -1,
+                "end": "2021-09-24T09:22:13.507Z",
+                "attempt": 1,
+                "start": "2021-09-24T00:30:54.446Z"
+              }
+            ],
+            "CallVariants.Sniffles": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T14:01:38.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T02:00:07.867Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T02:42:58.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T01:34:29.407Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T02:16:48.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T01:29:59.927Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T02:53:35.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T01:42:49.978Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T02:01:43.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T01:19:26.267Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T01:52:17.363Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:50.488Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T01:54:29.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T01:14:58.677Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T01:41:42.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T01:09:52.397Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T01:43:56.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:15.897Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T01:57:18.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T01:17:43.368Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T01:40:33.337Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T01:11:35.188Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T01:41:05.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:17.937Z"
+              },
+              {
+                "executionStatus": "RetryableFailure",
+                "backendStatus": "Preempted",
+                "shardIndex": 12,
+                "end": "2021-09-24T01:21:35.331Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T01:07:08.669Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T01:45:34.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-12/attempt-2",
+                "attempt": 2,
+                "start": "2021-09-24T01:21:35.468Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T01:28:17.338Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T01:00:59.367Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T01:16:34.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T00:57:39.027Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T20:29:55.656Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T01:07:05.608Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T01:26:04.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T01:03:14.738Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T01:19:22.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T00:59:54.270Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T01:12:42.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T00:56:29.848Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T01:19:58.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T01:00:58.349Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T01:21:36.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T01:03:45.227Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T02:51:23.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T00:55:24.738Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T01:47:13.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T01:12:42.329Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T00:59:19.331Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T00:43:07.807Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T00:45:18.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Sniffles/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T00:40:54.517Z"
+              }
+            ],
+            "CallVariants.Call": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T07:05:00.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T03:51:35.157Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T05:49:15.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T03:08:39.717Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T04:45:38.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T02:43:01.667Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T05:04:37.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T03:13:39.467Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T04:00:28.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T02:17:57.298Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T03:43:48.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T02:10:06.748Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T03:36:33.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T01:58:27.137Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T03:03:03.336Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T01:54:29.948Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T02:52:28.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T01:53:59.377Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T03:18:38.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T02:14:02.447Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T02:58:33.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T01:46:11.507Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T03:05:52.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T01:46:09.466Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T02:06:13.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T01:28:20.306Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T01:54:32.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T01:16:02.757Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T01:52:15.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:14.878Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T02:10:38.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T01:24:24.418Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T01:56:13.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T01:18:49.597Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T01:42:17.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:13.859Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T01:52:52.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T01:09:54.428Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T01:44:28.377Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T01:16:04.797Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T01:36:38.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T01:18:14.938Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T01:28:53.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T01:06:35.118Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T03:21:26.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T01:53:58.358Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T00:55:23.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T00:47:36.357Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T00:50:23.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Call/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T00:45:20.037Z"
+              }
+            ],
+            "CallVariants.SubsetBam": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T02:00:06.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T01:34:28.346Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T01:29:58.321Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T01:42:48.386Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T01:19:24.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T01:13:49.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T01:14:57.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T01:09:51.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T01:13:14.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T01:17:42.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T01:11:33.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T01:13:16.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T01:07:07.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T01:00:58.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T00:57:37.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T01:07:04.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T01:03:13.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T00:59:52.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T00:56:28.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T01:00:56.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.697Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T01:03:43.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T00:55:23.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T01:12:40.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T00:43:06.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T00:40:53.351Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-SubsetBam/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T00:37:01.698Z"
+              }
+            ],
+            "CallVariants.Longshot": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T04:52:23.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T02:00:07.867Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T03:39:19.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T01:34:29.407Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T03:15:22.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T01:29:59.927Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T03:30:23.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T01:42:49.978Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T02:49:08.321Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T01:19:26.267Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T02:47:58.348Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:50.488Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T02:47:26.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T01:14:58.677Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T02:34:03.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T01:09:52.396Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T02:28:28.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:15.897Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T02:45:13.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T01:17:43.368Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T02:24:36.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T01:11:35.188Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T02:22:58.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:17.937Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T02:02:18.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T01:07:08.669Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T01:52:49.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T01:00:59.367Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T01:42:14.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T00:57:39.028Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T04:20:02.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T01:07:05.607Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T02:02:18.324Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T01:03:14.738Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T01:50:03.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T00:59:54.270Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T01:34:58.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T00:56:29.848Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T01:58:58.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T01:00:58.349Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T01:45:33.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T01:03:45.228Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T01:50:38.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T00:55:24.737Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T02:32:23.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T01:12:42.329Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T00:57:05.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T00:43:07.807Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T00:45:18.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Longshot/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T00:40:54.517Z"
+              }
+            ],
+            "CallVariants.MergeSnifflesVCFs": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": -1,
+                "end": "2021-09-24T20:34:53.344Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-MergeSnifflesVCFs",
+                "attempt": 1,
+                "start": "2021-09-24T20:29:58.027Z"
+              }
+            ],
+            "CallVariants.Discover": [
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 0,
+                "end": "2021-09-24T03:51:33.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-0",
+                "attempt": 1,
+                "start": "2021-09-24T02:00:07.867Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 1,
+                "end": "2021-09-24T03:08:38.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-1",
+                "attempt": 1,
+                "start": "2021-09-24T01:34:29.407Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 2,
+                "end": "2021-09-24T02:43:00.331Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-2",
+                "attempt": 1,
+                "start": "2021-09-24T01:29:59.927Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 3,
+                "end": "2021-09-24T03:13:38.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-3",
+                "attempt": 1,
+                "start": "2021-09-24T01:42:49.978Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 4,
+                "end": "2021-09-24T02:17:55.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-4",
+                "attempt": 1,
+                "start": "2021-09-24T01:19:26.267Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 5,
+                "end": "2021-09-24T02:10:05.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-5",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:50.488Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 6,
+                "end": "2021-09-24T01:58:25.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-6",
+                "attempt": 1,
+                "start": "2021-09-24T01:14:58.677Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 7,
+                "end": "2021-09-24T01:54:28.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-7",
+                "attempt": 1,
+                "start": "2021-09-24T01:09:52.397Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 8,
+                "end": "2021-09-24T01:53:58.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-8",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:15.898Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 9,
+                "end": "2021-09-24T02:14:01.322Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-9",
+                "attempt": 1,
+                "start": "2021-09-24T01:17:43.367Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 10,
+                "end": "2021-09-24T01:46:10.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-10",
+                "attempt": 1,
+                "start": "2021-09-24T01:11:35.188Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 11,
+                "end": "2021-09-24T01:46:08.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-11",
+                "attempt": 1,
+                "start": "2021-09-24T01:13:17.937Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 12,
+                "end": "2021-09-24T01:28:18.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-12",
+                "attempt": 1,
+                "start": "2021-09-24T01:07:08.669Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 13,
+                "end": "2021-09-24T01:16:01.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-13",
+                "attempt": 1,
+                "start": "2021-09-24T01:00:59.367Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 14,
+                "end": "2021-09-24T01:13:13.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-14",
+                "attempt": 1,
+                "start": "2021-09-24T00:57:39.028Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 15,
+                "end": "2021-09-24T01:24:23.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-15",
+                "attempt": 1,
+                "start": "2021-09-24T01:07:05.608Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 16,
+                "end": "2021-09-24T01:18:48.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-16",
+                "attempt": 1,
+                "start": "2021-09-24T01:03:14.738Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 17,
+                "end": "2021-09-24T01:13:12.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-17",
+                "attempt": 1,
+                "start": "2021-09-24T00:59:54.269Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 18,
+                "end": "2021-09-24T01:09:53.323Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-18",
+                "attempt": 1,
+                "start": "2021-09-24T00:56:29.848Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 19,
+                "end": "2021-09-24T01:16:03.334Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-19",
+                "attempt": 1,
+                "start": "2021-09-24T01:00:58.349Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 20,
+                "end": "2021-09-24T01:18:13.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-20",
+                "attempt": 1,
+                "start": "2021-09-24T01:03:45.228Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 21,
+                "end": "2021-09-24T01:06:33.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-21",
+                "attempt": 1,
+                "start": "2021-09-24T00:55:24.737Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 22,
+                "end": "2021-09-24T01:53:56.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-22",
+                "attempt": 1,
+                "start": "2021-09-24T01:12:42.329Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 23,
+                "end": "2021-09-24T00:47:34.332Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-23",
+                "attempt": 1,
+                "start": "2021-09-24T00:43:07.807Z"
+              },
+              {
+                "executionStatus": "Done",
+                "backendStatus": "Success",
+                "shardIndex": 24,
+                "end": "2021-09-24T00:45:18.333Z",
+                "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-CallVariants/CallVariants/841b09cc-250d-40de-b5ed-440585dbec0e/call-Discover/shard-24",
+                "attempt": 1,
+                "start": "2021-09-24T00:40:54.517Z"
+              }
+            ]
+          },
+          "id": "841b09cc-250d-40de-b5ed-440585dbec0e",
+          "status": "Succeeded",
+          "end": "2021-09-24T20:34:54.967Z",
+          "start": "2021-09-24T00:30:52.407Z"
+        },
+        "shardIndex": -1,
+        "end": "2021-09-24T20:34:54.968Z",
+        "attempt": 1,
+        "start": "2021-09-24T00:30:52.406Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeLongshotTbi": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:38:48.408Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeLongshotTbi",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ],
+    "ONTWholeGenome.FinalizeLongshotVcf": [
+      {
+        "executionStatus": "Done",
+        "backendStatus": "Success",
+        "shardIndex": -1,
+        "end": "2021-09-24T20:39:23.337Z",
+        "callRoot": "gs://broad-dsp-lrma-cromwell/ONTWholeGenome/e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e/call-FinalizeLongshotVcf",
+        "attempt": 1,
+        "start": "2021-09-24T20:34:56.006Z"
+      }
+    ]
+  },
+  "id": "e1b4c89c-d8dc-4f87-a3e0-8539a39fe99e",
+  "status": "Succeeded",
+  "end": "2021-09-24T20:39:58.469Z",
+  "start": "2021-09-23T16:53:59.835Z"
+}
+

@@ -1,0 +1,5 @@
+{
+  "ShardCLRData.unaligned_bam": "gs://broad-dsde-methods-long-reads-aou/input/pb/m64091_200213_225218/m64091_200213_225218.subreads.bam",
+  "ShardCLRData.unaligned_pbi": "File"
+}
+
