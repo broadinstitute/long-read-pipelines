@@ -105,15 +105,16 @@ def main():
                                     else:
                                         copy_lists[bucket_name][os.path.dirname(vs) + "/"] = os.path.dirname(new_ss_row[ks] + "/")
 
-                        ss_new_hash[rw] = ss_new_hash[rw].append(ss_row)
+                        ss_new_hash[rw] = ss_new_hash[rw].append(new_ss_row)
                         membership_new_hash[rw].append(membership[ss_index])
                         namespace_new_hash[rw] = ns
 
     for workspace in membership_new_hash:
         if len(membership_new_hash[workspace]) > 0:
-            oms = pd \
-                .DataFrame({'entity:sample_set_id': list(ss_new_hash[workspace]['entity:sample_set_id']), 'sample': membership_new_hash[workspace]}) \
-                .explode('sample', ignore_index=True)
+            # oms = pd \
+            #     .DataFrame({'entity:sample_set_id': list(ss_new_hash[workspace]['entity:sample_set_id']), 'sample': membership_new_hash[workspace]}) \
+            #     .explode('sample', ignore_index=True)
+            oms = tbl_new_hash[workspace][['bio_sample', 'entity:sample_id']].reset_index(drop=True)
             oms.columns = ['membership:sample_set_id', 'sample']
 
             if args.run:
@@ -219,12 +220,14 @@ def load_table(namespace, workspace, table_name, store_membership=False):
 
 
 def upload_table(namespace, workspace, table, label):
-    # upload new samples
-    a = fapi.upload_entities(namespace, workspace, entity_data=table.to_csv(index=False, sep="\t"), model='flexible')
+    tbl = table.replace("^nan$", "", regex=True)
+    tbl = tbl.replace("^None$", "", regex=True)
+    tbl = tbl.drop_duplicates()
 
-    if a.status_code == 200:
-        print(f'Uploaded {len(table)} {label} rows successfully.')
-    else:
+    # upload new samples
+    a = fapi.upload_entities(namespace, workspace, entity_data=tbl.to_csv(index=False, sep="\t"), model='flexible')
+
+    if a.status_code != 200:
         print(a.json())
 
 
