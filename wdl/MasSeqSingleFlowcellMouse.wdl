@@ -59,7 +59,7 @@ workflow MasSeqSingleFlowcellMouse {
         # This way we preserve the vast majority of the data, even if it has low quality.
         # We can filter it out at later steps.
         Float min_read_quality = 0.0
-        Int max_reclamation_length = 60000
+        Int max_reclamation_length = 30000
 
         Boolean is_SIRV_data = false
         String mas_seq_model = "mas15threeP"
