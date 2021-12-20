@@ -43,16 +43,17 @@ def main():
     namespace_new_hash = {}
     bucket_new_hash = {}
     copy_lists = {}
+    rsync_lists = {}
 
     tbl_filtered = tbl_old[~tbl_old.workspace.isin(['nan', ''])]
     workspaces = get_workspaces()
 
     for rw in tbl_filtered['workspace'].unique():
         if rw not in workspaces:
-            create_workspace(args, rw)
+            create_workspace(args, rw, args.run)
 
-            workspaces[rw] = args.namespace
             b = fapi.update_workspace_acl(args.namespace, rw, owners)
+            workspaces[rw] = args.namespace
 
         if rw not in tbl_new_hash:
             tbl_new_hash[rw] = pd.DataFrame(columns=tbl_filtered.columns)
@@ -80,12 +81,15 @@ def main():
                     if 'gs://' in v and ('gs://broad-gp-pacbio/' not in v and 'gs://broad-gp-oxfordnano/' not in v):
                         if bucket_name not in copy_lists:
                             copy_lists[bucket_name] = {}
+                            rsync_lists[bucket_name] = {}
 
                         if '.' in v:
                             if len(re.sub("gs://", "", v).split("/")) <= 4:
                                 copy_lists[bucket_name][v] = newrow[k]
                             else:
-                                copy_lists[bucket_name][os.path.dirname(v) + "/"] = os.path.dirname(newrow[k]) + "/"
+                                sdir = "gs://" + "/".join(re.sub("gs://", "", v).split("/")[0:4])
+                                ddir = "gs://" + "/".join(re.sub("gs://", "", newrow[k]).split("/")[0:4])
+                                rsync_lists[bucket_name][sdir] = ddir
 
             for ss_index, ss_row in ss_old.iterrows():
                 for sample_id in tbl_new_hash[rw]['entity:sample_id']:
@@ -98,12 +102,15 @@ def main():
                             if 'gs://' in vs and ('gs://broad-gp-pacbio/' not in vs and 'gs://broad-gp-oxfordnano/' not in vs):
                                 if bucket_name not in copy_lists:
                                     copy_lists[bucket_name] = {}
+                                    rsync_lists[bucket_name] = {}
 
                                 if '.' in vs:
                                     if len(re.sub("gs://", "", vs).split("/")) <= 4:
                                         copy_lists[bucket_name][vs] = new_ss_row[ks]
                                     else:
-                                        copy_lists[bucket_name][os.path.dirname(vs) + "/"] = os.path.dirname(new_ss_row[ks] + "/")
+                                        sdir = "gs://" + "/".join(re.sub("gs://", "", vs).split("/")[0:4])
+                                        ddir = "gs://" + "/".join(re.sub("gs://", "", new_ss_row[ks]).split("/")[0:4])
+                                        rsync_lists[bucket_name][sdir] = ddir
 
                         ss_new_hash[rw] = ss_new_hash[rw].append(new_ss_row)
                         membership_new_hash[rw].append(membership[ss_index])
@@ -111,9 +118,6 @@ def main():
 
     for workspace in membership_new_hash:
         if len(membership_new_hash[workspace]) > 0:
-            # oms = pd \
-            #     .DataFrame({'entity:sample_set_id': list(ss_new_hash[workspace]['entity:sample_set_id']), 'sample': membership_new_hash[workspace]}) \
-            #     .explode('sample', ignore_index=True)
             oms = tbl_new_hash[workspace][['bio_sample', 'entity:sample_id']].reset_index(drop=True)
             oms.columns = ['membership:sample_set_id', 'sample']
 
@@ -123,34 +127,26 @@ def main():
 
                 upload_tables(namespace_new_hash[workspace], workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
 
-    num_files = 0
-    for bucket in copy_lists:
-        for s in copy_lists[bucket]:
-            num_files += 1
+    print(f"Rsyncing directories... {'[dry-run]' if not args.run else ''}")
+    sync_files(args, rsync_lists, args.run, rsync_files)
 
-    print("Examining files...")
-    num_files_copied = {}
-    with tqdm(total=num_files) as pbar:
-        pool = Pool(args.threads)
-        for bucket in copy_lists:
-            for s in copy_lists[bucket]:
-                r = pool.apply_async(copy_files, args = (s, copy_lists[bucket][s], args.run, ))
+    print(f"Copying files... {'[dry-run]' if not args.run else ''}")
+    sync_files(args, copy_lists, args.run, copy_files)
+
+
+def sync_files(args, file_lists, run, copy_func):
+    res = []
+    with Pool(processes=args.threads) as pool:
+        for bucket in file_lists:
+            for s in file_lists[bucket]:
+                res.append(pool.apply_async(copy_func, args = (s, file_lists[bucket][s], run, )))
+
+        num_jobs_complete = 0
+        with tqdm(total=len(res)) as pbar:
+            for r in res:
+                num_jobs_complete += r.get()
                 pbar.update()
 
-                if bucket_new_hash[bucket] not in num_files_copied:
-                    num_files_copied[bucket_new_hash[bucket]] = 0
-
-                num_files_copied[bucket_new_hash[bucket]] += r.get()
-
-        pool.close()
-        pool.join()
-
-    tot_files_copied = 0
-    for workspace in num_files_copied:
-        print(f"Workspace '{workspace}': copied {num_files_copied[workspace]} files. {'[dry-run]' if not args.run else ''}")
-        tot_files_copied += num_files_copied[workspace]
-
-    print(f"Total files copied: {tot_files_copied}. {'[dry-run]' if not args.run else ''}")
 
 def create_workspace(args, rw, run):
     status_code = "000"
@@ -161,22 +157,23 @@ def create_workspace(args, rw, run):
     print(f"[workspace  : {status_code}] Created workspace '{rw}' {'[dry-run]' if run else ''}")
 
 
-def copy_files(src, dst, run):
-    if src[-1] == '/':
-        if run:
-            result = subprocess.run(["gsutil", "-m", "rsync", "-rC", src, dst], capture_output=True, text=True)
-            return len(list(filter(lambda x: 'Copying' in x, result.stderr.split("\n"))))
-        else:
-            result = subprocess.run(["gsutil", "-m", "rsync", "-nrC", src, dst], capture_output=True, text=True)
-            return len(list(filter(lambda x: 'Would copy' in x, result.stderr.split("\n"))))
+def rsync_files(src, dst, run):
+    if run:
+        result = subprocess.run(["gsutil", "-m", "rsync", "-rC", src, dst], capture_output=True, text=True)
+        return 1 if len(list(filter(lambda x: 'Copying' in x, result.stderr.split("\n")))) > 0 else 0
     else:
-        if should_copy(src, dst):
-            if run:
-                result = subprocess.run(["gsutil", "cp", src, dst], capture_output=True, text=True)
-            else:
-                result = subprocess.run(["echo", "gsutil", "cp", src, dst, "[dry-run]"], capture_output=True, text=True)
+        result = subprocess.run(["gsutil", "-m", "rsync", "-nrC", src, dst], capture_output=True, text=True)
+        return 1 if len(list(filter(lambda x: 'Would copy' in x, result.stderr.split("\n")))) > 0 else 0
 
-            return 1
+
+def copy_files(src, dst, run):
+    if should_copy(src, dst):
+        if run:
+            result = subprocess.run(["gsutil", "cp", src, dst], capture_output=True, text=True)
+        else:
+            result = subprocess.run(["echo", "gsutil", "cp", src, dst, "[dry-run]"], capture_output=True, text=True)
+
+        return 1
 
     return 0
 
