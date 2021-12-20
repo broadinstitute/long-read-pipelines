@@ -25,6 +25,8 @@ RAW_BARCODE_TAG = 'CR'
 
 BARCODE_CORRECTED_TAG = "XC"
 
+COULD_CORRECT_BARCODE_TAG = "YV"
+
 
 def read_barcodes(barcodes_filename):
     """
@@ -141,7 +143,13 @@ def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, s
                 read.set_tag(BARCODE_CORRECTED_TAG, False)
 
                 # Get the corrected output:
-                corrected_barcode = correction_dict[raw_barcode]
+                try:
+                    corrected_barcode = correction_dict[raw_barcode]
+                    read.set_tag(COULD_CORRECT_BARCODE_TAG, True)
+                except KeyError:
+                    corrected_barcode = raw_barcode
+                    read.set_tag(COULD_CORRECT_BARCODE_TAG, False)
+                    print(f"WARNING: Raw barcode not in corrected dict: {raw_barcode}")
 
                 # If we used a 10x whitelist, only set the corrected barcode if it's in the whitelist:
                 if whitelist_10x is not None:
