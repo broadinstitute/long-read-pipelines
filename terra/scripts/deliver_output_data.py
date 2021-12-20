@@ -128,18 +128,18 @@ def main():
                 upload_tables(namespace_new_hash[workspace], workspace, tbl_new_hash[workspace], ss_new_hash[workspace], oms)
 
     print(f"Rsyncing directories... {'[dry-run]' if not args.run else ''}")
-    sync_files(args, rsync_lists, args.run, rsync_files)
+    sync_files(args, rsync_lists, args.project, args.run, rsync_files)
 
     print(f"Copying files... {'[dry-run]' if not args.run else ''}")
-    sync_files(args, copy_lists, args.run, copy_files)
+    sync_files(args, copy_lists, args.project, args.run, copy_files)
 
 
-def sync_files(args, file_lists, run, copy_func):
+def sync_files(args, file_lists, project, run, copy_func):
     res = []
     with Pool(processes=args.threads) as pool:
         for bucket in file_lists:
             for s in file_lists[bucket]:
-                res.append(pool.apply_async(copy_func, args = (s, file_lists[bucket][s], run, )))
+                res.append(pool.apply_async(copy_func, args = (s, file_lists[bucket][s], project, run, )))
 
         num_jobs_complete = 0
         with tqdm(total=len(res)) as pbar:
@@ -157,7 +157,7 @@ def create_workspace(args, rw, run):
     print(f"[workspace  : {status_code}] Created workspace '{rw}' {'[dry-run]' if run else ''}")
 
 
-def rsync_files(src, dst, run):
+def rsync_files(src, dst, project, run):
     if run:
         result = subprocess.run(["gsutil", "-m", "rsync", "-rC", src, dst], capture_output=True, text=True)
         return 1 if len(list(filter(lambda x: 'Copying' in x, result.stderr.split("\n")))) > 0 else 0
@@ -166,8 +166,8 @@ def rsync_files(src, dst, run):
         return 1 if len(list(filter(lambda x: 'Would copy' in x, result.stderr.split("\n")))) > 0 else 0
 
 
-def copy_files(src, dst, run):
-    if should_copy(src, dst):
+def copy_files(src, dst, project, run):
+    if should_copy(src, dst, project):
         if run:
             result = subprocess.run(["gsutil", "cp", src, dst], capture_output=True, text=True)
         else:
@@ -177,8 +177,8 @@ def copy_files(src, dst, run):
 
     return 0
 
-def should_copy(src, dst):
-    storage_client = storage.Client()
+def should_copy(src, dst, project):
+    storage_client = storage.Client(project=project)
 
     bs, ns = re.sub("^gs://", "", src).split("/", maxsplit=1)
     bd, nd = re.sub("^gs://", "", dst).split("/", maxsplit=1)
