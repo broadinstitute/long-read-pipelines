@@ -19,33 +19,63 @@ def main():
     parser.add_argument('-d', '--table-dir', type=str, help="Directory containing old tables")
     args = parser.parse_args()
 
+    print(f"Accessing Terra as '{fapi.whoami()}'.")
+
     tbl_old, _ = load_table(args.namespace, args.workspace, 'sample')
     tbl_filtered = tbl_old[~tbl_old.workspace.isin(['nan', ''])]
 
+    h = get_namespaces_hash()
+
+    new_data = {}
+
     for rw in tbl_filtered['workspace'].unique():
-        qa = fapi.get_workspace(args.namespace, rw)
+        ns = h[rw]
+        qa = fapi.get_workspace(ns, rw)
         if qa.status_code == 200:
-            tb, _ = load_table(args.namespace, rw, 'sample')
-            ss, _ = load_table(args.namespace, rw, 'sample_set', store_membership=False)
+            tb, _ = load_table(ns, rw, 'sample')
+            ss, _ = load_table(ns, rw, 'sample_set', store_membership=False)
 
             new_fcs = diff(tb, rw, 'sample', args.table_dir)
             new_sms = diff(ss, rw, 'sample_set', args.table_dir)
 
             if len(new_fcs) > 0 or len(new_sms) > 0:
-                slack_data = {'text': f"New data delivered to {rw}: {len(new_fcs)} flowcells, {len(new_sms)} samples ({', '.join(new_sms)})."}
-                print(slack_data)
+                new_data[f'{ns}/{rw}'] = f"{len(new_fcs)} flowcells, {len(new_sms)} samples ({', '.join(new_sms)})"
 
-                response = requests.post(
-                    url = args.webhook_url,
-                    data = json.dumps(slack_data),
-                    headers = {'Content-Type': 'application/json'}
-                )
+    if len(new_data) > 0:
+        slack_message = f"New data delivered!"
+        for nsrw in new_data:
+            slack_message += f"\n\t{nsrw}: {new_data[nsrw]}" 
 
-                if response.status_code != 200:
-                    raise ValueError(
-                        'Request to slack returned an error %s, the response is:\n%s'
-                        % (response.status_code, response.text)
-                )
+        slack_data = {'text': slack_message}
+        print(slack_data)
+
+        response = requests.post(
+            url = args.webhook_url,
+            data = json.dumps(slack_data),
+            headers = {'Content-Type': 'application/json'}
+        )
+
+        if response.status_code != 200:
+            raise ValueError(
+                'Request to slack returned an error %s, the response is:\n%s'
+                % (response.status_code, response.text)
+        )
+    else:
+        print("No new data.")
+
+
+def get_namespaces_hash():
+    rws = fapi.list_workspaces('workspace.name,workspace.namespace')
+
+    w = {}
+    if rws.status_code == 200:
+        for entry in rws.json():
+            workspace = entry['workspace']['name']
+            namespace = entry['workspace']['namespace']
+
+            w[workspace] = namespace
+
+    return w
 
 
 def load_table(namespace, workspace, table_name, store_membership=False):
