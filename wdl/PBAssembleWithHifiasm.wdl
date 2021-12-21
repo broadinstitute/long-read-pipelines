@@ -51,7 +51,11 @@ workflow PBAssembleWithHifiasm {
     }
 
     if (defined(ccs_bam)) {
-        call Utils.BamToFastq { input: bam = select_first([ccs_bam]), prefix = basename(ccs_bam, ".bam") }
+        call Utils.BamToFastq {
+            input:
+                bam = select_first([ccs_bam]),
+                prefix = basename(select_first([ccs_bam]), ".bam")
+        }
     }
 
     File ccs_fq = select_first([ MergeAllFastqs.merged_fastq, BamToFastq.reads_fq, ccs_fqs ])
