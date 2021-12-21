@@ -2,8 +2,8 @@ version 1.0
 
 ######################################################################################
 ## A workflow that performs single sample genome assembly on PacBio HiFi reads from
-## one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to genome assembly and variant calling.
+## one or more flow cells. The workflow merges multiple flowcells prior to genome
+## assembly and variant calling.
 ######################################################################################
 
 import "tasks/Utils.wdl" as Utils
@@ -14,10 +14,11 @@ import "tasks/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
     input {
-        Array[File] ccs_fqs
+        Array[File]? ccs_fqs
+        File? ccs_bam
 
-        File mother_bam
-        File father_bam
+        File? mother_bam
+        File? father_bam
 
         File ref_map_file
         String participant_name
@@ -27,7 +28,9 @@ workflow PBAssembleWithHifiasm {
     }
 
     parameter_meta {
-        ccs_fqs:            "GCS path to CCS fastq files"
+        ccs_fqs:            "GCS path to CCS reads files (.fq or .fq.gz)"
+        ccs_bam:            "GCS path to CCS reads file (.bam)"
+
         mother_bam:         "GCS path to BAM files for mother"
         father_bam:         "GCS path to BAM files for father"
 
@@ -42,14 +45,16 @@ workflow PBAssembleWithHifiasm {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBAssembleWithHifiasm/~{prefix}"
 
-    call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-
-    # gather across (potential multiple) input CCS BAMs
-    if (length(ccs_fqs) > 1) {
-        call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = ccs_fqs }
+    # gather across (potential multiple) inputs
+    if (defined(ccs_fqs) && length(select_first([ccs_fqs])) > 1) {
+        call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = select_first([ccs_fqs]) }
     }
 
-    File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, ccs_fqs ])
+    if (defined(ccs_bam)) {
+        call Utils.BamToFastq { input: bam = select_first([ccs_bam]), prefix = basename(ccs_bam, ".bam") }
+    }
+
+    File ccs_fq = select_first([ MergeAllFastqs.merged_fastq, BamToFastq.reads_fq, ccs_fqs ])
 
     call HA.Hifiasm {
         input:
@@ -59,10 +64,7 @@ workflow PBAssembleWithHifiasm {
             prefix = prefix
     }
 
-    call Quast.Quast {
-        input:
-            assemblies = [ Hifiasm.fa ]
-    }
+    call Quast.Quast { input: assemblies = [ Hifiasm.fa ] }
 
     call AV.CallAssemblyVariants {
         input:
