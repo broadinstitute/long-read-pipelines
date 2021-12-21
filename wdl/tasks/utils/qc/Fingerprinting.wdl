@@ -140,22 +140,9 @@ task CheckFingerprint {
     }
 }
 
-task ExtractRelevantGenotypingReads {
-    meta {
-        description: "Based on genotyping (SNP) sites, extract reads that overlap those places"
-    }
+task ExtractGenotypingSites {
     input {
-        File aligned_bam
-        File aligned_bai
-
         File fingerprint_vcf
-        RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        aligned_bam:{
-            localization_optional: true
-        }
     }
 
     command <<<
@@ -170,13 +157,79 @@ task ExtractRelevantGenotypingReads {
         "${GREPCMD}" -v "^#" ~{fingerprint_vcf} | \
             awk 'BEGIN {OFS="\t"} {print $1, $2-1, $2, $3}' \
             > genotyping.sites.bed
+    >>>
+
+    output {
+        File sites = "genotyping.sites.bed"
+    }
+
+    ###################
+    runtime {
+        cpu: 2
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"ubuntu:20.04"
+    }
+}
+
+task MergeGenotypingSites {
+    input {
+        Array[File] all_sites
+    }
+
+    command <<<
+
+        set -eux
+        cat ~{sep=' ' all_sites} | sort | uniq > "genotyping.sites.union.bed"
+    >>>
+
+    output {
+        File merged_sites = "genotyping.sites.union.bed"
+    }
+
+    ###################
+    runtime {
+        cpu: 2
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"ubuntu:20.04"
+    }
+}
+
+task ExtractRelevantGenotypingReads {
+    meta {
+        description: "Based on genotyping (SNP) sites, extract reads that overlap those places"
+    }
+    input {
+        File aligned_bam
+        File aligned_bai
+
+        File genotyping_sites_bed
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        aligned_bam:{
+            localization_optional: true
+        }
+    }
+
+    command <<<
+
+        set -eux
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
         
         samtools view -h -@ 1 \
             --write-index \
             -o "relevant_reads.bam##idx##relevant_reads.bam.bai" \
-            -M -L genotyping.sites.bed \
+            -M -L ~{genotyping_sites_bed} \
             ~{aligned_bam}
     >>>
 

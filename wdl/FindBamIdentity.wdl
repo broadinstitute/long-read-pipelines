@@ -39,12 +39,21 @@ workflow FindBamIdentity {
 
     Boolean is_clr_bam = expt_type=='CLR'
 
+    scatter (vcf in suspect_fingerprint_vcfs) {
+        call FPUtils.ExtractGenotypingSites {
+            input:
+                fingerprint_vcf = vcf
+        }
+    }
+
+    call FPUtils.MergeGenotypingSites {input: all_sites = ExtractGenotypingSites.sites}    
+
     # not as efficient as it can be given genotyping sites will be further filtered down, but this involves less code.
     call FPUtils.ExtractRelevantGenotypingReads {
         input:
             aligned_bam = aligned_bam, 
             aligned_bai = aligned_bai,
-            fingerprint_vcf = suspect_fingerprint_vcfs[0]
+            genotyping_sites_bed = MergeGenotypingSites.merged_sites
     }
     
     scatter (vcf in suspect_fingerprint_vcfs) {
@@ -102,6 +111,7 @@ workflow FindBamIdentity {
 
     output {
         String true_identity = sample_name
+        Float lod = FindMaxLOD.max_lod
     }
 }
 
@@ -110,18 +120,21 @@ task FindMaxLOD {
         Array[String] lod_scores
     }
 
+    Int n = length(lod_scores) - 1
+
     command <<<
 
-        idx=0
-        max=~{lod_scores[0]}
-        i=0
-        for s in ~{sep=' ' lod_scores}; do
-            if (( $(echo "${s} > ${max}" | bc -l) )); then idx=i; fi
-            i=$((i + 1))
-        done
+        set -eux
         
-        echo "${idx}" > "idx.txt"
-        echo "${max}" > "max_lod.txt"
+        seq 0 ~{n} > indices.txt
+        echo "~{sep='\n' lod_scores}" > scores.txt
+        paste -d' ' indices.txt scores.txt > to.sort.txt
+
+        sort -k2 -n to.sort.txt > sorted.txt
+        cat sorted.txt
+
+        tail -n 1 sorted.txt | awk '{print $1}' > "idx.txt"
+        tail -n 1 sorted.txt | awk '{print $2}' > "max_lod.txt"
     >>>
 
     output {

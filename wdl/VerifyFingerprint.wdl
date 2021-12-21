@@ -53,11 +53,16 @@ workflow VerifyFingerprint {
             fingerprint_vcf = fingerprint_vcf
     }
 
+    call FPUtils.ExtractGenotypingSites {
+        input:
+            fingerprint_vcf = FilterGenotypesVCF.read_to_use_vcf
+    }
+
     call FPUtils.ExtractRelevantGenotypingReads {
         input:
             aligned_bam     = aligned_bam,
             aligned_bai     = aligned_bai,
-            fingerprint_vcf = FilterGenotypesVCF.read_to_use_vcf,
+            genotyping_sites_bed = ExtractGenotypingSites.sites,
     }
 
     if (expt_type!='CLR') {
