@@ -58,7 +58,7 @@ task Align {
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        winnowmap -W ~{ref_meryl_kmers} -t $num_core -ax ~{preset} ~{ref_fasta} ~{reads} | samtools sort -@ $num_core -O BAM -o ~{prefix}.bam
+        winnowmap -Y -W ~{ref_meryl_kmers} -t $num_core -ax ~{preset} ~{ref_fasta} ~{reads} | samtools sort -@ $num_core -O BAM -o ~{prefix}.bam
         samtools index ~{prefix}.bam
     >>>
 
