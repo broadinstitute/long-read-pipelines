@@ -75,11 +75,11 @@ task GetRunInfo {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            50,
+        disk_gb:            1,
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.30"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -132,7 +132,7 @@ task ShardLongReads {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -150,22 +150,20 @@ task CCS {
     input {
         File subreads
 
-        Int min_passes = 3
-        Float min_snr = 2.5
-        Int min_length = 10
-        Int max_length = 50000
-        Float min_rq = 0.99
+        Boolean all       = true    # see https://ccs.how/faq/mode-all.html for details
+        Boolean kinetics  = false   # see https://ccs.how/faq/sqiie.html for details
         Boolean by_strand = false
-
-        Int cpus = 4
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(subreads, "GB"))
+    Int disk_size = 4*ceil(size(subreads, "GB"))
+    String bn = basename(subreads, ".bam")
 
     command <<<
         set -euxo pipefail
+
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         # Move the file from the UUID share to the current folder.
         # This will remove the UUID from the file path and allow call caching to work.
@@ -173,19 +171,26 @@ task CCS {
         mv ~{subreads} $infile
 
         # Run CCS:
-        ccs --min-passes ~{min_passes} \
-            --min-snr ~{min_snr} \
-            --min-length ~{min_length} \
-            --max-length ~{max_length} \
-            --min-rq ~{min_rq} \
-            --num-threads ~{cpus} \
-            --report-file ccs_report.txt \
-            ~{if by_strand then "--by-strand" else ""} $infile ccs_unmapped.bam
+        ccs ~{true='--all' false='' all} \
+            ~{true='--all-kinetics --subread-fallback' false='' kinetics} \
+            ~{true='--by-strand' false='' by_strand} \
+            --num-threads $num_core \
+            --log-file ~{bn}.ccs.log \
+            --stderr-json-log \
+            --suppress-reports \
+            --report-file ~{bn}.ccs_reports.txt \
+            --report-json ~{bn}.ccs_reports.json \
+            --metrics-json ~{bn}.zmw_metrics.json.gz \
+            --hifi-summary-json ~{bn}.hifi_summary.json \
+            $infile ~{bn}.ccs_unmapped.bam
     >>>
 
     output {
-        File consensus = "ccs_unmapped.bam"
-        File report = "ccs_report.txt"
+        File consensus = "~{bn}.ccs_unmapped.bam"
+        File report = "~{bn}.ccs_reports.txt"
+        File report_json = "~{bn}.ccs_reports.json"
+        File metrics_json = "~{bn}.zmw_metrics.json.gz"
+        File hifi_summary_json = "~{bn}.hifi_summary.json"
     }
 
     #########################
@@ -196,7 +201,50 @@ task CCS {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.32"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ExtractHifiReads {
+    input {
+        File bam
+        String prefix = "hifi"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 3*ceil(size(bam, "GB"))
+    String bn = basename(bam, ".bam")
+
+    command <<<
+        set -euxo pipefail
+
+        extracthifi ~{bam} ~{prefix}.bam
+    >>>
+
+    output {
+        File hifi_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.32"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -238,7 +286,7 @@ task MergeCCSReports {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -282,7 +330,7 @@ task ExtractUncorrectedReads {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -352,7 +400,7 @@ task Demultiplex {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -430,7 +478,7 @@ task MakeSummarizedDemultiplexingReport {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             4,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,
@@ -527,7 +575,7 @@ task RefineTranscriptReads {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -580,7 +628,7 @@ task ClusterTranscripts {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -625,7 +673,7 @@ task PolishTranscripts {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -679,7 +727,7 @@ task Align {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -722,7 +770,7 @@ task PBIndex {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -765,7 +813,7 @@ task CollapseTranscripts {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -794,16 +842,20 @@ task SummarizeCCSReport {
         cat ~{report} | grep 'ZMWs input' | awk -F": " '{ print $2 }' > zmws_input.txt
         cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_pass_filters.txt
         cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_fail_filters.txt
+        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_shortcut_filters.txt
         cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_pass_filters_pct.txt
         cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_fail_filters_pct.txt
+        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_shortcut_filters_pct.txt
     >>>
 
     output {
         Float zmws_input = read_float("zmws_input.txt")
         Float zmws_pass_filters = read_float("zmws_pass_filters.txt")
         Float zmws_fail_filters = read_float("zmws_fail_filters.txt")
+        Float zmws_shortcut_filters = read_float("zmws_shortcut_filters.txt")
         Float zmws_pass_filters_pct = read_float("zmws_pass_filters_pct.txt")
         Float zmws_fail_filters_pct = read_float("zmws_fail_filters_pct.txt")
+        Float zmws_shortcut_filters_pct = read_float("zmws_shortcut_filters_pct.txt")
     }
 
     #########################
@@ -894,12 +946,12 @@ task SummarizePBI {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             12,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.28"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
