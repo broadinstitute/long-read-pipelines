@@ -67,7 +67,7 @@ task GetRunInfo {
     >>>
 
     output {
-        Map[String, String] run_info = read_map("run_info.txt")
+#        Map[String, String] run_info = read_map("run_info.txt")
         Boolean is_corrected = read_boolean("status.txt")
     }
 

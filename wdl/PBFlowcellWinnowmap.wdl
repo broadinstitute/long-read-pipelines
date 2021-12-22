@@ -53,8 +53,9 @@ workflow PBFlowcell {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}"
 
     call PB.GetRunInfo { input: bam = bam, SM = SM }
-    String PU = GetRunInfo.run_info['PU']
-
+#    String PU = GetRunInfo.run_info['PU']
+    String PU = "prefix"
+    
     # break one raw BAM into fixed number of shards
     call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
 
