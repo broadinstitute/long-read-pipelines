@@ -80,7 +80,7 @@ workflow PBFlowcell {
                 ref_fasta   = ref_map['fasta'],
                 ref_meryl_kmers = ref_meryl_kmers,
                 prefix = SM,
-                experiment_type  = experiment_type,
+                preset  = experiment_type,
         }
     }
 
