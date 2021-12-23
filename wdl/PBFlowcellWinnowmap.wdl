@@ -55,7 +55,7 @@ workflow PBFlowcell {
     call PB.GetRunInfo { input: bam = bam, SM = SM }
 #    String PU = GetRunInfo.run_info['PU']
     String PU = "prefix"
-    
+
     # break one raw BAM into fixed number of shards
     call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
 
@@ -75,13 +75,13 @@ workflow PBFlowcell {
 
         call Utils.BamToFastq { input: bam = unaligned_bam, prefix = basename(unaligned_bam, ".bam") }
 
-        call Winnowmap.Align as AlignReads {
+        call Winnowmap.Winnowmap as AlignReads {
             input:
                 reads       = BamToFastq.reads_fq,
                 ref_fasta   = ref_map['fasta'],
                 ref_meryl_kmers = ref_meryl_kmers,
                 prefix = SM,
-                preset  = experiment_type,
+                experiment_type  = experiment_type,
         }
     }
 
