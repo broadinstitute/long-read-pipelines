@@ -153,6 +153,49 @@ task MergeAndSortVCFs {
     }
 }
 
+task GetVCFSampleName {
+    meta {
+        description: "Currently mostly used for extracting sample name in fingerprinting genotyped VCF"
+    }
+    input {
+        File fingerprint_vcf
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        fingerprint_vcf: "Assumed to be genotyped, and hold only one sample (other samples will be ignored)."
+    }
+
+    command <<<
+        set -eux
+
+        GREPCMD="grep"
+        if [[ ~{fingerprint_vcf} =~ \.gz$ ]]; then
+            GREPCMD="zgrep"
+        fi
+        "${GREPCMD}" \
+            "^#CHROM" \
+            ~{fingerprint_vcf} \
+            | awk '{print $10}' \
+            > sample_name.txt
+    >>>
+
+    output {
+        String sample_name = read_string("sample_name.txt")
+    }
+
+    ###################
+    runtime {
+        cpu: 2
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"ubuntu:20.04"
+    }
+}
+
 task SubsetVCF {
     input {
         File vcf_gz
