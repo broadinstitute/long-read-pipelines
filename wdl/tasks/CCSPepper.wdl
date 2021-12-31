@@ -174,6 +174,10 @@ task DV {
 
         mkdir -p "~{output_root}"
 
+        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        bash vm_local_monitoring_script.sh &> resources.log &
+        job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
+
         /opt/deepvariant/bin/run_deepvariant \
             --model_type=PACBIO \
             --ref=~{ref_fasta} \
@@ -181,13 +185,16 @@ task DV {
             --output_vcf="~{output_root}/~{prefix}.vcf.gz" \
             --output_gvcf="~{output_root}/~{prefix}.g.vcf.gz" \
             --num_shards="${num_core}" \
-            --use_hp_information
+            --use_hp_information || cat resources.log
+        if ps -p "${job_id}" > /dev/null; then kill "${job_id}"; fi
         
         find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
             > "~{output_root}/dir_structure.txt"
     >>>
 
     output {
+
+        File resouce_monitor_log = "resources.log"
 
         File output_dir_structure = "~{output_root}/dir_structure.txt"
 
@@ -208,8 +215,8 @@ task DV {
         boot_disk_gb:       100,
         preemptible_tries:  3,
         max_retries:        0,
-        docker:             "google/deepvariant:1.2.0"
-        # docker:             "google/deepvariant:1.2.0-gpu"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-deepvariant:1.3.0"
+        # docker:             "google/deepvariant:1.2.0-gpu"  # kept here to remind ourselves, occassionally, to review if it's better with GPU
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
