@@ -53,21 +53,24 @@ def load_new_sample_table(buckets, project):
                   "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application",
                   "experiment_type", "num_records", "total_length", "ccs_report", "ccs_zmws_input",
                   "ccs_zmws_pass_filters", "ccs_zmws_fail_filters", "ccs_zmws_shortcut_filters",
-                  "ccs_zmws_pass_filters_pct", "ccs_zmws_fail_filters_pct", "ccs_zmws_shortcut_filters_pct",
+                  "ccs_zmws_pass_filters_pct", "ccs_zmws_fail_filters_pct", "ccs_zmws_shortcut_filters_pct", "ref_map",
                   "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi", "input_bam", "input_pbi"]
     tbl_rows = []
     for e in ts:
         r = load_ccs_report(project, e['Files']['ccs_reports.txt'], e)
 
+        application = e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else None
         experiment_type = "CLR"
-        if ('IsCCS' in e['WellSample'][0] and e['WellSample'][0]['IsCCS'] == 'true') or e['Files']['reads.bam'] != "":
+
+        if ('IsCCS' in e['WellSample'][0] and e['WellSample'][0]['IsCCS'] == 'true') or e['Files']['reads.bam'] != "" or application == 'hifiReads':
             experiment_type = "CCS"
-        if 'IsoSeq' in e['WellSample'][0] and e['WellSample'][0]['IsoSeq'] == 'true':
+        if ('IsoSeq' in e['WellSample'][0] and e['WellSample'][0]['IsoSeq'] == 'true') or (application == 'isoSeq'):
             experiment_type = "ISOSEQ"
+        if ('BioSample' in e and 'MAS' in e['BioSample'][0]['Name']) or ('custom' in application):
+            experiment_type = "MASSEQ"
 
         input_bam = e['Files']['subreads.bam'] if e['Files']['subreads.bam'] != "" else e['Files']['reads.bam']
-        input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files'][
-            'reads.bam.pbi']
+        input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files']['reads.bam.pbi']
 
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
@@ -105,6 +108,8 @@ def load_new_sample_table(buckets, project):
             "{:.2f}".format(100.0 * r['ZMWs shortcut filters'] / (
                     r['ZMWs pass filters'] + r['ZMWs fail filters'] + r['ZMWs shortcut filters'] + 1)),
 
+            'gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt',
+
             e['Files']['input_dir'],
             e['Files']['subreads.bam'],
             e['Files']['subreads.bam.pbi'],
@@ -114,6 +119,7 @@ def load_new_sample_table(buckets, project):
             input_bam,
             input_pbi
         ])
+
     tbl_new = pd.DataFrame(tbl_rows, columns=tbl_header)
     tbl_new = tbl_new.astype(str)
     return tbl_new

@@ -6,3 +6,4 @@ tox
 google-cloud-storage
 numpy
 tinydb
+firecloud
