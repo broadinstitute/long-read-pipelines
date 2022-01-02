@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import firecloud.api as fapi
 
-from google.cloud import bigquery
+# from google.cloud import bigquery
 from google.cloud import storage
 from google.api_core.exceptions import NotFound
 
@@ -59,7 +59,7 @@ def load_new_sample_table(buckets, project):
     for e in ts:
         r = load_ccs_report(project, e['Files']['ccs_reports.txt'], e)
 
-        application = e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else None
+        application = e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else "longReads"
         experiment_type = "CLR"
 
         if ('IsCCS' in e['WellSample'][0] and e['WellSample'][0]['IsCCS'] == 'true') or e['Files']['reads.bam'] != "" or application == 'hifiReads':
@@ -308,8 +308,7 @@ def load_ccs_report(project, ccs_report_path, e):
     return d
 
 
-def update_sample_table(namespace, workspace, buckets, project):
-    tbl_old, _ = load_table(namespace, workspace, 'sample')
+def update_sample_table(namespace, workspace, buckets, project, tbl_old):
     tbl_new = load_new_sample_table(buckets, project)
     joined_tbl = merge_tables(tbl_old, tbl_new)
     joined_tbl = joined_tbl.replace('^nan$', '', regex=True)
@@ -317,9 +316,7 @@ def update_sample_table(namespace, workspace, buckets, project):
     return joined_tbl
 
 
-def update_sample_set_table(namespace, workspace, joined_tbl):
-    ss_old, membership = load_table(namespace, workspace, 'sample_set', store_membership=True)
-
+def update_sample_set_table(namespace, workspace, ss_old, membership, joined_tbl):
     # create old membership set
     oms = pd \
         .DataFrame({'entity:sample_set_id': list(ss_old['entity:sample_set_id']), 'sample': membership}) \
@@ -382,10 +379,14 @@ def main():
     parser.add_argument('buckets', metavar='B', type=str, nargs='+', help='GCS buckets to scan')
     args = parser.parse_args()
 
-    s = update_sample_table(args.namespace, args.workspace, args.buckets, args.project)
-    ss, nms = update_sample_set_table(args.namespace, args.workspace, s)
+    tbl_old, _ = load_table(args.namespace, args.workspace, 'sample')
+    ss_old, membership = load_table(args.namespace, args.workspace, 'sample_set', store_membership=True)
+
+    s = update_sample_table(args.namespace, args.workspace, args.buckets, args.project, tbl_old)
+    ss, nms = update_sample_set_table(args.namespace, args.workspace, ss_old, membership, s)
 
     if args.run:
+        fapi.__SESSION = None
         upload_tables(args.namespace, args.workspace, s, ss, nms)
 
 
