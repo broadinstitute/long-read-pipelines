@@ -20,7 +20,7 @@ def main():
     parser.add_argument('-n', '--namespace', required=True, type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', required=True, type=str, help="Terra workspace")
     parser.add_argument('-m', '--min-date', default='2021-12-12T00:00:00Z', type=str, help="Lower date cutoff")
-    parser.add_argument('-b', '--branch', default='main', type=str, help="The branch to require for automated job submissions")
+    parser.add_argument('-b', '--branch', default=['main'], action='extend', nargs="+", help="The branch to require for automated job submissions")
     parser.add_argument('-r', '--run', action='store_true', help="Turn off the default dry-run mode")
     args = parser.parse_args()
 
@@ -45,7 +45,7 @@ def main():
             current_config_json = current_config.json()
 
             method_version = current_config_json['methodRepoMethod']['methodVersion']
-            if method_version == args.branch:
+            if method_version in args.branch:
                 root_entity_type = current_config_json['rootEntityType']
 
                 tbl = load_table(args, root_entity_type)
@@ -108,7 +108,7 @@ def main():
                             submission_result = response.json()
                             submission_id = submission_result['submissionId']
                             
-                        print(f'namespace={args.namespace}, workspace={args.workspace}, wf={wf}, entity={entity_id}, submission_id={submission_id}, submission_result={submission_result}')
+                        print(f'namespace={args.namespace}, workspace={args.workspace}, wf={wf}, entity={entity_id}, submission_id={submission_id}')
             else:
                 print(f'Skipping {wf} because current configuration is set to "{method_version}" rather than "{args.branch}".')
 
