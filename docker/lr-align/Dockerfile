@@ -53,3 +53,4 @@ RUN wget https://github.com/samtools/samtools/releases/download/1.11/samtools-1.
     && ./configure --without-curses \
     && make \
     && make install
+

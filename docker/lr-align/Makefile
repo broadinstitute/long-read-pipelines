@@ -4,10 +4,14 @@ TAG2 = quay.io/broad-long-read-pipelines/lr-align:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-align:$(VERSION)
 TAG4 = us.gcr.io/broad-dsp-lrma/lr-align:latest
 
-all: build push
+all: | build push
 
 build:
 	docker build -t $(TAG1) -t $(TAG2) -t $(TAG3) -t $(TAG4) .
+
+build_no_cache:
+	docker build --no-cache -t $(TAG1) -t $(TAG2) -t $(TAG3) -t $(TAG4) .
+
 
 push:
 	docker push $(TAG1)
