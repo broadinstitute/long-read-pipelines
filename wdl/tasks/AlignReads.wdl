@@ -101,19 +101,21 @@ task SAMtoPAF {
     command <<<
         set -eu
 
+				MM2_VERSION="2.24"
+
         filename=$(basename -- ~{sam_formatted_file})
         extension="${filename##*.}"
         if [[ "$extension" == "sam" ]]; then
-            /minimap2-2.24_x64-linux/k8 \
-                /minimap2-2.24_x64-linux/paftools.js \
+            /minimap2-${MM2_VERSION}_x64-linux/k8 \
+                /minimap2-${MM2_VERSION}_x64-linux/paftools.js \
                 sam2paf \
                 -L \
                 ~{sam_formatted_file} \
                 > ~{prefix}".paf"
         elif [[ "$extension" == "bam" ]]; then
             samtools view -h ~{sam_formatted_file} | \
-                /minimap2-2.24_x64-linux/k8 \
-                /minimap2-2.24_x64-linux/paftools.js \
+                /minimap2-${MM2_VERSION}_x64-linux/k8 \
+                /minimap2-${MM2_VERSION}_x64-linux/paftools.js \
                 sam2paf \
                 -L \
                 - \

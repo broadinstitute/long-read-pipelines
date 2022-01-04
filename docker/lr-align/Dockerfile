@@ -23,10 +23,11 @@ COPY merge_read_group_tags.py /usr/local/bin/
 COPY cat_as_fastq.py /usr/local/bin/
 
 # install minimap2
-RUN wget https://github.com/lh3/minimap2/releases/download/v2.24/minimap2-2.24_x64-linux.tar.bz2 \
-        && tar xjf minimap2-2.24_x64-linux.tar.bz2 \
-        && rm minimap2-2.24_x64-linux.tar.bz2 \
-        && cd minimap2-2.24_x64-linux \
+ARG mm2_version=2.24
+RUN wget https://github.com/lh3/minimap2/releases/download/v${mm2_version}/minimap2-${mm2_version}_x64-linux.tar.bz2 \
+        && tar xjf minimap2-${mm2_version}_x64-linux.tar.bz2 \
+        && rm minimap2-${mm2_version}_x64-linux.tar.bz2 \
+        && cd minimap2-${mm2_version}_x64-linux \
         && cp minimap2 /usr/local/bin/
 
 # install htslib
