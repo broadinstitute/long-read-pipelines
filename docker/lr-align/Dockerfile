@@ -10,7 +10,7 @@ RUN conda env create -f /environment.yml && conda clean -a
 ENV PATH=/opt/conda/envs/lr-align/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install packages
-RUN apt update
+RUN apt-get update --allow-releaseinfo-change
 RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libdeflate-dev libssl-dev curl git-lfs \
     && rm -rf /var/lib/apt/lists/*
 
