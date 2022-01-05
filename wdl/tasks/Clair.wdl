@@ -49,27 +49,31 @@ task Clair {
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
+        # --include_all_ctgs is turned on, as scatter-gather chops bam before Clair
         /opt/bin/run_clair3.sh ~{true='--vcf_fn=' false='' defined(sites_vcf)}~{select_first([sites_vcf, ""])} \
             --bam_fn=~{bam} \
             --ref_fn=~{ref_fasta} \
             --threads=${num_core} \
             --platform=~{platform} \
             --model_path="/opt/models/~{platform}" \
-            --sample_name=$SM --gvcf ~{true='--ctg_name=' false='' defined(chr)}~{select_first([chr, ""])} \
+            --sample_name=$SM --gvcf ~{true='--ctg_name=' false='' defined(chr)}~{select_first([chr, "--include_all_ctgs"])} \
             --output="./"
+
+        # for chrM, Clair3 creates a header only vcf, copy it to gVCF as-is
+        if [[ ! -f merge_output.gvcf.gz ]]; then cp "merge_output.vcf.gz" "merge_output.gvcf.gz"; fi
     >>>
 
     output {
-        # save both VCF and gVCF
-        File pileup_vcf = "pileup.vcf.gz"
-        File pileup_vcf_tbi = "pileup.vcf.gz.tbi"
-        File full_alignment_vcf = "full_alignment.vcf.gz"
-        File full_alignment_tbi = "full_alignment.vcf.gz.tbi"
+        File? pileup_vcf = "pileup.vcf.gz"
+        File? pileup_vcf_tbi = "pileup.vcf.gz.tbi"
+        File? full_alignment_vcf = "full_alignment.vcf.gz"
+        File? full_alignment_tbi = "full_alignment.vcf.gz.tbi"
 
+        # save both VCF and gVCF
         File vcf = "merge_output.vcf.gz"
-        File vcf_tbi = "merge_output.vcf.gz.tbi"
+        File? vcf_tbi = "merge_output.vcf.gz.tbi"
         File gvcf = "merge_output.gvcf.gz"
-        File gvcf_tbi = "merge_output.gvcf.gz.tbi"
+        File? gvcf_tbi = "merge_output.gvcf.gz.tbi"
     }
 
     #########################

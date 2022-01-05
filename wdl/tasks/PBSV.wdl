@@ -1,8 +1,6 @@
 version 1.0
 
 import "Structs.wdl"
-import "Utils.wdl"
-import "VariantUtils.wdl"
 
 workflow RunPBSV {
     input {
@@ -77,7 +75,7 @@ task Discover {
         set -euxo pipefail
 
         pbsv discover \
-            ~{if defined(tandem_repeat_bed) && tandem_repeat_bed != "NA" then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
+            ~{if defined(tandem_repeat_bed) then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
             ~{bam} \
             ~{fileoutput}
     >>>
