@@ -101,7 +101,7 @@ task SAMtoPAF {
     command <<<
         set -eu
 
-				MM2_VERSION="2.24"
+        MM2_VERSION="2.24"
 
         filename=$(basename -- ~{sam_formatted_file})
         extension="${filename##*.}"
