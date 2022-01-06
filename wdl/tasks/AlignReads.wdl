@@ -66,7 +66,7 @@ task Minimap2 {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -101,19 +101,21 @@ task SAMtoPAF {
     command <<<
         set -eu
 
+        MM2_VERSION="2.24"
+
         filename=$(basename -- ~{sam_formatted_file})
         extension="${filename##*.}"
         if [[ "$extension" == "sam" ]]; then
-            /minimap2-2.17_x64-linux/k8 \
-                /minimap2-2.17_x64-linux/paftools.js \
+            /minimap2-${MM2_VERSION}_x64-linux/k8 \
+                /minimap2-${MM2_VERSION}_x64-linux/paftools.js \
                 sam2paf \
                 -L \
                 ~{sam_formatted_file} \
                 > ~{prefix}".paf"
         elif [[ "$extension" == "bam" ]]; then
             samtools view -h ~{sam_formatted_file} | \
-                /minimap2-2.17_x64-linux/k8 \
-                /minimap2-2.17_x64-linux/paftools.js \
+                /minimap2-${MM2_VERSION}_x64-linux/k8 \
+                /minimap2-${MM2_VERSION}_x64-linux/paftools.js \
                 sam2paf \
                 -L \
                 - \
@@ -135,7 +137,7 @@ task SAMtoPAF {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
