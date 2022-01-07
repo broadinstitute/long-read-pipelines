@@ -246,6 +246,7 @@ task CorrectBarcodesWithStarcodeSeedCounts {
         String prefix = "sample"
 
         File? whitelist_10x
+        String? extra_parameters
 
         RuntimeAttr? runtime_attr_override
     }
@@ -260,6 +261,8 @@ task CorrectBarcodesWithStarcodeSeedCounts {
 
     String timing_output_file = "timingInformation.txt"
     String memory_log_file = "memory_use.txt"
+
+    String extra_params_arg = if defined(extra_parameters) then " ~{extra_parameters} " else ""
 
     command <<<
 
@@ -284,6 +287,7 @@ task CorrectBarcodesWithStarcodeSeedCounts {
             --bam=~{bam_file} \
             --counts=~{starcode_seeds_tsv} \
             --name=~{prefix} \
+            ~{extra_params_arg} \
             ~{whitelist_10x_arg}~{default="" sep=" --whitelist-10x " whitelist_10x}
 
 
