@@ -885,7 +885,7 @@ task IndexBam {
         bam:   "input bam to be merged"
     }
 
-    Int disk_size = 1.5*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
