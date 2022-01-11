@@ -570,6 +570,8 @@ task RestoreAnnotationstoAlignedBam {
             ~{ignore_tags_arg} ~{default="" sep=" " tags_to_ignore} \
             --out-name ~{output_name}
 
+        samtools index ~{output_name}
+
         endTime=`date +%s.%N`
         echo "EndTime: $endTime" >> ~{timing_output_file}
 
@@ -604,6 +606,7 @@ task RestoreAnnotationstoAlignedBam {
     }
     output {
       File output_bam        = "~{output_name}"
+      File output_bam_index  = "~{output_name}.bai"
       File timing_info       = "~{timing_output_file}"
       File memory_info       = "~{memory_log_file}"
     }

@@ -392,7 +392,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             tags_to_ignore = [],
             mem_gb = 8,
     }
-    call Utils.IndexBam as t_33_IndexCcsAnnotatedArrayElementBam { input: bam = t_32_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam }
 
     call TENX.RestoreAnnotationstoAlignedBam as t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam {
         input:
@@ -401,7 +400,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             tags_to_ignore = [],
             mem_gb = 8,
     }
-    call Utils.IndexBam as t_35_IndexReclaimedAnnotatedArrayElementBam { input: bam = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam }
 
     ##########################################################################################################################
     #############################################################
@@ -417,7 +415,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call TENX.AnnotateBarcodesAndUMIs as t_36_TenxAnnotateCCSArrayElements {
         input:
             bam_file = t_32_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam,
-            bam_index = t_33_IndexCcsAnnotatedArrayElementBam.bai,
+            bam_index = t_32_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam_index,
             head_adapter_fasta = head_adapter_fasta,
             tail_adapter_fasta = tail_adapter_fasta,
             whitelist_10x = ten_x_cell_barcode_whitelist,
@@ -433,7 +431,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call TENX.AnnotateBarcodesAndUMIs as t_37_TenxAnnotateReclaimedArrayElements {
         input:
             bam_file = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
-            bam_index = t_35_IndexReclaimedAnnotatedArrayElementBam.bai,
+            bam_index = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam_index,
             head_adapter_fasta = head_adapter_fasta,
             tail_adapter_fasta = tail_adapter_fasta,
             whitelist_10x = ten_x_cell_barcode_whitelist,
