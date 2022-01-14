@@ -9,7 +9,7 @@ from multiprocessing.pool import ThreadPool
 from functools import partial
 
 
-def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
+def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, nocheck, index):
     """
     Write subset of PacBio bam to a shard, taking care not to split reads
     from the same ZMW across separate files.  These shards are thus suitable
@@ -40,9 +40,10 @@ def write_shard(bam, sharding_offsets, zmw_counts_exp, prefix, index):
     # Verify that the count for ZMWs written to this shard match the ZMW count determined
     # from the original read of the index file.  If this exception is thrown, it may indicate
     # that reads from the same ZMW have been erroneously sharded to separate files.
-    if zmw_counts_act[zmw] != zmw_counts_exp[zmw]:
-        raise Exception(f'Number of reads from a specific ZMW mismatches between the original data '
-                        f'and the sharded data ({zmw}: {zmw_counts_exp[zmw]} != {zmw_counts_act[zmw]})')
+    if not nocheck:
+        if zmw_counts_act[zmw] != zmw_counts_exp[zmw]:
+            raise Exception(f'Number of reads from a specific ZMW mismatches between the original data '
+                            f'and the sharded data ({zmw}: {zmw_counts_exp[zmw]} != {zmw_counts_act[zmw]})')
 
     return num_reads
 
@@ -111,17 +112,21 @@ def main():
     parser.add_argument('-n', '--num_shards', type=int, default=4, help="Number of shards")
     parser.add_argument('-t', '--num_threads', type=int, default=2, help="Number of threads to use during sharding")
     parser.add_argument('-i', '--index', type=str, required=False, help="PBI index filename")
+    parser.add_argument('--nocheck', required=False, help="Do not check for zmw counts.", action="store_true")
     parser.add_argument('bam', type=str, help="BAM")
     args = parser.parse_args()
 
     pbi = args.bam + ".pbi" if args.index is None else args.index
+
+    if args.nocheck:
+        print(f"Disabling ZMW read count integrity check.")
 
     # Decode PacBio .pbi file and determine the shard offsets.
     print(f"Reading index ({pbi}). This may take a few minutes...", flush=True)
     offsets, zmw_counts, read_count = compute_shard_offsets(pbi, args.num_shards)
 
     # Prepare a function with arguments partially filled in.
-    func = partial(write_shard, args.bam, offsets, zmw_counts, args.prefix)
+    func = partial(write_shard, args.bam, offsets, zmw_counts, args.prefix, args.nocheck)
     idx = list(range(0, len(offsets) - 1))
 
     # Write the shards using the specified number of threads.
