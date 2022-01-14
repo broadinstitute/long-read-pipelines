@@ -1347,7 +1347,7 @@ task FilterMasSeqReadsWithGatk {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB")) + size(bam_index, "GiB")
+    Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB")) + ceil(size(bam_index, "GiB"))
 
     command {
         ./gatk PrintReads \
