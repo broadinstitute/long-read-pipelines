@@ -10,7 +10,7 @@ RUN conda env create -f /environment.yml && conda clean -a
 ENV PATH=/opt/conda/envs/lr-pb/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install gsutil
-RUN apt update
+RUN apt-get --allow-releaseinfo-change update
 RUN apt install -y curl git-lfs time datamash
 RUN curl https://sdk.cloud.google.com | bash
 
