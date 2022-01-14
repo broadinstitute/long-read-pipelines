@@ -380,6 +380,7 @@ workflow MasSeqSingleFlowcellMouse {
             unaligned_bam = annotated_array_elements,
             unaligned_pbi = t_30_PbIndexAnnotatedArrayElements.pbindex,
             prefix = SM + "_ArrayElements_shard",
+            disable_check = true,
             num_shards = 300,
     }
 
