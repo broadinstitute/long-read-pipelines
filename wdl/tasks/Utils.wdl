@@ -1350,7 +1350,7 @@ task FilterMasSeqReadsWithGatk {
     Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB")) + ceil(size(bam_index, "GiB"))
 
     command {
-        ./gatk PrintReads \
+        /gatk/gatk PrintReads \
             -I ~{bam_file} \
             -O ~{prefix}.bam \
             --disable-read-filter WellformedReadFilter \
