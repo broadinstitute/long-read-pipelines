@@ -1336,8 +1336,8 @@ task ConvertFastaToOneLineSequences {
 
 task FilterMasSeqReadsWithGatk {
     input {
-        File bam
-        File bai
+        File bam_file
+        File bam_index
 
         Int maxReadLength = 15000
         Int maxEndClipping = 1000
@@ -1347,11 +1347,11 @@ task FilterMasSeqReadsWithGatk {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 1 + ceil(2 * size(bam, "GiB")) + size(bai, "GiB")
+    Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB")) + size(bam_index, "GiB")
 
     command {
         ./gatk PrintReads \
-            -I ~{bam} \
+            -I ~{bam_file} \
             -O ~{prefix}.bam \
             --disable-read-filter WellformedReadFilter \
             --read-filter MappedReadFilter \

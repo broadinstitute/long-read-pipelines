@@ -437,16 +437,16 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Remove unmapped, secondary, supplementary, mq0, length > 15kb, end clips > 1kb
     call Utils.FilterMasSeqReadsWithGatk as t_61_AlignmentFilterForCcsArrayElements {
         input:
-            bam = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
-            bai = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam_index,
+            bam_file = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
+            bam_index = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam_index,
             prefix = SM + "_ArrayElements_Annotated_Aligned_PrimaryOnly",
             runtime_attr_override = filterReadsAttrs
     }
 
     call Utils.FilterMasSeqReadsWithGatk as t_61_AlignmentFilterForReclaimedArrayElements {
         input:
-            bam = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
-            bai = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam_index,
+            bam_file = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
+            bam_index = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam_index,
             prefix = SM + "_ArrayElements_Annotated_Aligned_PrimaryOnly",
             runtime_attr_override = filterReadsAttrs
     }
