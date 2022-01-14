@@ -491,6 +491,8 @@ task FilterReadsBySamFlags {
         File bam
         String sam_flags
 
+        String extra_args = ""
+
         String prefix = "filtered_reads"
 
         RuntimeAttr? runtime_attr_override
@@ -509,7 +511,7 @@ task FilterReadsBySamFlags {
         # Make sure we use all our proocesors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
-        samtools view -h -b -F ~{sam_flags} -@$np ~{bam} > ~{prefix}.bam
+        samtools view -h -b -F ~{sam_flags} -@$np ~{extra_args} ~{bam} > ~{prefix}.bam
         samtools index -@$np ~{prefix}.bam
     >>>
 
@@ -1329,6 +1331,61 @@ task ConvertFastaToOneLineSequences {
     output {
       File one_line_fasta   = "${out_file_name}"
       File timing_info      = "${timing_output_file}"
+    }
+}
+
+task FilterMasSeqReadsWithGatk {
+    input {
+        File bam
+        File bai
+
+        Int maxReadLength = 15000
+        Int maxEndClipping = 1000
+
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size_gb = 1 + ceil(2 * size(bam, "GiB")) + size(bai, "GiB")
+
+    command {
+        ./gatk PrintReads \
+            -I ~{bam} \
+            -O ~{prefix}.bam \
+            --disable-read-filter WellformedReadFilter \
+            --read-filter MappedReadFilter \
+            --read-filter MappingQualityNotZeroReadFilter \
+            --read-filter NotSecondaryAlignmentReadFilter \
+            --read-filter NotSupplementaryAlignmentReadFilter \
+            --read-filter ReadLengthReadFilter --max-read-length 15000 \
+            --read-filter ExcessiveEndClippedReadFilter --max-clipped-bases 1000
+    }
+
+    output {
+        File bam = "~{prefix}.bam"
+        File bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             2,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "broadinstitute/gatk-nightly:caa48f98c8207b688db6ee35fead3eafb7219e38"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
 

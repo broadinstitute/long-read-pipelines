@@ -409,13 +409,58 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     ############################################################
     ##########################################################################################################################
 
+#    	• Post-Alignment filters:
+#		○ Remove Flags:
+#			§ MQ0
+#			§ Supplementary
+#			§ Secondary
+#			§ Unmapped
+#		○ Read length
+#			§ Keep: <15Kb
+#		○ Spread on the reference
+#			§ Some fraciton of ref length
+#			§ Or max N (splice gap)
+#			§ Overlapping multiple genes - remove it.
+#				□ Use funcotate segments or similar
+#				□ Whitelist genes with overlapping exons
+#				□ Bedtools intersection
+#					® THOUGH, occasionally it gives different results
+#					® Might not be a problem.
+#		○ End soft/hard Clipping
+#			§ L or R end of read
+#               1000?
+
+    RuntimeAttr filterReadsAttrs = object {
+        preemptible_tries: 0
+    }
+
+    # Remove unmapped, secondary, supplementary, mq0, length > 15kb, end clips > 1kb
+    call Utils.FilterMasSeqReadsWithGatk as t_61_AlignmentFilterForCcsArrayElements {
+        input:
+            bam = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
+            bai = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam_index,
+            prefix = SM + "_ArrayElements_Annotated_Aligned_PrimaryOnly",
+            runtime_attr_override = filterReadsAttrs
+    }
+
+    call Utils.FilterMasSeqReadsWithGatk as t_61_AlignmentFilterForReclaimedArrayElements {
+        input:
+            bam = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
+            bai = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam_index,
+            prefix = SM + "_ArrayElements_Annotated_Aligned_PrimaryOnly",
+            runtime_attr_override = filterReadsAttrs
+    }
+
+    ##########################################################################################################################
+    ##########################################################################################################################
+
     # Now we can annotate the CBC and UMI:
 
     # Annotate raw CBC / UMI in the ccs corrected reads:
     call TENX.AnnotateBarcodesAndUMIs as t_36_TenxAnnotateCCSArrayElements {
         input:
-            bam_file = t_32_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam,
-            bam_index = t_32_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam_index,
+            bam_file = t_61_AlignmentFilterForCcsArrayElements.bam,
+            bam_index = t_61_AlignmentFilterForCcsArrayElements.bai,
             head_adapter_fasta = head_adapter_fasta,
             tail_adapter_fasta = tail_adapter_fasta,
             whitelist_10x = ten_x_cell_barcode_whitelist,
@@ -430,8 +475,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Annotate raw CBC / UMI in the ccs reclaimed reads:
     call TENX.AnnotateBarcodesAndUMIs as t_37_TenxAnnotateReclaimedArrayElements {
         input:
-            bam_file = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
-            bam_index = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam_index,
+            bam_file = t_61_AlignmentFilterForReclaimedArrayElements.bam,
+            bam_index = t_61_AlignmentFilterForReclaimedArrayElements.bai,
             head_adapter_fasta = head_adapter_fasta,
             tail_adapter_fasta = tail_adapter_fasta,
             whitelist_10x = ten_x_cell_barcode_whitelist,
@@ -495,6 +540,15 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             extra_parameters = starcode_extra_params,
             prefix = SM + "_annotated_ccs_reclaimed_array_elements_starcode_corrected"
     }
+
+    # NEXT STEPS:
+    #     (6) UMI error correction with umi-tools (Levenshtein 2), grouping by SQANTI3
+    #     (7) generate count matrix
+    #
+    #
+    # Also need:
+    # Longbow Stats
+    # General read stats.
 
 #        #####################################################################################################################
 #
