@@ -255,8 +255,12 @@ task ShardLongReads {
 
         String prefix = "shard"
 
+        Boolean disable_check = false
+
         RuntimeAttr? runtime_attr_override
     }
+
+    String nocheck_arg = if disable_check then "--nocheck" else ""
 
     Int disk_size = 3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
     Int mem = ceil(25*size(unaligned_pbi, "MB")/1000)
@@ -269,6 +273,7 @@ task ShardLongReads {
             -t ~{num_threads} \
             -i ~{unaligned_pbi} \
             -p ~{prefix} \
+            ~{nocheck_arg} \
             ~{unaligned_bam}
     >>>
 
