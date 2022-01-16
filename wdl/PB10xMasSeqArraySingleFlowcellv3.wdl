@@ -313,6 +313,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 input:
                     annotated_reads = s2e_ccs_longbow_passed_shard,
                     prefix = SM + "_ccs_array_elements_subshard",
+                    extra_args = "-i",
                     model = mas_seq_model
             }
         }
@@ -340,6 +341,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 input:
                     annotated_reads = s2e_ccs_reclaimed_shard,
                     prefix = SM + "_ccs_reclaimed_array_elements_subshard",
+                    extra_args = "-i",
                     model = mas_seq_model
             }
         }
