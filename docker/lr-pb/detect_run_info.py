@@ -14,8 +14,9 @@ def sanitize_value(val):
     """Sanitize an info field value so that it can be properly ingested by downstream tools."""
 
     # Add more rules as needed:
-    while val.endswith("\\"):
-        val = val[:-1]
+    if val is not None:
+        while val.endswith("\\"):
+            val = val[:-1]
 
     return val
 

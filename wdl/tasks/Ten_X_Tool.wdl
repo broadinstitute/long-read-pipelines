@@ -605,10 +605,10 @@ task RestoreAnnotationstoAlignedBam {
         cpu: select_first([cpu, 1])
     }
     output {
-      File output_bam        = "~{output_name}"
-      File output_bam_index  = "~{output_name}.bai"
-      File timing_info       = "~{timing_output_file}"
-      File memory_info       = "~{memory_log_file}"
+        File timing_info       = "~{timing_output_file}"
+        File memory_info       = "~{memory_log_file}"
+        File output_bam        = "~{output_name}"
+        File output_bam_index  = "~{output_name}.bai"
     }
 }
 

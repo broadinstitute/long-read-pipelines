@@ -887,6 +887,8 @@ task IndexBam {
         bam:   "input bam to be merged"
     }
 
+    String base_name = basename(bam, ".bam")
+
     Int disk_size = 2*ceil(size(bam, "GB"))
 
     command <<<
@@ -1360,11 +1362,22 @@ task FilterMasSeqReadsWithGatk {
             --read-filter NotSupplementaryAlignmentReadFilter \
             --read-filter ReadLengthReadFilter --max-read-length 15000 \
             --read-filter ExcessiveEndClippedReadFilter --max-clipped-bases 1000
+
+        echo "PWD is:"
+        pwd
+
+        echo "PWD List:"
+        ls -la
+
+        echo "Outfile list:"
+        ls -la ~{prefix}.bam*
+
+        date
     }
 
     output {
         File bam = "~{prefix}.bam"
-        File bai = "~{prefix}.bam.bai"
+        File bai = "~{prefix}.bai"
     }
 
     #########################

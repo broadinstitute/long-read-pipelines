@@ -200,6 +200,96 @@ task GetRunInfo {
     }
 }
 
+task AddPacBioRgToBamFile {
+    input {
+        File bam_file
+        String prefix = "out"
+
+        String rg_line
+        String rg_ID
+
+        RuntimeAttr? runtime_attr_override
+    }
+    command {
+        python /usr/local/bin/add_pac_bio_rg_to_bam.py -b ~{bam_file} -r ~{rg_ID} -h "~{rg_line}" -o ~{prefix}.bam
+
+        samtools index ~{prefix}.bam
+        pbindex ~{prefix}.bam
+    }
+
+    output {
+        File bam = "~{prefix}.bam"
+        File bai = "~{prefix}.bam.bai"
+        File pbi = "~{prefix}.bam.pbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            50,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.30"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+}
+
+task GetPbReadGroupInfo {
+    input {
+        String gcs_bam_path
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String out_file = "rg_info.tsv"
+
+    command {
+        set -x
+
+        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+
+        samtools view -H ~{gcs_bam_path} | grep -m1 '^@RG' | sed 's#\t#\n#g' | tail -n+2 | sed 's#\([A-Z][A-Z]\):\(.*\)#\1\t\2#' > ~{out_file}
+
+    }
+
+    output {
+        Map[String, String] rg_info = read_map(out_file)
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            50,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.30"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task RemoveKineticsTags {
     input {
         File bam
