@@ -118,7 +118,10 @@ RUN pip install ssw
 RUN pip install construct
 
 # Get TALON:
-RUN git clone git@github.com:mortazavilab/TALON.git \
+RUN apt-get install -y python3-venv
+RUN apt-get install -y python3.8-dev
+RUN apt-get install -y bedtools
+RUN git clone https://github.com/mortazavilab/TALON.git \
     && cd TALON \
     && python3 -mvenv venv && . venv/bin/activate && pip install .
 
