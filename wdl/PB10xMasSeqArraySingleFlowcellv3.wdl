@@ -522,18 +522,14 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     Int num_array_element_shards = 50
 
     # CCS
-    call PB.PBIndex as t_19_PbIndexS2ECcsArrayElements {
+    call Utils.ShardReads as t_25_ShardS2ECcsArrayElements {
         input:
-            bam = t_61_AlignmentFilterForCcsArrayElements.bam
-    }
-    call PB.ShardLongReads as t_25_ShardS2ECcsArrayElements {
-        input:
-            unaligned_bam = t_61_AlignmentFilterForCcsArrayElements.bam,
-            unaligned_pbi = t_19_PbIndexS2ECcsArrayElements.pbindex,
+            bam = t_61_AlignmentFilterForCcsArrayElements.bam,
+            bam_index = t_61_AlignmentFilterForCcsArrayElements.bai,
             prefix = SM + "_ccs_array_elements_subshard",
             num_shards = num_array_element_shards,
     }
-    scatter (ccs_array_element_shard in t_25_ShardS2ECcsArrayElements.unmapped_shards) {
+    scatter (ccs_array_element_shard in t_25_ShardS2ECcsArrayElements.shards) {
 
         call Utils.IndexBam as t_728_IndexCcsArrayElementShard {
             input:
@@ -564,18 +560,14 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     # RECLAIMED
-    call PB.PBIndex as t_19_PbIndexS2ECcsReclaimedArrayElements {
+    call Utils.ShardReads as t_25_ShardS2ECcsReclaimedArrayElements {
         input:
-            bam = t_61_AlignmentFilterForReclaimedArrayElements.bam
-    }
-    call PB.ShardLongReads as t_25_ShardS2ECcsReclaimedArrayElements {
-        input:
-            unaligned_bam = t_61_AlignmentFilterForReclaimedArrayElements.bam,
-            unaligned_pbi = t_19_PbIndexS2ECcsReclaimedArrayElements.pbindex,
+            bam = t_61_AlignmentFilterForReclaimedArrayElements.bam,
+            bam_index = t_61_AlignmentFilterForReclaimedArrayElements.bai,
             prefix = SM + "_ccs_reclaimed_array_elements_subshard",
             num_shards = num_array_element_shards,
     }
-    scatter (ccs_reclaimed_array_element_shard in t_25_ShardS2ECcsReclaimedArrayElements.unmapped_shards) {
+    scatter (ccs_reclaimed_array_element_shard in t_25_ShardS2ECcsReclaimedArrayElements.shards) {
 
         call Utils.IndexBam as t_728_IndexCcsReclaimedArrayElementShard {
             input:

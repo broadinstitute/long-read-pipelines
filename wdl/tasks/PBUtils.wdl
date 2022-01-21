@@ -201,6 +201,7 @@ task GetRunInfo {
 }
 
 task AddPacBioRgToBamFile {
+    # NOTE: THIS DOESN'T MAKE VALID BAMS YET!!!
     input {
         File bam_file
         String prefix = "out"
@@ -210,8 +211,11 @@ task AddPacBioRgToBamFile {
 
         RuntimeAttr? runtime_attr_override
     }
+
+    Int disk_size = 10*ceil(size(bam_file, "GB"))
+
     command {
-        python /usr/local/bin/add_pac_bio_rg_to_bam.py -b ~{bam_file} -r ~{rg_ID} -h "~{rg_line}" -o ~{prefix}.bam
+        python /usr/local/bin/add_pac_bio_rg_to_bam.py -b ~{bam_file} -r ~{rg_ID} -l "~{rg_line}" -o ~{prefix}.bam
 
         samtools index ~{prefix}.bam
         pbindex ~{prefix}.bam
@@ -226,12 +230,12 @@ task AddPacBioRgToBamFile {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            50,
+        mem_gb:             2,
+        disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
+        preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.30"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.24.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

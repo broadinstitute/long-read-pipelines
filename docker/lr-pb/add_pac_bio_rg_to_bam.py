@@ -5,12 +5,12 @@ import sys
 import time
 import logging
 import re
-import statistics
 
 ################################################################################
 
 LOGGER = logging.getLogger("add_pac_bio_rg_to_bam")
 
+HEADER_SPLITTER = re.compile(r'''[ \t]+''')
 
 def configure_logging(args):
     """Set up logging for the module"""
@@ -35,9 +35,18 @@ def configure_logging(args):
 def add_read_group_to_bam(args):
     """Get the stats from the given polymerase reads and dump them to the specified output file(s)."""
 
-    with pysam.Samfile(args.bam, 'rb', check_sq=False) as input_bam:
+    hex_chars = [chr(i+ord('a')) for i in range(6)] + [chr(i+ord('A')) for i in range(6)]
+    if any(c in args.rg for c in hex_chars):
+        new_rg = int(args.rg, 16)
+    else:
+        new_rg = args.rg
 
-        header_dict = input_bam.header.as_dict()
+    with pysam.AlignmentFile(args.bam, 'rb', check_sq=False) as input_bam:
+
+        header_text = input_bam.text
+        print('-' * 80)
+        print(header_text)
+        print('-' * 80)
 
         chars_to_skip = 0
         if args.header_read_group_line.startswith("@RG"):
@@ -47,17 +56,35 @@ def add_read_group_to_bam(args):
             # Skip the first 3 characters (this includes the tab after the RG tag).
             chars_to_skip = 3
 
-        # Add the new header line to the header dict:
-        rg_header_line = args.header_read_group_line[chars_to_skip:]
-        header_dict["RG"] = rg_header_line
+        # grab the contents of the read group line:
+        raw_rg_header_line = args.header_read_group_line[chars_to_skip:]
 
-        new_header = pysam.AlignmentHeader.from_dict(header_dict)
+        # Do a little cleanup here to account for copy / paste and input errors:
+        # Split the line and create entries in sub-dict for each field:
+        rg_field_dict = dict()
+        for field_value_string in HEADER_SPLITTER.split(raw_rg_header_line):
+            if len(field_value_string) == 0:
+                continue
+            i = field_value_string.find(":")
+            field_name = field_value_string[:i]
+            if field_name == "ID":
+                field_value = new_rg
+            else:
+                field_value = field_value_string[i+1:]
+            rg_field_dict[field_name] = field_value
+
+        clean_rg_header_line = "@RG\t" + "\t".join([f"{k}:{v}" for k, v in rg_field_dict.items()])
+
+        new_header = pysam.AlignmentHeader.from_text(header_text + clean_rg_header_line)
 
         # Create a new output file:
         status_interval = 5000
         with pysam.AlignmentFile(args.outfile, 'wb', header=new_header) as out:
+            print('-' * 80)
+            print(out.text)
+            print('-' * 80)
             for i, read in enumerate(input_bam):
-                read.set_tag("RG", args.rg, value_type="i")
+                read.set_tag("RG", new_rg, value_type="i")
                 out.write(read)
 
                 if i % status_interval == 0:
@@ -89,7 +116,7 @@ def main(raw_args):
         "-r", "--rg", help="Read group ID.", required=True
     )
     required_args.add_argument(
-        "-h", "--header-read-group-line", help="Read group header line to add to the bam header.", required=True
+        "-l", "--header-read-group-line", help="Read group header line to add to the bam header.", required=True
     )
 
     parser.add_argument(
