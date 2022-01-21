@@ -2,7 +2,7 @@ IMAGE_NAME = lr-utils
 VERSION = 0.1.9.gamma
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
-TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
+TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
 
 all: | build push
 

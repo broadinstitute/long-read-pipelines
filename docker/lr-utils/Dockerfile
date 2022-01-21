@@ -11,7 +11,7 @@ RUN echo "source activate lr-utils" > ~/.bashrc
 ENV PATH=/opt/conda/envs/lr-utils/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install gsutil
-RUN apt update
+RUN apt-get --allow-releaseinfo-change update
 RUN apt install -y curl git-lfs
 RUN curl https://sdk.cloud.google.com | bash
 
@@ -70,7 +70,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
 		&& apt-get update -y \
 		&& apt-get install google-cloud-sdk -y
 
-RUN apt-get install -y libcurl4-openssl-dev libssl-dev
+RUN apt-get install -y libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev
 
 # Get samtools source:
 RUN wget https://github.com/samtools/samtools/releases/download/1.11/samtools-1.11.tar.bz2 \
