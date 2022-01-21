@@ -117,6 +117,11 @@ RUN pip install ssw
 # Get the construct package:
 RUN pip install construct
 
+# Get TALON:
+RUN git clone git@github.com:mortazavilab/TALON.git \
+    && cd TALON \
+    && python3 -mvenv venv && . venv/bin/activate && pip install .
+
 # Clean up apt-get process:
 RUN apt-get clean && apt-get purge && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
