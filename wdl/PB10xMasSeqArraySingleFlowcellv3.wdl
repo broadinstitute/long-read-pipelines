@@ -540,7 +540,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         call TENX.AnnotateBarcodesAndUMIs as t_36_TenxAnnotateCCSArrayElements {
             input:
                 bam_file = ccs_array_element_shard,
-                bam_index = t_728_IndexCcsArrayElementShard.bai,
                 head_adapter_fasta = head_adapter_fasta,
                 tail_adapter_fasta = tail_adapter_fasta,
                 whitelist_10x = ten_x_cell_barcode_whitelist,
@@ -578,7 +577,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         call TENX.AnnotateBarcodesAndUMIs as t_36_TenxAnnotateCCSReclaimedArrayElements {
             input:
                 bam_file = ccs_reclaimed_array_element_shard,
-                bam_index = t_728_IndexCcsReclaimedArrayElementShard.bai,
                 head_adapter_fasta = head_adapter_fasta,
                 tail_adapter_fasta = tail_adapter_fasta,
                 whitelist_10x = ten_x_cell_barcode_whitelist,

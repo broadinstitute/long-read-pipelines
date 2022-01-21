@@ -119,8 +119,6 @@ task AnnotateBarcodesAndUMIs {
     String barcode_len_arg = if defined(barcode_length) then " --barcode-length " else ""
     String umi_len_arg = if defined(umi_length) then " --umi-length " else ""
 
-    String do_index = if defined(bam_index) then "false" else "true"
-
     String do_raw_arg = if raw_extract_only then " --raw " else ""
 
     # ------------------------------------------------
@@ -128,7 +126,7 @@ task AnnotateBarcodesAndUMIs {
     Boolean use_ssd = false
 
     # You may have to change the following two parameter values depending on the task requirements
-    Int disk_size_gb = ceil(( (size(bam_file, "GiB") + size(bam_index, "GiB")) * 8) + 40)
+    Int disk_size_gb = 40 + ceil(size(bam_file, "GiB")* 8)
 
     String timing_output_file = "timingInformation.txt"
 
