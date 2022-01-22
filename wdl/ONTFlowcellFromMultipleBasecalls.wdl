@@ -2,13 +2,21 @@ version 1.0
 
 import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
 import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/NanoPlot.wdl" as NP
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTFlowcellFromMultipleBasecalls {
     input {
+        Array[File] aligned_bams
+        Array[File] aligned_bais
+        Boolean bams_suspected_to_contain_dup_record = true
+
+        File? bed_to_compute_coverage
+        File ref_map_file
+
+        String gcs_out_root_dir
+
         File? final_summary
         File? sequencing_summary
         String? fastq_dir

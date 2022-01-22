@@ -49,7 +49,7 @@ workflow ONTBasecall {
         'R2C2': 'splice'
     }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{dir_prefix}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTBasecall/~{dir_prefix}"
 
     String PU = "unknown"
     String DT = "2021-01-01T12:00:00.000000-05:00"
