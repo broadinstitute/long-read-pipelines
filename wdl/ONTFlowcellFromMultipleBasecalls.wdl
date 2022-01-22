@@ -1,10 +1,9 @@
 version 1.0
 
-import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/NanoPlot.wdl" as NP
 import "tasks/Finalize.wdl" as FF
+
+import "tasks/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow ONTFlowcellFromMultipleBasecalls {
     input {
@@ -12,160 +11,75 @@ workflow ONTFlowcellFromMultipleBasecalls {
         Array[File] aligned_bais
         Boolean bams_suspected_to_contain_dup_record = true
 
+        String flowcell
+
         File? bed_to_compute_coverage
-        File ref_map_file
-
-        String gcs_out_root_dir
-
-        File? final_summary
-        File? sequencing_summary
-        String? fastq_dir
 
         File ref_map_file
-
-        String SM
-        String ID
-
-        Int num_shards = 300
-        String experiment_type
-        String dir_prefix
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        final_summary:      "GCS path to '*final_summary*.txt*' file for basecalled fastq files"
-        sequencing_summary: "GCS path to '*sequencing_summary*.txt*' file for basecalled fastq files"
-        fastq_dir:          "GCS path to fastq directory"
-
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
-
-        SM:                 "the value to place in the BAM read group's SM field"
-        ID:                 "the value to place in the BAM read group's ID field"
-
-        num_shards:         "[default-valued] number of shards into which fastq files should be batched"
-        experiment_type:    "[default-valued] type of experiment run (DNA, RNA, R2C2)"
-        dir_prefix:         "directory prefix for output files"
-
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+        bams_suspected_to_contain_dup_record: "if the multiple basecalls are suspected to have duplicates amongst them"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
-    Map[String, String] map_presets = {
-        'DNA':  'map-ont',
-        'RNA':  'splice',
-        'R2C2': 'splice'
+
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{flowcell}"
+
+    ## Merge & deduplicate
+    if (length(aligned_bams) > 1) {
+        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = flowcell }
     }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{dir_prefix}"
-
-    String PU = "unknown"
-    String DT = "2021-01-01T12:00:00.000000-05:00"
-    if (defined(final_summary)) {
-        call ONT.GetRunInfo { input: final_summary = select_first([final_summary]) }
-        String PU = GetRunInfo.run_info['instrument']
-        String DT = GetRunInfo.run_info['started']
-    }
-
-    if (defined(sequencing_summary)) {
-        call ONT.ListFiles as ListFastqs {
-            input:
-                sequencing_summary = select_first([sequencing_summary]),
-                suffix = "fastq"
-        }
-
-        call NP.NanoPlotFromSummary { input: summary_files = [ select_first([sequencing_summary]) ] }
-    }
-
-    if (defined(fastq_dir)) {
-        call Utils.ListFilesOfType {
-            input:
-                gcs_dir = select_first([fastq_dir]),
-                suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz' ],
-                recurse = true
-        }
-
-        call NP.NanoPlotFromRichFastqs { input: fastqs = ListFilesOfType.files }
-    }
-
-    Map[String, Float] nanoplot_map = select_first([NanoPlotFromRichFastqs.stats_map, NanoPlotFromSummary.stats_map ])
-
-    File manifest = select_first([ListFilesOfType.manifest, ListFastqs.manifest])
-
-    String PL  = "ONT"
-    String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
-
-    call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = manifest, N = num_shards }
-
-    scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
-        call AR.Minimap2 as AlignReads {
-            input:
-                reads      = read_lines(manifest_chunk),
-                ref_fasta  = ref_map['fasta'],
-                RG         = RG,
-                map_preset = map_presets[experiment_type]
+    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
+    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
+    if (bams_suspected_to_contain_dup_record) {
+        call Utils.DeduplicateBam as RemoveDuplicates {
+            input: aligned_bam = bam, aligned_bai = bai, same_name_as_input = true
         }
     }
+    File usable_bam = select_first([RemoveDuplicates.corrected_bam, bam])
+    File usable_bai = select_first([RemoveDuplicates.corrected_bai, bai])
 
-    call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = ID }
-
-    call AM.AlignedMetrics as PerFlowcellMetrics {
+    # collect metrics
+    call COV.SampleLevelAlignedMetrics as coverage {
         input:
-            aligned_bam    = MergeAlignedReads.merged_bam,
-            aligned_bai    = MergeAlignedReads.merged_bai,
-            ref_fasta      = ref_map['fasta'],
-            ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics"
+            aligned_bam = usable_bam,
+            aligned_bai = usable_bai,
+            ref_fasta   = ref_map['fasta'],
+            bed_to_compute_coverage = bed_to_compute_coverage
     }
-
-    call NP.NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
-    call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
     # Finalize data
     String dir = outdir + "/alignments"
 
-    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = MergeAlignedReads.merged_bam }
-    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = MergeAlignedReads.merged_bai }
+    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = usable_bam }
+    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = usable_bai }
+    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
 
     output {
-        # Flowcell stats
-        Float active_channels = nanoplot_map['active_channels']
-
         # Aligned BAM file
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path
 
-        # Unaligned read stats
-        Float num_reads = nanoplot_map['number_of_reads']
-        Float num_bases = nanoplot_map['number_of_bases']
-        Float raw_est_fold_cov = nanoplot_map['number_of_bases']/ComputeGenomeLength.length
-
-        Float read_length_mean = nanoplot_map['mean_read_length']
-        Float read_length_median = nanoplot_map['median_read_length']
-        Float read_length_stdev = nanoplot_map['read_length_stdev']
-        Float read_length_N50 = nanoplot_map['n50']
-
-        Float read_qual_mean = nanoplot_map['mean_qual']
-        Float read_qual_median = nanoplot_map['median_qual']
-
-        Float num_reads_Q5 = nanoplot_map['Reads_Q5']
-        Float num_reads_Q7 = nanoplot_map['Reads_Q7']
-        Float num_reads_Q10 = nanoplot_map['Reads_Q10']
-        Float num_reads_Q12 = nanoplot_map['Reads_Q12']
-        Float num_reads_Q15 = nanoplot_map['Reads_Q15']
+        # Unaligned read stats, please check entries in ONTBasecall
 
         # Aligned read stats
-        Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
-        Float aligned_num_bases = NanoPlotFromBam.stats_map['number_of_bases_aligned']
-        Float aligned_frac_bases = NanoPlotFromBam.stats_map['fraction_bases_aligned']
-        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/ComputeGenomeLength.length
+        File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
 
-        Float aligned_read_length_mean = NanoPlotFromBam.stats_map['mean_read_length']
-        Float aligned_read_length_median = NanoPlotFromBam.stats_map['median_read_length']
-        Float aligned_read_length_stdev = NanoPlotFromBam.stats_map['read_length_stdev']
-        Float aligned_read_length_N50 = NanoPlotFromBam.stats_map['n50']
+        Float aligned_num_reads = coverage.aligned_num_reads
+        Float aligned_num_bases = coverage.aligned_num_bases
+        Float aligned_frac_bases = coverage.aligned_frac_bases
+        Float aligned_est_fold_cov = coverage.aligned_est_fold_cov
 
-        Float average_identity = NanoPlotFromBam.stats_map['average_identity']
-        Float median_identity = NanoPlotFromBam.stats_map['median_identity']
+        Float aligned_read_length_mean = coverage.aligned_read_length_mean
+        Float aligned_read_length_median = coverage.aligned_read_length_median
+        Float aligned_read_length_stdev = coverage.aligned_read_length_stdev
+        Float aligned_read_length_N50 = coverage.aligned_read_length_N50
+
+        Float average_identity = coverage.average_identity
+        Float median_identity = coverage.median_identity
     }
 }
