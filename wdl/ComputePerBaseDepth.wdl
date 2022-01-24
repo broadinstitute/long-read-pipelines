@@ -39,6 +39,8 @@ task Collect {
     String bq_filter = if defined(min_base_q) then " -q ~{min_base_q} " else " "
     String mq_filter = if defined(min_map_q)  then " -Q ~{min_map_q} " else " "
 
+    String prefix = basename(four_col_bed, ".bed")
+
     command <<<
 
         set -eu
@@ -55,8 +57,8 @@ task Collect {
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
 
-        out="~{four_col_bed}.samtools.depth.-aa.-J.txt"
-        echo -e "chr\tBED_beg\tBED_end\tid\tdepth_array" > "${out}"
+        out="~{prefix}.samtools.depth.txt"
+        echo -e "chr\tBED_beg\tBED_end\tid\tdepth_array_aa.J" > "${out}"
 
         # Note it's done this way due to https://github.com/samtools/samtools/issues/1581
         while IFS=$'\t' read -r chr column2 end bed_id; do
@@ -66,15 +68,11 @@ task Collect {
             echo -e "${chr}\t${column2}\t${end}\t${bed_id}\t${arr}" >> "${out}"
         done < "~{four_col_bed}"
 
-        ls .
-        wc -l "~{four_col_bed}"
-        wc -l "${out}"
-
         gzip -k "${out}"
     >>>
 
     output {
-        File depth = glob("~{four_col_bed}.samtools.depth.*gz")[0]
+        File depth = "~{prefix}.samtools.depth.txt.gz"
     }
 
     #########################
