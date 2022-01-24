@@ -41,7 +41,7 @@ task Collect {
 
     command <<<
 
-        set -eux
+        set -eu
 
         if awk -F '\t' 'NF!=4{exit 1}' ~{four_col_bed} ; then
             echo;
@@ -60,6 +60,7 @@ task Collect {
 
         # Note it's done this way due to https://github.com/samtools/samtools/issues/1581
         while IFS=$'\t' read -r chr column2 end bed_id; do
+            echo "${bed_id}"
             beg=$((column2+1))
             arr=$(samtools depth -aa -J -r "${chr}:${beg}-${end}" ~{bq_filter} ~{mq_filter} "~{bam}" | awk '{print $3}' | paste -s -d, -)
             echo -e "${chr}\t${column2}\t${end}\t${bed_id}\t${arr}" >> "${out}"
@@ -68,10 +69,12 @@ task Collect {
         ls .
         wc -l "~{four_col_bed}"
         wc -l "${out}"
+
+        gzip -k "${out}"
     >>>
 
     output {
-        File depth = glob("~{four_col_bed}.samtools.depth.*txt")[0]
+        File depth = glob("~{four_col_bed}.samtools.depth.*gz")[0]
     }
 
     #########################
