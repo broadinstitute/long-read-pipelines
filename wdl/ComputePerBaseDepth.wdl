@@ -36,8 +36,8 @@ task Collect {
         }
     }
 
-    String bq_filter = if defined(min_base_q) then " -q ~{min_base_q} " else ""
-    String mq_filter = if defined(min_map_q)  then " -Q ~{min_map_q} " else ""
+    String bq_filter = if defined(min_base_q) then " -q ~{min_base_q} " else " "
+    String mq_filter = if defined(min_map_q)  then " -Q ~{min_map_q} " else " "
 
     command <<<
 
