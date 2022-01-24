@@ -39,7 +39,7 @@ task Collect {
     String bq_filter = if defined(min_base_q) then " -q ~{min_base_q} " else " "
     String mq_filter = if defined(min_map_q)  then " -Q ~{min_map_q} " else " "
 
-    String prefix = basename(four_col_bed, ".bed")
+    String prefix = basename(bam, ".bam") + '.' + basename(four_col_bed, ".bed")
 
     command <<<
 
