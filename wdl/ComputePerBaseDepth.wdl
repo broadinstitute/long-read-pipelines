@@ -61,7 +61,7 @@ task Collect {
         # Note it's done this way due to https://github.com/samtools/samtools/issues/1581
         while IFS=$'\t' read -r chr column2 end bed_id; do
             beg=$((column2+1))
-            arr=$(samtools depth -aa -J -r "${chr}:${beg}-${end}" "~{bq_filter}" "~{mq_filter}" "~{bam}" | awk '{print $3}' | paste -s -d, -)
+            arr=$(samtools depth -aa -J -r "${chr}:${beg}-${end}" ~{bq_filter} ~{mq_filter} "~{bam}" | awk '{print $3}' | paste -s -d, -)
             echo -e "${chr}\t${column2}\t${end}\t${bed_id}\t${arr}" >> "${out}"
         done < "~{four_col_bed}"
 
