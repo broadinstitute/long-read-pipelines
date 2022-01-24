@@ -30,6 +30,11 @@ task Collect {
         Int? min_map_q
     	Boolean fail_on_non_4_col_bed
     }
+    parameter_meta {
+        bam: {
+            localization_optional: true
+        }
+    }
 
     String bq_filter = if defined(min_base_q) then " -q ~{min_base_q} " else ""
     String mq_filter = if defined(min_map_q)  then " -Q ~{min_map_q} " else ""
