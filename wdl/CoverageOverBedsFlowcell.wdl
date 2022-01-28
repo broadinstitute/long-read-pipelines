@@ -38,7 +38,7 @@ workflow CoverageOverBed {
         input:
             bam = bam,
             bai = bai,
-            bed = fiveK_bed
+            bed = threeH_bed
     }
     call worker.SummarizeDepthOverWholeBed as TwoS {
         input:
@@ -51,7 +51,7 @@ workflow CoverageOverBed {
         input:
             bam = bam,
             bai = bai,
-            bed = fiveK_bed
+            bed = exon_bed
     }
     call worker.SummarizeDepthOverWholeBed as ThreeS {
         input:
