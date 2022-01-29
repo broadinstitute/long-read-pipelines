@@ -9,6 +9,7 @@ version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
+import "tasks/Longbow.wdl" as Longbow
 import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/NanoPlot.wdl" as NP
 import "tasks/Finalize.wdl" as FF
@@ -24,7 +25,7 @@ workflow PBFlowcell {
 
         Boolean drop_per_base_N_pulse_tags = true
 
-        Int num_shards = 50
+        Int? num_shards
         String experiment_type
         String dir_prefix
 
@@ -39,7 +40,7 @@ workflow PBFlowcell {
         SM:                 "the value to place in the BAM read group's SM field"
         LB:                 "the value to place in the BAM read group's LB (library) field"
 
-        num_shards:         "[default-valued] number of shards into which fastq files should be batched"
+        num_shards:         "number of shards into which fastq files should be batched [optional]"
         experiment_type:    "type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
         dir_prefix:         "directory prefix for output files"
 
@@ -47,12 +48,12 @@ workflow PBFlowcell {
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
-    Map[String, String] map_presets = {
-        'CLR':    'SUBREAD',
-        'CCS':    'CCS',
-        'ISOSEQ': 'ISOSEQ',
-        'MASSEQ': 'SUBREAD',
-    }
+
+    DataTypeParameters clr    = { 'num_shards': select_first([num_shards, 100]), 'map_preset': 'SUBREAD' }
+    DataTypeParameters ccs    = { 'num_shards': select_first([num_shards, 100]), 'map_preset': 'CCS'     }
+    DataTypeParameters isoseq = { 'num_shards': select_first([num_shards,  50]), 'map_preset': 'ISOSEQ'  }
+    DataTypeParameters masseq = { 'num_shards': select_first([num_shards, 200]), 'map_preset': 'ISOSEQ'  }
+    Map[String, DataTypeParameters] data_presets = { 'CLR': clr, 'CCS': ccs, 'ISOSEQ': isoseq, 'MASSEQ': masseq }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}"
 
@@ -60,21 +61,39 @@ workflow PBFlowcell {
     String PU = GetRunInfo.run_info['PU']
 
     # break one raw BAM into fixed number of shards
-    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
+    call PB.ShardLongReads {
+        input:
+            unaligned_bam = bam,
+            unaligned_pbi = pbi,
+            num_shards = num_shards,
+            drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags
+    }
+
+    # for MAS-seq data, automatically detect the array model to use
+    if (experiment_type == "MASSEQ") {
+        call Longbow.Peek { input: bam = ShardLongReads.unmapped_shards[0], n = 100 }
+    }
 
     # then perform correction and alignment on each of the shard
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
         if (experiment_type != "CLR") {
             if (!GetRunInfo.is_corrected) { call PB.CCS { input: subreads = unmapped_shard } }
-            call PB.ExtractHifiReads {
-                input:
-                    bam = select_first([CCS.consensus, unmapped_shard]),
-                    sample_name = SM,
-                    library     = LB
+
+            if (experiment_type != "MASSEQ") {
+                call PB.ExtractHifiReads {
+                    input:
+                        bam = select_first([CCS.consensus, unmapped_shard]),
+                        sample_name = SM,
+                        library     = LB
+                }
+            }
+
+            if (experiment_type == 'MASSEQ') {
+                call Longbow.Process { input: bam = select_first([unmapped_shard, CCS.consensus]) }
             }
         }
 
-        File unaligned_bam = select_first([ExtractHifiReads.hifi_bam, unmapped_shard])
+        File unaligned_bam = select_first([Process.extracted_bam, ExtractHifiReads.hifi_bam, CCS.consensus, unmapped_shard])
 
         call PB.Align as AlignReads {
             input:
@@ -82,7 +101,7 @@ workflow PBFlowcell {
                 ref_fasta   = ref_map['fasta'],
                 sample_name = SM,
                 library     = LB,
-                map_preset  = map_presets[experiment_type],
+                map_preset  = data_presets[experiment_type].map_preset,
                 drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags
         }
 
@@ -93,7 +112,7 @@ workflow PBFlowcell {
 
     # merge corrected, unaligned reads
     String cdir = outdir + "/reads/ccs/unaligned"
-    if (experiment_type != "CLR") {
+    if (experiment_type != "CLR" && experiment_type != "MASSEQ") {
         call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(ExtractHifiReads.hifi_bam), prefix = "~{PU}.reads" }
         call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 

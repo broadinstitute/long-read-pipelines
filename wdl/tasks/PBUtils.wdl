@@ -101,6 +101,8 @@ task ShardLongReads {
         Int num_shards = 300
         Int num_threads = 8
 
+        Boolean drop_per_base_N_pulse_tags = false
+
         String prefix = "shard"
 
         RuntimeAttr? runtime_attr_override
@@ -108,11 +110,12 @@ task ShardLongReads {
 
     Int disk_size = 3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
     Int mem = ceil(25*size(unaligned_pbi, "MB")/1000)
+    String ex = if drop_per_base_N_pulse_tags then "-x fi,fp,ri,rp" else ""
 
     command <<<
         set -x
 
-        python3 /usr/local/bin/shard_bam.py \
+        python3 /usr/local/bin/shard_bam.py ~{ex} \
             -n ~{num_shards} \
             -t ~{num_threads} \
             -i ~{unaligned_pbi} \
