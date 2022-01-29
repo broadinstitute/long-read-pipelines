@@ -100,3 +100,11 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTPfTypeDrugResistanceMarkers.wdl
   testParameterFiles:
+- name: PBMASIsoSeqQuantify
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBMASIsoSeqQuantify.wdl
+  testParameterFiles:
+- name: PBMASIsoSeqDemultiplex
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBMASIsoSeqDemultiplex.wdl
+  testParameterFiles:

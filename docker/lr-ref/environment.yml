@@ -1,0 +1,7 @@
+name: lr-ref
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - google-cloud-storage

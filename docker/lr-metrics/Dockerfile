@@ -3,6 +3,7 @@ FROM continuumio/miniconda3
 MAINTAINER Kiran V Garimella
 
 # install some utilities
+RUN apt-get update --allow-releaseinfo-change
 RUN apt-get update -m
 RUN apt-get -y install bsdmainutils git-lfs wget datamash autoconf make cmake gcc g++ zlib1g-dev
 RUN wget http://ftp.de.debian.org/debian/pool/contrib/m/msttcorefonts/ttf-mscorefonts-installer_3.7_all.deb \
@@ -20,8 +21,9 @@ RUN conda env create -f /environment.yml && conda clean -a
 # install gatk
 RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
     && cd gatk \
+    && git checkout c9497220ef13beb05da7c7a820c181be00b9b817 \
     && ./gradlew \
-    && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
+    && cp /gatk/build/libs/gatk-package-4.1.0.0-57-gc949722-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
     && cd .. \
     && rm -rf /gatk
 

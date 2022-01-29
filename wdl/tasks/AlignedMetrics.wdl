@@ -88,6 +88,8 @@ workflow AlignedMetrics {
         File aligned_rl_hist = AlignedReadMetrics.rl_hist
         File aligned_rl_nx = AlignedReadMetrics.rl_nx
         File aligned_rl_yield_hist = AlignedReadMetrics.rl_yield_hist
+
+        File raw_chr_intervals = MakeChrIntervalList.raw_chrs
     }
 }
 
@@ -108,6 +110,7 @@ task MakeChrIntervalList {
 
     output {
         Array[Array[String]] chrs = read_tsv("chrs.txt")
+        File raw_chrs = "chrs.txt"
     }
 
     #########################
@@ -118,7 +121,7 @@ task MakeChrIntervalList {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -273,7 +276,7 @@ task SummarizeDepth {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -321,7 +324,7 @@ task CoverageTrack {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -363,7 +366,7 @@ task FlagStats {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -405,7 +408,7 @@ task ReadNamesAndLengths {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -449,7 +452,7 @@ task FilterMQ0Reads {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -496,7 +499,7 @@ task ComputeBedCoverage {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -548,7 +551,7 @@ task ReadMetrics {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -591,7 +594,7 @@ task BamToBed {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

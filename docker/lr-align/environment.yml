@@ -5,3 +5,5 @@ channels:
   - bioconda
 dependencies:
   - google-cloud-storage
+  - samtools
+  - java-jdk

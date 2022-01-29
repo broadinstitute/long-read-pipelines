@@ -1,11 +1,16 @@
-VERSION = 0.1.10
-TAG1 = us.gcr.io/broad-dsp-lrma/lr-utils:$(VERSION)
-TAG2 = us.gcr.io/broad-dsp-lrma/lr-utils:latest
+IMAGE_NAME = lr-utils
+VERSION = 0.1.11
 
-all: build push
+TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
+TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
+
+all: | build push
 
 build:
-	docker build -t $(TAG1) -t $(TAG2) .
+	docker build -t $(TAG1) -t $(TAG2)  .
+
+build_no_cache:
+	docker build --no-cache -t $(TAG1) -t $(TAG2)  .
 
 push:
 	docker push $(TAG1)

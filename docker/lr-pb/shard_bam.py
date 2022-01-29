@@ -9,7 +9,7 @@ from multiprocessing.pool import ThreadPool
 from functools import partial
 
 
-def write_shard(bam, sharding_offsets, zmw_counts_exp, tags_to_exclude, prefix, index):
+def write_shard(bam, sharding_offsets, zmw_counts_exp, tags_to_exclude, prefix, nocheck, index):
     """
     Write subset of PacBio bam to a shard, taking care not to split reads
     from the same ZMW across separate files.  These shards are thus suitable
@@ -46,9 +46,10 @@ def write_shard(bam, sharding_offsets, zmw_counts_exp, tags_to_exclude, prefix, 
     # Verify that the count for ZMWs written to this shard match the ZMW count determined
     # from the original read of the index file.  If this exception is thrown, it may indicate
     # that reads from the same ZMW have been erroneously sharded to separate files.
-    if zmw_counts_act[zmw] != zmw_counts_exp[zmw]:
-        raise Exception(f'Number of reads from a specific ZMW mismatches between the original data'
-                        f'and the sharded data ({zmw}: {zmw_counts_exp[zmw]} != {zmw_counts_act[zmw]})')
+    if not nocheck:
+        if zmw_counts_act[zmw] != zmw_counts_exp[zmw]:
+            raise Exception(f'Number of reads from a specific ZMW mismatches between the original data '
+                            f'and the sharded data ({zmw}: {zmw_counts_exp[zmw]} != {zmw_counts_act[zmw]})')
 
     return num_reads
 
@@ -119,10 +120,14 @@ def main():
     parser.add_argument('-x', '--exclude', type=str, help='Comma-separated list of tags to exclude '
                                                           '(note: removing ip and pw tags will break ccs)')
     parser.add_argument('-i', '--index', type=str, required=False, help="PBI index filename")
+    parser.add_argument('--nocheck', required=False, help="Do not check for zmw counts.", action="store_true")
     parser.add_argument('bam', type=str, help="BAM")
     args = parser.parse_args()
 
     pbi = args.bam + ".pbi" if args.index is None else args.index
+
+    if args.nocheck:
+        print(f"Disabling ZMW read count integrity check.")
 
     # Silence message about the .bai file not being found.
     pysam.set_verbosity(0)
@@ -133,7 +138,7 @@ def main():
 
     # Prepare a function with arguments partially filled in.
     tags_to_exclude = [] if args.exclude is None else args.exclude.split(",")
-    func = partial(write_shard, args.bam, offsets, zmw_counts, tags_to_exclude, args.prefix)
+    func = partial(write_shard, args.bam, offsets, zmw_counts, tags_to_exclude, args.prefix, args.nocheck)
     idx = list(range(0, len(offsets) - 1))
 
     # Write the shards using the specified number of threads.

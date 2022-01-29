@@ -5,10 +5,9 @@ RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf 
     && rm -rf /var/lib/apt/lists/*
 
 # install htslib
-RUN git clone https://github.com/samtools/htslib.git \
-    && cd htslib \
-    && autoheader \
-    && autoconf \
+RUN wget https://github.com/samtools/htslib/releases/download/1.11/htslib-1.11.tar.bz2 \
+    && tar -jxf htslib-1.11.tar.bz2 \
+    && cd htslib-1.11 \
     && ./configure \
     && make \
     && make install
@@ -25,6 +24,27 @@ WORKDIR /lrma
 # install miniconda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh \
     && bash /miniconda.sh -b -p /miniconda
+
+# Install samtools 1.11:
+RUN apt-get update
+RUN apt-get install -y bzip2 curl gnupg2
+RUN apt-get install -y libc-dev ncurses-dev
+
+#### Specific for google cloud support
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
+		&& curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - \
+		&& apt-get update -y \
+		&& apt-get install google-cloud-sdk -y
+
+RUN apt-get install -y libcurl4-openssl-dev libssl-dev
+
+# Get samtools source:
+RUN wget https://github.com/samtools/samtools/releases/download/1.11/samtools-1.11.tar.bz2 \
+		&& tar -xjf samtools-1.11.tar.bz2 \
+		&& cd samtools-1.11 \
+		&& ./configure \
+		&& make install
+RUN rm -rf /samtools-1.11 /samtools-1.11.tar.bz2
 
 # install conda packages
 ADD ./environment.yml /lrma/environment.yml
@@ -58,8 +78,22 @@ ADD reverse_adapter_sequence.fasta.bwt /lrma/reverse_adapter_sequence.fasta.bwt
 ADD reverse_adapter_sequence.fasta.pac /lrma/reverse_adapter_sequence.fasta.pac
 ADD reverse_adapter_sequence.fasta.sa /lrma/reverse_adapter_sequence.fasta.sa
 
+RUN pip3 install pysam biopython
+RUN pip3 install tqdm
+
 ADD tool.py /lrma/tool.py
 ADD tool_rle.py /lrma/tool_rle.py
+ADD tool_starcode_seeded.py /lrma/tool_starcode_seeded.py
+ADD extract_ilmn_bc_conf_scores.py /lrma/extract_ilmn_bc_conf_scores.py
+
+ADD restore_annotations_to_aligned_bam.py /lrma/restore_annotations_to_aligned_bam.py
+ADD extract_cbc_and_umi_from_annotated_read.py /lrma/extract_cbc_and_umi_from_annotated_read.py 
+ADD copy_contig_name_to_tag.py /lrma/copy_contig_name_to_tag.py 
+ADD tag_mas_sirv_umi_positions.py /lrma/tag_mas_sirv_umi_positions.py
+ADD update_umi_positions.py /lrma/update_umi_positions.py
+ADD update_umi_positions_2.py /lrma/update_umi_positions_2.py
+
+RUN echo -n "set number\nsyntax on\nset hlsearch" > ~/.vimrc
 
 RUN echo "source activate 10x_tool" > ~/.bashrc
-RUN pip3 install pysam biopython
+

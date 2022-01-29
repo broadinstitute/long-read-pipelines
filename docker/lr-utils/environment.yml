@@ -20,6 +20,7 @@ dependencies:
   - openssl=1.1.1k=h27cfd23_0
   - pbbam=1.6.0=h5b7e6e0_0
   - samtools=1.10=h2e538c0_3
+  - java-jdk
   - xz=5.2.5=h7b6447c_0
   - zlib=1.2.11=h7b6447c_3
   - pysam=0.16.0.1

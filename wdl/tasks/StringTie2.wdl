@@ -33,15 +33,16 @@ task Quantify {
         File st_abund = "~{prefix}.gene_abund.out"
     }
 
+    # TODO: Debug memory here.  Is getting seg fault...  More memory doesn't help.
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             8,
+        mem_gb:             64,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -89,7 +90,7 @@ task ExtractTranscriptSequences {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -114,6 +115,7 @@ task CompareTranscriptomes {
 
     Int disk_size = 2*ceil(size([guide_gtf, new_gtf], "GB"))
 
+    # TODO: Look into the comment below and figure out why this is happening.
     command <<<
         set -euxo pipefail
 
@@ -123,16 +125,23 @@ task CompareTranscriptomes {
         mv $dir/*.refmap ~{prefix}.refmap
         mv $dir/*.tmap ~{prefix}.tmap
 
+        if [ ! -e ~{prefix}.stats ] ; then
+            # Sometimes the stats file hasn't been named `.stats` and just has the prefix name.
+            # I have no idea why.  It's very weird.  But we don't use this for our output anyway, so
+            # for now we'll try to use the prefix file itself if it exists:
+            mv ~{prefix} ~{prefix}.stats
+        fi
+
         tree -h
     >>>
 
     output {
         File annotated_gtf = "~{prefix}.annotated.gtf"
         File loci = "~{prefix}.loci"
-        File stats = "~{prefix}"
         File tracking = "~{prefix}.tracking"
         File refmap = "~{prefix}.refmap"
         File tmap = "~{prefix}.tmap"
+        File stats = "~{prefix}.stats"
     }
 
     #########################
@@ -143,7 +152,7 @@ task CompareTranscriptomes {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
