@@ -55,7 +55,7 @@ dependencies:
     - decorator==4.4.2
     - networkx==2.5.1
     - numpy==1.19.5
-    - pysam==0.16.0.1
+    - pysam==0.18.0
     - scipy==1.5.4
-    - whatshap==1.1
+    - whatshap==1.2.1
 prefix: /opt/conda/envs/lr-whatshap

@@ -266,6 +266,8 @@ task MarginPhase {
         Int memory
         String zones
 
+        String? out_prefix
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -274,7 +276,7 @@ task MarginPhase {
 
     Int cores = 64
 
-    String prefix = basename(bam, ".bam") + ".pepper"
+    String prefix = if defined(out_prefix) then out_prefix else basename(bam, ".bam") + ".pepper"
     String output_root = "/cromwell_root/margin_output"
 
     command <<<

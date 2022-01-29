@@ -1,6 +1,5 @@
 IMAGE_NAME = lr-whatshap
-VERSION = 1.1 # This should match the WhatsHap version number
-
+VERSION = 1.2.1 # This should match the WhatsHap version number
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
 
