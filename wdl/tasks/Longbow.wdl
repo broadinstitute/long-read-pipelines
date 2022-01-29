@@ -47,21 +47,12 @@ task Peek {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        bam: {
-                 localization_optional: true
-             }
-    }
-
     Int disk_size = 10 * ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        ((samtools view -H ~{bam}) && (samtools view ~{bam} | head -n ~{n})) | samtools view -b > subset.bam
-
-        longbow peek -n ~{n} -o model.txt subset.bam
+        longbow peek -n ~{n} -o model.txt ~{bam}
     >>>
 
     output {
