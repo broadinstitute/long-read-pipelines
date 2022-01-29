@@ -31,7 +31,7 @@ workflow CCSPepper {
         input:
             bam = bam,
             bai = bai,
-            ref_fasta = ref_fasta, 
+            ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             threads = pepper_threads,
             memory = pepper_memory
@@ -41,7 +41,7 @@ workflow CCSPepper {
         input:
             bam = get_hap_tagged_bam.hap_tagged_bam,
             bai = get_hap_tagged_bam.hap_tagged_bai,
-            ref_fasta = ref_fasta, 
+            ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             threads = dv_threads,
             memory = dv_memory
@@ -182,7 +182,7 @@ task DV {
             --output_gvcf="~{output_root}/~{prefix}.g.vcf.gz" \
             --num_shards="${num_core}" \
             --use_hp_information
-        
+
         find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
             > "~{output_root}/dir_structure.txt"
     >>>
@@ -241,6 +241,8 @@ task MarginPhase {
 
         Int memory
 
+        String? out_prefix
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -249,7 +251,7 @@ task MarginPhase {
 
     Int cores = 64
 
-    String prefix = basename(bam, ".bam") + ".pepper"
+    String prefix = if defined(out_prefix) then out_prefix else basename(bam, ".bam") + ".pepper"
     String output_root = "/cromwell_root/margin_output"
 
     command <<<
@@ -271,7 +273,7 @@ task MarginPhase {
             -M \
             -o "~{output_root}/~{prefix}" \
             2>&1 | tee "~{output_root}/logs/5_margin_phase_vcf.log"
-        
+
         bgzip -c "~{output_root}/~{prefix}".phased.vcf > "~{output_root}/~{prefix}".phased.vcf.gz && \
             tabix -p vcf "~{output_root}/~{prefix}".phased.vcf.gz
     >>>
@@ -286,7 +288,7 @@ task MarginPhase {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          cores,
-        mem_gb:             memory, 
+        mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  3,

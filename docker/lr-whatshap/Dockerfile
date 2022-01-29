@@ -6,7 +6,7 @@ MAINTAINER Kiran V Garimella
 COPY ./environment.yml /
 
 RUN apt-get -y update && \
-    apt-get -y install curl zlib1g-dev libcurl4-openssl-dev libbz2-dev liblzma-dev gcc make && \
+    apt-get -y install curl zlib1g-dev libssl1.0.0 libcurl4-openssl-dev libbz2-dev liblzma-dev gcc make && \
     apt-get clean
 
 # install conda packages
@@ -16,5 +16,7 @@ ENV PATH=/opt/conda/envs/lr-whatshap/bin/:/root/google-cloud-sdk/bin/:${PATH}
 # install gsutil
 RUN curl https://sdk.cloud.google.com | bash
 
+RUN apt-get -y update && \
+    apt-get -y install libssl1.0.0 libssl-dev --reinstall
 # activate conda environment
 RUN echo "source activate lr-whatshap" > ~/.bashrc
