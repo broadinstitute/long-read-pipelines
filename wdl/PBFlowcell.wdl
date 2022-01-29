@@ -52,7 +52,7 @@ workflow PBFlowcell {
     DataTypeParameters clr    = { 'num_shards': select_first([num_shards, 100]), 'map_preset': 'SUBREAD' }
     DataTypeParameters ccs    = { 'num_shards': select_first([num_shards, 100]), 'map_preset': 'CCS'     }
     DataTypeParameters isoseq = { 'num_shards': select_first([num_shards,  50]), 'map_preset': 'ISOSEQ'  }
-    DataTypeParameters masseq = { 'num_shards': select_first([num_shards, 200]), 'map_preset': 'ISOSEQ'  }
+    DataTypeParameters masseq = { 'num_shards': select_first([num_shards, 300]), 'map_preset': 'ISOSEQ'  }
     Map[String, DataTypeParameters] data_presets = { 'CLR': clr, 'CCS': ccs, 'ISOSEQ': isoseq, 'MASSEQ': masseq }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}"
@@ -65,7 +65,7 @@ workflow PBFlowcell {
         input:
             unaligned_bam = bam,
             unaligned_pbi = pbi,
-            num_shards = num_shards,
+            num_shards = data_presets[experiment_type].num_shards,
             drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags
     }
 
