@@ -71,7 +71,7 @@ workflow PBFlowcell {
 
     # for MAS-seq data, automatically detect the array model to use
     if (experiment_type == "MASSEQ") {
-        call Longbow.Peek { input: bam = ShardLongReads.unmapped_shards[0], n = 100 }
+        call Longbow.Peek { input: bam = ShardLongReads.unmapped_shards[0] }
     }
 
     # then perform correction and alignment on each of the shard

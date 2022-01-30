@@ -8,17 +8,14 @@ workflow Process {
         File bam
 
         String prefix = "out"
-        String? model
+        String model = "mas15v2"
         File? barcode_tag
         File? barcode_allowlist
         Boolean same_barcode_per_read = false
     }
 
-    if (!defined(model)) {
-        call Peek { input: bam = bam, n = 1000 }
-    }
-
-    String lbmodel = select_first([Peek.model, "mas15v2"])
+    if (!defined(model)) { call Peek { input: bam = bam } }
+    String lbmodel = select_first([model, Peek.model])
 
     call Annotate { input: bam = bam, model = lbmodel }
 
@@ -42,12 +39,12 @@ workflow Process {
 task Peek {
     input {
         File bam
-        Int n = 1000
+        Int n = 100
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 * ceil(size(bam, "GB"))
+    Int disk_size = 1 + ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -61,7 +58,7 @@ task Peek {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
+        cpu_cores:          4,
         mem_gb:             4,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
