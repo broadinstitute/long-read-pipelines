@@ -89,7 +89,7 @@ workflow PBFlowcell {
             }
 
             if (experiment_type == 'MASSEQ') {
-                call Longbow.Process { input: bam = select_first([unmapped_shard, CCS.consensus]) }
+                call Longbow.Process { input: bam = select_first([unmapped_shard, CCS.consensus]), model = Peek.model }
             }
         }
 
