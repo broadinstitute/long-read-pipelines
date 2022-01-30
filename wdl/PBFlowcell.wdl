@@ -112,8 +112,8 @@ workflow PBFlowcell {
 
     # merge corrected, unaligned reads
     String cdir = outdir + "/reads/ccs/unaligned"
-    if (experiment_type != "CLR" && experiment_type != "MASSEQ") {
-        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(ExtractHifiReads.hifi_bam), prefix = "~{PU}.reads" }
+    if (experiment_type != "CLR") {
+        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(unaligned_bam), prefix = "~{PU}.reads" }
         call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 
         call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam }
@@ -122,6 +122,10 @@ workflow PBFlowcell {
                 outdir = cdir,
                 file = IndexCCSUnalignedReads.pbi,
                 name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi"
+        }
+
+        if (experiment_type == 'MASSEQ') {
+            call Longbow.Stats { input: bam = MergeCCSUnalignedReads.merged_bam }
         }
     }
 
