@@ -200,7 +200,7 @@ task Filter {
     >>>
 
     output {
-        File filtered_bam = "~{prefix}.extracted.bam"
+        File filtered_bam = "~{prefix}.filtered.bam"
     }
 
     #########################
