@@ -123,10 +123,6 @@ workflow PBFlowcell {
                 file = IndexCCSUnalignedReads.pbi,
                 name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi"
         }
-
-        if (experiment_type == 'MASSEQ') {
-            call Longbow.Stats { input: bam = MergeCCSUnalignedReads.merged_bam }
-        }
     }
 
     if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
@@ -147,6 +143,22 @@ workflow PBFlowcell {
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics"
+    }
+
+    if (experiment_type == 'MASSEQ') {
+        String stats_dir = outdir + "/metrics/longbow"
+
+        call Utils.MergeBams as MergeLongbowAnnotatedBams { input: bams = select_all(Process.annotated_bam) }
+        call Longbow.Stats as LongbowUnfilteredStats { input: bam = MergeLongbowAnnotatedBams.merged_bam, prefix="unfiltered" }
+        call FF.FinalizeToDir as FinalizeUnfilteredStatsPNGs { input: outdir = stats_dir, files = LongbowUnfilteredStats.pngs }
+        call FF.FinalizeToDir as FinalizeUnfilteredStatsSVGs { input: outdir = stats_dir, files = LongbowUnfilteredStats.svgs }
+        call FF.FinalizeToFile as FinalizeUnfilteredStatsSummary { input: outdir = stats_dir, file = LongbowUnfilteredStats.summary }
+
+        call Utils.MergeBams as MergeLongbowFilteredBams { input: bams = select_all(Process.filtered_bam) }
+        call Longbow.Stats as LongbowFilteredStats { input: bam = MergeLongbowFilteredBams.merged_bam, prefix="filtered" }
+        call FF.FinalizeToDir as FinalizeFilteredStatsPNGs { input: outdir = stats_dir, files = LongbowFilteredStats.pngs }
+        call FF.FinalizeToDir as FinalizeFilteredStatsSVGs { input: outdir = stats_dir, files = LongbowFilteredStats.svgs }
+        call FF.FinalizeToFile as FinalizeFilteredStatsSummary { input: outdir = stats_dir, file = LongbowFilteredStats.summary }
     }
 
     call PB.SummarizePBI as SummarizeSubreadsPBI   { input: pbi = pbi, runtime_attr_override = { 'mem_gb': 72 } }

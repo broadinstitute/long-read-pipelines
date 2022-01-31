@@ -29,9 +29,13 @@ workflow Process {
         }
     }
 
-    call Extract { input: bam = select_first([Refine.refined_bam, Annotate.annotated_bam]) }
+    call Filter { input: bam = select_first([Refine.refined_bam, Annotate.annotated_bam]) }
+
+    call Extract { input: bam = Filter.filtered_bam }
 
     output {
+        File annotated_bam = Annotate.annotated_bam
+        File filtered_bam = Filter.filtered_bam
         File extracted_bam = Extract.extracted_bam
     }
 }
@@ -177,6 +181,50 @@ task Refine {
     }
 }
 
+task Filter {
+    input {
+        File bam
+
+        Int num_cpus = 2
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 * ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        longbow filter -o ~{prefix}.filtered.bam ~{bam}
+    >>>
+
+    output {
+        File filtered_bam = "~{prefix}.extracted.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          num_cpus,
+        mem_gb:             2*num_cpus,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task Extract {
     input {
         File bam
@@ -192,7 +240,7 @@ task Extract {
     command <<<
         set -euxo pipefail
 
-        longbow filter ~{bam} | longbow segment | longbow extract -o ~{prefix}.extracted.bam
+        longbow segment ~{bam} | longbow extract -o ~{prefix}.extracted.bam
     >>>
 
     output {
@@ -241,6 +289,7 @@ task Stats {
     output {
         Array[File] pngs = glob("*.png")
         Array[File] svgs = glob("*.svg")
+        File summary = "~{prefix}_summary_stats.txt"
     }
 
     #########################
@@ -251,7 +300,7 @@ task Stats {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.11"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.12"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
