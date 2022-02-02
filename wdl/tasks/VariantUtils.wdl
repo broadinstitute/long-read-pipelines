@@ -75,7 +75,7 @@ task MergeAndSortVCFs {
 
     Int sz = ceil(size(vcfs, 'GB'))
     Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
-    
+
     Int cores = 8
 
     # pending a bug fix (bcftools github issue 1576) in official bcftools release,
@@ -192,7 +192,7 @@ task GetVCFSampleName {
         bootDiskSizeGb: 10
         preemptible_tries:     3
         max_retries:           2
-        docker:"ubuntu:20.04"
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
 
@@ -439,7 +439,7 @@ task FixSnifflesVCF {
         cat first_lines.txt contigs.txt everything.defined.txt sample.line.txt > fixed.header.txt
 
         # print to stdout for checking
-        grep -vF "##contig=<ID=" fixed.header.txt 
+        grep -vF "##contig=<ID=" fixed.header.txt
 
         cat fixed.header.txt body.txt > fixed.vcf
         rm ~{local_sp_fixed}

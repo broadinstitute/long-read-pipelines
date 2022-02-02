@@ -62,7 +62,7 @@ task PickGenotypeVCF {
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
         bootDiskSizeGb: 10
-        docker:"ubuntu:20.04"
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
 
@@ -104,7 +104,7 @@ task FilterGenotypesVCF {
         bootDiskSizeGb: 10
         preemptible_tries:     3
         max_retries:           2
-        docker:"ubuntu:20.04"
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
 
@@ -139,7 +139,7 @@ task ExtractGenotypingSites {
         bootDiskSizeGb: 10
         preemptible_tries:     3
         max_retries:           2
-        docker:"ubuntu:20.04"
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
 
@@ -166,7 +166,7 @@ task MergeGenotypingSites {
         bootDiskSizeGb: 10
         preemptible_tries:     3
         max_retries:           2
-        docker:"ubuntu:20.04"
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
 
@@ -193,7 +193,7 @@ task ExtractRelevantGenotypingReads {
         set -eux
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        
+
         samtools view -h -@ 1 \
             --write-index \
             -o "relevant_reads.bam##idx##relevant_reads.bam.bai" \
