@@ -41,7 +41,7 @@ task Quantify {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -89,7 +89,7 @@ task ExtractTranscriptSequences {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -143,7 +143,7 @@ task CompareTranscriptomes {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

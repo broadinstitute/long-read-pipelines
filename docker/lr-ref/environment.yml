@@ -1,0 +1,7 @@
+name: lr-align
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - google-cloud-storage

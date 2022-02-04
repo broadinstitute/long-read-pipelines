@@ -1,6 +1,6 @@
-VERSION = 2.2.1 # This should match the Stringtie version number
-TAG1 = us.gcr.io/broad-dsp-lrma/lr-stringtie2:$(VERSION)
-TAG2 = us.gcr.io/broad-dsp-lrma/lr-stringtie2:latest
+VERSION = 0.1.0
+TAG1 = us.gcr.io/broad-dsp-lrma/lr-ref:$(VERSION)
+TAG2 = us.gcr.io/broad-dsp-lrma/lr-ref:latest
 
 all: | build push
 
@@ -9,7 +9,8 @@ build:
 
 build_no_cache:
 	docker build --no-cache -t $(TAG1) -t $(TAG2) .
-  
+
+
 push:
 	docker push $(TAG1)
 	docker push $(TAG2)
