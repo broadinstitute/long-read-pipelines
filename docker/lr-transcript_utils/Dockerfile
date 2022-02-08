@@ -125,6 +125,12 @@ RUN git clone https://github.com/mortazavilab/TALON.git \
     && cd TALON \
     && python3 -mvenv venv && . venv/bin/activate && pip install .
 
+
+# Get GFFCompare:
+RUN git clone https://github.com/gpertea/gffcompare \
+	  && cd gffcompare \
+		&& make release
+
 # Clean up apt-get process:
 RUN apt-get clean && apt-get purge && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
