@@ -502,7 +502,7 @@ def write_read_to_equivalence_class_file(out_file_name, mas_seq_tx_equivalence_c
                   total=len(mas_seq_tx_equivalence_classes)) as pbar:
             f.write("#Read Name\tEQ Class\tAssociated Genes\n")
             for mas_read, tx_set in mas_seq_tx_equivalence_classes.items():
-                gene_assignments = mas_seq_to_gencode_gene[mas_read]
+                gene_assignments = sorted(list(mas_seq_to_gencode_gene[mas_read]))
                 tx_assignments = list(tx_set)
                 f.write(
                     f"{mas_read}\t{','.join([str(tx) + ';' + str(cc) for tx, cc in tx_assignments])}\t{','.join(gene_assignments)}\n")
@@ -656,3 +656,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args.gencode_gtf, args.st2_gencode, args.st2_mas_seq, args.gencode_st2, args.gencode_mas_seq, args.out_base_name)
+
