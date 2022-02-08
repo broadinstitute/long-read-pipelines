@@ -3,7 +3,7 @@ FROM continuumio/miniconda3
 MAINTAINER Jonn Smith <jonn@broadinstitute.org>
 
 # Update apt:
-RUN apt-get -y update
+RUN apt-get --allow-releaseinfo-change update 
 
 # Install utilities:
 RUN apt-get -y install wget vim tree
