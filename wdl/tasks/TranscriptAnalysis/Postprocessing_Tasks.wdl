@@ -214,3 +214,73 @@ task SubsetCountsMatrixByGenes {
         cpu: 8
     }
 }
+
+
+task QuantifyGffComparison {
+    meta {
+        description : "Create equivalence classes and gene assignments from a set of gffcompare results."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File genome_gtf
+
+        File st2_gencode_refmap
+        File st2_read_refmap
+        File gencode_st2_refmap
+        File gencode_read_refmap
+
+        String prefix = "reads_comparison"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        genome_gtf : "Genome annotation GTF file (usually gencode)."
+        st2_gencode_refmap : "Refmap file (produced by gffcompare) comparing the stringtie2 discovered transcriptome to the genome reference gtf."
+        st2_read_refmap : "Refmap file (produced by gffcompare) comparing the stringtie2 discovered transcriptome to input reads (in GFF format)."
+        gencode_st2_refmap : "Refmap file (produced by gffcompare) comparing the genome reference gtf to the stringtie2 discovered transcriptome."
+        gencode_read_refmap : "Refmap file (produced by gffcompare) comparing the genome reference gtf to input reads (in GFF format)."
+        prefix : "Prefix for ouput file."
+    }
+
+    Int disk_size_gb = 10 + 2*ceil(size(genome_gtf, "GB")) + 2*ceil(size(st2_gencode_refmap, "GB")) + 2*ceil(size(st2_read_refmap, "GB")) + 2*ceil(size(gencode_st2_refmap, "GB")) + 2*ceil(size(gencode_read_refmap, "GB"))
+
+    command <<<
+        time /python_scripts/quantify_gff_reads.py \
+            --gencode_gtf ~{genome_gtf} \
+            --st2-gencode ~{st2_gencode_refmap} \
+            --st2-mas-seq ~{st2_read_refmap} \
+            --gencode-st2 ~{gencode_st2_refmap} \
+            --gencode-mas-seq ~{gencode_read_refmap} \
+            -o ~{prefix}
+    >>>
+
+    output {
+        File gene_assignments_file = prefix + ".gene_name_assignments.tsv"
+        File tx_equivalence_class_file = prefix + ".equivalence_classes.tsv"
+        File graph_gpickle = prefix + ".graph.gpickle"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

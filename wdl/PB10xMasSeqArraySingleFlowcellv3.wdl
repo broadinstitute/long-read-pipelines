@@ -16,6 +16,7 @@ import "tasks/StringTie2.wdl"
 
 import "tasks/TranscriptAnalysis/UMI_Tools.wdl" as UMI_TOOLS
 import "tasks/TranscriptAnalysis/Postprocessing_Tasks.wdl" as TX_POST
+import "tasks/TranscriptAnalysis/Preprocessing_Tasks.wdl" as TX_PRE
 
 workflow PB10xMasSeqSingleFlowcellv3 {
 
@@ -689,12 +690,94 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             prefix = SM + "_annotated_ccs_reclaimed_array_elements_starcode"
     }
 
-    # Merge Aligned CCS Reclaimed reads together:
+    # Merge Aligned CCS and Reclaimed reads together:
     call Utils.MergeBams as t_63_MergeAllAnnotatedArrayElements {
         input:
             bams = [t_61_CorrectCCSBarcodesWithStarcodeSeedCountsSharded.output_bam, t_62_CorrectReclaimedBarcodesWithStarcodeSeedCountsSharded.output_bam],
             prefix = SM + "_all_starcode_annotated_array_elements"
     }
+
+    #################
+    # Now we have to split teh reads again, process them into gff files, run gffcompare and then aggregate the results in a graph
+
+    # We can actually compare the references without needing to scatter:
+    call TX_PRE.GffCompare as t_64_GffCompareStringtie2toGencode {
+        input:
+            gff_ref = t_44_ST2_Quant.st_gtf,
+            gff_query = genome_annotation_gtf,
+            ref_fasta = ref_fasta,
+            ref_fasta_index = ref_fasta_index,
+    }
+    call TX_PRE.GffCompare as t_65_GffCompareGencodetoStringtie2 {
+        input:
+            gff_ref = genome_annotation_gtf,
+            gff_query = t_44_ST2_Quant.st_gtf,
+            ref_fasta = ref_fasta,
+            ref_fasta_index = ref_fasta_index,
+    }
+
+    # Split by contig:
+    call TX_PRE.SplitBamByContig as t_66_SplitArrayElementsByContig {
+        input:
+            bam = t_63_MergeAllAnnotatedArrayElements.merged_bam,
+            prefix = SM + "_all_starcode_annotated_array_elements"
+    }
+
+    # For each contig:
+    scatter (i in range(length(t_66_SplitArrayElementsByContig.contig_bams))) {
+
+        File contig_bam = t_66_SplitArrayElementsByContig.contig_bams[i]
+        String contig_name = t_66_SplitArrayElementsByContig.contig_names[i]
+
+        # Create a GFF file:
+        call TX_PRE.ConvertSplicedBamToGff as t_67_ConvertSplicedBamToGff {
+            input:
+                bam = contig_bam
+        }
+
+        # Compare GFF files:
+        call TX_PRE.GffCompare as t_68_GffCompareStringtie2toMasSeqReads {
+            input:
+                gff_ref = t_44_ST2_Quant.st_gtf,
+                gff_query = t_67_ConvertSplicedBamToGff.gff,
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_index,
+        }
+
+        call TX_PRE.GffCompare as t_69_GffCompareGencodetoMasSeqReads {
+            input:
+                gff_ref = genome_annotation_gtf,
+                gff_query = t_67_ConvertSplicedBamToGff.gff,
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_index,
+        }
+
+        # Create the comparison graph and tsv files:
+        call TX_POST.QuantifyGffComparison as t_70_QuantifyGffComparison {
+            input:
+                genome_gtf = genome_annotation_gtf,
+                st2_gencode_refmap = t_64_GffCompareStringtie2toGencode.refmap,
+                st2_read_refmap = t_68_GffCompareStringtie2toMasSeqReads.refmap,
+                gencode_st2_refmap = t_65_GffCompareGencodetoStringtie2.refmap,
+                gencode_read_refmap = t_69_GffCompareGencodetoMasSeqReads.refmap,
+                prefix = SM + "_all_starcode_annotated_array_elements_" + contig_name
+        }
+    }
+
+    # Merge our gene assignments and eq classes:
+    call Utils.MergeFiles as t_71_MergeGeneAssignmentFiles {
+        input:
+            files_to_merge = t_70_QuantifyGffComparison.gene_assignments_file,
+            merged_file_name = SM + "_all_starcode_annotated_array_elements.gene_name_assignments.tsv"
+    }
+
+    # Merge our tx equivalance classes assignments and eq classes:
+    call Utils.MergeTsvFiles as t_72_MergeTxEqClassesFiles {
+        input:
+            tsv_files = t_70_QuantifyGffComparison.tx_equivalence_class_file,
+            prefix = SM + "_all_starcode_annotated_array_elements.gene_name_assignments"
+    }
+
 #
 #    ############################################################
 #    #               __  __      _        _
@@ -753,8 +836,77 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     String quant_dir = base_out_dir + "/quant"
 
     ##############################################################################################################
+    # Finalize gene / tx assignments:
+    call FF.FinalizeToDir as t_73_FinalizeTxAndGeneAssignments {
+        input:
+            files = [
+                t_71_MergeGeneAssignmentFiles.merged_file,
+                t_72_MergeTxEqClassesFiles.merged_tsv,
+            ],
+            outdir = quant_dir,
+            keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+    }
+
+    call FF.FinalizeToDir as t_74_FinalizeRefAndSt2Comparisons {
+        input:
+            files = [
+                t_64_GffCompareStringtie2toGencode.refmap,
+                t_64_GffCompareStringtie2toGencode.tmap,
+                t_64_GffCompareStringtie2toGencode.tracking,
+                t_64_GffCompareStringtie2toGencode.loci,
+                t_64_GffCompareStringtie2toGencode.annotated_gtf,
+                t_64_GffCompareStringtie2toGencode.stats,
+                t_64_GffCompareStringtie2toGencode.log,
+
+                t_65_GffCompareGencodetoStringtie2.refmap,
+                t_65_GffCompareGencodetoStringtie2.tmap,
+                t_65_GffCompareGencodetoStringtie2.tracking,
+                t_65_GffCompareGencodetoStringtie2.loci,
+                t_65_GffCompareGencodetoStringtie2.annotated_gtf,
+                t_65_GffCompareGencodetoStringtie2.stats,
+                t_65_GffCompareGencodetoStringtie2.log,
+            ],
+            outdir = quant_dir + "/gencode_and_stringtie2",
+            keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+    }
+
+    # Finalize gene / tx assignment by contig:
+    # NOTE: According to the scatter/gather documentation in the WDL spec, this will work correctly
+    #       (https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#scatter--gather)
+    scatter (i in range(length(t_66_SplitArrayElementsByContig.contig_bams))) {
+        String contig = t_66_SplitArrayElementsByContig.contig_names[i]
+
+        call FF.FinalizeToDir as t_75_FinalizeTxAndGeneAssignmentsByContig {
+            input:
+                files = [
+                    t_68_GffCompareStringtie2toMasSeqReads.refmap[i],
+                    t_68_GffCompareStringtie2toMasSeqReads.tmap[i],
+                    t_68_GffCompareStringtie2toMasSeqReads.tracking[i],
+                    t_68_GffCompareStringtie2toMasSeqReads.loci[i],
+                    t_68_GffCompareStringtie2toMasSeqReads.annotated_gtf[i],
+                    t_68_GffCompareStringtie2toMasSeqReads.stats[i],
+                    t_68_GffCompareStringtie2toMasSeqReads.log[i],
+
+                    t_69_GffCompareGencodetoMasSeqReads.refmap[i],
+                    t_69_GffCompareGencodetoMasSeqReads.tmap[i],
+                    t_69_GffCompareGencodetoMasSeqReads.tracking[i],
+                    t_69_GffCompareGencodetoMasSeqReads.loci[i],
+                    t_69_GffCompareGencodetoMasSeqReads.annotated_gtf[i],
+                    t_69_GffCompareGencodetoMasSeqReads.stats[i],
+                    t_69_GffCompareGencodetoMasSeqReads.log[i],
+
+                    t_70_QuantifyGffComparison.gene_assignments_file[i],
+                    t_70_QuantifyGffComparison.tx_equivalence_class_file[i],
+                    t_70_QuantifyGffComparison.graph_gpickle[i],
+                ],
+                outdir = quant_dir + "/by_contig/" + contig,
+                keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+        }
+    }
+
+    ##############################################################################################################
     # Finalize annotated, aligned array elements:
-    call FF.FinalizeToDir as t_64_FinalizeCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_76_FinalizeCBCAnnotatedArrayElements {
         input:
             files = [
                 t_61_CorrectCCSBarcodesWithStarcodeSeedCountsSharded.output_bam,
@@ -768,7 +920,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize meta files:
-    call FF.FinalizeToDir as t_65_FinalizeMeta {
+    call FF.FinalizeToDir as t_77_FinalizeMeta {
         input:
             files = [
                 starcode_seeds,
@@ -782,7 +934,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     if (defined(illumina_barcoded_bam)) {
-        call FF.FinalizeToDir as t_66_FinalizeMetaIlmnBarcodeConfs {
+        call FF.FinalizeToDir as t_78_FinalizeMetaIlmnBarcodeConfs {
             input:
                 files = select_all([
                     t_58_ExtractIlmnBarcodeConfScores.conf_score_tsv
@@ -795,7 +947,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     ##############################################################################################################
     # Finalize the discovered transcriptome:
     if ( !is_SIRV_data ) {
-        call FF.FinalizeToDir as t_67_FinalizeDiscoveredTranscriptome {
+        call FF.FinalizeToDir as t_79_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
                     t_44_ST2_Quant.st_gtf,
@@ -815,7 +967,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_68_FinalizeArrayReads {
+    call FF.FinalizeToDir as t_80_FinalizeArrayReads {
         input:
             files = [
                 t_33_MergeCCSLongbowPassedArrayReads.merged_bam,
@@ -881,7 +1033,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 #        }
 #    }
 #
-    call FF.FinalizeToDir as t_69_FinalizeCCSMetrics {
+    call FF.FinalizeToDir as t_81_FinalizeCCSMetrics {
         input:
             files = [ t_11_FindCCSReport.ccs_report[0] ],
             outdir = metrics_out_dir + "/ccs_metrics",

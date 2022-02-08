@@ -1,5 +1,7 @@
 version 1.0
 
+import "../Structs.wdl"
+
 task SplitBamBySampleAndCellBarcodeTask {
 
     meta {
@@ -219,5 +221,187 @@ task MergeDemuxMasSeqByIndexLogs {
         boot_disk_gb: 10
         preemptible: 0
         cpu: 2
+    }
+}
+
+task SplitBamByContig {
+    meta {
+        description : "Split a given bam file into separate files by contig."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File bam
+
+        String prefix = "reads"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam : "Bamfile to be split by contig."
+        prefix : "Prefix for ouput files."
+    }
+
+    Int disk_size_gb = 10 + 5*ceil(size(bam, "GB"))
+
+    String contig_list = "contig_list.txt"
+
+    command <<<
+        /python_scripts/split_reads_by_contig.py ~{bam} ~{prefix}
+
+        ls ~{prefix}.*.bam | sed 's#~{prefix}.\(.*\).bam#\1#' > ~{contig_list}
+    >>>
+
+    output {
+        Array[File] contig_bams = glob("~{prefix}*.bam")
+        Array[String] contig_names = read_lines(contig_list)
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ConvertSplicedBamToGff {
+    meta {
+        description : "Convert a given splice aligned bam file into a gff file."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File bam
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam : "Bamfile to be converted to gff."
+    }
+
+    String base_name = basename(bam, ".bam")
+
+    Int disk_size_gb = 10 + 5*ceil(size(bam, "GB"))
+
+    command <<<
+        spliced_bam2gff -S -M ~{bam} > ~{base_name}.gff
+    >>>
+
+    output {
+        File gff = "~{base_name}.gff"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-splicedbam2gff:0.0.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task GffCompare {
+    meta {
+        description : "Compare two GFF files"
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File gff_ref
+        File gff_query
+        File ref_fasta
+        File? ref_fasta_index
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        gff_ref : "Gff file to be used as a reference."
+        gff_query : "Gff file to be used as a query (compared against the gff_ref)."
+        ref_fasta : "Reference fasta file."
+        ref_fasta_index : "Reference fasta file index."
+    }
+
+    Int disk_size_gb = 10 + 2*ceil(size(gff_ref, "GB")) + 2*ceil(size(gff_query, "GB")) + 2*ceil(size(ref_fasta, "GB"))
+
+    String query_base_name = basename(gff_query)
+    String query_gff_dir = sub(gff_query, query_base_name + "$", "")
+
+    command <<<
+        time /juffowup2/gffcompare/gffcompare \
+             -V \
+             -r ~{gff_ref} \
+             -s ~{ref_fasta} \
+             ~{gff_query} &> ~{query_base_name}.gffcmp.log
+
+        # Rename some output files so we can disambiguate them later:
+        mv gffcmp.tracking ~{query_base_name}.gffcmp.tracking
+        mv gffcmp.loci ~{query_base_name}.gffcmp.loci
+        mv gffcmp.annotated.gtf ~{query_base_name}.gffcmp.annotated.gtf
+        mv gffcmp.stats ~{query_base_name}.gffcmp.stats
+    >>>
+
+    output {
+        File refmap = query_gff_dir + "/gffcmp." + query_base_name + ".refmap"
+        File tmap = query_gff_dir + "/gffcmp." + query_base_name + ".tmap"
+        File tracking = "~{query_base_name}.gffcmp.tracking"
+        File loci = "~{query_base_name}.gffcmp.loci"
+        File annotated_gtf = "~{query_base_name}.gffcmp.annotated.gtf"
+        File stats = "~{query_base_name}.gffcmp.stats"
+        File log = "~{query_base_name}.gffcmp.log"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
