@@ -511,9 +511,9 @@ def write_read_to_equivalence_class_file(out_base_file_name, eq_classes, mas_seq
             f.write("#Read_Name\tEQ_Class\tAssociated_Genes\n")
             for mas_read, tx_set in mas_seq_tx_equivalence_classes.items():
                 gene_assignments = sorted(list(mas_seq_to_gencode_gene[mas_read]))
-                tx_assignments = list(tx_set)
-                f.write(
-                    f"{mas_read}\t{','.join([str(tx) + ';' + str(cc) for tx, cc in tx_assignments])}\t{','.join(gene_assignments)}\n")
+                eq_class = tuple(sorted(list(tx_set)))
+                eq_class_label = eq_classes[eq_class]
+                f.write(f"{mas_read}\t{eq_class_label}\t{','.join(gene_assignments)}\n")
                 pbar.update(1)
 
 
