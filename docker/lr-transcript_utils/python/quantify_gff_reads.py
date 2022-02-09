@@ -640,7 +640,9 @@ def main(gencode_gtf, st2_gencode, st2_mas_seq, gencode_st2, gencode_mas_seq, ou
                                          mas_seq_to_gencode_gene)
 
     # Write our graph out to disk:
+    print("Writing graph pickle...")
     nx.write_gpickle(graph, f"{out_base_name}.graph.gpickle")
+    print("Done!")
 
 
 ##########################################################################################
