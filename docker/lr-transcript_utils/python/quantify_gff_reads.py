@@ -496,11 +496,19 @@ def write_read_to_gene_assignment_file(out_file_name, mas_seq_to_gencode_gene):
                 pbar.update(1)
 
 
-def write_read_to_equivalence_class_file(out_file_name, mas_seq_tx_equivalence_classes, mas_seq_to_gencode_gene):
-    with open(out_file_name, 'w') as f:
+def write_read_to_equivalence_class_file(out_base_file_name, eq_classes, mas_seq_tx_equivalence_classes, mas_seq_to_gencode_gene):
+    # Write out EQ Class label file:
+    with open(f"{out_base_file_name}.equivalence_class_lookup.tsv", 'w') as f:
+        with tqdm(desc=f"Writing EQ class label file", unit=" eq class", total=len(eq_classes)) as pbar:
+            f.write("#EQ_Class\tTranscript_Assignments\n")
+            for eq_class, indx in eq_classes.items():
+                f.write(f"{indx}\t{','.join([str(tx) + ';' + str(cc) for tx, cc in eq_class])}\n")
+                pbar.update(1)
+
+    with open(f"{out_base_file_name}.equivalence_classes.tsv", 'w') as f:
         with tqdm(desc=f"Writing mas-seq -> eq class", unit=" mas read",
                   total=len(mas_seq_tx_equivalence_classes)) as pbar:
-            f.write("#Read Name\tEQ Class\tAssociated Genes\n")
+            f.write("#Read_Name\tEQ_Class\tAssociated_Genes\n")
             for mas_read, tx_set in mas_seq_tx_equivalence_classes.items():
                 gene_assignments = sorted(list(mas_seq_to_gencode_gene[mas_read]))
                 tx_assignments = list(tx_set)
@@ -612,11 +620,24 @@ def main(gencode_gtf, st2_gencode, st2_mas_seq, gencode_st2, gencode_mas_seq, ou
     print_stats(mas_gencode_tx_assignment_counts, "MAS-seq transcript assignment stats")
     print()
 
+    # Calculate unique equivalence classes:
+    with tqdm(desc=f"Creating EQ class labels", unit=" eq class", total=len(mas_seq_tx_equivalence_classes)) as pbar:
+        eq_classes = set()
+        for eq_class in mas_seq_tx_equivalence_classes.values():
+            eq_classes.add(tuple(sorted(list(eq_class))))
+            pbar.update(1)
+        eq_classes = {eq_class: indx for indx, eq_class in enumerate(tuple(sorted(list(eq_classes))))}
+
+    print(f"Num unique equivalence classes: {len(eq_classes)}")
+
     # Write our gene assignments:
     write_read_to_gene_assignment_file(f"{out_base_name}.gene_name_assignments.tsv", mas_seq_to_gencode_gene)
 
     # Write our equivalence classes:
-    write_read_to_equivalence_class_file(f"{out_base_name}.equivalence_classes.tsv", mas_seq_tx_equivalence_classes, mas_seq_to_gencode_gene)
+    write_read_to_equivalence_class_file(out_base_name,
+                                         eq_classes,
+                                         mas_seq_tx_equivalence_classes,
+                                         mas_seq_to_gencode_gene)
 
     # Write our graph out to disk:
     nx.write_gpickle(graph, f"{out_base_name}.graph.gpickle")

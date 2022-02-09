@@ -245,7 +245,11 @@ task QuantifyGffComparison {
         prefix : "Prefix for ouput file."
     }
 
-    Int disk_size_gb = 10 + 2*ceil(size(genome_gtf, "GB")) + 2*ceil(size(st2_gencode_refmap, "GB")) + 2*ceil(size(st2_read_refmap, "GB")) + 2*ceil(size(gencode_st2_refmap, "GB")) + 2*ceil(size(gencode_read_refmap, "GB"))
+    Int disk_size_gb = 10 + 2*ceil(size(genome_gtf, "GB"))
+                          + 2*ceil(size(st2_gencode_refmap, "GB"))
+                          + 2*ceil(size(st2_read_refmap, "GB"))
+                          + 2*ceil(size(gencode_st2_refmap, "GB"))
+                          + 2*ceil(size(gencode_read_refmap, "GB"))
 
     command <<<
         time /python_scripts/quantify_gff_reads.py \

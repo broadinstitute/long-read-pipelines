@@ -823,6 +823,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
 
+    File keyfile = t_72_MergeTxEqClassesFiles.merged_tsv
+
     String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
     String metrics_out_dir = base_out_dir + "/metrics"
     String array_element_dir = base_out_dir + "/annotated_array_elements"
@@ -867,7 +869,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_65_GffCompareGencodetoStringtie2.log,
             ],
             outdir = quant_dir + "/gencode_and_stringtie2",
-            keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+            keyfile = keyfile
     }
 
     # Finalize gene / tx assignment by contig:
@@ -900,7 +902,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                     t_70_QuantifyGffComparison.graph_gpickle[i],
                 ],
                 outdir = quant_dir + "/by_contig/" + contig,
-                keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+                keyfile = keyfile
         }
     }
 
@@ -915,7 +917,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_63_MergeAllAnnotatedArrayElements.merged_bai,
             ],
             outdir = intermediate_array_elements_dir,
-            keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+            keyfile = keyfile
     }
 
     ##############################################################################################################
@@ -930,7 +932,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_56_MergeCCSReclaimedUmiConfScoreTsvsForStarcode.merged_file,
             ],
             outdir = meta_files_dir,
-            keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+            keyfile = keyfile
     }
 
     if (defined(illumina_barcoded_bam)) {
@@ -940,7 +942,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                     t_58_ExtractIlmnBarcodeConfScores.conf_score_tsv
                 ]),
                 outdir = meta_files_dir,
-                keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+                keyfile = keyfile
         }
     }
 
@@ -962,7 +964,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                     t_46_ST2_CompareTranscriptomes.tmap,
                 ],
                 outdir = base_out_dir + "/discovered_transcriptome",
-                keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+                keyfile = keyfile
         }
     }
     ##############################################################################################################
@@ -976,7 +978,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_36_MergeCCSUnreclaimableArrayReads.merged_bam,
             ],
             outdir = intermediate_reads_dir + "/array_bams",
-            keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+            keyfile = keyfile
     }
 #
 #    call FF.FinalizeToDir as t_37_FinalizeArrayElementReads {
@@ -1037,7 +1039,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             files = [ t_11_FindCCSReport.ccs_report[0] ],
             outdir = metrics_out_dir + "/ccs_metrics",
-            keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
+            keyfile = keyfile
     }
 #
 #    ##############################################################################################################
@@ -1097,11 +1099,11 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 #            keyfile = t_61_GenerateStaticReport.html_report
 #    }
 #
-#    ##############################################################################################################
-#    # Write out completion file so in the future we can be 100% sure that this run was good:
-#    call FF.WriteCompletionFile as t_47_WriteCompletionFile {
-#        input:
-#            outdir = base_out_dir + "/",
-#            keyfile = t_61_GenerateStaticReport.html_report
-#    }
+    ##############################################################################################################
+    # Write out completion file so in the future we can be 100% sure that this run was good:
+    call FF.WriteCompletionFile as t_82_WriteCompletionFile {
+        input:
+            outdir = base_out_dir + "/",
+            keyfile = keyfile
+    }
 }

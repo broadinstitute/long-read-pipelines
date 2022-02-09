@@ -361,11 +361,15 @@ task GffCompare {
     String query_gff_dir = sub(gff_query, query_base_name + "$", "")
 
     command <<<
+        # Because of how gffcompare works, we need to move the query file to our PWD:
+
+        mv -v ~{gff_query} .
+
         time /gffcompare/gffcompare \
              -V \
              -r ~{gff_ref} \
              -s ~{ref_fasta} \
-             ~{gff_query} &> ~{query_base_name}.gffcmp.log
+             ~{query_base_name} &> ~{query_base_name}.gffcmp.log
 
         # Rename some output files so we can disambiguate them later:
         mv gffcmp.tracking ~{query_base_name}.gffcmp.tracking
@@ -375,8 +379,8 @@ task GffCompare {
     >>>
 
     output {
-        File refmap = query_gff_dir + "/gffcmp." + query_base_name + ".refmap"
-        File tmap = query_gff_dir + "/gffcmp." + query_base_name + ".tmap"
+        File refmap = "gffcmp." + query_base_name + ".refmap"
+        File tmap = "gffcmp." + query_base_name + ".tmap"
         File tracking = "~{query_base_name}.gffcmp.tracking"
         File loci = "~{query_base_name}.gffcmp.loci"
         File annotated_gtf = "~{query_base_name}.gffcmp.annotated.gtf"
