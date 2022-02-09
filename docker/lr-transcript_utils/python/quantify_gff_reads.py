@@ -492,7 +492,7 @@ def write_read_to_gene_assignment_file(out_file_name, mas_seq_to_gencode_gene):
         with tqdm(desc=f"Writing mas-seq -> gene map", unit=" mas read", total=len(mas_seq_to_gencode_gene)) as pbar:
             for k, v in mas_seq_to_gencode_gene.items():
                 if len(v) != 0:
-                    f.write(f"{k}\t{','.join(v)}\n")
+                    f.write(f"{k}\t{','.join(sorted(v))}\n")
                 pbar.update(1)
 
 
