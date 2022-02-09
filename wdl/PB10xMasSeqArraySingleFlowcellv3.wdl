@@ -772,10 +772,11 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     # Merge our tx equivalance classes assignments and eq classes:
-    call Utils.MergeTsvFiles as t_72_MergeTxEqClassesFiles {
+    call TX_POST.CombineEqClassFiles as t_72_CombineEqClassFiles {
         input:
-            tsv_files = t_70_QuantifyGffComparison.tx_equivalence_class_file,
-            prefix = SM + "_all_starcode_annotated_array_elements.gene_name_assignments"
+            equivalence_class_definitions = t_70_QuantifyGffComparison.tx_equivalence_class_labels_file,
+            equivalence_classes = t_70_QuantifyGffComparison.tx_equivalence_class_file,
+            prefix = SM + "_all_starcode_annotated_array_elements"
     }
 
 #
@@ -823,7 +824,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
 
-    File keyfile = t_72_MergeTxEqClassesFiles.merged_tsv
+    File keyfile = t_72_CombineEqClassFiles.combined_eq_class_defs
 
     String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
     String metrics_out_dir = base_out_dir + "/metrics"
@@ -843,7 +844,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             files = [
                 t_71_MergeGeneAssignmentFiles.merged_file,
-                t_72_MergeTxEqClassesFiles.merged_tsv,
+                t_72_CombineEqClassFiles.combined_eq_class_defs,
+                t_72_CombineEqClassFiles.combined_eq_class_assignments,
             ],
             outdir = quant_dir,
             keyfile = t_63_MergeAllAnnotatedArrayElements.merged_bai
@@ -898,6 +900,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                     t_69_GffCompareGencodetoMasSeqReads.log[i],
 
                     t_70_QuantifyGffComparison.gene_assignments_file[i],
+                    t_70_QuantifyGffComparison.tx_equivalence_class_labels_file[i],
                     t_70_QuantifyGffComparison.tx_equivalence_class_file[i],
                     t_70_QuantifyGffComparison.graph_gpickle[i],
                 ],

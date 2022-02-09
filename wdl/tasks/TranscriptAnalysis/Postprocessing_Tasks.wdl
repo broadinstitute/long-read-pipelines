@@ -263,8 +263,70 @@ task QuantifyGffComparison {
 
     output {
         File gene_assignments_file = prefix + ".gene_name_assignments.tsv"
+        File tx_equivalence_class_labels_file = prefix + ".equivalence_class_lookup.tsv"
         File tx_equivalence_class_file = prefix + ".equivalence_classes.tsv"
         File graph_gpickle = prefix + ".graph.gpickle"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CombineEqClassFiles {
+    meta {
+        description : "Combine equivalence classes and gene assignments from disjoint sets of reads produced by QuantifyGffComparison."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        Array[File] equivalence_class_definitions
+        Array[File] equivalence_classes
+
+        String prefix = "combined"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        equivalence_class_definitions : "TSV files containing equivalence class definitions as produced by QuantifyGffComparison.tx_equivalence_class_labels_file."
+        equivalence_classes : "TSV files containing read -> equivalence class assignments as produced by QuantifyGffComparison.tx_equivalence_class_file."
+        prefix : "Prefix for ouput file."
+    }
+
+    Int disk_size_gb = 10 + 2*ceil(size(equivalence_class_definitions, "GB"))
+                          + 2*ceil(size(equivalence_classes, "GB"))
+
+    command <<<
+        time /python_scripts/combine_tx_equivalence_classes.py \
+            ~{sep=" " equivalence_class_definitions} \
+            ~{sep=" " equivalence_classes}
+
+        mv equivalence_class_lookup.tsv ~{prefix}.equivalence_class_lookup.tsv
+        mv equivalence_classes.tsv ~{prefix}.equivalence_classes.tsv
+    >>>
+
+    output {
+        File combined_eq_class_defs = "~{prefix}.equivalence_class_lookup.tsv"
+        File combined_eq_class_assignments = "~{prefix}.equivalence_classes.tsv"
     }
 
     #########################

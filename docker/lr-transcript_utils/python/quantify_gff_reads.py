@@ -496,7 +496,7 @@ def write_read_to_gene_assignment_file(out_file_name, mas_seq_to_gencode_gene):
                 pbar.update(1)
 
 
-def write_read_to_equivalence_class_file(out_base_file_name, eq_classes, mas_seq_tx_equivalence_classes, mas_seq_to_gencode_gene):
+def write_read_to_equivalence_class_files(out_base_file_name, eq_classes, mas_seq_tx_equivalence_classes, mas_seq_to_gencode_gene):
     # Write out EQ Class label file:
     with open(f"{out_base_file_name}.equivalence_class_lookup.tsv", 'w') as f:
         with tqdm(desc=f"Writing EQ class label file", unit=" eq class", total=len(eq_classes)) as pbar:
@@ -634,7 +634,7 @@ def main(gencode_gtf, st2_gencode, st2_mas_seq, gencode_st2, gencode_mas_seq, ou
     write_read_to_gene_assignment_file(f"{out_base_name}.gene_name_assignments.tsv", mas_seq_to_gencode_gene)
 
     # Write our equivalence classes:
-    write_read_to_equivalence_class_file(out_base_name,
+    write_read_to_equivalence_class_files(out_base_name,
                                          eq_classes,
                                          mas_seq_tx_equivalence_classes,
                                          mas_seq_to_gencode_gene)
