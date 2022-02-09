@@ -594,31 +594,38 @@ def main(gencode_gtf, st2_gencode, st2_mas_seq, gencode_st2, gencode_mas_seq, ou
     # Print some stats about our gene and transcript assignments:
     num_mas_seq_nodes = nx.subgraph_view(graph, filter_node=mas_seq_node_filter).number_of_nodes()
 
-    print("Gene Stats:")
-    mas_gencode_gene_assignment_counts = [len(s) for s in mas_seq_to_gencode_gene.values()]
-    print(
-        f"Num uniquely assigned MAS-seq reads: {sum([c == 1 for c in mas_gencode_gene_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 1 for c in mas_gencode_gene_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
-    print(
-        f"Num ambiguous/unassigned MAS-seq reads: {sum([c == 0 for c in mas_gencode_gene_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 0 for c in mas_gencode_gene_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
-    print(
-        f"Num multi-assigned MAS-seq reads: {sum([c > 1 for c in mas_gencode_gene_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c > 1 for c in mas_gencode_gene_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
     print()
-    print_stats(mas_gencode_gene_assignment_counts, "MAS-seq gene assignment stats")
+    print(f"Num MAS-seq nodes: {num_mas_seq_nodes}")
     print()
 
-    print()
+    if num_mas_seq_nodes == 0:
+        print("No mas-seq nodes in this dataset.  This may be fine if we're on an alt contig.")
+    else:
+        print("Gene Stats:")
+        mas_gencode_gene_assignment_counts = [len(s) for s in mas_seq_to_gencode_gene.values()]
+        print(
+            f"Num uniquely assigned MAS-seq reads: {sum([c == 1 for c in mas_gencode_gene_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 1 for c in mas_gencode_gene_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
+        print(
+            f"Num ambiguous/unassigned MAS-seq reads: {sum([c == 0 for c in mas_gencode_gene_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 0 for c in mas_gencode_gene_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
+        print(
+            f"Num multi-assigned MAS-seq reads: {sum([c > 1 for c in mas_gencode_gene_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c > 1 for c in mas_gencode_gene_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
+        print()
+        print_stats(mas_gencode_gene_assignment_counts, "MAS-seq gene assignment stats")
+        print()
 
-    print("Transcript Stats:")
-    mas_gencode_tx_assignment_counts = [len(s) for s in mas_seq_tx_equivalence_classes.values()]
-    print(
-        f"Num uniquely assigned MAS-seq reads: {sum([c == 1 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 1 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
-    print(
-        f"Num ambiguous/unassigned MAS-seq reads: {sum([c == 0 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 0 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
-    print(
-        f"Num multi-assigned MAS-seq reads: {sum([c > 1 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c > 1 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
-    print()
-    print_stats(mas_gencode_tx_assignment_counts, "MAS-seq transcript assignment stats")
-    print()
+        print()
+
+        print("Transcript Stats:")
+        mas_gencode_tx_assignment_counts = [len(s) for s in mas_seq_tx_equivalence_classes.values()]
+        print(
+            f"Num uniquely assigned MAS-seq reads: {sum([c == 1 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 1 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
+        print(
+            f"Num ambiguous/unassigned MAS-seq reads: {sum([c == 0 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 0 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
+        print(
+            f"Num multi-assigned MAS-seq reads: {sum([c > 1 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c > 1 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
+        print()
+        print_stats(mas_gencode_tx_assignment_counts, "MAS-seq transcript assignment stats")
+        print()
 
     # Calculate unique equivalence classes:
     with tqdm(desc=f"Creating EQ class labels", unit=" eq class", total=len(mas_seq_tx_equivalence_classes)) as pbar:
@@ -635,9 +642,9 @@ def main(gencode_gtf, st2_gencode, st2_mas_seq, gencode_st2, gencode_mas_seq, ou
 
     # Write our equivalence classes:
     write_read_to_equivalence_class_files(out_base_name,
-                                         eq_classes,
-                                         mas_seq_tx_equivalence_classes,
-                                         mas_seq_to_gencode_gene)
+                                          eq_classes,
+                                          mas_seq_tx_equivalence_classes,
+                                          mas_seq_to_gencode_gene)
 
     # Write our graph out to disk:
     print("Writing graph pickle...")
