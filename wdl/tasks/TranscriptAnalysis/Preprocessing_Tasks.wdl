@@ -361,7 +361,7 @@ task GffCompare {
     String query_gff_dir = sub(gff_query, query_base_name + "$", "")
 
     command <<<
-        time /juffowup2/gffcompare/gffcompare \
+        time /gffcompare/gffcompare \
              -V \
              -r ~{gff_ref} \
              -s ~{ref_fasta} \
