@@ -12,15 +12,14 @@ gCBC_TAG_NAME = "CB"
 gUMI_TAG_NAME = "BX"
 
 
-def main(input_bam, out_tsv_name):
-
-    global gGENE_TX_TAG_NAME
-    global gCBC_TAG_NAME
-    global gUMI_TAG_NAME
+def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, umi_tag):
 
     print("Verifying input file(s) exist...", file=sys.stderr)
     files_ok = True
-    for f in [input_bam]:
+    input_files = [input_bam]
+    if eq_class_tsv:
+        input_files.append(eq_class_tsv)
+    for f in input_files:
         if not os.path.exists(f):
             print(f"ERROR: Input file does not exist: {f}", file=sys.stderr)
             files_ok = False
@@ -28,7 +27,22 @@ def main(input_bam, out_tsv_name):
         sys.exit(1)
     print("Input files verified.", file=sys.stderr)
 
+    read_to_eq_class_map = None
+    if eq_class_tsv:
+        print("Equivalence class TSV provided.  Ingesting read -> eq class map...")
+
+        read_to_eq_class_map = dict()
+
+        with open(eq_class_tsv, 'r') as f:
+            for line in f:
+                if line.startswith("#"):
+                    continue
+                read_name, eq_class, gene_assignment = line.strip().split("\t")
+                read_to_eq_class_map[read_name] = eq_class
+
+
     reads_processed = 0
+    reads_assigned_to_txs = 0
 
     print(f"Tallying gene/tx x CBC x UMI counts from {input_bam}", file=sys.stderr)
     pysam.set_verbosity(0)  # silence message about the .bai file not being found
@@ -47,12 +61,17 @@ def main(input_bam, out_tsv_name):
 
         for read in bam_file:
 
-            gene_tx = read.get_tag(gGENE_TX_TAG_NAME)
-            umi = read.get_tag(gUMI_TAG_NAME)
+            if read_to_eq_class_map:
+                gene_tx = read_to_eq_class_map[read.query_name]
+                reads_assigned_to_txs += 1
+            else:
+                gene_tx = read.get_tag(gene_tx_tag)
+
+            umi = read.get_tag(umi_tag)
 
             if has_cbc:
                 try:
-                    cbc = read.get_tag(gCBC_TAG_NAME)
+                    cbc = read.get_tag(cell_barcode_tag)
                 except KeyError:
                     has_cbc = False
 
@@ -83,7 +102,10 @@ def main(input_bam, out_tsv_name):
     print(f"Writing out file: {out_tsv_name}", file=sys.stderr)
     with open(out_tsv_name, 'w') as out_tsv:
         # Write out a header:
-        out_tsv.write(f"Gene/Transcript\tCell_Barcode\tUMI\tCount\n")
+        if read_to_eq_class_map:
+            out_tsv.write(f"Equivalence_Class\tCell_Barcode\tUMI\tCount\n")
+        else:
+            out_tsv.write(f"Gene/Transcript\tCell_Barcode\tUMI\tCount\n")
 
         # Write out our counts:
         for cbc in count_matrix.keys():
@@ -110,13 +132,33 @@ if __name__ == "__main__":
                f"\tUMI:             {gUMI_TAG_NAME}\n"
     )
 
-    requiredNamed = parser.add_argument_group('required named arguments')
-    requiredNamed.add_argument('-b', '--bam',
-                               help='Annotated bam file from which to create the counts matrix.',
-                               required=True)
-    requiredNamed.add_argument('-o', '--out-name',
-                               help='Output tsv count matrix file name',
-                               required=True)
+    required_named_args = parser.add_argument_group('required named arguments')
+    required_named_args.add_argument('-b', '--bam',
+                                     help='Annotated bam file from which to create the counts matrix.',
+                                     required=True)
+    required_named_args.add_argument('-o', '--out-name',
+                                     help='Output tsv count matrix file name',
+                                     required=True)
+
+    optional_named_args = parser.add_argument_group("optional named arguments")
+    optional_named_args.add_argument('--eq-class-tsv',
+                                     help=f"Equivalence class TSV.  If used, gene-transcript-tag will be ignored and this lookup will be used.)",
+                                     required=False)
+    optional_named_args.add_argument('--gene-transcript-tag',
+                                     type=str,
+                                     help=f"Gene / Transcript BAM tag name. (Default: {gGENE_TX_TAG_NAME})",
+                                     default=gGENE_TX_TAG_NAME,
+                                     required=False)
+    optional_named_args.add_argument('--cell-barcode-tag',
+                                     type=str,
+                                     help=f"Cell barcode BAM tag name. (Default: {gCBC_TAG_NAME})",
+                                     default=gCBC_TAG_NAME,
+                                     required=False)
+    optional_named_args.add_argument('--umi-tag',
+                                     type=str,
+                                     help=f"UMI BAM tag name. (Default: {gUMI_TAG_NAME})",
+                                     default=gUMI_TAG_NAME,
+                                     required=False)
 
     args = parser.parse_args()
-    main(args.bam, args.out_name)
+    main(args.bam, args.out_name, args.eq_class_tsv, args.gene_transcript_tag, args.cell_barcode_tag, args.umi_tag)

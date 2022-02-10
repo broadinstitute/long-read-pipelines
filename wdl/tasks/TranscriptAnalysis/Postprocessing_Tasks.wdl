@@ -12,16 +12,24 @@ task CreateCountMatrixFromAnnotatedBam {
 
     input {
         File annotated_transcriptome_bam
+
+        File? equivalence_class_assignments
+
         String prefix = "umi_tools_group"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 20 + 11*ceil(size(annotated_transcriptome_bam, "GB"))
+    String eq_class_arg = if defined(equivalence_class_assignments)  then " --eq-class-tsv " else ""
+
+    Int disk_size_gb = 20 + 11*ceil(size(annotated_transcriptome_bam, "GB")) + 2*ceil(size(equivalence_class_assignments, "GB"))
 
     command <<<
         set -euxo pipefail
-        /python_scripts/create_count_matrix_from_annotated_bam.py -b ~{annotated_transcriptome_bam} -o ~{prefix}.tsv
+        /python_scripts/create_count_matrix_from_annotated_bam.py \
+            -b ~{annotated_transcriptome_bam} \
+            ~{eq_class_arg} ~{default="" sep=" --eq-class-tsv " equivalence_class_assignments} \
+            -o ~{prefix}.tsv
     >>>
 
     output {

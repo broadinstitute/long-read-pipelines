@@ -779,6 +779,28 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             prefix = SM + "_all_starcode_annotated_array_elements"
     }
 
+    ############################################################
+    # Quantify Transcripts:
+    ##########
+
+    # Slot in Vic's fix for UMI assignments / dedupe here.
+
+    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_18_CreateCountMatrixFromAnnotatedBam {
+        input:
+            annotated_transcriptome_bam = t_63_MergeAllAnnotatedArrayElements.merged_bam,
+            prefix = SM + "_gene_tx_expression_count_matrix"
+    }
+
+#    call TX_POST.CreateCountMatrixAnndataFromTsv as t_19_CreateCountMatrixAnndataFromTsv {
+#        input:
+#            count_matrix_tsv = t_18_CreateCountMatrixFromAnnotatedBam.count_matrix,
+#            genome_annotation_gtf_file = t_07_ST2_Quant.st_gtf,
+#            gencode_reference_gtf_file = genome_annotation_gtf,
+#            overlap_intervals = intervals_of_interest,
+#            overlap_interval_label = interval_overlap_name,
+#            prefix = SM + "_gene_tx_expression_count_matrix"
+#    }
+
 #
 #    ############################################################
 #    #               __  __      _        _
