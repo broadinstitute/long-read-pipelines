@@ -127,6 +127,8 @@ task CreateCountMatrixAnndataFromTsv {
 
         String prefix = "umi_tools_group"
 
+        File? equivalence_class_definitions
+
         File? overlap_intervals
         String? overlap_interval_label
         File? gencode_reference_gtf_file
@@ -134,13 +136,15 @@ task CreateCountMatrixAnndataFromTsv {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 20 + 4*ceil(size(count_matrix_tsv, "GB")) + 4*ceil(size(genome_annotation_gtf_file, "GB"))
+    Int disk_size_gb = 20 + 4*ceil(size(count_matrix_tsv, "GB")) + 4*ceil(size(genome_annotation_gtf_file, "GB")) + 2*ceil(size(equivalence_class_definitions, "GB"))
 
     String overlap_intervals_arg = if defined(overlap_intervals)  then " --overlap-intervals " else ""
     String overlap_interval_label_arg = if defined(overlap_interval_label) then " --overlap-interval-label " else ""
     String gencode_reference_gtf_file_arg = if defined(gencode_reference_gtf_file) then " --gencode-reference-gtf " else ""
 
     String force_gencode_overwrite_flag = if force_anndata_gencode_overwrite then " --force-overwrite-gencode-overlaps " else ""
+
+    String eq_class_arg = if defined(equivalence_class_definitions)  then " --eq-class-defs-tsv " else ""
 
     command <<<
         set -euxo pipefail
@@ -150,6 +154,7 @@ task CreateCountMatrixAnndataFromTsv {
             ~{overlap_intervals_arg}~{default="" sep=" --overlap-intervals " overlap_intervals} \
             ~{overlap_interval_label_arg}~{default="" sep=" --overlap-interval-label " overlap_interval_label} \
             ~{gencode_reference_gtf_file_arg}~{default="" sep=" --gencode-reference-gtf " gencode_reference_gtf_file} \
+            ~{eq_class_arg} ~{default="" sep=" --eq-class-defs-tsv " equivalence_class_definitions} \
             ~{force_gencode_overwrite_flag} \
             -o ~{prefix}
     >>>
@@ -235,9 +240,13 @@ task QuantifyGffComparison {
         File genome_gtf
 
         File st2_gencode_refmap
+        File st2_gencode_tmap
         File st2_read_refmap
+        File st2_read_tmap
         File gencode_st2_refmap
+        File gencode_st2_tmap
         File gencode_read_refmap
+        File gencode_read_tmap
 
         String prefix = "reads_comparison"
 
@@ -247,29 +256,42 @@ task QuantifyGffComparison {
     parameter_meta {
         genome_gtf : "Genome annotation GTF file (usually gencode)."
         st2_gencode_refmap : "Refmap file (produced by gffcompare) comparing the stringtie2 discovered transcriptome to the genome reference gtf."
+        st2_gencode_tmap : "Tmap file (produced by gffcompare) comparing the stringtie2 discovered transcriptome to the genome reference gtf."
         st2_read_refmap : "Refmap file (produced by gffcompare) comparing the stringtie2 discovered transcriptome to input reads (in GFF format)."
+        st2_read_tmap : "Tmap file (produced by gffcompare) comparing the stringtie2 discovered transcriptome to input reads (in GFF format)."
         gencode_st2_refmap : "Refmap file (produced by gffcompare) comparing the genome reference gtf to the stringtie2 discovered transcriptome."
+        gencode_st2_tmap : "Tmap file (produced by gffcompare) comparing the genome reference gtf to the stringtie2 discovered transcriptome."
         gencode_read_refmap : "Refmap file (produced by gffcompare) comparing the genome reference gtf to input reads (in GFF format)."
+        gencode_read_tmap : "Tmap file (produced by gffcompare) comparing the genome reference gtf to input reads (in GFF format)."
         prefix : "Prefix for ouput file."
     }
 
     Int disk_size_gb = 10 + 2*ceil(size(genome_gtf, "GB"))
                           + 2*ceil(size(st2_gencode_refmap, "GB"))
+                          + 2*ceil(size(st2_gencode_tmap, "GB"))
                           + 2*ceil(size(st2_read_refmap, "GB"))
+                          + 2*ceil(size(st2_read_tmap, "GB"))
                           + 2*ceil(size(gencode_st2_refmap, "GB"))
+                          + 2*ceil(size(gencode_st2_tmap, "GB"))
                           + 2*ceil(size(gencode_read_refmap, "GB"))
+                          + 2*ceil(size(gencode_read_tmap, "GB"))
 
     command <<<
         time /python_scripts/quantify_gff_reads.py \
             --gencode_gtf ~{genome_gtf} \
-            --st2-gencode ~{st2_gencode_refmap} \
-            --st2-mas-seq ~{st2_read_refmap} \
-            --gencode-st2 ~{gencode_st2_refmap} \
-            --gencode-mas-seq ~{gencode_read_refmap} \
+            --st2-gencode-refmap ~{st2_gencode_refmap} \
+            --st2-mas-seq-refmap ~{st2_read_refmap} \
+            --gencode-st2-refmap ~{gencode_st2_refmap} \
+            --gencode-mas-seq-refmap ~{gencode_read_refmap} \
+            --st2-gencode-tmap ~{st2_gencode_tmap} \
+            --st2-mas-seq-tmap ~{st2_read_tmap} \
+            --gencode-st2-tmap ~{gencode_st2_tmap} \
+            --gencode-mas-seq-tmap ~{gencode_read_tmap} \
             -o ~{prefix}
     >>>
 
     output {
+        File gene_eq_class_labels_file = prefix + ".gene_equivalence_class_lookup.tsv"
         File gene_assignments_file = prefix + ".gene_name_assignments.tsv"
         File tx_equivalence_class_labels_file = prefix + ".equivalence_class_lookup.tsv"
         File tx_equivalence_class_file = prefix + ".equivalence_classes.tsv"
@@ -279,7 +301,7 @@ task QuantifyGffComparison {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             16,
+        mem_gb:             32,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
         preemptible_tries:  2,
@@ -306,6 +328,9 @@ task CombineEqClassFiles {
     }
 
     input {
+        Array[File] gene_eq_class_definitions
+        Array[File] gene_assignment_files
+
         Array[File] equivalence_class_definitions
         Array[File] equivalence_classes
 
@@ -315,24 +340,34 @@ task CombineEqClassFiles {
     }
 
     parameter_meta {
-        equivalence_class_definitions : "TSV files containing equivalence class definitions as produced by QuantifyGffComparison.tx_equivalence_class_labels_file."
-        equivalence_classes : "TSV files containing read -> equivalence class assignments as produced by QuantifyGffComparison.tx_equivalence_class_file."
+        gene_eq_class_definitions : "TSV files containing equivalence class definitions for genes as produced by QuantifyGffComparison.gene_eq_class_labels_file."
+        gene_assignment_files : "TSV files containing read -> gene equivalence class assignments as produced by QuantifyGffComparison.gene_assignments_file."
+        equivalence_class_definitions : "TSV files containing transcript equivalence class definitions as produced by QuantifyGffComparison.tx_equivalence_class_labels_file."
+        equivalence_classes : "TSV files containing read -> transcript equivalence class assignments as produced by QuantifyGffComparison.tx_equivalence_class_file."
         prefix : "Prefix for ouput file."
     }
 
     Int disk_size_gb = 10 + 2*ceil(size(equivalence_class_definitions, "GB"))
                           + 2*ceil(size(equivalence_classes, "GB"))
+                          + 2*ceil(size(gene_eq_class_definitions, "GB"))
+                          + 2*ceil(size(gene_assignment_files, "GB"))
 
     command <<<
         time /python_scripts/combine_tx_equivalence_classes.py \
+            ~{sep=" " gene_eq_class_definitions} \
+            ~{sep=" " gene_assignment_files} \
             ~{sep=" " equivalence_class_definitions} \
             ~{sep=" " equivalence_classes}
 
+        mv gene_equivalence_class_lookup.tsv ~{prefix}.gene_equivalence_class_lookup.tsv
+        mv gene_name_assignments.tsv ~{prefix}.gene_name_assignments.tsv
         mv equivalence_class_lookup.tsv ~{prefix}.equivalence_class_lookup.tsv
         mv equivalence_classes.tsv ~{prefix}.equivalence_classes.tsv
     >>>
 
     output {
+        File combined_gene_eq_class_defs = "~{prefix}.gene_equivalence_class_lookup.tsv"
+        File combined_gene_eq_class_assignments = "~{prefix}.gene_name_assignments.tsv"
         File combined_eq_class_defs = "~{prefix}.equivalence_class_lookup.tsv"
         File combined_eq_class_assignments = "~{prefix}.equivalence_classes.tsv"
     }
@@ -340,7 +375,7 @@ task CombineEqClassFiles {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             8,
+        mem_gb:             16,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
         preemptible_tries:  2,

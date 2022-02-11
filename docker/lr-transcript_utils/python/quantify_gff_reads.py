@@ -227,6 +227,80 @@ def add_refmap_to_graph(refmap_file, nx_graph=None, gene_name_gene_id_map=None, 
     return nx_graph
 
 
+def add_tmap_to_graph(tmap_file, nx_graph=None, gene_name_gene_id_map=None, add_link_to_major_isoform_id=False):
+    if not nx_graph:
+        nx_graph = nx.MultiDiGraph()
+
+    num_lines = count_lines_in_file(tmap_file)
+
+    major_isoform_map = dict()
+
+    with open(tmap_file, 'r') as f:
+        with tqdm(desc=f"Parsing tmap for graph links...", unit=" line", total=num_lines) as pbar:
+            for i, line in enumerate(f):
+                if i == 0:
+                    continue
+
+                ref_gene, ref_tx, cc, query_gene, query_tx, num_exons, fpkm, tpm, cov, length, major_isoform_id, ref_match_len = line.strip().split(
+                    '\t')
+
+                ref_gene = ref_gene.strip()
+                ref_tx = ref_tx.strip()
+                cc = cc.strip()
+                query_gene = query_gene.strip()
+                query_tx = query_tx.strip()
+                num_exons = num_exons.strip()
+                fpkm = fpkm.strip()
+                tpm = tpm.strip()
+                cov = cov.strip()
+                length = length.strip()
+                major_isoform_id = major_isoform_id.strip()
+                ref_match_len = ref_match_len.strip()
+
+                #############################################
+                # Handle the reference gene / transcript:
+                if gene_name_gene_id_map and ref_gene in gene_name_gene_id_map:
+                    ref_gene = gene_name_gene_id_map[ref_gene]
+
+                if ref_tx not in nx_graph:
+                    nx_graph.add_node(ref_tx, gene_name_set={ref_gene})
+
+                nx_graph.nodes[ref_tx]["gene_name_set"].add(ref_gene)
+
+                #############################################
+                # Handle the query gene / transcript:
+                if gene_name_gene_id_map and query_gene in gene_name_gene_id_map:
+                    query_gene = gene_name_gene_id_map[query_gene]
+
+                if query_tx not in nx_graph:
+                    if not mas_seq_node_filter(query_gene):
+                        nx_graph.add_node(query_tx, gene_name_set={query_gene})
+                    else:
+                        nx_graph.add_node(query_tx, gene_name_set=set())
+
+                if not mas_seq_node_filter(query_gene):
+                    nx_graph.nodes[query_tx]["gene_name_set"].add(query_gene)
+
+                # Add an edge from query_tx to ref_tx:
+                nx_graph.add_edge(query_tx, ref_tx, class_code=cc)
+
+                #############################################
+                # track our major isoform ids if we need to:
+                if add_link_to_major_isoform_id:
+                    major_isoform_map[query_tx] = major_isoform_id
+
+                pbar.update(1)
+
+    if add_link_to_major_isoform_id:
+        # OK, we need to add in our links now that we have all the IDs:
+        with tqdm(desc=f"Adding links to major isoform IDs...", unit=" query txs",
+                  total=len(major_isoform_map)) as pbar:
+            for query_tx, major_isoform_id in major_isoform_map.items():
+                nx_graph.add_edge(query_tx, major_isoform_id)
+
+    return nx_graph
+
+
 def get_gencode_gene_id_gene_name_map(gencode_file):
     num_lines = count_lines_in_file(gencode_file)
 
@@ -314,8 +388,9 @@ def get_mas_seq_read_tx_assignments(graph):
     # 2) Get all other tx info:
     num_inexact = num_mas_seq_nodes - len(mas_seq_tx_equivalence_classes)
     with tqdm(desc=f"Extracting in-exact mas-seq -> gencode tx", unit=" node", total=num_inexact) as pbar:
-        for mas_seq_node in nx.subgraph_view(graph, filter_node=lambda n: mas_seq_node_filter(
-                n) and n not in mas_seq_tx_equivalence_classes).nodes:
+        for mas_seq_node in nx.subgraph_view(graph,
+                                             filter_node=lambda n: mas_seq_node_filter(n) and
+                                                                   n not in mas_seq_tx_equivalence_classes).nodes:
 
             # Get all nodes connected to this one on out edges
             # for each of them, record the edge class code and destination:
@@ -324,20 +399,31 @@ def get_mas_seq_read_tx_assignments(graph):
                 cc = d["class_code"]
                 tx_assignments.add((dest, cc))
 
+            # Check here for null (-) assignments.
+            # If we have exactly 1 null assignment and 1 of any other kind of assignment
+            # we ignore the null assignment.
+            #
+            # This resolves the case where a read maps to the genome but not to stringtie and visa-versa.
+            # For example:
+            #
+            #     Gencode / Read Tmap:
+            #          ENSG00000000460.17  ENST00000498289.5 i m64020e_210505_070001/453446566/ccs m64020e_210505_070001/453446566/ccs 1 0.000000  0.000000  0.000000  777 m64020e_210505_070001/453446566/ccs 3849
+            #     ST2 / Read Tmap:
+            #          - - u m64020e_210505_070001/453446566/ccs m64020e_210505_070001/453446566/ccs 1 0.000000  0.000000  0.000000  777 m64020e_210505_070001/453446566/ccs -
+            #
+            num_null = 0
+            for dest, cc in tx_assignments:
+                if dest == "-":
+                    num_null += 1
+            if num_null == 1 and len(tx_assignments) == 2:
+                new_tx_assignments = set()
+                for dest, cc in tx_assignments:
+                    if dest != "-":
+                        new_tx_assignments.add((dest, cc))
+                tx_assignments = new_tx_assignments
+
             mas_seq_tx_equivalence_classes[mas_seq_node] = tx_assignments
             pbar.update(1)
-
-    # print("Transcript Stats:")
-    # mas_gencode_tx_assignment_counts = [len(s) for s in mas_seq_tx_equivalence_classes.values()]
-    # print(
-    #     f"Num uniquely assigned MAS-seq reads: {sum([c == 1 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 1 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
-    # print(
-    #     f"Num ambiguous/unassigned MAS-seq reads: {sum([c == 0 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c == 0 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
-    # print(
-    #     f"Num multi-assigned MAS-seq reads: {sum([c > 1 for c in mas_gencode_tx_assignment_counts])}/{num_mas_seq_nodes} ({100 * sum([c > 1 for c in mas_gencode_tx_assignment_counts]) / num_mas_seq_nodes:2.4f}%)")
-    # print()
-    # print_stats(mas_gencode_tx_assignment_counts, "MAS-seq transcript assignment stats")
-    # print()
 
     return mas_seq_tx_equivalence_classes
 
@@ -389,6 +475,25 @@ def get_mas_seq_read_gene_assignments(graph):
                 if paths_have_eq and "=" not in path:
                     continue
                 gene_assignments.add(gencode_gene_name)
+
+            # Check here for null (-) assignments.
+            # If we have exactly 1 null assignment and 1 of any other kind of assignment
+            # we ignore the null assignment.
+            #
+            # This resolves the case where a read maps to the genome but not to stringtie and visa-versa.
+            # For example:
+            #
+            #     Gencode / Read Tmap:
+            #          ENSG00000000460.17  ENST00000498289.5 i m64020e_210505_070001/453446566/ccs m64020e_210505_070001/453446566/ccs 1 0.000000  0.000000  0.000000  777 m64020e_210505_070001/453446566/ccs 3849
+            #     ST2 / Read Tmap:
+            #          - - u m64020e_210505_070001/453446566/ccs m64020e_210505_070001/453446566/ccs 1 0.000000  0.000000  0.000000  777 m64020e_210505_070001/453446566/ccs -
+            #
+            num_null = 0
+            for g in gene_assignments:
+                if g == "-":
+                    num_null += 1
+            if num_null == 1 and len(gene_assignments) == 2:
+                gene_assignments.remove("-")
 
             mas_seq_to_gencode_gene[mas_seq_node] = gene_assignments
             pbar.update(1)
@@ -487,33 +592,68 @@ def update_stringtie2_gene_names(graph):
     return graph
 
 
-def write_read_to_gene_assignment_file(out_file_name, mas_seq_to_gencode_gene):
-    with open(out_file_name, 'w') as f:
+def write_read_to_gene_assignment_files(out_base_name, gene_eq_classes, mas_seq_to_gencode_gene):
+
+    # Write out EQ Class label file:
+    with open(f"{out_base_name}.gene_equivalence_class_lookup.tsv", 'w') as f:
+        with tqdm(desc=f"Writing Gene EQ class label file", unit=" eq class", total=len(gene_eq_classes)) as pbar:
+            f.write("#EQ_Class\tGene_Assignments\n")
+            for eq_class, indx in gene_eq_classes.items():
+                f.write(f"MASG{indx:011d}\t{','.join(eq_class)}\n")
+                pbar.update(1)
+
+    # Write out gene assignments:
+    with open(f"{out_base_name}.gene_name_assignments.tsv", 'w') as f:
         with tqdm(desc=f"Writing mas-seq -> gene map", unit=" mas read", total=len(mas_seq_to_gencode_gene)) as pbar:
             for k, v in mas_seq_to_gencode_gene.items():
-                if len(v) != 0:
-                    f.write(f"{k}\t{','.join(sorted(v))}\n")
+                # Don't write out gene assignments for reads that don't have them:
+                if len(v) == 1:
+                    if list(v)[0] == "-":
+                        # We take the EQ class for this read because it is a solitary read:
+                        eq_class_label = gene_eq_classes[tuple([k])]
+                        f.write(f"{k}\tMASG{eq_class_label:011d}\n")
+                    else:
+                        # No eq class necessary.
+                        f.write(f"{k}\t{','.join(sorted(v))}\n")
+                elif len(v) > 1:
+                    # Need to relabel with eq class:
+                    eq_class = tuple(sorted(list(v)))
+                    eq_class_label = gene_eq_classes[eq_class]
+                    f.write(f"{k}\tMASG{eq_class_label:011d}\n")
                 pbar.update(1)
 
 
-def write_read_to_equivalence_class_files(out_base_file_name, eq_classes, mas_seq_tx_equivalence_classes, mas_seq_to_gencode_gene):
+def write_read_to_equivalence_class_files(out_base_file_name,
+                                          tx_eq_class_defs,
+                                          mas_seq_tx_equivalence_classes,
+                                          gene_eq_classes,
+                                          mas_seq_to_gencode_gene):
     # Write out EQ Class label file:
     with open(f"{out_base_file_name}.equivalence_class_lookup.tsv", 'w') as f:
-        with tqdm(desc=f"Writing EQ class label file", unit=" eq class", total=len(eq_classes)) as pbar:
+        with tqdm(desc=f"Writing EQ class label file", unit=" eq class", total=len(tx_eq_class_defs)) as pbar:
             f.write("#EQ_Class\tTranscript_Assignments\n")
-            for eq_class, indx in eq_classes.items():
-                f.write(f"{indx}\t{','.join([str(tx) + ';' + str(cc) for tx, cc in eq_class])}\n")
+            for eq_class, indx in tx_eq_class_defs.items():
+                f.write(f"MAST{indx:011d}\t{','.join([str(tx) + ';' + str(cc) for tx, cc in eq_class])}\n")
                 pbar.update(1)
 
     with open(f"{out_base_file_name}.equivalence_classes.tsv", 'w') as f:
         with tqdm(desc=f"Writing mas-seq -> eq class", unit=" mas read",
                   total=len(mas_seq_tx_equivalence_classes)) as pbar:
-            f.write("#Read_Name\tEQ_Class\tAssociated_Genes\n")
+            f.write("#Read_Name\tEQ_Class\tAssociated_Gene(s)\n")
             for mas_read, tx_set in mas_seq_tx_equivalence_classes.items():
-                gene_assignments = sorted(list(mas_seq_to_gencode_gene[mas_read]))
-                eq_class = tuple(sorted(list(tx_set)))
-                eq_class_label = eq_classes[eq_class]
-                f.write(f"{mas_read}\t{eq_class_label}\t{','.join(gene_assignments)}\n")
+                gene_assignments = tuple(sorted(list(mas_seq_to_gencode_gene[mas_read])))
+
+                if len(gene_assignments) == 0:
+                    gene_eq_class_label = ""
+                elif len(gene_assignments) == 1:
+                    gene_eq_class_label = gene_assignments[0]
+                else:
+                    gene_eq_class_label = f"MASG{gene_eq_classes[gene_assignments]:011d}"
+
+                tx_eq_class = tuple(sorted(list(tx_set)))
+                tx_eq_class_label = tx_eq_class_defs[tx_eq_class]
+
+                f.write(f"{mas_read}\tMAST{tx_eq_class_label:011d}\t{gene_eq_class_label}\n")
                 pbar.update(1)
 
 
@@ -570,17 +710,28 @@ def print_graph_stats(graph):
         print(f"\t{k} ({class_code_lookup[k]})\t{v}")
 
 
-def main(gencode_gtf, st2_gencode, st2_mas_seq, gencode_st2, gencode_mas_seq, out_base_name):
+def main(gencode_gtf,
+         st2_gencode_refmap, st2_mas_seq_refmap, gencode_st2_refmap, gencode_mas_seq_refmap,
+         st2_gencode_tmap, st2_mas_seq_tmap, gencode_st2_tmap, gencode_mas_seq_tmap,
+         out_base_name):
 
     # Get the mapping from gencode gene name to gene ID so we can clean up the gene names in teh graph:
     gene_name_gene_id_map, gene_id_gene_name_map = get_gencode_gene_id_gene_name_map(gencode_gtf)
 
     # Create our graph:
     graph = nx.MultiDiGraph()
-    graph = add_refmap_to_graph(st2_gencode, graph, gene_name_gene_id_map=gene_name_gene_id_map)
-    graph = add_refmap_to_graph(st2_mas_seq, graph, gene_name_gene_id_map=gene_name_gene_id_map)
-    graph = add_refmap_to_graph(gencode_st2, graph, gene_name_gene_id_map=gene_name_gene_id_map)
-    graph = add_refmap_to_graph(gencode_mas_seq, graph, gene_name_gene_id_map=gene_name_gene_id_map)
+
+    # Add refmap files:
+    graph = add_refmap_to_graph(st2_gencode_refmap, graph, gene_name_gene_id_map=gene_name_gene_id_map)
+    graph = add_refmap_to_graph(st2_mas_seq_refmap, graph, gene_name_gene_id_map=gene_name_gene_id_map)
+    graph = add_refmap_to_graph(gencode_st2_refmap, graph, gene_name_gene_id_map=gene_name_gene_id_map)
+    graph = add_refmap_to_graph(gencode_mas_seq_refmap, graph, gene_name_gene_id_map=gene_name_gene_id_map)
+
+    # Add tmap files:
+    graph = add_tmap_to_graph(st2_gencode_tmap, graph, gene_name_gene_id_map=gene_name_gene_id_map)
+    graph = add_tmap_to_graph(st2_mas_seq_tmap, graph, gene_name_gene_id_map=gene_name_gene_id_map)
+    graph = add_tmap_to_graph(gencode_st2_tmap, graph, gene_name_gene_id_map=gene_name_gene_id_map)
+    graph = add_tmap_to_graph(gencode_mas_seq_tmap, graph, gene_name_gene_id_map=gene_name_gene_id_map)
 
     # Update StringTie2 gene names with resolved gencode names:
     graph = update_stringtie2_gene_names(graph)
@@ -627,23 +778,36 @@ def main(gencode_gtf, st2_gencode, st2_mas_seq, gencode_st2, gencode_mas_seq, ou
         print_stats(mas_gencode_tx_assignment_counts, "MAS-seq transcript assignment stats")
         print()
 
-    # Calculate unique equivalence classes:
-    with tqdm(desc=f"Creating EQ class labels", unit=" eq class", total=len(mas_seq_tx_equivalence_classes)) as pbar:
-        eq_classes = set()
-        for eq_class in mas_seq_tx_equivalence_classes.values():
-            eq_classes.add(tuple(sorted(list(eq_class))))
-            pbar.update(1)
-        eq_classes = {eq_class: indx for indx, eq_class in enumerate(tuple(sorted(list(eq_classes))))}
+    # Calculate unique gene equivalence classes:
+    gene_eq_classes = set()
+    for mas_read, gene_set in mas_seq_to_gencode_gene.items():
+        # For solitary null ('-') gene assignments, we create a separate eq class:
+        if len(gene_set) == 1 and list(gene_set)[0] == "-":
+            gene_eq_classes.add(tuple([mas_read]))
+        elif len(gene_set) > 1:
+            gene_eq_classes.add(tuple(sorted(list(gene_set))))
+    gene_eq_classes = {eq_class: indx for indx, eq_class in enumerate(tuple(sorted(list(gene_eq_classes))))}
 
-    print(f"Num unique equivalence classes: {len(eq_classes)}")
+    # Calculate unique transcript equivalence classes:
+    with tqdm(desc=f"Creating EQ class labels", unit=" eq class", total=len(mas_seq_tx_equivalence_classes)) as pbar:
+        tx_eq_classes = set()
+        for eq_class in mas_seq_tx_equivalence_classes.values():
+            tx_eq_classes.add(tuple(sorted(list(eq_class))))
+            pbar.update(1)
+        tx_eq_classes = {eq_class: indx for indx, eq_class in enumerate(tuple(sorted(list(tx_eq_classes))))}
+
+    print(f"Num unique equivalence classes: {len(tx_eq_classes)}")
 
     # Write our gene assignments:
-    write_read_to_gene_assignment_file(f"{out_base_name}.gene_name_assignments.tsv", mas_seq_to_gencode_gene)
+    write_read_to_gene_assignment_files(out_base_name,
+                                        gene_eq_classes,
+                                        mas_seq_to_gencode_gene)
 
     # Write our equivalence classes:
     write_read_to_equivalence_class_files(out_base_name,
-                                          eq_classes,
+                                          tx_eq_classes,
                                           mas_seq_tx_equivalence_classes,
+                                          gene_eq_classes,
                                           mas_seq_to_gencode_gene)
 
     # Write our graph out to disk:
@@ -668,22 +832,40 @@ if __name__ == "__main__":
     requiredNamed.add_argument('--gencode_gtf',
                                help='gencode gtf file used in the gffcompare calls for this dataset',
                                required=True)
-    requiredNamed.add_argument('--st2-mas-seq',
+
+    requiredNamed.add_argument('--st2-mas-seq-refmap',
                                help='stringtie2 reference <-> MAS-seq query refmap file',
                                required=True)
-    requiredNamed.add_argument('--st2-gencode',
+    requiredNamed.add_argument('--st2-gencode-refmap',
                                help='stringtie2 reference <-> gencode query refmap file',
                                required=True)
-    requiredNamed.add_argument('--gencode-mas-seq',
+    requiredNamed.add_argument('--gencode-mas-seq-refmap',
                                help='Gencode reference <-> MAS-seq query refmap file',
                                required=True)
-    requiredNamed.add_argument('--gencode-st2',
+    requiredNamed.add_argument('--gencode-st2-refmap',
                                help='Gencode reference <-> stringtie2 query refmap file',
                                required=True)
+
+    requiredNamed.add_argument('--st2-mas-seq-tmap',
+                               help='stringtie2 reference <-> MAS-seq query tmap file',
+                               required=True)
+    requiredNamed.add_argument('--st2-gencode-tmap',
+                               help='stringtie2 reference <-> gencode query tmap file',
+                               required=True)
+    requiredNamed.add_argument('--gencode-mas-seq-tmap',
+                               help='Gencode reference <-> MAS-seq query tmap file',
+                               required=True)
+    requiredNamed.add_argument('--gencode-st2-tmap',
+                               help='Gencode reference <-> stringtie2 query tmap file',
+                               required=True)
+
     requiredNamed.add_argument('-o', '--out-base-name',
                                help='Base name of the output files that will be produced.',
                                required=True)
 
     args = parser.parse_args()
-    main(args.gencode_gtf, args.st2_gencode, args.st2_mas_seq, args.gencode_st2, args.gencode_mas_seq, args.out_base_name)
+    main(args.gencode_gtf,
+         args.st2_gencode_refmap, args.st2_mas_seq_refmap, args.gencode_st2_refmap, args.gencode_mas_seq_refmap,
+         args.st2_gencode_tmap, args.st2_mas_seq_tmap, args.gencode_st2_tmap, args.gencode_mas_seq_tmap,
+         args.out_base_name)
 
