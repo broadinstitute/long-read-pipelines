@@ -65,7 +65,7 @@ task Segment
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow segment ~{extra_args} --model ~{model} -v INFO -s ~{annotated_reads} -o ~{prefix}.bam
+        longbow segment ~{extra_args} --model ~{model} -v INFO ~{annotated_reads} -o ~{prefix}.bam
 
         # Make sure this file exists:
         if [[ ! -e barcode_confidence_scores.txt ]] ; then
@@ -453,7 +453,7 @@ task Pad
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow pad -s --model ~{model} -v INFO --barcode-tag ~{tag_to_expand} -e ~{padding} -o ~{prefix}.bam ~{reads}
+        longbow pad --model ~{model} -v INFO --barcode-tag ~{tag_to_expand} -e ~{padding} -o ~{prefix}.bam ~{reads}
     >>>
 
     output {
