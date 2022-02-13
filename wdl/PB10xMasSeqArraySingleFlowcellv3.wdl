@@ -661,7 +661,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             merged_file_name = "ccs_reclaimed_array_element_raw_starcode_counts.txt"
     }
 
-    call Utils.MergeFiles as t_59_MergeUmiConfScoreTsvsForStarcode {
+    call Utils.MergeFiles as t_59_MergeCbcConfScoreTsvsForStarcode {
         input:
             files_to_merge = [t_57_MergeCCSCbcConfScoreTsvsForStarcode.merged_file, t_58_MergeCCSReclaimedCbcConfScoreTsvsForStarcode.merged_file],
             merged_file_name = "all_array_element_raw_starcode_counts.txt"
@@ -677,13 +677,13 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
 
         # Concatenate the TSV files with the barcode scores that we just created:
-        call Utils.MergeFiles as t_61_GetMasterUmiConfScoreTsvForStarcode {
+        call Utils.MergeFiles as t_61_GetMasterCbcConfScoreTsvForStarcode {
             input:
-                files_to_merge = [t_59_MergeUmiConfScoreTsvsForStarcode.merged_file, t_60_ExtractIlmnBarcodeConfScores.conf_score_tsv],
+                files_to_merge = [t_59_MergeCbcConfScoreTsvsForStarcode.merged_file, t_60_ExtractIlmnBarcodeConfScores.conf_score_tsv],
                 merged_file_name = "combined_mas-seq_and_ilmn_raw_starcode_counts.txt"
         }
     }
-    File starcode_seeds = if (defined(illumina_barcoded_bam)) then select_first([t_61_GetMasterUmiConfScoreTsvForStarcode.merged_file]) else t_59_MergeUmiConfScoreTsvsForStarcode.merged_file
+    File starcode_seeds = if (defined(illumina_barcoded_bam)) then select_first([t_61_GetMasterCbcConfScoreTsvForStarcode.merged_file]) else t_59_MergeCbcConfScoreTsvsForStarcode.merged_file
 
     # We have to consolidate our seeds into unique entries for starcode not to crash and burn:
     call TX_POST.MergeBarcodeCounts as t_62_ConsolidateBarcodeCountsForStarcode {

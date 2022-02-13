@@ -453,7 +453,9 @@ task Pad
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow pad --model ~{model} -v INFO --barcode-tag ~{tag_to_expand} -e ~{padding} -o ~{prefix}.bam ~{reads}
+        longbow pad --model ~{model} -v INFO --barcode-tag ~{tag_to_expand} -e ~{padding} -o tmp.bam ~{reads}
+
+        samtools sort tmp.bam -o ~{prefix}.bam
     >>>
 
     output {
