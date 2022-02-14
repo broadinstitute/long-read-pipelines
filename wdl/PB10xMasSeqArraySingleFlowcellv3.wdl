@@ -315,7 +315,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 input:
                     annotated_reads = s2e_ccs_longbow_passed_shard,
                     prefix = SM + "_ccs_array_elements_subshard",
-                    extra_args = "-i",
+                    extra_args = "-i -b",
                     model = mas_seq_model
             }
         }
@@ -325,6 +325,13 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             input:
                 bams = t_24_SegmentS2ECcsReads.segmented_bam,
                 prefix = SM + "_ccs_array_elements_shard"
+        }
+
+        # Merge CCS Barcode Conf files:
+        call Utils.MergeFiles as t_26_MergeCCSBarcodeConfShards {
+            input:
+                files_to_merge = t_24_SegmentS2ECcsReads.barcode_conf_file,
+                merged_file_name = SM + "_ccs_array_element_barcode_confs_shard.txt"
         }
 
         #####################
@@ -343,7 +350,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 input:
                     annotated_reads = s2e_ccs_reclaimed_shard,
                     prefix = SM + "_ccs_reclaimed_array_elements_subshard",
-                    extra_args = "-i",
+                    extra_args = "-i -b",
                     model = mas_seq_model
             }
         }
@@ -353,6 +360,13 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             input:
                 bams = t_27_SegmentS2ECcsReclaimedReads.segmented_bam,
                 prefix = SM + "_ccs_reclaimed_array_elements_shard"
+        }
+
+        # Merge CCS Barcode Conf files:
+        call Utils.MergeFiles as t_29_MergeCCSReclaimedBarcodeConfShards {
+            input:
+                files_to_merge = t_27_SegmentS2ECcsReclaimedReads.barcode_conf_file,
+                merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs_shard.txt"
         }
 
         ###############
@@ -444,6 +458,20 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             bams = t_32_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_aligned"
+    }
+
+    # Merge CCS Barcode Conf files:
+    call Utils.MergeFiles as t_41_MergeAllCCSBarcodeConfShards {
+        input:
+            files_to_merge = t_26_MergeCCSBarcodeConfShards.merged_file,
+            merged_file_name = SM + "_ccs_array_element_barcode_confs.txt"
+    }
+
+    # Merge CCS Barcode Conf files:
+    call Utils.MergeFiles as t_42_MergeAllCCSReclaimedBarcodeConfShards {
+        input:
+            files_to_merge = t_29_MergeCCSReclaimedBarcodeConfShards.merged_file,
+            merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs.txt"
     }
 
     ##########################################################################################################################
@@ -564,25 +592,25 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 bam = ccs_array_element_shard
         }
 
-        # Annotate raw CBC / UMI in the ccs corrected reads:
-        call TENX.AnnotateBarcodesAndUMIs as t_49_TenxAnnotateCCSArrayElements {
-            input:
-                bam_file = ccs_array_element_shard,
-                head_adapter_fasta = head_adapter_fasta,
-                tail_adapter_fasta = tail_adapter_fasta,
-                whitelist_10x = ten_x_cell_barcode_whitelist,
-                read_end_length = 200,
-                poly_t_length = 31,
-                barcode_length = 16,
-                umi_length = 10,
-                raw_extract_only = true,
-                runtime_attr_override = fast_network_attrs
-        }
+#        # Annotate raw CBC / UMI in the ccs corrected reads:
+#        call TENX.AnnotateBarcodesAndUMIs as t_49_TenxAnnotateCCSArrayElements {
+#            input:
+#                bam_file = ccs_array_element_shard,
+#                head_adapter_fasta = head_adapter_fasta,
+#                tail_adapter_fasta = tail_adapter_fasta,
+#                whitelist_10x = ten_x_cell_barcode_whitelist,
+#                read_end_length = 200,
+#                poly_t_length = 31,
+#                barcode_length = 16,
+#                umi_length = 10,
+#                raw_extract_only = true,
+#                runtime_attr_override = fast_network_attrs
+#        }
 
         # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
         call LONGBOW.Pad as t_50_LongbowPadCCSArrayElementUMIs {
             input:
-                reads = t_49_TenxAnnotateCCSArrayElements.output_bam,
+                reads = ccs_array_element_shard.output_bam,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
                 padding = 2,
@@ -590,7 +618,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
     }
     # Merge Aligned CCS Reclaimed reads together:
-    call Utils.MergeBams as t_51_MergeTenXAnnotatedCCSArrayElements {
+    call Utils.MergeBams as t_51_MergeLongbowPaddedCCSArrayElements {
         input:
             bams = t_50_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
             prefix = SM + "_ccs_array_elements_aligned_annotated_padded"
@@ -611,25 +639,25 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 bam = ccs_reclaimed_array_element_shard
         }
 
-        # Annotate raw CBC / UMI in the ccs corrected reads:
-        call TENX.AnnotateBarcodesAndUMIs as t_54_TenxAnnotateCCSReclaimedArrayElements {
-            input:
-                bam_file = ccs_reclaimed_array_element_shard,
-                head_adapter_fasta = head_adapter_fasta,
-                tail_adapter_fasta = tail_adapter_fasta,
-                whitelist_10x = ten_x_cell_barcode_whitelist,
-                read_end_length = 200,
-                poly_t_length = 31,
-                barcode_length = 16,
-                umi_length = 10,
-                raw_extract_only = true,
-                runtime_attr_override = fast_network_attrs
-        }
+#        # Annotate raw CBC / UMI in the ccs corrected reads:
+#        call TENX.AnnotateBarcodesAndUMIs as t_54_TenxAnnotateCCSReclaimedArrayElements {
+#            input:
+#                bam_file = ccs_reclaimed_array_element_shard,
+#                head_adapter_fasta = head_adapter_fasta,
+#                tail_adapter_fasta = tail_adapter_fasta,
+#                whitelist_10x = ten_x_cell_barcode_whitelist,
+#                read_end_length = 200,
+#                poly_t_length = 31,
+#                barcode_length = 16,
+#                umi_length = 10,
+#                raw_extract_only = true,
+#                runtime_attr_override = fast_network_attrs
+#        }
 
         # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
         call LONGBOW.Pad as t_55_LongbowPadCCSReclaimedArrayElementUMIs {
             input:
-                reads = t_54_TenxAnnotateCCSReclaimedArrayElements.output_bam,
+                reads = ccs_reclaimed_array_element_shard,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
                 padding = 2,
@@ -637,7 +665,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
     }
     # Merge Aligned CCS Reclaimed reads together:
-    call Utils.MergeBams as t_56_MergeTenXAnnotatedCCSReclaimedArrayElements {
+    call Utils.MergeBams as t_56_MergeLongbowPaddedCCSReclaimedArrayElements {
         input:
             bams = t_55_LongbowPadCCSReclaimedArrayElementUMIs.padded_tag_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded"
@@ -649,21 +677,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # We need to merge ALL the barcode information together before correcting either the
     # CCS or the Reclaimed reads.
 
-    call Utils.MergeFiles as t_57_MergeCCSCbcConfScoreTsvsForStarcode {
-        input:
-            files_to_merge = t_49_TenxAnnotateCCSArrayElements.raw_starcode_counts,
-            merged_file_name = "ccs_array_element_raw_starcode_counts.txt"
-    }
-
-    call Utils.MergeFiles as t_58_MergeCCSReclaimedCbcConfScoreTsvsForStarcode {
-        input:
-            files_to_merge = t_54_TenxAnnotateCCSReclaimedArrayElements.raw_starcode_counts,
-            merged_file_name = "ccs_reclaimed_array_element_raw_starcode_counts.txt"
-    }
-
     call Utils.MergeFiles as t_59_MergeCbcConfScoreTsvsForStarcode {
         input:
-            files_to_merge = [t_57_MergeCCSCbcConfScoreTsvsForStarcode.merged_file, t_58_MergeCCSReclaimedCbcConfScoreTsvsForStarcode.merged_file],
+            files_to_merge = [t_41_MergeAllCCSBarcodeConfShards.merged_file, t_42_MergeAllCCSReclaimedBarcodeConfShards.merged_file],
             merged_file_name = "all_array_element_raw_starcode_counts.txt"
     }
 
@@ -695,7 +711,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Now we can correct our barcodes:
     call TENX.CorrectBarcodesWithStarcodeSeedCounts as t_63_CorrectCCSBarcodesWithStarcodeSeedCountsSharded {
         input:
-            bam_file = t_51_MergeTenXAnnotatedCCSArrayElements.merged_bam,
+            bam_file = t_51_MergeLongbowPaddedCCSArrayElements.merged_bam,
             starcode_seeds_tsv = t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
             whitelist_10x = ten_x_cell_barcode_whitelist,
             extra_parameters = starcode_extra_params,
@@ -703,7 +719,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     call TENX.CorrectBarcodesWithStarcodeSeedCounts as t_64_CorrectReclaimedBarcodesWithStarcodeSeedCountsSharded {
         input:
-            bam_file = t_56_MergeTenXAnnotatedCCSReclaimedArrayElements.merged_bam,
+            bam_file = t_56_MergeLongbowPaddedCCSReclaimedArrayElements.merged_bam,
             starcode_seeds_tsv = t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
             whitelist_10x = ten_x_cell_barcode_whitelist,
             extra_parameters = starcode_extra_params,
@@ -977,8 +993,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 starcode_seeds,
                 t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
                 ten_x_cell_barcode_whitelist,
-                t_57_MergeCCSCbcConfScoreTsvsForStarcode.merged_file,
-                t_58_MergeCCSReclaimedCbcConfScoreTsvsForStarcode.merged_file,
+                t_41_MergeAllCCSBarcodeConfShards.merged_file,
+                t_42_MergeAllCCSReclaimedBarcodeConfShards.merged_file
             ],
             outdir = meta_files_dir,
             keyfile = keyfile
