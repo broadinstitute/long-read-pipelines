@@ -238,7 +238,7 @@ task Extract {
         set -euxo pipefail
 
         longbow segment ~{bam} | \
-            longbow extract \
+            longbow extract | \
             longbow correct-tag -b CR -c CB -a ~{allowlists[model]} -o ~{prefix}.extracted.bam
     >>>
 
