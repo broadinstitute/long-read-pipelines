@@ -337,16 +337,16 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         #####################
 
         # Shard our CCS reads into smaller problems to do work on array elements:
-        call PB.ShardLongReads as t_26_ShardS2ECcsReclaimedReads {
+        call PB.ShardLongReads as t_27_ShardS2ECcsReclaimedReads {
             input:
                 unaligned_bam = t_18_FilterS2EReclaimableReads.passed_reads,
                 unaligned_pbi = t_21_PbIndexS2ELongbowPassedReclaimedReads.pbindex,
                 prefix = SM + "_ccs_reclaimed_reads_subshard",
                 num_shards = 10,
         }
-        scatter (s2e_ccs_reclaimed_shard in t_26_ShardS2ECcsReclaimedReads.unmapped_shards) {
+        scatter (s2e_ccs_reclaimed_shard in t_27_ShardS2ECcsReclaimedReads.unmapped_shards) {
              # Segment Reclaimed reads into array elements:
-            call LONGBOW.Segment as t_27_SegmentS2ECcsReclaimedReads {
+            call LONGBOW.Segment as t_28_SegmentS2ECcsReclaimedReads {
                 input:
                     annotated_reads = s2e_ccs_reclaimed_shard,
                     prefix = SM + "_ccs_reclaimed_array_elements_subshard",
@@ -356,16 +356,16 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
 
         # Merge Filtered CCS Reclaimed reads together:
-        call Utils.MergeBams as t_28_MergeCCSReclaimedArrayElementShards {
+        call Utils.MergeBams as t_29_MergeCCSReclaimedArrayElementShards {
             input:
-                bams = t_27_SegmentS2ECcsReclaimedReads.segmented_bam,
+                bams = t_28_SegmentS2ECcsReclaimedReads.segmented_bam,
                 prefix = SM + "_ccs_reclaimed_array_elements_shard"
         }
 
         # Merge CCS Barcode Conf files:
-        call Utils.MergeFiles as t_29_MergeCCSReclaimedBarcodeConfShards {
+        call Utils.MergeFiles as t_30_MergeCCSReclaimedBarcodeConfShards {
             input:
-                files_to_merge = t_27_SegmentS2ECcsReclaimedReads.barcode_conf_file,
+                files_to_merge = t_28_SegmentS2ECcsReclaimedReads.barcode_conf_file,
                 merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs_shard.txt"
         }
 
@@ -374,7 +374,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         # Now align the array elements with their respective alignment presets:
 
         # Align CCS reads to the genome:
-        call AR.Minimap2 as t_29_AlignCCSArrayElementsToGenome {
+        call AR.Minimap2 as t_31_AlignCCSArrayElementsToGenome {
             input:
                 reads      = [ t_25_MergeCCSArrayElementShards.merged_bam ],
                 ref_fasta  = ref_fasta,
@@ -382,9 +382,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
 
         # Align Reclaimed reads to the genome:
-        call AR.Minimap2 as t_30_AlignReclaimedArrayElementsToGenome {
+        call AR.Minimap2 as t_32_AlignReclaimedArrayElementsToGenome {
             input:
-                reads      = [ t_28_MergeCCSReclaimedArrayElementShards.merged_bam ],
+                reads      = [ t_29_MergeCCSReclaimedArrayElementShards.merged_bam ],
                 ref_fasta  = ref_fasta,
                 map_preset = "splice"
         }
@@ -392,85 +392,85 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         ##############
 
         # Now restore the tags to the aligned bam files:
-        call TENX.RestoreAnnotationstoAlignedBam as t_31_RestoreAnnotationsToGenomeAlignedCCSBam {
+        call TENX.RestoreAnnotationstoAlignedBam as t_33_RestoreAnnotationsToGenomeAlignedCCSBam {
             input:
                 annotated_bam_file = t_25_MergeCCSArrayElementShards.merged_bam,
-                aligned_bam_file = t_29_AlignCCSArrayElementsToGenome.aligned_bam,
+                aligned_bam_file = t_31_AlignCCSArrayElementsToGenome.aligned_bam,
                 tags_to_ignore = [],
                 mem_gb = 8,
         }
 
-        call TENX.RestoreAnnotationstoAlignedBam as t_32_RestoreAnnotationsToGenomeAlignedReclaimedBam {
+        call TENX.RestoreAnnotationstoAlignedBam as t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam {
             input:
-                annotated_bam_file = t_28_MergeCCSReclaimedArrayElementShards.merged_bam,
-                aligned_bam_file = t_30_AlignReclaimedArrayElementsToGenome.aligned_bam,
+                annotated_bam_file = t_29_MergeCCSReclaimedArrayElementShards.merged_bam,
+                aligned_bam_file = t_32_AlignReclaimedArrayElementsToGenome.aligned_bam,
                 tags_to_ignore = [],
                 mem_gb = 8,
         }
     }
 
     # Merge the arrays:
-    call Utils.MergeBams as t_33_MergeCCSLongbowPassedArrayReads {
+    call Utils.MergeBams as t_35_MergeCCSLongbowPassedArrayReads {
         input:
             bams = t_17_FilterS2ECCSReads.passed_reads,
             prefix = SM + "_ccs_array_reads_longbow_passed"
     }
-    call Utils.MergeBams as t_34_MergeCCSLongbowFailedArrayReads {
+    call Utils.MergeBams as t_36_MergeCCSLongbowFailedArrayReads {
         input:
             bams = t_17_FilterS2ECCSReads.failed_reads,
             prefix = SM + "_ccs_array_reads_longbow_failed"
     }
 
-    call Utils.MergeBams as t_35_MergeCCSReclaimedArrayReads {
+    call Utils.MergeBams as t_37_MergeCCSReclaimedArrayReads {
         input:
             bams = t_18_FilterS2EReclaimableReads.passed_reads,
             prefix = SM + "_ccs_reclaimed_array_reads_longbow_passed"
     }
-    call Utils.MergeBams as t_36_MergeCCSUnreclaimableArrayReads {
+    call Utils.MergeBams as t_38_MergeCCSUnreclaimableArrayReads {
         input:
             bams = t_18_FilterS2EReclaimableReads.failed_reads,
             prefix = SM + "_ccs_unreclaimable_array_reads_longbow_failed"
     }
 
     # Merge Filtered CCS reads together:
-    call Utils.MergeBams as t_37_MergeCCSArrayElements {
+    call Utils.MergeBams as t_39_MergeCCSArrayElements {
         input:
             bams = t_25_MergeCCSArrayElementShards.merged_bam,
             prefix = SM + "_ccs_array_elements"
     }
 
     # Merge Filtered CCS Reclaimed reads together:
-    call Utils.MergeBams as t_38_MergeCCSReclaimedArrayElements {
+    call Utils.MergeBams as t_40_MergeCCSReclaimedArrayElements {
         input:
-            bams = t_28_MergeCCSReclaimedArrayElementShards.merged_bam,
+            bams = t_29_MergeCCSReclaimedArrayElementShards.merged_bam,
             prefix = SM + "_ccs_reclaimed_array_elements"
     }
 
     # Merge Aligned CCS reads together:
-    call Utils.MergeBams as t_39_MergeAlignedCCSArrayElements {
+    call Utils.MergeBams as t_41_MergeAlignedCCSArrayElements {
         input:
-            bams = t_31_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam,
+            bams = t_33_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam,
             prefix = SM + "_ccs_array_elements_aligned"
     }
 
     # Merge Aligned CCS Reclaimed reads together:
-    call Utils.MergeBams as t_40_MergeAlignedCCSReclaimedArrayElements {
+    call Utils.MergeBams as t_42_MergeAlignedCCSReclaimedArrayElements {
         input:
-            bams = t_32_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
+            bams = t_34_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_aligned"
     }
 
     # Merge CCS Barcode Conf files:
-    call Utils.MergeFiles as t_41_MergeAllCCSBarcodeConfShards {
+    call Utils.MergeFiles as t_43_MergeAllCCSBarcodeConfShards {
         input:
             files_to_merge = t_26_MergeCCSBarcodeConfShards.merged_file,
             merged_file_name = SM + "_ccs_array_element_barcode_confs.txt"
     }
 
     # Merge CCS Barcode Conf files:
-    call Utils.MergeFiles as t_42_MergeAllCCSReclaimedBarcodeConfShards {
+    call Utils.MergeFiles as t_44_MergeAllCCSReclaimedBarcodeConfShards {
         input:
-            files_to_merge = t_29_MergeCCSReclaimedBarcodeConfShards.merged_file,
+            files_to_merge = t_30_MergeCCSReclaimedBarcodeConfShards.merged_file,
             merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs.txt"
     }
 
@@ -508,18 +508,18 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     # Remove unmapped, secondary, supplementary, mq0, length > 15kb, end clips > 1kb
-    call Utils.FilterMasSeqReadsWithGatk as t_41_AlignmentFilterForCcsArrayElements {
+    call Utils.FilterMasSeqReadsWithGatk as t_45_AlignmentFilterForCcsArrayElements {
         input:
-            bam_file = t_39_MergeAlignedCCSArrayElements.merged_bam,
-            bam_index = t_39_MergeAlignedCCSArrayElements.merged_bai,
+            bam_file = t_41_MergeAlignedCCSArrayElements.merged_bam,
+            bam_index = t_41_MergeAlignedCCSArrayElements.merged_bai,
             prefix = SM + "_CCS_ArrayElements_Annotated_Aligned_PrimaryOnly",
             runtime_attr_override = filterReadsAttrs
     }
 
-    call Utils.FilterMasSeqReadsWithGatk as t_42_AlignmentFilterForReclaimedArrayElements {
+    call Utils.FilterMasSeqReadsWithGatk as t_46_AlignmentFilterForReclaimedArrayElements {
         input:
-            bam_file = t_40_MergeAlignedCCSReclaimedArrayElements.merged_bam,
-            bam_index = t_40_MergeAlignedCCSReclaimedArrayElements.merged_bai,
+            bam_file = t_42_MergeAlignedCCSReclaimedArrayElements.merged_bam,
+            bam_index = t_42_MergeAlignedCCSReclaimedArrayElements.merged_bai,
             prefix = SM + "_Reclaimed_ArrayElements_Annotated_Aligned_PrimaryOnly",
             runtime_attr_override = filterReadsAttrs
     }
@@ -540,33 +540,33 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Running TALON on our sample with a darabase initialized with the StringTie2 gtf
 
     # Merge all alignments together:
-    call Utils.MergeBams as t_43_MergeAllAlignedAndFilteredArrayElements {
+    call Utils.MergeBams as t_47_MergeAllAlignedAndFilteredArrayElements {
         input:
-            bams = [t_41_AlignmentFilterForCcsArrayElements.bam, t_42_AlignmentFilterForReclaimedArrayElements.bam],
+            bams = [t_45_AlignmentFilterForCcsArrayElements.bam, t_46_AlignmentFilterForReclaimedArrayElements.bam],
             prefix = SM + "_all_array_elements_aligned"
     }
 
-    call StringTie2.Quantify as t_44_ST2_Quant {
+    call StringTie2.Quantify as t_48_ST2_Quant {
         input:
-            aligned_bam = t_43_MergeAllAlignedAndFilteredArrayElements.merged_bam,
-            aligned_bai = t_43_MergeAllAlignedAndFilteredArrayElements.merged_bai,
+            aligned_bam = t_47_MergeAllAlignedAndFilteredArrayElements.merged_bam,
+            aligned_bai = t_47_MergeAllAlignedAndFilteredArrayElements.merged_bai,
             gtf = genome_annotation_gtf,
             keep_retained_introns = false,
             prefix = SM + "_StringTie2_Quantify",
     }
 
-    call StringTie2.ExtractTranscriptSequences as t_45_ST2_ExtractTranscriptSequences  {
+    call StringTie2.ExtractTranscriptSequences as t_49_ST2_ExtractTranscriptSequences  {
         input:
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_index,
-            gtf = t_44_ST2_Quant.st_gtf,
+            gtf = t_48_ST2_Quant.st_gtf,
             prefix = SM + "_StringTie2_ExtractTranscriptSequences",
     }
 
-    call StringTie2.CompareTranscriptomes as t_46_ST2_CompareTranscriptomes {
+    call StringTie2.CompareTranscriptomes as t_50_ST2_CompareTranscriptomes {
         input:
             guide_gtf = genome_annotation_gtf,
-            new_gtf = t_44_ST2_Quant.st_gtf,
+            new_gtf = t_48_ST2_Quant.st_gtf,
             prefix = SM + "_StringTie2_CompareTranscriptome",
     }
 
@@ -578,16 +578,16 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     Int num_array_element_shards = 50
 
     # CCS
-    call Utils.ShardReads as t_47_ShardS2ECcsArrayElements {
+    call Utils.ShardReads as t_51_ShardS2ECcsArrayElements {
         input:
-            bam = t_41_AlignmentFilterForCcsArrayElements.bam,
-            bam_index = t_41_AlignmentFilterForCcsArrayElements.bai,
+            bam = t_45_AlignmentFilterForCcsArrayElements.bam,
+            bam_index = t_45_AlignmentFilterForCcsArrayElements.bai,
             prefix = SM + "_ccs_array_elements_subshard",
             num_shards = num_array_element_shards,
     }
-    scatter (ccs_array_element_shard in t_47_ShardS2ECcsArrayElements.shards) {
+    scatter (ccs_array_element_shard in t_51_ShardS2ECcsArrayElements.shards) {
 
-        call Utils.IndexBam as t_48_IndexCcsArrayElementShard {
+        call Utils.IndexBam as t_52_IndexCcsArrayElementShard {
             input:
                 bam = ccs_array_element_shard
         }
@@ -608,9 +608,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 #        }
 
         # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
-        call LONGBOW.Pad as t_50_LongbowPadCCSArrayElementUMIs {
+        call LONGBOW.Pad as t_53_LongbowPadCCSArrayElementUMIs {
             input:
-                reads = ccs_array_element_shard.output_bam,
+                reads = ccs_array_element_shard,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
                 padding = 2,
@@ -618,23 +618,23 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
     }
     # Merge Aligned CCS Reclaimed reads together:
-    call Utils.MergeBams as t_51_MergeLongbowPaddedCCSArrayElements {
+    call Utils.MergeBams as t_54_MergeLongbowPaddedCCSArrayElements {
         input:
-            bams = t_50_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
+            bams = t_53_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
             prefix = SM + "_ccs_array_elements_aligned_annotated_padded"
     }
 
     # RECLAIMED
-    call Utils.ShardReads as t_52_ShardS2ECcsReclaimedArrayElements {
+    call Utils.ShardReads as t_55_ShardS2ECcsReclaimedArrayElements {
         input:
-            bam = t_42_AlignmentFilterForReclaimedArrayElements.bam,
-            bam_index = t_42_AlignmentFilterForReclaimedArrayElements.bai,
+            bam = t_46_AlignmentFilterForReclaimedArrayElements.bam,
+            bam_index = t_46_AlignmentFilterForReclaimedArrayElements.bai,
             prefix = SM + "_ccs_reclaimed_array_elements_subshard",
             num_shards = num_array_element_shards,
     }
-    scatter (ccs_reclaimed_array_element_shard in t_52_ShardS2ECcsReclaimedArrayElements.shards) {
+    scatter (ccs_reclaimed_array_element_shard in t_55_ShardS2ECcsReclaimedArrayElements.shards) {
 
-        call Utils.IndexBam as t_53_IndexCcsReclaimedArrayElementShard {
+        call Utils.IndexBam as t_56_IndexCcsReclaimedArrayElementShard {
             input:
                 bam = ccs_reclaimed_array_element_shard
         }
@@ -655,7 +655,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 #        }
 
         # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
-        call LONGBOW.Pad as t_55_LongbowPadCCSReclaimedArrayElementUMIs {
+        call LONGBOW.Pad as t_57_LongbowPadCCSReclaimedArrayElementUMIs {
             input:
                 reads = ccs_reclaimed_array_element_shard,
                 model = mas_seq_model,
@@ -665,9 +665,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
     }
     # Merge Aligned CCS Reclaimed reads together:
-    call Utils.MergeBams as t_56_MergeLongbowPaddedCCSReclaimedArrayElements {
+    call Utils.MergeBams as t_58_MergeLongbowPaddedCCSReclaimedArrayElements {
         input:
-            bams = t_55_LongbowPadCCSReclaimedArrayElementUMIs.padded_tag_bam,
+            bams = t_57_LongbowPadCCSReclaimedArrayElementUMIs.padded_tag_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded"
     }
 
@@ -679,7 +679,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     call Utils.MergeFiles as t_59_MergeCbcConfScoreTsvsForStarcode {
         input:
-            files_to_merge = [t_41_MergeAllCCSBarcodeConfShards.merged_file, t_42_MergeAllCCSReclaimedBarcodeConfShards.merged_file],
+            files_to_merge = [t_43_MergeAllCCSBarcodeConfShards.merged_file, t_44_MergeAllCCSReclaimedBarcodeConfShards.merged_file],
             merged_file_name = "all_array_element_raw_starcode_counts.txt"
     }
 
@@ -711,7 +711,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Now we can correct our barcodes:
     call TENX.CorrectBarcodesWithStarcodeSeedCounts as t_63_CorrectCCSBarcodesWithStarcodeSeedCountsSharded {
         input:
-            bam_file = t_51_MergeLongbowPaddedCCSArrayElements.merged_bam,
+            bam_file = t_54_MergeLongbowPaddedCCSArrayElements.merged_bam,
             starcode_seeds_tsv = t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
             whitelist_10x = ten_x_cell_barcode_whitelist,
             extra_parameters = starcode_extra_params,
@@ -719,7 +719,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     call TENX.CorrectBarcodesWithStarcodeSeedCounts as t_64_CorrectReclaimedBarcodesWithStarcodeSeedCountsSharded {
         input:
-            bam_file = t_56_MergeLongbowPaddedCCSReclaimedArrayElements.merged_bam,
+            bam_file = t_58_MergeLongbowPaddedCCSReclaimedArrayElements.merged_bam,
             starcode_seeds_tsv = t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
             whitelist_10x = ten_x_cell_barcode_whitelist,
             extra_parameters = starcode_extra_params,
@@ -739,7 +739,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # We can actually compare the references without needing to scatter:
     call TX_PRE.GffCompare as t_66_GffCompareStringtie2toGencode {
         input:
-            gff_ref = t_44_ST2_Quant.st_gtf,
+            gff_ref = t_48_ST2_Quant.st_gtf,
             gff_query = genome_annotation_gtf,
             ref_fasta = ref_fasta,
             ref_fasta_index = ref_fasta_index,
@@ -747,7 +747,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call TX_PRE.GffCompare as t_67_GffCompareGencodetoStringtie2 {
         input:
             gff_ref = genome_annotation_gtf,
-            gff_query = t_44_ST2_Quant.st_gtf,
+            gff_query = t_48_ST2_Quant.st_gtf,
             ref_fasta = ref_fasta,
             ref_fasta_index = ref_fasta_index,
     }
@@ -774,7 +774,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         # Compare GFF files:
         call TX_PRE.GffCompare as t_70_GffCompareStringtie2toMasSeqReads {
             input:
-                gff_ref = t_44_ST2_Quant.st_gtf,
+                gff_ref = t_48_ST2_Quant.st_gtf,
                 gff_query = t_69_ConvertSplicedBamToGff.gff,
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_index,
@@ -832,7 +832,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 #    call TX_POST.CreateCountMatrixAnndataFromTsv as t_19_CreateCountMatrixAnndataFromTsv {
 #        input:
 #            count_matrix_tsv = t_74_CreateCountMatrixFromAnnotatedBam.count_matrix,
-#            genome_annotation_gtf_file = t_44_ST2_Quant.st_gtf,
+#            genome_annotation_gtf_file = t_48_ST2_Quant.st_gtf,
 #            gencode_reference_gtf_file = genome_annotation_gtf,
 #            overlap_intervals = intervals_of_interest,
 #            overlap_interval_label = interval_overlap_name,
@@ -993,8 +993,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 starcode_seeds,
                 t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
                 ten_x_cell_barcode_whitelist,
-                t_41_MergeAllCCSBarcodeConfShards.merged_file,
-                t_42_MergeAllCCSReclaimedBarcodeConfShards.merged_file
+                t_43_MergeAllCCSBarcodeConfShards.merged_file,
+                t_44_MergeAllCCSReclaimedBarcodeConfShards.merged_file
             ],
             outdir = meta_files_dir,
             keyfile = keyfile
@@ -1017,16 +1017,16 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         call FF.FinalizeToDir as t_81_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
-                    t_44_ST2_Quant.st_gtf,
-                    t_45_ST2_ExtractTranscriptSequences.transcripts_fa,
-                    t_45_ST2_ExtractTranscriptSequences.transcripts_fai,
-                    t_45_ST2_ExtractTranscriptSequences.transcripts_dict,
-                    t_46_ST2_CompareTranscriptomes.annotated_gtf,
-                    t_46_ST2_CompareTranscriptomes.loci,
-                    t_46_ST2_CompareTranscriptomes.stats,
-                    t_46_ST2_CompareTranscriptomes.tracking,
-                    t_46_ST2_CompareTranscriptomes.refmap,
-                    t_46_ST2_CompareTranscriptomes.tmap,
+                    t_48_ST2_Quant.st_gtf,
+                    t_49_ST2_ExtractTranscriptSequences.transcripts_fa,
+                    t_49_ST2_ExtractTranscriptSequences.transcripts_fai,
+                    t_49_ST2_ExtractTranscriptSequences.transcripts_dict,
+                    t_50_ST2_CompareTranscriptomes.annotated_gtf,
+                    t_50_ST2_CompareTranscriptomes.loci,
+                    t_50_ST2_CompareTranscriptomes.stats,
+                    t_50_ST2_CompareTranscriptomes.tracking,
+                    t_50_ST2_CompareTranscriptomes.refmap,
+                    t_50_ST2_CompareTranscriptomes.tmap,
                 ],
                 outdir = base_out_dir + "/discovered_transcriptome",
                 keyfile = keyfile
@@ -1037,10 +1037,10 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call FF.FinalizeToDir as t_82_FinalizeArrayReads {
         input:
             files = [
-                t_33_MergeCCSLongbowPassedArrayReads.merged_bam,
-                t_34_MergeCCSLongbowFailedArrayReads.merged_bam,
-                t_35_MergeCCSReclaimedArrayReads.merged_bam,
-                t_36_MergeCCSUnreclaimableArrayReads.merged_bam,
+                t_35_MergeCCSLongbowPassedArrayReads.merged_bam,
+                t_36_MergeCCSLongbowFailedArrayReads.merged_bam,
+                t_37_MergeCCSReclaimedArrayReads.merged_bam,
+                t_38_MergeCCSUnreclaimableArrayReads.merged_bam,
             ],
             outdir = intermediate_reads_dir + "/array_bams",
             keyfile = keyfile
