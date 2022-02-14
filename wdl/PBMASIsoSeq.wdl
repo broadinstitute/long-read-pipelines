@@ -85,14 +85,19 @@ workflow PBMASIsoSeq {
     File transcriptome_reference_dict_for_quant = ExtractTranscriptSequences.transcripts_dict
 
     # break one raw BAM into fixed number of shards
-    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = 50 }
+#    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = 50 }
+    call Utils.MakeChrIntervalList { input: ref_dict = ref_map['dict'], filter = false }
 
     # Now we have to align the array elements to the new transcriptome.
-    scatter (extracted_array_elements in ShardLongReads.unmapped_shards) {
+    scatter (c in MakeChrIntervalList.chrs) {
+        String contig = c[0]
+
+        call Utils.SubsetBam { input: bam = bam, bai = bai, locus = contig }
+
         # Align our array elements:
         call PB.Align as AlignToTranscriptome {
             input:
-                bam = extracted_array_elements,
+                bam = SubsetBam.subset_bam,
                 ref_fasta = transcriptome_reference_for_quant,
                 sample_name = participant_name,
                 drop_per_base_N_pulse_tags = true,
