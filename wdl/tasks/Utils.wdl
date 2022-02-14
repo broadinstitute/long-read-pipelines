@@ -1177,6 +1177,64 @@ task MergeBams {
     }
 }
 
+task FilterReadsWithTagValues {
+    input {
+        File bam
+        String tag
+        String value_to_remove
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam:   "Input BAM file from which to remove a tag with certain values."
+        tag:   "Name of the tag to target for potential removal."
+        value_to_remove:   "Tag value to use to remove reads.  Reads will be removed if they have the given tag with this value."
+        prefix: "[default-valued] prefix for output BAM"
+    }
+
+    Int disk_size = 20 + 11*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        java -jar /usr/picard/picard.jar \
+            FilterSamReads \
+                --VALIDATION_STRINGENCY SILENT \
+                --FILTER excludeTagValues \
+                --TAG ~{tag} \
+                --TAG_VALUE ~{value_to_remove} \
+                -I ~{bam} \
+                -O ~{prefix}.bam
+    >>>
+
+    output {
+        File output_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             20,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "broadinstitute/picard:2.23.7"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 # A utility to subset a BAM to specifed loci
 task SubsetBam {
     input {

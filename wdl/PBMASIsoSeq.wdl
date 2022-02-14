@@ -6,12 +6,15 @@ version 1.0
 ## prior to processing.
 ######################################################################################
 
-import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
-import "tasks/NanoPlot.wdl" as NP
-import "tasks/StringTie2.wdl"
-# import "tasks/SQANTI.wdl"
+import "tasks/PBUtils.wdl" as PB
 import "tasks/AlignReads.wdl" as AR
+#import "tasks/NanoPlot.wdl" as NP
+#import "tasks/SQANTI.wdl"
+import "tasks/StringTie2.wdl" as ST2
+import "tasks/Ten_X_Tool.wdl" as TENX
+import "tasks/TranscriptAnalysis/UMI_Tools.wdl" as UMI_TOOLS
+import "tasks/TranscriptAnalysis/Postprocessing_Tasks.wdl" as TX_POST
 import "tasks/Finalize.wdl" as FF
 
 workflow PBMASIsoSeq {
@@ -52,7 +55,7 @@ workflow PBMASIsoSeq {
     call PB.PBIndex as IndexCCSAlignedReads { input: bam = bam }
     File pbi = IndexCCSAlignedReads.pbi
 
-    call StringTie2.Quantify {
+    call ST2.Quantify {
         input:
             aligned_bam = bam,
             aligned_bai = bai,
@@ -61,7 +64,7 @@ workflow PBMASIsoSeq {
             prefix = participant_name + "_StringTie2_Quantify",
     }
 
-    call StringTie2.ExtractTranscriptSequences {
+    call ST2.ExtractTranscriptSequences {
         input:
             ref_fasta = ref_map['fasta'],
             ref_fasta_fai = ref_map['fai'],
@@ -69,7 +72,7 @@ workflow PBMASIsoSeq {
             prefix = participant_name + "_StringTie2_ExtractTranscriptSequences",
     }
 
-    call StringTie2.CompareTranscriptomes {
+    call ST2.CompareTranscriptomes {
         input:
             guide_gtf = ref_gtf,
             new_gtf = Quantify.st_gtf,
@@ -87,7 +90,7 @@ workflow PBMASIsoSeq {
     # Now we have to align the array elements to the new transcriptome.
     scatter (extracted_array_elements in ShardLongReads.unmapped_shards) {
         # Align our array elements:
-        call PB.Align {
+        call PB.Align as AlignToTranscriptome {
             input:
                 bam = extracted_array_elements,
                 ref_fasta = transcriptome_reference_for_quant,
@@ -98,7 +101,7 @@ workflow PBMASIsoSeq {
         # To properly count our transcripts we must throw away the non-primary and unaligned reads:
         call Utils.FilterReadsBySamFlags as RemoveUnmappedAndNonPrimaryReads {
             input:
-                bam = Align.aligned_bam,
+                bam = AlignToTranscriptome.aligned_bam,
                 sam_flags = "2308",
                 prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly",
                 runtime_attr_override = object { cpu_cores: 4, preemptible_tries: 0 }
@@ -114,50 +117,57 @@ workflow PBMASIsoSeq {
                 runtime_attr_override = object { cpu_cores: 4, preemptible_tries: 0 }
         }
 
-#        # Copy the contig to a tag.
-#        # By this point in the pipeline, array elements are aligned to a transcriptome, so this tag will
-#        # actually indicate the transcript to which each array element aligns.
-#        call TENX.CopyContigNameToReadTag as t_38_CopyContigNameToReadTag {
-#            input:
-#                aligned_bam_file = t_37_FilterReadsWithNoUMI.output_bam,
-#                prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly_WithUMIs"
-#        }
+        # Copy the contig to a tag.
+        # By this point in the pipeline, array elements are aligned to a transcriptome, so this tag will
+        # actually indicate the transcript to which each array element aligns.
+        call TENX.CopyContigNameToReadTag as CopyContigNameToReadTag {
+            input:
+                aligned_bam_file = FilterReadsWithNoUMI.output_bam,
+                prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly_WithUMIs"
+        }
     }
 
-#    # Now we merge together our TX-ome aligned stuff:
-#    call Utils.MergeBams as t_52_MergeTranscriptomeAlignedExtractedArrayElements { input: bams = t_34_RestoreAnnotationsToTranscriptomeAlignedBam.output_bam, prefix = SM + "_array_elements_longbow_extracted_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
-#    call Utils.MergeBams as t_54_MergePrimaryTranscriptomeAlignedArrayElements { input: bams = t_38_CopyContigNameToReadTag.output_bam, prefix = SM + "_array_elements_longbow_extracted_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }
+    # Now we merge together our TX-ome aligned stuff:
+    call Utils.MergeBams as MergeTranscriptomeAlignedExtractedArrayElements {
+        input:
+            bams = AlignToTranscriptome.aligned_bam,
+            prefix = participant_name + "_array_elements_longbow_extracted_tx_aligned",
+            runtime_attr_override = object { cpu_cores: 4 }
+    }
+
+    call Utils.MergeBams as MergePrimaryTranscriptomeAlignedArrayElements {
+        input:
+            bams = CopyContigNameToReadTag.output_bam,
+            prefix = participant_name + "_array_elements_longbow_extracted_tx_aligned_primary_alignments",
+            runtime_attr_override = object { cpu_cores: 4 }
+    }
 
     ##########
     # Quantify Transcripts:
     ##########
 
-#    call UMI_TOOLS.Run_Group as t_56_UMIToolsGroup {
-#        input:
-#            aligned_transcriptome_reads = t_54_MergePrimaryTranscriptomeAlignedArrayElements.merged_bam,
-#            aligned_transcriptome_reads_index = t_54_MergePrimaryTranscriptomeAlignedArrayElements.merged_bai,
-#            do_per_cell = !is_SIRV_data,
-#            prefix = "~{SM}_~{ID}_umi_tools_group"
-#    }
-#
-#    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_57_CreateCountMatrixFromAnnotatedBam {
-#        input:
-#            annotated_transcriptome_bam = t_56_UMIToolsGroup.output_bam,
-#            prefix = "~{SM}_~{ID}_gene_tx_expression_count_matrix"
-#    }
-#
-#    # Only create the anndata objects if we're looking at real genomic data:
-#    if ( ! is_SIRV_data ) {
-#        call TX_POST.CreateCountMatrixAnndataFromTsv as t_58_CreateCountMatrixAnndataFromTsv {
-#            input:
-#                count_matrix_tsv = t_57_CreateCountMatrixFromAnnotatedBam.count_matrix,
-#                genome_annotation_gtf_file = select_first([t_74_ST2_Quant.st_gtf]),
-#                gencode_reference_gtf_file = genome_annotation_gtf,
-#                overlap_intervals = intervals_of_interest,
-#                overlap_interval_label = interval_overlap_name,
-#                prefix = "~{SM}_~{ID}_gene_tx_expression_count_matrix"
-#        }
-#    }
+    call UMI_TOOLS.Run_Group as UMIToolsGroup {
+        input:
+            aligned_transcriptome_reads = MergePrimaryTranscriptomeAlignedArrayElements.merged_bam,
+            aligned_transcriptome_reads_index = MergePrimaryTranscriptomeAlignedArrayElements.merged_bai,
+            do_per_cell = true,
+            prefix = "~{participant_name}_umi_tools_group"
+    }
+
+    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_57_CreateCountMatrixFromAnnotatedBam {
+        input:
+            annotated_transcriptome_bam = UMIToolsGroup.output_bam,
+            prefix = "~{participant_name}_gene_tx_expression_count_matrix"
+    }
+
+    # Only create the anndata objects if we're looking at real genomic data:
+    call TX_POST.CreateCountMatrixAnndataFromTsv as t_58_CreateCountMatrixAnndataFromTsv {
+        input:
+            count_matrix_tsv = t_57_CreateCountMatrixFromAnnotatedBam.count_matrix,
+            genome_annotation_gtf_file = select_first([Quantify.st_gtf]),
+            gencode_reference_gtf_file = ref_gtf,
+            prefix = "~{participant_name}_gene_tx_expression_count_matrix"
+    }
 
 #    call SQANTI.QC {
 #        input:
