@@ -129,7 +129,7 @@ task CompareTranscriptomes {
     output {
         File annotated_gtf = "~{prefix}.annotated.gtf"
         File loci = "~{prefix}.loci"
-        File stats = "~{prefix}"
+        File stats = "~{prefix}.stats"
         File tracking = "~{prefix}.tracking"
         File refmap = "~{prefix}.refmap"
         File tmap = "~{prefix}.tmap"
