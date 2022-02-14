@@ -95,6 +95,7 @@ workflow PBMASIsoSeq {
                 bam = extracted_array_elements,
                 ref_fasta = transcriptome_reference_for_quant,
                 sample_name = participant_name,
+                drop_per_base_N_pulse_tags = true,
                 map_preset = 'SUBREAD',
         }
 
