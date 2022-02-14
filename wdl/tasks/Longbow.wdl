@@ -18,20 +18,8 @@ workflow Process {
     String lbmodel = select_first([model, Peek.model])
 
     call Annotate { input: bam = bam, model = lbmodel }
-
-    if (defined(barcode_tag) && defined(barcode_allowlist)) {
-        call Refine {
-            input:
-                bam = Annotate.annotated_bam,
-                barcode_tag = select_first([barcode_tag]),
-                barcode_allowlist = select_first([barcode_allowlist]),
-                same_barcode_per_read = same_barcode_per_read
-        }
-    }
-
-    call Filter { input: bam = select_first([Refine.refined_bam, Annotate.annotated_bam]) }
-
-    call Extract { input: bam = Filter.filtered_bam }
+    call Filter   { input: bam = Annotate.annotated_bam }
+    call Extract  { input: bam = Filter.filtered_bam, model = lbmodel }
 
     output {
         File annotated_bam = Annotate.annotated_bam
@@ -228,6 +216,7 @@ task Filter {
 task Extract {
     input {
         File bam
+        String model
 
         Int num_cpus = 2
         String prefix = "out"
@@ -237,10 +226,20 @@ task Extract {
 
     Int disk_size = 10 * ceil(size(bam, "GB"))
 
+    Map[String, String] allowlists = {
+        "mas10v2":          "/longbow/resources/barcodes/cellranger/737K-august-2016.txt",
+        "mas15v2":          "/longbow/resources/barcodes/cellranger/737K-august-2016.txt",
+        "mas10threeP":      "/longbow/resources/barcodes/cellranger/3M-february-2018.txt.gz",
+        "mas15threeP":      "/longbow/resources/barcodes/cellranger/3M-february-2018.txt.gz",
+        "mas15teloprimev2": "/longbow/resources/barcodes/indexes/tpv2.indices.txt"
+    }
+
     command <<<
         set -euxo pipefail
 
-        longbow segment ~{bam} | longbow extract -o ~{prefix}.extracted.bam
+        longbow segment ~{bam} | \
+            longbow extract \
+            longbow correct-tag -b CR -c CB -a ~{allowlists[model]} -o ~{prefix}.extracted.bam
     >>>
 
     output {
@@ -255,7 +254,7 @@ task Extract {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.11"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.17"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
