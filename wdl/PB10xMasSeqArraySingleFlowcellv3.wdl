@@ -67,7 +67,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         Int max_reclamation_length = 60000
 
         Boolean is_SIRV_data = false
-        String mas_seq_model = "mas15"
+        String mas_seq_model = "mas15v2"
 
         String? sample_name
     }
