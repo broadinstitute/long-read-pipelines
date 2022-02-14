@@ -20,7 +20,7 @@ workflow Process {
     call Annotate { input: bam = bam, model = lbmodel }
     call Filter   { input: bam = Annotate.annotated_bam }
     call Extract  { input: bam = Filter.filtered_bam }
-    call Correct  { input: bam = Filter.filtered_bam, model = lbmodel }
+    call Correct  { input: bam = Extract.extracted_bam, model = lbmodel }
 
     output {
         File annotated_bam = Annotate.annotated_bam
