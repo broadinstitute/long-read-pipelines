@@ -84,45 +84,36 @@ workflow PBMASIsoSeq {
     # break one raw BAM into fixed number of shards
     call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = 50 }
 
-#    # Now we have to align the array elements to the new transcriptome.
-#    scatter (extracted_array_elements in ShardLongReads.unmapped_shards) {
-#        # Align our array elements:
-#        call AR.Minimap2 as t_32_AlignArrayElementsToTranscriptome {
-#            input:
-#                reads      = [ extracted_array_elements ],
-#                ref_fasta  = transcriptome_reference_for_quant,
-#                map_preset = "asm20"
-#        }
-#
-#        # We need to restore the annotations we created with the 10x tool to the aligned reads.
-#        call TENX.RestoreAnnotationstoAlignedBam as t_34_RestoreAnnotationsToTranscriptomeAlignedBam {
-#            input:
-#                annotated_bam_file = extracted_array_elements,
-#                aligned_bam_file = t_32_AlignArrayElementsToTranscriptome.aligned_bam,
-#                tags_to_ignore = [],
-#                mem_gb = 64,  # TODO: Debug for memory redution
-#        }
-#
-#        # To properly count our transcripts we must throw away the non-primary and unaligned reads:
-#        RuntimeAttr filterReadsAttrs = object { cpu_cores: 4, preemptible_tries: 0 }
-#        call Utils.FilterReadsBySamFlags as t_36_RemoveUnmappedAndNonPrimaryReads {
-#            input:
-#                bam = t_34_RestoreAnnotationsToTranscriptomeAlignedBam.output_bam,
-#                sam_flags = "2308",
-#                prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly",
-#                runtime_attr_override = filterReadsAttrs
-#        }
-#
-#        # Filter reads with no UMI tag:
-#        call Utils.FilterReadsWithTagValues as t_37_FilterReadsWithNoUMI {
-#            input:
-#                bam = t_36_RemoveUnmappedAndNonPrimaryReads.output_bam,
-#                tag = "ZU",
-#                value_to_remove = ".",
-#                prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly_WithUMIs",
-#                runtime_attr_override = filterReadsAttrs
-#        }
-#
+    # Now we have to align the array elements to the new transcriptome.
+    scatter (extracted_array_elements in ShardLongReads.unmapped_shards) {
+        # Align our array elements:
+        call PB.Align {
+            input:
+                bam = extracted_array_elements,
+                ref_fasta = transcriptome_reference_for_quant,
+                sample_name = participant_name,
+                map_preset = 'SUBREAD',
+        }
+
+        # To properly count our transcripts we must throw away the non-primary and unaligned reads:
+        call Utils.FilterReadsBySamFlags as RemoveUnmappedAndNonPrimaryReads {
+            input:
+                bam = Align.aligned_bam,
+                sam_flags = "2308",
+                prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly",
+                runtime_attr_override = object { cpu_cores: 4, preemptible_tries: 0 }
+        }
+
+        # Filter reads with no UMI tag:
+        call Utils.FilterReadsWithTagValues as FilterReadsWithNoUMI {
+            input:
+                bam = RemoveUnmappedAndNonPrimaryReads.output_bam,
+                tag = "ZU",
+                value_to_remove = ".",
+                prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly_WithUMIs",
+                runtime_attr_override = object { cpu_cores: 4, preemptible_tries: 0 }
+        }
+
 #        # Copy the contig to a tag.
 #        # By this point in the pipeline, array elements are aligned to a transcriptome, so this tag will
 #        # actually indicate the transcript to which each array element aligns.
@@ -131,8 +122,8 @@ workflow PBMASIsoSeq {
 #                aligned_bam_file = t_37_FilterReadsWithNoUMI.output_bam,
 #                prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly_WithUMIs"
 #        }
-#    }
-#
+    }
+
 #    # Now we merge together our TX-ome aligned stuff:
 #    call Utils.MergeBams as t_52_MergeTranscriptomeAlignedExtractedArrayElements { input: bams = t_34_RestoreAnnotationsToTranscriptomeAlignedBam.output_bam, prefix = SM + "_array_elements_longbow_extracted_tx_aligned", runtime_attr_override = merge_extra_cpu_attrs }
 #    call Utils.MergeBams as t_54_MergePrimaryTranscriptomeAlignedArrayElements { input: bams = t_38_CopyContigNameToReadTag.output_bam, prefix = SM + "_array_elements_longbow_extracted_tx_aligned_primary_alignments", runtime_attr_override = merge_extra_cpu_attrs }

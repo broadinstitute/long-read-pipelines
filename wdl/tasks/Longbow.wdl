@@ -282,7 +282,7 @@ task Correct {
     command <<<
         set -euxo pipefail
 
-        longbow correct-tag -b CR -c CB -a ~{allowlists[model]} -o ~{prefix}.extracted.bam ~{bam}
+        longbow correct-tag -b CR -c CB -a ~{allowlists[model]} -o ~{prefix}.corrected.bam ~{bam}
     >>>
 
     output {
