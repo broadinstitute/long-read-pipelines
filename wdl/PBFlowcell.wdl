@@ -93,7 +93,7 @@ workflow PBFlowcell {
             }
         }
 
-        File unaligned_bam = select_first([Process.extracted_bam, ExtractHifiReads.hifi_bam, CCS.consensus, unmapped_shard])
+        File unaligned_bam = select_first([Process.corrected_bam, ExtractHifiReads.hifi_bam, CCS.consensus, unmapped_shard])
 
         call PB.Align as AlignReads {
             input:
