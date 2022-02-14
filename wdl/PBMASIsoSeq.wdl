@@ -86,7 +86,8 @@ workflow PBMASIsoSeq {
 
     # break one raw BAM into fixed number of shards
 #    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = 50 }
-    call Utils.MakeChrIntervalList { input: ref_dict = ref_map['dict'], filter = false }
+    Array[String] default_filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
+    call Utils.MakeChrIntervalList { input: ref_dict = ref_map['dict'], filter = default_filter }
 
     # Now we have to align the array elements to the new transcriptome.
     scatter (c in MakeChrIntervalList.chrs) {
