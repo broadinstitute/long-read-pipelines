@@ -35,14 +35,14 @@ task Quantify {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             8,
+        cpu_cores:          4,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
         disk_type:          "HDD",
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.1.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1-test"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
