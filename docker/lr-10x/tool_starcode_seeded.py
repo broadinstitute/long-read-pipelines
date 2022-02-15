@@ -131,6 +131,8 @@ def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, s
     correction_dict['.'] = '.'
     print(f"Barcode Correction Dict Length: {len(correction_dict)}")
 
+    num_no_raw_barcode = 0
+
     with pysam.AlignmentFile(bam_filename, 'rb', check_sq=False) as bam_file, \
             tqdm(desc=f"Correcting barcodes", unit="read") as pbar:
 
@@ -138,7 +140,12 @@ def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, s
             for read in bam_file.fetch(until_eof=True):
 
                 # Get our raw barcode and set some basic outputs:
-                raw_barcode = read.get_tag(RAW_BARCODE_TAG)
+                try:
+                    raw_barcode = read.get_tag(RAW_BARCODE_TAG)
+                except KeyError:
+                    num_no_raw_barcode += 1
+                    continue
+
                 read.set_tag(BARCODE_TAG, raw_barcode, value_type='Z')
                 read.set_tag(BARCODE_CORRECTED_TAG, False)
 
@@ -163,6 +170,7 @@ def main(bam_filename, counts_filename, analysis_name, whitelist_10x_filename, s
                 output_file.write(read)
                 pbar.update(1)
 
+    print(f"Num reads skipped for not containing a raw barcode ({RAW_BARCODE_TAG}) tag: {num_no_raw_barcode}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
