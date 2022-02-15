@@ -5,7 +5,7 @@ MAINTAINER Kiran V Garimella
 # copy other resources
 COPY ./environment.yml /
 
-RUN apt-get -y update && \
+RUN apt-get -y  --allow-releaseinfo-change update && \
     apt-get -y install curl zlib1g-dev libcurl4-openssl-dev libbz2-dev liblzma-dev wget tree && \
     apt-get clean
 
