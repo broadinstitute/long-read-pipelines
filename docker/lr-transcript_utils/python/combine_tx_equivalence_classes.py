@@ -80,7 +80,7 @@ def ingest_old_class_def_files(old_class_def_file_dict, file_suffix):
         print(f"\tProcessing {eq_def_file}")
         with open(eq_def_file, 'r') as f:
             file_key = eq_def_file[:eq_def_file.find(file_suffix)]
-            old_tx_eq_classes[file_key] = dict()
+            old_eq_classes[file_key] = dict()
             for line in f:
                 if line[0] == "#":
                     continue
