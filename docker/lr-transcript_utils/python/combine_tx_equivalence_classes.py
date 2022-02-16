@@ -201,9 +201,9 @@ with open(GENE_EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME, 'w') as out_file:
                 # Now lookup the new class for the gene
                 # Not all genes are reassigned.  In fact, most arent.
                 try:
-                    new_assignment = gene_eq_classes[old_gene_eq_classes[file_key][gene_assignment]]
+                    new_class_num = gene_eq_classes[old_gene_eq_classes[file_key][gene_assignment]]
                 except KeyError:
-                    new_assignment = gene_assignment
+                    new_class_num = gene_assignment
 
                 # Now write out the class info:
                 out_file.write(f"{read_name}\t{new_class_num}\n")
