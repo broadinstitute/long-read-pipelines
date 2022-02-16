@@ -1310,7 +1310,7 @@ task ExcludeRegionsFromBam {
     command <<<
         set -euxo pipefail
 
-        cat ~{sep=',' loci} | sed 's/,/\n/g' | sed 's/[:-]/\t/g' > regions.bed
+        echo ~{sep=',' loci} | sed 's/,/\n/g' | sed 's/[:-]/\t/g' > regions.bed
         samtools view -L regions.bed -hbU ~{prefix}.bam -o /dev/null ~{bam}
         samtools index ~{prefix}.bam
     >>>
