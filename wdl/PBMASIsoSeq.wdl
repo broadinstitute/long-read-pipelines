@@ -49,15 +49,15 @@ workflow PBMASIsoSeq {
         call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
-    call Utils.ExcludeRegionsFromBam {
+    call Utils.SubsetBam {
         input:
             bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]]),
             bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]]),
-            loci = ["chr16:16000000-19000000"]
+            locus = ["chr21"]
     }
 
-    File bam = ExcludeRegionsFromBam.subset_bam
-    File bai = ExcludeRegionsFromBam.subset_bai
+    File bam = SubsetBam.subset_bam
+    File bai = SubsetBam.subset_bai
 
 #    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
 #    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
