@@ -195,9 +195,7 @@ def get_approximate_gencode_gene_assignments(gtf_field_dict, gencode_field_val_d
 def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_map, read_eq_class_map,
                             gtf_field_dict, overlapping_gene_name_set=None,
                             overlap_intervals_label="overlaps_intervals_of_interest",
-                            gencode_reference_gtf=None,
-                            force_recount=False,
-                            force_overwrite_gencode_overlaps=False):
+                            force_recount=False):
 
     """Create an anndata object holding the given gene/transcript information.
     NOTE: This MUST be a sparse matrix - we got lots of data here.
@@ -307,19 +305,27 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
     # First we handle our overlapping tests:
     # Mark the equivalence classes that overlap our intervals:
+    tx_eq_class_overlap_flags = None
     if overlapping_gene_name_set:
         print(f"Determining overlap intervals for the given interval list... ", end="", file=sys.stderr)
 
         tx_eq_class_overlap_flags = np.empty(len(tx_eq_classes), dtype=bool)
+
+        seen_eq_classes = set()
         for read_name, (tx_eq_class, gene_eq_class) in read_eq_class_map.items():
+
+            # We only need to do this once per each eq class:
+            if tx_eq_class in seen_eq_classes:
+                continue
+
             try:
-                genes = gene_eq_class_def_map[gene_eq_class]
+                gene_ids = gene_eq_class_def_map[gene_eq_class]
             except KeyError:
                 # The gene is not in the eq class map and so we have just this one
-                genes = tuple([gene_eq_class])
+                gene_ids = tuple([gene_eq_class])
 
             does_overlap = False
-            for gene in genes:
+            for gene in gene_ids:
                 # Remove the version number from the gene if it's present:
                 idx = gene.find(".")
                 if idx != -1:
@@ -332,7 +338,63 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
             if does_overlap:
                 tx_eq_class_overlap_flags[tx_eq_class_index_dict[tx_eq_class]] = True
 
+            # Make sure we don't see this guy again:
+            seen_eq_classes.add(tx_eq_class)
+
         print("Done!", file=sys.stderr)
+
+
+    # Now we handle the rest of our metadata (var / obs info):
+    gene_eq_classes = np.empty(len(tx_eq_classes), dtype=str)
+    transcript_ids = np.empty(len(tx_eq_classes), dtype=str)
+    gene_ids = np.empty(len(tx_eq_classes), dtype=str)
+    gene_names = np.empty(len(tx_eq_classes), dtype=str)
+    is_de_novo = np.empty(len(tx_eq_classes), dtype=bool)
+    is_gene_id_ambiguous = np.empty(len(tx_eq_classes), dtype=bool)
+
+    seen_eq_classes = set()
+    for read_name, (tx_eq_class, gene_eq_class) in read_eq_class_map.items():
+
+        if tx_eq_class in seen_eq_classes:
+            continue
+
+        tx_indx = tx_eq_class_index_dict[tx_eq_class]
+
+        # Get our gene ids:
+        try:
+            gene_ids = sorted(gene_eq_class_def_map[gene_eq_class])
+        except KeyError:
+            # The gene is not in the eq class map and so we have just this one
+            gene_ids = tuple([gene_eq_class])
+
+        tx_ids = sorted(tx_eq_class_def_map[tx_indx])
+
+        # Set gene eq class:
+        gene_eq_class[tx_indx] = gene_eq_class
+
+        # Set transcript ids:
+        transcript_ids[tx_indx] = ",".join(tx_ids)
+
+        # Set gene IDs:
+        gene_ids[tx_indx] = ",".join(gene_ids)
+
+        # Get the gene name:
+        gene_name = gene_eq_class
+        if len(tx_ids) == 1:
+            try:
+                gene_name = gtf_field_dict[tx_ids[0]][GENCODE_GENE_NAME_FIELD]
+            except KeyError:
+                pass
+        gene_names[tx_indx] = gene_name
+
+        # Any transcript with an equivalence class containing a stringtie 2 transcript, or the null transcript is de novo:
+        is_de_novo[tx_indx] = any([txid.startswith("STRG") or txid.startswith("-") for txid in tx_ids])
+
+        # Any gene is ambiguous if it has a gene equivalence class:
+        # NOTE: This might have to change by the multi-mapping gene / read pairs.
+        is_gene_id_ambiguous = len(gene_ids) == 1
+
+        seen_eq_classes.add(tx_eq_class)
 
     # Create our anndata object now:
     count_adata = anndata.AnnData(count_mat.tocsr())
@@ -340,9 +402,9 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
     # Add our variables:
     col_df = pd.DataFrame()
     col_df["transcript_eq_classes"] = tx_eq_classes
-    col_df["gene_eq_classes"] = gene_ids
-    col_df["transcript_ids"] = gene_names
-    col_df["gene_ids"] = gene_names
+    col_df["gene_eq_classes"] = gene_eq_classes
+    col_df["transcript_ids"] = transcript_ids
+    col_df["gene_ids"] = gene_ids
 
     col_df["gene_names"] = gene_names
 
@@ -489,13 +551,11 @@ def main(input_tsv, gtf_file, out_prefix,
     # Now read the full eq class associations:
     read_eq_class_map = parse_tx_eq_class_assignments(tx_eq_class_assignments)
 
-
     # Create our anndata objects from the given data:
     print("Creating master anndata objects from transcripts counts data...", file=sys.stderr)
     master_adata = create_combined_anndata(
         input_tsv, tx_eq_class_def_map, gene_eq_class_def_map, read_eq_class_map,
         gtf_field_dict, overlapping_gene_names, overlap_intervals_label,
-        gencode_reference_gtf, force_overwrite_gencode_overlaps=force_overwrite_gencode_overlaps
     )
 
     # Write our data out as pickles:

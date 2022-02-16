@@ -828,19 +828,19 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             prefix = SM + "_gene_tx_expression_count_matrix"
     }
 
-#    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_75_CreateCountMatrixAnndataFromEqClasses {
-#        input:
-#            count_matrix_tsv = t_74_CreateCountMatrixFromAnnotatedBam.count_matrix,
-#            genome_annotation_gtf_file = t_48_ST2_Quant.st_gtf,
-#            gencode_reference_gtf_file = genome_annotation_gtf,
-#            overlap_intervals = intervals_of_interest,
-#            overlap_interval_label = interval_overlap_name,
-#            tx_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
-#            tx_equivalence_class_definitions = t_73_CombineEqClassFiles.combined_tx_eq_class_defs,
-#            gene_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_gene_eq_class_assignments,
-#            gene_equivalence_class_definitions = t_73_CombineEqClassFiles.combined_gene_eq_class_defs,
-#            prefix = SM + "_gene_tx_expression_count_matrix"
-#    }
+    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_75_CreateCountMatrixAnndataFromEqClasses {
+        input:
+            count_matrix_tsv = t_74_CreateCountMatrixFromAnnotatedBam.count_matrix,
+            genome_annotation_gtf_file = t_48_ST2_Quant.st_gtf,
+            gencode_reference_gtf_file = genome_annotation_gtf,
+            overlap_intervals = intervals_of_interest,
+            overlap_interval_label = interval_overlap_name,
+            tx_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            tx_equivalence_class_definitions = t_73_CombineEqClassFiles.combined_tx_eq_class_defs,
+            gene_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_gene_eq_class_assignments,
+            gene_equivalence_class_definitions = t_73_CombineEqClassFiles.combined_gene_eq_class_defs,
+            prefix = SM + "_gene_tx_expression_count_matrix"
+    }
 
 #
 #    ############################################################
@@ -887,7 +887,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
 
-    File keyfile = t_74_CreateCountMatrixFromAnnotatedBam.count_matrix
+    File keyfile = t_75_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
 
     String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
     String metrics_out_dir = base_out_dir + "/metrics"
@@ -903,7 +903,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize gene / tx assignments:
-    call FF.FinalizeToDir as t_75_FinalizeTxAndGeneAssignments {
+    call FF.FinalizeToDir as t_76_FinalizeTxAndGeneAssignments {
         input:
             files = [
                 t_73_CombineEqClassFiles.combined_gene_eq_class_defs,
@@ -911,12 +911,20 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_73_CombineEqClassFiles.combined_tx_eq_class_defs,
                 t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
                 t_74_CreateCountMatrixFromAnnotatedBam.count_matrix,
+                t_75_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
             ],
             outdir = quant_dir,
-            keyfile = t_65_MergeAllAnnotatedArrayElements.merged_bai
+            keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_76_FinalizeRefAndSt2Comparisons {
+    call FF.FinalizeToDir as t_77_FinalizeRawQuantPickles {
+        input:
+            files = t_75_CreateCountMatrixAnndataFromEqClasses.pickles,
+            outdir = quant_dir,
+            keyfile = keyfile
+    }
+
+    call FF.FinalizeToDir as t_78_FinalizeRefAndSt2Comparisons {
         input:
             files = [
                 t_66_GffCompareStringtie2toGencode.refmap,
@@ -945,7 +953,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     scatter (i in range(length(t_68_SplitArrayElementsByContig.contig_bams))) {
         String contig = t_68_SplitArrayElementsByContig.contig_names[i]
 
-        call FF.FinalizeToDir as t_77_FinalizeTxAndGeneAssignmentsByContig {
+        call FF.FinalizeToDir as t_79_FinalizeTxAndGeneAssignmentsByContig {
             input:
                 files = [
                     t_70_GffCompareStringtie2toMasSeqReads.refmap[i],
@@ -976,7 +984,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize annotated, aligned array elements:
-    call FF.FinalizeToDir as t_78_FinalizeCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_80_FinalizeCBCAnnotatedArrayElements {
         input:
             files = [
                 t_63_CorrectCCSBarcodesWithStarcodeSeedCountsSharded.output_bam,
@@ -990,7 +998,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize meta files:
-    call FF.FinalizeToDir as t_79_FinalizeMeta {
+    call FF.FinalizeToDir as t_81_FinalizeMeta {
         input:
             files = [
                 starcode_seeds,
@@ -1004,7 +1012,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     if (defined(illumina_barcoded_bam)) {
-        call FF.FinalizeToDir as t_80_FinalizeMetaIlmnBarcodeConfs {
+        call FF.FinalizeToDir as t_82_FinalizeMetaIlmnBarcodeConfs {
             input:
                 files = select_all([
                     t_60_ExtractIlmnBarcodeConfScores.conf_score_tsv
@@ -1017,7 +1025,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     ##############################################################################################################
     # Finalize the discovered transcriptome:
     if ( !is_SIRV_data ) {
-        call FF.FinalizeToDir as t_81_FinalizeDiscoveredTranscriptome {
+        call FF.FinalizeToDir as t_83_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
                     t_48_ST2_Quant.st_gtf,
@@ -1037,7 +1045,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_82_FinalizeArrayReads {
+    call FF.FinalizeToDir as t_84_FinalizeArrayReads {
         input:
             files = [
                 t_35_MergeCCSLongbowPassedArrayReads.merged_bam,
@@ -1048,128 +1056,17 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             outdir = intermediate_reads_dir + "/array_bams",
             keyfile = keyfile
     }
-#
-#    call FF.FinalizeToDir as t_37_FinalizeArrayElementReads {
-#        input:
-#            files = [
-#                annotated_array_elements,
-#                t_51_MergeLongbowExtractedArrayElements.merged_bam,
-#                t_51_MergeLongbowExtractedArrayElements.merged_bai,
-#                t_52_MergeTranscriptomeAlignedExtractedArrayElements.merged_bam,
-#                t_52_MergeTranscriptomeAlignedExtractedArrayElements.merged_bai,
-#                t_53_MergeGenomeAlignedExtractedArrayElements.merged_bam,
-#                t_53_MergeGenomeAlignedExtractedArrayElements.merged_bai,
-#            ],
-#            outdir = intermediate_reads_dir + "/array_element_bams",
-#            keyfile = t_61_GenerateStaticReport.html_report
-#    }
-#
-#    ##############################################################################################################
-#    # Finalize Metrics:
-#    call FF.FinalizeToDir as t_38_FinalizeSamStatsOnInputBam {
-#        input:
-#            # an unfortunate hard-coded path here:
-#            outdir = metrics_out_dir + "/input_bam_stats",
-#            files = [
-#                t_55_CalcSamStatsOnInputBam.raw_stats,
-#                t_55_CalcSamStatsOnInputBam.summary_stats,
-#                t_55_CalcSamStatsOnInputBam.first_frag_qual,
-#                t_55_CalcSamStatsOnInputBam.last_frag_qual,
-#                t_55_CalcSamStatsOnInputBam.first_frag_gc_content,
-#                t_55_CalcSamStatsOnInputBam.last_frag_gc_content,
-#                t_55_CalcSamStatsOnInputBam.acgt_content_per_cycle,
-#                t_55_CalcSamStatsOnInputBam.insert_size,
-#                t_55_CalcSamStatsOnInputBam.read_length_dist,
-#                t_55_CalcSamStatsOnInputBam.indel_distribution,
-#                t_55_CalcSamStatsOnInputBam.indels_per_cycle,
-#                t_55_CalcSamStatsOnInputBam.coverage_distribution,
-#                t_55_CalcSamStatsOnInputBam.gc_depth
-#            ],
-#            keyfile = t_61_GenerateStaticReport.html_report
-#    }
-#
-#    # Finalize all the 10x metrics here:
-#    # NOTE: We only run the 10x tool if we have real (non-SIRV) data, so we have to have this conditional here:
-#    if (! is_SIRV_data) {
-#        String tenXToolMetricsDir = metrics_out_dir + "/ten_x_tool_metrics"
-#
-#        call FF.FinalizeToDir as t_39_FinalizeTenXRgStats {
-#            input:
-#                files = select_all([
-#                    starcode_seeds
-#               ]),
-#                outdir = tenXToolMetricsDir,
-#                keyfile = t_61_GenerateStaticReport.html_report
-#        }
-#    }
-#
-    call FF.FinalizeToDir as t_83_FinalizeCCSMetrics {
+
+    call FF.FinalizeToDir as t_85_FinalizeCCSMetrics {
         input:
             files = [ t_11_FindCCSReport.ccs_report[0] ],
             outdir = metrics_out_dir + "/ccs_metrics",
             keyfile = keyfile
     }
-#
-#    ##############################################################################################################
-#    # Finalize all the Quantification data:
-#    call FF.FinalizeToDir as t_41_FinalizeQuantResults {
-#        input:
-#            files = [
-#                t_56_UMIToolsGroup.output_bam,
-#                t_56_UMIToolsGroup.output_tsv,
-#                t_57_CreateCountMatrixFromAnnotatedBam.count_matrix
-#            ],
-#            outdir = quant_dir,
-#            keyfile = t_61_GenerateStaticReport.html_report
-#    }
-#    # Finalize our anndata objects if we have them:
-#    if ( ! is_SIRV_data ) {
-#        call FF.FinalizeToDir as t_42_FinalizeProcessedQuantResults {
-#            input:
-#                files = select_all([
-#                    t_58_CreateCountMatrixAnndataFromTsv.transcript_gene_count_anndata_h5ad,
-#                ]),
-#                outdir = quant_dir,
-#                keyfile = t_61_GenerateStaticReport.html_report
-#        }
-#
-#        call FF.FinalizeToDir as t_43_FinalizeProcessedQuantResultsPickles {
-#            input:
-#                files = select_first([t_58_CreateCountMatrixAnndataFromTsv.pickles]),
-#                outdir = quant_dir,
-#                keyfile = t_61_GenerateStaticReport.html_report
-#        }
-#    }
-#
-#    ##############################################################################################################
-#    # Finalize the report:
-#    call FF.FinalizeToDir as t_44_FinalizeStaticReport {
-#        input:
-#            files = [
-#                t_61_GenerateStaticReport.populated_notebook,
-#                t_61_GenerateStaticReport.html_report,
-#            ],
-#            outdir = report_dir,
-#            keyfile = t_61_GenerateStaticReport.html_report
-#    }
-#
-#    call FF.FinalizeTarGzContents as t_45_FinalizeReportFigures {
-#        input:
-#            tar_gz_file = t_61_GenerateStaticReport.figures_tar_gz,
-#            outdir = report_dir,
-#            keyfile = t_61_GenerateStaticReport.html_report
-#    }
-#
-#    call FF.FinalizeToDir as t_46_FinalizeReportPickles {
-#        input:
-#            files = t_61_GenerateStaticReport.pickles,
-#            outdir = report_dir,
-#            keyfile = t_61_GenerateStaticReport.html_report
-#    }
-#
+
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_84_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_86_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile
