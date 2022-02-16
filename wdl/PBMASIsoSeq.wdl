@@ -49,18 +49,18 @@ workflow PBMASIsoSeq {
         call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
-    call Utils.ExcludeRegionsFromBam {
-        input:
-            bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]]),
-            bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]]),
-            loci = ["chr16:17932720-18173063"]
-    }
+#    call Utils.ExcludeRegionsFromBam {
+#        input:
+#            bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]]),
+#            bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]]),
+#            loci = ["chr16:17932720-18173063"]
+#    }
+#
+#    File bam = ExcludeRegionsFromBam.subset_bam
+#    File bai = ExcludeRegionsFromBam.subset_bai
 
-    #File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
-    #File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
-
-    File bam = ExcludeRegionsFromBam.subset_bam
-    File bai = ExcludeRegionsFromBam.subset_bai
+    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
+    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
     call PB.PBIndex as IndexCCSAlignedReads { input: bam = bam }
     File pbi = IndexCCSAlignedReads.pbi
