@@ -49,15 +49,15 @@ workflow PBMASIsoSeq {
         call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
-    call Utils.SubsetBam {
+    call Utils.SubsetBam as SubsetToChr21 {
         input:
             bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]]),
             bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]]),
-            locus = ["chr21"]
+            locus = "chr21"
     }
 
-    File bam = SubsetBam.subset_bam
-    File bai = SubsetBam.subset_bai
+    File bam = SubsetToChr21.subset_bam
+    File bai = SubsetToChr21.subset_bai
 
 #    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
 #    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
