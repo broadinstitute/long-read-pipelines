@@ -95,10 +95,10 @@ def ingest_old_class_def_files(old_class_def_file_dict, file_suffix):
     return old_eq_classes, eq_class_set
 
 
-def write_new_eq_class_def_file(out_name, eq_class_dict):
-    print(f"Writing new Transcript EQ Class definitions to: {out_name}")
+def write_new_eq_class_def_file(out_name, eq_class_dict, eq_class_type="Transcript"):
+    print(f"Writing new {eq_class_type} EQ Class definitions to: {out_name}")
     with open(out_name, 'w') as f:
-        f.write("#EQ_Class\tTranscript_Assignments\n")
+        f.write(f"#EQ_Class\t{eq_class_type}_Assignments\n")
         for eq_class, indx in eq_class_dict.items():
             f.write(f"{indx}\t{eq_class}\n")
 
@@ -179,7 +179,7 @@ print("Renumbering gene eq classes...")
 gene_eq_classes = {eq_class: indx for indx, eq_class in enumerate(sorted(list(gene_eq_class_set)))}
 
 # Now we should write out our new eq class file:
-write_new_eq_class_def_file(GENE_EQ_CLASS_DEFINITIONS_OUT_FILE_NAME, gene_eq_classes)
+write_new_eq_class_def_file(GENE_EQ_CLASS_DEFINITIONS_OUT_FILE_NAME, gene_eq_classes, eq_class_type="Gene")
 
 print(f"Writing new Gene EQ Class assignments to: {GENE_EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME}")
 with open(GENE_EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME, 'w') as out_file:
