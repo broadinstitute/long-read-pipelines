@@ -161,4 +161,4 @@ if __name__ == "__main__":
                                      required=False)
 
     args = parser.parse_args()
-    main(args.bam, args.out_name, args.eq_class_tsv, args.gene_transcript_tag, args.cell_barcode_tag, args.umi_tag)
+    main(args.bam, args.out_name, args.tx_eq_class_assignments, args.gene_transcript_tag, args.cell_barcode_tag, args.umi_tag)
