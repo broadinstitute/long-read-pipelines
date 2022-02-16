@@ -887,7 +887,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
 
-    File keyfile = t_73_CombineEqClassFiles.combined_eq_class_defs
+    File keyfile = t_74_CreateCountMatrixFromAnnotatedBam.count_matrix
 
     String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
     String metrics_out_dir = base_out_dir + "/metrics"
@@ -908,8 +908,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             files = [
                 t_73_CombineEqClassFiles.combined_gene_eq_class_defs,
                 t_73_CombineEqClassFiles.combined_gene_eq_class_assignments,
-                t_73_CombineEqClassFiles.combined_eq_class_defs,
-                t_73_CombineEqClassFiles.combined_eq_class_assignments,
+                t_73_CombineEqClassFiles.combined_tx_eq_class_defs,
+                t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
                 t_74_CreateCountMatrixFromAnnotatedBam.count_matrix,
             ],
             outdir = quant_dir,
