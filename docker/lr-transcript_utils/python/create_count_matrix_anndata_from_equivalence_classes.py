@@ -192,7 +192,8 @@ def get_approximate_gencode_gene_assignments(gtf_field_dict, gencode_field_val_d
     return gene_name_assignments, gene_id_assignments, ambiguity_markers
 
 
-def create_combined_anndata(input_tsv, gtf_field_dict, overlap_intervals=None,
+def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_map, read_eq_class_map,
+                            gtf_field_dict, overlap_intervals=None,
                             overlap_intervals_label="overlaps_intervals_of_interest",
                             gencode_reference_gtf=None,
                             force_recount=False,
@@ -272,6 +273,12 @@ def create_combined_anndata(input_tsv, gtf_field_dict, overlap_intervals=None,
 
     ##################################################################################################################
     # Write our cell TX counts to our adata object:
+
+# __   __               _               _   _
+# \ \ / /__  _   _     / \   _ __ ___  | | | | ___ _ __ ___
+#  \ V / _ \| | | |   / _ \ | '__/ _ \ | |_| |/ _ \ '__/ _ \
+#   | | (_) | |_| |  / ___ \| | |  __/ |  _  |  __/ | |  __/
+#   |_|\___/ \__,_| /_/   \_\_|  \___| |_| |_|\___|_|  \___|
 
     # Create unique row / column identifiers into which to aggregate data:
     cell_barcodes = np.array(list(cell_barcode_to_tx_count_dict.keys()))
@@ -518,19 +525,50 @@ def read_intervals_from_tsv(filename):
     return intervals
 
 
+def parse_eq_class_defs_file(file_name):
+    eq_class_map = dict()
+    with open(file_name, 'r') as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            eq_class, raw_class_assignments = line.strip().split("\t")
+            class_assignments = []
+            for raw_class in raw_class_assignments.split(","):
+                eq_class_name, cc = raw_class.split(";")
+                class_assignments.append((eq_class_name, cc))
+            eq_class_map[eq_class] = tuple(class_assignments)
+
+    return eq_class_map
+
+
+def parse_tx_eq_class_assignments(file_name):
+    read_eq_class_map = dict()
+    with open(file_name, 'r') as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            read_name, tx_eq_class, gene_assignment = line.strip().split("\t")
+            read_eq_class_map[read_name] = tuple(tx_eq_class, gene_assignment)
+
+    return read_eq_class_map
+
+
 def main(input_tsv, gtf_file, out_prefix,
-         overlap_interval_filename=None, overlap_intervals_label=None, eq_class_defs_tsv=None,
+         tx_eq_class_definitions,
+         tx_eq_class_assignments,
+         gene_eq_class_definitions,
+         gene_eq_class_assignments,
+         overlap_interval_filename=None, overlap_intervals_label=None,
          gencode_reference_gtf=None, force_overwrite_gencode_overlaps=False):
 
     print("Verifying input file(s) exist...", file=sys.stderr)
     files_ok = True
-    files_to_check = [input_tsv, gtf_file]
+    files_to_check = [input_tsv, gtf_file, tx_eq_class_definitions, tx_eq_class_assignments,
+                      gene_eq_class_definitions, gene_eq_class_assignments]
     if overlap_interval_filename:
         files_to_check.append(overlap_interval_filename)
     if gencode_reference_gtf:
         files_to_check.append(gencode_reference_gtf)
-    if eq_class_defs_tsv:
-        files_to_check.append(eq_class_defs_tsv)
     for f in files_to_check:
         if not os.path.exists(f):
             print(f"ERROR: Input file does not exist: {f}", file=sys.stderr)
@@ -548,25 +586,18 @@ def main(input_tsv, gtf_file, out_prefix,
     # Create our gtf field map:
     gtf_field_dict = get_gtf_field_val_dict(gtf_file)
 
-    # If we're using equivalence classes, let's read in the class names here:
-    eq_class_def_map = None
-    if eq_class_defs_tsv:
-        eq_class_def_map = dict()
-        with open(eq_class_defs_tsv, 'r') as f:
-            for line in f:
-                if line.startswith("#"):
-                    continue
-                eq_class, raw_tx_assignments = line.strip().split("\t")
-                tx_assignments = []
-                for raw_tx in raw_tx_assignments.split(","):
-                    tx_name, cc = raw_tx.split(";")
-                    tx_assignments.append((tx_name, cc))
-                eq_class_def_map[eq_class] = tuple(tx_assignments)
+    # Let's read in the equivalence class defs here:
+    tx_eq_class_def_map = parse_eq_class_defs_file(tx_eq_class_definitions)
+    gene_eq_class_def_map = parse_eq_class_defs_file(gene_eq_class_definitions)
+
+    # Now read the full eq class associations:
+    read_eq_class_map = parse_tx_eq_class_assignments(tx_eq_class_assignments)
 
     # Create our anndata objects from the given data:
     print("Creating master anndata objects from transcripts counts data...", file=sys.stderr)
     master_adata = create_combined_anndata(
-        input_tsv, gtf_field_dict, overlap_intervals, overlap_intervals_label,
+        input_tsv, tx_eq_class_def_map, gene_eq_class_def_map, read_eq_class_map,
+        gtf_field_dict, overlap_intervals, overlap_intervals_label,
         gencode_reference_gtf, force_overwrite_gencode_overlaps=force_overwrite_gencode_overlaps
     )
 
@@ -597,6 +628,18 @@ if __name__ == "__main__":
     requiredNamed.add_argument('-g', '--gtf',
                                help='GTF file containing gene annotations.  Can be from either Gencode or stringtie.',
                                required=True)
+    requiredNamed.add_argument('--tx-eq-class-definitions',
+                               help='Transcript equivalence class definitions TSV file.',
+                               required=True)
+    requiredNamed.add_argument('--tx-eq-class-assignments',
+                               help='Transcript equivalence class assignments TSV file.',
+                               required=True)
+    requiredNamed.add_argument('--gene-eq-class-definitions',
+                               help='Gene equivalence class definitions TSV file.',
+                               required=True)
+    requiredNamed.add_argument('--gene-eq-class-assignments',
+                               help='Gene equivalence class assignments TSV file.',
+                               required=True)
     requiredNamed.add_argument('-o', '--out-base-name',
                                help='Base name for the output files',
                                required=True)
@@ -609,10 +652,6 @@ if __name__ == "__main__":
                         type=str, 
                         default="")
 
-    parser.add_argument("--eq-class-defs-tsv",
-                        help="Equivalence class definition TSV.",
-                        required=True)
-
     parser.add_argument("--gencode-reference-gtf",
                         help="Gencode GTF file to use to disambiguate the annotations in the given gtf file.",
                         type=str)
@@ -624,5 +663,10 @@ if __name__ == "__main__":
                         action='store_true')
 
     args = parser.parse_args()
-    main(args.tsv, args.gtf, args.out_base_name, args.overlap_intervals, args.overlap_interval_label,
-         args.eq_class_defs_tsv, args.gencode_reference_gtf, args.force_overwrite_gencode_overlaps)
+    main(args.tsv, args.gtf, args.out_base_name,
+         args.tx_eq_class_definitions,
+         args.tx_eq_class_assignments,
+         args.gene_eq_class_definitions,
+         args.gene_eq_class_assignments,
+         args.overlap_intervals, args.overlap_interval_label,
+         args.gencode_reference_gtf, args.force_overwrite_gencode_overlaps)

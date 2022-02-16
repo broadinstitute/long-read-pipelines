@@ -141,8 +141,8 @@ if __name__ == "__main__":
                                      required=True)
 
     optional_named_args = parser.add_argument_group("optional named arguments")
-    optional_named_args.add_argument('--eq-class-tsv',
-                                     help=f"Equivalence class TSV.  If used, gene-transcript-tag will be ignored and this lookup will be used.)",
+    optional_named_args.add_argument('--tx-eq-class-assignments',
+                                     help=f"Transcript equivalence class TSV.  If used, gene-transcript-tag will be ignored and this lookup will be used.)",
                                      required=False)
     optional_named_args.add_argument('--gene-transcript-tag',
                                      type=str,

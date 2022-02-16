@@ -824,18 +824,21 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call TX_POST.CreateCountMatrixFromAnnotatedBam as t_74_CreateCountMatrixFromAnnotatedBam {
         input:
             annotated_transcriptome_bam = t_65_MergeAllAnnotatedArrayElements.merged_bam,
+            tx_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
             prefix = SM + "_gene_tx_expression_count_matrix"
     }
 
-    # TODO: Add in the anndata creation here!
-    # You added a new script for this: create_count_matrix_anndata_from_equivalence_classes.py
-#    call TX_POST.CreateCountMatrixAnndataFromTsv as t_19_CreateCountMatrixAnndataFromTsv {
+#    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_75_CreateCountMatrixAnndataFromEqClasses {
 #        input:
 #            count_matrix_tsv = t_74_CreateCountMatrixFromAnnotatedBam.count_matrix,
 #            genome_annotation_gtf_file = t_48_ST2_Quant.st_gtf,
 #            gencode_reference_gtf_file = genome_annotation_gtf,
 #            overlap_intervals = intervals_of_interest,
 #            overlap_interval_label = interval_overlap_name,
+#            tx_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
+#            tx_equivalence_class_definitions = t_73_CombineEqClassFiles.combined_tx_eq_class_defs,
+#            gene_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_gene_eq_class_assignments,
+#            gene_equivalence_class_definitions = t_73_CombineEqClassFiles.combined_gene_eq_class_defs,
 #            prefix = SM + "_gene_tx_expression_count_matrix"
 #    }
 
