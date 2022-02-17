@@ -362,21 +362,21 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
         # Get our gene ids:
         try:
-            gene_ids = sorted(gene_eq_class_def_map[gene_eq_class])
+            read_gene_ids = sorted(gene_eq_class_def_map[gene_eq_class])
         except KeyError:
             # The gene is not in the eq class map and so we have just this one
-            gene_ids = tuple([gene_eq_class])
+            read_gene_ids = tuple([gene_eq_class])
 
         tx_ids = sorted(tx_eq_class_def_map[tx_indx])
 
         # Set gene eq class:
-        gene_eq_class[tx_indx] = gene_eq_class
+        gene_eq_classes[tx_indx] = gene_eq_class
 
         # Set transcript ids:
         transcript_ids[tx_indx] = ",".join(tx_ids)
 
         # Set gene IDs:
-        gene_ids[tx_indx] = ",".join(gene_ids)
+        gene_ids[tx_indx] = ",".join(read_gene_ids)
 
         # Get the gene name:
         gene_name = gene_eq_class
@@ -388,7 +388,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         gene_names[tx_indx] = gene_name
 
         # Any transcript with an equivalence class containing a stringtie 2 transcript, or the null transcript is de novo:
-        is_de_novo[tx_indx] = any([txid.startswith("STRG") or txid.startswith("-") for txid in tx_ids])
+        is_de_novo[tx_indx] = any([txid.startswith("STRG") or txid.startswith("-") for txid, cc in tx_ids])
 
         # Any gene is ambiguous if it has a gene equivalence class:
         # NOTE: This might have to change by the multi-mapping gene / read pairs.
@@ -479,6 +479,7 @@ def parse_tx_eq_class_defs_file(file_name):
             if line.startswith("#"):
                 continue
             eq_class, raw_class_assignments = line.strip().split("\t")
+            eq_class = int(eq_class)
             class_assignments = []
             for raw_class in raw_class_assignments.split(","):
                 eq_class_name, cc = raw_class.split(";")
