@@ -464,6 +464,8 @@ def read_gene_names_from_intervals_file(filename):
         for row in tsv_file:
             if row[0].startswith("# File provenance"):
                 continue
+            if not row[0].startswith("#"):
+                continue
             gene_name = row[10]
             gene_names.add(gene_name)
             pbar.update(1)
