@@ -369,6 +369,10 @@ task QuantifyGffComparison {
             --gencode-st2-tmap ~{gencode_st2_tmap} \
             --gencode-mas-seq-tmap ~{gencode_read_tmap} \
             -o ~{prefix}
+
+        # Here so the task changes and we don't get cached:
+        echo ""
+        echo ""
     >>>
 
     output {
