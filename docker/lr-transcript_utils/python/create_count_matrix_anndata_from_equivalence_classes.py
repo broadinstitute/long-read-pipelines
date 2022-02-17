@@ -51,7 +51,7 @@ def get_gtf_field_val_dict(gtf_file, entry_type_filter=TX_ENTRY_STRING, force_re
     if not os.path.exists(gtf_file):
         raise FileNotFoundError(f"GTF file does not exist: {gtf_file}")
 
-    pickle_file_name = os.path.abspath(os.path.splitext(os.path.basename(gtf_file))[0] + f".{entry_type_filter}.big_map.pickle")
+    pickle_file_name = os.path.splitext(os.path.basename(gtf_file))[0] + f".{entry_type_filter}.big_map.pickle"
 
     if not force_rebuild and os.path.exists(pickle_file_name):
         print(f"Loading GTF field map from {pickle_file_name}...", end="\t", file=sys.stderr)
@@ -221,7 +221,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
     cell_barcode_to_tx_eq_class_to_umi_dict = dict()
     cell_barcode_to_tx_eq_class_count_dict = dict()
 
-    pickle_file_name = os.path.abspath(os.path.splitext(os.path.basename(input_tsv))[0] + ".tx_raw_count_matrix.pickle")
+    pickle_file_name = os.path.splitext(os.path.basename(input_tsv))[0] + ".tx_raw_count_matrix.pickle"
 
     if not force_recount and os.path.exists(pickle_file_name):
         print(f"Loading cell count map from {pickle_file_name}...", end="\t", file=sys.stderr)
@@ -279,7 +279,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
     tx_eq_class_index_dict = {name: i for i, name in enumerate(tx_eq_classes)}
 
     # Populate the count matrix:
-    pickle_file_name = os.path.abspath(os.path.splitext(os.path.basename(input_tsv))[0] + ".cell_transcript_count_matrix.pickle")
+    pickle_file_name = os.path.splitext(os.path.basename(input_tsv))[0] + ".cell_transcript_count_matrix.pickle"
     if not force_recount and os.path.exists(pickle_file_name):
         print(f"Loading count map from {pickle_file_name}...", end="\t", file=sys.stderr)
         count_mat = pickle.load(open(pickle_file_name, "rb"))
@@ -464,8 +464,6 @@ def read_gene_names_from_intervals_file(filename):
         for row in tsv_file:
             if row[0].startswith("# File provenance"):
                 continue
-            if not row[0].startswith("#"):
-                continue
             gene_name = row[10]
             gene_names.add(gene_name)
             pbar.update(1)
@@ -479,7 +477,6 @@ def parse_tx_eq_class_defs_file(file_name):
             if line.startswith("#"):
                 continue
             eq_class, raw_class_assignments = line.strip().split("\t")
-            eq_class = int(eq_class)
             class_assignments = []
             for raw_class in raw_class_assignments.split(","):
                 eq_class_name, cc = raw_class.split(";")
@@ -509,6 +506,7 @@ def parse_tx_eq_class_assignments(file_name):
             if line.startswith("#"):
                 continue
             read_name, tx_eq_class, gene_assignment = line.strip().split("\t")
+            tx_eq_class = int(tx_eq_class)
             read_eq_class_map[read_name] = tuple([tx_eq_class, gene_assignment])
 
     return read_eq_class_map
@@ -539,7 +537,7 @@ def main(input_tsv, gtf_file, out_prefix,
 
     overlapping_gene_names = None
     if overlap_interval_filename:
-        print(f"Verifying contents of {overlap_interval_filename}...")
+        print("Verifying contents of {overlap_interval_filename}...")
         overlapping_gene_names = read_gene_names_from_intervals_file(overlap_interval_filename)
 
     print("Input files verified.", file=sys.stderr)

@@ -211,8 +211,6 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
 
         String prefix = "umi_tools_group"
 
-        File? equivalence_class_definitions
-
         File? overlap_intervals
         String? overlap_interval_label
         File? gencode_reference_gtf_file
@@ -220,7 +218,14 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 20 + 4*ceil(size(count_matrix_tsv, "GB")) + 4*ceil(size(genome_annotation_gtf_file, "GB")) + 2*ceil(size(equivalence_class_definitions, "GB"))
+    Int disk_size_gb = 20 + 4*ceil(size(count_matrix_tsv, "GB"))
+                          + 4*ceil(size(genome_annotation_gtf_file, "GB"))
+                          + 2*ceil(size(tx_equivalence_class_definitions, "GB"))
+                          + 2*ceil(size(tx_equivalence_class_assignments, "GB"))
+                          + 2*ceil(size(gene_equivalence_class_definitions, "GB"))
+                          + 2*ceil(size(gene_equivalence_class_assignments, "GB"))
+                          + 2*ceil(size(gencode_reference_gtf_file, "GB"))
+                          + 2*ceil(size(overlap_intervals, "GB"))
 
     String overlap_intervals_arg = if defined(overlap_intervals)  then " --overlap-intervals " else ""
     String overlap_interval_label_arg = if defined(overlap_interval_label) then " --overlap-interval-label " else ""
@@ -228,17 +233,18 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
 
     String force_gencode_overwrite_flag = if force_anndata_gencode_overwrite then " --force-overwrite-gencode-overlaps " else ""
 
-    String eq_class_arg = if defined(equivalence_class_definitions)  then " --eq-class-defs-tsv " else ""
-
     command <<<
         set -euxo pipefail
         /python_scripts/create_count_matrix_anndata_from_equivalence_classes.py \
             -t ~{count_matrix_tsv} \
             -g ~{genome_annotation_gtf_file} \
+            --tx-eq-class-definitions ~{tx_equivalence_class_definitions} \
+            --tx-eq-class-assignments ~{tx_equivalence_class_assignments} \
+            --gene-eq-class-definitions ~{gene_equivalence_class_definitions} \
+            --gene-eq-class-assignments ~{gene_equivalence_class_definitions} \
             ~{overlap_intervals_arg}~{default="" sep=" --overlap-intervals " overlap_intervals} \
             ~{overlap_interval_label_arg}~{default="" sep=" --overlap-interval-label " overlap_interval_label} \
             ~{gencode_reference_gtf_file_arg}~{default="" sep=" --gencode-reference-gtf " gencode_reference_gtf_file} \
-            ~{eq_class_arg} ~{default="" sep=" --eq-class-defs-tsv " equivalence_class_definitions} \
             ~{force_gencode_overwrite_flag} \
             -o ~{prefix}
     >>>
