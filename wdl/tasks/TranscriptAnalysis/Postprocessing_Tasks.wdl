@@ -17,6 +17,8 @@ task CreateCountMatrixFromAnnotatedBam {
 
         String prefix = "umi_tools_group"
 
+        String umi_tag = "ZU"
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -30,6 +32,7 @@ task CreateCountMatrixFromAnnotatedBam {
         /python_scripts/create_count_matrix_from_annotated_bam.py \
             -b ~{annotated_transcriptome_bam} \
             ~{tx_eq_class_assignments_arg} ~{default="" sep=" --tx-eq-class-assignments " tx_equivalence_class_assignments} \
+            --umi-tag ~{umi_tag} \
             -o ~{prefix}.tsv
     >>>
 

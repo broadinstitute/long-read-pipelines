@@ -825,6 +825,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             annotated_transcriptome_bam = t_65_MergeAllAnnotatedArrayElements.merged_bam,
             tx_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            umi_tag = "ZU",
             prefix = SM + "_gene_tx_expression_count_matrix"
     }
 
