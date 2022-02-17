@@ -178,6 +178,16 @@ def count_lines_in_file(file_name):
     return num_lines
 
 
+def has_edge(nx_graph, start_node, end_node, class_code):
+    edge_exists = False
+    for src, dest, key, dat in nx_graph.out_edges([start_node], data=True, keys=True):
+        if src == start_node and dest == end_node and dat["class_code"] == class_code:
+            edge_exists = True
+            break
+
+    return edge_exists
+
+
 def add_refmap_to_graph(refmap_file, nx_graph=None, gene_name_gene_id_map=None, do_eq_filter=False):
     if not nx_graph:
         nx_graph = nx.MultiDiGraph()
@@ -220,8 +230,9 @@ def add_refmap_to_graph(refmap_file, nx_graph=None, gene_name_gene_id_map=None, 
 
                     nx_graph.nodes[qtx]["gene_name_set"].add(qg)
 
-                    # Add an edge from qtx to ref_tx:
-                    nx_graph.add_edge(qtx, ref_tx, class_code=cc)
+                    # Add an edge from qtx to ref_tx if it doesn't already exist:
+                    if not nx_graph.has_edge(qtx, ref_tx, key=cc):
+                        nx_graph.add_edge(qtx, ref_tx, key=cc, class_code=cc)
 
                 pbar.update(1)
     return nx_graph
@@ -282,7 +293,8 @@ def add_tmap_to_graph(tmap_file, nx_graph=None, gene_name_gene_id_map=None, add_
                     nx_graph.nodes[query_tx]["gene_name_set"].add(query_gene)
 
                 # Add an edge from query_tx to ref_tx:
-                nx_graph.add_edge(query_tx, ref_tx, class_code=cc)
+                if not nx_graph.has_edge(query_tx, ref_tx, key=cc):
+                    nx_graph.add_edge(query_tx, ref_tx, key=cc, class_code=cc)
 
                 #############################################
                 # track our major isoform ids if we need to:
@@ -296,7 +308,9 @@ def add_tmap_to_graph(tmap_file, nx_graph=None, gene_name_gene_id_map=None, add_
         with tqdm(desc=f"Adding links to major isoform IDs...", unit=" query txs",
                   total=len(major_isoform_map)) as pbar:
             for query_tx, major_isoform_id in major_isoform_map.items():
-                nx_graph.add_edge(query_tx, major_isoform_id)
+                if not nx_graph.has_edge(query_tx, major_isoform_id, key="="):
+                    nx_graph.add_edge(query_tx, major_isoform_id, key="=")
+                pbar.update(1)
 
     return nx_graph
 
@@ -465,6 +479,7 @@ def get_mas_seq_read_gene_assignments(graph):
 
             # Now we can refine our entries by looking at the paths.
             # 1) If there are no gene names, we're done.
+
             # 2) If there is a single gene name, we're done.
             # 3) If there are more than 1 gene name:
             #    1) If there are paths with `=` in them, we remove all other paths.
