@@ -29,7 +29,7 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
 
     read_to_eq_class_map = None
     if eq_class_tsv:
-        print("Equivalence class TSV provided.  Ingesting read -> eq class map...")
+        print("Equivalence class TSV provided.  Ingesting read -> eq class map...", file=sys.stderr)
 
         read_to_eq_class_map = dict()
 
@@ -40,7 +40,7 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
                 read_name, eq_class, gene_assignment = line.strip().split("\t")
                 read_to_eq_class_map[read_name] = eq_class
 
-
+    num_reads_skipped = 0
     reads_processed = 0
     reads_assigned_to_txs = 0
 
@@ -67,30 +67,36 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
             else:
                 gene_tx = read.get_tag(gene_tx_tag)
 
-            umi = read.get_tag(umi_tag)
+            umi = None
+            try:
+                umi = read.get_tag(umi_tag)
+            except KeyError:
+                print(f"Read {read.query_name} does not have UMI tag ({umi_tag}).", file=sys.stderr)
+                num_reads_skipped += 1
 
-            if has_cbc:
-                try:
-                    cbc = read.get_tag(cell_barcode_tag)
-                except KeyError:
-                    has_cbc = False
+            if umi:
+                if has_cbc:
+                    try:
+                        cbc = read.get_tag(cell_barcode_tag)
+                    except KeyError:
+                        has_cbc = False
 
-            if not has_cbc:
-                cbc = "SINGLE_CELL"
+                if not has_cbc:
+                    cbc = "SINGLE_CELL"
 
-            if cbc in count_matrix:
-                if gene_tx in count_matrix[cbc]:
-                    if umi in count_matrix[cbc][gene_tx]:
-                        count_matrix[cbc][gene_tx][umi] += 1
+                if cbc in count_matrix:
+                    if gene_tx in count_matrix[cbc]:
+                        if umi in count_matrix[cbc][gene_tx]:
+                            count_matrix[cbc][gene_tx][umi] += 1
+                        else:
+                            count_matrix[cbc][gene_tx][umi] = 1
                     else:
+                        count_matrix[cbc][gene_tx] = dict()
                         count_matrix[cbc][gene_tx][umi] = 1
                 else:
+                    count_matrix[cbc] = dict()
                     count_matrix[cbc][gene_tx] = dict()
                     count_matrix[cbc][gene_tx][umi] = 1
-            else:
-                count_matrix[cbc] = dict()
-                count_matrix[cbc][gene_tx] = dict()
-                count_matrix[cbc][gene_tx][umi] = 1
 
             # Update our counts:
             pbar.update(1)
@@ -98,6 +104,7 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
 
     print("Done!", file=sys.stderr)
     print(f"Reads processed: {reads_processed}", file=sys.stderr)
+    print(f"Reads skipped: {num_reads_skipped}", file=sys.stderr)
 
     print(f"Writing out file: {out_tsv_name}", file=sys.stderr)
     with open(out_tsv_name, 'w') as out_tsv:
