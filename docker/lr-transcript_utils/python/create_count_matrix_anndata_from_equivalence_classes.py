@@ -479,6 +479,7 @@ def parse_tx_eq_class_defs_file(file_name):
             if line.startswith("#"):
                 continue
             eq_class, raw_class_assignments = line.strip().split("\t")
+            eq_class = int(eq_class)
             class_assignments = []
             for raw_class in raw_class_assignments.split(","):
                 eq_class_name, cc = raw_class.split(";")
@@ -538,7 +539,7 @@ def main(input_tsv, gtf_file, out_prefix,
 
     overlapping_gene_names = None
     if overlap_interval_filename:
-        print("Verifying contents of {overlap_interval_filename}...")
+        print(f"Verifying contents of {overlap_interval_filename}...")
         overlapping_gene_names = read_gene_names_from_intervals_file(overlap_interval_filename)
 
     print("Input files verified.", file=sys.stderr)
