@@ -458,10 +458,13 @@ def get_mas_seq_read_gene_assignments(graph):
                 if n in nodes_seen:
                     continue
 
-                for src, dest, d in graph.out_edges([n], data=True):
-                    new_path = [p for p in path]
-                    new_path.append(d["class_code"])
-                    node_traversal_list.append((dest, new_path))
+                # Only continue on if we aren't at a gencode node:
+                if not gencode_node_filter(n):
+                    for src, dest, d in graph.out_edges([n], data=True):
+                        if dest not in nodes_seen:
+                            new_path = [p for p in path]
+                            new_path.append(d["class_code"])
+                            node_traversal_list.append((dest, new_path))
 
                 nodes_seen[n] = path
 
@@ -469,13 +472,13 @@ def get_mas_seq_read_gene_assignments(graph):
             # Pull out all 'ENSG' gene definitions from them into a set.
 
             paths_have_eq = False
-            connected_gencode_genes = dict()
+            connected_gencode_genes = defaultdict(list)
             for n, path in nodes_seen.items():
                 for gene_name in graph.nodes[n]["gene_name_set"]:
                     if gencode_gene_name_filter(gene_name):
                         if "=" in path:
                             paths_have_eq = True
-                        connected_gencode_genes[gene_name] = path
+                        connected_gencode_genes[gene_name].append(path)
 
             # Now we can refine our entries by looking at the paths.
             # 1) If there are no gene names, we're done.
@@ -486,9 +489,15 @@ def get_mas_seq_read_gene_assignments(graph):
             #    2) Keep all remaining gene names.
 
             gene_assignments = set()
-            for gencode_gene_name, path in connected_gencode_genes.items():
-                if paths_have_eq and "=" not in path:
-                    continue
+            for gencode_gene_name, path_list in connected_gencode_genes.items():
+                if paths_have_eq:
+                    is_eq_path = False
+                    for path in path_list:
+                        if "=" in path:
+                            is_eq_path = True
+                            break
+                    if not is_eq_path:
+                        continue
                 gene_assignments.add(gencode_gene_name)
 
             # Check here for null (-) assignments.
