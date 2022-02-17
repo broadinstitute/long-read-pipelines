@@ -373,7 +373,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         gene_eq_classes[tx_indx] = gene_eq_class
 
         # Set transcript ids:
-        transcript_ids[tx_indx] = ",".join(tx_ids)
+        transcript_ids[tx_indx] = ",".join([txid for txid, cc in tx_ids])
 
         # Set gene IDs:
         gene_ids[tx_indx] = ",".join(read_gene_ids)
