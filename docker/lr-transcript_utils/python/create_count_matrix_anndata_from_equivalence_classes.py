@@ -419,7 +419,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
     # Assign the data to our anndata object:
     count_adata.var = col_df
-    count_adata.var_names = tx_eq_classes
+    count_adata.var_names = [str(t) for t in tx_eq_classes]
 
     # Add our observations:
     row_df = pd.DataFrame()
