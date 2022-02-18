@@ -65,11 +65,6 @@ workflow LocalAssembly {
                 mat_yak = mat_yak,
                 pat_yak = pat_yak
         }
-        output {
-            File local_bam = subset_bam
-            File h1_fa = Asm.h1_fa
-            File h2_fa = Asm.h2_fa
-        }
     }
 
     if (!trio) {
@@ -77,10 +72,6 @@ workflow LocalAssembly {
             input:
                 reads = BamToFastq.reads_fq,
                 prefix = prefix
-        }
-        output {
-            File local_bam = subset_bam
-            File fa = Asm.fa
         }
     }
 }

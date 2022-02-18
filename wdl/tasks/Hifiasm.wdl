@@ -19,10 +19,6 @@ workflow Hifiasm {
                 mat_yak = mat_yak,
                 pat_yak = pat_yak
         }
-        output {
-            File h1_fa = Asm.h1_fa
-            File h2_fa = Asm.h2_fa
-        }
     }
 
     if (!trio) {
@@ -30,9 +26,6 @@ workflow Hifiasm {
             input:
                 reads  = reads,
                 prefix = prefix,
-        }
-        output {
-            File fa = Asm.fa
         }
     }
 }
