@@ -347,6 +347,9 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
     is_de_novo = np.empty(len(tx_eq_classes), dtype=bool)
     is_gene_id_ambiguous = np.empty(len(tx_eq_classes), dtype=bool)
 
+    num_multi_gene_assignments = 0
+    num_no_gene_name = 0
+
     seen_eq_classes = set()
     for read_name, (tx_eq_class, gene_eq_class) in read_eq_class_map.items():
 
@@ -381,14 +384,19 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
                 # Since there's only 1 gene assignment, if it is a gencode gene, we only need to look up
                 # one transcript - they should all map to the same gene.
                 id_to_lookup = None
-                for i in tx_ids:
+                for i, _ in tx_ids:
                     if i.startswith("ENST"):
                         id_to_lookup = i
                         break
                 gene_name = gtf_field_dict[id_to_lookup][GENCODE_GENE_NAME_FIELD]
             except KeyError:
                 # Looks like this was not a gencode gene.
+                print(f"Unable to assign gene name to read: {read_name}.  Using gene eq class: {gene_eq_class}")
+                num_no_gene_name += 1
                 pass
+        else:
+            print(f"Unable to assign gene name to read: {read_name}.  Using gene eq class: {gene_eq_class}")
+            num_multi_gene_assignments += 1
         gene_names[tx_indx] = gene_name
 
         # Any transcript with an equivalence class containing a stringtie 2 transcript, or the null transcript is de novo:
@@ -399,6 +407,10 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         is_gene_id_ambiguous = len(read_gene_ids) != 1
 
         seen_eq_classes.add(tx_eq_class)
+
+    print("")
+    print(f"# reads unable to be mapped to gene name: {num_no_gene_name}")
+    print(f"# reads with multi-gene assignment: {num_multi_gene_assignments}")
 
     # Create our anndata object now:
     count_adata = anndata.AnnData(count_mat.tocsr())
