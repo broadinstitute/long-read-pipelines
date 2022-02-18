@@ -381,7 +381,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         assigned_gene_names = []
         for i, _ in tx_ids:
             if i.startswith("ENST"):
-                assigned_gene_names.append(gtf_field_dict[i][GENCODE_GENE_NAME_FIELD])
+                assigned_gene_names.append(gencode_gtf_field_dict[i][GENCODE_GENE_NAME_FIELD])
         if len(assigned_gene_names) == 0:
             print(f"Unable to assign gene name to read: {read_name}.  Using gene eq class: {gene_eq_class}")
             num_no_gene_name += 1
