@@ -339,7 +339,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
     # Let's create a lookup from geneID -> gene name:
     gene_name_lookup_by_id = dict()
-    for _, gencode_gene_info in gencode_gtf_field_dict:
+    for _, gencode_gene_info in gencode_gtf_field_dict.items():
         gene_name_lookup_by_id[gencode_gene_info[GENE_ID_FIELD]] = gencode_gene_info[GENCODE_GENE_NAME_FIELD]
 
     # Now we handle the rest of our metadata (var / obs info):
