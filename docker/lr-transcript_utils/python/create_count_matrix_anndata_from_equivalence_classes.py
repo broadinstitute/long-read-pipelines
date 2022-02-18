@@ -265,7 +265,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
     ##################################################################################################################
     # Write our cell TX counts to our adata object:
-    
+
     # Create unique row / column identifiers into which to aggregate data:
     cell_barcodes = np.array(list(cell_barcode_to_tx_eq_class_count_dict.keys()))
     tx_eq_classes = np.unique(np.array(list(tx_eq_class_def_map.keys())))
@@ -362,7 +362,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
             # The gene is not in the eq class map and so we have just this one
             read_gene_ids = tuple([gene_eq_class])
 
-        tx_ids = sorted(tx_eq_class_def_map[tx_indx])
+        tx_ids = sorted(tx_eq_class_def_map[tx_eq_class])
 
         # Set gene eq class:
         gene_eq_classes[tx_indx] = gene_eq_class
@@ -387,7 +387,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
         # Any gene is ambiguous if it has a gene equivalence class:
         # NOTE: This might have to change by the multi-mapping gene / read pairs.
-        is_gene_id_ambiguous = len(gene_ids) == 1
+        is_gene_id_ambiguous = len(read_gene_ids) != 1
 
         seen_eq_classes.add(tx_eq_class)
 
