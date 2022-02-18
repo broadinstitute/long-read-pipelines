@@ -12,7 +12,7 @@ workflow Hifiasm {
     }
 
     if (trio) {
-        call Assemble_trio as Asm {
+        call Assemble_trio {
             input:
                 reads  = reads,
                 prefix = prefix,
@@ -22,7 +22,7 @@ workflow Hifiasm {
     }
 
     if (!trio) {
-        call Assemble as Asm {
+        call Assemble {
             input:
                 reads  = reads,
                 prefix = prefix,

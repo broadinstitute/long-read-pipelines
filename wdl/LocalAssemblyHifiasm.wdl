@@ -58,7 +58,7 @@ workflow LocalAssembly {
     }
 
     if (trio) {
-        call Hifiasm.Assemble_trio as Asm {
+        call Hifiasm.Assemble_trio {
             input:
                 reads = BamToFastq.reads_fq,
                 prefix = prefix,
@@ -68,7 +68,7 @@ workflow LocalAssembly {
     }
 
     if (!trio) {
-        call Hifiasm.Assemble as Asm {
+        call Hifiasm.Assemble {
             input:
                 reads = BamToFastq.reads_fq,
                 prefix = prefix
