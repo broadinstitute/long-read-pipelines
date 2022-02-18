@@ -337,6 +337,10 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
         print("Done!", file=sys.stderr)
 
+    # Let's create a lookup from geneID -> gene name:
+    gene_name_lookup_by_id = dict()
+    for _, gencode_gene_info in gencode_gtf_field_dict:
+        gene_name_lookup_by_id[gencode_gene_info[GENE_ID_FIELD]] = gencode_gene_info[GENCODE_GENE_NAME_FIELD]
 
     # Now we handle the rest of our metadata (var / obs info):
     gene_eq_classes = [""] * len(tx_eq_classes)
@@ -346,9 +350,6 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
     is_de_novo = np.empty(len(tx_eq_classes), dtype=bool)
     is_gene_id_ambiguous = np.empty(len(tx_eq_classes), dtype=bool)
-
-    num_multi_gene_assignments = 0
-    num_no_gene_name = 0
 
     seen_eq_classes = set()
     for read_name, (tx_eq_class, gene_eq_class) in read_eq_class_map.items():
@@ -377,16 +378,16 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         gene_ids[tx_indx] = ",".join(read_gene_ids)
 
         # Get the gene names:
-
-        assigned_gene_names = []
-        for i, _ in tx_ids:
-            if i.startswith("ENST"):
-                assigned_gene_names.append(gencode_gtf_field_dict[i][GENCODE_GENE_NAME_FIELD])
-        if len(assigned_gene_names) == 0:
-            print(f"Unable to assign gene name to read: {read_name}.  Using gene eq class: {gene_eq_class}")
-            num_no_gene_name += 1
-            gene_name_assignment = gene_eq_class
+        if gene_eq_class.startswith("ENSG"):
+            gene_name_assignment = gene_name_lookup_by_id[gene_eq_class]
         else:
+            assigned_gene_names = []
+            for gid in read_gene_ids:
+                try:
+                    assigned_gene_names.append(gene_name_lookup_by_id[gid])
+                except KeyError:
+                    assigned_gene_names.append(gid)
+
             gene_name_assignment = ",".join(assigned_gene_names)
 
         gene_names[tx_indx] = gene_name_assignment
@@ -399,10 +400,6 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         is_gene_id_ambiguous = len(read_gene_ids) != 1
 
         seen_eq_classes.add(tx_eq_class)
-
-    print("")
-    print(f"# reads unable to be mapped to gene name: {num_no_gene_name}")
-    print(f"# reads with multi-gene assignment: {num_multi_gene_assignments}")
 
     # Create our anndata object now:
     count_adata = anndata.AnnData(count_mat.tocsr())
