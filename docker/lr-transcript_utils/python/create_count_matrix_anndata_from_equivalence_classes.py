@@ -265,13 +265,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
     ##################################################################################################################
     # Write our cell TX counts to our adata object:
-
-# __   __               _               _   _
-# \ \ / /__  _   _     / \   _ __ ___  | | | | ___ _ __ ___
-#  \ V / _ \| | | |   / _ \ | '__/ _ \ | |_| |/ _ \ '__/ _ \
-#   | | (_) | |_| |  / ___ \| | |  __/ |  _  |  __/ | |  __/
-#   |_|\___/ \__,_| /_/   \_\_|  \___| |_| |_|\___|_|  \___|
-
+    
     # Create unique row / column identifiers into which to aggregate data:
     cell_barcodes = np.array(list(cell_barcode_to_tx_eq_class_count_dict.keys()))
     tx_eq_classes = np.unique(np.array(list(tx_eq_class_def_map.keys())))
@@ -480,7 +474,6 @@ def parse_tx_eq_class_defs_file(file_name):
             if line.startswith("#"):
                 continue
             eq_class, raw_class_assignments = line.strip().split("\t")
-            eq_class = int(eq_class)
             class_assignments = []
             for raw_class in raw_class_assignments.split(","):
                 eq_class_name, cc = raw_class.split(";")
@@ -510,7 +503,6 @@ def parse_tx_eq_class_assignments(file_name):
             if line.startswith("#"):
                 continue
             read_name, tx_eq_class, gene_assignment = line.strip().split("\t")
-            tx_eq_class = int(tx_eq_class)
             read_eq_class_map[read_name] = tuple([tx_eq_class, gene_assignment])
 
     return read_eq_class_map
@@ -522,7 +514,7 @@ def main(input_tsv, gtf_file, out_prefix,
          gene_eq_class_definitions,
          gene_eq_class_assignments,
          overlap_interval_filename=None, overlap_intervals_label=None,
-         gencode_reference_gtf=None, force_overwrite_gencode_overlaps=False):
+         gencode_reference_gtf=None):
 
     print("Verifying input file(s) exist...", file=sys.stderr)
     files_ok = True
@@ -618,12 +610,6 @@ if __name__ == "__main__":
                         help="Gencode GTF file to use to disambiguate the annotations in the given gtf file.",
                         type=str)
 
-    parser.add_argument("--force-overwrite-gencode-overlaps",
-                        help="Forces the values in `gene_names` and `gene_ids` to overwrite `gencode_overlap_gene_names`"
-                             " and `gencode_overlap_gene_ids` respectively.  This is only valid if given with "
-                             "--gencode-reference-gtf.",
-                        action='store_true')
-
     args = parser.parse_args()
     main(args.tsv, args.gtf, args.out_base_name,
          args.tx_eq_class_definitions,
@@ -631,4 +617,4 @@ if __name__ == "__main__":
          args.gene_eq_class_definitions,
          args.gene_eq_class_assignments,
          args.overlap_intervals, args.overlap_interval_label,
-         args.gencode_reference_gtf, args.force_overwrite_gencode_overlaps)
+         args.gencode_reference_gtf)
