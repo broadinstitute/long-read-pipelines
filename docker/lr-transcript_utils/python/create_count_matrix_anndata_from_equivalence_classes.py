@@ -395,9 +395,17 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         # Any transcript with an equivalence class containing a stringtie 2 transcript, or the null transcript is de novo:
         is_de_novo[tx_indx] = any([txid.startswith("STRG") or txid.startswith("-") for txid, cc in tx_ids])
 
-        # Any gene is ambiguous if it has a gene equivalence class:
+        # Any gene is ambiguous if it has a gene equivalence class (i.e. more than one gene assignment),
+        # or if it does not have a gene assignment.
         # NOTE: This might have to change by the multi-mapping gene / read pairs.
-        is_gene_id_ambiguous = len(read_gene_ids) != 1
+        is_ambiguous = False
+        if len(read_gene_ids) != 1:
+            is_ambiguous = True
+        elif read_gene_ids[0].startswith("-"):
+            is_ambiguous = True
+        elif not read_gene_ids[0].startswith("ENSG"):
+            is_ambiguous = True
+        is_gene_id_ambiguous[tx_indx] = is_ambiguous
 
         seen_eq_classes.add(tx_eq_class)
 
