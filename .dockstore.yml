@@ -108,8 +108,8 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBAssembleWithHifiasm.wdl
   testParameterFiles:
-- name: PBFlowcellWinnowmap
+- name: LocalAssemblyHifiasm
   subclass: wdl
-  primaryDescriptorPath: /wdl/PBFlowcellWinnowmap.wdl
+  primaryDescriptorPath: /wdl/LocalAssemblyHifiasm.wdl
   testParameterFiles:
 
