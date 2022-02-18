@@ -345,10 +345,11 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
 
     # Now we handle the rest of our metadata (var / obs info):
-    gene_eq_classes = np.empty(len(tx_eq_classes), dtype=str)
-    transcript_ids = np.empty(len(tx_eq_classes), dtype=str)
-    gene_ids = np.empty(len(tx_eq_classes), dtype=str)
-    gene_names = np.empty(len(tx_eq_classes), dtype=str)
+    gene_eq_classes = [""] * len(tx_eq_classes)
+    transcript_ids = [""] * len(tx_eq_classes)
+    gene_ids = [""] * len(tx_eq_classes)
+    gene_names = [""] * len(tx_eq_classes)
+
     is_de_novo = np.empty(len(tx_eq_classes), dtype=bool)
     is_gene_id_ambiguous = np.empty(len(tx_eq_classes), dtype=bool)
 
