@@ -376,28 +376,20 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         # Set gene IDs:
         gene_ids[tx_indx] = ",".join(read_gene_ids)
 
-        # Get the gene name:
-        gene_name = gene_eq_class
-        if len(read_gene_ids) == 1:
-            try:
-                # Get a tx name that's in gencode to lookup.
-                # Since there's only 1 gene assignment, if it is a gencode gene, we only need to look up
-                # one transcript - they should all map to the same gene.
-                id_to_lookup = None
-                for i, _ in tx_ids:
-                    if i.startswith("ENST"):
-                        id_to_lookup = i
-                        break
-                gene_name = gtf_field_dict[id_to_lookup][GENCODE_GENE_NAME_FIELD]
-            except KeyError:
-                # Looks like this was not a gencode gene.
-                print(f"Unable to assign gene name to read: {read_name}.  Using gene eq class: {gene_eq_class}")
-                num_no_gene_name += 1
-                pass
-        else:
+        # Get the gene names:
+
+        assigned_gene_names = []
+        for i, _ in tx_ids:
+            if i.startswith("ENST"):
+                assigned_gene_names.append(gtf_field_dict[i][GENCODE_GENE_NAME_FIELD])
+        if len(assigned_gene_names) == 0:
             print(f"Unable to assign gene name to read: {read_name}.  Using gene eq class: {gene_eq_class}")
-            num_multi_gene_assignments += 1
-        gene_names[tx_indx] = gene_name
+            num_no_gene_name += 1
+            gene_name_assignment = gene_eq_class
+        else:
+            gene_name_assignment = ",".join(assigned_gene_names)
+
+        gene_names[tx_indx] = gene_name_assignment
 
         # Any transcript with an equivalence class containing a stringtie 2 transcript, or the null transcript is de novo:
         is_de_novo[tx_indx] = any([txid.startswith("STRG") or txid.startswith("-") for txid, cc in tx_ids])
