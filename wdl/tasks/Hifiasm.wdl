@@ -49,7 +49,7 @@ task Assemble_trio {
         pat_yak:  "paternal yak file"
     }
 
-    Int disk_size = 10 * ceil(size(reads, "GB"))
+    Int disk_size = ceil(size(mat_yak, "GB")) + ceil(size(pat_yak, "GB")) + 10 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail
