@@ -193,7 +193,7 @@ def get_approximate_gencode_gene_assignments(gtf_field_dict, gencode_field_val_d
 
 
 def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_map, read_eq_class_map,
-                            gtf_field_dict, overlapping_gene_name_set=None,
+                            gtf_field_dict, gencode_gtf_field_dict, overlapping_gene_name_set=None,
                             overlap_intervals_label="overlaps_intervals_of_interest",
                             force_recount=False):
 
@@ -375,10 +375,19 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
 
         # Get the gene name:
         gene_name = gene_eq_class
-        if len(tx_ids) == 1:
+        if len(read_gene_ids) == 1:
             try:
-                gene_name = gtf_field_dict[tx_ids[0]][GENCODE_GENE_NAME_FIELD]
+                # Get a tx name that's in gencode to lookup.
+                # Since there's only 1 gene assignment, if it is a gencode gene, we only need to look up
+                # one transcript - they should all map to the same gene.
+                id_to_lookup = None
+                for i in tx_ids:
+                    if i.startswith("ENST"):
+                        id_to_lookup = i
+                        break
+                gene_name = gtf_field_dict[id_to_lookup][GENCODE_GENE_NAME_FIELD]
             except KeyError:
+                # Looks like this was not a gencode gene.
                 pass
         gene_names[tx_indx] = gene_name
 
@@ -538,8 +547,11 @@ def main(input_tsv, gtf_file, out_prefix,
 
     print("Input files verified.", file=sys.stderr)
 
-    # Create our gtf field map:
+    # Create our discovered transcriptome gtf field map:
     gtf_field_dict = get_gtf_field_val_dict(gtf_file)
+
+    # Create our gencode transcriptome gtf field map:
+    gencode_gtf_field_dict = get_gtf_field_val_dict(gencode_reference_gtf)
 
     # Let's read in the equivalence class defs here:
     tx_eq_class_def_map = parse_tx_eq_class_defs_file(tx_eq_class_definitions)
@@ -552,7 +564,7 @@ def main(input_tsv, gtf_file, out_prefix,
     print("Creating master anndata objects from transcripts counts data...", file=sys.stderr)
     master_adata = create_combined_anndata(
         input_tsv, tx_eq_class_def_map, gene_eq_class_def_map, read_eq_class_map,
-        gtf_field_dict, overlapping_gene_names, overlap_intervals_label,
+        gtf_field_dict, gencode_gtf_field_dict, overlapping_gene_names, overlap_intervals_label
     )
 
     # Write our data out as pickles:
