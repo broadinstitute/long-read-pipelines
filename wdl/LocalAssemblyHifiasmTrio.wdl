@@ -10,10 +10,8 @@ workflow LocalAssembly {
         File   aligned_bai
         String prefix
 #        Boolean add_unaligned_reads = false
-        Boolean run_quast = false
-        Boolean trio = false
-        File? mat_yak
-        File? pat_yak
+        File mat_yak
+        File pat_yak
 
         File ref_map_file
     }
@@ -25,7 +23,6 @@ workflow LocalAssembly {
         prefix:        "prefix for output files"
 
 #        add_unaligned_reads: "set to true to include unaligned reads in the assembly (default: false)"
-        run_quast:           "set to true to run Quast on the assembly (default: false)"
 
         ref_map_file:  "table indicating reference sequence and auxillary file locations"
     }
@@ -57,21 +54,16 @@ workflow LocalAssembly {
             prefix = prefix
     }
 
-    if (trio) {
-        call Hifiasm.Assemble_trio {
-            input:
-                reads = BamToFastq.reads_fq,
-                prefix = prefix,
-                mat_yak = mat_yak,
-                pat_yak = pat_yak
-        }
+    call Hifiasm.Assemble_trio {
+        input:
+            reads = BamToFastq.reads_fq,
+            prefix = prefix,
+            mat_yak = mat_yak,
+            pat_yak = pat_yak
     }
 
-    if (!trio) {
-        call Hifiasm.Assemble {
-            input:
-                reads = BamToFastq.reads_fq,
-                prefix = prefix
-        }
+    output {
+        File h1_fa = Assemble_trio.h1_fa
+        File h2_fa = Assemble_trio.h2_fa
     }
 }

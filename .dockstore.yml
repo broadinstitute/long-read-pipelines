@@ -108,8 +108,8 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBAssembleWithHifiasm.wdl
   testParameterFiles:
-- name: LocalAssemblyHifiasm
+- name: LocalAssemblyHifiasmTrio
   subclass: wdl
-  primaryDescriptorPath: /wdl/LocalAssemblyHifiasm.wdl
+  primaryDescriptorPath: /wdl/LocalAssemblyHifiasmTrio.wdl
   testParameterFiles:
 

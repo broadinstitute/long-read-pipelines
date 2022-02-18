@@ -2,33 +2,33 @@ version 1.0
 
 import "Structs.wdl"
 
-workflow Hifiasm {
-    input {
-        File reads
-        String prefix
-        Boolean trio = false
-        File? mat_yak
-        File? pat_yak
-    }
+#workflow Hifiasm {
+#    input {
+#        File reads
+#        String prefix
+#        Boolean trio = false
+#        File? mat_yak
+#        File? pat_yak
+#    }
 
-    if (trio) {
-        call Assemble_trio {
-            input:
-                reads  = reads,
-                prefix = prefix,
-                mat_yak = mat_yak,
-                pat_yak = pat_yak
-        }
-    }
-
-    if (!trio) {
-        call Assemble {
-            input:
-                reads  = reads,
-                prefix = prefix,
-        }
-    }
-}
+#    if (trio) {
+#        call Assemble_trio {
+#            input:
+#                reads  = reads,
+#                prefix = prefix,
+#                mat_yak = mat_yak,
+#                pat_yak = pat_yak
+#        }
+#    }
+#
+#    if (!trio) {
+#        call Assemble {
+#            input:
+#                reads  = reads,
+#                prefix = prefix,
+#        }
+#    }
+#}
 
 task Assemble_trio {
     input {
