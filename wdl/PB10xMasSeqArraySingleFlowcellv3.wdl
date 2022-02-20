@@ -734,17 +734,25 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     #################
-    # Now we have to split teh reads again, process them into gff files, run gffcompare and then aggregate the results in a graph
+    # Here we restore the original read names to the bam because we're hashing them with Longbow.segment:
+    call TX_PRE.RestoreOriginalReadNames as t_66_RestoreOriginalReadNames {
+        input:
+            bam = t_65_MergeAllAnnotatedArrayElements.merged_bam,
+            prefix =  SM + "_all_starcode_annotated_array_elements_padded_original_names"
+    }
+
+    #################
+    # Now we have to split the reads again, process them into gff files, run gffcompare and then aggregate the results in a graph
 
     # We can actually compare the references without needing to scatter:
-    call TX_PRE.GffCompare as t_66_GffCompareStringtie2toGencode {
+    call TX_PRE.GffCompare as t_67_GffCompareStringtie2toGencode {
         input:
             gff_ref = t_48_ST2_Quant.st_gtf,
             gff_query = genome_annotation_gtf,
             ref_fasta = ref_fasta,
             ref_fasta_index = ref_fasta_index,
     }
-    call TX_PRE.GffCompare as t_67_GffCompareGencodetoStringtie2 {
+    call TX_PRE.GffCompare as t_68_GffCompareGencodetoStringtie2 {
         input:
             gff_ref = genome_annotation_gtf,
             gff_query = t_48_ST2_Quant.st_gtf,
@@ -753,66 +761,66 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     # Split by contig:
-    call TX_PRE.SplitBamByContig as t_68_SplitArrayElementsByContig {
+    call TX_PRE.SplitBamByContig as t_69_SplitArrayElementsByContig {
         input:
-            bam = t_65_MergeAllAnnotatedArrayElements.merged_bam,
-            prefix = SM + "_all_starcode_annotated_array_elements_padded"
+            bam = t_66_RestoreOriginalReadNames.bam_out,
+            prefix = SM + "_all_starcode_annotated_array_elements_padded_original_names"
     }
 
     # For each contig:
-    scatter (i in range(length(t_68_SplitArrayElementsByContig.contig_bams))) {
+    scatter (i in range(length(t_69_SplitArrayElementsByContig.contig_bams))) {
 
-        File contig_bam = t_68_SplitArrayElementsByContig.contig_bams[i]
-        String contig_name = t_68_SplitArrayElementsByContig.contig_names[i]
+        File contig_bam = t_69_SplitArrayElementsByContig.contig_bams[i]
+        String contig_name = t_69_SplitArrayElementsByContig.contig_names[i]
 
         # Create a GFF file:
-        call TX_PRE.ConvertSplicedBamToGff as t_69_ConvertSplicedBamToGff {
+        call TX_PRE.ConvertSplicedBamToGff as t_70_ConvertSplicedBamToGff {
             input:
                 bam = contig_bam
         }
 
         # Compare GFF files:
-        call TX_PRE.GffCompare as t_70_GffCompareStringtie2toMasSeqReads {
+        call TX_PRE.GffCompare as t_71_GffCompareStringtie2toMasSeqReads {
             input:
                 gff_ref = t_48_ST2_Quant.st_gtf,
-                gff_query = t_69_ConvertSplicedBamToGff.gff,
+                gff_query = t_70_ConvertSplicedBamToGff.gff,
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_index,
         }
 
-        call TX_PRE.GffCompare as t_71_GffCompareGencodetoMasSeqReads {
+        call TX_PRE.GffCompare as t_72_GffCompareGencodetoMasSeqReads {
             input:
                 gff_ref = genome_annotation_gtf,
-                gff_query = t_69_ConvertSplicedBamToGff.gff,
+                gff_query = t_70_ConvertSplicedBamToGff.gff,
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_index,
         }
 
         # Create the comparison graph and tsv files:
-        call TX_POST.QuantifyGffComparison as t_72_QuantifyGffComparison {
+        call TX_POST.QuantifyGffComparison as t_73_QuantifyGffComparison {
             input:
                 genome_gtf = genome_annotation_gtf,
-                st2_gencode_refmap = t_66_GffCompareStringtie2toGencode.refmap,
-                st2_gencode_tmap = t_66_GffCompareStringtie2toGencode.tmap,
-                st2_read_refmap = t_70_GffCompareStringtie2toMasSeqReads.refmap,
-                st2_read_tmap = t_70_GffCompareStringtie2toMasSeqReads.tmap,
-                gencode_st2_refmap = t_67_GffCompareGencodetoStringtie2.refmap,
-                gencode_st2_tmap = t_67_GffCompareGencodetoStringtie2.tmap,
-                gencode_read_refmap = t_71_GffCompareGencodetoMasSeqReads.refmap,
-                gencode_read_tmap = t_71_GffCompareGencodetoMasSeqReads.tmap,
+                st2_gencode_refmap = t_67_GffCompareStringtie2toGencode.refmap,
+                st2_gencode_tmap = t_67_GffCompareStringtie2toGencode.tmap,
+                st2_read_refmap = t_71_GffCompareStringtie2toMasSeqReads.refmap,
+                st2_read_tmap = t_71_GffCompareStringtie2toMasSeqReads.tmap,
+                gencode_st2_refmap = t_68_GffCompareGencodetoStringtie2.refmap,
+                gencode_st2_tmap = t_68_GffCompareGencodetoStringtie2.tmap,
+                gencode_read_refmap = t_72_GffCompareGencodetoMasSeqReads.refmap,
+                gencode_read_tmap = t_72_GffCompareGencodetoMasSeqReads.tmap,
                 prefix = SM + "_all_starcode_annotated_array_elements_padded_" + contig_name
         }
     }
 
     # Merge our tx equivalance classes assignments and eq classes:
-    call TX_POST.CombineEqClassFiles as t_73_CombineEqClassFiles {
+    call TX_POST.CombineEqClassFiles as t_74_CombineEqClassFiles {
         input:
-            gene_eq_class_definitions = t_72_QuantifyGffComparison.gene_eq_class_labels_file,
-            gene_assignment_files = t_72_QuantifyGffComparison.gene_assignments_file,
-            equivalence_class_definitions = t_72_QuantifyGffComparison.tx_equivalence_class_labels_file,
-            equivalence_classes = t_72_QuantifyGffComparison.tx_equivalence_class_file,
+            gene_eq_class_definitions = t_73_QuantifyGffComparison.gene_eq_class_labels_file,
+            gene_assignment_files = t_73_QuantifyGffComparison.gene_assignments_file,
+            equivalence_class_definitions = t_73_QuantifyGffComparison.tx_equivalence_class_labels_file,
+            equivalence_classes = t_73_QuantifyGffComparison.tx_equivalence_class_file,
             prefix = SM + "_all_starcode_annotated_array_elements_padded"
-        }
+    }
 
     ############################################################
     # Quantify Transcripts:
@@ -821,25 +829,25 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # TODO:
     # Slot in Vic's fix for UMI assignments / dedupe here.
 
-    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_74_CreateCountMatrixFromAnnotatedBam {
+    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_75_CreateCountMatrixFromAnnotatedBam {
         input:
-            annotated_transcriptome_bam = t_65_MergeAllAnnotatedArrayElements.merged_bam,
-            tx_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            annotated_transcriptome_bam = t_66_RestoreOriginalReadNames.bam_out,
+            tx_equivalence_class_assignments = t_74_CombineEqClassFiles.combined_tx_eq_class_assignments,
             umi_tag = "ZU",
             prefix = SM + "_gene_tx_expression_count_matrix"
     }
 
-    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_75_CreateCountMatrixAnndataFromEqClasses {
+    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_76_CreateCountMatrixAnndataFromEqClasses {
         input:
-            count_matrix_tsv = t_74_CreateCountMatrixFromAnnotatedBam.count_matrix,
+            count_matrix_tsv = t_75_CreateCountMatrixFromAnnotatedBam.count_matrix,
             genome_annotation_gtf_file = t_48_ST2_Quant.st_gtf,
             gencode_reference_gtf_file = genome_annotation_gtf,
             overlap_intervals = intervals_of_interest,
             overlap_interval_label = interval_overlap_name,
-            tx_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
-            tx_equivalence_class_definitions = t_73_CombineEqClassFiles.combined_tx_eq_class_defs,
-            gene_equivalence_class_assignments = t_73_CombineEqClassFiles.combined_gene_eq_class_assignments,
-            gene_equivalence_class_definitions = t_73_CombineEqClassFiles.combined_gene_eq_class_defs,
+            tx_equivalence_class_assignments = t_74_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            tx_equivalence_class_definitions = t_74_CombineEqClassFiles.combined_tx_eq_class_defs,
+            gene_equivalence_class_assignments = t_74_CombineEqClassFiles.combined_gene_eq_class_assignments,
+            gene_equivalence_class_definitions = t_74_CombineEqClassFiles.combined_gene_eq_class_defs,
             prefix = SM + "_gene_tx_expression_count_matrix"
     }
 
@@ -888,7 +896,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
 
-    File keyfile = t_75_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
+    File keyfile = t_76_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
 
     String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
     String metrics_out_dir = base_out_dir + "/metrics"
@@ -904,45 +912,45 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize gene / tx assignments:
-    call FF.FinalizeToDir as t_76_FinalizeTxAndGeneAssignments {
+    call FF.FinalizeToDir as t_77_FinalizeTxAndGeneAssignments {
         input:
             files = [
-                t_73_CombineEqClassFiles.combined_gene_eq_class_defs,
-                t_73_CombineEqClassFiles.combined_gene_eq_class_assignments,
-                t_73_CombineEqClassFiles.combined_tx_eq_class_defs,
-                t_73_CombineEqClassFiles.combined_tx_eq_class_assignments,
-                t_74_CreateCountMatrixFromAnnotatedBam.count_matrix,
-                t_75_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
+                t_74_CombineEqClassFiles.combined_gene_eq_class_defs,
+                t_74_CombineEqClassFiles.combined_gene_eq_class_assignments,
+                t_74_CombineEqClassFiles.combined_tx_eq_class_defs,
+                t_74_CombineEqClassFiles.combined_tx_eq_class_assignments,
+                t_75_CreateCountMatrixFromAnnotatedBam.count_matrix,
+                t_76_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
             ],
             outdir = quant_dir,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_77_FinalizeRawQuantPickles {
+    call FF.FinalizeToDir as t_78_FinalizeRawQuantPickles {
         input:
-            files = t_75_CreateCountMatrixAnndataFromEqClasses.pickles,
+            files = t_76_CreateCountMatrixAnndataFromEqClasses.pickles,
             outdir = quant_dir,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_78_FinalizeRefAndSt2Comparisons {
+    call FF.FinalizeToDir as t_79_FinalizeRefAndSt2Comparisons {
         input:
             files = [
-                t_66_GffCompareStringtie2toGencode.refmap,
-                t_66_GffCompareStringtie2toGencode.tmap,
-                t_66_GffCompareStringtie2toGencode.tracking,
-                t_66_GffCompareStringtie2toGencode.loci,
-                t_66_GffCompareStringtie2toGencode.annotated_gtf,
-                t_66_GffCompareStringtie2toGencode.stats,
-                t_66_GffCompareStringtie2toGencode.log,
+                t_67_GffCompareStringtie2toGencode.refmap,
+                t_67_GffCompareStringtie2toGencode.tmap,
+                t_67_GffCompareStringtie2toGencode.tracking,
+                t_67_GffCompareStringtie2toGencode.loci,
+                t_67_GffCompareStringtie2toGencode.annotated_gtf,
+                t_67_GffCompareStringtie2toGencode.stats,
+                t_67_GffCompareStringtie2toGencode.log,
 
-                t_67_GffCompareGencodetoStringtie2.refmap,
-                t_67_GffCompareGencodetoStringtie2.tmap,
-                t_67_GffCompareGencodetoStringtie2.tracking,
-                t_67_GffCompareGencodetoStringtie2.loci,
-                t_67_GffCompareGencodetoStringtie2.annotated_gtf,
-                t_67_GffCompareGencodetoStringtie2.stats,
-                t_67_GffCompareGencodetoStringtie2.log,
+                t_68_GffCompareGencodetoStringtie2.refmap,
+                t_68_GffCompareGencodetoStringtie2.tmap,
+                t_68_GffCompareGencodetoStringtie2.tracking,
+                t_68_GffCompareGencodetoStringtie2.loci,
+                t_68_GffCompareGencodetoStringtie2.annotated_gtf,
+                t_68_GffCompareGencodetoStringtie2.stats,
+                t_68_GffCompareGencodetoStringtie2.log,
             ],
             outdir = quant_dir + "/gencode_and_stringtie2",
             keyfile = keyfile
@@ -951,32 +959,32 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Finalize gene / tx assignment by contig:
     # NOTE: According to the scatter/gather documentation in the WDL spec, this will work correctly
     #       (https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#scatter--gather)
-    scatter (i in range(length(t_68_SplitArrayElementsByContig.contig_bams))) {
-        String contig = t_68_SplitArrayElementsByContig.contig_names[i]
+    scatter (i in range(length(t_69_SplitArrayElementsByContig.contig_bams))) {
+        String contig = t_69_SplitArrayElementsByContig.contig_names[i]
 
-        call FF.FinalizeToDir as t_79_FinalizeTxAndGeneAssignmentsByContig {
+        call FF.FinalizeToDir as t_80_FinalizeTxAndGeneAssignmentsByContig {
             input:
                 files = [
-                    t_70_GffCompareStringtie2toMasSeqReads.refmap[i],
-                    t_70_GffCompareStringtie2toMasSeqReads.tmap[i],
-                    t_70_GffCompareStringtie2toMasSeqReads.tracking[i],
-                    t_70_GffCompareStringtie2toMasSeqReads.loci[i],
-                    t_70_GffCompareStringtie2toMasSeqReads.annotated_gtf[i],
-                    t_70_GffCompareStringtie2toMasSeqReads.stats[i],
-                    t_70_GffCompareStringtie2toMasSeqReads.log[i],
+                    t_71_GffCompareStringtie2toMasSeqReads.refmap[i],
+                    t_71_GffCompareStringtie2toMasSeqReads.tmap[i],
+                    t_71_GffCompareStringtie2toMasSeqReads.tracking[i],
+                    t_71_GffCompareStringtie2toMasSeqReads.loci[i],
+                    t_71_GffCompareStringtie2toMasSeqReads.annotated_gtf[i],
+                    t_71_GffCompareStringtie2toMasSeqReads.stats[i],
+                    t_71_GffCompareStringtie2toMasSeqReads.log[i],
 
-                    t_71_GffCompareGencodetoMasSeqReads.refmap[i],
-                    t_71_GffCompareGencodetoMasSeqReads.tmap[i],
-                    t_71_GffCompareGencodetoMasSeqReads.tracking[i],
-                    t_71_GffCompareGencodetoMasSeqReads.loci[i],
-                    t_71_GffCompareGencodetoMasSeqReads.annotated_gtf[i],
-                    t_71_GffCompareGencodetoMasSeqReads.stats[i],
-                    t_71_GffCompareGencodetoMasSeqReads.log[i],
+                    t_72_GffCompareGencodetoMasSeqReads.refmap[i],
+                    t_72_GffCompareGencodetoMasSeqReads.tmap[i],
+                    t_72_GffCompareGencodetoMasSeqReads.tracking[i],
+                    t_72_GffCompareGencodetoMasSeqReads.loci[i],
+                    t_72_GffCompareGencodetoMasSeqReads.annotated_gtf[i],
+                    t_72_GffCompareGencodetoMasSeqReads.stats[i],
+                    t_72_GffCompareGencodetoMasSeqReads.log[i],
 
-                    t_72_QuantifyGffComparison.gene_assignments_file[i],
-                    t_72_QuantifyGffComparison.tx_equivalence_class_labels_file[i],
-                    t_72_QuantifyGffComparison.tx_equivalence_class_file[i],
-                    t_72_QuantifyGffComparison.graph_gpickle[i],
+                    t_73_QuantifyGffComparison.gene_assignments_file[i],
+                    t_73_QuantifyGffComparison.tx_equivalence_class_labels_file[i],
+                    t_73_QuantifyGffComparison.tx_equivalence_class_file[i],
+                    t_73_QuantifyGffComparison.graph_gpickle[i],
                 ],
                 outdir = quant_dir + "/by_contig/" + contig,
                 keyfile = keyfile
@@ -985,13 +993,14 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize annotated, aligned array elements:
-    call FF.FinalizeToDir as t_80_FinalizeCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_81_FinalizeCBCAnnotatedArrayElements {
         input:
             files = [
                 t_63_CorrectCCSBarcodesWithStarcodeSeedCountsSharded.output_bam,
                 t_64_CorrectReclaimedBarcodesWithStarcodeSeedCountsSharded.output_bam,
                 t_65_MergeAllAnnotatedArrayElements.merged_bam,
                 t_65_MergeAllAnnotatedArrayElements.merged_bai,
+                t_66_RestoreOriginalReadNames.bam_out,
             ],
             outdir = intermediate_array_elements_dir,
             keyfile = keyfile
@@ -999,7 +1008,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize meta files:
-    call FF.FinalizeToDir as t_81_FinalizeMeta {
+    call FF.FinalizeToDir as t_82_FinalizeMeta {
         input:
             files = [
                 starcode_seeds,
@@ -1013,7 +1022,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     if (defined(illumina_barcoded_bam)) {
-        call FF.FinalizeToDir as t_82_FinalizeMetaIlmnBarcodeConfs {
+        call FF.FinalizeToDir as t_83_FinalizeMetaIlmnBarcodeConfs {
             input:
                 files = select_all([
                     t_60_ExtractIlmnBarcodeConfScores.conf_score_tsv
@@ -1026,7 +1035,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     ##############################################################################################################
     # Finalize the discovered transcriptome:
     if ( !is_SIRV_data ) {
-        call FF.FinalizeToDir as t_83_FinalizeDiscoveredTranscriptome {
+        call FF.FinalizeToDir as t_84_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
                     t_48_ST2_Quant.st_gtf,
@@ -1046,7 +1055,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_84_FinalizeArrayReads {
+    call FF.FinalizeToDir as t_85_FinalizeArrayReads {
         input:
             files = [
                 t_35_MergeCCSLongbowPassedArrayReads.merged_bam,
@@ -1058,7 +1067,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_85_FinalizeCCSMetrics {
+    call FF.FinalizeToDir as t_86_FinalizeCCSMetrics {
         input:
             files = [ t_11_FindCCSReport.ccs_report[0] ],
             outdir = metrics_out_dir + "/ccs_metrics",
@@ -1067,7 +1076,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_86_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_87_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile
