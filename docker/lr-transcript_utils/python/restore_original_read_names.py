@@ -24,11 +24,11 @@ with pysam.AlignmentFile(input_bam, "rb", check_sq=False, require_index=False) a
             if i % 10000 == 0:
                 print(f"Processed {i} reads...")
 
-            original_name = read.get_tag("XM")
+            original_name = read.get_tag("XN")
             hashed_name = read.query_name
 
             read.query_name = original_name
-            read.set_tag("XM", hashed_name)
+            read.set_tag("XN", hashed_name)
 
             out_bam.write(read)
 
