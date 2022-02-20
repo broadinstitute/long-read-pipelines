@@ -9,6 +9,8 @@ import sys
 import time
 import pysam
 
+NAME_TAG = "XN"
+
 if len(sys.argv) != 2:
     print("ERROR: Must provide only 1 argument - an input bam file.", file=sys.stderr)
     sys.exit(1)
@@ -24,11 +26,11 @@ with pysam.AlignmentFile(input_bam, "rb", check_sq=False, require_index=False) a
             if i % 10000 == 0:
                 print(f"Processed {i} reads...")
 
-            original_name = read.get_tag("XN")
+            original_name = read.get_tag(NAME_TAG)
             hashed_name = read.query_name
 
             read.query_name = original_name
-            read.set_tag("XN", hashed_name)
+            read.set_tag(NAME_TAG, hashed_name)
 
             out_bam.write(read)
 
