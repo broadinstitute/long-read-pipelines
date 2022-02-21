@@ -848,7 +848,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             tx_equivalence_class_definitions = t_74_CombineEqClassFiles.combined_tx_eq_class_defs,
             gene_equivalence_class_assignments = t_74_CombineEqClassFiles.combined_gene_eq_class_assignments,
             gene_equivalence_class_definitions = t_74_CombineEqClassFiles.combined_gene_eq_class_defs,
-            prefix = SM + "_gene_tx_expression_count_matrix"
+            prefix = SM + "_gene_tx_expression_count_matrix",
+
+            runtime_attr_override = object {mem_gb: 64}
     }
 
 #
