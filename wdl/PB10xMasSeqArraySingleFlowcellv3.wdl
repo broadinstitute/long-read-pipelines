@@ -995,22 +995,30 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize annotated, aligned array elements:
-    call FF.FinalizeToDir as t_81_FinalizeCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_81_FinalizeIntermediateCBCAnnotatedArrayElements {
         input:
             files = [
                 t_63_CorrectCCSBarcodesWithStarcodeSeedCountsSharded.output_bam,
                 t_64_CorrectReclaimedBarcodesWithStarcodeSeedCountsSharded.output_bam,
                 t_65_MergeAllAnnotatedArrayElements.merged_bam,
                 t_65_MergeAllAnnotatedArrayElements.merged_bai,
-                t_66_RestoreOriginalReadNames.bam_out,
             ],
             outdir = intermediate_array_elements_dir,
             keyfile = keyfile
     }
 
+    call FF.FinalizeToDir as t_82_FinalizeCBCAnnotatedArrayElements {
+        input:
+            files = [
+                t_66_RestoreOriginalReadNames.bam_out,
+            ],
+            outdir = array_element_dir,
+            keyfile = keyfile
+    }
+
     ##############################################################################################################
     # Finalize meta files:
-    call FF.FinalizeToDir as t_82_FinalizeMeta {
+    call FF.FinalizeToDir as t_83_FinalizeMeta {
         input:
             files = [
                 starcode_seeds,
@@ -1024,7 +1032,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     if (defined(illumina_barcoded_bam)) {
-        call FF.FinalizeToDir as t_83_FinalizeMetaIlmnBarcodeConfs {
+        call FF.FinalizeToDir as t_84_FinalizeMetaIlmnBarcodeConfs {
             input:
                 files = select_all([
                     t_60_ExtractIlmnBarcodeConfScores.conf_score_tsv
@@ -1037,7 +1045,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     ##############################################################################################################
     # Finalize the discovered transcriptome:
     if ( !is_SIRV_data ) {
-        call FF.FinalizeToDir as t_84_FinalizeDiscoveredTranscriptome {
+        call FF.FinalizeToDir as t_85_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
                     t_48_ST2_Quant.st_gtf,
@@ -1057,7 +1065,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_85_FinalizeArrayReads {
+    call FF.FinalizeToDir as t_86_FinalizeArrayReads {
         input:
             files = [
                 t_35_MergeCCSLongbowPassedArrayReads.merged_bam,
@@ -1069,7 +1077,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_86_FinalizeCCSMetrics {
+    call FF.FinalizeToDir as t_87_FinalizeCCSMetrics {
         input:
             files = [ t_11_FindCCSReport.ccs_report[0] ],
             outdir = metrics_out_dir + "/ccs_metrics",
@@ -1078,7 +1086,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_87_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_88_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile
