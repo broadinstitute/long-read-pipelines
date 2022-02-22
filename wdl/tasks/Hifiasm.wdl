@@ -55,13 +55,13 @@ task Assemble_trio {
         set -euxo pipefail
 
         hifiasm -o ~{prefix} -t~{num_cpus} -1 ~{pat_yak} -2 ~{mat_yak} ~{reads}
-        awk '/^S/{print ">"$2; print $3}' ~{prefix}.dip.hap1.p_ctg.gfa > ~{prefix}.dip.hap1.p_ctg.fa
-        awk '/^S/{print ">"$2; print $3}' ~{prefix}.dip.hap2.p_ctg.gfa > ~{prefix}.dip.hap2.p_ctg.fa
+        awk '/^S/{print ">"$2; print $3}' ~{prefix}.hap1.p_ctg.gfa > ~{prefix}.hap1.p_ctg.fa
+        awk '/^S/{print ">"$2; print $3}' ~{prefix}.hap2.p_ctg.gfa > ~{prefix}.hap2.p_ctg.fa
     >>>
 
     output {
-        File h1_fa = "~{prefix}.dip.hap1.p_ctg.fa"
-        File h2_fa = "~{prefix}.dip.hap2.p_ctg.fa"
+        File h1_fa = "~{prefix}.hap1.p_ctg.fa"
+        File h2_fa = "~{prefix}.hap2.p_ctg.fa"
     }
 
     #########################
