@@ -162,7 +162,7 @@ task SamtoolsView {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB"))
+    Int disk_size_gb = 1 + 10*ceil(2 * size(bam_file, "GiB"))
 
     command <<<
 
@@ -208,7 +208,7 @@ task FilterReadsByCellBarcodeWhitelist {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB")) + ceil(size(whitelist, "GiB"))
+    Int disk_size_gb = 1 + 10*ceil(2 * size(bam_file, "GiB")) + ceil(size(whitelist, "GiB"))
 
     String out_file_name = "~{prefix}.bam"
 
@@ -291,7 +291,7 @@ task PrintReads {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB")) + ceil(size(bam_index, "GiB"))
+    Int disk_size_gb = 1 + 10*ceil(2 * size(bam_file, "GiB")) + ceil(size(bam_index, "GiB"))
 
     command {
         /gatk/gatk PrintReads \
@@ -343,7 +343,7 @@ task FilterMasSeqReadsWithGatk {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB")) + ceil(size(bam_index, "GiB"))
+    Int disk_size_gb = 1 + 10*ceil(2 * size(bam_file, "GiB")) + ceil(size(bam_index, "GiB"))
 
     command {
         /gatk/gatk PrintReads \
