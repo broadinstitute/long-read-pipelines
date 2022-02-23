@@ -391,7 +391,7 @@ task BamToFasta {
 
 task CountBamRecords {
     input {
-        File bam
+        String bam
 
         RuntimeAttr? runtime_attr_override
     }
@@ -399,7 +399,7 @@ task CountBamRecords {
     Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
 
     command <<<
-        samtools view -c ~{bam}
+        gsutil cat ~{bam} | samtools view -c
     >>>
 
     output {

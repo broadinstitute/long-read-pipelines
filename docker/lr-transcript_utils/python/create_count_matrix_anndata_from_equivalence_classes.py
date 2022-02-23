@@ -193,7 +193,7 @@ def get_approximate_gencode_gene_assignments(gtf_field_dict, gencode_field_val_d
 
 
 def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_map, read_eq_class_map,
-                            gtf_field_dict, gencode_gtf_field_dict, overlapping_gene_name_set=None,
+                            gtf_field_dict, gencode_gtf_field_dict, overlapping_gene_id_set=None,
                             overlap_intervals_label="overlaps_intervals_of_interest",
                             force_recount=False):
 
@@ -300,7 +300,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
     # First we handle our overlapping tests:
     # Mark the equivalence classes that overlap our intervals:
     tx_eq_class_overlap_flags = None
-    if overlapping_gene_name_set:
+    if overlapping_gene_id_set:
         print(f"Determining overlap intervals for the given interval list... ", end="", file=sys.stderr)
 
         tx_eq_class_overlap_flags = np.empty(len(tx_eq_classes), dtype=bool)
@@ -325,12 +325,14 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
                 if idx != -1:
                     gene = gene[:gene.find(".")]
 
-                does_overlap = gene in overlapping_gene_name_set
+                does_overlap = gene in overlapping_gene_id_set
                 if does_overlap:
                     break
 
             if does_overlap:
                 tx_eq_class_overlap_flags[tx_eq_class_index_dict[tx_eq_class]] = True
+            else:
+                tx_eq_class_overlap_flags[tx_eq_class_index_dict[tx_eq_class]] = False
 
             # Make sure we don't see this guy again:
             seen_eq_classes.add(tx_eq_class)
@@ -425,7 +427,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
     col_df["is_gene_id_ambiguous"] = is_gene_id_ambiguous
 
     # If we're doing interval overlaps, add our label:
-    if overlapping_gene_name_set:
+    if overlapping_gene_id_set:
         print(f"Adding {overlap_intervals_label} column for overlapping intervals...", file=sys.stderr, end="")
         col_df[f"{overlap_intervals_label}"] = tx_eq_class_overlap_flags
         print("Done!", file=sys.stderr)
@@ -463,7 +465,7 @@ def read_intervals_from_tsv(filename):
     return intervals
 
 
-def read_gene_names_from_intervals_file(filename):
+def read_gene_ids_from_intervals_file(filename):
     # Intervals file is of the format:
     # File provenance: https://www.genenames.org/data/genegroup/#!/group/370 , Gencode 37
     # # HGNC:12281	TRGJP2	T cell receptor gamma joining P2	Approved	T cell receptor gene	TCRGJP2	JP2	7p14.1	6972	ENSG00000211688	OTTHUMG00000155222	375	T cell receptor gamma locus at 7p14
@@ -471,6 +473,9 @@ def read_gene_names_from_intervals_file(filename):
     # ...
     #
     # So we can parse the gene info lines and get the gene names for overlaps instead of the intervals!
+    #
+    # Gene name is field 1
+    # Gene ID is field 9
     with open(filename, "r") as f, tqdm(desc="Processing intervals file", unit=" line") as pbar:
         gene_names = set()
         tsv_file = csv.reader(f, delimiter="\t")
@@ -479,7 +484,7 @@ def read_gene_names_from_intervals_file(filename):
                 continue
             if not row[0].startswith("#"):
                 continue
-            gene_name = row[10]
+            gene_name = row[9]
             gene_names.add(gene_name)
             pbar.update(1)
     return gene_names
@@ -549,10 +554,10 @@ def main(input_tsv, gtf_file, out_prefix,
     if not files_ok:
         sys.exit(1)
 
-    overlapping_gene_names = None
+    overlapping_gene_ids = None
     if overlap_interval_filename:
         print("Verifying contents of {overlap_interval_filename}...")
-        overlapping_gene_names = read_gene_names_from_intervals_file(overlap_interval_filename)
+        overlapping_gene_ids = read_gene_ids_from_intervals_file(overlap_interval_filename)
 
     print("Input files verified.", file=sys.stderr)
 
@@ -573,7 +578,7 @@ def main(input_tsv, gtf_file, out_prefix,
     print("Creating master anndata objects from transcripts counts data...", file=sys.stderr)
     master_adata = create_combined_anndata(
         input_tsv, tx_eq_class_def_map, gene_eq_class_def_map, read_eq_class_map,
-        gtf_field_dict, gencode_gtf_field_dict, overlapping_gene_names, overlap_intervals_label
+        gtf_field_dict, gencode_gtf_field_dict, overlapping_gene_ids, overlap_intervals_label
     )
 
     # Write our data out as pickles:
