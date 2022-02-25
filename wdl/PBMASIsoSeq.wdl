@@ -49,18 +49,18 @@ workflow PBMASIsoSeq {
         call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
-    call Utils.SubsetBam as SubsetToChr21 {
-        input:
-            bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]]),
-            bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]]),
-            locus = "chr21"
-    }
+#    call Utils.SubsetBam as SubsetToChr21 {
+#        input:
+#            bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]]),
+#            bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]]),
+#            locus = "chr21"
+#    }
+#
+#    File bam = SubsetToChr21.subset_bam
+#    File bai = SubsetToChr21.subset_bai
 
-    File bam = SubsetToChr21.subset_bam
-    File bai = SubsetToChr21.subset_bai
-
-#    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
-#    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
+    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
+    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
     call PB.PBIndex as IndexCCSAlignedReads { input: bam = bam }
     File pbi = IndexCCSAlignedReads.pbi
@@ -95,7 +95,6 @@ workflow PBMASIsoSeq {
     File transcriptome_reference_dict_for_quant = ExtractTranscriptSequences.transcripts_dict
 
     # break one raw BAM into fixed number of shards
-#    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = 50 }
     Array[String] default_filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
     call Utils.MakeChrIntervalList { input: ref_dict = ref_map['dict'], filter = default_filter }
 
@@ -128,7 +127,7 @@ workflow PBMASIsoSeq {
         call Utils.FilterReadsWithTagValues as FilterReadsWithNoUMI {
             input:
                 bam = RemoveUnmappedAndNonPrimaryReads.output_bam,
-                tag = "ZU",
+                tag = "XM",
                 value_to_remove = ".",
                 prefix = participant_name + "_ArrayElements_Annotated_Aligned_PrimaryOnly_WithUMIs",
                 runtime_attr_override = object { cpu_cores: 4, preemptible_tries: 0 }
@@ -171,16 +170,16 @@ workflow PBMASIsoSeq {
             prefix = "~{participant_name}_umi_tools_group"
     }
 
-    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_57_CreateCountMatrixFromAnnotatedBam {
+    call TX_POST.CreateCountMatrixFromAnnotatedBam as CreateCountMatrixFromAnnotatedBam {
         input:
             annotated_transcriptome_bam = UMIToolsGroup.output_bam,
             prefix = "~{participant_name}_gene_tx_expression_count_matrix"
     }
 
     # Only create the anndata objects if we're looking at real genomic data:
-    call TX_POST.CreateCountMatrixAnndataFromTsv as t_58_CreateCountMatrixAnndataFromTsv {
+    call TX_POST.CreateCountMatrixAnndataFromTsv as CreateCountMatrixAnndataFromTsv {
         input:
-            count_matrix_tsv = t_57_CreateCountMatrixFromAnnotatedBam.count_matrix,
+            count_matrix_tsv = CreateCountMatrixFromAnnotatedBam.count_matrix,
             genome_annotation_gtf_file = select_first([Quantify.st_gtf]),
             gencode_reference_gtf_file = ref_gtf,
             prefix = "~{participant_name}_gene_tx_expression_count_matrix"

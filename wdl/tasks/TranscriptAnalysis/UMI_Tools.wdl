@@ -54,7 +54,7 @@ task Run_Group {
           ~{per_cell_args} \
           --gene-tag XG \
           --extract-umi-method tag \
-          --umi-tag ZU \
+          --umi-tag ~{umi_tag} \
           -I ~{aligned_transcriptome_reads} \
           --group-out=~{prefix}.tsv \
           --output-bam \
