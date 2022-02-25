@@ -92,7 +92,11 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTMethylation.wdl
   testParameterFiles:
-- name: PBMASIsoSeq
+- name: PBMASIsoSeqQuantify
   subclass: wdl
-  primaryDescriptorPath: /wdl/PBMASIsoSeq.wdl
+  primaryDescriptorPath: /wdl/PBMASIsoSeqQuantify.wdl
+  testParameterFiles:
+- name: PBMASIsoSeqDemultiplex
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PBMASIsoSeqDemultiplex.wdl
   testParameterFiles:
