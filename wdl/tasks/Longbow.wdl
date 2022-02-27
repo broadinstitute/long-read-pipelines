@@ -279,10 +279,18 @@ task Correct {
         "mas15teloprimev2": "/longbow/resources/barcodes/indexes/tpv2.indices.txt"
     }
 
+    Map[String, String] correction_args = {
+        "mas10v2":          "-b CR -c CB",
+        "mas15v2":          "-b CR -c CB",
+        "mas10threeP":      "-b CR -c CB",
+        "mas15threeP":      "-b CR -c CB",
+        "mas15teloprimev2": "-b BC -c BC",
+    }
+
     command <<<
         set -euxo pipefail
 
-        longbow correct -b CR -c CB -a ~{allowlists[model]} -o ~{prefix}.corrected.bam ~{bam}
+        longbow correct ~{correction_args[model]} -a ~{allowlists[model]} -o ~{prefix}.corrected.bam ~{bam}
     >>>
 
     output {
