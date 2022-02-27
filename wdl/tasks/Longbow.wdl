@@ -282,7 +282,7 @@ task Correct {
     command <<<
         set -euxo pipefail
 
-        longbow correct-tag -b CR -c CB -a ~{allowlists[model]} -o ~{prefix}.corrected.bam ~{bam}
+        longbow correct -b CR -c CB -a ~{allowlists[model]} -o ~{prefix}.corrected.bam ~{bam}
     >>>
 
     output {
@@ -297,7 +297,7 @@ task Correct {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.21"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.22"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
