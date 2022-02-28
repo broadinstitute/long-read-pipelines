@@ -50,7 +50,7 @@ jobs:
 
   main_test:
     # The type of runner that the job will run on
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
 
