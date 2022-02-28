@@ -57,7 +57,6 @@ jobs:
 
     - name: Continuous integration test suite
       run: |
-        #python3 scripts/ci/run_test_suite.py
 	echo 'Test temporarily disabled.'
 
     # Send Slack message on workflow failure
