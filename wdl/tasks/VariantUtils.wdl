@@ -75,7 +75,7 @@ task MergeAndSortVCFs {
 
     Int sz = ceil(size(vcfs, 'GB'))
     Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
-    
+
     Int cores = 8
 
     # pending a bug fix (bcftools github issue 1576) in official bcftools release,
@@ -435,11 +435,12 @@ task FixSnifflesVCF {
         grep -F "##contig=<ID=" header.txt > contigs.txt
         grep "^#CHROM" ~{local_sp_fixed} > sample.line.txt
         grep "^##" ~{local_sp_fixed} | grep "^##[A-Z]" | sort > definitions.txt
-        cat definitions.txt missing.*.header | sort > everything.defined.txt
+        touch missing.placeholder.header && \
+          cat definitions.txt missing.*.header | sort > everything.defined.txt
         cat first_lines.txt contigs.txt everything.defined.txt sample.line.txt > fixed.header.txt
 
         # print to stdout for checking
-        grep -vF "##contig=<ID=" fixed.header.txt 
+        grep -vF "##contig=<ID=" fixed.header.txt
 
         cat fixed.header.txt body.txt > fixed.vcf
         rm ~{local_sp_fixed}
