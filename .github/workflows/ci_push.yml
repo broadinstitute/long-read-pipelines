@@ -51,14 +51,13 @@ jobs:
   # Run WDL tests on self-hosted runner
   branch_test:
     needs: tox_test
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
 
     - name: Continuous integration test suite
       run: |
-        #python3 scripts/ci/run_test_suite.py
-	echo 'Test temporarily disabled.'
+        echo 'Test temporarily disabled.'
 
     # Send Slack message on workflow failure
     - name: Slack Failure Notification

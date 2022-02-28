@@ -50,15 +50,14 @@ jobs:
 
   nightly_test:
     # The type of runner that the job will run on
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
 
     # Runs a set of commands using the runners shell
     - name: Continuous integration test suite
       run: |
-        #python3 scripts/ci/run_test_suite.py
-	echo 'Test temporarily disabled.'
+        echo 'Test temporarily disabled.'
 
     # Send Slack message on workflow failure
     - name: Slack Failure Notification
