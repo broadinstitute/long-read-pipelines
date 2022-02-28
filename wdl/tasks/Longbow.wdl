@@ -305,7 +305,7 @@ task Correct {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.22"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:kvg_improve_correction_behavior"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -363,6 +363,7 @@ task Stats {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
 task Demultiplex {
     input {
         File bam
@@ -393,7 +394,7 @@ task Demultiplex {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.21"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.22"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
