@@ -57,7 +57,7 @@ jobs:
 
     - name: Continuous integration test suite
       run: |
-	echo 'Test temporarily disabled.'
+        echo 'Test temporarily disabled.'
 
     # Send Slack message on workflow failure
     - name: Slack Failure Notification
