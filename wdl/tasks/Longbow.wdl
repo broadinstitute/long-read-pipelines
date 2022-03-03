@@ -502,13 +502,14 @@ task Correct
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(reads, "GB"))
+    Int disk_size = 4*ceil(size(reads, "GB")) + ceil(size(barcode_allow_list, "GB"))
 
     command <<<
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
         longbow correct \
+            -t 1 \
             --model ~{model} \
             --allow-list ~{barcode_allow_list} \
             -v INFO \
@@ -529,7 +530,7 @@ task Correct
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
+        cpu_cores:          2,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
