@@ -26,17 +26,17 @@ workflow PBCCSWholeGenome {
 
         String gcs_out_root_dir
 
-        Boolean call_svs
-        Boolean? fast_less_sensitive_sv
+        Boolean call_svs = true
+        Boolean? fast_less_sensitive_sv = true
 
-        Boolean call_small_variants
-        Boolean? call_small_vars_on_mitochondria
+        Boolean call_small_variants = true
+        Boolean? call_small_vars_on_mitochondria = false
         File? sites_vcf
         File? sites_vcf_tbi
 
-        Boolean? run_dv_pepper_analysis
-        Int? dvp_threads
-        Int? dvp_memory
+        Boolean? run_dv_pepper_analysis = true
+        Int? dvp_threads = 128
+        Int? dvp_memory = 64
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
     }

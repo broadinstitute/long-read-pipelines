@@ -26,11 +26,11 @@ workflow PBCLRWholeGenome {
 
         String gcs_out_root_dir
 
-        Boolean call_svs
-        Boolean? fast_less_sensitive_sv
+        Boolean call_svs = true
+        Boolean? fast_less_sensitive_sv = true
 
-        Boolean call_small_variants
-        Boolean? call_small_vars_on_mitochondria
+        Boolean call_small_variants = true
+        Boolean? call_small_vars_on_mitochondria = false
     }
 
     parameter_meta {
