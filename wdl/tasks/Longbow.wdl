@@ -484,6 +484,71 @@ task Pad
     }
 }
 
+task Correct
+{
+    input {
+        File reads
+        File barcode_allow_list
+
+        String model = "mas15v2"
+        String prefix = "longbow_correct"
+
+        String raw_barcode_tag = "CR"
+        String corrected_barcode_tag = "CB"
+
+        Int ccs_lev_dist_threshold = 2
+        Int clr_lev_dist_threshold = 3
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(reads, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        source /longbow/venv/bin/activate
+        longbow correct \
+            --model ~{model} \
+            --allow-list ~{barcode_allow_list} \
+            -v INFO \
+            --barcode-tag ~{raw_barcode_tag} \
+            --corrected-tag ~{corrected_barcode_tag} \
+            --max-hifi-dist ~{ccs_lev_dist_threshold} \
+            --max-clr-dist ~{clr_lev_dist_threshold} \
+            -o ~{prefix}_corrected_barcodes.bam \
+            --barcode-uncorrectable-bam ~{prefix}_uncorrected_barcodes.bam \
+            ~{reads} 2>&1 | tee longbow_correct.~{prefix}.log
+    >>>
+
+    output {
+        File corrected_barcodes_bam = "~{prefix}_corrected_barcodes.bam"
+        File uncorrected_barcodes_bam = "~{prefix}_uncorrected_barcodes.bam"
+        File log = "longbow_correct.~{prefix}.log"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.24"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task Stats
 {
     input {

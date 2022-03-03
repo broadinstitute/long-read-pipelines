@@ -33,7 +33,7 @@ workflow MasSeqReadFilteringQc {
             bam_file = t_02_GetPrimaryOnly.output_bam,
             bam_index = t_02_GetPrimaryOnly.output_bam_index,
             prefix = "primary_only.non_zero_mq",
-            filters = ""
+            filters = " --read-filter MappingQualityNotZeroReadFilter "
     }
     call Utils.CountBamRecords as t_05_CountNonZeroMq {
         input:
@@ -43,7 +43,7 @@ workflow MasSeqReadFilteringQc {
     # 2 - MQ > 20:
     call SamtoolsView as t_06_GetMqGt20Reads {
         input:
-            bam_file = t_02_GetPrimaryOnly.output_bam,
+            bam_file = t_04_GetNonZeroMqReads.bam,
             args = "-q 21",
             prefix = "primary_only.non_zero_mq.qual_gt_20",
     }
@@ -53,53 +53,59 @@ workflow MasSeqReadFilteringQc {
     }
 
     # 3 - length < 15kbp
-    call Utils.Bamtools as t_08_GetLenLt15kbpReads {
+    call Utils.SortSam as t_08_SortMqGt20Bam {
         input:
-            bamfile = t_06_GetMqGt20Reads.bam,
-            cmd = "filter",
-            args = '-length <15000',
-            prefix = "primary_only.non_zero_mq.qual_gt_20.length_lt_15kbp",
+            input_bam = t_06_GetMqGt20Reads.bam,
+            output_bam_basename = "primary_only.non_zero_mq.qual_gt_20_sorted",
+            compression_level = 2
     }
-    call Utils.CountBamRecords as t_09_CountLenLt15kbp {
+    call PrintReads as t_09_GetLenLt15kbpReads {
         input:
-            bam = t_08_GetLenLt15kbpReads.bam_out
+            bam_file = t_08_SortMqGt20Bam.output_bam,
+            bam_index = t_08_SortMqGt20Bam.output_bam_index,
+            prefix = "primary_only.non_zero_mq.qual_gt_20.length_lt_15kbp",
+            filters = " --read-filter ReadLengthReadFilter --max-read-length 15000 "
+    }
+    call Utils.CountBamRecords as t_10_CountLenLt15kbp {
+        input:
+            bam = t_09_GetLenLt15kbpReads.bam
     }
 
     # 4 - < 1000 soft clipped bases:
-    call PrintReads as t_10_GetSoftClipLt1000Reads {
+    call PrintReads as t_11_GetSoftClipLt1000Reads {
         input:
-            bam_file = t_08_GetLenLt15kbpReads.bam_out,
+            bam_file = t_09_GetLenLt15kbpReads.bam,
             prefix = "primary_only.non_zero_mq.qual_gt_20.length_lt_15kbp.soft_clip_lt_1000",
             filters = " --read-filter ExcessiveEndClippedReadFilter --max-clipped-bases 1000 "
     }
-    call Utils.CountBamRecords as t_11_CountSoftClipLt1000 {
+    call Utils.CountBamRecords as t_12_CountSoftClipLt1000 {
         input:
-            bam = t_10_GetSoftClipLt1000Reads.bam
+            bam = t_11_GetSoftClipLt1000Reads.bam
     }
 
     # 5 - Reads in CB whitelist:
-    call FilterReadsByCellBarcodeWhitelist as t_12_GetCbWhitelistReads {
+    call FilterReadsByCellBarcodeWhitelist as t_13_GetCbWhitelistReads {
         input:
-            bam_file = t_08_GetLenLt15kbpReads.bam_out,
+            bam_file = t_11_GetSoftClipLt1000Reads.bam,
             whitelist = whitelist,
             prefix = "primary_only.non_zero_mq.qual_gt_20.length_lt_15kbp.soft_clip_lt_1000.cb_whitelist",
     }
 
     # 6: Call output:
-    call CreateCountsTable as t_13_CreateFinalCountsTable {
+    call CreateCountsTable as t_14_CreateFinalCountsTable {
         input:
             numReadsIn = t_01_CountInputReads.num_records,
             numPrimary = t_03_CountPrimaryOnly.num_records,
             numMqGt0 = t_05_CountNonZeroMq.num_records,
             numMqGt20 = t_07_CountMqGt20.num_records,
-            numLenLt15kbp = t_09_CountLenLt15kbp.num_records,
-            numClipLenLt1000 = t_11_CountSoftClipLt1000.num_records,
-            numMatchWhitelist = t_12_GetCbWhitelistReads.num_reads_out,
+            numLenLt15kbp = t_10_CountLenLt15kbp.num_records,
+            numClipLenLt1000 = t_12_CountSoftClipLt1000.num_records,
+            numMatchWhitelist = t_13_GetCbWhitelistReads.num_reads_out,
     }
 
     output {
-        File final_bam = t_12_GetCbWhitelistReads.bam
-        File counts_table = t_13_CreateFinalCountsTable.counts
+        File final_bam = t_13_GetCbWhitelistReads.bam
+        File counts_table = t_14_CreateFinalCountsTable.counts
     }
 }
 
