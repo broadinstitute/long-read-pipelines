@@ -53,11 +53,11 @@ workflow FindBamIdentity {
         }
     }
 
-    call FPUtils.MergeGenotypingSites {input: all_sites = ExtractGenotypingSites.sites}    
+    call FPUtils.MergeGenotypingSites {input: all_sites = ExtractGenotypingSites.sites}
 
     call FPUtils.ExtractRelevantGenotypingReads {
         input:
-            aligned_bam = aligned_bam, 
+            aligned_bam = aligned_bam,
             aligned_bai = aligned_bai,
             genotyping_sites_bed = MergeGenotypingSites.merged_sites
     }
@@ -70,7 +70,7 @@ workflow FindBamIdentity {
                 arbitrary_bq = artificial_baseQ_for_CLR
         }
     }
-    
+
     scatter (vcf in FilterGenotypesVCF.ready_to_use_vcf) {
 
         call VariantUtils.GetVCFSampleName {
@@ -111,12 +111,16 @@ workflow FindBamIdentity {
 
     if (FindMaxLOD.max_lod < 6) {call Utils.StopWorkflow {input: reason = "No LOD score on the suspected identities are definite." }}
 
-    Array[String] TargetSampleNames = GetVCFSampleName.sample_name
-    String sample_name = TargetSampleNames[FindMaxLOD.idx]
+    String matching_vcf = PickGenotypeVCF.vcfs[FindMaxLOD.idx]
+
+    call GetAllIdentityInfo { input: vcf = matching_vcf }
 
     output {
-        String true_identity = sample_name
         Float lod = FindMaxLOD.max_lod
+
+        String true_smid = GetAllIdentityInfo.resolved_identities[0]
+        String true_collab_sample_id = GetAllIdentityInfo.resolved_identities[1]
+        String true_collab_partic_id = GetAllIdentityInfo.resolved_identities[2]
     }
 }
 
@@ -130,7 +134,7 @@ task FindMaxLOD {
     command <<<
 
         set -eux
-        
+
         seq 0 ~{n} > indices.txt
         echo "~{sep='\n' lod_scores}" > scores.txt
         paste -d' ' indices.txt scores.txt > to.sort.txt
@@ -155,6 +159,34 @@ task FindMaxLOD {
         bootDiskSizeGb: 10
         preemptible_tries:     3
         max_retries:           2
-        docker:"ubuntu:20.04"
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task GetAllIdentityInfo {
+    meta {
+        description: "Get collaborator participant, sample id, and SMID from a fingerprint VCF that follows the naming convension of smid__collabSmId_collabPartId.vcf"
+    }
+    input {
+        String vcf
+    }
+
+    String vcf_name = basename(basename(vcf, ".gz"), ".vcf")
+
+    command <<<
+        set -eux
+        echo ~{vcf_name} | sed 's/__/\n/g'  > out.txt
+    >>>
+    output {
+        Array[String] resolved_identities = read_lines("out.txt")
+    }
+
+    ###################
+    runtime {
+        cpu: 2
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }

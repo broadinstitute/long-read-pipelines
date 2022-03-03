@@ -192,7 +192,7 @@ task GetVCFSampleName {
         bootDiskSizeGb: 10
         preemptible_tries:     3
         max_retries:           2
-        docker:"ubuntu:20.04"
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
 
