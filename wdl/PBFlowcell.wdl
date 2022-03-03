@@ -29,6 +29,8 @@ workflow PBFlowcell {
         String dir_prefix
 
         String gcs_out_root_dir
+
+        Boolean validate_shards = false
     }
 
     parameter_meta {
@@ -64,6 +66,8 @@ workflow PBFlowcell {
 
     # then perform correction and alignment on each of the shard
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
+        # sometimes we see the sharded bams mising EOF marker, use this as 
+        if (validate_shards) {call Utils.CountBamRecords as ValidateShard {input: bam = unmapped_shard}}
         if (experiment_type != "CLR") {
             if (!GetRunInfo.is_corrected) { call PB.CCS { input: subreads = unmapped_shard } }
             call PB.ExtractHifiReads {

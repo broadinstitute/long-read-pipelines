@@ -1,8 +1,6 @@
 version 1.0
 
 import "Structs.wdl"
-import "Utils.wdl"
-import "VariantUtils.wdl"
 
 workflow RunPBSV {
     input {
@@ -67,9 +65,11 @@ task Discover {
         prefix:            "prefix for output"
     }
 
+    Int MINIMAL_DISK = 500
     Boolean is_big_bam = size(bam, "GB") > 100
-    Int inflation_factor = if (is_big_bam) then 3 else 2
+    Int inflation_factor = if (is_big_bam) then 5 else 2
     Int disk_size = inflation_factor * (ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
+    Int runtime_disk_size = if disk_size < MINIMAL_DISK then MINIMAL_DISK else disk_size
 
     String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
 
@@ -77,7 +77,7 @@ task Discover {
         set -euxo pipefail
 
         pbsv discover \
-            ~{if defined(tandem_repeat_bed) && tandem_repeat_bed != "NA" then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
+            ~{if defined(tandem_repeat_bed) then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
             ~{bam} \
             ~{fileoutput}
     >>>
@@ -88,9 +88,9 @@ task Discover {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             16,
-        disk_gb:            disk_size,
+        cpu_cores:          if(defined(chr)) then 8 else 32,
+        mem_gb:             if(defined(chr)) then 32 else 128,
+        disk_gb:            runtime_disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
