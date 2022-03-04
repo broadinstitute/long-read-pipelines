@@ -58,6 +58,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         String starcode_extra_params = "--dist 2 --sphere"
 #        String starcode_extra_params = "--dist 2 --cluster-ratio 10"
 
+        String expanded_cbc_tag = "vx"
+
         File? illumina_barcoded_bam
 
         # Default here is 0 because ccs uncorrected reads all seem to have RQ = -1.
@@ -608,6 +610,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 reads = t_53_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
                 model = mas_seq_model,
                 tag_to_expand = "CR",
+                new_tag_dest = expanded_cbc_tag,
                 padding = 3,
                 prefix = SM + "_ccs_array_elements_aligned_annotated_cbc_padded_shard_" + ccsi
         }
@@ -621,7 +624,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 ccs_lev_dist_threshold = 2,
                 clr_lev_dist_threshold = 3,
                 prefix = SM + "_ccs_array_elements_aligned_annotated_padded_cbc_corrected_shard_" + ccsi,
-                raw_barcode_tag = "CR",
+                raw_barcode_tag = expanded_cbc_tag,
                 corrected_barcode_tag = "CB",
         }
     }
@@ -659,6 +662,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 reads = ccs_reclaimed_array_element_shard,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
+                new_tag_dest = expanded_cbc_tag,
                 padding = 2,
                 prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_umi_padded_shard_" + cri
         }
@@ -681,7 +685,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 ccs_lev_dist_threshold = 2,
                 clr_lev_dist_threshold = 3,
                 prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_cbc_corrected_shard_" + cri,
-                raw_barcode_tag = "CR",
+                raw_barcode_tag = expanded_cbc_tag,
                 corrected_barcode_tag = "CB",
         }
     }

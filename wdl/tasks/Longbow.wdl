@@ -442,6 +442,7 @@ task Pad
         String prefix = "longbow_padded"
 
         String tag_to_expand = "ZU"
+        String new_tag_dest = "XM"
         Int padding = 2
 
         RuntimeAttr? runtime_attr_override
@@ -453,7 +454,7 @@ task Pad
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow pad --model ~{model} -v INFO --barcode-tag ~{tag_to_expand} -e ~{padding} -o tmp.bam ~{reads}
+        longbow pad --model ~{model} -v INFO --barcode-tag ~{tag_to_expand} -e ~{padding} -o tmp.bam -n ~{new_tag_dest} ~{reads}
 
         samtools sort tmp.bam -o ~{prefix}.bam
     >>>
@@ -470,7 +471,7 @@ task Pad
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.14"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.27"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -536,7 +537,7 @@ task Correct
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.26"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.27"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
