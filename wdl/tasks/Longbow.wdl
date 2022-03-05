@@ -566,54 +566,54 @@ task AggregateCorrectLogStats
     # YES, this SHOULD be a proper tool, but right now it isn't.
     command <<<
 python << CODE
-    import os
+import os
 
-    stats_dict = dict()
-    line_key = "STATS: "
+stats_dict = dict()
+line_key = "STATS: "
 
-    for stats_file in ["~{sep='","' longbow_correct_log_files}"]:
-        with open(os.path.join(p, log_file), 'r') as f:
-            for line in f:
-                if line_key in line:
-                    line = line.strip()
-                    s = line[line.find(line_key) + len(line_key):]
-                    key, remainder = [t.strip() for t in s.split(":")]
-                    if "/" in remainder:
-                        count = int(remainder[:remainder.find("/")])
-                        tot = int(remainder[remainder.find("/")+1:remainder.find(" ")])
-                    else:
-                        count = int(remainder)
-                        tot = None
+for stats_file in ["~{sep='","' longbow_correct_log_files}"]:
+    with open(os.path.join(p, log_file), 'r') as f:
+        for line in f:
+            if line_key in line:
+                line = line.strip()
+                s = line[line.find(line_key) + len(line_key):]
+                key, remainder = [t.strip() for t in s.split(":")]
+                if "/" in remainder:
+                    count = int(remainder[:remainder.find("/")])
+                    tot = int(remainder[remainder.find("/")+1:remainder.find(" ")])
+                else:
+                    count = int(remainder)
+                    tot = None
 
-                    try:
-                        c, t = stats_dict[key]
-                        if tot is not None:
-                            tot += t
-                        stats_dict[key] = (count + c, tot)
-                    except KeyError:
-                        stats_dict[key] = (count, tot)
+                try:
+                    c, t = stats_dict[key]
+                    if tot is not None:
+                        tot += t
+                    stats_dict[key] = (count + c, tot)
+                except KeyError:
+                    stats_dict[key] = (count, tot)
 
-    k_len = 0
-    for k in stats_dict.keys():
-        if len(k) > k_len:
-            k_len = len(k)
+k_len = 0
+for k in stats_dict.keys():
+    if len(k) > k_len:
+        k_len = len(k)
 
-    k_prefix = list(stats_dict.keys())[0]
-    k_prefix = k_prefix[:k_prefix.find(" ")]
-    with open("~{out_name}", 'w') as f:
-        for k, v in stats_dict.items():
+k_prefix = list(stats_dict.keys())[0]
+k_prefix = k_prefix[:k_prefix.find(" ")]
+with open("~{out_name}", 'w') as f:
+    for k, v in stats_dict.items():
 
-            if not k.startswith(k_prefix):
-                f.write("\n")
-                k_prefix = k[:k.find(" ")]
+        if not k.startswith(k_prefix):
+            f.write("\n")
+            k_prefix = k[:k.find(" ")]
 
-            k_spacing = k_len - len(k)
+        k_spacing = k_len - len(k)
 
-            count, tot = v
-            if tot is None:
-                f.write(f"{k}:{' '*k_spacing} {count}\n")
-            else:
-                f.write(f"{k}:{' '*k_spacing} {count}/{tot} ({100.0*count/tot:2.4f}%)\n")
+        count, tot = v
+        if tot is None:
+            f.write(f"{k}:{' '*k_spacing} {count}\n")
+        else:
+            f.write(f"{k}:{' '*k_spacing} {count}/{tot} ({100.0*count/tot:2.4f}%)\n")
 
 CODE
     >>>
