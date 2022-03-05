@@ -58,7 +58,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         String starcode_extra_params = "--dist 2 --sphere"
 #        String starcode_extra_params = "--dist 2 --cluster-ratio 10"
 
-        String expanded_cbc_tag = "CB"
+        String expanded_cbc_tag = "CR"
 
         File? illumina_barcoded_bam
 
