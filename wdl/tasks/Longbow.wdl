@@ -572,27 +572,26 @@ python << CODE
     line_key = "STATS: "
 
     for stats_file in ["~{sep='","' longbow_correct_log_files}"]:
-        if log_file.endswith(".log"):
-            with open(os.path.join(p, log_file), 'r') as f:
-                for line in f:
-                    if line_key in line:
-                        line = line.strip()
-                        s = line[line.find(line_key) + len(line_key):]
-                        key, remainder = [t.strip() for t in s.split(":")]
-                        if "/" in remainder:
-                            count = int(remainder[:remainder.find("/")])
-                            tot = int(remainder[remainder.find("/")+1:remainder.find(" ")])
-                        else:
-                            count = int(remainder)
-                            tot = None
+        with open(os.path.join(p, log_file), 'r') as f:
+            for line in f:
+                if line_key in line:
+                    line = line.strip()
+                    s = line[line.find(line_key) + len(line_key):]
+                    key, remainder = [t.strip() for t in s.split(":")]
+                    if "/" in remainder:
+                        count = int(remainder[:remainder.find("/")])
+                        tot = int(remainder[remainder.find("/")+1:remainder.find(" ")])
+                    else:
+                        count = int(remainder)
+                        tot = None
 
-                        try:
-                            c, t = stats_dict[key]
-                            if tot is not None:
-                                tot += t
-                            stats_dict[key] = (count + c, tot)
-                        except KeyError:
-                            stats_dict[key] = (count, tot)
+                    try:
+                        c, t = stats_dict[key]
+                        if tot is not None:
+                            tot += t
+                        stats_dict[key] = (count + c, tot)
+                    except KeyError:
+                        stats_dict[key] = (count, tot)
 
     k_len = 0
     for k in stats_dict.keys():
