@@ -58,7 +58,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         String starcode_extra_params = "--dist 2 --sphere"
 #        String starcode_extra_params = "--dist 2 --cluster-ratio 10"
 
-        String expanded_cbc_tag = "vx"
+        String expanded_cbc_tag = "CB"
 
         File? illumina_barcoded_bam
 
@@ -662,7 +662,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 reads = ccs_reclaimed_array_element_shard,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
-                new_tag_dest = expanded_cbc_tag,
                 padding = 2,
                 prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_umi_padded_shard_" + cri
         }
@@ -672,6 +671,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 reads = t_60_LongbowPadCCSReclaimedArrayElementUMIs.padded_tag_bam,
                 model = mas_seq_model,
                 tag_to_expand = "CR",
+                new_tag_dest = expanded_cbc_tag,
                 padding = 3,
                 prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_cbc_padded_shard_" + cri
         }
