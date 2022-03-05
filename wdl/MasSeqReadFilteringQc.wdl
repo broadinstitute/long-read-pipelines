@@ -219,7 +219,7 @@ task FilterReadsByCellBarcodeWhitelist {
     String out_file_name = "~{prefix}.bam"
 
     command <<<
-python << END
+python << CODE
         import pysam
         from tqdm import tqdm
 
@@ -253,7 +253,7 @@ python << END
 
         with open('num_reads_out.txt', 'w') as f:
             f.write(f"{num_barcodes_in_whitelist}\n")
-END
+CODE
     >>>
 
     output {

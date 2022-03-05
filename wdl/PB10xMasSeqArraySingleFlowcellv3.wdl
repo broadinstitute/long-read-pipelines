@@ -897,38 +897,21 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             runtime_attr_override = object {mem_gb: 64}
     }
 
-#
-#    ############################################################
-#    #               __  __      _        _
-#    #              |  \/  | ___| |_ _ __(_) ___ ___
-#    #              | |\/| |/ _ \ __| '__| |/ __/ __|
-#    #              | |  | |  __/ |_| |  | | (__\__ \
-#    #              |_|  |_|\___|\__|_|  |_|\___|___/
-#    #
-#    ############################################################
-#
-#    String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
-#    String metrics_out_dir = base_out_dir + "/metrics"
-#
-#    # Aligned CCS Metrics:
-#    call RM.CalculateAndFinalizeReadMetrics as t_59_GenomeAlignedArrayElementMetrics {
-#        input:
-#            bam_file = t_53_MergeGenomeAlignedExtractedArrayElements.merged_bam,
-#            bam_index = t_53_MergeGenomeAlignedExtractedArrayElements.merged_bai,
-#            ref_dict = ref_fasta_dict,
-#
-#            base_metrics_out_dir = metrics_out_dir + "/genome_aligned_array_element_metrics"
-#    }
-#
-#    # Aligned Array Element Metrics:
-#    call RM.CalculateAndFinalizeAlternateReadMetrics as t_60_TranscriptomeAlignedArrayElementMetrics {
-#        input:
-#            bam_file = t_52_MergeTranscriptomeAlignedExtractedArrayElements.merged_bam,
-#            bam_index = t_52_MergeTranscriptomeAlignedExtractedArrayElements.merged_bai,
-#            ref_dict = transcriptome_reference_dict_for_quant,
-#
-#            base_metrics_out_dir = metrics_out_dir + "/transcriptome_aligned_array_element_metrics"
-#    }
+
+    ############################################################
+    #               __  __      _        _
+    #              |  \/  | ___| |_ _ __(_) ___ ___
+    #              | |\/| |/ _ \ __| '__| |/ __/ __|
+    #              | |  | |  __/ |_| |  | | (__\__ \
+    #              |_|  |_|\___|\__|_|  |_|\___|___/
+    #
+    ############################################################
+
+    call LONGBOW.AggregateCorrectLogStats as t_77_AggregateLongbowCorrectStats {
+        input:
+            longbow_correct_log_files = flatten([t_62_LongbowCorrectCCSReclaimedArrayElementCBCs.log, t_55_LongbowCorrectCCSCorrectedArrayElementCBCs.log])
+    }
+
 
     ######################################################################
     #             _____ _             _ _
@@ -945,7 +928,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     File keyfile = t_76_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
 
     String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
-    String metrics_out_dir = base_out_dir + "/metrics"
+    String stats_out_dir = base_out_dir + "/stats"
     String array_element_dir = base_out_dir + "/annotated_array_elements"
     String intermediate_reads_dir = base_out_dir + "/intermediate_reads"
 
@@ -958,7 +941,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize gene / tx assignments:
-    call FF.FinalizeToDir as t_77_FinalizeTxAndGeneAssignments {
+    call FF.FinalizeToDir as t_78_FinalizeTxAndGeneAssignments {
         input:
             files = [
                 t_74_CombineEqClassFiles.combined_gene_eq_class_defs,
@@ -972,14 +955,14 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_78_FinalizeRawQuantPickles {
+    call FF.FinalizeToDir as t_79_FinalizeRawQuantPickles {
         input:
             files = t_76_CreateCountMatrixAnndataFromEqClasses.pickles,
             outdir = quant_dir,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_79_FinalizeRefAndSt2Comparisons {
+    call FF.FinalizeToDir as t_80_FinalizeRefAndSt2Comparisons {
         input:
             files = [
                 t_67_GffCompareStringtie2toGencode.refmap,
@@ -1008,7 +991,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     scatter (i in range(length(t_69_SplitArrayElementsByContig.contig_bams))) {
         String contig = t_69_SplitArrayElementsByContig.contig_names[i]
 
-        call FF.FinalizeToDir as t_80_FinalizeTxAndGeneAssignmentsByContig {
+        call FF.FinalizeToDir as t_81_FinalizeTxAndGeneAssignmentsByContig {
             input:
                 files = [
                     t_71_GffCompareStringtie2toMasSeqReads.refmap[i],
@@ -1039,7 +1022,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize annotated, aligned array elements:
-    call FF.FinalizeToDir as t_81_FinalizeIntermediateCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_82_FinalizeIntermediateCBCAnnotatedArrayElements {
         input:
             files = [
                 t_56_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bam,
@@ -1053,7 +1036,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_82_FinalizeCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_83_FinalizeCBCAnnotatedArrayElements {
         input:
             files = [
                 t_66_RestoreOriginalReadNames.bam_out,
@@ -1064,7 +1047,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize meta files:
-    call FF.FinalizeToDir as t_83_FinalizeMeta {
+    call FF.FinalizeToDir as t_84_FinalizeMeta {
         input:
             files = [
 #                starcode_seeds,
@@ -1077,14 +1060,14 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_84_FinalizeCCSCBCcorrectionLogsToMeta {
+    call FF.FinalizeToDir as t_85_FinalizeCCSCBCcorrectionLogsToMeta {
         input:
             files = t_55_LongbowCorrectCCSCorrectedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_cbc_correction_logs",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_85_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
+    call FF.FinalizeToDir as t_86_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
         input:
             files = t_62_LongbowCorrectCCSReclaimedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_rejected_cbc_correction_logs",
@@ -1105,7 +1088,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     ##############################################################################################################
     # Finalize the discovered transcriptome:
     if ( !is_SIRV_data ) {
-        call FF.FinalizeToDir as t_86_FinalizeDiscoveredTranscriptome {
+        call FF.FinalizeToDir as t_87_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
                     t_48_ST2_Quant.st_gtf,
@@ -1125,7 +1108,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_87_FinalizeArrayReads {
+    call FF.FinalizeToDir as t_88_FinalizeArrayReads {
         input:
             files = [
                 t_35_MergeCCSLongbowPassedArrayReads.merged_bam,
@@ -1137,16 +1120,16 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_88_FinalizeCCSMetrics {
+    call FF.FinalizeToDir as t_89_FinalizeCCSMetrics {
         input:
-            files = [ t_11_FindCCSReport.ccs_report[0] ],
-            outdir = metrics_out_dir + "/ccs_metrics",
+            files = [ t_11_FindCCSReport.ccs_report[0], t_77_AggregateLongbowCorrectStats.stats ],
+            outdir = stats_out_dir + "/ccs_metrics",
             keyfile = keyfile
     }
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_89_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_90_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile
