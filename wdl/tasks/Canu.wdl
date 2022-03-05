@@ -238,6 +238,7 @@ task SingleStep {
 #        Float error_rate
         String prefix
         String preset
+        String? other_params
 
         RuntimeAttr? runtime_attr_override
     }
@@ -250,6 +251,8 @@ task SingleStep {
         preset:         "data type preset: nanopore, pacbio, or pacbio-hifi"
     }
 
+    String params = select_first([other_params, ""])
+
     Int disk_size = 50 * ceil(size(reads, "GB"))
 
     command <<<
@@ -258,7 +261,7 @@ task SingleStep {
         canu \
              -p ~{prefix} -d canu_assemble_output \
              genomeSize=~{genome_size} \
-             -~{preset} ~{reads}
+             -~{preset} ~{reads} ~{params}
     >>>
 
     output {
