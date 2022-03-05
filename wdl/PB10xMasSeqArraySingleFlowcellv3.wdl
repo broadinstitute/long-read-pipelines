@@ -909,7 +909,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     call LONGBOW.AggregateCorrectLogStats as t_77_AggregateLongbowCorrectStats {
         input:
-            longbow_correct_log_files = flatten([t_62_LongbowCorrectCCSReclaimedArrayElementCBCs.log, t_55_LongbowCorrectCCSCorrectedArrayElementCBCs.log])
+            longbow_correct_log_files = flatten([t_62_LongbowCorrectCCSReclaimedArrayElementCBCs.log, t_55_LongbowCorrectCCSCorrectedArrayElementCBCs.log]),
+            out_name = SM + "_longbow_correct_stats.txt"
     }
 
 

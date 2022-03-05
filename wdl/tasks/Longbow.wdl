@@ -556,12 +556,12 @@ task AggregateCorrectLogStats
     input {
         Array[File] longbow_correct_log_files
 
+        String out_name = "longbow_correct_stats.txt"
+
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 2*ceil(size(longbow_correct_log_files, "GB"))
-
-    String stats_file = "longbow_correct_stats.txt"
 
     # YES, this SHOULD be a proper tool, but right now it isn't.
     command <<<
@@ -600,26 +600,26 @@ python << CODE
 
     k_prefix = list(stats_dict.keys())[0]
     k_prefix = k_prefix[:k_prefix.find(" ")]
+    with open("~{out_name}", 'w') as f:
+        for k, v in stats_dict.items():
 
-    for k, v in stats_dict.items():
+            if not k.startswith(k_prefix):
+                f.write("\n")
+                k_prefix = k[:k.find(" ")]
 
-        if not k.startswith(k_prefix):
-            print()
-            k_prefix = k[:k.find(" ")]
+            k_spacing = k_len - len(k)
 
-        k_spacing = k_len - len(k)
-
-        count, tot = v
-        if tot is None:
-            print(f"{k}:{' '*k_spacing} {count}")
-        else:
-            print(f"{k}:{' '*k_spacing} {count}/{tot} ({100.0*count/tot:2.4f}%)")
+            count, tot = v
+            if tot is None:
+                f.write(f"{k}:{' '*k_spacing} {count}\n")
+            else:
+                f.write(f"{k}:{' '*k_spacing} {count}/{tot} ({100.0*count/tot:2.4f}%)\n")
 
 CODE
     >>>
 
     output {
-        File stats = stats_file
+        File stats = out_name
     }
 
     #########################
