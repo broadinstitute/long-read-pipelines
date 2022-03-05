@@ -572,7 +572,7 @@ stats_dict = dict()
 line_key = "STATS: "
 
 for stats_file in ["~{sep='","' longbow_correct_log_files}"]:
-    with open(os.path.join(p, log_file), 'r') as f:
+    with open(stats_file, 'r') as f:
         for line in f:
             if line_key in line:
                 line = line.strip()
