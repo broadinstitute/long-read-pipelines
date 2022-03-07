@@ -110,11 +110,15 @@ task Assemble {
 
         hifiasm -o ~{prefix} -t~{num_cpus} ~{reads}
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
+        awk '/^S/{print ">"$2; print $3}' ~{prefix}.hap1.p_ctg.gfa > ~{prefix}.hap1.p_ctg.fa
+        awk '/^S/{print ">"$2; print $3}' ~{prefix}.hap2.p_ctg.gfa > ~{prefix}.hap2.p_ctg.fa
     >>>
 
     output {
 #        File gfa = "~{prefix}.p_ctg.gfa"
         File fa = "~{prefix}.p_ctg.fa"
+        File h1_fa = "~{prefix}.hap1.p_ctg.fa"
+        File h2_fa = "~{prefix}.hap2.p_ctg.fa"
     }
 
     #########################

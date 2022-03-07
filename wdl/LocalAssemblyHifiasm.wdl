@@ -60,5 +60,8 @@ workflow LocalAssembly {
 
     output {
         File fa = Assemble.fa
+        File h1_fa = Assemble.h1_fa
+        File h2_fa = Assemble.h2_fa
+
     }
 }
