@@ -113,7 +113,7 @@ task Assemble {
     >>>
 
     output {
-        File gfa = "~{prefix}.p_ctg.gfa"
+#        File gfa = "~{prefix}.p_ctg.gfa"
         File fa = "~{prefix}.p_ctg.fa"
     }
 
