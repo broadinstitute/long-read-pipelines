@@ -10,8 +10,6 @@ workflow LocalAssembly {
         File   aligned_bai
         String prefix
 #        Boolean add_unaligned_reads = false
-        File mat_yak
-        File pat_yak
 
         File ref_map_file
     }
@@ -54,16 +52,13 @@ workflow LocalAssembly {
             prefix = prefix
     }
 
-    call Hifiasm.Assemble_trio {
+    call Hifiasm.Assemble {
         input:
             reads = BamToFastq.reads_fq,
-            prefix = prefix,
-            mat_yak = mat_yak,
-            pat_yak = pat_yak
+            prefix = prefix
     }
 
     output {
-        File h1_fa = Assemble_trio.h1_fa
-        File h2_fa = Assemble_trio.h2_fa
+        File fa = Assemble.fa
     }
 }
