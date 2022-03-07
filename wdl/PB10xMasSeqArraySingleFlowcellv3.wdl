@@ -30,12 +30,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         String gcs_input_dir
         String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/PB10xMasSeqSingleFlowcellv3"
 
-        File segments_fasta = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/cDNA_array_15x.unique_seqs_for_cartographer.fasta"
-        File boundaries_file = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/bounds_file_for_extraction.txt"
-
-        File head_adapter_fasta = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/10x_adapter.fasta"
-        File tail_adapter_fasta = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/tso_adapter.fasta"
-        File ten_x_cell_barcode_whitelist = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/737K-august-2016.txt"
+        File cell_barcode_whitelist = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/737K-august-2016.txt"
 
         # NOTE: Reference for un-split CCS reads:
         File ref_fasta =  "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/GCA_000001405.15_GRCh38_no_alt_analysis_set.fa"
@@ -56,7 +51,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         String interval_overlap_name = "is_tcr_overlapping"
 
         String starcode_extra_params = "--dist 2 --sphere"
-#        String starcode_extra_params = "--dist 2 --cluster-ratio 10"
 
         String expanded_cbc_tag = "CR"
 
@@ -72,6 +66,12 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         Boolean is_SIRV_data = false
         String mas_seq_model = "mas15v2"
 
+        Int ccs_lev_dist = 2
+        Int clr_lev_dist = 3
+
+        # Add a suffix here for our out directory so we can label runs:
+        String out_dir_suffix = ""
+
         String? sample_name
     }
 
@@ -79,12 +79,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         gcs_input_dir : "Input folder on GCS in which to search for BAM files to process."
         gcs_out_root_dir : "Root output GCS folder in which to place results of this workflow."
 
-        segments_fasta : "FASTA file containing unique segments for which to search in the given BAM files.   These segments are used as delimiters in the reads.  Read splitting uses these delimiters and the boundaries file."
-        boundaries_file : "Text file containing two comma-separated segment names from the segments_fasta on each line.  These entries define delimited sections to be extracted from the reads and treated as individual array elements."
-
-        head_adapter_fasta : "FASTA file containing the sequence that each transcript should start with.  Typically this will be the 10x adapter sequence from the 10x library prep."
-        tail_adapter_fasta : "FASTA file containing the sequence that each transcript should end with.  Typically this will be the Template Switch Oligo (TSO) sequence from the 10x library prep."
-        ten_x_cell_barcode_whitelist : "Text file containing a whitelist of cell barcodes for the 10x library prep."
+        cell_barcode_whitelist : "Text file containing a whitelist of cell barcodes for the single-cell library prep."
 
         ref_fasta : "FASTA file containing the reference sequence to which the input data should be aligned before splitting into array elements."
         ref_fasta_index : "FASTA index file for the given ref_fasta file."
@@ -130,7 +125,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Call our timestamp so we can store outputs without clobbering previous runs:
     call Utils.GetCurrentTimestampString as t_01_WdlExecutionStartTimestamp { input: }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "")
+    String outdir = sub(gcs_out_root_dir, "/$", "") + out_dir_suffix
 
     call PB.FindBams as t_02_FindBams { input: gcs_input_dir = gcs_input_dir }
     call PB.FindZmwStatsJsonGz as t_03_FindZmwStatsJsonGz { input: gcs_input_dir = gcs_input_dir }
@@ -619,10 +614,10 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         call LONGBOW.Correct as t_55_LongbowCorrectCCSCorrectedArrayElementCBCs {
             input:
                 reads = t_54_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
-                barcode_allow_list = ten_x_cell_barcode_whitelist,
+                barcode_allow_list = cell_barcode_whitelist,
                 model = mas_seq_model,
-                ccs_lev_dist_threshold = 2,
-                clr_lev_dist_threshold = 3,
+                ccs_lev_dist_threshold = ccs_lev_dist,
+                clr_lev_dist_threshold = clr_lev_dist,
                 prefix = SM + "_ccs_array_elements_aligned_annotated_padded_cbc_corrected_shard_" + ccsi,
                 raw_barcode_tag = expanded_cbc_tag,
                 corrected_barcode_tag = "CB",
@@ -680,10 +675,10 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         call LONGBOW.Correct as t_62_LongbowCorrectCCSReclaimedArrayElementCBCs {
             input:
                 reads = t_61_LongbowPadCCSReclaimedArrayElementCBCs.padded_tag_bam,
-                barcode_allow_list = ten_x_cell_barcode_whitelist,
+                barcode_allow_list = cell_barcode_whitelist,
                 model = mas_seq_model,
-                ccs_lev_dist_threshold = 2,
-                clr_lev_dist_threshold = 3,
+                ccs_lev_dist_threshold = ccs_lev_dist,
+                clr_lev_dist_threshold = clr_lev_dist,
                 prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_cbc_corrected_shard_" + cri,
                 raw_barcode_tag = expanded_cbc_tag,
                 corrected_barcode_tag = "CB",
@@ -700,74 +695,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             bams = t_62_LongbowCorrectCCSReclaimedArrayElementCBCs.uncorrected_barcodes_bam,
             prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_uncorrectable"
     }
-
-    #####################
-    # Now we correct the barcodes:
-    #     ___  _     ____
-    #    / _ \| |   |  _ \
-    #   | | | | |   | | | |
-    #   | |_| | |___| |_| |
-    #    \___/|_____|____/
-
-    # We need to merge ALL the barcode information together before correcting either the
-    # CCS or the Reclaimed reads.
-
-#    call Utils.MergeFiles as t_59_MergeCbcConfScoreTsvsForStarcode {
-#        input:
-#            files_to_merge = [t_43_MergeAllCCSBarcodeConfShards.merged_file, t_44_MergeAllCCSReclaimedBarcodeConfShards.merged_file],
-#            merged_file_name = "all_array_element_raw_starcode_counts.txt"
-#    }
-#
-#    # If we have our ilmn barcode file, we need to process it here:
-#    if (defined(illumina_barcoded_bam)) {
-#        call TENX.ExtractIlmnBarcodeConfScores as t_60_ExtractIlmnBarcodeConfScores {
-#            input:
-#                bam_file = select_first([illumina_barcoded_bam]),
-#                prefix = SM,
-#                runtime_attr_override = fast_network_attrs
-#        }
-#
-#        # Concatenate the TSV files with the barcode scores that we just created:
-#        call Utils.MergeFiles as t_61_GetMasterCbcConfScoreTsvForStarcode {
-#            input:
-#                files_to_merge = [t_59_MergeCbcConfScoreTsvsForStarcode.merged_file, t_60_ExtractIlmnBarcodeConfScores.conf_score_tsv],
-#                merged_file_name = "combined_mas-seq_and_ilmn_raw_starcode_counts.txt"
-#        }
-#    }
-#    File starcode_seeds = if (defined(illumina_barcoded_bam)) then select_first([t_61_GetMasterCbcConfScoreTsvForStarcode.merged_file]) else t_59_MergeCbcConfScoreTsvsForStarcode.merged_file
-#
-#    # We have to consolidate our seeds into unique entries for starcode not to crash and burn:
-#    call TX_POST.MergeBarcodeCounts as t_62_ConsolidateBarcodeCountsForStarcode {
-#        input:
-#            barcode_count_tsv = starcode_seeds,
-#            prefix = SM + "_barcode_counts_for_starcode"
-#    }
-#
-#    # Now we can correct our barcodes:
-#    call TENX.CorrectBarcodesWithStarcodeSeedCounts as t_63_CorrectCCSBarcodesWithStarcodeSeedCountsSharded {
-#        input:
-#            bam_file = t_54_MergeLongbowPaddedCCSArrayElements.merged_bam,
-#            starcode_seeds_tsv = t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
-#            whitelist_10x = ten_x_cell_barcode_whitelist,
-#            extra_parameters = starcode_extra_params,
-#            prefix = SM + "_annotated_ccs_array_elements_starcode_padded"
-#    }
-#    call TENX.CorrectBarcodesWithStarcodeSeedCounts as t_64_CorrectReclaimedBarcodesWithStarcodeSeedCountsSharded {
-#        input:
-#            bam_file = t_58_MergeLongbowPaddedCCSReclaimedArrayElements.merged_bam,
-#            starcode_seeds_tsv = t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
-#            whitelist_10x = ten_x_cell_barcode_whitelist,
-#            extra_parameters = starcode_extra_params,
-#            prefix = SM + "_annotated_ccs_reclaimed_array_elements_starcode_padded"
-#    }
-#
-#    # Merge Aligned CCS and Reclaimed reads together:
-#    call Utils.MergeBams as t_65_MergeAllAnnotatedArrayElements {
-#        input:
-#            bams = [t_63_CorrectCCSBarcodesWithStarcodeSeedCountsSharded.output_bam, t_64_CorrectReclaimedBarcodesWithStarcodeSeedCountsSharded.output_bam],
-#            prefix = SM + "_all_starcode_annotated_array_elements_padded"
-#    }
-
 
     #################
     # Here we restore the original read names to the bam because we're hashing them with Longbow.segment:
@@ -1053,7 +980,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             files = [
 #                starcode_seeds,
 #                t_62_ConsolidateBarcodeCountsForStarcode.merged_counts,
-                ten_x_cell_barcode_whitelist,
+                cell_barcode_whitelist,
                 t_43_MergeAllCCSBarcodeConfShards.merged_file,
                 t_44_MergeAllCCSReclaimedBarcodeConfShards.merged_file
             ],
@@ -1074,17 +1001,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             outdir = meta_files_dir + "/" + "ccs_rejected_cbc_correction_logs",
             keyfile = keyfile
     }
-
-#    if (defined(illumina_barcoded_bam)) {
-#        call FF.FinalizeToDir as t_84_FinalizeMetaIlmnBarcodeConfs {
-#            input:
-#                files = select_all([
-#                    t_60_ExtractIlmnBarcodeConfScores.conf_score_tsv
-#                ]),
-#                outdir = meta_files_dir,
-#                keyfile = keyfile
-#        }
-#    }
 
     ##############################################################################################################
     # Finalize the discovered transcriptome:
