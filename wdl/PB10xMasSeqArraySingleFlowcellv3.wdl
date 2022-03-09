@@ -1048,9 +1048,16 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
+    call FF.FinalizeToDir as t_90_FinalizeLongbowCorrectStats {
+        input:
+            files = [ t_77_AggregateLongbowCorrectStats.stats ],
+            outdir = stats_out_dir + "/",
+            keyfile = keyfile
+    }
+
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_90_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_91_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile
