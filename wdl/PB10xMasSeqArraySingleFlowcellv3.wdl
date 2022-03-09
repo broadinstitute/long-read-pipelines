@@ -56,6 +56,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
         File? illumina_barcoded_bam
 
+        File? cell_barcode_freq_tsv
+
         # Default here is 0 because ccs uncorrected reads all seem to have RQ = -1.
         # All pathologically long reads also have RQ = -1.
         # This way we preserve the vast majority of the data, even if it has low quality.
@@ -125,7 +127,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Call our timestamp so we can store outputs without clobbering previous runs:
     call Utils.GetCurrentTimestampString as t_01_WdlExecutionStartTimestamp { input: }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + out_dir_suffix
+    String outdir = sub(gcs_out_root_dir, "/$", "")
 
     call PB.FindBams as t_02_FindBams { input: gcs_input_dir = gcs_input_dir }
     call PB.FindZmwStatsJsonGz as t_03_FindZmwStatsJsonGz { input: gcs_input_dir = gcs_input_dir }
@@ -615,6 +617,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             input:
                 reads = t_54_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
                 barcode_allow_list = cell_barcode_whitelist,
+                barcode_freq_list = cell_barcode_freq_tsv,
                 model = mas_seq_model,
                 ccs_lev_dist_threshold = ccs_lev_dist,
                 clr_lev_dist_threshold = clr_lev_dist,
@@ -676,6 +679,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             input:
                 reads = t_61_LongbowPadCCSReclaimedArrayElementCBCs.padded_tag_bam,
                 barcode_allow_list = cell_barcode_whitelist,
+                barcode_freq_list = cell_barcode_freq_tsv,
                 model = mas_seq_model,
                 ccs_lev_dist_threshold = ccs_lev_dist,
                 clr_lev_dist_threshold = clr_lev_dist,
@@ -855,7 +859,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     File keyfile = t_76_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
 
-    String base_out_dir = outdir + "/" + DIR + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
+    String base_out_dir = outdir + "/" + DIR + out_dir_suffix + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
     String stats_out_dir = base_out_dir + "/stats"
     String array_element_dir = base_out_dir + "/annotated_array_elements"
     String intermediate_reads_dir = base_out_dir + "/intermediate_reads"
