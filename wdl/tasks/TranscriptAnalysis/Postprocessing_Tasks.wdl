@@ -487,3 +487,70 @@ task CombineEqClassFiles {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task CopyGeneNameToTag {
+    meta {
+        description : "Copy the gene assignment for each given read into the given tag for each read."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File bam
+        File eq_class_file
+
+        String gene_tag = "XG"
+
+        String prefix = "combined"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size_gb = 10 + 2*ceil(size(bam, "GB"))
+                          + 2*ceil(size(eq_class_file, "GB"))
+
+    command <<<
+python << CODE
+import pysam
+
+with open("~{eq_class_file}", 'r') as f:
+    read_gene_dict = dict()
+    for line in f:
+        if line.startswith("#"):
+            continue
+        read_name, tx_eq_class, gene_assignment = line.strip().split("\t")
+        read_gene_dict[read_name] = gene_assignment
+
+with pysam.AlignmentFile("~{bam}", "rb", check_sq=False, require_index=False) as bam_file:
+    with pysam.AlignmentFile("~{prefix}.bam", "wb", header=bam_file.header) as out_bam_file:
+        read.set_tag("~{gene_tag}", read_gene_dict(read.query_name))
+        out_bam_file.write(read)
+
+CODE
+    >>>
+
+    output {
+        File bam_out = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             16,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

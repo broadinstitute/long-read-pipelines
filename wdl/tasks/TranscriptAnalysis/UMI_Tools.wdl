@@ -52,9 +52,9 @@ task Run_Group {
           --no-sort-output \
           --per-gene \
           ~{per_cell_args} \
-          --gene-tag XG \
+          --gene-tag ~{gene_tag} \
           --extract-umi-method tag \
-          --umi-tag ZU \
+          --umi-tag ~{umi_tag} \
           -I ~{aligned_transcriptome_reads} \
           --group-out=~{prefix}.tsv \
           --output-bam \

@@ -804,7 +804,25 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # TODO:
     # Slot in Vic's fix for UMI assignments / dedupe here.
 
-    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_75_CreateCountMatrixFromAnnotatedBam {
+    # Use old quant method here as a baseline for comparison:
+    call TX_POST.CopyGeneNameToTag as t_75_CopyGeneNameToTag {
+        input:
+            bam = t_66_RestoreOriginalReadNames.bam_out,
+            eq_class_file = t_74_CombineEqClassFiles.combined_tx_eq_class_assignments,
+    }
+    call Utils.IndexBam as t_76_IndexFinalBamFile {
+        input:
+            bam = t_75_CopyGeneNameToTag.bam_out
+    }
+    call UMI_TOOLS.Run_Group as t_77_UMIToolsGroup {
+        input:
+            aligned_transcriptome_reads = t_75_CopyGeneNameToTag.bam_out,
+            aligned_transcriptome_reads_index = t_76_IndexFinalBamFile.bai,
+            do_per_cell = true,
+            prefix = SM + "_umi_tools_group"
+    }
+
+    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_78_CreateCountMatrixFromAnnotatedBam {
         input:
             annotated_transcriptome_bam = t_66_RestoreOriginalReadNames.bam_out,
             tx_equivalence_class_assignments = t_74_CombineEqClassFiles.combined_tx_eq_class_assignments,
@@ -812,9 +830,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             prefix = SM + "_gene_tx_expression_count_matrix"
     }
 
-    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_76_CreateCountMatrixAnndataFromEqClasses {
+    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_79_CreateCountMatrixAnndataFromEqClasses {
         input:
-            count_matrix_tsv = t_75_CreateCountMatrixFromAnnotatedBam.count_matrix,
+            count_matrix_tsv = t_78_CreateCountMatrixFromAnnotatedBam.count_matrix,
             genome_annotation_gtf_file = t_48_ST2_Quant.st_gtf,
             gencode_reference_gtf_file = genome_annotation_gtf,
             overlap_intervals = intervals_of_interest,
@@ -838,7 +856,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     #
     ############################################################
 
-    call LONGBOW.AggregateCorrectLogStats as t_77_AggregateLongbowCorrectStats {
+    call LONGBOW.AggregateCorrectLogStats as t_80_AggregateLongbowCorrectStats {
         input:
             longbow_correct_log_files = flatten([t_62_LongbowCorrectCCSReclaimedArrayElementCBCs.log, t_55_LongbowCorrectCCSCorrectedArrayElementCBCs.log]),
             out_name = SM + "_longbow_correct_stats.txt"
@@ -857,7 +875,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
 
-    File keyfile = t_76_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
+    File keyfile = t_79_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
 
     String base_out_dir = outdir + "/" + DIR + out_dir_suffix + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
     String stats_out_dir = base_out_dir + "/stats"
@@ -873,28 +891,30 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize gene / tx assignments:
-    call FF.FinalizeToDir as t_78_FinalizeTxAndGeneAssignments {
+    call FF.FinalizeToDir as t_81_FinalizeTxAndGeneAssignments {
         input:
             files = [
                 t_74_CombineEqClassFiles.combined_gene_eq_class_defs,
                 t_74_CombineEqClassFiles.combined_gene_eq_class_assignments,
                 t_74_CombineEqClassFiles.combined_tx_eq_class_defs,
                 t_74_CombineEqClassFiles.combined_tx_eq_class_assignments,
-                t_75_CreateCountMatrixFromAnnotatedBam.count_matrix,
-                t_76_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
+                t_78_CreateCountMatrixFromAnnotatedBam.count_matrix,
+                t_79_CreateCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
+                t_77_UMIToolsGroup.output_bam,
+                t_77_UMIToolsGroup.output_tsv,
             ],
             outdir = quant_dir,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_79_FinalizeRawQuantPickles {
+    call FF.FinalizeToDir as t_82_FinalizeRawQuantPickles {
         input:
-            files = t_76_CreateCountMatrixAnndataFromEqClasses.pickles,
+            files = t_79_CreateCountMatrixAnndataFromEqClasses.pickles,
             outdir = quant_dir,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_80_FinalizeRefAndSt2Comparisons {
+    call FF.FinalizeToDir as t_83_FinalizeRefAndSt2Comparisons {
         input:
             files = [
                 t_67_GffCompareStringtie2toGencode.refmap,
@@ -923,7 +943,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     scatter (i in range(length(t_69_SplitArrayElementsByContig.contig_bams))) {
         String contig = t_69_SplitArrayElementsByContig.contig_names[i]
 
-        call FF.FinalizeToDir as t_81_FinalizeTxAndGeneAssignmentsByContig {
+        call FF.FinalizeToDir as t_84_FinalizeTxAndGeneAssignmentsByContig {
             input:
                 files = [
                     t_71_GffCompareStringtie2toMasSeqReads.refmap[i],
@@ -954,7 +974,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize annotated, aligned array elements:
-    call FF.FinalizeToDir as t_82_FinalizeIntermediateCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_85_FinalizeIntermediateCBCAnnotatedArrayElements {
         input:
             files = [
                 t_56_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bam,
@@ -968,10 +988,11 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_83_FinalizeCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_86_FinalizeCBCAnnotatedArrayElements {
         input:
             files = [
-                t_66_RestoreOriginalReadNames.bam_out,
+                t_75_CopyGeneNameToTag.bam_out,
+                t_76_IndexFinalBamFile.bai,
             ],
             outdir = array_element_dir,
             keyfile = keyfile
@@ -979,7 +1000,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize meta files:
-    call FF.FinalizeToDir as t_84_FinalizeMeta {
+    call FF.FinalizeToDir as t_87_FinalizeMeta {
         input:
             files = [
 #                starcode_seeds,
@@ -992,14 +1013,14 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_85_FinalizeCCSCBCcorrectionLogsToMeta {
+    call FF.FinalizeToDir as t_88_FinalizeCCSCBCcorrectionLogsToMeta {
         input:
             files = t_55_LongbowCorrectCCSCorrectedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_cbc_correction_logs",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_86_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
+    call FF.FinalizeToDir as t_89_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
         input:
             files = t_62_LongbowCorrectCCSReclaimedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_rejected_cbc_correction_logs",
@@ -1009,7 +1030,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     ##############################################################################################################
     # Finalize the discovered transcriptome:
     if ( !is_SIRV_data ) {
-        call FF.FinalizeToDir as t_87_FinalizeDiscoveredTranscriptome {
+        call FF.FinalizeToDir as t_90_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
                     t_48_ST2_Quant.st_gtf,
@@ -1029,7 +1050,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_88_FinalizeArrayReads {
+    call FF.FinalizeToDir as t_91_FinalizeArrayReads {
         input:
             files = [
                 t_35_MergeCCSLongbowPassedArrayReads.merged_bam,
@@ -1041,23 +1062,23 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_89_FinalizeCCSMetrics {
+    call FF.FinalizeToDir as t_92_FinalizeCCSMetrics {
         input:
-            files = [ t_11_FindCCSReport.ccs_report[0], t_77_AggregateLongbowCorrectStats.stats ],
+            files = [ t_11_FindCCSReport.ccs_report[0], t_80_AggregateLongbowCorrectStats.stats ],
             outdir = stats_out_dir + "/ccs_metrics",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_90_FinalizeLongbowCorrectStats {
+    call FF.FinalizeToDir as t_93_FinalizeLongbowCorrectStats {
         input:
-            files = [ t_77_AggregateLongbowCorrectStats.stats ],
+            files = [ t_80_AggregateLongbowCorrectStats.stats ],
             outdir = stats_out_dir + "/",
             keyfile = keyfile
     }
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_91_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_94_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile
