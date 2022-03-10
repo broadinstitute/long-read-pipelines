@@ -513,7 +513,7 @@ task CopyGeneNameToTag {
 python << CODE
 import pysam
 
-with open("~{eq_class_file}", 'r') as f:
+with open(f"~{eq_class_file}", 'r') as f:
     read_gene_dict = dict()
     for line in f:
         if line.startswith("#"):
@@ -521,11 +521,11 @@ with open("~{eq_class_file}", 'r') as f:
         read_name, tx_eq_class, gene_assignment = line.strip().split("\t")
         read_gene_dict[read_name] = gene_assignment
 
-with pysam.AlignmentFile("~{bam}", "rb", check_sq=False, require_index=False) as bam_file:
-    with pysam.AlignmentFile("~{prefix}.bam", "wb", header=bam_file.header) as out_bam_file:
-        read.set_tag("~{gene_tag}", read_gene_dict(read.query_name))
-        out_bam_file.write(read)
-
+with pysam.AlignmentFile(f"~{bam}", "rb", check_sq=False, require_index=False) as bam_file:
+    with pysam.AlignmentFile(f"~{prefix}.bam", "wb", header=bam_file.header) as out_bam_file:
+        for read in bam_file:
+            read.set_tag(f"~{gene_tag}", read_gene_dict[read.query_name])
+            out_bam_file.write(read)
 CODE
     >>>
 
