@@ -17,7 +17,7 @@ import "tasks/TranscriptAnalysis/UMI_Tools.wdl" as UMI_TOOLS
 import "tasks/TranscriptAnalysis/Postprocessing_Tasks.wdl" as TX_POST
 import "tasks/Finalize.wdl" as FF
 
-workflow PBMASIsoSeq {
+workflow PBMASIsoSeqQuantify {
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais
@@ -167,12 +167,15 @@ workflow PBMASIsoSeq {
             aligned_transcriptome_reads = MergePrimaryTranscriptomeAlignedArrayElements.merged_bam,
             aligned_transcriptome_reads_index = MergePrimaryTranscriptomeAlignedArrayElements.merged_bai,
             do_per_cell = true,
+            cell_barcode_tag = "XC",
+            umi_tag = "XM",
             prefix = "~{participant_name}_umi_tools_group"
     }
 
     call TX_POST.CreateCountMatrixFromAnnotatedBam as CreateCountMatrixFromAnnotatedBam {
         input:
-            annotated_transcriptome_bam = UMIToolsGroup.output_bam,
+#            annotated_transcriptome_bam = UMIToolsGroup.output_bam,
+            annotated_transcriptome_bam = MergePrimaryTranscriptomeAlignedArrayElements.merged_bam,
             prefix = "~{participant_name}_gene_tx_expression_count_matrix"
     }
 
