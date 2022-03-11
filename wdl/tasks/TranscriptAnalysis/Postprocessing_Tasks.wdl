@@ -527,10 +527,13 @@ with pysam.AlignmentFile(f"~{bam}", "rb", check_sq=False, require_index=False) a
             read.set_tag(f"~{gene_tag}", read_gene_dict[read.query_name])
             out_bam_file.write(read)
 CODE
+
+        samtools index ~{prefix}.bam
     >>>
 
     output {
         File bam_out = "~{prefix}.bam"
+        File bai = "~{prefix}.bam.bai"
     }
 
     #########################

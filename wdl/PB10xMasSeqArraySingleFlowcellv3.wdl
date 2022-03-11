@@ -810,14 +810,10 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             bam = t_66_RestoreOriginalReadNames.bam_out,
             eq_class_file = t_74_CombineEqClassFiles.combined_tx_eq_class_assignments,
     }
-    call Utils.IndexBam as t_76_IndexFinalBamFile {
-        input:
-            bam = t_75_CopyGeneNameToTag.bam_out
-    }
     call UMI_TOOLS.Run_Group as t_77_UMIToolsGroup {
         input:
             aligned_transcriptome_reads = t_75_CopyGeneNameToTag.bam_out,
-            aligned_transcriptome_reads_index = t_76_IndexFinalBamFile.bai,
+            aligned_transcriptome_reads_index = t_75_CopyGeneNameToTag.bai,
             do_per_cell = true,
             prefix = SM + "_umi_tools_group"
     }
@@ -992,7 +988,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             files = [
                 t_75_CopyGeneNameToTag.bam_out,
-                t_76_IndexFinalBamFile.bai,
+                t_75_CopyGeneNameToTag.bai,
             ],
             outdir = array_element_dir,
             keyfile = keyfile
