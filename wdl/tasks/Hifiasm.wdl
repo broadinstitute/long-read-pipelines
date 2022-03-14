@@ -41,7 +41,7 @@ task Assemble {
     command <<<
         set -euxo pipefail
 
-        hifiasm -o ~{prefix} -t~{num_cpus} ~{reads}
+        hifiasm -o ~{prefix} -t~{num_cpus} --hg-size=16000 ~{reads}
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
     >>>
 
