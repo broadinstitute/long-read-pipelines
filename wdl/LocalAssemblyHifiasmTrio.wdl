@@ -2,7 +2,7 @@ version 1.0
 
 import "tasks/Utils.wdl" as Utils
 import "tasks/Hifiasm.wdl" as Hifiasm
-import "tasks/PBUtils.wdl" as PB
+import "tasks/CallAssemblyVariants.wdl" as Align
 
 workflow LocalAssembly {
     input {
@@ -63,32 +63,24 @@ workflow LocalAssembly {
             pat_yak = pat_yak
     }
 
-    call PB.Align as align_hap1 {
+    call Align.AlignAsPAF as align_hap1 {
         input:
-            bam = Assemble_trio.h1_fa,
+            asm_fasta = Assemble_trio.h1_fa,
             ref_fasta = ref_map['fasta'],
-            sample_name = "~{prefix}_h1",
-            map_preset = "asm5",
-            drop_per_base_N_pulse_tags = false,
             prefix = "~{prefix}_h1"
     }
 
-        call PB.Align as align_hap2 {
+        call Align.AlignAsPAF as align_hap2 {
         input:
-            bam = Assemble_trio.h2_fa,
+            asm_fasta = Assemble_trio.h2_fa,
             ref_fasta = ref_map['fasta'],
-            sample_name = "~{prefix}_h2",
-            map_preset = "asm5",
-            drop_per_base_N_pulse_tags = false,
             prefix = "~{prefix}_h2"
     }
 
     output {
         File h1_fa = Assemble_trio.h1_fa
         File h2_fa = Assemble_trio.h2_fa
-        File h1_aligned_bam = align_hap1.aligned_bam
-        File h1_aligned_bai = align_hap1.aligned_bai
-        File h2_aligned_bam = align_hap2.aligned_bam
-        File h2_aligned_bai = align_hap2.aligned_bai
+        File h1_aligned = align_hap1.paf
+        File h2_aligned = align_hap2.paf
     }
 }
