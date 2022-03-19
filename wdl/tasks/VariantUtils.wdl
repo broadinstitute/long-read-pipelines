@@ -43,7 +43,7 @@ task MergePerChrCalls {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
