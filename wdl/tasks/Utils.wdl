@@ -1533,12 +1533,12 @@ task StopWorkflow {
     command <<<
         echo -e "Workflow explicitly stopped because \n  ~{reason}." && exit 1
     >>>
-    runtime {docker: "ubuntu:latest"}
+    runtime {docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"}
 }
 
 task InferSampleName {
     meta {
-        description: "Infer sample name encoded on the @RG line of the header sections"
+        description: "Infer sample name encoded on the @RG line of the header section. Fails if multiple values found, or if SM ~= unnamedsample."
     }
 
     input {
@@ -1553,12 +1553,19 @@ task InferSampleName {
     }
 
     command <<<
+        set -euxo pipefail
+
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        samtools view -H ~{bam} | grep -m 1 "^@RG" | awk '{for (i=1;i<=NF;i++){if ($i ~/^SM:/) {print $i}}}' | awk -F ':' '{print $NF}'
+        samtools view -H ~{bam} > header.txt
+        if ! grep -q '^@RG' header.txt; then echo "No read group line found!" && exit 1; fi
+
+        grep '^@RG' header.txt | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g' | sort | uniq > sample.names.txt
+        if [[ $(wc -l sample.names.txt) -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
+        if grep -iq "unnamedsample" sample.names.txt; then echo "Sample name found to be unnamedsample!" && exit 1; fi
     >>>
 
     output {
-        String sample_name = read_string(stdout())
+        String sample_name = read_string("sample.names.txt")
     }
 
     runtime {
@@ -1569,5 +1576,29 @@ task InferSampleName {
         preemptible:    2
         maxRetries:     1
         docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+task CheckOnSamplenames {
+    meta {
+        description: "Makes sure the provided sample names are all same, i.e. no mixture of sample names"
+    }
+
+    input {
+        Array[String] sample_names
+    }
+
+    command <<<
+        if [[ $(echo ~{sep='\n' sample_names} | sort | uniq | wc -l) -gt 1 ]]; then echo "Sample mixture!" && exit 1; fi
+    >>>
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
