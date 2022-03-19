@@ -31,7 +31,7 @@ workflow CCSPepper {
         input:
             bam = bam,
             bai = bai,
-            ref_fasta = ref_fasta, 
+            ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             threads = pepper_threads,
             memory = pepper_memory
@@ -41,7 +41,7 @@ workflow CCSPepper {
         input:
             bam = get_hap_tagged_bam.hap_tagged_bam,
             bai = get_hap_tagged_bam.hap_tagged_bai,
-            ref_fasta = ref_fasta, 
+            ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             threads = dv_threads,
             memory = dv_memory
@@ -81,11 +81,13 @@ task Pepper {
     String prefix = basename(bam, ".bam") + ".pepper"
 
     command <<<
+        # avoid the infamous pipefail 141 https://stackoverflow.com/questions/19120263
+        set -eux
+        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
+
         set -euxo pipefail
 
         touch ~{bai}
-        SM=$(samtools view -H ~{bam} | grep -m 1 "^@RG" | awk '{for (i=1;i<=NF;i++){if ($i ~/^SM:/) {print $i}}}' | awk -F ':' '{print $NF}')
-
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         mkdir -p "~{output_root}"
@@ -187,7 +189,7 @@ task DV {
             --num_shards="${num_core}" \
             --use_hp_information || cat resources.log
         if ps -p "${job_id}" > /dev/null; then kill "${job_id}"; fi
-        
+
         find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
             > "~{output_root}/dir_structure.txt"
     >>>
@@ -278,7 +280,7 @@ task MarginPhase {
             -M \
             -o "~{output_root}/~{prefix}" \
             2>&1 | tee "~{output_root}/logs/5_margin_phase_vcf.log"
-        
+
         bgzip -c "~{output_root}/~{prefix}".phased.vcf > "~{output_root}/~{prefix}".phased.vcf.gz && \
             tabix -p vcf "~{output_root}/~{prefix}".phased.vcf.gz
     >>>
@@ -293,7 +295,7 @@ task MarginPhase {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          cores,
-        mem_gb:             memory, 
+        mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  3,
