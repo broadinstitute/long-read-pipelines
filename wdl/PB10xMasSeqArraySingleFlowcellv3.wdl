@@ -71,6 +71,12 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         Int ccs_lev_dist = 2
         Int clr_lev_dist = 3
 
+        Int ccs_umi_padding = 2
+        Int clr_umi_padding = 2
+
+        Int ccs_cbc_padding = 3
+        Int clr_cbc_padding = 3
+
         # Add a suffix here for our out directory so we can label runs:
         String out_dir_suffix = ""
 
@@ -598,7 +604,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 reads = ccs_array_element_shard,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
-                padding = 2,
+                padding = ccs_umi_padding,
                 prefix = SM + "_ccs_array_elements_aligned_annotated_umi_padded_shard_" + ccsi
         }
 
@@ -608,7 +614,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 model = mas_seq_model,
                 tag_to_expand = "CR",
                 new_tag_dest = expanded_cbc_tag,
-                padding = 3,
+                padding = ccs_cbc_padding,
                 prefix = SM + "_ccs_array_elements_aligned_annotated_cbc_padded_shard_" + ccsi
         }
 
@@ -660,7 +666,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 reads = ccs_reclaimed_array_element_shard,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
-                padding = 2,
+                padding = clr_umi_padding,
                 prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_umi_padded_shard_" + cri
         }
 
@@ -670,7 +676,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 model = mas_seq_model,
                 tag_to_expand = "CR",
                 new_tag_dest = expanded_cbc_tag,
-                padding = 3,
+                padding = clr_cbc_padding,
                 prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_cbc_padded_shard_" + cri
         }
 

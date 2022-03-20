@@ -542,7 +542,7 @@ task Correct
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.28"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
