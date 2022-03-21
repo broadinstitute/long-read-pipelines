@@ -36,11 +36,13 @@ task Pepper {
     String prefix = basename(bam, ".bam") + ".deepvariant_pepper"
 
     command <<<
+        # avoid the infamous pipefail 141 https://stackoverflow.com/questions/19120263
+        set -eux
+        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
+
         set -euxo pipefail
 
         touch ~{bai}
-        SM=$(samtools view -H ~{bam} | grep -m 1 "^@RG" | awk '{for (i=1;i<=NF;i++){if ($i ~/^SM:/) {print $i}}}' | awk -F ':' '{print $NF}')
-
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         mkdir -p "~{output_root}"
@@ -81,13 +83,13 @@ task Pepper {
 
         File hap_tagged_bam = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam"
         File hap_tagged_bai = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam.bai"
-        
+
         # maybe less useful
         File output_dir_structure = "~{output_root}/dir_structure.txt"
         File phaseset_bed = "~{output_root}/~{prefix}.phaseset.bed"
         File visual_report_html = "~{output_root}/~{prefix}.visual_report.html"
     }
-    
+
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          threads,

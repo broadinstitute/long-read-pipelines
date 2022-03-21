@@ -69,6 +69,11 @@ workflow ONTWholeGenome {
 
     # gather across (potential multiple) input raw BAMs
     if (length(aligned_bams) > 1) {
+        scatter (pair in zip(aligned_bams, aligned_bais)) {
+            call Utils.InferSampleName {input: bam = pair.left, bai = pair.right}
+        }
+        call Utils.CheckOnSamplenames {input: sample_names = InferSampleName.sample_name}
+
         call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
