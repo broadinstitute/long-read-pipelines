@@ -6,6 +6,7 @@ import "tasks/Hifiasm.wdl" as HA
 import "tasks/AlignReads.wdl" as AR
 import "tasks/Quast.wdl" as Quast
 import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
+import "tasks/Canu.wdl" as Canu
 
 task RG_Parsing {
 
@@ -69,6 +70,10 @@ workflow MitochondriaProcessing{
         File ref_fasta
         File ref_fai
         String participant_name
+        Int genome_size
+        Float correct_error_rate = 0.045
+        Float trim_error_rate = 0.045
+        Float assemble_error_rate = 0.045
     }
 
     parameter_meta{
@@ -79,28 +84,44 @@ workflow MitochondriaProcessing{
         ref_fasta:  "chrM reference fasta"
         map_preset: "preset to be used for minimap2 parameter '-x'"
         ref_fai:    "index of fa"
+
     }
 
     call Utils.SubsetBam as SubsetBam {input: bam = bam, bai = bai, locus=locus}
     call RG_Parsing as Parsing {input: bam = SubsetBam.subset_bam}
     call Utils.BamToFastq as BamToFastq {input: bam = SubsetBam.subset_bam, prefix = prefix}
 
-    String ID = Parsing.ID
-    String SM = Parsing.SM
-    String PL = Parsing.PL
-    String PU = Parsing.PU
-    String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}"
+#    String ID = Parsing.ID
+#    String SM = Parsing.SM
+#    String PL = Parsing.PL
+#    String PU = Parsing.PU
+#    String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}"
+    String RG = "@RG\\tID:~{Parsing.ID}\\tSM:~{Parsing.SM}\\tPL:~{Parsing.PL}\\tPU:~{Parsing.PU}"
 
-    call HA.Hifiasm as Hifiasm {input: reads = BamToFastq.reads_fq, prefix = prefix}
-    call AR.Minimap2 as Minimap2 {input: reads = [Hifiasm.fa], ref_fasta = ref_fasta, map_preset = "map-hifi", RG = RG}
-    call Quast.Quast as Quast {input: ref = ref_fasta, assemblies = [Hifiasm.fa]}
-    call CallAssemblyVariants.CallAssemblyVariants as  CallAssemblyVariants {input: asm_fasta = Hifiasm.fa,
+#    call HA.Hifiasm as Hifiasm {input: reads = BamToFastq.reads_fq, prefix = prefix}
+    call Canu.Canu {
+        input:
+            reads = BamToFastq.reads_fq,
+            genome_size = genome_size,
+            correct_error_rate = correct_error_rate,
+            trim_error_rate = trim_error_rate,
+            assemble_error_rate = assemble_error_rate,
+            prefix = prefix}
+
+    call AR.Minimap2 as Minimap2 {input: reads = [Canu.fa], ref_fasta = ref_fasta, map_preset = "map-hifi", RG = RG}
+#    call Quast.Quast as Quast {input: ref = ref_fasta, assemblies = [Hifiasm.fa]}
+    call Quast.Quast as Quast {input: ref = ref_fasta, assemblies = [Canu.fa]}
+#    call CallAssemblyVariants.CallAssemblyVariants as  CallAssemblyVariants {input: asm_fasta = Hifiasm.fa,
+#                                                                ref_fasta = ref_fasta,
+#                                                                participant_name = participant_name,
+#                                                                prefix = prefix}
+    call CallAssemblyVariants.CallAssemblyVariants as  CallAssemblyVariants {input: asm_fasta = Canu.fa,
                                                                 ref_fasta = ref_fasta,
                                                                 participant_name = participant_name,
                                                                 prefix = prefix}
     output{ File chrM_bam = SubsetBam.subset_bam
             File chrM_bam_bai = SubsetBam.subset_bai
-            File gfa = Hifiasm.gfa
+#            File gfa = Hifiasm.gfa
             File chrM_aligned_bam = Minimap2.aligned_bam
             File chrM_aligned_bai = Minimap2.aligned_bai
             File report_html = Quast.report_html
