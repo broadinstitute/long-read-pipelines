@@ -247,7 +247,7 @@ def unpack_cigar_count_and_op(cigar_int):
     return count, op
 
 
-def main(bam_filename, output_prefix, barcode_seq, cell_barcode_tag, umi_length, new_umi_tag, existing_umi_tag,
+def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length, new_umi_tag, existing_umi_tag,
          ssw_path):
     # Set up our SSW objects:
     ssw = ssw_lib.CSsw(ssw_path)
@@ -255,9 +255,6 @@ def main(bam_filename, output_prefix, barcode_seq, cell_barcode_tag, umi_length,
 
     # silence message about the .bai file not being found
     pysam.set_verbosity(0)
-
-    # Track the barcode counts:
-    out_file_name = f"{output_prefix}.bam"
 
     num_reads = 0
     num_new_umis_same_as_old = 0
@@ -316,11 +313,15 @@ def main(bam_filename, output_prefix, barcode_seq, cell_barcode_tag, umi_length,
                                     res.nRefEnd, umi_length, res.nCigarLen, res.sCigar)
 
                 print()
-                for f in (dir(res)):
-                    if not f.startswith("_") and f != "sCigar":
-                        print(f"res.{f} = ", end="")
-                        print(eval(f"res.{f}"))
-                print(f"res.sCigar = ", end="")
+                print(f"nQryBeg = {res.nQryBeg}")
+                print(f"nQryEnd = {res.nQryEnd}")
+                print(f"nRefBeg = {res.nRefBeg}")
+                print(f"nRefEnd = {res.nRefEnd}")
+                print(f"nRefEnd2 = {res.nRefEnd2}")
+                print(f"nScore = {res.nScore}")
+                print(f"nScore2 = {res.nScore2}")
+                print(f"nCigarLen = {res.nCigarLen}")
+                print(f"sCigar = ", end="")
                 for i in range(res.nCigarLen):
                     count, op = unpack_cigar_count_and_op(res.sCigar[i])
                     print(f"{count}{op} ", end="")
@@ -364,7 +365,7 @@ if __name__ == '__main__':
         epilog="")
     requiredNamed = parser.add_argument_group('Required arguments')
     requiredNamed.add_argument('-b', '--bam', help='BAM filename', required=True)
-    requiredNamed.add_argument('-o', "--output-prefix", help='Output prefix', required=True)
+    requiredNamed.add_argument('-o', "--output-file", help='Output file', required=True)
 
     parser.add_argument('--ssw-path', help='Path to the Striped Smith-Waterman library', type=str, default='/lrma/ssw')
 
@@ -392,5 +393,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.bam, args.output_prefix, args.barcode_seq, args.cell_barcode_tag, args.umi_length, args.new_umi_tag,
+    main(args.bam, args.output_file, args.barcode_seq, args.cell_barcode_tag, args.umi_length, args.new_umi_tag,
          args.existing_umi_tag, args.ssw_path)
