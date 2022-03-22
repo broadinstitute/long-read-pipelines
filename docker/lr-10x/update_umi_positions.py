@@ -175,32 +175,28 @@ if __name__ == '__main__':
 
     # User-defined length for the marker segments:
     parser.add_argument(
-        '--barcode-seq', help='Sequence of the cell barcode used in the library prep.', type=str, show_default=True,
+        '--barcode-seq', help='Sequence of the cell barcode used in the library prep.  (default: %(default)s)', type=str,
         default=CELL_BARCODE_SEQUENCE
     )
     parser.add_argument(
-        '--cell-barcode-tag', help='Read tag containing the corrected cell barcode for each read.', type=str,
-        show_default=True,
+        '--cell-barcode-tag', help='Read tag containing the corrected cell barcode for each read.  (default: %(default)s)', type=str,
         default=CELL_BARCODE_TAG
     )
     parser.add_argument(
-        '--umi-length', help='Length of the unique molecular identifier used in the library prep.', type=int,
-        show_default=True,
+        '--umi-length', help='Length of the unique molecular identifier used in the library prep.  (default: %(default)d)', type=int,
         default=UMI_LENGTH
     )
     parser.add_argument(
-        '--new-umi-tag', help='Read tag to populate with the UMIs discovered by this tool.', type=str,
-        show_default=True,
+        '--new-umi-tag', help='Read tag to populate with the UMIs discovered by this tool.  (default: %(default)s)', type=str,
         default=NEW_UMI_TAG
     )
     parser.add_argument(
-        '--existing-umi-tag', help='Read tag of the existing UMI in the reads.', type=str, show_default=True,
+        '--existing-umi-tag', help='Read tag of the existing UMI in the reads.  (default: %(default)s)', type=str,
         default=UMI_TAG
     )
     parser.add_argument(
         '--num-read-bases-to-align',
-        help='Number of bases from the start of each read in which to find the adapter + barcode sequence', type=int,
-        show_default=True,
+        help='Number of bases from the start of each read in which to find the adapter + barcode sequence. .  (default: %(default)d)', type=int,
         default=NUM_BASES_TO_ALIGN
     )
 
