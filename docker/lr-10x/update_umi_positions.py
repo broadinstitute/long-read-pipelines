@@ -10,6 +10,8 @@ import ctypes
 import sys
 import shutil
 
+import struct
+
 import numpy as np
 
 from tqdm import tqdm
@@ -20,7 +22,8 @@ import array
 sys.path.append('/lrma')
 from ssw import ssw_lib
 
-NUM_BASES_TO_ALIGN = 80
+NUM_BASES_TO_ALIGN_CCS = 80
+NUM_BASES_TO_ALIGN_CLR = 120
 
 UMI_LENGTH = 10
 CELL_BARCODE_SEQUENCE = "TCTACACGACGCTCTTCCGATCT"
@@ -146,25 +149,106 @@ def get_alignment(ssw, sequence, adapter_seq, alphabet, letter_to_int, mat, open
     res = ssw.ssw_align(q_profile, adapter_numbers, ctypes.c_int32(len(adapter_seq)), open_penalty,
                         extension_penalty, flag, 0, 0, mask_length)
 
-    print()
-    print(sequence)
-    print(" " * res.contents.nQryBeg, end="")
-    print(adapter_seq)
+    return res.contents.nQryBeg, res.contents.nQryEnd, res.contents.nScore, res.contents
+
+
+def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end, umi_length, cigar_length, cigar):
+
+    # Get our cigar operations here:
+    num_insertions = 0
+    num_deletions = 0
+    cigar_ops = []
+    for i in range(cigar_length):
+        count, op = unpack_cigar_count_and_op(cigar[i])
+        if op == "I":
+            num_insertions += count
+        elif op == "D":
+            num_deletions += count
+        cigar_ops.append((count, op))
+
+    extra_read_padding = " " * (ref_start - query_start)
 
     print()
-    for f in (dir(res.contents)):
-        if not f.startswith("_"):
-            print(f"res.contents.{f} = ", end="")
-            print(eval(f"res.contents.{f}"))
+    print(extra_read_padding, end="")
+    print(" " * query_start, end="")
+    print("V", end="")
+    print("-" * (query_end - query_start - 1 + num_deletions), end="")
+    print("|", end="")
+    print("V", end="")
+    print("-" * (umi_length - 2), end="")
+    print("|")
+
+    # Print the excerpt from the read:
+    print(extra_read_padding, end="")
+    print(seq[:query_start], end="")
+    cur_pos = query_start
+    for count, op in cigar_ops:
+        if op == "M" or op == "I":
+            print(seq[cur_pos:cur_pos+count], end="")
+            cur_pos += count
+        elif op == "D":
+            print("-" * count, end="")
+    print(seq[cur_pos:], end="")
     print()
 
+    # # Print the alignment representation:
+    # print(seq[:query_start], end="")
+    # for count, op in cigar_ops:
+    #     if op == "M":
+    #         print("", end="")
+    #     elif op == "I":
+    #         print(seq[cur_pos:cur_pos+count], end="")
+    #     elif op == "D":
+    #         print("-" * count, end="")
+
+    print(" " * (query_start - ref_start), end="")
+    # print(adapter_seq)
+
+    # Print the excerpt from the read:
+    marker_len = 0
+    cur_pos = 0
+    for count, op in cigar_ops:
+        if op == "M" or op == "D":
+            print(adapter_seq[cur_pos:cur_pos+count], end="")
+            cur_pos += count
+        elif op == "I":
+            print("-" * count, end="")
+            marker_len += count
+    print(adapter_seq[cur_pos:], end="")
+    marker_len += cur_pos
+    print()
+
+    print(" " * (query_start - ref_start), end="")
+    print(" " * ref_start, end="")
+    print("^", end="")
+    print("-" * (marker_len - 2), end="")
+    print("|", end="")
+    print("^", end="")
+    print("-" * (umi_length - 2), end="")
+    print("|")
 
 
-    return (res.contents.nQryBeg, res.contents.nQryEnd) if res.contents.nScore > 30 else None
+def unpack_cigar_count_and_op(cigar_int):
+
+    # top 28 bits are count:
+    count = (cigar_int & 0xFFFFFFF0) >> 4
+
+    # bottom 4 bits are type:
+    t = (cigar_int & 0xF)
+    if t == 0:
+        op = "M"
+    elif t == 1:
+        op = "I"
+    elif t == 2:
+        op = "D"
+    else:
+        raise RuntimeError(f"Unpacked unknown type of cigar operation: {t} from raw cigar: {cigar_int}")
+
+    return count, op
 
 
 def main(bam_filename, output_prefix, barcode_seq, cell_barcode_tag, umi_length, new_umi_tag, existing_umi_tag,
-         num_read_bases_to_align, ssw_path):
+         ssw_path):
     # Set up our SSW objects:
     ssw = ssw_lib.CSsw(ssw_path)
     alphabet, letter_to_int, mat = ssw_build_matrix()
@@ -175,69 +259,103 @@ def main(bam_filename, output_prefix, barcode_seq, cell_barcode_tag, umi_length,
     # Track the barcode counts:
     out_file_name = f"{output_prefix}.bam"
 
-    num_reads_without_new_umi = 0
     num_reads = 0
-    num_new_umis = 0
     num_new_umis_same_as_old = 0
+    num_ccs_reads_not_same_as_old = 0
+    num_clr_reads_not_same_as_old = 0
 
     with pysam.AlignmentFile(bam_filename, 'rb', check_sq=False, require_index=False) as bam_file, \
-            tqdm(desc=f"Processing reads", unit="read") as pbar:
+            tqdm(desc=f"Processing reads", unit="read", file=sys.stderr) as pbar:
         with pysam.AlignmentFile(out_file_name, 'wb', header=bam_file.header) as out_bam_file:
 
             for read in bam_file:
-                pbar.update(1)
-
                 num_reads += 1
+
+                # We grab a different number of bases if it's CCS vs CLR because CLR reads can be VERY noisy:
+                is_ccs = read.get_tag("rq") > 0
+                num_read_bases_to_align = NUM_BASES_TO_ALIGN_CCS if is_ccs else NUM_BASES_TO_ALIGN_CLR
+
+                adapter_seq = barcode_seq + read.get_tag(cell_barcode_tag)
 
                 # Let's align the CBC and UMI in the forward direction:
                 alignments = get_alignment(ssw,
                                            read.query_sequence[:num_read_bases_to_align],
-                                           barcode_seq + read.get_tag(cell_barcode_tag),
+                                           adapter_seq,
                                            alphabet,
                                            letter_to_int,
                                            mat)
-                if alignments:
 
-                    # OK, we have our alignment:
+                # Now do it in the reverse direction:
+                rc_seq = reverse_complement(read.query_sequence)
+                rc_alignments = get_alignment(ssw,
+                                              rc_seq[:num_read_bases_to_align],
+                                              adapter_seq,
+                                              alphabet,
+                                              letter_to_int,
+                                              mat)
+
+                # Take the direction with the best score:
+                if alignments[2] > rc_alignments[2]:
+                    seq = read.query_sequence
+                    res = alignments[3]
                     alignment_end = alignments[1]
-
-                    new_umi_seq = read.query_sequence[alignment_end + 1:alignment_end + 1 + umi_length]
-                    num_new_umis += 1
-
-                # OK, now let's try the RC direction:
                 else:
-                    rc_seq = reverse_complement(read.query_sequence)
-                    rc_alignments = get_alignment(ssw,
-                                               rc_seq[:num_read_bases_to_align],
-                                               barcode_seq + read.get_tag(cell_barcode_tag),
-                                               alphabet,
-                                               letter_to_int,
-                                               mat)
-
-                    if not rc_alignments:
-                        print(f"Could not find adapter + CBC for read: {read.query_name}", file=sys.stderr)
-                        num_reads_without_new_umi += 1
-                        continue
-
-                    # OK, we have our alignment:
+                    seq = rc_seq
+                    res = rc_alignments[3]
                     alignment_end = rc_alignments[1]
 
-                    new_umi_seq = rc_seq[alignment_end + 1:alignment_end + 1 + umi_length]
-                    num_new_umis += 1
+                # Get the new UMI from the read sequence:
+                new_umi_seq = seq[alignment_end + 1:alignment_end + 1 + umi_length]
+
+                print()
+                print("=" * 80)
+                print(f"{read.query_name}")
+                print()
+                # Debugging:
+                print_alignment(seq[:num_read_bases_to_align], adapter_seq, res.nQryBeg, res.nQryEnd, res.nRefBeg,
+                                    res.nRefEnd, umi_length, res.nCigarLen, res.sCigar)
+
+                print()
+                for f in (dir(res)):
+                    if not f.startswith("_") and f != "sCigar":
+                        print(f"res.{f} = ", end="")
+                        print(eval(f"res.{f}"))
+                print(f"res.sCigar = ", end="")
+                for i in range(res.nCigarLen):
+                    count, op = unpack_cigar_count_and_op(res.sCigar[i])
+                    print(f"{count}{op} ", end="")
+                print()
+                if read.has_tag(existing_umi_tag) and read.get_tag(existing_umi_tag) != new_umi_seq:
+                    print(f"OLD: {read.get_tag(existing_umi_tag)}")
+                    print(f"NEW: {new_umi_seq}")
+                    print()
+                else:
+                    print(f"UMI: {new_umi_seq}")
+                    print()
+                print(f"Read RQ: {read.get_tag('rq'):0.5f}")
+                print()
 
                 if read.has_tag(existing_umi_tag) and read.get_tag(existing_umi_tag) == new_umi_seq:
                     num_new_umis_same_as_old += 1
+                else:
+                    if is_ccs:
+                        num_ccs_reads_not_same_as_old += 1
+                    else:
+                        num_clr_reads_not_same_as_old += 1
 
                 read.set_tag(new_umi_tag, new_umi_seq)
 
                 out_bam_file.write(read)
                 pbar.update(1)
 
+    print("=" * 80)
+    print()
     print("Stats:")
     print(f"Total Num Reads: {num_reads}")
-    print(f"Num reads with new UMIs: {num_new_umis}")
-    print(f"Num reads without new UMIs: {num_reads_without_new_umi}")
-    print(f"Num new UMIs same as old UMIs: {num_new_umis_same_as_old}")
+    print(f"Num new UMIs same as old UMIs: {num_new_umis_same_as_old} ({100*num_new_umis_same_as_old/num_reads:2.4f}%)")
+    print(f"Num new UMIs different from old UMIs: {num_reads - num_new_umis_same_as_old} ({100*(num_reads - num_new_umis_same_as_old)/num_reads:2.4f}%)")
+    print(f"Num CCS Reads with new UMIs != old UMIs: {num_ccs_reads_not_same_as_old} ({100*num_ccs_reads_not_same_as_old/num_reads:2.4f}%)")
+    print(f"Num CLR Reads with new UMIs != old UMIs: {num_clr_reads_not_same_as_old} ({100*num_clr_reads_not_same_as_old/num_reads:2.4f}%)")
 
 
 if __name__ == '__main__':
@@ -271,13 +389,8 @@ if __name__ == '__main__':
         '--existing-umi-tag', help='Read tag of the existing UMI in the reads.  (default: %(default)s)', type=str,
         default=UMI_TAG
     )
-    parser.add_argument(
-        '--num-read-bases-to-align',
-        help='Number of bases from the start of each read in which to find the adapter + barcode sequence. .  (default: %(default)d)', type=int,
-        default=NUM_BASES_TO_ALIGN
-    )
 
     args = parser.parse_args()
 
     main(args.bam, args.output_prefix, args.barcode_seq, args.cell_barcode_tag, args.umi_length, args.new_umi_tag,
-         args.existing_umi_tag, args.num_read_bases_to_align, args.ssw_path)
+         args.existing_umi_tag, args.ssw_path)
