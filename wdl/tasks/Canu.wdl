@@ -4,7 +4,7 @@ version 1.0
 # A workflow that runs the Canu 3-step assembly (correct, trim, assemble).
 # - Tested on a small genome (malaria ~23mb), larger genomes may require some changes
 #     including tweaks to the default resource allocation.
-# - Currently assumes nanopore reads
+
 ##########################################################################################
 
 import "Structs.wdl"
@@ -12,7 +12,7 @@ import "Structs.wdl"
 workflow Canu {
     input {
         File reads
-
+        String technology
         Int genome_size
         Float correct_error_rate
         Float trim_error_rate
@@ -26,7 +26,8 @@ workflow Canu {
             reads = reads,
             genome_size = genome_size,
             error_rate = correct_error_rate,
-            prefix = prefix
+            prefix = prefix,
+            technology = technology
     }
 
     call Trim {
@@ -35,6 +36,7 @@ workflow Canu {
             corrected_reads = Correct.corrected_reads,
             error_rate = trim_error_rate,
             prefix = prefix,
+            technology = technology
     }
 
     call Assemble {
@@ -43,6 +45,7 @@ workflow Canu {
             trimmed_reads = Trim.trimmed_reads,
             error_rate = assemble_error_rate,
             prefix = prefix,
+            technology = technology
     }
 
     output {
@@ -57,7 +60,7 @@ task Correct {
         Int genome_size
         Float error_rate
         String prefix
-
+        String technology
         RuntimeAttr? runtime_attr_override
     }
 
@@ -68,6 +71,7 @@ task Correct {
         prefix:       "prefix to output files"
     }
 
+    String tech_specific_arg = if technology == 'ont' then "nanopore" else 'pacbio'
     Int disk_size = 150 * ceil(size(reads, "GB"))
 
     command <<<
@@ -78,7 +82,7 @@ task Correct {
              genomeSize=~{genome_size}k \
              corMaxEvidenceErate=0.15 \
              correctedErrorRate=~{error_rate} \
-             -nanopore \
+             -{tech_specific_arg} \
              ~{reads}
     >>>
 
@@ -115,6 +119,7 @@ task Trim {
         Int genome_size
         Float error_rate
         String prefix
+        String technology
 
         RuntimeAttr? runtime_attr_override
     }
@@ -125,7 +130,7 @@ task Trim {
         corrected_reads:   "parameter to canu's 'correctedErrorRate'"
         prefix:            "prefix to output files"
     }
-
+    String tech_specific_arg = if technology == 'ont' then "nanopore" else 'pacbio'
     Int disk_size = 50 * ceil(size(corrected_reads, "GB"))
 
     command <<<
@@ -135,7 +140,7 @@ task Trim {
             -p ~{prefix} -d canu_trim_output \
             genomeSize=~{genome_size}k \
             correctedErrorRate=~{error_rate} \
-            -nanopore-corrected \
+            -{tech_specific_arg}-corrected \
             ~{corrected_reads}
     >>>
 
@@ -172,7 +177,7 @@ task Assemble {
         File trimmed_reads
         Float error_rate
         String prefix
-
+        String technology
         RuntimeAttr? runtime_attr_override
     }
 
@@ -183,6 +188,7 @@ task Assemble {
         prefix:         "prefix to output files"
     }
 
+    String tech_specific_arg = if technology == 'ont' then "nanopore" else 'pacbio'
     Int disk_size = 50 * ceil(size(trimmed_reads, "GB"))
 
     command <<<
@@ -192,7 +198,7 @@ task Assemble {
              -p ~{prefix} -d canu_assemble_output \
              genomeSize=~{genome_size}k \
              correctedErrorRate=~{error_rate} \
-             -nanopore-corrected \
+             -{tech_specific_arg}-corrected \
              ~{trimmed_reads}
     >>>
 
