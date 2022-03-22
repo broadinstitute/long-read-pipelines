@@ -690,6 +690,61 @@ task CopyContigNameToReadTag {
 }
 
 
+task AdjustUmiSequenceWithAdapterAlignment {
+    meta {
+        description : "Extracts a new UMI from each given read by aligning the preceding adapter sequences to the read."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+    input {
+        File bam
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size_gb = 10 + 3*ceil(size(bam, "GB"))
+
+    # ------------------------------------------------
+    # Get machine settings:
+
+    command {
+        set -e
+
+        python3 /lrma/update_umi_positions.py \
+            -b ~{bam} \
+            -o ~{prefix}.bam
+
+        samtools index ~{prefix}.bam
+    }
+    output {
+        File output_bam = "~{prefix}.bam"
+        File output_bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
+        mem_gb:             16,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.17"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+
 task TagSirvUmiPositionsFromLongbowAnnotatedArrayElement {
     meta {
         description : "Extracts the UMI from each read in the given bam file into the ZU tag."
