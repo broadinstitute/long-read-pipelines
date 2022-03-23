@@ -155,8 +155,7 @@ def get_alignment(ssw, sequence, adapter_seq, alphabet, letter_to_int, mat, open
     return res.contents.nQryBeg, res.contents.nQryEnd, res.contents.nScore, res.contents
 
 
-def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end, post_alignment_start, umi_length, cigar_length, cigar):
-
+def parse_cigar(cigar, cigar_length):
     # Get our cigar operations here:
     num_insertions = 0
     num_deletions = 0
@@ -168,6 +167,114 @@ def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end
         elif op == "D":
             num_deletions += count
         cigar_ops.append((count, op))
+
+    return cigar_ops, num_insertions, num_deletions
+
+
+def _build_alignment_strings_from_cigar(seq, adapter_seq, cigar_ops,
+                                        read_offset, adapter_offset,
+                                        read_string, alignment_string, query_string):
+    # Now we have to go through the alignments and write out each base by
+    # whether it is used in the cigar operation:
+    refined_cigar_ops = []
+    for count, op in cigar_ops:
+        if op == "M":
+            cur_op = "=" if seq[read_offset] == adapter_seq[adapter_offset] else "X"
+            cur_count = 1
+            # We need to go through each base and see if it's a match or mismatch:
+            for i in range(count):
+                if seq[read_offset] == adapter_seq[adapter_offset]:
+                    read_string += seq[read_offset]
+                    alignment_string += "|"
+                    query_string += adapter_seq[adapter_offset]
+                    read_offset += 1
+                    adapter_offset += 1
+                    i_op = "="
+                else:
+                    read_string += seq[read_offset]
+                    alignment_string += "X"
+                    query_string += adapter_seq[adapter_offset]
+                    read_offset += 1
+                    adapter_offset += 1
+                    i_op = "X"
+
+                cur_count += 1
+
+                if i_op != cur_op:
+                    refined_cigar_ops.append((cur_count, cur_op))
+                    cur_op = i_op
+                    cur_count = 1
+
+        elif op == "D":
+            # Bases deleted in the sequence
+            # We need to skip them in the seq and print them in the query:
+            read_string += "-" * count
+            alignment_string += " " * count
+            query_string += adapter_seq[adapter_offset:adapter_offset + count]
+            adapter_offset += count
+            refined_cigar_ops.append((count, op))
+        elif op == "I":
+            # Bases inserted in the sequence
+            # We can just write them all out and skip ahead:
+            read_string += seq[read_offset:read_offset + count]
+            alignment_string += " " * count
+            query_string += "-" * count
+            read_offset += count
+            refined_cigar_ops.append((count, op))
+
+    return read_string, alignment_string, query_string, read_offset, refined_cigar_ops
+
+
+def build_alignment_display_strings(seq, adapter_seq,
+                                    alignment_start_seq, alignment_end_seq,
+                                    alignment_start_adapter,
+                                    cigar_ops,
+                                    alignment_b_start_seq, alignment_b_end_seq,
+                                    alignment_b_start_boreas,
+                                    cigar_ops_b):
+
+    # 1) Assume that the seq is the longer read.
+    #    Display all info through the end of the alignments
+
+    # Start with the beginning part of the read that is before anything is aligned:
+    read_string = seq[:alignment_start_seq]
+    alignment_string = " " * alignment_start_seq
+    query_string = " " * (alignment_start_seq - alignment_start_adapter)
+    query_string += adapter_seq[:alignment_start_adapter]
+
+    # Now we have to go through the alignments and write out each base by
+    # whether it is used in the cigar operation:
+    read_offset = alignment_start_seq
+    adapter_offset = alignment_start_adapter
+
+    read_string, alignment_string, query_string, read_offset, refined_cigar_ops = \
+        _build_alignment_strings_from_cigar(seq, adapter_seq, cigar_ops,
+                                            read_offset, adapter_offset,
+                                            read_string, alignment_string, query_string)
+
+    # OK, now we have to move forward to the next match:
+    num_bases_forward = alignment_b_start_seq - read_offset
+    read_string += seq[read_offset:alignment_b_start_seq]
+    read_offset += num_bases_forward
+    alignment_string += " " * num_bases_forward
+    query_string += " " * (num_bases_forward - alignment_b_start_boreas)
+    query_string += POST_UMI_SEQ[:alignment_b_start_boreas]
+
+    # Adjust the query string for the start of the next alignment:
+    read_string, alignment_string, query_string, read_offset, refined_cigar_ops_b = \
+        _build_alignment_strings_from_cigar(seq, POST_UMI_SEQ, cigar_ops_b,
+                                            read_offset, alignment_b_start_boreas,
+                                            read_string, alignment_string, query_string)
+
+    # Finally create a marker string that delineates where the alignments and UMI are:
+    num_dels_alignment = sum([c for c, op in cigar_ops if op == "D"])
+    num_dels_alignment_b = sum([c for c, op in cigar_ops_b if op == "D"])
+    marker_string = (" " * alignment_start_seq) + "V" + ("-" * (alignment_end_seq - alignment_start_seq - 1 + num_dels_alignment)) + "|" + (" " * num_bases_forward) + "V" + ("-" * (alignment_b_end_seq - alignment_b_start_seq - 1 + num_dels_alignment_b)) + "|"
+
+    return read_string, alignment_string, query_string, marker_string, refined_cigar_ops, refined_cigar_ops_b
+
+
+def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end, post_alignment_start, umi_length, cigar_ops, num_insertions, num_deletions):
 
     extra_read_padding = " " * (ref_start - query_start)
 
@@ -263,6 +370,8 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     # Set up our SSW objects:
     ssw = ssw_lib.CSsw(ssw_path)
     alphabet, letter_to_int, mat = ssw_build_matrix()
+
+    print(mat)
 
     # silence message about the .bai file not being found
     pysam.set_verbosity(0)
@@ -370,21 +479,39 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
 
                 # Adjust positions to reflect start position in string:
                 post_alignment_start = post_alignments[0] + alignment_end
-                post_alignments[3].nQryBeg += alignment_end + 1
-                post_alignments[3].nQryEnd += alignment_end + 1
+                post_alignments[3].nQryBeg += alignment_end
+                post_alignments[3].nQryEnd += alignment_end
 
                 # Get the new UMI from the read sequence:
                 # new_umi_seq = seq[alignment_end + 1:alignment_end + 1 + umi_length]
                 new_umi_seq = seq[alignment_end + 1:post_alignment_start]
+
+                alignment_cigar, alignment_num_insertions, alignment_num_deletions = parse_cigar(res.sCigar, res.nCigarLen)
+                post_cigar, post_num_insertions, post_num_deletions = parse_cigar(post_alignments[3].sCigar, post_alignments[3].nCigarLen)
 
                 print()
                 print("=" * 80)
                 print(f"{read.query_name}")
                 print()
 
+                read_string, alignment_string, query_string, marker_string, refined_cigar, refined_post_alignment_cigar = \
+                    build_alignment_display_strings(seq, adapter_seq,
+                                                    res.nQryBeg, res.nQryEnd,
+                                                    res.nRefBeg,
+                                                    alignment_cigar,
+                                                    post_alignments[3].nQryBeg, post_alignments[3].nQryEnd,
+                                                    post_alignments[3].nRefBeg,
+                                                    post_cigar)
+
                 # Debugging:
-                print_alignment(seq[:num_read_bases_to_align], adapter_seq, res.nQryBeg, res.nQryEnd, res.nRefBeg,
-                                    res.nRefEnd, post_alignment_start, umi_length, res.nCigarLen, res.sCigar)
+                # print_alignment(seq[:num_read_bases_to_align + (2 * (umi_length + len(POST_UMI_SEQ)))],
+                #                 adapter_seq, res.nQryBeg, res.nQryEnd, res.nRefBeg,
+                #                 res.nRefEnd, post_alignment_start, umi_length, alignment_cigar,
+                #                 alignment_num_insertions, alignment_num_deletions)
+                print(marker_string)
+                print(read_string)
+                print(alignment_string)
+                print(query_string)
 
                 print()
                 print(f"nQryBeg = {res.nQryBeg}")
@@ -394,11 +521,25 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                 print(f"nRefEnd2 = {res.nRefEnd2}")
                 print(f"nScore = {res.nScore}")
                 print(f"nScore2 = {res.nScore2}")
-                print(f"nCigarLen = {res.nCigarLen}")
-                print(f"sCigar = ", end="")
-                for i in range(res.nCigarLen):
-                    count, op = unpack_cigar_count_and_op(res.sCigar[i])
+                print(f"Cigar Length = {len(refined_cigar)}")
+                print(f"Cigar = ", end="")
+                for count, op in refined_cigar:
                     print(f"{count}{op} ", end="")
+                print()
+                print()
+                print("Post-UMI Alignment")
+                print(f"nQryBeg = {post_alignments[3].nQryBeg}")
+                print(f"nQryEnd = {post_alignments[3].nQryEnd}")
+                print(f"nRefBeg = {post_alignments[3].nRefBeg}")
+                print(f"nRefEnd = {post_alignments[3].nRefEnd}")
+                print(f"nRefEnd2 = {post_alignments[3].nRefEnd2}")
+                print(f"nScore = {post_alignments[3].nScore}")
+                print(f"nScore2 = {post_alignments[3].nScore2}")
+                print(f"Cigar Length = {len(refined_post_alignment_cigar)}")
+                print(f"Cigar = ", end="")
+                for count, op in refined_post_alignment_cigar:
+                    print(f"{count}{op} ", end="")
+                print()
                 print()
                 if read.has_tag(existing_umi_tag) and read.get_tag(existing_umi_tag) != new_umi_seq:
                     print(f"OLD: {read.get_tag(existing_umi_tag)}")
