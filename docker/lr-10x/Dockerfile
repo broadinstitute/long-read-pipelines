@@ -89,7 +89,9 @@ ADD extract_ilmn_bc_conf_scores.py /lrma/extract_ilmn_bc_conf_scores.py
 ADD restore_annotations_to_aligned_bam.py /lrma/restore_annotations_to_aligned_bam.py
 ADD extract_cbc_and_umi_from_annotated_read.py /lrma/extract_cbc_and_umi_from_annotated_read.py 
 ADD copy_contig_name_to_tag.py /lrma/copy_contig_name_to_tag.py 
-ADD tag_mas_sirv_umi_positions.py /lrma/tag_mas_sirv_umi_positions.py 
+ADD tag_mas_sirv_umi_positions.py /lrma/tag_mas_sirv_umi_positions.py
+
+RUN echo -n "set number\nsyntax on\nset hlsearch" > ~/.vimrc
 
 RUN echo "source activate 10x_tool" > ~/.bashrc
 

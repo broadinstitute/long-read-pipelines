@@ -27,6 +27,7 @@ NUM_BASES_TO_ALIGN_CLR = 120
 
 UMI_LENGTH = 10
 CELL_BARCODE_SEQUENCE = "TCTACACGACGCTCTTCCGATCT"
+POST_UMI_SEQ = "TTTCTTATATGGG"
 CELL_BARCODE_TAG = "CB"
 
 UMI_TAG = "ZU"
@@ -152,7 +153,7 @@ def get_alignment(ssw, sequence, adapter_seq, alphabet, letter_to_int, mat, open
     return res.contents.nQryBeg, res.contents.nQryEnd, res.contents.nScore, res.contents
 
 
-def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end, umi_length, cigar_length, cigar):
+def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end, post_alignment_start, umi_length, cigar_length, cigar):
 
     # Get our cigar operations here:
     num_insertions = 0
@@ -177,6 +178,9 @@ def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end
     print("V", end="")
     print("-" * (umi_length - 2), end="")
     print("|")
+    print(extra_read_padding, end="")
+    print(" " * (post_alignment_start + num_deletions), end="")
+    print("V")
 
     # Print the excerpt from the read:
     print(extra_read_padding, end="")
@@ -191,18 +195,7 @@ def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end
     print(seq[cur_pos:], end="")
     print()
 
-    # # Print the alignment representation:
-    # print(seq[:query_start], end="")
-    # for count, op in cigar_ops:
-    #     if op == "M":
-    #         print("", end="")
-    #     elif op == "I":
-    #         print(seq[cur_pos:cur_pos+count], end="")
-    #     elif op == "D":
-    #         print("-" * count, end="")
-
     print(" " * (query_start - ref_start), end="")
-    # print(adapter_seq)
 
     # Print the excerpt from the read:
     marker_len = 0
@@ -216,6 +209,8 @@ def print_alignment(seq, adapter_seq, query_start, query_end, ref_start, ref_end
             marker_len += count
     print(adapter_seq[cur_pos:], end="")
     marker_len += cur_pos
+    print(" " * ((post_alignment_start + num_deletions) - marker_len - (query_start - ref_start) - ref_start), end="")
+    print(POST_UMI_SEQ)
     print()
 
     print(" " * (query_start - ref_start), end="")
@@ -296,21 +291,40 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                     seq = read.query_sequence
                     res = alignments[3]
                     alignment_end = alignments[1]
+
                 else:
                     seq = rc_seq
                     res = rc_alignments[3]
                     alignment_end = rc_alignments[1]
 
+                # Now we align the POST_UMI_SEQ to the region following our adapters
+                # so we can have a bounded region within which we can grab the UMI:
+                post_alignments = get_alignment(ssw,
+                                                seq[alignment_end:alignment_end + 2 * (umi_length + len(POST_UMI_SEQ))],
+                                                POST_UMI_SEQ,
+                                                alphabet,
+                                                letter_to_int,
+                                                mat)
+
+                # Adjust positions to reflect start position in string:
+                post_alignment_start = post_alignments[0] + alignment_end
+                post_alignments[3].nQryBeg += alignment_end + 1
+                post_alignments[3].nQryEnd += alignment_end + 1
+
                 # Get the new UMI from the read sequence:
-                new_umi_seq = seq[alignment_end + 1:alignment_end + 1 + umi_length]
+                # new_umi_seq = seq[alignment_end + 1:alignment_end + 1 + umi_length]
+                new_umi_seq = seq[alignment_end + 1:post_alignment_start]
 
                 print()
                 print("=" * 80)
                 print(f"{read.query_name}")
                 print()
+
+                print(post_alignments[0])
+                print(seq[alignment_end:alignment_end + 2 * (umi_length + len(POST_UMI_SEQ))])
                 # Debugging:
                 print_alignment(seq[:num_read_bases_to_align], adapter_seq, res.nQryBeg, res.nQryEnd, res.nRefBeg,
-                                    res.nRefEnd, umi_length, res.nCigarLen, res.sCigar)
+                                    res.nRefEnd, post_alignment_start, umi_length, res.nCigarLen, res.sCigar)
 
                 print()
                 print(f"nQryBeg = {res.nQryBeg}")
