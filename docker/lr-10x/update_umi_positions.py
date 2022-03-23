@@ -290,6 +290,22 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     new_cbc_end_offsets = defaultdict(int)
     new_post_adapter_start_offsets = defaultdict(int)
 
+    new_umi_length_hist = defaultdict(int)
+    new_ccs_umi_length_hist = defaultdict(int)
+    new_clr_umi_length_hist = defaultdict(int)
+
+    num_reads_missing_venus = 0
+    num_ccs_reads_missing_venus = 0
+    num_clr_reads_missing_venus = 0
+
+    num_reads_missing_cbc = 0
+    num_ccs_reads_missing_cbc = 0
+    num_clr_reads_missing_cbc = 0
+
+    num_reads_missing_boreas = 0
+    num_ccs_reads_missing_boreas = 0
+    num_clr_reads_missing_boreas = 0
+
     with pysam.AlignmentFile(bam_filename, 'rb', check_sq=False, require_index=False) as bam_file, \
             tqdm(desc=f"Processing reads", unit="read", file=sys.stderr) as pbar:
         with pysam.AlignmentFile(out_file_name, 'wb', header=bam_file.header) as out_bam_file:
@@ -392,10 +408,7 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                     print(f"UMI: {new_umi_seq}")
                     print()
                 print(f"Read RQ: {read.get_tag('rq'):0.5f}")
-                print(f"10x start offset: {alignment_start - segments['VENUS'][0]}")
-                print(f"CBC end offset: {alignment_end - segments['CBC'][1]}")
-                print(f"Post UMI start offset: {post_alignment_start - segments['BOREAS'][0]}")
-                print()
+                print(f"UMI Length: {len(new_umi_seq)}")
 
                 # Get our stats:
                 if read.has_tag(existing_umi_tag):
@@ -438,9 +451,46 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                     else:
                         num_new_clr_umis_not_in_short_reads_umis += 1
 
-                new_tenx_start_offsets[alignment_start - segments['VENUS'][0]] += 1
-                new_cbc_end_offsets[alignment_end - segments['CBC'][1]] += 1
-                new_post_adapter_start_offsets[post_alignment_start - segments['BOREAS'][0]] += 1
+                try:
+                    new_tenx_start_offsets[alignment_start - segments['VENUS'][0]] += 1
+                    print(f"10x start offset: {alignment_start - segments['VENUS'][0]}")
+                except KeyError:
+                    num_reads_missing_venus += 1
+                    print("Missing 10x adapter")
+                    if is_ccs:
+                        num_ccs_reads_missing_venus += 1
+                    else:
+                        num_clr_reads_missing_venus += 1
+
+                try:
+                    new_cbc_end_offsets[alignment_end - segments['CBC'][1]] += 1
+                    print(f"CBC end offset: {alignment_end - segments['CBC'][1]}")
+                except KeyError:
+                    num_reads_missing_cbc += 1
+                    print("Missing CBC")
+                    if is_ccs:
+                        num_ccs_reads_missing_cbc += 1
+                    else:
+                        num_clr_reads_missing_cbc += 1
+
+                try:
+                    new_post_adapter_start_offsets[post_alignment_start - segments['BOREAS'][0]] += 1
+                    print(f"Post UMI start offset: {post_alignment_start - segments['BOREAS'][0]}")
+                except KeyError:
+                    num_reads_missing_boreas += 1
+                    print("Missing Post UMI Adapter")
+                    if is_ccs:
+                        num_ccs_reads_missing_boreas += 1
+                    else:
+                        num_clr_reads_missing_boreas += 1
+
+                new_umi_length_hist[len(new_umi_seq)] += 1
+                if is_ccs:
+                    new_ccs_umi_length_hist[len(new_umi_seq)] += 1
+                else:
+                    new_clr_umi_length_hist[len(new_umi_seq)] += 1
+
+                print()
 
                 # Actually set the new tag for the new UMI and write the read:
                 read.set_tag(new_umi_tag, new_umi_seq)
@@ -472,26 +522,47 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     print(f"Num new CCS umis NOT in short reads umis: {num_new_ccs_umis_not_in_short_reads_umis} ({100*num_new_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
     print(f"Num new CLR umis NOT in short reads umis: {num_new_clr_umis_not_in_short_reads_umis} ({100*num_new_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
     print()
-    new_tenx_start_offsets = {k:new_tenx_start_offsets[k] for k in sorted(new_tenx_start_offsets.keys())}
+    print(f"Num reads missing 10x adapter (venus): {num_reads_missing_venus} ({100 * num_reads_missing_venus / num_reads:2.4f}%)")
+    print(f"Num CCS reads missing 10x adapter (venus): {num_ccs_reads_missing_venus} ({100 * num_ccs_reads_missing_venus / num_reads:2.4f}%)")
+    print(f"Num CLR reads missing 10x adapter (venus): {num_clr_reads_missing_venus} ({100 * num_clr_reads_missing_venus / num_reads:2.4f}%)")
+    print()
+    print(f"Num reads missing CBC: {num_reads_missing_cbc} ({100 * num_reads_missing_cbc / num_reads:2.4f}%)")
+    print(f"Num CCS reads missing CBC: {num_ccs_reads_missing_cbc} ({100 * num_ccs_reads_missing_cbc / num_reads:2.4f}%)")
+    print(f"Num CLR reads missing CBC: {num_clr_reads_missing_cbc} ({100 * num_clr_reads_missing_cbc / num_reads:2.4f}%)")
+    print()
+    print(f"Num reads missing post-umi adapter (boreas): {num_reads_missing_boreas} ({100 * num_reads_missing_boreas / num_reads:2.4f}%)")
+    print(f"Num CCS reads missing post-umi adapter (boreas): {num_ccs_reads_missing_boreas} ({100 * num_ccs_reads_missing_boreas / num_reads:2.4f}%)")
+    print(f"Num CLR reads missing post-umi adapter (boreas): {num_clr_reads_missing_boreas} ({100 * num_clr_reads_missing_boreas / num_reads:2.4f}%)")
+    print()
+    print("Overall new UMI Lengths:")
+    print_dict_stats(new_umi_length_hist)
+    print()
+    print("CCS new UMI Lengths:")
+    print_dict_stats(new_ccs_umi_length_hist)
+    print()
+    print("CLR new UMI Lengths:")
+    print_dict_stats(new_clr_umi_length_hist)
+    print()
     print("New 10x adapter start offset stats:")
     print_dict_stats(new_tenx_start_offsets)
 
-    new_cbc_end_offsets = {k: new_cbc_end_offsets[k] for k in sorted(new_cbc_end_offsets.keys())}
     print("New CBC end offset stats:")
     print_dict_stats(new_cbc_end_offsets)
 
-    new_post_adapter_start_offsets = {k: new_post_adapter_start_offsets[k] for k in sorted(new_post_adapter_start_offsets.keys())}
     print("New post UMI adapter start offset stats:")
     print_dict_stats(new_post_adapter_start_offsets)
     print()
     print()
-    print("For histograms:")
+    print("For Offset histograms:")
     print("  A negative number indicates that the new offset is before the original offset.")
     print("  A positive number indicates that the new offset is after the original offset.")
     print()
-    
+
 
 def print_dict_stats(d, front_padding=2):
+
+    d = {k:d[k] for k in sorted(d.keys())}
+
     print((front_padding * ' ') + "Histogram:")
     for k, v in d.items():
         print((front_padding * ' ') + f"  {k}  {v}")
