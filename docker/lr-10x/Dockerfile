@@ -90,6 +90,7 @@ ADD restore_annotations_to_aligned_bam.py /lrma/restore_annotations_to_aligned_b
 ADD extract_cbc_and_umi_from_annotated_read.py /lrma/extract_cbc_and_umi_from_annotated_read.py 
 ADD copy_contig_name_to_tag.py /lrma/copy_contig_name_to_tag.py 
 ADD tag_mas_sirv_umi_positions.py /lrma/tag_mas_sirv_umi_positions.py
+ADD update_umi_positions.py /lrma/update_umi_positions.py
 
 RUN echo -n "set number\nsyntax on\nset hlsearch" > ~/.vimrc
 
