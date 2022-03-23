@@ -10,6 +10,8 @@ import ctypes
 import sys
 import shutil
 
+from collections import defaultdict
+
 import struct
 
 import numpy as np
@@ -284,11 +286,25 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     num_new_ccs_umis_not_in_short_reads_umis = 0
     num_new_clr_umis_not_in_short_reads_umis = 0
 
+    new_tenx_start_offsets = defaultdict(int)
+    new_cbc_end_offsets = defaultdict(int)
+    new_post_adapter_start_offsets = defaultdict(int)
+
     with pysam.AlignmentFile(bam_filename, 'rb', check_sq=False, require_index=False) as bam_file, \
             tqdm(desc=f"Processing reads", unit="read", file=sys.stderr) as pbar:
         with pysam.AlignmentFile(out_file_name, 'wb', header=bam_file.header) as out_bam_file:
 
             for read in bam_file:
+
+                # Parse our segments so we can use them later for stats:
+                segments = dict()
+                for s in read.get_tag("SG").strip().split(','):
+                    name, bounds = s.split(":")
+                    st, nd = bounds.split("-")
+                    st = int(st)
+                    nd = int(nd)
+                    segments[name] = (st, nd)
+
                 num_reads += 1
 
                 # We grab a different number of bases if it's CCS vs CLR because CLR reads can be VERY noisy:
@@ -318,11 +334,13 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                 if alignments[2] > rc_alignments[2]:
                     seq = read.query_sequence
                     res = alignments[3]
+                    alignment_start = alignments[0]
                     alignment_end = alignments[1]
 
                 else:
                     seq = rc_seq
                     res = rc_alignments[3]
+                    alignment_start = rc_alignments[0]
                     alignment_end = rc_alignments[1]
 
                 # Now we align the POST_UMI_SEQ to the region following our adapters
@@ -348,8 +366,6 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                 print(f"{read.query_name}")
                 print()
 
-                print(post_alignments[0])
-                print(seq[alignment_end:alignment_end + 2 * (umi_length + len(POST_UMI_SEQ))])
                 # Debugging:
                 print_alignment(seq[:num_read_bases_to_align], adapter_seq, res.nQryBeg, res.nQryEnd, res.nRefBeg,
                                     res.nRefEnd, post_alignment_start, umi_length, res.nCigarLen, res.sCigar)
@@ -376,10 +392,13 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                     print(f"UMI: {new_umi_seq}")
                     print()
                 print(f"Read RQ: {read.get_tag('rq'):0.5f}")
+                print(f"10x start offset: {alignment_start - segments['VENUS'][0]}")
+                print(f"CBC end offset: {alignment_end - segments['CBC'][1]}")
+                print(f"Post UMI start offset: {post_alignment_start - segments['BOREAS'][0]}")
                 print()
 
+                # Get our stats:
                 if read.has_tag(existing_umi_tag):
-
                     old_umi = read.get_tag(existing_umi_tag)
 
                     # Get old stats:
@@ -419,6 +438,11 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                     else:
                         num_new_clr_umis_not_in_short_reads_umis += 1
 
+                new_tenx_start_offsets[alignment_start - segments['VENUS'][0]] += 1
+                new_cbc_end_offsets[alignment_end - segments['CBC'][1]] += 1
+                new_post_adapter_start_offsets[post_alignment_start - segments['BOREAS'][0]] += 1
+
+                # Actually set the new tag for the new UMI and write the read:
                 read.set_tag(new_umi_tag, new_umi_seq)
 
                 out_bam_file.write(read)
@@ -447,6 +471,43 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     print(f"Num new umis NOT in short reads umis: {num_new_umis_not_in_short_reads_umis} ({100*num_new_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
     print(f"Num new CCS umis NOT in short reads umis: {num_new_ccs_umis_not_in_short_reads_umis} ({100*num_new_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
     print(f"Num new CLR umis NOT in short reads umis: {num_new_clr_umis_not_in_short_reads_umis} ({100*num_new_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print()
+    new_tenx_start_offsets = {k:new_tenx_start_offsets[k] for k in sorted(new_tenx_start_offsets.keys())}
+    print("New 10x adapter start offset stats:")
+    print_dict_stats(new_tenx_start_offsets)
+
+    new_cbc_end_offsets = {k: new_cbc_end_offsets[k] for k in sorted(new_cbc_end_offsets.keys())}
+    print("New CBC end offset stats:")
+    print_dict_stats(new_cbc_end_offsets)
+
+    new_post_adapter_start_offsets = {k: new_post_adapter_start_offsets[k] for k in sorted(new_post_adapter_start_offsets.keys())}
+    print("New post UMI adapter start offset stats:")
+    print_dict_stats(new_post_adapter_start_offsets)
+    print()
+    print()
+    print("For histograms:")
+    print("  A negative number indicates that the new offset is before the original offset.")
+    print("  A positive number indicates that the new offset is after the original offset.")
+    print()
+    
+
+def print_dict_stats(d, front_padding=2):
+    print((front_padding * ' ') + "Histogram:")
+    for k, v in d.items():
+        print((front_padding * ' ') + f"  {k}  {v}")
+
+    # reconstruct the base data array for ease of statistical calculations:
+    data = []
+    for k, v in d.items():
+        for i in range(v):
+            data.append(k)
+    data = np.array(data)
+
+    print((front_padding * ' ') + f"Min {np.min(data)}")
+    print((front_padding * ' ') + f"Max {np.max(data)}")
+    print((front_padding * ' ') + f"Mean {np.mean(data)}")
+    print((front_padding * ' ') + f"Median {np.median(data)}")
+    print((front_padding * ' ') + f"Stdev {np.std(data)}")
     print()
 
 
