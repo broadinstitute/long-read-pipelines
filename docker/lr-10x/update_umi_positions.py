@@ -33,8 +33,11 @@ POST_UMI_SEQ = "TTTCTTATATGGG"
 CELL_BARCODE_TAG = "CB"
 
 UMI_TAG = "ZU"
-NEW_UMI_TAG = "ZX"
-
+NEW_UMI_TAG = "JX"
+FRONT_ALIGNMENT_SCORE_TAG = "JF"
+BACK_ALIGNMENT_SCORE_TAG = "JB"
+FRONT_CIGAR_TAG = "JC"
+BACK_CIGAR_TAG = "JD"
 
 # IUPAC RC's from: http://arep.med.harvard.edu/labgc/adnan/projects/Utilities/revcomp.html
 # and https://www.dnabaser.com/articles/IUPAC%20ambiguity%20codes.html
@@ -388,7 +391,9 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
 
     # Set up our SSW objects:
     ssw = ssw_lib.CSsw(ssw_path)
-    alphabet, letter_to_int, mat = ssw_build_matrix()
+    match_score = 2
+    mismatch_score = 1
+    alphabet, letter_to_int, mat = ssw_build_matrix(match_score, mismatch_score)
 
     print(mat)
 
@@ -396,6 +401,9 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     pysam.set_verbosity(0)
 
     num_reads = 0
+    num_ccs_reads = 0
+    num_clr_reads = 0
+
     num_new_umis_same_as_old = 0
     num_ccs_reads_not_same_as_old = 0
     num_clr_reads_not_same_as_old = 0
@@ -647,14 +655,21 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
 
                 new_umi_length_hist[len(new_umi_seq)] += 1
                 if is_ccs:
+                    num_ccs_reads += 1
                     new_ccs_umi_length_hist[len(new_umi_seq)] += 1
                 else:
+                    num_clr_reads += 1
                     new_clr_umi_length_hist[len(new_umi_seq)] += 1
 
                 print()
 
-                # Actually set the new tag for the new UMI and write the read:
+                # Actually set the new tags for the new UMI and write the read:
                 read.set_tag(new_umi_tag, new_umi_seq)
+
+                read.set_tag(FRONT_ALIGNMENT_SCORE_TAG, f"{res.nScore}/{len(adapter_seq) * match_score}")
+                read.set_tag(BACK_ALIGNMENT_SCORE_TAG, f"{post_alignments[3].nScore}/{len(POST_UMI_SEQ) * match_score}")
+                read.set_tag(FRONT_CIGAR_TAG, f"{''.join([str(c)+o for c, o in refined_cigar])}")
+                read.set_tag(BACK_CIGAR_TAG, f"{''.join([str(c)+o for c, o in refined_post_alignment_cigar])}")
 
                 out_bam_file.write(read)
                 pbar.update(1)
@@ -663,37 +678,39 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     print()
     print("Stats:")
     print(f"Total Num Reads: {num_reads}")
+    print(f"Num CCS Reads: {num_ccs_reads}")
+    print(f"Num CLR Reads: {num_clr_reads}")
     print()
     print(f"Num new UMIs same as old UMIs: {num_new_umis_same_as_old} ({100*num_new_umis_same_as_old/num_reads:2.4f}%)")
     print(f"Num new UMIs different from old UMIs: {num_reads - num_new_umis_same_as_old} ({100*(num_reads - num_new_umis_same_as_old)/num_reads:2.4f}%)")
-    print(f"Num CCS Reads with new UMIs != old UMIs: {num_ccs_reads_not_same_as_old} ({100*num_ccs_reads_not_same_as_old/num_reads:2.4f}%)")
-    print(f"Num CLR Reads with new UMIs != old UMIs: {num_clr_reads_not_same_as_old} ({100*num_clr_reads_not_same_as_old/num_reads:2.4f}%)")
+    print(f"Num CCS Reads with new UMIs != old UMIs: {num_ccs_reads_not_same_as_old} ({100*num_ccs_reads_not_same_as_old/num_reads:2.4f}%) ({100 * num_ccs_reads_not_same_as_old / num_ccs_reads:2.4f}% of CCS)")
+    print(f"Num CLR Reads with new UMIs != old UMIs: {num_clr_reads_not_same_as_old} ({100*num_clr_reads_not_same_as_old/num_reads:2.4f}%) ({100 * num_clr_reads_not_same_as_old / num_clr_reads:2.4f}% of CLR)")
     print()
     print(f"Num old umis in short reads umis: {num_old_umis_in_short_reads_umis} ({100*num_old_umis_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num old CCS umis in short reads umis: {num_old_ccs_umis_in_short_reads_umis} ({100*num_old_ccs_umis_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num old CLR umis in short reads umis: {num_old_clr_umis_in_short_reads_umis} ({100*num_old_clr_umis_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num old CCS umis in short reads umis: {num_old_ccs_umis_in_short_reads_umis} ({100*num_old_ccs_umis_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_old_ccs_umis_in_short_reads_umis / num_ccs_reads:2.4f}% of CCS)")
+    print(f"Num old CLR umis in short reads umis: {num_old_clr_umis_in_short_reads_umis} ({100*num_old_clr_umis_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_old_clr_umis_in_short_reads_umis / num_clr_reads:2.4f}% of CLR)")
     print(f"Num old umis NOT in short reads umis: {num_old_umis_not_in_short_reads_umis} ({100*num_old_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num old CCS umis NOT in short reads umis: {num_old_ccs_umis_not_in_short_reads_umis} ({100*num_old_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num old CLR umis NOT in short reads umis: {num_old_clr_umis_not_in_short_reads_umis} ({100*num_old_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num old CCS umis NOT in short reads umis: {num_old_ccs_umis_not_in_short_reads_umis} ({100*num_old_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_old_ccs_umis_not_in_short_reads_umis / num_ccs_reads:2.4f}% of CCS)")
+    print(f"Num old CLR umis NOT in short reads umis: {num_old_clr_umis_not_in_short_reads_umis} ({100*num_old_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_old_clr_umis_not_in_short_reads_umis / num_clr_reads:2.4f}% of CLR)")
     print()
     print(f"Num new umis in short reads umis: {num_new_umis_in_short_reads_umis} ({100*num_new_umis_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num new CCS umis in short reads umis: {num_new_ccs_umis_in_short_reads_umis} ({100*num_new_ccs_umis_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num new CLR umis in short reads umis: {num_new_clr_umis_in_short_reads_umis} ({100*num_new_clr_umis_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num new CCS umis in short reads umis: {num_new_ccs_umis_in_short_reads_umis} ({100*num_new_ccs_umis_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_new_ccs_umis_in_short_reads_umis / num_ccs_reads:2.4f}% of CCS)")
+    print(f"Num new CLR umis in short reads umis: {num_new_clr_umis_in_short_reads_umis} ({100*num_new_clr_umis_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_new_clr_umis_in_short_reads_umis / num_clr_reads:2.4f}% of CLR)")
     print(f"Num new umis NOT in short reads umis: {num_new_umis_not_in_short_reads_umis} ({100*num_new_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num new CCS umis NOT in short reads umis: {num_new_ccs_umis_not_in_short_reads_umis} ({100*num_new_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num new CLR umis NOT in short reads umis: {num_new_clr_umis_not_in_short_reads_umis} ({100*num_new_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num new CCS umis NOT in short reads umis: {num_new_ccs_umis_not_in_short_reads_umis} ({100*num_new_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_new_ccs_umis_not_in_short_reads_umis / num_ccs_reads:2.4f}% of CCS)")
+    print(f"Num new CLR umis NOT in short reads umis: {num_new_clr_umis_not_in_short_reads_umis} ({100*num_new_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_new_ccs_umis_not_in_short_reads_umis / num_clr_reads:2.4f}% of CLR)")
     print()
     print(f"Num reads missing 10x adapter (venus): {num_reads_missing_venus} ({100 * num_reads_missing_venus / num_reads:2.4f}%)")
-    print(f"Num CCS reads missing 10x adapter (venus): {num_ccs_reads_missing_venus} ({100 * num_ccs_reads_missing_venus / num_reads:2.4f}%)")
-    print(f"Num CLR reads missing 10x adapter (venus): {num_clr_reads_missing_venus} ({100 * num_clr_reads_missing_venus / num_reads:2.4f}%)")
+    print(f"Num CCS reads missing 10x adapter (venus): {num_ccs_reads_missing_venus} ({100 * num_ccs_reads_missing_venus / num_reads:2.4f}%) ({100 * num_ccs_reads_missing_venus / num_ccs_reads:2.4f}% of CCS)")
+    print(f"Num CLR reads missing 10x adapter (venus): {num_clr_reads_missing_venus} ({100 * num_clr_reads_missing_venus / num_reads:2.4f}%) ({100 * num_clr_reads_missing_venus / num_clr_reads:2.4f}% of CLR)")
     print()
     print(f"Num reads missing CBC: {num_reads_missing_cbc} ({100 * num_reads_missing_cbc / num_reads:2.4f}%)")
-    print(f"Num CCS reads missing CBC: {num_ccs_reads_missing_cbc} ({100 * num_ccs_reads_missing_cbc / num_reads:2.4f}%)")
-    print(f"Num CLR reads missing CBC: {num_clr_reads_missing_cbc} ({100 * num_clr_reads_missing_cbc / num_reads:2.4f}%)")
+    print(f"Num CCS reads missing CBC: {num_ccs_reads_missing_cbc} ({100 * num_ccs_reads_missing_cbc / num_reads:2.4f}%) ({100 * num_ccs_reads_missing_cbc / num_ccs_reads:2.4f}% of CCS)")
+    print(f"Num CLR reads missing CBC: {num_clr_reads_missing_cbc} ({100 * num_clr_reads_missing_cbc / num_reads:2.4f}%) ({100 * num_clr_reads_missing_cbc / num_clr_reads:2.4f}% of CLR)")
     print()
     print(f"Num reads missing post-umi adapter (boreas): {num_reads_missing_boreas} ({100 * num_reads_missing_boreas / num_reads:2.4f}%)")
-    print(f"Num CCS reads missing post-umi adapter (boreas): {num_ccs_reads_missing_boreas} ({100 * num_ccs_reads_missing_boreas / num_reads:2.4f}%)")
-    print(f"Num CLR reads missing post-umi adapter (boreas): {num_clr_reads_missing_boreas} ({100 * num_clr_reads_missing_boreas / num_reads:2.4f}%)")
+    print(f"Num CCS reads missing post-umi adapter (boreas): {num_ccs_reads_missing_boreas} ({100 * num_ccs_reads_missing_boreas / num_reads:2.4f}%) ({100 * num_ccs_reads_missing_boreas / num_ccs_reads:2.4f}% of CCS)")
+    print(f"Num CLR reads missing post-umi adapter (boreas): {num_clr_reads_missing_boreas} ({100 * num_clr_reads_missing_boreas / num_reads:2.4f}%) ({100 * num_clr_reads_missing_boreas / num_clr_reads:2.4f}% of CLR)")
     print()
     print("Overall new UMI Lengths:")
     print_dict_stats(new_umi_length_hist)
