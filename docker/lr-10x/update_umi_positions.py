@@ -242,8 +242,22 @@ def unpack_cigar_count_and_op(cigar_int):
     return count, op
 
 
+def get_short_reads_umis(short_reads_umi_file):
+    with open(short_reads_umi_file, 'r') as f:
+        umis = set()
+        for line in f:
+            if line.startswith("#") or line.startswith("UMI"):
+                continue
+            umis.add(line.strip().split()[0].strip())
+    return umis
+
+
 def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length, new_umi_tag, existing_umi_tag,
-         ssw_path):
+         short_reads_umi_file, ssw_path):
+
+    # Read in the short reads umis:
+    short_read_umis = get_short_reads_umis(short_reads_umi_file)
+
     # Set up our SSW objects:
     ssw = ssw_lib.CSsw(ssw_path)
     alphabet, letter_to_int, mat = ssw_build_matrix()
@@ -255,6 +269,20 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     num_new_umis_same_as_old = 0
     num_ccs_reads_not_same_as_old = 0
     num_clr_reads_not_same_as_old = 0
+
+    num_old_umis_in_short_reads_umis = 0
+    num_old_ccs_umis_in_short_reads_umis = 0
+    num_old_clr_umis_in_short_reads_umis = 0
+    num_old_umis_not_in_short_reads_umis = 0
+    num_old_ccs_umis_not_in_short_reads_umis = 0
+    num_old_clr_umis_not_in_short_reads_umis = 0
+
+    num_new_umis_in_short_reads_umis = 0
+    num_new_ccs_umis_in_short_reads_umis = 0
+    num_new_clr_umis_in_short_reads_umis = 0
+    num_new_umis_not_in_short_reads_umis = 0
+    num_new_ccs_umis_not_in_short_reads_umis = 0
+    num_new_clr_umis_not_in_short_reads_umis = 0
 
     with pysam.AlignmentFile(bam_filename, 'rb', check_sq=False, require_index=False) as bam_file, \
             tqdm(desc=f"Processing reads", unit="read", file=sys.stderr) as pbar:
@@ -350,13 +378,46 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
                 print(f"Read RQ: {read.get_tag('rq'):0.5f}")
                 print()
 
-                if read.has_tag(existing_umi_tag) and read.get_tag(existing_umi_tag) == new_umi_seq:
-                    num_new_umis_same_as_old += 1
-                else:
-                    if is_ccs:
-                        num_ccs_reads_not_same_as_old += 1
+                if read.has_tag(existing_umi_tag):
+
+                    old_umi = read.get_tag(existing_umi_tag)
+
+                    # Get old stats:
+                    if old_umi in short_read_umis:
+                        num_old_umis_in_short_reads_umis += 1
+                        if is_ccs:
+                            num_old_ccs_umis_in_short_reads_umis += 1
+                        else:
+                            num_old_clr_umis_in_short_reads_umis += 1
                     else:
-                        num_clr_reads_not_same_as_old += 1
+                        num_old_umis_not_in_short_reads_umis += 1
+                        if is_ccs:
+                            num_old_ccs_umis_not_in_short_reads_umis += 1
+                        else:
+                            num_old_clr_umis_not_in_short_reads_umis += 1
+
+                    # Get new stats:
+                    if old_umi == new_umi_seq:
+                        num_new_umis_same_as_old += 1
+                    else:
+                        if is_ccs:
+                            num_ccs_reads_not_same_as_old += 1
+                        else:
+                            num_clr_reads_not_same_as_old += 1
+
+                # Get new stats:
+                if new_umi_seq in short_read_umis:
+                    num_new_umis_in_short_reads_umis += 1
+                    if is_ccs:
+                        num_new_ccs_umis_in_short_reads_umis += 1
+                    else:
+                        num_new_clr_umis_in_short_reads_umis += 1
+                else:
+                    num_new_umis_not_in_short_reads_umis += 1
+                    if is_ccs:
+                        num_new_ccs_umis_not_in_short_reads_umis += 1
+                    else:
+                        num_new_clr_umis_not_in_short_reads_umis += 1
 
                 read.set_tag(new_umi_tag, new_umi_seq)
 
@@ -367,10 +428,26 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     print()
     print("Stats:")
     print(f"Total Num Reads: {num_reads}")
+    print()
     print(f"Num new UMIs same as old UMIs: {num_new_umis_same_as_old} ({100*num_new_umis_same_as_old/num_reads:2.4f}%)")
     print(f"Num new UMIs different from old UMIs: {num_reads - num_new_umis_same_as_old} ({100*(num_reads - num_new_umis_same_as_old)/num_reads:2.4f}%)")
     print(f"Num CCS Reads with new UMIs != old UMIs: {num_ccs_reads_not_same_as_old} ({100*num_ccs_reads_not_same_as_old/num_reads:2.4f}%)")
     print(f"Num CLR Reads with new UMIs != old UMIs: {num_clr_reads_not_same_as_old} ({100*num_clr_reads_not_same_as_old/num_reads:2.4f}%)")
+    print()
+    print(f"Num old umis in short reads umis: {num_old_umis_in_short_reads_umis} ({100*num_old_umis_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num old CCS umis in short reads umis: {num_old_ccs_umis_in_short_reads_umis} ({100*num_old_ccs_umis_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num old CLR umis in short reads umis: {num_old_clr_umis_in_short_reads_umis} ({100*num_old_clr_umis_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num old umis NOT in short reads umis: {num_old_umis_not_in_short_reads_umis} ({100*num_old_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num old CCS umis NOT in short reads umis: {num_old_ccs_umis_not_in_short_reads_umis} ({100*num_old_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num old CLR umis NOT in short reads umis: {num_old_clr_umis_not_in_short_reads_umis} ({100*num_old_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print()
+    print(f"Num new umis in short reads umis: {num_new_umis_in_short_reads_umis} ({100*num_new_umis_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num new CCS umis in short reads umis: {num_new_ccs_umis_in_short_reads_umis} ({100*num_new_ccs_umis_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num new CLR umis in short reads umis: {num_new_clr_umis_in_short_reads_umis} ({100*num_new_clr_umis_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num new umis NOT in short reads umis: {num_new_umis_not_in_short_reads_umis} ({100*num_new_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num new CCS umis NOT in short reads umis: {num_new_ccs_umis_not_in_short_reads_umis} ({100*num_new_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print(f"Num new CLR umis NOT in short reads umis: {num_new_clr_umis_not_in_short_reads_umis} ({100*num_new_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
+    print()
 
 
 if __name__ == '__main__':
@@ -379,6 +456,7 @@ if __name__ == '__main__':
         epilog="")
     requiredNamed = parser.add_argument_group('Required arguments')
     requiredNamed.add_argument('-b', '--bam', help='BAM filename', required=True)
+    requiredNamed.add_argument('-s', '--short-reads-umis', help='File containing short reads UMIs', required=True)
     requiredNamed.add_argument('-o', "--output-file", help='Output file', required=True)
 
     parser.add_argument('--ssw-path', help='Path to the Striped Smith-Waterman library', type=str, default='/lrma/ssw')
@@ -408,4 +486,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(args.bam, args.output_file, args.barcode_seq, args.cell_barcode_tag, args.umi_length, args.new_umi_tag,
-         args.existing_umi_tag, args.ssw_path)
+         args.existing_umi_tag, args.short_reads_umis, args.ssw_path)

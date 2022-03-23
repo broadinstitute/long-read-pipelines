@@ -50,6 +50,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         File intervals_of_interest = "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/gencode.37.TCR_intervals.tsv"
         String interval_overlap_name = "is_tcr_overlapping"
 
+        File short_read_umis_tsv
+
         String starcode_extra_params = "--dist 2 --sphere"
 
         String expanded_cbc_tag = "CR"
@@ -635,6 +637,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         call TENX.AdjustUmiSequenceWithAdapterAlignment as t_56_AdjustCCSUMIs {
             input:
                 bam = t_55_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
+                short_read_umis = short_read_umis_tsv,
                 prefix = SM + "_ccs_array_elements_aligned_annotated_padded_cbc_corrected_UMI_adjusted_shard_" + ccsi,
         }
     }
@@ -703,6 +706,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         call TENX.AdjustUmiSequenceWithAdapterAlignment as t_64_AdjustCCSReclaimedUMIs {
             input:
                 bam = t_63_LongbowCorrectCCSReclaimedArrayElementCBCs.corrected_barcodes_bam,
+                short_read_umis = short_read_umis_tsv,
                 prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_cbc_corrected_UMI_adjusted_shard_" + cri,
         }
     }

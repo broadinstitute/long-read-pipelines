@@ -698,6 +698,7 @@ task AdjustUmiSequenceWithAdapterAlignment {
     }
     input {
         File bam
+        File short_read_umis
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
@@ -713,6 +714,7 @@ task AdjustUmiSequenceWithAdapterAlignment {
 
         python3 /lrma/update_umi_positions.py \
             -b ~{bam} \
+            -s ~{short_read_umis} \
             -o ~{prefix}.bam
 
         samtools index ~{prefix}.bam
