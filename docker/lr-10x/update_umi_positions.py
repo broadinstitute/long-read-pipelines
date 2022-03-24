@@ -761,11 +761,11 @@ def print_dict_stats(d, front_padding=2):
             data.append(k)
     data = np.array(data)
 
-    print((front_padding * ' ') + f"Min {np.min(data)}")
-    print((front_padding * ' ') + f"Max {np.max(data)}")
-    print((front_padding * ' ') + f"Mean {np.mean(data)}")
-    print((front_padding * ' ') + f"Median {np.median(data)}")
-    print((front_padding * ' ') + f"Stdev {np.std(data)}")
+    print((front_padding * ' ') + f"Min {np.min(data) if len(data) > 0 else 0}")
+    print((front_padding * ' ') + f"Max {np.max(data) if len(data) > 0 else 0}")
+    print((front_padding * ' ') + f"Mean {np.mean(data) if len(data) > 0 else 0}")
+    print((front_padding * ' ') + f"Median {np.median(data) if len(data) > 0 else 0}")
+    print((front_padding * ' ') + f"Stdev {np.std(data) if len(data) > 0 else 0}")
     print()
 
 
