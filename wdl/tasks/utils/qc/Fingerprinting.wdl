@@ -69,7 +69,7 @@ task PickGenotypeVCF {
 task FilterGenotypesVCF {
     input {
         File fingerprint_vcf
-        Array[String] filters = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
+        Array[String] filters = ['_random\\t', '_decoy\\t', '_alt\\t', '^chrUn', '^HLA', '^EBV']
     }
 
     parameter_meta {

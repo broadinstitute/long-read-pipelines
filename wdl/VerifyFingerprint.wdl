@@ -23,6 +23,8 @@ workflow VerifyFingerprint {
         String collaborator_smid
         String collaborator_participant_id
 
+        File? use_this_fp_vcf
+
         File ref_map_file
 
         String gcs_out_root_dir
@@ -38,6 +40,8 @@ workflow VerifyFingerprint {
         collaborator_smid:  "Collaborator sample ID"
         collaborator_participant_id:    "Collaborator participant ID"
 
+        use_this_fp_vcf:    "Optional gt VCF, if provided, used for fingerprint verification (fingerprint_store, smid, collaborator_smid, collaborator_participant_id will all be ignored)"
+
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
@@ -47,24 +51,28 @@ workflow VerifyFingerprint {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/VerifyFingerprint"
 
-    call FPUtils.ListGenotypedVCFs { input: fingerprint_store = fingerprint_store }
-    String separator = "__"
-    String intended_file= smid + separator + collaborator_smid + separator + collaborator_participant_id + ".vcf.gz"
-    
-    call FPUtils.PickGenotypeVCF {
-        input:
-            fingerprinting_vcf_gs_paths = ListGenotypedVCFs.vcf_gs_paths,
-            vcf_name = intended_file
+    if (!defined(use_this_fp_vcf)) {
+        call FPUtils.ListGenotypedVCFs { input: fingerprint_store = fingerprint_store }
+        String separator = "__"
+        String intended_file= smid + separator + collaborator_smid + separator + collaborator_participant_id + ".vcf.gz"
+
+        call FPUtils.PickGenotypeVCF {
+            input:
+                fingerprinting_vcf_gs_paths = ListGenotypedVCFs.vcf_gs_paths,
+                vcf_name = intended_file
+        }
     }
+
+    File gt_vcf = if (defined(use_this_fp_vcf)) then select_first([use_this_fp_vcf]) else select_first([PickGenotypeVCF.vcfs])[0]
 
     call VariantUtils.GetVCFSampleName {
         input:
-            fingerprint_vcf = PickGenotypeVCF.vcfs[0]
+            fingerprint_vcf = gt_vcf
     }
 
     call FPUtils.FilterGenotypesVCF {
         input:
-            fingerprint_vcf = PickGenotypeVCF.vcfs[0]
+            fingerprint_vcf = gt_vcf
     }
 
     call FPUtils.ExtractGenotypingSites {
