@@ -395,8 +395,6 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     mismatch_score = 1
     alphabet, letter_to_int, mat = ssw_build_matrix(match_score, mismatch_score)
 
-    print(mat)
-
     # silence message about the .bai file not being found
     pysam.set_verbosity(0)
 
@@ -681,36 +679,36 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     print(f"Num CCS Reads: {num_ccs_reads}")
     print(f"Num CLR Reads: {num_clr_reads}")
     print()
-    print(f"Num new UMIs same as old UMIs: {num_new_umis_same_as_old} ({100*num_new_umis_same_as_old/num_reads:2.4f}%)")
-    print(f"Num new UMIs different from old UMIs: {num_reads - num_new_umis_same_as_old} ({100*(num_reads - num_new_umis_same_as_old)/num_reads:2.4f}%)")
-    print(f"Num CCS Reads with new UMIs != old UMIs: {num_ccs_reads_not_same_as_old} ({100*num_ccs_reads_not_same_as_old/num_reads:2.4f}%) ({100 * num_ccs_reads_not_same_as_old / num_ccs_reads:2.4f}% of CCS)")
-    print(f"Num CLR Reads with new UMIs != old UMIs: {num_clr_reads_not_same_as_old} ({100*num_clr_reads_not_same_as_old/num_reads:2.4f}%) ({100 * num_clr_reads_not_same_as_old / num_clr_reads:2.4f}% of CLR)")
+    print_single_count("Num new UMIs same as old UMIs", num_new_umis_same_as_old, num_reads)
+    print_single_count("Num new UMIs different from old UMIs", num_reads - num_new_umis_same_as_old, num_reads)
+    print_single_count("Num CCS Reads with new UMIs != old UMIs", num_ccs_reads_not_same_as_old, num_reads, num_ccs_reads, " of CCS")
+    print_single_count("Num CLR Reads with new UMIs != old UMIs", num_clr_reads_not_same_as_old, num_reads, num_clr_reads, " of CLR")
     print()
-    print(f"Num old umis in short reads umis: {num_old_umis_in_short_reads_umis} ({100*num_old_umis_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num old CCS umis in short reads umis: {num_old_ccs_umis_in_short_reads_umis} ({100*num_old_ccs_umis_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_old_ccs_umis_in_short_reads_umis / num_ccs_reads:2.4f}% of CCS)")
-    print(f"Num old CLR umis in short reads umis: {num_old_clr_umis_in_short_reads_umis} ({100*num_old_clr_umis_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_old_clr_umis_in_short_reads_umis / num_clr_reads:2.4f}% of CLR)")
-    print(f"Num old umis NOT in short reads umis: {num_old_umis_not_in_short_reads_umis} ({100*num_old_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num old CCS umis NOT in short reads umis: {num_old_ccs_umis_not_in_short_reads_umis} ({100*num_old_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_old_ccs_umis_not_in_short_reads_umis / num_ccs_reads:2.4f}% of CCS)")
-    print(f"Num old CLR umis NOT in short reads umis: {num_old_clr_umis_not_in_short_reads_umis} ({100*num_old_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_old_clr_umis_not_in_short_reads_umis / num_clr_reads:2.4f}% of CLR)")
+    print_single_count("Num old umis in short reads umis", num_old_umis_in_short_reads_umis, num_reads)
+    print_single_count("Num old CCS umis in short reads umis", num_old_ccs_umis_in_short_reads_umis, num_reads, num_ccs_reads, " of CCS")
+    print_single_count("Num old CLR umis in short reads umis", num_old_clr_umis_in_short_reads_umis, num_reads, num_clr_reads, " of CLR")
+    print_single_count("Num old umis NOT in short reads umis", num_old_umis_not_in_short_reads_umis, num_reads)
+    print_single_count("Num old CCS umis NOT in short reads umis", num_old_ccs_umis_not_in_short_reads_umis, num_reads, num_ccs_reads, " of CCS")
+    print_single_count("Num old CLR umis NOT in short reads umis", num_old_clr_umis_not_in_short_reads_umis, num_reads, num_clr_reads, " of CLR")
     print()
-    print(f"Num new umis in short reads umis: {num_new_umis_in_short_reads_umis} ({100*num_new_umis_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num new CCS umis in short reads umis: {num_new_ccs_umis_in_short_reads_umis} ({100*num_new_ccs_umis_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_new_ccs_umis_in_short_reads_umis / num_ccs_reads:2.4f}% of CCS)")
-    print(f"Num new CLR umis in short reads umis: {num_new_clr_umis_in_short_reads_umis} ({100*num_new_clr_umis_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_new_clr_umis_in_short_reads_umis / num_clr_reads:2.4f}% of CLR)")
-    print(f"Num new umis NOT in short reads umis: {num_new_umis_not_in_short_reads_umis} ({100*num_new_umis_not_in_short_reads_umis/num_reads:2.4f}%)")
-    print(f"Num new CCS umis NOT in short reads umis: {num_new_ccs_umis_not_in_short_reads_umis} ({100*num_new_ccs_umis_not_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_new_ccs_umis_not_in_short_reads_umis / num_ccs_reads:2.4f}% of CCS)")
-    print(f"Num new CLR umis NOT in short reads umis: {num_new_clr_umis_not_in_short_reads_umis} ({100*num_new_clr_umis_not_in_short_reads_umis/num_reads:2.4f}%) ({100 * num_new_ccs_umis_not_in_short_reads_umis / num_clr_reads:2.4f}% of CLR)")
+    print_single_count("Num new umis in short reads umis", num_new_umis_in_short_reads_umis, num_reads)
+    print_single_count("Num new CCS umis in short reads umis", num_new_ccs_umis_in_short_reads_umis, num_reads, num_ccs_reads, " of CCS")
+    print_single_count("Num new CLR umis in short reads umis", num_new_clr_umis_in_short_reads_umis, num_reads, num_clr_reads, " of CLR")
+    print_single_count("Num new umis NOT in short reads umis", num_new_umis_not_in_short_reads_umis, num_reads)
+    print_single_count("Num new CCS umis NOT in short reads umis", num_new_ccs_umis_not_in_short_reads_umis, num_reads, num_ccs_reads, " of CCS")
+    print_single_count("Num new CLR umis NOT in short reads umis", num_new_clr_umis_not_in_short_reads_umis, num_reads, num_clr_reads, " of CLR")
     print()
-    print(f"Num reads missing 10x adapter (venus): {num_reads_missing_venus} ({100 * num_reads_missing_venus / num_reads:2.4f}%)")
-    print(f"Num CCS reads missing 10x adapter (venus): {num_ccs_reads_missing_venus} ({100 * num_ccs_reads_missing_venus / num_reads:2.4f}%) ({100 * num_ccs_reads_missing_venus / num_ccs_reads:2.4f}% of CCS)")
-    print(f"Num CLR reads missing 10x adapter (venus): {num_clr_reads_missing_venus} ({100 * num_clr_reads_missing_venus / num_reads:2.4f}%) ({100 * num_clr_reads_missing_venus / num_clr_reads:2.4f}% of CLR)")
+    print_single_count("Num reads missing 10x adapter (venus)", num_reads_missing_venus, num_reads)
+    print_single_count("Num CCS reads missing 10x adapter (venus)", num_ccs_reads_missing_venus, num_reads, num_ccs_reads, " of CCS")
+    print_single_count("Num CLR reads missing 10x adapter (venus)", num_clr_reads_missing_venus, num_reads, num_clr_reads, " of CLR")
     print()
-    print(f"Num reads missing CBC: {num_reads_missing_cbc} ({100 * num_reads_missing_cbc / num_reads:2.4f}%)")
-    print(f"Num CCS reads missing CBC: {num_ccs_reads_missing_cbc} ({100 * num_ccs_reads_missing_cbc / num_reads:2.4f}%) ({100 * num_ccs_reads_missing_cbc / num_ccs_reads:2.4f}% of CCS)")
-    print(f"Num CLR reads missing CBC: {num_clr_reads_missing_cbc} ({100 * num_clr_reads_missing_cbc / num_reads:2.4f}%) ({100 * num_clr_reads_missing_cbc / num_clr_reads:2.4f}% of CLR)")
+    print_single_count("Num reads missing CBC", num_reads_missing_cbc, num_reads)
+    print_single_count("Num CCS reads missing CBC", num_ccs_reads_missing_cbc, num_reads, num_ccs_reads, " of CCS")
+    print_single_count("Num CLR reads missing CBC", num_clr_reads_missing_cbc, num_reads, num_clr_reads, " of CLR")
     print()
-    print(f"Num reads missing post-umi adapter (boreas): {num_reads_missing_boreas} ({100 * num_reads_missing_boreas / num_reads:2.4f}%)")
-    print(f"Num CCS reads missing post-umi adapter (boreas): {num_ccs_reads_missing_boreas} ({100 * num_ccs_reads_missing_boreas / num_reads:2.4f}%) ({100 * num_ccs_reads_missing_boreas / num_ccs_reads:2.4f}% of CCS)")
-    print(f"Num CLR reads missing post-umi adapter (boreas): {num_clr_reads_missing_boreas} ({100 * num_clr_reads_missing_boreas / num_reads:2.4f}%) ({100 * num_clr_reads_missing_boreas / num_clr_reads:2.4f}% of CLR)")
+    print_single_count("Num reads missing post-umi adapter (boreas)", num_reads_missing_boreas, num_reads)
+    print_single_count("Num CCS reads missing post-umi adapter (boreas)", num_ccs_reads_missing_boreas, num_reads, num_ccs_reads, " of CCS")
+    print_single_count("Num CLR reads missing post-umi adapter (boreas)", num_clr_reads_missing_boreas, num_reads, num_clr_reads, " of CLR")
     print()
     print("Overall new UMI Lengths:")
     print_dict_stats(new_umi_length_hist)
@@ -735,6 +733,17 @@ def main(bam_filename, out_file_name, barcode_seq, cell_barcode_tag, umi_length,
     print("  A negative number indicates that the new offset is before the original offset.")
     print("  A positive number indicates that the new offset is after the original offset.")
     print()
+
+
+def print_single_count(label, count, total, alt_total=None, alt_label=""):
+
+    count_frac = count/total if total != 0 else 0
+
+    if alt_total is not None:
+        alt_count_frac = count/alt_total if alt_total != 0 else 0
+        print(f"{label}: {count} ({100 * count_frac:2.4f}%) ({100 * alt_count_frac:2.4f}%{alt_label})")
+    else:
+        print(f"{label}: {count} ({100 * count_frac:2.4f}%)")
 
 
 def print_dict_stats(d, front_padding=2):
