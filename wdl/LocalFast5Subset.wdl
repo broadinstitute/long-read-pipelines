@@ -205,7 +205,7 @@ task CountLines {
     >>>
 
     output {
-        Int numlines = stdout()
+        Int numlines = read_int(stdout())
     }
         #########################
     RuntimeAttr default_attr = object {
