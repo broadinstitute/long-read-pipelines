@@ -9,6 +9,7 @@ workflow LocalFast5 {
         File   aligned_bai
         String gcs_output_dir
         File summary_txt
+        String prefix
     }
 
     scatter (locus in loci) {
@@ -50,7 +51,8 @@ workflow LocalFast5 {
             filenames = GetFast5Filenames.filenames,
             numfiles = CountLines.numlines,
             fast5_dir = fast5_dir,
-            gcs_output_dir = gcs_output_dir
+            gcs_output_dir = gcs_output_dir,
+            prefix = prefix
     }
 }
 
@@ -61,6 +63,7 @@ task GetLocalFast5 {
         Int numfiles
         String fast5_dir
         String gcs_output_dir
+        String prefix
 
         RuntimeAttr? runtime_attr_override
     }
@@ -80,7 +83,7 @@ task GetLocalFast5 {
 
         ## save output
         cd output
-        gsutil cp *.fast5 ~{gcs_output_dir}
+        gsutil cp *.fast5 ~{gcs_output_dir}/~{prefix}
     >>>
 
     #########################
