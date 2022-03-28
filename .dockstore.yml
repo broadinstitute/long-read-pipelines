@@ -120,3 +120,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LocalFast5Subset.wdl
   testParameterFiles:
+- name: ONTMethylation
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTMethylation.wdl
+  testParameterFiles:
