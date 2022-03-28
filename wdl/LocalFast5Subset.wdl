@@ -61,6 +61,8 @@ task GetLocalFast5 {
         Int numfiles
         String fast5_dir
         String gcs_output_dir
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = ceil(0.4 * numfiles)
@@ -107,6 +109,8 @@ task GetFast5Filenames {
     input {
         File readnames
         File summary_file
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 3*(size(readnames, "GB")+size(summary_file, "GB"))
@@ -146,6 +150,8 @@ task GetFast5Filenames {
 task GetReadnames {
     input {
         File bam
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 2*size(bam, "GB")
@@ -185,6 +191,8 @@ task GetReadnames {
 task CountLines {
     input {
         File file
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 1.2 * size(file, "GB")
