@@ -40,11 +40,11 @@ workflow LocalFast5 {
             summary_file = summary_txt
     }
 
-    String fast5_dir = sub(summary_file, basename(summary_file), "fast5_pass")
+    String fast5_dir = sub(summary_txt, basename(summary_txt), "fast5_pass")
 
     call GetLocalFast5 {
         input:
-            readnames = = GetReadnames.readnames,
+            readnames = GetReadnames.readnames,
             filenames = GetFast5Filenames.filenames,
             fast5_dir = fast5_dir,
             gcs_output_dir = gcs_output_dir
