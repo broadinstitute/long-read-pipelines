@@ -116,3 +116,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LocalAssemblyHifiasm.wdl
   testParameterFiles:
+- name: LocalFast5Subset
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LocalFast5Subset.wdl
+  testParameterFiles:
