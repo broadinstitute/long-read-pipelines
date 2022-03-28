@@ -117,6 +117,103 @@ task EchoManifest {
     }
 }
 
+task MergeFastqGzs {
+    input {
+        Array[File] fastq_gzs
+
+        String prefix = "merged"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 3 * ceil(size(fastq_gzs, "GB"))
+
+    command <<<
+        cat ~{sep=' ' fastq_gzs} > ~{prefix}.fastq.gz
+    >>>
+
+    output {
+        File merged_fastq_gz = "~{prefix}.fastq.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+
+task Cat {
+    input {
+        Array[File] files
+        Boolean has_header = false
+        String out = "out.txt"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        files:      "text files to combine"
+        has_header: "files have a redundant header"
+        out:        "[default-valued] output filename"
+    }
+
+    Int disk_size = 4*ceil(size(files, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        HAS_HEADER=~{true='1' false='0' has_header}
+
+        if [ HAS_HEADER == 1 ]; then
+            ((head -1 ~{files[0]}) && (cat ~{sep=' ' files} | xargs -n 1 tail -n +2)) > ~{out}
+        else
+            cat ~{sep=' ' files} > ~{out}
+        fi
+    >>>
+
+    output {
+        File combined = out
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task ChunkManifest {
     input {
         File manifest
@@ -1180,6 +1277,7 @@ task ListFilesOfType {
 
     output {
         Array[String] files = read_lines("files.txt")
+        File manifest = "files.txt"
     }
 
     #########################
@@ -1190,7 +1288,7 @@ task ListFilesOfType {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
