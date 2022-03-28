@@ -48,7 +48,7 @@ workflow LocalFast5 {
         input:
             readnames = GetReadnames.readnames,
             filenames = GetFast5Filenames.filenames,
-            numfiles = CountLines.numLines,
+            numfiles = CountLines.numlines,
             fast5_dir = fast5_dir,
             gcs_output_dir = gcs_output_dir
     }
