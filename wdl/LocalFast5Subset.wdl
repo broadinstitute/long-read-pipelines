@@ -94,7 +94,7 @@ task GetLocalFast5 {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "nanozoo/ont-fast5-api:3.1.6--a980386"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-ont:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
