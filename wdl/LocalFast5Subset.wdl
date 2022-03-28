@@ -1,5 +1,6 @@
 version 1.0
 import "tasks/Utils.wdl" as Utils
+import "tasks/Structs.wdl"
 
 workflow LocalFast5 {
     input {
