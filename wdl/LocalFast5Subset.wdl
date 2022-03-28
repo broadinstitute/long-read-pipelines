@@ -41,11 +41,13 @@ workflow LocalFast5 {
     }
 
     String fast5_dir = sub(summary_txt, basename(summary_txt), "fast5_pass")
+    call CountLines { input: file = GetFast5Filenames.filenames }
 
     call GetLocalFast5 {
         input:
             readnames = GetReadnames.readnames,
             filenames = GetFast5Filenames.filenames,
+            numfiles = CountLines.numLines,
             fast5_dir = fast5_dir,
             gcs_output_dir = gcs_output_dir
     }
@@ -55,13 +57,12 @@ task GetLocalFast5 {
     input {
         File readnames
         File filenames
+        Int numfiles
         String fast5_dir
         String gcs_output_dir
     }
 
-    call CountLines { input: file = filenames }
-
-    Int disk_size = 400 * CountLines.numLines
+    Int disk_size = ceil(0.4 * numfiles)
 
     command <<<
         set -euxo pipefail
@@ -141,7 +142,6 @@ task GetFast5Filenames {
     }
 }
 
-
 task GetReadnames {
     input {
         File bam
@@ -182,12 +182,14 @@ task GetReadnames {
 }
 
 task CountLines {
-    input { File file }
+    input {
+        File file
+    }
 
-    Int disk_size = 1.5 * size(file, "GB")
+    Int disk_size = 1.2 * size(file, "GB")
 
     command <<<
-        wc -l ~{file}
+        wc -l ~{file} | awk '{print $1}'
     >>>
 
     output {
