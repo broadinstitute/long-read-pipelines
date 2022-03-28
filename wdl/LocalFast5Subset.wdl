@@ -116,7 +116,7 @@ task GetFast5Filenames {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*(size(readnames, "GB")+size(summary_file, "GB"))
+    Int disk_size = 3*ceil((size(readnames, "GB")+size(summary_file, "GB")))
 
     command <<<
         set -euxo pipefail
@@ -157,7 +157,7 @@ task GetReadnames {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*size(bam, "GB")
+    Int disk_size = 2*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -198,7 +198,7 @@ task CountLines {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1.2 * size(file, "GB")
+    Int disk_size = ceil(1.2 * size(file, "GB"))
 
     command <<<
         wc -l ~{file} | awk '{print $1}'
