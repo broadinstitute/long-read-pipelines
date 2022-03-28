@@ -83,7 +83,7 @@ task GetLocalFast5 {
 
         ## save output
         cd output
-        gsutil cp *.fast5 ~{gcs_output_dir}/~{prefix}
+        gsutil cp *.fast5 ~{gcs_output_dir}/~{prefix}/
     >>>
 
     #########################
