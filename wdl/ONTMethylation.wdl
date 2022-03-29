@@ -78,7 +78,7 @@ workflow ONTMethylation {
         File mapped_bam = FinalizeMappedBam.gcs_path
         File mapped_bai = FinalizeMappedBai.gcs_path
 
-        File Basecalls = FinalizeBasecalls.gcs_path
+        File basecalls = FinalizeBasecalls.gcs_path
     }
 }
 
@@ -178,7 +178,7 @@ task Megalodon {
         boot_disk_gb:       30,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+        docker:             "quay.io/ymostovoy/lr-megalodon:2.5.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
