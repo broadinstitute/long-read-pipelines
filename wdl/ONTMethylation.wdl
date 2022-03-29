@@ -155,7 +155,7 @@ task Megalodon {
     >>>
 
     output {
-        Array[File] logs = glob("$TMP_DIR/*log*")
+        Array[File] logs = glob("tmp/*/*log*")
         File basecalls_fastq = "megalodon_results/basecalls.fastq"
 
         File mappings_bam = "megalodon_results/mappings.sorted.bam"
