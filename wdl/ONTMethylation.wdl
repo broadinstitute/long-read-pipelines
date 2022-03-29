@@ -155,6 +155,7 @@ task Megalodon {
     >>>
 
     output {
+        Array[File] logs = glob("$TMP_DIR/*log*")
         File basecalls_fastq = "megalodon_results/basecalls.fastq"
 
         File mappings_bam = "megalodon_results/mappings.sorted.bam"
@@ -168,6 +169,7 @@ task Megalodon {
         File sequencing_summary = "megalodon_results/sequencing_summary.txt"
 
         File per_read_modified_base_calls_db = "megalodon_merge_mods_results/per_read_modified_base_calls.db"
+
     }
 
     #########################
