@@ -63,4 +63,4 @@ if __name__ == '__main__':
                 read_count += 1
 
     print(f"Num reads: {read_count}")
-    print(f"Num end element reads removed: {num_end_elements_removed}")
+    print(f"Num end element reads removed: {num_end_elements_removed} ({100*num_end_elements_removed/read_count:2.4f}%)")
