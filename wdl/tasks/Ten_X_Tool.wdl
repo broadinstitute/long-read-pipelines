@@ -715,13 +715,14 @@ task AdjustUmiSequenceWithAdapterAlignment {
         python3 /lrma/update_umi_positions.py \
             -b ~{bam} \
             -s ~{short_read_umis} \
-            -o ~{prefix}.bam
+            -o ~{prefix}.bam | tee ~{prefix}.log
 
         samtools index ~{prefix}.bam
     }
     output {
         File output_bam = "~{prefix}.bam"
         File output_bai = "~{prefix}.bam.bai"
+        File log = "~{prefix}.log"
     }
 
     #########################
