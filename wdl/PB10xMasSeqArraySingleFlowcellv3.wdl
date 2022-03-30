@@ -532,6 +532,17 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             runtime_attr_override = filterReadsAttrs
     }
 
+#    # Now remove all -END reads:
+#    call Utils.RemoveMasSeqEndReads as t_47_RemoveMasSeqEndReadsFromCcsReads {
+#        input:
+#            bam_file = t_45_AlignmentFilterForCcsArrayElements.bam
+#    }
+#
+#    call Utils.RemoveMasSeqEndReads as t_47_RemoveMasSeqEndReadsFromCcsReclaimedReads {
+#        input:
+#            bam_file =  t_46_AlignmentFilterForReclaimedArrayElements.bam
+#    }
+
     #########################################################################################################################
     ##########################################################################################################################
 
@@ -831,6 +842,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             bam = t_68_RestoreOriginalReadNames.bam_out,
             eq_class_file = t_76_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            prefix = SM + "_annotated_array_elements_with_gene_names"
     }
     call UMI_TOOLS.Run_Group as t_78_UMIToolsGroup {
         input:
