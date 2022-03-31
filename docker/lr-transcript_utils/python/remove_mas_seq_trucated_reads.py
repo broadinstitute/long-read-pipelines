@@ -7,6 +7,8 @@ import pathlib
 
 import pysam
 
+from tqdm import tqdm
+
 READ_SEGMENTS_TAG = "SG"
 READ_ALTERED_NAME_TAG = "XN"
 zmw_regex = re.compile(r'.*?/(\d+)/.*')
@@ -56,12 +58,7 @@ if __name__ == '__main__':
 
     with pysam.AlignmentFile(in_file_path, 'rb' if is_bam else 'r', check_sq=False) as bam_file:
         with pysam.AlignmentFile(out_file_name, 'wb', check_sq=False, header=bam_file.header) as output_file:
-            for read in bam_file.fetch(until_eof=True):
-                if read_count % 1000 == 0:
-                    current_time = time.time()
-                    print('Processed reads: {:,}. Time elapsed: {:.2f}s'.format(read_count, current_time - last_timing), file=sys.stderr)
-                    last_timing = current_time
-
+            for read in tqdm(bam_file.fetch(until_eof=True), desc="Examining reads", unit="read"):
                 # Make sure we're looking at the correct name.
                 # After reads are segmented, the longbow-specific name gets put into the READ_ALTERED_NAME_TAG tag.
                 # As a fall-back, we can check the read name itself as well:
