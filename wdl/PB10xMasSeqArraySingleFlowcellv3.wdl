@@ -1372,10 +1372,28 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             outdir = stats_out_dir + "/longbow_stats/All_Longbow_Passed/",
             keyfile = keyfile
     }
+    call FF.FinalizeToDir as t_127_FinalizeAllPassedLongbowStats {
+        input:
+            files = [
+                t_106_Failed_longbow_stats.summary_stats,
+                t_106_Failed_longbow_stats.array_length_counts_plot_png,
+                t_106_Failed_longbow_stats.array_length_counts_plot_svg,
+                t_106_Failed_longbow_stats.ligation_heatmap_nn_png,
+                t_106_Failed_longbow_stats.ligation_heatmap_nn_svg,
+                t_106_Failed_longbow_stats.ligation_heatmap_png,
+                t_106_Failed_longbow_stats.ligation_heatmap_svg,
+                t_106_Failed_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_106_Failed_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_106_Failed_longbow_stats.ligation_heatmap_reduced_png,
+                t_106_Failed_longbow_stats.ligation_heatmap_reduced_svg,
+            ],
+            outdir = stats_out_dir + "/longbow_stats/All_Longbow_Failed/",
+            keyfile = keyfile
+    }
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_127_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_128_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile
