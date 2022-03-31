@@ -1406,7 +1406,7 @@ task RemoveMasSeqEndReads {
     Int disk_size_gb = 1 + ceil(2 * size(bam_file, "GiB"))
 
     command {
-        /python_scripts/remove_mas_seq_trailing_trucated_reads.py ~{bam_file} ~{prefix}
+        /python_scripts/remove_mas_seq_trucated_reads.py ~{bam_file} ~{prefix}
     }
 
     output {

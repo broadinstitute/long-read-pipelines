@@ -1297,8 +1297,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_102_CCS_longbow_stats.ligation_heatmap_reduced_png,
                 t_102_CCS_longbow_stats.ligation_heatmap_reduced_svg,
             ],
-            outdir = base_out_dir + "/longbow_stats/CCS_Corrected/",
-            keyfile = t_107_Overall_longbow_stats.summary_stats
+            outdir = stats_out_dir + "/longbow_stats/CCS_Corrected/",
+            keyfile = keyfile
     }
     call FF.FinalizeToDir as t_123_FinalizeReclaimableLongbowStats {
         input:
@@ -1315,8 +1315,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_103_Reclaimable_longbow_stats.ligation_heatmap_reduced_png,
                 t_103_Reclaimable_longbow_stats.ligation_heatmap_reduced_svg,
             ],
-            outdir = base_out_dir + "/longbow_stats/CCS_Reclaimable/",
-            keyfile = t_107_Overall_longbow_stats.summary_stats
+            outdir = stats_out_dir + "/longbow_stats/CCS_Reclaimable/",
+            keyfile = keyfile
     }
     call FF.FinalizeToDir as t_124_FinalizeReclaimedLongbowStats {
         input:
@@ -1333,8 +1333,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_104_Reclaimed_longbow_stats.ligation_heatmap_reduced_png,
                 t_104_Reclaimed_longbow_stats.ligation_heatmap_reduced_svg,
             ],
-            outdir = base_out_dir + "/longbow_stats/CCS_Reclaimed/",
-            keyfile = t_107_Overall_longbow_stats.summary_stats
+            outdir = stats_out_dir + "/longbow_stats/CCS_Reclaimed/",
+            keyfile = keyfile
     }
     call FF.FinalizeToDir as t_125_FinalizeOverallLongbowStats {
         input:
@@ -1351,8 +1351,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_107_Overall_longbow_stats.ligation_heatmap_reduced_png,
                 t_107_Overall_longbow_stats.ligation_heatmap_reduced_svg,
             ],
-            outdir = base_out_dir + "/longbow_stats/Overall/",
-            keyfile = t_107_Overall_longbow_stats.summary_stats
+            outdir = stats_out_dir + "/longbow_stats/Overall/",
+            keyfile = keyfile
     }
     call FF.FinalizeToDir as t_126_FinalizeAllPassedLongbowStats {
         input:
@@ -1369,8 +1369,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_105_Passed_longbow_stats.ligation_heatmap_reduced_png,
                 t_105_Passed_longbow_stats.ligation_heatmap_reduced_svg,
             ],
-            outdir = base_out_dir + "/longbow_stats/All_Longbow_Passed/",
-            keyfile = t_107_Overall_longbow_stats.summary_stats
+            outdir = stats_out_dir + "/longbow_stats/All_Longbow_Passed/",
+            keyfile = keyfile
     }
 
     ##############################################################################################################
