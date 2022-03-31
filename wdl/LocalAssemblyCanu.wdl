@@ -13,15 +13,16 @@ workflow LocalAssembly {
         File   aligned_bai
         String prefix
         String experiment_type
+
 #        Boolean add_unaligned_reads = false
         Boolean run_quast = false
 
-        File ref_map_file
+        File ref_fasta
     }
 
     parameter_meta {
         loci:          "Loci to assemble. At least one is required. Reads from all loci will be merged for assembly. Format: [\"chr1:1000-2000\", \"chr1:5000-10000\"]"
-        region_size:   "Estimated size of region to assemble, in mb"
+        region_size:   "Estimated size of region to assemble (can use k/m/g suffixes, e.g. 3g for the whole human genome)"
         aligned_bam:   "aligned file"
         aligned_bai:   "index file"
         prefix:        "prefix for output files"
@@ -30,10 +31,8 @@ workflow LocalAssembly {
 #        add_unaligned_reads: "set to true to include unaligned reads in the assembly (default: false)"
         run_quast:           "set to true to run Quast on the assembly (default: false)"
 
-        ref_map_file:  "table indicating reference sequence and auxillary file locations"
+        ref_fasta:  "reference seq in fasta format, for alignment and variant calling"
     }
-
-    Map[String, String] ref_map = read_map(ref_map_file)
 
     Map[String, String] map_presets = {
         'CLR':    'pacbio',
@@ -67,7 +66,6 @@ workflow LocalAssembly {
             bam = subset_bam,
             prefix = prefix
     }
-
 
     if (experiment_type == 'CLR' || experiment_type == 'ONT') {
         ######## Call 3 stages of Canu #########
@@ -112,7 +110,7 @@ workflow LocalAssembly {
     if (run_quast) {
         call Quast.Quast {
             input:
-                ref = ref_map['fasta'],
+                ref = ref_fasta,
                 assemblies = [ assembled_contigs ]
         }
     }
@@ -120,7 +118,7 @@ workflow LocalAssembly {
     call AV.CallAssemblyVariants as CallAssemblyVariants {
         input:
             asm_fasta = assembled_contigs,
-            ref_fasta = ref_map['fasta'],
+            ref_fasta = ref_fasta,
             participant_name = prefix,
             prefix = prefix + ".canu"
     }
