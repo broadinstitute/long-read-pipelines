@@ -13,7 +13,8 @@ READ_SEGMENTS_TAG = "SG"
 READ_ALTERED_NAME_TAG = "XN"
 zmw_regex = re.compile(r'.*?/(\d+)/.*')
 
-UNSUPPORTED_START_SEGMENTS = ["random", "BOREAS", "cDNA", "CBC", "UMI", "Poly_A", "MARS"]
+UNSUPPORTED_START_SEGMENTS = {"random", "BOREAS", "cDNA", "CBC", "UMI", "Poly_A", "MARS"}
+SUPPORTED_END_SEGMENTS = {"P", "Poly_A", "MARS"}
 
 if __name__ == '__main__':
 
@@ -23,7 +24,7 @@ if __name__ == '__main__':
         print(f"{sys.argv[0]} LONGBOW_SEGMENTED_BAM PREFIX", file=sys.stderr)
         print(f"Removes any truncated array element.", file=sys.stderr)
         print(f"Truncated array elements are determined by the following:", file=sys.stderr)
-        print(f"    Read name has the -END suffix", file=sys.stderr)
+        print(f"    Read name ends with `-END` and the read segments ({READ_SEGMENTS_TAG} tag) end with one of: {','.join(SUPPORTED_END_SEGMENTS)}", file=sys.stderr)
         print(f"    Read name contains `START` and the read segments ({READ_SEGMENTS_TAG} tag) begin with one of: {','.join(UNSUPPORTED_START_SEGMENTS)}", file=sys.stderr)
         print(f"", file=sys.stderr)
 
@@ -55,6 +56,7 @@ if __name__ == '__main__':
     num_end_elements_removed = 0
     num_start_elements_removed = 0
     remove_start_element_counts = dict()
+    remove_end_element_counts = dict()
 
     with pysam.AlignmentFile(in_file_path, 'rb' if is_bam else 'r', check_sq=False) as bam_file:
         with pysam.AlignmentFile(out_file_name, 'wb', check_sq=False, header=bam_file.header) as output_file:
@@ -65,7 +67,18 @@ if __name__ == '__main__':
                 name = read.get_tag(READ_ALTERED_NAME_TAG) if read.has_tag(READ_ALTERED_NAME_TAG) else read.query_name
 
                 if name.endswith("-END"):
-                    num_end_elements_removed += 1
+                    # OK, we have an end element here.  We need to determine what it actually contains:
+                    segments = read.get_tag(READ_SEGMENTS_TAG).split(",")
+                    end_seg_name, coords = segments[-1].split(":")
+
+                    if end_seg_name not in SUPPORTED_END_SEGMENTS:
+                        num_end_elements_removed += 1
+                        try:
+                            remove_end_element_counts[end_seg_name] += 1
+                        except KeyError:
+                            remove_end_element_counts[end_seg_name] = 1
+                    else:
+                        output_file.write(read)
                 elif "START" in name:
                     # OK, we have a start element here.  We need to determine what it actually contains:
                     segments = read.get_tag(READ_SEGMENTS_TAG).split(",")
@@ -88,4 +101,7 @@ if __name__ == '__main__':
     print(f"Num start element reads removed: {num_start_elements_removed} ({100*num_start_elements_removed/read_count:2.4f}%)")
     print(f"Removed start element breakdown: ")
     for k, v in remove_start_element_counts.items():
+        print(f"\t{k}: {v}")
+    print(f"Removed end element breakdown: ")
+    for k, v in remove_end_element_counts.items():
         print(f"\t{k}: {v}")
