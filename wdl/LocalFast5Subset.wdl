@@ -68,7 +68,7 @@ task GetLocalFast5 {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(0.4 * numfiles)
+    Int disk_size = ceil(0.5 * numfiles)
 
     command <<<
         set -euxo pipefail
