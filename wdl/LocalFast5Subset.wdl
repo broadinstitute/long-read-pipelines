@@ -121,8 +121,8 @@ task GetFast5Filenames {
     command <<<
         set -euxo pipefail
 
-        while read name; do grep $name ~{summary_file} |cut -f2 >> filenames; done < ~{readnames}
-        sort -u filenames -o filenames
+        sort -k3,3 ~{summary_file} -o ~{summary_file}
+        join -1 1 -2 3 -o 2.2 ~{readnames} ~{summary_file} |sort -u > filenames
     >>>
 
     output {
