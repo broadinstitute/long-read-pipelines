@@ -924,7 +924,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             aligned_transcriptome_reads = t_97_CopyGeneNameToTag.bam_out,
             aligned_transcriptome_reads_index = t_97_CopyGeneNameToTag.bai,
             do_per_cell = true,
-            prefix = SM + "_umi_tools_group"
+            prefix = SM + "_annotated_array_elements_with_gene_names_with_umi_tools_group_correction"
     }
 
     call TX_POST.CreateCountMatrixFromAnnotatedBam as t_99_CreateCountMatrixFromAnnotatedBam {
