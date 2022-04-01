@@ -120,12 +120,12 @@ task GetFast5Filenames {
 
         sort -k3,3 ~{summary_file} -o ~{summary_file}
         join -1 1 -2 3 -o 2.2 ~{readnames} ~{summary_file} |sort -u > filenames
-        sed -i '' 's/^/~{fast5_dir}/' filenames
-        wc -l filenames | awk '{print $1}'
+        awk '{print DIR$1}' DIR="~{fast5_dir}" filenames > full_filenames
+        wc -l full_filenames | awk '{print $1}'
     >>>
 
     output {
-        File filenames = "filenames"
+        File filenames = "full_filenames"
         Int numlines = read_int(stdout())
     }
     #########################
