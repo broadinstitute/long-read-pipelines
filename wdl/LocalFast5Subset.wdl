@@ -42,15 +42,11 @@ workflow LocalFast5 {
             summary_file = summary_txt
     }
 
-    String fast5_dir = sub(summary_txt, basename(summary_txt), "fast5_pass")
-    call CountLines { input: file = GetFast5Filenames.filenames }
-
     call GetLocalFast5 {
         input:
             readnames = GetReadnames.readnames,
             filenames = GetFast5Filenames.filenames,
-            numfiles = CountLines.numlines,
-            fast5_dir = fast5_dir,
+            numfiles = GetFast5Filenames.numlines,
             gcs_output_dir = gcs_output_dir,
             prefix = prefix
     }
@@ -61,7 +57,6 @@ task GetLocalFast5 {
         File readnames
         File filenames
         Int numfiles
-        String fast5_dir
         String gcs_output_dir
         String prefix
 
@@ -77,13 +72,13 @@ task GetLocalFast5 {
         mkdir fast5
         mkdir output
 
-        while read filename; do gsutil cp ~{fast5_dir}/$filename fast5/ ; done < ~{filenames}
+        while read filename; do gsutil cp $filename fast5/ ; done < ~{filenames}
 
         fast5_subset -i fast5 -s output -l ~{readnames} -t $num_core
 
         ## save output
         cd output
-        gsutil cp *.fast5 ~{gcs_output_dir}/~{prefix}/
+        gsutil -m cp *.fast5 ~{gcs_output_dir}/~{prefix}/
     >>>
 
     #########################
@@ -118,15 +113,20 @@ task GetFast5Filenames {
 
     Int disk_size = 3*ceil((size(readnames, "GB")+size(summary_file, "GB")))
 
+    String fast5_dir = sub(summary_file, basename(summary_file), "fast5_pass/")
+
     command <<<
         set -euxo pipefail
 
         sort -k3,3 ~{summary_file} -o ~{summary_file}
         join -1 1 -2 3 -o 2.2 ~{readnames} ~{summary_file} |sort -u > filenames
+        sed -i '' 's/^/~{fast5_dir}/' filenames
+        wc -l filenames | awk '{print $1}'
     >>>
 
     output {
         File filenames = "filenames"
+        Int numlines = read_int(stdout())
     }
     #########################
     RuntimeAttr default_attr = object {
@@ -178,44 +178,6 @@ task GetReadnames {
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task CountLines {
-    input {
-        File file
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = ceil(1.2 * size(file, "GB"))
-
-    command <<<
-        wc -l ~{file} | awk '{print $1}'
-    >>>
-
-    output {
-        Int numlines = read_int(stdout())
-    }
-        #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             2,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        1,
-        docker:             "ubuntu:16.04"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
