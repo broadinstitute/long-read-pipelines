@@ -17,7 +17,6 @@ workflow Canu {
         Float correct_error_rate
         Float trim_error_rate
         Float assemble_error_rate
-
         String prefix
     }
 
@@ -49,7 +48,12 @@ workflow Canu {
     }
 
     output {
-        File fa = Assemble.canu_contigs_fasta
+        File assemble_fa = Assemble.canu_contigs_fasta
+        File assemble_log = Assemble.intermediate_log
+        File correct_fa = Correct.corrected_reads
+        File correct_log = Correct.intermediate_log
+        File trim_fa = Trim.trimmed_reads
+        File trim_log = Trim.intermediate_log
     }
 }
 
