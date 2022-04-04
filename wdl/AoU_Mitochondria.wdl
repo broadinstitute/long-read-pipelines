@@ -74,6 +74,7 @@ workflow MitochondriaProcessing{
         Float correct_error_rate = 0.045
         Float trim_error_rate = 0.045
         Float assemble_error_rate = 0.045
+        String technology
     }
 
     parameter_meta{
@@ -106,7 +107,8 @@ workflow MitochondriaProcessing{
             correct_error_rate = correct_error_rate,
             trim_error_rate = trim_error_rate,
             assemble_error_rate = assemble_error_rate,
-            prefix = prefix}
+            prefix = prefix,
+            technology = technology}
 
     call AR.Minimap2 as Minimap2 {input: reads = [Canu.fa], ref_fasta = ref_fasta, map_preset = "map-hifi", RG = RG}
 #    call Quast.Quast as Quast {input: ref = ref_fasta, assemblies = [Hifiasm.fa]}
