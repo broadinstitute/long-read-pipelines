@@ -11,7 +11,7 @@ import "tasks/Canu.wdl" as Canu
 task RG_Parsing {
 
     meta {
-        description: "This workflow parses"
+        description: "This workflow parses bam header"
     }
 
     input{
