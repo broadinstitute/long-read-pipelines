@@ -42,43 +42,45 @@ workflow LocalFast5 {
             summary_file = summary_txt
     }
 
-    call GetLocalFast5 {
-        input:
-            readnames = GetReadnames.readnames,
-            filenames = GetFast5Filenames.filenames,
-            numfiles = GetFast5Filenames.numlines,
-            gcs_output_dir = gcs_output_dir,
-            prefix = prefix
+    call Utils.ChunkManifest { input: manifest = GetFast5Filenames.filenames, manifest_lines_per_chunk = 100 }
+
+    scatter (chunk_index in range(length(ChunkManifest.manifest_chunks))) {
+        call GetLocalFast5 {
+            input:
+                readnames = GetReadnames.readnames,
+                fast5_files = read_lines(ChunkManifest.manifest_chunks[chunk_index]),
+                gcs_output_dir = gcs_output_dir,
+                dir_prefix = prefix,
+                fast5_prefix = "chunk"+chunk_index+"_"
+        }
     }
 }
 
 task GetLocalFast5 {
     input {
         File readnames
-        File filenames
-        Int numfiles
+        Array[File] fast5_files
         String gcs_output_dir
-        String prefix
+        String dir_prefix
+        String fast5_prefix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(0.6 * numfiles)
+    Int disk_size = ceil(1.5*size(fast5_files, "GB"))
 
     command <<<
         set -euxo pipefail
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        mkdir fast5
+        fast5_dir=$(dirname ~{fast5_files[0]})
         mkdir output
 
-        while read filename; do gsutil cp $filename fast5/ ; done < ~{filenames}
-
-        fast5_subset -i fast5 -s output -l ~{readnames} -t $num_core
+        fast5_subset -i $fast5_dir -s output -l ~{readnames} -t $num_core -f ~{fast5_prefix}
 
         ## save output
         cd output
-        gsutil -m cp *.fast5 ~{gcs_output_dir}/~{prefix}/
+        gsutil -m cp *.fast5 ~{gcs_output_dir}/~{dir_prefix}/
     >>>
 
     #########################
