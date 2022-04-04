@@ -82,7 +82,7 @@ task Correct {
              genomeSize=~{genome_size}k \
              corMaxEvidenceErate=0.15 \
              correctedErrorRate=~{error_rate} \
-             -{tech_specific_arg} \
+             -~{tech_specific_arg} \
              ~{reads}
     >>>
 
@@ -140,7 +140,7 @@ task Trim {
             -p ~{prefix} -d canu_trim_output \
             genomeSize=~{genome_size}k \
             correctedErrorRate=~{error_rate} \
-            -{tech_specific_arg}-corrected \
+            -~{tech_specific_arg}-corrected \
             ~{corrected_reads}
     >>>
 
@@ -198,7 +198,7 @@ task Assemble {
              -p ~{prefix} -d canu_assemble_output \
              genomeSize=~{genome_size}k \
              correctedErrorRate=~{error_rate} \
-             -{tech_specific_arg}-corrected \
+             -~{tech_specific_arg}-corrected \
              ~{trimmed_reads}
     >>>
 
