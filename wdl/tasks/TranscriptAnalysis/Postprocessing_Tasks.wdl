@@ -62,6 +62,108 @@ task CreateCountMatrixFromAnnotatedBam {
     }
 }
 
+task AggregateUmiAdjustmentStats
+{
+
+    # TODO: FINISHME
+    input {
+        Array[File] longbow_umi_adjustment_log_files
+
+        String out_name = "longbow_umi_adjustment_stats.txt"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(longbow_umi_adjustment_log_files, "GB"))
+
+    # YES, this SHOULD be a proper tool, but right now it isn't.
+    command <<<
+
+        f=~{write_lines(longbow_umi_adjustment_log_files)}
+
+        mv $f THE_UMI_FILE_LIST.txt
+
+python << CODE
+import os
+
+stats_dict = dict()
+line_key = "STATS: "
+
+with open("THE_UMI_FILE_LIST.txt", 'r') as umi_file_list_file:
+    for line in umi_file_list_file:
+        stats_file = line.strip()
+        with open(stats_file, 'r') as f:
+            for line in f:
+                if line_key in line:
+                    line = line.strip()
+                    s = line[line.find(line_key) + len(line_key):]
+                    key, remainder = [t.strip() for t in s.split(":")]
+                    if "/" in remainder:
+                        count = int(remainder[:remainder.find("/")])
+                        tot = int(remainder[remainder.find("/")+1:remainder.find(" ")])
+                    else:
+                        count = int(remainder)
+                        tot = None
+
+                    try:
+                        c, t = stats_dict[key]
+                        if tot is not None:
+                            tot += t
+                        stats_dict[key] = (count + c, tot)
+                    except KeyError:
+                        stats_dict[key] = (count, tot)
+
+k_len = 0
+for k in stats_dict.keys():
+    if len(k) > k_len:
+        k_len = len(k)
+
+k_prefix = list(stats_dict.keys())[0]
+k_prefix = k_prefix[:k_prefix.find(" ")]
+with open("~{out_name}", 'w') as f:
+    for k, v in stats_dict.items():
+
+        if not k.startswith(k_prefix):
+            f.write("\n")
+            k_prefix = k[:k.find(" ")]
+
+        k_spacing = k_len - len(k)
+
+        count, tot = v
+        if tot is None:
+            f.write(f"{k}:{' '*k_spacing} {count}\n")
+        else:
+            f.write(f"{k}:{' '*k_spacing} {count}/{tot} ({100.0*count/tot:2.4f}%)\n")
+
+CODE
+    >>>
+
+    output {
+        File stats = out_name
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.27"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task MergeBarcodeCounts {
     meta {
         description : "Merge all counts for each unique barcode in the given TSV file.  Assumes file is unheadered and have two columns: BARCODE COUNT.  Merging performed by adding all COUNTs for each BARCODE."
@@ -488,7 +590,7 @@ task CombineEqClassFiles {
     }
 }
 
-task CopyGeneNameToTag {
+task CopyEqClassInfoToTag {
     meta {
         description : "Copy the gene assignment for each given read into the given tag for each read."
         author : "Jonn Smith"
@@ -500,6 +602,7 @@ task CopyGeneNameToTag {
         File eq_class_file
 
         String gene_tag = "XG"
+        String eq_class_tag = "eq"
 
         String prefix = "combined"
 
@@ -507,24 +610,26 @@ task CopyGeneNameToTag {
     }
 
     Int disk_size_gb = 10 + 2*ceil(size(bam, "GB"))
-                          + 2*ceil(size(eq_class_file, "GB"))
+                          + 4*ceil(size(eq_class_file, "GB"))
 
     command <<<
 python << CODE
 import pysam
+from tqdm import tqdm
 
 with open(f"~{eq_class_file}", 'r') as f:
     read_gene_dict = dict()
-    for line in f:
+    for line in tqdm(f):
         if line.startswith("#"):
             continue
         read_name, tx_eq_class, gene_assignment = line.strip().split("\t")
-        read_gene_dict[read_name] = gene_assignment
+        read_gene_dict[read_name] = (tx_eq_class, gene_assignment)
 
 with pysam.AlignmentFile(f"~{bam}", "rb", check_sq=False, require_index=False) as bam_file:
     with pysam.AlignmentFile(f"~{prefix}.bam", "wb", header=bam_file.header) as out_bam_file:
-        for read in bam_file:
-            read.set_tag(f"~{gene_tag}", read_gene_dict[read.query_name])
+        for read in tqdm(bam_file):
+            read.set_tag(f"~{eq_class_tag}", read_gene_dict[read.query_name][0])
+            read.set_tag(f"~{gene_tag}", read_gene_dict[read.query_name][1])
             out_bam_file.write(read)
 CODE
 
@@ -539,7 +644,7 @@ CODE
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             16,
+        mem_gb:             32,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
         preemptible_tries:  2,

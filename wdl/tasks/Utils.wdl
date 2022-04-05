@@ -1394,7 +1394,7 @@ task ConvertFastaToOneLineSequences {
 }
 
 
-task RemoveMasSeqEndReads {
+task RemoveMasSeqTruncatedReads {
     input {
         File bam_file
 

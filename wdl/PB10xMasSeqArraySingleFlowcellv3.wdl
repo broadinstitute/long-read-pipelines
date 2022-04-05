@@ -329,7 +329,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
             # Now remove all -END reads:
             # We do this here to speed up all other calculations.
-            call Utils.RemoveMasSeqEndReads as t_25_RemoveMasSeqEndReadsFromCcsReads {
+            call Utils.RemoveMasSeqTruncatedReads as t_25_RemoveMasSeqTruncatedReadsFromCcsReads {
                 input:
                     bam_file = t_24_SegmentS2ECcsReads.segmented_bam
             }
@@ -350,9 +350,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
 
         # Merge Filtered CCS reads with no ends together:
-        call Utils.MergeBams as t_28_MergeCCSArrayElementsNoEndShards {
+        call Utils.MergeBams as t_28_MergeCCSArrayElementsNonTruncatedShards {
             input:
-                bams = t_25_RemoveMasSeqEndReadsFromCcsReads.bam,
+                bams = t_25_RemoveMasSeqTruncatedReadsFromCcsReads.bam,
                 prefix = SM + "_ccs_array_elements_no_ends_shard"
         }
 
@@ -378,7 +378,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
             # Now remove all -END reads:
             # We do this here to speed up all other calculations.
-            call Utils.RemoveMasSeqEndReads as t_31_RemoveMasSeqEndReadsFromCcsReclaimedReads {
+            call Utils.RemoveMasSeqTruncatedReads as t_31_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads {
                 input:
                     bam_file = t_30_SegmentS2ECcsReclaimedReads.segmented_bam
             }
@@ -399,20 +399,21 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         }
 
         # Merge Filtered CCS reads with no ends together:
-        call Utils.MergeBams as t_34_MergeCCSReclaimedArrayElementsNoEndShards {
+        call Utils.MergeBams as t_34_MergeCCSReclaimedArrayElementsNonTruncatedShards {
             input:
-                bams = t_31_RemoveMasSeqEndReadsFromCcsReclaimedReads.bam,
+                bams = t_31_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
                 prefix = SM + "_ccs_reclaimed_array_elements_no_ends_shard"
         }
 
         ###############
 
-        # Now align the array elements with their respective alignment presets:
+        # Now align the array elements with their respective alignment presets.
+        # NOTE: We use the non-truncated reads because we only want the good stuff.
 
         # Align CCS reads to the genome:
         call AR.Minimap2 as t_35_AlignCCSArrayElementsToGenome {
             input:
-                reads      = [ t_26_MergeCCSArrayElementShards.merged_bam ],
+                reads      = [ t_28_MergeCCSArrayElementsNonTruncatedShards.merged_bam ],
                 ref_fasta  = ref_fasta,
                 map_preset = "splice:hq"
         }
@@ -420,7 +421,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         # Align Reclaimed reads to the genome:
         call AR.Minimap2 as t_36_AlignReclaimedArrayElementsToGenome {
             input:
-                reads      = [ t_32_MergeCCSReclaimedArrayElementShards.merged_bam ],
+                reads      = [ t_34_MergeCCSReclaimedArrayElementsNonTruncatedShards.merged_bam ],
                 ref_fasta  = ref_fasta,
                 map_preset = "splice"
         }
@@ -430,7 +431,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         # Now restore the tags to the aligned bam files:
         call TENX.RestoreAnnotationstoAlignedBam as t_37_RestoreAnnotationsToGenomeAlignedCCSBam {
             input:
-                annotated_bam_file = t_26_MergeCCSArrayElementShards.merged_bam,
+                annotated_bam_file = t_28_MergeCCSArrayElementsNonTruncatedShards.merged_bam,
                 aligned_bam_file = t_35_AlignCCSArrayElementsToGenome.aligned_bam,
                 tags_to_ignore = [],
                 mem_gb = 8,
@@ -438,7 +439,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
         call TENX.RestoreAnnotationstoAlignedBam as t_38_RestoreAnnotationsToGenomeAlignedReclaimedBam {
             input:
-                annotated_bam_file = t_32_MergeCCSReclaimedArrayElementShards.merged_bam,
+                annotated_bam_file = t_34_MergeCCSReclaimedArrayElementsNonTruncatedShards.merged_bam,
                 aligned_bam_file = t_36_AlignReclaimedArrayElementsToGenome.aligned_bam,
                 tags_to_ignore = [],
                 mem_gb = 8,
@@ -498,7 +499,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     call Utils.MergeBams as t_53_MergeLongbowFailedReads {
         input:
-#            bams = [t_45_MergeCCSLongbowFailedArrayReads.merged_bam, t_49_MergeCCSUnreclaimableArrayReads.merged_bam],
             bams = flatten([t_17_FilterS2ECCSReads.failed_reads, t_18_FilterS2EReclaimableReads.failed_reads]),
             prefix = SM + "_longbow_failed_array_reads"
     }
@@ -527,17 +527,17 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
 
     # Merge Filtered (and end removed) CCS array elements together:
-    call Utils.MergeBams as t_59_MergeCCSNoEndArrayElements {
+    call Utils.MergeBams as t_59_MergeCCSArrayElementsNonTruncated {
         input:
-            bams = t_28_MergeCCSArrayElementsNoEndShards.merged_bam,
-            prefix = SM + "_ccs_array_elements_no_ends"
+            bams = t_28_MergeCCSArrayElementsNonTruncatedShards.merged_bam,
+            prefix = SM + "_ccs_array_elements_non_truncated"
     }
 
     # Merge Filtered (and end removed) CCS Reclaimed array elements together:
-    call Utils.MergeBams as t_60_MergeCCSReclaimedNoEndArrayElements {
+    call Utils.MergeBams as t_60_MergeCCSReclaimedArrayElementsNonTruncated {
         input:
-            bams = t_34_MergeCCSReclaimedArrayElementsNoEndShards.merged_bam,
-            prefix = SM + "_ccs_reclaimed_array_elements_no_ends"
+            bams = t_34_MergeCCSReclaimedArrayElementsNonTruncatedShards.merged_bam,
+            prefix = SM + "_ccs_reclaimed_array_elements_non_truncated"
     }
 
     # Merge Aligned CCS array elements together:
@@ -921,7 +921,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Slot in Vic's fix for UMI assignments / dedupe here.
 
     # Use old quant method here as a baseline for comparison:
-    call TX_POST.CopyGeneNameToTag as t_98_CopyGeneNameToTag {
+    call TX_POST.CopyEqClassInfoToTag as t_98_CopyEqClassInfoToTag {
         input:
             bam = t_89_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
             eq_class_file = t_97_CombineEqClassFiles.combined_tx_eq_class_assignments,
@@ -929,8 +929,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     }
     call UMI_TOOLS.Run_Group as t_99_UMIToolsGroup {
         input:
-            aligned_transcriptome_reads = t_98_CopyGeneNameToTag.bam_out,
-            aligned_transcriptome_reads_index = t_98_CopyGeneNameToTag.bai,
+            aligned_transcriptome_reads = t_98_CopyEqClassInfoToTag.bam_out,
+            aligned_transcriptome_reads_index = t_98_CopyEqClassInfoToTag.bai,
             do_per_cell = true,
             prefix = SM + "_annotated_array_elements_with_gene_names_with_umi_tools_group_correction"
     }
@@ -1086,7 +1086,10 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
 
-    File keyfile = t_105_CreateOverallCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
+#    File keyfile = t_105_CreateOverallCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
+
+    # This seems to take longer to get to:
+    File keyfile = t_99_UMIToolsGroup.output_tsv
 
     String base_out_dir = outdir + "/" + DIR + out_dir_suffix + "/" + t_01_WdlExecutionStartTimestamp.timestamp_string
     String stats_out_dir = base_out_dir + "/stats"
@@ -1245,10 +1248,10 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_57_MergeCCSArrayElements.merged_bai,
                 t_58_MergeCCSReclaimedArrayElements.merged_bam,
                 t_58_MergeCCSReclaimedArrayElements.merged_bai,
-                t_59_MergeCCSNoEndArrayElements.merged_bam,
-                t_59_MergeCCSNoEndArrayElements.merged_bai,
-                t_60_MergeCCSReclaimedNoEndArrayElements.merged_bam,
-                t_60_MergeCCSReclaimedNoEndArrayElements.merged_bai,
+                t_59_MergeCCSArrayElementsNonTruncated.merged_bam,
+                t_59_MergeCCSArrayElementsNonTruncated.merged_bai,
+                t_60_MergeCCSReclaimedArrayElementsNonTruncated.merged_bam,
+                t_60_MergeCCSReclaimedArrayElementsNonTruncated.merged_bai,
                 t_77_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bam,
                 t_77_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bai,
                 t_78_MergeLongbowPaddedCBCUncorrectableCCSArrayElements.merged_bam,
@@ -1271,8 +1274,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call FF.FinalizeToDir as t_124_FinalizeCBCAnnotatedArrayElements {
         input:
             files = [
-                t_98_CopyGeneNameToTag.bam_out,
-                t_98_CopyGeneNameToTag.bai,
+                t_98_CopyEqClassInfoToTag.bam_out,
+                t_98_CopyEqClassInfoToTag.bai,
             ],
             outdir = array_element_dir,
             keyfile = keyfile
