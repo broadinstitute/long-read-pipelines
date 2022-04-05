@@ -540,6 +540,12 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             prefix = SM + "_ccs_reclaimed_array_elements_non_truncated"
     }
 
+    call Utils.MergeBams as t_61_MergeAllArrayElementsNonTruncated {
+        input:
+            bams = flatten([t_28_MergeCCSArrayElementsNonTruncatedShards.merged_bam, t_34_MergeCCSReclaimedArrayElementsNonTruncatedShards.merged_bam]),
+            prefix = SM + "_array_elements_non_truncated"
+    }
+
     # Merge Aligned CCS array elements together:
     call Utils.MergeBams as t_61_MergeAlignedCCSArrayElements {
         input:
@@ -552,6 +558,12 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             bams = t_38_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_aligned"
+    }
+
+    call Utils.MergeBams as t_61_MergeAllAlignedArrayElementsNonTruncated {
+        input:
+            bams = flatten([t_37_RestoreAnnotationsToGenomeAlignedCCSBam.output_bam, t_38_RestoreAnnotationsToGenomeAlignedReclaimedBam.output_bam]),
+            prefix = SM + "_array_elements_non_truncated_aligned"
     }
 
     # Merge CCS Barcode Conf files:
@@ -637,7 +649,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call Utils.MergeBams as t_67_MergeAllAlignedAndFilteredArrayElements {
         input:
             bams = [t_65_AlignmentFilterForCcsArrayElements.bam, t_66_AlignmentFilterForReclaimedArrayElements.bam],
-            prefix = SM + "_all_array_elements_aligned"
+            prefix = SM + "_all_array_elements_aligned_for_txome_discovery"
     }
 
     call StringTie2.Quantify as t_68_ST2_Quant {
@@ -925,7 +937,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             bam = t_89_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
             eq_class_file = t_97_CombineEqClassFiles.combined_tx_eq_class_assignments,
-            prefix = SM + "_annotated_array_elements_with_gene_names"
+            prefix = SM + "_annotated_array_elements_for_quant_with_gene_names"
     }
     call UMI_TOOLS.Run_Group as t_99_UMIToolsGroup {
         input:
@@ -1012,13 +1024,33 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
 
     #################################################
-    #   ___      ____
-    #  / _ \    / ___|
-    # | | | |  | |
-    # | |_| |  | |___
-    #  \__\_\   \____|
+    #     ___   ____      __  __  __ _____ _____ ____  ___ ____ ____
+    #    / _ \ / ___|    / / |  \/  | ____|_   _|  _ \|_ _/ ___/ ___|
+    #   | | | | |       / /  | |\/| |  _|   | | | |_) || | |   \___ \
+    #   | |_| | |___   / /   | |  | | |___  | | |  _ < | | |___ ___) |
+    #    \__\_\\____| /_/    |_|  |_|_____| |_| |_| \_\___\____|____/
     #
     #################################################
+
+    call AM.SamtoolsStats as t_106_BaselineArrayElementStats {
+        input:
+            bam = t_61_MergeAllArrayElementsNonTruncated.merged_bam
+    }
+
+    call AM.SamtoolsStats as t_106_AlignedArrayElementStats {
+        input:
+            bam = t_61_MergeAllAlignedArrayElementsNonTruncated.merged_bam
+    }
+
+    call AM.SamtoolsStats as t_106_AlignedFilteredArrayElementStats {
+        input:
+            bam = t_67_MergeAllAlignedAndFilteredArrayElements.merged_bam
+    }
+
+    call AM.SamtoolsStats as t_107_AlignedAnnotatedArrayElementsForQuantStats {
+        input:
+            bam = t_89_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam
+    }
 
     call LONGBOW.AggregateCorrectLogStats as t_106_AggregateLongbowCorrectStats {
         input:
@@ -1241,7 +1273,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     ##############################################################################################################
     # Finalize annotated, aligned array elements:
-    call FF.FinalizeToDir as t_123_FinalizeIntermediateCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_123_FinalizeIntermediateAnnotatedArrayElements {
         input:
             files = [
                 t_57_MergeCCSArrayElements.merged_bam,
@@ -1252,6 +1284,16 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 t_59_MergeCCSArrayElementsNonTruncated.merged_bai,
                 t_60_MergeCCSReclaimedArrayElementsNonTruncated.merged_bam,
                 t_60_MergeCCSReclaimedArrayElementsNonTruncated.merged_bai,
+
+                t_61_MergeAllArrayElementsNonTruncated.merged_bam,
+                t_61_MergeAllArrayElementsNonTruncated.merged_bai,
+
+                t_61_MergeAllAlignedArrayElementsNonTruncated.merged_bam,
+                t_61_MergeAllAlignedArrayElementsNonTruncated.merged_bai,
+
+                t_67_MergeAllAlignedAndFilteredArrayElements.merged_bam,
+                t_67_MergeAllAlignedAndFilteredArrayElements.merged_bai,
+
                 t_77_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bam,
                 t_77_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bai,
                 t_78_MergeLongbowPaddedCBCUncorrectableCCSArrayElements.merged_bam,
@@ -1271,11 +1313,14 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_124_FinalizeCBCAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_124_FinalizeAnnotatedArrayElements {
         input:
             files = [
                 t_98_CopyEqClassInfoToTag.bam_out,
                 t_98_CopyEqClassInfoToTag.bai,
+
+                t_67_MergeAllAlignedAndFilteredArrayElements.merged_bam,
+                t_67_MergeAllAlignedAndFilteredArrayElements.merged_bai
             ],
             outdir = array_element_dir,
             keyfile = keyfile
@@ -1398,6 +1443,90 @@ workflow PB10xMasSeqSingleFlowcellv3 {
         input:
             files = [ t_11_FindCCSReport.ccs_report[0], t_106_AggregateLongbowCorrectStats.stats ],
             outdir = stats_out_dir,
+            keyfile = keyfile
+    }
+
+    call FF.FinalizeToDir as t_133_FinalizeQuantArrayElementStats {
+        input:
+            files = [
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.raw_stats,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.summary_stats,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.first_frag_qual,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.last_frag_qual,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.first_frag_gc_content,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.last_frag_gc_content,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.acgt_content_per_cycle,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.insert_size,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.read_length_dist,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.indel_distribution,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.indels_per_cycle,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.coverage_distribution,
+                t_107_AlignedAnnotatedArrayElementsForQuantStats.gc_depth,
+            ],
+            outdir = stats_out_dir + "/array_elements_for_quant/",
+            keyfile = keyfile
+    }
+
+    call FF.FinalizeToDir as t_133_FinalizeTxomeDiscoveryArrayElementStats {
+        input:
+            files = [
+                t_106_AlignedFilteredArrayElementStats.raw_stats,
+                t_106_AlignedFilteredArrayElementStats.summary_stats,
+                t_106_AlignedFilteredArrayElementStats.first_frag_qual,
+                t_106_AlignedFilteredArrayElementStats.last_frag_qual,
+                t_106_AlignedFilteredArrayElementStats.first_frag_gc_content,
+                t_106_AlignedFilteredArrayElementStats.last_frag_gc_content,
+                t_106_AlignedFilteredArrayElementStats.acgt_content_per_cycle,
+                t_106_AlignedFilteredArrayElementStats.insert_size,
+                t_106_AlignedFilteredArrayElementStats.read_length_dist,
+                t_106_AlignedFilteredArrayElementStats.indel_distribution,
+                t_106_AlignedFilteredArrayElementStats.indels_per_cycle,
+                t_106_AlignedFilteredArrayElementStats.coverage_distribution,
+                t_106_AlignedFilteredArrayElementStats.gc_depth,
+            ],
+            outdir = stats_out_dir + "/array_elements_for_transcriptome_discovery/",
+            keyfile = keyfile
+    }
+
+    call FF.FinalizeToDir as t_133_FinalizeAlignedArrayElementStats {
+        input:
+            files = [
+                t_106_AlignedArrayElementStats.raw_stats,
+                t_106_AlignedArrayElementStats.summary_stats,
+                t_106_AlignedArrayElementStats.first_frag_qual,
+                t_106_AlignedArrayElementStats.last_frag_qual,
+                t_106_AlignedArrayElementStats.first_frag_gc_content,
+                t_106_AlignedArrayElementStats.last_frag_gc_content,
+                t_106_AlignedArrayElementStats.acgt_content_per_cycle,
+                t_106_AlignedArrayElementStats.insert_size,
+                t_106_AlignedArrayElementStats.read_length_dist,
+                t_106_AlignedArrayElementStats.indel_distribution,
+                t_106_AlignedArrayElementStats.indels_per_cycle,
+                t_106_AlignedArrayElementStats.coverage_distribution,
+                t_106_AlignedArrayElementStats.gc_depth,
+            ],
+            outdir = stats_out_dir + "/aligned_array_elements/",
+            keyfile = keyfile
+    }
+
+    call FF.FinalizeToDir as t_133_FinalizeBaselineArrayElementStats {
+        input:
+            files = [
+                t_106_BaselineArrayElementStats.raw_stats,
+                t_106_BaselineArrayElementStats.summary_stats,
+                t_106_BaselineArrayElementStats.first_frag_qual,
+                t_106_BaselineArrayElementStats.last_frag_qual,
+                t_106_BaselineArrayElementStats.first_frag_gc_content,
+                t_106_BaselineArrayElementStats.last_frag_gc_content,
+                t_106_BaselineArrayElementStats.acgt_content_per_cycle,
+                t_106_BaselineArrayElementStats.insert_size,
+                t_106_BaselineArrayElementStats.read_length_dist,
+                t_106_BaselineArrayElementStats.indel_distribution,
+                t_106_BaselineArrayElementStats.indels_per_cycle,
+                t_106_BaselineArrayElementStats.coverage_distribution,
+                t_106_BaselineArrayElementStats.gc_depth,
+            ],
+            outdir = stats_out_dir + "/baseline_array_elements/",
             keyfile = keyfile
     }
 
