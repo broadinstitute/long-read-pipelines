@@ -1,16 +1,7 @@
-FROM continuumio/miniconda3
+FROM zeunas/modbam2bed:0.5.1
 
-MAINTAINER Kiran V Garimella
+MAINTAINER Yulia Mostovoy
 
-# copy other resources
-COPY ./environment.yml /
-
-# install conda packages
-RUN conda env create -f /environment.yml && conda clean -a
-RUN echo "source activate lr-utils" > ~/.bashrc
-ENV PATH=/opt/conda/envs/lr-utils/bin/:/root/google-cloud-sdk/bin/:${PATH}
-
-# install gsutil
-RUN apt update
-RUN apt install -y curl git-lfs parallel
-RUN curl https://sdk.cloud.google.com | bash
+# install bedtools
+RUN apt-get -y update
+RUN apt install -y bedtools
