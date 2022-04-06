@@ -50,14 +50,14 @@ workflow Canu {
     output {
         File assemble_fa = Assemble.canu_contigs_fasta
         File assemble_log = Assemble.intermediate_log
-        File correct_fa = Correct.corrected_reads
-        File correct_log = Correct.intermediate_log
-        File trim_fa = Trim.trimmed_reads
-        File trim_log = Trim.intermediate_log
+#        File correct_fa = Correct.corrected_reads
+#        File correct_log = Correct.intermediate_log
+#        File trim_fa = Trim.trimmed_reads
+#        File trim_log = Trim.intermediate_log
     }
 }
 
-# performs canu correct on raw reads, currently assumes ONT reads
+# performs canu correct on raw reads
 task Correct {
     input {
         File reads
@@ -93,7 +93,7 @@ task Correct {
 
     output {
         File corrected_reads = "canu_correct_output/~{prefix}.correctedReads.fasta.gz"
-        File intermediate_log = "intermediate.log"
+#        File intermediate_log = "intermediate.log"
     }
 
     #########################
@@ -219,9 +219,9 @@ task Assemble {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          32,
-        mem_gb:             32,
+        mem_gb:             60,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       20,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-canu:0.2.0"

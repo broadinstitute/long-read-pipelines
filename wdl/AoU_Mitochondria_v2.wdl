@@ -101,15 +101,17 @@ workflow MitochondriaProcessing{
             assemble_error_rate = assemble_error_rate,
             prefix = prefix,
             technology = technology}
-    call AR.Minimap2 as Minimap2 {input: reads = [Canu.fa], ref_fasta = ref_fasta, map_preset = "map-hifi", RG = RG}
-    call Quast.Quast as Quast {input: ref = ref_fasta, assemblies = [Canu.fa]}
-    call CallAssemblyVariants.CallAssemblyVariants as  CallAssemblyVariants {input: asm_fasta = Canu.fa,
+    call AR.Minimap2 as Minimap2 {input: reads = [Canu.assemble_fa], ref_fasta = ref_fasta, map_preset = "map-hifi", RG = RG}
+    call Quast.Quast as Quast {input: ref = ref_fasta, assemblies = [Canu.assemble_fa]}
+    call CallAssemblyVariants.CallAssemblyVariants as  CallAssemblyVariants {input: asm_fasta = Canu.assemble_fa,
                                                                 ref_fasta = ref_fasta,
                                                                 participant_name = participant_name,
                                                                 prefix = prefix}
     output{
             File chrM_aligned_bam = Minimap2.aligned_bam
             File chrM_aligned_bai = Minimap2.aligned_bai
+            File canu_contig = Canu.assemble_fa
+            File canu_assemble_log = Canu.assemble_log
             File report_html = Quast.report_html
             File report_txt = Quast.report_txt
             File report_pdf = Quast.report_pdf
