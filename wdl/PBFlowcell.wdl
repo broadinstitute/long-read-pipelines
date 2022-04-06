@@ -61,12 +61,15 @@ workflow PBFlowcell {
     call PB.GetRunInfo { input: bam = bam, SM = SM }
     String PU = GetRunInfo.run_info['PU']
 
+    call Utils.ComputeAllowedLocalSSD as Guess {input: intended_gb = 3*ceil(size(bam, "GB") + size(pbi, "GB"))}
+    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+
     # break one raw BAM into fixed number of shards
-    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards }
+    call PB.ShardLongReads { input: unaligned_bam = bam, unaligned_pbi = pbi, num_shards = num_shards, num_ssds = Guess.numb_of_local_ssd, zones = arbitrary.zones}
 
     # then perform correction and alignment on each of the shard
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
-        # sometimes we see the sharded bams mising EOF marker, use this as 
+        # sometimes we see the sharded bams mising EOF marker, use this as
         if (validate_shards) {call Utils.CountBamRecords as ValidateShard {input: bam = unmapped_shard}}
         if (experiment_type != "CLR") {
             if (!GetRunInfo.is_corrected) { call PB.CCS { input: subreads = unmapped_shard } }
