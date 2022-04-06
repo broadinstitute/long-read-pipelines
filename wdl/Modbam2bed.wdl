@@ -24,6 +24,10 @@ workflow CallModbam2bed {
             region_bed = region_bed
     }
 
+    output {
+        File mod_bed = Modbam2bed.mod_bed
+        File mod_bedgraph = Modbam2bed.mod_bedgraph
+    }
 }
 
 task Modbam2bed {
