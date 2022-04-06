@@ -1,5 +1,7 @@
 version 1.0
 
+import "tasks/Structs.wdl"
+
 workflow CallModbam2bed {
     input {
         File ref_map_file
