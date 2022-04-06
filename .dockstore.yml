@@ -124,3 +124,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTMethylation.wdl
   testParameterFiles:
+- name: Modbam2bed
+  subclass: wdl
+  primaryDescriptorPath: /wdl/Modbam2bed.wdl
+  testParameterFiles:
