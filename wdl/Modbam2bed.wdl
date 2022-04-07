@@ -64,7 +64,7 @@ task Modbam2bed {
     >>>
 
     output {
-        File mod_bed = "~{prefix}.mod_mapped.sorted.bed"
+        File mod_bed = "~{prefix}.mod_mapped.bed"
         File mod_bedgraph = "~{prefix}.mod_mapped.min~{min_reads}.bedgraph"
     }
 
