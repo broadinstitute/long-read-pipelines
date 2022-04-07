@@ -52,9 +52,9 @@ task Modbam2bed {
 
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
 
-        modbam2bed -m ~{mod} -e ~{ref_fasta} ~{aligned_mod_bam} > ~{prefix}.mod_mapped.bed
+        modbam2bed -m ~{mod} -e ~{ref_fasta} ~{aligned_mod_bam} | sort -k1,1 -k2,2n > ~{prefix}.mod_mapped.bed
 
-        if test -f ~{region_bed}; then bedtools intersect -wa -a ~{prefix}.mod_mapped.bed -b ~{region_bed} > tmp; mv tmp ~{prefix}.mod_mapped.bed; fi
+        if test -f ~{region_bed}; then bedtools intersect -wa -sorted -a ~{prefix}.mod_mapped.bed -b ~{region_bed} > tmp; mv tmp ~{prefix}.mod_mapped.bed; fi
 
         awk '$5>=MIN {OFS="\t"; print $1,$2,$3,$11}' MIN="~{min_reads}" ~{prefix}.mod_mapped.bed > ~{prefix}.mod_mapped.min~{min_reads}.bedgraph
     >>>
