@@ -56,7 +56,7 @@ task Modbam2bed {
 
         if test -f ~{region_bed}; then bedtools intersect -wa -a ~{prefix}.mod_mapped.bed -b ~{region_bed} > tmp; mv tmp ~{prefix}.mod_mapped.bed; fi
 
-        awk '$5>=MIN {OFS="\t"; print $1,$2,$3,$11}' MIN="~{min_reads} ~{prefix}.mod_mapped.bed > ~{prefix}.mod_mapped.min~{min_reads}.bedgraph
+        awk '$5>=MIN {OFS="\t"; print $1,$2,$3,$11}' MIN="~{min_reads}" ~{prefix}.mod_mapped.bed > ~{prefix}.mod_mapped.min~{min_reads}.bedgraph
     >>>
 
     output {
