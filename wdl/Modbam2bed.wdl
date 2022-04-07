@@ -51,23 +51,26 @@ task Modbam2bed {
         set -euxo pipefail
 
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
+        mem_gb = $(grep MemTotal /proc/meminfo|awk '{print int($2/1000000)}')
 
-        modbam2bed -m ~{mod} -e ~{ref_fasta} ~{aligned_mod_bam} | sort -k1,1 -k2,2n > ~{prefix}.mod_mapped.bed
+        modbam2bed -m ~{mod} -e ~{ref_fasta} ~{aligned_mod_bam} > ~{prefix}.mod_mapped.bed
 
-        if test -f ~{region_bed}; then bedtools intersect -wa -sorted -a ~{prefix}.mod_mapped.bed -b ~{region_bed} > tmp; mv tmp ~{prefix}.mod_mapped.bed; fi
+        sort-bed --max-mem ${mem_gb}G ~{prefix}.mod_mapped.bed > ~{prefix}.mod_mapped.sorted.bed
 
-        awk '$5>=MIN {OFS="\t"; print $1,$2,$3,$11}' MIN="~{min_reads}" ~{prefix}.mod_mapped.bed > ~{prefix}.mod_mapped.min~{min_reads}.bedgraph
+        if test -f ~{region_bed}; then bedtools intersect -wa -sorted -a ~{prefix}.mod_mapped.sorted.bed -b ~{region_bed} > tmp; mv tmp ~{prefix}.mod_mapped.sorted.bed; fi
+
+        awk '$5>=MIN {OFS="\t"; print $1,$2,$3,$11}' MIN="~{min_reads}" ~{prefix}.mod_mapped.sorted.bed > ~{prefix}.mod_mapped.min~{min_reads}.bedgraph
     >>>
 
     output {
-        File mod_bed = "~{prefix}.mod_mapped.bed"
+        File mod_bed = "~{prefix}.mod_mapped.sorted.bed"
         File mod_bedgraph = "~{prefix}.mod_mapped.min~{min_reads}.bedgraph"
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             4,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
