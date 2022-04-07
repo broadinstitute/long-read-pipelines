@@ -56,10 +56,11 @@ task Modbam2bed {
         modbam2bed -m ~{mod} -e ~{ref_fasta} ~{aligned_mod_bam} > ~{prefix}.mod_mapped.bed
 
         sort-bed --max-mem ${mem_gb}G ~{prefix}.mod_mapped.bed > ~{prefix}.mod_mapped.sorted.bed
+        mv ~{prefix}.mod_mapped.sorted.bed ~{prefix}.mod_mapped.bed
 
-        if test -f ~{region_bed}; then bedtools intersect -wa -sorted -a ~{prefix}.mod_mapped.sorted.bed -b ~{region_bed} > tmp; mv tmp ~{prefix}.mod_mapped.sorted.bed; fi
+        if test -f ~{region_bed}; then bedtools intersect -wa -sorted -a ~{prefix}.mod_mapped.bed -b ~{region_bed} > tmp; mv tmp ~{prefix}.mod_mapped.bed; fi
 
-        awk '$5>=MIN {OFS="\t"; print $1,$2,$3,$11}' MIN="~{min_reads}" ~{prefix}.mod_mapped.sorted.bed > ~{prefix}.mod_mapped.min~{min_reads}.bedgraph
+        awk '$5>=MIN {OFS="\t"; print $1,$2,$3,$11}' MIN="~{min_reads}" ~{prefix}.mod_mapped.bed > ~{prefix}.mod_mapped.min~{min_reads}.bedgraph
     >>>
 
     output {
