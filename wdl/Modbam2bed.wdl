@@ -45,7 +45,7 @@ task Modbam2bed {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1.5 * ceil(size(ref_fasta, "GB") + size(aligned_mod_bam, "GB"))
+    Int disk_size = ceil(1.5*(size(ref_fasta, "GB") + size(aligned_mod_bam, "GB")))
 
     command <<<
         set -euxo pipefail
