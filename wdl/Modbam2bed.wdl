@@ -51,7 +51,7 @@ task Modbam2bed {
         set -euxo pipefail
 
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
-        mem_gb = $(grep MemTotal /proc/meminfo|awk '{print int($2/1000000)}')
+        mem_gb=$(grep MemTotal /proc/meminfo|awk '{print int($2/1000000)}')
 
         modbam2bed -m ~{mod} -e ~{ref_fasta} ~{aligned_mod_bam} > ~{prefix}.mod_mapped.bed
 
