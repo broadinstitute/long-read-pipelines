@@ -81,7 +81,7 @@ task Correct {
     command <<<
         set -euxo pipefail
 
-        canu -correct \
+        canu -correct corOutCoverage=100\
              -p ~{prefix} -d canu_correct_output \
              genomeSize=~{genome_size}k \
              corMaxEvidenceErate=0.15 \
@@ -93,7 +93,7 @@ task Correct {
 
     output {
         File corrected_reads = "canu_correct_output/~{prefix}.correctedReads.fasta.gz"
-#        File intermediate_log = "intermediate.log"
+        File intermediate_log = "intermediate.log"
     }
 
     #########################
