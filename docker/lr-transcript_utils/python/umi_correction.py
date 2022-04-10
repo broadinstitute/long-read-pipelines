@@ -70,7 +70,7 @@ def valid_tags(read, config):
             read.has_tag(GENE_TAG)
 
 
-def filter_read(read, config):
+def read_passes_filters(read, config):
     # filters the read based on the final UMI length and back alignment score
     return get_back_aln_score(read) >= config.min_back_aln_score and \
            abs(len(read.get_tag(FINAL_UMI_TAG)) - UMI_LEN) <= config.max_umi_delta_filter[get_read_type(read).name]
@@ -195,8 +195,8 @@ def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config):
     print("Number of loci: ", len(locus2reads))
 
     with pysam.AlignmentFile(input_bam_fname, "rb") as input_bam:
-        with pysam.AlignmentFile(output_bam_fname, "wb", template=input_bam) as output_bam:
-            with pysam.AlignmentFile(filter_bam_fname, "wb", template=input_bam) as filter_bam:
+        with pysam.AlignmentFile(output_bam_fname, "wb", template=input_bam) as correct_umi_bam:
+            with pysam.AlignmentFile(filter_bam_fname, "wb", template=input_bam) as uncorreted_umi_bam:
 
                 for locus in tqdm(locus2reads):
                     process_reads_at_locus(locus2reads[locus], read2umi, config)
@@ -209,10 +209,11 @@ def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config):
                     else:
                         read.set_tag(FINAL_UMI_TAG, read.get_tag(UMI_TAG))
                         read.set_tag(UMI_CORR_TAG, 0)
-                    if filter_read(read, config):
-                        filter_bam.write(read)
+
+                    if read_passes_filters(read, config):
+                        correct_umi_bam.write(read)
                     else:
-                        output_bam.write(read)
+                        uncorreted_umi_bam.write(read)
 
 
 def main():
