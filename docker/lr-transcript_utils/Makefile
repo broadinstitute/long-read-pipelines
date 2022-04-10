@@ -1,4 +1,4 @@
-VERSION = 0.0.11
+VERSION = 0.0.12
 NAME = lr-transcript_utils
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(NAME):$(VERSION)

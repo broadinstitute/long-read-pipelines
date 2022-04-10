@@ -929,9 +929,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Quantify Transcripts:
     ##########
 
-    # TODO:
-    # Slot in Vic's fix for UMI assignments / dedupe here.
-
     # Use old quant method here as a baseline for comparison:
     call TX_POST.CopyEqClassInfoToTag as t_98_CopyEqClassInfoToTag {
         input:
@@ -939,10 +936,37 @@ workflow PB10xMasSeqSingleFlowcellv3 {
             eq_class_file = t_97_CombineEqClassFiles.combined_tx_eq_class_assignments,
             prefix = SM + "_annotated_array_elements_for_quant_with_gene_names"
     }
+
+    call TX_PRE.CorrectUmisWithSetCover as t_98_CorrectUmisWithSetCover {
+        input:
+            bam = t_89_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
+            prefix = SM + "_annotated_array_elements_for_quant_with_gene_names"
+    }
+
+    # Because of how we're doing things, we need to pull out the CCS and CCS Reclaimed reads from the output of the
+    # set cover correction:
+    call Utils.Bamtools as t_99_GetCcsCorrectedReadsWithCorrectedUmis {
+        input:
+            bamfile = t_98_CorrectUmisWithSetCover.corrected_umi_reads,
+            prefix = SM + "_annotated_array_elements_for_quant_with_gene_names.corrected_umis.CCS",
+            cmd = "filter",
+            args = '-tag "rq":">=' + min_read_quality + '"',
+            runtime_attr_override = disable_preemption_runtime_attrs
+        }
+
+    call Utils.Bamtools as t_99_GetCcsReclaimedReadsWithCorrectedUmis {
+            input:
+                bamfile =t_98_CorrectUmisWithSetCover.corrected_umi_reads,
+                prefix = SM + "_annotated_array_elements_for_quant_with_gene_names.corrected_umis.CCS_Reclaimed",
+                cmd = "filter",
+                args = '-tag "rq":"<' + min_read_quality + '"',
+                runtime_attr_override = disable_preemption_runtime_attrs
+        }
+
     call UMI_TOOLS.Run_Group as t_99_UMIToolsGroup {
         input:
-            aligned_transcriptome_reads = t_98_CopyEqClassInfoToTag.bam_out,
-            aligned_transcriptome_reads_index = t_98_CopyEqClassInfoToTag.bai,
+            aligned_transcriptome_reads = t_98_CorrectUmisWithSetCover.corrected_umi_reads,
+            aligned_transcriptome_reads_index = t_98_CorrectUmisWithSetCover.corrected_umi_reads_index,
             do_per_cell = true,
             prefix = SM + "_annotated_array_elements_with_gene_names_with_umi_tools_group_correction"
     }
@@ -950,9 +974,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Create CCS count matrix and anndata:
     call TX_POST.CreateCountMatrixFromAnnotatedBam as t_100_CreateCCSCountMatrixFromAnnotatedBam {
         input:
-            annotated_transcriptome_bam = t_87_RestoreCcsOriginalReadNames.bam_out,
+            annotated_transcriptome_bam = t_99_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
             tx_equivalence_class_assignments = t_97_CombineEqClassFiles.combined_tx_eq_class_assignments,
-            umi_tag = "ZU",
+            umi_tag = "BX",
             prefix = SM + "_ccs_gene_tx_expression_count_matrix"
     }
 
@@ -975,9 +999,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Create CLR count matrix and anndata:
     call TX_POST.CreateCountMatrixFromAnnotatedBam as t_102_CreateCLRCountMatrixFromAnnotatedBam {
         input:
-            annotated_transcriptome_bam = t_88_RestoreClrOriginalReadNames.bam_out,
+            annotated_transcriptome_bam = t_99_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
             tx_equivalence_class_assignments = t_97_CombineEqClassFiles.combined_tx_eq_class_assignments,
-            umi_tag = "ZU",
+            umi_tag = "BX",
             prefix = SM + "_clr_gene_tx_expression_count_matrix"
     }
 
@@ -1000,9 +1024,9 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     # Create overall count matrix and anndata:
     call TX_POST.CreateCountMatrixFromAnnotatedBam as t_104_CreateOverallCountMatrixFromAnnotatedBam {
         input:
-            annotated_transcriptome_bam = t_89_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
+            annotated_transcriptome_bam = t_98_CorrectUmisWithSetCover.corrected_umi_reads,
             tx_equivalence_class_assignments = t_97_CombineEqClassFiles.combined_tx_eq_class_assignments,
-            umi_tag = "ZU",
+            umi_tag = "BX",
             prefix = SM + "_overall_gene_tx_expression_count_matrix"
     }
 
@@ -1308,6 +1332,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
                 t_89_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
                 t_89_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bai,
+
+                t_98_CorrectUmisWithSetCover.uncorrected_umi_reads
             ],
             outdir = intermediate_array_elements_dir,
             keyfile = keyfile
@@ -1316,8 +1342,11 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call FF.FinalizeToDir as t_124_FinalizeAnnotatedArrayElements {
         input:
             files = [
-                t_98_CopyEqClassInfoToTag.bam_out,
-                t_98_CopyEqClassInfoToTag.bai,
+                t_98_CorrectUmisWithSetCover.corrected_umi_reads,
+                t_98_CorrectUmisWithSetCover.corrected_umi_reads_index,
+
+                t_99_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
+                t_99_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
 
                 t_67_MergeAllAlignedAndFilteredArrayElements.merged_bam,
                 t_67_MergeAllAlignedAndFilteredArrayElements.merged_bai

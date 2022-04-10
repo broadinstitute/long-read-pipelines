@@ -83,7 +83,7 @@ task Run_Group {
         mem_gb:             64,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
+        preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.3"
     }
