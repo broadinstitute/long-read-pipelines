@@ -698,7 +698,7 @@ task AdjustUmiSequenceWithAdapterAlignment {
     }
     input {
         File bam
-        File short_read_umis
+        File short_read_umis  # Just used for stats
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
