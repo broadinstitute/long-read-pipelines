@@ -1073,7 +1073,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
     call AM.SamtoolsStats as t_114_AlignedAnnotatedArrayElementsForQuantStats {
         input:
-            bam = t_91_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam
+            bam = t_101_CorrectUmisWithSetCover.corrected_umi_reads
     }
 
     call LONGBOW.AggregateCorrectLogStats as t_115_AggregateLongbowCorrectStats {
