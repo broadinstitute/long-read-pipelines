@@ -134,6 +134,10 @@ RUN git clone https://github.com/gpertea/gffcompare \
 # Clean up apt-get process:
 RUN apt-get clean && apt-get purge && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Last few python packages:
+RUN python3.8 -m pip install pyyaml
+RUN python3.8 -m pip install polyleven 
+
 # Install our scripts:
 RUN mkdir /python_scripts 
 COPY python/* /python_scripts/
