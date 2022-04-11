@@ -5,14 +5,10 @@ import "Structs.wdl"
 # Given BAM, call SVs using Sniffles
 task Sniffles {
     input {
-        String bam
-        String bai
+        File bam
+        File bai
+        File tandem_repeats_bed
 
-        Int min_read_support = 2
-        Int min_read_length = 1000
-        Int min_mq = 20
-
-        String chr
         String prefix
 
         RuntimeAttr? runtime_attr_override
@@ -23,39 +19,27 @@ task Sniffles {
         bai:              "index accompanying the BAM"
 
         min_read_support: "[default-valued] minimum reads required to make a call"
-        min_read_length:  "[default-valued] filter out reads below minimum read length"
         min_mq:           "[default-valued] minimum mapping quality to accept"
 
-        chr:              "chr on which to call variants"
         prefix:           "prefix for output"
     }
 
-    Int cpus = 8
-    Int disk_size = ceil(size(bam, "GB"))
+    Int disk_size = ceil(1.5 * size(bam, "GB"))
 
     command <<<
         set -x
+        num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        samtools view -hb ~{bam} ~{chr} > ~{chr}.bam
-        samtools index ~{chr}.bam
-
-        sniffles -t ~{cpus} \
-                 -m ~{chr}.bam \
-                 -v ~{prefix}.~{chr}.sniffles.pre.vcf \
-                 -s ~{min_read_support} \
-                 -r ~{min_read_length} \
-                 -q ~{min_mq} \
-                 --num_reads_report -1 \
-                 --genotype
-
-        touch ~{prefix}.~{chr}.sniffles.pre.vcf
-
-        cat ~{prefix}.~{chr}.sniffles.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.~{chr}.sniffles.vcf
+        sniffles -t ${num_cores} \
+                 --input ~{bam} \
+                 --vcf ~{prefix}.sniffles.vcf \
+                 --tandem-repeats ~{tandem_repeats_bed} \
+                 --minsupport ~{min_read_support} \
+                 --mapq ~{min_mq}
     >>>
 
     output {
-        File vcf = "~{prefix}.~{chr}.sniffles.vcf"
+        File vcf = "~{prefix}.sniffles.vcf"
     }
 
     #########################

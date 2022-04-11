@@ -128,3 +128,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/Modbam2bed.wdl
   testParameterFiles:
+- name: CallSniffles.wdl
+  subclass: wdl
+  primaryDescriptorPath: /wdl/CallSniffles.wdl
+  testParameterFiles:
