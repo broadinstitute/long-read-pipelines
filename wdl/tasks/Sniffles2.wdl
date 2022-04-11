@@ -14,16 +14,6 @@ task Sniffles {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        bam:              "input BAM from which to call SVs"
-        bai:              "index accompanying the BAM"
-
-        min_read_support: "[default-valued] minimum reads required to make a call"
-        min_mq:           "[default-valued] minimum mapping quality to accept"
-
-        prefix:           "prefix for output"
-    }
-
     Int disk_size = ceil(1.5 * size(bam, "GB"))
 
     command <<<
