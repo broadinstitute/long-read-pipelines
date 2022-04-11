@@ -358,7 +358,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
 
         #####################
 
-        # Shard our CCS reads into smaller problems to do work on array elements:
+        # Shard our CCS reclaimed reads into smaller problems to do work on array elements:
         call PB.ShardLongReads as t_29_ShardS2ECcsReclaimedReads {
             input:
                 unaligned_bam = t_18_FilterS2EReclaimableReads.passed_reads,

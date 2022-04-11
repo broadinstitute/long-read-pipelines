@@ -18,7 +18,7 @@ workflow MasSeqDownsampleArrayElementBam {
         File ccs_array_element_bam
         String sample_name
 
-        String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqDownsampleArrayElementBam"
+        String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasSeqDownsampleArrayElementBam_2"
     }
 
     parameter_meta {

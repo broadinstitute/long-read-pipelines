@@ -83,8 +83,8 @@ task DownsampleToIsoSeqEquivalent {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.6"
-        memory: 16 + " GiB"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.12"
+        memory: 32 + " GiB"  # Need a lot of ram here because we keep a set of ZMWs in memory
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
         preemptible: 0

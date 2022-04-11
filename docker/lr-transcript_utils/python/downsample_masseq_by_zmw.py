@@ -42,29 +42,21 @@ if __name__ == '__main__':
 
     last_timing = time.time()
     read_count = 0
+
+    zmw_set = set()
+
     with pysam.AlignmentFile(in_file_path, 'rb' if is_bam else 'r', check_sq=False) as bam_file:
         with pysam.AlignmentFile(out_file_name, 'wb', check_sq=False, header=bam_file.header) as output_file:
             with tqdm(desc=f"Downsampling bam file", unit=" read") as pbar:
-                read_list = []
-                current_zmw = None
                 for read in bam_file.fetch(until_eof=True):
 
                     i1 = read.query_name.find("/")
                     i2 = read.query_name.find("/", i1+1)
                     zmw = int(read.query_name[i1+1:i2])
 
-                    if current_zmw and zmw != current_zmw:
-                        r = read_list[0]
-                        output_file.write(r)
-                        read_list = []
-
-                    current_zmw = zmw
-                    read_list.append(read)
+                    if zmw not in zmw_set:
+                        output_file.write(read)
+                        zmw_set.add(zmw)
 
                     read_count += 1
                     pbar.update(1)
-
-                # Now we write out the last of the ZMWs:
-                r = read_list[0]
-                output_file.write(r)
-                read_list = []
