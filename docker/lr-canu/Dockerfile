@@ -8,4 +8,5 @@ RUN wget https://github.com/marbl/canu/releases/download/v2.2/canu-2.2.Linux-amd
     tar -xJf canu-2.2.*.tar.xz
 
 
-ENV PATH="/canu-2.2/Linux-amd64/bin:${PATH}"
+ENV PATH="/canu-2.2/bin:${PATH}"
+RUN canu
