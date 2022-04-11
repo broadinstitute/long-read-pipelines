@@ -45,10 +45,20 @@ if __name__ == '__main__':
 
     zmw_set = set()
 
+    has_XN_tag = False
+    is_first = True
+
     with pysam.AlignmentFile(in_file_path, 'rb' if is_bam else 'r', check_sq=False) as bam_file:
         with pysam.AlignmentFile(out_file_name, 'wb', check_sq=False, header=bam_file.header) as output_file:
             with tqdm(desc=f"Downsampling bam file", unit=" read") as pbar:
                 for read in bam_file.fetch(until_eof=True):
+
+                    if is_first and read.has_tag("XN"):
+                        print("Read has XN Tag.  Using XN for names!")
+                        has_XN_tag = True
+                    is_first = False
+
+                    name = read.get_tag("XN") if has_XN_tag else read.query_name
 
                     i1 = read.query_name.find("/")
                     i2 = read.query_name.find("/", i1+1)
