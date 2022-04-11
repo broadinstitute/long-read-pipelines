@@ -485,7 +485,7 @@ task CorrectUmisWithSetCover {
         prefix : "Prefix to assign to output files."
     }
 
-    Int disk_size_gb = 10 + 2*ceil(size(bam, "GB"))
+    Int disk_size_gb = 10 + 10*ceil(size(bam, "GB"))
 
     command <<<
         # Because of how gffcompare works, we need to move the query file to our PWD:
