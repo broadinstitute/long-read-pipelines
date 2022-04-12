@@ -31,7 +31,7 @@ task Bonito {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 4*ceil(size(fast5_files, "GB") + size(ref_fasta, "GB"))
+    Int disk_size = 1 + 4*ceil(size(fast5_files, "GB"))
 
     command <<<
         set -euxo pipefail
