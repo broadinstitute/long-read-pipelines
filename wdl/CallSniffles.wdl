@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/Sniffles2.wdl"
+import "tasks/Sniffles2.wdl" as Sniffles
 
 workflow CallSniffles {
     input {
@@ -10,7 +10,7 @@ workflow CallSniffles {
         File tandem_repeats_bed
     }
 
-    call Sniffles {
+    call Sniffles.Sniffles {
         input:
             bam = bam,
             bai = bai,
