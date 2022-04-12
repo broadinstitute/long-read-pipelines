@@ -48,6 +48,9 @@ if __name__ == '__main__':
     has_XN_tag = False
     is_first = True
 
+    num_written = 0
+    num_skipped = 0
+
     with pysam.AlignmentFile(in_file_path, 'rb' if is_bam else 'r', check_sq=False) as bam_file:
         with pysam.AlignmentFile(out_file_name, 'wb', check_sq=False, header=bam_file.header) as output_file:
             with tqdm(desc=f"Downsampling bam file", unit=" read") as pbar:
@@ -60,13 +63,22 @@ if __name__ == '__main__':
 
                     name = read.get_tag("XN") if has_XN_tag else read.query_name
 
-                    i1 = read.query_name.find("/")
-                    i2 = read.query_name.find("/", i1+1)
-                    zmw = int(read.query_name[i1+1:i2])
+                    i1 = name.find("/")
+                    i2 = name.find("/", i1+1)
+                    zmw = int(name[i1+1:i2])
 
                     if zmw not in zmw_set:
                         output_file.write(read)
                         zmw_set.add(zmw)
+                        num_written += 1
+                    else:
+                        num_skipped += 1
 
                     read_count += 1
                     pbar.update(1)
+
+print(f"Total reads: {read_count}")
+print(f"Num reads output: {num_written}")
+print(f"Num reads skipped: {num_skipped}")
+
+

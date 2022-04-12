@@ -615,8 +615,9 @@ with open("~{out_name}", 'w') as f:
         k_spacing = k_len - len(k)
 
         count, tot = v
-        if tot is None:
+        if tot is None or tot == 0:
             f.write(f"{k}:{' '*k_spacing} {count}\n")
+            print(f"WARNING: tot == {tot}")
         else:
             f.write(f"{k}:{' '*k_spacing} {count}/{tot} ({100.0*count/tot:2.4f}%)\n")
 
