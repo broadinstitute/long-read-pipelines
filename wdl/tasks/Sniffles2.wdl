@@ -38,7 +38,7 @@ task Sniffles {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "quay.io/ymostovoy/lr-sniffles:lates"
+        docker:             "quay.io/ymostovoy/lr-sniffles:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
