@@ -584,7 +584,7 @@ workflow PB10xMasSeqArraySingleFlowcellv3_ArrayElementAnalysis {
 
     call TX_PRE.CorrectUmisWithSetCover as t_45_CorrectUmisWithSetCover {
         input:
-            bam = t_35_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
+            bam = t_44_CopyEqClassInfoToTag.bam_out,
             prefix = SM + "_annotated_array_elements_for_quant_with_gene_names"
     }
 
