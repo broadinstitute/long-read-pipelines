@@ -23,9 +23,7 @@ task Sniffles {
         sniffles -t ${num_cores} \
                  --input ~{bam} \
                  --vcf ~{prefix}.sniffles.vcf \
-                 --tandem-repeats ~{tandem_repeats_bed} \
-                 --minsupport ~{min_read_support} \
-                 --mapq ~{min_mq}
+                 --tandem-repeats ~{tandem_repeats_bed}
     >>>
 
     output {
