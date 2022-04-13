@@ -40,10 +40,8 @@ task Bonito {
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
         fast5_dir=$(dirname ~{fast5_files[0]})
 
-        pwd
-        ls
-
         source /bonito-0.3.0/venv3/bin/activate
+        export LD_LIBRARY_PATH=/usr/local/cuda-10.2/compat:$LD_LIBRARY_PATH
 
         bonito basecaller $model_dir $fast5_dir | gzip > recalled.fa.gz
     >>>
