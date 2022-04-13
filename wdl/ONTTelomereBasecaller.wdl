@@ -1,6 +1,7 @@
 version 1.0
 
 import "tasks/Structs.wdl" as Structs
+import "tasks/Utils.wdl" as Utils
 
 workflow CallTelomeres {
     input {
