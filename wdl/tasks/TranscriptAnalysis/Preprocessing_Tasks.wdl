@@ -504,13 +504,13 @@ task CorrectUmisWithSetCover {
     output {
         File corrected_umi_reads = "~{prefix}.corrected_umis.bam"
         File corrected_umi_reads_index = "~{prefix}.corrected_umis.bam.bai"
-        File uncorrected_umi_reads = "~{prefix}.corrected_umis.bam"
+        File uncorrected_umi_reads = "~{prefix}.uncorrected_umi_reads.bam"
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             16,
+        mem_gb:             32,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
         preemptible_tries:  0,

@@ -817,7 +817,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call Utils.MergeBams as t_88_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements {
         input:
             bams = t_85_LongbowCorrectCCSReclaimedArrayElementCBCs.uncorrected_barcodes_bam,
-            prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_uncorrectable"
+            prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_uncorrectable"
     }
 
     #################
