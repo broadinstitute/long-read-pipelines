@@ -42,6 +42,7 @@ task Bonito {
 
         source /bonito-0.3.0/venv3/bin/activate
         export LD_LIBRARY_PATH=/usr/local/cuda-10.2/compat:$LD_LIBRARY_PATH
+        export CUDA_VISIBLE_DEVICES=6
 
         bonito basecaller $model_dir $fast5_dir | gzip > recalled.fa.gz
     >>>
