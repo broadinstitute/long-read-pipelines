@@ -196,7 +196,7 @@ def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config):
 
     with pysam.AlignmentFile(input_bam_fname, "rb") as input_bam:
         with pysam.AlignmentFile(output_bam_fname, "wb", template=input_bam) as correct_umi_bam:
-            with pysam.AlignmentFile(filter_bam_fname, "wb", template=input_bam) as uncorreted_umi_bam:
+            with pysam.AlignmentFile(filter_bam_fname, "wb", template=input_bam) as filtered_out_umi_bam:
 
                 for locus in tqdm(locus2reads):
                     process_reads_at_locus(locus2reads[locus], read2umi, config)
@@ -213,7 +213,7 @@ def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config):
                     if read_passes_filters(read, config):
                         correct_umi_bam.write(read)
                     else:
-                        uncorreted_umi_bam.write(read)
+                        filtered_out_umi_bam.write(read)
 
 
 def main():

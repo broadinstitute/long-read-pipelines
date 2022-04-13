@@ -494,7 +494,7 @@ task CorrectUmisWithSetCover {
         time /python_scripts/umi_correction.py  \
             --input_bam  ~{bam} \
             --output_bam  ~{prefix}.corrected_umis.unsorted.bam \
-            --filtered_bam ~{prefix}.uncorrected_umi_reads.bam \
+            --filtered_bam ~{prefix}.corrected_umis.failed_filters.bam \
             --config /python_scripts/umi_correction.yaml
 
         samtools sort ~{prefix}.corrected_umis.unsorted.bam > ~{prefix}.corrected_umis.bam
@@ -504,7 +504,7 @@ task CorrectUmisWithSetCover {
     output {
         File corrected_umi_reads = "~{prefix}.corrected_umis.bam"
         File corrected_umi_reads_index = "~{prefix}.corrected_umis.bam.bai"
-        File uncorrected_umi_reads = "~{prefix}.uncorrected_umi_reads.bam"
+        File uncorrected_umi_reads = "~{prefix}.corrected_umis.failed_filters.bam"
     }
 
     #########################
