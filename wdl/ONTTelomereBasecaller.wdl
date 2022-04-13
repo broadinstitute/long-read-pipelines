@@ -40,15 +40,12 @@ task Bonito {
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
         fast5_dir=$(dirname ~{fast5_files[0]})
 
-        wget https://zenodo.org/record/5819148/files/chm13_nanopore_trained_run225.zip
-        unzip chm13_nanopore_trained_run225.zip
-        rm chm13_nanopore_trained_run225.zip
+        pwd
+        ls
 
-        model_dir=chm13_nanopore_trained_run225/
+        source /bonito-0.3.0/venv3/bin/activate
 
-        source bonito-0.3.0/venv3/bin/activate
-
-        bonito basecaller $model_dir fast5_dir | gzip > recalled.fa.gz
+        bonito basecaller $model_dir $fast5_dir | gzip > recalled.fa.gz
     >>>
 
     output {
