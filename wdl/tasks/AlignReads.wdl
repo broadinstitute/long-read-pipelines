@@ -77,8 +77,9 @@ task Minimap2 {
     # +1 to handle small files
     Int disk_size = 1 + 10*2*2*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
 
-    Int cpus = 4
-    Int mem = 30
+    Int cpus = select_first([runtime_attr.cpu_cores, 4])
+    Int mem = select_first([runtime_attr.mem_gb, default_attr.cpu_cores])
+    Int sortMem = floor((mem - 1) / cpus)
 
     # This is a hack to fix the WDL parsing of ${} variables:
     String DOLLAR = "$"
@@ -137,7 +138,7 @@ task Minimap2 {
             exit 1
         fi
 
-        samtools sort -@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam tmp.sam
+        samtools sort -@~{cpus} -m~{sortMem}G --no-PG -o ~{prefix}.bam tmp.sam
         samtools index ~{prefix}.bam
     >>>
 
@@ -152,8 +153,8 @@ task Minimap2 {
         mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        2,
+        preemptible_tries:  0,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
