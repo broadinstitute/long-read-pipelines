@@ -445,7 +445,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
     # Add our observations:
     row_df = pd.DataFrame()
     row_df["Cell Barcode"] = cell_barcodes
-    row_df["Total Counts Per Cell"] = cell_barcode_overall_counts_dict.values()
+    row_df["Total Counts Per Cell"] = np.array(cell_barcode_overall_counts_dict.values())
 
     count_adata.obs = row_df
     count_adata.obs_names = cell_barcodes
