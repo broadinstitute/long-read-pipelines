@@ -77,14 +77,14 @@ task Minimap2 {
     # +1 to handle small files
     Int disk_size = 1 + 10*2*2*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
 
-    Int cpus = select_first([runtime_attr.cpu_cores, 4])
-    Int mem = select_first([runtime_attr.mem_gb, default_attr.cpu_cores])
-    Int sortMem = floor((mem - 1) / cpus)
-
     # This is a hack to fix the WDL parsing of ${} variables:
     String DOLLAR = "$"
     command <<<
         set -euxo pipefail
+
+        NUM_CPUS=$( cat /proc/cpuinfo | grep '^processor' | tail -n1 | awk '{print $NF+1}' )
+        RAM_IN_GB=$( free -g | grep "^Mem" | awk '{print $2}' )
+        MEM_FOR_SORT=$( echo "" | awk "{print int(($RAM_IN_GB - 1)/$NUM_CPUS)}" )
 
         rg_len=$(echo -n '~{RG}' | wc -c | awk '{print $NF}')
         if [[ $rg_len -ne 0 ]] ; then
@@ -94,9 +94,9 @@ task Minimap2 {
             echo "Original Read Group: ~{RG}"
             echo "Sanitized Read Group: $sanitized_read_group"
 
-            MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -R $sanitized_read_group -t ~{cpus} ~{ref_fasta}"
+            MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -R $sanitized_read_group -t ${NUM_CPUS} ~{ref_fasta}"
         else
-            MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -t ~{cpus} ~{ref_fasta}"
+            MAP_PARAMS="-ayYL --MD --eqx -x ~{map_preset} -t ${NUM_CPUS} ~{ref_fasta}"
         fi
         FILE="~{reads[0]}"
         FILES="~{sep=' ' reads}"
@@ -138,7 +138,7 @@ task Minimap2 {
             exit 1
         fi
 
-        samtools sort -@~{cpus} -m~{sortMem}G --no-PG -o ~{prefix}.bam tmp.sam
+        samtools sort -@${NUM_CPUS} -m${MEM_FOR_SORT}G --no-PG -o ~{prefix}.bam tmp.sam
         samtools index ~{prefix}.bam
     >>>
 
@@ -149,8 +149,8 @@ task Minimap2 {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          cpus,
-        mem_gb:             mem,
+        cpu_cores:          4,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,

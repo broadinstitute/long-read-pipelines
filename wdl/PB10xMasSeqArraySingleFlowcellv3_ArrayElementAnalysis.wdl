@@ -135,6 +135,13 @@ workflow PB10xMasSeqArraySingleFlowcellv3_ArrayElementAnalysis {
         preemptible_tries: 0
     }
 
+    RuntimeAttr super_beefy_alignment_attrs = object {
+        cpu_cores:  16,
+        mem_gb:     64,
+        disk_type:  "LOCAL",
+        preemptible_tries:  1
+    }
+
     # Call our timestamp so we can store outputs without clobbering previous runs:
     call Utils.GetCurrentTimestampString as t_01_WdlExecutionStartTimestamp { input: }
 
@@ -179,7 +186,7 @@ workflow PB10xMasSeqArraySingleFlowcellv3_ArrayElementAnalysis {
             ref_fasta  = ref_fasta,
             tags_to_preserve = tags_to_preserve,
             map_preset = "splice:hq",
-            runtime_attr_override = disable_preemption_runtime_attrs
+            runtime_attr_override = super_beefy_alignment_attrs
     }
 
     # Align Reclaimed reads to the genome:
@@ -189,7 +196,7 @@ workflow PB10xMasSeqArraySingleFlowcellv3_ArrayElementAnalysis {
             ref_fasta  = ref_fasta,
             tags_to_preserve = tags_to_preserve,
             map_preset = "splice",
-            runtime_attr_override = disable_preemption_runtime_attrs
+            runtime_attr_override = super_beefy_alignment_attrs
     }
 
     ##############
