@@ -53,6 +53,8 @@ task Minimap2 {
 
         String map_preset
 
+        Array[String] tags_to_preserve = []
+
         String RG = ""
 
         String prefix = "out"
@@ -66,6 +68,8 @@ task Minimap2 {
         map_preset: "preset to be used for minimap2 parameter '-x'"
         prefix:     "[default-valued] prefix for output BAM"
     }
+
+    Boolean do_preserve_tags = if length(tags_to_preserve) != 0 then true else false
 
     # 10x for the decompressed file size
     # 2x for potential for FASTQ and SAM files (from file conversion).
@@ -112,14 +116,22 @@ task Minimap2 {
 
             # samtools fastq takes only 1 file at a time so we need to merge them together:
             for f in "~{sep=' ' reads}" ; do
-                samtools fastq "$f"
+                if ~{do_preserve_tags} ; then
+                    samtools fastq -T  ~{sep=',' tags_to_preserve} "$f"
+                else
+                    samtools fastq "$f"
+                fi
             done > tmp.fastq
 
             echo "Memory info:"
             cat /proc/meminfo
             echo ""
 
-            minimap2 $MAP_PARAMS tmp.fastq > tmp.sam
+            if ~{do_preserve_tags} ; then
+                minimap2 $MAP_PARAMS -y tmp.fastq > tmp.sam
+            else
+                minimap2 $MAP_PARAMS tmp.fastq > tmp.sam
+            fi
         else
             echo "Did not understand file format for '$FILE'"
             exit 1
