@@ -293,6 +293,12 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
         pickle.dump(count_mat, open(pickle_file_name, "wb"))
         print("Done!", file=sys.stderr)
 
+    # Create a total counts / cell list to use as an additional observation column:
+    cell_barcode_overall_counts_dict = dict()
+    for cb, counts_dict in cell_barcode_overall_counts_dict.items():
+        tot = sum(counts_dict.values())
+        cell_barcode_overall_counts_dict[cb] = tot
+
     ############################################################################################################
     # Now we set up the variables that we're going to apply to each observation:
     # We'll try two different ways - one for Gencode GTFs and one for stringtie GTFs:
@@ -439,6 +445,7 @@ def create_combined_anndata(input_tsv, tx_eq_class_def_map, gene_eq_class_def_ma
     # Add our observations:
     row_df = pd.DataFrame()
     row_df["Cell Barcode"] = cell_barcodes
+    row_df["Total Counts Per Cell"] = cell_barcode_overall_counts_dict.values()
 
     count_adata.obs = row_df
     count_adata.obs_names = cell_barcodes
