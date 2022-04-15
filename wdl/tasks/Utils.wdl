@@ -1617,7 +1617,9 @@ task ComputeAllowedLocalSSD {
     }
         Int raw = intended_gb / 375
     command <<<
-        if [[ ~{raw} -lt 9 ]]; then  ## we are pushing the boundary here a bit, based on the assumption that input is a convervative estimate
+        if [[ ~{raw} -lt 1 ]]; then  ## we are pushing the boundary here a bit, based on the assumption that input is a convervative estimate
+            echo "1" > "result.txt"
+        elif [[ ~{raw} -lt 9 ]]; then
             echo ~{raw} > "result.txt"
         elif [[ ~{raw} -lt 16  ]]; then
             echo "16" > "result.txt"
