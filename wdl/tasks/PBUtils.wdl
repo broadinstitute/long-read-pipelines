@@ -103,10 +103,20 @@ task ShardLongReads {
 
         String prefix = "shard"
 
+        String zones = "us-central1-c us-central1-b"
+        Int? num_ssds
+
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
+    parameter_meta {
+        # when running large scale workflows, we sometimes see errors like the following
+        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
+        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
+        zones: "select which zone (GCP) to run this task"
+    }
+
+    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
     Int mem = ceil(25*size(unaligned_pbi, "MB")/1000)
 
     command <<<
@@ -139,6 +149,7 @@ task ShardLongReads {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -271,7 +282,7 @@ task ExtractHifiReads {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.32"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.35"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -313,7 +324,7 @@ task MergeCCSReports {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.35"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -1602,3 +1602,73 @@ task CheckOnSamplenames {
         docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
+
+# todo: hook this in to all tasks using LOCAL ssds
+task ComputeAllowedLocalSSD {
+    # This exists because of the following error message
+    #   Task PBFlowcell.ShardLongReads:NA:1 failed. The job was stopped before the command finished. PAPI error code 3.
+    #   Execution failed: allocating: creating instance: inserting instance: Number of local SSDs for an instance of type custom-8-15360
+    #   should be one of [0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 24], while [9] is requested.
+    meta {
+        description: "Compute the number of LOCAL ssd's allowed by Google"
+    }
+    input {
+        Int intended_gb
+    }
+        Int raw = intended_gb / 375
+    command <<<
+        if [[ ~{raw} -lt 9 ]]; then  ## we are pushing the boundary here a bit, based on the assumption that input is a convervative estimate
+            echo ~{raw} > "result.txt"
+        elif [[ ~{raw} -lt 16  ]]; then
+            echo "16" > "result.txt"
+        elif [[ ~{raw} -lt 24  ]]; then
+            echo "24" > "result.txt"
+        else
+            echo "Would request ~{raw} local SSDs, more than possible (24)." && exit 1
+        fi
+    >>>
+
+    output {
+        Int numb_of_local_ssd = read_int("result.txt")
+    }
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task RandomZoneSpewer {
+    input {
+        Int num_of_zones
+    }
+
+    command <<<
+        set -eux
+
+        # by no means a perfect solution, but that's not desired anyway
+        all_known_zones=("us-central1-a" "us-central1-b" "us-central1-c" "us-central1-f" "us-east1-b" "us-east1-c" "us-east1-d" "us-east4-a" "us-east4-b" "us-east4-c" "us-west1-a" "us-west1-b" "us-west1-c" "us-west2-a" "us-west2-b" "us-west2-c" "us-west3-a" "us-west3-b" "us-west3-c" "us-west4-a" "us-west4-b" "us-west4-c")
+        for zone in "${all_known_zones[@]}"; do echo "${zone}" >> zones.txt; done
+
+        shuf zones.txt | head -n ~{num_of_zones} | tr '\n' ' ' > "result.txt"
+    >>>
+
+    output {
+        String zones = read_string("result.txt")
+    }
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}

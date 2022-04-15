@@ -10,7 +10,7 @@ d = {}
 for ccs_report in args.ccs_report:
     file = open(ccs_report, "r")
     for line in file:
-        if len(line) > 1 and 'Exclusive counts for ZMWs' not in line:
+        if len(line) > 1 and ':' in line:
             a = line.rstrip().split(":")
 
             k = a[0].rstrip()
