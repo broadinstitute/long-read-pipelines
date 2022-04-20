@@ -377,6 +377,7 @@ def get_mas_seq_read_tx_assignments(graph):
                 if n in nodes_seen:
                     continue
 
+                # TODO: We don't need to prefer `=` edges anymore!  The EQ Class is a subgraph, so to be consistent we should not do this.
                 for src, dest, d in graph.out_edges([n], data=True):
                     cc = d["class_code"]
                     if cc == "=":
@@ -391,6 +392,7 @@ def get_mas_seq_read_tx_assignments(graph):
 
             tx_assignments = set()
             for n, path in nodes_seen.items():
+                # TODO: Shouldn't this be gencode OR stringtie nodes?
                 if gencode_node_filter(n):
                     tx_assignments.add((n, '='))
 
@@ -425,6 +427,7 @@ def get_mas_seq_read_tx_assignments(graph):
             #     ST2 / Read Tmap:
             #          - - u m64020e_210505_070001/453446566/ccs m64020e_210505_070001/453446566/ccs 1 0.000000  0.000000  0.000000  777 m64020e_210505_070001/453446566/ccs -
             #
+            # TODO: This should actually drop the null assignments in the case where there are ANY other assignments.
             num_null = 0
             for dest, cc in tx_assignments:
                 if dest == "-":
@@ -512,6 +515,7 @@ def get_mas_seq_read_gene_assignments(graph):
             #     ST2 / Read Tmap:
             #          - - u m64020e_210505_070001/453446566/ccs m64020e_210505_070001/453446566/ccs 1 0.000000  0.000000  0.000000  777 m64020e_210505_070001/453446566/ccs -
             #
+            # TODO: This should actually drop the null assignments in the case where there are ANY other assignments.
             num_null = 0
             for g in gene_assignments:
                 if g == "-":
@@ -571,6 +575,7 @@ def update_stringtie2_gene_names(graph):
     with tqdm(desc=f"Refining st2 -> gencode gene map", unit=" node", total=len(st2_gene_to_gencode_genes)) as pbar:
         for st2_gene_name, gencode_conn_list in st2_gene_to_gencode_genes.items():
 
+            #TODO: This is probably unnecessary since we're filtering out everything else in the case of an `=` relationship.
             has_eq = any([cc == '=' for ggn, src, cc in gencode_conn_list])
 
             unique_gencode_genes = set()
