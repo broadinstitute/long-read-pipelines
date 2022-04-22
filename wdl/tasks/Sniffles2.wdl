@@ -23,11 +23,13 @@ task Sniffles {
         sniffles -t ${num_cores} \
                  --input ~{bam} \
                  --vcf ~{prefix}.sniffles.vcf \
-                 --tandem-repeats ~{tandem_repeats_bed}
+                 --tandem-repeats ~{tandem_repeats_bed} \
+                 --snf ~{prefix}.snf
     >>>
 
     output {
         File vcf = "~{prefix}.sniffles.vcf"
+        File snf = "~{prefix}.snf"
     }
 
     #########################

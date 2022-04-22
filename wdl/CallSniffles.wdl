@@ -19,6 +19,7 @@ workflow CallSniffles {
     }
 
     output {
-        File sniffles_vcf = Sniffles.vcf
+        File sniffles2_vcf = Sniffles.vcf
+        File snf = Sniffles.snf
     }
 }
