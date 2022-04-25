@@ -155,7 +155,7 @@ task CheckAndSplit {
             fi
         fi
 
-        split -d -l ~{split_line_cnt} padded.bed --additional-suffix=".bed" splitted_
+        split -d -l ~{split_line_cnt} ~{four_col_bed} --additional-suffix=".bed" splitted_
     >>>
 
     output {
