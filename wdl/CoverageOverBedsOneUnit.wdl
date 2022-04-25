@@ -18,6 +18,8 @@ workflow CoverageOverBedsOneUnit {
         File threeH_bed
         File exon_bed
 
+        Int mapQ_filter
+
         String workflow_root_name
         String gcs_out_root_dir
     }
@@ -29,7 +31,8 @@ workflow CoverageOverBedsOneUnit {
         input:
             bam = bam,
             bai = bai,
-            bed = fiveK_bed
+            bed = fiveK_bed,
+            mapQ_filter = mapQ_filter
     }
     call worker.SummarizeDepthOverWholeBed as fiveK_mean {
         input:
@@ -43,7 +46,8 @@ workflow CoverageOverBedsOneUnit {
         input:
             bam = bam,
             bai = bai,
-            bed = threeH_bed
+            bed = threeH_bed,
+            mapQ_filter = mapQ_filter
     }
     call worker.SummarizeDepthOverWholeBed as threeH_mean {
         input:
@@ -57,7 +61,8 @@ workflow CoverageOverBedsOneUnit {
         input:
             bam = bam,
             bai = bai,
-            bed = exon_bed
+            bed = exon_bed,
+            mapQ_filter = mapQ_filter
     }
     call worker.SummarizeDepthOverWholeBed as exon_mean {
         input:

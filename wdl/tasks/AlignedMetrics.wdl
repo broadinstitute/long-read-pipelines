@@ -203,7 +203,13 @@ task MosDepthOverBed {
         File bai
         File bed
 
+        Int mapQ_filter = 1
+
         RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        mapQ_filter: "The parameter value for mosdepth -Q"
     }
 
     Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
@@ -214,7 +220,7 @@ task MosDepthOverBed {
     command <<<
         set -euxo pipefail
 
-        mosdepth -t 4 -b ~{bed} -n -x -Q 1 ~{prefix} ~{bam}
+        mosdepth -t 4 -b ~{bed} -n -x -Q ~{mapQ_filter} ~{prefix} ~{bam}
     >>>
 
     output {
