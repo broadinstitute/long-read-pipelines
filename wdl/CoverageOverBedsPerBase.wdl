@@ -137,6 +137,43 @@ task SplitCollectMerge {
 
 ###############################################
 
+task Split {
+    input {
+        File four_col_bed
+        Boolean fail_on_non_4_col_bed
+        Int split_line_cnt
+    }
+
+    command <<<
+
+        set -eu
+        if awk -F '\t' 'NF!=4{exit 1}' ~{four_col_bed} ; then
+            echo;
+        else
+            if ~{fail_on_non_4_col_bed}; then
+                echo "input BED must be exactly 4 columns" && exit 1;
+            else
+                echo "WARNING!!! Input BED has more than 4 columns, information held in columns beyond the 4th will be dropped."
+            fi
+        fi
+
+        split -d -l ~{split_line_cnt} padded.bed --additional-suffix=".bed" splitted_
+    >>>
+
+    output {
+        Array[File] splitted_beds = glob("splitted_*.bed")
+    }
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
 task PadAndSplit {
     meta {
         description: "Pad input bed up/downstream by 100 bases, and split the resuling file into 5 pieces"
@@ -298,3 +335,4 @@ task MergeDepth {
         docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
+
