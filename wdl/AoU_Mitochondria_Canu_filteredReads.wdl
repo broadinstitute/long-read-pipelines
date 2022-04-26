@@ -2,7 +2,6 @@ version 1.0
 
 
 import "tasks/Utils.wdl" as Utils
-import "tasks/Hifiasm.wdl" as HA
 import "tasks/AlignReads.wdl" as AR
 import "tasks/Quast.wdl" as Quast
 import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
@@ -72,6 +71,7 @@ workflow MitochondriaProcessing{
         File reads_fq
         String participant_name
         Int genome_size
+        Int corrected_coverage
         Float correct_error_rate = 0.045
         Float trim_error_rate = 0.045
         Float assemble_error_rate = 0.045
@@ -96,22 +96,23 @@ workflow MitochondriaProcessing{
         input:
             reads = reads_fq,
             genome_size = genome_size,
+            corrected_coverage = corrected_coverage,
             correct_error_rate = correct_error_rate,
             trim_error_rate = trim_error_rate,
             assemble_error_rate = assemble_error_rate,
             prefix = prefix,
             technology = technology}
-    call AR.Minimap2 as Minimap2 {input: reads = [Canu.assemble_fa], ref_fasta = ref_fasta, map_preset = "map-hifi", RG = RG}
-    call Quast.Quast as Quast {input: ref = ref_fasta, assemblies = [Canu.assemble_fa]}
-    call CallAssemblyVariants.CallAssemblyVariants as  CallAssemblyVariants {input: asm_fasta = Canu.assemble_fa,
+    call AR.Minimap2 as Minimap2 {input: reads = [Canu.fa], ref_fasta = ref_fasta, map_preset = "map-hifi", RG = RG}
+    call Quast.Quast as Quast {input: ref = ref_fasta, assemblies = [Canu.fa]}
+    call CallAssemblyVariants.CallAssemblyVariants as  CallAssemblyVariants {input: asm_fasta = Canu.fa,
                                                                 ref_fasta = ref_fasta,
                                                                 participant_name = participant_name,
                                                                 prefix = prefix}
     output{
             File chrM_aligned_bam = Minimap2.aligned_bam
             File chrM_aligned_bai = Minimap2.aligned_bai
-            File canu_contig = Canu.assemble_fa
-            File canu_assemble_log = Canu.assemble_log
+            File canu_contig = Canu.fa
+            File canu_assemble_log = Canu.log
             File report_html = Quast.report_html
             File report_txt = Quast.report_txt
             File report_pdf = Quast.report_pdf

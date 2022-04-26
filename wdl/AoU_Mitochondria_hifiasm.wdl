@@ -6,7 +6,6 @@ import "tasks/Hifiasm.wdl" as HA
 import "tasks/AlignReads.wdl" as AR
 import "tasks/Quast.wdl" as Quast
 import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
-import "tasks/Canu.wdl" as Canu
 
 task RG_Parsing {
 
@@ -70,11 +69,9 @@ workflow MitochondriaProcessing{
         File ref_fasta
         File ref_fai
         String participant_name
-        Int genome_size
         Float correct_error_rate = 0.045
         Float trim_error_rate = 0.045
         Float assemble_error_rate = 0.045
-        String technology
     }
 
     parameter_meta{
@@ -118,6 +115,7 @@ workflow MitochondriaProcessing{
 
     output{ File chrM_bam = SubsetBam.subset_bam
             File chrM_bam_bai = SubsetBam.subset_bai
+            File asm_input = BamToFastq.reads_fq
             File chrM_aligned_bam = Minimap2.aligned_bam
             File chrM_aligned_bai = Minimap2.aligned_bai
             File report_html = Quast.report_html

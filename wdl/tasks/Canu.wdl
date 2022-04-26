@@ -18,11 +18,13 @@ workflow Canu {
         Float trim_error_rate
         Float assemble_error_rate
         String prefix
+        Int corrected_coverage
     }
 
     call Correct {
         input:
             reads = reads,
+            corrected_coverage = corrected_coverage,
             genome_size = genome_size,
             error_rate = correct_error_rate,
             prefix = prefix,
@@ -48,8 +50,8 @@ workflow Canu {
     }
 
     output {
-        File assemble_fa = Assemble.canu_contigs_fasta
-        File assemble_log = Assemble.intermediate_log
+        File fa = Assemble.canu_contigs_fasta
+        File log = Assemble.intermediate_log
 #        File correct_fa = Correct.corrected_reads
 #        File correct_log = Correct.intermediate_log
 #        File trim_fa = Trim.trimmed_reads
@@ -62,6 +64,7 @@ task Correct {
     input {
         File reads
         Int genome_size
+        Int corrected_coverage
         Float error_rate
         String prefix
         String technology
@@ -81,7 +84,7 @@ task Correct {
     command <<<
         set -euxo pipefail
 
-        canu -correct corOutCoverage=100\
+        canu -correct corOutCoverage=~{corrected_coverage}\
              -p ~{prefix} -d canu_correct_output \
              genomeSize=~{genome_size}k \
              corMaxEvidenceErate=0.15 \
