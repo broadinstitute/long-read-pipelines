@@ -60,8 +60,9 @@ def main():
         pp = pprint.PrettyPrinter(indent=4)
 
         # First, populate run info (ri) hash with information gleaned from run metadata
+        pb_bam_pattern = re.compile("reads.bam$")
         for blob in blobs:
-            if blob.name.endswith(".subreads.bam") or blob.name.endswith(".reads.bam") and not blob.name.endswith(".scraps.bam"):
+            if pb_bam_pattern.search(blob.name) and not blob.name.endswith(".scraps.bam"):
                 bams.append(blob.name)
 
             if not "fail" in blob.name and bool(re.search('(f(ast)?q)(.gz)?', blob.name)):
