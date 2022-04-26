@@ -92,6 +92,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LocalAssemblyCanu.wdl
   testParameterFiles:
+- name: MergedAssemblyCanu
+  subclass: wdl
+  primaryDescriptorPath: /wdl/MergedAssemblyCanu.wdl
+  testParameterFiles:
 - name: BionanoAssemble
   subclass: wdl
   primaryDescriptorPath: /wdl/BionanoAssemble.wdl
