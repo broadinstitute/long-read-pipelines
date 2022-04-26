@@ -59,7 +59,7 @@ task GetRunInfo {
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         python /usr/local/bin/detect_run_info.py --SM ~{SM} ~{gcs_dir} > run_info.txt
 
-        ((samtools view -H ~{bam} | grep '^@PG[[:space:]]\+ID:ccs-') 2>/dev/null) | \
+        ((samtools view -H ~{bam} | grep '^@PG' | grep -w 'PN:ccs') 2>/dev/null) | \
             wc -l | \
             sed 's/0/false/' | \
             sed 's/1/true/' \
