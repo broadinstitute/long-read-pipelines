@@ -418,7 +418,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 reads      = [ t_28_MergeCCSArrayElementsNonTruncatedShards.merged_bam ],
                 ref_fasta  = ref_fasta,
                 tags_to_preserve = tags_to_preserve,
-                map_preset = "splice:hq"
+                map_preset = "splice:hq",
+                runtime_attr_override = object { mem_gb: 32 }
         }
 
         # Align Reclaimed reads to the genome:
@@ -427,7 +428,8 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                 reads      = [ t_34_MergeCCSReclaimedArrayElementsNonTruncatedShards.merged_bam ],
                 ref_fasta  = ref_fasta,
                 tags_to_preserve = tags_to_preserve,
-                map_preset = "splice"
+                map_preset = "splice",
+                runtime_attr_override = object { mem_gb: 32 }
         }
     }
 
