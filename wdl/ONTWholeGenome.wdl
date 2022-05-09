@@ -36,8 +36,8 @@ workflow ONTWholeGenome {
         File? sites_vcf_tbi
 
         Boolean? run_dv_pepper_analysis = true
-        Int? dvp_threads = 128
-        Int? dvp_memory = 64
+        Int? dvp_threads = 32
+        Int? dvp_memory = 128
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
     }
