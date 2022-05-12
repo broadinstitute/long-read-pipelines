@@ -67,7 +67,7 @@ def upload_tables(namespace, workspace, s, ss, nms):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Copy data to delivery workspaces', prog='deliver_output_data')
+    parser = argparse.ArgumentParser(description='Copy input data to delivery workspaces', prog='deliver_input_data')
     parser.add_argument('-p', '--project', type=str, help="GCP project")
     parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")

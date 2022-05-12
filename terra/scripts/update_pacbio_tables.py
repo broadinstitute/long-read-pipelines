@@ -5,6 +5,8 @@ import re
 import math
 import hashlib
 import argparse
+import subprocess
+
 
 import numpy as np
 import pandas as pd
@@ -16,6 +18,7 @@ from google.api_core.exceptions import NotFound
 
 from collections import OrderedDict
 
+from tqdm import tqdm
 import xmltodict
 import pprint
 
@@ -56,7 +59,7 @@ def load_new_sample_table(buckets, project):
                   "ccs_zmws_pass_filters_pct", "ccs_zmws_fail_filters_pct", "ccs_zmws_shortcut_filters_pct", "ref_map",
                   "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi", "input_bam", "input_pbi"]
     tbl_rows = []
-    for e in ts:
+    for e in tqdm(ts):
         r = load_ccs_report(project, e['Files']['ccs_reports.txt'], e)
 
         application = e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else "longReads"
@@ -72,13 +75,16 @@ def load_new_sample_table(buckets, project):
         input_bam = e['Files']['subreads.bam'] if e['Files']['subreads.bam'] != "" else e['Files']['reads.bam']
         input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files']['reads.bam.pbi']
 
+        #correctable = False if e['Files']['subreads.bam'] == "" else is_correctable(e['Files']['subreads.bam'])
+        #if correctable:
+        #    e['WellSample'][0]['IsCCS'] = 'true'
+
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
 
             e['CellPac'][0]['Barcode'] if 'Barcode' in e['CellPac'][0] else "UnknownFlowcell",
 
-            e['CollectionMetadata'][0]['InstrumentName'] if 'Context' in e['CollectionMetadata'][
-                0] else "UnknownInstrument",
+            e['CollectionMetadata'][0]['InstrumentName'] if 'Context' in e['CollectionMetadata'][0] else "UnknownInstrument",
             e['CollectionMetadata'][0]['Context'] if 'Context' in e['CollectionMetadata'][0] else "UnknownMovie",
             e['WellSample'][0]['WellName'] if 'WellName' in e['WellSample'][0] else "Z00",
             e['WellSample'][0]['CreatedAt'] if 'CreatedAt' in e['WellSample'][0] else "0001-01-01T00:00:00",
@@ -245,8 +251,7 @@ def load_xmls(gcs_buckets, project):
                     'subreads.bam.pbi': "",
 
                     'consensusreadset.xml': gcs_bucket + "/" + blob.name,
-                    'ccs_reports.txt': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".ccs_reports.txt",
-                                                                 blob.name),
+                    'ccs_reports.txt': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".ccs_reports.txt", blob.name),
                     'reads.bam': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam", blob.name),
                     'reads.bam.pbi': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam.pbi", blob.name)
                 }
@@ -288,24 +293,48 @@ def load_ccs_report(project, ccs_report_path, e):
         for blob in blobs:
             blob.download_to_filename("ccs_report.txt")
 
-            file = open("ccs_report.txt", "r")
+            f = open("ccs_report.txt", "r")
 
             d = {}
-            for line in file:
-                if len(line) > 1 and 'Exclusive counts for ZMWs' not in line:
+            for line in f:
+                if len(line) > 1 and 'Exclusive' not in line and 'Additional' not in line:
                     a = line.rstrip().split(":")
 
-                    k = a[0].rstrip()
-                    v = float(re.sub(" ", "", re.sub(" \(.*$", "", a[1])))
+                    try:
+                        k = a[0].rstrip()
+                        v = float(re.sub(" ", "", re.sub(" \(.*$", "", a[1])))
 
-                    if k not in d:
-                        d[k] = 0.0;
+                        if k not in d:
+                            d[k] = 0.0;
 
-                    d[k] = d[k] + v
+                        d[k] = d[k] + v
+                    except:
+                        pass
 
             break
 
     return d
+
+
+def is_correctable(subreads_bam):
+    cmd = 'gsutil cat ' + subreads_bam + ' | samtools view | head -n 1000 | cut -d"/" -f2 | uniq -c'
+    lines = subprocess.getoutput(cmd).split("\n")
+
+    num_ccs_reads = 0
+    num_reads = 1 # add a pseudocount to avoid div by 0
+    for l in lines:
+        l = l.strip()
+
+        if l != "":
+            a = l.strip().split(" ")
+            try:
+                if int(a[0]) >= 3:
+                    num_ccs_reads += 1
+                num_reads += 1
+            except:
+                pass
+
+    return num_ccs_reads / num_reads >= 0.3
 
 
 def update_sample_table(namespace, workspace, buckets, project, tbl_old):

@@ -24,7 +24,7 @@ def main():
     parser.add_argument('-p', '--project', type=str, help="GCP project")
     parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
-    parser.add_argument('-u', '--user', type=str, nargs="+", help="Usernames to add as owners to the workspace")
+    parser.add_argument('-u', '--user', type=str, action="append", help="Usernames to add as owners to the workspace")
     parser.add_argument('-t', '--threads', type=int, default=os.cpu_count() + 2, help="Number of threads to use to copy files")
     parser.add_argument('-r', '--run', action='store_true', help="Actually run the copying commands")
     args = parser.parse_args()
@@ -52,7 +52,6 @@ def main():
         if rw not in workspaces:
             create_workspace(args, rw, args.run)
 
-            b = fapi.update_workspace_acl(args.namespace, rw, owners)
             workspaces[rw] = args.namespace
 
         if rw not in tbl_new_hash:
@@ -62,6 +61,8 @@ def main():
 
         ns = workspaces[rw]
 
+        b = fapi.update_workspace_acl(ns, rw, owners)
+
         tbl_rw = tbl_filtered[tbl_filtered['workspace'] == rw]
         qa = fapi.get_workspace(ns, rw)
         if qa.status_code == 200:
@@ -70,15 +71,21 @@ def main():
             bucket_name = f"gs://{q['workspace']['bucketName']}"
 
             for index, row in tbl_rw.iterrows():
+                deliver_inputs = row.to_dict()['workspace_deliver_inputs'] != 'False'
+
                 newrow = row
                 newrow = newrow.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
                 newrow = newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", regex=True)
+
+                if deliver_inputs:
+                    newrow = newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/", regex=True)
+                    newrow = newrow.replace('gs://broad-gp-oxfordnano/', bucket_name + "/inputs/", regex=True)
 
                 tbl_new_hash[rw] = tbl_new_hash[rw].append(newrow)
                 bucket_new_hash[bucket_name] = rw
 
                 for k, v in row.to_dict().items():
-                    if 'gs://' in v and ('gs://broad-gp-pacbio/' not in v and 'gs://broad-gp-oxfordnano/' not in v):
+                    if 'gs://' in v and (('gs://broad-gp-pacbio/' not in v and 'gs://broad-gp-oxfordnano/' not in v) or deliver_inputs):
                         if bucket_name not in copy_lists:
                             copy_lists[bucket_name] = {}
                             rsync_lists[bucket_name] = {}
@@ -89,7 +96,10 @@ def main():
                             else:
                                 sdir = "gs://" + "/".join(re.sub("gs://", "", v).split("/")[0:4])
                                 ddir = "gs://" + "/".join(re.sub("gs://", "", newrow[k]).split("/")[0:4])
+
                                 rsync_lists[bucket_name][sdir] = ddir
+                                if os.path.basename(sdir) != os.path.basename(ddir):
+                                    rsync_lists[bucket_name][sdir] = f'{ddir}/{os.path.basename(sdir)}'
 
             for ss_index, ss_row in ss_old.iterrows():
                 for sample_id in tbl_new_hash[rw]['entity:sample_id']:
@@ -118,7 +128,7 @@ def main():
 
     for workspace in membership_new_hash:
         if len(membership_new_hash[workspace]) > 0:
-            oms = tbl_new_hash[workspace][['bio_sample', 'entity:sample_id']].reset_index(drop=True)
+            oms = tbl_new_hash[workspace][['bio_sample', 'entity:sample_id']].reset_index(drop=True) if 'bio_sample' in tbl_new_hash[workspace] else tbl_new_hash[workspace][['sample_name', 'entity:sample_id']].reset_index(drop=True)
             oms.columns = ['membership:sample_set_id', 'sample']
 
             if args.run:
@@ -154,7 +164,7 @@ def create_workspace(args, rw, run):
         a = fapi.create_workspace(args.namespace, rw)
         status_code = a.status_code
 
-    print(f"[workspace  : {status_code}] Created workspace '{rw}' {'[dry-run]' if run else ''}")
+    print(f"[workspace  : {status_code}] Created workspace '{rw}' {'[dry-run]' if not run else ''}")
 
 
 def rsync_files(src, dst, project, run):

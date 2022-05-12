@@ -13,6 +13,7 @@ import firecloud.api as fapi
 
 from google.cloud import storage
 
+from tqdm import tqdm
 import pprint
 
 
@@ -110,7 +111,7 @@ def load_new_sample_table(buckets, project):
     tbl_header = ["entity:sample_id", "final_summary_file", "sequencing_summary_file", "fast5_pass_dir", "fastq_pass_dir", "protocol_group_id", "instrument", "position", "flow_cell_id", "sample_name", "basecalling_enabled", "started", "acquisition_stopped", "processing_stopped", "fast5_files_in_fallback", "fast5_files_in_final_dest", "fastq_files_in_fallback", "fastq_files_in_final_dest"]
     tbl_rows = []
 
-    for e in ts:
+    for e in tqdm(ts):
         tbl_rows.append([
             e["entity:sample_id"],
             e["Files"]["final_summary.txt"],

@@ -29,7 +29,10 @@ def main():
 
     # Get list of flowcells (we'll need this to determine the data type at the sample_set level)
     s_tbl = load_table(args, 'sample')
-    s_tbl['created_at']= pd.to_datetime(s_tbl['created_at'])
+    try:
+        s_tbl['created_at']= pd.to_datetime(s_tbl['created_at'])
+    except:
+        s_tbl['created_at']= pd.to_datetime('2019-01-01T00:00:00.000Z')
 
     workflows = {
         'PBFlowcell': set(['CCS', 'CLR', 'ISOSEQ']),
@@ -84,7 +87,12 @@ def main():
                             has_succeeded = tbl_w_jobs_subset['workflow_status'][0] == 'Succeeded'
                             is_running = 'Running' in list(tbl_w_jobs_subset['workflow_status'])
                             has_exceeded_failure_limit = len(list(filter(lambda x: x != "Succeeded" and x != "Running", list(tbl_w_jobs_subset['workflow_status'])))) >= 3
-                            created_before_min_date = pd.to_datetime(created_at) < pd.to_datetime(args.min_date)
+
+                            try:
+                                created_before_min_date = pd.to_datetime(created_at) < pd.to_datetime(args.min_date)
+                            except:
+                                created_before_min_date = False
+
                             prereqs_satisfied = len(prereq_jobs) > 0
 
                             process = not has_succeeded and not is_running and not has_exceeded_failure_limit and not created_before_min_date and prereqs_satisfied
