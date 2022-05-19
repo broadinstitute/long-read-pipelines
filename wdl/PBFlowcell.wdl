@@ -17,10 +17,12 @@ workflow PBFlowcell {
     input {
         File bam
         File pbi
-        File ref_map_file
+        File? ccs_report_txt
 
         String SM
         String LB
+
+        File ref_map_file
 
         Boolean drop_per_base_N_pulse_tags = true
 
@@ -114,10 +116,13 @@ workflow PBFlowcell {
     }
 
     if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
-        call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
-        call PB.SummarizeCCSReport { input: report = MergeCCSReports.report }
+        if (!GetRunInfo.is_corrected) {
+            call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
+            call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report }
+        }
+        File CCS_report_to_parse = select_first([ccs_report_txt, MergeCCSReports.report])
 
-        call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report }
+        call PB.SummarizeCCSReport { input: report = CCS_report_to_parse }
     }
 
     # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
