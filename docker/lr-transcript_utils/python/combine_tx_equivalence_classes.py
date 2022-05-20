@@ -58,10 +58,10 @@ for in_file in sys.argv[1:]:
         tx_eq_class_data_files[base_name] = in_file
     elif in_file.endswith(GENE_EQ_LOOKUP_FILE_SUFFIX):
         base_name = in_file[:in_file.find(GENE_EQ_LOOKUP_FILE_SUFFIX)]
-        gene_eq_class_data_files[base_name] = in_file
+        gene_eq_class_def_files[base_name] = in_file
     elif in_file.endswith(GENE_EQ_DATA_FILE_SUFFIX):
         base_name = in_file[:in_file.find(GENE_EQ_DATA_FILE_SUFFIX)]
-        gene_eq_class_def_files[base_name] = in_file
+        gene_eq_class_data_files[base_name] = in_file
     else:
         print(f"ERROR: Unknown file suffix: {in_file}")
         sys.exit(1)
@@ -77,9 +77,9 @@ def ingest_old_class_def_files(old_class_def_file_dict, file_suffix):
     eq_class_set = set()
 
     for eq_def_file in sorted(list(old_class_def_file_dict.values())):
-        print(f"\tProcessing {eq_def_file}")
+        file_key = eq_def_file[:eq_def_file.find(file_suffix)]
+        print(f"\tProcessing {eq_def_file} ({file_key})")
         with open(eq_def_file, 'r') as f:
-            file_key = eq_def_file[:eq_def_file.find(file_suffix)]
             old_eq_classes[file_key] = dict()
             for line in f:
                 if line[0] == "#":
@@ -101,6 +101,59 @@ def write_new_eq_class_def_file(out_name, eq_class_dict, eq_class_type="Transcri
         f.write(f"#EQ_Class\t{eq_class_type}_Assignments\n")
         for eq_class, indx in eq_class_dict.items():
             f.write(f"{indx}\t{eq_class}\n")
+
+########################################################################################
+########################################################################################
+########################################################################################
+
+############################################
+#   ____
+#  / ___| ___ _ __   ___  ___
+# | |  _ / _ \ '_ \ / _ \/ __|
+# | |_| |  __/ | | |  __/\__ \
+#  \____|\___|_| |_|\___||___/
+#
+############################################
+
+# OK, we have our files collected.
+# Now we need to create the new set of equivalence class labels:
+
+print("Reading Gene EQ Class definitions...")
+old_gene_eq_classes, gene_eq_class_set = ingest_old_class_def_files(gene_eq_class_def_files, GENE_EQ_LOOKUP_FILE_SUFFIX)
+
+# Now that we have our eq class sets, we need to renumber them:
+print("Renumbering gene eq classes...")
+gene_eq_classes = {eq_class: indx for indx, eq_class in enumerate(sorted(list(gene_eq_class_set)))}
+
+# Now we should write out our new eq class file:
+write_new_eq_class_def_file(GENE_EQ_CLASS_DEFINITIONS_OUT_FILE_NAME, gene_eq_classes, eq_class_type="Gene")
+
+print(f"Writing new Gene EQ Class assignments to: {GENE_EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME}")
+with open(GENE_EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME, 'w') as out_file:
+    for eq_class_data_file in sorted(list(gene_eq_class_data_files.values())):
+
+        file_key = eq_class_data_file[:eq_class_data_file.find(GENE_EQ_DATA_FILE_SUFFIX)]
+        print(f"\tProcessing {eq_class_data_file} ({file_key})")
+
+        with open(eq_class_data_file, 'r') as f:
+            for line in f:
+                if line[0] == "#":
+                    continue
+
+                # Get the class info from the input file:
+                fields = line.strip().split("\t")
+                read_name = fields[0]
+                gene_assignment = fields[1]
+
+                # Now lookup the new class for the gene
+                # Not all genes are reassigned.  In fact, most arent.
+                try:
+                    new_class_num = gene_eq_classes[old_gene_eq_classes[file_key][gene_assignment]]
+                except KeyError:
+                    new_class_num = gene_assignment
+
+                # Now write out the class info:
+                out_file.write(f"{read_name}\t{new_class_num}\n")
 
 ########################################################################################
 ########################################################################################
@@ -147,6 +200,8 @@ with open(EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME, 'w') as out_file:
                 read_name = fields[0]
                 class_num = fields[1]
                 # Some eq classes don't have associated genes:
+
+                # TODO: This MUST be a lookup into the unified gene equivalence class that we created first.  You can't just reuse these gene assignments!!!
                 gene_assignments = fields[2] if len(fields) > 2 else ""
 
                 # Now lookup the new class #:
@@ -154,59 +209,6 @@ with open(EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME, 'w') as out_file:
 
                 # Now write out the class info:
                 out_file.write(f"{read_name}\t{new_class_num}\t{gene_assignments}\n")
-
-########################################################################################
-########################################################################################
-########################################################################################
-
-############################################
-#   ____
-#  / ___| ___ _ __   ___  ___
-# | |  _ / _ \ '_ \ / _ \/ __|
-# | |_| |  __/ | | |  __/\__ \
-#  \____|\___|_| |_|\___||___/
-#
-############################################
-
-# OK, we have our files collected.
-# Now we need to create the new set of equivalence class labels:
-
-print("Reading Gene EQ Class definitions...")
-old_gene_eq_classes, gene_eq_class_set = ingest_old_class_def_files(gene_eq_class_def_files, GENE_EQ_LOOKUP_FILE_SUFFIX)
-
-# Now that we have our eq class sets, we need to renumber them:
-print("Renumbering gene eq classes...")
-gene_eq_classes = {eq_class: indx for indx, eq_class in enumerate(sorted(list(gene_eq_class_set)))}
-
-# Now we should write out our new eq class file:
-write_new_eq_class_def_file(GENE_EQ_CLASS_DEFINITIONS_OUT_FILE_NAME, gene_eq_classes, eq_class_type="Gene")
-
-print(f"Writing new Gene EQ Class assignments to: {GENE_EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME}")
-with open(GENE_EQ_CLASS_ASSIGNMENTS_OUT_FILE_NAME, 'w') as out_file:
-    for eq_class_data_file in sorted(list(gene_eq_class_data_files.values())):
-
-        print(f"\tProcessing {eq_class_data_file}")
-        file_key = eq_class_data_file[:eq_class_data_file.find(GENE_EQ_DATA_FILE_SUFFIX)]
-
-        with open(eq_class_data_file, 'r') as f:
-            for line in f:
-                if line[0] == "#":
-                    continue
-
-                # Get the class info from the input file:
-                fields = line.strip().split("\t")
-                read_name = fields[0]
-                gene_assignment = fields[1]
-
-                # Now lookup the new class for the gene
-                # Not all genes are reassigned.  In fact, most arent.
-                try:
-                    new_class_num = gene_eq_classes[old_gene_eq_classes[file_key][gene_assignment]]
-                except KeyError:
-                    new_class_num = gene_assignment
-
-                # Now write out the class info:
-                out_file.write(f"{read_name}\t{new_class_num}\n")
 
 ########################################################################################
 ########################################################################################

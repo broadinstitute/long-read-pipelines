@@ -680,11 +680,6 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     scatter (ccsi in range(length(t_71_ShardS2ECcsArrayElements.shards))) {
         File ccs_array_element_shard = t_71_ShardS2ECcsArrayElements.shards[ccsi]
 
-        call Utils.IndexBam as t_72_IndexCcsArrayElementShard {
-            input:
-                bam = ccs_array_element_shard
-        }
-
         # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
         call LONGBOW.Pad as t_73_LongbowPadCCSArrayElementUMIs {
             input:
@@ -1273,6 +1268,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
                     t_95_GffCompareGencodetoMasSeqReads.log[i],
 
                     t_96_QuantifyGffComparison.gene_assignments_file[i],
+                    t_96_QuantifyGffComparison.gene_eq_class_labels_file[i],
                     t_96_QuantifyGffComparison.tx_equivalence_class_labels_file[i],
                     t_96_QuantifyGffComparison.tx_equivalence_class_file[i],
                     t_96_QuantifyGffComparison.graph_gpickle[i],
