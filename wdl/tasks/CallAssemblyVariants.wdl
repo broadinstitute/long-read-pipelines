@@ -107,6 +107,7 @@ task Paftools {
 
     output {
         File variants = "~{prefix}.paftools.vcf"
+        File stats = "~{prefix}.pafstats.pdf"
     }
 
     #########################
