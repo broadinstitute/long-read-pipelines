@@ -1603,6 +1603,72 @@ task CheckOnSamplenames {
     }
 }
 
+task FixSampleName {
+    meta {
+        desciption:
+        "This fixes the sample name of a demultiplexed BAM"
+    }
+
+    input {
+        File bam
+        String sample_name
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String prefix = basename(bam, ".bam")
+    Int disk_size = 3*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools view --no-PG -H ~{bam} > header.txt
+        awk '$1 ~ /^@RG/' header.txt > rg_line.txt
+        if ! grep -qF "SM:" rg_line.txt; then
+            sed -i "s/$/SM:tbd/" rg_line.txt
+        fi
+        awk -v lib="~{sample_name}" -F '\t' 'BEGIN {OFS="\t"} { for (i=1; i<=NF; ++i) { if ($i ~ "SM:") $i="SM:"lib } print}' \
+            rg_line.txt \
+            > fixed_rg_line.txt
+
+        sed -n '/@RG/q;p' header.txt > first_half.txt
+        sed -n '/@RG/,$p' header.txt | sed '1d' > second_half.txt
+
+        cat first_half.txt fixed_rg_line.txt second_half.txt > fixed_header.txt
+        cat fixed_header.txt
+
+        mv ~{bam} old.bam
+        date
+        samtools reheader fixed_header.txt old.bam > ~{prefix}.bam
+        date
+    >>>
+
+    output {
+        File reheadered_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 # todo: hook this in to all tasks using LOCAL ssds
 task ComputeAllowedLocalSSD {
     # This exists because of the following error message
@@ -1672,5 +1738,72 @@ task RandomZoneSpewer {
         preemptible:    2
         maxRetries:     1
         docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task SplitDelimitedString {
+    input {
+        String s
+        String sep
+    }
+
+    command <<<
+        set -eux
+
+        echo ~{s} | tr ~{sep} '\n' > result.txt
+    >>>
+
+    output {
+        Array[String] arr = read_lines("result.txt")
+    }
+
+    runtime {
+        disks: "local-disk 100 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task ConstructMap {
+    meta {
+        desciption:
+        "Use only when the keys are guaranteed to be unique and the two arrays are of the same length."
+    }
+    input {
+        Array[String] keys
+        Array[String] values
+    }
+    command <<<
+        set -eux
+        paste ~{write_lines(keys)} ~{write_lines(values)} > converted.tsv
+        cat converted.tsv
+    >>>
+
+    output {
+        Map[String, String] converted = read_map("converted.tsv")
+    }
+
+    runtime {
+        disks: "local-disk 100 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task MapToTsv {
+    input {
+        Map[String, Float] my_map
+        String name_of_file
+    }
+
+    command <<<
+        cp ~{write_map(my_map)} ~{name_of_file}
+    >>>
+
+    output {
+        File result = "~{name_of_file}"
+    }
+
+    runtime {
+        disks: "local-disk 100 HDD"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }
