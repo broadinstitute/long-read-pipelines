@@ -252,6 +252,12 @@ task ExtractHifiReads {
 
         samtools view --no-PG -H ~{prefix}.tmp.bam > header.txt
         awk '$1 ~ /^@RG/' header.txt > rg_line.txt
+        if ! grep -qF "LB:" rg_line.txt; then
+            sed -i "s/$/LB:tbd/" rg_line.txt
+        fi
+        if ! grep -qF "SM:" rg_line.txt; then
+            sed -i "s/$/SM:tbd/" rg_line.txt
+        fi
         # fix LB:
         awk -v lib="~{library}" -F '\t' 'BEGIN {OFS="\t"} { for (i=1; i<=NF; ++i) { if ($i ~ "LB:") $i="LB:"lib } print}' \
             rg_line.txt \
