@@ -17,10 +17,12 @@ workflow PBFlowcell {
     input {
         File bam
         File pbi
-        File ref_map_file
+        File? ccs_report_txt
 
         String SM
         String LB
+
+        File ref_map_file
 
         Boolean drop_per_base_N_pulse_tags = true
 
@@ -35,6 +37,7 @@ workflow PBFlowcell {
 
     parameter_meta {
         bam:                "GCS path to raw subread bam"
+        ccs_report_txt:     "GCS path to CCS report txt, required if on-instrument corrected, otherwise CCS is run in this workflow for CCS libraries"
         pbi:                "GCS path to pbi index for raw subread bam"
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
@@ -60,6 +63,12 @@ workflow PBFlowcell {
 
     call PB.GetRunInfo { input: bam = bam, SM = SM }
     String PU = GetRunInfo.run_info['PU']
+
+    if (experiment_type != "CLR" && GetRunInfo.is_corrected) {
+        if (!defined(ccs_report_txt)) {
+            call Utils.StopWorkflow as lack_ccs_report {input: reason = "Provided BAM is on-instrument CCS-corrected, but lacks the companion CCS report."}
+        }
+    }
 
     call Utils.ComputeAllowedLocalSSD as Guess {input: intended_gb = 3*ceil(size(bam, "GB") + size(pbi, "GB"))}
     call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
@@ -98,7 +107,7 @@ workflow PBFlowcell {
 
     call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = BamToFastq.reads_fq }
 
-    # merge corrected, unaligned reads
+    # merge corrected, unaligned reads, and pipeline-CCSed reports
     String cdir = outdir + "/reads/ccs/unaligned"
     if (experiment_type != "CLR") {
         call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = select_all(ExtractHifiReads.hifi_bam), prefix = "~{PU}.reads" }
@@ -111,13 +120,13 @@ workflow PBFlowcell {
                 file = IndexCCSUnalignedReads.pbi,
                 name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi"
         }
-    }
 
-    if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
-        call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
-        call PB.SummarizeCCSReport { input: report = MergeCCSReports.report }
+        if (!GetRunInfo.is_corrected) {
+            call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
+            call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report }
+        }
 
-        call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report }
+        call PB.SummarizeCCSReport { input: report = select_first([ccs_report_txt, MergeCCSReports.report]) }
     }
 
     # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
