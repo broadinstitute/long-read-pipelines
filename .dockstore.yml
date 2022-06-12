@@ -92,3 +92,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTMethylation.wdl
   testParameterFiles:
+- name: ONTPfHrp2Hrp3Status
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTPfHrp2Hrp3Status.wdl
+  testParameterFiles:
