@@ -7,8 +7,6 @@ workflow ONTPfHrp2Hrp3Status {
     input {
         File bam
         File bai
-
-        String gcs_out_root_dir
     }
 
     call IsLocusDeleted as HRP2Status {
