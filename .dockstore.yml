@@ -96,3 +96,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTPfHrp2Hrp3Status.wdl
   testParameterFiles:
+- name: ONTPfTypeDrugResistanceMarkers
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTPfTypeDrugResistanceMarkers.wdl
+  testParameterFiles:
