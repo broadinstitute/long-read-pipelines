@@ -36,7 +36,7 @@ task AnnotateEffectsOfSelectedVariants {
     String base = basename(vcf, ".vcf.gz")
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         zcat ~{vcf} | \
             sed 's/^Pf3D7_0//' | \
