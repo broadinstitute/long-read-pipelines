@@ -39,13 +39,16 @@ task Clair {
     String platform = if preset == "CCS" then "hifi" else "ont"
 
     command <<<
+        # avoid the infamous pipefail 141 https://stackoverflow.com/questions/19120263
+        set -eux
+        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
+
         # example from https://github.com/HKU-BAL/Clair3#option-1--docker-pre-built-image
         set -euxo pipefail
 
         touch ~{bai}
-
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-        SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
+
 
         /opt/bin/run_clair3.sh ~{true='--vcf_fn=' false='' defined(sites_vcf)}~{select_first([sites_vcf, ""])} \
             --bam_fn=~{bam} \
@@ -55,7 +58,7 @@ task Clair {
             --model_path="/opt/models/~{platform}" \
             --snp_min_af=0.01 \
             --indel_min_af=0.01 \
-            --sample_name=$SM --gvcf ~{true='--ctg_name=' false='' defined(chr)}~{select_first([chr, ""])} \
+            --sample_name=$SM --gvcf ~{true='--ctg_name=' false='' defined(chr)}~{select_first([chr, "--include_all_ctgs"])} \
             --output="./"
 
     >>>

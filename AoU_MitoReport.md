@@ -28,38 +28,55 @@
 
     ``` samtools faidx hifi_test.fa ``` 
     ``` wc -l hifi_test.fa.fai ```
-- ran on VM
+
+3) Hifiasm + filtered reads w/ genome size
     - output: 59 contigs 
     - mean length: 18k
-        - Alighment using minimap2: <br />
-            ```./minimap2 -aYL --MD -t 8 ../chrM_ref.fa ../test_1.p_ctg.fa | samtools sort -o "chrM_test.bam"``` <br />
-                    - potential further steps: <br />
-                        - collapse alignment into a single contig (CD-HIT) http://weizhong-lab.ucsd.edu/cd-hit/ <br />
+        - Alighment using minimap2: 
+           -  ```./minimap2 -aYL --MD -t 8 ../chrM_ref.fa ../test_1.p_ctg.fa | samtools sort -o "chrM_test.bam" ``` 
+                - potential further steps: 
+                    - polishing: collapse alignment into a single contig (CD-HIT) http://weizhong-lab.ucsd.edu/cd-hit/
+                        1) CONSENT:
+                            - free(): invalid pointer. software not maintained.
+                        2) abPOA: 
+                            - segmentation fault
+                        3) CD-HIT:
+                            - downloaded latest release and uploaded to VM
+                            - ```awk '/^>/ {print; next; } { seqlen = length($0); print seqlen}' file.fa```
+                            - with wrapped fasta:
+                                - ```awk '/^>/ {if (seqlen){print seqlen}; print ;seqlen=0;next; } { seqlen += length($0)}END{print seqlen}'```
+                            - 99% identity ng threshold)
+                            - output: 9 clusters with 1 with similar length
+                        4) circlator
+                        ```sudo docker run --rm -it -v /home/ewan/data:/data sangerpathogens/circlator circlator all /data/test_1.p_ctg.fa /data/classified_reads.for_assembly.bam /data/output_directory```
+                            
                         - OR trim soft-clipped region and align separately or throw away 
                         - filter out contigs that don't stretch the full length 16k
-                        - abPOA: collapse contig (talk to John about the python version) <br />
+                        - abPOA: collapse contig (talk to John about the python version) 
                         - OR: run assembly twice
+
             - Contig selection and trimming:
              ```samtools view  chrM_test.bam | grep -F "h1tg000049" | less -S > select_contig.txt```
              - minimap2 align again: 
+             ```./minimap2 -aYL -R'@RG\tID:blah\tSM:HG00514' --MD -t 8 ../chrM_ref.fa contig_trimmed.fa | samtools sort -o "second_alignment_chrM.bam"```
 
-                ```./minimap2 -aYL --MD -t 8 ../chrM_ref.fa contig_trimmed.fa | samtools sort -o "second_alignment_chrM.bam"```
-            - run paftools 
-    - convert PAF to VCF:
-    1) 
-    ```awk 'BEGIN {OFS="\t"} {print "chrM", $1-1, $1, $2"->"$3}' paf_fin_out.txt > mito_paf.bed```
+            - run paftools (paftools_mito.wdl):
+                - convert PAF to VCF: <br />
+                ```awk 'BEGIN {OFS="\t"} {print "chrM", $1-1, $1, $2"->"$3}' paf_fin_out.txt > mito_paf.bed```
 
-awk 'BEGIN {OFS="\t"} {print "chrM", $1-1, $1, $2"->"$3}' paf_fin_out.txt
+    - align reads to assembly using Clair3: <br />
+        - align filtered reads to contig (check if contig deviates from reads) <br />
+        ```./minimap2 -aYL -R'@RG\tID:ID\tSM:HG00514' --MD -t 8 contig_trimmed.fa chrM_raw_reads.fa | samtools sort -o "readstocontig_chrM.bam"```
+    - Clair3: evaluate assembly - compare raw reads to selected contig
+        - output: pileup.vcf; full_alignment.vcf; merged.vcf
+        - visualize vcf output on IGV with readstocontig_chrM.bam (change reference to contig_trimmed.fa on IGV)
+        - IGV shows:
+            - variants identified (shown in vcf) are minor (not seen in most reads aka low allele frequency)
+            - if selected contig is the representative one, there should be almost no variants?? 
+        
 
-awk 'BEGIN {OFS="\t"} {print "chrM", $1, ".", $2, $3, ".", ".", "."}' paf_fin_out.txt > paf_vcf.txt
 
-awk '{print "chrM\t"$1"\t"$1+1}' paf_fin_out.txt 
-
-
-echo "CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" | awk 'BEGIN {OFS="\t"} {print "chrM", $1, ".", $2, $3, ",", ".", "."}' paf_fin_out.txt
-
-awk 'BEGIN {OFS="\t"} {print "chrM", $1-1, $1, $2"->"$3}' paf_fin_out.txt > mito_paf.bed
-
+ 
                         
 <br />
 <br />
@@ -151,3 +168,31 @@ BED file and visualize
 
 future work: 
 - clustering variants (should see cluster around ethnicity)
+
+
+
+
+create truth dataset:
+- supporting reads
+
+
+
+
+
+Hifiasm notes: 
+- prefix`.r_utg.gfa: haplotype-resolved raw unitig graph. This graph keeps all haplotype information.
+- `prefix`.p_utg.gfa: haplotype-resolved processed unitig graph without small bubbles. Small bubbles might
+be caused by somatic mutations or noise in data, which are not the real haplotype information. Hifiasm automatically pops such small bubbles based on coverage
+- `prefix`.p_ctg.gfa: assembly graph of primary contigs. This graph includes a complete assembly with long
+stretches of phased blocks.
+- `prefix`.a_ctg.gfa: assembly graph of alternate contigs. This graph consists of all contigs that are discarded
+in primary contig graph.
+- `prefix`.*hap*.p_ctg.gfa: phased contig graph. This graph keeps the phased contigs.
+
+
+
+hifi parameters: 
+- N 20 didn't change contig numbers but looks diff on IGV
+
+
+./hifiasm -o "523_test" -t 4 -k 51 --pri-range 100 16700 --n-hap 1 --hg-size 16k chrM_filtered_rawreads.fastq
