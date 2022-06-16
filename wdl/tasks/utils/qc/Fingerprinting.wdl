@@ -304,8 +304,8 @@ task CheckFingerprint {
         }
 
         fingerprint_vcf:    "Fingerprint VCF file from local database; note that sample name must be the same as in BAM"
-
-        haplotype_map:      "table indicating reference sequence and auxillary file locations"
+        vcf_sample_name:    "Sample name in VCF, possibly different from that in the BAM."
+        haplotype_map:      "Happlotype map file for the reference build used. See https://bit.ly/3QyZbwt"
     }
 
     Int disk_size = ceil(size([fingerprint_vcf, haplotype_map], "GB"))
@@ -395,7 +395,8 @@ task CheckCLRFingerprint {
     }
 
     parameter_meta {
-        haplotype_map: "table indicating reference sequence and auxillary file locations"
+        vcf_sample_name:    "Sample name in VCF, possibly different from that in the BAM."
+        haplotype_map:      "Happlotype map file for the reference build used. See https://bit.ly/3QyZbwt"
     }
 
     Int disk_size = 100 + ceil(size(aligned_bam, "GB"))

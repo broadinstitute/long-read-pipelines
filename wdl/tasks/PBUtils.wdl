@@ -122,6 +122,8 @@ task ShardLongReads {
     command <<<
         set -x
 
+        samtools view -c ~{unaligned_bam} # to check if file is truncated
+
         python3 /usr/local/bin/shard_bam.py \
             -n ~{num_shards} \
             -t ~{num_threads} \
@@ -141,7 +143,7 @@ task ShardLongReads {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
-        max_retries:        0,
+        max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -757,8 +759,8 @@ task Align {
     Boolean fix_library_entry = if defined(library) then true else false
 
     Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
-    Int cpus = 4
-    Int mem = 30
+    Int cpus = 16
+    Int mem = 96
 
     command <<<
         set -euxo pipefail
