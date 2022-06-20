@@ -136,14 +136,14 @@ workflow PBFlowcell {
     call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = PU }
     call PB.PBIndex as IndexAlignedReads { input: bam = MergeAlignedReads.merged_bam }
 
-    call AM.AlignedMetrics as PerFlowcellMetrics {
-        input:
-            aligned_bam    = MergeAlignedReads.merged_bam,
-            aligned_bai    = MergeAlignedReads.merged_bai,
-            ref_fasta      = ref_map['fasta'],
-            ref_dict       = ref_map['dict'],
-            gcs_output_dir = outdir + "/metrics"
-    }
+#    call AM.AlignedMetrics as PerFlowcellMetrics {
+#        input:
+#            aligned_bam    = MergeAlignedReads.merged_bam,
+#            aligned_bai    = MergeAlignedReads.merged_bai,
+#            ref_fasta      = ref_map['fasta'],
+#            ref_dict       = ref_map['dict'],
+#            gcs_output_dir = outdir + "/metrics"
+#    }
 
     if (experiment_type == 'MASSEQ') {
         String stats_dir = outdir + "/metrics/longbow"
