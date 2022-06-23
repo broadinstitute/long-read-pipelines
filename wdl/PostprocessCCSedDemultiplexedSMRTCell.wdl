@@ -15,6 +15,7 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
     input {
         String smrtcell_id
         String movie_name
+        String library
 
         File demuxed_barcode_2_folder
 
@@ -99,8 +100,8 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
             input:
                 uBAM = GetDemxedFilePaths.bam_path,
                 uPBI = GetDemxedFilePaths.pbi_path,
-                bam_sample_name = RG.read_group_info['SM'],
-                library = RG.read_group_info['LB'],
+                bam_sample_name = ConstructBarcodeToIDs.barcode_2_downstream_id[bc], #RG.read_group_info['SM'],
+                library = library, # RG.read_group_info['LB'],
 
                 turn_off_fingperprint_check = turn_off_fingperprint_check,
                 fp_store = fingerprint_store,
