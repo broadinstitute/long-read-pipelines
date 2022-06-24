@@ -88,9 +88,9 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LocalAssembly.wdl
   testParameterFiles:
-- name: LocalJointAssemblyCanu
+- name: LocalJointAssembly
   subclass: wdl
-  primaryDescriptorPath: /wdl/LocalJointAssemblyCanu.wdl
+  primaryDescriptorPath: /wdl/LocalJointAssembly.wdl
   testParameterFiles:
 - name: MergedAssemblyCanu
   subclass: wdl
