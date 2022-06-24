@@ -122,7 +122,7 @@ workflow LocalJointAssembly {
     }
 
     output {
-        File local_bam = SubsetBam.subset_bam
+        File local_merged_bam = MergeBams.merged_bam
         File canu_fa = assembled_contigs
         File variants = CallAssemblyVariants.paftools_vcf
         File paf_aln = CallAssemblyVariants.paf
