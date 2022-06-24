@@ -1,6 +1,5 @@
 IMAGE_NAME = lr-utils
-VERSION = 0.1.9.gamma
-
+VERSION = 0.1.10
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
 

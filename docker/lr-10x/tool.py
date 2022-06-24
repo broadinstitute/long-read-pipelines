@@ -450,7 +450,7 @@ def process_poly_t(sequence, umi_position, stats):
         return True
 
 
-def _process_starcode_stdout(starcode_proc, starcode_output_file = None):
+def _process_starcode_stdout(starcode_proc, starcode_output_file=None):
     num_clusters = 0
     correction_dict = dict()
 

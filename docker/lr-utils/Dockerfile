@@ -4,6 +4,8 @@ MAINTAINER Kiran V Garimella
 
 # copy other resources
 COPY ./environment.yml /
+COPY mark.ont.duplicates.naive.sh /opt/
+COPY remove_duplicate_ont_aln.py /opt/
 
 # install conda packages
 RUN conda env create -f /environment.yml && conda clean -a
@@ -12,21 +14,13 @@ ENV PATH=/opt/conda/envs/lr-utils/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install gsutil
 RUN apt-get --allow-releaseinfo-change update
-RUN apt install -y curl git-lfs
+RUN apt install -y curl git-lfs parallel
 RUN curl https://sdk.cloud.google.com | bash
 
 # Setup crcmodc for gsutil:
 RUN apt-get install -y gcc python3-dev python3-setuptools && \
 			pip3 uninstall -y crcmod && \
 			pip3 install --no-cache-dir -U crcmod
-
-# install gatk
-RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
-    && cd gatk \
-    && ./gradlew \
-    && cp /gatk/build/libs/gatk-package-4.1.0.0-56-*-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
-    && cd .. \
-    && rm -rf /gatk
 
 # Install bamtools:
 # First get cmake:

@@ -1,5 +1,4 @@
-VERSION = 2.2.1-test # This should match the Stringtie version number
-
+VERSION = 2.2.1 # This should match the Stringtie version number
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-stringtie2:$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/lr-stringtie2:latest
 

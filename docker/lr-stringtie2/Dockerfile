@@ -20,15 +20,15 @@ RUN wget https://github.com/gpertea/stringtie/releases/download/v2.2.1/stringtie
     cp * /usr/local/bin/
 
 # install gffread
-RUN wget https://github.com/gpertea/gffread/releases/download/v0.12.6/gffread-0.12.6.Linux_x86_64.tar.gz && \
-    tar zxvf gffread-0.12.6.Linux_x86_64.tar.gz && \
-    cd gffread-0.12.6.Linux_x86_64 && \
+RUN wget https://github.com/gpertea/gffread/releases/download/v0.12.7/gffread-0.12.7.Linux_x86_64.tar.gz && \
+    tar zxvf gffread-0.12.7.Linux_x86_64.tar.gz && \
+    cd gffread-0.12.7.Linux_x86_64 && \
     cp gffread /usr/local/bin/
 
 # install gffcompare
-RUN wget https://github.com/gpertea/gffcompare/releases/download/v0.12.2/gffcompare-0.12.2.Linux_x86_64.tar.gz && \
-    tar zxvf gffcompare-0.12.2.Linux_x86_64.tar.gz && \
-    cd gffcompare-0.12.2.Linux_x86_64 && \
+RUN wget https://github.com/gpertea/gffcompare/releases/download/v0.12.6/gffcompare-0.12.6.Linux_x86_64.tar.gz && \
+    tar zxvf gffcompare-0.12.6.Linux_x86_64.tar.gz && \
+    cd gffcompare-0.12.6.Linux_x86_64 && \
     cp gffcompare trmap /usr/local/bin/
 
 # activate conda environment

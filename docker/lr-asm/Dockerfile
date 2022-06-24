@@ -14,7 +14,9 @@ RUN wget https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x
         && tar xjf minimap2-2.17_x64-linux.tar.bz2 \
         && rm minimap2-2.17_x64-linux.tar.bz2 \
         && cd minimap2-2.17_x64-linux \
-        && cp minimap2 /usr/local/bin/
+        && cp minimap2 /usr/local/bin/ \
+        && cp k8 /usr/local/bin/ \
+        && cp paftools.js /usr/local/bin/
 
 # install Shasta
 RUN wget https://github.com/chanzuckerberg/shasta/releases/download/0.2.0/shasta-Linux-0.2.0 \
