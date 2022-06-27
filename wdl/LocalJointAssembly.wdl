@@ -13,6 +13,7 @@ workflow LocalJointAssembly {
         Array[String]+ aligned_bais
         String prefix
         String experiment_type
+        String? other_params
 
 #        Boolean add_unaligned_reads = false
         Boolean run_quast = false
@@ -27,6 +28,7 @@ workflow LocalJointAssembly {
         aligned_bais:   "index files"
         prefix:        "prefix for output files"
         experiment_type:  "CLR, CCS, or ONT"
+        other_params:   "extra parameters to send to Canu"
 
 #        add_unaligned_reads: "set to true to include unaligned reads in the assembly (default: false)"
         run_quast:           "set to true to run Quast on the assembly (default: false)"
@@ -99,7 +101,8 @@ workflow LocalJointAssembly {
                 genome_size = region_size,
                 reads = BamToFastq.reads_fq,
                 prefix = prefix,
-                preset = preset
+                preset = preset,
+                other_params = other_params
         }
     } ######## Done calling Canu #########
 
