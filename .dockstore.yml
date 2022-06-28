@@ -93,3 +93,8 @@ workflows:
 - name: ONTFlowcellFromMultipleBasecalls
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
+  primaryDescriptorPath: /wdl/LRConvertBCF.wdl
+- name: FusilliCreateRefDB
+  subclass: wdl
+  primaryDescriptorPath: /wdl/FusilliRefDB.wdl
+  testParameterFiles:
