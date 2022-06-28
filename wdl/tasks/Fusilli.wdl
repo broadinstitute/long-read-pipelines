@@ -16,10 +16,9 @@ task BuildGraph {
     }
 
     command <<<
-        set -euxo pipefail
-
         # Activate fusilli conda env
-        source activate base
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
 
         echo "ID" > ref_ids.txt
         echo "fpath" > ref_paths.txt
@@ -83,10 +82,9 @@ task BuildRefLinks {
     }
 
     command <<<
-        set -euxo pipefail
-
         # Activate fusilli conda env
-        source activate base
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
 
         # Mimic Fusilli DB folder structure
         mkdir -p fusilli_db
@@ -100,7 +98,7 @@ task BuildRefLinks {
         ln -s ~{ref_path} ~{ref_id}.fa.gz
 
         # Build minimap2 index for ref contig mapping in later steps
-        minimap2 -x asm5 -d ~{ref_id}.fa.gz.mm2
+        minimap2 -x asm5 -d ~{ref_id}.fa.gz.mm2 ~{ref_path}
 
         cd ../..
 
