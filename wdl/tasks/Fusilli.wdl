@@ -182,6 +182,7 @@ task FinalizeDB {
             parts=(${line})
 
             mkdir -p "${parts[0]}"
+            cd "${parts[0]}"
             ln -s "${parts[1]}" "${parts[0]}/${parts[1]##*/}"
             ln -s "${parts[2]}" "${parts[0]}/${parts[2]##*/}"
         done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_links)} ~{write_lines(mm2_indices)})
