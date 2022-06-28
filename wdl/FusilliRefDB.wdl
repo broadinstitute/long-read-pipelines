@@ -16,9 +16,9 @@ workflow FusilliRefDB {
     }
 
     scatter(ref in zip(ref_ids, ref_paths)) {
-        call Fusilli.BuildLinks as BuildLinks {
+        call Fusilli.BuildRefLinks as BuildRefLinks {
             input: graph = BuildGraph.graph, graph_colors = BuildGraph.graph_colors, ref_meta = BuildGraph.ref_meta,
-                   ref_id = ref[0], ref_path = ref[1]
+                   ref_id = ref.left, ref_path = ref.right
         }
     }
 
@@ -29,8 +29,8 @@ workflow FusilliRefDB {
             ref_meta = BuildGraph.ref_meta,
 
             ref_ids = ref_ids,
-            ref_links = BuildLinks.ref_links,
-            mm2_indices = BuildLinks.minimap2_index,
+            ref_links = BuildRefLinks.ref_links,
+            mm2_indices = BuildRefLinks.minimap2_index,
 
             gcs_output_dir = gcs_output_dir
     }

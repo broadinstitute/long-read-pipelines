@@ -25,7 +25,7 @@ task BuildGraph {
         cat ~{write_lines(ref_paths)} >> ref_paths.txt
 
         paste ref_ids.txt ref_paths.txt \
-            | fusilli db create -t ~{select_first(runtime_attr.cpu_cores, default_attr.cpu_cores)} --symlink fusilli_db/
+            | fusilli db create -t ~{select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])} --symlink fusilli_db/
     >>>
 
     output {
@@ -34,7 +34,7 @@ task BuildGraph {
         File ref_meta = "fusilli_db/reference_meta.tsv"
     }
 
-    Int disk_size = max(ceil((len(ref_ids) * 10) / 1024), 5)
+    Int disk_size = 1 + ceil((length(ref_ids) * 10) / 1024)
 
     #########################
     RuntimeAttr default_attr = object {
@@ -153,7 +153,7 @@ task FinalizeDB {
 
         ref_ids: "List of reference IDs"
         ref_links: "List of paths to the reference Link databases"
-        mm2_indicies: "List of minimap2 indices for each reference"
+        mm2_indices: "List of minimap2 indices for each reference"
 
         gcs_output_dir: "Final destination directory on GCS to store the Fusilli DB."
     }
