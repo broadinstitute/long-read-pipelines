@@ -81,6 +81,8 @@ task BuildRefLinks {
         ref_path: "Reference FASTA path"
     }
 
+    String ref_filename = basename(ref_path)
+
     command <<<
         # Activate fusilli conda env
         source /usr/local/bin/_activate_current_env.sh
@@ -95,10 +97,10 @@ task BuildRefLinks {
 
         mkdir -p ~{ref_id}
         cd ~{ref_id}
-        ln -s ~{ref_path} ~{ref_id}.fa.gz
+        ln -s ~{ref_path} ~{ref_filename}
 
         # Build minimap2 index for ref contig mapping in later steps
-        minimap2 -x asm5 -d ~{ref_id}.fa.gz.mm2 ~{ref_path}
+        minimap2 -x asm5 -d ~{ref_filename}.mm2 ~{ref_path}
 
         cd ../..
 
@@ -107,8 +109,8 @@ task BuildRefLinks {
     >>>
 
     output {
-        File minimap2_index = "fusilli_db/~{ref_id}/~{ref_id}.fa.gz.mm2"
-        File ref_links = "fusilli_db/~{ref_id}/~{ref_id}.links"
+        File minimap2_index = "fusilli_db/~{ref_id}/~{ref_filename}.mm2"
+        File ref_links = "fusilli_db/~{ref_id}/~{ref_filename}.links"
     }
 
     #########################
@@ -175,13 +177,13 @@ task FinalizeDB {
         ln -s ~{graph_colors} reference_graph.bfg_colors
         ln -s ~{ref_meta} reference_meta.tsv
 
-        # Add individual reference files
+        # Symlink individual reference files
         while IFS= read -r line; do
             parts=(${line})
 
             mkdir -p "${parts[0]}"
-            ln -s "${parts[1]}" "${parts[0]}/${parts[0]}.links"
-            ln -s "${parts[2]}" "${parts[0]}/${parts[0]}.fa.gz.mm2"
+            ln -s "${parts[1]}" "${parts[0]}/${parts[1]##*/}"
+            ln -s "${parts[2]}" "${parts[0]}/${parts[2]##*/}"
         done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_links)} ~{write_lines(mm2_indices)})
 
         cd ..
