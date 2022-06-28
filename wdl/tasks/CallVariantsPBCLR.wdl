@@ -52,6 +52,8 @@ workflow CallVariants {
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 
+    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+
     ######################################################################
     # Block for small variants handling
     ######################################################################
@@ -86,7 +88,8 @@ workflow CallVariants {
                         ref_fasta_fai = ref_fasta_fai,
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
-                        is_ccs = false
+                        is_ccs = false,
+                        zones = arbitrary.zones
                 }
 
                 call Sniffles.Sniffles {
@@ -139,7 +142,8 @@ workflow CallVariants {
                     ref_fasta_fai = ref_fasta_fai,
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
-                    is_ccs = false
+                    is_ccs = false,
+                    zones = arbitrary.zones
             }
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 

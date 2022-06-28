@@ -57,6 +57,8 @@ workflow CallVariants {
     # Block for small variants handling
     ######################################################################
 
+    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+
     # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {
         # Scatter by chromosome
@@ -89,7 +91,8 @@ workflow CallVariants {
                     sites_vcf = sites_vcf,
                     sites_vcf_tbi = sites_vcf_tbi,
 
-                    preset = "ONT"
+                    preset = "ONT",
+                    zones = arbitrary.zones
             }
         }
 
@@ -132,7 +135,8 @@ workflow CallVariants {
                         ref_fasta     = ref_fasta,
                         ref_fasta_fai = ref_fasta_fai,
                         threads       = select_first([dvp_threads]),
-                        memory        = select_first([dvp_memory])
+                        memory        = select_first([dvp_memory]),
+                        zones = arbitrary.zones
                 }
             }
 
@@ -196,7 +200,8 @@ workflow CallVariants {
                         ref_fasta_fai = ref_fasta_fai,
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
-                        is_ccs = false
+                        is_ccs = false,
+                        zones = arbitrary.zones
                 }
 
                 call Sniffles.Sniffles {
@@ -249,7 +254,8 @@ workflow CallVariants {
                     ref_fasta_fai = ref_fasta_fai,
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
-                    is_ccs = false
+                    is_ccs = false,
+                    zones = arbitrary.zones
             }
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 

@@ -57,6 +57,8 @@ workflow CallVariants {
     # Block for small variants handling
     ######################################################################
 
+    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+
     # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {
         # Scatter by chromosome
@@ -89,7 +91,8 @@ workflow CallVariants {
                     sites_vcf = sites_vcf,
                     sites_vcf_tbi = sites_vcf_tbi,
 
-                    preset = "CCS"
+                    preset = "CCS",
+                    zones = arbitrary.zones
             }
         }
 
@@ -136,7 +139,8 @@ workflow CallVariants {
                         pepper_threads = select_first([dvp_threads]),
                         pepper_memory  = select_first([dvp_memory]),
                         dv_threads = select_first([dvp_threads]),
-                        dv_memory  = select_first([dvp_memory])
+                        dv_memory  = select_first([dvp_memory]),
+                        zones = arbitrary.zones
                 }
             }
 
@@ -171,7 +175,8 @@ workflow CallVariants {
                     unphased_vcf_tbi = MergeDeepVariantVCFs.tbi,
                     ref_fasta     = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
-                    memory        = select_first([dvp_memory, 64])
+                    memory        = select_first([dvp_memory, 64]),
+                    zones = arbitrary.zones
             }
         }
     }
@@ -206,7 +211,8 @@ workflow CallVariants {
                         ref_fasta_fai = ref_fasta_fai,
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
-                        is_ccs = true
+                        is_ccs = true,
+                        zones = arbitrary.zones
                 }
 
                 call Sniffles.Sniffles {
@@ -259,7 +265,8 @@ workflow CallVariants {
                     ref_fasta_fai = ref_fasta_fai,
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
-                    is_ccs = true
+                    is_ccs = true,
+                    zones = arbitrary.zones
             }
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 
