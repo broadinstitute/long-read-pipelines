@@ -19,7 +19,7 @@ task BuildGraph {
         set -euxo pipefail
 
         # Activate fusilli conda env
-        source /usr/local/bin/_activate_current_env.sh
+        micromamba activate base
 
         echo "ID" > ref_ids.txt
         echo "fpath" > ref_paths.txt
@@ -86,7 +86,7 @@ task BuildRefLinks {
         set -euxo pipefail
 
         # Activate fusilli conda env
-        source /usr/local/bin/_activate_current_env.sh
+        micromamba activate base
 
         # Mimic Fusilli DB folder structure
         mkdir -p fusilli_db
