@@ -107,6 +107,7 @@ workflow LocalJointAssembly {
     } ######## Done calling Canu #########
 
     File assembled_contigs = select_first([Assemble.canu_contigs_fasta, SingleStep.canu_contigs_fasta])
+    File unassembled_contigs = select_first([Assemble.canu_unassembled_fasta, SingleStep.canu_unassembled_fasta])
 
     if (run_quast) {
         call Quast.Quast {
@@ -127,6 +128,7 @@ workflow LocalJointAssembly {
     output {
         File local_merged_bam = MergeBams.merged_bam
         File canu_fa = assembled_contigs
+        File canu_unassembled_fa = unassembled_contigs
         File variants = CallAssemblyVariants.paftools_vcf
         File paf_aln = CallAssemblyVariants.paf
     }

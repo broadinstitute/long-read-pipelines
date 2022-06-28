@@ -206,6 +206,8 @@ task Assemble {
 
     output {
         File canu_contigs_fasta = "canu_assemble_output/~{prefix}.contigs.fasta"
+        File canu_unassembled_fasta = "canu_assemble_output/~{prefix}.unassembled.fasta"
+
     }
 
     #########################
@@ -266,6 +268,7 @@ task SingleStep {
 
     output {
         File canu_contigs_fasta = "canu_assemble_output/~{prefix}.contigs.fasta"
+        File canu_unassembled_fasta = "canu_assemble_output/~{prefix}.unassembled.fasta"
     }
 
     #########################
