@@ -37,18 +37,28 @@
                 - potential further steps: 
                     - polishing: collapse alignment into a single contig (CD-HIT) http://weizhong-lab.ucsd.edu/cd-hit/
                         1) CONSENT:
+                            - description: self-correction for long reads. compute overlaps between long reads to define alignment pile (a set of overlapping reads used for correction) for each read.  multiple alignment strategy to compute consensus. then consensus is further polished with local de bruijn graph 
                             - free(): invalid pointer. software not maintained.
                         2) abPOA: 
+                            - description: performs multiple sequence alignment on a set of input sequences and generate a consensus by applying the heaviest bundling algo
                             - segmentation fault
                         3) CD-HIT:
+                            - description: clustering and comparing protein or sequences
                             - downloaded latest release and uploaded to VM
                             - ```awk '/^>/ {print; next; } { seqlen = length($0); print seqlen}' file.fa```
                             - with wrapped fasta:
                                 - ```awk '/^>/ {if (seqlen){print seqlen}; print ;seqlen=0;next; } { seqlen += length($0)}END{print seqlen}'```
                             - 99% identity ng threshold)
                             - output: 9 clusters with 1 with similar length
-                        4) circlator
-                        ```sudo docker run --rm -it -v /home/ewan/data:/data sangerpathogens/circlator circlator all /data/test_1.p_ctg.fa /data/classified_reads.for_assembly.bam /data/output_directory```
+                        4) circlator: <br />
+                        - description: identify each circular sequence and output a linearized version. assemble all reads that map to contig ends and compare the resulting contigs with the input assembly.
+                        - failed experiments (using docker): 
+                        - ```sudo docker run --rm -it -v /home/ewan/data:/data sangerpathogens/circlator circlator all /data/test_1.p_ctg.fa /data/chrM_reads_raw.fasta /data/output_directory/all_contig```
+                            - raise Error('Error running SPAdes. Output directories are:\n  ' + '\n  '.join(kmer_to_dir.values()) + '\nThe reason why should be in the spades.log file in each directory.')
+                        - ```sudo docker run --rm -it -v /home/ewan/input:/input sangerpathogens/circlator circlator all --assembler canu /input/test_1.p_ctg.fa /input/chrM_raw_reads.fasta /output/616_output```
+
+
+                        
                             
                         - OR trim soft-clipped region and align separately or throw away 
                         - filter out contigs that don't stretch the full length 16k
@@ -64,7 +74,7 @@
                 - convert PAF to VCF: <br />
                 ```awk 'BEGIN {OFS="\t"} {print "chrM", $1-1, $1, $2"->"$3}' paf_fin_out.txt > mito_paf.bed```
 
-    - align reads to assembly using Clair3: <br />
+    - align reads to assembly (instead of reference): <br />
         - align filtered reads to contig (check if contig deviates from reads) <br />
         ```./minimap2 -aYL -R'@RG\tID:ID\tSM:HG00514' --MD -t 8 contig_trimmed.fa chrM_raw_reads.fa | samtools sort -o "readstocontig_chrM.bam"```
     - Clair3: evaluate assembly - compare raw reads to selected contig
@@ -196,3 +206,32 @@ hifi parameters:
 
 
 ./hifiasm -o "523_test" -t 4 -k 51 --pri-range 100 16700 --n-hap 1 --hg-size 16k chrM_filtered_rawreads.fastq
+
+
+## Circlator (Algorithm)
+- summary: run local assemblies of corrected reads that align to contig ends. use local assemblies to identify circular sequences 
+
+1) Read filtering and local assembly
+- input: assembly in fasta and reads in fasta/fastq
+- only reads that map to either ends (first and last 50k bases of the contig) are retained. others trimmed. 
+- filtered reads assembled using SPAdes 
+
+2) Contig merging
+- contigs (resulting SPAdes assembly) aligned to the original assembly using nucmer of MUMmer
+- The longest match to each of the start and end of the SPAdes contigs is identified. <br />
+![](circlator1.png)
+- When a join is made, the filtered reads are remapped to the new merged assembly and the process of read filtering, assembly, and contig merging is repeated until no more contigs can be merged
+
+
+3) Circularization
+- once all possible merges are made, SPAdes assembly aligned to merged assembly
+- circularize each contig: <br />
+    using matches to contigs assembled from filtered reads
+![](circlator_2.png)
+
+
+4) Contig refinement
+- discard contigs shorter than 2000bp
+- remove on-circular contigs:
+    - assembly aligned to itself using nucmer 
+    - contig A contained in contig B if: it wasn't identified as circular and alignment to contigB at least 95% identity and of length 95% of contigA. For each set of equivalent contigs, only the ongest contig retained. 
