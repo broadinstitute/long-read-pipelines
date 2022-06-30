@@ -24,6 +24,7 @@ def main():
     parser.add_argument('-p', '--project', type=str, help="GCP project")
     parser.add_argument('-n', '--namespace', type=str, help="Terra namespace")
     parser.add_argument('-w', '--workspace', type=str, help="Terra workspace")
+    parser.add_argument('-f', '--filter-delivery-workspace', type=str, help="Only process data destined for the specified delivery workspace")
     parser.add_argument('-u', '--user', type=str, action="append", help="Usernames to add as owners to the workspace")
     parser.add_argument('-t', '--threads', type=int, default=os.cpu_count() + 2, help="Number of threads to use to copy files")
     parser.add_argument('-r', '--run', action='store_true', help="Actually run the copying commands")
@@ -36,6 +37,9 @@ def main():
 
     tbl_old, _ = load_table(args.namespace, args.workspace, 'sample')
     ss_old, membership = load_table(args.namespace, args.workspace, 'sample_set', store_membership=True)
+
+    if args.filter_delivery_workspace is not None:
+        tbl_old, ss_old, membership = subset_tables(tbl_old, ss_old, membership, args.filter_delivery_workspace)
 
     tbl_new_hash = {}
     ss_new_hash = {}
@@ -103,6 +107,7 @@ def main():
 
             for ss_index, ss_row in ss_old.iterrows():
                 for sample_id in tbl_new_hash[rw]['entity:sample_id']:
+
                     if sample_id in membership[ss_index]:
                         new_ss_row = ss_row
                         new_ss_row = new_ss_row.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
@@ -144,12 +149,33 @@ def main():
     sync_files(args, copy_lists, args.project, args.run, copy_files)
 
 
-def sync_files(args, file_lists, project, run, copy_func):
+def subset_tables(tbl_old, ss_old, membership, filter_delivery_workspace):
+    tbl_new = tbl_old[tbl_old['workspace'] == filter_delivery_workspace].reset_index(drop=True)
+
+    sample_ids = tbl_new['entity:sample_id']
+    indices = set()
+    membership_new = []
+    for i in range(len(membership)):
+        for sample_id in sample_ids:
+            if sample_id in membership[i]:
+                indices.add(i)
+                membership_new.append(membership[i])
+                break
+
+    ss_new = ss_old.iloc[list(indices)].reset_index(drop=True)
+
+    return tbl_new, ss_new, membership_new
+
+
+def sync_files(args, file_lists, project, run, copy_func, single_thread = False):
     res = []
     with Pool(processes=args.threads) as pool:
         for bucket in file_lists:
             for s in file_lists[bucket]:
-                res.append(pool.apply_async(copy_func, args = (s, file_lists[bucket][s], project, run, )))
+                if single_thread:
+                    copy_func(s, file_lists[bucket][s], project, run)
+                else:
+                    res.append(pool.apply_async(copy_func, args = (s, file_lists[bucket][s], project, run, )))
 
         num_jobs_complete = 0
         with tqdm(total=len(res)) as pbar:
@@ -202,6 +228,8 @@ def should_copy(src, dst, project):
         fd.reload()
 
     copy = not fd.exists() or fs.md5_hash != fd.md5_hash
+
+    return copy
 
 
 def load_table(namespace, workspace, table_name, store_membership=False):
