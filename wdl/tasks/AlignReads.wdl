@@ -106,11 +106,13 @@ task Minimap2_simple {
     command <<<
         set -euxo pipefail
 
-        minimap2 -ayYL --MD -x ~{map_preset} -t ~{cpus} ~{ref_fasta} ~{reads} | samtools sort -@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam -
+        minimap2 -ayYL --MD -x ~{map_preset} -t ~{cpus} ~{ref_fasta} ~{reads} > ~{prefix}.sam
+        samtools sort -@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam ~{prefix}.sam
         samtools index ~{prefix}.bam
     >>>
 
     output {
+        File tmp_sam = "~{prefix}.sam"
         File aligned_bam = "~{prefix}.bam"
         File aligned_bai = "~{prefix}.bam.bai"
     }
