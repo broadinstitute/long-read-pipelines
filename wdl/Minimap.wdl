@@ -4,7 +4,7 @@ import "tasks/AlignReads.wdl" as AR
 
 workflow CallMinimap {
     input {
-        Array[File] reads
+        File reads
         String map_preset
         String prefix
         File ref_map_file
@@ -16,12 +16,12 @@ workflow CallMinimap {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call AR.Minimap2 as Align {
+    call AR.Minimap2_simple as Align {
         input:
             reads = reads,
             ref_fasta = ref_map['fasta'],
-            RG = prefix,
-            map_preset = map_preset
+            map_preset = map_preset,
+            prefix = prefix
     }
 
     output {
