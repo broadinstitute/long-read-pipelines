@@ -127,3 +127,71 @@ task BarcodeReport {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task BarcodeReportWithOnBoardDemuxedFolder {
+    meta {
+        desciption: "Users SMRTtools barcode_report to generage metrics json and png files for on-board demultiplexed SMRTCell."
+    }
+    input {
+        String movie_name
+
+        String smrtcell_data_dir
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        smrtcell_data_dir: "Bucket location of the 'folder' that contains the demultiplexed CCSed BAM, PBI, XMLs and other companion files."
+    }
+
+    command <<<
+        set -eux
+
+        mkdir -p "~{movie_name}/original/"
+
+        # barcode report demands everything, including the bam....
+        gsutil -m cp -r ~{smrtcell_data_dir} "~{movie_name}/original/"
+
+        tree -h .
+
+        lima_xml=$(find "~{movie_name}/original/" -type f -name "~{movie_name}.consensusreadset.xml")
+
+        barcode_report \
+            --log-file "~{movie_name}/barcode_report.log" \
+            --log-level "INFO" \
+            --per-barcode-reports "~{movie_name}/per_barcode_reports.datastore.json" \
+            --report-csv "~{movie_name}/barcode_details.csv" \
+            "${lima_xml}" \
+            "~{movie_name}/barcode.report.json"
+
+        tree -h "~{movie_name}"
+
+        rm -rf "~{movie_name}/original/" && \
+        tar -czf "~{movie_name}.barcode_report.tar.gz" "~{movie_name}"
+    >>>
+
+    output {
+        File barcode_report_tar_gz = "~{movie_name}.barcode_report.tar.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            500,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:11.0.0.146107"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

@@ -188,7 +188,7 @@ workflow GatherLimaAndCustomDemultiplexingMetrics {
         File lima_counts
         File? lima_guess
         File lima_summary
-        File lima_json
+        File? lima_json
         File lima_xml
 
         File barcodes_fasta
@@ -232,7 +232,12 @@ task GatherLimaReports {
 
     command <<<
 
-        mkdir -p lima_metrics
+        mkdir -p lima_metrics/raw_metric_files/
+        mkdir -p lima_metrics/summary_figures/
+        mkdir -p lima_metrics/detailed_pngs/
+        mkdir -p lima_metrics/detailed_pdfs/
+        mkdir -p lima_metrics/per_barcode_pngs/
+        mkdir -p lima_metrics/per_barcode_pdfs/
 
         cp -r ~{sep=' ' lima_raw_metric_files}  lima_metrics/raw_metric_files/
 
