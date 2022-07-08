@@ -1,5 +1,6 @@
-FROM ubuntu:18.04
+FROM continuumio/miniconda3
 
-RUN apt-get update
+MAINTAINER Evie Wan
 
-CMD
+# copy other resources
+COPY ./environment.yml /
