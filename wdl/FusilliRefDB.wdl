@@ -1,7 +1,6 @@
 version 1.0
 
 import "tasks/Fusilli.wdl" as Fusilli
-import "tasks/Finalize.wdl" as FF
 
 workflow FusilliRefDB {
     input {
@@ -33,6 +32,11 @@ workflow FusilliRefDB {
             mm2_indices = BuildRefLinks.minimap2_index,
 
             gcs_output_dir = gcs_output_dir
+    }
+
+    output {
+        String ref_graph = Finalize.ref_graph
+        String ref_graph_colors = Finalize.ref_graph_colors
     }
 }
 
