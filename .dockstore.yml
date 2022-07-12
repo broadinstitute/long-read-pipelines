@@ -98,3 +98,11 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/FusilliRefDB.wdl
   testParameterFiles:
+- name: FusilliBuildAndCleanSampleGraph
+  subclass: wdl
+  primaryDescriptorPath: /wdl/FusilliSamples.wdl
+  testParameterFiles:
+- name: FusilliVariantCall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/FusilliCall.wdl
+  testParameterFiles:
