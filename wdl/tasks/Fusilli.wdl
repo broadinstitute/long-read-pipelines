@@ -238,6 +238,10 @@ task BuildSampleGraph {
     Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
 
     command <<<
+        # Activate fusilli conda env
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
         fusilli sample build-and-clean -t ~{num_threads} ~{sample_id} ~{sep=' ' reads}
     >>>
 
@@ -294,6 +298,10 @@ task ConstructSampleLinks {
     Array[File] reads = select_all([reads_fq1, reads_fq2])
 
     command <<<
+        # Activate fusilli conda env
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
         # First rebuild DB folder structure
         mkdir -p fusilli_db
         cd fusilli_db
@@ -362,6 +370,10 @@ task BuildCombinedGraph {
     Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
 
     command <<<
+        # Activate fusilli conda env
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
         # Organize sample graphs
         while IFS= read -r line; do
             parts=(${line})
@@ -416,6 +428,10 @@ task FindVariantKmers {
     Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
 
     command <<<
+        # Activate fusilli conda env
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
         fusilli samples scan ~{ref_graph} ~{combined_graph} -o kmers
     >>>
 
