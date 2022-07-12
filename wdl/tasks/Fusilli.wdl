@@ -192,6 +192,7 @@ task FinalizeDB {
     output {
         String ref_graph = "~{output_dir}/reference_graph.gfa"
         String ref_graph_colors = "~{output_dir}/reference_graph.bfg_colors"
+        String ref_meta = "~{output_dir}/reference_meta.tsv"
     }
 
     #########################

@@ -37,6 +37,7 @@ workflow FusilliRefDB {
     output {
         String ref_graph = Finalize.ref_graph
         String ref_graph_colors = Finalize.ref_graph_colors
+        String ref_meta = Finalize.ref_meta
     }
 }
 
