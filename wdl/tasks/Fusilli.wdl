@@ -189,6 +189,11 @@ task FinalizeDB {
         gsutil -m cp -r . ~{output_dir}
     >>>
 
+    output {
+        String ref_graph = "~{output_dir}/reference_graph.gfa"
+        String ref_graph_colors = "~{output_dir}/reference_graph.bfg_colors"
+    }
+
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
@@ -198,6 +203,236 @@ task FinalizeDB {
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+
+task BuildSampleGraph {
+    input {
+        String sample_id
+
+        File reads_fq1
+        File? reads_fq2
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        sample_id: "Name of the sample"
+        reads_fq1: "Path to FASTQ file with reads"
+        reads_fq2: "In case of Illumina paired-end reads, the path to the second FASTQ file"
+    }
+
+    Array[File] reads = select_all([reads_fq1, reads_fq2])
+    Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+
+    command <<<
+        fusilli sample build-and-clean -t ~{num_threads} ~{sample_id} ~{sep=' ' reads}
+    >>>
+
+    output {
+        File sample_graph = "~{sample_id}/~{sample_id}.gfa"
+        File sample_graph_colors = "~{sample_id}/~{sample_id}.bfg_colors"
+        File kmer_counts = "~{sample_id}/~{sample_id}.counts"
+        File cleaned_graph = "~{sample_id}/~{sample_id}.cleaned.gfa"
+        File cleaned_graph_colors = "~{sample_id}/~{sample_id}.cleaned.bfg_colors"
+        File clean_meta = "~{sample_id}/sample_clean_meta.json"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          8,
+        mem_gb:             32,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ConstructSampleLinks {
+    input {
+        String sample_id
+        File sample_graph
+        File sample_graph_colors
+
+        File ref_meta
+        Array[String] ref_ids
+        Array[File] ref_paths
+
+        File reads_fq1
+        File? reads_fq2
+
+        Int prune_threshold
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Array[File] reads = select_all([reads_fq1, reads_fq2])
+
+    command <<<
+        # First rebuild DB folder structure
+        mkdir -p fusilli_db
+        cd fusilli_db
+
+        ln -s ~{ref_meta} reference_meta.tsv
+
+        # Symlink individual reference files
+        while IFS= read -r line; do
+            parts=(${line})
+
+            mkdir -p "${parts[0]}"
+            ln -s "${parts[1]}" "${parts[0]}/${parts[1]##*/}"
+        done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_paths)})
+
+        cd ..
+
+        # Organize sample related files
+        mkdir ~{sample_id}
+        cd ~{sample_id}
+
+        ln -s ~{sample_graph} ~{sample_id}.cleaned.gfa
+        ln -s ~{sample_graph_colors} ~{sample_id}.cleaned.bfg_colors
+
+        cd ..
+
+        fusilli sample construct-links ~{sample_id} -o ~{sample_id}.links -r fusilli_db -s ~{sep=' ' reads}
+        fusilli sample prune-links ~{sample_id}.links -t ~{prune_threshold} --in-place
+    >>>
+
+    output {
+        File sample_links = "~{sample_id}.links"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          8,
+        mem_gb:             32,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task BuildCombinedGraph {
+    input {
+        Array[String] sample_ids
+        Array[File] cleaned_graphs
+        Array[File] cleaned_graph_colors
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+
+    command <<<
+        # Organize sample graphs
+        while IFS= read -r line; do
+            parts=(${line})
+
+            mkdir -p "${parts[0]}"
+            ln -s "${parts[1]}" "${parts[0]}/${parts[1]##*/}"
+            ln -s "${parts[1]}" "${parts[0]}/${parts[2]##*/}"
+        done < <(paste ~{write_lines(sample_ids)} ~{write_lines(cleaned_graphs)} ~{write_lines(cleaned_graph_colors)})
+
+        fusilli samples combine **/*.cleaned.gfa -o combined_graph.gfa -t ~{num_threads}
+    >>>
+
+    output {
+        File combined_graph = "combined_graph.gfa"
+        File combined_graph_colors = "combined_graph.bfg_colors"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          8,
+        mem_gb:             32,
+        disk_gb:            50,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FindVariantKmers {
+    input {
+        File ref_graph
+        File ref_graph_colors
+
+        File combined_graph
+        File combined_graph_colors
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+
+    command <<<
+        fusilli samples scan ~{ref_graph} ~{combined_graph} -o kmers
+    >>>
+
+    output {
+        File variant_kmers = "kmers.variants.txt"
+        File nonref_kmers = "kmers.nonref.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             32,
+        disk_gb:            50,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
