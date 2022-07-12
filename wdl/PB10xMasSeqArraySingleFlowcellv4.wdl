@@ -58,8 +58,6 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
         File? illumina_barcoded_bam
 
-        File? cell_barcode_freq_tsv
-
         # Default here is 0 because ccs uncorrected reads all seem to have RQ = -1.
         # All pathologically long reads also have RQ = -1.
         # This way we preserve the vast majority of the data, even if it has low quality.
@@ -365,7 +363,6 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 input:
                     reads = t_27_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
                     barcode_allow_list = cell_barcode_whitelist,
-                    barcode_freq_list = cell_barcode_freq_tsv,
                     model = mas_seq_model,
                     ccs_lev_dist_threshold = ccs_lev_dist,
                     clr_lev_dist_threshold = clr_lev_dist,
@@ -504,7 +501,6 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 input:
                     reads = t_44_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
                     barcode_allow_list = cell_barcode_whitelist,
-                    barcode_freq_list = cell_barcode_freq_tsv,
                     model = mas_seq_model,
                     ccs_lev_dist_threshold = ccs_lev_dist,
                     clr_lev_dist_threshold = clr_lev_dist,

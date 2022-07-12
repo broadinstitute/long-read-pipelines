@@ -497,8 +497,6 @@ task Correct
         File reads
         File barcode_allow_list
 
-        File? barcode_freq_list
-
         String model = "mas15v2"
         String prefix = "longbow_correct"
 
@@ -511,8 +509,6 @@ task Correct
         RuntimeAttr? runtime_attr_override
     }
 
-    String barcode_freq_arg = if defined(barcode_freq_list) then " --barcode-freqs " else ""
-
     Int disk_size = 4*ceil(size(reads, "GB")) + ceil(size(barcode_allow_list, "GB"))
 
     command <<<
@@ -523,7 +519,6 @@ task Correct
             -t 1 \
             --model ~{model} \
             --allow-list ~{barcode_allow_list} \
-            ~{barcode_freq_arg}~{default="" sep=" --barcode-freqs " barcode_freq_list} \
             -v INFO \
             --barcode-tag ~{raw_barcode_tag} \
             --corrected-tag ~{corrected_barcode_tag} \
