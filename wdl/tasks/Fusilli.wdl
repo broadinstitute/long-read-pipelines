@@ -520,3 +520,76 @@ task AssembleVariantContigs {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task FinalizeAssembly {
+    input {
+        Array[String] sample_ids
+        Array[File] linkdbs
+        Array[File] variant_contigs
+
+        File combined_graph
+        File combined_graph_colors
+        File variant_kmers
+        File nonref_kmers
+
+        String gcs_output_dir
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String output_dir = sub(gcs_output_dir, "/$", "")
+
+    command <<<
+        set -euxo pipefail
+
+        # Create final folder structure
+        mkdir output
+        cd output
+
+        # Organize sample data
+        while IFS= read -r line; do
+            parts=(${line})
+
+            mkdir -p "${parts[0]}"
+            ln -s "${parts[1]}" "${parts[0]}/${parts[1]##*/}"
+            ln -s "${parts[1]}" "${parts[0]}/${parts[2]##*/}"
+        done < <(paste ~{write_lines(sample_ids)} ~{write_lines(linkdbs)} ~{write_lines(variant_contigs)})
+
+        ln -s ~{combined_graph} combined_graph.gfa
+        ln -s ~{combined_graph_colors} combined_graph.bfg_colors
+        ln -s ~{variant_kmers} kmers.variants.txt
+        ln -s ~{nonref_kmers} kmers.nonref.txt
+
+        gsutil -m cp -r . ~{output_dir}
+
+    >>>
+
+    output {
+        String combined_graph = "~{output_dir}/combined_graph.gfa"
+        String combined_graph_colors = "~{output_dir}/combined_graph.bfg_colors"
+        String variant_kmers = "~{output_dir}/kmers.variants.txt"
+        String nonref_kmers = "~{output_dir}/kmers.nonref.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

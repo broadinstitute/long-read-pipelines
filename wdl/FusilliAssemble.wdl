@@ -2,7 +2,7 @@ version 1.0
 
 import "tasks/Fusilli.wdl" as Fusilli
 
-workflow FusilliCall {
+workflow FusilliAssemble {
     input {
         File ref_meta
         File ref_graph
@@ -18,7 +18,10 @@ workflow FusilliCall {
         Array[File] cleaned_sample_graph_colors
         Array[Int] prune_thresholds
 
+        String gcs_output_dir
     }
+
+    String output_dir = sub(gcs_output_dir, "/$", "")
 
     # Build links for each sample graph from both references and each sample's reads
     scatter(i in range(length(sample_ids))) {
@@ -68,5 +71,33 @@ workflow FusilliCall {
                 nonref_kmers = FindVariantKmers.nonref_kmers
         }
 
+    }
+
+    call Fusilli.FinalizeAssembly as FinalizeAssembly {
+        input:
+            sample_ids = sample_ids,
+            linkdbs = ConstructSampleLinks.sample_links,
+            variant_contigs = AssembleVariantContigs.variant_contigs,
+            combined_graph = BuildCombinedGraph.combined_graph,
+            combined_graph_colors = BuildCombinedGraph.combined_graph_colors,
+            variant_kmers = FindVariantKmers.variant_kmers,
+            nonref_kmers = FindVariantKmers.nonref_kmers
+    }
+
+    # Workaround to define finalized paths for sample data
+    # WDL doesn't provide functionality to apply a function on an Array (e.g., applying `basename` on all
+    # entries in an array), and scatter can't be used in a task, so we do it here.
+    scatter(i in range(length(sample_ids))) {
+        String finalized_linkdbs = "~{output_dir}/~{sample_ids[i]}/~{sample_ids[i]}.links"
+        String finalized_contigs = "~{output_dir}/~{sample_ids[i]}/~{sample_ids[i]}.contigs.fasta"
+    }
+
+    output {
+        String combined_graph = FinalizeAssembly.combined_graph
+        String combined_graph_colors = FinalizeAssembly.combined_graph_colors
+        String variant_kmers = FinalizeAssembly.variant_kmers
+        String nonref_kmers = FinalizeAssembly.nonref_kmers
+        Array[String] linkdbs = finalized_linkdbs
+        Array[String] variant_contigs = finalized_contigs
     }
 }
