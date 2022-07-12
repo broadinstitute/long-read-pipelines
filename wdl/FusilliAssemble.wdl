@@ -4,10 +4,12 @@ import "tasks/Fusilli.wdl" as Fusilli
 
 workflow FusilliCall {
     input {
-        Array[String] ref_ids
-        Array[File] ref_paths
+        File ref_meta
         File ref_graph
         File ref_graph_colors
+
+        Array[String] ref_ids
+        Array[File] ref_paths
 
         Array[String] sample_ids
         Array[File] reads_fq1
@@ -26,6 +28,7 @@ workflow FusilliCall {
                 sample_graph = cleaned_sample_graphs[i],
                 sample_graph_colors = cleaned_sample_graph_colors[i],
 
+                ref_meta = ref_meta,
                 ref_ids = ref_ids,
                 ref_paths = ref_paths,
 
@@ -54,4 +57,16 @@ workflow FusilliCall {
             combined_graph_colors = BuildCombinedGraph.combined_graph_colors
     }
 
+    scatter(i in range(length(sample_ids))) {
+        call Fusilli.AssembleVariantContigs as AssembleVariantContigs {
+            input:
+                sample_id = sample_ids[i],
+                cleaned_graph = cleaned_sample_graphs[i],
+                cleaned_graph_colors = cleaned_sample_graph_colors[i],
+                linkdb = ConstructSampleLinks.sample_links[i],
+                variant_kmers = FindVariantKmers.variant_kmers,
+                nonref_kmers = FindVariantKmers.nonref_kmers
+        }
+
+    }
 }

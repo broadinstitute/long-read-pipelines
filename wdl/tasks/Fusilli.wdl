@@ -463,3 +463,60 @@ task FindVariantKmers {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task AssembleVariantContigs {
+    input {
+        String sample_id
+        File cleaned_graph
+        File cleaned_graph_colors
+
+        File linkdb
+
+        File variant_kmers
+        File nonref_kmers
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        # Activate fusilli conda env
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
+        mkdir ~{sample_id}
+        cd ~{sample_id}
+
+        ln -s ~{cleaned_graph} ~{sample_id}.cleaned.gfa
+        ln -s ~{cleaned_graph_colors} ~{sample_id}.cleaned.bfg_colors
+
+        cd ..
+
+        fusilli sample assemble ~{sample_id} ~{variant_kmers} ~{nonref_kmers} -l ~{linkdb} -o ~{sample_id}.contigs.fasta
+    >>>
+
+    output {
+        File variant_contigs = "~{sample_id}.contigs.fasta"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             32,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
