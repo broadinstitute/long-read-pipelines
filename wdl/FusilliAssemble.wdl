@@ -75,6 +75,7 @@ workflow FusilliAssemble {
 
     call Fusilli.FinalizeAssembly as FinalizeAssembly {
         input:
+            gcs_output_dir = output_dir,
             sample_ids = sample_ids,
             linkdbs = ConstructSampleLinks.sample_links,
             variant_contigs = AssembleVariantContigs.variant_contigs,
