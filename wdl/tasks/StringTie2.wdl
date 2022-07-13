@@ -42,7 +42,7 @@ task Quantify {
         preemptible_tries:  1,
         max_retries:        0,
         disk_type:          "HDD",
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1-test"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-stringtie2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
