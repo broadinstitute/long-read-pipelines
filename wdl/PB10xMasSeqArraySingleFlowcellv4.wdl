@@ -189,7 +189,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
         preemptible_tries: 0
     }
 
-    Array[String] tags_to_preserve = ["CR" , "RC", "RG", "SG", "XA", "XB", "XC", "XF", "XM", "XN", "XQ", "XU", "YG", "YK", "YN", "YQ", "YS", "YV", "ZS", "ZU", "ec", "ic", "im", "is", "it", "np", "rq", "sn", "we", "ws", "zm"]
+    Array[String] tags_to_preserve =  [ "CB", "JB", "JC", "JD", "JF", "JX", "RC", "RG", "SG", "XA", "XB", "XC", "XF", "XM", "XN", "XQ", "XU", "YC", "YG", "YK", "YN", "YP", "YQ", "YS", "YV", "ZS", "ZU", "ec", "fn", "ic", "im", "is", "it", "np", "pz", "rn", "rq", "sn", "we", "ws", "zm" ]
 
     scatter (main_shard_index in range(length(t_09_ShardLongReads.unmapped_shards))) {
         File sharded_reads = t_09_ShardLongReads.unmapped_shards[main_shard_index]
