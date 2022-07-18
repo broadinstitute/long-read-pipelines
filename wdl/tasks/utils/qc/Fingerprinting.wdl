@@ -469,3 +469,36 @@ task CheckCLRFingerprint {
         docker:                select_first([runtime_attr.docker, default_attr.docker])
     }
 }
+
+task ReheaderFullGRCh38VCFtoNoAlt {
+    meta {
+        desciption:
+        "Reheader the fingperint VCF that's generated with full GRCh38 reference to the no_alt header; project specific."
+    }
+
+    input {
+        File full_GRCh38_vcf
+    }
+
+    command <<<
+        set -eux
+
+        GREPCMD="grep"
+        if [[ ~{full_GRCh38_vcf} =~ \.gz$ ]]; then
+            GREPCMD="zgrep"
+        fi
+        "${GREPCMD}" -vF "_decoy,length=" ~{full_GRCh38_vcf} | \
+            grep -vF "_alt,length=" | \
+            grep -v "^##contig=<ID=HLA-" \
+            > "reheadered.fp.vcf"
+    >>>
+
+    output {
+        File reheadered_vcf = "reheadered.fp.vcf"
+    }
+
+    runtime {
+        disks: "local-disk 100 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
