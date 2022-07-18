@@ -275,7 +275,6 @@ task BuildSampleGraph {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        cpuPlatform:            "Intel Cascade Lake"
     }
 }
 
@@ -357,7 +356,6 @@ task ConstructSampleLinks {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        cpuPlatform:            "Intel Cascade Lake"
     }
 }
 
@@ -414,7 +412,6 @@ task BuildCombinedGraph {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        cpuPlatform:            "Intel Cascade Lake"
     }
 }
 
@@ -464,7 +461,6 @@ task FindVariantKmers {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        cpuPlatform:            "Intel Cascade Lake"
     }
 }
 
@@ -522,7 +518,6 @@ task AssembleVariantContigs {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        cpuPlatform:            "Intel Cascade Lake"
     }
 }
 
