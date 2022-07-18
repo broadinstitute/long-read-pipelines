@@ -22,7 +22,7 @@ task TrimGalore {
     >>>
 
     String out_fname1 = basename(reads_fq1)
-    String out_fname2 = if defined(reads_fq2) then basename(reads_fq2) else "gjhfgkjdsfg_non_existent"
+    String out_fname2 = if defined(reads_fq2) then basename(select_first([reads_fq2])) else "gjhfgkjdsfg_non_existent"
 
     output {
         File trimmed_fq1 = "output/~{out_fname1}"
