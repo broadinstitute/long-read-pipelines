@@ -32,7 +32,7 @@ task TrimGalore {
     RuntimeAttr default_attr = object {
         cpu_cores:          8,
         mem_gb:             32,
-        disk_gb:            (size(reads_fq1, "G") + size(reads_fq2, "G")) * 2 + 10,
+        disk_gb:            ceil((size(reads_fq1, "G") + size(reads_fq2, "G")) * 2 + 10.0),
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
