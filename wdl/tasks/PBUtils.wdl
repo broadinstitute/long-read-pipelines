@@ -769,7 +769,7 @@ task Align {
             mv ~{prefix}.pre.bam ~{prefix}.pre.tmp.bam
             samtools view --no-PG -H ~{prefix}.pre.tmp.bam > header.txt
             awk '$1 ~ /^@RG/' header.txt > rg_line.txt
-            awk -v lib="~{library}" 'BEGIN {OFS="\t"} { for (i=1; i<=NF; ++i) { if ($i ~ "LB:") $i="LB:"lib } print}' \
+            awk -v lib="~{library}" -F '\t' 'BEGIN {OFS="\t"} { for (i=1; i<=NF; ++i) { if ($i ~ "LB:") $i="LB:"lib } print}' \
                 rg_line.txt \
                 > fixed_rg_line.txt
             sed -n '/@RG/q;p' header.txt > first_half.txt

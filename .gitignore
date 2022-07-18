@@ -1,6 +1,7 @@
 scratch
 .DS_Store
 .idea
+.vscode/
 .Rproj.user
 .RData
 .bak
