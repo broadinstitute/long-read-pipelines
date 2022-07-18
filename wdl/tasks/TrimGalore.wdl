@@ -21,11 +21,14 @@ task TrimGalore {
         trim_galore -t ~{num_cores} --length ~{length} ~{true='--paired' false='' paired} ~{sep=' ' reads} -o output
     >>>
 
+    String out_fname1 = basename(reads_fq1)
+    String out_fname2 = if defined(reads_fq2) then basename(reads_fq2) else "gjhfgkjdsfg_non_existent"
+
     output {
-        File trimmed_fq1 = "output/~{basename(reads_fq1)}"
-        File trimming_report1 = "output/~{basename(reads_fq1)}_trimming_report.txt"
-        File? trimmed_fq2 = "output/~{basename(reads_fq2)}"
-        File? trimming_report2 = "output/~{basename(reads_fq2)}_trimming_report.txt"
+        File trimmed_fq1 = "output/~{out_fname1}"
+        File trimming_report1 = "output/~{out_fname1}_trimming_report.txt"
+        File? trimmed_fq2 = "output/~{out_fname2}"
+        File? trimming_report2 = "output/~{out_fname2}_trimming_report.txt"
     }
 
     #########################
