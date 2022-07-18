@@ -18,7 +18,7 @@ task TrimGalore {
 
     command <<<
         mkdir output
-        trim_galore -t ~{num_cores} --length ~{length} ~{true='--paired' false='' paired} ~{sep=' ' reads} -o output
+        trim_galore -j ~{num_cores} --length ~{length} ~{true='--paired' false='' paired} ~{sep=' ' reads} -o output
     >>>
 
     String out_fname1 = basename(reads_fq1)
