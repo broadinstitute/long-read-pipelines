@@ -1,6 +1,7 @@
 version 1.0
 
 import "tasks/Fusilli.wdl" as Fusilli
+import "tasks/TrimGalore.wdl" as Trim
 
 workflow FusilliBuildAndCleanSampleGraph {
     input {
@@ -10,13 +11,24 @@ workflow FusilliBuildAndCleanSampleGraph {
         File? reads_fq2
     }
 
+    call Trim.TrimGalore as TrimGalore {
+        input:
+            reads_fq1 = reads_fq1,
+            reads_fq2 = reads_fq2
+    }
+
     call Fusilli.BuildSampleGraph as BuildSampleGraph {
-        input: sample_id = sample_id, reads_fq1 = reads_fq1, reads_fq2 = reads_fq2
+        input:
+            sample_id = sample_id,
+            reads_fq1 = TrimGalore.trimmed_fq1,
+            reads_fq2 = TrimGalore.trimmed_fq2
     }
 
     Map[String, Float] clean_meta = read_json(BuildSampleGraph.clean_meta)
 
     output {
+        File trimmed_fq1 = TrimGalore.trimmed_fq1
+        File? trimmed_fq2 = TrimGalore.trimmed_fq2
         File sample_graph = BuildSampleGraph.sample_graph
         File sample_graph_colors = BuildSampleGraph.sample_graph_colors
         File kmer_counts = BuildSampleGraph.kmer_counts
