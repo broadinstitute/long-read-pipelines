@@ -7,28 +7,27 @@ task TrimGalore {
         File reads_fq1
         File? reads_fq2
 
-        Int? min_length
+        Int? min_length = 31
         RuntimeAttr? runtime_attr_override
     }
 
     Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
     Array[File] reads = select_all([reads_fq1, reads_fq2])
     Boolean paired = length(reads) > 1
-    Int length = select_first([min_length, 31])
 
     command <<<
         mkdir output
-        trim_galore -j ~{num_cores} --length ~{length} ~{true='--paired' false='' paired} ~{sep=' ' reads} -o output
+        trim_galore -j ~{num_cores} --length ~{min_length} ~{true='--paired' false='' paired} ~{sep=' ' reads} -o output
     >>>
 
-    String out_fname1 = basename(reads_fq1)
-    String out_fname2 = if defined(reads_fq2) then basename(select_first([reads_fq2])) else "gjhfgkjdsfg_non_existent"
+    String basename1 = basename(reads_fq1)
+    String basename2 = if defined(reads_fq2) then basename(select_first([reads_fq2])) else "gjhfgkjdsfg_non_existent"
 
     output {
-        File trimmed_fq1 = "output/~{out_fname1}"
-        File trimming_report1 = "output/~{out_fname1}_trimming_report.txt"
-        File? trimmed_fq2 = "output/~{out_fname2}"
-        File? trimming_report2 = "output/~{out_fname2}_trimming_report.txt"
+        File trimmed_fq1 = select_first(glob("output/*_val_1.fq.gz"))
+        File trimming_report1 = "output/~{basename1}_trimming_report.txt"
+        File trimmed_fq2 = select_first(glob("output/*_val_2.fq.gz"))
+        File trimming_report2 = "output/~{basename2}_trimming_report.txt"
     }
 
     #########################
