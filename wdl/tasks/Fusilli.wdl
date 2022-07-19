@@ -342,7 +342,7 @@ task ConstructSampleLinks {
         mem_gb:             32,
         disk_gb:            20,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
+        preemptible_tries:  1,
         max_retries:        2,
         docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
     }
