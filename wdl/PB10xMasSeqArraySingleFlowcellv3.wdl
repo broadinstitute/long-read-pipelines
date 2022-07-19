@@ -922,6 +922,7 @@ workflow PB10xMasSeqSingleFlowcellv3 {
     call TX_PRE.CorrectUmisWithSetCover as t_99_CorrectUmisWithSetCover {
         input:
             bam = t_98_CopyEqClassInfoToTag.bam_out,
+            is_extracted = false,
             prefix = SM + "_annotated_array_elements_for_quant_with_gene_names"
     }
 

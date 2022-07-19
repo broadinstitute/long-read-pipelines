@@ -477,6 +477,8 @@ task CorrectUmisWithSetCover {
         File bam
         String prefix = "out"
 
+        Boolean is_extracted = true
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -487,14 +489,14 @@ task CorrectUmisWithSetCover {
 
     Int disk_size_gb = 10 + 10*ceil(size(bam, "GB"))
 
+    String is_extracted_arg = if (is_extracted)  then "--pre-extracted" else ""
+
     command <<<
-        # Because of how gffcompare works, we need to move the query file to our PWD:
-
-
         time /python_scripts/umi_correction.py  \
             --input_bam  ~{bam} \
             --output_bam  ~{prefix}.corrected_umis.unsorted.bam \
             --filtered_bam ~{prefix}.corrected_umis.failed_filters.bam \
+            ~{is_extracted_arg} \
             --config /python_scripts/umi_correction.yaml
 
         samtools sort ~{prefix}.corrected_umis.unsorted.bam > ~{prefix}.corrected_umis.bam
@@ -515,7 +517,7 @@ task CorrectUmisWithSetCover {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.12"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
