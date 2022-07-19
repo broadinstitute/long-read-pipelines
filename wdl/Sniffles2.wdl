@@ -1,7 +1,7 @@
 version 1.0
 
-import "Structs.wdl"
 
+import "tasks/Structs.wdl"
 
 workflow Sniffles2 {
     input {
@@ -39,10 +39,10 @@ task sample_sv {
 
     input {
         File bam
-        File bai
-        Int min_read_support = 2
-        Int min_alignment_length = 1000
-        Int min_mq = 20
+        Array[File] bai
+        Int min_read_support #= 2
+        Int min_alignment_length #= 1000
+        Int min_mq #= 20
         String? chr
         String prefix
         RuntimeAttr? runtime_attr_override
@@ -67,12 +67,11 @@ task sample_sv {
 
         sniffles -t ~{cpus} \
                  -i ~{bam} \
-                 -v ~{fileoutput}\
                  --minsupport ~{min_read_support} \
                  --min-alignment-length ~{min_alignment_length} \
                  --mapq ~{min_mq} \
-                 --snf sample1.snf
-
+                 --snf ~{fileoutput}
+        tree
         touch ~{prefix}.~{fileoutput}
 
     >>>
@@ -89,7 +88,7 @@ task sample_sv {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sniffles2:2.0.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -117,8 +116,9 @@ task merge_call {
 
     command <<<
     set -x
-    sniffles --input ~{snfs} \
+    sniffles --input ~{sep=" " snfs} \
     --vcf multisample.vcf
+    tree
 
     >>>
 
@@ -126,7 +126,8 @@ task merge_call {
         File vcf = "multisample.vcf" }
 
     Int cpus = 8
-    Int disk_size = 3*ceil(size([snfs], "GB"))
+    Int disk_size = 3*ceil(size(snfs, "GB"))
+#    Int disk_size = 60
                                                                                                                                                                                                                                                                                                                                                                                                                                    #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
@@ -135,7 +136,7 @@ task merge_call {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sniffles2:2.0.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

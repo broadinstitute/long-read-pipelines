@@ -6,7 +6,7 @@ MAINTAINER Kiran V Garimella
 COPY ./environment.yml /
 
 # install conda packages
-RUN conda env create -f /environment.yml && conda clean -a
+RUN conda env create -f /environment.yml && conda clean -azip
 ENV PATH=/opt/conda/envs/lr-asm/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install minimap2
