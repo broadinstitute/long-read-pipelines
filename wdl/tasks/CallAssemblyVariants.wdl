@@ -101,7 +101,7 @@ task Paftools {
     command <<<
         zcat ~{paf} | \
             sort -k6,6 -k8,8n | \
-            paftools.js call -f ~{ref_fasta} -s ~{participant_name} - \
+            paftools.js call -L10000 -f ~{ref_fasta} -s ~{participant_name} - \
             > ~{prefix}.paftools.vcf
     >>>
 
