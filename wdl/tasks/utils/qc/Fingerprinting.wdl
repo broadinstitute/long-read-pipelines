@@ -12,7 +12,7 @@ task ListGenotypedVCFs {
     command <<<
         set -eux
 
-        gsutil ls -r ~{bucket_dir}/**.vcf.gz > all.vcfs.txt
+        gsutil ls -r ~{bucket_dir} | grep -E "vcf(.gz)?$" > all.vcfs.txt
     >>>
 
     output {
