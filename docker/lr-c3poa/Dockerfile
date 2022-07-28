@@ -33,11 +33,17 @@ RUN git clone https://github.com/rvolden/C3POa.git \
 # install gsutil
 RUN curl https://sdk.cloud.google.com | bash
 
+# Setup crcmodc for gsutil:
+RUN apt-get install -y gcc python3-dev python3-setuptools && \
+			pip3 uninstall -y crcmod && \
+			pip3 install --no-cache-dir -U crcmod
+
+# install Pip packages
+RUN pip install --upgrade scipy numpy pyabpoa mappy Cython tqdm setuptools wheel
+
 # set LD library path
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/lr-c3poa/lib/
 
 # activate conda environment
 RUN echo "source activate lr-c3poa" > ~/.bashrc
 
-# install Pip packages
-RUN pip install --upgrade scipy numpy pyabpoa mappy Cython tqdm setuptools wheel

@@ -17,6 +17,11 @@ RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf 
 # install gsutil
 RUN curl https://sdk.cloud.google.com | bash
 
+# Setup crcmodc for gsutil:
+RUN apt-get install -y gcc python3-dev python3-setuptools && \
+			pip3 uninstall -y crcmod && \
+			pip3 install --no-cache-dir -U crcmod
+
 # copy other resources
 COPY prepare_run.py /usr/local/bin/
 COPY merge_read_group_tags.py /usr/local/bin/
@@ -55,3 +60,11 @@ RUN wget https://github.com/samtools/samtools/releases/download/1.11/samtools-1.
     && make \
     && make install
 
+# install gatk
+RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
+    && cd gatk \
+    && git checkout c9497220ef13beb05da7c7a820c181be00b9b817 \
+    && ./gradlew \
+    && cp /gatk/build/libs/gatk-package-4.1.0.0-54-g47086b6-SNAPSHOT-local.jar /usr/local/bin/gatk.jar \
+    && cd .. \
+    && rm -rf /gatk

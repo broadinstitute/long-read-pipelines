@@ -10,6 +10,17 @@ import pprint
 import os
 
 
+def sanitize_value(val):
+    """Sanitize an info field value so that it can be properly ingested by downstream tools."""
+
+    # Add more rules as needed:
+    if val is not None:
+        while val.endswith("\\"):
+            val = val[:-1]
+
+    return val
+
+
 def main():
     parser = argparse.ArgumentParser(description='Detect long read run information.')
     parser.add_argument('--SM', type=str, help='sample name (SM) to use in place of detected value')
@@ -19,6 +30,9 @@ def main():
     parser.add_argument('--PM', type=str, help='platform model (PM) to use in place of the detected value')
     parser.add_argument('--PU', type=str, help='platform unit (PU) to use in place of the detected value')
     parser.add_argument('--DS', type=str, help='description (DS) to use in place of the detected value')
+
+    parser.add_argument('--BS', type=str, help='bam suffix (BS) of the input file to search for', default='.subreads.bam')
+
     parser.add_argument('gcs_path', metavar='S', type=str, help='GCS path for long read data to process')
     args = parser.parse_args()
 
@@ -60,9 +74,8 @@ def main():
         pp = pprint.PrettyPrinter(indent=4)
 
         # First, populate run info (ri) hash with information gleaned from run metadata
-        pb_bam_pattern = re.compile("reads.bam$")
         for blob in blobs:
-            if pb_bam_pattern.search(blob.name) and not blob.name.endswith(".scraps.bam"):
+            if blob.name.endswith(args.BS) and not blob.name.endswith(".scraps.bam"):
                 bams.append(blob.name)
 
             if not "fail" in blob.name and bool(re.search('(f(ast)?q)(.gz)?', blob.name)):
@@ -87,31 +100,37 @@ def main():
                 ri['ID'] = info['flow_cell_id'] + "." + info['position'] + "." + info['sample_id']
                 ri['SO'] = 'unsorted'
 
-            if blob.name.endswith(".subreadset.xml") or blob.name.endswith(".consensusreadset.xml"):
-                blob.download_to_filename("data.xml")
+            if blob.name.endswith(".xml"):
+                dest_f_name = None
+                if blob.name.endswith(".metadata.xml"):
+                    dest_f_name = "metadata.xml"
+                elif blob.name.endswith(".subreadset.xml") or blob.name.endswith(".consensusreadset.xml"):
+                    dest_f_name = "data.xml"
 
-                a = etree.parse("data.xml")
-                for e in a.iter():
-                    if bool(e.attrib):
-                        tag = re.sub(r"{.+}", "", e.tag)
-                        for k, v in e.attrib.items():
-                            key = tag + "." + k
-                            info[key] = "".join(v)
+                if dest_f_name:
+                    blob.download_to_filename(dest_f_name)
+                    a = etree.parse(dest_f_name)
+                    for e in a.iter():
+                        if bool(e.attrib):
+                            tag = re.sub(r"{.+}", "", e.tag)
+                            for k, v in e.attrib.items():
+                                key = tag + "." + k
+                                info[key] = "".join(v)
 
-                movieName = info['CollectionMetadata.Context']
-                readType = "SUBREAD"
+                    movieName = info['CollectionMetadata.Context']
+                    readType = "SUBREAD"
 
-                ri['ID'] = f'{movieName}//{readType}'
-                ri['DT'] = info['WellSample.CreatedAt']
-                ri['PL'] = 'PACBIO'
-                ri['PM'] = info['CollectionMetadata.InstrumentName']
-                ri['PU'] = info['CollectionMetadata.Context']
-                ri['SM'] = 'unknown'
+                    ri['ID'] = f'{movieName}//{readType}'
+                    ri['DT'] = info['WellSample.CreatedAt']
+                    ri['PL'] = 'PACBIO'
+                    ri['PM'] = info['CollectionMetadata.InstrumentName']
+                    ri['PU'] = info['CollectionMetadata.Context']
+                    ri['SM'] = 'unknown'
 
-                if 'BioSample.Name' in info:
-                    ri['SM'] = info['BioSample.Name']
-                elif 'WellSample.Name' in info:
-                    ri['SM'] = info['WellSample.Name']
+                    if 'BioSample.Name' in info:
+                        ri['SM'] = info['BioSample.Name']
+                    elif 'WellSample.Name' in info:
+                        ri['SM'] = info['WellSample.Name']
 
     if len(bams) > 0:
         for name in bams:
@@ -184,7 +203,7 @@ def main():
         ri[key] = ri[key][0] if isinstance(ri[key], tuple) else ri[key]
 
     for k, v in ri.items():
-        print(f'{k}\t{v}')
+        print(f'{k}\t{sanitize_value(v)}')
 
     if 0 < len(f5s) != len(fqs):
         sys.exit(f"Error: possible incomplete upload; len(fast5s) ({len(f5s)} != len(fastqs) ({len(fqs)})")

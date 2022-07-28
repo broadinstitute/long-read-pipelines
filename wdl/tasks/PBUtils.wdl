@@ -101,6 +101,8 @@ task ShardLongReads {
         Int num_shards = 300
         Int num_threads = 8
 
+        Boolean drop_per_base_N_pulse_tags = false
+
         String prefix = "shard"
 
         String zones = "us-central1-c us-central1-b"
@@ -116,15 +118,16 @@ task ShardLongReads {
         zones: "select which zone (GCP) to run this task"
     }
 
-    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
+    Int disk_size = if defined(num_ssds) then 1 + 375*select_first([num_ssds]) else 1+3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
     Int mem = ceil(25*size(unaligned_pbi, "MB")/1000)
+    String ex = if drop_per_base_N_pulse_tags then "-x fi,fp,ri,rp" else ""
 
     command <<<
         set -x
 
         samtools view -c ~{unaligned_bam} # to check if file is truncated
 
-        python3 /usr/local/bin/shard_bam.py \
+        python3 /usr/local/bin/shard_bam.py ~{ex} \
             -n ~{num_shards} \
             -t ~{num_threads} \
             -i ~{unaligned_pbi} \
@@ -170,7 +173,7 @@ task CCS {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(subreads, "GB"))
+    Int disk_size = 1 + 4*ceil(size(subreads, "GB"))
     String bn = basename(subreads, ".bam")
 
     command <<<
@@ -245,7 +248,7 @@ task ExtractHifiReads {
         library: "this will override the LB: entry on the @RG line"
     }
 
-    Int disk_size = 3*ceil(size(bam, "GB"))
+    Int disk_size = 1 + 3*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -312,7 +315,7 @@ task MergeCCSReports {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(reports, "GB")) + 1
+    Int disk_size = 1 + 2*ceil(size(reports, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -356,7 +359,7 @@ task ExtractUncorrectedReads {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(subreads, "GB") + size(consensus, "GB"))
+    Int disk_size = 1 + 2*ceil(size(subreads, "GB") + size(consensus, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -408,7 +411,7 @@ task Demultiplex {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+    Int disk_size = 1 + 4*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -488,7 +491,7 @@ task MakeDetailedDemultiplexingReport {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -529,7 +532,7 @@ task MakeSummarizedDemultiplexingReport {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -577,7 +580,7 @@ task MakePerBarcodeDemultiplexingReports {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -601,7 +604,7 @@ task RefineTranscriptReads {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+    Int disk_size = 1 + 4*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -644,7 +647,7 @@ task ClusterTranscripts {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+    Int disk_size = 1 + 4*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -698,7 +701,7 @@ task PolishTranscripts {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size([bam, subreads_bam], "GB"))
+    Int disk_size = 1 + 2*ceil(size([bam, subreads_bam], "GB"))
 
     command <<<
         set -euxo pipefail
@@ -874,7 +877,7 @@ task CollapseTranscripts {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+    Int disk_size = 1 + 4*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -915,7 +918,7 @@ task SummarizeCCSReport {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(report, "GB"))
+    Int disk_size = 1 + 2*ceil(size(report, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -968,7 +971,7 @@ task SummarizeXMLMetadata {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(xml, "GB"))
+    Int disk_size = 1 + 2*ceil(size(xml, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -1012,7 +1015,7 @@ task SummarizePBI {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(pbi, "GB"))
+    Int disk_size = 1 + 2*ceil(size(pbi, "GB"))
 
     command <<<
         set -euxo pipefail

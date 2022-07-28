@@ -9,3 +9,8 @@ struct RuntimeAttr {
     Int? max_retries
     String? docker
 }
+
+struct DataTypeParameters {
+    Int num_shards
+    String map_preset
+}
