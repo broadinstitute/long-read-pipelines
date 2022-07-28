@@ -89,7 +89,7 @@ workflow PBFlowcell {
         }
     }
 
-    call Utils.ComputeAllowedLocalSSD as Guess {input: intended_gb = 3*ceil(size(bam, "GB") + size(pbi, "GB"))}
+    call Utils.ComputeAllowedLocalSSD as Guess {input: intended_gb = ceil(size(bam, "GB") * if experiment_type=='CLR' then 4 else 3 + size(pbi, "GB"))}
     call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
 
     # break one raw BAM into fixed number of shards
