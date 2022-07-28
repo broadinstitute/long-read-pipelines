@@ -294,7 +294,7 @@ workflow PBFlowcell {
 
         # Finalize MAS-seq logs / stats:
         String longbow_logs_dir = outdir + "/logs"
-        scatter (i_1 in range(length(select_all(LongbowProcessCCS.correct_logs)))) {
+        scatter (i_1 in range(length(select_all(LongbowProcessCCS.correct_log)))) {
 
             # Only finalize these files if they were created:
             if (chosen_mas_seq_model != "mas_15_bulk_10x5p_single_internal" && chosen_mas_seq_model != "mas_15_bulk_10x5p_single_internal") {
@@ -303,12 +303,11 @@ workflow PBFlowcell {
 
             # Some more debugging outputs:
             if (DEBUG_MODE) {
-                Array[File] umi_adjustment_logs_shard = select_all(LongbowProcessCCS.umi_adjustment_logs)[i_1]
-                call FF.FinalizeToDir as FinalizeLongbowUmiAdjustmentLogs { input: outdir = longbow_logs_dir + "/longbow_umi_adjustment/shard_" + i_1, files = umi_adjustment_logs_shard, keyfile = keyfile }
+                call FF.FinalizeToFile as FinalizeLongbowUmiAdjustmentLog { input: outdir = longbow_logs_dir + "/longbow_umi_adjustment/shard_" + i_1, file = select_first([LongbowProcessCCS.umi_adjustment_log[i_1]]), name = "longbow_umi_adjustment.shard_" + i_1 + ".txt", keyfile = keyfile }
                 # Only finalize these files if they were created:
                 if (chosen_mas_seq_model != "mas_15_bulk_10x5p_single_internal" && chosen_mas_seq_model != "mas_15_bulk_10x5p_single_internal") {
-                    Array[File] correct_logs_shard = select_all(select_all(LongbowProcessCCS.correct_logs)[i_1])
-                    call FF.FinalizeToDir as FinalizeLongbowCorrectLogs { input: outdir = longbow_logs_dir + "/longbow_correct/shard_" + i_1, files = correct_logs_shard, keyfile = keyfile }
+                    File correct_logs_shard = select_first([LongbowProcessCCS.correct_log[i_1]])
+                    call FF.FinalizeToFile as FinalizeLongbowCorrectLog { input: outdir = longbow_logs_dir + "/longbow_correct/shard_" + i_1, file = correct_logs_shard, name = "longbow_correct_stats.shard_" + i_1 + ".txt", keyfile = keyfile }
                 }
             }
         }
