@@ -257,14 +257,15 @@ task NanoPlotFromBam {
     }
 }
 
-task NanoPlotFromUBam {
+task NanoPlotFromUnAligned {
     input {
-        File bam
-
+        File unaligned_file
+        String format
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(unaligned_file, "GB"))
+    String input_format = if (format=='ubam') then "--ubam" else if (format=='fastq') then "--fastq" else "--fasta"
 
     command <<<
         set -euxo pipefail
@@ -275,7 +276,7 @@ task NanoPlotFromUBam {
             -c orangered \
             --N50 \
             --tsv_stats \
-            --ubam "~{bam}"
+            "~{input_format}" "~{unaligned_file}"
 
         cat NanoStats.txt | \
             grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
@@ -284,20 +285,6 @@ task NanoPlotFromUBam {
             awk '{ print $1 "\t" $2 }' | \
             tee map.txt
     >>>
-
-    #number_of_reads 991
-    #number_of_bases 12949457.0
-    #median_read_length      13705.0
-    #mean_read_length        13067.1
-    #read_length_stdev       9581.3
-    #n50     18618.0
-    #mean_qual       0.0
-    #median_qual     0.0
-    #Reads_Q5        0
-    #Reads_Q7        0
-    #Reads_Q10       0
-    #Reads_Q12       0
-    #Reads_Q15       0
 
     output {
         File stats = "NanoStats.txt"
