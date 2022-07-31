@@ -303,11 +303,11 @@ workflow PBFlowcell {
 
             # Some more debugging outputs:
             if (DEBUG_MODE) {
-                call FF.FinalizeToFile as FinalizeLongbowUmiAdjustmentLog { input: outdir = longbow_logs_dir + "/longbow_umi_adjustment/shard_" + i_1, file = select_first([LongbowProcessCCS.umi_adjustment_log[i_1]]), name = "longbow_umi_adjustment.shard_" + i_1 + ".txt", keyfile = keyfile }
+                call FF.FinalizeToFile as FinalizeLongbowUmiAdjustmentLog { input: outdir = longbow_logs_dir + "/longbow_umi_adjustment", file = select_first([LongbowProcessCCS.umi_adjustment_log[i_1]]), name = "longbow_umi_adjustment.shard_" + i_1 + ".txt", keyfile = keyfile }
                 # Only finalize these files if they were created:
                 if (chosen_mas_seq_model != "mas_15_bulk_10x5p_single_internal" && chosen_mas_seq_model != "mas_15_bulk_10x5p_single_internal") {
                     File correct_logs_shard = select_first([LongbowProcessCCS.correct_log[i_1]])
-                    call FF.FinalizeToFile as FinalizeLongbowCorrectLog { input: outdir = longbow_logs_dir + "/longbow_correct/shard_" + i_1, file = correct_logs_shard, name = "longbow_correct_stats.shard_" + i_1 + ".txt", keyfile = keyfile }
+                    call FF.FinalizeToFile as FinalizeLongbowCorrectLog { input: outdir = longbow_logs_dir + "/longbow_correct", file = correct_logs_shard, name = "longbow_correct_stats.shard_" + i_1 + ".txt", keyfile = keyfile }
                 }
             }
         }
