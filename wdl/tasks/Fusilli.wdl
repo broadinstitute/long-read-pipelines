@@ -328,7 +328,8 @@ task ConstructSampleLinks {
 
         cd ..
 
-        fusilli sample construct-links ~{sample_id} -o ~{sample_id}.links -r fusilli_db -s ~{sep=' ' reads}
+        fusilli sample construct-links ~{sample_id} -o ~{sample_id}.links -r fusilli_db -s ~{sep=' ' reads} \
+            --prune-first-pass-db 3
         fusilli sample prune-links ~{sample_id}.links -t ~{prune_threshold} --in-place
     >>>
 
