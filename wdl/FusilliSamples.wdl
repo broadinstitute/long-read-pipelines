@@ -36,5 +36,7 @@ workflow FusilliBuildAndCleanSampleGraph {
         File cleaned_graph_colors = BuildSampleGraph.cleaned_graph_colors
         Float est_coverage = clean_meta['est_coverage']
         Int prune_threshold = round(clean_meta['threshold'])
+        Int num_nodes_before = round(clean_meta['num_nodes_before'])
+        Int num_nodes_after = round(clean_meta['num_nodes_after'])
     }
 }
