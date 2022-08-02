@@ -244,12 +244,14 @@ task BuildSampleGraph {
         set -euxo pipefail
 
         fusilli sample build-and-clean -t ~{num_threads} ~{sample_id} ~{sep=' ' reads}
+        fusilli sample kmer-spectrum ~{sample_id}/~{sample_id}.counts -o ~{sample_id}/~{sample_id}.spectrum.png
     >>>
 
     output {
         File sample_graph = "~{sample_id}/~{sample_id}.gfa"
         File sample_graph_colors = "~{sample_id}/~{sample_id}.bfg_colors"
         File kmer_counts = "~{sample_id}/~{sample_id}.counts"
+        File kmer_spectrum = "~{sample_id}/~{sample_id}.spectrum.png"
         File cleaned_graph = "~{sample_id}/~{sample_id}.cleaned.gfa"
         File cleaned_graph_colors = "~{sample_id}/~{sample_id}.cleaned.bfg_colors"
         File clean_meta = "~{sample_id}/sample_clean_meta.json"
