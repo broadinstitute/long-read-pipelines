@@ -173,6 +173,13 @@ workflow PBFlowcell {
                     runtime_attr_override = object { mem_gb: alignment_memory_gb }
             }
             call Utils.BamToFastq as MasseqCCSBamToFastq { input: bam = LongbowProcessCCS.extracted_bam, prefix = basename(LongbowProcessCCS.extracted_bam, ".bam") }
+
+            # Fix MAS-ISO-seq tags that are position-based:
+            call Longbow.TagFix as FixMasSeqCcsReadTagsPostAlignment {
+                input:
+                    bam = AlignMasSeqCCSReads.aligned_bam,
+                    prefix = SM + ".isoform_reads"
+            }
         }
 
         # All other types of libraries:
@@ -194,7 +201,7 @@ workflow PBFlowcell {
 
         # Resolve MAS-seq vs non-MAS-seq data so we can more easily reference it later:
         File unaligned_reads_bam = select_first([LongbowProcessCCS.extracted_bam, unaligned_bam])
-        File aligned_reads_bam = select_first([AlignMasSeqCCSReads.aligned_bam, AlignReads.aligned_bam])
+        File aligned_reads_bam = select_first([FixMasSeqCcsReadTagsPostAlignment.tag_fixed_bam, AlignReads.aligned_bam])
         File reads_fastq = select_first([MasseqCCSBamToFastq.reads_fq, BamToFastq.reads_fq])
     }
 
