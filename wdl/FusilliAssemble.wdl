@@ -71,6 +71,15 @@ workflow FusilliAssemble {
                 nonref_kmers = FindVariantKmers.nonref_kmers
         }
 
+        call Fusilli.BuildRefPanels as BuildRefPanels {
+            input:
+                ref_meta = ref_meta,
+                ref_graph = ref_graph,
+                ref_graph_colors = ref_graph_colors,
+
+                variant_contigs = AssembleVariantContigs.variant_contigs
+        }
+
     }
 
     call Fusilli.FinalizeAssembly as FinalizeAssembly {
@@ -91,6 +100,16 @@ workflow FusilliAssemble {
     scatter(i in range(length(sample_ids))) {
         String finalized_linkdbs = "~{output_dir}/~{sample_ids[i]}/~{sample_ids[i]}.links"
         String finalized_contigs = "~{output_dir}/~{sample_ids[i]}/~{sample_ids[i]}.contigs.fasta"
+
+        call Fusilli.FinalizeRefPanels {
+            input:
+                sample_id = sample_ids[i],
+                ref_panels = BuildRefPanels.ref_panels[i],
+
+                gcs_output_dir = output_dir
+        }
+
+        String finalized_ref_panels = "~{output_dir}/~{sample_ids[i]}/ref_panels"
     }
 
     output {
@@ -100,5 +119,6 @@ workflow FusilliAssemble {
         String nonref_kmers = FinalizeAssembly.nonref_kmers
         Array[String] linkdbs = finalized_linkdbs
         Array[String] variant_contigs = finalized_contigs
+        Array[String] ref_panels = finalized_ref_panels
     }
 }

@@ -494,11 +494,13 @@ task AssembleVariantContigs {
 
         cd ..
 
-        fusilli sample assemble ~{sample_id} ~{variant_kmers} ~{nonref_kmers} -l ~{linkdb} -o ~{sample_id}.contigs.fasta
+        fusilli sample assemble ~{sample_id} ~{variant_kmers} ~{nonref_kmers} -l ~{linkdb} -o ~{sample_id}.tmp.fasta
+        fusilli sample rm-contained ~{sample_id}.tmp.fasta -o ~{sample_id}.contigs.fasta > num_contained
     >>>
 
     output {
         File variant_contigs = "~{sample_id}.contigs.fasta"
+        Int num_contained = read_int("num_contained")
     }
 
     #########################
@@ -523,6 +525,61 @@ task AssembleVariantContigs {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task BuildRefPanels {
+    input {
+        File ref_meta
+        File ref_graph
+        File ref_graph_colors
+
+        File variant_contigs
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        # Activate fusilli conda env
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
+        mkdir fusilli_db
+        cd fusilli_db
+        ln -s ~{ref_graph} reference_graph.gfa
+        ln -s ~{ref_graph_colors} reference_graph.bfg_colors
+        ln -s ~{ref_meta} reference_meta.tsv
+
+        cd ..
+
+        fusilli call build-ref-panels fusilli_db ~{variant_contigs} -o ref_contigs/
+    >>>
+
+    output {
+        Array[File] ref_panels = glob("ref_contigs/*.ref_contigs.fa")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             32,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 
 task FinalizeAssembly {
     input {
@@ -572,6 +629,56 @@ task FinalizeAssembly {
         String variant_kmers = "~{output_dir}/kmers.variants.txt"
         String nonref_kmers = "~{output_dir}/kmers.nonref.txt"
     }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FinalizeRefPanels {
+    input {
+        String sample_id
+        Array[File] ref_panels
+
+        String gcs_output_dir
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String output_dir = sub(gcs_output_dir, "/$", "")
+    String sample_gcs_dir = output_dir + "/" + sample_id
+
+    command <<<
+        mkdir ref_panels/
+        cd ref_panels
+
+        while IFS= read -r line; do
+            fname=${line##*/}
+            ln -s ${fname} ${line}
+        done < ~{write_lines(ref_panels)}
+
+        cd ..
+
+        gsutil -m cp ref_panels ~{sample_gcs_dir}
+    >>>
 
     #########################
     RuntimeAttr default_attr = object {
