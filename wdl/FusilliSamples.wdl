@@ -32,6 +32,7 @@ workflow FusilliBuildAndCleanSampleGraph {
         File sample_graph = BuildSampleGraph.sample_graph
         File sample_graph_colors = BuildSampleGraph.sample_graph_colors
         File kmer_counts = BuildSampleGraph.kmer_counts
+        File kmer_spectrum = BuildSampleGraph.kmer_spectrum
         File cleaned_graph = BuildSampleGraph.cleaned_graph
         File cleaned_graph_colors = BuildSampleGraph.cleaned_graph_colors
         Float est_coverage = clean_meta['est_coverage']
