@@ -4,7 +4,7 @@ import "Structs.wdl"
 import "Utils.wdl"
 import "MASSeq.wdl" as MAS
 
-struct LongbowModelUmiAdjustmentParams {
+struct LongbowModelParams {
     Int umi_length
     String? pre_pre_umi_seq
     String? pre_umi_seq
@@ -34,14 +34,14 @@ workflow Process {
 
     # Make a lookup table for our models for now.
     # TODO: Once the UMI adjustment is part of longbow, remove this (it's redundant to Longbow):
-    LongbowModelUmiAdjustmentParams umi_params_mas15                = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTCTTATATGGG" }
-    LongbowModelUmiAdjustmentParams umi_params_mas15threeP          = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTTTTTTTTTTT" }
-    LongbowModelUmiAdjustmentParams umi_params_mas15BulkWithIndices = { 'umi_length': 10, "pre_umi_seq": 'TCTACACGACGCTCTTCCGATCT', "post_umi_seq": "TTTCTTATATGGG" }
-    LongbowModelUmiAdjustmentParams umi_params_mas10                = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTCTTATATGGG" }
-    LongbowModelUmiAdjustmentParams umi_params_slide_seq            = { 'umi_length': 9, 'pre_pre_umi_seq': 'TCTTCAGCGTTCCCGAGA', "pre_umi_tag": "X1", "post_umi_seq": "TTTTTTTTTTTTT" }
-    LongbowModelUmiAdjustmentParams umi_params_mas15teloprimev2     = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTCTTATATGGG" }
+    LongbowModelParams umi_params_mas15                = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTCTTATATGGG" }
+    LongbowModelParams umi_params_mas15threeP          = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTTTTTTTTTTT" }
+    LongbowModelParams umi_params_mas15BulkWithIndices = { 'umi_length': 10, "pre_umi_seq": 'TCTACACGACGCTCTTCCGATCT', "post_umi_seq": "TTTCTTATATGGG" }
+    LongbowModelParams umi_params_mas10                = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTCTTATATGGG" }
+    LongbowModelParams umi_params_slide_seq            = { 'umi_length': 9, 'pre_pre_umi_seq': 'TCTTCAGCGTTCCCGAGA', "pre_umi_tag": "X1", "post_umi_seq": "TTTTTTTTTTTTT" }
+    LongbowModelParams umi_params_mas15teloprimev2     = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTCTTATATGGG" }
 
-    Map[String, LongbowModelUmiAdjustmentParams] longbow_umi_adjustment_params = {
+    Map[String, LongbowModelParams] longbow_umi_adjustment_params = {
         'mas_15_sc_10x5p_single_none': umi_params_mas15,
         'mas_15_sc_10x3p_single_none': umi_params_mas15threeP,
         'mas_15_bulk_10x5p_single_internal': umi_params_mas15BulkWithIndices,
@@ -58,76 +58,56 @@ workflow Process {
     # cDNA itself, rather than a known segment delimiter:
     call MAS.RemoveMasSeqTruncatedReads as t_05_RemoveMasSeqTruncatedReads { input: prefix = prefix, bam = t_04_Segment.segmented_bam }
 
-    # This next step can be slow, so we should shard it:
-    call Utils.ShardReads as t_06_ShardArrayElements {
+    call PadUMI  as t_07_PadUMI {
         input:
+            prefix = prefix + "_umi_padded",
             bam = t_05_RemoveMasSeqTruncatedReads.non_trucated_bam,
-            bam_index = t_05_RemoveMasSeqTruncatedReads.non_trucated_bai,
-            prefix = prefix + "_array_elements_subshard",
-            num_shards = shard_width,
-    }
-    scatter (cri in range(length(t_06_ShardArrayElements.shards))) {
-        File array_element_shard = t_06_ShardArrayElements.shards[cri]
-
-        call PadUMI  as t_07_PadUMI { input: prefix = prefix + "_shard_" + cri, bam = array_element_shard, model = lbmodel }
-
-        # Only call CBC code if we have a single-cell library:
-        if (lbmodel != "mas_15_bulk_10x5p_single_internal" && lbmodel != "mas_15_bulk_10x5p_single_internal") {
-            call PadCBC  as t_08_PadCBC {
-                input: prefix = prefix + "_shard_" + cri,
-                    bam = t_07_PadUMI.padded_umi_bam,
-                    model = lbmodel,
-                    barcode_tag = barcode_tag,
-            }
-            call Correct as t_09_Correct {
-                input: prefix = prefix + "_shard_" + cri,
-                    bam = t_08_PadCBC.padded_cbc_bam,
-                    model = lbmodel,
-                    barcode_allow_list = barcode_allow_list,
-                    barcode_tag = barcode_tag,
-                    corrected_tag = corrected_tag
-            }
-        }
-
-        File bam_for_umi_adjustment = select_first([t_09_Correct.corrected_bam, t_07_PadUMI.padded_umi_bam])
-
-        call MAS.AdjustUmiSequenceWithAdapterAlignment as t_10_AdjustUmiSequenceWithAdapterAlignment {
-            input:
-                prefix = prefix + "_shard_" + cri,
-                bam = bam_for_umi_adjustment,
-                umi_length = longbow_umi_adjustment_params[lbmodel].umi_length,
-                pre_pre_umi_seq = longbow_umi_adjustment_params[lbmodel].pre_pre_umi_seq,
-                pre_umi_seq = longbow_umi_adjustment_params[lbmodel].pre_umi_seq,
-                pre_umi_tag = longbow_umi_adjustment_params[lbmodel].pre_umi_tag,
-                post_umi_seq = longbow_umi_adjustment_params[lbmodel].post_umi_seq,
-                post_umi_tag = longbow_umi_adjustment_params[lbmodel].post_umi_tag,
-        }
-    }
-
-    # Merge reads together:
-    call Utils.MergeBams as MergeCBCCorrectedUmiAdjustedArrayElements {
-        input:
-            bams = t_10_AdjustUmiSequenceWithAdapterAlignment.umi_adjusted_bam,
-            prefix = prefix + "_array_elements_CBC_corrected_UMI_adjusted"
+            model = lbmodel
     }
 
     # Only call CBC code if we have a single-cell library:
     if (lbmodel != "mas_15_bulk_10x5p_single_internal" && lbmodel != "mas_15_bulk_10x5p_single_internal") {
-        call Utils.MergeBams as MergeCBCUncorrectableArrayElements {
-            input:
-                bams = select_all(t_09_Correct.uncorrected_bam),
-                prefix = prefix + "_array_elements_CBC_uncorrectable"
+        call PadCBC  as t_08_PadCBC {
+            input: prefix = prefix + "_umi_padded_cbc_padded",
+                bam = t_07_PadUMI.padded_umi_bam,
+                model = lbmodel,
+                barcode_tag = barcode_tag,
         }
+        call Correct as t_09_Correct {
+            input: prefix = prefix + "_umi_padded_cbc_padded_corrected",
+                bam = t_08_PadCBC.padded_cbc_bam,
+                model = lbmodel,
+                barcode_allow_list = barcode_allow_list,
+                barcode_tag = barcode_tag,
+                corrected_tag = corrected_tag
+        }
+    }
 
+    File bam_for_umi_adjustment = select_first([t_09_Correct.corrected_bam, t_07_PadUMI.padded_umi_bam])
+
+    call MAS.AdjustUmiSequenceWithAdapterAlignment as t_10_AdjustUmiSequenceWithAdapterAlignment {
+        input:
+            prefix = prefix + "_array_elements_CBC_corrected_UMI_adjusted",
+            bam = bam_for_umi_adjustment,
+            umi_length = longbow_umi_adjustment_params[lbmodel].umi_length,
+            pre_pre_umi_seq = longbow_umi_adjustment_params[lbmodel].pre_pre_umi_seq,
+            pre_umi_seq = longbow_umi_adjustment_params[lbmodel].pre_umi_seq,
+            pre_umi_tag = longbow_umi_adjustment_params[lbmodel].pre_umi_tag,
+            post_umi_seq = longbow_umi_adjustment_params[lbmodel].post_umi_seq,
+            post_umi_tag = longbow_umi_adjustment_params[lbmodel].post_umi_tag,
+    }
+
+    # Only call CBC code if we have a single-cell library:
+    if (lbmodel != "mas_15_bulk_10x5p_single_internal" && lbmodel != "mas_15_bulk_10x5p_single_internal") {
         # Merge our correction stats so we can have a record of them for later:
         call AggregateCorrectLogStats {
             input:
-                longbow_correct_log_files = select_all(t_09_Correct.log),
+                longbow_correct_log_files = select_all([t_09_Correct.log]),
                 out_name = prefix + "_longbow_correct_stats.txt"
         }
     }
 
-    call Extract { input: prefix = prefix, bam = MergeCBCCorrectedUmiAdjustedArrayElements.merged_bam }
+    call Extract { input: prefix = prefix, bam = t_10_AdjustUmiSequenceWithAdapterAlignment.umi_adjusted_bam }
 
     output {
         # Output reads:
@@ -137,15 +117,15 @@ workflow Process {
         File filtered_bam = t_03_Filter.filtered_bam
         File filter_failed_bam = t_03_Filter.filter_failed_bam
 
-        File? corrected_bam = MergeCBCCorrectedUmiAdjustedArrayElements.merged_bam
-        File? uncorrectable_bam = MergeCBCUncorrectableArrayElements.merged_bam
+        File? corrected_bam = t_10_AdjustUmiSequenceWithAdapterAlignment.umi_adjusted_bam
+        File? uncorrectable_bam = t_09_Correct.uncorrected_bam
 
         File extracted_bam = Extract.extracted_bam
 
         # Output stats / logs:
         File? correct_stats = AggregateCorrectLogStats.stats
-        Array[File?] correct_logs = t_09_Correct.log
-        Array[File] umi_adjustment_logs = t_10_AdjustUmiSequenceWithAdapterAlignment.log
+        File? correct_log = t_09_Correct.log
+        File umi_adjustment_log = t_10_AdjustUmiSequenceWithAdapterAlignment.log
     }
 }
 
@@ -176,8 +156,8 @@ task Peek {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -221,8 +201,8 @@ task Annotate {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -278,8 +258,8 @@ task Filter {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -325,8 +305,8 @@ task Segment {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -392,8 +372,8 @@ task Extract {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -449,9 +429,9 @@ task PadUMI
         mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -509,9 +489,59 @@ task PadCBC
         mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task TagFix
+{
+    input {
+        File bam
+
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        source /longbow/venv/bin/activate
+        longbow tagfix -t${np} -v INFO -o tmp.bam ~{bam}
+
+        samtools sort -@${np} tmp.bam -o ~{prefix}.alignment_tags_fixed.bam
+    >>>
+
+    output {
+        File tag_fixed_bam = "~{prefix}.alignment_tags_fixed.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -554,6 +584,14 @@ task Correct {
         "mas_15_bulk_10x5p_single_internal":    "/longbow/resources/barcodes/cellranger/737K-august-2016.txt",
         "mas_10_sc_10x5p_single_none":          "/longbow/resources/barcodes/cellranger/737K-august-2016.txt",
         "mas_15_bulk_teloprimeV2_single_none":  "/longbow/resources/barcodes/indexes/tpv2.indices.txt",
+    }
+
+    Map[String, String] machine_memory = {
+        "mas_15_sc_10x5p_single_none":          32,
+        "mas_15_sc_10x3p_single_none":          64,
+        "mas_15_bulk_10x5p_single_internal":    32,
+        "mas_10_sc_10x5p_single_none":          32,
+        "mas_15_bulk_teloprimeV2_single_none":  32,
     }
 
     Map[String, String] barcode_tags = {
@@ -614,12 +652,12 @@ task Correct {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             64,  # MUST be this big because of the symspell barcode index.
+        mem_gb:             machine_memory[model],  # MUST be this big because of the symspell barcode index.
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -663,8 +701,8 @@ task Stats {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -709,8 +747,8 @@ task Demultiplex {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -802,9 +840,9 @@ CODE
         mem_gb:             2,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.33"
+        preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.34"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
