@@ -196,7 +196,7 @@ task FilterMasSeqReads {
 
 task RenameSingleCellBamTagsForMasIsoSeqV0 {
     meta {
-        description : "Rename the single-cell tags in MAS-ISO-seq v0 data (CB -> Jp; ZU -> Jq)."
+        description : "Rename the single-cell tags in MAS-ISO-seq v0 data (CB -> Jp; ZU -> Jq ...)."
         author : "Jonn Smith"
         email : "jonn@broadinstitute.org"
     }
@@ -215,6 +215,61 @@ task RenameSingleCellBamTagsForMasIsoSeqV0 {
         set -euxo pipefail
 
         time /python_scripts/rename_single_cell_bam_tags.py \
+            ~{bam} \
+            ~{prefix}.bam
+
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        samtools index -@${np} ~{prefix}.bam
+    >>>
+
+    output {
+        File bam_out = "~{prefix}.bam"
+        File bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             16,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task RestoreSingleCellBamTagsForMasIsoSeqV0 {
+    meta {
+        description : "Restore the single-cell tags in MAS-ISO-seq v0 data (Jp -> Cb; Jq -> ZU ...)."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File bam
+
+        String prefix = "tags_restored"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size_gb = 10 + 2*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        time /python_scripts/restore_single_cell_bam_tags.py \
             ~{bam} \
             ~{prefix}.bam
 

@@ -79,11 +79,18 @@ workflow PBMASIsoSeqQuantify {
 #    File bam = SubsetToChr21.subset_bam
 #    File bai = SubsetToChr21.subset_bai
 
+    # Restore the tags we have renamed in PBFlowcell:
+    call MAS.RestoreSingleCellBamTagsForMasIsoSeqV0 as t_03_RestoreSingleCellBamTagsForMasIsoSeqV0 {
+        input:
+            bam = bam,
+            prefix = participant_name + ".tag_restored"
+    }
+
     # Remove unmapped, secondary, supplementary, mq0, length > 15kb, end clips > 1kb
     call MAS.FilterMasSeqReads as t_03_AlignmentFilterArrayElements {
         input:
-            input_bam = bam,
-            input_bai = bai,
+            input_bam = t_03_RestoreSingleCellBamTagsForMasIsoSeqV0.bam_out,
+            input_bai = t_03_RestoreSingleCellBamTagsForMasIsoSeqV0.bai,
             prefix = participant_name + ".alignment_filtered",
     }
 
