@@ -99,9 +99,15 @@
         - <Racon.wdl> <mito_racon.wdl>
         - (polish contig based on raw reads)
 
-    
+
+## Evaluate Racon polished contig: 
+```gatk Concordance -R ~/Desktop/alignment_filehistory/raw_reads_ref/chrM_ref.fa -eval ~/Documents/mito_vcf/paf_fin2.vcf --truth  ~/Desktop/alignment_filehistory/Racon/racon_paf.vcf --summary summary.tsv -tpfn tpfn.vcf -tpfp tpfp.vcf```
 
 
+## Create Truth Data
+
+- correct
+<racon_to_truth.vcf>
 
 3) Canu 2.2 with filtered reads:
     -  canu-correct issues:
