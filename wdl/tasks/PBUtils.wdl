@@ -768,6 +768,8 @@ task Align {
     command <<<
         set -euxo pipefail
 
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
         pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
             --preset ~{map_preset} \
             ~{median_filter} \
@@ -795,7 +797,7 @@ task Align {
         fi
 
         samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
-        samtools index ~{prefix}.bam
+        samtools index -@${np} ~{prefix}.bam
     >>>
 
     output {

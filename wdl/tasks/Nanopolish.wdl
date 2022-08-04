@@ -83,6 +83,8 @@ task NanopolishIndex {
     command <<<
         set -euxo pipefail
 
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
         mkdir fast5
         gsutil -m cp "~{fast5_dir_cleaned}/*" fast5/
         cp ~{sequencing_summary} fast5/sequencing_summary.txt
@@ -94,7 +96,7 @@ task NanopolishIndex {
         nanopolish index -d fast5/ -s fast5/sequencing_summary.txt fast5/reads.fasta
 
         minimap2 -ax map-ont -t 8 ~{draft_basename} ~{reads_fasta} | samtools sort -o draft_alignment.sorted.bam
-        samtools index draft_alignment.sorted.bam
+        samtools index -@${np} draft_alignment.sorted.bam
 
         python3 /nanopolish/scripts/nanopolish_makerange.py ~{draft_basename} > nanopolish_intervals.txt
 

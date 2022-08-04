@@ -437,12 +437,14 @@ task RestoreOriginalReadNames {
     Int disk_size_gb = 10 + 2*ceil(size(bam, "GB"))
 
     command <<<
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
         time /python_scripts/restore_original_read_names.py ~{bam}
 
         # Rename some output files so we can disambiguate them later:
         mv out.original_read_names_restored.bam ~{prefix}.bam
 
-        samtools index ~{prefix}.bam
+        samtools index -@${np} ~{prefix}.bam
     >>>
 
     output {
@@ -498,6 +500,8 @@ task CorrectUmisWithSetCover {
     String is_extracted_arg = if (is_extracted)  then "--pre-extracted" else ""
 
     command <<<
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
         time /python_scripts/umi_correction.py  \
             --input_bam  ~{bam} \
             --output_bam  ~{prefix}.corrected_umis.unsorted.bam \
@@ -506,7 +510,7 @@ task CorrectUmisWithSetCover {
             --config /python_scripts/umi_correction.yaml
 
         samtools sort ~{prefix}.corrected_umis.unsorted.bam > ~{prefix}.corrected_umis.bam
-        samtools index ~{prefix}.corrected_umis.bam
+        samtools index -@${np} ~{prefix}.corrected_umis.bam
     >>>
 
     output {

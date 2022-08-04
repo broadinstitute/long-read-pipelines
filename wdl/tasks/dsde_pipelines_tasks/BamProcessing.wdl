@@ -67,8 +67,10 @@ task SortSamSpark {
   Float sort_sam_disk_multiplier = 3.25
   Int disk_size = ceil(sort_sam_disk_multiplier * size(input_bam, "GiB")) + 20
 
-  command {
+  command <<<
     set -e
+
+    np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
     gatk --java-options "-Dsamjdk.compression_level=~{compression_level} -Xms100g -Xmx100g" \
       SortSamSpark \
@@ -76,8 +78,8 @@ task SortSamSpark {
       -O ~{output_bam_basename}.bam \
       -- --conf spark.local.dir=. --spark-master 'local[16]' --conf 'spark.kryo.referenceTracking=false'
 
-    samtools index ~{output_bam_basename}.bam ~{output_bam_basename}.bai
-  }
+    samtools index -@${np} ~{output_bam_basename}.bam ~{output_bam_basename}.bai
+  >>>
   runtime {
     docker: gatk_docker
     disks: "local-disk " + disk_size + " HDD"
