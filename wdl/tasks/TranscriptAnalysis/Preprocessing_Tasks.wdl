@@ -40,7 +40,7 @@ task SplitBamBySampleAndCellBarcodeTask {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 16 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -83,7 +83,7 @@ task DownsampleToIsoSeqEquivalent {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 32 + " GiB"  # Need a lot of ram here because we keep a set of ZMWs in memory
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -126,7 +126,7 @@ task DemuxMasSeqDataByIndex {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 4 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -215,7 +215,7 @@ task MergeDemuxMasSeqByIndexLogs {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 4 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -267,7 +267,7 @@ task SplitBamByContig {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -402,7 +402,7 @@ task GffCompare {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -458,7 +458,7 @@ task RestoreOriginalReadNames {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -523,7 +523,7 @@ task CorrectUmisWithSetCover {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
