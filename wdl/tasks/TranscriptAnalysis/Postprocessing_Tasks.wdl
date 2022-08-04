@@ -636,7 +636,8 @@ with pysam.AlignmentFile(f"~{bam}", "rb", check_sq=False, require_index=False) a
             out_bam_file.write(read)
 CODE
 
-        samtools index ~{prefix}.bam
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        samtools index -@${np} ~{prefix}.bam
     >>>
 
     output {

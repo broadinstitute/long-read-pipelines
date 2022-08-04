@@ -15,6 +15,8 @@ import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/NanoPlot.wdl" as NP
 import "tasks/Finalize.wdl" as FF
 
+import "tasks/MASSeq.wdl" as MAS
+
 import "tasks/JupyterNotebooks.wdl" as JUPYTER
 
 workflow PBFlowcell {
@@ -180,6 +182,12 @@ workflow PBFlowcell {
                     bam = AlignMasSeqCCSReads.aligned_bam,
                     prefix = SM + ".isoform_reads"
             }
+
+            call MAS.RenameSingleCellBamTagsForMasIsoSeqV0 as RenameSingleCellBamTagsForMasIsoSeqV0 {
+                input:
+                    bam = FixMasSeqCcsReadTagsPostAlignment.tag_fixed_bam,
+                    prefix =  SM + ".isoform_reads.renamed_tags"
+            }
         }
 
         # All other types of libraries:
@@ -201,7 +209,7 @@ workflow PBFlowcell {
 
         # Resolve MAS-seq vs non-MAS-seq data so we can more easily reference it later:
         File unaligned_reads_bam = select_first([LongbowProcessCCS.extracted_bam, unaligned_bam])
-        File aligned_reads_bam = select_first([FixMasSeqCcsReadTagsPostAlignment.tag_fixed_bam, AlignReads.aligned_bam])
+        File aligned_reads_bam = select_first([RenameSingleCellBamTagsForMasIsoSeqV0.bam_out, AlignReads.aligned_bam])
         File reads_fastq = select_first([MasseqCCSBamToFastq.reads_fq, BamToFastq.reads_fq])
     }
 
