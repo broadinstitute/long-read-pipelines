@@ -47,4 +47,4 @@ with pysam.AlignmentFile(bam_file_name, "rb", check_sq=False, require_index=Fals
                     read.set_tag(new, read.get_tag(old))
                     read.set_tag(old, None)
 
-                out_bam_file.write(read)
+            out_bam_file.write(read)
