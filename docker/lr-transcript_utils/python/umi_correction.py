@@ -93,7 +93,7 @@ def extract_read_groups(input_bam_fname, config, pre_extracted):
     n_filtered_gene = 0
     n_valid_reads = 0
     with pysam.AlignmentFile(input_bam_fname, "rb") as input_bam:
-        for read in tqdm(input_bam):
+        for read in tqdm(input_bam, desc="Extracting Read Groups", unit=" read"):
             if not valid_tags(read, config):
                 continue
             if not valid_gene(read):
@@ -209,11 +209,11 @@ def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config, 
         with pysam.AlignmentFile(output_bam_fname, "wb", template=input_bam) as correct_umi_bam:
             with pysam.AlignmentFile(filter_bam_fname, "wb", template=input_bam) as filtered_out_umi_bam:
 
-                for locus in tqdm(locus2reads):
+                for locus in tqdm(locus2reads, desc="Processing each locus"):
                     process_reads_at_locus(locus2reads[locus], read2umi, config)
 
                 # output BAM with corrected UMIs
-                for read in tqdm(input_bam):
+                for read in tqdm(input_bam, desc="Writing out UMI-corrected reads", unit=" read"):
                     if read.qname in read2umi:
                         read.set_tag(FINAL_UMI_TAG, read2umi[read.qname])
                         read.set_tag(UMI_CORR_TAG, 1)
