@@ -181,7 +181,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             unaligned_bam = reads_bam,
             unaligned_pbi = read_pbi,
             prefix = SM + "_shard",
-            num_shards = 300,
+            num_shards = 100,
     }
 
     ## No more preemption on this sharding - takes too long otherwise.
@@ -310,277 +310,132 @@ workflow PB10xMasSeqSingleFlowcellv4 {
         #     (6) UMI error correction with umi-tools (Levenshtein 2), grouping by SQANTI3
         #     (7) generate count matrix
 
-        # Shard our CCS reads into smaller problems to do work on array elements:
-        call PB.ShardLongReads as t_23_ShardS2ECcsLongbowPassedReads {
+
+        # Segment CCS reads into array elements:
+        call LONGBOW.Segment as t_24_SegmentS2ECcsReads {
             input:
-                unaligned_bam = t_17_FilterS2ECCSReads.passed_reads,
-                unaligned_pbi = t_19_PbIndexS2ELongbowPassedCcsReads.pbindex,
-                prefix = SM + "_ccs_reads_shard_" + main_shard_index,
-                num_shards = 10,
+                annotated_reads = t_17_FilterS2ECCSReads.passed_reads,
+                prefix = SM + "_ccs_array_elements_shard_" + main_shard_index,
+                extra_args = "-b",
+                model = mas_seq_model
         }
 
-        scatter (ccsi1 in range(length(t_23_ShardS2ECcsLongbowPassedReads.unmapped_shards))) {
-            File s2e_ccs_longbow_passed_shard = t_23_ShardS2ECcsLongbowPassedReads.unmapped_shards[ccsi1]
-
-            # Segment CCS reads into array elements:
-            call LONGBOW.Segment as t_24_SegmentS2ECcsReads {
-                input:
-                    annotated_reads = s2e_ccs_longbow_passed_shard,
-                    prefix = SM + "_ccs_array_elements_shard_" + main_shard_index + "_subshard_" + ccsi1,
-                    extra_args = "-b",
-                    model = mas_seq_model
-            }
-
-            # Now remove all -END reads:
-            # We do this here to speed up all other calculations.
-            call Utils.RemoveMasSeqTruncatedReads as t_25_RemoveMasSeqTruncatedReadsFromCcsReads {
-                input:
-                    bam_file = t_24_SegmentS2ECcsReads.segmented_bam
-            }
-
-            # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
-            call LONGBOW.Pad as t_26_LongbowPadCCSArrayElementUMIs {
-                input:
-                    reads = t_25_RemoveMasSeqTruncatedReadsFromCcsReads.bam,
-                    model = mas_seq_model,
-                    tag_to_expand = "ZU",
-                    padding = ccs_umi_padding,
-                    prefix = SM + "_ccs_array_elements_annotated_umi_padded_shard_" + main_shard_index + "_subshard_" + ccsi1
-            }
-
-            call LONGBOW.Pad as t_27_LongbowPadCCSArrayElementCBCs {
-                input:
-                    reads = t_26_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
-                    model = mas_seq_model,
-                    tag_to_expand = "CR",
-                    new_tag_dest = expanded_cbc_tag,
-                    padding = ccs_cbc_padding,
-                    prefix = SM + "_ccs_array_elements_annotated_cbc_padded_shard_" + main_shard_index + "_subshard_" + ccsi1
-            }
-
-            # Now we should correct our barcodes based on the whitelist:
-            call LONGBOW.Correct as t_28_LongbowCorrectCCSCorrectedArrayElementCBCs {
-                input:
-                    reads = t_27_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
-                    barcode_allow_list = cell_barcode_whitelist,
-                    model = mas_seq_model,
-                    ccs_lev_dist_threshold = ccs_lev_dist,
-                    clr_lev_dist_threshold = clr_lev_dist,
-                    prefix = SM + "_ccs_array_elements_annotated_padded_cbc_corrected_shard_" + main_shard_index + "_subshard_" + ccsi1,
-                    raw_barcode_tag = expanded_cbc_tag,
-                    corrected_barcode_tag = "CB",
-            }
-
-            call TENX.AdjustUmiSequenceWithAdapterAlignment as t_29_AdjustCCSUMIs {
-                input:
-                    bam = t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
-                    short_read_umis = short_read_umis_tsv,
-                    prefix = SM + "_ccs_array_elements_annotated_padded_cbc_corrected_UMI_adjusted_shard_" + main_shard_index + "_subshard_" + ccsi1
-            }
-
-            call LONGBOW.Extract as t_30_LongbowExtractCcsArrayElements {
-                input:
-                    bam = t_29_AdjustCCSUMIs.output_bam,
-                    prefix = SM + "_ccs_array_elements_cbc_umi_padded_extracted_shard_" + main_shard_index + "_subshard_" + ccsi1
-            }
+        # Now remove all -END reads:
+        # We do this here to speed up all other calculations.
+        call Utils.RemoveMasSeqTruncatedReads as t_25_RemoveMasSeqTruncatedReadsFromCcsReads {
+            input:
+                bam_file = t_24_SegmentS2ECcsReads.segmented_bam
         }
 
-        # Merge Filtered CCS reads together:
-        call Utils.MergeBams as t_31_MergeCCSArrayElementShards {
+        # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
+        call LONGBOW.Pad as t_26_LongbowPadCCSArrayElementUMIs {
             input:
-                bams = t_24_SegmentS2ECcsReads.segmented_bam,
-                prefix = SM + "_ccs_array_elements_shard_" + main_shard_index
+                reads = t_25_RemoveMasSeqTruncatedReadsFromCcsReads.bam,
+                model = mas_seq_model,
+                tag_to_expand = "ZU",
+                padding = ccs_umi_padding,
+                prefix = SM + "_ccs_array_elements_annotated_umi_padded_shard_" + main_shard_index
         }
 
-        # Merge CCS Barcode Conf files:
-        call Utils.MergeFiles as t_32_MergeCCSBarcodeConfShards {
+        call LONGBOW.Pad as t_27_LongbowPadCCSArrayElementCBCs {
             input:
-                files_to_merge = t_24_SegmentS2ECcsReads.barcode_conf_file,
-                merged_file_name = SM + "_ccs_array_element_barcode_confs_shard_" + main_shard_index + ".txt"
+                reads = t_26_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
+                model = mas_seq_model,
+                tag_to_expand = "CR",
+                new_tag_dest = expanded_cbc_tag,
+                padding = ccs_cbc_padding,
+                prefix = SM + "_ccs_array_elements_annotated_cbc_padded_shard_" + main_shard_index
         }
 
-        # Merge Filtered CCS reads with no ends together:
-        call Utils.MergeBams as t_33_MergeCCSArrayElementsNonTruncatedShards {
+        # Now we should correct our barcodes based on the whitelist:
+        call LONGBOW.Correct as t_28_LongbowCorrectCCSCorrectedArrayElementCBCs {
             input:
-                bams = t_25_RemoveMasSeqTruncatedReadsFromCcsReads.bam,
-                prefix = SM + "_ccs_array_elements_no_ends_shard_" + main_shard_index
+                reads = t_27_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
+                barcode_allow_list = cell_barcode_whitelist,
+                model = mas_seq_model,
+                ccs_lev_dist_threshold = ccs_lev_dist,
+                clr_lev_dist_threshold = clr_lev_dist,
+                prefix = SM + "_ccs_array_elements_annotated_padded_cbc_corrected_shard_" + main_shard_index,
+                raw_barcode_tag = expanded_cbc_tag,
+                corrected_barcode_tag = "CB",
         }
 
-        # Merge UMI-Padded CCS Array Elements:
-        call Utils.MergeBams as t_34_MergeCCSArrayElementsUmiPaddedShards {
+        call TENX.AdjustUmiSequenceWithAdapterAlignment as t_29_AdjustCCSUMIs {
             input:
-                bams = t_26_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
-                prefix = SM + "_ccs_array_elements_no_ends_umi_padded_shard_" + main_shard_index
+                bam = t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
+                short_read_umis = short_read_umis_tsv,
+                prefix = SM + "_ccs_array_elements_annotated_padded_cbc_corrected_UMI_adjusted_shard_" + main_shard_index,
         }
 
-        # Merge CBC-UMI-Padded CCS Array Elements:
-        call Utils.MergeBams as t_35_MergeCCSArrayElementsUmiCbcPaddedShards {
+        call LONGBOW.Extract as t_30_LongbowExtractCcsArrayElements {
             input:
-                bams = t_27_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
-                prefix = SM + "_ccs_array_elements_no_ends_cbc_umi_padded_shard_" + main_shard_index
-        }
-
-        # Merge Corrected CBC CCS Array Elements:
-        call Utils.MergeBams as t_36_MergeCCSArrayElementsUmiCbcPaddedCbcCorrectedShards {
-            input:
-                bams = t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
-                prefix = SM + "_ccs_array_elements_no_ends_cbc_umi_padded_shard_" + main_shard_index
-        }
-
-        call Utils.MergeBams as t_37_MergeLongbowPaddedCBCUncorrectableCCSArrayElementsShards {
-            input:
-                bams = t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.uncorrected_barcodes_bam,
-                prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_uncorrectable_shard_" + main_shard_index
-        }
-
-        call Utils.MergeBams as t_38_MergeLongbowPaddedCBCCorrectedCCSArrayElementsShards {
-            input:
-                bams = t_29_AdjustCCSUMIs.output_bam,
-                prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_corrected_shard_" + main_shard_index
-        }
-
-        call Utils.MergeBams as t_39_MergeLongbowExtractedCcsArrayElements {
-            input:
-                bams = t_30_LongbowExtractCcsArrayElements.extracted_bam,
-                prefix = SM + "_ccs_array_elements_cbc_umi_padded_extracted_shard_" + main_shard_index
+                bam = t_29_AdjustCCSUMIs.output_bam,
+                prefix = SM + "_ccs_array_elements_cbc_umi_padded_extracted_shard_" + main_shard_index,
         }
 
         #####################
         # CCS Reclaimed / CLR:
 
-        # Shard our CCS reclaimed reads into smaller problems to do work on array elements:
-        call PB.ShardLongReads as t_40_ShardS2ECcsReclaimedReads {
+        # Segment Reclaimed reads into array elements:
+        call LONGBOW.Segment as t_41_SegmentS2ECcsReclaimedReads {
             input:
-                unaligned_bam = t_18_FilterS2EReclaimableReads.passed_reads,
-                unaligned_pbi = t_21_PbIndexS2ELongbowPassedReclaimedReads.pbindex,
-                prefix = SM + "_ccs_reclaimed_reads_shard_" + main_shard_index,
-                num_shards = 10,
+                annotated_reads = t_18_FilterS2EReclaimableReads.passed_reads,
+                prefix = SM + "_ccs_reclaimed_array_elements_shard_" + main_shard_index,
+                extra_args = "-b",
+                model = mas_seq_model
         }
 
-        scatter (cri1 in range(length(t_40_ShardS2ECcsReclaimedReads.unmapped_shards))) {
-            File s2e_ccs_reclaimed_shard = t_40_ShardS2ECcsReclaimedReads.unmapped_shards[cri1]
-
-            # Segment Reclaimed reads into array elements:
-            call LONGBOW.Segment as t_41_SegmentS2ECcsReclaimedReads {
-                input:
-                    annotated_reads = s2e_ccs_reclaimed_shard,
-                    prefix = SM + "_ccs_reclaimed_array_elements_shard_" + main_shard_index + "_subshard_" + cri1,
-                    extra_args = "-b",
-                    model = mas_seq_model
-            }
-
-            # Now remove all -END reads:
-            # We do this here to speed up all other calculations.
-            call Utils.RemoveMasSeqTruncatedReads as t_42_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads {
-                input:
-                    bam_file = t_41_SegmentS2ECcsReclaimedReads.segmented_bam
-            }
-
-            # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
-            call LONGBOW.Pad as t_43_LongbowPadCcsReclaimedArrayElementUMIs {
-                input:
-                    reads = t_42_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
-                    model = mas_seq_model,
-                    tag_to_expand = "ZU",
-                    padding = ccs_umi_padding,
-                    prefix = SM + "_ccs_reclaimed_array_elements_annotated_umi_padded_shard_" + main_shard_index + "_subshard_" + cri1
-            }
-
-            call LONGBOW.Pad as t_44_LongbowPadCcsReclaimedArrayElementCBCs {
-                input:
-                    reads = t_43_LongbowPadCcsReclaimedArrayElementUMIs.padded_tag_bam,
-                    model = mas_seq_model,
-                    tag_to_expand = "CR",
-                    new_tag_dest = expanded_cbc_tag,
-                    padding = ccs_cbc_padding,
-                    prefix = SM + "_ccs_reclaimed_array_elements_annotated_cbc_padded_shard_" + main_shard_index + "_subshard_" + cri1
-            }
-
-            # Now we should correct our barcodes based on the whitelist:
-            call LONGBOW.Correct as t_45_LongbowCorrectCcsReclaimedArrayElementCBCs {
-                input:
-                    reads = t_44_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
-                    barcode_allow_list = cell_barcode_whitelist,
-                    model = mas_seq_model,
-                    ccs_lev_dist_threshold = ccs_lev_dist,
-                    clr_lev_dist_threshold = clr_lev_dist,
-                    prefix = SM + "_ccs_reclaimed_array_elements_annotated_padded_cbc_corrected_shard_" + main_shard_index + "_subshard_" + cri1,
-                    raw_barcode_tag = expanded_cbc_tag,
-                    corrected_barcode_tag = "CB",
-            }
-
-            call TENX.AdjustUmiSequenceWithAdapterAlignment as t_46_AdjustCcsReclaimedUMIs {
-                input:
-                    bam = t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
-                    short_read_umis = short_read_umis_tsv,
-                    prefix = SM + "_ccs_reclaimed_array_elements_annotated_padded_cbc_corrected_UMI_adjusted_shard_" + main_shard_index + "_subshard_" + cri1
-            }
-
-            call LONGBOW.Extract as t_47_LongbowExtractCcsReclaimedArrayElements {
-                input:
-                    bam = t_46_AdjustCcsReclaimedUMIs.output_bam,
-                    prefix = SM + "_ccs_reclaimed_array_elements_cbc_umi_padded_extracted_shard_" + main_shard_index + "_subshard_" + cri1
-            }
+        # Now remove all -END reads:
+        # We do this here to speed up all other calculations.
+        call Utils.RemoveMasSeqTruncatedReads as t_42_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads {
+            input:
+                bam_file = t_41_SegmentS2ECcsReclaimedReads.segmented_bam
         }
 
-        # Merge Filtered CCS Reclaimed reads together:
-        call Utils.MergeBams as t_48_MergeCCSReclaimedArrayElementShards {
+        # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
+        call LONGBOW.Pad as t_43_LongbowPadCcsReclaimedArrayElementUMIs {
             input:
-                bams = t_41_SegmentS2ECcsReclaimedReads.segmented_bam,
-                prefix = SM + "_ccs_reclaimed_array_elements_shard_" + main_shard_index
+                reads = t_42_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
+                model = mas_seq_model,
+                tag_to_expand = "ZU",
+                padding = ccs_umi_padding,
+                prefix = SM + "_ccs_reclaimed_array_elements_annotated_umi_padded_shard_" + main_shard_index,
         }
 
-        # Merge CCS Barcode Conf files:
-        call Utils.MergeFiles as t_49_MergeCCSReclaimedBarcodeConfShards {
+        call LONGBOW.Pad as t_44_LongbowPadCcsReclaimedArrayElementCBCs {
             input:
-                files_to_merge = t_41_SegmentS2ECcsReclaimedReads.barcode_conf_file,
-                merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs_shard_" + main_shard_index + ".txt"
+                reads = t_43_LongbowPadCcsReclaimedArrayElementUMIs.padded_tag_bam,
+                model = mas_seq_model,
+                tag_to_expand = "CR",
+                new_tag_dest = expanded_cbc_tag,
+                padding = ccs_cbc_padding,
+                prefix = SM + "_ccs_reclaimed_array_elements_annotated_cbc_padded_shard_" + main_shard_index,
         }
 
-        # Merge Filtered CCS reads with no ends together:
-        call Utils.MergeBams as t_50_MergeCCSReclaimedArrayElementsNonTruncatedShards {
+        # Now we should correct our barcodes based on the whitelist:
+        call LONGBOW.Correct as t_45_LongbowCorrectCcsReclaimedArrayElementCBCs {
             input:
-                bams = t_42_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
-                prefix = SM + "_ccs_reclaimed_array_elements_no_ends_shard_" + main_shard_index
+                reads = t_44_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
+                barcode_allow_list = cell_barcode_whitelist,
+                model = mas_seq_model,
+                ccs_lev_dist_threshold = ccs_lev_dist,
+                clr_lev_dist_threshold = clr_lev_dist,
+                prefix = SM + "_ccs_reclaimed_array_elements_annotated_padded_cbc_corrected_shard_" + main_shard_index,
+                raw_barcode_tag = expanded_cbc_tag,
+                corrected_barcode_tag = "CB",
         }
 
-        # Merge UMI-Padded CCS Array Elements:
-        call Utils.MergeBams as t_51_MergeCCSReclaimedArrayElementsUmiPaddedShards {
+        call TENX.AdjustUmiSequenceWithAdapterAlignment as t_46_AdjustCcsReclaimedUMIs {
             input:
-                bams = t_43_LongbowPadCcsReclaimedArrayElementUMIs.padded_tag_bam,
-                prefix = SM + "_ccs_reclaimed_array_elements_no_ends_umi_padded_shard_" + main_shard_index
+                bam = t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
+                short_read_umis = short_read_umis_tsv,
+                prefix = SM + "_ccs_reclaimed_array_elements_annotated_padded_cbc_corrected_UMI_adjusted_shard_" + main_shard_index,
         }
 
-        # Merge CBC-UMI-Padded CCS Array Elements:
-        call Utils.MergeBams as t_52_MergeCCSReclaimedArrayElementsUmiCbcPaddedShards {
+        call LONGBOW.Extract as t_47_LongbowExtractCcsReclaimedArrayElements {
             input:
-                bams = t_44_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
-                prefix = SM + "_ccs_reclaimed_array_elements_no_ends_cbc_umi_padded_shard_" + main_shard_index
-        }
-
-        # Merge Corrected CBC CCS Array Elements:
-        call Utils.MergeBams as t_53_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrectedShards {
-            input:
-                bams = t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
-                prefix = SM + "_ccs_reclaimed_array_elements_no_ends_cbc_umi_padded_shard_" + main_shard_index
-        }
-
-        call Utils.MergeBams as t_54_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElementsShards {
-            input:
-                bams = t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.uncorrected_barcodes_bam,
-                prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_uncorrectable_shard_" + main_shard_index
-        }
-
-        call Utils.MergeBams as t_55_MergeLongbowPaddedCBCCorrectedCCSReclaimedArrayElementsShards {
-            input:
-                bams = t_46_AdjustCcsReclaimedUMIs.output_bam,
-                prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_corrected_shard_" + main_shard_index
-        }
-
-        call Utils.MergeBams as t_56_MergeLongbowExtractedCcsReclaimedArrayElements {
-            input:
-                bams = t_47_LongbowExtractCcsReclaimedArrayElements.extracted_bam,
-                prefix = SM + "_ccs_reclaimed_array_elements_cbc_umi_padded_extracted_shard_" + main_shard_index
+                bam = t_46_AdjustCcsReclaimedUMIs.output_bam,
+                prefix = SM + "_ccs_reclaimed_array_elements_cbc_umi_padded_extracted_shard_" + main_shard_index,
         }
 
         ###############
@@ -591,7 +446,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
         # Align CCS reads to the genome:
         call AR.Minimap2 as t_57_AlignCCSArrayElementsToGenome {
             input:
-                reads      = [ t_39_MergeLongbowExtractedCcsArrayElements.merged_bam ],
+                reads      = [ t_30_LongbowExtractCcsArrayElements.extracted_bam ],
                 ref_fasta  = ref_fasta,
                 tags_to_preserve = tags_to_preserve,
                 map_preset = "splice:hq",
@@ -599,15 +454,27 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 runtime_attr_override = object { mem_gb: 32 }
         }
 
+        call LONGBOW.TagFix as t_58_LongbowTagfixAlignedCcsArrayElements {
+            input:
+                bam = t_57_AlignCCSArrayElementsToGenome.aligned_bam,
+                prefix = SM + "_ccs_array_elements_extracted_aligned_tagfixed_shard_" + main_shard_index,
+        }
+
         # Align Reclaimed reads to the genome:
         call AR.Minimap2 as t_58_AlignReclaimedArrayElementsToGenome {
             input:
-                reads      = [ t_56_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bam ],
+                reads      = [ t_47_LongbowExtractCcsReclaimedArrayElements.extracted_bam ],
                 ref_fasta  = ref_fasta,
                 tags_to_preserve = tags_to_preserve,
                 map_preset = "splice",
                 prefix = SM + "_ccs_reclaimed_array_elements_extracted_aligned_shard_" + main_shard_index,
                 runtime_attr_override = object { mem_gb: 32 }
+        }
+
+        call LONGBOW.TagFix as t_59_LongbowTagfixAlignedCcsReclaimedArrayElements {
+            input:
+                bam = t_58_AlignReclaimedArrayElementsToGenome.aligned_bam,
+                prefix = SM + "_ccs_reclaimed_array_elements_extracted_aligned_tagfixed_shard_" + main_shard_index,
         }
     }
 
@@ -675,153 +542,163 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     }
     call PB.PBIndex as t_76_PbIndexMergedAllLongbowAnnotatedReads { input: bam = t_75_MergeAllLongbowAnnotatedReads.merged_bam }
 
-    # Merge Filtered CCS array elements together:
-    call Utils.MergeBams as t_77_MergeCCSArrayElements {
+    # Merge Filtered CCS reads together:
+    call Utils.MergeBams as t_31_MergeCCSArrayElements {
         input:
-            bams = t_31_MergeCCSArrayElementShards.merged_bam,
+            bams = t_24_SegmentS2ECcsReads.segmented_bam,
             prefix = SM + "_ccs_array_elements"
     }
 
-    # Merge Filtered CCS Reclaimed array elements together:
-    call Utils.MergeBams as t_78_MergeCCSReclaimedArrayElements {
+    # Merge CCS Barcode Conf files:
+    call Utils.MergeFiles as t_32_MergeCCSBarcodeConfShards {
         input:
-            bams = t_48_MergeCCSReclaimedArrayElementShards.merged_bam,
-            prefix = SM + "_ccs_reclaimed_array_elements"
+            files_to_merge = t_24_SegmentS2ECcsReads.barcode_conf_file,
+            merged_file_name = SM + "_ccs_array_element_barcode_confs.txt"
     }
 
-    # Merge Filtered (and end removed) CCS array elements together:
-    call Utils.MergeBams as t_79_MergeCCSArrayElementsNonTruncated {
+    # Merge Filtered CCS reads with no ends together:
+    call Utils.MergeBams as t_33_MergeCCSArrayElementsNonTruncated {
         input:
-            bams = t_33_MergeCCSArrayElementsNonTruncatedShards.merged_bam,
-            prefix = SM + "_ccs_array_elements_non_truncated"
+            bams = t_25_RemoveMasSeqTruncatedReadsFromCcsReads.bam,
+            prefix = SM + "_ccs_array_elements_no_ends"
     }
-
-    # Merge Filtered (and end removed) CCS Reclaimed array elements together:
-    call Utils.MergeBams as t_80_MergeCCSReclaimedArrayElementsNonTruncated {
-        input:
-            bams = t_50_MergeCCSReclaimedArrayElementsNonTruncatedShards.merged_bam,
-            prefix = SM + "_ccs_reclaimed_array_elements_non_truncated"
-    }
-
-    call Utils.MergeBams as t_81_MergeAllArrayElementsNonTruncated {
-        input:
-            bams = flatten([t_33_MergeCCSArrayElementsNonTruncatedShards.merged_bam, t_50_MergeCCSReclaimedArrayElementsNonTruncatedShards.merged_bam]),
-            prefix = SM + "_array_elements_non_truncated"
-    }
-
-    # CCS Corrected:
 
     # Merge UMI-Padded CCS Array Elements:
-    call Utils.MergeBams as t_82_MergeCCSArrayElementsUmiPadded {
+    call Utils.MergeBams as t_34_MergeCCSArrayElementsUmiPadded {
         input:
-            bams = t_34_MergeCCSArrayElementsUmiPaddedShards.merged_bam,
+            bams = t_26_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
             prefix = SM + "_ccs_array_elements_no_ends_umi_padded"
     }
 
     # Merge CBC-UMI-Padded CCS Array Elements:
     call Utils.MergeBams as t_83_MergeCCSArrayElementsUmiCbcPadded {
         input:
-            bams = t_35_MergeCCSArrayElementsUmiCbcPaddedShards.merged_bam,
+            bams = t_27_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
             prefix = SM + "_ccs_array_elements_no_ends_cbc_umi_padded"
     }
 
     # Merge Corrected CBC CCS Array Elements:
     call Utils.MergeBams as t_84_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected {
         input:
-            bams = t_36_MergeCCSArrayElementsUmiCbcPaddedCbcCorrectedShards.merged_bam,
+            bams = t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
             prefix = SM + "_ccs_array_elements_no_ends_cbc_umi_padded"
     }
 
-    # Merge Corrected CBC CCS Array Elements:
-    call Utils.MergeBams as t_85_MergeLongbowPaddedCBCCorrectedCCSArrayElements {
-        input:
-            bams = t_38_MergeLongbowPaddedCBCCorrectedCCSArrayElementsShards.merged_bam,
-            prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_corrected"
-    }
-
-    # Merge uncorrectable CBC CCS Array Elements:
     call Utils.MergeBams as t_86_MergeLongbowPaddedCBCUncorrectableCCSArrayElements {
         input:
-            bams = t_37_MergeLongbowPaddedCBCUncorrectableCCSArrayElementsShards.merged_bam,
+            bams = t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.uncorrected_barcodes_bam,
             prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_uncorrectable"
     }
 
-    call Utils.MergeBams as t_87_MergeLongbowPaddedCBCCorrectedExtractedCCSArrayElements {
+    call Utils.MergeBams as t_85_MergeLongbowPaddedCBCCorrectedCCSArrayElements {
         input:
-            bams = t_39_MergeLongbowExtractedCcsArrayElements.merged_bam,
+            bams = t_29_AdjustCCSUMIs.output_bam,
+            prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_corrected"
+    }
+
+    call Utils.MergeBams as t_39_MergeLongbowExtractedCcsArrayElements {
+        input:
+            bams = t_30_LongbowExtractCcsArrayElements.extracted_bam,
             prefix = SM + "_ccs_array_elements_cbc_umi_padded_extracted"
     }
 
-    # RECLAIMED:
+     # Merge Filtered CCS Reclaimed reads together:
+    call Utils.MergeBams as t_78_MergeCCSReclaimedArrayElements {
+        input:
+            bams = t_41_SegmentS2ECcsReclaimedReads.segmented_bam,
+            prefix = SM + "_ccs_reclaimed_array_elements"
+    }
 
-    # Merge UMI-Padded CCS Reclaimed Array Elements:
+    # Merge CCS Barcode Conf files:
+    call Utils.MergeFiles as t_49_MergeCCSReclaimedBarcodeConfShards {
+        input:
+            files_to_merge = t_41_SegmentS2ECcsReclaimedReads.barcode_conf_file,
+            merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs"
+    }
+
+    # Merge Filtered CCS reads with no ends together:
+    call Utils.MergeBams as t_80_MergeCCSReclaimedArrayElementsNonTruncated {
+        input:
+            bams = t_42_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
+            prefix = SM + "_ccs_reclaimed_array_elements_no_ends"
+    }
+
+    # Merge UMI-Padded CCS Array Elements:
     call Utils.MergeBams as t_88_MergeCCSReclaimedArrayElementsUmiPadded {
         input:
-            bams = t_51_MergeCCSReclaimedArrayElementsUmiPaddedShards.merged_bam,
+            bams = t_43_LongbowPadCcsReclaimedArrayElementUMIs.padded_tag_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_no_ends_umi_padded"
     }
 
-    # Merge CBC-UMI-Padded CCS Reclaimed Array Elements:
+    # Merge CBC-UMI-Padded CCS Array Elements:
     call Utils.MergeBams as t_89_MergeCCSReclaimedArrayElementsUmiCbcPadded {
         input:
-            bams = t_52_MergeCCSReclaimedArrayElementsUmiCbcPaddedShards.merged_bam,
+            bams = t_44_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_no_ends_cbc_umi_padded"
     }
 
-    # Merge Corrected CBC CCS Reclaimed Array Elements:
+    # Merge Corrected CBC CCS Array Elements:
     call Utils.MergeBams as t_90_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected {
         input:
-            bams = t_53_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrectedShards.merged_bam,
+            bams = t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_no_ends_cbc_umi_padded"
     }
 
-    # Merge uncorrectable CBC CCS Reclaimed Array Elements:
     call Utils.MergeBams as t_91_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements {
         input:
-            bams = t_54_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElementsShards.merged_bam,
+            bams = t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.uncorrected_barcodes_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_uncorrectable"
     }
 
-    call Utils.MergeBams as t_92_MergeLongbowPaddedCBCCorrectedExtractedCCSReclaimedArrayElements {
+    call Utils.MergeBams as t_55_MergeLongbowPaddedCBCCorrectedCCSReclaimedArrayElementsShards {
         input:
-            bams = t_56_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bam,
+            bams = t_46_AdjustCcsReclaimedUMIs.output_bam,
+            prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_corrected"
+    }
+
+    call Utils.MergeBams as t_56_MergeLongbowExtractedCcsReclaimedArrayElements {
+        input:
+            bams = t_47_LongbowExtractCcsReclaimedArrayElements.extracted_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_cbc_umi_padded_extracted"
     }
 
-    ##############################################################################################################
-
+    call Utils.MergeBams as t_81_MergeAllArrayElementsNonTruncated {
+        input:
+            bams = [t_33_MergeCCSArrayElementsNonTruncated.merged_bam, t_80_MergeCCSReclaimedArrayElementsNonTruncated.merged_bam],
+            prefix = SM + "_array_elements_non_truncated"
+    }
 
     # Merge Aligned CCS array elements together:
     call Utils.MergeBams as t_93_MergeAlignedCCSArrayElements {
         input:
-            bams = t_57_AlignCCSArrayElementsToGenome.aligned_bam,
-            prefix = SM + "_ccs_array_elements_padded_aligned"
+            bams = t_58_LongbowTagfixAlignedCcsArrayElements.tag_fixed_bam,
+            prefix = SM + "_ccs_array_elements_padded_aligned_tagfixed"
     }
 
     # Merge Aligned CCS Reclaimed array elements together:
     call Utils.MergeBams as t_94_MergeAlignedCCSReclaimedArrayElements {
         input:
-            bams = t_58_AlignReclaimedArrayElementsToGenome.aligned_bam,
-            prefix = SM + "_ccs_reclaimed_array_elements_padded_aligned"
+            bams = t_59_LongbowTagfixAlignedCcsReclaimedArrayElements.tag_fixed_bam,
+            prefix = SM + "_ccs_reclaimed_array_elements_padded_aligned_tagfixed"
     }
 
     call Utils.MergeBams as t_95_MergeAllAlignedArrayElementsNonTruncated {
         input:
-            bams = flatten([t_57_AlignCCSArrayElementsToGenome.aligned_bam, t_58_AlignReclaimedArrayElementsToGenome.aligned_bam]),
-            prefix = SM + "_array_elements_padded_aligned"
+            bams = flatten([t_58_LongbowTagfixAlignedCcsArrayElements.tag_fixed_bam, t_59_LongbowTagfixAlignedCcsReclaimedArrayElements.tag_fixed_bam]),
+            prefix = SM + "_array_elements_padded_aligned_tagfixed"
     }
 
     # Merge CCS Barcode Conf files:
     call Utils.MergeFiles as t_96_MergeAllCCSBarcodeConfShards {
         input:
-            files_to_merge = t_32_MergeCCSBarcodeConfShards.merged_file,
+            files_to_merge = t_24_SegmentS2ECcsReads.segmented_bam,
             merged_file_name = SM + "_ccs_array_element_barcode_confs.txt"
     }
 
     # Merge CCS Barcode Conf files:
     call Utils.MergeFiles as t_97_MergeAllCCSReclaimedBarcodeConfShards {
         input:
-            files_to_merge = t_49_MergeCCSReclaimedBarcodeConfShards.merged_file,
+            files_to_merge = t_41_SegmentS2ECcsReclaimedReads.segmented_bam,
             merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs.txt"
     }
 
@@ -1182,7 +1059,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
     call LONGBOW.AggregateCorrectLogStats as t_130_AggregateLongbowCorrectStats {
         input:
-            longbow_correct_log_files = flatten([flatten(t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.log), flatten(t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.log)]),
+            longbow_correct_log_files = flatten([t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.log, t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.log]),
             out_name = SM + "_longbow_correct_stats.txt"
     }
 
@@ -1405,12 +1282,12 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     call FF.FinalizeToDir as t_147_FinalizeIntermediateAnnotatedArrayElements {
         input:
             files = [
-                t_77_MergeCCSArrayElements.merged_bam,
-                t_77_MergeCCSArrayElements.merged_bai,
-                t_79_MergeCCSArrayElementsNonTruncated.merged_bam,
-                t_79_MergeCCSArrayElementsNonTruncated.merged_bai,
-                t_82_MergeCCSArrayElementsUmiPadded.merged_bam,
-                t_82_MergeCCSArrayElementsUmiPadded.merged_bai,
+                t_31_MergeCCSArrayElements.merged_bam,
+                t_31_MergeCCSArrayElements.merged_bai,
+                t_33_MergeCCSArrayElementsNonTruncated.merged_bam,
+                t_33_MergeCCSArrayElementsNonTruncated.merged_bai,
+                t_34_MergeCCSArrayElementsUmiPadded.merged_bam,
+                t_34_MergeCCSArrayElementsUmiPadded.merged_bai,
                 t_83_MergeCCSArrayElementsUmiCbcPadded.merged_bam,
                 t_83_MergeCCSArrayElementsUmiCbcPadded.merged_bai,
                 t_84_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
@@ -1442,18 +1319,14 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 t_100_MergeAllAlignedAndFilteredArrayElements.merged_bam,
                 t_100_MergeAllAlignedAndFilteredArrayElements.merged_bai,
 
-                t_85_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bam,
-                t_85_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bai,
-                t_86_MergeLongbowPaddedCBCUncorrectableCCSArrayElements.merged_bam,
-                t_86_MergeLongbowPaddedCBCUncorrectableCCSArrayElements.merged_bai,
-                t_87_MergeLongbowPaddedCBCCorrectedExtractedCCSArrayElements.merged_bam,
-                t_87_MergeLongbowPaddedCBCCorrectedExtractedCCSArrayElements.merged_bai,
+                t_39_MergeLongbowExtractedCcsArrayElements.merged_bam,
+                t_39_MergeLongbowExtractedCcsArrayElements.merged_bai,
                 t_90_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
                 t_90_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bai,
                 t_91_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bam,
                 t_91_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bai,
-                t_92_MergeLongbowPaddedCBCCorrectedExtractedCCSReclaimedArrayElements.merged_bam,
-                t_92_MergeLongbowPaddedCBCCorrectedExtractedCCSReclaimedArrayElements.merged_bai,
+                t_56_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bam,
+                t_56_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bai,
 
                 t_104_RestoreCcsOriginalReadNames.bam_out,
                 t_105_RestoreClrOriginalReadNames.bam_out,
@@ -1498,28 +1371,28 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
     call FF.FinalizeToDir as t_150_FinalizeCCSCBCcorrectionLogsToMeta {
         input:
-            files = flatten(t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.log),
+            files = t_28_LongbowCorrectCCSCorrectedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_cbc_correction_logs",
             keyfile = keyfile
     }
 
     call FF.FinalizeToDir as t_151_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
         input:
-            files = flatten(t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.log),
+            files = t_45_LongbowCorrectCcsReclaimedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_rejected_cbc_correction_logs",
             keyfile = keyfile
     }
 
     call FF.FinalizeToDir as t_152_FinalizeCCSUmiAdjustmentLogs {
         input:
-            files = flatten(t_29_AdjustCCSUMIs.log),
+            files = t_29_AdjustCCSUMIs.log,
             outdir = meta_files_dir + "/" + "umi_adjustment_logs_ccs",
             keyfile = keyfile
     }
 
     call FF.FinalizeToDir as t_153_FinalizeCCSReclaimedUmiAdjustmentLogs {
         input:
-            files = flatten(t_46_AdjustCcsReclaimedUMIs.log),
+            files = t_46_AdjustCcsReclaimedUMIs.log,
             outdir = meta_files_dir + "/" + "umi_adjustment_logs_ccs_reclaimed",
             keyfile = keyfile
     }
