@@ -529,11 +529,14 @@ task AssembleVariantContigs {
 task BuildRefPanels {
     input {
         String ref_db_gcs
+        File ref_meta
 
         File variant_contigs
 
         RuntimeAttr? runtime_attr_override
     }
+
+    String db_name = basename(ref_db_gcs)
 
     command <<<
         # Activate fusilli conda env
@@ -541,9 +544,9 @@ task BuildRefPanels {
         set -euxo pipefail
 
         mkdir fusilli_db
-        gsutil -m cp -r ~{ref_db_gcs} fusilli_db
+        gsutil -m cp -r ~{ref_db_gcs}/ .
 
-        fusilli call build-ref-panels fusilli_db ~{variant_contigs} -o ref_contigs/
+        fusilli call build-ref-panels ~{db_name} ~{variant_contigs} -o ref_contigs/
     >>>
 
     output {
