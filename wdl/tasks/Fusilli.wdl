@@ -528,9 +528,7 @@ task AssembleVariantContigs {
 
 task BuildRefPanels {
     input {
-        File ref_meta
-        File ref_graph
-        File ref_graph_colors
+        String ref_db_gcs
 
         File variant_contigs
 
@@ -543,12 +541,7 @@ task BuildRefPanels {
         set -euxo pipefail
 
         mkdir fusilli_db
-        cd fusilli_db
-        ln -s ~{ref_graph} reference_graph.gfa
-        ln -s ~{ref_graph_colors} reference_graph.bfg_colors
-        ln -s ~{ref_meta} reference_meta.tsv
-
-        cd ..
+        gsutil -m cp -r ~{ref_db_gcs} fusilli_db
 
         fusilli call build-ref-panels fusilli_db ~{variant_contigs} -o ref_contigs/
     >>>
@@ -677,7 +670,7 @@ task FinalizeRefPanels {
 
         cd ..
 
-        gsutil -m cp ref_panels ~{sample_gcs_dir}
+        gsutil -m cp -r ref_panels ~{sample_gcs_dir}
     >>>
 
     #########################

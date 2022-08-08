@@ -4,6 +4,7 @@ import "tasks/Fusilli.wdl" as Fusilli
 
 workflow FusilliAssemble {
     input {
+        String fusilli_db_gcs
         File ref_meta
         File ref_graph
         File ref_graph_colors
@@ -23,25 +24,6 @@ workflow FusilliAssemble {
 
     String output_dir = sub(gcs_output_dir, "/$", "")
 
-    # Build links for each sample graph from both references and each sample's reads
-    scatter(i in range(length(sample_ids))) {
-        call Fusilli.ConstructSampleLinks as ConstructSampleLinks {
-            input:
-                sample_id = sample_ids[i],
-                sample_graph = cleaned_sample_graphs[i],
-                sample_graph_colors = cleaned_sample_graph_colors[i],
-
-                ref_meta = ref_meta,
-                ref_ids = ref_ids,
-                ref_paths = ref_paths,
-
-                reads_fq1 = reads_fq1[i],
-                reads_fq2 = reads_fq2[i],
-
-                prune_threshold = prune_thresholds[i]
-        }
-    }
-
     # The combined graph is a ccDBG combining all sample graphs, and is used to identify
     # variant k-mers in a later step below
     call Fusilli.BuildCombinedGraph as BuildCombinedGraph {
@@ -60,22 +42,37 @@ workflow FusilliAssemble {
             combined_graph_colors = BuildCombinedGraph.combined_graph_colors
     }
 
+    # Build links for each sample graph from both references and each sample's reads
     scatter(i in range(length(sample_ids))) {
+        call Fusilli.ConstructSampleLinks as ConstructSampleLinks {
+            input:
+                sample_id = sample_ids[i],
+                sample_graph = cleaned_sample_graphs[i],
+                sample_graph_colors = cleaned_sample_graph_colors[i],
+
+                ref_meta = ref_meta,
+                ref_ids = ref_ids,
+                ref_paths = ref_paths,
+
+                reads_fq1 = reads_fq1[i],
+                reads_fq2 = reads_fq2[i],
+
+                prune_threshold = prune_thresholds[i]
+        }
+
         call Fusilli.AssembleVariantContigs as AssembleVariantContigs {
             input:
                 sample_id = sample_ids[i],
                 cleaned_graph = cleaned_sample_graphs[i],
                 cleaned_graph_colors = cleaned_sample_graph_colors[i],
-                linkdb = ConstructSampleLinks.sample_links[i],
+                linkdb = ConstructSampleLinks.sample_links,
                 variant_kmers = FindVariantKmers.variant_kmers,
                 nonref_kmers = FindVariantKmers.nonref_kmers
         }
 
         call Fusilli.BuildRefPanels as BuildRefPanels {
             input:
-                ref_meta = ref_meta,
-                ref_graph = ref_graph,
-                ref_graph_colors = ref_graph_colors,
+                ref_db_gcs = fusilli_db_gcs,
 
                 variant_contigs = AssembleVariantContigs.variant_contigs
         }
