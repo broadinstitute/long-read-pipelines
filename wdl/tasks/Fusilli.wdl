@@ -529,7 +529,6 @@ task AssembleVariantContigs {
 task BuildRefPanels {
     input {
         String ref_db_gcs
-        File ref_meta
 
         File variant_contigs
 
