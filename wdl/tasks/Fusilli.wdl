@@ -667,7 +667,7 @@ task FinalizeRefPanels {
 
         while IFS= read -r line; do
             fname=${line##*/}
-            ln -s ${fname} ${line}
+            ln -s ${line} ${fname}
         done < ~{write_lines(ref_panels)}
 
         cd ..
