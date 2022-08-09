@@ -607,7 +607,7 @@ task FinalizeAssembly {
 
             mkdir -p "${parts[0]}"
             ln -s "${parts[1]}" "${parts[0]}/${parts[1]##*/}"
-            ln -s "${parts[1]}" "${parts[0]}/${parts[2]##*/}"
+            ln -s "${parts[2]}" "${parts[0]}/${parts[2]##*/}"
         done < <(paste ~{write_lines(sample_ids)} ~{write_lines(linkdbs)} ~{write_lines(variant_contigs)})
 
         ln -s ~{combined_graph} combined_graph.gfa
@@ -695,5 +695,12 @@ task FinalizeRefPanels {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task TesseraeAlign {
+    input {
+        String sample_gcs_dir
+
     }
 }
