@@ -96,3 +96,6 @@ workflows:
 - name: CleanupIntermediate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
+- name: DystPeaker
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DystPeaker.wdl

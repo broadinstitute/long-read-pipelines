@@ -1,0 +1,458 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+from collections import OrderedDict
+from itertools import *
+from math import sqrt
+import argparse
+import array
+import os, stat
+from select import select
+import stat
+import sys
+import termios
+import time
+import tty
+import atexit
+
+unicodes = [
+    "▏", "▎", "▍", "▌", "▋", "▊", "▉" 
+]
+
+if sys.version_info[0] > 2:
+    raw_input = input
+else:
+    unicodes=[i.decode('utf-8') for i in unicodes]
+
+
+def restoretty():
+    termios.tcsetattr(KEYBOARD, termios.TCSADRAIN, old_settings)
+
+
+ch = os.fstat(1).st_mode & stat.S_IFCHR
+reg = os.fstat(1).st_mode & stat.S_IFREG
+
+PRINTED = 0
+
+
+def goUp(n):
+    sys.stderr.write(u"\u001b[" + str(n) + "A")
+    sys.stderr.flush()
+
+
+def cleanLine(n):
+    sys.stderr.write(u"\u001b[" + str(n) + "A")
+    for i in range(n):
+        sys.stderr.write(u"\u001b[2K\r\n")
+    sys.stderr.flush()
+
+
+class histogram:
+    def __init__(self,
+                 inibins=10,
+                 pct=False,
+                 width=80,
+                 noprogress=False,
+                 lowlim=None,
+                 maxlim=None):
+
+        self.bins = []
+        self.nbins = inibins
+        while inibins:
+            self.bins.append(array.array('d', []))
+            inibins -= 1
+
+        self.width = width
+
+        self.LAST = time.time()
+
+        self.others = array.array('d', [])
+        self.outlimits = array.array('d', [])
+
+        self.min = -999999999
+        self.max = 999999999
+        self.calcSD = False
+        self.pct = pct
+
+        self.lowlimit = lowlim
+        self.highlimit = maxlim
+
+        if self.lowlimit != None: self.lowlimit = float(self.lowlimit)
+        if self.highlimit != None: self.highlimit = float(self.highlimit)
+
+        self.bs = ((self.max - self.min) / self.nbins)
+
+        self.sum = 0
+
+        self.ln = 0
+
+        self.progress = not noprogress
+
+    def __append(self, v):
+        if self.lowlimit != None and v < self.lowlimit:
+            self.outlimits.append(v)
+            return
+        elif self.highlimit != None and v > self.highlimit:
+            self.outlimits.append(v)
+            return
+
+        self.sum += v
+        if v < self.min or v > self.max:
+            self.others.append(v)
+            if len(self.others) > 1000:
+                self.restruct1()
+            return
+
+        bn = int((v - self.min) / self.bs) + 1
+        if v == self.max: bn -= 1
+
+        self.bins[bn - 1].append(v)
+
+        self.ln += 1
+
+    def append(self, v):
+        d, _, _ = select([KEYBOARD], [], [], 0.0)
+        if d:
+            ch = os.read(KEYBOARD, 1)
+            if hasattr(ch,'decode'):
+                ch=ch.decode()
+            if ch.lower() == 'q':
+                return True
+            elif ch.lower() == 'p':
+                self.pct = not self.pct
+            elif ch.lower() == 'a':
+                self.nbins = max(5, self.nbins - 2)
+                self.restruct1()
+            elif ch.lower() == 's':
+                self.nbins = self.nbins + 2
+                self.restruct1()
+            elif ch.lower() == 'x':
+                if self.lowlimit == None: self.lowlimit = self.min
+                self.lowlimit += (self.max - self.min) / 10
+                self.restruct1()
+            elif ch.lower() == 'z':
+                if self.lowlimit == None: self.lowlimit = self.min
+                self.lowlimit -= (self.max - self.min) / 10
+                self.restruct1()
+            elif ch.lower() == 'm':
+                if self.highlimit == None: self.highlimit = self.max
+                self.highlimit += (self.max - self.min) / 10
+                self.restruct1()
+            elif ch.lower() == 'n':
+                if self.highlimit == None: self.highlimit = self.max
+                self.highlimit -= (self.max - self.min) / 10
+                self.restruct1()
+            elif ch.lower() == 'v':
+                self.highlimit = self.lowlimit = None
+                self.restruct1()
+            elif ch.lower() == 'i':
+                self.width -= 10
+            elif ch.lower() == 'o':
+                self.width += 10
+
+        self.__append(v)
+
+        if self.ln == 100:
+            self.restruct1()
+
+        n = time.time()
+
+        if self.progress and (not self.ln % 10000 or n - self.LAST > .1):
+            self.LAST = n
+            self.printer()
+
+    def restruct1(self):
+        vs = []
+
+        self.bins.append(self.others)
+        self.bins.append(self.outlimits)
+
+        for i in self.bins:
+            try:
+                vs.append(min(i))
+            except:
+                pass
+            try:
+                vs.append(max(i))
+            except:
+                pass
+
+        self.min = min(vs)
+        if self.lowlimit: self.min = self.lowlimit
+        self.max = max(vs)
+        if self.highlimit: self.max = self.highlimit
+        self.bs = ((self.max - self.min) / self.nbins)
+
+        oldbins = self.bins
+
+        self.bins = []
+        nbins = self.nbins
+        while nbins:
+            self.bins.append(array.array('d', []))
+            nbins -= 1
+        self.others = array.array('d', [])
+        self.outlimits = array.array('d', [])
+        self.sum = 0
+
+        self.ln = 0
+
+        for v in chain(*oldbins):
+            self.__append(v)
+
+    def stringify(self, writable):
+        avg = float(self.sum / self.ln)
+        res = "# TOTAL: {} - MEAN: {:.3f}\r\n# MIN: {} - MAX: {}\r\n".format(
+            self.ln, avg, self.min, self.max)
+        if writable:
+            CHAR = '#'
+        else:
+            CHAR = u'\u2589'
+
+        if self.calcSD:
+            variance = 0
+            for i in chain(self.others, *self.bins):
+                i -= avg
+                variance += i * i
+            variance = variance / self.ln
+
+            res += "# SD: {} - Variance {}\r\n".format(
+                sqrt(variance), variance)
+
+        len_max = len(str(int(self.max))) + 5
+        len_min = len(str(int(self.min))) + 5
+        len_n = str(max(len_max, len_min))
+        len_counts = str(max(map(lambda x: len(str(len(x))), self.bins)))
+
+        len_bar = self.width - (int(len_n) * 2 + 8 + int(len_counts))
+
+        longestbar = max([len(i) for i in self.bins])
+        if not longestbar: return ""
+        factor = float(len_bar) / longestbar
+
+        start = self.min
+        for i in range(self.nbins):
+            bar = CHAR * int(factor * len(self.bins[i]))
+            if not writable:
+                extra = factor * len(self.bins[i])
+                extra = int(((extra - int(extra)) * 100) / 16.67)
+                bar += unicodes[extra]
+            if self.pct:
+                bar += ' ({:.2f}%)'.format(
+                    len(self.bins[i]) / float(self.ln) * 100)
+            res += (
+                "{:" + len_n + ".4f} - {:" + len_n + ".4f} [{:" +
+                len_counts + "}]: ").format(start, start + self.bs,
+                                            len(self.bins[i])) + bar + '\r\n'
+            start += self.bs
+
+        return res
+
+    def printer(self):
+        global PRINTED
+        s = self.stringify(False)
+        if PRINTED:
+            cleanLine(PRINTED)
+            goUp(PRINTED)
+        PRINTED = s.count('\r\n')
+        sys.stderr.write(s)
+        sys.stderr.flush()
+
+
+class wordHist:
+    def __init__(self, pct=False, width=80, noprogress=False):
+        self.words = OrderedDict()
+        self.ln = 0
+        self.pct = pct
+        self.LAST = time.time()
+        self.width = width
+        self.progress = not noprogress
+
+    def append(self, w):
+        d, _, _ = select([KEYBOARD], [], [], 0.0)
+        if d:
+            ch = os.read(KEYBOARD, 1)
+            if hasattr(ch,'decode'):
+                ch=ch.decode()
+            if ch.lower() == 'q':
+                return True
+            elif ch.lower() == 'p':
+                self.pct = not self.pct
+            elif ch.lower() == 'i':
+                self.width -= 10
+            elif ch.lower() == 'o':
+                self.width += 10
+
+        if w not in self.words:
+            self.words[w] = 1
+        else:
+            self.words[w] += 1
+        self.ln += 1
+
+        n = time.time()
+
+        if self.progress and (not self.ln % 10000 or n - self.LAST > .1):
+            self.LAST = n
+            self.printer()
+
+    def printer(self):
+        global PRINTED
+        s = self.stringify(False)
+        if PRINTED:
+            cleanLine(PRINTED )
+            goUp(PRINTED )
+        PRINTED = s.count('\r\n')
+        sys.stderr.write(s)
+        sys.stderr.flush()
+
+    def stringify(self, writable):
+        res = "# TOTAL: {}\r\n".format(self.ln)
+        if writable:
+            CHAR = '#'
+        else:
+            CHAR = u'\u2589'
+
+        len_n = str(max([len(i) for i in self.words]))
+        len_counts = str(max(map(lambda x: len(str(x)), self.words.values())))
+
+        len_bar = self.width - (int(len_n) + 8 + int(len_counts))
+
+        longestbar = max(self.words.values())
+        if not longestbar: return ""
+        factor = float(len_bar) / longestbar
+
+        for wd, cnt in self.words.items():
+            bar = CHAR * int(factor * cnt)
+            if not writable:
+                extra = factor * cnt
+                extra = int(((extra - int(extra)) * 100) / 16.67)
+                bar += unicodes[extra]
+            if self.pct:
+                bar += ' ({:.2f}%)'.format(cnt / float(self.ln) * 100)
+            res += ("{:" + len_n + "s} [{:" + len_counts + "}]: ").format(
+                wd, cnt) + bar + '\r\n'
+
+        return res
+
+    def restruct1(self):
+        pass
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(
+        description='Text mode Histogram software')
+
+    parser.add_argument(
+        '-w',
+        dest='words',
+        action='store_true',
+        help='process words instead of numbers')
+
+    parser.add_argument(
+        '-b',
+        dest='bins',
+        type=int,
+        default=10,
+        help='Bins shows in the histogram (numeric mode only) [10]')
+
+    parser.add_argument(
+        '-c',
+        dest='columns',
+        type=int,
+        default=80,
+        help='Histogram width in columns [80]')
+
+    parser.add_argument(
+        '-p',
+        dest='percentage',
+        action='store_true',
+        help='Show percentage for each bar')
+
+    parser.add_argument(
+        '-n',
+        dest='noprogress',
+        action='store_true',
+        help='Don\'t show progress only final result')
+
+    parser.add_argument(
+        '-m', dest='min', help='Minimum value to show in the histogram ')
+
+    parser.add_argument(
+        '-x', dest='max', help='Maximum value to show in the histogram')
+
+    parser.add_argument(
+        '-i', dest='inputfile', help='Input file containing data')
+    # parser.add_argument(
+    #     'inputfile', help="Input file containing data", nargs='?')
+
+    args = parser.parse_args()
+
+    mode = os.fstat(0).st_mode
+    # usually this should be stat.S_ISFIFO(mode), but in docker containers that always evalues to True
+    # so we decide to forgo piping
+    hack_is_fifo = False
+    if args.inputfile == None and not hack_is_fifo and not stat.S_ISREG(
+            mode):
+        parser.print_help()
+        sys.exit(1)
+    elif args.inputfile and hack_is_fifo or stat.S_ISREG(mode):
+        print("You must specify a file or input via stdin!, NOT BOTH")
+        sys.exit(1)
+
+    if args.inputfile:
+        KEYBOARD = sys.stdin.fileno()
+        sys.stdin = open(args.inputfile)
+
+    if not args.noprogress:
+        if hack_is_fifo or stat.S_ISREG(mode):
+            KEYBOARD = os.open('/dev/tty', os.O_RDONLY)
+
+        # old_settings = termios.tcgetattr(KEYBOARD)
+        # tty.setraw(KEYBOARD)
+        # atexit.register(restoretty)
+        sys.stderr.write(
+            "# [q]uit | +/- bins [a,s] | percentages [p] | +/- width [i,o]\r\n# +/- minimum [z,x] | reset [v] | +/- maximum [n,m]\r\n\r\n"
+        )
+    else:
+        if hack_is_fifo or stat.S_ISREG(mode):
+            KEYBOARD = os.open('/dev/tty', os.O_RDONLY)
+
+    try:
+        if args.words:
+            h = wordHist(args.percentage, args.columns, args.noprogress)
+            while True:
+                try:
+                    i = raw_input().strip()
+                except:
+                    break
+                if h.append(i): break
+        else:
+            h = histogram(
+                args.bins,
+                args.percentage,
+                args.columns,
+                args.noprogress,
+                lowlim=args.min,
+                maxlim=args.max)
+            while True:
+                try:
+                    i = raw_input()
+                except:
+                    break
+
+                try:
+                    if h.append(float(i)): break
+                except:
+                    pass
+    except KeyboardInterrupt:
+        pass
+
+    h.calcSD = True
+    h.restruct1()
+
+    if PRINTED:
+        cleanLine(PRINTED)
+        goUp(PRINTED)
+    if (not ch and not reg) or (not ch and reg):
+        print(h.stringify(True))
+    else:
+        print(h.stringify(False))
