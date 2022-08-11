@@ -3,24 +3,27 @@ version 1.0
 
 import "tasks/Structs.wdl"
 
+# "This workflow calls SV candidates using Sniffles2 population mode.
+# 1) Call SV candidates and create .snf file for each sample
+#  2) Combined calling using multiple .snf files into a single .vcf"
+
 workflow Sniffles2 {
+
     input {
         Array[File] sampleBAMs
         Array[File] bai
-        Int min_read_support
-        Int min_alignment_length
-        Int min_mq
-        String prefix}
+        Int minsvlen
+        String prefix
+        String sample_id}
 
     scatter (bam in sampleBAMs) {
         call sample_sv {
                 input:
                     bam = bam,
                     bai = bai,
-                    min_read_support = min_read_support,
-                    min_alignment_length = min_alignment_length,
-                    min_mq = min_mq,
-                    prefix = prefix
+                    minsvlen = minsvlen,
+                    prefix = prefix,
+                    sample_id = sample_id
                 }
          }
 
@@ -40,10 +43,9 @@ task sample_sv {
     input {
         File bam
         Array[File] bai
-        Int min_read_support #= 2
-        Int min_alignment_length #= 1000
-        Int min_mq #= 20
+        Int minsvlen
         String? chr
+        String sample_id
         String prefix
         RuntimeAttr? runtime_attr_override
     }
@@ -51,25 +53,25 @@ task sample_sv {
     parameter_meta {
         bam:              "input BAM from which to call SVs"
         bai:              "index accompanying the BAM"
-        min_read_support: "[default-valued] minimum reads required to make a call"
-        min_alignment_length:  "[default-valued] reads shorter than the minimum alignment length will be ignored"
-        min_mq:           "[default-valued] minimum mapping quality to accept"
+        minsvlen:         "minimum SV length in bp. Default 35"
         chr:              "chr on which to call variants"
+        sample_id:         "Sample ID"
         prefix:           "prefix for output"
     }
 
     Int cpus = 8
     Int disk_size = 2*ceil(size([bam, bai], "GB"))
     String fileoutput = if defined(chr) then "~{prefix}.~{chr}.sniffles.snf" else "~{prefix}.sniffles.snf"
+    String vcf_sample = if defined(chr) then "~{prefix}.~{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
 
     command <<<
         set -x
 
         sniffles -t ~{cpus} \
                  -i ~{bam} \
-                 --minsupport ~{min_read_support} \
-                 --min-alignment-length ~{min_alignment_length} \
-                 --mapq ~{min_mq} \
+                 --minsvlen ~{minsvlen} \
+                 --sample-id ~{sample_id} \
+                 --vcf ~{vcf_sample} \
                  --snf ~{fileoutput}
         tree
         touch ~{prefix}.~{fileoutput}
@@ -127,7 +129,6 @@ task merge_call {
 
     Int cpus = 8
     Int disk_size = 3*ceil(size(snfs, "GB"))
-#    Int disk_size = 60
                                                                                                                                                                                                                                                                                                                                                                                                                                    #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
