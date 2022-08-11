@@ -176,7 +176,7 @@ task SortBam {
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         samtools sort -@$num_core -o ~{prefix}.bam ~{input_bam}
-        samtools index -@${num_core} ~{prefix}.bam
+        samtools index ~{prefix}.bam
     >>>
 
     output {
@@ -1203,11 +1203,8 @@ task Index {
     command <<<
         set -euxo pipefail
 
-        # Make sure we use all our proocesors:
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
         mv ~{bam} ~{prefix}
-        samtools index -@${np} ~{basename(prefix)}
+        samtools index ~{basename(prefix)}
     >>>
 
     output {
@@ -1320,12 +1317,10 @@ task SubsetBam {
     command <<<
         set -euxo pipefail
 
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
 
         samtools view -bhX ~{bam} ~{bai} ~{locus} > ~{prefix}.bam
-        samtools index -@${np} ~{prefix}.bam
+        samtools index ~{prefix}.bam
     >>>
 
     output {
@@ -1371,11 +1366,9 @@ task ExcludeRegionsFromBam {
     command <<<
         set -euxo pipefail
 
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
         echo ~{sep=',' loci} | sed 's/,/\n/g' | sed 's/[:-]/\t/g' > regions.bed
         samtools view -L regions.bed -hbU ~{prefix}.bam -o /dev/null ~{bam}
-        samtools index -@${np} ~{prefix}.bam
+        samtools index ~{prefix}.bam
     >>>
 
     output {
@@ -1669,10 +1662,8 @@ task FilterBamOnTag {
     command <<<
         set -euxo pipefail
 
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
         bamtools filter -in ~{bam} -out ~{prefix}.bam -tag "~{tag}":"~{expression}"
-        samtools index -@${np} ~{prefix}.bam
+        samtools index ~{prefix}.bam
     >>>
 
     output {
@@ -1722,8 +1713,6 @@ task DeduplicateBam {
     String prefix = if (same_name_as_input) then base else (base + ".dedup")
 
     command <<<
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
         echo "==========================================================="
         echo "collecting duplicate information"
         time \
@@ -1739,7 +1728,7 @@ task DeduplicateBam {
             "~{aligned_bam}"
         echo "==========================================================="
         echo "DONE"
-        samtools index -@${np} "~{prefix}.bam"
+        samtools index "~{prefix}.bam"
     >>>
 
     output {

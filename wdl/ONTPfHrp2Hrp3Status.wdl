@@ -52,11 +52,9 @@ task IsLocusDeleted {
     command <<<
         set -euxo pipefail
 
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         samtools view -bhX ~{bam} ~{bai} ~{chr} > chr.bam
-        samtools index  -@${np} chr.bam
+        samtools index chr.bam
 
         mosdepth -t 4 -b <(echo -e "~{chr}\t~{start}\t~{stop}") -x -Q 1 out chr.bam
 

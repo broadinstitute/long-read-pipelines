@@ -165,12 +165,11 @@ task MergeBamouts {
 
   Int disk_size = ceil(size(bams, "GiB") * 2) + 10
 
-  command <<<
-    np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+  command {
     samtools merge ~{output_base_name}.bam ~{sep=" " bams}
-    samtools index -@${np} ~{output_base_name}.bam
+    samtools index ~{output_base_name}.bam
     mv ~{output_base_name}.bam.bai ~{output_base_name}.bai
-  >>>
+  }
 
   output {
     File output_bam = "~{output_base_name}.bam"

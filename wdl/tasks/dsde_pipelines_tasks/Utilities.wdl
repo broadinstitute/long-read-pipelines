@@ -133,8 +133,6 @@ task ConvertToCram {
     set -e
     set -o pipefail
 
-    np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
     samtools view -C -T ~{ref_fasta} ~{input_bam} | \
     tee ~{output_basename}.cram | \
     md5sum | awk '{print $1}' > ~{output_basename}.cram.md5
@@ -144,7 +142,7 @@ task ConvertToCram {
     export REF_PATH=:
     export REF_CACHE=./ref/cache/%2s/%2s/%s
 
-    samtools index -@${np} ~{output_basename}.cram
+    samtools index ~{output_basename}.cram
   >>>
   runtime {
     docker: "us.gcr.io/broad-gotc-prod/genomes-in-the-cloud:2.4.1-1540490856"
@@ -173,11 +171,9 @@ task ConvertToBam {
     set -e
     set -o pipefail
 
-    np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
     samtools view -b -o ~{output_basename}.bam -T ~{ref_fasta} ~{input_cram}
 
-    samtools index -@${np} ~{output_basename}.bam
+    samtools index ~{output_basename}.bam
   >>>
   runtime {
     docker: "us.gcr.io/broad-gotc-prod/genomes-in-the-cloud:2.4.1-1540490856"

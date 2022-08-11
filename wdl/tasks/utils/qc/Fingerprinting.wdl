@@ -244,14 +244,12 @@ task ResetCLRBaseQual {
     command <<<
         set -eux
 
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
         python /usr/local/bin/reset_clr_bam_bq.py \
             -q ~{arbitrary_bq} \
             -p ~{prefix} \
             ~{bam}
         rm -f "~{prefix}.bai" "~{prefix}.bam.bai"
-        samtools index -@${np} "~{prefix}.bam"
+        samtools index "~{prefix}.bam"
     >>>
 
     output {

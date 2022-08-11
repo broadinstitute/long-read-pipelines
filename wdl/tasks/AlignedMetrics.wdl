@@ -435,10 +435,8 @@ task FilterMQ0Reads {
     command <<<
         set -euxo pipefail
 
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-
         samtools view -q 1 -b ~{bam} > ~{prefix}.no_mq0.bam
-        samtools index -@${np} ~{prefix}.no_mq0.bam
+        samtools index ~{prefix}.no_mq0.bam
     >>>
 
     output {

@@ -242,19 +242,19 @@ task Megalodon {
         samtools cat -o megalodon_results/mappings.bam tmp/*/mappings.bam
         samtools addreplacerg -O BAM -r '@RG\tID:mappings\tSM:~{SM}' megalodon_results/mappings.bam | samtools reheader mappings.header.sam - > megalodon_results/mappings.rh.bam
         samtools sort megalodon_results/mappings.rh.bam > megalodon_results/mappings.sorted.bam
-        samtools index -@${num_cores} megalodon_results/mappings.sorted.bam
+        samtools index megalodon_results/mappings.sorted.bam
 
         ((samtools dict ~{ref_fasta}) && (echo -e '@RG\tID:mod_mappings\tSM:~{SM}')) > mod_mappings.header.sam
         samtools cat -o megalodon_results/mod_mappings.bam tmp/*/mod_mappings.bam
         samtools addreplacerg -O BAM -r '@RG\tID:mod_mappings\tSM:~{SM}' megalodon_results/mod_mappings.bam | samtools reheader mod_mappings.header.sam - > megalodon_results/mod_mappings.rh.bam
         samtools sort megalodon_results/mod_mappings.rh.bam > megalodon_results/mod_mappings.sorted.bam
-        samtools index -@${num_cores} megalodon_results/mod_mappings.sorted.bam
+        samtools index megalodon_results/mod_mappings.sorted.bam
 
         ((samtools dict ~{ref_fasta}) && (echo -e '@RG\tID:variant_mappings\tSM:~{SM}')) > variant_mappings.header.sam
         samtools cat -o megalodon_results/variant_mappings.bam tmp/*/variant_mappings.bam
         samtools addreplacerg -O BAM -r '@RG\tID:variant_mappings\tSM:~{SM}' megalodon_results/variant_mappings.bam | samtools reheader variant_mappings.header.sam - > megalodon_results/variant_mappings.rh.bam
         samtools sort megalodon_results/variant_mappings.rh.bam > megalodon_results/variant_mappings.sorted.bam
-        samtools index -@${num_cores} megalodon_results/variant_mappings.sorted.bam
+        samtools index megalodon_results/variant_mappings.sorted.bam
 
         megalodon_extras merge variants tmp/*
         megalodon_extras merge modified_bases tmp/*
