@@ -538,7 +538,9 @@ task RestoreAnnotationstoAlignedBam {
 
     String ignore_tags_arg = if (length(tags_to_ignore) != 0 ) then "--ignore-tags " else ""
 
-    command {
+    command <<<
+
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
         # Set up memory logging daemon:
         MEM_LOG_INTERVAL_s=5
@@ -563,7 +565,7 @@ task RestoreAnnotationstoAlignedBam {
             ~{ignore_tags_arg} ~{default="" sep=" " tags_to_ignore} \
             --out-name ~{output_name}
 
-        samtools index ~{output_name}
+        samtools index -@${np} ~{output_name}
 
         endTime=`date +%s.%N`
         echo "EndTime: $endTime" >> ~{timing_output_file}
@@ -588,7 +590,8 @@ task RestoreAnnotationstoAlignedBam {
         elif [[ $pythonr -eq 0 ]] ; then elapsedTime=`python -c "print( $endTime - $startTime )"`;
         fi
         echo "Elapsed Time: $elapsedTime" >> ~{timing_output_file}
-    }
+    >>>
+
     runtime {
         docker: "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.15"
         memory: machine_mem + " MB"
@@ -641,7 +644,9 @@ task CopyContigNameToReadTag {
 
     String output_name = prefix + ".bam"
 
-    command {
+    command <<<
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
         set -e
         startTime=`date +%s.%N`
         echo "StartTime: $startTime" > ~{timing_output_file}
@@ -652,7 +657,7 @@ task CopyContigNameToReadTag {
             -b ~{aligned_bam_file} \
             -o ~{output_name}
 
-        samtools index ~{output_name}
+        samtools index -@${np} ~{output_name}
 
         endTime=`date +%s.%N`
         echo "EndTime: $endTime" >> ~{timing_output_file}
@@ -668,7 +673,8 @@ task CopyContigNameToReadTag {
         elif [[ $pythonr -eq 0 ]] ; then elapsedTime=`python -c "print( $endTime - $startTime )"`;
         fi
         echo "Elapsed Time: $elapsedTime" >> ~{timing_output_file}
-    }
+    >>>
+
     runtime {
         docker: "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.13"
         memory: machine_mem + " MB"

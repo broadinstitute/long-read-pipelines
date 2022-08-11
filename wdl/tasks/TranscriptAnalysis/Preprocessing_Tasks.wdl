@@ -40,7 +40,7 @@ task SplitBamBySampleAndCellBarcodeTask {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 16 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -83,7 +83,7 @@ task DownsampleToIsoSeqEquivalent {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 32 + " GiB"  # Need a lot of ram here because we keep a set of ZMWs in memory
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -126,7 +126,7 @@ task DemuxMasSeqDataByIndex {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 4 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -215,7 +215,7 @@ task MergeDemuxMasSeqByIndexLogs {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 4 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -267,7 +267,7 @@ task SplitBamByContig {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -402,7 +402,7 @@ task GffCompare {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -437,12 +437,14 @@ task RestoreOriginalReadNames {
     Int disk_size_gb = 10 + 2*ceil(size(bam, "GB"))
 
     command <<<
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
         time /python_scripts/restore_original_read_names.py ~{bam}
 
         # Rename some output files so we can disambiguate them later:
         mv out.original_read_names_restored.bam ~{prefix}.bam
 
-        samtools index ~{prefix}.bam
+        samtools index -@${np} ~{prefix}.bam
     >>>
 
     output {
@@ -458,7 +460,7 @@ task RestoreOriginalReadNames {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -498,6 +500,8 @@ task CorrectUmisWithSetCover {
     String is_extracted_arg = if (is_extracted)  then "--pre-extracted" else ""
 
     command <<<
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
         time /python_scripts/umi_correction.py  \
             --input_bam  ~{bam} \
             --output_bam  ~{prefix}.corrected_umis.unsorted.bam \
@@ -506,7 +510,7 @@ task CorrectUmisWithSetCover {
             --config /python_scripts/umi_correction.yaml
 
         samtools sort ~{prefix}.corrected_umis.unsorted.bam > ~{prefix}.corrected_umis.bam
-        samtools index ~{prefix}.corrected_umis.bam
+        samtools index -@${np} ~{prefix}.corrected_umis.bam
     >>>
 
     output {
@@ -523,7 +527,7 @@ task CorrectUmisWithSetCover {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

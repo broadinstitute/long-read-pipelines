@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-transcript_utils
-VERSION = 0.0.13
+VERSION = 0.0.14
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest

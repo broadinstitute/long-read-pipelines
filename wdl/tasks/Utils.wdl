@@ -1728,7 +1728,7 @@ task DeduplicateBam {
             "~{aligned_bam}"
         echo "==========================================================="
         echo "DONE"
-        samtools index -@ 1 "~{prefix}.bam"
+        samtools index "~{prefix}.bam"
     >>>
 
     output {

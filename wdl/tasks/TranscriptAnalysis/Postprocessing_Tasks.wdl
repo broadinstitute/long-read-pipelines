@@ -48,7 +48,7 @@ task CreateCountMatrixFromAnnotatedBam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -202,7 +202,7 @@ task MergeBarcodeCounts {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -278,7 +278,7 @@ task CreateCountMatrixAnndataFromTsv {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -364,7 +364,7 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -411,7 +411,7 @@ task SubsetCountsMatrixByGenes {
     }
 
     runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 16 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
         boot_disk_gb: 10
@@ -502,7 +502,7 @@ task QuantifyGffComparison {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -576,7 +576,7 @@ task CombineEqClassFiles {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -636,7 +636,8 @@ with pysam.AlignmentFile(f"~{bam}", "rb", check_sq=False, require_index=False) a
             out_bam_file.write(read)
 CODE
 
-        samtools index ~{prefix}.bam
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        samtools index -@${np} ~{prefix}.bam
     >>>
 
     output {
@@ -652,7 +653,7 @@ CODE
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
