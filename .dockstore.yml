@@ -106,3 +106,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/FusilliAssemble.wdl
   testParameterFiles:
+- name: FusilliCall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/FusilliCall.wdl
+  testParameterFiles:

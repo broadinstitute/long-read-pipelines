@@ -662,6 +662,8 @@ task FinalizeRefPanels {
     String sample_gcs_dir = output_dir + "/" + sample_id
 
     command <<<
+        set -euxo pipefail
+
         mkdir ref_panels/
         cd ref_panels
 
@@ -684,6 +686,175 @@ task FinalizeRefPanels {
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ChunkSampleContigs {
+    input {
+        File sample_contigs
+
+        Int? chunk_size = 1000
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String contig_basename = basename(sample_contigs)
+
+    command <<<
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
+        ln -s ~{sample_contigs} ~{contig_basename}
+
+        fusilli util split-fasta ~{contig_basename} -c ~{chunk_size}
+    >>>
+
+    output {
+        Array[File] chunks = glob("*.chunk*")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            5,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task TesseraeAlign {
+    input {
+        String sample_id
+        File sample_contigs
+        String fusilli_run_gcs
+        File? hmm_config
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String sample_gcs_dir = fusilli_run_gcs + "/" + sample_id
+
+    command <<<
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
+        gsutil -m cp -r ~{sample_gcs_dir} .
+
+        mkdir output
+        tesserae multi-align "~{sample_id}/ref_panels/{query_id}.ref_contigs.fa" ~{sample_contigs} \
+            ~{if defined(hmm_config) then "-c ~{hmm_config}" else ""} -O bam -o output/
+    >>>
+
+    output {
+        Array[File] alignments = glob("output/*.bam")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             32,
+        disk_gb:            30,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/tesserae2:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task InferGenomeCoords {
+    input {
+        String fusilli_db_gcs
+        Array[String] ref_ids
+        Array[File] ref_fastas
+
+        String fusilli_run_gcs
+        String sample_id
+        Array[File] aligned_sample_contigs
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String db_name = basename(fusilli_db_gcs)
+    String sample_run_data = fusilli_run_gcs + "/" + sample_id
+
+    command <<<
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
+        mkdir db
+        mkdir run
+        gsutil -m cp ~{fusilli_db_gcs} db/
+        gsutil -m cp ~{sample_run_data} run/
+
+        # Create symlinks to actual reference FASTAs and GFFs
+        cd db/~{db_name}
+
+        while IFS=$'\t' read ref_id ref_fasta; do
+            ln -s "${ref_fasta}" "${ref_id}/${ref_fasta##*/}"
+        done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_fastas)})
+
+        cd ../..
+
+        fusilli call infer-genome-coords db/~{db_name} run/~{sample_id}/ref_panels \
+            -o ~{sample_id}.tsv -r aligned_refs/ < ~{write_lines(aligned_sample_contigs)}
+
+        for f in aligned_refs/*.unsorted.bam; do
+            samtools sort -O bam -o ${f%.unsorted.bam}.bam $f
+            samtools index ${f%.unsorted.bam}.bam
+            rm $f
+        done
+    >>>
+
+    output {
+        File alignment_stats = "~{sample_id}.tsv"
+        Array[File] aligned_ref_contigs = glob("aligned_refs/*.bam")
+        Array[File] aligned_ref_contigs_bai = glob("aligned_refs/*.bai")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            30,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
