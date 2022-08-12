@@ -42,9 +42,9 @@ workflow FusilliCall {
                        fusilli_run_gcs = fusilli_run_gcs
                }
             }
-
-            Array[File] alignments = select_first([TesseraeAlignWithConfig.alignments, TesseraeAlign.alignments])
         }
+
+        Array[Array[File]] alignments = select_first([TesseraeAlignWithConfig.alignments, TesseraeAlign.alignments])
 
         call Fusilli.InferGenomeCoords as InferGenomeCoords {
             input:
