@@ -34,7 +34,7 @@ workflow FusilliCall {
                 }
             }
 
-            if(!defined(hmm_config)) {
+            if(!defined(hmm_config) || hmm_config == "") {
                call Fusilli.TesseraeAlign as TesseraeAlign {
                    input:
                        sample_id = sample_id,
@@ -42,9 +42,9 @@ workflow FusilliCall {
                        fusilli_run_gcs = fusilli_run_gcs
                }
             }
-        }
 
-        Array[Array[File]] alignments = select_first([TesseraeAlignWithConfig.alignments, TesseraeAlign.alignments])
+            Array[File] alignments = select_first([TesseraeAlignWithConfig.alignments, TesseraeAlign.alignments])
+        }
 
         call Fusilli.InferGenomeCoords as InferGenomeCoords {
             input:
