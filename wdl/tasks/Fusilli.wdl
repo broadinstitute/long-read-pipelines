@@ -716,7 +716,7 @@ task ChunkSampleContigs {
 
         ln -s ~{sample_contigs} ~{contig_basename}
 
-        fusilli util split-fasta ~{contig_basename} -c ~{chunk_size}
+        fusilli utils split-fasta ~{contig_basename} -c ~{chunk_size}
     >>>
 
     output {
