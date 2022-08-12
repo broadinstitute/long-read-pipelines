@@ -24,12 +24,23 @@ workflow FusilliCall {
         }
 
         scatter(chunk in ChunkSampleContigs.chunks) {
-            call Fusilli.TesseraeAlign as TesseraeAlign {
-                input:
-                    sample_id = sample_id,
-                    sample_contigs = chunk,
-                    fusilli_run_gcs = fusilli_run_gcs,
-                    hmm_config = hmm_config
+            if(defined(hmm_config)) {
+                call Fusilli.TesseraeAlign as TesseraeAlign {
+                    input:
+                        sample_id = sample_id,
+                        sample_contigs = chunk,
+                        fusilli_run_gcs = fusilli_run_gcs,
+                        hmm_config = hmm_config
+                }
+            }
+
+            if(!defined(hmm_config)) {
+               call Fusilli.TesseraeAlign as TesseraeAlign {
+                   input:
+                       sample_id = sample_id,
+                       sample_contigs = chunk,
+                       fusilli_run_gcs = fusilli_run_gcs
+               }
             }
         }
 
