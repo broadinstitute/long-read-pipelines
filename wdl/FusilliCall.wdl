@@ -16,7 +16,7 @@ workflow FusilliCall {
 
     # Perform Tesserae2 alignment across multiple shards (by default 1000 per worker)
     scatter(sample_id in sample_ids) {
-        String sample_contigs = fusilli_run_gcs + "/" + sample_id + "/" + sample_id + ".contigs.fa"
+        String sample_contigs = fusilli_run_gcs + "/" + sample_id + "/" + sample_id + ".contigs.fasta"
 
         call Fusilli.ChunkSampleContigs as ChunkSampleContigs {
             input:
