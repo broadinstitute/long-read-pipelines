@@ -24,8 +24,8 @@ workflow FusilliCall {
         }
 
         scatter(chunk in ChunkSampleContigs.chunks) {
-            if(defined(hmm_config)) {
-                call Fusilli.TesseraeAlign as TesseraeAlign {
+            if(defined(hmm_config) && hmm_config != "") {
+                call Fusilli.TesseraeAlign as TesseraeAlignWithConfig {
                     input:
                         sample_id = sample_id,
                         sample_contigs = chunk,
@@ -42,6 +42,8 @@ workflow FusilliCall {
                        fusilli_run_gcs = fusilli_run_gcs
                }
             }
+
+            Array[File] alignments = select_first([TesseraeAlignWithConfig.alignments, TesseraeAlign.alignments])
         }
 
         call Fusilli.InferGenomeCoords as InferGenomeCoords {
@@ -52,7 +54,7 @@ workflow FusilliCall {
 
                 fusilli_run_gcs = fusilli_run_gcs,
                 sample_id = sample_id,
-                aligned_sample_contigs = flatten(TesseraeAlign.alignments)
+                aligned_sample_contigs = flatten(alignments)
         }
     }
 }
