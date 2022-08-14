@@ -213,6 +213,7 @@ def copy_files(src, dst, project, run):
 
     return 0
 
+
 def should_copy(src, dst, project):
     storage_client = storage.Client(project=project)
 

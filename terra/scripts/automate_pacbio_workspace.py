@@ -35,7 +35,7 @@ def main():
         s_tbl['created_at']= pd.to_datetime('2019-01-01T00:00:00.000Z')
 
     workflows = {
-        'PBFlowcell': set(['CCS', 'CLR', 'ISOSEQ']),
+        'PBFlowcell': set(['CCS', 'CLR', 'ISOSEQ', 'MASSEQ']),
         'PBCCSWholeGenome': set(['CCS']),
         'PBCLRWholeGenome': set(['CLR']),
         'PBCCSIsoSeq': set(['ISOSEQ']),

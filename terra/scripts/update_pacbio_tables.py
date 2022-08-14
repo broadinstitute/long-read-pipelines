@@ -242,6 +242,16 @@ def load_xmls(gcs_buckets, project):
                 xml = blob.download_as_string()
                 doc = xmltodict.parse(xml)
 
+                bucket = storage_client.bucket(re.sub("^gs://", "", gcs_bucket))
+                ccs_reads_bam = storage.Blob(bucket=bucket, name=re.sub(".consensusreadset.xml", ".reads.bam", blob.name))
+                hifi_reads_bam = storage.Blob(bucket=bucket, name=re.sub(".consensusreadset.xml", ".hifi_reads.bam", blob.name))
+
+                reads_bam = ccs_reads_bam
+                if hifi_reads_bam.exists(storage_client):
+                    reads_bam = hifi_reads_bam
+
+                    print(reads_bam)
+
                 t = combine(traverse_xml('root', doc))
                 t['Files'] = {
                     'input_dir': os.path.dirname(gcs_bucket + "/" + blob.name),
@@ -252,8 +262,8 @@ def load_xmls(gcs_buckets, project):
 
                     'consensusreadset.xml': gcs_bucket + "/" + blob.name,
                     'ccs_reports.txt': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".ccs_reports.txt", blob.name),
-                    'reads.bam': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam", blob.name),
-                    'reads.bam.pbi': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".reads.bam.pbi", blob.name)
+                    'reads.bam': gcs_bucket + "/" + reads_bam.name,
+                    'reads.bam.pbi': gcs_bucket + "/" + reads_bam.name + ".pbi"
                 }
                 ts.append(t)
 
