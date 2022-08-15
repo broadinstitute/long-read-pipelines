@@ -68,6 +68,8 @@ def main():
         b = fapi.update_workspace_acl(ns, rw, owners)
 
         tbl_rw = tbl_filtered[tbl_filtered['workspace'] == rw]
+        deliver_inputs = len(tbl_rw.loc[tbl_rw['workspace_deliver_inputs'] == 'True']) > 0
+
         qa = fapi.get_workspace(ns, rw)
         if qa.status_code == 200:
             q = qa.json()
@@ -75,11 +77,10 @@ def main():
             bucket_name = f"gs://{q['workspace']['bucketName']}"
 
             for index, row in tbl_rw.iterrows():
-                deliver_inputs = row.to_dict()['workspace_deliver_inputs'] != 'False'
-
                 newrow = row
                 newrow = newrow.replace('gs://broad-gp-pacbio-outgoing/', bucket_name + "/", regex=True)
                 newrow = newrow.replace('gs://broad-gp-oxfordnano-outgoing/', bucket_name + "/", regex=True)
+                newrow = newrow.replace('gs://broad-dsde-methods-long-reads/', bucket_name + "/", regex=True)
 
                 if deliver_inputs:
                     newrow = newrow.replace('gs://broad-gp-pacbio/', bucket_name + "/inputs/", regex=True)
