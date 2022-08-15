@@ -57,7 +57,8 @@ def load_new_sample_table(buckets, project):
                   "experiment_type", "num_records", "total_length", "ccs_report", "ccs_zmws_input",
                   "ccs_zmws_pass_filters", "ccs_zmws_fail_filters", "ccs_zmws_shortcut_filters",
                   "ccs_zmws_pass_filters_pct", "ccs_zmws_fail_filters_pct", "ccs_zmws_shortcut_filters_pct", "ref_map",
-                  "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi", "input_bam", "input_pbi"]
+                  "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi", "hifi_bam", "hifi_pbi",
+                  "input_bam", "input_pbi"]
     tbl_rows = []
     for e in tqdm(ts):
         r = load_ccs_report(project, e['Files']['ccs_reports.txt'], e)
@@ -72,8 +73,15 @@ def load_new_sample_table(buckets, project):
         if ('BioSample' in e and 'MAS' in e['BioSample'][0]['Name']) or ('custom' in application):
             experiment_type = "MASSEQ"
 
-        input_bam = e['Files']['subreads.bam'] if e['Files']['subreads.bam'] != "" else e['Files']['reads.bam']
-        input_pbi = e['Files']['subreads.bam.pbi'] if e['Files']['subreads.bam.pbi'] != "" else e['Files']['reads.bam.pbi']
+        if e['Files']['hifi_reads.bam'] != "":
+            input_bam = e['Files']['hifi_reads.bam']
+            input_pbi = e['Files']['hifi_reads.bam.pbi']
+        elif e['Files']['reads.bam'] != "":
+            input_bam = e['Files']['reads.bam']
+            input_pbi = e['Files']['reads.bam.pbi']
+        elif e['Files']['subreads.bam'] != "":
+            input_bam = e['Files']['subreads.bam']
+            input_pbi = e['Files']['subreads.bam.pbi']
 
         #correctable = False if e['Files']['subreads.bam'] == "" else is_correctable(e['Files']['subreads.bam'])
         #if correctable:
@@ -121,6 +129,8 @@ def load_new_sample_table(buckets, project):
             e['Files']['subreads.bam.pbi'],
             e['Files']['reads.bam'],
             e['Files']['reads.bam.pbi'],
+            e['Files']['hifi_reads.bam'],
+            e['Files']['hifi_reads.bam.pbi'],
 
             input_bam,
             input_pbi
@@ -215,57 +225,83 @@ def combine(tables):
 def load_xmls(gcs_buckets, project):
     storage_client = storage.Client(project=project)
 
-    ts = []
+    input_dirs = set()
     for gcs_bucket in gcs_buckets:
-        blobs = storage_client.list_blobs(re.sub("^gs://", "", gcs_bucket))
+        bucket_name = re.sub("^gs://", "", gcs_bucket)
+        bucket = storage_client.bucket(bucket_name)
 
+        blobs = storage_client.list_blobs(bucket)
         for blob in blobs:
-            if 'subreadset.xml' in blob.name:
-                xml = blob.download_as_string()
-                doc = xmltodict.parse(xml)
+            if '.subreadset.xml' in blob.name or \
+               '.consensusreadset.xml' in blob.name or \
+               '.subreads.bam' in blob.name or \
+               '.reads.bam' in blob.name or \
+               '.hifi_reads.bam' in blob.name:
 
-                t = combine(traverse_xml('root', doc))
-                t['Files'] = {
-                    'input_dir': os.path.dirname(gcs_bucket + "/" + blob.name),
+                input_dirs.add((bucket_name, os.path.dirname(blob.name)))
 
-                    'subreadset.xml': gcs_bucket + "/" + blob.name,
-                    'subreads.bam': gcs_bucket + "/" + re.sub("et.xml", ".bam", blob.name),
-                    'subreads.bam.pbi': gcs_bucket + "/" + re.sub("et.xml", ".bam.pbi", blob.name),
+    ts = []
+    for bucket_name, input_dir in input_dirs:
+        xml_file = None
 
-                    'consensusreadset.xml': "",
-                    'ccs_reports.txt': "",
-                    'reads.bam': "",
-                    'reads.bam.pbi': ""
-                }
-                ts.append(t)
-            elif 'consensusreadset.xml' in blob.name:
-                xml = blob.download_as_string()
-                doc = xmltodict.parse(xml)
+        blobs = storage_client.list_blobs(bucket_name, prefix=input_dir)
+        for blob in blobs:
+            if '.consensusreadset.xml' in blob.name or '.subreadset.xml' in blob.name:
+                xml_file = blob.name
+                break
 
-                bucket = storage_client.bucket(re.sub("^gs://", "", gcs_bucket))
-                ccs_reads_bam = storage.Blob(bucket=bucket, name=re.sub(".consensusreadset.xml", ".reads.bam", blob.name))
-                hifi_reads_bam = storage.Blob(bucket=bucket, name=re.sub(".consensusreadset.xml", ".hifi_reads.bam", blob.name))
+        if xml_file is not None:
+            xml_blob = storage.Blob(bucket=bucket, name=xml_file)
+            xml = xml_blob.download_as_string()
+            doc = xmltodict.parse(xml)
 
-                reads_bam = ccs_reads_bam
-                if hifi_reads_bam.exists(storage_client):
-                    reads_bam = hifi_reads_bam
+            t = combine(traverse_xml('root', doc))
+            t['Files'] = {
+                'input_dir': input_dir,
 
-                    print(reads_bam)
+                'subreadset.xml': "",
+                'consensusreadset.xml': "",
 
-                t = combine(traverse_xml('root', doc))
-                t['Files'] = {
-                    'input_dir': os.path.dirname(gcs_bucket + "/" + blob.name),
+                'subreads.bam': "",
+                'subreads.bam.pbi': "",
+                'reads.bam': "",
+                'reads.bam.pbi': "",
+                'hifi_reads.bam': "",
+                'hifi_reads.bam.pbi': "",
 
-                    'subreadset.xml': "",
-                    'subreads.bam': "",
-                    'subreads.bam.pbi': "",
+                'ccs_reports.txt': ""
+            }
 
-                    'consensusreadset.xml': gcs_bucket + "/" + blob.name,
-                    'ccs_reports.txt': gcs_bucket + "/" + re.sub(".consensusreadset.xml", ".ccs_reports.txt", blob.name),
-                    'reads.bam': gcs_bucket + "/" + reads_bam.name,
-                    'reads.bam.pbi': gcs_bucket + "/" + reads_bam.name + ".pbi"
-                }
-                ts.append(t)
+            blobs = storage_client.list_blobs(bucket_name, prefix=input_dir)
+            for blob in blobs:
+                if '.subreadset.xml' in blob.name:
+                    t['Files']['subreadset.xml'] = f'gs://{bucket_name}/{blob.name}'
+
+                elif '.consensusreadset.xml' in blob.name:
+                    t['Files']['consensusreadset.xml'] = f'gs://{bucket_name}/{blob.name}'
+
+                elif '.subreads.bam.pbi' in blob.name:
+                    t['Files']['subreads.bam.pbi'] = f'gs://{bucket_name}/{blob.name}'
+
+                elif '.subreads.bam' in blob.name and '.pbi' not in blob.name:
+                    t['Files']['subreads.bam'] = f'gs://{bucket_name}/{blob.name}'
+
+                elif '.reads.bam.pbi' in blob.name:
+                    t['Files']['reads.bam.pbi'] = f'gs://{bucket_name}/{blob.name}'
+
+                elif '.reads.bam' in blob.name and '.pbi' not in blob.name:
+                    t['Files']['reads.bam'] = f'gs://{bucket_name}/{blob.name}'
+
+                elif '.hifi_reads.bam.pbi' in blob.name:
+                    t['Files']['hifi_reads.bam.pbi'] = f'gs://{bucket_name}/{blob.name}'
+
+                elif '.hifi_reads.bam' in blob.name and '.pbi' not in blob.name:
+                    t['Files']['hifi_reads.bam'] = f'gs://{bucket_name}/{blob.name}'
+
+                elif '.ccs_reports.txt' in blob.name:
+                    t['Files']['ccs_reports.txt'] = f'gs://{bucket_name}/{blob.name}'
+
+            ts.append(t)
 
     return ts
 
