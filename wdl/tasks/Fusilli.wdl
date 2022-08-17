@@ -827,7 +827,7 @@ task InferGenomeCoords {
         # Create symlinks to actual reference FASTAs and GFFs
         cd db/~{db_name}
 
-        while IFS=$'\t' read ref_id ref_fasta; do
+        while IFS=$'\t' read -r ref_id ref_fasta; do
             ln -s "${ref_fasta}" "${ref_id}/${ref_fasta##*/}"
         done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_fastas)})
 
