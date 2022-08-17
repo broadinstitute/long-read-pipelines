@@ -761,10 +761,10 @@ task TesseraeAlign {
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             32,
-        disk_gb:            30,
+        disk_gb:            50,
         boot_disk_gb:       10,
         preemptible_tries:  3,
-        max_retries:        2,
+        max_retries:        3,
         docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/tesserae2:devel"
     }
 
