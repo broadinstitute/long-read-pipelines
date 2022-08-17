@@ -758,22 +758,6 @@ task TesseraeAlign {
 
     String sample_gcs_dir = fusilli_run_gcs + "/" + sample_id
 
-    command <<<
-        source /usr/local/bin/_activate_current_env.sh
-        set -euxo pipefail
-
-        gsutil -m cp -r ~{sample_gcs_dir} .
-
-        mkdir output
-        tesserae multi-align "~{sample_id}/ref_panels/{query_id}.ref_contigs.fa" ~{sample_contigs} \
-            ~{if defined(hmm_config) then "-c ~{hmm_config}" else ""} -O bam -o output/
-    >>>
-
-    output {
-        Array[File] alignments = glob("output/*.bam")
-    }
-
-    #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             32,
@@ -785,6 +769,24 @@ task TesseraeAlign {
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    Int max_memory_tesserae = select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 2
+
+    command <<<
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
+        gsutil -m cp -r ~{sample_gcs_dir} .
+
+        mkdir output
+        tesserae multi-align "~{sample_id}/ref_panels/{query_id}.ref_contigs.fa" ~{sample_contigs} \
+            ~{if defined(hmm_config) then "-c ~{hmm_config}" else ""} -O bam -o output/ -m ~{max_memory_tesserae}G
+    >>>
+
+    output {
+        Array[File] alignments = glob("output/*.bam")
+    }
+
+    #########################
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
