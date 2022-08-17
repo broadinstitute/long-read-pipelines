@@ -769,7 +769,7 @@ task TesseraeAlign {
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    Int max_memory_tesserae = select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 2
+    Int max_memory_tesserae = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 2)
 
     command <<<
         source /usr/local/bin/_activate_current_env.sh
