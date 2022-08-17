@@ -769,7 +769,7 @@ task TesseraeAlign {
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    Int max_memory_tesserae = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 2)
+    Int max_memory_tesserae = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 5)
 
     command <<<
         source /usr/local/bin/_activate_current_env.sh
@@ -784,6 +784,7 @@ task TesseraeAlign {
 
     output {
         Array[File] alignments = glob("output/*.bam")
+        File unaligned = "output/unaligned.fasta.gz"
     }
 
     #########################
@@ -820,8 +821,8 @@ task InferGenomeCoords {
 
         mkdir db
         mkdir run
-        gsutil -m cp ~{fusilli_db_gcs} db/
-        gsutil -m cp ~{sample_run_data} run/
+        gsutil -m cp -r ~{fusilli_db_gcs} db/
+        gsutil -m cp -r ~{sample_run_data} run/
 
         # Create symlinks to actual reference FASTAs and GFFs
         cd db/~{db_name}
