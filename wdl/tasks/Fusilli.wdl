@@ -833,20 +833,15 @@ task InferGenomeCoords {
 
         cd ../..
 
+        mkdir output
         fusilli call infer-genome-coords db/~{db_name} run/~{sample_id}/ref_panels \
-            -o ~{sample_id}.tsv -r aligned_refs/ < ~{write_lines(aligned_sample_contigs)}
-
-        for f in aligned_refs/*.unsorted.bam; do
-            samtools sort -O bam -o ${f%.unsorted.bam}.bam $f
-            samtools index ${f%.unsorted.bam}.bam
-            rm $f
-        done
+            -o output/ < ~{write_lines(aligned_sample_contigs)}
     >>>
 
     output {
-        File alignment_stats = "~{sample_id}.tsv"
-        Array[File] aligned_ref_contigs = glob("aligned_refs/*.bam")
-        Array[File] aligned_ref_contigs_bai = glob("aligned_refs/*.bai")
+        File alignment_stats = "output/sample_contig_aln_stats.tsv"
+        Array[File] aligned_ref_contigs = glob("output/*.bam")
+        Array[File] aligned_ref_contigs_bai = glob("output/*.bai")
     }
 
     #########################
