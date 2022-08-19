@@ -45,6 +45,7 @@ workflow FusilliCall {
             }
 
             Array[File] alignments = select_first([TesseraeAlignWithConfig.alignments, TesseraeAlign.alignments])
+            File unaligned_fasta = select_first([TesseraeAlignWithConfig.unaligned, TesseraeAlign.unaligned])
         }
 
         call Fusilli.InferGenomeCoords as InferGenomeCoords {
@@ -65,6 +66,7 @@ workflow FusilliCall {
                 sample_id = sample_id,
 
                 alignment_stats = InferGenomeCoords.alignment_stats,
+                unaligned_fastas = unaligned_fasta,
                 aligned_sample_contigs = flatten(alignments),
                 aligned_ref_contigs = InferGenomeCoords.aligned_ref_contigs,
                 aligned_ref_contigs_bai = InferGenomeCoords.aligned_ref_contigs_bai

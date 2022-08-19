@@ -877,6 +877,7 @@ task FinalizeContigAlignments {
 
         File alignment_stats
         Array[File] aligned_sample_contigs
+        Array[File] unaligned_fastas
         Array[File] aligned_ref_contigs
         Array[File] aligned_ref_contigs_bai
 
@@ -894,6 +895,8 @@ task FinalizeContigAlignments {
         mkdir aligned_sample_contigs
         mkdir aligned_ref_contigs
 
+        cat $(< ~{write_lines(unaligned_fastas)}) > unaligned.fasta.gz
+
         for sample_contig in $(< ~{write_lines(aligned_sample_contigs)}); do
             ln -s "${sample_contig}" "aligned_sample_contigs/${sample_contig##*/}"
         done
@@ -902,6 +905,9 @@ task FinalizeContigAlignments {
             ln -s "${ref_contig_bam}" "aligned_ref_contigs/${ref_contig_bam##*/}"
             ln -s "${ref_contig_bai}" "aligned_ref_contigs/${ref_contig_bai##*/}"
         done < <(paste ~{write_lines(aligned_ref_contigs)} ~{write_lines(aligned_ref_contigs_bai)})
+
+        # First a non-recursive copy to ensure all folders exists
+        gsutil cp ~{basename(alignment_stats)} ~{call_output_dir}/~{sample_id}/~{basename(alignment_stats)}
 
         cd ..
 
