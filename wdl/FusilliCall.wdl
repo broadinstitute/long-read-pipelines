@@ -10,6 +10,7 @@ workflow FusilliCall {
         Array[File] ref_gffs
 
         String fusilli_run_gcs
+        String fusilli_call_id
         Array[String] sample_ids
         File? hmm_config
     }
@@ -55,6 +56,18 @@ workflow FusilliCall {
                 fusilli_run_gcs = fusilli_run_gcs,
                 sample_id = sample_id,
                 aligned_sample_contigs = flatten(alignments)
+        }
+
+        call Fusilli.FinalizeContigAlignments as FinalizeContigAlignments {
+            input:
+                fusilli_run_gcs = fusilli_run_gcs,
+                call_id = fusilli_call_id,
+                sample_id = sample_id,
+
+                alignment_stats = InferGenomeCoords.alignment_stats,
+                aligned_sample_contigs = flatten(alignments),
+                aligned_ref_contigs = InferGenomeCoords.aligned_ref_contigs,
+                aligned_ref_contigs_bai = InferGenomeCoords.aligned_ref_contigs_bai
         }
     }
 }

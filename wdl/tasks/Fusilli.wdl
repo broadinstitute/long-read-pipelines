@@ -836,10 +836,12 @@ task InferGenomeCoords {
         mkdir output
         fusilli call infer-genome-coords db/~{db_name} run/~{sample_id}/ref_panels \
             -o output/ < ~{write_lines(aligned_sample_contigs)}
+
+        mv output/sample_contig_aln_stats.tsv output/~{sample_id}.aln_stats.tsv
     >>>
 
     output {
-        File alignment_stats = "output/sample_contig_aln_stats.tsv"
+        File alignment_stats = "output/~{sample_id}.aln_stats.tsv"
         Array[File] aligned_ref_contigs = glob("output/*.bam")
         Array[File] aligned_ref_contigs_bai = glob("output/*.bai")
     }
@@ -865,4 +867,67 @@ task InferGenomeCoords {
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
+}
+
+task FinalizeContigAlignments {
+    input {
+        String fusilli_run_gcs
+        String call_id
+        String sample_id
+
+        File alignment_stats
+        Array[File] aligned_sample_contigs
+        Array[File] aligned_ref_contigs
+        Array[File] aligned_ref_contigs_bai
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String call_output_dir = fusilli_run_gcs + "/calls/" + call_id
+
+    command <<<
+        mkdir ~{sample_id}
+        cd ~{sample_id}
+
+        ln -s ~{alignment_stats} ~{basename(alignment_stats)}
+
+        mkdir aligned_sample_contigs
+        mkdir aligned_ref_contigs
+
+        for sample_contig in $(< ~{write_lines(aligned_sample_contigs)}); do
+            ln -s "${sample_contig}" "aligned_sample_contigs/${sample_contig##*/}"
+        done
+
+        while IFS=$'\t' read -r ref_contig_bam ref_contig_bai; do
+            ln -s "${ref_contig_bam}" "aligned_ref_contigs/${ref_contig_bam##*/}"
+            ln -s "${ref_contig_bai}" "aligned_ref_contigs/${ref_contig_bai##*/}"
+        done < <(paste ~{write_lines(aligned_ref_contigs)} ~{write_lines(aligned_ref_contigs_bai)})
+
+        cd ..
+
+        gsutil -m cp -r ~{sample_id} ~{call_output_dir}
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
 }
