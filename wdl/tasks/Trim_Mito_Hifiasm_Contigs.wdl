@@ -11,10 +11,10 @@ workflow Trim_Contigs {
         assembly_fasta = assembly_fasta
     }
 
-#    call Self_Align {
-#        input:
-#        assembly_fasta = assembly_fasta
-#    }
+    call Self_Align {
+        input:
+        filtered_contigs = Filter_Contigs.filtered_contigs
+    }
 
     output{
         #Array[File] output_fasta = Self_Align.split_fasta
@@ -52,7 +52,7 @@ task Filter_Contigs {
 
 task Self_Align {
     input {
-        File assembly_fasta
+        File filtered_contigs
     }
 
     parameter_meta {

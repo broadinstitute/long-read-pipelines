@@ -36,6 +36,82 @@
            -  ```./minimap2 -aYL --MD -t 8 ../chrM_ref.fa ../test_1.p_ctg.fa | samtools sort -o "chrM_test.bam" ``` 
 
 
+
+4) Canu 2.2 with filtered reads:
+    -  canu-correct issues:
+        1) error due to less than 100 reads being corrected
+        2) reads without overlapping
+
+        ```
+        --                             original      original
+        --                            raw reads     raw reads
+        --   category                w/overlaps  w/o/overlaps
+        --   -------------------- ------------- -------------
+        --   Number of Reads                282          7189
+        --   Number of Bases            3066432        136616
+        --   Coverage                   191.652         8.539
+        --   Median                       10382             0
+        --   Mean                         10873            19
+        --   N50                          10577          8563
+        --   Minimum                       8277             0
+        --   Maximum                      16615          9539
+        ```
+
+
+    - Two approaches for correcting error caused by < 100 reads: 
+    1) change source code 
+    2) use parameter ```corOutCoverage```
+
+    -  ```canu -correct corOutCoverage=100```
+        - Quast stats:
+            - 1 contig
+            - largest alignment: 15,689
+            - duplication ratio: 1.887
+            - total length: 31,266
+            - GC %: 44.42
+
+
+
+5) MitoHiFi
+    - container setup:
+        ```
+        sudo docker login
+        sudo docker build .
+        sudo docker images
+        sudo docker tag <image name> <dockerID/imageID>
+        sudo docker push <dockerID/imageID>
+        sudo docker pull <dockerID/imageID>
+        sudo docker run -it <imageID>
+        ```
+        convert fastq to fa:
+        ```
+        seqtk/seqtk seq -a classified_reads.for_assembly.fastq.gz > chrM_reads.fa
+        ```
+    - mount necessary files: 
+        ```
+        sudo docker run -it -v /home/ewan/MitoHiFi/reads_ref:/powerhouse_reads --entrypoint /bin/bash f84b6087a290
+        ```
+    - get GenBank file:
+        ```
+        findMitoReference.py --species "Homo sapiens" --email ewan@broadinstitute.org --outfolder /bin --min_length 16000
+        ```
+
+    - assemble using mitohifi.py
+
+        ```
+         mitohifi.py -r ../powerhouse_reads/chrM_reads.fa -f ../powerhouse_reads/chrM_ref.fa -g ../powerhouse_reads/LC657585.1.gb -t 10
+        ```
+
+        1. First we map your Pacbio HiFi reads to the close-related mitogenome
+        2. Now we filter out any mapped reads that are larger than the reference mitogenome to avoid NUMTS
+            2.1 First we convert the mapped reads from BAM to FASTA format: 
+            ```samtools fasta reads.HiFiMapped.bam > gbk.HiFiMapped.bam.fasta```
+            Total number of mapped reads: 7471
+            2.2 Then we filter reads that are larger than 16569 bp. Number of filtered reads: 7286
+        3. Now let's run hifiasm to assemble the mapped and filtered reads!
+            ```hifiasm --primary -t 10 -f 0 -o gbk.HiFiMapped.bam.filtered.assembled gbk.HiFiMapped.bam.filtered.fasta```
+
+
 ## Contig Selection and Poishing
 ### Trim (by hand)
 - trim soft-clipped region and align separately or throw away 
@@ -109,79 +185,13 @@
 - correct
 <racon_to_truth.vcf>
 
-3) Canu 2.2 with filtered reads:
-    -  canu-correct issues:
-        1) error due to less than 100 reads being corrected
-        2) reads without overlapping
 
-        ```
-        --                             original      original
-        --                            raw reads     raw reads
-        --   category                w/overlaps  w/o/overlaps
-        --   -------------------- ------------- -------------
-        --   Number of Reads                282          7189
-        --   Number of Bases            3066432        136616
-        --   Coverage                   191.652         8.539
-        --   Median                       10382             0
-        --   Mean                         10873            19
-        --   N50                          10577          8563
-        --   Minimum                       8277             0
-        --   Maximum                      16615          9539
-        ```
+## Improved Contig Selection and Trimming
 
-
-    - Two approaches for correcting error caused by < 100 reads: 
-    1) change source code 
-    2) use parameter ```corOutCoverage```
-
-    -  ```canu -correct corOutCoverage=100```
-        - Quast stats:
-            - 1 contig
-            - largest alignment: 15,689
-            - duplication ratio: 1.887
-            - total length: 31,266
-            - GC %: 44.42
+1) 
 
 
 
-4) MitoHiFi
-    - container setup:
-        ```
-        sudo docker login
-        sudo docker build .
-        sudo docker images
-        sudo docker tag <image name> <dockerID/imageID>
-        sudo docker push <dockerID/imageID>
-        sudo docker pull <dockerID/imageID>
-        sudo docker run -it <imageID>
-        ```
-        convert fastq to fa:
-        ```
-        seqtk/seqtk seq -a classified_reads.for_assembly.fastq.gz > chrM_reads.fa
-        ```
-    - mount necessary files: 
-        ```
-        sudo docker run -it -v /home/ewan/MitoHiFi/reads_ref:/powerhouse_reads --entrypoint /bin/bash f84b6087a290
-        ```
-    - get GenBank file:
-        ```
-        findMitoReference.py --species "Homo sapiens" --email ewan@broadinstitute.org --outfolder /bin --min_length 16000
-        ```
-
-    - assemble using mitohifi.py
-
-        ```
-         mitohifi.py -r ../powerhouse_reads/chrM_reads.fa -f ../powerhouse_reads/chrM_ref.fa -g ../powerhouse_reads/LC657585.1.gb -t 10
-        ```
-
-        1. First we map your Pacbio HiFi reads to the close-related mitogenome
-        2. Now we filter out any mapped reads that are larger than the reference mitogenome to avoid NUMTS
-            2.1 First we convert the mapped reads from BAM to FASTA format: 
-            ```samtools fasta reads.HiFiMapped.bam > gbk.HiFiMapped.bam.fasta```
-            Total number of mapped reads: 7471
-            2.2 Then we filter reads that are larger than 16569 bp. Number of filtered reads: 7286
-        3. Now let's run hifiasm to assemble the mapped and filtered reads!
-            ```hifiasm --primary -t 10 -f 0 -o gbk.HiFiMapped.bam.filtered.assembled gbk.HiFiMapped.bam.filtered.fasta```
 
 
 
