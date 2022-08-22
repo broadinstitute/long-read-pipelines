@@ -86,7 +86,65 @@ task Segment
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.32"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.35"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task Sift
+{
+    input {
+        File segmented_input_reads
+        String model = "mas_15_sc_10x5p_single_none"
+        String validation_model = "10x_sc_10x5p_single_none"
+
+        String prefix = "longbow_sifted"
+
+        String extra_args = ""
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 15*ceil(size(segmented_input_reads, "GB")) + 20
+
+    command <<<
+        set -euxo pipefail
+
+        source /longbow/venv/bin/activate
+
+        longbow sift ~{extra_args} \
+            --model ~{model} \
+            --stats ~{prefix}.stats.tsv \
+            --summary-stats ~{prefix}.summary_stats.tsv \
+            --validation-model ~{validation_model} \
+            -o ~{prefix}.bam \
+            ~{segmented_input_reads}
+    >>>
+
+    output {
+        File sifted_bam = "~{prefix}.bam"
+        File stats_tsv = "~{prefix}.stats.tsv"
+        File summary_stats_tsv = "~{prefix}.summary_stats.tsv"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.36"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

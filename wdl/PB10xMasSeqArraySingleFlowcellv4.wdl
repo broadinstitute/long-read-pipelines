@@ -327,19 +327,29 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 bam_file = t_023_SegmentS2ECcsReads.segmented_bam
         }
 
-        # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
-        call LONGBOW.Pad as t_025_LongbowPadCCSArrayElementUMIs {
+        # Now call the new Longbow Sift to remove individual reads that are incomplete / truncated / malformed:
+        call LONGBOW.Sift as t_025_LongbowSiftCCSArrayElements {
             input:
-                reads = t_024_RemoveMasSeqTruncatedReadsFromCcsReads.bam,
+                segmented_input_reads = t_024_RemoveMasSeqTruncatedReadsFromCcsReads.bam,
+                model = mas_seq_model,
+                # TODO: This should be determined in longbow by the regular `model`
+                validation_model = "10x_sc_10x5p_single_none",
+                prefix = SM + "_ccs_array_elements_annotated_non_truncated_sifted_" + main_shard_index
+        }
+
+        # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
+        call LONGBOW.Pad as t_026_LongbowPadCCSArrayElementUMIs {
+            input:
+                reads = t_025_LongbowSiftCCSArrayElements.sifted_bam,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
                 padding = ccs_umi_padding,
                 prefix = SM + "_ccs_array_elements_annotated_umi_padded_shard_" + main_shard_index
         }
 
-        call LONGBOW.Pad as t_026_LongbowPadCCSArrayElementCBCs {
+        call LONGBOW.Pad as t_027_LongbowPadCCSArrayElementCBCs {
             input:
-                reads = t_025_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
+                reads = t_026_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
                 model = mas_seq_model,
                 tag_to_expand = "CR",
                 new_tag_dest = expanded_cbc_tag,
@@ -348,9 +358,9 @@ workflow PB10xMasSeqSingleFlowcellv4 {
         }
 
         # Now we should correct our barcodes based on the whitelist:
-        call LONGBOW.Correct as t_027_LongbowCorrectCCSCorrectedArrayElementCBCs {
+        call LONGBOW.Correct as t_028_LongbowCorrectCCSCorrectedArrayElementCBCs {
             input:
-                reads = t_026_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
+                reads = t_027_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
                 barcode_allow_list = cell_barcode_whitelist,
                 model = mas_seq_model,
                 ccs_lev_dist_threshold = ccs_lev_dist,
@@ -360,16 +370,16 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 corrected_barcode_tag = "CB",
         }
 
-        call TENX.AdjustUmiSequenceWithAdapterAlignment as t_028_AdjustCCSUMIs {
+        call TENX.AdjustUmiSequenceWithAdapterAlignment as t_029_AdjustCCSUMIs {
             input:
-                bam = t_027_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
+                bam = t_028_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
                 short_read_umis = short_read_umis_tsv,
                 prefix = SM + "_ccs_array_elements_annotated_padded_cbc_corrected_UMI_adjusted_shard_" + main_shard_index,
         }
 
-        call LONGBOW.Extract as t_029_LongbowExtractCcsArrayElements {
+        call LONGBOW.Extract as t_030_LongbowExtractCcsArrayElements {
             input:
-                bam = t_028_AdjustCCSUMIs.output_bam,
+                bam = t_029_AdjustCCSUMIs.output_bam,
                 prefix = SM + "_ccs_array_elements_cbc_umi_padded_extracted_shard_" + main_shard_index,
         }
 
@@ -377,7 +387,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
         # CCS Reclaimed / CLR:
 
         # Segment Reclaimed reads into array elements:
-        call LONGBOW.Segment as t_030_SegmentS2ECcsReclaimedReads {
+        call LONGBOW.Segment as t_031_SegmentS2ECcsReclaimedReads {
             input:
                 annotated_reads = t_018_FilterS2EReclaimableReads.passed_reads,
                 prefix = SM + "_ccs_reclaimed_array_elements_shard_" + main_shard_index,
@@ -387,24 +397,34 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
         # Now remove all -END reads:
         # We do this here to speed up all other calculations.
-        call Utils.RemoveMasSeqTruncatedReads as t_031_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads {
+        call Utils.RemoveMasSeqTruncatedReads as t_032_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads {
             input:
-                bam_file = t_030_SegmentS2ECcsReclaimedReads.segmented_bam
+                bam_file = t_031_SegmentS2ECcsReclaimedReads.segmented_bam
+        }
+
+        # Now call the new Longbow Sift to remove individual reads that are incomplete / truncated / malformed:
+        call LONGBOW.Sift as t_033_LongbowSiftCcsReclaimedArrayElements {
+            input:
+                segmented_input_reads = t_032_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
+                model = mas_seq_model,
+                # TODO: This should be determined in longbow by the regular `model`
+                validation_model = "10x_sc_10x5p_single_none",
+                prefix = SM + "_ccs_reclaimed_array_elements_annotated_non_truncated_sifted_" + main_shard_index
         }
 
         # Now that we've annotated the reads, we can pad the UMIs by a couple of bases to aid in the deduping:
-        call LONGBOW.Pad as t_032_LongbowPadCcsReclaimedArrayElementUMIs {
+        call LONGBOW.Pad as t_034_LongbowPadCcsReclaimedArrayElementUMIs {
             input:
-                reads = t_031_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
+                reads = t_033_LongbowSiftCcsReclaimedArrayElements.sifted_bam,
                 model = mas_seq_model,
                 tag_to_expand = "ZU",
                 padding = ccs_umi_padding,
                 prefix = SM + "_ccs_reclaimed_array_elements_annotated_umi_padded_shard_" + main_shard_index,
         }
 
-        call LONGBOW.Pad as t_033_LongbowPadCcsReclaimedArrayElementCBCs {
+        call LONGBOW.Pad as t_035_LongbowPadCcsReclaimedArrayElementCBCs {
             input:
-                reads = t_032_LongbowPadCcsReclaimedArrayElementUMIs.padded_tag_bam,
+                reads = t_034_LongbowPadCcsReclaimedArrayElementUMIs.padded_tag_bam,
                 model = mas_seq_model,
                 tag_to_expand = "CR",
                 new_tag_dest = expanded_cbc_tag,
@@ -413,9 +433,9 @@ workflow PB10xMasSeqSingleFlowcellv4 {
         }
 
         # Now we should correct our barcodes based on the whitelist:
-        call LONGBOW.Correct as t_034_LongbowCorrectCcsReclaimedArrayElementCBCs {
+        call LONGBOW.Correct as t_036_LongbowCorrectCcsReclaimedArrayElementCBCs {
             input:
-                reads = t_033_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
+                reads = t_035_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
                 barcode_allow_list = cell_barcode_whitelist,
                 model = mas_seq_model,
                 ccs_lev_dist_threshold = ccs_lev_dist,
@@ -425,16 +445,16 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 corrected_barcode_tag = "CB",
         }
 
-        call TENX.AdjustUmiSequenceWithAdapterAlignment as t_035_AdjustCcsReclaimedUMIs {
+        call TENX.AdjustUmiSequenceWithAdapterAlignment as t_037_AdjustCcsReclaimedUMIs {
             input:
-                bam = t_034_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
+                bam = t_036_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
                 short_read_umis = short_read_umis_tsv,
                 prefix = SM + "_ccs_reclaimed_array_elements_annotated_padded_cbc_corrected_UMI_adjusted_shard_" + main_shard_index,
         }
 
-        call LONGBOW.Extract as t_036_LongbowExtractCcsReclaimedArrayElements {
+        call LONGBOW.Extract as t_038_LongbowExtractCcsReclaimedArrayElements {
             input:
-                bam = t_035_AdjustCcsReclaimedUMIs.output_bam,
+                bam = t_037_AdjustCcsReclaimedUMIs.output_bam,
                 prefix = SM + "_ccs_reclaimed_array_elements_cbc_umi_padded_extracted_shard_" + main_shard_index,
         }
 
@@ -444,9 +464,9 @@ workflow PB10xMasSeqSingleFlowcellv4 {
         # NOTE: We use the non-truncated reads because we only want the good stuff.
 
         # Align CCS reads to the genome:
-        call AR.Minimap2 as t_037_AlignCCSArrayElementsToGenome {
+        call AR.Minimap2 as t_039_AlignCCSArrayElementsToGenome {
             input:
-                reads      = [ t_029_LongbowExtractCcsArrayElements.extracted_bam ],
+                reads      = [ t_030_LongbowExtractCcsArrayElements.extracted_bam ],
                 ref_fasta  = ref_fasta,
                 tags_to_preserve = tags_to_preserve,
                 map_preset = "splice:hq",
@@ -454,16 +474,16 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 runtime_attr_override = object { mem_gb: 32 }
         }
 
-        call LONGBOW.TagFix as t_038_LongbowTagfixAlignedCcsArrayElements {
+        call LONGBOW.TagFix as t_040_LongbowTagfixAlignedCcsArrayElements {
             input:
-                bam = t_037_AlignCCSArrayElementsToGenome.aligned_bam,
+                bam = t_039_AlignCCSArrayElementsToGenome.aligned_bam,
                 prefix = SM + "_ccs_array_elements_extracted_aligned_tagfixed_shard_" + main_shard_index,
         }
 
         # Align Reclaimed reads to the genome:
-        call AR.Minimap2 as t_039_AlignReclaimedArrayElementsToGenome {
+        call AR.Minimap2 as t_041_AlignReclaimedArrayElementsToGenome {
             input:
-                reads      = [ t_036_LongbowExtractCcsReclaimedArrayElements.extracted_bam ],
+                reads      = [ t_038_LongbowExtractCcsReclaimedArrayElements.extracted_bam ],
                 ref_fasta  = ref_fasta,
                 tags_to_preserve = tags_to_preserve,
                 map_preset = "splice",
@@ -471,234 +491,234 @@ workflow PB10xMasSeqSingleFlowcellv4 {
                 runtime_attr_override = object { mem_gb: 32 }
         }
 
-        call LONGBOW.TagFix as t_040_LongbowTagfixAlignedCcsReclaimedArrayElements {
+        call LONGBOW.TagFix as t_042_LongbowTagfixAlignedCcsReclaimedArrayElements {
             input:
-                bam = t_039_AlignReclaimedArrayElementsToGenome.aligned_bam,
+                bam = t_041_AlignReclaimedArrayElementsToGenome.aligned_bam,
                 prefix = SM + "_ccs_reclaimed_array_elements_extracted_aligned_tagfixed_shard_" + main_shard_index,
         }
     }
 
     # Merge the arrays:
-    call Utils.MergeBams as t_041_MergeCCSLongbowAnnotatedArrayReads {
+    call Utils.MergeBams as t_043_MergeCCSLongbowAnnotatedArrayReads {
         input:
             bams = annotated_S2E_ccs_file,
             prefix = SM + "_ccs_array_reads_longbow_annotated"
     }
-    call PB.PBIndex as t_042_PbIndexMergedCCSLongbowAnnotatedArrayReads { input: bam = t_041_MergeCCSLongbowAnnotatedArrayReads.merged_bam }
+    call PB.PBIndex as t_044_PbIndexMergedCCSLongbowAnnotatedArrayReads { input: bam = t_043_MergeCCSLongbowAnnotatedArrayReads.merged_bam }
 
-    call Utils.MergeBams as t_043_MergeCCSReclaimableLongbowAnnotatedArrayReads {
+    call Utils.MergeBams as t_045_MergeCCSReclaimableLongbowAnnotatedArrayReads {
         input:
             bams = annotated_S2E_reclaimable_file,
             prefix = SM + "_ccs_reclaimable_array_reads_longbow_annotated"
     }
-    call PB.PBIndex as t_044_PbIndexMergedCCSReclaimableLongbowAnnotatedArrayReads { input: bam = t_043_MergeCCSReclaimableLongbowAnnotatedArrayReads.merged_bam }
+    call PB.PBIndex as t_046_PbIndexMergedCCSReclaimableLongbowAnnotatedArrayReads { input: bam = t_045_MergeCCSReclaimableLongbowAnnotatedArrayReads.merged_bam }
 
-    call Utils.MergeBams as t_045_MergeCCSLongbowPassedArrayReads {
+    call Utils.MergeBams as t_047_MergeCCSLongbowPassedArrayReads {
         input:
             bams = t_017_FilterS2ECCSReads.passed_reads,
             prefix = SM + "_ccs_array_reads_longbow_passed"
     }
-    call PB.PBIndex as t_046_PbIndexMergedCCSLongbowPassedArrayReads { input: bam = t_045_MergeCCSLongbowPassedArrayReads.merged_bam }
+    call PB.PBIndex as t_048_PbIndexMergedCCSLongbowPassedArrayReads { input: bam = t_047_MergeCCSLongbowPassedArrayReads.merged_bam }
 
-    call Utils.MergeBams as t_047_MergeCCSLongbowFailedArrayReads {
+    call Utils.MergeBams as t_049_MergeCCSLongbowFailedArrayReads {
         input:
             bams = t_017_FilterS2ECCSReads.failed_reads,
             prefix = SM + "_ccs_array_reads_longbow_failed"
     }
-    call PB.PBIndex as t_048_PbIndexMergedCCSLongbowFailedArrayReads { input: bam = t_047_MergeCCSLongbowFailedArrayReads.merged_bam }
+    call PB.PBIndex as t_050_PbIndexMergedCCSLongbowFailedArrayReads { input: bam = t_049_MergeCCSLongbowFailedArrayReads.merged_bam }
 
-    call Utils.MergeBams as t_049_MergeCCSReclaimedArrayReads {
+    call Utils.MergeBams as t_051_MergeCCSReclaimedArrayReads {
         input:
             bams = t_018_FilterS2EReclaimableReads.passed_reads,
             prefix = SM + "_ccs_reclaimed_array_reads_longbow_passed"
     }
-    call PB.PBIndex as t_050_PbIndexMergedCCSReclaimedArrayReads { input: bam = t_049_MergeCCSReclaimedArrayReads.merged_bam }
+    call PB.PBIndex as t_052_PbIndexMergedCCSReclaimedArrayReads { input: bam = t_051_MergeCCSReclaimedArrayReads.merged_bam }
 
-    call Utils.MergeBams as t_051_MergeCCSUnreclaimableArrayReads {
+    call Utils.MergeBams as t_053_MergeCCSUnreclaimableArrayReads {
         input:
             bams = t_018_FilterS2EReclaimableReads.failed_reads,
             prefix = SM + "_ccs_unreclaimable_array_reads_longbow_failed"
     }
-    call PB.PBIndex as t_052_PbIndexMergedCCSUnreclaimableReclaimedArrayReads { input: bam = t_051_MergeCCSUnreclaimableArrayReads.merged_bam }
+    call PB.PBIndex as t_054_PbIndexMergedCCSUnreclaimableReclaimedArrayReads { input: bam = t_053_MergeCCSUnreclaimableArrayReads.merged_bam }
 
-    call Utils.MergeBams as t_053_MergeLongbowPassedReads {
+    call Utils.MergeBams as t_055_MergeLongbowPassedReads {
         input:
             bams = flatten([t_017_FilterS2ECCSReads.passed_reads, t_018_FilterS2EReclaimableReads.passed_reads]),
             prefix = SM + "_longbow_passed_array_reads"
     }
-    call PB.PBIndex as t_054_PbIndexMergedLongbowPassingReads { input: bam = t_053_MergeLongbowPassedReads.merged_bam }
+    call PB.PBIndex as t_056_PbIndexMergedLongbowPassingReads { input: bam = t_055_MergeLongbowPassedReads.merged_bam }
 
-    call Utils.MergeBams as t_055_MergeLongbowFailedReads {
+    call Utils.MergeBams as t_057_MergeLongbowFailedReads {
         input:
             bams = flatten([t_017_FilterS2ECCSReads.failed_reads, t_018_FilterS2EReclaimableReads.failed_reads]),
             prefix = SM + "_longbow_failed_array_reads"
     }
-    call PB.PBIndex as t_056_PbIndexMergedLongbowFailedReads { input: bam = t_055_MergeLongbowFailedReads.merged_bam }
+    call PB.PBIndex as t_058_PbIndexMergedLongbowFailedReads { input: bam = t_057_MergeLongbowFailedReads.merged_bam }
 
-    call Utils.MergeBams as t_057_MergeAllLongbowAnnotatedReads {
+    call Utils.MergeBams as t_059_MergeAllLongbowAnnotatedReads {
         input:
             bams = flatten([annotated_S2E_ccs_file, annotated_S2E_reclaimable_file]),
             prefix = SM + "_all_longbow_annotated_array_reads"
     }
-    call PB.PBIndex as t_058_PbIndexMergedAllLongbowAnnotatedReads { input: bam = t_057_MergeAllLongbowAnnotatedReads.merged_bam }
+    call PB.PBIndex as t_060_PbIndexMergedAllLongbowAnnotatedReads { input: bam = t_059_MergeAllLongbowAnnotatedReads.merged_bam }
 
     # Merge Filtered CCS reads together:
-    call Utils.MergeBams as t_059_MergeCCSArrayElements {
+    call Utils.MergeBams as t_061_MergeCCSArrayElements {
         input:
             bams = t_023_SegmentS2ECcsReads.segmented_bam,
             prefix = SM + "_ccs_array_elements"
     }
 
     # Merge CCS Barcode Conf files:
-    call Utils.MergeFiles as t_060_MergeCCSBarcodeConfShards {
+    call Utils.MergeFiles as t_062_MergeCCSBarcodeConfShards {
         input:
             files_to_merge = t_023_SegmentS2ECcsReads.barcode_conf_file,
             merged_file_name = SM + "_ccs_array_element_barcode_confs.txt"
     }
 
     # Merge Filtered CCS reads with no ends together:
-    call Utils.MergeBams as t_061_MergeCCSArrayElementsNonTruncated {
+    call Utils.MergeBams as t_063_MergeCCSArrayElementsNonTruncated {
         input:
             bams = t_024_RemoveMasSeqTruncatedReadsFromCcsReads.bam,
             prefix = SM + "_ccs_array_elements_no_ends"
     }
 
     # Merge UMI-Padded CCS Array Elements:
-    call Utils.MergeBams as t_062_MergeCCSArrayElementsUmiPadded {
+    call Utils.MergeBams as t_064_MergeCCSArrayElementsUmiPadded {
         input:
-            bams = t_025_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
+            bams = t_026_LongbowPadCCSArrayElementUMIs.padded_tag_bam,
             prefix = SM + "_ccs_array_elements_no_ends_umi_padded"
     }
 
     # Merge CBC-UMI-Padded CCS Array Elements:
-    call Utils.MergeBams as t_063_MergeCCSArrayElementsUmiCbcPadded {
+    call Utils.MergeBams as t_065_MergeCCSArrayElementsUmiCbcPadded {
         input:
-            bams = t_026_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
+            bams = t_027_LongbowPadCCSArrayElementCBCs.padded_tag_bam,
             prefix = SM + "_ccs_array_elements_no_ends_cbc_umi_padded"
     }
 
     # Merge Corrected CBC CCS Array Elements:
-    call Utils.MergeBams as t_064_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected {
+    call Utils.MergeBams as t_066_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected {
         input:
-            bams = t_027_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
+            bams = t_028_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
             prefix = SM + "_ccs_array_elements_no_ends_cbc_umi_padded"
     }
 
-    call Utils.MergeBams as t_065_MergeLongbowPaddedCBCUncorrectableCCSArrayElements {
+    call Utils.MergeBams as t_067_MergeLongbowPaddedCBCUncorrectableCCSArrayElements {
         input:
-            bams = t_027_LongbowCorrectCCSCorrectedArrayElementCBCs.uncorrected_barcodes_bam,
+            bams = t_028_LongbowCorrectCCSCorrectedArrayElementCBCs.uncorrected_barcodes_bam,
             prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_uncorrectable"
     }
 
-    call Utils.MergeBams as t_066_MergeLongbowPaddedCBCCorrectedCCSArrayElements {
+    call Utils.MergeBams as t_068_MergeLongbowPaddedCBCCorrectedCCSArrayElements {
         input:
-            bams = t_028_AdjustCCSUMIs.output_bam,
+            bams = t_029_AdjustCCSUMIs.output_bam,
             prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_corrected"
     }
 
-    call Utils.MergeBams as t_067_MergeLongbowExtractedCcsArrayElements {
+    call Utils.MergeBams as t_069_MergeLongbowExtractedCcsArrayElements {
         input:
-            bams = t_029_LongbowExtractCcsArrayElements.extracted_bam,
+            bams = t_030_LongbowExtractCcsArrayElements.extracted_bam,
             prefix = SM + "_ccs_array_elements_cbc_umi_padded_extracted"
     }
 
      # Merge Filtered CCS Reclaimed reads together:
-    call Utils.MergeBams as t_068_MergeCCSReclaimedArrayElements {
+    call Utils.MergeBams as t_070_MergeCCSReclaimedArrayElements {
         input:
-            bams = t_030_SegmentS2ECcsReclaimedReads.segmented_bam,
+            bams = t_031_SegmentS2ECcsReclaimedReads.segmented_bam,
             prefix = SM + "_ccs_reclaimed_array_elements"
     }
 
     # Merge CCS Barcode Conf files:
-    call Utils.MergeFiles as t_069_MergeCCSReclaimedBarcodeConfShards {
+    call Utils.MergeFiles as t_071_MergeCCSReclaimedBarcodeConfShards {
         input:
-            files_to_merge = t_030_SegmentS2ECcsReclaimedReads.barcode_conf_file,
+            files_to_merge = t_031_SegmentS2ECcsReclaimedReads.barcode_conf_file,
             merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs"
     }
 
     # Merge Filtered CCS reads with no ends together:
-    call Utils.MergeBams as t_070_MergeCCSReclaimedArrayElementsNonTruncated {
+    call Utils.MergeBams as t_072_MergeCCSReclaimedArrayElementsNonTruncated {
         input:
-            bams = t_031_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
+            bams = t_032_RemoveMasSeqTruncatedReadsFromCcsReclaimedReads.bam,
             prefix = SM + "_ccs_reclaimed_array_elements_no_ends"
     }
 
     # Merge UMI-Padded CCS Array Elements:
-    call Utils.MergeBams as t_071_MergeCCSReclaimedArrayElementsUmiPadded {
+    call Utils.MergeBams as t_073_MergeCCSReclaimedArrayElementsUmiPadded {
         input:
-            bams = t_032_LongbowPadCcsReclaimedArrayElementUMIs.padded_tag_bam,
+            bams = t_034_LongbowPadCcsReclaimedArrayElementUMIs.padded_tag_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_no_ends_umi_padded"
     }
 
     # Merge CBC-UMI-Padded CCS Array Elements:
-    call Utils.MergeBams as t_072_MergeCCSReclaimedArrayElementsUmiCbcPadded {
+    call Utils.MergeBams as t_074_MergeCCSReclaimedArrayElementsUmiCbcPadded {
         input:
-            bams = t_033_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
+            bams = t_035_LongbowPadCcsReclaimedArrayElementCBCs.padded_tag_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_no_ends_cbc_umi_padded"
     }
 
     # Merge Corrected CBC CCS Array Elements:
-    call Utils.MergeBams as t_073_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected {
+    call Utils.MergeBams as t_075_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected {
         input:
-            bams = t_034_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
+            bams = t_036_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_no_ends_cbc_umi_padded"
     }
 
-    call Utils.MergeBams as t_074_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements {
+    call Utils.MergeBams as t_076_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements {
         input:
-            bams = t_034_LongbowCorrectCcsReclaimedArrayElementCBCs.uncorrected_barcodes_bam,
+            bams = t_036_LongbowCorrectCcsReclaimedArrayElementCBCs.uncorrected_barcodes_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_uncorrectable"
     }
 
-    call Utils.MergeBams as t_075_MergeLongbowPaddedCBCCorrectedCCSReclaimedArrayElementsShards {
+    call Utils.MergeBams as t_077_MergeLongbowPaddedCBCCorrectedCCSReclaimedArrayElementsShards {
         input:
-            bams = t_035_AdjustCcsReclaimedUMIs.output_bam,
+            bams = t_037_AdjustCcsReclaimedUMIs.output_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_corrected"
     }
 
-    call Utils.MergeBams as t_076_MergeLongbowExtractedCcsReclaimedArrayElements {
+    call Utils.MergeBams as t_078_MergeLongbowExtractedCcsReclaimedArrayElements {
         input:
-            bams = t_036_LongbowExtractCcsReclaimedArrayElements.extracted_bam,
+            bams = t_038_LongbowExtractCcsReclaimedArrayElements.extracted_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_cbc_umi_padded_extracted"
     }
 
-    call Utils.MergeBams as t_077_MergeAllArrayElementsNonTruncated {
+    call Utils.MergeBams as t_079_MergeAllArrayElementsNonTruncated {
         input:
-            bams = [t_061_MergeCCSArrayElementsNonTruncated.merged_bam, t_070_MergeCCSReclaimedArrayElementsNonTruncated.merged_bam],
+            bams = [t_063_MergeCCSArrayElementsNonTruncated.merged_bam, t_072_MergeCCSReclaimedArrayElementsNonTruncated.merged_bam],
             prefix = SM + "_array_elements_non_truncated"
     }
 
     # Merge Aligned CCS array elements together:
-    call Utils.MergeBams as t_078_MergeAlignedCCSArrayElements {
+    call Utils.MergeBams as t_080_MergeAlignedCCSArrayElements {
         input:
-            bams = t_038_LongbowTagfixAlignedCcsArrayElements.tag_fixed_bam,
+            bams = t_040_LongbowTagfixAlignedCcsArrayElements.tag_fixed_bam,
             prefix = SM + "_ccs_array_elements_padded_aligned_tagfixed"
     }
 
     # Merge Aligned CCS Reclaimed array elements together:
-    call Utils.MergeBams as t_079_MergeAlignedCCSReclaimedArrayElements {
+    call Utils.MergeBams as t_081_MergeAlignedCCSReclaimedArrayElements {
         input:
-            bams = t_040_LongbowTagfixAlignedCcsReclaimedArrayElements.tag_fixed_bam,
+            bams = t_042_LongbowTagfixAlignedCcsReclaimedArrayElements.tag_fixed_bam,
             prefix = SM + "_ccs_reclaimed_array_elements_padded_aligned_tagfixed"
     }
 
-    call Utils.MergeBams as t_080_MergeAllAlignedArrayElementsNonTruncated {
+    call Utils.MergeBams as t_082_MergeAllAlignedArrayElementsNonTruncated {
         input:
-            bams = flatten([t_038_LongbowTagfixAlignedCcsArrayElements.tag_fixed_bam, t_040_LongbowTagfixAlignedCcsReclaimedArrayElements.tag_fixed_bam]),
+            bams = flatten([t_040_LongbowTagfixAlignedCcsArrayElements.tag_fixed_bam, t_042_LongbowTagfixAlignedCcsReclaimedArrayElements.tag_fixed_bam]),
             prefix = SM + "_array_elements_padded_aligned_tagfixed"
     }
 
     # Merge CCS Barcode Conf files:
-    call Utils.MergeFiles as t_081_MergeAllCCSBarcodeConfShards {
+    call Utils.MergeFiles as t_083_MergeAllCCSBarcodeConfShards {
         input:
             files_to_merge = t_023_SegmentS2ECcsReads.segmented_bam,
             merged_file_name = SM + "_ccs_array_element_barcode_confs.txt"
     }
 
     # Merge CCS Barcode Conf files:
-    call Utils.MergeFiles as t_082_MergeAllCCSReclaimedBarcodeConfShards {
+    call Utils.MergeFiles as t_084_MergeAllCCSReclaimedBarcodeConfShards {
         input:
-            files_to_merge = t_030_SegmentS2ECcsReclaimedReads.segmented_bam,
+            files_to_merge = t_031_SegmentS2ECcsReclaimedReads.segmented_bam,
             merged_file_name = SM + "_ccs_reclaimed_array_element_barcode_confs.txt"
     }
 
@@ -736,18 +756,18 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     }
 
     # Remove unmapped, secondary, supplementary, mq0, length > 15kb, end clips > 1kb
-    call Utils.FilterMasSeqReadsWithGatk as t_083_AlignmentFilterForCcsArrayElements {
+    call Utils.FilterMasSeqReadsWithGatk as t_085_AlignmentFilterForCcsArrayElements {
         input:
-            bam_file = t_078_MergeAlignedCCSArrayElements.merged_bam,
-            bam_index = t_078_MergeAlignedCCSArrayElements.merged_bai,
+            bam_file = t_080_MergeAlignedCCSArrayElements.merged_bam,
+            bam_index = t_080_MergeAlignedCCSArrayElements.merged_bai,
             prefix = SM + "_CCS_ArrayElements_Annotated_Aligned_PrimaryOnly",
             runtime_attr_override = filterReadsAttrs
     }
 
-    call Utils.FilterMasSeqReadsWithGatk as t_084_AlignmentFilterForReclaimedArrayElements {
+    call Utils.FilterMasSeqReadsWithGatk as t_086_AlignmentFilterForReclaimedArrayElements {
         input:
-            bam_file = t_079_MergeAlignedCCSReclaimedArrayElements.merged_bam,
-            bam_index = t_079_MergeAlignedCCSReclaimedArrayElements.merged_bai,
+            bam_file = t_081_MergeAlignedCCSReclaimedArrayElements.merged_bam,
+            bam_index = t_081_MergeAlignedCCSReclaimedArrayElements.merged_bai,
             prefix = SM + "_Reclaimed_ArrayElements_Annotated_Aligned_PrimaryOnly",
             runtime_attr_override = filterReadsAttrs
     }
@@ -768,33 +788,33 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     # Running TALON on our sample with a darabase initialized with the StringTie2 gtf
 
     # Merge all alignments together:
-    call Utils.MergeBams as t_085_MergeAllAlignedAndFilteredArrayElements {
+    call Utils.MergeBams as t_087_MergeAllAlignedAndFilteredArrayElements {
         input:
-            bams = [t_083_AlignmentFilterForCcsArrayElements.bam, t_084_AlignmentFilterForReclaimedArrayElements.bam],
+            bams = [t_085_AlignmentFilterForCcsArrayElements.bam, t_086_AlignmentFilterForReclaimedArrayElements.bam],
             prefix = SM + "_all_array_elements_aligned_for_txome_discovery"
     }
 
-    call StringTie2.Quantify as t_086_ST2_Quant {
+    call StringTie2.Quantify as t_088_ST2_Quant {
         input:
-            aligned_bam = t_085_MergeAllAlignedAndFilteredArrayElements.merged_bam,
-            aligned_bai = t_085_MergeAllAlignedAndFilteredArrayElements.merged_bai,
+            aligned_bam = t_087_MergeAllAlignedAndFilteredArrayElements.merged_bam,
+            aligned_bai = t_087_MergeAllAlignedAndFilteredArrayElements.merged_bai,
             gtf = genome_annotation_gtf,
             keep_retained_introns = false,
             prefix = SM + "_StringTie2_Quantify",
     }
 
-    call StringTie2.ExtractTranscriptSequences as t_087_ST2_ExtractTranscriptSequences  {
+    call StringTie2.ExtractTranscriptSequences as t_089_ST2_ExtractTranscriptSequences  {
         input:
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_index,
-            gtf = t_086_ST2_Quant.st_gtf,
+            gtf = t_088_ST2_Quant.st_gtf,
             prefix = SM + "_StringTie2_ExtractTranscriptSequences",
     }
 
-    call StringTie2.CompareTranscriptomes as t_088_ST2_CompareTranscriptomes {
+    call StringTie2.CompareTranscriptomes as t_090_ST2_CompareTranscriptomes {
         input:
             guide_gtf = genome_annotation_gtf,
-            new_gtf = t_086_ST2_Quant.st_gtf,
+            new_gtf = t_088_ST2_Quant.st_gtf,
             prefix = SM + "_StringTie2_CompareTranscriptome",
     }
 
@@ -805,23 +825,23 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     # Here we restore the original read names to the bam because we're hashing them with Longbow.segment:
 
     # Restore original read names to CCS reads:
-    call TX_PRE.RestoreOriginalReadNames as t_089_RestoreCcsOriginalReadNames {
+    call TX_PRE.RestoreOriginalReadNames as t_091_RestoreCcsOriginalReadNames {
         input:
-            bam = t_083_AlignmentFilterForCcsArrayElements.bam,
+            bam = t_085_AlignmentFilterForCcsArrayElements.bam,
             prefix =  SM + "_CCS_cbc_annotated_array_elements_padded_original_names"
     }
 
     # Restore original read names to CLR reads:
-    call TX_PRE.RestoreOriginalReadNames as t_090_RestoreClrOriginalReadNames {
+    call TX_PRE.RestoreOriginalReadNames as t_092_RestoreClrOriginalReadNames {
         input:
-            bam = t_084_AlignmentFilterForReclaimedArrayElements.bam,
+            bam = t_086_AlignmentFilterForReclaimedArrayElements.bam,
             prefix =  SM + "_CLR_cbc_annotated_array_elements_padded_original_names"
     }
 
     # Merge Aligned CCS and Reclaimed reads together:
-    call Utils.MergeBams as t_091_MergeAllAnnotatedArrayElementsWithOriginalNames {
+    call Utils.MergeBams as t_093_MergeAllAnnotatedArrayElementsWithOriginalNames {
         input:
-            bams = [t_089_RestoreCcsOriginalReadNames.bam_out, t_090_RestoreClrOriginalReadNames.bam_out],
+            bams = [t_091_RestoreCcsOriginalReadNames.bam_out, t_092_RestoreClrOriginalReadNames.bam_out],
             prefix = SM + "_all_cbc_annotated_array_elements_padded_original_names"
     }
 
@@ -829,80 +849,80 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     # Now we have to split the reads again, process them into gff files, run gffcompare and then aggregate the results in a graph
 
     # We can actually compare the references without needing to scatter:
-    call TX_PRE.GffCompare as t_092_GffCompareStringtie2toGencode {
+    call TX_PRE.GffCompare as t_094_GffCompareStringtie2toGencode {
         input:
-            gff_ref = t_086_ST2_Quant.st_gtf,
+            gff_ref = t_088_ST2_Quant.st_gtf,
             gff_query = genome_annotation_gtf,
             ref_fasta = ref_fasta,
             ref_fasta_index = ref_fasta_index,
     }
-    call TX_PRE.GffCompare as t_093_GffCompareGencodetoStringtie2 {
+    call TX_PRE.GffCompare as t_095_GffCompareGencodetoStringtie2 {
         input:
             gff_ref = genome_annotation_gtf,
-            gff_query = t_086_ST2_Quant.st_gtf,
+            gff_query = t_088_ST2_Quant.st_gtf,
             ref_fasta = ref_fasta,
             ref_fasta_index = ref_fasta_index,
     }
 
     # Split by contig:
-    call TX_PRE.SplitBamByContig as t_094_SplitArrayElementsByContig {
+    call TX_PRE.SplitBamByContig as t_096_SplitArrayElementsByContig {
         input:
-            bam = t_091_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
+            bam = t_093_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
             prefix = SM + "_all_cbc_annotated_array_elements_padded_original_names"
     }
 
     # For each contig:
-    scatter (i in range(length(t_094_SplitArrayElementsByContig.contig_bams))) {
+    scatter (i in range(length(t_096_SplitArrayElementsByContig.contig_bams))) {
 
-        File contig_bam = t_094_SplitArrayElementsByContig.contig_bams[i]
-        String contig_name = t_094_SplitArrayElementsByContig.contig_names[i]
+        File contig_bam = t_096_SplitArrayElementsByContig.contig_bams[i]
+        String contig_name = t_096_SplitArrayElementsByContig.contig_names[i]
 
         # Create a GFF file:
-        call TX_PRE.ConvertSplicedBamToGff as t_095_ConvertSplicedBamToGff {
+        call TX_PRE.ConvertSplicedBamToGff as t_097_ConvertSplicedBamToGff {
             input:
                 bam = contig_bam
         }
 
         # Compare GFF files:
-        call TX_PRE.GffCompare as t_096_GffCompareStringtie2toMasSeqReads {
+        call TX_PRE.GffCompare as t_098_GffCompareStringtie2toMasSeqReads {
             input:
-                gff_ref = t_086_ST2_Quant.st_gtf,
-                gff_query = t_095_ConvertSplicedBamToGff.gff,
+                gff_ref = t_088_ST2_Quant.st_gtf,
+                gff_query = t_097_ConvertSplicedBamToGff.gff,
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_index,
         }
 
-        call TX_PRE.GffCompare as t_097_GffCompareGencodetoMasSeqReads {
+        call TX_PRE.GffCompare as t_099_GffCompareGencodetoMasSeqReads {
             input:
                 gff_ref = genome_annotation_gtf,
-                gff_query = t_095_ConvertSplicedBamToGff.gff,
+                gff_query = t_097_ConvertSplicedBamToGff.gff,
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_index,
         }
 
         # Create the comparison graph and tsv files:
-        call TX_POST.QuantifyGffComparison as t_098_QuantifyGffComparison {
+        call TX_POST.QuantifyGffComparison as t_100_QuantifyGffComparison {
             input:
                 genome_gtf = genome_annotation_gtf,
-                st2_gencode_refmap = t_092_GffCompareStringtie2toGencode.refmap,
-                st2_gencode_tmap = t_092_GffCompareStringtie2toGencode.tmap,
-                st2_read_refmap = t_096_GffCompareStringtie2toMasSeqReads.refmap,
-                st2_read_tmap = t_096_GffCompareStringtie2toMasSeqReads.tmap,
-                gencode_st2_refmap = t_093_GffCompareGencodetoStringtie2.refmap,
-                gencode_st2_tmap = t_093_GffCompareGencodetoStringtie2.tmap,
-                gencode_read_refmap = t_097_GffCompareGencodetoMasSeqReads.refmap,
-                gencode_read_tmap = t_097_GffCompareGencodetoMasSeqReads.tmap,
+                st2_gencode_refmap = t_094_GffCompareStringtie2toGencode.refmap,
+                st2_gencode_tmap = t_094_GffCompareStringtie2toGencode.tmap,
+                st2_read_refmap = t_098_GffCompareStringtie2toMasSeqReads.refmap,
+                st2_read_tmap = t_098_GffCompareStringtie2toMasSeqReads.tmap,
+                gencode_st2_refmap = t_095_GffCompareGencodetoStringtie2.refmap,
+                gencode_st2_tmap = t_095_GffCompareGencodetoStringtie2.tmap,
+                gencode_read_refmap = t_099_GffCompareGencodetoMasSeqReads.refmap,
+                gencode_read_tmap = t_099_GffCompareGencodetoMasSeqReads.tmap,
                 prefix = SM + "_all_cbc_annotated_array_elements_padded_" + contig_name
         }
     }
 
     # Merge our tx equivalance classes assignments and eq classes:
-    call TX_POST.CombineEqClassFiles as t_099_CombineEqClassFiles {
+    call TX_POST.CombineEqClassFiles as t_101_CombineEqClassFiles {
         input:
-            gene_eq_class_definitions = t_098_QuantifyGffComparison.gene_eq_class_labels_file,
-            gene_assignment_files = t_098_QuantifyGffComparison.gene_assignments_file,
-            equivalence_class_definitions = t_098_QuantifyGffComparison.tx_equivalence_class_labels_file,
-            equivalence_classes = t_098_QuantifyGffComparison.tx_equivalence_class_file,
+            gene_eq_class_definitions = t_100_QuantifyGffComparison.gene_eq_class_labels_file,
+            gene_assignment_files = t_100_QuantifyGffComparison.gene_assignments_file,
+            equivalence_class_definitions = t_100_QuantifyGffComparison.tx_equivalence_class_labels_file,
+            equivalence_classes = t_100_QuantifyGffComparison.tx_equivalence_class_file,
             prefix = SM + "_all_cbc_annotated_array_elements_padded"
     }
 
@@ -911,119 +931,119 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     ##########
 
     # Use old quant method here as a baseline for comparison:
-    call TX_POST.CopyEqClassInfoToTag as t_100_CopyEqClassInfoToTag {
+    call TX_POST.CopyEqClassInfoToTag as t_102_CopyEqClassInfoToTag {
         input:
-            bam = t_091_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
-            eq_class_file = t_099_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            bam = t_093_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
+            eq_class_file = t_101_CombineEqClassFiles.combined_tx_eq_class_assignments,
             prefix = SM + "_annotated_array_elements_for_quant_with_gene_names"
     }
 
-    call TX_PRE.CorrectUmisWithSetCover as t_101_CorrectUmisWithSetCover {
+    call TX_PRE.CorrectUmisWithSetCover as t_103_CorrectUmisWithSetCover {
         input:
-            bam = t_100_CopyEqClassInfoToTag.bam_out,
+            bam = t_102_CopyEqClassInfoToTag.bam_out,
             prefix = SM + "_annotated_array_elements_for_quant_with_gene_names"
     }
 
     # Because of how we're doing things, we need to pull out the CCS and CCS Reclaimed reads from the output of the
     # set cover correction:
-    call Utils.Bamtools as t_102_GetCcsCorrectedReadsWithCorrectedUmis {
+    call Utils.Bamtools as t_104_GetCcsCorrectedReadsWithCorrectedUmis {
         input:
-            bamfile = t_101_CorrectUmisWithSetCover.corrected_umi_reads,
+            bamfile = t_103_CorrectUmisWithSetCover.corrected_umi_reads,
             prefix = SM + "_annotated_array_elements_for_quant_with_gene_names.corrected_umis.CCS",
             cmd = "filter",
             args = '-tag "rq":">=' + min_read_quality + '"',
             runtime_attr_override = disable_preemption_runtime_attrs
     }
-    call Utils.IndexBam as t_103_IndexCcsReadsWithCorrectedUmis {input: bam = t_102_GetCcsCorrectedReadsWithCorrectedUmis.bam_out }
+    call Utils.IndexBam as t_105_IndexCcsReadsWithCorrectedUmis {input: bam = t_104_GetCcsCorrectedReadsWithCorrectedUmis.bam_out }
 
-    call Utils.Bamtools as t_104_GetCcsReclaimedReadsWithCorrectedUmis {
+    call Utils.Bamtools as t_106_GetCcsReclaimedReadsWithCorrectedUmis {
         input:
-            bamfile =t_101_CorrectUmisWithSetCover.corrected_umi_reads,
+            bamfile =t_103_CorrectUmisWithSetCover.corrected_umi_reads,
             prefix = SM + "_annotated_array_elements_for_quant_with_gene_names.corrected_umis.CCS_Reclaimed",
             cmd = "filter",
             args = '-tag "rq":"<' + min_read_quality + '"',
             runtime_attr_override = disable_preemption_runtime_attrs
     }
-    call Utils.IndexBam as t_105_IndexCcsReclaimedReadsWithCorrectedUmis {input: bam = t_104_GetCcsReclaimedReadsWithCorrectedUmis.bam_out }
+    call Utils.IndexBam as t_107_IndexCcsReclaimedReadsWithCorrectedUmis {input: bam = t_106_GetCcsReclaimedReadsWithCorrectedUmis.bam_out }
 
-    call UMI_TOOLS.Run_Group as t_106_UMIToolsGroup {
+    call UMI_TOOLS.Run_Group as t_108_UMIToolsGroup {
         input:
-            aligned_transcriptome_reads = t_101_CorrectUmisWithSetCover.corrected_umi_reads,
-            aligned_transcriptome_reads_index = t_101_CorrectUmisWithSetCover.corrected_umi_reads_index,
+            aligned_transcriptome_reads = t_103_CorrectUmisWithSetCover.corrected_umi_reads,
+            aligned_transcriptome_reads_index = t_103_CorrectUmisWithSetCover.corrected_umi_reads_index,
             do_per_cell = true,
             prefix = SM + "_annotated_array_elements_with_gene_names_with_umi_tools_group_correction"
     }
 
     # Create CCS count matrix and anndata:
-    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_107_CreateCCSCountMatrixFromAnnotatedBam {
+    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_109_CreateCCSCountMatrixFromAnnotatedBam {
         input:
-            annotated_transcriptome_bam = t_102_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
-            tx_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            annotated_transcriptome_bam = t_104_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
+            tx_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_tx_eq_class_assignments,
             umi_tag = "BX",
             prefix = SM + "_ccs_gene_tx_expression_count_matrix"
     }
 
-    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_108_CreateCCSCountMatrixAnndataFromEqClasses {
+    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_110_CreateCCSCountMatrixAnndataFromEqClasses {
         input:
-            count_matrix_tsv = t_107_CreateCCSCountMatrixFromAnnotatedBam.count_matrix,
-            genome_annotation_gtf_file = t_086_ST2_Quant.st_gtf,
+            count_matrix_tsv = t_109_CreateCCSCountMatrixFromAnnotatedBam.count_matrix,
+            genome_annotation_gtf_file = t_088_ST2_Quant.st_gtf,
             gencode_reference_gtf_file = genome_annotation_gtf,
             overlap_intervals = intervals_of_interest,
             overlap_interval_label = interval_overlap_name,
-            tx_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_tx_eq_class_assignments,
-            tx_equivalence_class_definitions = t_099_CombineEqClassFiles.combined_tx_eq_class_defs,
-            gene_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_gene_eq_class_assignments,
-            gene_equivalence_class_definitions = t_099_CombineEqClassFiles.combined_gene_eq_class_defs,
+            tx_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            tx_equivalence_class_definitions = t_101_CombineEqClassFiles.combined_tx_eq_class_defs,
+            gene_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_gene_eq_class_assignments,
+            gene_equivalence_class_definitions = t_101_CombineEqClassFiles.combined_gene_eq_class_defs,
             prefix = SM + "_ccs_gene_tx_expression_count_matrix",
 
             runtime_attr_override = object {mem_gb: 64}
     }
 
     # Create CLR count matrix and anndata:
-    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_109_CreateCLRCountMatrixFromAnnotatedBam {
+    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_111_CreateCLRCountMatrixFromAnnotatedBam {
         input:
-            annotated_transcriptome_bam = t_104_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
-            tx_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            annotated_transcriptome_bam = t_106_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
+            tx_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_tx_eq_class_assignments,
             umi_tag = "BX",
             prefix = SM + "_clr_gene_tx_expression_count_matrix"
     }
 
-    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_110_CreateCLRCountMatrixAnndataFromEqClasses {
+    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_112_CreateCLRCountMatrixAnndataFromEqClasses {
         input:
-            count_matrix_tsv = t_109_CreateCLRCountMatrixFromAnnotatedBam.count_matrix,
-            genome_annotation_gtf_file = t_086_ST2_Quant.st_gtf,
+            count_matrix_tsv = t_111_CreateCLRCountMatrixFromAnnotatedBam.count_matrix,
+            genome_annotation_gtf_file = t_088_ST2_Quant.st_gtf,
             gencode_reference_gtf_file = genome_annotation_gtf,
             overlap_intervals = intervals_of_interest,
             overlap_interval_label = interval_overlap_name,
-            tx_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_tx_eq_class_assignments,
-            tx_equivalence_class_definitions = t_099_CombineEqClassFiles.combined_tx_eq_class_defs,
-            gene_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_gene_eq_class_assignments,
-            gene_equivalence_class_definitions = t_099_CombineEqClassFiles.combined_gene_eq_class_defs,
+            tx_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            tx_equivalence_class_definitions = t_101_CombineEqClassFiles.combined_tx_eq_class_defs,
+            gene_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_gene_eq_class_assignments,
+            gene_equivalence_class_definitions = t_101_CombineEqClassFiles.combined_gene_eq_class_defs,
             prefix = SM + "_clr_gene_tx_expression_count_matrix",
 
             runtime_attr_override = object {mem_gb: 64}
     }
 
     # Create overall count matrix and anndata:
-    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_111_CreateOverallCountMatrixFromAnnotatedBam {
+    call TX_POST.CreateCountMatrixFromAnnotatedBam as t_113_CreateOverallCountMatrixFromAnnotatedBam {
         input:
-            annotated_transcriptome_bam = t_101_CorrectUmisWithSetCover.corrected_umi_reads,
-            tx_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            annotated_transcriptome_bam = t_103_CorrectUmisWithSetCover.corrected_umi_reads,
+            tx_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_tx_eq_class_assignments,
             umi_tag = "BX",
             prefix = SM + "_overall_gene_tx_expression_count_matrix"
     }
 
-    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_112_CreateOverallCountMatrixAnndataFromEqClasses {
+    call TX_POST.CreateCountMatrixAnndataFromEquivalenceClasses as t_114_CreateOverallCountMatrixAnndataFromEqClasses {
         input:
-            count_matrix_tsv = t_111_CreateOverallCountMatrixFromAnnotatedBam.count_matrix,
-            genome_annotation_gtf_file = t_086_ST2_Quant.st_gtf,
+            count_matrix_tsv = t_113_CreateOverallCountMatrixFromAnnotatedBam.count_matrix,
+            genome_annotation_gtf_file = t_088_ST2_Quant.st_gtf,
             gencode_reference_gtf_file = genome_annotation_gtf,
             overlap_intervals = intervals_of_interest,
             overlap_interval_label = interval_overlap_name,
-            tx_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_tx_eq_class_assignments,
-            tx_equivalence_class_definitions = t_099_CombineEqClassFiles.combined_tx_eq_class_defs,
-            gene_equivalence_class_assignments = t_099_CombineEqClassFiles.combined_gene_eq_class_assignments,
-            gene_equivalence_class_definitions = t_099_CombineEqClassFiles.combined_gene_eq_class_defs,
+            tx_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_tx_eq_class_assignments,
+            tx_equivalence_class_definitions = t_101_CombineEqClassFiles.combined_tx_eq_class_defs,
+            gene_equivalence_class_assignments = t_101_CombineEqClassFiles.combined_gene_eq_class_assignments,
+            gene_equivalence_class_definitions = t_101_CombineEqClassFiles.combined_gene_eq_class_defs,
             prefix = SM + "_overall_gene_tx_expression_count_matrix",
 
             runtime_attr_override = object {mem_gb: 64}
@@ -1039,76 +1059,76 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     #
     #################################################
 
-    call AM.SamtoolsStats as t_113_BaselineArrayElementStats {
+    call AM.SamtoolsStats as t_115_BaselineArrayElementStats {
         input:
-            bam = t_077_MergeAllArrayElementsNonTruncated.merged_bam
+            bam = t_079_MergeAllArrayElementsNonTruncated.merged_bam
     }
 
-    call AM.SamtoolsStats as t_114_AlignedArrayElementStats {
+    call AM.SamtoolsStats as t_116_AlignedArrayElementStats {
         input:
-            bam = t_080_MergeAllAlignedArrayElementsNonTruncated.merged_bam
+            bam = t_082_MergeAllAlignedArrayElementsNonTruncated.merged_bam
     }
 
-    call AM.SamtoolsStats as t_115_AlignedFilteredArrayElementStats {
+    call AM.SamtoolsStats as t_117_AlignedFilteredArrayElementStats {
         input:
-            bam = t_085_MergeAllAlignedAndFilteredArrayElements.merged_bam
+            bam = t_087_MergeAllAlignedAndFilteredArrayElements.merged_bam
     }
 
-    call AM.SamtoolsStats as t_116_AlignedAnnotatedArrayElementsForQuantStats {
+    call AM.SamtoolsStats as t_118_AlignedAnnotatedArrayElementsForQuantStats {
         input:
-            bam = t_101_CorrectUmisWithSetCover.corrected_umi_reads
+            bam = t_103_CorrectUmisWithSetCover.corrected_umi_reads
     }
 
-    call LONGBOW.AggregateCorrectLogStats as t_117_AggregateLongbowCorrectStats {
+    call LONGBOW.AggregateCorrectLogStats as t_119_AggregateLongbowCorrectStats {
         input:
-            longbow_correct_log_files = flatten([t_034_LongbowCorrectCcsReclaimedArrayElementCBCs.log, t_027_LongbowCorrectCCSCorrectedArrayElementCBCs.log]),
+            longbow_correct_log_files = flatten([t_036_LongbowCorrectCcsReclaimedArrayElementCBCs.log, t_028_LongbowCorrectCCSCorrectedArrayElementCBCs.log]),
             out_name = SM + "_longbow_correct_stats.txt"
     }
 
     # Get stats on CCS reads:
-    call LONGBOW.Stats as t_118_CCS_longbow_stats {
+    call LONGBOW.Stats as t_120_CCS_longbow_stats {
         input:
-            reads = t_041_MergeCCSLongbowAnnotatedArrayReads.merged_bam,
+            reads = t_043_MergeCCSLongbowAnnotatedArrayReads.merged_bam,
             model = mas_seq_model,
             prefix = SM + "_CCS_Corrected",
     }
 
     # Get stats on Reclaimable reads:
-    call LONGBOW.Stats as t_119_Reclaimable_longbow_stats {
+    call LONGBOW.Stats as t_121_Reclaimable_longbow_stats {
         input:
-            reads = t_043_MergeCCSReclaimableLongbowAnnotatedArrayReads.merged_bam,
+            reads = t_045_MergeCCSReclaimableLongbowAnnotatedArrayReads.merged_bam,
             model = mas_seq_model,
             prefix = SM + "_CCS_Reclaimable",
     }
 
     # Get stats on Reclaimed reads:
-    call LONGBOW.Stats as t_120_Reclaimed_longbow_stats {
+    call LONGBOW.Stats as t_122_Reclaimed_longbow_stats {
         input:
-            reads = t_049_MergeCCSReclaimedArrayReads.merged_bam,
+            reads = t_051_MergeCCSReclaimedArrayReads.merged_bam,
             model = mas_seq_model,
             prefix = SM + "_CCS_Reclaimed",
     }
 
     # Get stats on All Passing reads (overall stats):
-    call LONGBOW.Stats as t_121_Passed_longbow_stats {
+    call LONGBOW.Stats as t_123_Passed_longbow_stats {
         input:
-            reads = t_053_MergeLongbowPassedReads.merged_bam,
+            reads = t_055_MergeLongbowPassedReads.merged_bam,
             model = mas_seq_model,
             prefix = SM + "_All_Longbow_Passed",
     }
 
     # Get stats on All Failed reads (overall stats):
-    call LONGBOW.Stats as t_122_Failed_longbow_stats {
+    call LONGBOW.Stats as t_124_Failed_longbow_stats {
         input:
-            reads = t_055_MergeLongbowFailedReads.merged_bam,
+            reads = t_057_MergeLongbowFailedReads.merged_bam,
             model = mas_seq_model,
             prefix = SM + "_All_Longbow_Failed",
     }
 
     # Get stats on All reads (overall stats):
-    call LONGBOW.Stats as t_123_Overall_longbow_stats {
+    call LONGBOW.Stats as t_125_Overall_longbow_stats {
         input:
-            reads = t_057_MergeAllLongbowAnnotatedReads.merged_bam,
+            reads = t_059_MergeAllLongbowAnnotatedReads.merged_bam,
             model = mas_seq_model,
             prefix = SM + "_Overall",
     }
@@ -1125,10 +1145,10 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     # NOTE: We key all finalization steps on the static report.
     #       This will prevent incomplete runs from being placed in the output folders.
 
-#    File keyfile = t_112_CreateOverallCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
+#    File keyfile = t_114_CreateOverallCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad
 
     # This seems to take longer to get to:
-    File keyfile = t_106_UMIToolsGroup.output_tsv
+    File keyfile = t_108_UMIToolsGroup.output_tsv
 
     String base_out_dir = outdir + "/" + DIR + out_dir_suffix + "/" + t_001_WdlExecutionStartTimestamp.timestamp_string
     String stats_out_dir = base_out_dir + "/stats"
@@ -1144,100 +1164,100 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
     ##############################################################################################################
     # Finalize gene / tx assignments:
-    call FF.FinalizeToDir as t_124_FinalizeEqClasses {
+    call FF.FinalizeToDir as t_126_FinalizeEqClasses {
         input:
             files = [
-                t_099_CombineEqClassFiles.combined_gene_eq_class_defs,
-                t_099_CombineEqClassFiles.combined_gene_eq_class_assignments,
-                t_099_CombineEqClassFiles.combined_tx_eq_class_defs,
-                t_099_CombineEqClassFiles.combined_tx_eq_class_assignments,
+                t_101_CombineEqClassFiles.combined_gene_eq_class_defs,
+                t_101_CombineEqClassFiles.combined_gene_eq_class_assignments,
+                t_101_CombineEqClassFiles.combined_tx_eq_class_defs,
+                t_101_CombineEqClassFiles.combined_tx_eq_class_assignments,
             ],
             outdir = quant_dir + "/eqivalence_classes",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_125_FinalizeUmiToolsOutputs {
+    call FF.FinalizeToDir as t_127_FinalizeUmiToolsOutputs {
         input:
             files = [
-                t_106_UMIToolsGroup.output_bam,
-                t_106_UMIToolsGroup.output_tsv,
+                t_108_UMIToolsGroup.output_bam,
+                t_108_UMIToolsGroup.output_tsv,
             ],
             outdir = quant_dir + "/UMITools",
             keyfile = keyfile
     }
 
     # CCS:
-    call FF.FinalizeToDir as t_126_FinalizeCCSTxAndGeneAssignments {
+    call FF.FinalizeToDir as t_128_FinalizeCCSTxAndGeneAssignments {
         input:
             files = [
-                t_107_CreateCCSCountMatrixFromAnnotatedBam.count_matrix,
-                t_108_CreateCCSCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
+                t_109_CreateCCSCountMatrixFromAnnotatedBam.count_matrix,
+                t_110_CreateCCSCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
             ],
             outdir = quant_dir + "/CCS",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_127_FinalizeCCSRawQuantPickles {
+    call FF.FinalizeToDir as t_129_FinalizeCCSRawQuantPickles {
         input:
-            files = t_108_CreateCCSCountMatrixAnndataFromEqClasses.pickles,
+            files = t_110_CreateCCSCountMatrixAnndataFromEqClasses.pickles,
             outdir = quant_dir + "/CCS",
             keyfile = keyfile
     }
 
     # CLR:
-    call FF.FinalizeToDir as t_128_FinalizeCLRTxAndGeneAssignments {
+    call FF.FinalizeToDir as t_130_FinalizeCLRTxAndGeneAssignments {
         input:
             files = [
-                t_109_CreateCLRCountMatrixFromAnnotatedBam.count_matrix,
-                t_110_CreateCLRCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
+                t_111_CreateCLRCountMatrixFromAnnotatedBam.count_matrix,
+                t_112_CreateCLRCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
             ],
             outdir = quant_dir + "/CLR",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_129_FinalizeCLRRawQuantPickles {
+    call FF.FinalizeToDir as t_131_FinalizeCLRRawQuantPickles {
         input:
-            files = t_110_CreateCLRCountMatrixAnndataFromEqClasses.pickles,
+            files = t_112_CreateCLRCountMatrixAnndataFromEqClasses.pickles,
             outdir = quant_dir + "/CLR",
             keyfile = keyfile
     }
 
     # Overall:
-    call FF.FinalizeToDir as t_130_FinalizeOverallTxAndGeneAssignments {
+    call FF.FinalizeToDir as t_132_FinalizeOverallTxAndGeneAssignments {
         input:
             files = [
-                t_111_CreateOverallCountMatrixFromAnnotatedBam.count_matrix,
-                t_112_CreateOverallCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
+                t_113_CreateOverallCountMatrixFromAnnotatedBam.count_matrix,
+                t_114_CreateOverallCountMatrixAnndataFromEqClasses.transcript_gene_count_anndata_h5ad,
             ],
             outdir = quant_dir + "/Overall",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_131_FinalizeOverallRawQuantPickles {
+    call FF.FinalizeToDir as t_133_FinalizeOverallRawQuantPickles {
         input:
-            files = t_112_CreateOverallCountMatrixAnndataFromEqClasses.pickles,
+            files = t_114_CreateOverallCountMatrixAnndataFromEqClasses.pickles,
             outdir = quant_dir + "/Overall",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_132_FinalizeRefAndSt2Comparisons {
+    call FF.FinalizeToDir as t_134_FinalizeRefAndSt2Comparisons {
         input:
             files = [
-                t_092_GffCompareStringtie2toGencode.refmap,
-                t_092_GffCompareStringtie2toGencode.tmap,
-                t_092_GffCompareStringtie2toGencode.tracking,
-                t_092_GffCompareStringtie2toGencode.loci,
-                t_092_GffCompareStringtie2toGencode.annotated_gtf,
-                t_092_GffCompareStringtie2toGencode.stats,
-                t_092_GffCompareStringtie2toGencode.log,
+                t_094_GffCompareStringtie2toGencode.refmap,
+                t_094_GffCompareStringtie2toGencode.tmap,
+                t_094_GffCompareStringtie2toGencode.tracking,
+                t_094_GffCompareStringtie2toGencode.loci,
+                t_094_GffCompareStringtie2toGencode.annotated_gtf,
+                t_094_GffCompareStringtie2toGencode.stats,
+                t_094_GffCompareStringtie2toGencode.log,
 
-                t_093_GffCompareGencodetoStringtie2.refmap,
-                t_093_GffCompareGencodetoStringtie2.tmap,
-                t_093_GffCompareGencodetoStringtie2.tracking,
-                t_093_GffCompareGencodetoStringtie2.loci,
-                t_093_GffCompareGencodetoStringtie2.annotated_gtf,
-                t_093_GffCompareGencodetoStringtie2.stats,
-                t_093_GffCompareGencodetoStringtie2.log,
+                t_095_GffCompareGencodetoStringtie2.refmap,
+                t_095_GffCompareGencodetoStringtie2.tmap,
+                t_095_GffCompareGencodetoStringtie2.tracking,
+                t_095_GffCompareGencodetoStringtie2.loci,
+                t_095_GffCompareGencodetoStringtie2.annotated_gtf,
+                t_095_GffCompareGencodetoStringtie2.stats,
+                t_095_GffCompareGencodetoStringtie2.log,
             ],
             outdir = quant_dir + "/gencode_and_stringtie2",
             keyfile = keyfile
@@ -1246,33 +1266,33 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     # Finalize gene / tx assignment by contig:
     # NOTE: According to the scatter/gather documentation in the WDL spec, this will work correctly
     #       (https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#scatter--gather)
-    scatter (i in range(length(t_094_SplitArrayElementsByContig.contig_bams))) {
-        String contig = t_094_SplitArrayElementsByContig.contig_names[i]
+    scatter (i in range(length(t_096_SplitArrayElementsByContig.contig_bams))) {
+        String contig = t_096_SplitArrayElementsByContig.contig_names[i]
 
-        call FF.FinalizeToDir as t_133_FinalizeTxAndGeneAssignmentsByContig {
+        call FF.FinalizeToDir as t_135_FinalizeTxAndGeneAssignmentsByContig {
             input:
                 files = [
-                    t_096_GffCompareStringtie2toMasSeqReads.refmap[i],
-                    t_096_GffCompareStringtie2toMasSeqReads.tmap[i],
-                    t_096_GffCompareStringtie2toMasSeqReads.tracking[i],
-                    t_096_GffCompareStringtie2toMasSeqReads.loci[i],
-                    t_096_GffCompareStringtie2toMasSeqReads.annotated_gtf[i],
-                    t_096_GffCompareStringtie2toMasSeqReads.stats[i],
-                    t_096_GffCompareStringtie2toMasSeqReads.log[i],
+                    t_098_GffCompareStringtie2toMasSeqReads.refmap[i],
+                    t_098_GffCompareStringtie2toMasSeqReads.tmap[i],
+                    t_098_GffCompareStringtie2toMasSeqReads.tracking[i],
+                    t_098_GffCompareStringtie2toMasSeqReads.loci[i],
+                    t_098_GffCompareStringtie2toMasSeqReads.annotated_gtf[i],
+                    t_098_GffCompareStringtie2toMasSeqReads.stats[i],
+                    t_098_GffCompareStringtie2toMasSeqReads.log[i],
 
-                    t_097_GffCompareGencodetoMasSeqReads.refmap[i],
-                    t_097_GffCompareGencodetoMasSeqReads.tmap[i],
-                    t_097_GffCompareGencodetoMasSeqReads.tracking[i],
-                    t_097_GffCompareGencodetoMasSeqReads.loci[i],
-                    t_097_GffCompareGencodetoMasSeqReads.annotated_gtf[i],
-                    t_097_GffCompareGencodetoMasSeqReads.stats[i],
-                    t_097_GffCompareGencodetoMasSeqReads.log[i],
+                    t_099_GffCompareGencodetoMasSeqReads.refmap[i],
+                    t_099_GffCompareGencodetoMasSeqReads.tmap[i],
+                    t_099_GffCompareGencodetoMasSeqReads.tracking[i],
+                    t_099_GffCompareGencodetoMasSeqReads.loci[i],
+                    t_099_GffCompareGencodetoMasSeqReads.annotated_gtf[i],
+                    t_099_GffCompareGencodetoMasSeqReads.stats[i],
+                    t_099_GffCompareGencodetoMasSeqReads.log[i],
 
-                    t_098_QuantifyGffComparison.gene_assignments_file[i],
-                    t_098_QuantifyGffComparison.gene_eq_class_labels_file[i],
-                    t_098_QuantifyGffComparison.tx_equivalence_class_labels_file[i],
-                    t_098_QuantifyGffComparison.tx_equivalence_class_file[i],
-                    t_098_QuantifyGffComparison.graph_gpickle[i],
+                    t_100_QuantifyGffComparison.gene_assignments_file[i],
+                    t_100_QuantifyGffComparison.gene_eq_class_labels_file[i],
+                    t_100_QuantifyGffComparison.tx_equivalence_class_labels_file[i],
+                    t_100_QuantifyGffComparison.tx_equivalence_class_file[i],
+                    t_100_QuantifyGffComparison.graph_gpickle[i],
                 ],
                 outdir = quant_dir + "/by_contig/" + contig,
                 keyfile = keyfile
@@ -1281,80 +1301,80 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
     ##############################################################################################################
     # Finalize annotated, aligned array elements:
-    call FF.FinalizeToDir as t_134_FinalizeIntermediateAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_136_FinalizeIntermediateAnnotatedArrayElements {
         input:
             files = [
-                t_059_MergeCCSArrayElements.merged_bam,
-                t_059_MergeCCSArrayElements.merged_bai,
-                t_061_MergeCCSArrayElementsNonTruncated.merged_bam,
-                t_061_MergeCCSArrayElementsNonTruncated.merged_bai,
-                t_062_MergeCCSArrayElementsUmiPadded.merged_bam,
-                t_062_MergeCCSArrayElementsUmiPadded.merged_bai,
-                t_063_MergeCCSArrayElementsUmiCbcPadded.merged_bam,
-                t_063_MergeCCSArrayElementsUmiCbcPadded.merged_bai,
-                t_064_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
-                t_064_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected.merged_bai,
-                t_066_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bam,
-                t_066_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bai,
-                t_065_MergeLongbowPaddedCBCUncorrectableCCSArrayElements.merged_bam,
-                t_065_MergeLongbowPaddedCBCUncorrectableCCSArrayElements.merged_bai,
+                t_061_MergeCCSArrayElements.merged_bam,
+                t_061_MergeCCSArrayElements.merged_bai,
+                t_063_MergeCCSArrayElementsNonTruncated.merged_bam,
+                t_063_MergeCCSArrayElementsNonTruncated.merged_bai,
+                t_064_MergeCCSArrayElementsUmiPadded.merged_bam,
+                t_064_MergeCCSArrayElementsUmiPadded.merged_bai,
+                t_065_MergeCCSArrayElementsUmiCbcPadded.merged_bam,
+                t_065_MergeCCSArrayElementsUmiCbcPadded.merged_bai,
+                t_066_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
+                t_066_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected.merged_bai,
+                t_068_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bam,
+                t_068_MergeLongbowPaddedCBCCorrectedCCSArrayElements.merged_bai,
+                t_067_MergeLongbowPaddedCBCUncorrectableCCSArrayElements.merged_bam,
+                t_067_MergeLongbowPaddedCBCUncorrectableCCSArrayElements.merged_bai,
 
-                t_068_MergeCCSReclaimedArrayElements.merged_bam,
-                t_068_MergeCCSReclaimedArrayElements.merged_bai,
-                t_070_MergeCCSReclaimedArrayElementsNonTruncated.merged_bam,
-                t_070_MergeCCSReclaimedArrayElementsNonTruncated.merged_bai,
-                t_071_MergeCCSReclaimedArrayElementsUmiPadded.merged_bam,
-                t_071_MergeCCSReclaimedArrayElementsUmiPadded.merged_bai,
-                t_072_MergeCCSReclaimedArrayElementsUmiCbcPadded.merged_bam,
-                t_072_MergeCCSReclaimedArrayElementsUmiCbcPadded.merged_bai,
-                t_073_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
-                t_073_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bai,
-                t_074_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bam,
-                t_074_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bai,
+                t_070_MergeCCSReclaimedArrayElements.merged_bam,
+                t_070_MergeCCSReclaimedArrayElements.merged_bai,
+                t_072_MergeCCSReclaimedArrayElementsNonTruncated.merged_bam,
+                t_072_MergeCCSReclaimedArrayElementsNonTruncated.merged_bai,
+                t_073_MergeCCSReclaimedArrayElementsUmiPadded.merged_bam,
+                t_073_MergeCCSReclaimedArrayElementsUmiPadded.merged_bai,
+                t_074_MergeCCSReclaimedArrayElementsUmiCbcPadded.merged_bam,
+                t_074_MergeCCSReclaimedArrayElementsUmiCbcPadded.merged_bai,
+                t_075_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
+                t_075_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bai,
+                t_076_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bam,
+                t_076_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bai,
 
-                t_077_MergeAllArrayElementsNonTruncated.merged_bam,
-                t_077_MergeAllArrayElementsNonTruncated.merged_bai,
+                t_079_MergeAllArrayElementsNonTruncated.merged_bam,
+                t_079_MergeAllArrayElementsNonTruncated.merged_bai,
 
-                t_080_MergeAllAlignedArrayElementsNonTruncated.merged_bam,
-                t_080_MergeAllAlignedArrayElementsNonTruncated.merged_bai,
+                t_082_MergeAllAlignedArrayElementsNonTruncated.merged_bam,
+                t_082_MergeAllAlignedArrayElementsNonTruncated.merged_bai,
 
-                t_085_MergeAllAlignedAndFilteredArrayElements.merged_bam,
-                t_085_MergeAllAlignedAndFilteredArrayElements.merged_bai,
+                t_087_MergeAllAlignedAndFilteredArrayElements.merged_bam,
+                t_087_MergeAllAlignedAndFilteredArrayElements.merged_bai,
 
-                t_067_MergeLongbowExtractedCcsArrayElements.merged_bam,
-                t_067_MergeLongbowExtractedCcsArrayElements.merged_bai,
-                t_073_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
-                t_073_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bai,
-                t_074_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bam,
-                t_074_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bai,
-                t_076_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bam,
-                t_076_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bai,
+                t_069_MergeLongbowExtractedCcsArrayElements.merged_bam,
+                t_069_MergeLongbowExtractedCcsArrayElements.merged_bai,
+                t_075_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
+                t_075_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bai,
+                t_076_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bam,
+                t_076_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bai,
+                t_078_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bam,
+                t_078_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bai,
 
-                t_089_RestoreCcsOriginalReadNames.bam_out,
-                t_090_RestoreClrOriginalReadNames.bam_out,
+                t_091_RestoreCcsOriginalReadNames.bam_out,
+                t_092_RestoreClrOriginalReadNames.bam_out,
 
-                t_091_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
-                t_091_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bai,
+                t_093_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
+                t_093_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bai,
 
-                t_101_CorrectUmisWithSetCover.uncorrected_umi_reads
+                t_103_CorrectUmisWithSetCover.uncorrected_umi_reads
             ],
             outdir = intermediate_array_elements_dir,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_135_FinalizeAnnotatedArrayElements {
+    call FF.FinalizeToDir as t_137_FinalizeAnnotatedArrayElements {
         input:
             files = [
-                t_101_CorrectUmisWithSetCover.corrected_umi_reads,
-                t_101_CorrectUmisWithSetCover.corrected_umi_reads_index,
+                t_103_CorrectUmisWithSetCover.corrected_umi_reads,
+                t_103_CorrectUmisWithSetCover.corrected_umi_reads_index,
 
-                t_102_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
-                t_103_IndexCcsReadsWithCorrectedUmis.bai,
-                t_104_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
-                t_105_IndexCcsReclaimedReadsWithCorrectedUmis.bai,
+                t_104_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
+                t_105_IndexCcsReadsWithCorrectedUmis.bai,
+                t_106_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
+                t_107_IndexCcsReclaimedReadsWithCorrectedUmis.bai,
 
-                t_085_MergeAllAlignedAndFilteredArrayElements.merged_bam,
-                t_085_MergeAllAlignedAndFilteredArrayElements.merged_bai
+                t_087_MergeAllAlignedAndFilteredArrayElements.merged_bam,
+                t_087_MergeAllAlignedAndFilteredArrayElements.merged_bai
             ],
             outdir = array_element_dir,
             keyfile = keyfile
@@ -1362,41 +1382,41 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
     ##############################################################################################################
     # Finalize meta files:
-    call FF.FinalizeToDir as t_136_FinalizeMeta {
+    call FF.FinalizeToDir as t_138_FinalizeMeta {
         input:
             files = [
                 cell_barcode_whitelist,
-                t_081_MergeAllCCSBarcodeConfShards.merged_file,
-                t_082_MergeAllCCSReclaimedBarcodeConfShards.merged_file
+                t_083_MergeAllCCSBarcodeConfShards.merged_file,
+                t_084_MergeAllCCSReclaimedBarcodeConfShards.merged_file
             ],
             outdir = meta_files_dir,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_137_FinalizeCCSCBCcorrectionLogsToMeta {
+    call FF.FinalizeToDir as t_139_FinalizeCCSCBCcorrectionLogsToMeta {
         input:
-            files = t_027_LongbowCorrectCCSCorrectedArrayElementCBCs.log,
+            files = t_028_LongbowCorrectCCSCorrectedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_cbc_correction_logs",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_138_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
+    call FF.FinalizeToDir as t_140_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
         input:
-            files = t_034_LongbowCorrectCcsReclaimedArrayElementCBCs.log,
+            files = t_036_LongbowCorrectCcsReclaimedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_rejected_cbc_correction_logs",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_139_FinalizeCCSUmiAdjustmentLogs {
+    call FF.FinalizeToDir as t_141_FinalizeCCSUmiAdjustmentLogs {
         input:
-            files = t_028_AdjustCCSUMIs.log,
+            files = t_029_AdjustCCSUMIs.log,
             outdir = meta_files_dir + "/" + "umi_adjustment_logs_ccs",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_140_FinalizeCCSReclaimedUmiAdjustmentLogs {
+    call FF.FinalizeToDir as t_142_FinalizeCCSReclaimedUmiAdjustmentLogs {
         input:
-            files = t_035_AdjustCcsReclaimedUMIs.log,
+            files = t_037_AdjustCcsReclaimedUMIs.log,
             outdir = meta_files_dir + "/" + "umi_adjustment_logs_ccs_reclaimed",
             keyfile = keyfile
     }
@@ -1404,19 +1424,19 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     ##############################################################################################################
     # Finalize the discovered transcriptome:
     if ( !is_SIRV_data ) {
-        call FF.FinalizeToDir as t_141_FinalizeDiscoveredTranscriptome {
+        call FF.FinalizeToDir as t_143_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
-                    t_086_ST2_Quant.st_gtf,
-                    t_087_ST2_ExtractTranscriptSequences.transcripts_fa,
-                    t_087_ST2_ExtractTranscriptSequences.transcripts_fai,
-                    t_087_ST2_ExtractTranscriptSequences.transcripts_dict,
-                    t_088_ST2_CompareTranscriptomes.annotated_gtf,
-                    t_088_ST2_CompareTranscriptomes.loci,
-                    t_088_ST2_CompareTranscriptomes.stats,
-                    t_088_ST2_CompareTranscriptomes.tracking,
-                    t_088_ST2_CompareTranscriptomes.refmap,
-                    t_088_ST2_CompareTranscriptomes.tmap,
+                    t_088_ST2_Quant.st_gtf,
+                    t_089_ST2_ExtractTranscriptSequences.transcripts_fa,
+                    t_089_ST2_ExtractTranscriptSequences.transcripts_fai,
+                    t_089_ST2_ExtractTranscriptSequences.transcripts_dict,
+                    t_090_ST2_CompareTranscriptomes.annotated_gtf,
+                    t_090_ST2_CompareTranscriptomes.loci,
+                    t_090_ST2_CompareTranscriptomes.stats,
+                    t_090_ST2_CompareTranscriptomes.tracking,
+                    t_090_ST2_CompareTranscriptomes.refmap,
+                    t_090_ST2_CompareTranscriptomes.tmap,
                 ],
                 outdir = base_out_dir + "/discovered_transcriptome",
                 keyfile = keyfile
@@ -1424,45 +1444,45 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     }
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_142_FinalizeArrayReads {
+    call FF.FinalizeToDir as t_144_FinalizeArrayReads {
         input:
             files = [
 
-                t_041_MergeCCSLongbowAnnotatedArrayReads.merged_bam,
-                t_041_MergeCCSLongbowAnnotatedArrayReads.merged_bai,
-                t_042_PbIndexMergedCCSLongbowAnnotatedArrayReads.pbindex,
+                t_043_MergeCCSLongbowAnnotatedArrayReads.merged_bam,
+                t_043_MergeCCSLongbowAnnotatedArrayReads.merged_bai,
+                t_044_PbIndexMergedCCSLongbowAnnotatedArrayReads.pbindex,
 
-                t_043_MergeCCSReclaimableLongbowAnnotatedArrayReads.merged_bam,
-                t_043_MergeCCSReclaimableLongbowAnnotatedArrayReads.merged_bai,
-                t_044_PbIndexMergedCCSReclaimableLongbowAnnotatedArrayReads.pbindex,
+                t_045_MergeCCSReclaimableLongbowAnnotatedArrayReads.merged_bam,
+                t_045_MergeCCSReclaimableLongbowAnnotatedArrayReads.merged_bai,
+                t_046_PbIndexMergedCCSReclaimableLongbowAnnotatedArrayReads.pbindex,
 
-                t_053_MergeLongbowPassedReads.merged_bam,
-                t_053_MergeLongbowPassedReads.merged_bai,
-                t_054_PbIndexMergedLongbowPassingReads.pbindex,
+                t_055_MergeLongbowPassedReads.merged_bam,
+                t_055_MergeLongbowPassedReads.merged_bai,
+                t_056_PbIndexMergedLongbowPassingReads.pbindex,
 
-                t_055_MergeLongbowFailedReads.merged_bam,
-                t_055_MergeLongbowFailedReads.merged_bai,
-                t_056_PbIndexMergedLongbowFailedReads.pbindex,
+                t_057_MergeLongbowFailedReads.merged_bam,
+                t_057_MergeLongbowFailedReads.merged_bai,
+                t_058_PbIndexMergedLongbowFailedReads.pbindex,
 
-                t_057_MergeAllLongbowAnnotatedReads.merged_bam,
-                t_057_MergeAllLongbowAnnotatedReads.merged_bai,
-                t_058_PbIndexMergedAllLongbowAnnotatedReads.pbindex,
+                t_059_MergeAllLongbowAnnotatedReads.merged_bam,
+                t_059_MergeAllLongbowAnnotatedReads.merged_bai,
+                t_060_PbIndexMergedAllLongbowAnnotatedReads.pbindex,
 
-                t_045_MergeCCSLongbowPassedArrayReads.merged_bam,
-                t_045_MergeCCSLongbowPassedArrayReads.merged_bai,
-                t_046_PbIndexMergedCCSLongbowPassedArrayReads.pbindex,
+                t_047_MergeCCSLongbowPassedArrayReads.merged_bam,
+                t_047_MergeCCSLongbowPassedArrayReads.merged_bai,
+                t_048_PbIndexMergedCCSLongbowPassedArrayReads.pbindex,
 
-                t_047_MergeCCSLongbowFailedArrayReads.merged_bam,
-                t_047_MergeCCSLongbowFailedArrayReads.merged_bai,
-                t_048_PbIndexMergedCCSLongbowFailedArrayReads.pbindex,
+                t_049_MergeCCSLongbowFailedArrayReads.merged_bam,
+                t_049_MergeCCSLongbowFailedArrayReads.merged_bai,
+                t_050_PbIndexMergedCCSLongbowFailedArrayReads.pbindex,
 
-                t_049_MergeCCSReclaimedArrayReads.merged_bam,
-                t_049_MergeCCSReclaimedArrayReads.merged_bai,
-                t_050_PbIndexMergedCCSReclaimedArrayReads.pbindex,
+                t_051_MergeCCSReclaimedArrayReads.merged_bam,
+                t_051_MergeCCSReclaimedArrayReads.merged_bai,
+                t_052_PbIndexMergedCCSReclaimedArrayReads.pbindex,
 
-                t_051_MergeCCSUnreclaimableArrayReads.merged_bam,
-                t_051_MergeCCSUnreclaimableArrayReads.merged_bai,
-                t_052_PbIndexMergedCCSUnreclaimableReclaimedArrayReads.pbindex,
+                t_053_MergeCCSUnreclaimableArrayReads.merged_bam,
+                t_053_MergeCCSUnreclaimableArrayReads.merged_bai,
+                t_054_PbIndexMergedCCSUnreclaimableReclaimedArrayReads.pbindex,
 
             ],
             outdir = intermediate_array_reads_dir,
@@ -1473,201 +1493,229 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     # Finalize Stats:
 
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.FinalizeToDir as t_143_FinalizeHighLevelStats {
+    call FF.FinalizeToDir as t_145_FinalizeHighLevelStats {
         input:
-            files = [ t_011_FindCCSReport.ccs_report[0], t_117_AggregateLongbowCorrectStats.stats ],
+            files = [ t_011_FindCCSReport.ccs_report[0], t_119_AggregateLongbowCorrectStats.stats ],
             outdir = stats_out_dir,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_144_FinalizeQuantArrayElementStats {
+    # Finalize Longbow Sift stats:
+    scatter (i_f in range(length(t_009_ShardLongReads.unmapped_shards))) {
+        call FF.FinalizeToFile as t_146_FinalizeCcsLongbowSiftStats {
+            input:
+                file = t_025_LongbowSiftCCSArrayElements.stats_tsv[i_f],
+                outfile = stats_out_dir + "/longbow_stats/sift/ccs/" + SM + "_ccs_array_elements_annotated_non_truncated_sifted_" + i_f + ".stats.tsv",
+                keyfile = keyfile
+        }
+        call FF.FinalizeToFile as t_147_FinalizeCcsLongbowSiftSummaryStats {
+            input:
+                file = t_025_LongbowSiftCCSArrayElements.summary_stats_tsv[i_f],
+                outfile = stats_out_dir + "/longbow_stats/sift/ccs/" + SM + "_ccs_array_elements_annotated_non_truncated_sifted_" + i_f + ".summary_stats.tsv",
+                keyfile = keyfile
+        }
+        call FF.FinalizeToFile as t_148_FinalizeCcsReclaimedLongbowSiftStats {
+            input:
+                file = t_033_LongbowSiftCcsReclaimedArrayElements.stats_tsv[i_f],
+                outfile = stats_out_dir + "/longbow_stats/sift/ccs_reclaimed/" + SM + "_ccs_reclaimed_array_elements_annotated_non_truncated_sifted_" + i_f + ".stats.tsv",
+                keyfile = keyfile
+        }
+        call FF.FinalizeToFile as t_149_FinalizeCcsReclaimedLongbowSiftSummaryStats {
+            input:
+                file = t_033_LongbowSiftCcsReclaimedArrayElements.summary_stats_tsv[i_f],
+                outfile = stats_out_dir + "/longbow_stats/sift/ccs_reclaimed/" + SM + "_ccs_reclaimed_array_elements_annotated_non_truncated_sifted_" + i_f + ".summary_stats.tsv",
+                keyfile = keyfile
+        }
+    }
+
+    call FF.FinalizeToDir as t_150_FinalizeQuantArrayElementStats {
         input:
             files = [
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.raw_stats,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.summary_stats,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.first_frag_qual,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.last_frag_qual,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.first_frag_gc_content,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.last_frag_gc_content,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.acgt_content_per_cycle,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.insert_size,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.read_length_dist,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.indel_distribution,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.indels_per_cycle,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.coverage_distribution,
-                t_116_AlignedAnnotatedArrayElementsForQuantStats.gc_depth,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.raw_stats,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.summary_stats,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.first_frag_qual,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.last_frag_qual,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.first_frag_gc_content,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.last_frag_gc_content,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.acgt_content_per_cycle,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.insert_size,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.read_length_dist,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.indel_distribution,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.indels_per_cycle,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.coverage_distribution,
+                t_118_AlignedAnnotatedArrayElementsForQuantStats.gc_depth,
             ],
             outdir = stats_out_dir + "/array_elements_for_quant/",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_145_FinalizeTxomeDiscoveryArrayElementStats {
+    call FF.FinalizeToDir as t_151_FinalizeTxomeDiscoveryArrayElementStats {
         input:
             files = [
-                t_115_AlignedFilteredArrayElementStats.raw_stats,
-                t_115_AlignedFilteredArrayElementStats.summary_stats,
-                t_115_AlignedFilteredArrayElementStats.first_frag_qual,
-                t_115_AlignedFilteredArrayElementStats.last_frag_qual,
-                t_115_AlignedFilteredArrayElementStats.first_frag_gc_content,
-                t_115_AlignedFilteredArrayElementStats.last_frag_gc_content,
-                t_115_AlignedFilteredArrayElementStats.acgt_content_per_cycle,
-                t_115_AlignedFilteredArrayElementStats.insert_size,
-                t_115_AlignedFilteredArrayElementStats.read_length_dist,
-                t_115_AlignedFilteredArrayElementStats.indel_distribution,
-                t_115_AlignedFilteredArrayElementStats.indels_per_cycle,
-                t_115_AlignedFilteredArrayElementStats.coverage_distribution,
-                t_115_AlignedFilteredArrayElementStats.gc_depth,
+                t_117_AlignedFilteredArrayElementStats.raw_stats,
+                t_117_AlignedFilteredArrayElementStats.summary_stats,
+                t_117_AlignedFilteredArrayElementStats.first_frag_qual,
+                t_117_AlignedFilteredArrayElementStats.last_frag_qual,
+                t_117_AlignedFilteredArrayElementStats.first_frag_gc_content,
+                t_117_AlignedFilteredArrayElementStats.last_frag_gc_content,
+                t_117_AlignedFilteredArrayElementStats.acgt_content_per_cycle,
+                t_117_AlignedFilteredArrayElementStats.insert_size,
+                t_117_AlignedFilteredArrayElementStats.read_length_dist,
+                t_117_AlignedFilteredArrayElementStats.indel_distribution,
+                t_117_AlignedFilteredArrayElementStats.indels_per_cycle,
+                t_117_AlignedFilteredArrayElementStats.coverage_distribution,
+                t_117_AlignedFilteredArrayElementStats.gc_depth,
             ],
             outdir = stats_out_dir + "/array_elements_for_transcriptome_discovery/",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_146_FinalizeAlignedArrayElementStats {
+    call FF.FinalizeToDir as t_152_FinalizeAlignedArrayElementStats {
         input:
             files = [
-                t_114_AlignedArrayElementStats.raw_stats,
-                t_114_AlignedArrayElementStats.summary_stats,
-                t_114_AlignedArrayElementStats.first_frag_qual,
-                t_114_AlignedArrayElementStats.last_frag_qual,
-                t_114_AlignedArrayElementStats.first_frag_gc_content,
-                t_114_AlignedArrayElementStats.last_frag_gc_content,
-                t_114_AlignedArrayElementStats.acgt_content_per_cycle,
-                t_114_AlignedArrayElementStats.insert_size,
-                t_114_AlignedArrayElementStats.read_length_dist,
-                t_114_AlignedArrayElementStats.indel_distribution,
-                t_114_AlignedArrayElementStats.indels_per_cycle,
-                t_114_AlignedArrayElementStats.coverage_distribution,
-                t_114_AlignedArrayElementStats.gc_depth,
+                t_116_AlignedArrayElementStats.raw_stats,
+                t_116_AlignedArrayElementStats.summary_stats,
+                t_116_AlignedArrayElementStats.first_frag_qual,
+                t_116_AlignedArrayElementStats.last_frag_qual,
+                t_116_AlignedArrayElementStats.first_frag_gc_content,
+                t_116_AlignedArrayElementStats.last_frag_gc_content,
+                t_116_AlignedArrayElementStats.acgt_content_per_cycle,
+                t_116_AlignedArrayElementStats.insert_size,
+                t_116_AlignedArrayElementStats.read_length_dist,
+                t_116_AlignedArrayElementStats.indel_distribution,
+                t_116_AlignedArrayElementStats.indels_per_cycle,
+                t_116_AlignedArrayElementStats.coverage_distribution,
+                t_116_AlignedArrayElementStats.gc_depth,
             ],
             outdir = stats_out_dir + "/aligned_array_elements/",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_147_FinalizeBaselineArrayElementStats {
+    call FF.FinalizeToDir as t_153_FinalizeBaselineArrayElementStats {
         input:
             files = [
-                t_113_BaselineArrayElementStats.raw_stats,
-                t_113_BaselineArrayElementStats.summary_stats,
-                t_113_BaselineArrayElementStats.first_frag_qual,
-                t_113_BaselineArrayElementStats.last_frag_qual,
-                t_113_BaselineArrayElementStats.first_frag_gc_content,
-                t_113_BaselineArrayElementStats.last_frag_gc_content,
-                t_113_BaselineArrayElementStats.acgt_content_per_cycle,
-                t_113_BaselineArrayElementStats.insert_size,
-                t_113_BaselineArrayElementStats.read_length_dist,
-                t_113_BaselineArrayElementStats.indel_distribution,
-                t_113_BaselineArrayElementStats.indels_per_cycle,
-                t_113_BaselineArrayElementStats.coverage_distribution,
-                t_113_BaselineArrayElementStats.gc_depth,
+                t_115_BaselineArrayElementStats.raw_stats,
+                t_115_BaselineArrayElementStats.summary_stats,
+                t_115_BaselineArrayElementStats.first_frag_qual,
+                t_115_BaselineArrayElementStats.last_frag_qual,
+                t_115_BaselineArrayElementStats.first_frag_gc_content,
+                t_115_BaselineArrayElementStats.last_frag_gc_content,
+                t_115_BaselineArrayElementStats.acgt_content_per_cycle,
+                t_115_BaselineArrayElementStats.insert_size,
+                t_115_BaselineArrayElementStats.read_length_dist,
+                t_115_BaselineArrayElementStats.indel_distribution,
+                t_115_BaselineArrayElementStats.indels_per_cycle,
+                t_115_BaselineArrayElementStats.coverage_distribution,
+                t_115_BaselineArrayElementStats.gc_depth,
             ],
             outdir = stats_out_dir + "/baseline_array_elements/",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_148_FinalizeCCSLongbowStats {
+    call FF.FinalizeToDir as t_154_FinalizeCCSLongbowStats {
         input:
             files = [
-                t_118_CCS_longbow_stats.summary_stats,
-                t_118_CCS_longbow_stats.array_length_counts_plot_png,
-                t_118_CCS_longbow_stats.array_length_counts_plot_svg,
-                t_118_CCS_longbow_stats.ligation_heatmap_nn_png,
-                t_118_CCS_longbow_stats.ligation_heatmap_nn_svg,
-                t_118_CCS_longbow_stats.ligation_heatmap_png,
-                t_118_CCS_longbow_stats.ligation_heatmap_svg,
-                t_118_CCS_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_118_CCS_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_118_CCS_longbow_stats.ligation_heatmap_reduced_png,
-                t_118_CCS_longbow_stats.ligation_heatmap_reduced_svg,
+                t_120_CCS_longbow_stats.summary_stats,
+                t_120_CCS_longbow_stats.array_length_counts_plot_png,
+                t_120_CCS_longbow_stats.array_length_counts_plot_svg,
+                t_120_CCS_longbow_stats.ligation_heatmap_nn_png,
+                t_120_CCS_longbow_stats.ligation_heatmap_nn_svg,
+                t_120_CCS_longbow_stats.ligation_heatmap_png,
+                t_120_CCS_longbow_stats.ligation_heatmap_svg,
+                t_120_CCS_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_120_CCS_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_120_CCS_longbow_stats.ligation_heatmap_reduced_png,
+                t_120_CCS_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = stats_out_dir + "/longbow_stats/CCS_Corrected/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_149_FinalizeReclaimableLongbowStats {
+    call FF.FinalizeToDir as t_155_FinalizeReclaimableLongbowStats {
         input:
             files = [
-                t_119_Reclaimable_longbow_stats.summary_stats,
-                t_119_Reclaimable_longbow_stats.array_length_counts_plot_png,
-                t_119_Reclaimable_longbow_stats.array_length_counts_plot_svg,
-                t_119_Reclaimable_longbow_stats.ligation_heatmap_nn_png,
-                t_119_Reclaimable_longbow_stats.ligation_heatmap_nn_svg,
-                t_119_Reclaimable_longbow_stats.ligation_heatmap_png,
-                t_119_Reclaimable_longbow_stats.ligation_heatmap_svg,
-                t_119_Reclaimable_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_119_Reclaimable_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_119_Reclaimable_longbow_stats.ligation_heatmap_reduced_png,
-                t_119_Reclaimable_longbow_stats.ligation_heatmap_reduced_svg,
+                t_121_Reclaimable_longbow_stats.summary_stats,
+                t_121_Reclaimable_longbow_stats.array_length_counts_plot_png,
+                t_121_Reclaimable_longbow_stats.array_length_counts_plot_svg,
+                t_121_Reclaimable_longbow_stats.ligation_heatmap_nn_png,
+                t_121_Reclaimable_longbow_stats.ligation_heatmap_nn_svg,
+                t_121_Reclaimable_longbow_stats.ligation_heatmap_png,
+                t_121_Reclaimable_longbow_stats.ligation_heatmap_svg,
+                t_121_Reclaimable_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_121_Reclaimable_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_121_Reclaimable_longbow_stats.ligation_heatmap_reduced_png,
+                t_121_Reclaimable_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = stats_out_dir + "/longbow_stats/CCS_Reclaimable/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_150_FinalizeReclaimedLongbowStats {
+    call FF.FinalizeToDir as t_156_FinalizeReclaimedLongbowStats {
         input:
             files = [
-                t_120_Reclaimed_longbow_stats.summary_stats,
-                t_120_Reclaimed_longbow_stats.array_length_counts_plot_png,
-                t_120_Reclaimed_longbow_stats.array_length_counts_plot_svg,
-                t_120_Reclaimed_longbow_stats.ligation_heatmap_nn_png,
-                t_120_Reclaimed_longbow_stats.ligation_heatmap_nn_svg,
-                t_120_Reclaimed_longbow_stats.ligation_heatmap_png,
-                t_120_Reclaimed_longbow_stats.ligation_heatmap_svg,
-                t_120_Reclaimed_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_120_Reclaimed_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_120_Reclaimed_longbow_stats.ligation_heatmap_reduced_png,
-                t_120_Reclaimed_longbow_stats.ligation_heatmap_reduced_svg,
+                t_122_Reclaimed_longbow_stats.summary_stats,
+                t_122_Reclaimed_longbow_stats.array_length_counts_plot_png,
+                t_122_Reclaimed_longbow_stats.array_length_counts_plot_svg,
+                t_122_Reclaimed_longbow_stats.ligation_heatmap_nn_png,
+                t_122_Reclaimed_longbow_stats.ligation_heatmap_nn_svg,
+                t_122_Reclaimed_longbow_stats.ligation_heatmap_png,
+                t_122_Reclaimed_longbow_stats.ligation_heatmap_svg,
+                t_122_Reclaimed_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_122_Reclaimed_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_122_Reclaimed_longbow_stats.ligation_heatmap_reduced_png,
+                t_122_Reclaimed_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = stats_out_dir + "/longbow_stats/CCS_Reclaimed/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_151_FinalizeOverallLongbowStats {
+    call FF.FinalizeToDir as t_157_FinalizeOverallLongbowStats {
         input:
             files = [
-                t_123_Overall_longbow_stats.summary_stats,
-                t_123_Overall_longbow_stats.array_length_counts_plot_png,
-                t_123_Overall_longbow_stats.array_length_counts_plot_svg,
-                t_123_Overall_longbow_stats.ligation_heatmap_nn_png,
-                t_123_Overall_longbow_stats.ligation_heatmap_nn_svg,
-                t_123_Overall_longbow_stats.ligation_heatmap_png,
-                t_123_Overall_longbow_stats.ligation_heatmap_svg,
-                t_123_Overall_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_123_Overall_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_123_Overall_longbow_stats.ligation_heatmap_reduced_png,
-                t_123_Overall_longbow_stats.ligation_heatmap_reduced_svg,
+                t_125_Overall_longbow_stats.summary_stats,
+                t_125_Overall_longbow_stats.array_length_counts_plot_png,
+                t_125_Overall_longbow_stats.array_length_counts_plot_svg,
+                t_125_Overall_longbow_stats.ligation_heatmap_nn_png,
+                t_125_Overall_longbow_stats.ligation_heatmap_nn_svg,
+                t_125_Overall_longbow_stats.ligation_heatmap_png,
+                t_125_Overall_longbow_stats.ligation_heatmap_svg,
+                t_125_Overall_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_125_Overall_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_125_Overall_longbow_stats.ligation_heatmap_reduced_png,
+                t_125_Overall_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = stats_out_dir + "/longbow_stats/Overall/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_152_FinalizeAllPassedLongbowStats {
+    call FF.FinalizeToDir as t_158_FinalizeAllPassedLongbowStats {
         input:
             files = [
-                t_121_Passed_longbow_stats.summary_stats,
-                t_121_Passed_longbow_stats.array_length_counts_plot_png,
-                t_121_Passed_longbow_stats.array_length_counts_plot_svg,
-                t_121_Passed_longbow_stats.ligation_heatmap_nn_png,
-                t_121_Passed_longbow_stats.ligation_heatmap_nn_svg,
-                t_121_Passed_longbow_stats.ligation_heatmap_png,
-                t_121_Passed_longbow_stats.ligation_heatmap_svg,
-                t_121_Passed_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_121_Passed_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_121_Passed_longbow_stats.ligation_heatmap_reduced_png,
-                t_121_Passed_longbow_stats.ligation_heatmap_reduced_svg,
+                t_123_Passed_longbow_stats.summary_stats,
+                t_123_Passed_longbow_stats.array_length_counts_plot_png,
+                t_123_Passed_longbow_stats.array_length_counts_plot_svg,
+                t_123_Passed_longbow_stats.ligation_heatmap_nn_png,
+                t_123_Passed_longbow_stats.ligation_heatmap_nn_svg,
+                t_123_Passed_longbow_stats.ligation_heatmap_png,
+                t_123_Passed_longbow_stats.ligation_heatmap_svg,
+                t_123_Passed_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_123_Passed_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_123_Passed_longbow_stats.ligation_heatmap_reduced_png,
+                t_123_Passed_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = stats_out_dir + "/longbow_stats/All_Longbow_Passed/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_153_FinalizeAllPassedLongbowStats {
+    call FF.FinalizeToDir as t_159_FinalizeAllPassedLongbowStats {
         input:
             files = [
-                t_122_Failed_longbow_stats.summary_stats,
-                t_122_Failed_longbow_stats.array_length_counts_plot_png,
-                t_122_Failed_longbow_stats.array_length_counts_plot_svg,
-                t_122_Failed_longbow_stats.ligation_heatmap_nn_png,
-                t_122_Failed_longbow_stats.ligation_heatmap_nn_svg,
-                t_122_Failed_longbow_stats.ligation_heatmap_png,
-                t_122_Failed_longbow_stats.ligation_heatmap_svg,
-                t_122_Failed_longbow_stats.ligation_heatmap_nn_reduced_png,
-                t_122_Failed_longbow_stats.ligation_heatmap_nn_reduced_svg,
-                t_122_Failed_longbow_stats.ligation_heatmap_reduced_png,
-                t_122_Failed_longbow_stats.ligation_heatmap_reduced_svg,
+                t_124_Failed_longbow_stats.summary_stats,
+                t_124_Failed_longbow_stats.array_length_counts_plot_png,
+                t_124_Failed_longbow_stats.array_length_counts_plot_svg,
+                t_124_Failed_longbow_stats.ligation_heatmap_nn_png,
+                t_124_Failed_longbow_stats.ligation_heatmap_nn_svg,
+                t_124_Failed_longbow_stats.ligation_heatmap_png,
+                t_124_Failed_longbow_stats.ligation_heatmap_svg,
+                t_124_Failed_longbow_stats.ligation_heatmap_nn_reduced_png,
+                t_124_Failed_longbow_stats.ligation_heatmap_nn_reduced_svg,
+                t_124_Failed_longbow_stats.ligation_heatmap_reduced_png,
+                t_124_Failed_longbow_stats.ligation_heatmap_reduced_svg,
             ],
             outdir = stats_out_dir + "/longbow_stats/All_Longbow_Failed/",
             keyfile = keyfile
@@ -1675,7 +1723,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_154_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_160_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile
