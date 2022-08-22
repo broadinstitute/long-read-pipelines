@@ -56,24 +56,14 @@ task Self_Align {
     }
 
     parameter_meta {
-        assembly_fasta: "Hifiasm Assembly Fasta File"
+        filtered_contigs: "Filtered contigs based on genome ßlength"
 
     }
 
 
 
     command <<<
-        set -euxo pipefail
 
-        while read line ; do
-            if [ ${line:0:1} == ">" ]; then
-                filename=$(echo "$line" | cut -d ":" -f1 | tr -d ">")
-                touch "$filename".fasta
-                echo "$line" >> "split.${filename}".fasta
-            else
-                echo "$line" >> "split.${filename}".fasta
-            fi
-        done < ~{assembly_fasta}
     >>>
 
     output {
@@ -81,7 +71,7 @@ task Self_Align {
     }
 
 
-    #########################
+    ########################
     runtime {
         disks: "local-disk 100 HDD"
         docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
