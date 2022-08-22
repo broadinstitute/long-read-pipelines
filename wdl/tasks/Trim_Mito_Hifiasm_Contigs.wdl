@@ -34,7 +34,7 @@ task Filter_Contigs {
 
     command <<<
         set -euxo pipefail
-        awk 'BEGIN {RS = ">" ; ORS = ""} length($2) >16000 && length($2) {print ">"$0}' ~{assembly_fasta} > filtered_contigs.fasta
+        awk 'BEGIN {RS = ">" ; ORS = ""} length($2) >16000 && length($2) < 30000 {print ">"$0}' ~{assembly_fasta} > filtered_contigs.fasta
 
     >>>
 
