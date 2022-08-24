@@ -1362,7 +1362,23 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_137_FinalizeAnnotatedArrayElements {
+    # Finalize Longbow Sift rejected reads:
+    scatter (i_f in range(length(t_009_ShardLongReads.unmapped_shards))) {
+        call FF.FinalizeToFile as t_137_FinalizeCcsLongbowSiftRejectedReads {
+            input:
+                file = t_025_LongbowSiftCCSArrayElements.sift_failed_bam[i_f],
+                outfile = intermediate_array_elements_dir + "/longbow_sift/ccs/" + SM + "_ccs_array_elements_annotated_non_truncated_" + i_f + ".sift_failed.bam",
+                keyfile = keyfile
+        }
+        call FF.FinalizeToFile as t_138_FinalizeCcsReclaimedLongbowSiftRejectedReads {
+            input:
+                file = t_033_LongbowSiftCcsReclaimedArrayElements.sift_failed_bam[i_f],
+                outfile = intermediate_array_elements_dir + "/longbow_sift/ccs/" + SM + "_ccs_reclaimed_array_elements_annotated_non_truncated_" + i_f + ".sift_failed.bam",
+                keyfile = keyfile
+        }
+    }
+
+    call FF.FinalizeToDir as t_139_FinalizeAnnotatedArrayElements {
         input:
             files = [
                 t_103_CorrectUmisWithSetCover.corrected_umi_reads,
@@ -1382,7 +1398,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
     ##############################################################################################################
     # Finalize meta files:
-    call FF.FinalizeToDir as t_138_FinalizeMeta {
+    call FF.FinalizeToDir as t_140_FinalizeMeta {
         input:
             files = [
                 cell_barcode_whitelist,
@@ -1393,28 +1409,28 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_139_FinalizeCCSCBCcorrectionLogsToMeta {
+    call FF.FinalizeToDir as t_141_FinalizeCCSCBCcorrectionLogsToMeta {
         input:
             files = t_028_LongbowCorrectCCSCorrectedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_cbc_correction_logs",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_140_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
+    call FF.FinalizeToDir as t_142_FinalizeCCSRejectedCBCcorrectionLogsToMeta {
         input:
             files = t_036_LongbowCorrectCcsReclaimedArrayElementCBCs.log,
             outdir = meta_files_dir + "/" + "ccs_rejected_cbc_correction_logs",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_141_FinalizeCCSUmiAdjustmentLogs {
+    call FF.FinalizeToDir as t_143_FinalizeCCSUmiAdjustmentLogs {
         input:
             files = t_029_AdjustCCSUMIs.log,
             outdir = meta_files_dir + "/" + "umi_adjustment_logs_ccs",
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_142_FinalizeCCSReclaimedUmiAdjustmentLogs {
+    call FF.FinalizeToDir as t_144_FinalizeCCSReclaimedUmiAdjustmentLogs {
         input:
             files = t_037_AdjustCcsReclaimedUMIs.log,
             outdir = meta_files_dir + "/" + "umi_adjustment_logs_ccs_reclaimed",
@@ -1424,7 +1440,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     ##############################################################################################################
     # Finalize the discovered transcriptome:
     if ( !is_SIRV_data ) {
-        call FF.FinalizeToDir as t_143_FinalizeDiscoveredTranscriptome {
+        call FF.FinalizeToDir as t_145_FinalizeDiscoveredTranscriptome {
             input:
                 files = [
                     t_088_ST2_Quant.st_gtf,
@@ -1444,7 +1460,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     }
     ##############################################################################################################
     # Finalize the intermediate reads files (from raw CCS corrected reads through split array elements)
-    call FF.FinalizeToDir as t_144_FinalizeArrayReads {
+    call FF.FinalizeToDir as t_146_FinalizeArrayReads {
         input:
             files = [
 
@@ -1493,7 +1509,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     # Finalize Stats:
 
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.FinalizeToDir as t_145_FinalizeHighLevelStats {
+    call FF.FinalizeToDir as t_147_FinalizeHighLevelStats {
         input:
             files = [ t_011_FindCCSReport.ccs_report[0], t_119_AggregateLongbowCorrectStats.stats ],
             outdir = stats_out_dir,
@@ -1501,34 +1517,34 @@ workflow PB10xMasSeqSingleFlowcellv4 {
     }
 
     # Finalize Longbow Sift stats:
-    scatter (i_f in range(length(t_009_ShardLongReads.unmapped_shards))) {
-        call FF.FinalizeToFile as t_146_FinalizeCcsLongbowSiftStats {
+    scatter (i_f2 in range(length(t_009_ShardLongReads.unmapped_shards))) {
+        call FF.FinalizeToFile as t_148_FinalizeCcsLongbowSiftStats {
             input:
-                file = t_025_LongbowSiftCCSArrayElements.stats_tsv[i_f],
-                outfile = stats_out_dir + "/longbow_stats/sift/ccs/" + SM + "_ccs_array_elements_annotated_non_truncated_sifted_" + i_f + ".stats.tsv",
+                file = t_025_LongbowSiftCCSArrayElements.stats_tsv[i_f2],
+                outfile = stats_out_dir + "/longbow_stats/sift/ccs/" + SM + "_ccs_array_elements_annotated_non_truncated_sifted_" + i_f2 + ".stats.tsv",
                 keyfile = keyfile
         }
-        call FF.FinalizeToFile as t_147_FinalizeCcsLongbowSiftSummaryStats {
+        call FF.FinalizeToFile as t_149_FinalizeCcsLongbowSiftSummaryStats {
             input:
-                file = t_025_LongbowSiftCCSArrayElements.summary_stats_tsv[i_f],
-                outfile = stats_out_dir + "/longbow_stats/sift/ccs/" + SM + "_ccs_array_elements_annotated_non_truncated_sifted_" + i_f + ".summary_stats.tsv",
+                file = t_025_LongbowSiftCCSArrayElements.summary_stats_tsv[i_f2],
+                outfile = stats_out_dir + "/longbow_stats/sift/ccs/" + SM + "_ccs_array_elements_annotated_non_truncated_sifted_" + i_f2 + ".summary_stats.tsv",
                 keyfile = keyfile
         }
-        call FF.FinalizeToFile as t_148_FinalizeCcsReclaimedLongbowSiftStats {
+        call FF.FinalizeToFile as t_150_FinalizeCcsReclaimedLongbowSiftStats {
             input:
-                file = t_033_LongbowSiftCcsReclaimedArrayElements.stats_tsv[i_f],
-                outfile = stats_out_dir + "/longbow_stats/sift/ccs_reclaimed/" + SM + "_ccs_reclaimed_array_elements_annotated_non_truncated_sifted_" + i_f + ".stats.tsv",
+                file = t_033_LongbowSiftCcsReclaimedArrayElements.stats_tsv[i_f2],
+                outfile = stats_out_dir + "/longbow_stats/sift/ccs_reclaimed/" + SM + "_ccs_reclaimed_array_elements_annotated_non_truncated_sifted_" + i_f2 + ".stats.tsv",
                 keyfile = keyfile
         }
-        call FF.FinalizeToFile as t_149_FinalizeCcsReclaimedLongbowSiftSummaryStats {
+        call FF.FinalizeToFile as t_151_FinalizeCcsReclaimedLongbowSiftSummaryStats {
             input:
-                file = t_033_LongbowSiftCcsReclaimedArrayElements.summary_stats_tsv[i_f],
-                outfile = stats_out_dir + "/longbow_stats/sift/ccs_reclaimed/" + SM + "_ccs_reclaimed_array_elements_annotated_non_truncated_sifted_" + i_f + ".summary_stats.tsv",
+                file = t_033_LongbowSiftCcsReclaimedArrayElements.summary_stats_tsv[i_f2],
+                outfile = stats_out_dir + "/longbow_stats/sift/ccs_reclaimed/" + SM + "_ccs_reclaimed_array_elements_annotated_non_truncated_sifted_" + i_f2 + ".summary_stats.tsv",
                 keyfile = keyfile
         }
     }
 
-    call FF.FinalizeToDir as t_150_FinalizeQuantArrayElementStats {
+    call FF.FinalizeToDir as t_152_FinalizeQuantArrayElementStats {
         input:
             files = [
                 t_118_AlignedAnnotatedArrayElementsForQuantStats.raw_stats,
@@ -1549,7 +1565,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_151_FinalizeTxomeDiscoveryArrayElementStats {
+    call FF.FinalizeToDir as t_153_FinalizeTxomeDiscoveryArrayElementStats {
         input:
             files = [
                 t_117_AlignedFilteredArrayElementStats.raw_stats,
@@ -1570,7 +1586,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_152_FinalizeAlignedArrayElementStats {
+    call FF.FinalizeToDir as t_154_FinalizeAlignedArrayElementStats {
         input:
             files = [
                 t_116_AlignedArrayElementStats.raw_stats,
@@ -1591,7 +1607,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_153_FinalizeBaselineArrayElementStats {
+    call FF.FinalizeToDir as t_155_FinalizeBaselineArrayElementStats {
         input:
             files = [
                 t_115_BaselineArrayElementStats.raw_stats,
@@ -1612,7 +1628,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as t_154_FinalizeCCSLongbowStats {
+    call FF.FinalizeToDir as t_156_FinalizeCCSLongbowStats {
         input:
             files = [
                 t_120_CCS_longbow_stats.summary_stats,
@@ -1630,7 +1646,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             outdir = stats_out_dir + "/longbow_stats/CCS_Corrected/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_155_FinalizeReclaimableLongbowStats {
+    call FF.FinalizeToDir as t_157_FinalizeReclaimableLongbowStats {
         input:
             files = [
                 t_121_Reclaimable_longbow_stats.summary_stats,
@@ -1648,7 +1664,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             outdir = stats_out_dir + "/longbow_stats/CCS_Reclaimable/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_156_FinalizeReclaimedLongbowStats {
+    call FF.FinalizeToDir as t_158_FinalizeReclaimedLongbowStats {
         input:
             files = [
                 t_122_Reclaimed_longbow_stats.summary_stats,
@@ -1666,7 +1682,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             outdir = stats_out_dir + "/longbow_stats/CCS_Reclaimed/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_157_FinalizeOverallLongbowStats {
+    call FF.FinalizeToDir as t_159_FinalizeOverallLongbowStats {
         input:
             files = [
                 t_125_Overall_longbow_stats.summary_stats,
@@ -1684,7 +1700,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             outdir = stats_out_dir + "/longbow_stats/Overall/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_158_FinalizeAllPassedLongbowStats {
+    call FF.FinalizeToDir as t_160_FinalizeAllPassedLongbowStats {
         input:
             files = [
                 t_123_Passed_longbow_stats.summary_stats,
@@ -1702,7 +1718,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
             outdir = stats_out_dir + "/longbow_stats/All_Longbow_Passed/",
             keyfile = keyfile
     }
-    call FF.FinalizeToDir as t_159_FinalizeAllPassedLongbowStats {
+    call FF.FinalizeToDir as t_161_FinalizeAllPassedLongbowStats {
         input:
             files = [
                 t_124_Failed_longbow_stats.summary_stats,
@@ -1723,7 +1739,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:
-    call FF.WriteCompletionFile as t_160_WriteCompletionFile {
+    call FF.WriteCompletionFile as t_162_WriteCompletionFile {
         input:
             outdir = base_out_dir + "/",
             keyfile = keyfile

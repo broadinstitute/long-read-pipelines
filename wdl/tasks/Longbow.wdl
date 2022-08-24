@@ -127,19 +127,21 @@ task Sift
             --summary-stats ~{prefix}.summary_stats.tsv \
             --validation-model ~{validation_model} \
             -o ~{prefix}.bam \
+            -x ~{prefix}.sift_failed.bam \
             ~{segmented_input_reads}
     >>>
 
     output {
         File sifted_bam = "~{prefix}.bam"
+        File sift_failed_bam = "~{prefix}.sift_failed.bam"
         File stats_tsv = "~{prefix}.stats.tsv"
         File summary_stats_tsv = "~{prefix}.summary_stats.tsv"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
-        mem_gb:             4,
+        cpu_cores:          2,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
