@@ -799,7 +799,7 @@ task TesseraeAlign {
     }
 }
 
-task InferGenomeCoords {
+task MakeCalls {
     input {
         String fusilli_db_gcs
         Array[String] ref_ids
@@ -824,7 +824,7 @@ task InferGenomeCoords {
         gsutil -m cp -r ~{fusilli_db_gcs} db/
         gsutil -m cp -r ~{sample_run_data} run/
 
-        # Create symlinks to actual reference FASTAs and GFFs
+        # Create symlinks to actual reference FASTAs
         cd db/~{db_name}
 
         while IFS=$'\t' read -r ref_id ref_fasta; do
@@ -834,16 +834,25 @@ task InferGenomeCoords {
         cd ../..
 
         mkdir output
-        fusilli call infer-genome-coords db/~{db_name} run/~{sample_id}/ref_panels \
+        fusilli call run db/~{db_name} ~{sample_id} run/~{sample_id}/ref_panels \
             -o output/ < ~{write_lines(aligned_sample_contigs)}
 
-        mv output/sample_contig_aln_stats.tsv output/~{sample_id}.aln_stats.tsv
+        # Sort, normalize and deduplicate VCF. We output to BCF to be able to get indexed by bcftools index in
+        # later Fusilli stage
+        for vcf in output/*.vcf; do
+            filename=${vcf##*/}
+            ref_name=${vcf%.vcf}
+            bcftools sort -Ou ${vcf} \
+                | bcftools norm --fasta-ref $(fusilli db get-ref-path ${ref_name}) -d exact -Ob -o ${vcf%.vcf}.bcf
+        done
     >>>
 
     output {
         File alignment_stats = "output/~{sample_id}.aln_stats.tsv"
         Array[File] aligned_ref_contigs = glob("output/*.bam")
         Array[File] aligned_ref_contigs_bai = glob("output/*.bai")
+        Array[File] per_ref_vcfs = glob("output/*.bcf")
+        Array[File] per_ref_bed = glob("output/*.bed")
     }
 
     #########################
@@ -869,7 +878,7 @@ task InferGenomeCoords {
     }
 }
 
-task FinalizeContigAlignments {
+task FinalizeCalls {
     input {
         String fusilli_run_gcs
         String call_id
@@ -880,6 +889,8 @@ task FinalizeContigAlignments {
         Array[File] unaligned_fastas
         Array[File] aligned_ref_contigs
         Array[File] aligned_ref_contigs_bai
+        Array[File] per_ref_vcfs
+        Array[File] per_ref_bed
 
         RuntimeAttr? runtime_attr_override
     }
@@ -894,6 +905,8 @@ task FinalizeContigAlignments {
 
         mkdir aligned_sample_contigs
         mkdir aligned_ref_contigs
+        mkdir per_ref_vcfs
+        mkdir per_ref_bed
 
         cat $(< ~{write_lines(unaligned_fastas)}) > unaligned.fasta.gz
 
@@ -906,6 +919,14 @@ task FinalizeContigAlignments {
             ln -s "${ref_contig_bai}" "aligned_ref_contigs/${ref_contig_bai##*/}"
         done < <(paste ~{write_lines(aligned_ref_contigs)} ~{write_lines(aligned_ref_contigs_bai)})
 
+        for vcf in $(< ~{write_lines(per_ref_vcfs)}); do
+            ln -s "${vcf}" "per_ref_vcfs/${vcf##*/}"
+        done
+
+        for bed in $(< ~{write_lines(per_ref_bed)}); do
+            ln -s "${bed}" "per_ref_bed/${bed##*/}"
+        done
+
         # First a non-recursive copy to ensure all folders exists
         gsutil cp ~{basename(alignment_stats)} ~{call_output_dir}/~{sample_id}/~{basename(alignment_stats)}
 
@@ -913,6 +934,194 @@ task FinalizeContigAlignments {
 
         gsutil -m cp -r ~{sample_id} ~{call_output_dir}
     >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+
+task CreatePseudoRef {
+    input {
+        File ref_meta
+
+        Array[String] ref_ids
+        Array[File] ref_fastas
+        Array[File] ref_gffs
+
+        Array[File] alignment_stats
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
+        mkdir db
+        cd db
+
+        ln -s ~{ref_meta} reference_meta.tsv
+
+        while IFS=$'\t' read -r ref_id ref_fasta ref_gff; do
+            ln -s "${ref_fasta}" "${ref_id}/${ref_fasta##*/}"
+            ln -s "${ref_gff}" "${ref_id}/${ref_gff##*/}"
+        done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_fastas)} ~{write_lines(ref_gffs)})
+
+        cd ..
+
+        fusilli call build-pseudo-ref db/ $(< ~{write_lines(alignment_stats)}) -o pseudo_ref.fasta
+    >>>
+
+    output {
+        File pseudo_ref = "pseudo_ref.fasta"
+        File pseudo_gff = "pseudo_ref.gff"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             8,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task TranslateCoordinatesToPseudoRef {
+    input {
+        File pseudo_ref
+
+        String sample_id
+
+        Array[File] per_ref_vcfs
+        Array[File] per_ref_bed
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
+        mkdir to_pseudo_vcfs
+        mkdir to_pseudo_beds
+
+        # Translate coordinates to pseudo-ref coordinates
+        for vcf in $(< ~{write_lines(per_ref_vcfs)}); do
+            vcf_filename=${vcf##*/}
+            ref_name=${vcf_filename%.bcf}
+            fusilli call translate-to-pseudo-ref ~{pseudo_ref} -m vcf -r ${ref_name} \
+                -o to_pseudo_vcfs/${vcf_filename} ${vcf}
+
+            # Index for bcftools concat down below
+            bcftools index to_pseudo_vcfs/${vcf_filename}
+        done
+
+        for bed in $(< ~{write_lines(per_ref_bed)}); do
+            bed_filename=${bed##*/}
+            ref_name=${bed_filename%.bed}
+            fusilli call translate-to-pseudo-ref ~{pseudo_ref} -m bed -r ${ref_name} \
+                -o to_pseudo_beds/${bed_filename} ${bed}
+        done
+
+        # Combine all per-ref VCFs to a single VCF for this sample
+        bcftools concat to_pseudo_vcfs/*.bcf -Ob -o ~{sample_id}.bcf
+        bcftools index ~{sample_id}.bcf
+
+        # Combine all per-ref BEDs to a single BED file
+        cat to_pseudo_beds/*.bed > ~{sample_id}.bed
+    >>>
+
+    output {
+        File pseudo_vcf = "~{sample_id}.bcf"
+        File pseudo_vcf_csi = "~{sample_id}.bcf.csi"
+        File pseudo_bed = "~{sample_id}.bed"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             16,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FinalizePseudoRef {
+    input {
+        String fusilli_run_gcs
+        String call_id
+
+        File pseudo_ref
+        File pseudo_gff
+
+        Array[File] pseudo_vcfs
+        Array[File] pseudo_vcf_csis
+        Array[File] pseudo_beds
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String output_dir = fusilli_run_gcs + "/calls/" + call_id + "/pseudo_ref"
+
+    command <<<
+        gsutil cp ~{pseudo_ref} ~{pseudo_gff} ~{output_dir}
+        gsutil -m cp $(< ~{write_lines(pseudo_vcfs)}) ~{output_dir}/sample_data
+        gsutil -m cp $(< ~{write_lines(pseudo_vcf_csis)}) ~{output_dir}/sample_data
+        gsutil -m cp $(< ~{write_lines(pseudo_beds)}) ~{output_dir}/sample_data
+    >>>
+
+    output {
+        String pseudo_ref = "~{output_dir}/~{basename(pseudo_ref)}"
+        String pseudo_gff = "~{output_dir}/~{basename(pseudo_gff)}"
+        String sample_data_dir = "~{output_dir}/sample_data"
+    }
 
     #########################
     RuntimeAttr default_attr = object {
