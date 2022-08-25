@@ -1,10 +1,19 @@
 version 1.0
 
 import "tasks/Structs.wdl"
+import "tasks/AlignReads.wdl" as AR
+import "AoU_Mitochondria_Canu_filteredReads.wdl" as AoU
+import "tasks/Quast.wdl" as Quast
+import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
+import "tasks/Canu.wdl" as Canu
+import "tasks/Clair.wdl" as Clair
 
 workflow Trim_Contigs {
     input {
         File assembly_fasta
+        File bam
+#        String prefix
+
     }
 
     call Filter_Contigs {
@@ -17,14 +26,27 @@ workflow Trim_Contigs {
         filtered_contigs = Filter_Contigs.filtered_contigs
     }
 
-    call Align_to_Candidates {
-        input:
-        trimmed_contigs = Self_Align.trimmed_contigs
+    call AoU.RG_Parsing as Parsing {input: bam = bam}
+    String RG = "@RG\\tID:~{Parsing.ID}\\tSM:~{Parsing.SM}\\tPL:~{Parsing.PL}\\tPU:~{Parsing.PU}"
 
+
+    scatter (contig in Self_Align.trimmed_contigs) {
+#        String prefix = contig
+        call AR.Minimap2 as Minimap2 {
+            input:
+                reads = [assembly_fasta],
+                ref_fasta = contig,
+                map_preset = "map-hifi",
+                RG = RG
+        }
     }
+
+
 
     output{
         Array[File] trimmed_candidate_contigs = Self_Align.trimmed_contigs
+#        Array[File] aligned_bam = glob("~{prefix}*.bam")
+        Array[File] aligned_bam = Minimap2.aligned_bam
     }
 }
 
@@ -154,28 +176,29 @@ task Self_Align {
 
 
 
-task Align_to_Candidates {
-
-    input{
-        Array[File] trimmed_contigs
-        File bam
-    }
-
-    parameter_meta {
-
-    }
-
-    command <<<
-    >>>
-
-    output {
-        Array[File] candidates_alignment_results = glob("*.bam")
-    }
-
-    runtime {
-        disks: ""
-        docker: ""
-    }
-}
+#task Align_to_Candidates {
+#
+#    input{
+#        Array[File] trimmed_contigs
+#        File assembly_fasta
+#    }
+#
+#    parameter_meta {
+#        trimmed_contigs: "trimmed contigs"
+#    }
+#
+#    command <<<
+#        minimap2  -aYL --MD -t 8 ~{ref} ~{con}
+#    >>>
+#
+#    output {
+#        Array[File] candidates_alignment_results = glob("*.bam")
+#    }
+#
+#    runtime {
+#        disks: ""
+#        docker: ""
+#    }
+#}
 
 
