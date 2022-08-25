@@ -841,7 +841,7 @@ task MakeCalls {
         # later Fusilli stage
         for vcf in output/*.vcf; do
             filename=${vcf##*/}
-            ref_name=${vcf%.vcf}
+            ref_name=${filename%.vcf}
             bcftools sort -Ou ${vcf} \
                 | bcftools norm --fasta-ref $(fusilli db get-ref-path ${ref_name}) -d exact -Ob -o ${vcf%.vcf}.bcf
         done
