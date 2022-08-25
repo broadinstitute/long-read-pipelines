@@ -843,7 +843,7 @@ task MakeCalls {
             filename=${vcf##*/}
             ref_name=${filename%.vcf}
             bcftools sort -Ou ${vcf} \
-                | bcftools norm --fasta-ref $(fusilli db ger-ref-path db/~{db_name} ${ref_name}) -d exact -Ob -o ${vcf%.vcf}.bcf
+                | bcftools norm --fasta-ref $(fusilli db get-ref-path db/~{db_name} ${ref_name}) -d exact -Ob -o ${vcf%.vcf}.bcf
         done
     >>>
 
