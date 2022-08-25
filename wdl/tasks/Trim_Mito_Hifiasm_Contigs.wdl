@@ -6,7 +6,7 @@ import "AoU_Mitochondria_Canu_filteredReads.wdl" as AoU
 import "tasks/Quast.wdl" as Quast
 import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
 import "tasks/Canu.wdl" as Canu
-import "tasks/Clair.wdl" as Clair
+import "tasks/Clair_mito.wdl" as Clair_Mito
 
 workflow Trim_Contigs {
     input {
@@ -41,12 +41,25 @@ workflow Trim_Contigs {
         }
     }
 
+    scatter (bam, bai in Minimap2.aligned_bam, Minimap2.aligned_bai) {
+        call Clair_Mito.Clair as Clair_Mito {
+            input:
+                bam = bam,
+                bai = bai,
+                ref_fasta = ,
+                ref_fasta_fai,
+                preset
+        }
+    }
+
 
 
     output{
         Array[File] trimmed_candidate_contigs = Self_Align.trimmed_contigs
 #        Array[File] aligned_bam = glob("~{prefix}*.bam")
         Array[File] aligned_bam = Minimap2.aligned_bam
+        Array[File] aligned_bai = Minimap2.aligned_bai
+
     }
 }
 
