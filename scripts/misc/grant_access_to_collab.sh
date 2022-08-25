@@ -38,6 +38,7 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 ################################################################################
+account_type="-u"
 while [ $# -ge 1 ]; do
     case $1 in
         -h|-\?|--help)
@@ -46,14 +47,18 @@ while [ $# -ge 1 ]; do
             ;;
         -u|--user)
             if [ $# -ge 2 ]; then
-                user_email="$2"
+                account_email="$2"
                 shift 2
             else
                 throw_error "--user requires a non-empty argument"
             fi
             ;;
         --user=?*)
-            user_email=${1#*=} # remove everything up to = and assign rest to user
+            account_email=${1#*=} # remove everything up to = and assign rest to user
+            shift
+            ;;
+        -g|--group)
+            account_type="-g"
             shift
             ;;
         -b|--bucket)
@@ -108,8 +113,8 @@ done
 ################################################################################
 access_level='READ'
 
-if [[ -z ${user_email+x} ]]; then
-    echo "user_email isn't set or is set to empty" && exit 1
+if [[ -z ${account_email+x} ]]; then
+    echo "account_email isn't set or is set to empty" && exit 1
 elif [[ -z ${gcs_bucket+x} ]]; then
     echo "gcs_bucket isn't set or is set to empty" && exit 1
 elif [[ -z ${prefix+x} ]]; then
@@ -129,10 +134,11 @@ prefix="${prefix%/}"
 ################################################################################
 for t in "${file_types[@]}";
 do
-    echo -e "\nGranting user ${user_email} with ${access_level}-level access to file type ${t} under gs://${gcs_bucket}/${prefix}/"
-    gsutil -mq acl \
-        ch -u "${user_email}":"${access_level}" \
-        -R "gs://${gcs_bucket}/${prefix}/**${t}"
+    echo -e "\nGranting ${account_email} with ${access_level}-level access to file type ${t} under gs://${gcs_bucket}/${prefix}/"
+    gsutil -mq acl ch \
+        "${account_type}" \
+        "${account_email}":"${access_level}" \
+        -R "gs://${gcs_bucket}/${prefix}/**/*${t}"
     sleep 10 # avoid being blocked
 done
 
