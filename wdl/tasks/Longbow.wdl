@@ -122,6 +122,7 @@ task Sift
         source /longbow/venv/bin/activate
 
         longbow sift ~{extra_args} \
+            -v DEBUG \
             --model ~{model} \
             --stats ~{prefix}.stats.tsv \
             --summary-stats ~{prefix}.summary_stats.tsv \
@@ -140,8 +141,8 @@ task Sift
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             16,
+        cpu_cores:          1,
+        mem_gb:             4,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
