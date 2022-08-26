@@ -42,7 +42,7 @@ task sample_sv {
 
     input {
         File bam
-        Array[File] bai
+        File bai
         Int minsvlen
         String? chr
         String sample_id

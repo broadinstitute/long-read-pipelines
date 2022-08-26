@@ -4,7 +4,7 @@ import "Utils.wdl"
 import "VariantUtils.wdl"
 
 import "PBSV.wdl"
-import "Sniffles2.wdl"
+import "Sniffles2.wdl" as Sniffles2
 
 import "Clair.wdl" as Clair3
 
@@ -16,9 +16,10 @@ workflow CallVariants {
     }
     input {
         File bam
-#        File bai
+        File bai
         Int minsvlen
         String prefix
+        String sample_id
 
 
         File ref_fasta
@@ -218,7 +219,7 @@ workflow CallVariants {
                         zones = arbitrary.zones
                 }
 
-                call Sniffles2.Sniffles2 {
+                call Sniffles2.sample_sv {
                     input:
                         bam    = SubsetBam.subset_bam,
                         bai    = SubsetBam.subset_bai,
@@ -249,13 +250,13 @@ workflow CallVariants {
 #                input:
 #                    vcfs = FixSnifflesVCF.sortedVCF
 #            }
-            call VariantUtils.MergeAndSortVCFs as MergeSnifflesVCFs {
-                input:
-                    vcfs   = FixSnifflesVCF.sortedVCF,
-                    ref_fasta_fai = ref_fasta_fai,
-                    header_definitions_file = UnionHeadersSnifflesVCFs.union_definitions,
-                    prefix = prefix + ".sniffles"
-            }
+#            call VariantUtils.MergeAndSortVCFs as MergeSnifflesVCFs {
+#                input:
+#                    vcfs   = FixSnifflesVCF.sortedVCF,
+#                    ref_fasta_fai = ref_fasta_fai,
+#                    header_definitions_file = UnionHeadersSnifflesVCFs.union_definitions,
+#                    prefix = prefix + ".sniffles"
+#            }
         }
 
         if (!fast_less_sensitive_sv) {
@@ -285,8 +286,9 @@ workflow CallVariants {
     }
 
     output {
-        File? sniffles_vcf = select_first([MergeSnifflesVCFs.vcf, ZipAndIndexSniffles.sortedVCF])
-        File? sniffles_tbi = select_first([MergeSnifflesVCFs.tbi, ZipAndIndexSniffles.tbi])
+#        File? sniffles_vcf = select_first([MergeSnifflesVCFs.vcf, ZipAndIndexSniffles.sortedVCF])
+#        File? sniffles_tbi = select_first([MergeSnifflesVCFs.tbi, ZipAndIndexSniffles.tbi])
+        File sniffles_snf = Sniffles2.sample_sv.snf,
 
         File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
         File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
