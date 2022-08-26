@@ -4,7 +4,7 @@ import "Utils.wdl"
 import "VariantUtils.wdl"
 
 import "PBSV.wdl"
-import "Sniffles.wdl"
+import "Sniffles2.wdl"
 
 import "Clair.wdl" as Clair3
 
@@ -16,7 +16,10 @@ workflow CallVariants {
     }
     input {
         File bam
-        File bai
+#        File bai
+        Int minsvlen
+        String prefix
+
 
         File ref_fasta
         File ref_fasta_fai
@@ -215,7 +218,7 @@ workflow CallVariants {
                         zones = arbitrary.zones
                 }
 
-                call Sniffles.Sniffles {
+                call Sniffles2.Sniffles2 {
                     input:
                         bam    = SubsetBam.subset_bam,
                         bai    = SubsetBam.subset_bai,
@@ -228,11 +231,11 @@ workflow CallVariants {
                         bam = SubsetBam.subset_bam,
                         bai = SubsetBam.subset_bai
                 }
-                call VariantUtils.FixSnifflesVCF {
-                    input:
-                        vcf = Sniffles.vcf,
-                        sample_name = InferSampleName.sample_name
-                }
+#                call VariantUtils.FixSnifflesVCF {
+#                    input:
+#                        vcf = Sniffles.vcf,
+#                        sample_name = InferSampleName.sample_name
+#                }
             }
 
             call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
@@ -242,10 +245,10 @@ workflow CallVariants {
                     prefix   = prefix + ".pbsv"
             }
 
-            call VariantUtils.CollectDefinitions as UnionHeadersSnifflesVCFs {
-                input:
-                    vcfs = FixSnifflesVCF.sortedVCF
-            }
+#            call VariantUtils.CollectDefinitions as UnionHeadersSnifflesVCFs {
+#                input:
+#                    vcfs = FixSnifflesVCF.sortedVCF
+#            }
             call VariantUtils.MergeAndSortVCFs as MergeSnifflesVCFs {
                 input:
                     vcfs   = FixSnifflesVCF.sortedVCF,
