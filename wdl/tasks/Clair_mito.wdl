@@ -42,7 +42,7 @@ task Clair {
         # avoid the infamous pipefail 141 https://stackoverflow.com/questions/19120263
         set -eux
         mv  ~{ref_fasta} moved.fasta
-        mv ~{ref_fai} moved.fasta.fai
+        mv ~{ref_fasta_fai} moved.fasta.fai
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
         # example from https://github.com/HKU-BAL/Clair3#option-1--docker-pre-built-image
@@ -67,15 +67,15 @@ task Clair {
 
     output {
         # save both VCF and gVCF
-        File pileup_vcf = "pileup.vcf.gz"
-        File pileup_vcf_tbi = "pileup.vcf.gz.tbi"
-        File full_alignment_vcf = "full_alignment.vcf.gz"
-        File full_alignment_tbi = "full_alignment.vcf.gz.tbi"
+        File? pileup_vcf = "pileup.vcf.gz"
+        File? pileup_vcf_tbi = "pileup.vcf.gz.tbi"
+        File? full_alignment_vcf = "full_alignment.vcf.gz"
+        File? full_alignment_tbi = "full_alignment.vcf.gz.tbi"
 
-        File vcf = "merge_output.vcf.gz"
-        File vcf_tbi = "merge_output.vcf.gz.tbi"
-        File gvcf = "merge_output.gvcf.gz"
-        File gvcf_tbi = "merge_output.gvcf.gz.tbi"
+        File? vcf = "merge_output.vcf.gz"
+        File? vcf_tbi = "merge_output.vcf.gz.tbi"
+        File? gvcf = "merge_output.gvcf.gz"
+        File? gvcf_tbi = "merge_output.gvcf.gz.tbi"
     }
 
     #########################

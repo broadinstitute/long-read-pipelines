@@ -58,12 +58,13 @@ workflow Trim_Contigs {
     output{
         Array[File] trimmed_candidate_contigs = Self_Align.trimmed_contigs
         Array[File] trimmed_cadidate_fai = Self_Align.trimmed_contigs_idx
-#        Array[File] aligned_bam = glob("~{prefix}*.bam")
         Array[File] aligned_bam = Minimap2.aligned_bam
         Array[File] aligned_bai = Minimap2.aligned_bai
-        Array[File] full_alignment_vcf = Clair_Mito.full_alignment_vcf
-        Array[File] gvcf = Clair_Mito.gvcf
-        Array[File] merged_vcf = Clair_Mito.vcf
+
+        Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
+        Array[File?] gvcf = Clair_Mito.gvcf
+#        Array[File] gvcf_tbi = Clair_Mito.gvcf_tbi
+        Array[File?] merged_vcf = Clair_Mito.vcf
 
     }
 }
