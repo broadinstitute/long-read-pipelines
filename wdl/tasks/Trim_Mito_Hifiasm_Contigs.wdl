@@ -11,7 +11,9 @@ import "tasks/Clair_mito.wdl" as Clair_Mito
 workflow Trim_Contigs {
     input {
         File assembly_fasta
+        File reads
         File bam
+        String preset
 #        String prefix
 
     }
@@ -30,35 +32,38 @@ workflow Trim_Contigs {
     String RG = "@RG\\tID:~{Parsing.ID}\\tSM:~{Parsing.SM}\\tPL:~{Parsing.PL}\\tPU:~{Parsing.PU}"
 
 
-    scatter (contig in Self_Align.trimmed_contigs) {
-#        String prefix = contig
+    scatter (pair in zip(Self_Align.trimmed_contigs, Self_Align.trimmed_contigs_idx)) {
         call AR.Minimap2 as Minimap2 {
             input:
-                reads = [assembly_fasta],
-                ref_fasta = contig,
+                reads = [reads],
+                ref_fasta = pair.left,
                 map_preset = "map-hifi",
                 RG = RG
         }
-    }
-
-    scatter (bam, bai in Minimap2.aligned_bam, Minimap2.aligned_bai) {
         call Clair_Mito.Clair as Clair_Mito {
             input:
-                bam = bam,
-                bai = bai,
-                ref_fasta = ,
-                ref_fasta_fai,
-                preset
+                bam = Minimap2.aligned_bam,
+                bai = Minimap2.aligned_bai,
+                ref_fasta = pair.left,
+                ref_fasta_fai = pair.right,
+                preset = preset
+
         }
     }
+
+
 
 
 
     output{
         Array[File] trimmed_candidate_contigs = Self_Align.trimmed_contigs
+        Array[File] trimmed_cadidate_fai = Self_Align.trimmed_contigs_idx
 #        Array[File] aligned_bam = glob("~{prefix}*.bam")
         Array[File] aligned_bam = Minimap2.aligned_bam
         Array[File] aligned_bai = Minimap2.aligned_bai
+        Array[File] full_alignment_vcf = Clair_Mito.full_alignment_vcf
+        Array[File] gvcf = Clair_Mito.gvcf
+        Array[File] merged_vcf = Clair_Mito.vcf
 
     }
 }
@@ -98,7 +103,7 @@ task Self_Align {
     }
 
     parameter_meta {
-        filtered_contigs: "Filtered contigs based on genome ßlength"
+        filtered_contigs: "Filtered contigs based on genome length"
 
     }
 
@@ -107,6 +112,7 @@ task Self_Align {
     command <<<
         python <<CODE
         import mappy as mp
+        import subprocess
         with open("~{filtered_contigs}", "r") as f:
             assembly = f.readlines()
             for i in assembly:
@@ -146,11 +152,15 @@ task Self_Align {
                                     tfa.write('\n')
                                     tfa.write(trimmed_seq)
                                     tfa.close()
+
+                                subprocess.run(["samtools","faidx",contig_name+"_trimmed.fa"])
         CODE
     >>>
 
     output {
         Array[File] trimmed_contigs = glob("*_trimmed.fa")
+        Array[File] trimmed_contigs_idx = glob("*_trimmed.fa.fai")
+
     }
 
 #     Int disk_size = 2*ceil(size(filtered_contigs, "GB"))
