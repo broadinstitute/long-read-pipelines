@@ -41,6 +41,8 @@ task Clair {
     command <<<
         # avoid the infamous pipefail 141 https://stackoverflow.com/questions/19120263
         set -eux
+        mv  ~{ref_fasta} moved.fasta
+        mv ~{ref_fai} moved.fasta.fai
         SM=$(samtools view -H ~{bam} | grep -m1 '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g')
 
         # example from https://github.com/HKU-BAL/Clair3#option-1--docker-pre-built-image
@@ -52,7 +54,7 @@ task Clair {
 
         /opt/bin/run_clair3.sh ~{true='--vcf_fn=' false='' defined(sites_vcf)}~{select_first([sites_vcf, ""])} \
             --bam_fn=~{bam} \
-            --ref_fn=~{ref_fasta} \
+            --ref_fn=moved.fasta \
             --threads=${num_core} \
             --platform=~{platform} \
             --model_path="/opt/models/~{platform}" \
