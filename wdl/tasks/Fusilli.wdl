@@ -983,6 +983,8 @@ task CreatePseudoRef {
         ln -s ~{ref_meta} reference_meta.tsv
 
         while IFS=$'\t' read -r ref_id ref_fasta ref_gff; do
+            mkdir "${ref_id}"
+
             ln -s "${ref_fasta}" "${ref_id}/${ref_fasta##*/}"
             ln -s "${ref_gff}" "${ref_id}/${ref_gff##*/}"
         done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_fastas)} ~{write_lines(ref_gffs)})
