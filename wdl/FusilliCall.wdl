@@ -103,6 +103,7 @@ workflow FusilliCall {
             call_id = fusilli_call_id,
 
             pseudo_ref = CreatePseudoRef.pseudo_ref,
+            pseudo_ref_fai = CreatePseudoRef.pseudo_ref_fai,
             pseudo_gff = CreatePseudoRef.pseudo_gff,
             pseudo_vcfs = TranslateCoordinatesToPseudoRef.pseudo_vcf,
             pseudo_vcf_csis = TranslateCoordinatesToPseudoRef.pseudo_vcf_csi,
