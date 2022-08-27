@@ -992,10 +992,12 @@ task CreatePseudoRef {
         cd ..
 
         fusilli call build-pseudo-ref db/ $(< ~{write_lines(alignment_stats)}) -o pseudo_ref.fasta
+        samtools faidx pseudo_ref.fasta
     >>>
 
     output {
         File pseudo_ref = "pseudo_ref.fasta"
+        File pseudo_ref_fai = "pseudo_ref.fasta.fai"
         File pseudo_gff = "pseudo_ref.gff"
     }
 
@@ -1102,6 +1104,7 @@ task FinalizePseudoRef {
         String call_id
 
         File pseudo_ref
+        File pseudo_ref_fai
         File pseudo_gff
 
         Array[File] pseudo_vcfs
@@ -1114,7 +1117,7 @@ task FinalizePseudoRef {
     String output_dir = fusilli_run_gcs + "/calls/" + call_id + "/pseudo_ref"
 
     command <<<
-        gsutil cp ~{pseudo_ref} ~{pseudo_gff} ~{output_dir}
+        gsutil cp ~{pseudo_ref} ~{pseudo_ref_fai} ~{pseudo_gff} ~{output_dir}
         gsutil -m cp $(< ~{write_lines(pseudo_vcfs)}) ~{output_dir}/sample_data
         gsutil -m cp $(< ~{write_lines(pseudo_vcf_csis)}) ~{output_dir}/sample_data
         gsutil -m cp $(< ~{write_lines(pseudo_beds)}) ~{output_dir}/sample_data
