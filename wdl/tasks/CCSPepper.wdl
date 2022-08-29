@@ -226,7 +226,7 @@ task DV {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          threads,
-        mem_gb:             memory,
+        mem_gb:             192,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  3,
