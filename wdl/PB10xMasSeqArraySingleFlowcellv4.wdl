@@ -1386,6 +1386,7 @@ workflow PB10xMasSeqSingleFlowcellv4 {
 
                 t_104_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
                 t_105_IndexCcsReadsWithCorrectedUmis.bai,
+                
                 t_106_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
                 t_107_IndexCcsReclaimedReadsWithCorrectedUmis.bai,
 
