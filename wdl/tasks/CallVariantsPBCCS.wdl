@@ -26,7 +26,6 @@ workflow CallVariants {
         File ref_fasta_fai
         File ref_dict
 
-        String prefix
 
         Boolean call_svs
         Boolean fast_less_sensitive_sv
@@ -219,11 +218,13 @@ workflow CallVariants {
                         zones = arbitrary.zones
                 }
 
-                call Sniffles2.sample_sv {
+                call Sniffles2.sample_sv as sample_snf {
                     input:
                         bam    = SubsetBam.subset_bam,
                         bai    = SubsetBam.subset_bai,
+                        minsvlen = minsvlen,
                         chr    = contig_for_sv,
+                        sample_id = sample_id,
                         prefix = prefix
                 }
 
@@ -274,21 +275,25 @@ workflow CallVariants {
             }
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 
-            call Sniffles.Sniffles as SnifflesSlow {
+            call Sniffles2.sample_sv as sample_snf_slow {
                 input:
                     bam    = bam,
                     bai    = bai,
+                    minsvlen = minsvlen,
+                    sample_id = sample_id,
                     prefix = prefix
             }
+
+
             call Utils.InferSampleName as infer {input: bam = bam, bai = bai}
-            call VariantUtils.FixSnifflesVCF as ZipAndIndexSniffles {input: vcf = SnifflesSlow.vcf, sample_name = infer.sample_name}
+#            call VariantUtils.FixSnifflesVCF as ZipAndIndexSniffles {input: vcf = SnifflesSlow.vcf, sample_name = infer.sample_name}
         }
     }
 
     output {
 #        File? sniffles_vcf = select_first([MergeSnifflesVCFs.vcf, ZipAndIndexSniffles.sortedVCF])
 #        File? sniffles_tbi = select_first([MergeSnifflesVCFs.tbi, ZipAndIndexSniffles.tbi])
-        File sniffles_snf = Sniffles2.sample_sv.snf,
+        Array[File]? sniffles_snf = sample_snf.snf
 
         File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
         File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])

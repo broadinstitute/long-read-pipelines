@@ -1,7 +1,7 @@
 version 1.0
 
 
-import "tasks/Structs.wdl"
+import "Structs.wdl"
 
 # "This workflow calls SV candidates using Sniffles2 population mode.
 # 1) Call SV candidates and create .snf file for each sample
@@ -11,16 +11,16 @@ workflow Sniffles2 {
 
     input {
         Array[File] sampleBAMs
-        Array[File] bai
+        Array[File] sampleBai
         Int minsvlen
         String prefix
         String sample_id}
 
-    scatter (bam in sampleBAMs) {
+    scatter (pair in zip(sampleBAMs, sampleBai)) {
         call sample_sv {
                 input:
-                    bam = bam,
-                    bai = bai,
+                    bam = pair.left,
+                    bai = pair.right,
                     minsvlen = minsvlen,
                     prefix = prefix,
                     sample_id = sample_id
@@ -31,6 +31,7 @@ workflow Sniffles2 {
 
 
     output {
+#         File single_snf = sample_sv.snf
          File multisample_vcf = merge_call.vcf
         }
 }
