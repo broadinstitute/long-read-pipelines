@@ -53,19 +53,17 @@ workflow Trim_Contigs {
 
 
 
-
-
     output{
         Array[File] trimmed_candidate_contigs = Self_Align.trimmed_contigs
         Array[File] trimmed_cadidate_fai = Self_Align.trimmed_contigs_idx
         Array[File] aligned_bam = Minimap2.aligned_bam
         Array[File] aligned_bai = Minimap2.aligned_bai
-
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
         Array[File?] gvcf = Clair_Mito.gvcf
 #        Array[File] gvcf_tbi = Clair_Mito.gvcf_tbi
         Array[File?] merged_vcf = Clair_Mito.vcf
-
+        Array[File] pileup_vcf = Clair_Mito.pileup_vcf
+        Array[File] pileup_vcf_tbi = Clair_Mito.pileup_vcf_tbi
     }
 }
 
@@ -193,10 +191,33 @@ task Self_Align {
         docker: "us.gcr.io/broad-dsp-lrma/lr-c3poa:2.2.2"
     }
 
-
-
 }
 
+
+task Count_VCF {
+
+    input{
+
+    }
+    command <<<
+
+    >>>
+
+
+
+    output {
+        # tsv file? fasta file?
+
+
+    }
+
+    #########################
+    runtime {
+        disks: "local-disk 100 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+
+}
 
 
 
