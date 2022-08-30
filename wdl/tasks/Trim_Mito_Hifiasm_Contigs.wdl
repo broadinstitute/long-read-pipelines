@@ -51,6 +51,14 @@ workflow Trim_Contigs {
         }
     }
 
+    scatter (vcf in Clair_Mito.pileup_vcf) {
+    call Count_VCF {
+        input:
+            single_pileup_vcf = vcf
+        }
+    }
+
+
 
 
     output{
@@ -197,13 +205,13 @@ task Self_Align {
 task Count_VCF {
 
     input{
-        File pileup_vcf
+        File single_pileup_vcf
 
     }
 
     command <<<
         set -euxo pipefail
-        zcat < ~{pileup_vcf} > pileup_unzip.vcf
+        zcat < ~{single_pileup_vcf} > pileup_unzip.vcf
         n_snp = $(grep -v "^#" pileup_unzip.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]')
 
     >>>
