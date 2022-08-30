@@ -955,10 +955,11 @@ task IndexBam {
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
         samtools index -@$np ~{bam}
+        mv ~{bam}.bai ~{base_name}.bam.bai
     >>>
 
     output {
-        File bai = "~{bam}.bai"
+        File bai = "~{base_name}.bam.bai"
     }
 
     #########################
