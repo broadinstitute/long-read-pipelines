@@ -49,14 +49,15 @@ workflow Trim_Contigs {
                 preset = preset
 
         }
+
+        call Count_Variants {
+            input:
+                vcf = Clair_Mito.vcf
+            }
+
     }
 
-    scatter (vcf in Clair_Mito.pileup_vcf) {
-    call Count_VCF {
-        input:
-            single_pileup_vcf = vcf
-        }
-    }
+
 
 
 
@@ -67,11 +68,8 @@ workflow Trim_Contigs {
         Array[File] aligned_bam = Minimap2.aligned_bam
         Array[File] aligned_bai = Minimap2.aligned_bai
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
-        Array[File?] gvcf = Clair_Mito.gvcf
-#        Array[File] gvcf_tbi = Clair_Mito.gvcf_tbi
         Array[File?] merged_vcf = Clair_Mito.vcf
-        Array[File] pileup_vcf = Clair_Mito.pileup_vcf
-        Array[File] pileup_vcf_tbi = Clair_Mito.pileup_vcf_tbi
+        Array[Int] variant_counts = Count_Variants.
     }
 }
 
@@ -202,7 +200,7 @@ task Self_Align {
 }
 
 
-task Count_VCF {
+task Count_Variants {
 
     input{
         File single_pileup_vcf
@@ -212,7 +210,7 @@ task Count_VCF {
     command <<<
         set -euxo pipefail
         zcat < ~{single_pileup_vcf} > pileup_unzip.vcf
-        n_snp = $(grep -v "^#" pileup_unzip.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]')
+        grep -v "^#" pileup_unzip.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]' > counts.txt
 
     >>>
 
@@ -220,6 +218,7 @@ task Count_VCF {
 
     output {
         # tsv file? fasta file?
+        Int count = read_int("counts.txt")
 
 
     }
