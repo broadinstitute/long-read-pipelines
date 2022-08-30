@@ -218,7 +218,7 @@ workflow CallVariants {
                         zones = arbitrary.zones
                 }
 
-                call Sniffles2.sample_sv as sample_snf {
+                call Sniffles2.sample_sv as sample_snf_fast {
                     input:
                         bam    = SubsetBam.subset_bam,
                         bai    = SubsetBam.subset_bai,
@@ -285,15 +285,15 @@ workflow CallVariants {
             }
 
 
-            call Utils.InferSampleName as infer {input: bam = bam, bai = bai}
+#            call Utils.InferSampleName as infer {input: bam = bam, bai = bai}
 #            call VariantUtils.FixSnifflesVCF as ZipAndIndexSniffles {input: vcf = SnifflesSlow.vcf, sample_name = infer.sample_name}
         }
     }
 
     output {
-#        File? sniffles_vcf = select_first([MergeSnifflesVCFs.vcf, ZipAndIndexSniffles.sortedVCF])
+        File? sniffles_vcf = select_first([sample_snf_fast.vcf, sample_snf_slow.vcf])
 #        File? sniffles_tbi = select_first([MergeSnifflesVCFs.tbi, ZipAndIndexSniffles.tbi])
-        Array[File]? sniffles_snf = sample_snf.snf
+        File? sniffles_snf = select_first([sample_snf_fast.snf,sample_snf_slow.snf])
 
         File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
         File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])

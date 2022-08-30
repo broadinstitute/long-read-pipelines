@@ -63,7 +63,7 @@ task sample_sv {
     Int cpus = 8
     Int disk_size = 2*ceil(size([bam, bai], "GB"))
     String fileoutput = if defined(chr) then "~{prefix}.~{chr}.sniffles.snf" else "~{prefix}.sniffles.snf"
-    String vcf_sample = if defined(chr) then "~{prefix}.~{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
+    String vcf_output = if defined(chr) then "~{prefix}.~{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
 
     command <<<
         set -x
@@ -72,15 +72,17 @@ task sample_sv {
                  -i ~{bam} \
                  --minsvlen ~{minsvlen} \
                  --sample-id ~{sample_id} \
-                 --vcf ~{vcf_sample} \
+                 --vcf ~{vcf_output} \
                  --snf ~{fileoutput}
         tree
         touch ~{prefix}.~{fileoutput}
+        touch ~{prefix}.~{vcf_output}
 
     >>>
 
     output {
         File snf = "~{fileoutput}"
+        File vcf = "~{vcf_output}"
     }
 
     #########################
