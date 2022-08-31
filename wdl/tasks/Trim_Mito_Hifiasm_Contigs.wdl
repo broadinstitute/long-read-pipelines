@@ -69,7 +69,7 @@ workflow Trim_Contigs {
         Array[File] aligned_bai = Minimap2.aligned_bai
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
         Array[File?] merged_vcf = Clair_Mito.vcf
-        Array[Int] variant_counts = Count_Variants.
+        Array[Int] variant_counts = Count_Variants.count
     }
 }
 
@@ -203,15 +203,13 @@ task Self_Align {
 task Count_Variants {
 
     input{
-        File single_pileup_vcf
-
+        File vcf
     }
 
     command <<<
         set -euxo pipefail
-        zcat < ~{single_pileup_vcf} > pileup_unzip.vcf
+        zcat < ~{vcf} > pileup_unzip.vcf
         grep -v "^#" pileup_unzip.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]' > counts.txt
-
     >>>
 
 
@@ -219,8 +217,6 @@ task Count_Variants {
     output {
         # tsv file? fasta file?
         Int count = read_int("counts.txt")
-
-
     }
 
     #########################
@@ -230,6 +226,19 @@ task Count_Variants {
     }
 
 }
+
+task Find_Max {
+    input {
+        Array[Int] Count_Variants.count
+    }
+
+    command <<<
+        set -eux
+        sort ~
+        >>>
+}
+
+
 
 
 
