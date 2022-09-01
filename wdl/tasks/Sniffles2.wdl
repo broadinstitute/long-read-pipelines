@@ -75,9 +75,6 @@ task sample_sv {
                  --vcf ~{vcf_output} \
                  --snf ~{fileoutput}
         tree
-        touch ~{prefix}.~{fileoutput}
-        touch ~{prefix}.~{vcf_output}
-
     >>>
 
     output {
@@ -106,7 +103,6 @@ task sample_sv {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
-
 
 
 task merge_call {
