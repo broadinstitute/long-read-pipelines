@@ -14,8 +14,6 @@ workflow Trim_Contigs {
         File reads
         File bam
         String preset
-#        String prefix
-
     }
 
     call Filter_Contigs {
@@ -30,7 +28,6 @@ workflow Trim_Contigs {
 
     call AoU.RG_Parsing as Parsing {input: bam = bam}
     String RG = "@RG\\tID:~{Parsing.ID}\\tSM:~{Parsing.SM}\\tPL:~{Parsing.PL}\\tPU:~{Parsing.PU}"
-
 
     scatter (pair in zip(Self_Align.trimmed_contigs, Self_Align.trimmed_contigs_idx)) {
         call AR.Minimap2 as Minimap2 {
@@ -57,8 +54,11 @@ workflow Trim_Contigs {
 
     }
 
+    call Find_Min {
+        input:
+            variant_count = Count_Variants.count
 
-
+    }
 
 
 
@@ -70,6 +70,8 @@ workflow Trim_Contigs {
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
         Array[File?] merged_vcf = Clair_Mito.vcf
         Array[Int] variant_counts = Count_Variants.count
+        Int min_idx = Find_Min.min_idx
+        Int min_val = Find_Min.min_val
     }
 }
 
@@ -109,9 +111,7 @@ task Self_Align {
 
     parameter_meta {
         filtered_contigs: "Filtered contigs based on genome length"
-
     }
-
 
 
     command <<<
@@ -191,7 +191,7 @@ task Self_Align {
 #        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
 #        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
 #    }
-
+    ###################
     runtime {
         disks: "local-disk 100 HDD"
         docker: "us.gcr.io/broad-dsp-lrma/lr-c3poa:2.2.2"
@@ -203,23 +203,23 @@ task Self_Align {
 task Count_Variants {
 
     input{
-        File vcf
+        File? vcf
+        RuntimeAttr? runtime_attr_override
     }
 
     command <<<
         set -euxo pipefail
-        zcat < ~{vcf} > pileup_unzip.vcf
-        grep -v "^#" pileup_unzip.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]' > counts.txt
+        zcat < ~{vcf} > merge_output.vcf
+        grep -v "^#" merge_output.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]' > counts.txt
     >>>
 
 
-
     output {
-        # tsv file? fasta file?
         Int count = read_int("counts.txt")
     }
 
     #########################
+
     runtime {
         disks: "local-disk 100 HDD"
         docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -227,16 +227,45 @@ task Count_Variants {
 
 }
 
-task Find_Max {
+task Find_Min {
     input {
-        Array[Int] Count_Variants.count
+        Array[Int] variant_count
     }
+
+    Int n = length(variant_count) - 1
 
     command <<<
         set -eux
-        sort ~
+        seq 0 ~{n} > indices.txt
+        echo "~{sep='\n' variant_count} > counts.txt
+        paste -d' ' indices.txt counts.txt > counts_index.txt
+
+        sort -k2 -n counts_index.txt > sorted_counts.txt
+        cat sorted_counts.txt
+
+        head -n 1 sorted_counts.txt | awk '{print $1}' > "idx.txt"
+        head -n 1 sorted_counts.txt | awk '{print $2}' > "min_count.txt"
         >>>
+
+
+    output {
+        Int min_idx = read_int("idx.txt")
+        Int min_val = read_int("min_count.txt")
+    }
+                                                                             ###################
+    runtime {
+        cpu: 2
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+
+
 }
+
 
 
 
