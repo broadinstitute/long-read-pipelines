@@ -49,16 +49,16 @@ workflow Trim_Contigs {
 
         call Count_Variants {
             input:
-                vcf = Clair_Mito.vcf
+                vcfgz = Clair_Mito.vcf
             }
 
     }
 
-    call Find_Min {
-        input:
-            variant_count = Count_Variants.count
-
-    }
+#    call Find_Min {
+#        input:
+#            variant_count = Count_Variants.count
+#
+#    }
 
 
 
@@ -70,8 +70,8 @@ workflow Trim_Contigs {
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
         Array[File?] merged_vcf = Clair_Mito.vcf
         Array[Int] variant_counts = Count_Variants.count
-        Int min_idx = Find_Min.min_idx
-        Int min_val = Find_Min.min_val
+#        Int min_idx = Find_Min.min_idx
+#        Int min_val = Find_Min.min_val
     }
 }
 
@@ -203,14 +203,20 @@ task Self_Align {
 task Count_Variants {
 
     input{
-        File? vcf
+        File? vcfgz
         RuntimeAttr? runtime_attr_override
     }
 
     command <<<
-        set -euxo pipefail
-        zcat < ~{vcf} > merge_output.vcf
+
+        zcat < ~{vcfgz} > merge_output.vcf
         grep -v "^#" merge_output.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]' > counts.txt
+        if [[ $counts -eq 0 ]];
+        then
+            echo  0 > counts.txt
+        else
+            echo $counts > counts.txt
+        fi
     >>>
 
 
@@ -227,44 +233,44 @@ task Count_Variants {
 
 }
 
-task Find_Min {
-    input {
-        Array[Int] variant_count
-    }
-
-    Int n = length(variant_count) - 1
-
-    command <<<
-        set -eux
-        seq 0 ~{n} > indices.txt
-        echo "~{sep='\n' variant_count} > counts.txt
-        paste -d' ' indices.txt counts.txt > counts_index.txt
-
-        sort -k2 -n counts_index.txt > sorted_counts.txt
-        cat sorted_counts.txt
-
-        head -n 1 sorted_counts.txt | awk '{print $1}' > "idx.txt"
-        head -n 1 sorted_counts.txt | awk '{print $2}' > "min_count.txt"
-        >>>
-
-
-    output {
-        Int min_idx = read_int("idx.txt")
-        Int min_val = read_int("min_count.txt")
-    }
-                                                                             ###################
-    runtime {
-        cpu: 2
-        memory:  "4 GiB"
-        disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
-        preemptible_tries:     3
-        max_retries:           2
-        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
-    }
-
-
-}
+#task Find_Min {
+#    input {
+#        Array[Int] variant_count
+#    }
+#
+#    Int n = length(variant_count) - 1
+#
+#    command <<<
+#        set -eux
+#        seq 0 ~{n} > indices.txt
+#        echo "~{sep='\n' variant_count} > counts.txt
+#        paste -d' ' indices.txt counts.txt > counts_index.txt
+#
+#        sort -k2 -n counts_index.txt > sorted_counts.txt
+#        cat sorted_counts.txt
+#
+#        head -n 1 sorted_counts.txt | awk '{print $1}' > "idx.txt"
+#        head -n 1 sorted_counts.txt | awk '{print $2}' > "min_count.txt"
+#        >>>
+#
+#
+#    output {
+#        Int min_idx = read_int("idx.txt")
+#        Int min_val = read_int("min_count.txt")
+#    }
+#                                                                             ###################
+#    runtime {
+#        cpu: 2
+#        memory:  "4 GiB"
+#        disks: "local-disk 50 HDD"
+#        bootDiskSizeGb: 10
+#        preemptible_tries:     3
+#        max_retries:           2
+#        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+#    }
+#
+#
+#}
 
 
 
