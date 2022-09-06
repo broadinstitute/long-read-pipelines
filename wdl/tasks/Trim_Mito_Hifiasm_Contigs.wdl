@@ -54,13 +54,12 @@ workflow Trim_Contigs {
 
     }
 
-#    call Find_Min {
-#        input:
-#            variant_count = Count_Variants.count
-#
-#    }
+    call Find_Min {
+        input:
+            variant_count = Count_Variants.count
+    }
 
-
+    File custom_reference = Self_Align.trimmed_contigs[Find_Min.idx]
 
     output{
         Array[File] trimmed_candidate_contigs = Self_Align.trimmed_contigs
@@ -70,8 +69,9 @@ workflow Trim_Contigs {
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
         Array[File?] merged_vcf = Clair_Mito.vcf
         Array[Int] variant_counts = Count_Variants.count
-#        Int min_idx = Find_Min.min_idx
-#        Int min_val = Find_Min.min_val
+        Int min_idx = Find_Min.min_idx
+        Int min_val = Find_Min.min_val
+        File custom_reference = custom_reference
     }
 }
 
@@ -168,29 +168,7 @@ task Self_Align {
 
     }
 
-#     Int disk_size = 2*ceil(size(filtered_contigs, "GB"))
 
-    ########################
-    #########################
-#    RuntimeAttr default_attr = object {
-#        cpu_cores:          1,
-#        mem_gb:             8,
-#        disk_gb:            disk_size,
-#        boot_disk_gb:       10,
-#        preemptible_tries:  1,
-#        max_retries:        0,
-#        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:2.2.2"
-#    }
-#    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-#    runtime {
-#        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-#        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-#        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-#        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-#        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-#        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-#        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-#    }
     ###################
     runtime {
         disks: "local-disk 100 HDD"
@@ -198,7 +176,6 @@ task Self_Align {
     }
 
 }
-
 
 task Count_Variants {
 
@@ -233,73 +210,51 @@ task Count_Variants {
 
 }
 
-#task Find_Min {
-#    input {
-#        Array[Int] variant_count
-#    }
-#
-#    Int n = length(variant_count) - 1
-#
-#    command <<<
-#        set -eux
-#        seq 0 ~{n} > indices.txt
-#        echo "~{sep='\n' variant_count} > counts.txt
-#        paste -d' ' indices.txt counts.txt > counts_index.txt
-#
-#        sort -k2 -n counts_index.txt > sorted_counts.txt
-#        cat sorted_counts.txt
-#
-#        head -n 1 sorted_counts.txt | awk '{print $1}' > "idx.txt"
-#        head -n 1 sorted_counts.txt | awk '{print $2}' > "min_count.txt"
-#        >>>
-#
-#
-#    output {
-#        Int min_idx = read_int("idx.txt")
-#        Int min_val = read_int("min_count.txt")
-#    }
-#                                                                             ###################
-#    runtime {
-#        cpu: 2
-#        memory:  "4 GiB"
-#        disks: "local-disk 50 HDD"
-#        bootDiskSizeGb: 10
-#        preemptible_tries:     3
-#        max_retries:           2
-#        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
-#    }
-#
-#
-#}
+task Find_Min {
+    input {
+        Array[Int] variant_count
+    }
+
+    Int n = length(variant_count)-1
+
+    command <<<
+        set -eux
+        seq 0 ~{n} > indices.txt
+        echo "~{sep='\n' variant_count}" > counts.txt
+        paste -d' ' indices.txt counts.txt > counts_index.txt
+        sort -k2 -n counts_index.txt > sorted_counts.txt
+        cat sorted_counts.txt
+
+        head -n 1 sorted_counts.txt | awk '{print $1}' > "idx.txt"
+        head -n 1 sorted_counts.txt | awk '{print $2}' > "min_count.txt"
+        >>>
+
+
+
+    output {
+        Int min_idx = read_int("counts.txt")
+        Int min_val = read_int("min_count.txt")
+    }
+
+    ###################
+    runtime {
+        cpu: 2
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
 
 
 
 
 
 
-#task Align_to_Candidates {
-#
-#    input{
-#        Array[File] trimmed_contigs
-#        File assembly_fasta
-#    }
-#
-#    parameter_meta {
-#        trimmed_contigs: "trimmed contigs"
-#    }
-#
-#    command <<<
-#        minimap2  -aYL --MD -t 8 ~{ref} ~{con}
-#    >>>
-#
-#    output {
-#        Array[File] candidates_alignment_results = glob("*.bam")
-#    }
-#
-#    runtime {
-#        disks: ""
-#        docker: ""
-#    }
-#}
+
+
+
 
 
