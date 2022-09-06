@@ -36,7 +36,7 @@ task BuildGraph {
         File ref_meta = "fusilli_db/reference_meta.tsv"
     }
 
-    Int disk_size = 1 + ceil((length(ref_ids) * 10) / 1024)
+    Int disk_size = 1 + ceil((length(ref_ids) * 25) / 1024)
 
     #########################
     RuntimeAttr default_attr = object {
