@@ -59,7 +59,12 @@ workflow Trim_Contigs {
             variant_count = Count_Variants.count
     }
 
-    File custom_reference = Self_Align.trimmed_contigs[Find_Min.idx]
+    scatter (txt in Find_Min.min_idx) {
+        Int idx = read_int(txt)
+        File custom_reference = Self_Align.trimmed_contigs[idx]
+#        String test = idx
+    }
+
 
     output{
         Array[File] trimmed_candidate_contigs = Self_Align.trimmed_contigs
@@ -69,9 +74,8 @@ workflow Trim_Contigs {
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
         Array[File?] merged_vcf = Clair_Mito.vcf
         Array[Int] variant_counts = Count_Variants.count
-        Int min_idx = Find_Min.min_idx
-        Int min_val = Find_Min.min_val
-        File custom_reference = custom_reference
+        Array[File] min_idx = Find_Min.min_idx
+        Array[File] custom_reference_all = custom_reference
     }
 }
 
@@ -187,7 +191,7 @@ task Count_Variants {
     command <<<
 
         zcat < ~{vcfgz} > merge_output.vcf
-        grep -v "^#" merge_output.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]' > counts.txt
+        counts=$(grep -v "^#" merge_output.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]')
         if [[ $counts -eq 0 ]];
         then
             echo  0 > counts.txt
@@ -220,31 +224,28 @@ task Find_Min {
     command <<<
         set -eux
         seq 0 ~{n} > indices.txt
-        echo "~{sep='\n' variant_count}" > counts.txt
-        paste -d' ' indices.txt counts.txt > counts_index.txt
+        echo "~{sep='\n' variant_count}" > v_counts.txt
+        paste -d' ' indices.txt v_counts.txt > counts_index.txt
         sort -k2 -n counts_index.txt > sorted_counts.txt
-        cat sorted_counts.txt
 
-        head -n 1 sorted_counts.txt | awk '{print $1}' > "idx.txt"
-        head -n 1 sorted_counts.txt | awk '{print $2}' > "min_count.txt"
+
+        min_val=$(head -n 1 sorted.txt | awk '{print $2}')
+
+        for idx in $(awk -F " " '{if ($2=="$min_val") print $1}' sorted_counts.txt); do
+            echo $idx > ${idx%.*}.txt
+        done
         >>>
 
 
 
     output {
-        Int min_idx = read_int("counts.txt")
-        Int min_val = read_int("min_count.txt")
+        Array[File] min_idx = glob("^[0-9]*[1-9][0-9]*.txt")
     }
 
     ###################
     runtime {
-        cpu: 2
-        memory:  "4 GiB"
-        disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
-        preemptible_tries:     3
-        max_retries:           2
-        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+        disks: "local-disk 100 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
 
