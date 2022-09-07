@@ -286,14 +286,8 @@ task ConstructSampleLinks {
         File sample_graph
         File sample_graph_colors
 
-        File ref_meta
-        Array[String] ref_ids
-        Array[File] ref_paths
-
         File reads_fq1
         File? reads_fq2
-
-        Int prune_threshold
 
         RuntimeAttr? runtime_attr_override
     }
@@ -305,22 +299,6 @@ task ConstructSampleLinks {
         source /usr/local/bin/_activate_current_env.sh
         set -euxo pipefail
 
-        # First rebuild DB folder structure
-        mkdir -p fusilli_db
-        cd fusilli_db
-
-        ln -s ~{ref_meta} reference_meta.tsv
-
-        # Symlink individual reference files
-        while IFS= read -r line; do
-            parts=(${line})
-
-            mkdir -p "${parts[0]}"
-            ln -s "${parts[1]}" "${parts[0]}/${parts[1]##*/}"
-        done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_paths)})
-
-        cd ..
-
         # Organize sample related files
         mkdir ~{sample_id}
         cd ~{sample_id}
@@ -330,9 +308,8 @@ task ConstructSampleLinks {
 
         cd ..
 
-        fusilli sample construct-links ~{sample_id} -o ~{sample_id}.links -r fusilli_db -s ~{sep=' ' reads} \
+        fusilli sample links-from-reads ~{sample_id} ~{sep=' ' reads} -o ~{sample_id}.links \
             --prune-first-pass-db 3
-        fusilli sample prune-links ~{sample_id}.links -t ~{prune_threshold} --in-place
     >>>
 
     output {
@@ -341,7 +318,7 @@ task ConstructSampleLinks {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          8,
+        cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            20,
         boot_disk_gb:       10,
@@ -465,6 +442,56 @@ task FindVariantKmers {
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
+}
+
+task MergeSampleAndRefLinks {
+    input {
+        String sample_id
+        File cleaned_graph
+        File cleaned_graph_colors
+        File sample_links
+
+        File ref_meta
+        Array[String] ref_ids
+        Array[String] ref_fastas
+
+        Int prune_threshold
+    }
+
+    command <<<
+        mkdir -p fusilli_db
+        cd fusilli_db
+
+        ln -s ~{ref_meta} reference_meta.tsv
+
+        # Symlink individual reference files
+        while IFS=$'\t' read -r ref_id ref_fasta; do
+            mkdir -p "${ref_id}"
+            ln -s "${ref_fasta}" "${ref_id}/${ref_fasta##*/}"
+        done < <(paste ~{write_lines(ref_ids)} ~{write_lines(ref_fastas)})
+
+        cd ..
+
+        mkdir ~{sample_id}
+        cd ~{sample_id}
+
+        ln -s ~{cleaned_graph} ~{sample_id}.cleaned.gfa
+        ln -s ~{cleaned_graph_colors} ~{sample_id}.cleaned.bfg_colors
+        ln -s ~{sample_links} ~{sample_id}.links
+
+        cd ..
+
+        fusilli sample links-from-refs ~{sample_id} fusilli_db/ -o ~{sample_id}.refs.links
+
+        fusilli sample merge-links ~{sample_id}.refs.links ~{sample_id}/~{sample_id}.links -o ~{sample_id}.temp.links
+        fusilli sample prune-links ~{sample_id}.temp.links -t ~{prune_threshold} -o ~{sample_id}.merged.links
+    >>>
+
+    output {
+        File sample_ref_links = "~{sample_id}.refs.links"
+        File sample_merged_links = "~{sample_id}.links"
+    }
+
 }
 
 task AssembleVariantContigs {
@@ -592,7 +619,7 @@ task FinalizeAssembly {
         RuntimeAttr? runtime_attr_override
     }
 
-    String output_dir = sub(gcs_output_dir, "/$", "")
+    String output_dir = sub(gcs_output_dir, "/$", "") + "/assembly"
 
     command <<<
         set -euxo pipefail
@@ -658,7 +685,7 @@ task FinalizeRefPanels {
         RuntimeAttr? runtime_attr_override
     }
 
-    String output_dir = sub(gcs_output_dir, "/$", "")
+    String output_dir = sub(gcs_output_dir, "/$", "") + "/assembly"
     String sample_gcs_dir = output_dir + "/" + sample_id
 
     command <<<
@@ -813,7 +840,7 @@ task MakeCalls {
     }
 
     String db_name = basename(fusilli_db_gcs)
-    String sample_run_data = fusilli_run_gcs + "/" + sample_id
+    String sample_run_data = fusilli_run_gcs + "/assembly/" + sample_id
 
     command <<<
         source /usr/local/bin/_activate_current_env.sh

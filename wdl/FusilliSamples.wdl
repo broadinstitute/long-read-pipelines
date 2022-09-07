@@ -26,6 +26,17 @@ workflow FusilliBuildAndCleanSampleGraph {
 
     Map[String, Float] clean_meta = read_json(BuildSampleGraph.clean_meta)
 
+    call Fusilli.ConstructSampleLinks as ConstructSampleLinks {
+        input:
+            sample_id = sample_id,
+            sample_graph = BuildSampleGraph.cleaned_graph,
+            sample_graph_colors = BuildSampleGraph.cleaned_graph_colors,
+
+            reads_fq1 = TrimGalore.trimmed_fq1,
+            reads_fq2 = TrimGalore.trimmed_fq2
+    }
+
+
     output {
         File trimmed_fq1 = TrimGalore.trimmed_fq1
         File? trimmed_fq2 = TrimGalore.trimmed_fq2
@@ -35,6 +46,7 @@ workflow FusilliBuildAndCleanSampleGraph {
         File kmer_spectrum = BuildSampleGraph.kmer_spectrum
         File cleaned_graph = BuildSampleGraph.cleaned_graph
         File cleaned_graph_colors = BuildSampleGraph.cleaned_graph_colors
+        File sample_links = ConstructSampleLinks.sample_links
         Float est_coverage = clean_meta['est_coverage']
         Int prune_threshold = round(clean_meta['threshold'])
         Int num_nodes_before = round(clean_meta['num_nodes_before'])

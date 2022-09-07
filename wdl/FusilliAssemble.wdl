@@ -17,6 +17,7 @@ workflow FusilliAssemble {
         Array[File?] reads_fq2
         Array[File] cleaned_sample_graphs
         Array[File] cleaned_sample_graph_colors
+        Array[File] sample_links
         Array[Int] prune_thresholds
 
         String gcs_output_dir
@@ -44,18 +45,16 @@ workflow FusilliAssemble {
 
     # Build links for each sample graph from both references and each sample's reads
     scatter(i in range(length(sample_ids))) {
-        call Fusilli.ConstructSampleLinks as ConstructSampleLinks {
+        call Fusilli.MergeSampleAndRefLinks as MergeSampleAndRefLinks {
             input:
                 sample_id = sample_ids[i],
-                sample_graph = cleaned_sample_graphs[i],
-                sample_graph_colors = cleaned_sample_graph_colors[i],
+                cleaned_graph = cleaned_sample_graphs[i],
+                cleaned_graph_colors = cleaned_sample_graph_colors[i],
+                sample_links = sample_links[i],
 
                 ref_meta = ref_meta,
                 ref_ids = ref_ids,
-                ref_paths = ref_paths,
-
-                reads_fq1 = reads_fq1[i],
-                reads_fq2 = reads_fq2[i],
+                ref_fastas = ref_paths,
 
                 prune_threshold = prune_thresholds[i]
         }
@@ -65,7 +64,7 @@ workflow FusilliAssemble {
                 sample_id = sample_ids[i],
                 cleaned_graph = cleaned_sample_graphs[i],
                 cleaned_graph_colors = cleaned_sample_graph_colors[i],
-                linkdb = ConstructSampleLinks.sample_links,
+                linkdb = MergeSampleAndRefLinks.sample_merged_links,
                 variant_kmers = FindVariantKmers.variant_kmers,
                 nonref_kmers = FindVariantKmers.nonref_kmers
         }
@@ -83,7 +82,7 @@ workflow FusilliAssemble {
         input:
             gcs_output_dir = output_dir,
             sample_ids = sample_ids,
-            linkdbs = ConstructSampleLinks.sample_links,
+            linkdbs = MergeSampleAndRefLinks.sample_merged_links,
             variant_contigs = AssembleVariantContigs.variant_contigs,
             combined_graph = BuildCombinedGraph.combined_graph,
             combined_graph_colors = BuildCombinedGraph.combined_graph_colors,
