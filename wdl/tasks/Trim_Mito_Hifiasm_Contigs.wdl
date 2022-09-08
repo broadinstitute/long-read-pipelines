@@ -56,13 +56,8 @@ workflow Trim_Contigs {
 
     call Find_Min {
         input:
-            variant_count = Count_Variants.count
-    }
-
-    scatter (txt in Find_Min.min_idx) {
-        Int idx = read_int(txt)
-        File custom_reference = Self_Align.trimmed_contigs[idx]
-#        String test = idx
+            variant_count = Count_Variants.count,
+            contigs = Self_Align.trimmed_contigs
     }
 
 
@@ -74,8 +69,7 @@ workflow Trim_Contigs {
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
         Array[File?] merged_vcf = Clair_Mito.vcf
         Array[Int] variant_counts = Count_Variants.count
-        Array[File] min_idx = Find_Min.min_idx
-        Array[File] custom_reference_all = custom_reference
+        Array[File] picked_tigs = Find_Min.picked_tigs
     }
 }
 
@@ -217,29 +211,28 @@ task Count_Variants {
 task Find_Min {
     input {
         Array[Int] variant_count
+        Array[String] contigs
     }
 
     Int n = length(variant_count)-1
 
     command <<<
         set -eux
-        seq 0 ~{n} > indices.txt
         echo "~{sep='\n' variant_count}" > v_counts.txt
-        paste -d' ' indices.txt v_counts.txt > counts_index.txt
-        sort -k2 -n counts_index.txt > sorted_counts.txt
+        echo "~{sep='\n' contigs}" > fasta_path.txt
 
+        paste -d' ' fasta_path.txt v_counts.txt > vcount_contigs.txt
+        sort -k2 -n vcount_contigs.txt > sorted_counts.txt
 
-        min_val=$(head -n 1 sorted.txt | awk '{print $2}')
-
-        for idx in $(awk -F " " '{if ($2=="$min_val") print $1}' sorted_counts.txt); do
-            echo $idx > ${idx%.*}.txt
-        done
+        min_val=$(head -n 1 sorted_counts.txt | awk '{print $2}')
+        awk -v mm=${min_val} '{if($2==mm) print $1}' sorted_counts.txt > picked_tigs.txt
         >>>
 
 
-
     output {
-        Array[File] min_idx = glob("^[0-9]*[1-9][0-9]*.txt")
+#        Array[File] min_idx = glob("^[0-9]*[1-9][0-9]*.txt")
+#        Array[File] min_id = glob("*.fasta")
+        Array[String] picked_tigs = read_lines("picked_tigs.txt")
     }
 
     ###################
