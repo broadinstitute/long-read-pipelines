@@ -453,7 +453,7 @@ task MergeSampleAndRefLinks {
 
         File ref_meta
         Array[String] ref_ids
-        Array[String] ref_fastas
+        Array[File] ref_fastas
 
         Int prune_threshold
 
