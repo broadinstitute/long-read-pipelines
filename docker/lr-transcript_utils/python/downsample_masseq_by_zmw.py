@@ -45,9 +45,6 @@ if __name__ == '__main__':
 
     zmw_set = set()
 
-    has_XN_tag = False
-    is_first = True
-
     num_written = 0
     num_skipped = 0
 
@@ -56,16 +53,7 @@ if __name__ == '__main__':
             with tqdm(desc=f"Downsampling bam file", unit=" read") as pbar:
                 for read in bam_file.fetch(until_eof=True):
 
-                    if is_first and read.has_tag("XN"):
-                        print("Read has XN Tag.  Using XN for names!")
-                        has_XN_tag = True
-                    is_first = False
-
-                    name = read.get_tag("XN") if has_XN_tag else read.query_name
-
-                    i1 = name.find("/")
-                    i2 = name.find("/", i1+1)
-                    zmw = int(name[i1+1:i2])
+                    zmw = int(read.get_tag("zm"))
 
                     if zmw not in zmw_set:
                         output_file.write(read)
