@@ -94,8 +94,8 @@ workflow FusilliAssemble {
     # WDL doesn't provide functionality to apply a function on an Array (e.g., applying `basename` on all
     # entries in an array), and scatter can't be used in a task, so we do it here.
     scatter(i in range(length(sample_ids))) {
-        String finalized_linkdbs = "~{output_dir}/~{sample_ids[i]}/~{sample_ids[i]}.links"
-        String finalized_contigs = "~{output_dir}/~{sample_ids[i]}/~{sample_ids[i]}.contigs.fasta"
+        String finalized_linkdbs = "~{output_dir}/assembly/~{sample_ids[i]}/~{sample_ids[i]}.links"
+        String finalized_contigs = "~{output_dir}/assembly/~{sample_ids[i]}/~{sample_ids[i]}.contigs.fasta"
 
         call Fusilli.FinalizeRefPanels {
             input:
@@ -105,7 +105,7 @@ workflow FusilliAssemble {
                 gcs_output_dir = output_dir
         }
 
-        String finalized_ref_panels = "~{output_dir}/~{sample_ids[i]}/ref_panels"
+        String finalized_ref_panels = "~{output_dir}/assembly/~{sample_ids[i]}/ref_panels"
     }
 
     output {
