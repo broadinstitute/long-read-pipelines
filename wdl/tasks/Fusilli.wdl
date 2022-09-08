@@ -490,7 +490,7 @@ task MergeSampleAndRefLinks {
         fusilli sample prune-links ~{sample_id}/~{sample_id}.links -t ~{prune_threshold} -o ~{sample_id}.pruned.links
 
         fusilli sample links-from-refs ~{sample_id} fusilli_db/ -o ~{sample_id}.refs.links
-        fusilli sample merge-links ~{sample_id}.refs.links ~{sample_id}.pruned.links -o ~{sample_id}.temp.links
+        fusilli sample merge-links ~{sample_id}.refs.links ~{sample_id}.pruned.links -o ~{sample_id}.links
     >>>
 
     output {
