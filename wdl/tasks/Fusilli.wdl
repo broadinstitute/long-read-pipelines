@@ -461,6 +461,10 @@ task MergeSampleAndRefLinks {
     }
 
     command <<<
+        # Activate fusilli conda env
+        source /usr/local/bin/_activate_current_env.sh
+        set -euxo pipefail
+
         mkdir -p fusilli_db
         cd fusilli_db
 
