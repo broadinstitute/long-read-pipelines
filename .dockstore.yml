@@ -117,3 +117,9 @@ workflows:
 - name: CallVariantsReadBased
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl
+- name: LongReadsContaminationEstimation
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/LongReadsContaminationEstimation.wdl
+- name: SexCheckNaive
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SexCheckNaive.wdl
