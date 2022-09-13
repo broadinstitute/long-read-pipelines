@@ -35,4 +35,4 @@ jobs:
         with:
           BRANCH: bs_add_docs
           #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FOLDER: docs/build
+          FOLDER: docs/
