@@ -1,9 +1,9 @@
-site_name: "St. Jude Cloud Bioinformatics Workflows"
-repo_url: "https://github.com/stjudecloud/workflows"
+site_name: "Broad Institute Long Read Pipelines"
+repo_url: "https://github.com/broadinstitute/long-read-pipelines"
 
-site_description: "Repository containing bioinformatics workflows used on the St. Jude Cloud project."
-site_author: "St. Jude Cloud"
-copyright: "© 2020-Present St. Jude Children's Research Hospital"
+site_description: "This repository contains pipelines for processing of long read data from PacBio and/or Oxford Nanopore platforms."
+site_author: "Broad Institute"
+copyright: "Copyright (c) 2019, Broad Institute"
 
 theme: readthedocs
 
