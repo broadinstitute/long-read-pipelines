@@ -1,0 +1,11 @@
+site_name: "St. Jude Cloud Bioinformatics Workflows"
+repo_url: "https://github.com/stjudecloud/workflows"
+
+site_description: "Repository containing bioinformatics workflows used on the St. Jude Cloud project."
+site_author: "St. Jude Cloud"
+copyright: "© 2020-Present St. Jude Children's Research Hospital"
+
+theme: readthedocs
+
+markdown_extensions:
+    - def_list
