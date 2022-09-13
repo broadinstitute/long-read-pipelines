@@ -7,13 +7,15 @@ import "tasks/Quast.wdl" as Quast
 import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
 import "tasks/Canu.wdl" as Canu
 import "tasks/Clair_mito.wdl" as Clair_Mito
+import "tasks/Finalize.wdl" as Finalize
 
-workflow Trim_Contigs {
+workflow Select_Contigs {
     input {
         File assembly_fasta
         File reads
         File bam
         String preset
+        String outdir
     }
 
     call Filter_Contigs {
@@ -58,6 +60,12 @@ workflow Trim_Contigs {
         input:
             variant_count = Count_Variants.count,
             contigs = Self_Align.trimmed_contigs
+    }
+
+    call Finalize.FinalizeToDir {
+        input:
+            files = Find_Min.picked_tigs,
+            outdir = outdir
     }
 
 
@@ -230,8 +238,6 @@ task Find_Min {
 
 
     output {
-#        Array[File] min_idx = glob("^[0-9]*[1-9][0-9]*.txt")
-#        Array[File] min_id = glob("*.fasta")
         Array[String] picked_tigs = read_lines("picked_tigs.txt")
     }
 
