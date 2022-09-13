@@ -27,7 +27,8 @@ jobs:
 
       - name: Create documents
         run: |
-        cp README.md docs/index.md #&& sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
+        cp README.md docs/index.md
+      #sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
 
       - name: Build Docs
         run: |
