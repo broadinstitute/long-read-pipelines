@@ -26,7 +26,8 @@ jobs:
           python3 -m pip install mkdocs
 
       - name: Create documents
-        run: cp README.md docs/index.md && sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
+        run: |
+        cp README.md docs/index.md #&& sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
 
       - name: Build Docs
         run: |
@@ -38,5 +39,4 @@ jobs:
         with:
           BRANCH: gh-pages
           #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          #FOLDER: docs/
           FOLDER: ./site
