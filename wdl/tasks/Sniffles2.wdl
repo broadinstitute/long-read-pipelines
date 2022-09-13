@@ -17,7 +17,7 @@ workflow Sniffles2 {
         String sample_id}
 
     scatter (pair in zip(sampleBAMs, sampleBai)) {
-        call sample_sv {
+        call SampleSV {
                 input:
                     bam = pair.left,
                     bai = pair.right,
@@ -27,18 +27,18 @@ workflow Sniffles2 {
                 }
          }
 
-    call merge_call { input: snfs = sample_sv.snf}
+    call MergeCall { input: snfs = SampleSV.snf}
 
 
     output {
-         Array[File] single_snf = sample_sv.snf
-         File multisample_vcf = merge_call.vcf
+         Array[File] single_snf = SampleSV.snf
+         File multisample_vcf = MergeCall.vcf
         }
 }
 
 
 
-task sample_sv {
+task SampleSV {
 
     input {
         File bam
@@ -55,7 +55,7 @@ task sample_sv {
         bai:              "index accompanying the BAM"
         minsvlen:         "minimum SV length in bp. Default 35"
         chr:              "chr on which to call variants"
-        sample_id:         "Sample ID"
+        sample_id:        "Sample ID"
         prefix:           "prefix for output"
     }
 
@@ -104,14 +104,14 @@ task sample_sv {
 }
 
 
-task merge_call {
+task MergeCall {
     input {
         Array[File] snfs
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        snfs: "snf files"
+        snfs: ".snf files"
 }
 
     command <<<
