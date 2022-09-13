@@ -28,7 +28,7 @@ jobs:
       - name: Create documents
         run: |
           cp README.md docs/index.md
-        echo "![Place Holder Llama](./llama_mascot_placeholder.png)" >> docs/index.md
+          echo "![Place Holder Llama](./llama_mascot_placeholder.png)" >> docs/index.md
         #&& sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
 
       - name: Build Docs
