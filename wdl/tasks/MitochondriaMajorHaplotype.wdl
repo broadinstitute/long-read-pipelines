@@ -3,13 +3,12 @@ version 1.0
 import "tasks/Structs.wdl"
 import "tasks/AlignReads.wdl" as AR
 import "AoU_Mitochondria_Canu_filteredReads.wdl" as AoU
-import "tasks/Quast.wdl" as Quast
 import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
 import "tasks/Canu.wdl" as Canu
 import "tasks/Clair_mito.wdl" as Clair_Mito
 import "tasks/Finalize.wdl" as Finalize
 
-workflow Select_Contigs {
+workflow SelectContigs {
     input {
         File assembly_fasta
         File reads
@@ -18,20 +17,20 @@ workflow Select_Contigs {
         String outdir
     }
 
-    call Filter_Contigs {
+    call FilterContigs {
         input:
-        assembly_fasta = assembly_fasta
+            assembly_fasta = assembly_fasta
     }
 
-    call Self_Align {
+    call SelfAlign {
         input:
-        filtered_contigs = Filter_Contigs.filtered_contigs
+            filtered_contigs = FilterContigs.filtered_contigs
     }
 
     call AoU.RG_Parsing as Parsing {input: bam = bam}
     String RG = "@RG\\tID:~{Parsing.ID}\\tSM:~{Parsing.SM}\\tPL:~{Parsing.PL}\\tPU:~{Parsing.PU}"
 
-    scatter (pair in zip(Self_Align.trimmed_contigs, Self_Align.trimmed_contigs_idx)) {
+    scatter (pair in zip(SelfAlign.trimmed_contigs, SelfAlign.trimmed_contigs_idx)) {
         call AR.Minimap2 as Minimap2 {
             input:
                 reads = [reads],
@@ -49,40 +48,40 @@ workflow Select_Contigs {
 
         }
 
-        call Count_Variants {
+        call CountVariants {
             input:
                 vcfgz = Clair_Mito.vcf
             }
 
     }
 
-    call Find_Min {
+    call FindMin {
         input:
-            variant_count = Count_Variants.count,
-            contigs = Self_Align.trimmed_contigs
+            variant_count = CountVariants.count,
+            contigs = SelfAlign.trimmed_contigs
     }
 
     call Finalize.FinalizeToDir {
         input:
-            files = Find_Min.picked_tigs,
+            files = FindMin.picked_tigs,
             outdir = outdir
     }
 
 
     output{
-        Array[File] trimmed_candidate_contigs = Self_Align.trimmed_contigs
-        Array[File] trimmed_cadidate_fai = Self_Align.trimmed_contigs_idx
+        Array[File] trimmed_candidate_contigs = SelfAlign.trimmed_contigs
+        Array[File] trimmed_cadidate_fai = SelfAlign.trimmed_contigs_idx
         Array[File] aligned_bam = Minimap2.aligned_bam
         Array[File] aligned_bai = Minimap2.aligned_bai
         Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
         Array[File?] merged_vcf = Clair_Mito.vcf
-        Array[Int] variant_counts = Count_Variants.count
-        Array[File] picked_tigs = Find_Min.picked_tigs
+        Array[Int] variant_counts = CountVariants.count
+        Array[File] picked_tigs = FindMin.picked_tigs
     }
 }
 
 
-task Filter_Contigs {
+task FilterContigs {
     input {
         File assembly_fasta
     }
@@ -109,7 +108,7 @@ task Filter_Contigs {
 }
 
 
-task Self_Align {
+task SelfAlign {
     input {
         File filtered_contigs
         RuntimeAttr? runtime_attr_override
@@ -183,7 +182,7 @@ task Self_Align {
 
 }
 
-task Count_Variants {
+task CountVariants {
 
     input{
         File? vcfgz
@@ -191,7 +190,6 @@ task Count_Variants {
     }
 
     command <<<
-
         zcat < ~{vcfgz} > merge_output.vcf
         counts=$(grep -v "^#" merge_output.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]')
         if [[ $counts -eq 0 ]];
@@ -216,7 +214,7 @@ task Count_Variants {
 
 }
 
-task Find_Min {
+task FindMin {
     input {
         Array[Int] variant_count
         Array[String] contigs
