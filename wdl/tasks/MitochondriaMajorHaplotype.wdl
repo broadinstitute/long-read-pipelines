@@ -189,6 +189,10 @@ task CountVariants {
         RuntimeAttr? runtime_attr_override
     }
 
+    parameter_meta {
+        vcfgz: ".vcf.gz file"
+    }
+
     command <<<
         zcat < ~{vcfgz} > merge_output.vcf
         counts=$(grep -v "^#" merge_output.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]')
@@ -218,6 +222,11 @@ task FindMin {
     input {
         Array[Int] variant_count
         Array[String] contigs
+    }
+
+    parameter_meta {
+        variant_count: "number of SNPs from contigs"
+        contigs: "gs paths of contigs fasta files"
     }
 
     Int n = length(variant_count)-1
