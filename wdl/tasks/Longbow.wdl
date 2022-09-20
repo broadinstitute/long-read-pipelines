@@ -35,7 +35,7 @@ workflow Process {
     # Make a lookup table for our models for now.
     # TODO: Once the UMI adjustment is part of longbow, remove this (it's redundant to Longbow):
     LongbowModelParams umi_params_mas15                = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTCTTATATGGG" }
-    LongbowModelParams umi_params_mas15threeP          = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTTTTTTTTTTT" }
+    LongbowModelParams umi_params_mas15threeP          = { 'umi_length': 12, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTTTTTTTTTTT" }
     LongbowModelParams umi_params_mas15BulkWithIndices = { 'umi_length': 10, "pre_umi_seq": 'TCTACACGACGCTCTTCCGATCT', "post_umi_seq": "TTTCTTATATGGG" }
     LongbowModelParams umi_params_mas10                = { 'umi_length': 10, 'pre_pre_umi_seq': 'TCTACACGACGCTCTTCCGATCT', "pre_umi_tag": "CB", "post_umi_seq": "TTTCTTATATGGG" }
     LongbowModelParams umi_params_slide_seq            = { 'umi_length': 9, 'pre_pre_umi_seq': 'TCTTCAGCGTTCCCGAGA', "pre_umi_tag": "X1", "post_umi_seq": "TTTTTTTTTTTTT" }
@@ -157,7 +157,7 @@ task Peek {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -202,7 +202,7 @@ task Annotate {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -259,7 +259,7 @@ task Filter {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -306,7 +306,7 @@ task Segment {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -373,7 +373,7 @@ task Extract {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -431,7 +431,7 @@ task PadUMI
         boot_disk_gb:       10,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -491,7 +491,7 @@ task PadCBC
         boot_disk_gb:       10,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -541,7 +541,7 @@ task TagFix
         boot_disk_gb:       10,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -657,7 +657,7 @@ task Correct {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -702,7 +702,7 @@ task Stats {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -748,7 +748,7 @@ task Demultiplex {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -842,7 +842,7 @@ CODE
         boot_disk_gb:       10,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
