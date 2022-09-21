@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "GermlineVariantDiscovery.wdl" as Calling
@@ -155,8 +157,11 @@ workflow VariantCalling {
   }
 }
 
-# This task is here because merging bamout files using Picard produces an error.
 task MergeBamouts {
+
+    meta {
+        description: "This task is here because merging bamout files using Picard produces an error."
+    }
 
   input {
     Array[File] bams

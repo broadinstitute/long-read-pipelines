@@ -1,14 +1,16 @@
+## #
+
 version 1.0
 
-##########################################################################################
-# This pipeline calls SVs on an input LR BAM using various known SV algorithms
-# that are specifically designed to work with long read data.
-# Each individual task/algo. is directly callable, if so desired.
-##########################################################################################
 
 import "Structs.wdl"
 
 task CuteSV {
+
+    meta {
+        description: "This pipeline calls SVs on an input LR BAM using various known SV algorithms that are specifically designed to work with long read data. Each individual task/algo. is directly callable, if so desired."
+    }
+
     input {
         File bam
         File bai

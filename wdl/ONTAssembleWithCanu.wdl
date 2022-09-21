@@ -1,10 +1,6 @@
-version 1.0
+## #
 
-######################################################################################
-## A workflow that performs single sample genome assembly on ONT reads from one or
-## more flow cells. The workflow merges multiple samples into a single BAM prior to
-## genome assembly and variant calling.
-######################################################################################
+version 1.0
 
 import "tasks/Utils.wdl" as Utils
 import "tasks/Canu.wdl" as Canu
@@ -14,6 +10,11 @@ import "tasks/Quast.wdl" as Quast
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTAssembleWithCanu {
+
+    meta {
+        description: "A workflow that performs single sample genome assembly on ONT reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to genome assembly and variant calling."
+    }
+
     input {
         String gcs_fastq_dir
 

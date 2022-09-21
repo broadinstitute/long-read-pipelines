@@ -1,13 +1,6 @@
-version 1.0
+## #
 
-##########################################################################################
-## A workflow that performs trio-binning of child long reads given parental (short) reads.
-## Based on the trio-canu publication
-##    De novo assembly of haplotype-resolved genomes with trio binning
-##    https://www.nature.com/articles/nbt.4277
-## This holds the sub-workflow for
-##   part two: given the k-mer stats database from part one, classify child long reads
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
@@ -15,6 +8,10 @@ import "Structs.wdl"
 #  1. we can test out using different k-value when collecting parental k-mer states
 #  2. we can collect parental k-mer stats once and classify all children reads (different sibblings, technologies) separately
 workflow AssignChildLongReadsGivenParentalKmerStats {
+
+    meta {
+        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication: <br /> De novo assembly of haplotype-resolved genomes with trio binning https://www.nature.com/articles/nbt.4277 <br /> <br /> This holds the sub-workflow for: <br /> part two: given the k-mer stats database from part one, classify child long reads"
+    }
 
 	input{
 
@@ -80,10 +77,13 @@ workflow AssignChildLongReadsGivenParentalKmerStats {
     }
 }
 
-###############################################################
 
-# actually assign child long reads
 task AssignChildLongReads {
+
+    meta {
+        description: "assign child long reads"
+    }
+
     input{
 
         String workdir_name

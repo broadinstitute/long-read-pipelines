@@ -1,11 +1,6 @@
-version 1.0
+## #
 
-##########################################################################################
-## A workflow that performs CCS correction on PacBio HiFi reads from a single flow cell.
-## The workflow shards the subreads into clusters and performs CCS in parallel on each cluster.
-## Ultimately, all the corrected reads (and uncorrected) are gathered into a single BAM.
-## Various metrics are produced along the way.
-##########################################################################################
+version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/AlignReads.wdl" as AR
@@ -20,6 +15,11 @@ import "tasks/MASSeq.wdl" as MAS
 import "tasks/JupyterNotebooks.wdl" as JUPYTER
 
 workflow PBFlowcell {
+
+    meta {
+        description: "A workflow that performs CCS correction on PacBio HiFi reads from a single flow cell. The workflow shards the subreads into clusters and performs CCS in parallel on each cluster. Ultimately, all the corrected reads (and uncorrected) are gathered into a single BAM. Various metrics are produced along the way."
+    }
+
     input {
         File bam
         File pbi

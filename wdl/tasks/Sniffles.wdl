@@ -1,9 +1,15 @@
+## #
+
 version 1.0
 
 import "Structs.wdl"
 
-# Given BAM, call SVs using Sniffles
 task Sniffles {
+
+    meta {
+        description: "Given BAM, call SVs using Sniffles"
+    }
+
     input {
         File bam
         File bai

@@ -1,10 +1,6 @@
-version 1.0
+## #
 
-##########################################################################################
-# This pipeline calls SVs on an input LR BAM using various known SV algorithms
-# that are specifically designed to work with long read data.
-# Each individual task/algo. is directly callable, if so desired.
-##########################################################################################
+version 1.0
 
 import "Utils.wdl"
 import "VariantUtils.wdl"
@@ -14,9 +10,11 @@ import "Sniffles.wdl"
 
 
 workflow CallVariants {
+
     meta {
-        descrition: "A workflow for calling small and/or structural variants from an aligned CLR BAM file."
+        description: "A workflow for calling small and/or structural variants from an aligned CLR BAM file. This pipeline calls SVs on an input LR BAM using various known SV algorithms that are specifically designed to work with long read data. Each individual task/algo. is directly callable, if so desired."
     }
+
     input {
         File bam
         File bai

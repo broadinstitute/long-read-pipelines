@@ -1,10 +1,6 @@
-version 1.0
+## #
 
-######################################################################################
-## A workflow that performs single sample variant calling on PacBio CLR reads from one
-## or more flow cells. The workflow merges multiple samples into a single BAM prior to
-## variant calling.
-######################################################################################
+version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
@@ -14,6 +10,11 @@ import "tasks/Finalize.wdl" as FF
 import "tasks/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow PBCLRWholeGenome {
+
+    meta {
+        description: "A workflow that performs single sample variant calling on PacBio CLR reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to variant calling."
+    }
+
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais

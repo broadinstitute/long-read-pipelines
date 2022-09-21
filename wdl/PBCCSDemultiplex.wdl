@@ -1,17 +1,17 @@
-version 1.0
+## #
 
-##########################################################################################
-## A workflow that performs CCS correction and demultiplexing on PacBio HiFi reads from a
-## single flow cell. The workflow shards the subreads into clusters and performs CCS in
-## parallel on each cluster.  Error-corrected reads are then demultiplexed.  A number of
-## metrics and figures are produced along the way.
-##########################################################################################
+version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSDemultiplex {
+
+    meta {
+        description: "A workflow that performs CCS correction and demultiplexing on PacBio HiFi reads from a single flow cell. The workflow shards the subreads into clusters and performs CCS in parallel on each cluster.  Error-corrected reads are then demultiplexed.  A number of metrics and figures are produced along the way."
+    }
+
     input {
         Array[File] bams
         File ref_map_file

@@ -1,17 +1,17 @@
-version 1.0
+## #
 
-##########################################################################################
-## A workflow that performs CCS correction on PacBio HiFi reads from a single flow cell.
-## The workflow shards the subreads into clusters and performs CCS in parallel on each cluster.
-## Ultimately, all the corrected reads (and uncorrected) are gathered into a single BAM.
-## Various metrics are produced along the way.
-##########################################################################################
+version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCS {
+
+    meta {
+        description: "A workflow that performs CCS correction on PacBio HiFi reads from a single flow cell. The workflow shards the subreads into clusters and performs CCS in parallel on each cluster. Ultimately, all the corrected reads (and uncorrected) are gathered into a single BAM. Various metrics are produced along the way."
+    }
+
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais

@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "Structs.wdl"
@@ -191,7 +193,7 @@ task MergeAndSortVCFs {
 
 task CollectDefinitions {
     meta {
-        description: "Collect (union) various definitions in vcf files, adddressing a bcftols bug: https://github.com/samtools/bcftools/issues/1629"
+        description: "Collect (union) various definitions in vcf files, addressing a bcftols bug: https://github.com/samtools/bcftools/issues/1629"
     }
     input {
         Array[File] vcfs

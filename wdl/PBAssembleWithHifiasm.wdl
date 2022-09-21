@@ -1,10 +1,6 @@
-version 1.0
+## #
 
-######################################################################################
-## A workflow that performs single sample genome assembly on PacBio HiFi reads from
-## one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to genome assembly and variant calling.
-######################################################################################
+version 1.0
 
 import "tasks/Utils.wdl" as Utils
 import "tasks/Hifiasm.wdl" as HA
@@ -13,6 +9,11 @@ import "tasks/Quast.wdl" as Quast
 import "tasks/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
+
+    meta {
+        description: "A workflow that performs single sample genome assembly on PacBio HiFi reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to genome assembly and variant calling."
+    }
+
     input {
         Array[File] ccs_fqs
 

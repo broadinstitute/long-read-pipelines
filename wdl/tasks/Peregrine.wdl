@@ -1,15 +1,15 @@
-version 1.0
+## #
 
-##########################################################################################
-# This pipeline assembles sequences an PacBio HiFi BAM using Peregrine
-#  https://github.com/cschin/Peregrine
-# and aligns the assembly to a reference, followed by variant calling using paftools
-#  https://github.com/lh3/minimap2/tree/master/misc#asmvar
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
 workflow Peregrine {
+
+    meta {
+        description: "This pipeline assembles sequences an PacBio HiFi BAM using [Peregrine](https://github.com/cschin/Peregrine) and aligns the assembly to a reference, followed by variant calling using [paftools](https://github.com/lh3/minimap2/tree/master/misc#asmvar)."
+    }
+
     input {
         File ref_fasta
         File bam

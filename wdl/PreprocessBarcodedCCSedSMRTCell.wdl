@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "tasks/CCSLima.wdl"
@@ -10,8 +12,7 @@ import "tasks/utils/GeneralUtils.wdl" as GU
 
 workflow PreprocessBarcodedCCSedSMRTCell {
     meta {
-        desciption:
-        "A workflow for preprocessing barcoded (potentially multiplexed) SMRTCell. The cell is assumed to be CCS-ed on-instrument, and the whole data folder is mirrored onto a cloud bucket."
+        description: "A workflow for preprocessing barcoded (potentially multiplexed) SMRTCell. The cell is assumed to be CCS-ed on-instrument, and the whole data folder is mirrored onto a cloud bucket."
     }
     input {
         String smrtcell_data_dir
@@ -57,8 +58,9 @@ workflow PreprocessBarcodedCCSedSMRTCell {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/" + workflow_name + "/" + movie
     String outdir_metrics = outdir + "/metrics"
 
-    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, sep = ','}
-    call Utils.SplitDelimitedString as get_sample_ids {input: s = downstream_sample_ids, sep = ','}
+
+    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, separator = ','}
+    call Utils.SplitDelimitedString as get_sample_ids {input: s = downstream_sample_ids, separator = ','}
     if (length(get_barcodes.arr) != length(get_sample_ids.arr)) {
         call Utils.StopWorkflow as unmatched_barcodes_and_samples {
             input: reason = "Length of barcode names array and sample ids array don't match."

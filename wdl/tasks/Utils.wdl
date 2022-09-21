@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "Structs.wdl"
@@ -211,6 +213,11 @@ task SortBam {
 # copied from "dsde_pipelines_tasks/BamProcessing.wdl", with
 # customization on the runtime block, and "preemptible_tries" taken out
 task SortSam {
+
+    meta {
+        description: "Sort BAM file by coordinate order"
+    }
+
     input {
         File input_bam
         String output_bam_basename
@@ -1131,8 +1138,12 @@ task MergeFastqGzs {
     }
 }
 
-# A utility to merge several input BAMs into a single BAM.
 task MergeBams {
+
+    meta {
+        description: "A utility to merge several input BAMs into a single BAM."
+    }
+
     input {
         Array[File] bams
         String prefix = "out"
@@ -1291,8 +1302,12 @@ task FilterReadsWithTagValues {
     }
 }
 
-# A utility to subset a BAM to specifed loci
 task SubsetBam {
+
+    meta {
+        description: "A utility to subset a BAM to specifed loci"
+    }
+
     input {
         File bam
         File bai
@@ -1350,8 +1365,12 @@ task SubsetBam {
     }
 }
 
-# A utility to subset a BAM to specifed loci
 task ExcludeRegionsFromBam {
+
+    meta {
+        description: "A utility to subset a BAM to specified loci"
+    }
+
     input {
         File bam
         File bai
@@ -1398,8 +1417,12 @@ task ExcludeRegionsFromBam {
     }
 }
 
-# A utility to select the first N reads from a BAM file
 task SelectFirstNReads {
+
+    meta {
+        description: "A utility to select the first N reads from a BAM file"
+    }
+
     input {
         File bam
         Int n
@@ -1695,7 +1718,7 @@ task FilterBamOnTag {
 
 task DeduplicateBam {
     meta {
-        description: "Utility to drop (occationally happening) duplicate records in input BAM"
+        description: "Utility to drop (occasionally happening) duplicate records in input BAM"
     }
 
     input {
@@ -2039,8 +2062,7 @@ task CheckOnSamplenames {
 
 task FixSampleName {
     meta {
-        desciption:
-        "This fixes the sample name of a demultiplexed BAM"
+        description: "This fixes the sample name of a demultiplexed BAM"
     }
 
     input {
@@ -2232,18 +2254,11 @@ task ShardReads {
     }
 }
 
-# Get the current timestamp as a string.
-# Levergaes the unix `date` command.
-# You can enter your own date format string.
-# The default date string is:
-#     %Y%m%d_%H%M%S_%N
-# which corresponds to a date of the following form:
-# For August 10th, 2020 at 16:06:32.7091 EDT (20:06:32.7091 UTC):
-#     20200810_200632_709100000
-#
 task GetCurrentTimestampString {
 
     meta {
+        description: "Get the current timestamp as a string. Levergaes the unix `date` command."
+        notes: "You can enter your own date format string. <br /> The default date string is `%Y%m%d_%H%M%S_%N` which corresponds to a date of the following form: <br /> For August 10th, 2020 at 16:06:32.7091 EDT (20:06:32.7091 UTC): `20200810_200632_709100000`"
         # The volatile keyword forces call caching to be turned off, which is
         # exactly what we want for this task.
         # For more info see: https://cromwell.readthedocs.io/en/stable/optimizations/VolatileTasks/
@@ -2360,13 +2375,13 @@ task FailWithWarning {
 task SplitDelimitedString {
     input {
         String s
-        String sep
+        String separator
     }
 
     command <<<
         set -eux
 
-        echo ~{s} | tr ~{sep} '\n' > result.txt
+        echo ~{s} | tr ~{separator} '\n' > result.txt
     >>>
 
     output {
@@ -2381,7 +2396,7 @@ task SplitDelimitedString {
 
 task ConstructMap {
     meta {
-        desciption:
+        description:
         "Use only when the keys are guaranteed to be unique and the two arrays are of the same length."
     }
     input {

@@ -1,9 +1,10 @@
+## #
+
 version 1.0
 
 task GetReadGroupInfo {
     meta {
-        desciption:
-        "Get some read group information Given a single-readgroup BAM. Will fail if the information isn't present."
+        description: "Get some read group information Given a single-readgroup BAM. Will fail if the information isn't present."
     }
 
     input {

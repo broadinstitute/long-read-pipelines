@@ -1,8 +1,6 @@
-version 1.0
+## #
 
-#######################################################
-# This pipeline calls small variants using DeepVariant.
-#######################################################
+version 1.0
 
 import "Structs.wdl"
 
@@ -10,7 +8,8 @@ import "Structs.wdl"
 workflow CCSPepper {
 
     meta {
-        description: "Workflow for getting haplotagged BAM, VCF and gVCF from DV-pepper. Note VCF is un-phased."
+        description: "A workflow for getting haplotagged BAM, VCF and gVCF from DV-pepper. This pipeline calls small variants using DeepVariant."
+        notes: " - VCF is un-phased"
     }
 
     input {
@@ -250,7 +249,7 @@ task DV {
 task MarginPhase {
 
     meta {
-        description: "Generates phased VCF. Note this runs fast so no need to parallize."
+        description: "Generates phased VCF. Note this runs fast so no need to parallelize."
     }
 
     input {

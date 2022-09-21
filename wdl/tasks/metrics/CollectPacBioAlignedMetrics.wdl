@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "../PBUtils.wdl" as PB
@@ -5,8 +7,7 @@ import "../NanoPlot.wdl" as NP
 
 workflow CollectPacBioAlignedMetrics {
     meta {
-        desciption:
-        "Collect a few custom metrics on the alignments."
+        Description: "Collect a few custom metrics on the alignments."
     }
 
     input {
@@ -52,8 +53,7 @@ workflow CollectPacBioAlignedMetrics {
 
 task CustomMetricsSummaryToFile {
     meta {
-        desciption:
-        "Format a few custom metrics on the alignments into a 2-col TSV: 1-col is attribute name, 2-col is value."
+        description: "Format a few custom metrics on the alignments into a 2-col TSV: 1-col is attribute name, 2-col is value."
     }
 
     input {

@@ -1,12 +1,15 @@
-version 1.0
+## #
 
-##########################################################################################
-# Workflow that runs F5C rewrite of Nanopolish to call methylation.
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
 workflow Methylation {
+
+    meta {
+        description: "Workflow that runs F5C rewrite of Nanopolish to call methylation."
+    }
+
     input {
         Array[File] fast5s
         Array[File] fastqs

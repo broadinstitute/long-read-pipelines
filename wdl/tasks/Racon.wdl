@@ -1,11 +1,13 @@
+## #
+
 version 1.0
 
-##########################################################################################
-# A task that polishes a draft assembly with long reads using Racon.
-# - Recommended to run a few times
-##########################################################################################
-
 task RaconPolish {
+
+    meta {
+        description: "A task that polishes a draft assembly with long reads using Racon. <br /> - Recommended to run a few times"
+    }
+
     input {
         File reads
         File draft_assembly

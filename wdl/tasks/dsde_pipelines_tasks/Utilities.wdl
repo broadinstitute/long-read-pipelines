@@ -1,3 +1,5 @@
+## #Utilities
+
 version 1.0
 
 ## Copyright Broad Institute, 2018
@@ -15,8 +17,12 @@ version 1.0
 ## page at https://hub.docker.com/r/broadinstitute/genomes-in-the-cloud/ for detailed
 ## licensing information pertaining to the included programs.
 
-# Generate sets of intervals for scatter-gathering over chromosomes
 task CreateSequenceGroupingTSV {
+
+    meta {
+        description: "Generate sets of intervals for scatter-gathering over chromosomes"
+    }
+
   input {
     File ref_dict
     Int preemptible_tries
@@ -71,10 +77,12 @@ task CreateSequenceGroupingTSV {
   }
 }
 
-# This task calls picard's IntervalListTools to scatter the input interval list into scatter_count sub interval lists
-# Note that the number of sub interval lists may not be exactly equal to scatter_count.  There may be slightly more or less.
-# Thus we have the block of python to count the number of generated sub interval lists.
 task ScatterIntervalList {
+
+    meta {
+        description: "This task calls picard's IntervalListTools to scatter the input interval list into scatter_count sub interval lists. Note that the number of sub interval lists may not be exactly equal to scatter_count. There may be slightly more or less. Thus we have the block of python to count the number of generated sub interval lists."
+    }
+
   input {
     File interval_list
     Int scatter_count
@@ -115,9 +123,12 @@ task ScatterIntervalList {
   }
 }
 
-# Convert BAM file to CRAM format
-# Note that reading CRAMs directly with Picard is not yet supported
 task ConvertToCram {
+
+    meta {
+        description: "Convert BAM file to CRAM format. Note that reading CRAMs directly with Picard is not yet supported"
+    }
+
   input {
     File input_bam
     File ref_fasta
@@ -158,8 +169,12 @@ task ConvertToCram {
   }
 }
 
-# Convert CRAM file to BAM format
 task ConvertToBam {
+
+    meta {
+        description: "Convert CRAM file to BAM format"
+    }
+
   input {
     File input_cram
     File ref_fasta
@@ -188,8 +203,12 @@ task ConvertToBam {
   }
 }
 
-# Calculates sum of a list of floats
 task SumFloats {
+
+    meta{
+        description: "Calculates sum of a list of floats"
+    }
+
   input {
     Array[Float] sizes
     Int preemptible_tries

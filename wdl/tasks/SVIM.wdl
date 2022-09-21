@@ -1,15 +1,19 @@
-version 1.0
+## #
 
-##########################################################################################
-# This pipeline calls SVs on an input LR BAM using various known SV algorithms
-# that are specifically designed to work with long read data.
-# Each individual task/algo. is directly callable, if so desired.
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
-# Given BAM, call SVs using SVIM
+# This pipeline calls SVs on an input LR BAM using various known SV algorithms
+# that are specifically designed to work with long read data.
+# Each individual task/algo. is directly callable, if so desired.
+
 task SVIM {
+
+    meta {
+        description: "Given BAM, call SVs using SVIM"
+    }
+
     input {
         File bam
         File bai

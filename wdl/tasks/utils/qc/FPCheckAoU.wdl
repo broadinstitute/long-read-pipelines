@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "Fingerprinting.wdl" as FPUtils
@@ -6,8 +8,7 @@ import "../../VariantUtils.wdl"
 workflow FPCheckAoU {
 
     meta {
-        description:
-        "Check correctness of metadata on a (demultiplexed) alignmed BAM, by genotyping it's BAM generated with its metadata, against a fingerprint VCF. Practically assumes human GRCh38 reference."
+        description: "Check correctness of metadata on a (demultiplexed) alignmed BAM, by genotyping it's BAM generated with its metadata, against a fingerprint VCF. Practically assumes human GRCh38 reference."
     }
 
     input {
@@ -91,8 +92,7 @@ workflow FPCheckAoU {
 
 task ResolveFPVCFPath {
     meta {
-        desciption:
-        "Find the fingerprint VCF at the fingerprint store; project specific."
+        description: "Find the fingerprint VCF at the fingerprint store; project specific."
     }
 
     input {
@@ -145,8 +145,7 @@ task ResolveFPVCFPath {
 
 task ReheaderFullGRCh38VCFtoNoAlt {
     meta {
-        desciption:
-        "Reheader the fingperint VCF that's generated with full GRCh38 reference to the no_alt header; project specific."
+        description: "Reheader the fingerprint VCF that's generated with full GRCh38 reference to the no_alt header; project specific."
     }
 
     input {

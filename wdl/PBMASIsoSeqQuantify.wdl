@@ -1,10 +1,6 @@
-version 1.0
+## #
 
-######################################################################################
-## A workflow that performs processing of MAS-ISO-seq data on a single sample from
-## one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to processing.
-######################################################################################
+version 1.0
 
 import "tasks/Utils.wdl" as Utils
 import "tasks/PBUtils.wdl" as PB
@@ -19,7 +15,7 @@ import "tasks/Finalize.wdl" as FF
 
 workflow PBMASIsoSeqQuantify {
     meta {
-        description : "Quantifies RNA isoform expression from given extracted, aligned, UMI- and CBC-annotated MAS-ISO-seq reads."
+        description : "A workflow that performs processing of MAS-ISO-seq data on a single sample from one or more flow cells. The workflow merges multiple samples into a single BAM prior to processing. Quantifies RNA isoform expression from given extracted, aligned, UMI- and CBC-annotated MAS-ISO-seq reads."
     }
     input {
         Array[File] aligned_ccs_bams

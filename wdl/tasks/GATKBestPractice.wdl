@@ -1,12 +1,6 @@
+## #
+
 version 1.0
-
-##########################################################################################
-# Calls (small) variants on an input LR BAM with GATK4 HaplotypeCaller pipeline.
-
-# This is essentially copying "dsde_pipelines_tasks/VariantCalling.wdl"
-# with some customization to fit the process described in
-# "https://github.com/PacificBiosciences/hg002-ccs/"
-##########################################################################################
 
 import "dsde_pipelines_tasks/GermlineVariantDiscovery.wdl" as Calling
 import "dsde_pipelines_tasks/Qc.wdl" as QC
@@ -15,6 +9,11 @@ import "dsde_pipelines_tasks/Utilities.wdl" as DSDEPipelinesUtils
 import "Utils.wdl" as Utils
 
 workflow GATKBestPraciceForLR {
+
+    meta {
+        description: "Calls (small) variants on an input LR BAM with GATK4 HaplotypeCaller pipeline. <br /> This is essentially copying 'dsde_pipelines_tasks/VariantCalling.wdl' with some customization to fit the process described in 'https://github.com/PacificBiosciences/hg002-ccs/'"
+    }
+
     input {
         File calling_interval_list
         Int calling_intervals_scatter_count
@@ -255,8 +254,12 @@ workflow GATKBestPraciceForLR {
     }
 }
 
-# This task is here because merging bamout files using Picard produces an error.
 task MergeBamouts {
+
+    meta {
+        description: "This task is here because merging bamout files using Picard produces an error."
+    }
+
     input {
         Array[File] bams
         String output_base_name
@@ -371,8 +374,12 @@ task GenotypeGVCFs {
     }
 }
 
-# Postprocessing the VCFs following the CCS paper
 task PostProcess {
+
+    meta {
+        description: "Postprocessing the VCFs following the CCS paper."
+    }
+
     input {
         File input_vcf
         File input_vcf_index

@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "Utils.wdl"
@@ -11,9 +13,11 @@ import "Clair.wdl" as Clair3
 import "ONTPepper.wdl"
 
 workflow CallVariants {
+
     meta {
-        descrition: "A workflow for calling small and/or structural variants from an aligned ONT BAM file."
+        description: "A workflow for calling small and/or structural variants from an aligned ONT BAM file."
     }
+
     input {
         File bam
         File bai

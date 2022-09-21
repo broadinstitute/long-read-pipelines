@@ -1,15 +1,15 @@
-version 1.0
+## #
 
-##########################################################################################
-# A workflow that runs the Canu 3-step assembly (correct, trim, assemble).
-# - Tested on a small genome (malaria ~23mb), larger genomes may require some changes
-#     including tweaks to the default resource allocation.
-# - Currently assumes nanopore reads
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
 workflow Canu {
+
+    meta {
+        description: "A workflow that runs the Canu 3-step assembly (correct, trim, assemble). <br /> - Tested on a small genome (malaria ~23mb), larger genomes may require some changes including tweaks to the default resource allocation. <br /> - Currently assumes nanopore reads"
+    }
+
     input {
         File reads
 
@@ -50,8 +50,12 @@ workflow Canu {
     }
 }
 
-# performs canu correct on raw reads, currently assumes ONT reads
 task Correct {
+
+    meta {
+        description: "Performs canu correct on raw reads, currently assumes ONT reads."
+    }
+
     input {
         File reads
         Int genome_size
@@ -108,8 +112,12 @@ task Correct {
     }
 }
 
-# performs canu trim on corrected reads
 task Trim {
+
+    meta {
+        description: "Performs canu trim on corrected reads"
+    }
+
     input {
         File corrected_reads
         Int genome_size
@@ -165,8 +173,12 @@ task Trim {
     }
 }
 
-# performs assembly on corrected, then trimmmed reads
 task Assemble {
+
+    meta {
+        description: "Performs assembly on corrected, then trimmed reads"
+    }
+
     input {
         Int genome_size
         File trimmed_reads

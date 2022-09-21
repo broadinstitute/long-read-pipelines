@@ -1,14 +1,15 @@
-version 1.0
+## #
 
-##########################################################################################
-# This WDL pipeline downloads files from wget-able URLs in parallel and stores the results in
-# the specified GCS dir.  This pipeline is essentially a Cromwell/GCP reimagining of the
-# Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
-##########################################################################################
+version 1.0
 
 import "tasks/Structs.wdl"
 
 workflow DownloadFromHudsonAlpha {
+
+    meta{
+        description: "This WDL pipeline downloads files from wget-able URLs in parallel and stores the results in the specified GCS dir.  This pipeline is essentially a Cromwell/GCP reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl)."
+    }
+
     input {
         File manifest
 

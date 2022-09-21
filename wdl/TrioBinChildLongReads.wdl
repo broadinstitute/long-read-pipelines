@@ -1,20 +1,17 @@
-version 1.0
+## #
 
-##########################################################################################
-## A workflow that performs trio-binning of child long reads given parental (short) reads.
-## Based on the trio-canu publication
-##    De novo assembly of haplotype-resolved genomes with trio binning
-##    https://www.nature.com/articles/nbt.4277
-## We divide the workflow into two parts
-##   part one: collect k-mer stats given parental (short) reads
-##   part two: given the k-mer stats database from part one, classify child long reads
-##########################################################################################
+version 1.0
 
 import "tasks/CollectParentsKmerStats.wdl" as stats
 
 import "tasks/AssignChildLongReads.wdl" as asign
 
 workflow TrioBinChildLongReads {
+
+    meta {
+        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication: <br /> *De novo assembly of haplotype-resolved genomes with trio binning* https://www.nature.com/articles/nbt.4277 <br /> <br /> We divide the workflow into two parts: <br /> - part one: collect k-mer stats given parental (short) reads <br /> - part two: given the k-mer stats database from part one, classify child long reads"
+    }
+
     input{
 
         String workdir_name

@@ -1,12 +1,15 @@
-version 1.0
+## #
 
-#######################################################
-# This pipeline calls small variants using DeepVariant.
-#######################################################
+version 1.0
 
 import "Structs.wdl"
 
 task Clair {
+
+    meta {
+        description: "This pipeline calls small variants using DeepVariant."
+    }
+
     input {
         File bam
         File bai

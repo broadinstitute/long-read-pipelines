@@ -1,3 +1,5 @@
+## #BamProcessing
+
 version 1.0
 
 ## Copyright Broad Institute, 2018
@@ -15,8 +17,12 @@ version 1.0
 ## page at https://hub.docker.com/r/broadinstitute/genomes-in-the-cloud/ for detailed
 ## licensing information pertaining to the included programs.
 
-# Sort BAM file by coordinate order
 task SortSam {
+
+    meta {
+        description: "Sort BAM file by coordinate order"
+    }
+
   input {
     File input_bam
     String output_bam_basename
@@ -53,8 +59,12 @@ task SortSam {
   }
 }
 
-# Sort BAM file by coordinate order -- using Spark!
 task SortSamSpark {
+
+    meta {
+        description: "Sort BAM file by coordinate order -- using Spark!"
+    }
+
   input {
     File input_bam
     String output_bam_basename
@@ -92,8 +102,12 @@ task SortSamSpark {
   }
 }
 
-# Mark duplicate reads to avoid counting non-independent observations
 task MarkDuplicates {
+
+    meta {
+        description: "Mark duplicate reads to avoid counting non-independent observations"
+    }
+
   input {
     Array[File] input_bams
     String output_bam_basename
@@ -147,6 +161,11 @@ task MarkDuplicates {
 }
 
 task MarkDuplicatesSpark {
+
+    meta {
+        description: "Mark duplicate reads to avoid counting non-independent observations -- using Spark!"
+    }
+
   input {
     Array[File] input_bams
     String output_bam_basename
@@ -204,8 +223,12 @@ task MarkDuplicatesSpark {
   }
 }
 
-# Generate Base Quality Score Recalibration (BQSR) model
 task BaseRecalibrator {
+
+    meta {
+        description: "Generate Base Quality Score Recalibration (BQSR) model"
+    }
+
   input {
     File input_bam
     String recalibration_report_filename
@@ -256,8 +279,12 @@ task BaseRecalibrator {
   }
 }
 
-# Apply Base Quality Score Recalibration (BQSR) model
 task ApplyBQSR {
+
+    meta {
+        description: "Apply Base Quality Score Recalibration (BQSR) model"
+    }
+
   input {
     File input_bam
     String output_bam_basename
@@ -313,8 +340,12 @@ task ApplyBQSR {
   }
 }
 
-# Combine multiple recalibration tables from scattered BaseRecalibrator runs
 task GatherBqsrReports {
+
+    meta {
+        description: "Combine multiple recalibration tables from scattered BaseRecalibrator runs"
+    }
+
   input {
     Array[File] input_bqsr_reports
     String output_report_filename
@@ -339,8 +370,12 @@ task GatherBqsrReports {
   }
 }
 
-# Combine multiple *sorted* BAM files
 task GatherSortedBamFiles {
+
+    meta {
+        description: "Combine multiple *sorted* BAM files"
+    }
+
   input {
     Array[File] input_bams
     String output_bam_basename
@@ -373,9 +408,12 @@ task GatherSortedBamFiles {
   }
 }
 
-# Combine multiple *unsorted* BAM files
-# Note that if/when WDL supports optional outputs, we should merge this task with the sorted version
 task GatherUnsortedBamFiles {
+
+    meta {
+        description: "Combine multiple *unsorted* BAM files. Note that if/when WDL supports optional outputs, we should merge this task with the sorted version"
+    }
+
   input {
     Array[File] input_bams
     String output_bam_basename

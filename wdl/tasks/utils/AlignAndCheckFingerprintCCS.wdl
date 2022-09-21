@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "qc/FPCheckAoU.wdl" as FPCheck
@@ -8,8 +10,7 @@ import "GeneralUtils.wdl"
 
 workflow AlignAndCheckFingerprintCCS {
     meta {
-        desciption:
-        "Given an unaligned CCS/HiFi BAM for a sample, align and verify fingerprint."
+        description: "Given an unaligned CCS/HiFi BAM for a sample, align and verify fingerprint."
     }
 
     input {

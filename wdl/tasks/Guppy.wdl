@@ -1,19 +1,18 @@
-version 1.0
+## #
 
-##########################################################################################
-# A workflow that runs the Guppy basecaller on ONT FAST5 files.
-# - The docker tag number will match the version of Guppy that is being run. You can change
-#   this value to run a different version of Guppy. Currently supports... [3.5.2, 3.6.0, 4.0.14]
-# - All fast5 files within the given GCS dir, gcs_fast5_dir, will be processed
-# - Takes a few hours to process 130GB. Best guess is that the processing time scales
-#   linearly but untested.
-##########################################################################################
+version 1.0
 
 import "Utils.wdl" as Utils
 import "ONTUtils.wdl" as ONT
 import "Structs.wdl"
 
 workflow Guppy {
+
+    meta {
+        description: "A workflow that runs the Guppy basecaller on ONT FAST5 files."
+        notes: "<br /> - The docker tag number will match the version of Guppy that is being run. You can change this value to run a different version of Guppy. Currently supports... [3.5.2, 3.6.0, 4.0.14]. <br /> - All fast5 files within the given GCS dir, gcs_fast5_dir, will be processed. <br /> - Takes a few hours to process 130GB. Best guess is that the processing time scales linearly but untested."
+    }
+
     input {
         String gcs_fast5_dir
 

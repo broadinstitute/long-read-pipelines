@@ -1,14 +1,15 @@
-version 1.0
+## #
 
-##########################################################################################
-# A task that runs QUAST to evaluate a given set of assemblies
-# on a species with existing reference assembly.
-# - Entire Quast output will be tarballed
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
 task Quast {
+
+    meta {
+        description: "A task that runs QUAST to evaluate a given set of assemblies on a species with existing reference assembly. <br /> - Entire Quast output will be tarballed"
+    }
+
     input {
         File? ref
         Array[File] assemblies

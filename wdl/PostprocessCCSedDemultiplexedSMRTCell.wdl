@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 import "tasks/utils/AlignAndCheckFingerprintCCS.wdl" as major
@@ -7,9 +9,9 @@ import "tasks/utils/GeneralUtils.wdl" as GU
 import "tasks/Finalize.wdl" as FF
 
 workflow PostprocessCCSedDemultiplexedSMRTCell {
+
     meta {
-        desciption:
-        "A workflow for postprocessing files output by PreprocessBarcodedCCSedSMRTCell. Note: the various IDs are assumed to be in-phase with the barcode names."
+        Description: "A workflow for postprocessing files output by PreprocessBarcodedCCSedSMRTCell. Note: the various IDs are assumed to be in-phase with the barcode names."
     }
 
     input {
@@ -66,11 +68,11 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
 
     # associate barcode to various forms of sample ids
     Array[Pair[String, String]] barcode_2_folder = read_map(demuxed_barcode_2_folder)  # type coercion Map to Array[Pair] may only work in WDL 1.0
-    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, sep = ','}
-    call Utils.SplitDelimitedString as get_biosamples {input: s = biosample_ids, sep = ','}
-    call Utils.SplitDelimitedString as get_aliquots {input: s = sample_ids, sep = ','}
-    call Utils.SplitDelimitedString as get_ds_ids {input: s = downstream_sample_ids, sep = ','}
-    call Utils.SplitDelimitedString as get_fp_ids {input: s = sample_ids_at_store, sep = ','}
+    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, separator = ','}
+    call Utils.SplitDelimitedString as get_biosamples {input: s = biosample_ids, separator = ','}
+    call Utils.SplitDelimitedString as get_aliquots {input: s = sample_ids, separator = ','}
+    call Utils.SplitDelimitedString as get_ds_ids {input: s = downstream_sample_ids, separator = ','}
+    call Utils.SplitDelimitedString as get_fp_ids {input: s = sample_ids_at_store, separator = ','}
     if (length(barcode_2_folder) != length(get_fp_ids.arr)) {
         call Utils.StopWorkflow as unmatched_barcodes_and_samples {
             input: reason = "Length of barcode names array and sample ids array don't match."

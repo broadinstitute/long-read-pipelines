@@ -1,3 +1,5 @@
+## #Qc
+
 version 1.0
 
 ## Copyright Broad Institute, 2018
@@ -15,8 +17,12 @@ version 1.0
 ## page at https://hub.docker.com/r/broadinstitute/genomes-in-the-cloud/ for detailed
 ## licensing information pertaining to the included programs.
 
-# Collect sequencing yield quality metrics
 task CollectQualityYieldMetrics {
+
+    meta {
+        description: "Collect sequencing yield quality metrics"
+    }
+
   input {
     File input_bam
     String metrics_filename
@@ -43,8 +49,12 @@ task CollectQualityYieldMetrics {
   }
 }
 
-# Collect base quality and insert size metrics
 task CollectUnsortedReadgroupBamQualityMetrics {
+
+    meta {
+        description: "Collect base quality and insert size metrics"
+    }
+
   input {
     File input_bam
     String output_bam_prefix
@@ -88,8 +98,12 @@ task CollectUnsortedReadgroupBamQualityMetrics {
   }
 }
 
-# Collect alignment summary and GC bias quality metrics
 task CollectReadgroupBamQualityMetrics {
+
+    meta {
+        description: "Collect alignment summary and GC bias quality metrics"
+    }
+
   input {
     File input_bam
     File input_bam_index
@@ -136,8 +150,12 @@ task CollectReadgroupBamQualityMetrics {
   }
 }
 
-# Collect quality metrics from the aggregated bam
 task CollectAggregationMetrics {
+
+    meta {
+        description: "Collect quality metrics from the aggregated bam"
+    }
+
   input {
     File input_bam
     File input_bam_index
@@ -199,8 +217,12 @@ task CollectAggregationMetrics {
   }
 }
 
-# Check that the fingerprints of separate readgroups all match
 task CrossCheckFingerprints {
+
+    meta {
+        description: "Check that the fingerprints of separate readgroups all match"
+    }
+
   input {
     Array[File] input_bams
     Array[File] input_bam_indexes
@@ -237,8 +259,12 @@ task CrossCheckFingerprints {
   }
 }
 
-# Check that the fingerprint of the sample BAM matches the sample array
 task CheckFingerprint {
+
+    meta {
+        description: "Check that the fingerprint of the sample BAM matches the sample array"
+    }
+
   input {
     File input_bam
     File input_bam_index
@@ -414,8 +440,12 @@ task CollectWgsMetrics {
   }
 }
 
-# Collect raw WGS metrics (commonly used QC thresholds)
 task CollectRawWgsMetrics {
+
+    meta {
+        description: "Collect raw WGS metrics (commonly used QC thresholds)"
+    }
+
   input {
     File input_bam
     File input_bam_index
@@ -505,8 +535,12 @@ task CollectHsMetrics {
   }
 }
 
-# Generate a checksum per readgroup
 task CalculateReadGroupChecksum {
+
+    meta {
+        description: "Generate a checksum per readgroup"
+    }
+
   input {
     File input_bam
     File input_bam_index
@@ -533,8 +567,12 @@ task CalculateReadGroupChecksum {
   }
 }
 
-# Validate a (g)VCF with -gvcf specific validation
 task ValidateVCF {
+
+    meta {
+        description: "Validate a (g)VCF with -gvcf specific validation"
+    }
+
   input {
     File input_vcf
     File input_vcf_index
@@ -570,8 +608,12 @@ task ValidateVCF {
   }
 }
 
-# Collect variant calling metrics from GVCF output
 task CollectVariantCallingMetrics {
+
+    meta {
+        description: "Collect variant calling metrics from GVCF output"
+    }
+
   input {
     File input_vcf
     File input_vcf_index

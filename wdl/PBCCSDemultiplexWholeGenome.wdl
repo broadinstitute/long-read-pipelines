@@ -1,12 +1,6 @@
-version 1.0
+## #
 
-##########################################################################################
-## A workflow that performs CCS correction, demultiplexing, and variant calling on PacBio
-## HiFi reads from a single flow cell. The workflow shards the subreads into clusters and
-## performs CCS in parallel on each cluster.  Error-corrected reads are then demultiplexed,
-## and each demultiplexed dataset is independently variant-called.  A number of metrics
-## and figures are produced along the way.
-##########################################################################################
+version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
@@ -16,6 +10,11 @@ import "tasks/CallVariantsPBCCS.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSDemultiplexWholeGenome {
+
+    meta {
+        description: "A workflow that performs CCS correction, demultiplexing, and variant calling on PacBio HiFi reads from a single flow cell. The workflow shards the subreads into clusters and performs CCS in parallel on each cluster.  Error-corrected reads are then demultiplexed, and each demultiplexed dataset is independently variant-called.  A number of metrics and figures are produced along the way."
+    }
+
     input {
         Array[File] bams
         File ref_map_file

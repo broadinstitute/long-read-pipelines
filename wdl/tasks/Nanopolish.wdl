@@ -1,13 +1,15 @@
-version 1.0
+## #
 
-##########################################################################################
-# Workflow that runs Nanopolish to polish an ONT genome assembly.
-# Quite computationally expensive so there's a parallelization factor parameter.
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
 workflow PolishAssembly {
+
+    meta {
+        description: "Workflow that runs Nanopolish to polish an ONT genome assembly.Quite computationally expensive so there's a parallelization factor parameter. "
+    }
+
     input {
         String fast5_dir
         File reads_fasta

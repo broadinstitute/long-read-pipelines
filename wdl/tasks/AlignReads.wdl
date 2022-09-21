@@ -1,9 +1,15 @@
+## #
+
 version 1.0
 
 import "Structs.wdl"
 
-# A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference
 task Minimap2 {
+
+    meta {
+        description: "A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference."
+    }
+
     input {
         Array[File] reads
         File ref_fasta
@@ -143,8 +149,12 @@ task Minimap2 {
     }
 }
 
-# A simple task to covert SAM-formatted alignment to PAF format
 task SAMtoPAF {
+
+    meta {
+        description: "A simple task to covert SAM-formatted alignment to PAF format"
+    }
+
     input {
         File sam_formatted_file
         File? index

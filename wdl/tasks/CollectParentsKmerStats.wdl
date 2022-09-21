@@ -1,17 +1,15 @@
-version 1.0
+## #
 
-##########################################################################################
-## A workflow that performs trio-binning of child long reads given parental (short) reads.
-## Based on the trio-canu publication
-##    De novo assembly of haplotype-resolved genomes with trio binning
-##    https://www.nature.com/articles/nbt.4277
-## This holds the sub-workflow for
-##   part one: collect k-mer stats given parental (short) reads
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
 workflow CollectParentsKmerStats {
+
+    meta {
+        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. <br /> Based on the trio-canu publication: <br /> De novo assembly of haplotype-resolved genomes with trio binning <br /> https://www.nature.com/articles/nbt.4277 <br /><br /> This holds the sub-workflow for: <br /> part one: collect k-mer stats given parental (short) reads"
+    }
+
     input{
 
         String workdir_name
@@ -90,11 +88,12 @@ workflow CollectParentsKmerStats {
     }
 }
 
-###############################################################
-
-# repartition the parental short reads for easier batch-processing by canu/meryl itself
-# note that this step is IO bound
 task ParentalReadsRepartitionAndMerylConfigure {
+
+    meta {
+        description: "Repartition the parental short reads for easier batch-processing by canu/meryl itself. Note that this step is IO bound."
+    }
+
     input{
 
         String workdir_name
@@ -232,10 +231,12 @@ task ParentalReadsRepartitionAndMerylConfigure {
     }
 }
 
-# a hackish step to simply print out memory configuration from the above step
-# this value is used for configuring the VMs for actual batch Meryl count processing
-#   as well as memory allocation for the merging and subtracting step
 task PrintMerylMemory {
+
+    meta {
+        description: "Step to simply print out memory configuration. This value is used for configuring the VMs for actual batch Meryl count processing as well as memory allocation for the merging and subtracting step"
+    }
+
     input {
         File meryl_memory_file
     }
@@ -255,8 +256,12 @@ task PrintMerylMemory {
     }
 }
 
-# mery-count on one batch
 task MerylCount {
+
+    meta {
+        description: "Mery-count on one batch"
+    }
+
     input{
 
         String workdir_name
@@ -369,9 +374,12 @@ task MerylCount {
     }
 }
 
-# merge the batches of the parental reads, generate one result per parent
-# then subtract the k-mers
 task MerylMergeAndSubtract {
+
+    meta {
+        description: "Merge the batches of the parental reads, generate one result per parent then subtract the k-mers."
+    }
+
     input{
 
         File meryl_merge_script

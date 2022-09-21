@@ -1,13 +1,15 @@
-version 1.0
+## #
 
-##########################################################################################
-# Runs Medaka on an ONT draft assembly with GUPPY basecalled ONT reads
-# - Runs within a few hours with 18GB basecalled_reads and a 23Mb genome
-##########################################################################################
+version 1.0
 
 import "Structs.wdl"
 
 task MedakaPolish {
+
+    meta {
+        description: "Runs Medaka on an ONT draft assembly with GUPPY basecalled ONT reads. Runs within a few hours with 18GB basecalled_reads and a 23Mb genome"
+    }
+
     input {
         File basecalled_reads
         File draft_assembly

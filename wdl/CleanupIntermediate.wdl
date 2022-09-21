@@ -1,7 +1,9 @@
+## #
+
 version 1.0
 
 workflow CleanupIntermediate {
-    # Ironicaly, this generates intermeidate files too, but they are tiny.
+    # Ironically, this generates intermediate files too, but they are tiny.
     meta {
         description: "A workflow to clean up intermediate files from running workflows. Use at your own risk."
     }

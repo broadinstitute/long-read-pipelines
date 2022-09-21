@@ -1,9 +1,15 @@
+## #
+
 version 1.0
 
 import "Structs.wdl"
 
-# performs Longshot algo on one particular chromosome
 task Longshot {
+
+    meta {
+        description: "Performs Longshot algo on one particular chromosome"
+    }
+
     input {
         File bam
         File bai

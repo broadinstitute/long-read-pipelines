@@ -1,3 +1,5 @@
+## #
+
 version 1.0
 
 # todo: move all existing, simiar util tasks here
@@ -5,8 +7,7 @@ version 1.0
 
 task TarGZFiles {
     meta {
-        description:
-        "Zip up a list of files to a tar.gz file."
+        description: "Zip up a list of files to a tar.gz file."
     }
 
     input {
@@ -33,7 +34,7 @@ task TarGZFiles {
 
 task GetTodayDate {
     meta {
-        desciption: "Generates a YYYY-MM-DD date of today (when this task is called). UTC."
+        description: "Generates a YYYY-MM-DD date of today (when this task is called). UTC."
         volatile: true
     }
     command {

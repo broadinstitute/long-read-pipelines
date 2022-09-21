@@ -1,11 +1,15 @@
+## #
+
 version 1.0
 
 import "Structs.wdl"
 
 task CCSLima {
+
     meta {
-        desciption: "A task for demultiplexing/un-barcoding on-instrument CCSed SMRTCell"
+        description: "A task for demultiplexing/un-barcoding on-instrument CCSed SMRTCell"
     }
+
     input {
         File bam
         File barcode_file
@@ -125,7 +129,7 @@ task CCSLima {
 
 task ParseLimaOptionsFile {
     meta {
-        desciption: "Given options file, parse it into an array that can be fed to lima directly"
+        description: "Given options file, parse it into an array that can be fed to lima directly"
     }
     input {
         File lima_options_file
@@ -154,7 +158,7 @@ task ParseLimaOptionsFile {
 
 task LocateBarcodeSpecificFolders {
     meta {
-        desciption: "Generates a 2-col TSV where the 1st col is the barcode name, and 2nd is the GCS \'folder\' holding the de-barcoded files."
+        description: "Generates a 2-col TSV where the 1st col is the barcode name, and 2nd is the GCS \'folder\' holding the de-barcoded files."
     }
     input {
         Array[String] barcodes_list
@@ -181,7 +185,7 @@ task LocateBarcodeSpecificFolders {
 ###########################################
 workflow GatherLimaAndCustomDemultiplexingMetrics {
     meta {
-        desciption: "Generate custom performance reports by parsing lima.report, and gather them together with the raw metric files produced by lima itself."
+        description: "Generate custom performance reports by parsing lima.report, and gather them together with the raw metric files produced by lima itself."
     }
     input {
         File lima_report
@@ -219,7 +223,7 @@ workflow GatherLimaAndCustomDemultiplexingMetrics {
 
 task GatherLimaReports {
     meta {
-        desciption: "A trivial task for grouping together the raw and custom lima reports."
+        description: "A trivial task for grouping together the raw and custom lima reports."
     }
     input {
         Array[File] lima_raw_metric_files
@@ -258,7 +262,7 @@ task GatherLimaReports {
 ###########################################
 task MakeSummarizedCustomDemultiplexingReport {
     meta {
-        desciption: "Custom report on demultiplexing; summarized."
+        description: "Custom report on demultiplexing; summarized."
     }
     input {
         File lima_report
@@ -302,7 +306,7 @@ task MakeSummarizedCustomDemultiplexingReport {
 
 task MakeDetailedCustomDemultiplexingReport {
     meta {
-        desciption: "Custom report on demultiplexing; in detail."
+        description: "Custom report on demultiplexing; in detail."
     }
     input {
         File lima_report
@@ -347,7 +351,7 @@ task MakeDetailedCustomDemultiplexingReport {
 
 task MakePerBarcodeCustomDemultiplexingReports {
     meta {
-        desciption: "Custom report on demultiplexing; per-barcode detected."
+        description: "Custom report on demultiplexing; per-barcode detected."
     }
     input {
         File lima_report
