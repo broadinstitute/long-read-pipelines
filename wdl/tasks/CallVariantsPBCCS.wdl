@@ -241,7 +241,7 @@ workflow CallVariants {
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 
-            call Sniffles2.SampleSV as sample_snf_slow {
+            call Sniffles2.SampleSV as Sniffles2SV {
                 input:
                     bam    = bam,
                     bai    = bai,
@@ -250,18 +250,17 @@ workflow CallVariants {
                     prefix = prefix
             }
 
-            call VariantUtils.ZipAndIndexVCF as ZipAndIndexVCF_slow {
+            call VariantUtils.ZipAndIndexVCF as ZipAndIndexSnifflesVCF {
                 input:
-                    vcf = sample_snf_slow.vcf
+                    vcf = Sniffles2SV.vcf
             }
         }
     }
 
     output {
-        File? sniffles_vcf = sample_snf_slow.vcf
-        File? sniffles_vcfgz = ZipAndIndexVCF_slow.vcfgz
-        File? sniffles_tbi = ZipAndIndexVCF_slow.tbi
-        File? sniffles_snf = sample_snf_slow.snf
+        File? sniffles_vcf = ZipAndIndexSnifflesVCF.vcfgz
+        File? sniffles_tbi = ZipAndIndexSnifflesVCF.tbi
+        File? sniffles_snf = Sniffles2SV.snf
         File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
         File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
 
