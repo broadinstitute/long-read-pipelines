@@ -41,6 +41,7 @@ workflow CallVariants {
     parameter_meta {
         fast_less_sensitive_sv:  "to trade less sensitive SV calling for faster speed"
         tandem_repeat_bed:       "BED file containing TRF finder for better PBSV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+        minsvlen:       "Minimum SV length in bp (default: 35)"
 
         call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
         sites_vcf:     "for use with Clair"
