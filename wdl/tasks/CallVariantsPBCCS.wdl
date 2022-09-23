@@ -9,7 +9,7 @@ import "CCSPepper.wdl"
 
 workflow CallVariants {
     meta {
-        descrition: "A workflow for calling small and/or structural variants from an aligned CCS BAM file."
+        description: "A workflow for calling small and/or structural variants from an aligned CCS BAM file."
     }
     input {
         File bam
@@ -18,11 +18,9 @@ workflow CallVariants {
         String prefix
         String sample_id
 
-
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
-
 
         Boolean call_svs
         Boolean fast_less_sensitive_sv
@@ -255,8 +253,6 @@ workflow CallVariants {
                 input:
                     vcf = sample_snf_slow.vcf
             }
-
-
         }
     }
 
