@@ -242,7 +242,7 @@ workflow CallVariants {
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 
-            call Sniffles2.sample_sv as sample_snf_slow {
+            call Sniffles2.SampleSV as sample_snf_slow {
                 input:
                     bam    = bam,
                     bai    = bai,
