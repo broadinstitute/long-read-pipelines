@@ -2023,7 +2023,9 @@ task CheckOnSamplenames {
     }
 
     command <<<
-        if [[ $(echo ~{sep='\n' sample_names} | sort | uniq | wc -l) -gt 1 ]]; then echo "Sample mixture!" && exit 1; fi
+        set -eux
+        n_sm=$(sort ~{write_lines(sample_names)} | uniq | wc -l | awk '{print $1}')
+        if [[ ${n_sm} -gt 1 ]]; then echo "Sample mixture!" && exit 1; fi
     >>>
 
     runtime {
