@@ -122,7 +122,7 @@ workflow ONTWholeGenome {
             input:
                 bam               = usable_bam,
                 bai               = usable_bai,
-
+                sample_id         = participant_name,
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],

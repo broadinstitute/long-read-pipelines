@@ -117,7 +117,7 @@ workflow PBCCSWholeGenome {
             input:
                 bam               = bam,
                 bai               = bai,
-
+                sample_id         = participant_name,
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
