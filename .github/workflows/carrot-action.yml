@@ -1,8 +1,6 @@
 
 name: start-carrot-test
-on:
-    issue_comment:
-        types: [created]
+on: [push]
 jobs:
     publish-test:
         runs-on: ubuntu-20.04
@@ -25,9 +23,11 @@ jobs:
             "author":"${{ github.triggering_actor }}",
             "owner":"${{ github.repository_owner }}",
             "wdl_tests_dir":"wdl_test",
-            "branch_name":"${{ github.ref }}",
+            "repo_url":"${{ github.repositoryUrl }}"
+            "branch_name":"${{ github.ref_name }}",
             "commit":"${{ github.sha }}",
             "repo":"${{ github.repository }}",
+            "test_names": "",
             "issue_number":"",
             "software_name":""
             }'
