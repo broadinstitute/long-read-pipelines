@@ -1,5 +1,5 @@
 
-name: start-carrot-test-from-pr-comment
+name: start-carrot-test
 on:
     issue_comment:
         types: [created]
@@ -7,11 +7,27 @@ jobs:
     publish-test:
         runs-on: ubuntu-18.04
         steps:
-            - name: Parse comment
-              uses: broadinstitute/carrot-publish-github-action@v0.3.1-beta
-              with:
-                software-name: test_carrot
-                github-token: ${{ secrets.GITHUB_TOKEN }}
-                topic-name: ${{ secrets.CARROT_TOPIC_NAME }}
-                sa-key: ${{ secrets.CARROT_SA_KEY }}
-                minimum-permissions: read
+
+        # https://github.com/google-github-actions/setup-gcloud#service-account-key-json
+        - id: auth
+          uses: google-github-actions/auth@v0
+          with:
+            credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+        - name: Set up Cloud SDK
+          uses: google-github-actions/setup-gcloud@v0
+
+        # https://cloud.google.com/pubsub/docs/publisher#publish_messages
+        - name: Use gcloud CLI
+          run: >
+            gcloud pubsub topics publish ${{ secrets.CARROT_TOPIC_NAME }}
+            --message='{"source":"github",
+            "author":"${{ github.triggering_actor }}",
+            "owner":"${{ github.repository_owner }}",
+            "wdl_tests_dir":"wdl_test",
+            "branch_name":"${{ github.ref }}",
+            "commit":"${{ github.sha }}",
+            "repo":"${{ github.repository }}",
+            "issue_number":"",
+            "software_name":""
+            }'
