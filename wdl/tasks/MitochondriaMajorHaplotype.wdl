@@ -2,7 +2,6 @@ version 1.0
 
 import "tasks/Structs.wdl"
 import "tasks/AlignReads.wdl" as AR
-import "AoU_Mitochondria_Canu_filteredReads.wdl" as AoU
 import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
 import "tasks/Canu.wdl" as Canu
 import "tasks/Clair_mito.wdl" as Clair_Mito
@@ -27,8 +26,7 @@ workflow SelectContigs {
             filtered_contigs = FilterContigs.filtered_contigs
     }
 
-    call AoU.RG_Parsing as Parsing {input: bam = bam}
-    String RG = "@RG\\tID:~{Parsing.ID}\\tSM:~{Parsing.SM}\\tPL:~{Parsing.PL}\\tPU:~{Parsing.PU}"
+    String RG = "@RG\\tID:NA\\tSM:HG00514.2"
 
     scatter (pair in zip(SelfAlign.trimmed_contigs, SelfAlign.trimmed_contigs_idx)) {
         call AR.Minimap2 as Minimap2 {
@@ -195,13 +193,7 @@ task CountVariants {
 
     command <<<
         zcat < ~{vcfgz} > merge_output.vcf
-        counts=$(grep -v "^#" merge_output.vcf | awk -F "\t" '{a=length($4); if (a==1) print $4}' | grep -c '[A-Za-z]')
-        if [[ $counts -eq 0 ]];
-        then
-            echo  0 > counts.txt
-        else
-            echo $counts > counts.txt
-        fi
+        grep -v "^#" merge_output.vcf | awk -F "\t" '{ref=length($4); alt=length($5); if (ref==1 && alt==1) print $4}' | wc -l | awk '{print $1}' > counts.txt
     >>>
 
 
