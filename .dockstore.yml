@@ -46,3 +46,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/MalariaAssembly.wdl
   testParameterFiles:
+- name: PB10xMasSeqSingleFlowcellv4
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PB10xMasSeqArraySingleFlowcellv4_ArrayElementAnalysis.wdl
+  testParameterFiles:
