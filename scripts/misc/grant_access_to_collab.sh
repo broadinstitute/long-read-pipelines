@@ -19,6 +19,8 @@ Syntax
       display help and exit
     -u or --user [USER]:
       email address to grant access to
+    -g or --group:
+      indicates the email provided is for a group rather than a user
     -b --bucket [BUCKET]
       the GCS bucket, without the leading gs://
     -p --prefix [PREFIX]:
