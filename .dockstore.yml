@@ -81,6 +81,12 @@ workflows:
 - name: PBMASIsoSeqDemultiplex
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqDemultiplex.wdl
+- name: ProcessOnInstrumentDemuxedChunkRefFree
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/ProcessOnInstrumentDemuxedChunkRefFree.wdl
+- name: ProcessOnInstrumentDemuxedChunk
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/ProcessOnInstrumentDemuxedChunk.wdl
 
 ###################################################
 # TechAgnostic
