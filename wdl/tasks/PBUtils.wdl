@@ -923,13 +923,21 @@ task SummarizeCCSReport {
     command <<<
         set -euxo pipefail
 
-        cat ~{report} | grep 'ZMWs input' | awk -F": " '{ print $2 }' > zmws_input.txt
-        cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_pass_filters.txt
-        cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_fail_filters.txt
-        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_shortcut_filters.txt
-        cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_pass_filters_pct.txt
-        cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_fail_filters_pct.txt
-        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_shortcut_filters_pct.txt
+        grep 'ZMWs input' ~{report} | awk -F": " '{ print $2 }' > zmws_input.txt
+        grep 'ZMWs pass filters' ~{report} | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_pass_filters.txt
+        grep 'ZMWs fail filters' ~{report} | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_fail_filters.txt
+        grep 'ZMWs shortcut filters' ~{report} | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_shortcut_filters.txt
+        grep 'ZMWs pass filters' ~{report} | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_pass_filters_pct.txt
+        grep 'ZMWs fail filters' ~{report} | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_fail_filters_pct.txt
+        grep 'ZMWs shortcut filters' ~{report} | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_shortcut_filters_pct.txt
+
+        rm -f resmap.tsv
+        for ff in zmws_*.txt; do
+            filename=$(basename -- "$ff")
+            attr="${filename%.*}"
+            content=$(cat "$ff")
+            echo -e "${attr}\t${content}" >> resmap.tsv
+        done
     >>>
 
     output {
@@ -940,6 +948,8 @@ task SummarizeCCSReport {
         Float zmws_pass_filters_pct = read_float("zmws_pass_filters_pct.txt")
         Float zmws_fail_filters_pct = read_float("zmws_fail_filters_pct.txt")
         Float zmws_shortcut_filters_pct = read_float("zmws_shortcut_filters_pct.txt")
+
+        Map [String, Float] stats = read_map("resmap.tsv")
     }
 
     #########################
