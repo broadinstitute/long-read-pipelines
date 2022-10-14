@@ -19,8 +19,8 @@ workflow AlignAndCheckFingerprintCCS {
         String library
 
         Boolean turn_off_fingperprint_check
-        String fp_store
-        String sample_id_at_store
+        String? fp_store
+        String? sample_id_at_store
 
         File ref_map_file
     }
@@ -36,6 +36,11 @@ workflow AlignAndCheckFingerprintCCS {
         fp_status : "A summary string on the fingerprint check result, value is one of [PASS, FAIL, BORDERLINE]."
         fp_lod_expected_sample : "An LOD score assuming the BAM is the same sample as the FP VCF, i.e. BAM sourced from the 'expected sample'."
         fingerprint_detail_tar_gz : "A tar.gz file holding the fingerprinting details."
+    }
+    if (! turn_off_fingperprint_check) {
+        if (!defined(fp_store) || !(defined(sample_id_at_store))) {
+            call Utils.StopWorkflow {input: reason = "Fingerprint information not provided."}
+        }
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -114,8 +119,8 @@ workflow AlignAndCheckFingerprintCCS {
             input:
                 aligned_bam = aBAM,
                 aligned_bai = aBAI,
-                fp_store = fp_store,
-                sample_id_at_store = sample_id_at_store,
+                fp_store = select_first([fp_store]),
+                sample_id_at_store = select_first([sample_id_at_store]),
                 ref_specific_haplotype_map = ref_map['haplotype_map']
         }
         call GeneralUtils.TarGZFiles as saveFPRes {input: files = [FPCheckAoU.fingerprint_summary, FPCheckAoU.fingerprint_details], name = 'fingerprint_check.summary_and_details'}
