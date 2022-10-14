@@ -118,7 +118,7 @@ task ShardLongReads {
         zones: "select which zone (GCP) to run this task"
     }
 
-    Int disk_size = if defined(num_ssds) then 1 + 375*select_first([num_ssds]) else 1+3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
+    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 1+3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
     Int mem = ceil(25*size(unaligned_pbi, "MB")/1000)
     String ex = if drop_per_base_N_pulse_tags then "-x fi,fp,ri,rp" else ""
 
