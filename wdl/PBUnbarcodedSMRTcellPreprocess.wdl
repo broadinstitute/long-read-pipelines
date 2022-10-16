@@ -60,7 +60,7 @@ workflow PBUnbarcodedSMRTcellPreprocess {
         ##########
         # shard-[ccs,...]-merge
         ##########
-        call Utils.ComputeAllowedLocalSSD as Guess {input: intended_gb = ceil(size(raw_bam, "GB") * 4 + size(raw_pbi, "GB"))}
+        call Utils.ComputeAllowedLocalSSD as Guess {input: intended_gb = ceil(size(raw_bam, "GB") * 3 + size(raw_pbi, "GB"))}
         call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
         call PB.ShardLongReads as ShardLongReads {
             input:
