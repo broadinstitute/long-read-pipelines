@@ -28,9 +28,6 @@ workflow PBCLRWholeGenome {
 
         Boolean call_svs = true
         Boolean? pbsv_call_per_chr = true
-
-        Boolean call_small_variants = true
-        Boolean? call_small_vars_on_mitochondria = false
     }
 
     parameter_meta {
@@ -43,9 +40,6 @@ workflow PBCLRWholeGenome {
 
         call_svs:               "whether to call SVs"
         pbsv_call_per_chr:      "when using PBSV, make calls per chromosome then merge (trade lower sensitivity for faster speed)"
-
-        call_small_variants: "whether to call small variants"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -84,7 +78,7 @@ workflow PBCLRWholeGenome {
 
     if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
 
-    if (call_svs || call_small_variants) {
+    if (call_svs) {
 
         # verify arguments are provided
         if (call_svs) {
@@ -105,10 +99,7 @@ workflow PBCLRWholeGenome {
                 sample_id = participant_name,
 
                 call_svs = call_svs,
-                pbsv_call_per_chr = select_first([pbsv_call_per_chr]),
-
-                call_small_variants = call_small_variants,
-                call_small_vars_on_mitochondria = select_first([call_small_vars_on_mitochondria]),
+                pbsv_call_per_chr = select_first([pbsv_call_per_chr])
         }
 
         String svdir = outdir + "/variants/sv"

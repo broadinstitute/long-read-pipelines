@@ -31,9 +31,6 @@ workflow CallVariants {
         Boolean call_svs
         Boolean pbsv_call_per_chr
         File? tandem_repeat_bed
-
-        Boolean call_small_variants = false
-        Boolean call_small_vars_on_mitochondria
     }
 
     parameter_meta {
@@ -43,10 +40,6 @@ workflow CallVariants {
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         ref_dict:          "sequence dictionary accompanying the reference"
-
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
-        sites_vcf:     "for use with Clair, the small variant caller"
-        sites_vcf_tbi: "for use with Clair, the small variant caller"
 
         prefix:            "prefix for output files"
 
