@@ -27,7 +27,7 @@ workflow PBCLRWholeGenome {
         String gcs_out_root_dir
 
         Boolean call_svs = true
-        Boolean? fast_less_sensitive_sv = true
+        Boolean? pbsv_call_per_chr = true
 
         Boolean call_small_variants = true
         Boolean? call_small_vars_on_mitochondria = false
@@ -42,7 +42,7 @@ workflow PBCLRWholeGenome {
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
 
         call_svs:               "whether to call SVs"
-        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
+        pbsv_call_per_chr:      "when using PBSV, make calls per chromosome then merge (trade lower sensitivity for faster speed)"
 
         call_small_variants: "whether to call small variants"
         call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
@@ -88,7 +88,7 @@ workflow PBCLRWholeGenome {
 
         # verify arguments are provided
         if (call_svs) {
-            if (! defined(fast_less_sensitive_sv)) {call Utils.StopWorkflow as fast_less_sensitive_sv_not_provided {input: reason = "Calling SVs without specifying arg fast_less_sensitive_sv"}}
+            if (! defined(pbsv_call_per_chr)) {call Utils.StopWorkflow as pbsv_call_per_chr_not_provided {input: reason = "Calling SVs without specifying arg pbsv_call_per_chr"}}
         }
 
         call VAR.CallVariants {
@@ -102,9 +102,10 @@ workflow PBCLRWholeGenome {
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
 
                 prefix = participant_name,
+                sample_id = participant_name,
 
                 call_svs = call_svs,
-                fast_less_sensitive_sv = select_first([fast_less_sensitive_sv]),
+                pbsv_call_per_chr = select_first([pbsv_call_per_chr]),
 
                 call_small_variants = call_small_variants,
                 call_small_vars_on_mitochondria = select_first([call_small_vars_on_mitochondria]),

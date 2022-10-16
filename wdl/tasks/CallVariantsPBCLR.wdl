@@ -10,7 +10,7 @@ import "Utils.wdl"
 import "VariantUtils.wdl"
 
 import "PBSV.wdl"
-import "Sniffles.wdl"
+import "Sniffles2.wdl" as Sniffles2
 
 
 workflow CallVariants {
@@ -20,15 +20,16 @@ workflow CallVariants {
     input {
         File bam
         File bai
-
+        Int minsvlen = 50
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
 
         String prefix
+        String sample_id
 
         Boolean call_svs
-        Boolean fast_less_sensitive_sv
+        Boolean pbsv_call_per_chr
         File? tandem_repeat_bed
 
         Boolean call_small_variants = false
@@ -50,6 +51,8 @@ workflow CallVariants {
         prefix:            "prefix for output files"
 
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+        minsvlen:       "Minimum SV length in bp (default: 50)"
+        pbsv_call_per_chr:      "when using PBSV, make calls per chromosome then merge (trade lower sensitivity for faster speed)"
     }
 
     call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
@@ -62,7 +65,7 @@ workflow CallVariants {
     # Block for SV handling
     ######################################################################
     if (call_svs) {
-        if (fast_less_sensitive_sv) {
+        if (pbsv_call_per_chr) {
 
             call Utils.MakeChrIntervalList {
             input:
@@ -91,25 +94,6 @@ workflow CallVariants {
                         is_ccs = false,
                         zones = arbitrary.zones
                 }
-
-                call Sniffles.Sniffles {
-                    input:
-                        bam    = SubsetBam.subset_bam,
-                        bai    = SubsetBam.subset_bai,
-                        chr    = contig_for_sv,
-                        prefix = prefix
-                }
-
-                call Utils.InferSampleName {
-                    input:
-                        bam = SubsetBam.subset_bam,
-                        bai = SubsetBam.subset_bai
-                }
-                call VariantUtils.FixSnifflesVCF {
-                    input:
-                        vcf = Sniffles.vcf,
-                        sample_name = InferSampleName.sample_name
-                }
             }
 
             call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
@@ -118,21 +102,9 @@ workflow CallVariants {
                     ref_dict = ref_dict,
                     prefix   = prefix + ".pbsv"
             }
-
-            call VariantUtils.CollectDefinitions as UnionHeadersSnifflesVCFs {
-                input:
-                    vcfs = FixSnifflesVCF.sortedVCF
-            }
-            call VariantUtils.MergeAndSortVCFs as MergeSnifflesVCFs {
-                input:
-                    vcfs   = FixSnifflesVCF.sortedVCF,
-                    ref_fasta_fai = ref_fasta_fai,
-                    header_definitions_file = UnionHeadersSnifflesVCFs.union_definitions,
-                    prefix = prefix + ".sniffles"
-            }
         }
 
-        if (!fast_less_sensitive_sv) {
+        if (!pbsv_call_per_chr) {
 
             call PBSV.RunPBSV as PBSVslow {
                 input:
@@ -146,21 +118,27 @@ workflow CallVariants {
                     zones = arbitrary.zones
             }
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
+        }
 
-            call Sniffles.Sniffles as SnifflesSlow {
-                input:
-                    bam    = bam,
-                    bai    = bai,
-                    prefix = prefix
-            }
-            call Utils.InferSampleName as infer {input: bam = bam, bai = bai}
-            call VariantUtils.FixSnifflesVCF as ZipAndIndexSniffles {input: vcf = SnifflesSlow.vcf, sample_name = infer.sample_name}
+        call Sniffles2.SampleSV as Sniffles2SV {
+            input:
+                bam    = bam,
+                bai    = bai,
+                minsvlen = minsvlen,
+                sample_id = sample_id,
+                prefix = prefix
+        }
+
+        call VariantUtils.ZipAndIndexVCF as ZipAndIndexSnifflesVCF {
+            input:
+                vcf = Sniffles2SV.vcf
         }
     }
 
     output {
-        File? sniffles_vcf = select_first([MergeSnifflesVCFs.vcf, ZipAndIndexSniffles.sortedVCF])
-        File? sniffles_tbi = select_first([MergeSnifflesVCFs.tbi, ZipAndIndexSniffles.tbi])
+        File? sniffles_vcf = select_first([ZipAndIndexSnifflesVCF.vcfgz])
+        File? sniffles_tbi = select_first([ZipAndIndexSnifflesVCF.tbi])
+        File? sniffles_snf = select_first([Sniffles2SV.snf])
 
         File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
         File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])

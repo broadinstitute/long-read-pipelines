@@ -23,7 +23,7 @@ workflow CallVariants {
         File ref_dict
 
         Boolean call_svs
-        Boolean fast_less_sensitive_sv
+        Boolean pbsv_call_per_chr
         File? tandem_repeat_bed
 
         Boolean call_small_variants
@@ -39,7 +39,7 @@ workflow CallVariants {
     }
 
     parameter_meta {
-        fast_less_sensitive_sv:  "to trade less sensitive SV calling for faster speed"
+        pbsv_call_per_chr:      "when using PBSV, make calls per chromosome then merge (trade lower sensitivity for faster speed)"
         tandem_repeat_bed:       "BED file containing TRF finder for better PBSV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
         minsvlen:       "Minimum SV length in bp (default: 50)"
 
@@ -184,7 +184,7 @@ workflow CallVariants {
     # Block for SV handling
     ######################################################################
     if (call_svs) {
-        if (fast_less_sensitive_sv) {
+        if (pbsv_call_per_chr) {
 
             call Utils.MakeChrIntervalList {
             input:
@@ -213,7 +213,6 @@ workflow CallVariants {
                         is_ccs = true,
                         zones = arbitrary.zones
                 }
-
             }
 
             call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
@@ -222,10 +221,9 @@ workflow CallVariants {
                     ref_dict = ref_dict,
                     prefix   = prefix + ".pbsv"
             }
-
         }
 
-        if (!fast_less_sensitive_sv) {
+        if (!pbsv_call_per_chr) {
 
             call PBSV.RunPBSV as PBSVslow {
                 input:
@@ -240,27 +238,27 @@ workflow CallVariants {
             }
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
+        }
 
-            call Sniffles2.SampleSV as Sniffles2SV {
-                input:
-                    bam    = bam,
-                    bai    = bai,
-                    minsvlen = minsvlen,
-                    sample_id = sample_id,
-                    prefix = prefix
-            }
+        call Sniffles2.SampleSV as Sniffles2SV {
+            input:
+                bam    = bam,
+                bai    = bai,
+                minsvlen = minsvlen,
+                sample_id = sample_id,
+                prefix = prefix
+        }
 
-            call VariantUtils.ZipAndIndexVCF as ZipAndIndexSnifflesVCF {
-                input:
-                    vcf = Sniffles2SV.vcf
-            }
+        call VariantUtils.ZipAndIndexVCF as ZipAndIndexSnifflesVCF {
+            input:
+                vcf = Sniffles2SV.vcf
         }
     }
 
     output {
-        File? sniffles_vcf = ZipAndIndexSnifflesVCF.vcfgz
-        File? sniffles_tbi = ZipAndIndexSnifflesVCF.tbi
-        File? sniffles_snf = Sniffles2SV.snf
+        File? sniffles_vcf = select_first([ZipAndIndexSnifflesVCF.vcfgz])
+        File? sniffles_tbi = select_first([ZipAndIndexSnifflesVCF.tbi])
+        File? sniffles_snf = select_first([Sniffles2SV.snf])
         File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
         File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
 
