@@ -59,7 +59,7 @@ task AssembleForHaplotigs {
     }
 
     Int proposed_memory = 4 * ceil(size(reads, "GB"))
-    Int memory = if proposed_memory < 96 then 96 else proposed_memory  # this 96 magic number is purely empirical
+    Int memory = 512 # if proposed_memory < 96 then 96 else if proposed_memory > 512 then 512 else proposed_memory # this 96 magic number is purely empirical
     Int n = memory / 4  # this might be an odd number
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
@@ -137,7 +137,7 @@ task AssembleForAltContigs {
         RuntimeAttr? runtime_attr_override
     }
     Int proposed_memory = 4 * ceil(size(reads, "GB"))
-    Int memory = if proposed_memory < 96 then 96 else if proposed_memory > 512 then 512 else proposed_memory # this 96 magic number is purely empirical
+    Int memory = 512 # if proposed_memory < 96 then 96 else if proposed_memory > 512 then 512 else proposed_memory # this 96 magic number is purely empirical
     Int n = memory / 4  # this might be an odd number
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
