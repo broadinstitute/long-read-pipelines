@@ -39,13 +39,13 @@ workflow run_Clair_mito {
     output {
             File? pileup_vcf = Clair_mito_call.pileup_vcf
             File? pileup_vcf_tbi = Clair_mito_call.pileup_vcf_tbi
-            File full_alignment_vcf = Clair_mito_call.full_alignment_vcf
-            File full_alignment_tbi = Clair_mito_call.full_alignment_tbi
+            File? full_alignment_vcf = Clair_mito_call.full_alignment_vcf
+            File? full_alignment_tbi = Clair_mito_call.full_alignment_tbi
 
-            File vcf = Clair_mito_call.vcf
-            File vcf_tbi = Clair_mito_call.vcf_tbi
-            File gvcf = Clair_mito_call.gvcf
-            File gvcf_tbi = Clair_mito_call.gvcf_tbi
+            File? vcf = Clair_mito_call.vcf
+            File? vcf_tbi = Clair_mito_call.vcf_tbi
+            File? gvcf = Clair_mito_call.gvcf
+            File? gvcf_tbi = Clair_mito_call.gvcf_tbi
         }
 
 }
