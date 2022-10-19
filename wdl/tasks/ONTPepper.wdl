@@ -101,8 +101,8 @@ task Pepper {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          threads,
-        mem_gb:             memory,
+        cpu_cores:          96,
+        mem_gb:             640,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  1,
