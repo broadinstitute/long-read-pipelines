@@ -1485,35 +1485,48 @@ task ResilientSubsetBam {
 
     String subset_prefix = prefix + "." + interval_id
 
+    String local_prefix = basename(bam, ".bam")
+
     command <<<
+        set -x
+        if [[ ~{interval_id} == "1" || ~{interval_id} -eq 1 ]]; then
+            set -eu
+            gsutil -q cp ~{bai} ~{local_prefix}.bam.bai
+            gsutil -q cp ~{bam} ~{local_prefix}.bam
+            touch ~{local_prefix}.bam.bai
 
-        # the way this works is the following:
-        # 0) relying on the re-auth.sh script to export the credentials
-        # 1) perform the remote sam-view subsetting in the background
-        # 2) listen to the PID of the background process, while re-auth every 1200 seconds
-        source /opt/re-auth.sh
-        set -euxo pipefail
+            samtools view -bhX -M -@1 --verbosity=8 --write-index \
+                -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
+                ~{local_prefix}.bam ~{local_prefix}.bam.bai \
+                ~{sep=" " intervals}
+        else
+            # the way this works is the following:
+            # 0) relying on the re-auth.sh script to export the credentials
+            # 1) perform the remote sam-view subsetting in the background
+            # 2) listen to the PID of the background process, while re-auth every 1200 seconds
+            source /opt/re-auth.sh
+            set -euxo pipefail
+            # see man page for what '-M' means
+            samtools view \
+                -bhX \
+                -M \
+                -@ 1 \
+                --verbosity=8 \
+                --write-index \
+                -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
+                ~{bam} ~{bai} \
+                ~{sep=" " intervals} && exit 0 || { echo "samtools seem to have failed"; exit 77; } &
+            pid=$!
 
-        # see man page for what '-M' means
-        samtools view \
-            -bhX \
-            -M \
-            -@ 1 \
-            --verbosity=8 \
-            --write-index \
-            -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
-            ~{bam} ~{bai} \
-            ~{sep=" " intervals} && exit 0 || { echo "samtools seem to have failed"; exit 77; } &
-        pid=$!
-
-        set +e
-        count=0
-        while true; do
-            sleep 1200 && date && source /opt/re-auth.sh
-            count=$(( count+1 ))
-            if [[ ${count} -gt 6 ]]; then exit 0; fi
-            if ! pgrep -x -P $pid; then exit 0; fi
-        done
+            set +e
+            count=0
+            while true; do
+                sleep 1200 && ls && date && source /opt/re-auth.sh
+                count=$(( count+1 ))
+                if [[ ${count} -gt 6 ]]; then exit 0; fi
+                if ! pgrep -x -P $pid; then exit 0; fi
+            done
+        fi
     >>>
 
     output {
