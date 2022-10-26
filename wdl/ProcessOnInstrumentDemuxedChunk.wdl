@@ -99,6 +99,7 @@ workflow ProcessOnInstrumentDemuxedChunk {
         File aligned_pbi = FinalizeAlignedPbi.gcs_path
         Float wgs_cov = MosDepthWGS.wgs_cov
         File alignment_metrics_tar_gz = FinalizeAlnMetrics.gcs_path
+        Map[String, Float] alignment_metrics = AlignAndCheckFingerprintCCS.alignment_metrics
         String movie = movie_name
 
         String last_postprocessing_date = today.yyyy_mm_dd
