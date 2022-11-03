@@ -1540,3 +1540,147 @@ task ListFilesOfType {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task StopWorkflow {
+    input {
+        String reason
+    }
+    command <<<
+        echo -e "Workflow explicitly stopped because \n  ~{reason}." && exit 1
+    >>>
+    runtime {docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+}
+
+task InferSampleName {
+    meta {
+        description: "Infer sample name encoded on the @RG line of the header section. Fails if multiple values found, or if SM ~= unnamedsample."
+    }
+
+    input {
+        File bam
+        File bai
+    }
+
+    parameter_meta {
+        bam: {
+            localization_optional: true
+        }
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -H ~{bam} > header.txt
+        if ! grep -q '^@RG' header.txt; then echo "No read group line found!" && exit 1; fi
+
+        grep '^@RG' header.txt | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g' | sort | uniq > sample.names.txt
+        if [[ $(wc -l sample.names.txt) -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
+        if grep -iq "unnamedsample" sample.names.txt; then echo "Sample name found to be unnamedsample!" && exit 1; fi
+    >>>
+
+    output {
+        String sample_name = read_string("sample.names.txt")
+    }
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+task CheckOnSamplenames {
+    meta {
+        description: "Makes sure the provided sample names are all same, i.e. no mixture of sample names"
+    }
+
+    input {
+        Array[String] sample_names
+    }
+
+    command <<<
+        set -eux
+        n_sm=$(sort ~{write_lines(sample_names)} | uniq | wc -l | awk '{print $1}')
+        if [[ ${n_sm} -gt 1 ]]; then echo "Sample mixture!" && exit 1; fi
+    >>>
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task DeduplicateBam {
+    meta {
+        description: "Utility to drop (occationally happening) duplicate records in input BAM"
+    }
+
+    input {
+        File aligned_bam
+        File aligned_bai
+
+        Boolean same_name_as_input = true
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 3 * ceil(size(aligned_bam, "GB"))
+
+    String base = basename(aligned_bam, ".bam")
+    String prefix = if (same_name_as_input) then base else (base + ".dedup")
+
+    command <<<
+        echo "==========================================================="
+        echo "collecting duplicate information"
+        time \
+            samtools view -@ 1 "~{aligned_bam}" | \
+            awk -F "\t" 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $5}' | \
+            sort | uniq -d \
+            > "~{aligned_bam}".duplicates.txt
+        echo "==========================================================="
+        echo "de-duplicating"
+        time python3 /opt/remove_duplicate_ont_aln.py \
+            --prefix "~{prefix}" \
+            --annotations "~{aligned_bam}".duplicates.txt \
+            "~{aligned_bam}"
+        echo "==========================================================="
+        echo "DONE"
+        samtools index "~{prefix}.bam"
+    >>>
+
+    output {
+        File corrected_bam = "~{prefix}.bam"
+        File corrected_bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
