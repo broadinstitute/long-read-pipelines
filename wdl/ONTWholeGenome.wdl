@@ -100,8 +100,6 @@ workflow ONTWholeGenome {
     call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = usable_bam, name = "~{participant_name}.bam" }
     call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = usable_bai, name = "~{participant_name}.bam.bai" }
 
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
-
     output {
         File merged_bam = FinalizeBam.gcs_path
         File merged_bai = FinalizeBai.gcs_path
@@ -119,7 +117,6 @@ workflow ONTWholeGenome {
         #Float average_identity = coverage.average_identity
         #Float median_identity = coverage.median_identity
 
-        File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
         ########################################
     }
 }
