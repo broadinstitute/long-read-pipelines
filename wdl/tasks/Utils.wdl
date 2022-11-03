@@ -117,6 +117,95 @@ task EchoManifest {
     }
 }
 
+task ChunkManifest {
+    input {
+        File manifest
+        Int manifest_lines_per_chunk
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        split -a 5 -d --additional-suffix=".txt" -l ~{manifest_lines_per_chunk} ~{manifest} chunk_
+    >>>
+
+    output {
+        Array[File] manifest_chunks = glob("chunk_*")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            10,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SortBam {
+    input {
+        File input_bam
+        String prefix = "sorted"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        input_bam: "input BAM"
+        prefix:    "[default-valued] prefix for output BAM"
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        samtools sort -@$num_core -o ~{prefix}.bam ~{input_bam}
+        samtools index ~{prefix}.bam
+    >>>
+
+    output {
+        File sorted_bam = "~{prefix}.bam"
+        File sorted_bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             4,
+        disk_gb:            10,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task MergeFastqGzs {
     input {
         Array[File] fastq_gzs
@@ -214,45 +303,6 @@ task Cat {
     }
 }
 
-task ChunkManifest {
-    input {
-        File manifest
-        Int manifest_lines_per_chunk
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    command <<<
-        set -euxo pipefail
-
-        split -a 5 -d --additional-suffix=".txt" -l ~{manifest_lines_per_chunk} ~{manifest} chunk_
-    >>>
-
-    output {
-        Array[File] manifest_chunks = glob("chunk_*")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            10,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
 
 # TODO: investigate if samtools is better for this task
 # Sort BAM file by coordinate order
@@ -492,14 +542,136 @@ task CountBamRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
+    parameter_meta { bam: { localization_optional: true } }
+
+    Int disk_size = 100
 
     command <<<
-        samtools view ~{bam} | wc -l
+        set -eux
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -c ~{bam} > "count.txt" 2>"error.log"
+        if [[ -f "error.log" ]]; then
+            if [[ -s "error.log" ]]; then echo "samtools has warn/error" && cat "error.log" && exit 1; fi
+        fi
     >>>
 
     output {
-        Int num_records = read_int(stdout())
+        File? samools_error = "error.log"
+        Int num_records = read_int("count.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FilterListOfStrings {
+    meta {
+        description : "Filter a given list of files by a query term (essentially pipes the query into grep)."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        Array[String] list_to_filter
+        String query
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        list_to_filter: "Array of strings to filter by the query."
+        query: "Term to use to filter the given strings."
+    }
+
+
+    command <<<
+        set -euxo pipefail
+
+        \grep "~{query}" ~{write_lines(list_to_filter)} > filtered_list.txt
+    >>>
+
+    output {
+        Array[String] filtered_list = read_lines("filtered_list.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            10,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "ubuntu:hirsute-20210825"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FilterReadsBySamFlags {
+    meta {
+        description : "Filter reads based on sam flags.  Reads with ANY of the given flags will be removed from the given dataset."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File bam
+        String sam_flags
+
+        String extra_args = ""
+
+        String prefix = "filtered_reads"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam:   "BAM file to be filtered."
+        sam_flags: "Flags for which to remove reads.  Reads with ANY of the given flags will be removed from the given dataset."
+        prefix : "[Optional] Prefix string to name the output file (Default: filtered_reads)."
+    }
+
+    Int disk_size = 20 + ceil(11 * size(bam, "GiB"))
+
+    command <<<
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        samtools view -h -b -F ~{sam_flags} -@$np ~{extra_args} ~{bam} > ~{prefix}.bam
+        samtools index -@$np ~{prefix}.bam
+    >>>
+
+    output {
+        File output_bam = "~{prefix}.bam"
+        File output_bam_index = "~{prefix}.bam.bai"
     }
 
     #########################
@@ -511,6 +683,73 @@ task CountBamRecords {
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task DownsampleSam {
+    meta {
+        description : "Downsample the given bam / sam file using Picard/GATK's DownsampleSam tool."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File bam
+
+        Float probability = 0.01
+        String strategy = "HighAccuracy"
+        String prefix = "downsampled_reads"
+
+        Int random_seed = 1
+
+        String extra_args = ""
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam:   "BAM file to be filtered."
+        probability : "[Optional] Probability that a read will be emitted (Default: 0.01)."
+        strategy : "[Optional] Strategy to use to downsample the given bam file (Default: HighAccuracy)."
+        prefix : "[Optional] Prefix string to name the output file (Default: downsampled_reads)."
+        extra_args : "[Optional] Extra arguments to pass into DownsampleSam."
+    }
+
+    Int disk_size = 20 + ceil(11 * size(bam, "GiB"))
+
+    command <<<
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        gatk DownsampleSam --VALIDATION_STRINGENCY SILENT --RANDOM_SEED ~{random_seed} -I ~{bam} -O ~{prefix}.bam -S ~{strategy} -P ~{probability} ~{extra_args}
+        samtools index -@$np ~{prefix}.bam
+    >>>
+
+    output {
+        File output_bam = "~{prefix}.bam"
+        File output_bam_index = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

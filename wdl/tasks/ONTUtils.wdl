@@ -74,7 +74,7 @@ task GetRunInfo {
     command <<<
         set -euxo pipefail
 
-        gsutil cat "~{final_summary}" | sed 's/=/\t/g' > run_info.txt
+        gsutil cat "~{final_summary}" | sed 's/=[[:space:]]*$/=unknown/' | sed 's/=/\t/g' > run_info.txt
     >>>
 
     output {
