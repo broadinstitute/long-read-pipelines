@@ -6,7 +6,7 @@ task Annotate
 {
     input {
         File reads
-        String model = "mas15"
+        String model = "mas_15+sc_10x5p"
         String prefix = "longbow_annotated"
 
         RuntimeAttr? runtime_attr_override
@@ -33,7 +33,7 @@ task Annotate
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -51,7 +51,7 @@ task Segment
 {
     input {
         File annotated_reads
-        String model = "mas15"
+        String model = "mas_15+sc_10x5p"
         String prefix = "longbow_segmented"
 
         String extra_args = ""
@@ -86,7 +86,7 @@ task Segment
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -104,8 +104,7 @@ task Sift
 {
     input {
         File segmented_input_reads
-        String model = "mas_15_sc_10x5p_single_none"
-        String validation_model = "10x_sc_10x5p_single_none"
+        String model = "mas_15+sc_10x5p"
 
         String prefix = "longbow_sifted"
 
@@ -125,7 +124,6 @@ task Sift
             --model ~{model} \
             --stats ~{prefix}.stats.tsv \
             --summary-stats ~{prefix}.summary_stats.tsv \
-            --validation-model ~{validation_model} \
             -o ~{prefix}.bam \
             -x ~{prefix}.sift_failed.bam \
             ~{segmented_input_reads}
@@ -146,62 +144,7 @@ task Sift
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task ScSplit
-{
-    input {
-        File reads_bam
-        String model = "mas15"
-
-        String force_option = ""
-
-        Int umi_length = 10
-        String cbc_dummy = "CTGCCTAACCTGATCC"
-
-        String prefix = "scsplit"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    # On average bam compression is 10x and we have more data on output than that:
-    Int disk_size = 15*ceil(size(reads_bam, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        source /longbow/venv/bin/activate
-        longbow scsplit -t4 -v INFO --model ~{model} -b ~{force_option} -o ~{prefix} -u ~{umi_length} -c ~{cbc_dummy} ~{reads_bam}
-    >>>
-
-    output {
-        File mates1 = "~{prefix}_mates1.fastq"
-        File mates2 = "~{prefix}_mates2.fastq"
-        File annotated_bam = "~{prefix}.cbc_umi_annotated.bam"
-        File whitelist = "~{prefix}_whitelist.txt"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          4,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
-        mem_gb:             8,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -223,7 +166,7 @@ task Inspect
 
         File read_names
 
-        String model = "mas15"
+        String model = "mas_15+sc_10x5p"
         String prefix = "longbow_inspected_reads"
 
         RuntimeAttr? runtime_attr_override
@@ -251,7 +194,7 @@ task Inspect
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -317,7 +260,7 @@ task Demultiplex
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -378,10 +321,9 @@ task CheckForAnnotatedArrayReads {
 task Filter {
     input {
         File bam
-        String model = "mas15"
+        String model = "mas_15+sc_10x5p"
 
         String prefix = "reads"
-
 
         File? bam_pbi
 
@@ -418,7 +360,7 @@ task Filter {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -486,7 +428,7 @@ task Extract {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -504,7 +446,7 @@ task Pad
 {
     input {
         File reads
-        String model = "mas15"
+        String model = "mas_15+sc_10x5p"
         String prefix = "longbow_padded"
 
         String tag_to_expand = "ZU"
@@ -537,7 +479,7 @@ task Pad
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -557,7 +499,7 @@ task Correct
         File reads
         File barcode_allow_list
 
-        String model = "mas15v2"
+        String model = "mas_15+sc_10x5p"
         String prefix = "longbow_correct"
 
         String raw_barcode_tag = "CR"
@@ -603,7 +545,7 @@ task Correct
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -697,7 +639,7 @@ CODE
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -715,7 +657,7 @@ task Stats
 {
     input {
         File reads
-        String model = "mas15"
+        String model = "mas_15+sc_10x5p"
         String prefix = "longbow_stats"
 
         RuntimeAttr? runtime_attr_override
@@ -760,7 +702,7 @@ task Stats
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -811,7 +753,69 @@ task TagFix
         boot_disk_gb:       10,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.39"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task Correct_UMI
+{
+    meta {
+        description : "Corrects the UMIs in the given reads using a set cover algorithm."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+    input {
+        File bam
+
+        String prefix = "out"
+        Int umi_length = 10
+        Boolean pre_extracted = true
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size_gb = 10 + 10*ceil(size(bam, "GB"))
+
+    String pre_extracted_arg = if pre_extracted then " --pre-extracted " else ""
+
+    command <<<
+        set -euxo pipefail
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        source /longbow/venv/bin/activate
+        longbow correct_umi -v INFO -t ${np} -o ~{prefix}.corrected_umis.unsorted.bam -x ~{prefix}.failed_umi_correction.bam ~{bam}
+
+        samtools sort -@${np} ~{prefix}.corrected_umis.unsorted.bam > ~{prefix}.corrected_umis.bam
+        samtools index -@${np} ~{prefix}.corrected_umis.bam
+    >>>
+
+    output {
+        File umi_corrected_bam = "~{prefix}.corrected_umis.bam"
+        File umi_corrected_bam_index = "~{prefix}.corrected_umis.bam"
+        File failed_umi_correction_bam = "~{prefix}.failed_umi_correction.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             32,
+        disk_gb:            disk_size_gb,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
