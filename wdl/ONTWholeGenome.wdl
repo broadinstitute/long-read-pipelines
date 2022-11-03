@@ -8,7 +8,6 @@ version 1.0
 
 import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
-import "tasks/CallVariantsONT.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 import "tasks/SampleLevelAlignedMetrics.wdl" as COV
@@ -88,13 +87,13 @@ workflow ONTWholeGenome {
     File usable_bam = select_first([RemoveDuplicates.corrected_bam, bam])
     File usable_bai = select_first([RemoveDuplicates.corrected_bai, bai])
 
-    call COV.SampleLevelAlignedMetrics as coverage {
-        input:
-            aligned_bam = usable_bam,
-            aligned_bai = usable_bai,
-            ref_fasta   = ref_map['fasta'],
-            bed_to_compute_coverage = bed_to_compute_coverage
-    }
+    #call COV.SampleLevelAlignedMetrics as coverage {
+    #    input:
+    #        aligned_bam = usable_bam,
+    #        aligned_bai = usable_bai,
+    #        ref_fasta   = ref_map['fasta'],
+    #        bed_to_compute_coverage = bed_to_compute_coverage
+    #}
 
     String dir = outdir + "/alignments"
 
@@ -103,113 +102,24 @@ workflow ONTWholeGenome {
 
     if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
 
-    ####################################################################################################
-    if (call_svs || call_small_variants) {
-
-        # verify arguments are provided
-        if (call_svs) {
-            if (! defined(fast_less_sensitive_sv)) {call Utils.StopWorkflow as fast_less_sensitive_sv_not_provided {input: reason = "Calling SVs without specifying arg fast_less_sensitive_sv"}}
-        }
-        if (call_small_variants) {
-            if (! defined(call_small_vars_on_mitochondria)) {call Utils.StopWorkflow as call_small_vars_on_mitochondria_not_provided {input: reason = "Unprovided arg call_small_vars_on_mitochondria"}}
-            if (! defined(run_dv_pepper_analysis)) {call Utils.StopWorkflow as run_dv_pepper_analysis_not_provided {input: reason = "Unprovided arg run_dv_pepper_analysis"}}
-            if (! defined(dvp_threads)) {call Utils.StopWorkflow as dvp_threads_not_provided {input: reason = "Unprovided arg dvp_threads"}}
-            if (! defined(ref_scatter_interval_list_locator)) {call Utils.StopWorkflow as ref_scatter_interval_list_locator_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_locator"}}
-            if (! defined(ref_scatter_interval_list_ids)) {call Utils.StopWorkflow as ref_scatter_interval_list_ids_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_ids"}}
-        }
-
-        call VAR.CallVariants {
-            input:
-                bam               = usable_bam,
-                bai               = usable_bai,
-                sample_id         = participant_name,
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict'],
-                tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-                prefix = participant_name,
-
-                call_svs = call_svs,
-                fast_less_sensitive_sv = select_first([fast_less_sensitive_sv]),
-
-                call_small_variants = call_small_variants,
-                call_small_vars_on_mitochondria = select_first([call_small_vars_on_mitochondria]),
-                sites_vcf = sites_vcf,
-                sites_vcf_tbi = sites_vcf_tbi,
-
-                run_dv_pepper_analysis = select_first([run_dv_pepper_analysis]),
-                dvp_threads = select_first([dvp_threads]),
-                dvp_memory = select_first([dvp_memory]),
-                ref_scatter_interval_list_locator = select_first([ref_scatter_interval_list_locator]),
-                ref_scatter_interval_list_ids = select_first([ref_scatter_interval_list_ids])
-        }
-
-        String svdir = outdir + "/variants/sv"
-        String smalldir = outdir + "/variants/small"
-
-        if (call_svs) {
-            call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = select_first([CallVariants.pbsv_vcf]) }
-            call FF.FinalizeToFile as FinalizePBSVtbi { input: outdir = svdir, file = select_first([CallVariants.pbsv_tbi]) }
-
-            call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = select_first([CallVariants.sniffles_vcf]) }
-            call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = select_first([CallVariants.sniffles_tbi]) }
-        }
-
-        if (call_small_variants) {
-            call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_vcf])}
-            call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_tbi])}
-
-            call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_gvcf])}
-            call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_gtbi])}
-
-            if (select_first([run_dv_pepper_analysis])) {
-                call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
-                call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_tbi])}
-                call FF.FinalizeToFile as FinalizeDVPepperPhasedVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperPhasedTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_tbi])}
-            }
-        }
-    }
-
-output {
+    output {
         File merged_bam = FinalizeBam.gcs_path
         File merged_bai = FinalizeBai.gcs_path
 
-        Float aligned_num_reads = coverage.aligned_num_reads
-        Float aligned_num_bases = coverage.aligned_num_bases
-        Float aligned_frac_bases = coverage.aligned_frac_bases
-        Float aligned_est_fold_cov = coverage.aligned_est_fold_cov
+        #Float aligned_num_reads = coverage.aligned_num_reads
+        #Float aligned_num_bases = coverage.aligned_num_bases
+        #Float aligned_frac_bases = coverage.aligned_frac_bases
+        #Float aligned_est_fold_cov = coverage.aligned_est_fold_cov
 
-        Float aligned_read_length_mean = coverage.aligned_read_length_mean
-        Float aligned_read_length_median = coverage.aligned_read_length_median
-        Float aligned_read_length_stdev = coverage.aligned_read_length_stdev
-        Float aligned_read_length_N50 = coverage.aligned_read_length_N50
+        #Float aligned_read_length_mean = coverage.aligned_read_length_mean
+        #Float aligned_read_length_median = coverage.aligned_read_length_median
+        #Float aligned_read_length_stdev = coverage.aligned_read_length_stdev
+        #Float aligned_read_length_N50 = coverage.aligned_read_length_N50
 
-        Float average_identity = coverage.average_identity
-        Float median_identity = coverage.median_identity
+        #Float average_identity = coverage.average_identity
+        #Float median_identity = coverage.median_identity
 
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
         ########################################
-        File? pbsv_vcf = FinalizePBSV.gcs_path
-        File? pbsv_tbi = FinalizePBSVtbi.gcs_path
-
-        File? sniffles_vcf = FinalizeSniffles.gcs_path
-        File? sniffles_tbi = FinalizeSnifflesTbi.gcs_path
-
-        File? clair_vcf = FinalizeClairVcf.gcs_path
-        File? clair_tbi = FinalizeClairTbi.gcs_path
-
-        File? clair_gvcf = FinalizeClairGVcf.gcs_path
-        File? clair_gtbi = FinalizeClairGTbi.gcs_path
-
-        File? dvp_vcf = FinalizeDVPepperVcf.gcs_path
-        File? dvp_tbi = FinalizeDVPepperTbi.gcs_path
-        File? dvp_g_vcf = FinalizeDVPepperGVcf.gcs_path
-        File? dvp_g_tbi = FinalizeDVPepperGTbi.gcs_path
-        File? dvp_phased_vcf = FinalizeDVPepperPhasedVcf.gcs_path
-        File? dvp_phased_tbi = FinalizeDVPepperPhasedTbi.gcs_path
     }
 }
