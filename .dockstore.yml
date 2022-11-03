@@ -50,7 +50,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PB10xMasSeqArraySingleFlowcellv4_ArrayElementAnalysis.wdl
   testParameterFiles:
-- name: wdl/PB10xMasSeqArraySingleFlowcellv5.wdl
+- name: PB10xMasSeqArraySingleFlowcellv5
   subclass: wdl
   primaryDescriptorPath: /wdl/PB10xMasSeqArraySingleFlowcellv5.wdl
   testParameterFiles:
