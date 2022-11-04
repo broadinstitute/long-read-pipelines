@@ -144,3 +144,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/Minimap.wdl
   testParameterFiles:
+- name: Clipper
+  subclass: wdl
+  primaryDescriptorPath: /wdl/Clipper.wdl
+  testParameterFiles:
