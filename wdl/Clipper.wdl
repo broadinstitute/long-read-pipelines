@@ -51,7 +51,7 @@ task ClipperCluster {
     command <<<
         set -euxo pipefail
 
-        python split_reads.py ~{aligned_bam} > ~{prefix}_clipped_reads.bed
+        python /split_reads.py ~{aligned_bam} > ~{prefix}_clipped_reads.bed
         awk '$9~"chr"' ~{prefix}_clipped_reads.bed | sort -k1,1 -k2,2n > ~{prefix}_clipped_reads_filtered.bed
         bedtools cluster -d 5 -i ~{prefix}_clipped_reads_filtered.bed > ~{prefix}_clipped_reads_filtered_clustered.bed
     >>>
@@ -96,7 +96,7 @@ task ClipperProcess {
     Int disk_size = ceil(size(clusterfile, "GB"))+50
 
     command <<<
-        python split_reads_process_clusters.py ~{clusterfile} -d ~{min_dist} -c ~{min_cluster_count} -u ~{max_unique_breakends} > ~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}.vcf
+        python /split_reads_process_clusters.py ~{clusterfile} -d ~{min_dist} -c ~{min_cluster_count} -u ~{max_unique_breakends} > ~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}.vcf
     >>>
 
     output { File clustervcf = "~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}.vcf" }
