@@ -640,6 +640,9 @@ CODE
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.4"
+=======
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:kvg-hierarchical-models"
+>>>>>>> e0e7893 (Temp docker image change)
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
