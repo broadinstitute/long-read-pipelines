@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env scripts
 
 # This is a quick script to swap the read name with the value of the XN tag.
 #

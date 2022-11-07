@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/scripts
 
 """accept_test_results.py
 

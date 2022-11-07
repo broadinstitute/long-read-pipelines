@@ -23,10 +23,10 @@ jobs:
     - name: Checkout LFS objects
       run: git lfs checkout
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - name: Set up Python ${{ matrix.scripts-version }}
+      uses: actions/setup-scripts@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ matrix.scripts-version }}
 
     - name: Install dependencies
       run: |

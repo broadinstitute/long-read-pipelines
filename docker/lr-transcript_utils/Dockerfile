@@ -31,7 +31,7 @@ RUN apt-get -y install liblzma-dev libbz2-dev
 # Get libcurses:
 RUN apt-get -y install libncurses5-dev libncursesw5-dev
 
-# Get python 3.8:
+# Get scripts 3.8:
 RUN apt-get install -y software-properties-common
 RUN apt-get install -y libssl-dev libncurses5-dev libsqlite3-dev libreadline-dev libgdm-dev libdb4o-cil-dev libpcap-dev libtk8.6
 RUN cd /opt && \
@@ -50,8 +50,8 @@ RUN python3.8 -m pip install --no-cache-dir scipy
 RUN python3.8 -m pip install pysam
 RUN python3.8 -m pip install biopython
 
-# Link python 3.8 to the global python executable:
-RUN ln -s /usr/local/bin/python3.8 /usr/local/bin/python
+# Link scripts 3.8 to the global scripts executable:
+RUN ln -s /usr/local/bin/python3.8 /usr/local/bin/scripts
 
 ################################################################################
 # Install local settings:
@@ -134,7 +134,7 @@ RUN git clone https://github.com/gpertea/gffcompare \
 # Clean up apt-get process:
 RUN apt-get clean && apt-get purge && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Last few python packages:
+# Last few scripts packages:
 RUN python3.8 -m pip install pyyaml
 RUN python3.8 -m pip install polyleven 
 

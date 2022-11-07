@@ -4,7 +4,7 @@ channels:
   - bioconda
   - anaconda
 dependencies:
-  - python=3.6
+  - scripts=3.6
   - cython
   - numpy
   - bwapy

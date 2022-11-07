@@ -19,7 +19,7 @@ RUN jupyter nbextension enable --py nbresuse --sys-prefix
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 
 ########################################
-# Install python bioinformatics / datascience packages:
+# Install scripts bioinformatics / datascience packages:
 
 # Install UMAP clustering package:
 RUN pip install llvmlite --ignore-installed
@@ -36,7 +36,7 @@ RUN pip install joblib
 RUN pip install pysam
 
 # Install OpenCV for image processing algorithms:
-RUN pip install opencv-python
+RUN pip install opencv-scripts
 
 ########################################
 # Install libraries for interactive graph visualization:
@@ -56,7 +56,7 @@ RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager plotlywidge
 RUN pip install ipycytoscape
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-cytoscape
 
-# Install the backend support for the graphviz python project:
+# Install the backend support for the graphviz scripts project:
 USER root
 RUN apt-get update
 RUN apt-get install -y software-properties-common
@@ -100,7 +100,7 @@ RUN wget https://github.com/yangao07/abPOA/releases/download/v1.1.0/abPOA-v1.1.0
 			&& make install_py
 
 ########################################
-# Install some more python packages so we can export plotly images:
+# Install some more scripts packages so we can export plotly images:
 RUN pip install -U kaleido
 
 # This doesn't seem to be needed:

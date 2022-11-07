@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/scripts
 import argparse
 import json
 import math
 import urllib2
-# pip install python-dateutil
+# pip install scripts-dateutil
 import dateutil.parser
 from StringIO import StringIO
 import gzip

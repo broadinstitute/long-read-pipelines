@@ -1,4 +1,4 @@
-#!/usr/bin/env scripts
+#!/usr/bin/env python
 
 import os
 import sys
@@ -9,8 +9,17 @@ import tqdm
 
 gGENE_TX_TAG_NAME = "XG"
 gCBC_TAG_NAME = "CB"
-gUMI_TAG_NAME = "BX"
+gUMI_TAG_NAME = "XX"
 
+def _blocks(files, size=65536):
+    while True:
+        b = files.read(size)
+        if not b: break
+        yield b
+
+def get_num_lines_in_text_file(file_name):
+    with open(file_name, "r", encoding="utf-8",errors='ignore') as f:
+        return sum(bl.count("\n") for bl in _blocks(f))
 
 def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, umi_tag):
 
@@ -32,9 +41,12 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
         print("Equivalence class TSV provided.  Ingesting read -> eq class map...", file=sys.stderr)
 
         read_to_eq_class_map = dict()
+        print("Counting num lines in EQ class file...")
+        num_lines = get_num_lines_in_text_file(f"{eq_class_file}")
+        print(f"Num lines: {num_lines}")
 
         with open(eq_class_tsv, 'r') as f:
-            for line in f:
+            for line in tqdm(f, desc="Reading in EQ classes", total=num_lines):
                 if line.startswith("#"):
                     continue
                 read_name, eq_class, gene_assignment = line.strip().split("\t")
@@ -46,20 +58,21 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
 
     print(f"Tallying gene/tx x CBC x UMI counts from {input_bam}", file=sys.stderr)
     pysam.set_verbosity(0)  # silence message about the .bai file not being found
-    with pysam.AlignmentFile(
-            input_bam, "rb", check_sq=False, require_index=False
-    ) as bam_file, tqdm.tqdm(
-        desc="Progress",
-        unit=" read",
-        file=sys.stderr
-    ) as pbar:
+    with pysam.AlignmentFile(input_bam, "rb", check_sq=False, require_index=False) as bam_file:
 
         # Create a storage system for our count matrix:
         count_matrix = dict()
 
         has_cbc = True
 
-        for read in bam_file:
+        total_reads = None
+        if bam_file.has_index():
+            idx_stats = bam_file.get_index_statistics()
+            unaligned_reads = bam_file.nocoordinate
+            aligned_reads = reduce(lambda a, b: a + b, [x.total for x in idx_stats]) if len(idx_stats) > 0 else 0
+            total_reads = unaligned_reads + aligned_reads
+
+        for read in tqdm.tqdm(bam_file, desc="Progress", total=total_reads, unit=" read", file=sys.stderr):
 
             if read_to_eq_class_map:
                 gene_tx = read_to_eq_class_map[read.query_name]
@@ -99,7 +112,6 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
                     count_matrix[cbc][gene_tx][umi] = 1
 
             # Update our counts:
-            pbar.update(1)
             reads_processed += 1
 
     print("Done!", file=sys.stderr)
@@ -115,7 +127,7 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
             out_tsv.write(f"Gene/Transcript\tCell_Barcode\tUMI\tCount\n")
 
         # Write out our counts:
-        for cbc in count_matrix.keys():
+        for cbc in tqdm(count_matrix.keys(), desc="Writing gene/cbc/umi counts"):
             for gene_tx in count_matrix[cbc]:
                 for umi in count_matrix[cbc][gene_tx]:
                     out_tsv.write(
@@ -169,3 +181,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args.bam, args.out_name, args.tx_eq_class_assignments, args.gene_transcript_tag, args.cell_barcode_tag, args.umi_tag)
+

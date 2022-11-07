@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env scripts
 import math
 import os
 import sys

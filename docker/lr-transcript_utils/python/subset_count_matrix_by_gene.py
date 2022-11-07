@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env scripts
 
 # Read in data from individual quant files:
 import sys

@@ -2,7 +2,7 @@ FROM ubuntu:latest
 
 # install base packages
 RUN apt-get update --fix-missing
-RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libssl-dev curl python python3.6 time wget \
+RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libssl-dev curl scripts python3.6 time wget \
 	&& rm -rf /var/lib/apt/lists/*
 
 # install libdeflate

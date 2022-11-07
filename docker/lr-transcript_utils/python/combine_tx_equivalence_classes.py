@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env scripts
 
 # This is a quick script to combine all the equivalence class data from multiple disjoint subsets of reads into a final
 # combined set of files - one eq class lookup and one set of eq classes.

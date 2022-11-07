@@ -21,7 +21,7 @@ task CreateSequenceGroupingTSV {
     File ref_dict
     Int preemptible_tries
   }
-  # Use python to create the Sequencing Groupings used for BQSR and PrintReads Scatter.
+  # Use scripts to create the Sequencing Groupings used for BQSR and PrintReads Scatter.
   # It outputs to stdout where it is parsed into a wdl Array[Array[String]]
   # e.g. [["1"], ["2"], ["3", "4"], ["5"], ["6", "7", "8"]]
   command <<<
@@ -73,7 +73,7 @@ task CreateSequenceGroupingTSV {
 
 # This task calls picard's IntervalListTools to scatter the input interval list into scatter_count sub interval lists
 # Note that the number of sub interval lists may not be exactly equal to scatter_count.  There may be slightly more or less.
-# Thus we have the block of python to count the number of generated sub interval lists.
+# Thus we have the block of scripts to count the number of generated sub interval lists.
 task ScatterIntervalList {
   input {
     File interval_list

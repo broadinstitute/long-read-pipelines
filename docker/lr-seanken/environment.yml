@@ -11,4 +11,4 @@ dependencies:
   - pysam
   - scipy
   - pandas
-  - python-levenshtein
+  - scripts-levenshtein

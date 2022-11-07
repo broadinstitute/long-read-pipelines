@@ -32,7 +32,7 @@ dependencies:
   - openssl=1.1.1h=h7b6447c_0
   - pip=19.3.1=py27_0
   - pysam=0.15.3=py27hda2845c_1
-  - python=2.7.18=h15b4118_1
+  - scripts=2.7.18=h15b4118_1
   - readline=8.0=h7b6447c_0
   - setuptools=44.0.0=py27_0
   - six=1.15.0=py_0

@@ -83,7 +83,7 @@ dependencies:
   - perl-xml-simple=2.25=pl526_1
   - perl-xsloader=0.24=pl526_0
   - pip=20.2.2=py38_0
-  - python=3.8.5=h7579374_1
+  - scripts=3.8.5=h7579374_1
   - readline=8.0=h7b6447c_0
   - setuptools=49.6.0=py38_0
   - sqlite=3.33.0=h62c20be_0

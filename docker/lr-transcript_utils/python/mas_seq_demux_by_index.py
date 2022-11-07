@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env scripts
 
 import pysam
 import time

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/scripts
 
 from google.cloud import storage
 import glob

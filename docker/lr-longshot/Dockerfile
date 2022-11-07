@@ -6,7 +6,7 @@ MAINTAINER Kiran V Garimella
 COPY ./environment.yml /
 
 # install conda packages
-RUN conda env create python=3.6 -f /environment.yml && conda clean -a
+RUN conda env create scripts=3.6 -f /environment.yml && conda clean -a
 ENV PATH=/opt/conda/envs/lr-longshot/bin/:/root/google-cloud-sdk/bin/:${PATH}
 RUN echo "source activate lr-longshot" > ~/.bashrc
 RUN activate lr-longshot

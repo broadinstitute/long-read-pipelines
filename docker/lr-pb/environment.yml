@@ -62,7 +62,7 @@ dependencies:
   - pyopenssl=20.0.1=pyhd3eb1b0_1
   - pysam=0.16.0.1=py38hbdc2ae9_1
   - pysocks=1.7.1=py38h06a4308_0
-  - python=3.8.8=hdb3f193_4
+  - scripts=3.8.8=hdb3f193_4
   - python_abi=3.8=1_cp38
   - pytz=2021.1=pyhd3eb1b0_0
   - readline=8.1=h27cfd23_0

@@ -53,9 +53,9 @@ dependencies:
   - pyparsing=2.4.7=py_0
   - pytest=4.6.2=py27_0
   - pytest-runner=5.2=py_0
-  - python=2.7.18=h15b4118_1
-  - python-levenshtein=0.12.0=py27h7b6447c_1001
-  - python-utils=2.3.0=py27_0
+  - scripts=2.7.18=h15b4118_1
+  - scripts-levenshtein=0.12.0=py27h7b6447c_1001
+  - scripts-utils=2.3.0=py27_0
   - pyvcf=0.6.8=py27_1000
   - readline=8.0=h7b6447c_0
   - samtools=1.11=h6270b1f_0

@@ -12,8 +12,8 @@ RUN apt-get install -yq software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update
 RUN apt-get install -yq python3.6 curl && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.6 2 && \
-    update-alternatives  --set python /usr/bin/python3.6
+    update-alternatives --install /usr/bin/scripts scripts /usr/bin/python3.6 2 && \
+    update-alternatives  --set scripts /usr/bin/python3.6
 
-RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" && python get-pip.py
+RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" && scripts get-pip.py
 RUN pip install ont-guppy-duplex-pipeline

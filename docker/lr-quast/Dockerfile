@@ -1,7 +1,7 @@
 FROM continuumio/miniconda3
 
-RUN conda install python=3.6.9
-RUN conda create -n lr-quast python=3.6.9
+RUN conda install scripts=3.6.9
+RUN conda create -n lr-quast scripts=3.6.9
 RUN activate lr-quast
 
 RUN conda install matplotlib

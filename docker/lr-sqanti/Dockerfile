@@ -20,8 +20,8 @@ RUN wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gtfToGenePred -P 
 RUN git clone https://github.com/Magdoll/cDNA_Cupcake.git \
     && conda install numpy cython \
     && cd cDNA_Cupcake \
-    && python setup.py build \
-    && python setup.py install
+    && scripts setup.py build \
+    && scripts setup.py install
 
 # Configure environment
 ENV PATH=${PATH}:/SQANTI3/utilities/

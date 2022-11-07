@@ -1,7 +1,7 @@
 FROM nvidia/cuda:10.1-devel-ubuntu16.04
 
 RUN apt-get update && \
-    apt-get install -y vim python python-pip git wget
+    apt-get install -y vim scripts scripts-pip git wget
 
 RUN pip install --upgrade pip
 RUN pip install --user numpy biopython ConfigParser

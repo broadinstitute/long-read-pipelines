@@ -7,7 +7,7 @@ MAINTAINER Jonn Smith <jonn@broadinstitute.org>
 ARG DEBIAN_FRONTEND=noninteractive
 
 ## Install any needed packages specified in requirements.txt
-#RUN pip install --trusted-host pypi.python.org -r requirements.txt
+#RUN pip install --trusted-host pypi.scripts.org -r requirements.txt
 
 # Set the working directory to /
 WORKDIR /
@@ -33,7 +33,7 @@ RUN apt-get -y install liblzma-dev libbz2-dev
 # Get libcurses:
 RUN apt-get -y install libncurses5-dev libncursesw5-dev
 
-# Get python 3.8:
+# Get scripts 3.8:
 RUN apt-get install -y software-properties-common
 RUN apt-get install -y libssl-dev libncurses5-dev libsqlite3-dev libreadline-dev libgdm-dev libdb4o-cil-dev libpcap-dev libtk8.6
 RUN cd /opt && \
@@ -52,8 +52,8 @@ RUN python3.8 -m pip install --no-cache-dir scipy
 RUN python3.8 -m pip install pysam
 RUN python3.8 -m pip install biopython
 
-# Link python 3.8 to the global python executable:
-RUN ln -s /usr/local/bin/python3.8 /usr/local/bin/python
+# Link scripts 3.8 to the global scripts executable:
+RUN ln -s /usr/local/bin/python3.8 /usr/local/bin/scripts
 
 ################################################################################
 # Install local settings:
