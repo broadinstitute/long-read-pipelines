@@ -669,7 +669,28 @@ task Stats
         set -euxo pipefail
 
         source /longbow/venv/bin/activate
-        longbow stats -s --model ~{model} -v INFO -o ~{prefix} ~{reads}
+
+        NUM_READS=`samtools view -c ~{reads}`
+        if [ $NUM_READS -gt "0" ]; then
+            longbow stats -s --model ~{model} -v INFO -o ~{prefix} ~{reads}
+        else
+            # This is a complete hack, meant to deal with simulated datasets that have zero reclaimed reads.
+            # TODO: maybe fix longbow stats to just do the right thing with empty BAMs?
+
+            touch ~{prefix}_summary_stats.txt
+            touch ~{prefix}_00_MAS-seq_Array_Length_Counts_~{model}.png
+            touch ~{prefix}_00_MAS-seq_Array_Length_Counts_~{model}.svg
+            touch ~{prefix}_01_MAS-seq_Array_Element_Length_Counts_~{model}.png
+            touch ~{prefix}_01_MAS-seq_Array_Element_Length_Counts_~{model}.svg
+            touch ~{prefix}_02_MAS-seq_Ligations_~{model}_no_numbers.png
+            touch ~{prefix}_02_MAS-seq_Ligations_~{model}_no_numbers.svg
+            touch ~{prefix}_03_MAS-seq_Ligations_~{model}.png
+            touch ~{prefix}_03_MAS-seq_Ligations_~{model}.svg
+            touch ~{prefix}_04_MAS-seq_Ligations_~{model}_reduced_no_numbers.png
+            touch ~{prefix}_04_MAS-seq_Ligations_~{model}_reduced_no_numbers.svg
+            touch ~{prefix}_05_MAS-seq_Ligations_~{model}_reduced.png
+            touch ~{prefix}_05_MAS-seq_Ligations_~{model}_reduced.svg
+        fi
     >>>
 
     output {
