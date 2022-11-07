@@ -1360,6 +1360,8 @@ workflow PB10xMasSeqSingleFlowcellv5 {
             files = [
                 t_103_LongbowCorrectUmi.umi_corrected_bam,
                 t_103_LongbowCorrectUmi.umi_corrected_bam_index,
+                t_103_LongbowCorrectUmi.failed_umi_correction_bam,
+                t_103_LongbowCorrectUmi.cached_read_loci,
 
                 t_104_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
                 t_106_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,

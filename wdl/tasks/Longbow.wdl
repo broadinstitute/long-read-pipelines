@@ -808,6 +808,8 @@ task Correct_UMI
 
     String pre_extracted_arg = if pre_extracted then " --pre-extracted " else ""
 
+    String loci_cache_file_name = basename(bam) + ".locus2reads.pickle"
+
     command <<<
         set -euxo pipefail
 
@@ -819,6 +821,7 @@ task Correct_UMI
             -v INFO \
             -l ~{umi_length} \
             ~{pre_extracted_arg} \
+            --cache-read-loci \
             --max-ccs-edit-dist ~{max_ccs_edit_dist} \
             --max-clr-edit-dist ~{max_clr_edit_dist} \
             --max-ccs-length-diff ~{max_ccs_length_diff} \
@@ -847,6 +850,7 @@ task Correct_UMI
         File umi_corrected_bam = "~{prefix}.corrected_umis.bam"
         File umi_corrected_bam_index = "~{prefix}.corrected_umis.bam"
         File failed_umi_correction_bam = "~{prefix}.failed_umi_correction.bam"
+        File cached_read_loci = "~{loci_cache_file_name}"
     }
 
     #########################
@@ -855,9 +859,9 @@ task Correct_UMI
         mem_gb:             32,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
-        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

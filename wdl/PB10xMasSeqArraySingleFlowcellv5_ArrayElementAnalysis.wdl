@@ -834,6 +834,8 @@ workflow PB10xMasSeqArraySingleFlowcellv5_ArrayElementAnalysis {
             files = [
                 t_045_LongbowCorrectUmi.umi_corrected_bam,
                 t_045_LongbowCorrectUmi.umi_corrected_bam_index,
+                t_045_LongbowCorrectUmi.failed_umi_correction_bam,
+                t_045_LongbowCorrectUmi.cached_read_loci,
 
                 t_046_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
                 t_048_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
