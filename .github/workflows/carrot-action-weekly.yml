@@ -1,6 +1,10 @@
+# Runs workflow tests every Sunday, the workflows to be tested
+# are specified by the "test_names" parameter
 
 name: start-carrot-test
-on: [push]
+on:
+  schedule:
+    - cron: '0 7 * * 0'  # Run every Sunday at 7am
 jobs:
     publish-test:
         runs-on: ubuntu-20.04
@@ -27,7 +31,7 @@ jobs:
             "branch_name":"${{ github.ref_name }}",
             "commit":"${{ github.sha }}",
             "repo":"${{ github.repository }}",
-            "test_names": "",
+            "test_names": "PBCCSWholeGenome",
             "issue_number":"",
             "software_name":""
             }'
