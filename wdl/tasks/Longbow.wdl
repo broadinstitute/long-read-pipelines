@@ -865,7 +865,7 @@ task Correct_UMI
 
     output {
         File umi_corrected_bam = "~{prefix}.corrected_umis.bam"
-        File umi_corrected_bam_index = "~{prefix}.corrected_umis.bam"
+        File umi_corrected_bam_index = "~{prefix}.corrected_umis.bam.bai"
         File failed_umi_correction_bam = "~{prefix}.failed_umi_correction.bam"
     }
 
@@ -877,7 +877,7 @@ task Correct_UMI
         boot_disk_gb:       10,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
