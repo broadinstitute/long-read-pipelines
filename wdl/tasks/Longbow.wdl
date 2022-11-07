@@ -837,7 +837,6 @@ task Correct_UMI
         source /longbow/venv/bin/activate
         longbow correct_umi \
             -v INFO \
-            -t ${np} \
             -l ~{umi_length} \
             ~{pre_extracted_arg} \
             --max-ccs-edit-dist ~{max_ccs_edit_dist} \
