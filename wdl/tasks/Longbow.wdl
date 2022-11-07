@@ -782,6 +782,7 @@ task Correct_UMI
 
         Int max_ccs_edit_dist = 2
         Int max_clr_edit_dist = 3
+
         Int max_ccs_length_diff = 50
         Int max_clr_length_diff = 150
         Float max_ccs_gc_diff = 0.05
@@ -816,7 +817,6 @@ task Correct_UMI
         source /longbow/venv/bin/activate
         longbow correct_umi \
             -v INFO \
-            -t ${np} \
             -l ~{umi_length} \
             ~{pre_extracted_arg} \
             --max-ccs-edit-dist ~{max_ccs_edit_dist} \
