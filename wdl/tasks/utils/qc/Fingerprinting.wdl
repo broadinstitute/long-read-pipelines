@@ -67,6 +67,46 @@ task PickGenotypeVCF {
     }
 }
 
+task SelectPossibleVCFs {
+    input {
+        File fingerprinting_vcf_gs_paths
+        Array[String]? suspect_sample_names
+    }
+
+    parameter_meta {
+        fingerprinting_vcf_gs_paths:    "A file holding GS paths to fingerprinting GT'ed VCFs"
+        suspect_sample_names: "A list of sample names whose FP vcfs to pick (VCFs at FP store are named with these names)"
+    }
+
+    Boolean filter = defined(suspect_sample_names)
+
+    command <<<
+        set -eux
+
+        if ~{filter}; then
+            cat ~{write_lines(select_first([suspect_sample_names]))} > suspects.txt
+            cat suspects.txt
+            grep -f suspects.txt ~{fingerprinting_vcf_gs_paths} > vcfs.txt
+            cat vcfs.txt
+        else
+            cp ~{fingerprinting_vcf_gs_paths} vcfs.txt
+        fi
+    >>>
+
+    output {
+        Array[String] vcfs = read_lines("vcfs.txt")
+    }
+
+    ###################
+    runtime {
+        cpu: 2
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
 task FilterGenotypesVCF {
     input {
         File fingerprint_vcf

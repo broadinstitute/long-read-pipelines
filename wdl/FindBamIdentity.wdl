@@ -19,7 +19,7 @@ workflow FindBamIdentity {
         Int artificial_baseQ_for_CLR = 10
 
         String fingerprint_store
-        String? vcf_filter_expression
+        Array[String]? suspect_sample_names
 
         File ref_map_file
     }
@@ -30,7 +30,7 @@ workflow FindBamIdentity {
         artificial_baseQ_for_CLR: "An artificial value for CLR reads used for fingerprint verification (CLR reads come with all 0 base qual)"
 
         fingerprint_store:      "GS path to where all known fingerprinting GT'ed VCFS are stored"
-        vcf_filter_expression:  "an expression used for picking up VCFs, the filter will be applied to VCF names, any match will lead to the VCF to be included"
+        suspect_sample_names: "A list of sample names whose FP vcfs to pick (VCFs at FP store are named with these names)"
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
     }
@@ -40,9 +40,9 @@ workflow FindBamIdentity {
     Boolean is_clr_bam = expt_type=='CLR'
 
     call FPUtils.ListGenotypedVCFs { input: fingerprint_store = fingerprint_store }
-    call FPUtils.PickGenotypeVCF { input: fingerprinting_vcf_gs_paths = ListGenotypedVCFs.vcf_gs_paths, vcf_name = vcf_filter_expression }
+    call FPUtils.SelectPossibleVCFs { input: fingerprinting_vcf_gs_paths = ListGenotypedVCFs.vcf_gs_paths, suspect_sample_names = suspect_sample_names }
 
-    scatter (vcf in PickGenotypeVCF.vcfs) {
+    scatter (vcf in SelectPossibleVCFs.vcfs) {
         call FPUtils.ReheaderFullGRCh38VCFtoNoAlt {input: full_GRCh38_vcf = vcf}
 
         call FPUtils.FilterGenotypesVCF {
@@ -113,7 +113,7 @@ workflow FindBamIdentity {
 
     if (FindMaxLOD.max_lod < 6) {call Utils.StopWorkflow {input: reason = "No LOD score on the suspected identities are definite." }}
 
-    String matching_vcf = PickGenotypeVCF.vcfs[FindMaxLOD.idx]
+    String matching_vcf = SelectPossibleVCFs.vcfs[FindMaxLOD.idx]
 
     call GetAllIdentityInfo { input: vcf = matching_vcf }
 
