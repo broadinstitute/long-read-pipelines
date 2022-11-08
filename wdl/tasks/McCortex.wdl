@@ -20,7 +20,7 @@ task MergePairedEndReads {
         docker:             "quay.io/biocontainers/pear:0.9.6--h67092d7_8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
         pear -j ~{num_threads} -f ~{illumina_fq1} -r ~{illumina_fq2} -o pear
@@ -65,8 +65,8 @@ task McCortexBuild {
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    Int max_mem = select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 2  # 2 GB buffer
-    Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    Int max_mem = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb])) - 2  # 2 GB buffer
+    Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     String seq_arg = if defined(illumina_fq2) && illumina_fq2 != "" then "--seq2 ~{illumina_fq1}:~{illumina_fq2}" else "--seq ~{illumina_fq1}"
 
@@ -117,8 +117,8 @@ task McCortexLinksForRef {
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    Int max_mem = select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 2  # 2 GB buffer
-    Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    Int max_mem = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb])) - 2  # 2 GB buffer
+    Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
         mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem} --seq ~{ref_fasta} ~{mccortex_graph} --out ~{ref_id}.ctp.gz
@@ -164,8 +164,8 @@ task McCortexLinksForReads {
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    Int max_mem = select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 2  # 2 GB buffer
-    Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    Int max_mem = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb])) - 2  # 2 GB buffer
+    Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
         # Links from merged paired-end reads and then from non-merged reads
@@ -219,8 +219,8 @@ task McCortexAssemble {
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    Int max_mem = select_first([runtime_attr.mem_gb, default_attr.mem_gb]) - 2  # 2 GB buffer
-    Int num_threads = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    Int max_mem = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb])) - 2  # 2 GB buffer
+    Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
         # Join ref links and sample links
