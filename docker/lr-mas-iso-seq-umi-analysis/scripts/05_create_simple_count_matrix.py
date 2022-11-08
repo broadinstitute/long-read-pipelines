@@ -16,7 +16,8 @@ gUMI_TAG_NAME = "XX"
 def _blocks(files, size=65536):
     while True:
         b = files.read(size)
-        if not b: break
+        if not b:
+            break
         yield b
 
 
@@ -165,7 +166,8 @@ if __name__ == "__main__":
 
     optional_named_args = parser.add_argument_group("optional named arguments")
     optional_named_args.add_argument('--tx-eq-class-assignments',
-                                     help=f"Transcript equivalence class TSV.  If used, gene-transcript-tag will be ignored and this lookup will be used.)",
+                                     help=f"Transcript equivalence class TSV.  If used, gene-transcript-tag will be "
+                                          f"ignored and this lookup will be used.)",
                                      required=False)
     optional_named_args.add_argument('--gene-transcript-tag',
                                      type=str,
@@ -184,5 +186,5 @@ if __name__ == "__main__":
                                      required=False)
 
     args = parser.parse_args()
-    main(args.bam, args.out_name, args.tx_eq_class_assignments, args.gene_transcript_tag, args.cell_barcode_tag, args.umi_tag)
-
+    main(args.bam, args.out_name, args.tx_eq_class_assignments, args.gene_transcript_tag, args.cell_barcode_tag,
+         args.umi_tag)
