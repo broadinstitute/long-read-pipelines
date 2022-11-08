@@ -9,6 +9,9 @@ import editdistance
 import numpy as np
 from tqdm import tqdm
 
+from ssw import ssw_lib
+ssw_path = "/usr/local/lib/ssw"
+
 ###################################
 
 # IUPAC RC's from: http://arep.med.harvard.edu/labgc/adnan/projects/Utilities/revcomp.html
@@ -129,9 +132,6 @@ def get_alignment(ssw, target_seq, ref_seq, alphabet, letter_to_int, mat, open_p
 
 ###################################
 
-ssw_path = "/juffowup2/Complete-Striped-Smith-Waterman-Library/ssw"
-sys.path.insert(0, ssw_path)
-import ssw_lib
 ssw = ssw_lib.CSsw(ssw_path)
 
 def get_cigar_tuples(cigar, cigar_len):
