@@ -798,6 +798,7 @@ task Correct_UMI
         String eq_class_tag = "eq"
         String final_umi_tag = "BX"
         String umi_corrected_tag = "UX"
+        String back_alignment_score_tag = "JB"
 
         Boolean pre_extracted = true
 
@@ -838,6 +839,7 @@ task Correct_UMI
             --eq-class-tag ~{eq_class_tag} \
             --final-umi-tag ~{final_umi_tag} \
             --umi-corrected-tag ~{umi_corrected_tag} \
+            --back-alignment-score-tag ~{back_alignment_score_tag} \
             -o ~{prefix}.corrected_umis.unsorted.bam \
             -x ~{prefix}.failed_umi_correction.bam \
             ~{bam}
@@ -861,7 +863,7 @@ task Correct_UMI
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
