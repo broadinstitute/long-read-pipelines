@@ -1,5 +1,6 @@
+# Runs all available carrot tests in a branch when commits have been pushed to a PR
 
-name: start-carrot-test
+name: carrot-test-run-from-push
 on: [push]
 jobs:
     publish-test:
