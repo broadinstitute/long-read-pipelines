@@ -1,9 +1,9 @@
 version 1.0
 
 import "Structs.wdl"
-import "tasks/Utils.wdl" as Utils
-import "tasks/Longbow.wdl" as LONGBOW
-import "tasks/Finalize.wdl" as FF
+import "Utils.wdl" as Utils
+import "Longbow.wdl" as LONGBOW
+import "Finalize.wdl" as FF
 
 workflow MasIsoSeqUmiAnalysis {
     meta {
