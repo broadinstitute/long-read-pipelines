@@ -15,7 +15,7 @@ WORKDIR /
 RUN apt-get update && apt-get install -y apt-utils software-properties-common && apt-get -y upgrade && add-apt-repository ppa:deadsnakes/ppa && apt-get -y update
 RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake \
 			gcc g++ zlib1g zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libdeflate-dev libssl-dev vim wget unzip curl vim python3.7 python3.7-distutils \
-			libc-dev ncurses-dev bzip2 gnupg2 libcurl4-openssl-dev libssl-dev \
+			libc-dev ncurses-dev bzip2 gnupg2 libcurl4-openssl-dev libssl-dev bc \
           && rm -rf /var/lib/apt/lists/*
 
 # Install google cloud support:
