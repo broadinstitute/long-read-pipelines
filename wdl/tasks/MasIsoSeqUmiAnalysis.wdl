@@ -13,8 +13,8 @@ workflow MasIsoSeqUmiAnalysis {
     }
 
     input {
-        File pre_extracted_array_element_bam
-        File? bam_index
+        File pre_extracted_array_element_ccs_bam
+        File pre_extracted_array_element_clr_bam
 
         File eq_class_tsv
 
@@ -31,11 +31,18 @@ workflow MasIsoSeqUmiAnalysis {
     # Call our timestamp so we can store outputs without clobbering previous runs:
     call Utils.GetCurrentTimestampString as t_001_WdlExecutionStartTimestamp { input: }
 
+    # Merge Aligned CCS and Reclaimed reads together:
+    call Utils.MergeBams as t_001_MergeCcsAndClrReads {
+        input:
+            bams = [pre_extracted_array_element_ccs_bam, pre_extracted_array_element_clr_bam],
+            prefix = prefix + ".all_reads"
+    }
+
     call RestoreSegCoordsAndOriginalNameToReads as t_001_RestoreSegCoordsAndOriginalNameToReads {
         input:
-            bam_file = pre_extracted_array_element_bam,
-            bam_index = bam_index,
-            prefix = prefix + ".names_restored"
+            bam_file = t_001_MergeCcsAndClrReads.merged_bam,
+            bam_index = t_001_MergeCcsAndClrReads.merged_bai,
+            prefix = prefix + ".all_reads.names_restored"
     }
 
     call CopyEqClassInfoToTag as t_002_CopyEqClassInfoToTag {
@@ -45,14 +52,14 @@ workflow MasIsoSeqUmiAnalysis {
             eq_class_tsv = eq_class_tsv,
             eq_class_tag = eq_class_tag,
             gene_tag = gene_tag,
-            prefix = prefix + ".names_restored.eq_class_assigned",
+            prefix = prefix + ".all_reads.names_restored.eq_class_assigned",
     }
 
     call ExtractOptimial3pAdapterToUmiTag as t_003_ExtractOptimial3pAdapterToUmiTag {
         input:
             bam_file = t_002_CopyEqClassInfoToTag.bam,
             bam_index = t_002_CopyEqClassInfoToTag.bai,
-            prefix = prefix + ".names_restored.eq_class_assigned.3p_adapter_as_umi",
+            prefix = prefix + ".all_reads.names_restored.eq_class_assigned.3p_adapter_as_umi",
     }
 
     call LONGBOW.Correct_UMI as t_004_LongbowCorrectUmi {
@@ -64,7 +71,7 @@ workflow MasIsoSeqUmiAnalysis {
             umi_corrected_tag = "XZ",
             eq_class_tag = eq_class_tag,
             gene_tag = gene_tag,
-            prefix = prefix + ".names_restored.eq_class_assigned.3p_adapter_as_umi.umi_cover_corrected",
+            prefix = prefix + ".all_reads.names_restored.eq_class_assigned.3p_adapter_as_umi.umi_cover_corrected",
     }
 
     call SplitCcsAndClrReads as t_004_SplitCcsAndClrReads {
