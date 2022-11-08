@@ -118,9 +118,10 @@ workflow FindBamIdentity {
     output {
         Float lod = FindMaxLOD.max_lod
 
-        String true_smid = GetAllIdentityInfo.resolved_identities[0]
-        String true_collab_sample_id = GetAllIdentityInfo.resolved_identities[1]
-        String true_collab_partic_id = GetAllIdentityInfo.resolved_identities[2]
+        String true_id_at_fingerprint_store = GetAllIdentityInfo.resolved_id_at_fingerprint_store
+        # String true_smid = GetAllIdentityInfo.resolved_identities[0]
+        # String true_collab_sample_id = GetAllIdentityInfo.resolved_identities[1]
+        # String true_collab_partic_id = GetAllIdentityInfo.resolved_identities[2]
     }
 }
 
@@ -175,10 +176,10 @@ task GetAllIdentityInfo {
 
     command <<<
         set -eux
-        echo ~{vcf_name} | sed 's/__/\n/g'  > out.txt
+        echo ~{vcf_name} | awk -F '.' '{print $1}' > id_at_fingerprint_store.txt
     >>>
     output {
-        Array[String] resolved_identities = read_lines("out.txt")
+        String resolved_id_at_fingerprint_store = read_string("id_at_fingerprint_store.txt")
     }
 
     ###################
