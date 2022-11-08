@@ -3,13 +3,15 @@
 import os
 import sys
 import argparse
+from functools import reduce
 
 import pysam
-import tqdm
+from tqdm import tqdm
 
 gGENE_TX_TAG_NAME = "XG"
 gCBC_TAG_NAME = "CB"
 gUMI_TAG_NAME = "XX"
+
 
 def _blocks(files, size=65536):
     while True:
@@ -17,9 +19,11 @@ def _blocks(files, size=65536):
         if not b: break
         yield b
 
+
 def get_num_lines_in_text_file(file_name):
     with open(file_name, "r", encoding="utf-8",errors='ignore') as f:
         return sum(bl.count("\n") for bl in _blocks(f))
+
 
 def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, umi_tag):
 
@@ -42,7 +46,7 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
 
         read_to_eq_class_map = dict()
         print("Counting num lines in EQ class file...")
-        num_lines = get_num_lines_in_text_file(f"{eq_class_file}")
+        num_lines = get_num_lines_in_text_file(f"{eq_class_tsv}")
         print(f"Num lines: {num_lines}")
 
         with open(eq_class_tsv, 'r') as f:
@@ -72,7 +76,7 @@ def main(input_bam, out_tsv_name, eq_class_tsv, gene_tx_tag, cell_barcode_tag, u
             aligned_reads = reduce(lambda a, b: a + b, [x.total for x in idx_stats]) if len(idx_stats) > 0 else 0
             total_reads = unaligned_reads + aligned_reads
 
-        for read in tqdm.tqdm(bam_file, desc="Progress", total=total_reads, unit=" read", file=sys.stderr):
+        for read in tqdm(bam_file, desc="Progress", total=total_reads, unit=" read", file=sys.stderr):
 
             if read_to_eq_class_map:
                 gene_tx = read_to_eq_class_map[read.query_name]
