@@ -110,3 +110,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/FusilliCall.wdl
   testParameterFiles:
+- name: IllumAssembleWithMcCortex
+  subclass: wdl
+  primaryDescriptorPath: /wdl/IllumAssembleWithMcCortex.wdl
+  testParameterFiles:
