@@ -14,7 +14,7 @@ WORKDIR /
 # Make sure we can actually talk to package repos:
 RUN apt-get update && apt-get install -y apt-utils software-properties-common && apt-get -y upgrade && add-apt-repository ppa:deadsnakes/ppa && apt-get -y update
 RUN apt-get install -y --no-install-recommends git ssh ca-certificates autoconf make cmake \
-			gcc g++ zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libdeflate-dev libssl-dev vim wget unzip curl vim python3.7 python3.7-distutils \
+			gcc g++ zlib1g zlib1g-dev libcurl4-openssl-dev liblzma-dev libbz2-dev libdeflate-dev libssl-dev vim wget unzip curl vim python3.7 python3.7-distutils \
 			libc-dev ncurses-dev bzip2 gnupg2 libcurl4-openssl-dev libssl-dev \
           && rm -rf /var/lib/apt/lists/*
 
@@ -47,6 +47,16 @@ RUN touch /root/.local/lib/python3.7/site-packages/ssw/__init__.py \
     && mkdir -p /usr/local/lib/ssw \
 	&& mv Complete-Striped-Smith-Waterman-Library-master/src/libssw.so /usr/local/lib/ssw/libssw.so \
 	&& rm -rf Complete-Striped-Smith-Waterman-Library-master
+
+# Install bamtools:
+RUN git clone https://github.com/pezmaster31/bamtools.git \
+    && cd bamtools \
+    && mkdir build && cd build \
+    && cmake .. \
+    && make \
+    && make install \
+    && cd ../../ \
+    && rm -rf bamtools
 
 # Install our scripts:
 RUN mkdir /scripts
