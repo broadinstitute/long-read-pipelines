@@ -929,6 +929,24 @@ workflow PB10xMasSeqSingleFlowcellv5 {
             prefix = SM + "_annotated_array_elements_for_quant_with_gene_names"
     }
 
+#    call Utils.Bamtools as t_102_RemoveEqZero {
+#        input:
+#            bamfile = t_102_CopyEqClassInfoToTag.bam_out,
+#            prefix = SM + "_annotated_array_elements_for_quant_with_gene_names_no_eq_zero",
+#            cmd = "filter",
+#            args = '-tag "eq":0',
+#            runtime_attr_override = disable_preemption_runtime_attrs
+#    }
+#
+#    call Utils.Bamtools as t_102_ExtractEqZero {
+#        input:
+#            bamfile = t_102_CopyEqClassInfoToTag.bam_out,
+#            prefix = SM + "_annotated_array_elements_for_quant_with_gene_names_only_eq_zero",
+#            cmd = "filter",
+#            args = '-tag "eq":"==0"',
+#            runtime_attr_override = disable_preemption_runtime_attrs
+#    }
+
     call LONGBOW.Correct_UMI as t_103_LongbowCorrectUmi {
         input:
             bam = t_102_CopyEqClassInfoToTag.bam_out,
