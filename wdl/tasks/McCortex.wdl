@@ -244,9 +244,7 @@ task McCortexAssemble {
     command <<<
         set -euxo pipefail
 
-        # Join ref links and sample links
-        mccortex ~{k} popbubbles -t ~{num_threads} -m ~{max_mem}G --out popped_bubbles.ctx ~{mccortex_graph}
-        mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem}G -p ~{sep=" -p " ref_links} -o ~{sample_id}.contigs.fasta popped_bubbles.ctx
+        mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem}G -p ~{sep=" -p " ref_links} -o ~{sample_id}.contigs.fasta ~{mccortex_graph}
     >>>
 
     output {
