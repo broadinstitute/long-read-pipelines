@@ -9,6 +9,7 @@ workflow CallAssemblyVariants {
         File ref_fasta
         String participant_name
         String prefix
+        Int? length_threshold = 50000
     }
 
     parameter_meta {
@@ -16,6 +17,7 @@ workflow CallAssemblyVariants {
         ref_fasta:        "reference to which assembly should be aligned"
         participant_name: "participant name"
         prefix:           "prefix for output files"
+        length_threshold: "By default, paftools.js call ignores alignments 50kb or shorter. For mitochondria, this value should be changed to 10k."
     }
 
     call AlignAsPAF {
@@ -30,7 +32,8 @@ workflow CallAssemblyVariants {
             ref_fasta = ref_fasta,
             paf = AlignAsPAF.paf,
             participant_name = participant_name,
-            prefix = prefix
+            prefix = prefix,
+            length_threshold = length_threshold
     }
 
     output {
@@ -91,6 +94,7 @@ task Paftools {
         File paf
         String participant_name
         String prefix
+        Int? length_threshold
 
         RuntimeAttr? runtime_attr_override
     }
@@ -101,7 +105,7 @@ task Paftools {
     command <<<
         zcat ~{paf} | \
             sort -k6,6 -k8,8n | \
-            paftools.js call -L10000 -f ~{ref_fasta} -s ~{participant_name} - \
+            paftools.js call -L ~{length_threshold} -f ~{ref_fasta} -s ~{participant_name} - \
             > ~{prefix}.paftools.vcf
     >>>
 
