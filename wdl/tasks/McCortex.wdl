@@ -23,6 +23,8 @@ task MergePairedEndReads {
     Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
+        set -euxo pipefail
+
         pear -j ~{num_threads} -f ~{illumina_fq1} -r ~{illumina_fq2} -o pear
     >>>
 
@@ -73,6 +75,8 @@ task McCortexBuild {
     String flag_sep = if defined(illumina_fq2) && illumina_fq2 != "" then ":" else ""
 
     command <<<
+        set -euxo pipefail
+
         mccortex ~{k} build -t ~{num_threads} -m ~{max_mem}G -k ~{k} --sample ~{sample_id} \
             ~{flag_str}~{illumina_fq1}~{flag_sep}~{illumina_fq2} \
             ~{sample_id}.ctx
@@ -125,6 +129,8 @@ task McCortexLinksForRef {
     Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
+        set -euxo pipefail
+
         mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem}G --seq ~{ref_fasta} --out ~{ref_id}.ctp.gz ~{mccortex_graph}
     >>>
 
@@ -159,7 +165,7 @@ task McCortexLinksForReads {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             32,
+        mem_gb:             64,
         disk_gb:            25,
         boot_disk_gb:       10,
         preemptible_tries:  3,
@@ -172,12 +178,19 @@ task McCortexLinksForReads {
     Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
-        # Links from merged paired-end reads and then from non-merged reads
-        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem}G --seq ~{merged_fq} --out ~{sample_id}.merged.raw.ctp.gz ~{mccortex_graph}
-        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem}G --seq2 ~{illumina_fq1}:~{illumina_fq2} --out ~{sample_id}.other.raw.ctp.gz ~{mccortex_graph}
+        set -euxo pipefail
 
-        # Combine them in a single link file
-        mccortex ~{k} pjoin -t ~{num_threads} -m ~{max_mem}G --out ~{sample_id}.raw.ctp.gz ~{sample_id}.merged.raw.ctp.gz ~{sample_id}.other.raw.ctp.gz
+        # Links from merged paired-end reads
+        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem}G \
+            --seq ~{merged_fq} \
+            --out ~{sample_id}.firstpass.raw.ctp.gz ~{mccortex_graph}
+
+        # In a second pass, use links from the first pass to fill in potential gaps between split paired-end reads.
+        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem}G \
+            --seq ~{merged_fq} \
+            --seq2 ~{illumina_fq1}:~{illumina_fq2}
+            -p ~{sample_id}.firstpass.raw.ctp.gz
+            --out ~{sample_id}.raw.ctp.gz ~{mccortex_graph}
 
         # Prune low coverage links
         mccortex ~{k} links -T link.stats.txt -L 1000 ~{sample_id}.raw.ctp.gz
@@ -227,6 +240,8 @@ task McCortexAssemble {
     Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
+        set -euxo pipefail
+
         # Join ref links and sample links
         mccortex ~{k} pjoin -t ~{num_threads} -m ~{max_mem}G -o all_links.ctp.gz $(< ~{write_lines(ref_links)}) ~{sample_links}
         mccortex ~{k} popbubbles -t ~{num_threads} -m ~{max_mem}G --out popped_bubbles.ctx ~{mccortex_graph}
