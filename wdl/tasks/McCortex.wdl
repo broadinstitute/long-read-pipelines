@@ -28,8 +28,9 @@ task MergePairedEndReads {
 
     output {
         File merged = "pear.assembled.fastq"
-        File split1 = "pear.forward.fastq"
-        File split2 = "pear.reverse.fastq"
+        File split1 = "pear.unassembled.forward.fastq"
+        File split2 = "pear.unassembled.reverse.fastq"
+        File discarded = "pear.discarded.fastq"
     }
 
     runtime {
