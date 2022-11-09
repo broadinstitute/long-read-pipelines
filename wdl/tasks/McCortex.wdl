@@ -177,7 +177,7 @@ task McCortexLinksForReads {
         mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem}G --seq2 ~{illumina_fq1}:~{illumina_fq2} --out ~{sample_id}.other.raw.ctp.gz ~{mccortex_graph}
 
         # Combine them in a single link file
-        mccortex ~{k} pjoin -t ~{num_threads} -m ~{max_mem}G ~{sample_id}.merged.raw.ctp.gz --out ~{sample_id}.raw.ctp.gz ~{sample_id}.other.raw.ctp.gz
+        mccortex ~{k} pjoin -t ~{num_threads} -m ~{max_mem}G --out ~{sample_id}.raw.ctp.gz ~{sample_id}.merged.raw.ctp.gz ~{sample_id}.other.raw.ctp.gz
 
         # Prune low coverage links
         mccortex ~{k} links -T link.stats.txt -L 1000 ~{sample_id}.raw.ctp.gz
@@ -228,7 +228,7 @@ task McCortexAssemble {
 
     command <<<
         # Join ref links and sample links
-        mccortex ~{k} pjoin $(< ~{write_lines(ref_links)}) -o all_links.ctp.gz ~{sample_links}
+        mccortex ~{k} pjoin -t ~{num_threads} -m ~{max_mem}G -o all_links.ctp.gz $(< ~{write_lines(ref_links)}) ~{sample_links}
         mccortex ~{k} popbubbles -t ~{num_threads} -m ~{max_mem}G --out popped_bubbles.ctx ~{mccortex_graph}
         mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem}G -p all_links.ctp.gz -o ~{sample_id}.contigs.fasta popped_bubbles.ctx
     >>>
