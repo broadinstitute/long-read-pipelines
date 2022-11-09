@@ -803,7 +803,6 @@ task Correct_UMI
 
         Int max_ccs_edit_dist = 2
         Int max_clr_edit_dist = 3
-
         Int max_ccs_length_diff = 50
         Int max_clr_length_diff = 150
         Float max_ccs_gc_diff = 0.05
@@ -819,7 +818,6 @@ task Correct_UMI
         String eq_class_tag = "eq"
         String final_umi_tag = "BX"
         String umi_corrected_tag = "UX"
-        String back_alignment_score_tag = "JB"
 
         Boolean pre_extracted = true
 
@@ -829,8 +827,6 @@ task Correct_UMI
     Int disk_size_gb = 10 + 10*ceil(size(bam, "GB"))
 
     String pre_extracted_arg = if pre_extracted then " --pre-extracted " else ""
-
-    String loci_cache_file_name = basename(bam) + ".locus2reads.pickle"
 
     command <<<
         set -euxo pipefail
@@ -843,7 +839,6 @@ task Correct_UMI
             -v INFO \
             -l ~{umi_length} \
             ~{pre_extracted_arg} \
-            --cache-read-loci \
             --max-ccs-edit-dist ~{max_ccs_edit_dist} \
             --max-clr-edit-dist ~{max_clr_edit_dist} \
             --max-ccs-length-diff ~{max_ccs_length_diff} \
@@ -860,20 +855,18 @@ task Correct_UMI
             --eq-class-tag ~{eq_class_tag} \
             --final-umi-tag ~{final_umi_tag} \
             --umi-corrected-tag ~{umi_corrected_tag} \
-            --back-alignment-score-tag ~{back_alignment_score_tag} \
             -o ~{prefix}.corrected_umis.unsorted.bam \
             -x ~{prefix}.failed_umi_correction.bam \
             ~{bam}
 
-            samtools sort -@${np} ~{prefix}.corrected_umis.unsorted.bam > ~{prefix}.corrected_umis.bam
-            samtools index -@${np} ~{prefix}.corrected_umis.bam
+        samtools sort -@${np} ~{prefix}.corrected_umis.unsorted.bam > ~{prefix}.corrected_umis.bam
+        samtools index -@${np} ~{prefix}.corrected_umis.bam
     >>>
 
     output {
         File umi_corrected_bam = "~{prefix}.corrected_umis.bam"
         File umi_corrected_bam_index = "~{prefix}.corrected_umis.bam.bai"
         File failed_umi_correction_bam = "~{prefix}.failed_umi_correction.bam"
-        File cached_read_loci = "~{loci_cache_file_name}"
     }
 
     #########################
@@ -882,9 +875,9 @@ task Correct_UMI
         mem_gb:             32,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.8"
+        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.6.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
