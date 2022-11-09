@@ -80,9 +80,11 @@ task McCortexBuild {
         mccortex ~{k} build -t ~{num_threads} -m ~{max_mem}G -k ~{k} --sample ~{sample_id} \
             ~{flag_str}~{illumina_fq1}~{flag_sep}~{illumina_fq2} \
             ~{sample_id}.ctx
-        mccortex ~{k} clean -t ~{num_threads} -m ~{max_mem}G --out ~{sample_id}.cleaned.ctx ~{sample_id}.ctx
-
         mccortex ~{k} inferedges -t ~{num_threads} -m ~{max_mem}G ~{sample_id}.ctx
+
+        # Create a cleaned version
+        mccortex ~{k} clean -t ~{num_threads} -m ~{max_mem}G --out ~{sample_id}.cleaned1.ctx ~{sample_id}.ctx
+        mccortex ~{k} popbubbles -t ~{num_threads} -m ~{max_mem}G --out ~{sample_id}.cleaned.ctx ~{sample_id}.cleaned1.ctx
         mccortex ~{k} inferedges -t ~{num_threads} -m ~{max_mem}G ~{sample_id}.cleaned.ctx
     >>>
 
