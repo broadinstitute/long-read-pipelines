@@ -188,8 +188,8 @@ task McCortexLinksForReads {
         # In a second pass, use links from the first pass to fill in potential gaps between split paired-end reads.
         mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem}G \
             --seq ~{merged_fq} \
-            --seq2 ~{illumina_fq1}:~{illumina_fq2}
-            -p ~{sample_id}.firstpass.raw.ctp.gz
+            --seq2 ~{illumina_fq1}:~{illumina_fq2} \
+            -p ~{sample_id}.firstpass.raw.ctp.gz \
             --out ~{sample_id}.raw.ctp.gz ~{mccortex_graph}
 
         # Prune low coverage links
