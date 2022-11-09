@@ -72,6 +72,10 @@ workflow MasIsoSeqUmiAnalysis {
             umi_corrected_tag = "XZ",
             eq_class_tag = eq_class_tag,
             gene_tag = gene_tag,
+            max_ccs_length_diff = 9999999,
+            max_clr_length_diff = 9999999,
+            max_ccs_gc_diff = 10,
+            max_clr_gc_diff = 10,
             prefix = prefix + ".all_reads.names_restored.eq_class_assigned.3p_adapter_as_umi.umi_cover_corrected",
     }
 
