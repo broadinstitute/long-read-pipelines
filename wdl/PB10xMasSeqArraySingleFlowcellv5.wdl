@@ -1364,11 +1364,7 @@ workflow PB10xMasSeqSingleFlowcellv5 {
                 t_103_LongbowCorrectUmi.cached_read_loci,
 
                 t_104_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
-                t_105_IndexCcsReadsWithCorrectedUmis.bai,
-
                 t_106_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
-                t_107_IndexCcsReclaimedReadsWithCorrectedUmis.bai,
-
 
                 t_087_MergeAllAlignedAndFilteredArrayElements.merged_bam,
                 t_087_MergeAllAlignedAndFilteredArrayElements.merged_bai
@@ -1387,7 +1383,7 @@ workflow PB10xMasSeqSingleFlowcellv5 {
     call FF.FinalizeToFile as t_139_FinalizeCcsReclaimedArrayElementCorrectedUmiIndex {
         input:
             file = t_107_IndexCcsReclaimedReadsWithCorrectedUmis.bai,
-            outfile = array_element_dir + "/" + SM + "_annotated_array_elements_for_quant_with_gene_names.corrected_umis.CCS_Reclaimed",
+            outfile = array_element_dir + "/" + SM + "_annotated_array_elements_for_quant_with_gene_names.corrected_umis.CCS_Reclaimed.bai",
             keyfile = keyfile
     }
 
