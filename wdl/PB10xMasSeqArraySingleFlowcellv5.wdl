@@ -1364,7 +1364,11 @@ workflow PB10xMasSeqSingleFlowcellv5 {
                 t_103_LongbowCorrectUmi.cached_read_loci,
 
                 t_104_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
+                t_105_IndexCcsReadsWithCorrectedUmis.bai,
+
                 t_106_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
+                t_107_IndexCcsReclaimedReadsWithCorrectedUmis.bai,
+
 
                 t_087_MergeAllAlignedAndFilteredArrayElements.merged_bam,
                 t_087_MergeAllAlignedAndFilteredArrayElements.merged_bai
