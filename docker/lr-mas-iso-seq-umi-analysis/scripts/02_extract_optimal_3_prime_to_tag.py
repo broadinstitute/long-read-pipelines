@@ -238,6 +238,7 @@ with pysam.AlignmentFile(f"{bam}", "rb", check_sq=False, require_index=False) as
 
                         if full_adapter_alignment_score >= FULL_ADAPTER_SSW_SCORE_THRESH:
                             if threep_extract:
+                                read.set_tag(f"{TEST_BARCODE_TAG}", threep_extract)
                                 out_bam_file.write(read)
                             else:
                                 rejected_no_threep_bam_file.write(read)
