@@ -114,3 +114,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/IllumAssembleWithMcCortex.wdl
   testParameterFiles:
+- name: IllumAssembleWithSPAdes
+  subclass: wdl
+  primaryDescriptorPath: /wdl/IllumAssembleWithSPAdes.wdl
+  testParameterFiles:
