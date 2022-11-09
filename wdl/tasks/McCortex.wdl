@@ -68,10 +68,13 @@ task McCortexBuild {
     Int max_mem = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb])) - 2  # 2 GB buffer
     Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
-    String seq_arg = if defined(illumina_fq2) && illumina_fq2 != "" then "--seq2 ~{illumina_fq1}:~{illumina_fq2}" else "--seq ~{illumina_fq1}"
+    String flag_str = if defined(illumina_fq2) && illumina_fq2 != "" then "--seq2 " else "--seq "
+    String flag_sep = if defined(illumina_fq2) && illumina_fq2 != "" then ":" else ""
 
     command <<<
-        mccortex ~{k} build -t ~{num_threads} -m ~{max_mem}G -k ~{k} --sample ~{sample_id} ~{seq_arg} ~{sample_id}.ctx
+        mccortex ~{k} build -t ~{num_threads} -m ~{max_mem}G -k ~{k} --sample ~{sample_id} \
+            ~{flag_str}~{illumina_fq1}~{flag_sep}~{illumina_fq2} \
+            ~{sample_id}.ctx
         mccortex ~{k} clean -t ~{num_threads} -m ~{max_mem}G ~{sample_id}.ctx --out ~{sample_id}.cleaned.ctx
 
         mccortex ~{k} inferedges -t ~{num_threads} -m ~{max_mem}G ~{sample_id}.ctx
