@@ -244,7 +244,7 @@ task McCortexAssemble {
     command <<<
         set -euxo pipefail
 
-        mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem}G -p ~{sep=" -p " ref_links} -o ~{sample_id}.contigs.fasta ~{mccortex_graph}
+        mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem}G -p ~{sep=" -p " ref_links} -p ~{sample_links} -o ~{sample_id}.contigs.fasta ~{mccortex_graph}
     >>>
 
     output {
