@@ -75,7 +75,7 @@ task McCortexBuild {
         mccortex ~{k} build -t ~{num_threads} -m ~{max_mem}G -k ~{k} --sample ~{sample_id} \
             ~{flag_str}~{illumina_fq1}~{flag_sep}~{illumina_fq2} \
             ~{sample_id}.ctx
-        mccortex ~{k} clean -t ~{num_threads} -m ~{max_mem}G ~{sample_id}.ctx --out ~{sample_id}.cleaned.ctx
+        mccortex ~{k} clean -t ~{num_threads} -m ~{max_mem}G --out ~{sample_id}.cleaned.ctx ~{sample_id}.ctx
 
         mccortex ~{k} inferedges -t ~{num_threads} -m ~{max_mem}G ~{sample_id}.ctx
         mccortex ~{k} inferedges -t ~{num_threads} -m ~{max_mem}G ~{sample_id}.cleaned.ctx
@@ -124,7 +124,7 @@ task McCortexLinksForRef {
     Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
     command <<<
-        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem} --seq ~{ref_fasta} ~{mccortex_graph} --out ~{ref_id}.ctp.gz
+        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem} --seq ~{ref_fasta} --out ~{ref_id}.ctp.gz ~{mccortex_graph}
     >>>
 
     output {
@@ -172,11 +172,11 @@ task McCortexLinksForReads {
 
     command <<<
         # Links from merged paired-end reads and then from non-merged reads
-        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem} --seq ~{merged_fq} ~{mccortex_graph} --out ~{sample_id}.merged.raw.ctp.gz
-        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem} --seq2 ~{illumina_fq1}:~{illumina_fq2} ~{mccortex_graph} --out ~{sample_id}.other.raw.ctp.gz
+        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem} --seq ~{merged_fq} --out ~{sample_id}.merged.raw.ctp.gz ~{mccortex_graph}
+        mccortex ~{k} thread -t ~{num_threads} -m ~{max_mem} --seq2 ~{illumina_fq1}:~{illumina_fq2} --out ~{sample_id}.other.raw.ctp.gz ~{mccortex_graph}
 
         # Combine them in a single link file
-        mccortex ~{k} pjoin ~{sample_id}.merged.raw.ctp.gz ~{sample_id}.other.raw.ctp.gz --out ~{sample_id}.raw.ctp.gz
+        mccortex ~{k} pjoin ~{sample_id}.merged.raw.ctp.gz --out ~{sample_id}.raw.ctp.gz ~{sample_id}.other.raw.ctp.gz
 
         # Prune low coverage links
         mccortex ~{k} links -T link.stats.txt -L 1000 ~{sample_id}.raw.ctp.gz
@@ -227,9 +227,9 @@ task McCortexAssemble {
 
     command <<<
         # Join ref links and sample links
-        mccortex ~{k} pjoin $(< ~{write_lines(ref_links)}) ~{sample_links} -o all_links.ctp.gz
-        mccortex ~{k} popbubbles -t ~{num_threads} -m ~{max_mem} ~{mccortex_graph} --out popped_bubbles.ctx
-        mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem} -p all_links.ctp.gz popped_bubbles.ctx -o ~{sample_id}.contigs.fasta
+        mccortex ~{k} pjoin $(< ~{write_lines(ref_links)}) -o all_links.ctp.gz ~{sample_links}
+        mccortex ~{k} popbubbles -t ~{num_threads} -m ~{max_mem} --out popped_bubbles.ctx ~{mccortex_graph}
+        mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem} -p all_links.ctp.gz -o ~{sample_id}.contigs.fasta popped_bubbles.ctx
     >>>
 
     output {
