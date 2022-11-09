@@ -104,7 +104,7 @@ task McCortexLinksForRef {
 
         File mccortex_graph
 
-        File ref_id
+        String ref_id
         File ref_fasta
 
         RuntimeAttr? runtime_attr_override
