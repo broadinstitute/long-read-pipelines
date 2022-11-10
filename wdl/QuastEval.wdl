@@ -7,6 +7,7 @@ workflow QuastEval {
         File reference
         File? reference_gff
         Array[File] assemblies
+        Array[String]? labels
 
         Boolean icarus = false
     }
@@ -17,7 +18,8 @@ workflow QuastEval {
             ref_gff = reference_gff,
             icarus = icarus,
 
-            assemblies = assemblies
+            assemblies = assemblies,
+            labels = labels
     }
 
     output {

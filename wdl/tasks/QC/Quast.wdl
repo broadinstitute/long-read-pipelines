@@ -14,6 +14,7 @@ task Quast {
         File? ref_gff
         Array[File] assemblies
         Boolean is_large = false
+        Array[String]? labels
         Boolean icarus = false
 
         RuntimeAttr? runtime_attr_override
@@ -23,6 +24,7 @@ task Quast {
         ref:        "reference assembly of the species"
         ref_gff:    "Reference features (e.g. genes)"
         assemblies: "list of assemblies to evaluate"
+        labels:     "Optional list of labels for each assembly (will be used in reports/plots)."
         icarus:     "Include QUAST's Icarus viewer outputs"
     }
 
@@ -41,6 +43,7 @@ task Quast {
               --threads "${num_core}" \
               ~{true='-r' false='' defined(ref)} \
               ~{select_first([ref, ""])} ~{'-g ' + ref_gff} \
+              ~{true='-l ' false='' defined(labels)} ~{sep=' ' labels} \
               ~{sep=' ' assemblies}
 
         tree -h quast_results/
