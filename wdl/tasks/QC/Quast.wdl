@@ -43,7 +43,7 @@ task Quast {
               --threads "${num_core}" \
               ~{true='-r' false='' defined(ref)} \
               ~{select_first([ref, ""])} ~{'-g ' + ref_gff} \
-              ~{true='-l ' false='' defined(labels)} ~{sep=' ' labels} \
+              ~{true='-l ' false='' defined(labels)} ~{sep=', ' labels} \
               ~{sep=' ' assemblies}
 
         tree -h quast_results/
