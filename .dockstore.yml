@@ -118,3 +118,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/IllumAssembleWithSPAdes.wdl
   testParameterFiles:
+- name: QuastEval
+  subclass: wdl
+  primaryDescriptorPath: /wdl/QuastEval.wdl
+  testParameterFiles:
