@@ -224,6 +224,8 @@ task McCortexAssemble {
         Array[File] ref_links
         File sample_links
 
+        String? genome_size
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -244,7 +246,7 @@ task McCortexAssemble {
     command <<<
         set -euxo pipefail
 
-        mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem}G -p ~{sep=" -p " ref_links} -p ~{sample_links} -o ~{sample_id}.raw.contigs.fasta ~{mccortex_graph}
+        mccortex ~{k} contigs -t ~{num_threads} -m ~{max_mem}G ~{"-G " + genome_size} -p ~{sep=" -p " ref_links} -p ~{sample_links} -o ~{sample_id}.raw.contigs.fasta ~{mccortex_graph}
         mccortex ~{k} rmsubstr -m ~{max_mem}G --out ~{sample_id}.contigs.fa ~{sample_id}.raw.contigs.fa
     >>>
 

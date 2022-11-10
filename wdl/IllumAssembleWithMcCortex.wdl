@@ -5,6 +5,7 @@ import "tasks/McCortex.wdl" as McCortex
 workflow IllumAssembleWithMcCortex {
     input {
         String sample_id
+        String? est_genome_size
         Int k
 
         File illumina_fq1
@@ -12,6 +13,7 @@ workflow IllumAssembleWithMcCortex {
 
         Array[String] ref_ids
         Array[File] ref_fastas
+
     }
 
     call McCortex.McCortexBuild as McCortexBuild {
@@ -56,7 +58,8 @@ workflow IllumAssembleWithMcCortex {
             k = k,
             mccortex_graph = McCortexBuild.graph_cleaned,
             ref_links = BuildRefLinks.mccortex_links,
-            sample_links = BuildReadLinks.mccortex_links
+            sample_links = BuildReadLinks.mccortex_links,
+            genome_size = est_genome_size
     }
 
     output {
