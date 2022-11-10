@@ -11,15 +11,19 @@ import "../../structs/Structs.wdl"
 task Quast {
     input {
         File? ref
+        File? ref_gff
         Array[File] assemblies
         Boolean is_large = false
+        Boolean icarus = false
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         ref:        "reference assembly of the species"
+        ref_gff:    "Reference features (e.g. genes)"
         assemblies: "list of assemblies to evaluate"
+        icarus:     "Include QUAST's Icarus viewer outputs"
     }
 
     Int minimal_disk_size = 2*(ceil(size(ref, "GB") + size(assemblies, "GB")))
@@ -32,11 +36,11 @@ task Quast {
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        quast --no-icarus \
+        quast ~{true='' false='--no-icarus' icarus} \
               "~{size_optimization}" \
               --threads "${num_core}" \
               ~{true='-r' false='' defined(ref)} \
-              ~{select_first([ref, ""])} \
+              ~{select_first([ref, ""])} ~{'-g ' + ref_gff} \
               ~{sep=' ' assemblies}
 
         tree -h quast_results/
@@ -53,6 +57,8 @@ task Quast {
         Array[File] report_in_various_formats = glob("quast_results/latest/report.*")
 
         Array[File] plots = glob("quast_results/latest/basic_stats/*.pdf")
+        Array[File] icarus_main = glob("quast_results/latest/icarus.html")  # glob as workaround for optional output
+        Array[File] icarus_viewers = glob("quast_results/latest/icarus_viewers/*.html")
 
         File? contigs_reports = "contigs_reports.tar.gz"
     }
