@@ -12,7 +12,7 @@ workflow QuastEval {
         Boolean icarus = false
     }
 
-    call Quast.Quast as Eval {
+    call Quast.QuastBenchmark as Benchmark {
         input:
             ref = reference,
             ref_gff = reference_gff,
@@ -23,13 +23,14 @@ workflow QuastEval {
     }
 
     output {
-        File report_html = Eval.report_html
-        File report_txt = Eval.report_txt
-        File report_pdf = Eval.report_pdf
-        Array[File] plots = Eval.plots
-        Array[File] icarus_main = Eval.icarus_main
-        Array[File] icarus_viewers = Eval.icarus_viewers
+        File report_html = Benchmark.report_html
+        File report_txt = Benchmark.report_txt
+        File report_pdf = Benchmark.report_pdf
+        File metrics_tsv = Benchmark.metrics_tsv
 
-        Map[String, String] metrics = Eval.metrics
+        Array[File] plots = Benchmark.plots
+        Array[File] icarus_main = Benchmark.icarus_main
+        Array[File] icarus_viewers = Benchmark.icarus_viewers
+
     }
 }
