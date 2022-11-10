@@ -105,8 +105,7 @@ task QuastBenchmark {
         quast ~{true='' false='--no-icarus' icarus} \
               "~{size_optimization}" \
               --threads "${num_core}" \
-              ~{true='-r' false='' defined(ref)} \
-              ~{select_first([ref, ""])} ~{'-g ' + ref_gff} \
+              ~{'-r ' + ref} ~{'-g gene:' + ref_gff} \
               ~{true='-l ' false='' defined(labels)} ~{sep=', ' labels} \
               ~{sep=' ' assemblies}
 
