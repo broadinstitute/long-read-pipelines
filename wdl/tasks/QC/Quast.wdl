@@ -125,10 +125,10 @@ task QuastBenchmark {
         File metrics_tsv = "report_map.txt"
 
         Array[File] plots = glob("quast_results/latest/basic_stats/*.pdf")
-        Array[File] icarus_main = glob("quast_results/latest/icarus.html")  # glob as workaround for optional output
-        Array[File] icarus_viewers = glob("quast_results/latest/icarus_viewers/*.html")
-
-        File? contigs_reports = "contigs_reports.tar.gz"
+        Array[File] icarus_html = flatten([
+            glob("quast_results/latest/icarus.html"),  # glob as workaround for optional output
+            glob("quast_results/latest/icarus_viewers/*.html")
+        ])
     }
 
     ###################

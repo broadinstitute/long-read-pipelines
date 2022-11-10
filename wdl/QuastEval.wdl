@@ -29,8 +29,6 @@ workflow QuastEval {
         File metrics_tsv = Benchmark.metrics_tsv
 
         Array[File] plots = Benchmark.plots
-        Array[File] icarus_main = Benchmark.icarus_main
-        Array[File] icarus_viewers = Benchmark.icarus_viewers
-
+        Array[File] icarus_html = Benchmark.icarus_html
     }
 }
