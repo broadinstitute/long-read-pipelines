@@ -43,7 +43,7 @@ task BayesHammer {
         fi
 
         orig1_target=${orig1_no_gz%.*}.corrected.fastq${orig1_gz}
-        ln -s "${corrected1}" "${orig1_target}"
+        mv "${corrected1}" "${orig1_target}"
 
         orig2="~{illumina_fq2}"
         orig2=${orig2##*/}  # Remove directories
@@ -58,7 +58,7 @@ task BayesHammer {
         fi
 
         orig2_target=${orig2_no_gz%.*}.corrected.fastq${orig2_gz}
-        ln -s "${corrected2}" "${orig2_target}"
+        mv "${corrected2}" "${orig2_target}"
     >>>
 
     output {
