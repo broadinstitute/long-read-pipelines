@@ -102,7 +102,7 @@ task QuastBenchmark {
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        quast ~{true='' false='--no-icarus' icarus} \
+        quast ~{true='' false='--no-icarus' icarus} -s \
               "~{size_optimization}" \
               --threads "${num_core}" \
               ~{'-r ' + ref} ~{'-g gene:' + ref_gff} \
