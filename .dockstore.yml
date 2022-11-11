@@ -118,6 +118,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/IllumAssembleWithSPAdes.wdl
   testParameterFiles:
+- name: IllumErrorCorrectBayesHammer
+  subclass: wdl
+  primaryDescriptorPath: /wdl/IllumErrorCorrectBayesHammer.wdl
+  testParameterFiles:
 - name: QuastEval
   subclass: wdl
   primaryDescriptorPath: /wdl/QuastEval.wdl
