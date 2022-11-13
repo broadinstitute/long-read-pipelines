@@ -25,6 +25,8 @@ workflow PreprocessBarcodedCCSedSMRTCell {
         String barcode_design
         File? lima_options_file
 
+        Boolean check_expected_barcodes_found
+
         String gcs_out_root_dir
     }
 
@@ -130,12 +132,14 @@ workflow PreprocessBarcodedCCSedSMRTCell {
             outdir = outdir + "/unbarcoded"
     }
 
-    call AllExpectedBarcodesFound {input: all_autodetected_barcodes=Lima.barcodes_list, expected_barcode_names=get_barcodes.arr}
-    if (!AllExpectedBarcodesFound.indeed) {
-        call Utils.StopWorkflow as missing_barcodes {input: reason = "Not all barcodes expected by user are detected by lima."}
+    if (check_expected_barcodes_found) {
+        call AllExpectedBarcodesFound {input: all_autodetected_barcodes=Lima.barcodes_list, expected_barcode_names=get_barcodes.arr}
+        if (!AllExpectedBarcodesFound.indeed) {
+            call Utils.StopWorkflow as missing_barcodes {input: reason = "Not all barcodes expected by user are detected by lima."}
+        }
     }
 
-    # each barcode in the cell
+    # each barcode in the cell that's detected by lima
     scatter (idx in range(length(Lima.barcodes_list))) {
 
         String bc = Lima.barcodes_list[idx]
