@@ -110,15 +110,20 @@ workflow AlignAndCheckFingerprintCCS {
     }
 
     if (!turn_off_fingperprint_check){
-        call FPCheck.FPCheckAoU {
-            input:
-                aligned_bam = aBAM,
-                aligned_bai = aBAI,
-                fp_store = fp_store,
-                sample_id_at_store = sample_id_at_store,
-                ref_specific_haplotype_map = ref_map['haplotype_map']
+        if (bam_sample_name!='NA') {
+            call FPCheck.FPCheckAoU {
+                input:
+                    aligned_bam = aBAM,
+                    aligned_bai = aBAI,
+                    fp_store = fp_store,
+                    sample_id_at_store = sample_id_at_store,
+                    ref_specific_haplotype_map = ref_map['haplotype_map']
+            }
+            call GeneralUtils.TarGZFiles as saveFPRes {input: files = [FPCheckAoU.fingerprint_summary, FPCheckAoU.fingerprint_details], name = 'fingerprint_check.summary_and_details'}
         }
-        call GeneralUtils.TarGZFiles as saveFPRes {input: files = [FPCheckAoU.fingerprint_summary, FPCheckAoU.fingerprint_details], name = 'fingerprint_check.summary_and_details'}
+        Float fp_lod_exp_sm = select_first([FPCheckAoU.lod_expected_sample, -100])
+        String fp_status_opt = select_first([FPCheckAoU.FP_status, 'NA'])
+        File fp_details_tgz = select_first([saveFPRes.you_got_it, 'NA'])
     }
 
     output {
@@ -128,8 +133,8 @@ workflow AlignAndCheckFingerprintCCS {
 
         File alignment_metrics_tar_gz = saveAlnMetrics.you_got_it
 
-        Float? fp_lod_expected_sample = FPCheckAoU.lod_expected_sample
-        String? fp_status = FPCheckAoU.FP_status
-        File? fingerprint_detail_tar_gz = saveFPRes.you_got_it
+        Float? fp_lod_expected_sample = fp_lod_exp_sm
+        String? fp_status = fp_status_opt
+        File? fingerprint_detail_tar_gz = fp_details_tgz
     }
 }
