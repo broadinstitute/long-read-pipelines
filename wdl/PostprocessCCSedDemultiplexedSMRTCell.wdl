@@ -90,54 +90,75 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
     scatter (bc_n_dir in barcode_2_folder) { # each barcode, i.e. each sample loaded on the SMRTCell
 
         String bc = bc_n_dir.left
+        call InputBarcodeWasNotDetected {input: bacode_and_demux_dir = bc_n_dir}
 
-        call GetDemxedFilePaths {input: demux_dir = bc_n_dir.right}
+        if (!InputBarcodeWasNotDetected.res) {
 
-        call BAMutils.GetReadGroupInfo as RG {input: uBAM = GetDemxedFilePaths.bam_path, keys = ['SM', 'LB']}
+            call GetDemxedFilePaths {input: demux_dir = bc_n_dir.right}
 
-        call major.AlignAndCheckFingerprintCCS {
-            input:
-                uBAM = GetDemxedFilePaths.bam_path,
-                uPBI = GetDemxedFilePaths.pbi_path,
-                bam_sample_name = RG.read_group_info['SM'],
-                library = RG.read_group_info['LB'],
+            call BAMutils.GetReadGroupInfo as RG {input: uBAM = GetDemxedFilePaths.bam_path, keys = ['SM', 'LB']}
 
-                turn_off_fingperprint_check = turn_off_fingperprint_check,
-                fp_store = fingerprint_store,
-                sample_id_at_store = ConstructBarcodeToIDs.barcode_2_fp_id[bc],
-                ref_map_file = ref_map_file
+            call major.AlignAndCheckFingerprintCCS {
+                input:
+                    uBAM = GetDemxedFilePaths.bam_path,
+                    uPBI = GetDemxedFilePaths.pbi_path,
+                    bam_sample_name = RG.read_group_info['SM'],
+                    library = RG.read_group_info['LB'],
+
+                    turn_off_fingperprint_check = turn_off_fingperprint_check,
+                    fp_store = fingerprint_store,
+                    sample_id_at_store = ConstructBarcodeToIDs.barcode_2_fp_id[bc],
+                    ref_map_file = ref_map_file
+            }
+
+            ###################################################################################
+            # finalize each barcode
+            String bc_specific_aln_out    = outdir + '/alignments/' + smrtcell_id + '/' + bc
+            String bc_specific_metric_out = outdir + "/metrics/"    + smrtcell_id + '/' + bc
+
+            call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_bam, name = movie_name + '.' + bc + '.bam' }
+            call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_bai, name = movie_name + '.' + bc + '.bai' }
+            call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_pbi, name = movie_name + '.' + bc + '.pbi' }
+
+            call FF.FinalizeToFile as FinalizeAlnMetrics { input: outdir = bc_specific_metric_out, file = AlignAndCheckFingerprintCCS.alignment_metrics_tar_gz }
+
+            if (! turn_off_fingperprint_check) {
+                call FF.FinalizeToFile as FinalizeFPDetails  { input: outdir = bc_specific_metric_out, file = select_first([AlignAndCheckFingerprintCCS.fingerprint_detail_tar_gz]) }
+            }
+
         }
-
-        ###################################################################################
-        # finalize each barcode
-        String bc_specific_aln_out    = outdir + '/alignments/' + smrtcell_id + '/' + bc
-        String bc_specific_metric_out = outdir + "/metrics/"    + smrtcell_id + '/' + bc
-
-        call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_bam, name = movie_name + '.' + bc + '.bam' }
-        call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_bai, name = movie_name + '.' + bc + '.bai' }
-        call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_pbi, name = movie_name + '.' + bc + '.pbi' }
-
-        call FF.FinalizeToFile as FinalizeAlnMetrics { input: outdir = bc_specific_metric_out, file = AlignAndCheckFingerprintCCS.alignment_metrics_tar_gz }
-
+        if (InputBarcodeWasNotDetected.res) {
+            String fp_res_missing_bc = 'NA'
+            Float fp_lod_missing_bc = -100
+            String bc_specific_aln_out_missing_bc = 'NA'
+            String bc_specific_aln_metric_missing_bc = 'NA'
+            String bc_specific_fp_details_missing_bc = 'NA'
+        }
+        if (!turn_off_fingperprint_check) {
+            String fp_res_for_bc = select_first([AlignAndCheckFingerprintCCS.fp_status, fp_res_missing_bc])
+            Float fp_lod_for_bc = select_first([AlignAndCheckFingerprintCCS.fp_lod_expected_sample, fp_lod_missing_bc])
+        }
+        String bc_specific_aln_out_general = select_first([bc_specific_aln_out, bc_specific_aln_out_missing_bc])
+        String bc_specific_aln_metric_general = select_first([FinalizeAlnMetrics.gcs_path, bc_specific_aln_metric_missing_bc])
         if (! turn_off_fingperprint_check) {
-            call FF.FinalizeToFile as FinalizeFPDetails  { input: outdir = bc_specific_metric_out, file = select_first([AlignAndCheckFingerprintCCS.fingerprint_detail_tar_gz]) }
+            String bc_specific_fp_details_general = select_first([FinalizeFPDetails.gcs_path, bc_specific_fp_details_missing_bc])
         }
     }
 
     ###################################################################################
     # For Terra data tables
-    call LocateBarcodeSpecificFoldersOrFiles as bc_2_aln_dir {input: barcodes_list = bc, finalized_dir_or_file_for_each_barcode = bc_specific_aln_out}
+    call LocateBarcodeSpecificFoldersOrFiles as bc_2_aln_dir {input: barcodes_list = bc, finalized_dir_or_file_for_each_barcode = bc_specific_aln_out_general}
     call FF.FinalizeToFile as finalize_bc_2_aln_dir_tsv {input: file = bc_2_aln_dir.barcode_2_gs_path, outdir = outdir_aln + '/' + smrtcell_id }
 
-    call LocateBarcodeSpecificFoldersOrFiles as bc_2_aln_metric_dir {input: barcodes_list = bc, finalized_dir_or_file_for_each_barcode = FinalizeAlnMetrics.gcs_path}
+    call LocateBarcodeSpecificFoldersOrFiles as bc_2_aln_metric_dir {input: barcodes_list = bc, finalized_dir_or_file_for_each_barcode = bc_specific_aln_metric_general}
     call FF.FinalizeToFile as finalize_bc_2_aln_metrics_tsv {input: file = bc_2_aln_metric_dir.barcode_2_gs_path, outdir = outdir_metrics + '/' + smrtcell_id }
     if (! turn_off_fingperprint_check) {
-        call LocateBarcodeSpecificFoldersOrFiles as bc_2_fp_details_dir {input: barcodes_list = bc, finalized_dir_or_file_for_each_barcode = select_all(FinalizeFPDetails.gcs_path)}
+        call LocateBarcodeSpecificFoldersOrFiles as bc_2_fp_details_dir {input: barcodes_list = bc, finalized_dir_or_file_for_each_barcode = select_all(bc_specific_fp_details_general)}
         call FF.FinalizeToFile as finalize_bc_2_fp_details_tsv {input: file = bc_2_fp_details_dir.barcode_2_gs_path, outdir = outdir_metrics + '/' + smrtcell_id }
     }
 
-    Array[String?] fp_res  = AlignAndCheckFingerprintCCS.fp_status
-    Array[Float?]  fp_lods = AlignAndCheckFingerprintCCS.fp_lod_expected_sample
+    Array[String?] fp_res  = fp_res_for_bc
+    Array[Float?]  fp_lods = fp_lod_for_bc
 
     call GU.GetTodayDate as today {}
 
@@ -256,6 +277,26 @@ task LocateBarcodeSpecificFoldersOrFiles {
 
     output {
         File barcode_2_gs_path = "barcode_2_gs_path.tsv"
+    }
+
+    runtime {
+        disks: "local-disk 100 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task InputBarcodeWasNotDetected {
+    input {
+        Pair[String, String] bacode_and_demux_dir
+    }
+
+    command <<<
+        set -eux
+        if [[ ~{bacode_and_demux_dir.right} == "NotDetected" ]]; then echo "true"; else echo "false"; fi
+    >>>
+
+    output {
+        Boolean res = read_boolean(stdout())
     }
 
     runtime {
