@@ -336,7 +336,11 @@ task SelectExpectedBarcodesOnly {
         set -eux
         touch "selected_barcode_2_folder.tsv"
         for bc in ~{sep=' ' expected_barcode_names}; do
-            grep -w "^${bc}" ~{all_barcode_2_dir} >> "selected_barcode_2_folder.tsv"
+            if grep -qw "^${bc}" ~{all_barcode_2_dir}; then
+                grep -w "^${bc}" ~{all_barcode_2_dir} >> "selected_barcode_2_folder.tsv"
+            else
+                echo -e "${bc}\tNotDetected" >> "selected_barcode_2_folder.tsv"
+            fi
         done
     >>>
 
