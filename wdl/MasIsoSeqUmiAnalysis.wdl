@@ -63,7 +63,7 @@ workflow MasIsoSeqUmiAnalysis {
             prefix = prefix + ".all_reads.names_restored.eq_class_assigned.3p_adapter_as_umi",
     }
 
-    call LONGBOW.Correct_UMI as t_006_LongbowCorrectUmi {
+    call MAS_UMI.UmiCoverForThreePrimeAnalysis as t_006_UmiCoverForThreePrimeAnalysis {
         input:
             bam = t_005_ExtractOptimial3pAdapterToUmiTag.bam,
             umi_tag = "ZV",
@@ -82,8 +82,8 @@ workflow MasIsoSeqUmiAnalysis {
 
     call MAS_UMI.SplitCcsAndClrReads as t_007_SplitCcsAndClrReads {
         input:
-            bam_file = t_006_LongbowCorrectUmi.umi_corrected_bam,
-            bam_index = t_006_LongbowCorrectUmi.umi_corrected_bam_index,
+            bam_file = t_006_UmiCoverForThreePrimeAnalysis.umi_corrected_bam,
+            bam_index = t_006_UmiCoverForThreePrimeAnalysis.umi_corrected_bam_index,
             prefix = prefix + ".names_restored.eq_class_assigned.3p_adapter_as_umi.umi_cover_corrected",
     }
 
@@ -103,8 +103,8 @@ workflow MasIsoSeqUmiAnalysis {
     }
     call MAS_UMI.CreateSimpleCountMatrixForUmiAnalysis as t_010_CreateSimpleCountMatrixForUmiAnalysisAll {
         input:
-            bam_file = t_006_LongbowCorrectUmi.umi_corrected_bam,
-            bam_index = t_006_LongbowCorrectUmi.umi_corrected_bam_index,
+            bam_file = t_006_UmiCoverForThreePrimeAnalysis.umi_corrected_bam,
+            bam_index = t_006_UmiCoverForThreePrimeAnalysis.umi_corrected_bam_index,
             eq_class_tsv = eq_class_tsv,
             prefix = prefix + ".names_restored.eq_class_assigned.3p_adapter_as_umi.umi_cover_corrected.all.simple_counts",
     }
@@ -132,10 +132,10 @@ workflow MasIsoSeqUmiAnalysis {
                 t_005_ExtractOptimial3pAdapterToUmiTag.rejected_bam_no_threep,
                 t_005_ExtractOptimial3pAdapterToUmiTag.rejected_bam_low_ssw_score,
 
-                t_006_LongbowCorrectUmi.umi_corrected_bam,
-                t_006_LongbowCorrectUmi.umi_corrected_bam_index,
-                t_006_LongbowCorrectUmi.failed_umi_correction_bam,
-                t_006_LongbowCorrectUmi.cached_read_loci,
+                t_006_UmiCoverForThreePrimeAnalysis.umi_corrected_bam,
+                t_006_UmiCoverForThreePrimeAnalysis.umi_corrected_bam_index,
+                t_006_UmiCoverForThreePrimeAnalysis.failed_umi_correction_bam,
+                t_006_UmiCoverForThreePrimeAnalysis.cached_read_loci,
 
                 t_007_SplitCcsAndClrReads.ccs_bam,
                 t_007_SplitCcsAndClrReads.ccs_bai,
@@ -153,8 +153,8 @@ workflow MasIsoSeqUmiAnalysis {
     }
 
     output {
-        File all_reads_for_counting_bam = t_006_LongbowCorrectUmi.umi_corrected_bam
-        File all_reads_for_counting_bai = t_006_LongbowCorrectUmi.umi_corrected_bam_index
+        File all_reads_for_counting_bam = t_006_UmiCoverForThreePrimeAnalysis.umi_corrected_bam
+        File all_reads_for_counting_bai = t_006_UmiCoverForThreePrimeAnalysis.umi_corrected_bam_index
 
         File ccs_reads_for_counting_bam = t_007_SplitCcsAndClrReads.ccs_bam
         File ccs_reads_for_counting_bai = t_007_SplitCcsAndClrReads.ccs_bai
