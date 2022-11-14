@@ -123,7 +123,10 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
             call FF.FinalizeToFile as FinalizeAlnMetrics { input: outdir = bc_specific_metric_out, file = AlignAndCheckFingerprintCCS.alignment_metrics_tar_gz }
 
             if (! turn_off_fingperprint_check) {
-                call FF.FinalizeToFile as FinalizeFPDetails  { input: outdir = bc_specific_metric_out, file = select_first([AlignAndCheckFingerprintCCS.fingerprint_detail_tar_gz]) }
+                if (AlignAndCheckFingerprintCCS.fp_status != 'NA'){
+                    call FF.FinalizeToFile as FinalizeFPDetails  { input: outdir = bc_specific_metric_out, file = select_first([AlignAndCheckFingerprintCCS.fingerprint_detail_tar_gz]) }
+                }
+                String fp_details_str = select_first([FinalizeFPDetails.gcs_path, 'NA'])
             }
 
         }
@@ -141,7 +144,7 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
         String bc_specific_aln_out_general = select_first([bc_specific_aln_out, bc_specific_aln_out_missing_bc])
         String bc_specific_aln_metric_general = select_first([FinalizeAlnMetrics.gcs_path, bc_specific_aln_metric_missing_bc])
         if (! turn_off_fingperprint_check) {
-            String bc_specific_fp_details_general = select_first([FinalizeFPDetails.gcs_path, bc_specific_fp_details_missing_bc])
+            String bc_specific_fp_details_general = select_first([fp_details_str, bc_specific_fp_details_missing_bc])
         }
     }
 

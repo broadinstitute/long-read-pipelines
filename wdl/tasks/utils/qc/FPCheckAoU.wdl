@@ -92,7 +92,7 @@ workflow FPCheckAoU {
 task ResolveFPVCFPath {
     meta {
         desciption:
-        "Find the fingerprint VCF at the fingerprint store; project specific."
+        "Find the fingerprint VCF at the fingerprint store; reports 'NA' if nothing found (project specific)."
     }
 
     input {
@@ -108,9 +108,12 @@ task ResolveFPVCFPath {
 
         # note the addition of the wildcard character *
         FP_SEARCH="~{fp_store_formatted}/~{sample_id_at_store}*.fingerprint.liftedover.vcf"
-        # this will error if no paths match, i.e. no FP file exists with this sample_id_at_store
-        FP_PATH=$(gsutil ls "${FP_SEARCH}" | head -n 1)
-        FP_INDEX_PATH="${FP_PATH}.idx"
+        FP_PATH=$(head -n 1 <(gsutil ls "${FP_SEARCH}" || echo "NA"))
+        if [[ ${FP_PATH} == "NA" ]]; then
+            FP_INDEX_PATH='NA'
+        else
+            FP_INDEX_PATH="${FP_PATH}.idx"
+        fi
 
         echo "${FP_PATH}" > "vcf.gspath"
         echo "${FP_INDEX_PATH}" > "index.gspath"

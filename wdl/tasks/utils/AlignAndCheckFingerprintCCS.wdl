@@ -111,15 +111,18 @@ workflow AlignAndCheckFingerprintCCS {
 
     if (!turn_off_fingperprint_check){
         if (bam_sample_name!='NA') {
-            call FPCheck.FPCheckAoU {
-                input:
-                    aligned_bam = aBAM,
-                    aligned_bai = aBAI,
-                    fp_store = fp_store,
-                    sample_id_at_store = sample_id_at_store,
-                    ref_specific_haplotype_map = ref_map['haplotype_map']
+            call FPCheck.ResolveFPVCFPath as preCheck {input: fp_store = fp_store, sample_id_at_store = sample_id_at_store}
+            if (preCheck.fp_vcf != "NA") {
+                call FPCheck.FPCheckAoU {
+                    input:
+                        aligned_bam = aBAM,
+                        aligned_bai = aBAI,
+                        fp_store = fp_store,
+                        sample_id_at_store = sample_id_at_store,
+                        ref_specific_haplotype_map = ref_map['haplotype_map']
+                }
+                call GeneralUtils.TarGZFiles as saveFPRes {input: files = [FPCheckAoU.fingerprint_summary, FPCheckAoU.fingerprint_details], name = 'fingerprint_check.summary_and_details'}
             }
-            call GeneralUtils.TarGZFiles as saveFPRes {input: files = [FPCheckAoU.fingerprint_summary, FPCheckAoU.fingerprint_details], name = 'fingerprint_check.summary_and_details'}
         }
         Float fp_lod_exp_sm = select_first([FPCheckAoU.lod_expected_sample, -100])
         String fp_status_opt = select_first([FPCheckAoU.FP_status, 'NA'])
