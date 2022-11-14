@@ -34,7 +34,7 @@ RUN wget https://github.com/samtools/samtools/releases/download/1.11/samtools-1.
 
 # Install python and some requirements:
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3.7 get-pip.py && \
-    pip3 install pysam tqdm editdistance numpy
+    pip3 install pysam tqdm editdistance numpy polyleven pyyaml
 
 # Install ssw lib:
 ADD ssw/ssw_lib.py /root/.local/lib/python3.7/site-packages/ssw/ssw_lib.py
