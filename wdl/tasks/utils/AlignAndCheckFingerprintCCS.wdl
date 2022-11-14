@@ -112,7 +112,8 @@ workflow AlignAndCheckFingerprintCCS {
     if (!turn_off_fingperprint_check){
         if (bam_sample_name!='NA') {
             call FPCheck.ResolveFPVCFPath as preCheck {input: fp_store = fp_store, sample_id_at_store = sample_id_at_store}
-            if (preCheck.fp_vcf != "NA") {
+            Float sz = size(aBAM, "MiB")
+            if (preCheck.fp_vcf != "NA" && sz > 100) {
                 call FPCheck.FPCheckAoU {
                     input:
                         aligned_bam = aBAM,
