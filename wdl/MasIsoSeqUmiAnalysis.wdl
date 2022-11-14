@@ -77,6 +77,7 @@ workflow MasIsoSeqUmiAnalysis {
             max_ccs_gc_diff = 10,
             max_clr_gc_diff = 10,
             prefix = prefix + ".all_reads.names_restored.eq_class_assigned.3p_adapter_as_umi.umi_cover_corrected",
+            runtime_attr_override = object {mem_gb: 128},
     }
 
     call MAS_UMI.SplitCcsAndClrReads as t_007_SplitCcsAndClrReads {
