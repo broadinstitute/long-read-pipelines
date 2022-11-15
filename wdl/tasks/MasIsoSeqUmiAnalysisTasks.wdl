@@ -340,13 +340,13 @@ task UmiCoverForThreePrimeAnalysis
         # Generate a config YAML file:
         rm -f correct_umi.yaml
 
-        echo "edit_distance: {\"CCS\": ~{max_ccs_edit_dist}, \"CLR\": ~{max_clr_edit_dist}" >> correct_umi.yaml
+        echo "edit_distance: {\"CCS\": ~{max_ccs_edit_dist}, \"CLR\": ~{max_clr_edit_dist}}" >> correct_umi.yaml
         echo "len_diff: {\"CCS\": ~{max_ccs_length_diff}, \"CLR\": ~{max_clr_length_diff}}" >> correct_umi.yaml
-        echo "gc_diff: {\"CCS\": ~{max_ccs_gc_diff}, \"CLR\": ~{max_clr_gc_diff}" >> correct_umi.yaml
+        echo "gc_diff: {\"CCS\": ~{max_ccs_gc_diff}, \"CLR\": ~{max_clr_gc_diff}}" >> correct_umi.yaml
         echo "op: \"AND\"" >> correct_umi.yaml
-        echo "max_umi_delta: {\"CCS\": ~{max_ccs_umi_length_delta}, \"CLR\": ~{max_clr_umi_length_delta}" >> correct_umi.yaml
-        echo "max_umi_delta_filter: {\"CCS\": ~{max_final_ccs_umi_length_delta}, \"CLR\": ~{max_final_clr_umi_length_delta}" >> correct_umi.yaml
-        echo "min_back_aln_score: ~{min_back_seg_score}" >> correct_umi.yaml
+        echo "max_umi_delta: {\"CCS\": ~{max_ccs_umi_length_delta}, \"CLR\": ~{max_clr_umi_length_delta}}" >> correct_umi.yaml
+        echo "max_umi_delta_filter: {\"CCS\": ~{max_final_ccs_umi_length_delta}, \"CLR\": ~{max_final_clr_umi_length_delta}}" >> correct_umi.yaml
+        echo "min_back_aln_score: ~{min_back_seg_score}}" >> correct_umi.yaml
 
 python3.7 - --input_bam ~{bam} --output_bam ~{prefix}.corrected_umis.bam --filtered_bam ~{prefix}.failed_umi_correction.bam --config correct_umi.yaml --pre-extracted << CODE
 #!/usr/bin/env python3.7

@@ -119,7 +119,7 @@ workflow MasIsoSeqUmiAnalysis {
             files = [
                 t_003_RestoreSegCoordsAndOriginalNameToReads.bam,
                 t_003_RestoreSegCoordsAndOriginalNameToReads.bai,
-
+ 
                 t_004_CopyEqClassInfoToTag.bam,
                 t_004_CopyEqClassInfoToTag.bai,
 
