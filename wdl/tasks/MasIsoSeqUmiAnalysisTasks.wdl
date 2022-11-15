@@ -346,7 +346,7 @@ task UmiCoverForThreePrimeAnalysis
         echo "op: \"AND\"" >> correct_umi.yaml
         echo "max_umi_delta: {\"CCS\": ~{max_ccs_umi_length_delta}, \"CLR\": ~{max_clr_umi_length_delta}}" >> correct_umi.yaml
         echo "max_umi_delta_filter: {\"CCS\": ~{max_final_ccs_umi_length_delta}, \"CLR\": ~{max_final_clr_umi_length_delta}}" >> correct_umi.yaml
-        echo "min_back_aln_score: ~{min_back_seg_score}}" >> correct_umi.yaml
+        echo "min_back_aln_score: ~{min_back_seg_score}" >> correct_umi.yaml
 
 python3.7 - --input_bam ~{bam} --output_bam ~{prefix}.corrected_umis.bam --filtered_bam ~{prefix}.failed_umi_correction.bam --config correct_umi.yaml --pre-extracted << CODE
 #!/usr/bin/env python3.7
@@ -461,7 +461,7 @@ def valid_tags(read, config):
 
 def read_passes_filters(read, config):
     # filters the read based on the final UMI length and back alignment score
-    return float(get_back_aln_score(read)) >= float(config.min_back_aln_score) and \
+    return (get_back_aln_score(read) >= config.min_back_aln_score) and \
            abs(len(read.get_tag(FINAL_UMI_TAG)) - UMI_LEN) <= config.max_umi_delta_filter[get_read_type(read).name]
 
 
@@ -559,7 +559,7 @@ def build_graph(reads, config):
                     graph[target_id].append(read_id)
                     target2umi_counts[target_id][read.umi] += 1
     else:
-        for read_id, read in tqdm(enumerate(reads), desc="Building graph", position=1):
+        for read_id, read in tqdm(enumerate(reads), desc="Building graph", total=len(reads), position=1):
             for target_id, target in enumerate(targets):
                 if can_convert(read, target, config):
                     graph[target_id].append(read_id)
