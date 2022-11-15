@@ -461,7 +461,7 @@ def valid_tags(read, config):
 
 def read_passes_filters(read, config):
     # filters the read based on the final UMI length and back alignment score
-    return get_back_aln_score(read) >= config.min_back_aln_score and \
+    return float(get_back_aln_score(read)) >= float(config.min_back_aln_score) and \
            abs(len(read.get_tag(FINAL_UMI_TAG)) - UMI_LEN) <= config.max_umi_delta_filter[get_read_type(read).name]
 
 
