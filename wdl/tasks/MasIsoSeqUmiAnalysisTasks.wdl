@@ -329,7 +329,7 @@ task UmiCoverForThreePrimeAnalysis
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 4*ceil(size(bam, "GB")) + 4*ceil(size(bam_index, "GB"))
+    Int disk_size = 10*ceil(size(bam, "GB")) + 10*ceil(size(bam_index, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -678,7 +678,7 @@ if __name__ == '__main__':
 
 CODE
 
-        samtools sort -@${np} ~{prefix}.corrected_umis.bam > tmp.bam
+        samtools sort -@${np} ~{prefix}.corrected_umis.bam -o tmp.bam
         mv tmp.bam ~{prefix}.corrected_umis.bam
         samtools index -@${np} ~{prefix}.corrected_umis.bam
     >>>
