@@ -123,7 +123,7 @@ workflow MasIsoSeqUmiAnalysisWithLevDistSweep {
     ################################################################################
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/" + sample_name + "/" + t_001_WdlExecutionStartTimestamp.timestamp_string
-    File keyfile = select_first(t_010_CreateSimpleCountMatrixForUmiAnalysisAll.simple_counts_tsv)
+    File keyfile = select_first(t_008_CreateSimpleCountMatrixForUmiAnalysisCCS.simple_counts_tsv)
 
     call FF.FinalizeToDir as t_011_FinalizeNonSweptFiles {
             input:

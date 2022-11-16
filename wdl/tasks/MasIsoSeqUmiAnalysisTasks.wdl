@@ -619,10 +619,7 @@ def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config, 
         print(f"Loading locus2reads cache: ~{locus_pickle_name}")
         st = time.time()
         locus2reads = pickle.load(open("~{locus_pickle_name}", 'rb'))
-        try:
-            total_num_reads = pickle.load(open(input_bam_fname + ".total_num_reads.pickle", 'rb'))
-        except FileNotFoundError:
-            total_num_reads = None
+        total_num_reads = None
         et = time.time()
         print(f"done. (elapsed: {et - st}s)")
     else:
@@ -630,7 +627,6 @@ def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config, 
         print(f"Writing locus2reads cache: ~{locus_pickle_name}")
         st = time.time()
         pickle.dump(locus2reads, open("~{locus_pickle_name}", 'wb'))
-        pickle.dump(total_num_reads, open("~{locus_pickle_name}", 'wb'))
         et = time.time()
         print(f"done. (elapsed: {et - st}s)")
 
