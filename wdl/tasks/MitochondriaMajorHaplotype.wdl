@@ -1,10 +1,10 @@
 version 1.0
 
-import "tasks/Structs.wdl"
-import "tasks/AlignReads.wdl" as AR
-import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
-import "tasks/Clair_mito.wdl" as Clair_Mito
-import "tasks/Finalize.wdl" as Finalize
+import "Structs.wdl"
+import "AlignReads.wdl" as AR
+import "CallAssemblyVariants.wdl" as  CallAssemblyVariants
+import "Clair.wdl" as Clair
+import "Finalize.wdl" as Finalize
 
 workflow SelectContigs {
     input {
@@ -44,7 +44,7 @@ workflow SelectContigs {
                 map_preset = "map-hifi",
                 RG = RG
         }
-        call Clair_Mito.Clair as Clair_Mito {
+        call Clair.Clair as Clair {
             input:
                 bam = Minimap2.aligned_bam,
                 bai = Minimap2.aligned_bai,
@@ -56,7 +56,7 @@ workflow SelectContigs {
 
         call CountVariants {
             input:
-                vcfgz = Clair_Mito.vcf
+                vcfgz = Clair.vcf
             }
 
     }
@@ -79,8 +79,8 @@ workflow SelectContigs {
         Array[File] trimmed_cadidate_fai = SelfAlign.trimmed_contigs_idx
         Array[File] aligned_bam = Minimap2.aligned_bam
         Array[File] aligned_bai = Minimap2.aligned_bai
-        Array[File?] full_alignment_vcf = Clair_Mito.full_alignment_vcf
-        Array[File?] merged_vcf = Clair_Mito.vcf
+        Array[File?] full_alignment_vcf = Clair.full_alignment_vcf
+        Array[File?] merged_vcf = Clair.vcf
         Array[Int] variant_counts = CountVariants.count
         Array[File] picked_tigs = FindMin.picked_tigs
     }
