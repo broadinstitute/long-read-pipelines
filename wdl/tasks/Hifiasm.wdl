@@ -6,12 +6,14 @@ workflow Hifiasm {
     input {
         File reads
         String prefix
+        String genome_size
     }
 
     call Assemble {
         input:
             reads  = reads,
-            prefix = prefix
+            prefix = prefix,
+            genome_size = genome_size
     }
 
     output {
@@ -24,16 +26,17 @@ task Assemble {
     input {
         File reads
         String prefix = "out"
-
+        String genome_size
         Int num_cpus = 32
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
-        prefix:   "prefix to apply to assembly output filenames"
-        num_cpus: "number of CPUs to parallelize over"
+        reads:       "reads (in fasta or fastq format, compressed or uncompressed)"
+        prefix:      "prefix to apply to assembly output filenames"
+        num_cpus:    "number of CPUs to parallelize over"
+        genome_size: "genme size(k/m/g). For example, 16k for mitochondria"
     }
 
     Int disk_size = 10 * ceil(size(reads, "GB"))
@@ -41,7 +44,7 @@ task Assemble {
     command <<<
         set -euxo pipefail
 
-        hifiasm -o ~{prefix} -t ~{num_cpus} --hg-size 16k ~{reads}
+        hifiasm -o ~{prefix} -t ~{num_cpus} --hg-size ~{genome_size} ~{reads}
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
     >>>
 
