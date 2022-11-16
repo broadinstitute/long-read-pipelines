@@ -26,12 +26,12 @@ workflow MasIsoSeqUmiAnalysisWithLevDistSweep {
 
         String gcs_out_root_dir = "gs://broad-dsde-methods-long-reads-outgoing/MasIsoSeqUmiAnalysisWithLevDistSweep"
 
+        # Set up our parameter sweep:
+        Array[Int] ccs_lev_dists = [0,0,1,2,3,4,5]
+        Array[Int] clr_lev_dists = [0,1,2,3,4,5,6]
+
         String sample_name
     }
-
-    # Set up our parameter sweep:
-    Array[Int] ccs_lev_dists = [0,0,1,2,3,4,5]
-    Array[Int] clr_lev_dists = [0,1,2,3,4,5,6]
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
     call Utils.GetCurrentTimestampString as t_001_WdlExecutionStartTimestamp { input: }
