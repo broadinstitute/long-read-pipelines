@@ -61,29 +61,35 @@ workflow HiFiBamToFastQ {
 
         String bc = bc_n_dir.left
 
-        call GetDemxedFilePaths {input: demux_dir = bc_n_dir.right}
+        call InputBarcodeWasNotDetected {input: bacode_and_demux_dir = bc_n_dir}
+        if (!InputBarcodeWasNotDetected.res) {
 
-        # call BAMutils.GetReadGroupInfo as RG {input: uBAM = GetDemxedFilePaths.bam_path, keys = ['SM', 'LB']}
+            call GetDemxedFilePaths {input: demux_dir = bc_n_dir.right}
 
-        call Utils.BamToFastq {input: bam = GetDemxedFilePaths.bam_path, prefix = "does_not_matter"}
+            # call BAMutils.GetReadGroupInfo as RG {input: uBAM = GetDemxedFilePaths.bam_path, keys = ['SM', 'LB']}
 
-        ###################################################################################
-        # finalize each barcode
-        # String bc_specific_aln_out    = outdir + '/alignments/' + smrtcell_id + '/' + bc
-        # String bc_specific_metric_out = outdir + "/metrics/"    + smrtcell_id + '/' + bc
+            call Utils.BamToFastq {input: bam = GetDemxedFilePaths.bam_path, prefix = "does_not_matter"}
 
-        # call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_bam, name = movie_name + '.' + bc + '.bam' }
-        # call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_bai, name = movie_name + '.' + bc + '.bai' }
-        # call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_pbi, name = movie_name + '.' + bc + '.pbi' }
+            ###################################################################################
+            # finalize each barcode
+            # String bc_specific_aln_out    = outdir + '/alignments/' + smrtcell_id + '/' + bc
+            # String bc_specific_metric_out = outdir + "/metrics/"    + smrtcell_id + '/' + bc
+
+            # call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_bam, name = movie_name + '.' + bc + '.bam' }
+            # call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_bai, name = movie_name + '.' + bc + '.bai' }
+            # call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bc_specific_aln_out, file = AlignAndCheckFingerprintCCS.aligned_pbi, name = movie_name + '.' + bc + '.pbi' }
 
 
-        String bc_specific_fastq_out = outdir_ref_free + '/' + smrtcell_id + '/' + bc
-        call FF.FinalizeToFile as FinalizeFQ { input: outdir = bc_specific_fastq_out, file = BamToFastq.reads_fq, name =  movie_name + '.' + bc + '.hifi.fq.gz' }
+            String bc_specific_fastq_out = outdir_ref_free + '/' + smrtcell_id + '/' + bc
+            call FF.FinalizeToFile as FinalizeFQ { input: outdir = bc_specific_fastq_out, file = BamToFastq.reads_fq, name =  movie_name + '.' + bc + '.hifi.fq.gz' }
+        }
+
+        String blah = select_first([FinalizeFQ.gcs_path, 'NA'])
     }
 
     ###################################################################################
     # For Terra data tables
-    call LocateBarcodeSpecificFoldersOrFiles as bc_2_hifi_fq {input: barcodes_list = bc, finalized_dir_or_file_for_each_barcode = FinalizeFQ.gcs_path}
+    call LocateBarcodeSpecificFoldersOrFiles as bc_2_hifi_fq {input: barcodes_list = bc, finalized_dir_or_file_for_each_barcode = blah}
     call FF.FinalizeToFile as finalize_bc_2_hifi_fq_tsv {input: file = bc_2_hifi_fq.barcode_2_gs_path, outdir = outdir_ref_free + '/' + smrtcell_id }
 
     output {
@@ -193,6 +199,26 @@ task LocateBarcodeSpecificFoldersOrFiles {
 
     output {
         File barcode_2_gs_path = "barcode_2_gs_path.tsv"
+    }
+
+    runtime {
+        disks: "local-disk 100 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task InputBarcodeWasNotDetected {
+    input {
+        Pair[String, String] bacode_and_demux_dir
+    }
+
+    command <<<
+        set -eux
+        if [[ ~{bacode_and_demux_dir.right} == "NotDetected" ]]; then echo "true"; else echo "false"; fi
+    >>>
+
+    output {
+        Boolean res = read_boolean(stdout())
     }
 
     runtime {
