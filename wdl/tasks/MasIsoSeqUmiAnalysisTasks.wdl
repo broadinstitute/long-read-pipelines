@@ -331,6 +331,8 @@ task UmiCoverForThreePrimeAnalysis
 
     Int disk_size = 10*ceil(size(bam, "GB")) + 10*ceil(size(bam_index, "GB"))
 
+    String locus_pickle_name = basename(bam) + ".locus2reads.ccs_lev_~{max_ccs_edit_dist}_clr_lev_~{max_clr_edit_dist}.pickle"
+
     command <<<
         set -euxo pipefail
 
@@ -363,7 +365,6 @@ from enum import Enum
 import pysam
 import numpy as np
 from collections import Counter
-import pickle
 import operator
 from polyleven import levenshtein
 from tqdm import tqdm
@@ -614,10 +615,10 @@ def process_reads_at_locus(reads, read2umi, config, debug=False):
 def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config, pre_extracted):
 
     # split reads into groups by locus
-    if os.path.exists(input_bam_fname + ".locus2reads.pickle"):
-        print(f"Loading locus2reads cache: {input_bam_fname}.locus2reads.pickle")
+    if os.path.exists("~{locus_pickle_name}"):
+        print(f"Loading locus2reads cache: ~{locus_pickle_name}")
         st = time.time()
-        locus2reads = pickle.load(open(input_bam_fname + ".locus2reads.pickle", 'rb'))
+        locus2reads = pickle.load(open("~{locus_pickle_name}", 'rb'))
         try:
             total_num_reads = pickle.load(open(input_bam_fname + ".total_num_reads.pickle", 'rb'))
         except FileNotFoundError:
@@ -626,10 +627,10 @@ def umi_correction(input_bam_fname, output_bam_fname, filter_bam_fname, config, 
         print(f"done. (elapsed: {et - st}s)")
     else:
         locus2reads, total_num_reads = extract_read_groups(input_bam_fname, config, pre_extracted)
-        print(f"Writing locus2reads cache: {input_bam_fname}.locus2reads.pickle")
+        print(f"Writing locus2reads cache: ~{locus_pickle_name}")
         st = time.time()
-        pickle.dump(locus2reads, open(input_bam_fname + ".locus2reads.pickle", 'wb'))
-        pickle.dump(total_num_reads, open(input_bam_fname + ".total_num_reads.pickle", 'wb'))
+        pickle.dump(locus2reads, open("~{locus_pickle_name}", 'wb'))
+        pickle.dump(total_num_reads, open("~{locus_pickle_name}", 'wb'))
         et = time.time()
         print(f"done. (elapsed: {et - st}s)")
 
@@ -687,7 +688,7 @@ CODE
         File umi_corrected_bam = "~{prefix}.corrected_umis.bam"
         File umi_corrected_bam_index = "~{prefix}.corrected_umis.bam.bai"
         File failed_umi_correction_bam = "~{prefix}.failed_umi_correction.bam"
-        File cached_read_loci = "~{bam}.locus2reads.pickle"
+        File cached_read_loci = "~{locus_pickle_name}"
     }
 
     #########################
