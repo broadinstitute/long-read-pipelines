@@ -3,7 +3,6 @@ version 1.0
 import "tasks/Structs.wdl"
 import "tasks/AlignReads.wdl" as AR
 import "tasks/CallAssemblyVariants.wdl" as  CallAssemblyVariants
-import "tasks/Canu.wdl" as Canu
 import "tasks/Clair_mito.wdl" as Clair_Mito
 import "tasks/Finalize.wdl" as Finalize
 
@@ -14,6 +13,15 @@ workflow SelectContigs {
         File bam
         String preset
         String outdir
+        String sample_name
+    }
+
+    parameter_meta {
+        assembly_fasta:   "GCS path to assembly fasta file using hifiasm"
+        reads:            "filtered mitochondrial reads (after eliminating reads that show sv-like behaviors)"
+        bam:              "x"
+        preset:           "type of read (ex CCS)"
+        outdir:           "output directory"
     }
 
     call FilterContigs {
@@ -26,7 +34,7 @@ workflow SelectContigs {
             filtered_contigs = FilterContigs.filtered_contigs
     }
 
-    String RG = "@RG\\tID:NA\\tSM:HG00514.2"
+    String RG = "@RG\\tID:NA\\tSM:~{sample_name}"
 
     scatter (pair in zip(SelfAlign.trimmed_contigs, SelfAlign.trimmed_contigs_idx)) {
         call AR.Minimap2 as Minimap2 {
