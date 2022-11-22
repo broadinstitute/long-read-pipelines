@@ -350,6 +350,7 @@ workflow PB10xMasSeqArraySingleFlowcellv5_ArrayElementAnalysis {
             bam = t_022_LongbowCorrectClrArrayElementCBCs.corrected_barcodes_bam,
             short_read_umis = short_read_umis_tsv,
             prefix = SM + "_clr_array_elements_annotated_padded_cbc_corrected_UMI_adjusted",
+            runtime_attr_override = object { mem_gb: 64 }
     }
 
     call LONGBOW.Extract as t_024_LongbowExtractClrArrayElements {

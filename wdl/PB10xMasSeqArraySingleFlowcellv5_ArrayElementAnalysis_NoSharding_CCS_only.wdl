@@ -191,7 +191,7 @@ workflow PB10xMasSeqArraySingleFlowcellv5_ArrayElementAnalysis {
             model = mas_seq_model,
             tag_to_expand = "ZU",
             padding = ccs_umi_padding,
-            prefix = SM + "_ccs_array_elements_annotated_umi_padded"
+            prefix = SM + "_ccs_array_elements_annotated_umi_padded",
     }
 
     call LONGBOW.Pad as t_006_LongbowPadCCSArrayElementCBCs {
@@ -201,7 +201,7 @@ workflow PB10xMasSeqArraySingleFlowcellv5_ArrayElementAnalysis {
             tag_to_expand = "CR",
             new_tag_dest = expanded_cbc_tag,
             padding = ccs_cbc_padding,
-            prefix = SM + "_ccs_array_elements_annotated_cbc_padded_shard"
+            prefix = SM + "_ccs_array_elements_annotated_cbc_padded_shard",
     }
 
     # Now we should correct our barcodes based on the whitelist:
