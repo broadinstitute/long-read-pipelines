@@ -6,7 +6,7 @@ workflow Hifiasm {
     input {
         File reads
         String prefix
-        String genome_size
+        String? genome_size
     }
 
     call Assemble {
@@ -26,7 +26,7 @@ task Assemble {
     input {
         File reads
         String prefix = "out"
-        String genome_size
+        String? genome_size
         Int num_cpus = 32
 
         RuntimeAttr? runtime_attr_override
@@ -39,12 +39,14 @@ task Assemble {
         genome_size: "genme size(k/m/g). For example, 16k for mitochondria"
     }
 
+    String arg_genome_size = if defined(genome_size) then "--hg-size ~{genome_size}" else ""
+
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        hifiasm -o ~{prefix} -t ~{num_cpus} --hg-size ~{genome_size} ~{reads}
+        hifiasm -o ~{prefix} -t ~{num_cpus} ~{arg_genome_size} ~{reads}
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
     >>>
 
