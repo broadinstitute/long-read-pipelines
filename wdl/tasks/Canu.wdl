@@ -52,10 +52,6 @@ workflow Canu {
     output {
         File fa = Assemble.canu_contigs_fasta
         File log = Assemble.intermediate_log
-#        File correct_fa = Correct.corrected_reads
-#        File correct_log = Correct.intermediate_log
-#        File trim_fa = Trim.trimmed_reads
-#        File trim_log = Trim.intermediate_log
     }
 }
 
@@ -76,6 +72,7 @@ task Correct {
         genome_size:  "estimate on genome size (parameter to canu's 'genomeSize')"
         error_rate:   "parameter to canu's 'correctedErrorRate'"
         prefix:       "prefix to output files"
+        technology:   "sequencing technology (nanopore or pacbio)"
     }
 
     String tech_specific_arg = if technology == 'ont' then "nanopore" else 'pacbio'
@@ -138,6 +135,7 @@ task Trim {
         genome_size:       "estimate on genome size (parameter to canu's 'genomeSize')"
         corrected_reads:   "parameter to canu's 'correctedErrorRate'"
         prefix:            "prefix to output files"
+        technology:        "sequencing technology (nanopore or pacbio)"
     }
     String tech_specific_arg = if technology == 'ont' then "nanopore" else 'pacbio'
     Int disk_size = 50 * ceil(size(corrected_reads, "GB"))
@@ -197,6 +195,7 @@ task Assemble {
         genome_size:    "estimate on genome size (parameter to canu's 'genomeSize')"
         error_rate:     "parameter to canu's 'correctedErrorRate'"
         prefix:         "prefix to output files"
+        technology:     "sequencing technology (nanopore or pacbio)"
     }
 
     String tech_specific_arg = if technology == 'ont' then "nanopore" else 'pacbio'
