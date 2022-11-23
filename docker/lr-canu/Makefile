@@ -1,17 +1,15 @@
-IMAGE_NAME = lr-canu
-VERSION = 0.1.0
 
-TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
-TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
+VERSION = 0.2.0
+
+TAG1 = us.gcr.io/broad-dsp-lrma/lr-canu:$(VERSION)
+TAG2 = us.gcr.io/broad-dsp-lrma/lr-canu:latest
+
 
 all: | build push
 
 build:
-    docker build -t $(TAG1) -t $(TAG2) .
-
-build_no_cache:
-    docker build --no-cache -t $(TAG1) -t $(TAG2) .
+	docker build -t $(TAG1) -t $(TAG2) .
 
 push:
-    docker push $(TAG1)
-    docker push $(TAG2)
+	docker push $(TAG1)
+	docker push $(TAG2)
