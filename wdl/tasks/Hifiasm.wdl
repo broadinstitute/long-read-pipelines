@@ -2,6 +2,8 @@ version 1.0
 
 import "Structs.wdl"
 
+import "Utils.wdl"
+
 workflow Hifiasm {
     meta {
         description: "We run two HiFiasm jobs, one for getting alternative contigs and one for getting the haplotigs. And we take the primary assembly from the first job."
@@ -17,16 +19,20 @@ workflow Hifiasm {
         prefix:   "prefix to apply to assembly output filenames"
     }
 
+    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+
     call AssembleForAltContigs {
         input:
             reads  = reads,
-            prefix = prefix
+            prefix = prefix,
+            zones = arbitrary.zones
     }
 
     call AssembleForHaplotigs {
         input:
             reads  = reads,
-            prefix = prefix
+            prefix = prefix,
+            zones = arbitrary.zones
     }
 
     output {
@@ -54,6 +60,7 @@ task AssembleForHaplotigs {
     input {
         File reads
         String prefix = "out"
+        String zones
 
         RuntimeAttr? runtime_attr_override
     }
@@ -125,6 +132,7 @@ task AssembleForHaplotigs {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        zones: zones
     }
 }
 
@@ -132,7 +140,7 @@ task AssembleForAltContigs {
     input {
         File reads
         String prefix = "out"
-
+        String zones
 
         RuntimeAttr? runtime_attr_override
     }
@@ -197,5 +205,6 @@ task AssembleForAltContigs {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        zones: zones
     }
 }
