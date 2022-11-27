@@ -626,3 +626,51 @@ task FixSnifflesVCF {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task ReSampleSingleSampleVCF {
+    meta {
+        desciption: "Change sample name in a single sample VCF to the desired value."
+    }
+    input {
+        File  vcf
+        File? idx
+
+        String new_sample_name
+        String out_prefix
+    }
+
+    parameter_meta {
+        vcf: "VCF to operate on; assumed to be a single-sample VCF."
+        idx: "Accompanying index file."
+        new_sample_name: "New sample name desired (assumed to be a valid value)."
+        out_prefix: "Prefix for output VCF."
+    }
+
+    command <<<
+        set -eux
+
+        echo "~{new_sample_name}" > new_sample_name.txt
+        bcftools reheader \
+            --samples new_sample_name.txt \
+            -o ~{out_prefix}.vcf.gz \
+            --threads 1 \
+            ~{vcf}
+        bcftools index -t --threads 1 ~{out_prefix}.vcf.gz
+        ls
+    >>>
+
+    output {
+        File reheadered_vcf = "~{out_prefix}.vcf.gz"
+        File reheadered_tbi = "~{out_prefix}.vcf.gz.tbi"
+    }
+
+    runtime {
+        cpu:            2
+        memory:         "8 GiB"
+        disks:          "local-disk 100 SSD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
