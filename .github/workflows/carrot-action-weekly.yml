@@ -1,5 +1,4 @@
-# Runs workflow tests every Sunday, the workflows to be tested
-# are specified by the "test_names" parameter as string seperated by space.
+# Runs all workflow tests every Sunday
 
 name: carrot-test-run-weekly
 on:
@@ -31,7 +30,7 @@ jobs:
             "branch_name":"${{ github.ref_name }}",
             "commit":"${{ github.sha }}",
             "repo":"${{ github.repository }}",
-            "test_names": "PBCCSWholeGenome",
+            "test_names": "",
             "issue_number":"",
             "software_name":""
             }'

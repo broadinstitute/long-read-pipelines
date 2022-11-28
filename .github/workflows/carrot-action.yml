@@ -1,4 +1,6 @@
-# Runs all available carrot tests in a branch when commits have been pushed to a PR
+# Runs workflow tests from the branch when commits have been pushed to a PR
+# the workflows to be tested are specified by the "test_names"
+# parameter as string seperated by space.
 
 name: carrot-test-run-from-push
 on: [push]
@@ -28,7 +30,7 @@ jobs:
             "branch_name":"${{ github.ref_name }}",
             "commit":"${{ github.sha }}",
             "repo":"${{ github.repository }}",
-            "test_names": "",
+            "test_names": "PBCCSWholeGenome",
             "issue_number":"",
             "software_name":""
             }'
