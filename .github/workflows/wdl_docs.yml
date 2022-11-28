@@ -1,6 +1,10 @@
 name: Build and deploy site to GitHub Pages
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   github-pages:
