@@ -14,9 +14,9 @@ RUN wget https://github.com/lh3/yak/archive/v0.1.tar.gz \
     && cp yak /usr/local/bin/
 
 # install hifiasm
-RUN wget https://github.com/chhylp123/hifiasm/archive/v0.13.tar.gz \
-    && tar -xvf v0.13.tar.gz \
-    && cd hifiasm-0.13 \
+RUN wget https://github.com/chhylp123/hifiasm/archive/v0.17.7.tar.gz \
+    && tar -xvf v0.17.7.tar.gz \
+    && cd hifiasm-0.17.7 \
     && make \
     && cp hifiasm /usr/local/bin/
 
