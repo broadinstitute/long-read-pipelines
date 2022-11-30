@@ -117,3 +117,6 @@ workflows:
 - name: CallVariantsReadBased
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl
+- name: VerifyBamFingerprint
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyBamFingerprint.wdl
