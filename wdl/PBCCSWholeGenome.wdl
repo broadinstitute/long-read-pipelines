@@ -39,6 +39,8 @@ workflow PBCCSWholeGenome {
         Int? dvp_memory = 128
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
+
+        Array[String] assigned_gcp_zones = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
     }
 
     parameter_meta {
@@ -60,6 +62,8 @@ workflow PBCCSWholeGenome {
         run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
         ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
+
+        assigned_gcp_zones: "GCP zone to use for carrying out the variant calling. Be careful not to select zones in a different country from where the data lives."
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -137,7 +141,9 @@ workflow PBCCSWholeGenome {
                 dvp_threads = select_first([dvp_threads]),
                 dvp_memory = select_first([dvp_memory]),
                 ref_scatter_interval_list_locator = select_first([ref_scatter_interval_list_locator]),
-                ref_scatter_interval_list_ids = select_first([ref_scatter_interval_list_ids])
+                ref_scatter_interval_list_ids = select_first([ref_scatter_interval_list_ids]),
+
+                gcp_zones = assigned_gcp_zones
         }
 
         String svdir = outdir + "/variants/sv"

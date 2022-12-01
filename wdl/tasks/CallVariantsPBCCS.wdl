@@ -36,6 +36,8 @@ workflow CallVariants {
         Int? dvp_memory
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
+
+        Array[String]? gcp_zones
     }
 
     parameter_meta {
@@ -50,13 +52,21 @@ workflow CallVariants {
         run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
         ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
+
+        gcp_zones: "GCP zone to use for carrying out the compute. Be careful not to select zones in a different country from where the data lives."
     }
 
     ######################################################################
     # Block for small variants handling
     ######################################################################
 
-    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+    if (defined(gcp_zones)) {
+        call CollapseStrings {input: whatever = select_first([gcp_zones])}
+    }
+    if (!defined(gcp_zones)) {
+        call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+    }
+    String assgined_zones = select_first([CollapseStrings.collapsed, arbitrary.zones])
 
     # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {
@@ -91,7 +101,7 @@ workflow CallVariants {
                     sites_vcf_tbi = sites_vcf_tbi,
 
                     preset = "CCS",
-                    zones = arbitrary.zones
+                    zones = assgined_zones
             }
         }
 
@@ -139,7 +149,7 @@ workflow CallVariants {
                         pepper_memory  = select_first([dvp_memory]),
                         dv_threads = select_first([dvp_threads]),
                         dv_memory  = select_first([dvp_memory]),
-                        zones = arbitrary.zones
+                        zones = assgined_zones
                 }
             }
 
@@ -175,7 +185,7 @@ workflow CallVariants {
                     ref_fasta     = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
                     memory        = select_first([dvp_memory, 64]),
-                    zones = arbitrary.zones
+                    zones = assgined_zones
             }
         }
     }
@@ -211,7 +221,7 @@ workflow CallVariants {
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
                         is_ccs = true,
-                        zones = arbitrary.zones
+                        zones = assgined_zones
                 }
             }
 
@@ -234,7 +244,7 @@ workflow CallVariants {
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
                     is_ccs = true,
-                    zones = arbitrary.zones
+                    zones = assgined_zones
             }
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
@@ -274,5 +284,27 @@ workflow CallVariants {
         File? dvp_tbi = MergeDeepVariantVCFs.tbi
         File? dvp_phased_vcf = MarginPhase.phasedVCF
         File? dvp_phased_tbi = MarginPhase.phasedtbi
+    }
+}
+
+task CollapseStrings {
+    meta {
+        description: "For collapsing an array of strings into a long single-space-delimited string"
+    }
+    input {
+        Array[String] whatever
+    }
+
+    command <<<
+        echo ~{sep=' ' whatever}
+    >>>
+
+    output {
+        String collapsed = read_string(stdout())
+    }
+
+    runtime {
+        disks: "local-disk 50 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
