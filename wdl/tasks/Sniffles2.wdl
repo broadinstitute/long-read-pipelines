@@ -47,14 +47,11 @@ workflow Sniffles2 {
             prefix = prefix
     }
 
-
     output {
-         Array[File] single_snf = SampleSV.snf
-         File multisample_vcf = MergeCall.vcf
+        Array[File] single_snf = SampleSV.snf
+        File multisample_vcf = MergeCall.vcf
     }
 }
-
-
 
 task SampleSV {
 
@@ -79,15 +76,15 @@ task SampleSV {
         prefix:           "prefix for output"
     }
 
-    Int cpus = 8
     Int disk_size = 2*ceil(size([bam, bai], "GB"))
-    String snf_output = "~{prefix}.sniffles.snf"
-    String vcf_output = "~{prefix}.sniffles.vcf"
+    String snf_output = "~{prefix}.sniffles2.snf"
+    String vcf_output = "~{prefix}.sniffles2.vcf"
 
     command <<<
         set -eux
 
-        sniffles -t ~{cpus} \
+        num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
+        sniffles -t "${num_cores}" \
                  -i ~{bam} \
                  --minsvlen ~{minsvlen} \
                  --sample-id ~{sample_id} \
@@ -103,7 +100,7 @@ task SampleSV {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          cpus,
+        cpu_cores:          8,
         mem_gb:             46,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
@@ -122,7 +119,6 @@ task SampleSV {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
-
 
 task MergeCall {
 
@@ -153,7 +149,7 @@ task MergeCall {
 
     Int cpus = 8
     Int disk_size = 3*ceil(size(snfs, "GB"))
-                                                                                                                                                                                                                                                                                                                                                                                                                                   #########################
+
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             46,
