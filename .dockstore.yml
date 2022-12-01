@@ -108,3 +108,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBMASIsoSeqDemultiplex.wdl
   testParameterFiles:
+- name: ComputeReadLengths
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ComputeReadLengths.wdl
+  testParameterFiles:

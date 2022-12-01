@@ -403,6 +403,7 @@ task Demultiplex {
         Boolean peek_guess      = false
         Boolean dump_removed    = false
         Boolean split_bam_named = false
+        Boolean single_side     = false
         Int peek                = 0
         Int min_score           = 0
         Int guess               = 0
@@ -425,6 +426,7 @@ task Demultiplex {
             ~{if peek > 0 then "--peek ~{peek}" else ""} \
             ~{if dump_removed then "--dump-removed" else ""} \
             ~{if split_bam_named then "--split-bam-named" else ""} \
+            ~{if single_side then "--single-side" else ""} \
             ~{bam} \
             ~{barcode_file} \
             ~{prefix}.bam

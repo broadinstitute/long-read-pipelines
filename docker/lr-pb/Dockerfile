@@ -29,6 +29,7 @@ COPY collect_polymerase_read_lengths.py /usr/local/bin/
 COPY add_pac_bio_rg_to_bam.py /usr/local/bin/
 COPY compute_pbi_stats.py /usr/local/bin/
 COPY reset_clr_bam_bq.py /usr/local/bin/
+COPY compute_read_length_hist.py /usr/local/bin/
 
 # activate conda environment
 RUN echo "source activate lr-pb" > ~/.bashrc
