@@ -218,7 +218,7 @@ workflow CallVariants {
                         bai = SubsetBam.subset_bai,
                         ref_fasta = ref_fasta,
                         ref_fasta_fai = ref_fasta_fai,
-                        prefix = prefix,
+                        prefix = prefix + "." + contig_for_sv,
                         tandem_repeat_bed = tandem_repeat_bed,
                         is_ccs = true,
                         zones = assgined_zones
