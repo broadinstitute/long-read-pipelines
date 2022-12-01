@@ -152,9 +152,14 @@ workflow PBCCSWholeGenome {
         if (call_svs) {
             call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = select_first([CallVariants.pbsv_vcf]) }
             call FF.FinalizeToFile as FinalizePBSVtbi { input: outdir = svdir, file = select_first([CallVariants.pbsv_tbi]) }
+            Array[File] pbsv_sig_files = select_all((select_first([CallVariants.pbsv_sig])))
+            scatter (sig in pbsv_sig_files) {
+                call FF.FinalizeToFile as FinalizePBSVsig { input: outdir = svdir, file = sig }
+            }
 
             call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = select_first([CallVariants.sniffles_vcf]) }
             call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = select_first([CallVariants.sniffles_tbi]) }
+            call FF.FinalizeToFile as FinalizeSnifflesSNF { input: outdir = svdir, file = select_first([CallVariants.sniffles_snf]) }
         }
 
         if (call_small_variants) {
@@ -197,9 +202,11 @@ workflow PBCCSWholeGenome {
         ########################################
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? pbsv_tbi = FinalizePBSVtbi.gcs_path
+        Array[File]? pbsv_sig = FinalizePBSVsig.gcs_path
 
-        File? sniffles_vcf = FinalizeSniffles.gcs_path
-        File? sniffles_tbi = FinalizeSnifflesTbi.gcs_path
+        File? sniffles2_vcf = FinalizeSniffles.gcs_path
+        File? sniffles2_tbi = FinalizeSnifflesTbi.gcs_path
+        File? sniffles2_snf = FinalizeSnifflesSNF.gcs_path
 
         File? clair_vcf = FinalizeClairVcf.gcs_path
         File? clair_tbi = FinalizeClairTbi.gcs_path

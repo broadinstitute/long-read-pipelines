@@ -271,6 +271,7 @@ workflow CallVariants {
         File? sniffles_snf = select_first([Sniffles2SV.snf])
         File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
         File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
+        Array[File?]? pbsv_sig = select_first([RunPBSV.svsig, [PBSVslow.svsig]])
 
         File? clair_vcf = MergeAndSortClairVCFs.vcf
         File? clair_tbi = MergeAndSortClairVCFs.tbi

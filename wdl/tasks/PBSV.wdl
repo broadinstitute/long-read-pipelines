@@ -44,6 +44,7 @@ workflow RunPBSV {
 
     output {
         File vcf = Call.vcf
+        File svsig = Discover.svsig
     }
 }
 
@@ -174,4 +175,3 @@ task Call {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
-
