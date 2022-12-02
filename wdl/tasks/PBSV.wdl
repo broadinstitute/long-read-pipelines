@@ -134,7 +134,7 @@ task Call {
         prefix:            "prefix for output"
     }
 
-    Int disk_size = 2*ceil(size(svsigs, "GiB") + size([ref_fasta, ref_fasta_fai], "GiB"))
+    Int disk_size = 2*ceil(size(svsigs, "GiB") + size([ref_fasta, ref_fasta_fai], "GiB")) + 50
 
     command <<<
         set -euxo pipefail
@@ -155,8 +155,8 @@ task Call {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             96,
+        cpu_cores:          40,
+        mem_gb:             160,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
