@@ -34,7 +34,7 @@ workflow PBCCSWholeGenome {
         File? sites_vcf
         File? sites_vcf_tbi
 
-        Boolean? run_dv_pepper_analysis = true
+        Boolean? run_clair3 = false
         Int? dvp_threads = 32
         Int? dvp_memory = 128
         File? ref_scatter_interval_list_locator
@@ -59,7 +59,7 @@ workflow PBCCSWholeGenome {
         sites_vcf:     "for use with Clair"
         sites_vcf_tbi: "for use with Clair"
 
-        run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
+        run_clair3:  "to turn on Clair3 or not (non-trivial increase in cost and runtime)"
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
         ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
 
@@ -111,7 +111,7 @@ workflow PBCCSWholeGenome {
         }
         if (call_small_variants) {
             if (! defined(call_small_vars_on_mitochondria)) {call Utils.StopWorkflow as call_small_vars_on_mitochondria_not_provided {input: reason = "Unprovided arg call_small_vars_on_mitochondria"}}
-            if (! defined(run_dv_pepper_analysis)) {call Utils.StopWorkflow as run_dv_pepper_analysis_not_provided {input: reason = "Unprovided arg run_dv_pepper_analysis"}}
+            if (! defined(run_clair3)) {call Utils.StopWorkflow as run_clair3_not_provided {input: reason = "Unprovided arg run_clair3"}}
             if (! defined(dvp_threads)) {call Utils.StopWorkflow as dvp_threads_not_provided {input: reason = "Unprovided arg dvp_threads"}}
             if (! defined(ref_scatter_interval_list_locator)) {call Utils.StopWorkflow as ref_scatter_interval_list_locator_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_locator"}}
             if (! defined(ref_scatter_interval_list_ids)) {call Utils.StopWorkflow as ref_scatter_interval_list_ids_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_ids"}}
@@ -137,7 +137,7 @@ workflow PBCCSWholeGenome {
                 sites_vcf = sites_vcf,
                 sites_vcf_tbi = sites_vcf_tbi,
 
-                run_dv_pepper_analysis = select_first([run_dv_pepper_analysis]),
+                run_clair3 = select_first([run_clair3]),
                 dvp_threads = select_first([dvp_threads]),
                 dvp_memory = select_first([dvp_memory]),
                 ref_scatter_interval_list_locator = select_first([ref_scatter_interval_list_locator]),
@@ -163,20 +163,22 @@ workflow PBCCSWholeGenome {
         }
 
         if (call_small_variants) {
-            call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_vcf])}
-            call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_tbi])}
+            if (select_first([run_clair3])) {
+                call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = select_first([CallVariants.clair3_vcf])}
+                call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = select_first([CallVariants.clair3_tbi])}
 
-            call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_gvcf])}
-            call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_gtbi])}
-
-            if (select_first([run_dv_pepper_analysis])) {
-                call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
-                call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_tbi])}
-                call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_vcf]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz" }
-                call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_tbi]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz.tbi" }
+                call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = select_first([CallVariants.clair3_gvcf])}
+                call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = select_first([CallVariants.clair3_gtbi])}
             }
+
+            call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_vcf])}
+            call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
+            call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}
+            call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_tbi])}
+            call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_vcf]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz" }
+            call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_tbi]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz.tbi" }
+            call FF.FinalizeToFile as FinalizeDVPEPPERHapTagBam { input: outdir = smalldir, file = select_first([CallVariants.dvp_haplotagged_bam]), name = "~{participant_name}.MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam" }
+            call FF.FinalizeToFile as FinalizeDVPEPPERHapTagBai { input: outdir = smalldir, file = select_first([CallVariants.dvp_haplotagged_bai]), name = "~{participant_name}.MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam.bai" }
         }
     }
 
@@ -208,11 +210,11 @@ workflow PBCCSWholeGenome {
         File? sniffles2_tbi = FinalizeSnifflesTbi.gcs_path
         File? sniffles2_snf = FinalizeSnifflesSNF.gcs_path
 
-        File? clair_vcf = FinalizeClairVcf.gcs_path
-        File? clair_tbi = FinalizeClairTbi.gcs_path
+        File? clair3_vcf = FinalizeClairVcf.gcs_path
+        File? clair3_tbi = FinalizeClairTbi.gcs_path
 
-        File? clair_gvcf = FinalizeClairGVcf.gcs_path
-        File? clair_gtbi = FinalizeClairGTbi.gcs_path
+        File? clair3_gvcf = FinalizeClairGVcf.gcs_path
+        File? clair3_gtbi = FinalizeClairGTbi.gcs_path
 
         File? dvp_vcf = FinalizeDVPepperVcf.gcs_path
         File? dvp_tbi = FinalizeDVPepperTbi.gcs_path
@@ -220,5 +222,7 @@ workflow PBCCSWholeGenome {
         File? dvp_g_tbi = FinalizeDVPepperGTbi.gcs_path
         File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
         File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
+        File? dvp_haplotagged_bam = FinalizeDVPEPPERHapTagBam.gcs_path
+        File? dvp_haplotagged_bai = FinalizeDVPEPPERHapTagBai.gcs_path
     }
 }
