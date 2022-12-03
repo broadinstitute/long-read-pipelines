@@ -30,7 +30,6 @@ workflow PBCCSWholeGenome {
         Boolean? pbsv_call_per_chr = true
 
         Boolean call_small_variants = true
-        Boolean? call_small_vars_on_mitochondria = false
         File? sites_vcf
         File? sites_vcf_tbi
 
@@ -55,7 +54,6 @@ workflow PBCCSWholeGenome {
         pbsv_call_per_chr:      "when using PBSV, make calls per chromosome then merge (trade lower sensitivity for faster speed)"
 
         call_small_variants: "whether to call small variants"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
         sites_vcf:     "for use with Clair"
         sites_vcf_tbi: "for use with Clair"
 
@@ -110,7 +108,6 @@ workflow PBCCSWholeGenome {
             if (! defined(pbsv_call_per_chr)) {call Utils.StopWorkflow as pbsv_call_per_chr_not_provided {input: reason = "Calling SVs without specifying arg pbsv_call_per_chr"}}
         }
         if (call_small_variants) {
-            if (! defined(call_small_vars_on_mitochondria)) {call Utils.StopWorkflow as call_small_vars_on_mitochondria_not_provided {input: reason = "Unprovided arg call_small_vars_on_mitochondria"}}
             if (! defined(run_clair3)) {call Utils.StopWorkflow as run_clair3_not_provided {input: reason = "Unprovided arg run_clair3"}}
             if (! defined(dvp_threads)) {call Utils.StopWorkflow as dvp_threads_not_provided {input: reason = "Unprovided arg dvp_threads"}}
             if (! defined(ref_scatter_interval_list_locator)) {call Utils.StopWorkflow as ref_scatter_interval_list_locator_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_locator"}}
@@ -133,7 +130,6 @@ workflow PBCCSWholeGenome {
                 pbsv_call_per_chr = select_first([pbsv_call_per_chr]),
 
                 call_small_variants = call_small_variants,
-                call_small_vars_on_mitochondria = select_first([call_small_vars_on_mitochondria]),
                 sites_vcf = sites_vcf,
                 sites_vcf_tbi = sites_vcf_tbi,
 

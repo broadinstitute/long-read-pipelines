@@ -27,7 +27,6 @@ workflow CallVariants {
         File? tandem_repeat_bed
 
         Boolean call_small_variants
-        Boolean call_small_vars_on_mitochondria
         File? sites_vcf
         File? sites_vcf_tbi
 
@@ -45,7 +44,6 @@ workflow CallVariants {
         tandem_repeat_bed:       "BED file containing TRF finder for better PBSV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
         minsvlen:       "Minimum SV length in bp (default: 50)"
 
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
         sites_vcf:     "for use with Clair"
         sites_vcf_tbi: "for use with Clair"
 
@@ -73,11 +71,10 @@ workflow CallVariants {
         if (run_clair3) {
             # Scatter by chromosome
             Array[String] default_filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
-            Array[String] use_filter = if (call_small_vars_on_mitochondria) then default_filter else flatten([['chrM'],default_filter])
             call Utils.MakeChrIntervalList as SmallVariantsScatterPrepp {
                 input:
                     ref_dict = ref_dict,
-                    filter = use_filter
+                    filter = default_filter
             }
 
             scatter (c in SmallVariantsScatterPrepp.chrs) {
