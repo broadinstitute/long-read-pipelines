@@ -108,3 +108,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBMASIsoSeqDemultiplex.wdl
   testParameterFiles:
+- name: LRJointCallGVCFs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LRJointCallGVCFs.wdl
+  testParameterFiles:

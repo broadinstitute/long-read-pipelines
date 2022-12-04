@@ -53,7 +53,8 @@ task JointCall {
             ~{if squeeze then "--squeeze" else ""} \
             ~{if trim_uncalled_alleles then "--trim-uncalled-alleles" else ""} \
             ~{if defined(bed) then "--bed ~{select_first([bed])}" else ""} \
-            --list ~{write_lines(gvcfs)} | bgzip -@ ~{num_cpus} -c > ~{prefix}.g.vcf.bgz
+            --list ~{write_lines(gvcfs)} \
+            | bcftools view | bgzip -@ ~{num_cpus} -c > ~{prefix}.g.vcf.bgz
 
         tabix -p vcf ~{prefix}.g.vcf.bgz
     >>>
