@@ -38,7 +38,7 @@ task JointCall {
         prefix:   "output prefix for joined-called BCF and GVCF files"
     }
 
-    Int disk_size = 1 + 3*ceil(size(gvcfs, "GB"))
+    Int disk_size = 1 + 20*ceil(size(gvcfs, "GB"))
 
     command <<<
         set -euxo pipefail
