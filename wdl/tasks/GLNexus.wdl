@@ -38,7 +38,7 @@ task JointCall {
         prefix:   "output prefix for joined-called BCF and GVCF files"
     }
 
-    Int disk_size = 1 + 20*ceil(size(gvcfs, "GB"))
+    Int disk_size = 1 + 5*ceil(size(gvcfs, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -47,7 +47,6 @@ task JointCall {
         ulimit -Sn 65536
 
         glnexus_cli \
-            --dir /tmp/glnexus \
             --config ~{config} \
             ~{if more_PL then "--more-PL" else ""} \
             ~{if squeeze then "--squeeze" else ""} \
