@@ -7,7 +7,7 @@ version 1.0
 import "tasks/GLNexus.wdl" as GLNexus
 import "tasks/Finalize.wdl" as FF
 
-workflow JointCallGVCFs {
+workflow LRJointCallGVCFs {
     input {
         Array[File] gvcfs
         File? bed
