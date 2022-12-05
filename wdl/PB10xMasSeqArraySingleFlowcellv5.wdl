@@ -1356,8 +1356,8 @@ workflow PB10xMasSeqSingleFlowcellv5 {
 
                 t_068_MergeLongbowExtractedCcsArrayElements.merged_bam,
                 t_068_MergeLongbowExtractedCcsArrayElements.merged_bai,
-                t_075_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bam,
-                t_075_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected.merged_bai,
+                t_077_MergeLongbowPaddedCBCCorrectedCCSReclaimedArrayElementsShards.merged_bam,
+                t_077_MergeLongbowPaddedCBCCorrectedCCSReclaimedArrayElementsShards.merged_bai,
                 t_076_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bam,
                 t_076_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements.merged_bai,
                 t_078_MergeLongbowExtractedCcsReclaimedArrayElements.merged_bam,

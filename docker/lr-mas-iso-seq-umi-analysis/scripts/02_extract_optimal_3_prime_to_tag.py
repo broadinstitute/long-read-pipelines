@@ -4,10 +4,12 @@ import sys
 import pysam
 import ctypes
 import pickle
+import argparse
 
 import editdistance
 import numpy as np
 from tqdm import tqdm
+from functools import reduce
 
 from ssw import ssw_lib
 ssw_path = "/usr/local/lib/ssw"
@@ -156,18 +158,37 @@ ssw_align = lambda x, y: get_alignment(ssw, x, y, alphabet, letter_to_int, mat)
 
 ################################################################################
 
-num_args = 3
-if len(sys.argv) != num_args:
-    print(f"ERROR:You must give exactly {num_args-1} arguments: BAM, PREFIX", file=sys.stderr)
-    sys.exit(1)
+# We actually need an arg parser now:
+parser = argparse.ArgumentParser(
+    description=f"Extracts the middle 10 bases of the 3' adapter to a tag which can then later be used for a UMI analysis.",
+)
 
-bam = sys.argv[1]
-prefix = sys.argv[2]
+required_named_args = parser.add_argument_group('required named arguments')
+required_named_args.add_argument('-b', '--bam',
+                                 help='Annotated bam file from which to create the counts matrix.',
+                                 required=True)
+required_named_args.add_argument('-o', '--out-prefix',
+                                 help='Prefix of the output files.',
+                                 required=True)
 
+optional_named_args = parser.add_argument_group("optional named arguments")
+optional_named_args.add_argument('-s', '--min-sw-score',
+                                 type=int,
+                                 help=f"Minimum Smith-Waterman alignment score for the 3' region in the read to be "
+                                      f"considered good enough for inclusion in the analysis.  Reads below this score are "
+                                      f"output in a separate file.",
+                                 default=35,
+                                 required=False)
+
+# Parse our args:
+args = parser.parse_args()
+bam = args.bam
+prefix = args.out_prefix
+FULL_ADAPTER_SSW_SCORE_THRESH = args.min_sw_score
+
+# Constants:
 THREE_P_ADAPTER_REAL_SEQ = "GTACTCTGCGTTGATACCACTGCTT"
 THREE_P_ADAPTER_MIDDLE = THREE_P_ADAPTER_REAL_SEQ[7:17]  # GCGTTGATAC
-
-FULL_ADAPTER_SSW_SCORE_THRESH = 35
 
 TEST_BARCODE_TAG = "ZV"
 
@@ -189,6 +210,7 @@ clr_levs = []
 ccs_sws = []  
 clr_sws = []
 
+# Do the work:
 with pysam.AlignmentFile(f"{bam}", "rb", check_sq=False, require_index=False) as bam_file:
 
     total_reads = None 

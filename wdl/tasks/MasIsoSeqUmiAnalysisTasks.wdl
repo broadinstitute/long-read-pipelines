@@ -112,6 +112,8 @@ task ExtractOptimial3pAdapterToUmiTag
         File bam_file
         File? bam_index
 
+        Int min_sw_score = 35
+
         String prefix = "3p_adapters_tagged_as_umis"
 
         RuntimeAttr? runtime_attr_override
@@ -123,7 +125,7 @@ task ExtractOptimial3pAdapterToUmiTag
         set -euxo pipefail
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
-        python3.7 /scripts/02_extract_optimal_3_prime_to_tag.py ~{bam_file} ~{prefix}
+        python3.7 /scripts/02_extract_optimal_3_prime_to_tag.py -b ~{bam_file} -o ~{prefix} -s ~{min_sw_score}
 
         samtools index -@${np} ~{prefix}.bam
     >>>
