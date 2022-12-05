@@ -30,7 +30,11 @@ workflow MasIsoSeqUmiAnalysisWithLevDistSweep {
         Array[Int] ccs_lev_dists = [0,0,1,2,3,4,5]
         Array[Int] clr_lev_dists = [0,1,2,3,4,5,6]
 
+        # Min SW Score for excluding 3' adapters:
+        Int min_sw_score = 35
+
         String sample_name
+        String out_dir_suffix = ""
     }
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
@@ -64,6 +68,7 @@ workflow MasIsoSeqUmiAnalysisWithLevDistSweep {
         input:
             bam_file = t_004_CopyEqClassInfoToTag.bam,
             bam_index = t_004_CopyEqClassInfoToTag.bai,
+            min_sw_score = min_sw_score,
             prefix = prefix + ".all_reads.names_restored.eq_class_assigned.3p_adapter_as_umi",
     }
 
@@ -122,7 +127,7 @@ workflow MasIsoSeqUmiAnalysisWithLevDistSweep {
 
     ################################################################################
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/" + sample_name + "/" + t_001_WdlExecutionStartTimestamp.timestamp_string
+    String outdir = sub(gcs_out_root_dir, "/$", "") + out_dir_suffix + "/" + sample_name + "/" + t_001_WdlExecutionStartTimestamp.timestamp_string
     File keyfile = select_first(t_008_CreateSimpleCountMatrixForUmiAnalysisCCS.simple_counts_tsv)
 
     call FF.FinalizeToDir as t_011_FinalizeNonSweptFiles {

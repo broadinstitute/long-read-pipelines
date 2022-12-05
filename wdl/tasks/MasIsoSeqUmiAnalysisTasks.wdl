@@ -140,7 +140,7 @@ task ExtractOptimial3pAdapterToUmiTag
         File clr_sws_pickle = "~{prefix}.clr_sws.pickle"
 
         File rejected_bam_no_threep = "~{prefix}.rejected_no_threep.bam"
-        File rejected_bam_low_ssw_score = "~{prefix}.rejected_ssw_score_below_35.bam"
+        File rejected_bam_low_ssw_score = "~{prefix}.rejected_ssw_score_below_~{FULL_ADAPTER_SSW_SCORE_THRESH}.bam"
     }
 
     #########################
