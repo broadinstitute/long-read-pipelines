@@ -39,7 +39,7 @@ task Assemble {
         genome_size: "genme size(k/m/g). For example, 16k for mitochondria"
     }
 
-    String arg_genome_size = if defined(genome_size) then "--hg-size ~{genome_size}" else ""
+    String arg_genome_size = if defined(genome_size) then "--hg-size \"~{genome_size}\"" else ""
 
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
@@ -47,11 +47,11 @@ task Assemble {
         set -euxo pipefail
 
         hifiasm -o ~{prefix} -t ~{num_cpus} ~{arg_genome_size} ~{reads}
-        awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
+        awk '/^S/{print ">"$2; print $3}' ~{prefix}.bp.p_ctg.gfa > ~{prefix}.p_ctg.fa
     >>>
 
     output {
-        File gfa = "~{prefix}.p_ctg.gfa"
+        File gfa = "~{prefix}.bp.p_ctg.gfa"
         File fa = "~{prefix}.p_ctg.fa"
     }
 
@@ -63,7 +63,7 @@ task Assemble {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.17.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
