@@ -254,14 +254,3 @@ task FindMin {
         docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
-
-
-
-
-
-
-
-
-
-
-
