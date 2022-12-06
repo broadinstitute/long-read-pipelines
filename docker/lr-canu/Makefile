@@ -1,4 +1,3 @@
-
 IMAGE_NAME = lr-canu
 VERSION = 0.1.0
 
