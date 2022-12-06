@@ -39,7 +39,7 @@ task Assemble {
         genome_size: "genme size(k/m/g). For example, 16k for mitochondria"
     }
 
-    String arg_genome_size = if defined(genome_size) then "--hg-size \"~{genome_size}\"" else ""
+    String arg_genome_size = if defined(genome_size) then "--hg-size ~{genome_size}" else ""
 
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
