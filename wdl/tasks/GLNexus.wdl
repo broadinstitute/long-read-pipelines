@@ -19,7 +19,7 @@ workflow JointCall {
         Boolean squeeze = false
         Boolean trim_uncalled_alleles = false
 
-        Int num_cpus = 32
+        Int num_cpus = 96
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
@@ -38,6 +38,8 @@ workflow JointCall {
         prefix:   "output prefix for joined-called BCF and GVCF files"
     }
 
+    call Utils.ComputeAllowedLocalSSD as Guess { input: intended_gb = 1 + 10*ceil(size(gvcfs, "GB")) }
+
     call Call {
         input:
             gvcfs = gvcfs,
@@ -49,7 +51,9 @@ workflow JointCall {
             trim_uncalled_alleles = trim_uncalled_alleles,
 
             num_cpus = num_cpus,
-            prefix = prefix
+            prefix = prefix,
+
+            num_ssds = Guess.numb_of_local_ssd
     }
 
     call ZipAndIndex { input: joint_bcf = Call.joint_bcf, num_cpus = num_cpus, prefix = prefix }
@@ -73,10 +77,12 @@ task Call {
         Int num_cpus = 32
         String prefix = "out"
 
+        Int? num_ssds
+
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 10*ceil(size(gvcfs, "GB"))
+    Int disk_size = if defined(num_ssds) then 1 + 375*select_first([num_ssds]) else 1 + 10*ceil(size(gvcfs, "GB"))
 
     command <<<
         set -x
@@ -101,18 +107,18 @@ task Call {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
-        mem_gb:             2*num_cpus,
+        mem_gb:             4*num_cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
-        max_retries:        1,
+        preemptible_tries:  0,
+        max_retries:        0,
         docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
