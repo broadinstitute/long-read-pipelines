@@ -587,7 +587,7 @@ workflow PB10xMasSeqSingleFlowcellv5 {
     call Utils.MergeBams as t_065_MergeCCSArrayElementsUmiCbcPaddedCbcCorrected {
         input:
             bams = t_027_LongbowCorrectCCSCorrectedArrayElementCBCs.corrected_barcodes_bam,
-            prefix = SM + "_ccs_array_elements_no_ends_cbc_umi_padded"
+            prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_corrected"
     }
 
     call Utils.MergeBams as t_066_MergeLongbowPaddedCBCUncorrectableCCSArrayElements {
@@ -599,7 +599,7 @@ workflow PB10xMasSeqSingleFlowcellv5 {
     call Utils.MergeBams as t_067_MergeLongbowPaddedCBCCorrectedCCSArrayElements {
         input:
             bams = t_028_AdjustCCSUMIs.output_bam,
-            prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_corrected"
+            prefix = SM + "_ccs_array_elements_aligned_annotated_padded_CBC_corrected_UMI_adjusted"
     }
 
     call Utils.MergeBams as t_068_MergeLongbowExtractedCcsArrayElements {
@@ -652,7 +652,7 @@ workflow PB10xMasSeqSingleFlowcellv5 {
     call Utils.MergeBams as t_075_MergeCCSReclaimedArrayElementsUmiCbcPaddedCbcCorrected {
         input:
             bams = t_034_LongbowCorrectCcsReclaimedArrayElementCBCs.corrected_barcodes_bam,
-            prefix = SM + "_ccs_reclaimed_array_elements_no_ends_cbc_umi_padded"
+            prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_corrected"
     }
 
     call Utils.MergeBams as t_076_MergeLongbowPaddedCBCUncorrectableCCSReclaimedArrayElements {
@@ -664,7 +664,7 @@ workflow PB10xMasSeqSingleFlowcellv5 {
     call Utils.MergeBams as t_077_MergeLongbowPaddedCBCCorrectedCCSReclaimedArrayElementsShards {
         input:
             bams = t_035_AdjustCcsReclaimedUMIs.output_bam,
-            prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_corrected"
+            prefix = SM + "_ccs_reclaimed_array_elements_aligned_annotated_padded_CBC_corrected_UMI_adjusted"
     }
 
     call Utils.MergeBams as t_078_MergeLongbowExtractedCcsReclaimedArrayElements {
@@ -1368,6 +1368,9 @@ workflow PB10xMasSeqSingleFlowcellv5 {
 
                 t_093_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bam,
                 t_093_MergeAllAnnotatedArrayElementsWithOriginalNames.merged_bai,
+
+                t_103_LongbowCorrectUmi.failed_umi_correction_bam,
+                t_103_LongbowCorrectUmi.cached_read_loci,
             ],
             outdir = intermediate_array_elements_dir,
             keyfile = keyfile
@@ -1378,11 +1381,12 @@ workflow PB10xMasSeqSingleFlowcellv5 {
             files = [
                 t_103_LongbowCorrectUmi.umi_corrected_bam,
                 t_103_LongbowCorrectUmi.umi_corrected_bam_index,
-                t_103_LongbowCorrectUmi.failed_umi_correction_bam,
-                t_103_LongbowCorrectUmi.cached_read_loci,
 
                 t_104_GetCcsCorrectedReadsWithCorrectedUmis.bam_out,
                 t_106_GetCcsReclaimedReadsWithCorrectedUmis.bam_out,
+
+                t_105_IndexCcsReadsWithCorrectedUmis.bai,
+                t_107_IndexCcsReclaimedReadsWithCorrectedUmis.bai,
 
                 t_087_MergeAllAlignedAndFilteredArrayElements.merged_bam,
                 t_087_MergeAllAlignedAndFilteredArrayElements.merged_bai
