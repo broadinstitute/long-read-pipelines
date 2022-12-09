@@ -38,8 +38,6 @@ workflow JointCall {
         prefix:   "output prefix for joined-called BCF and GVCF files"
     }
 
-    call Utils.ComputeAllowedLocalSSD as Guess { input: intended_gb = 1 + 10*ceil(size(gvcfs, "GB")) }
-
     call Call {
         input:
             gvcfs = gvcfs,
@@ -52,8 +50,6 @@ workflow JointCall {
 
             num_cpus = num_cpus,
             prefix = prefix,
-
-            num_ssds = Guess.numb_of_local_ssd
     }
 
     call ZipAndIndex { input: joint_bcf = Call.joint_bcf, num_cpus = num_cpus, prefix = prefix }
@@ -77,12 +73,10 @@ task Call {
         Int num_cpus = 32
         String prefix = "out"
 
-        Int? num_ssds
-
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = if defined(num_ssds) then 1 + 375*select_first([num_ssds]) else 1 + 10*ceil(size(gvcfs, "GB"))
+    Int disk_size = 1 + 10*ceil(size(gvcfs, "GB"))
 
     command <<<
         set -x
@@ -118,7 +112,7 @@ task Call {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
