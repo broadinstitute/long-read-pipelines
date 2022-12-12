@@ -31,6 +31,7 @@ workflow LRJointCallGVCFs {
     # Finalize
     call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = JointCall.joint_gvcf }
     call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = JointCall.joint_gvcf_tbi }
+    call FF.FinalizeToFile as FinalizeMT { input: outdir = outdir, file = JointCall.joint_mt_tar_gz }
 
     ##########
     # store the results into designated bucket
@@ -39,5 +40,6 @@ workflow LRJointCallGVCFs {
     output {
         File joint_gvcf = FinalizeGVCF.gcs_path
         File joint_gvcf_tbi = FinalizeTBI.gcs_path
+        File joint_mt_tar_gz = FinalizeMT.gcs_path
     }
 }
