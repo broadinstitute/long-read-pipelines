@@ -3,7 +3,7 @@ version 1.0
 workflow CleanupIntermediate {
     # Ironicaly, this generates intermeidate files too, but they are tiny.
     meta {
-        description: "A workflow to clean up intermediate files from running workflows. Use at your own risk."
+        description: "A workflow to clean up intermediate files from running workflows on Terra. Use at your own risk."
     }
 
     input {
@@ -31,17 +31,15 @@ task CleanupAFolder {
     }
 
     command <<<
-        echo "started"
-        gsutil -q rm -rf gs://~{bucket_name}/~{submission_id}
+        timeout 23h gsutil -q rm -rf gs://~{bucket_name}/submissions/~{submission_id} || echo "Timed out. Please try again."
     >>>
 
     runtime {
         cpu: 1
         memory:  "4 GiB"
-        disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
+        disks: "local-disk 10 HDD"
         preemptible_tries:     1
         max_retries:           1
-        docker:"google/cloud-sdk:latest"
+        docker:"us.gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine"
     }
 }
