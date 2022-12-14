@@ -5,6 +5,7 @@ version 1.0
 ############################################################################################
 
 import "tasks/GLNexus.wdl" as GLNexus
+import "tasks/Hail.wdl" as Hail
 import "tasks/Finalize.wdl" as FF
 
 workflow LRJointCallGVCFs {
@@ -28,10 +29,21 @@ workflow LRJointCallGVCFs {
     # Gather across multiple input gVCFs
     call GLNexus.JointCall { input: gvcfs = gvcfs, bed = bed, prefix = prefix }
 
+    call Hail.ConvertToHailMT {
+        input:
+            gvcf = JointCall.joint_gvcf,
+            tbi = JointCall.joint_gvcf_tbi,
+            prefix = prefix,
+            finalize_to_dir = outdir
+    }
+
     # Finalize
     call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = JointCall.joint_gvcf }
     call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = JointCall.joint_gvcf_tbi }
-    call FF.FinalizeToFile as FinalizeMT { input: outdir = outdir, file = JointCall.joint_mt_tar_gz }
+
+    if (defined(ConvertToHailMT.joint_mt_tar_gz)) {
+        call FF.FinalizeToFile as FinalizeMT { input: outdir = outdir, file = select_first([ConvertToHailMT.joint_mt_tar_gz]) }
+    }
 
     ##########
     # store the results into designated bucket
@@ -40,6 +52,7 @@ workflow LRJointCallGVCFs {
     output {
         File joint_gvcf = FinalizeGVCF.gcs_path
         File joint_gvcf_tbi = FinalizeTBI.gcs_path
-        File joint_mt_tar_gz = FinalizeMT.gcs_path
+        File? joint_mt_tar_gz = FinalizeMT.gcs_path
+        String joint_mt = if (defined(FinalizeMT.gcs_path)) then select_first([FinalizeMT.gcs_path]) else "~{outdir}/~{prefix}.mt"
     }
 }
