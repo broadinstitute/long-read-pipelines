@@ -108,6 +108,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBMASIsoSeqDemultiplex.wdl
   testParameterFiles:
+- name: SRBamToFq
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRBamToFq.wdl
+  testParameterFiles:
 - name: LRJointCallGVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/LRJointCallGVCFs.wdl
