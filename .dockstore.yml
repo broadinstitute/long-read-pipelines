@@ -112,3 +112,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SRBamToFq.wdl
   testParameterFiles:
+- name: SRIndexBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRIndexBam.wdl
+  testParameterFiles:
