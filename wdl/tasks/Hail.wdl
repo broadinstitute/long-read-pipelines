@@ -10,7 +10,7 @@ task ConvertToHailMT {
         String reference = "GRCh38"
         String prefix = "out"
 
-        String? finalize_to_dir
+        String finalize_to_dir
 
         RuntimeAttr? runtime_attr_override
     }
@@ -30,16 +30,11 @@ task ConvertToHailMT {
 
         EOF
 
-        if [ "~{defined(finalize_to_dir)}" == "true" ]
-        then
-            gsutil -m rsync -Cr ~{prefix}.mt ~{finalize_to_dir}/~{prefix}.mt
-        else
-            tar zcvf ~{prefix}.mt.tar.gz ~{prefix}.mt
-        fi
+        gsutil -m rsync -Cr ~{prefix}.mt ~{finalize_to_dir}/~{prefix}.mt
     >>>
 
     output {
-        File? joint_mt_tar_gz = "~{prefix}.mt.tar.gz"
+        String gcs_path = "~{finalize_to_dir}/~{prefix}.mt"
     }
 
     #########################
