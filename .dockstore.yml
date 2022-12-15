@@ -116,3 +116,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SRIndexBam.wdl
   testParameterFiles:
+- name: SRWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRWholeGenome.wdl
+  testParameterFiles:
