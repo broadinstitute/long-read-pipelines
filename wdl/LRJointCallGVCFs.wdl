@@ -34,16 +34,12 @@ workflow LRJointCallGVCFs {
             gvcf = JointCall.joint_gvcf,
             tbi = JointCall.joint_gvcf_tbi,
             prefix = prefix,
-            finalize_to_dir = outdir
+            outdir = outdir
     }
 
     # Finalize
     call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = JointCall.joint_gvcf }
     call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = JointCall.joint_gvcf_tbi }
-
-#    if (defined(ConvertToHailMT.joint_mt_tar_gz)) {
-#        call FF.FinalizeToFile as FinalizeMT { input: outdir = outdir, file = select_first([ConvertToHailMT.joint_mt_tar_gz]) }
-#    }
 
     ##########
     # store the results into designated bucket
