@@ -112,6 +112,22 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SRBamToFq.wdl
   testParameterFiles:
+- name: SRIndexBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRIndexBam.wdl
+  testParameterFiles:
+- name: SRWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRWholeGenome.wdl
+  testParameterFiles:
+- name: SRFlowcell
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRFlowcell.wdl
+  testParameterFiles:
+- name: LRJointCallGVCFsWithGenomicsDB
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LRJointCallGVCFsWithGenomicsDB.wdl
+  testParameterFiles:
 - name: LRJointCallGVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/LRJointCallGVCFs.wdl
