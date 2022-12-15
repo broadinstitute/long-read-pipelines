@@ -10,7 +10,7 @@ task ConvertToHailMT {
         String reference = "GRCh38"
         String prefix = "out"
 
-        String finalize_to_dir
+        String outdir
 
         RuntimeAttr? runtime_attr_override
     }
@@ -30,11 +30,11 @@ task ConvertToHailMT {
 
         EOF
 
-        gsutil -m rsync -Cr ~{prefix}.mt ~{finalize_to_dir}/~{prefix}.mt
+        gsutil -m rsync -Cr ~{prefix}.mt ~{outdir}/~{prefix}.mt
     >>>
 
     output {
-        String gcs_path = "~{finalize_to_dir}/~{prefix}.mt"
+        String gcs_path = "~{outdir}/~{prefix}.mt"
     }
 
     #########################
