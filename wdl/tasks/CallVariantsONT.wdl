@@ -2,36 +2,23 @@ version 1.0
 
 import "Utils.wdl"
 import "VariantUtils.wdl"
-import "PBSV.wdl"
-import "Sniffles2.wdl" as Sniffles2
-import "Clair.wdl" as Clair3
 import "ONTPepper.wdl"
 
 workflow CallVariants {
     meta {
-        descrition: "A workflow for calling small and/or structural variants from an aligned ONT BAM file."
+        description: "A workflow for calling small and/or structural variants from an aligned ONT BAM file."
     }
     input {
         File bam
         File bai
-        Int minsvlen = 50
         String prefix
-        String sample_id
 
         File ref_fasta
         File ref_fasta_fai
-        File ref_dict
 
         String prefix
 
-        Boolean call_svs
-        Boolean fast_less_sensitive_sv
-        File? tandem_repeat_bed
-
         Boolean call_small_variants
-        Boolean call_small_vars_on_mitochondria
-        File? sites_vcf
-        File? sites_vcf_tbi
 
         Boolean run_dv_pepper_analysis
         Int? dvp_threads
@@ -41,12 +28,6 @@ workflow CallVariants {
     }
 
     parameter_meta {
-        fast_less_sensitive_sv:  "to trade less sensitive SV calling for faster speed"
-        tandem_repeat_bed:       "BED file containing TRF finder for better PBSV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
-        minsvlen :      "Minimum SV length in bp (default: 50)"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
-        sites_vcf:     "for use with Clair"
-        sites_vcf_tbi: "for use with Clair"
 
         run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
@@ -61,55 +42,6 @@ workflow CallVariants {
 
     # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {
-        # Scatter by chromosome
-        Array[String] default_filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
-        Array[String] use_filter = if (call_small_vars_on_mitochondria) then default_filter else flatten([['chrM'],default_filter])
-        call Utils.MakeChrIntervalList as SmallVariantsScatterPrepp {
-            input:
-                ref_dict = ref_dict,
-                filter = use_filter
-        }
-
-        scatter (c in SmallVariantsScatterPrepp.chrs) {
-            String chr = c[0]
-
-            call Utils.SubsetBam as SmallVariantsScatter {
-                input:
-                    bam = bam,
-                    bai = bai,
-                    locus = chr
-            }
-
-            call Clair3.Clair {
-                input:
-                    bam = SmallVariantsScatter.subset_bam,
-                    bai = SmallVariantsScatter.subset_bai,
-
-                    ref_fasta     = ref_fasta,
-                    ref_fasta_fai = ref_fasta_fai,
-
-                    sites_vcf = sites_vcf,
-                    sites_vcf_tbi = sites_vcf_tbi,
-
-                    preset = "ONT",
-                    zones = arbitrary.zones
-            }
-        }
-
-        call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
-            input:
-                vcfs = Clair.vcf,
-                ref_fasta_fai = ref_fasta_fai,
-                prefix = prefix + ".clair"
-        }
-
-        call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
-            input:
-                vcfs = Clair.gvcf,
-                ref_fasta_fai = ref_fasta_fai,
-                prefix = prefix + ".clair.g"
-        }
-
         # size-balanced scatter
         if (run_dv_pepper_analysis) {
             File scatter_interval_list_ids = select_first([ref_scatter_interval_list_ids])
@@ -170,103 +102,8 @@ workflow CallVariants {
             }
         }
     }
-    ######################################################################
-    # Block for SV handling
-    ######################################################################
-    if (call_svs) {
-        if (fast_less_sensitive_sv) {
 
-            call Utils.MakeChrIntervalList {
-            input:
-                ref_dict = ref_dict,
-                filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
-            }
-
-            scatter (c in MakeChrIntervalList.chrs) {
-                String contig = c[0]
-
-                call Utils.SubsetBam {
-                    input:
-                        bam = bam,
-                        bai = bai,
-                        locus = contig
-                }
-
-                call PBSV.RunPBSV {
-                    input:
-                        bam = SubsetBam.subset_bam,
-                        bai = SubsetBam.subset_bai,
-                        ref_fasta = ref_fasta,
-                        ref_fasta_fai = ref_fasta_fai,
-                        prefix = prefix,
-                        tandem_repeat_bed = tandem_repeat_bed,
-                        is_ccs = false,
-                        zones = arbitrary.zones
-                }
-
-                call Utils.InferSampleName {
-                    input:
-                        bam = SubsetBam.subset_bam,
-                        bai = SubsetBam.subset_bai
-                }
-
-            }
-
-            call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
-                input:
-                    vcfs     = RunPBSV.vcf,
-                    ref_dict = ref_dict,
-                    prefix   = prefix + ".pbsv"
-            }
-
-        }
-
-        if (!fast_less_sensitive_sv) {
-
-            call PBSV.RunPBSV as PBSVslow {
-                input:
-                    bam = bam,
-                    bai = bai,
-                    ref_fasta = ref_fasta,
-                    ref_fasta_fai = ref_fasta_fai,
-                    prefix = prefix,
-                    tandem_repeat_bed = tandem_repeat_bed,
-                    is_ccs = false,
-                    zones = arbitrary.zones
-            }
-            call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
-
-            call Sniffles2.SampleSV as Sniffles2SV {
-                input:
-                    bam    = bam,
-                    bai    = bai,
-                    minsvlen = minsvlen,
-                    sample_id = sample_id,
-                    prefix = prefix
-            }
-
-            call VariantUtils.ZipAndIndexVCF as ZipAndIndexSnifflesVCF {
-                input:
-                    vcf = Sniffles2SV.vcf
-            }
-
-            call Utils.InferSampleName as infer {input: bam = bam, bai = bai}
-        }
-    }
-
-    output {
-        File? sniffles_vcf = ZipAndIndexSnifflesVCF.vcfgz
-        File? sniffles_tbi = ZipAndIndexSnifflesVCF.tbi
-
-        File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
-        File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
-
-        File? clair_vcf = MergeAndSortClairVCFs.vcf
-        File? clair_tbi = MergeAndSortClairVCFs.tbi
-
-        File? clair_gvcf = MergeAndSortClair_gVCFs.vcf
-        File? clair_gtbi = MergeAndSortClair_gVCFs.tbi
-
+  output {
         File? dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
         File? dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
         File? dvp_g_vcf = MergeDeepVariantGVCFs.vcf
