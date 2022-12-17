@@ -15,7 +15,7 @@ task ConvertToHailMT {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 2*ceil(size(gvcf, "GB"))
+    Int disk_size = 1 + 5*ceil(size(gvcf, "GB"))
 
     command <<<
         set -x
