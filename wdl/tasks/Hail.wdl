@@ -8,6 +8,8 @@ task ConvertToHailMT {
         File tbi
 
         String reference = "GRCh38"
+        String? ref_fasta
+        String? ref_fai
         String prefix = "out"
 
         String outdir
@@ -23,7 +25,11 @@ task ConvertToHailMT {
         python3 <<EOF
 
         import hail as hl
-        hl.init(default_reference='~{reference}', idempotent=True)
+
+        if '~{defined(ref_fasta)}' == 'true':
+            ref = hl.ReferenceGenome.from_fasta_file('~{reference}', '~{ref_fasta}', '~{ref_fai}')
+        else:
+            hl.init(default_reference='~{reference}', idempotent=True)
 
         callset = hl.import_vcf('~{gvcf}', array_elements_required=False)
         callset.write('~{prefix}.mt', overwrite=True)
