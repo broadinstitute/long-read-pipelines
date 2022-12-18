@@ -17,7 +17,7 @@ task ConvertToHailMT {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 5*ceil(size(gvcf, "GB"))
+    Int disk_size = 1 + 3*ceil(size(gvcf, "GB"))
 
     command <<<
         set -x
@@ -25,8 +25,6 @@ task ConvertToHailMT {
         python3 <<EOF
 
         import hail as hl
-
-        print('~{defined(ref_fasta)}')
 
         if '~{defined(ref_fasta)}' == 'true':
             ref = hl.ReferenceGenome.from_fasta_file('~{reference}', '~{ref_fasta}', '~{ref_fai}')
@@ -49,7 +47,7 @@ task ConvertToHailMT {
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             64,
-        disk_gb:            10,
+        disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
