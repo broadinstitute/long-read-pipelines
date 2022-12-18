@@ -26,10 +26,13 @@ task ConvertToHailMT {
 
         import hail as hl
 
+        print('~{defined(ref_fasta)}')
+
         if '~{defined(ref_fasta)}' == 'true':
             ref = hl.ReferenceGenome.from_fasta_file('~{reference}', '~{ref_fasta}', '~{ref_fai}')
+            print("Hello!")
         else:
-            hl.init(default_reference='~{reference}', idempotent=True)
+            hl.init(default_reference='~{reference}')
 
         callset = hl.import_vcf('~{gvcf}', array_elements_required=False)
         callset.write('~{prefix}.mt', overwrite=True)
