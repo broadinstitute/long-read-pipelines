@@ -25,14 +25,19 @@ task ConvertToHailMT {
         python3 <<EOF
 
         import hail as hl
+        hl.init(default_reference='GRCh38')
 
-        if '~{defined(ref_fasta)}' == 'true':
+        if '~{defined(ref_fasta)}' == 'true' and '~{defined(ref_fai)}' == 'true':
             ref = hl.ReferenceGenome.from_fasta_file('~{reference}', '~{ref_fasta}', '~{ref_fai}')
 
-        hl.init(default_reference='~{reference}')
+        callset = hl.import_vcf(
+            '~{gvcf}',
+            array_elements_required=False,
+            force_bgz=True,
+            reference_genome='~{reference}'
+        )
 
-        callset = hl.import_vcf('~{gvcf}', array_elements_required=False)
-        callset.write('~{prefix}.mt', overwrite=True)
+        callset.write('~{prefix}.mt')
 
         EOF
 
