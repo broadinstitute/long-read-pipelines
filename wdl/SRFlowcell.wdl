@@ -24,7 +24,6 @@ workflow SRFlowcell {
 
         File ref_map_file
 
-        Int? num_shards
         String dir_prefix
 
         String gcs_out_root_dir
@@ -96,25 +95,26 @@ workflow SRFlowcell {
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
             ref_dict = ref_map["dict"],
+            prefix = SM + ".aligned.merged"
     }
 
     # Mark Duplicates
     call SRUTIL.MarkDuplicates as MarkDuplicates {
         input:
             input_bam = MergeBamAlignment.bam,
-            prefix = SM + ".aligned.markDuplicates."
+            prefix = SM + ".aligned.merged.markDuplicates."
     }
 
     # Sort Duplicate Marked Bam:
     call Utils.SortBam as SortAlignedDuplicateMarkedBam {
         input:
             input_bam = MarkDuplicates.bam,
-            prefix = SM + ".aligned.markDuplicates.sorted"
+            prefix = SM + ".aligned.merged.markDuplicates.sorted"
     }
 
 #    Fingerprinting?
-#
-    # BQSR
+
+    # Recalibrate Base Scores:
     call SRUTIL.BaseRecalibrator as BaseRecalibrator {
         input:
             input_bam = SortAlignedDuplicateMarkedBam.sorted_bam,
@@ -125,11 +125,80 @@ workflow SRFlowcell {
             ref_dict = ref_map["dict"],
 
             known_sites_vcf = ref_map["known_sites_vcf"],
-            known_sites_index = ref_map["known_sites_vcf_idx"],
+            known_sites_index = ref_map["known_sites_index"],
 
             prefix = SM + ".baseRecalibratorReport"
     }
 
+    call SRUTIL.ApplyBQSR as ApplyBQSR {
+        input:
+            input_bam = SortAlignedDuplicateMarkedBam.sorted_bam,
+            input_bam_index = SortAlignedDuplicateMarkedBam.sorted_bai,
+
+            ref_fasta = ref_map["fasta"],
+            ref_fasta_index = ref_map["fai"],
+            ref_dict = ref_map["dict"],
+
+            recalibration_report = BaseRecalibrator.recalibration_report,
+
+            prefix = SM + ".aligned.merged.markDuplicates.sorted.BQSR"
+    }
+
+    ############################################
+    #      _____ _             _ _
+    #     |  ___(_)_ __   __ _| (_)_______
+    #     | |_  | | '_ \ / _` | | |_  / _ \
+    #     |  _| | | | | | (_| | | |/ /  __/
+    #     |_|   |_|_| |_|\__,_|_|_/___\___|
+    #
+    ############################################
+    File keyfile = BaseRecalibrator.recalibration_report
+    String reads_dir = outdir + "/reads"
+    String metrics_dir = outdir + "/metrics"
+
+    # Finalize our reads first:
+    call FF.FinalizeToDir as FinalizeUnalignedReads {
+        input:
+            outdir = reads_dir + "/unaligned",
+            files =
+            [
+                bam,
+                bai,
+                Bam2Fastq.fastq
+            ],
+            keyfile = keyfile
+    }
+
+    call FF.FinalizeToDir as FinalizeAlignedReads {
+        input:
+            outdir = reads_dir + "/aligned",
+            files =
+            [
+                AlignReads.bam,
+                AlignReads.bai,
+                MergeBamAlignment.bam,
+                MarkDuplicates.bam,
+                SortAlignedDuplicateMarkedBam.sorted_bam,
+                SortAlignedDuplicateMarkedBam.sorted_bai,
+                ApplyBQSR.recalibrated_bam,
+                ApplyBQSR.recalibrated_bai,
+            ],
+            keyfile = keyfile
+    }
+
+    # Finalize our metrics:
+    call FF.FinalizeToDir as FinalizeMetrics {
+        input:
+            outdir = metrics_dir,
+            files =
+            [
+                MarkDuplicates.metrics,
+                BaseRecalibrator.recalibration_report,
+                ApplyBQSR.recalibrated_bam_checksum,
+            ],
+            keyfile = keyfile
+    }
+    
     ############################################
     #      ___        _               _
     #     / _ \ _   _| |_ _ __  _   _| |_

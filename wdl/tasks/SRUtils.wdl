@@ -378,7 +378,7 @@ task BaseRecalibrator {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -392,6 +392,85 @@ task BaseRecalibrator {
     }
     output {
         File recalibration_report = "~{prefix}.txt"
+    }
+}
+
+task ApplyBQSR {
+    input {
+        File input_bam
+        File input_bam_index
+
+        File ref_dict
+        File ref_fasta
+        File ref_fasta_index
+
+        File recalibration_report
+
+        Boolean bin_base_qualities = true
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int compression_level = 2
+    Int java_memory_size_mb = 30768
+
+    parameter_meta {
+        input_bam: {
+            localization_optional: true
+        }
+    }
+
+    Int disk_size = 1 + 4*ceil(size(input_bam, "GB"))
+                      + 4*ceil(size(input_bam_index, "GB"))
+                      + 2*ceil(size(ref_dict, "GB"))
+                      + 2*ceil(size(ref_fasta, "GB"))
+                      + 2*ceil(size(ref_fasta_index, "GB"))
+                      + 2*ceil(size(recalibration_report, "GB"))
+
+    command {
+        gatk --java-options "-XX:+PrintFlagsFinal -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps \
+            -XX:+PrintGCDetails -Xloggc:gc_log.log \
+            -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=~{compression_level} -Xms8192m -Xmx~{java_memory_size_mb}m" \
+            ApplyBQSR \
+            --create-output-bam-md5 \
+            --add-output-sam-program-record \
+            -R ~{ref_fasta} \
+            -I ~{input_bam} \
+            --use-original-qualities \
+            -O ~{prefix}.bam \
+            -bqsr ~{recalibration_report} \
+            ~{true='--static-quantized-quals 10' false='' bin_base_qualities} \
+            ~{true='--static-quantized-quals 20' false='' bin_base_qualities} \
+            ~{true='--static-quantized-quals 30' false='' bin_base_qualities} \
+
+
+    }
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          16,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+    output {
+        File recalibrated_bam = "~{prefix}.bam"
+        File recalibrated_bai = "~{prefix}.bam.bai"
+        File recalibrated_bam_checksum = "~{prefix}.bam.md5"
     }
 }
 
