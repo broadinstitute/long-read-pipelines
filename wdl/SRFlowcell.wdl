@@ -48,6 +48,15 @@ workflow SRFlowcell {
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
+    ####################################
+    #     _____         _
+    #    |_   _|_ _ ___| | _____
+    #      | |/ _` / __| |/ / __|
+    #      | | (_| \__ \   <\__ \
+    #      |_|\__,_|___/_|\_\___/
+    #
+    ####################################
+
     # Get ref info:
     Map[String, String] ref_map = read_map(ref_map_file)
 
@@ -76,7 +85,7 @@ workflow SRFlowcell {
             ref_ann = ref_map["ann"],
             ref_bwt = ref_map["bwt"],
             ref_pac = ref_map["pac"],
-            prefix = SM + ".sorted"
+            prefix = SM + ".aligned"
     }
 
     # Merge aligned reads and unaligned reads:
@@ -89,9 +98,47 @@ workflow SRFlowcell {
             ref_dict = ref_map["dict"],
     }
 
-#    Mark Duplicates
-#
+    # Mark Duplicates
+    call SRUTIL.MarkDuplicates as MarkDuplicates {
+        input:
+            input_bam = MergeBamAlignment.bam,
+            prefix = SM + ".aligned.markDuplicates."
+    }
+
+    # Sort Duplicate Marked Bam:
+    call Utils.SortBam as SortAlignedDuplicateMarkedBam {
+        input:
+            input_bam = MarkDuplicates.bam,
+            prefix = SM + ".aligned.markDuplicates.sorted"
+    }
+
 #    Fingerprinting?
 #
-#    BQSR
+    # BQSR
+    call SRUTIL.BaseRecalibrator as BaseRecalibrator {
+        input:
+            input_bam = SortAlignedDuplicateMarkedBam.sorted_bam,
+            input_bam_index = SortAlignedDuplicateMarkedBam.sorted_bai,
+
+            ref_fasta = ref_map["fasta"],
+            ref_fasta_index = ref_map["fai"],
+            ref_dict = ref_map["dict"],
+
+            known_sites_vcf = ref_map["known_sites_vcf"],
+            known_sites_index = ref_map["known_sites_vcf_idx"],
+
+            prefix = SM + ".baseRecalibratorReport"
+    }
+
+    ############################################
+    #      ___        _               _
+    #     / _ \ _   _| |_ _ __  _   _| |_
+    #    | | | | | | | __| '_ \| | | | __|
+    #    | |_| | |_| | |_| |_) | |_| | |_
+    #     \___/ \__,_|\__| .__/ \__,_|\__|
+    #                    |_|
+    ############################################
+    output {
+
+    }
 }

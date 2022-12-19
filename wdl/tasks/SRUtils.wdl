@@ -64,7 +64,7 @@ task Bam2FqPicard {
     command <<<
         set -euxo pipefail
 
-        java -Xms8192m -Xmx8192m -jar /usr/gitc/picard.jar \
+        java -Xms8192m -Xmx30768m -jar /usr/picard/picard.jar \
             SamToFastq \
             INPUT=~{bam} \
             FASTQ=~{prefix}.fastq \
@@ -84,7 +84,7 @@ task Bam2FqPicard {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "broadinstitute/picard:2.27.5"
+        docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -204,7 +204,7 @@ task MergeBamAlignment {
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
         let np=${np}-1
 
-        java -Dsamjdk.compression_level=2 -Xms8192m -Xmx8192m -jar /usr/gitc/picard.jar \
+        java -Dsamjdk.compression_level=2 -Xms8192m -Xmx30768m -jar /usr/picard/picard.jar \
             MergeBamAlignment \
             VALIDATION_STRINGENCY=SILENT \
             EXPECTED_ORIENTATIONS=FR \
@@ -231,13 +231,10 @@ task MergeBamAlignment {
             ALIGNER_PROPER_PAIR_FLAGS=true \
             UNMAP_CONTAMINANT_READS=true \
             ADD_PG_TAG_TO_READS=false
-
-        samtools index -@${np} ~{prefix}.bam
     >>>
 
     output {
         File bam = "~{prefix}.bam"
-        File bai = "~{prefix}.bam.bai"
     }
 
     #########################
@@ -248,7 +245,7 @@ task MergeBamAlignment {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "broadinstitute/picard:2.27.5"
+        docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -261,3 +258,140 @@ task MergeBamAlignment {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task MarkDuplicates {
+    input {
+        File input_bam
+
+        String prefix
+
+        # The program default for READ_NAME_REGEX is appropriate in nearly every case.
+        # Sometimes we wish to supply "null" in order to turn off optical duplicate detection
+        # This can be desirable if you don't mind the estimated library size being wrong and optical duplicate detection is taking >7 days and failing
+        String? read_name_regex
+
+        Float? sorting_collection_size_ratio
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int compression_level = 2
+    Int java_memory_size_mb = 30768
+
+    Int disk_size = 1 + 4*ceil(size(input_bam, "GB"))
+
+    # Task is assuming query-sorted input so that the Secondary and Supplementary reads get marked correctly
+    # This works because the output of BWA is query-grouped and therefore, so is the output of MergeBamAlignment.
+    # While query-grouped isn't actually query-sorted, it's good enough for MarkDuplicates with ASSUME_SORT_ORDER="queryname"
+
+    command {
+        java -Dsamjdk.compression_level=~{compression_level} -Xms~{java_memory_size_mb}m -jar /usr/picard/picard.jar \
+        MarkDuplicates \
+        INPUT=~{input_bam} \
+        OUTPUT=~{prefix}.bam \
+        METRICS_FILE=~{prefix}.metrics.txt \
+        VALIDATION_STRINGENCY=SILENT \
+        ~{"READ_NAME_REGEX=" + read_name_regex} \
+        ~{"SORTING_COLLECTION_SIZE_RATIO=" + sorting_collection_size_ratio} \
+        OPTICAL_DUPLICATE_PIXEL_DISTANCE=2500 \
+        ASSUME_SORT_ORDER="queryname" \
+        CLEAR_DT="false" \
+        ADD_PG_TAG_TO_READS=false
+    }
+
+    output {
+        File bam = "~{prefix}.bam"
+        File metrics = "~{prefix}.metrics.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          16,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+
+# Generate Base Quality Score Recalibration (BQSR) model
+task BaseRecalibrator {
+    input {
+        File input_bam
+        File input_bam_index
+
+        File ref_dict
+        File ref_fasta
+        File ref_fasta_index
+
+        File known_sites_vcf
+        File known_sites_index
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 4*ceil(size(input_bam, "GB"))
+                      + 4*ceil(size(input_bam_index, "GB"))
+                      + 2*ceil(size(ref_dict, "GB"))
+                      + 2*ceil(size(ref_fasta, "GB"))
+                      + 2*ceil(size(ref_fasta_index, "GB"))
+                      + 2*ceil(size(known_sites_vcf, "GB"))
+                      + 2*ceil(size(known_sites_index, "GB"))
+
+    parameter_meta {
+        input_bam: {
+            localization_optional: true
+        }
+    }
+
+    command {
+        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
+            -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCDetails \
+            -Xloggc:gc_log.log -Xms5000m -Xmx5500m" \
+            BaseRecalibrator \
+            -R ~{ref_fasta} \
+            -I ~{input_bam} \
+            --use-original-qualities \
+            -O ~{prefix}.txt \
+            --known-sites ~{known_sites_vcf}
+    }
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          16,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+    output {
+        File recalibration_report = "~{prefix}.txt"
+    }
+}
+
