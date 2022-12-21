@@ -59,7 +59,7 @@ task DownloadFiles {
         Boolean prepend_dir_name
         String gcs_out_root_dir
 
-        Int disk_size_gb = 10
+        Int disk_size_gb = 100
         Int num_cpus = 4
 
         RuntimeAttr? runtime_attr_override
