@@ -60,7 +60,7 @@ task DownloadFiles {
         String gcs_out_root_dir
 
         Int disk_size_gb = 100
-        Int num_cpus = 4
+        Int num_cpus = 8
 
         RuntimeAttr? runtime_attr_override
     }
@@ -76,11 +76,13 @@ task DownloadFiles {
             if gsutil -q stat "${gcsdir}/${sra_id}_*fastq.gz" ; then
                 echo "${gcsdir}/${sra_id}_*fastq.gz already exists."
             else
-                (fasterq-dump --progress --threads ~{num_cpus} $sra_id && \
-                    (for fastq in *.fastq; do pigz $fastq; done) && \
-                    gsutil cp *.gz "$gcsdir/") || RET=1
-
-                rm -f *.fastq.gz
+                if fasterq-dump --threads ~{num_cpus} $sra_id ; then
+                    for fastq in *.fastq; do pigz $fastq; done
+                    gsutil -m cp *.gz "$gcsdir/"
+                    rm -f *.gz
+                else
+                    RET=1
+                fi
             fi
         done
 
@@ -99,7 +101,7 @@ task DownloadFiles {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

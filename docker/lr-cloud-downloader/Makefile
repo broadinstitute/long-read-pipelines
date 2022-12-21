@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-cloud-downloader
-VERSION = 0.2.4
+VERSION = 0.2.5
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
