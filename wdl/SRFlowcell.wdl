@@ -60,22 +60,29 @@ workflow SRFlowcell {
     Map[String, String] ref_map = read_map(ref_map_file)
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
-    call Utils.GetCurrentTimestampString as WdlExecutionStartTimestamp { input: }
+    call Utils.GetCurrentTimestampString as t_001_WdlExecutionStartTimestamp { input: }
 
     # Create an outdir:
-    String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}/" + WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}"
+    String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}"
+
+    # Convert the given bam to a uBAM (needed for previous aligned data):
+    call SRUTIL.RevertSam as t_002_RevertSam {
+        input:
+            input_bam = bam,
+            prefix = SM + ".revertSam"
+    }
 
     # Convert input SAM/BAM to FASTQ:
-    call SRUTIL.Bam2FqPicard as Bam2Fastq {
+    call SRUTIL.Bam2FqPicard as t_003_Bam2Fastq {
         input:
-            bam = bam,
+            bam = t_002_RevertSam.bam,
             prefix = SM
     }
 
     # Align reads to reference with BWA-MEM2:
-    call SRUTIL.BwaMem2 as AlignReads {
+    call SRUTIL.BwaMem2 as t_004_AlignReads {
         input:
-            name_sorted_fastq = Bam2Fastq.fastq,
+            name_sorted_fastq = t_003_Bam2Fastq.fastq,
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
             ref_dict = ref_map["dict"],
@@ -84,41 +91,50 @@ workflow SRFlowcell {
             ref_ann = ref_map["ann"],
             ref_bwt = ref_map["bwt"],
             ref_pac = ref_map["pac"],
+            mark_short_splits_as_secondary = true,
             prefix = SM + ".aligned"
     }
 
     # Merge aligned reads and unaligned reads:
-    call SRUTIL.MergeBamAlignment as MergeBamAlignment {
+    call SRUTIL.MergeBamAlignment as t_005_MergeBamAlignment {
         input:
-            aligned_bam = AlignReads.bam,
-            unaligned_bam = bam,
+            aligned_bam = t_004_AlignReads.bam,
+            unaligned_bam = t_002_RevertSam.bam,
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
             ref_dict = ref_map["dict"],
             prefix = SM + ".aligned.merged"
     }
 
+    # This was for GATK 3.  We probably don't need it now.
+#    # Fix mates:
+#    call SRUTIL.FixMate as t_006_FixMate {
+#        input:
+#            input_bam = t_005_MergeBamAlignment.bam,
+#            prefix = SM + ".aligned.merged.fixmates"
+#    }
+
     # Mark Duplicates
-    call SRUTIL.MarkDuplicates as MarkDuplicates {
+    call SRUTIL.MarkDuplicates as t_006_MarkDuplicates {
         input:
-            input_bam = MergeBamAlignment.bam,
-            prefix = SM + ".aligned.merged.markDuplicates."
+            input_bam = t_005_MergeBamAlignment.bam,
+            prefix = SM + ".aligned.merged.markDuplicates"
     }
 
     # Sort Duplicate Marked Bam:
-    call Utils.SortBam as SortAlignedDuplicateMarkedBam {
+    call Utils.SortBam as t_007_SortAlignedDuplicateMarkedBam {
         input:
-            input_bam = MarkDuplicates.bam,
+            input_bam = t_006_MarkDuplicates.bam,
             prefix = SM + ".aligned.merged.markDuplicates.sorted"
     }
 
 #    Fingerprinting?
 
     # Recalibrate Base Scores:
-    call SRUTIL.BaseRecalibrator as BaseRecalibrator {
+    call SRUTIL.BaseRecalibrator as t_008_BaseRecalibrator {
         input:
-            input_bam = SortAlignedDuplicateMarkedBam.sorted_bam,
-            input_bam_index = SortAlignedDuplicateMarkedBam.sorted_bai,
+            input_bam = t_007_SortAlignedDuplicateMarkedBam.sorted_bam,
+            input_bam_index = t_007_SortAlignedDuplicateMarkedBam.sorted_bai,
 
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
@@ -130,18 +146,32 @@ workflow SRFlowcell {
             prefix = SM + ".baseRecalibratorReport"
     }
 
-    call SRUTIL.ApplyBQSR as ApplyBQSR {
+    call SRUTIL.ApplyBQSR as t_009_ApplyBQSR {
         input:
-            input_bam = SortAlignedDuplicateMarkedBam.sorted_bam,
-            input_bam_index = SortAlignedDuplicateMarkedBam.sorted_bai,
+            input_bam = t_007_SortAlignedDuplicateMarkedBam.sorted_bam,
+            input_bam_index = t_007_SortAlignedDuplicateMarkedBam.sorted_bai,
 
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
             ref_dict = ref_map["dict"],
 
-            recalibration_report = BaseRecalibrator.recalibration_report,
+            recalibration_report = t_008_BaseRecalibrator.recalibration_report,
 
             prefix = SM + ".aligned.merged.markDuplicates.sorted.BQSR"
+    }
+
+    #############################################
+    #      __  __      _        _
+    #     |  \/  | ___| |_ _ __(_) ___ ___
+    #     | |\/| |/ _ \ __| '__| |/ __/ __|
+    #     | |  | |  __/ |_| |  | | (__\__ \
+    #     |_|  |_|\___|\__|_|  |_|\___|___/
+    #
+    #############################################
+
+    call AM.SamStats as t_010_SamStats {
+        input:
+            bam = t_009_ApplyBQSR.recalibrated_bam
     }
 
     ############################################
@@ -152,53 +182,52 @@ workflow SRFlowcell {
     #     |_|   |_|_| |_|\__,_|_|_/___\___|
     #
     ############################################
-    File keyfile = BaseRecalibrator.recalibration_report
+    File keyfile = t_010_SamStats.sam_stats
     String reads_dir = outdir + "/reads"
     String metrics_dir = outdir + "/metrics"
 
     # Finalize our reads first:
-    call FF.FinalizeToDir as FinalizeUnalignedReads {
+    call FF.FinalizeToDir as t_011_FinalizeUnalignedReads {
         input:
             outdir = reads_dir + "/unaligned",
             files =
             [
                 bam,
                 bai,
-                Bam2Fastq.fastq
+                t_003_Bam2Fastq.fastq
             ],
             keyfile = keyfile
     }
 
-    call FF.FinalizeToDir as FinalizeAlignedReads {
+    call FF.FinalizeToDir as t_012_FinalizeAlignedReads {
         input:
             outdir = reads_dir + "/aligned",
             files =
             [
-                AlignReads.bam,
-                AlignReads.bai,
-                MergeBamAlignment.bam,
-                MarkDuplicates.bam,
-                SortAlignedDuplicateMarkedBam.sorted_bam,
-                SortAlignedDuplicateMarkedBam.sorted_bai,
-                ApplyBQSR.recalibrated_bam,
-                ApplyBQSR.recalibrated_bai,
+                t_004_AlignReads.bam,
+                t_005_MergeBamAlignment.bam,
+                t_006_MarkDuplicates.bam,
+                t_007_SortAlignedDuplicateMarkedBam.sorted_bam,
+                t_007_SortAlignedDuplicateMarkedBam.sorted_bai,
+                t_009_ApplyBQSR.recalibrated_bam,
+                t_009_ApplyBQSR.recalibrated_bai,
             ],
             keyfile = keyfile
     }
 
     # Finalize our metrics:
-    call FF.FinalizeToDir as FinalizeMetrics {
+    call FF.FinalizeToDir as t_013_FinalizeMetrics {
         input:
             outdir = metrics_dir,
             files =
             [
-                MarkDuplicates.metrics,
-                BaseRecalibrator.recalibration_report,
-                ApplyBQSR.recalibrated_bam_checksum,
+                t_006_MarkDuplicates.metrics,
+                t_008_BaseRecalibrator.recalibration_report,
+                t_010_SamStats.sam_stats
             ],
             keyfile = keyfile
     }
-    
+
     ############################################
     #      ___        _               _
     #     / _ \ _   _| |_ _ __  _   _| |_

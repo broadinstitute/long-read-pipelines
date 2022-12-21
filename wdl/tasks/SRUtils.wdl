@@ -51,6 +51,48 @@ task BamToFq {
     }
 }
 
+task FixMate {
+    input {
+        File input_bam
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 4*ceil(size(input_bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools fixmate ~{input_bam} ~{prefix}.bam
+    >>>
+
+    output {
+        File bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task Bam2FqPicard {
     input {
         File bam
@@ -114,6 +156,8 @@ task BwaMem2 {
 
         String prefix = "out"
 
+        Boolean mark_short_splits_as_secondary = false
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -132,7 +176,9 @@ task BwaMem2 {
 
         # Make sure we use all our proocesors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-        let np=${np}-1
+        if [[ ${np} -gt 2 ]] ; then
+            let np=${np}-1
+        fi
 
         # Breakdown of the arguments:
         # -K INT        process INT input bases in each batch regardless of nThreads (for reproducibility) []
@@ -144,15 +190,20 @@ task BwaMem2 {
         # -t INT        number of threads [1]
         # -Y            use soft clipping for supplementary alignments
 
-        bwa-mem2 mem -K 100000000 -p -v 3 -t ${np} -Y ~{ref_fasta} ~{name_sorted_fastq} | \
-            samtools view -1 - > ~{prefix}.bam
-
-        samtools index -@${np} ~{prefix}.bam
+        bwa-mem2 mem \
+            -K 100000000 \
+            -p \
+            -v 3 \
+            -t ${np} \
+            -Y \
+            ~{true='-M' false="" mark_short_splits_as_secondary} \
+            ~{ref_fasta} \
+            ~{name_sorted_fastq} | \
+        samtools view -1 - > ~{prefix}.bam
     >>>
 
     output {
         File bam = "~{prefix}.bam"
-        File bai = "~{prefix}.bam.bai"
     }
 
     #########################
@@ -223,8 +274,8 @@ task MergeBamAlignment {
             ADD_MATE_CIGAR=true \
             MAX_INSERTIONS_OR_DELETIONS=-1 \
             PRIMARY_ALIGNMENT_STRATEGY=MostDistant \
-            PROGRAM_RECORD_ID="bwamem" \
-            PROGRAM_GROUP_VERSION="${BWA_VERSION}" \
+            PROGRAM_RECORD_ID="bwa-mem2" \
+            PROGRAM_GROUP_VERSION="2.2.1" \
             PROGRAM_GROUP_COMMAND_LINE="bwa-mem2 mem -K 100000000 -p -v 3 -t 15 -Y" \
             PROGRAM_GROUP_NAME="bwa-mem2" \
             UNMAPPED_READ_STRATEGY=COPY_TO_TAG \
@@ -429,7 +480,7 @@ task ApplyBQSR {
                       + 2*ceil(size(ref_fasta_index, "GB"))
                       + 2*ceil(size(recalibration_report, "GB"))
 
-    command {
+    command <<<
         gatk --java-options "-XX:+PrintFlagsFinal -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps \
             -XX:+PrintGCDetails -Xloggc:gc_log.log \
             -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=~{compression_level} -Xms8192m -Xmx~{java_memory_size_mb}m" \
@@ -445,8 +496,11 @@ task ApplyBQSR {
             ~{true='--static-quantized-quals 20' false='' bin_base_qualities} \
             ~{true='--static-quantized-quals 30' false='' bin_base_qualities} \
 
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
-    }
+        samtools index -@${np} ~{prefix}.bam
+    >>>
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
@@ -470,7 +524,64 @@ task ApplyBQSR {
     output {
         File recalibrated_bam = "~{prefix}.bam"
         File recalibrated_bai = "~{prefix}.bam.bai"
-        File recalibrated_bam_checksum = "~{prefix}.bam.md5"
     }
 }
 
+task RevertSam {
+    input {
+        File input_bam
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int compression_level = 2
+    Int java_memory_size_mb = 30768
+
+    Int disk_size = 1 + 4*ceil(size(input_bam, "GB"))
+
+    # As documented on the GATK website:
+    # https://gatk.broadinstitute.org/hc/en-us/articles/4403687183515--How-to-Generate-an-unmapped-BAM-from-FASTQ-or-aligned-BAM
+    command {
+        java -Dsamjdk.compression_level=~{compression_level} -Xms~{java_memory_size_mb}m -jar /usr/picard/picard.jar \
+        RevertSam \
+        INPUT=~{input_bam} \
+        OUTPUT=~{prefix}.bam \
+        SANITIZE=true \
+        MAX_DISCARD_FRACTION=0.005 \
+        ATTRIBUTE_TO_CLEAR=XT \
+        ATTRIBUTE_TO_CLEAR=XN \
+        ATTRIBUTE_TO_CLEAR=AS \
+        ATTRIBUTE_TO_CLEAR=OC \
+        ATTRIBUTE_TO_CLEAR=OP \
+        SORT_ORDER=queryname \
+        RESTORE_ORIGINAL_QUALITIES=true \
+        REMOVE_DUPLICATE_INFORMATION=true \
+        REMOVE_ALIGNMENT_INFORMATION=true
+    }
+
+    output {
+        File bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          16,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

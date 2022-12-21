@@ -170,6 +170,8 @@ task SortBam {
         prefix:    "[default-valued] prefix for output BAM"
     }
 
+    Int disk_size = 10 + 10*ceil(size(input_bam, "GB"))
+
     command <<<
         set -euxo pipefail
 
@@ -188,7 +190,7 @@ task SortBam {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             4,
-        disk_gb:            10,
+        disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        1,
