@@ -88,7 +88,6 @@ task Call {
         ulimit -Sn 65536
 
         glnexus_cli \
-            --dir /mnt/tmp/GLnexus.DB \
             --config ~{config} \
             ~{if more_PL then "--more-PL" else ""} \
             ~{if squeeze then "--squeeze" else ""} \
