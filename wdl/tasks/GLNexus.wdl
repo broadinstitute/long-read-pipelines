@@ -43,7 +43,7 @@ workflow JointCall {
         prefix:   "output prefix for joined-called BCF and GVCF files"
     }
 
-    Int cpus_exp = if defined(num_cpus) then num_cpus else 2*length(gvcfs)
+    Int cpus_exp = if defined(num_cpus) then select_first([num_cpus]) else 2*length(gvcfs)
     Int cpus_act = if cpus_exp < 96 then cpus_exp else 96
 
     # List all of the contigs in the reference
