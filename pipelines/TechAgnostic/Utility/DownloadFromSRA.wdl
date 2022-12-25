@@ -59,8 +59,8 @@ task DownloadFiles {
         Boolean prepend_dir_name
         String gcs_out_root_dir
 
-        Int disk_size_gb = 100
-        Int num_cpus = 8
+        Int disk_size_gb = 50
+        Int num_cpus = 4
 
         RuntimeAttr? runtime_attr_override
     }
@@ -96,10 +96,10 @@ task DownloadFiles {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
-        mem_gb:             8,
+        mem_gb:             4,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  5,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.5"
     }
