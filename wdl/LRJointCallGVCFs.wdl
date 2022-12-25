@@ -11,23 +11,34 @@ import "tasks/Finalize.wdl" as FF
 workflow LRJointCallGVCFs {
     input {
         Array[File] gvcfs
-        File? bed
+        Array[File] tbis
+        File ref_map_file
+
         String prefix
 
         String gcs_out_root_dir
     }
 
     parameter_meta {
-        gvcfs:            "GCS path to aligned BAM files"
-        bed:              "three-column BED file with ranges to analyze"
+        gvcfs:            "GCS paths to gVCF files"
+        tbis:             "GCS paths to gVCF tbi files"
+        ref_map_file:     "table indicating reference sequence and auxillary file locations"
         prefix:           "prefix for output joint-called gVCF and tabix index"
         gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"
 
+    Map[String, String] ref_map = read_map(ref_map_file)
+
     # Gather across multiple input gVCFs
-    call GLNexus.JointCall { input: gvcfs = gvcfs, bed = bed, prefix = prefix }
+    call GLNexus.JointCall {
+        input:
+            gvcfs = gvcfs,
+            tbis = tbis,
+            dict = ref_map['dict'],
+            prefix = prefix
+    }
 
     call Hail.ConvertToHailMT {
         input:
