@@ -143,7 +143,8 @@ task Bam2FqPicard {
 
 task BwaMem2 {
     input {
-        File name_sorted_fastq
+        File fq_end1
+        File fq_end2
 
         File ref_fasta
         File ref_fasta_index
@@ -161,7 +162,8 @@ task BwaMem2 {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 4*ceil(size(name_sorted_fastq, "GB"))
+    Int disk_size = 1 + 4*ceil(size(fq_end1, "GB"))
+                      + 4*ceil(size(fq_end2, "GB"))
                       + 4*ceil(size(ref_fasta, "GB"))
                       + 4*ceil(size(ref_fasta_index, "GB"))
                       + 4*ceil(size(ref_dict, "GB"))
@@ -198,7 +200,8 @@ task BwaMem2 {
             -Y \
             ~{true='-M' false="" mark_short_splits_as_secondary} \
             ~{ref_fasta} \
-            ~{name_sorted_fastq} | \
+            ~{fq_end1} \
+            ~{fq_end2} | \
         samtools view -1 - > ~{prefix}.bam
     >>>
 
