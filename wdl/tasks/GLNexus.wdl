@@ -23,6 +23,7 @@ workflow JointCall {
         Boolean trim_uncalled_alleles = false
 
         Int? num_cpus
+        Int max_cpus = 64
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
@@ -40,11 +41,12 @@ workflow JointCall {
         trim_uncalled_alleles: "remove alleles with no output GT calls in postprocessing"
 
         num_cpus: "number of CPUs to use"
+        max_cpus: "maximum number of CPUs to allow"
         prefix:   "output prefix for joined-called BCF and GVCF files"
     }
 
     Int cpus_exp = if defined(num_cpus) then select_first([num_cpus]) else 2*length(gvcfs)
-    Int cpus_act = if cpus_exp < 96 then cpus_exp else 96
+    Int cpus_act = if cpus_exp < max_cpus then cpus_exp else max_cpus
 
     # List all of the contigs in the reference
     call GetRanges { input: dict = dict, bed = bed }
