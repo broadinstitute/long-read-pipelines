@@ -116,3 +116,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ConvertToHailMT.wdl
   testParameterFiles:
+- name: LRConvertBCF
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LRConvertBCF.wdl
+  testParameterFiles:
