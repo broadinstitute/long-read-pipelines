@@ -98,7 +98,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/IllumAssembleWithFusilli.wdl
   testParameterFiles:
-- name: IllumAssembleWithFusilliContinue.wdl
+- name: IllumAssembleWithFusilliContinue
   subclass: wdl
   primaryDescriptorPath: /wdl/IllumAssembleWithFusilliContinue.wdl
   testParameterFiles:
