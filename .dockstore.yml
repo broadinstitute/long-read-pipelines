@@ -94,21 +94,13 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
   primaryDescriptorPath: /wdl/LRConvertBCF.wdl
-- name: FusilliCreateRefDB
+- name: IllumAssembleWithFusilli
   subclass: wdl
-  primaryDescriptorPath: /wdl/FusilliRefDB.wdl
+  primaryDescriptorPath: /wdl/IllumAssembleWithFusilli.wdl
   testParameterFiles:
-- name: FusilliBuildAndCleanSampleGraph
+- name: IllumAssembleWithFusilliContinue.wdl
   subclass: wdl
-  primaryDescriptorPath: /wdl/FusilliSamples.wdl
-  testParameterFiles:
-- name: FusilliAssemble
-  subclass: wdl
-  primaryDescriptorPath: /wdl/FusilliAssemble.wdl
-  testParameterFiles:
-- name: FusilliCall
-  subclass: wdl
-  primaryDescriptorPath: /wdl/FusilliCall.wdl
+  primaryDescriptorPath: /wdl/IllumAssembleWithFusilliContinue.wdl
   testParameterFiles:
 - name: IllumAssembleWithMcCortex
   subclass: wdl
