@@ -28,7 +28,7 @@ workflow IllumAssembleWithFusilliContinue {
         call Fusilli.FinalizeFusilliRun {
             input:
                 fusilli_output_tar = Assemble.fusilli_output_tar,
-                gcs_output_file = gcs_output_file
+                gcs_output_file = select_first([gcs_output_file])
         }
     }
 
