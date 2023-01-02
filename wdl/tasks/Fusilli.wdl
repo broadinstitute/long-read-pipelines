@@ -54,7 +54,7 @@ task FusilliAssemble {
             -R ~{write_lines(references)} \
             -c -o output/ ~{illumina_fq1} ~{illumina_fq2}
 
-        tar -czf -C output/ fusilli_run.tar.gz .
+        tar -czf fusilli_run.tar.gz -C output/ .
     >>>
 
     output {
