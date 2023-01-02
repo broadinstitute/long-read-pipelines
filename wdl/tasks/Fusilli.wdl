@@ -16,7 +16,7 @@ task FusilliAssemble {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + (3 * ceil(size(illumina_fq1, "GiB") + size(illumina_fq2, "GiB"))) + ceil((length(references) * 25) / 1024)
+    Int disk_size = 1 + (3 * (ceil(size(illumina_fq1, "GiB") + size(illumina_fq2, "GiB")))) + ceil((length(references) * 25) / 1024)
 
     RuntimeAttr default_attr = object {
         cpu_cores:          8,
