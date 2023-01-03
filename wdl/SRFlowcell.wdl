@@ -89,14 +89,14 @@ workflow SRFlowcell {
         }
     }
 
-    File fq1 = select_first([fq_end1, t_003_Bam2Fastq.fq_end1])
-    File fq2 = select_first([fq_end2, t_003_Bam2Fastq.fq_end2])
+    File fq_e1 = select_first([fq_end1, t_003_Bam2Fastq.fq_end1])
+    File fq_e2 = select_first([fq_end2, t_003_Bam2Fastq.fq_end2])
 
     # Align reads to reference with BWA-MEM2:
     call SRUTIL.BwaMem2 as t_004_AlignReads {
         input:
-            fq_end1 = fq1,
-            fq_end2 = fq2,
+            fq_end1 = fq_e1,
+            fq_end2 = fq_e2,
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
             ref_dict = ref_map["dict"],
@@ -195,6 +195,15 @@ workflow SRFlowcell {
     call NP.NanoPlotFromBam as t_011_NanoPlotFromBam { input: bam = t_009_ApplyBQSR.recalibrated_bam, bai = t_009_ApplyBQSR.recalibrated_bai }
     call Utils.ComputeGenomeLength as t_012_ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
+    call SRUTIL.ComputeBamStats as t_013_ComputeBamStats { input: bam_file = t_009_ApplyBQSR.recalibrated_bam }
+
+    # Collect stats on aligned reads:
+    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ5 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 5 }
+    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ7 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 7 }
+    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ10 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 10 }
+    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ12 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 12 }
+    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ15 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 15 }
+
     ############################################
     #      _____ _             _ _
     #     |  ___(_)_ __   __ _| (_)_______
@@ -203,22 +212,34 @@ workflow SRFlowcell {
     #     |_|   |_|_| |_|\__,_|_|_/___\___|
     #
     ############################################
-    File keyfile = t_010_SamStats.sam_stats
+    File keyfile = t_013_ComputeBamStats.results_file
     String reads_dir = outdir + "/reads"
     String metrics_dir = outdir + "/metrics"
 
-    # Finalize our reads first:
-#    call FF.FinalizeToDir as t_013_FinalizeUnalignedReads {
-#        input:
-#            outdir = reads_dir + "/unaligned",
-#            files =
-#            [
-#                bam,
-#                bai,
-#                t_003_Bam2Fastq.fastq
-#            ],
-#            keyfile = keyfile
-#    }
+    # Finalize our unaligned reads first:
+    call FF.FinalizeToDir as t_013_FinalizeUnalignedFastqReads {
+        input:
+            outdir = reads_dir + "/unaligned",
+            files =
+            [
+                fq_e1,
+                fq_e2,
+            ],
+            keyfile = keyfile
+    }
+    if (defined(bam)) {
+        call FF.FinalizeToDir as t_013_FinalizeUnalignedReadsFromBam {
+            input:
+                outdir = reads_dir + "/unaligned",
+                files = select_all(
+                [
+                    bam,
+                    bai,
+                    t_003_Bam2Fastq.fq_unpaired,
+                ]),
+                keyfile = keyfile
+        }
+    }
 
     call FF.FinalizeToDir as t_014_FinalizeAlignedReads {
         input:
@@ -256,9 +277,22 @@ workflow SRFlowcell {
             [
                 t_006_MarkDuplicates.metrics,
                 t_008_BaseRecalibrator.recalibration_report,
-                t_010_SamStats.sam_stats
+                t_010_SamStats.sam_stats,
+                t_013_ComputeBamStats.results,
+                t_013_ComputeBamStatsQ5.results,
+                t_013_ComputeBamStatsQ7.results,
+                t_013_ComputeBamStatsQ10.results,
+                t_013_ComputeBamStatsQ12.results,
+                t_013_ComputeBamStatsQ15.results,
             ],
             keyfile = keyfile
+    }
+
+    # Prep a few files for output:
+    if (defined(bam)) {
+        File unaligned_bam_o = reads_dir + "/unaligned/" + basename(select_first([bam]))
+        File unaligned_bai_o = reads_dir + "/unaligned/" + basename(select_first([bai]))
+        File fqboup = reads_dir + "/unaligned/" + basename(select_first([t_003_Bam2Fastq.fq_unpaired]))
     }
 
     ############################################
@@ -271,34 +305,36 @@ workflow SRFlowcell {
     ############################################
     output {
         # Unaligned reads
-        File? fq = reads_dir + "/unaligned/" + basename(t_003_Bam2Fastq.fastq)
+        File fq1 = fq_e1
+        File fq2 = fq_e2
+        File? fq_unpaired = t_003_Bam2Fastq.fq_unpaired
 
         # Unaligned BAM file
-        File? unaligned_bam = reads_dir + "/unaligned/" + basename(bam)
-        File? unaligned_bai = reads_dir + "/unaligned/" + basename(bai)
+        File? unaligned_bam = unaligned_bam_o
+        File? unaligned_bai = unaligned_bai_o
 
         # Aligned BAM file
         File aligned_bam = t_015_FinalizeAlignedBam.gcs_path
         File aligned_bai = t_016_FinalizeAlignedBai.gcs_path
 
-#        # Unaligned read stats
-#        Float num_reads = SummarizeSubreadsPBI.results['reads']
-#        Float num_bases = SummarizeSubreadsPBI.results['bases']
-#        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/t_012_ComputeGenomeLength.length
-#
-#        Float read_length_mean = SummarizeSubreadsPBI.results['subread_mean']
-#        Float read_length_median = SummarizeSubreadsPBI.results['subread_median']
-#        Float read_length_stdev = SummarizeSubreadsPBI.results['subread_stdev']
-#        Float read_length_N50 = SummarizeSubreadsPBI.results['subread_n50']
-#
-#        Float read_qual_mean = SummarizeSubreadsPBI.results['mean_qual']
-#        Float read_qual_median = SummarizeSubreadsPBI.results['median_qual']
-#
-#        Float num_reads_Q5 = SummarizeAlignedQ5PBI.results['reads']
-#        Float num_reads_Q7 = SummarizeAlignedQ7PBI.results['reads']
-#        Float num_reads_Q10 = SummarizeAlignedQ10PBI.results['reads']
-#        Float num_reads_Q12 = SummarizeAlignedQ12PBI.results['reads']
-#        Float num_reads_Q15 = SummarizeAlignedQ15PBI.results['reads']
+        # Unaligned read stats
+        Float num_reads = t_013_ComputeBamStats.results['reads']
+        Float num_bases = t_013_ComputeBamStats.results['bases']
+        Float raw_est_fold_cov = t_013_ComputeBamStats.results['bases']/t_012_ComputeGenomeLength.length
+
+        Float read_length_mean = t_013_ComputeBamStats.results['subread_mean']
+        Float read_length_median = t_013_ComputeBamStats.results['subread_median']
+        Float read_length_stdev = t_013_ComputeBamStats.results['subread_stdev']
+        Float read_length_N50 = t_013_ComputeBamStats.results['subread_n50']
+
+        Float read_qual_mean = t_013_ComputeBamStats.results['mean_qual']
+        Float read_qual_median = t_013_ComputeBamStats.results['median_qual']
+
+        Float num_reads_Q5 = t_013_ComputeBamStatsQ5.results['reads']
+        Float num_reads_Q7 = t_013_ComputeBamStatsQ7.results['reads']
+        Float num_reads_Q10 = t_013_ComputeBamStatsQ10.results['reads']
+        Float num_reads_Q12 = t_013_ComputeBamStatsQ12.results['reads']
+        Float num_reads_Q15 = t_013_ComputeBamStatsQ15.results['reads']
 
         # Aligned read stats
         Float aligned_num_reads = t_011_NanoPlotFromBam.stats_map['number_of_reads']
