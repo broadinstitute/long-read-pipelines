@@ -184,17 +184,12 @@ task BwaMem2 {
 
         # Breakdown of the arguments:
         # -K INT        process INT input bases in each batch regardless of nThreads (for reproducibility) []
-        # -p            Smart  pairing.  If  two  adjacent reads have the same
-        #               name, they are considered to form a  read  pair.  This
-        #               way, paired-end and single-end reads can be mixed in a
-        #               single FASTA/Q stream.
         # -v INT        verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]
         # -t INT        number of threads [1]
         # -Y            use soft clipping for supplementary alignments
 
         bwa-mem2 mem \
             -K 100000000 \
-            -p \
             -v 3 \
             -t ${np} \
             -Y \
