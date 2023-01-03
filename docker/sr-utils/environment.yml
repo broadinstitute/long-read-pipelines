@@ -6,3 +6,4 @@ channels:
 dependencies:
   - samtools
   - bwa
+  - pysam
