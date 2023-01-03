@@ -198,11 +198,11 @@ workflow SRFlowcell {
     call SRUTIL.ComputeBamStats as t_013_ComputeBamStats { input: bam_file = t_009_ApplyBQSR.recalibrated_bam }
 
     # Collect stats on aligned reads:
-    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ5 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 5 }
-    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ7 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 7 }
-    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ10 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 10 }
-    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ12 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 12 }
-    call SRUTIL.ComputeBamStats as t_013_ComputeBamStatsQ15 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 15 }
+    call SRUTIL.ComputeBamStats as t_014_ComputeBamStatsQ5 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 5 }
+    call SRUTIL.ComputeBamStats as t_015_ComputeBamStatsQ7 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 7 }
+    call SRUTIL.ComputeBamStats as t_016_ComputeBamStatsQ10 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 10 }
+    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ12 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 12 }
+    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ15 { input: bam_file = t_009_ApplyBQSR.recalibrated_bam, qual_threshold = 15 }
 
     ############################################
     #      _____ _             _ _
@@ -217,7 +217,7 @@ workflow SRFlowcell {
     String metrics_dir = outdir + "/metrics"
 
     # Finalize our unaligned reads first:
-    call FF.FinalizeToDir as t_013_FinalizeUnalignedFastqReads {
+    call FF.FinalizeToDir as t_019_FinalizeUnalignedFastqReads {
         input:
             outdir = reads_dir + "/unaligned",
             files =
@@ -228,7 +228,7 @@ workflow SRFlowcell {
             keyfile = keyfile
     }
     if (defined(bam)) {
-        call FF.FinalizeToDir as t_013_FinalizeUnalignedReadsFromBam {
+        call FF.FinalizeToDir as t_020_FinalizeUnalignedReadsFromBam {
             input:
                 outdir = reads_dir + "/unaligned",
                 files = select_all(
@@ -241,7 +241,7 @@ workflow SRFlowcell {
         }
     }
 
-    call FF.FinalizeToDir as t_014_FinalizeAlignedReads {
+    call FF.FinalizeToDir as t_021_FinalizeAlignedReads {
         input:
             outdir = reads_dir + "/aligned",
             files =
@@ -255,14 +255,14 @@ workflow SRFlowcell {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToFile as t_015_FinalizeAlignedBam {
+    call FF.FinalizeToFile as t_022_FinalizeAlignedBam {
         input:
             outdir = reads_dir + "/aligned",
             file = t_009_ApplyBQSR.recalibrated_bam,
             keyfile = keyfile
     }
 
-    call FF.FinalizeToFile as t_016_FinalizeAlignedBai {
+    call FF.FinalizeToFile as t_023_FinalizeAlignedBai {
         input:
             outdir = reads_dir + "/aligned",
             file = t_009_ApplyBQSR.recalibrated_bai,
@@ -270,7 +270,7 @@ workflow SRFlowcell {
     }
 
     # Finalize our metrics:
-    call FF.FinalizeToDir as t_017_FinalizeMetrics {
+    call FF.FinalizeToDir as t_024_FinalizeMetrics {
         input:
             outdir = metrics_dir,
             files =
@@ -279,11 +279,11 @@ workflow SRFlowcell {
                 t_008_BaseRecalibrator.recalibration_report,
                 t_010_SamStats.sam_stats,
                 t_013_ComputeBamStats.results,
-                t_013_ComputeBamStatsQ5.results,
-                t_013_ComputeBamStatsQ7.results,
-                t_013_ComputeBamStatsQ10.results,
-                t_013_ComputeBamStatsQ12.results,
-                t_013_ComputeBamStatsQ15.results,
+                t_014_ComputeBamStatsQ5.results,
+                t_015_ComputeBamStatsQ7.results,
+                t_016_ComputeBamStatsQ10.results,
+                t_017_ComputeBamStatsQ12.results,
+                t_018_ComputeBamStatsQ15.results,
             ],
             keyfile = keyfile
     }
@@ -314,8 +314,8 @@ workflow SRFlowcell {
         File? unaligned_bai = unaligned_bai_o
 
         # Aligned BAM file
-        File aligned_bam = t_015_FinalizeAlignedBam.gcs_path
-        File aligned_bai = t_016_FinalizeAlignedBai.gcs_path
+        File aligned_bam = t_022_FinalizeAlignedBam.gcs_path
+        File aligned_bai = t_023_FinalizeAlignedBai.gcs_path
 
         # Unaligned read stats
         Float num_reads = t_013_ComputeBamStats.results['reads']
@@ -330,11 +330,11 @@ workflow SRFlowcell {
         Float read_qual_mean = t_013_ComputeBamStats.results['mean_qual']
         Float read_qual_median = t_013_ComputeBamStats.results['median_qual']
 
-        Float num_reads_Q5 = t_013_ComputeBamStatsQ5.results['reads']
-        Float num_reads_Q7 = t_013_ComputeBamStatsQ7.results['reads']
-        Float num_reads_Q10 = t_013_ComputeBamStatsQ10.results['reads']
-        Float num_reads_Q12 = t_013_ComputeBamStatsQ12.results['reads']
-        Float num_reads_Q15 = t_013_ComputeBamStatsQ15.results['reads']
+        Float num_reads_Q5 = t_014_ComputeBamStatsQ5.results['reads']
+        Float num_reads_Q7 = t_015_ComputeBamStatsQ7.results['reads']
+        Float num_reads_Q10 = t_016_ComputeBamStatsQ10.results['reads']
+        Float num_reads_Q12 = t_017_ComputeBamStatsQ12.results['reads']
+        Float num_reads_Q15 = t_018_ComputeBamStatsQ15.results['reads']
 
         # Aligned read stats
         Float aligned_num_reads = t_011_NanoPlotFromBam.stats_map['number_of_reads']
