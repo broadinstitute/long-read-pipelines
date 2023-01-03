@@ -192,16 +192,8 @@ workflow SRFlowcell {
             bam = t_009_ApplyBQSR.recalibrated_bam
     }
 
-    call NP.NanoPlotFromBam as t_011_NanoPlotFromBam {
-        input:
-            bam = t_009_ApplyBQSR.recalibrated_bam,
-            bai = t_009_ApplyBQSR.recalibrated_bai
-    }
-
-    call Utils.ComputeGenomeLength as t_012_ComputeGenomeLength {
-        input:
-            fasta = ref_map['fasta']
-    }
+    call NP.NanoPlotFromBam as t_011_NanoPlotFromBam { input: bam = t_009_ApplyBQSR.recalibrated_bam, bai = t_009_ApplyBQSR.recalibrated_bai }
+    call Utils.ComputeGenomeLength as t_012_ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
     ############################################
     #      _____ _             _ _
@@ -278,9 +270,35 @@ workflow SRFlowcell {
     #                    |_|
     ############################################
     output {
+        # Unaligned reads
+        File? fq = reads_dir + "/unaligned/" + basename(t_003_Bam2Fastq.fastq)
+
+        # Unaligned BAM file
+        File? unaligned_bam = reads_dir + "/unaligned/" + basename(bam)
+        File? unaligned_bai = reads_dir + "/unaligned/" + basename(bai)
+
         # Aligned BAM file
         File aligned_bam = t_015_FinalizeAlignedBam.gcs_path
         File aligned_bai = t_016_FinalizeAlignedBai.gcs_path
+
+#        # Unaligned read stats
+#        Float num_reads = SummarizeSubreadsPBI.results['reads']
+#        Float num_bases = SummarizeSubreadsPBI.results['bases']
+#        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/t_012_ComputeGenomeLength.length
+#
+#        Float read_length_mean = SummarizeSubreadsPBI.results['subread_mean']
+#        Float read_length_median = SummarizeSubreadsPBI.results['subread_median']
+#        Float read_length_stdev = SummarizeSubreadsPBI.results['subread_stdev']
+#        Float read_length_N50 = SummarizeSubreadsPBI.results['subread_n50']
+#
+#        Float read_qual_mean = SummarizeSubreadsPBI.results['mean_qual']
+#        Float read_qual_median = SummarizeSubreadsPBI.results['median_qual']
+#
+#        Float num_reads_Q5 = SummarizeAlignedQ5PBI.results['reads']
+#        Float num_reads_Q7 = SummarizeAlignedQ7PBI.results['reads']
+#        Float num_reads_Q10 = SummarizeAlignedQ10PBI.results['reads']
+#        Float num_reads_Q12 = SummarizeAlignedQ12PBI.results['reads']
+#        Float num_reads_Q15 = SummarizeAlignedQ15PBI.results['reads']
 
         # Aligned read stats
         Float aligned_num_reads = t_011_NanoPlotFromBam.stats_map['number_of_reads']
