@@ -1,88 +1,325 @@
 version 1.0
 
+import "Structs.wdl"
 import "Utils.wdl"
+import "SRUtils.wdl" as SRUTIL
+import "SRJointGenotyping.wdl" as SRJOINT
+
+workflow CallVariantsWithHaplotypeCaller {
+    meta {
+        author: "Jonn Smith"
+        description: "A workflow for calling small variants with GATK HaplotypeCaller from an Illumina BAM file."
+    }
+
+    input {
+        File bam
+        File bai
+
+        String prefix
+        String sample_id
+
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+
+        File dbsnp_vcf
+
+        Boolean call_vars_on_mitochondria = true
+
+        String mito_contig = "chrM"
+        Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
+    }
+
+    # Scatter by chromosome:
+    Array[String] use_filter = if (call_vars_on_mitochondria) then contigs_names_to_ignore else flatten([[mito_contig], contigs_names_to_ignore])
+    call Utils.MakeChrIntervalList as SmallVariantsScatterPrep {
+        input:
+            ref_dict = ref_dict,
+            filter = use_filter
+    }
+
+    # Call over the scattered intervals:
+    scatter (c in SmallVariantsScatterPrep.chrs) {
+        String contig_for_small_var = c[0]
+
+        call HaplotypeCaller_GATK4_VCF as CallVariantsWithHC {
+            input:
+                input_bam = bam,
+                input_bam_index = bai,
+                prefix = prefix + "." + contig_for_small_var,
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_fai,
+                ref_dict = ref_dict,
+                make_gvcf = true,
+                make_bamout = true,
+                single_interval = contig_for_small_var,
+                contamination = 0,
+                use_spanning_event_genotyping = true
+        }
+    }
+
+    # Merge the output GVCFs:
+    call SRUTIL.MergeVCFs as MergeGVCFs {
+        input:
+            input_vcfs = CallVariantsWithHC.output_vcf,
+            input_vcfs_indexes = CallVariantsWithHC.output_vcf_index,
+            prefix = prefix
+    }
+
+    # Merge the output BAMs:
+    call MergeBamouts as MergeVariantCalledBamOuts {
+        input:
+            bams = CallVariantsWithHC.bamout,
+            prefix = "~{prefix}.bamout"
+    }
+
+    # Now reblock the GVCF to combine hom ref blocks and save $ / storage:
+    call ReblockGVCF {
+        input:
+            gvcf = MergeGVCFs.output_vcf,
+            gvcf_index = MergeGVCFs.output_vcf_index,
+            ref_fasta = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            ref_dict = ref_dict,
+            prefix = prefix
+    }
+
+    # Collapse the GVCF into a regular VCF:
+    call SRJOINT.GenotypeGVCFs as CollapseGVCFtoVCF {
+        input:
+            input_gvcf_data = ReblockGVCF.output_gvcf,
+            interval_list = SmallVariantsScatterPrep.interval_list,
+            ref_fasta = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            ref_dict = ref_dict,
+            dbsnp_vcf = dbsnp_vcf,
+            prefix = prefix,
+    }
+
+    output {
+        File output_gvcf = ReblockGVCF.output_gvcf
+        File output_gvcf_index = ReblockGVCF.output_gvcf_index
+        File output_vcf = CollapseGVCFtoVCF.output_vcf
+        File output_vcf_index = CollapseGVCFtoVCF.output_vcf_index
+        File bamout = MergeVariantCalledBamOuts.output_bam
+        File bamout_index = MergeVariantCalledBamOuts.output_bam_index
+    }
+}
 
 task HaplotypeCaller_GATK4_VCF {
-  input {
-    File input_bam
-    File input_bam_index
-    File interval_list
-    String vcf_basename
-    File ref_dict
-    File ref_fasta
-    File ref_fasta_index
-    Float? contamination
-    Boolean make_gvcf
-    Boolean make_bamout
-    Int preemptible_tries
-    Int hc_scatter
-    Boolean run_dragen_mode_variant_calling = false
-    Boolean use_dragen_hard_filtering = false
-    Boolean use_spanning_event_genotyping = true
-    File? dragstr_model
-    String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
-    Int memory_multiplier = 1
-  }
-
-  Int memory_size_mb = ceil(8000 * memory_multiplier)
-
-  String output_suffix = if make_gvcf then ".g.vcf.gz" else ".vcf.gz"
-  String output_file_name = vcf_basename + output_suffix
-
-  Float ref_size = size(ref_fasta, "GiB") + size(ref_fasta_index, "GiB") + size(ref_dict, "GiB")
-  Int disk_size = ceil(((size(input_bam, "GiB") + 30) / hc_scatter) + ref_size) + 20
-
-  String bamout_arg = if make_bamout then "-bamout ~{vcf_basename}.bamout.bam" else ""
-
-  parameter_meta {
-    input_bam: {
-      localization_optional: true
+    meta {
+        author: "Jonn Smith"
+        notes: "Adapted from the WARP pipeline found here: https://github.com/broadinstitute/warp.git"
     }
-  }
 
-  command <<<
-    set -e
-    # We need at least 1 GB of available memory outside of the Java heap in order to execute native code, thus, limit
-    # Java's memory by the total memory minus 1 GB. We need to compute the total memory as it might differ from
-    # memory_size_gb because of Cromwell's retry with more memory feature.
-    # Note: In the future this should be done using Cromwell's ${MEM_SIZE} and ${MEM_UNIT} environment variables,
-    #       which do not rely on the output format of the `free` command.
-    available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-    let java_memory_size_mb=available_memory_mb-1024
-    echo Total available memory: ${available_memory_mb} MB >&2
-    echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
+    input {
+        File input_bam
+        File input_bam_index
 
-    gatk --java-options "-Xmx${java_memory_size_mb}m -Xms${java_memory_size_mb}m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
-      HaplotypeCaller \
-      -R ~{ref_fasta} \
-      -I ~{input_bam} \
-      -L ~{interval_list} \
-      -O ~{output_file_name} \
-      -contamination ~{default=0 contamination} \
-      -G StandardAnnotation -G StandardHCAnnotation ~{true="-G AS_StandardAnnotation" false="" make_gvcf} \
-      ~{true="--dragen-mode" false="" run_dragen_mode_variant_calling} \
-      ~{false="--disable-spanning-event-genotyping" true="" use_spanning_event_genotyping} \
-      ~{if defined(dragstr_model) then "--dragstr-params-path " + dragstr_model else ""} \
-      -GQB 10 -GQB 20 -GQB 30 -GQB 40 -GQB 50 -GQB 60 -GQB 70 -GQB 80 -GQB 90 \
-      ~{true="-ERC GVCF" false="" make_gvcf} \
-      ~{bamout_arg}
+        String prefix
 
-    # Cromwell doesn't like optional task outputs, so we have to touch this file.
-    touch ~{vcf_basename}.bamout.bam
-  >>>
+        File ref_dict
+        File ref_fasta
+        File ref_fasta_index
 
-  runtime {
-    docker: gatk_docker
-    preemptible: preemptible_tries
-    memory: "~{memory_size_mb} MiB"
-    cpu: "2"
-    bootDiskSizeGb: 15
-    disks: "local-disk " + disk_size + " HDD"
-  }
+        Boolean make_gvcf
+        Boolean make_bamout
 
-  output {
-    File output_vcf = "~{output_file_name}"
-    File output_vcf_index = "~{output_file_name}.tbi"
-    File bamout = "~{vcf_basename}.bamout.bam"
-  }
+        String? single_interval
+        File? interval_list
+        Float? contamination
+
+        Boolean use_spanning_event_genotyping = true
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String output_suffix = if make_gvcf then ".g.vcf.gz" else ".vcf.gz"
+    String output_file_name = prefix + output_suffix
+
+    Float ref_size = size(ref_fasta, "GiB") + size(ref_fasta_index, "GiB") + size(ref_dict, "GiB")
+    Int disk_size = 2*ceil(((size(input_bam, "GiB") + 30)) + ref_size) + 20
+
+    String bamout_arg = if make_bamout then "-bamout ~{prefix}.bamout.bam" else ""
+
+    String interval_arg = if (defined(interval_list) || defined(single_interval)) then " -L " else ""
+    String interval_arg_value = if defined(interval_list) then interval_list else if defined(single_interval) then single_interval else ""
+
+    parameter_meta {
+        input_bam: { localization_optional: true }
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        # We need at least 1 GB of available memory outside of the Java heap in order to execute native code, thus, limit
+        # Java's memory by the total memory minus 1 GB. We need to compute the total memory as it might differ from
+        # memory_size_gb because of Cromwell's retry with more memory feature.
+        # Note: In the future this should be done using Cromwell's ${MEM_SIZE} and ${MEM_UNIT} environment variables,
+        #       which do not rely on the output format of the `free` command.
+
+        available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
+        let java_memory_size_mb=available_memory_mb-1024
+        echo Total available memory: ${available_memory_mb} MB >&2
+        echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
+
+        gatk --java-options "-Xmx${java_memory_size_mb}m -Xms${java_memory_size_mb}m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
+            HaplotypeCaller \
+                -R ~{ref_fasta} \
+                -I ~{input_bam} \
+                ~{interval_arg}~{default="" sep=" -L " interval_list} \
+                -O ~{output_file_name} \
+                -contamination ~{default=0 contamination} \
+                -GQB 10 -GQB 20 -GQB 30 -GQB 40 -GQB 50 -GQB 60 -GQB 70 -GQB 80 -GQB 90 \
+                ~{false="--disable-spanning-event-genotyping" true="" use_spanning_event_genotyping} \
+                -G StandardAnnotation -G StandardHCAnnotation ~{true="-G AS_StandardAnnotation" false="" make_gvcf} \
+                ~{true="-ERC GVCF" false="" make_gvcf} \
+                ~{bamout_arg}
+
+        # Cromwell doesn't like optional task outputs, so we have to touch this file.
+        touch ~{prefix}.bamout.bam
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+       cpu_cores:          2,
+       mem_gb:             16,
+       disk_gb:            disk_size,
+       boot_disk_gb:       15,
+       preemptible_tries:  1,
+       max_retries:        1,
+       docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File output_vcf = "~{output_file_name}"
+        File output_vcf_index = "~{output_file_name}.tbi"
+        File bamout = "~{prefix}.bamout.bam"
+    }
+}
+
+
+# This task is here because merging bamout files using Picard produces an error.
+task MergeBamouts {
+
+    input {
+        Array[File] bams
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil(size(bams, "GiB") * 2) + 10
+
+    command <<<
+
+        set -euxo pipefail
+
+        # Make sure we use all our processors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        ithreads=${np}
+        let mthreads=${np}-1
+
+        samtools merge -@${mthreads} ~{prefix}.bam ~{sep=" " bams}
+        samtools index -@${ithreads} ~{prefix}.bam
+        mv ~{prefix}.bam.bai ~{prefix}.bai
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+       cpu_cores:          1,
+       mem_gb:             4,
+       disk_gb:            disk_size,
+       boot_disk_gb:       10,
+       preemptible_tries:  1,
+       max_retries:        1,
+       docker:             "biocontainers/samtools:1.3.1"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File output_bam = "~{prefix}.bam"
+        File output_bam_index = "~{prefix}.bai"
+    }
+}
+
+task ReblockGVCF {
+
+    input {
+        File gvcf
+        File gvcf_index
+
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+
+        String prefix
+        Float? tree_score_cutoff
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil((size(gvcf, "GiB") * 4) + size(ref_fasta, "GiB") + size(ref_fasta_fai, "GiB") + size(ref_dict, "GiB") + 10)
+
+    command {
+        set -euxo pipefail
+
+        gatk --java-options "-Xms3000m -Xmx3000m" \
+            ReblockGVCF \
+                -R ~{ref_fasta} \
+                -V ~{gvcf} \
+                -do-qual-approx \
+                --floor-blocks -GQB 20 -GQB 30 -GQB 40 \
+                ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
+                -O ~{prefix}.rb.g.vcf.gz
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+       cpu_cores:          1,
+       mem_gb:             4,
+       disk_gb:            disk_size,
+       boot_disk_gb:       15,
+       preemptible_tries:  1,
+       max_retries:        1,
+       docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File output_gvcf = "~{prefix}.rb.g.vcf.gz"
+        File output_gvcf_index = "~{prefix}.rb.g.vcf.gz.tbi"
+    }
 }

@@ -284,10 +284,13 @@ task MakeChrIntervalList {
             sed 's/[SL]N://g' | \
             grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
             tee chrs.txt
+
+         cat chrs.txt | awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > intervalList.intervals
     >>>
 
     output {
         Array[Array[String]] chrs = read_tsv("chrs.txt")
+        File interval_list = "intervalList.intervals"
     }
 
     #########################

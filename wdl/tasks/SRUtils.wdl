@@ -641,3 +641,54 @@ task ComputeBamStats {
     }
 }
 
+task MergeVCFs {
+    meta {
+        description: "Combine multiple VCFs or GVCFs from scattered HaplotypeCaller runs"
+    }
+
+    input {
+        Array[File] input_vcfs
+        Array[File] input_vcfs_indexes
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int compression_level = 2
+    Int java_memory_size_mb = 30768
+
+    Int disk_size = ceil(size(input_vcfs, "GiB") * 2.5) + 10
+
+    command {
+        java -Xms2000m -Xmx2500m -jar /usr/picard/picard.jar \
+          MergeVcfs \
+          INPUT=~{sep=' INPUT=' input_vcfs} \
+          OUTPUT=~{prefix}.vcf
+    }
+
+    output {
+        File output_vcf = "~{prefix}.vcf"
+        File output_vcf_index = "~{prefix}.vcf.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             3,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

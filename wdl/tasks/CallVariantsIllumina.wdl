@@ -25,6 +25,9 @@ workflow CallVariants {
         Boolean run_dv_pepper_analysis
         Int? dvp_threads
         Int? dvp_memory
+
+        String mito_contig = "chrM"
+        Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
 
     ######################################################################
@@ -36,8 +39,7 @@ workflow CallVariants {
     # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {
         # Scatter by chromosome
-        Array[String] default_filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
-        Array[String] use_filter = if (call_small_vars_on_mitochondria) then default_filter else flatten([['chrM'],default_filter])
+        Array[String] use_filter = if (call_small_vars_on_mitochondria) then contigs_names_to_ignore else flatten([[mito_contig], contigs_names_to_ignore])
         call Utils.MakeChrIntervalList as SmallVariantsScatterPrepp {
             input:
                 ref_dict = ref_dict,

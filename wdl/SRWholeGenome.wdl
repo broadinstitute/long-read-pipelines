@@ -6,9 +6,9 @@ version 1.0
 ## prior to variant calling.
 ######################################################################################
 
-import "tasks/SRUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/CallVariantsIllumina.wdl" as VAR
+import "tasks/HaplotypeCaller.wdl" as HC
 import "tasks/Finalize.wdl" as FF
 
 import "tasks/SampleLevelAlignedMetrics.wdl" as COV
@@ -26,11 +26,17 @@ workflow SRWholeGenome {
 
         String gcs_out_root_dir
 
+        File dbsnp_vcf
+
         Boolean call_small_variants = true
 
-        Boolean? run_dv_pepper_analysis = true
-        Int? dvp_threads = 32
-        Int? dvp_memory = 128
+        Boolean run_HC_analysis = true
+        Boolean run_dv_pepper_analysis = true
+        Int dvp_threads = 32
+        Int dvp_memory = 128
+
+        String mito_contig = "chrM"
+        Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -66,15 +72,19 @@ workflow SRWholeGenome {
     if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
 
     ####################################################################################################
-    if (call_small_variants) {
 
-        # verify arguments are provided
-        if (call_small_variants) {
-            if (! defined(run_dv_pepper_analysis)) {call Utils.StopWorkflow as run_dv_pepper_analysis_not_provided {input: reason = "Unprovided arg run_dv_pepper_analysis"}}
-            if (! defined(dvp_threads)) {call Utils.StopWorkflow as dvp_threads_not_provided {input: reason = "Unprovided arg dvp_threads"}}
+    # Some input handling:
+    if ((!run_dv_pepper_analysis) && (!run_HC_analysis)) {
+        call Utils.StopWorkflow as short_variant_caller_analysis_not_provided {
+            input: reason = "One of the following must be set to true: run_dv_pepper_analysis(~{run_dv_pepper_analysis}), run_HC_analysis(~{run_HC_analysis})"
         }
+    }
 
-        call VAR.CallVariants {
+    String smalldir = outdir + "/variants/small"
+
+    # Handle DeepVariant First:
+    if (run_dv_pepper_analysis) {
+        call VAR.CallVariants as CallVariantsWithDeepVariant {
             input:
                 bam               = bam,
                 bai               = bai,
@@ -83,25 +93,47 @@ workflow SRWholeGenome {
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
 
-                prefix = participant_name,
+                prefix = participant_name + ".deep_variant",
 
                 call_small_variants = call_small_variants,
 
-                run_dv_pepper_analysis = select_first([run_dv_pepper_analysis]),
-                dvp_threads = select_first([dvp_threads]),
-                dvp_memory = select_first([dvp_memory]),
+                run_dv_pepper_analysis = run_dv_pepper_analysis,
+                dvp_threads = dvp_threads,
+                dvp_memory = dvp_memory,
+
+                mito_contig = mito_contig,
+                contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
-        String smalldir = outdir + "/variants/small"
+        call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_vcf])}
+        call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_tbi])}
+        call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_vcf])}
+        call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_tbi])}
+    }
 
-        if (call_small_variants) {
-            if (select_first([run_dv_pepper_analysis])) {
-                call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
-                call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_tbi])}
-            }
+    # Now we handle HaplotypeCaller data:
+    if (run_HC_analysis) {
+        call HC.CallVariantsWithHaplotypeCaller {
+            input:
+                bam               = bam,
+                bai               = bai,
+                sample_id         = participant_name,
+                ref_fasta         = ref_map['fasta'],
+                ref_fasta_fai     = ref_map['fai'],
+                ref_dict          = ref_map['dict'],
+
+                prefix = participant_name + ".haplotype_caller",
+
+                mito_contig = mito_contig,
+                contigs_names_to_ignore = contigs_names_to_ignore,
         }
+
+        call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_vcf])}
+        call FF.FinalizeToFile as FinalizeHCTbi { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_vcf_index])}
+        call FF.FinalizeToFile as FinalizeHCGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_gvcf])}
+        call FF.FinalizeToFile as FinalizeHCGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_gvcf_index])}
+        call FF.FinalizeToFile as FinalizeHCBamOut { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.bamout])}
+        call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.bamout_index])}
     }
 
     output {
@@ -125,9 +157,18 @@ workflow SRWholeGenome {
 
         ########################################
 
-        File? dvp_vcf = FinalizeDVPepperVcf.gcs_path
-        File? dvp_tbi = FinalizeDVPepperTbi.gcs_path
+        File? dvp_vcf   = FinalizeDVPepperVcf.gcs_path
+        File? dvp_tbi   = FinalizeDVPepperTbi.gcs_path
         File? dvp_g_vcf = FinalizeDVPepperGVcf.gcs_path
         File? dvp_g_tbi = FinalizeDVPepperGTbi.gcs_path
+
+        ########################################
+
+        File? hc_vcf    = FinalizeHCVcf.gcs_path
+        File? hc_tbi    = FinalizeHCTbi.gcs_path
+        File? hc_g_vcf  = FinalizeHCGVcf.gcs_path
+        File? hc_g_tbi  = FinalizeHCGTbi.gcs_path
+        File? hc_bamout = FinalizeHCBamOut.gcs_path
+        File? hc_baiout = FinalizeHCBaiOut.gcs_path
     }
 }
