@@ -155,6 +155,8 @@ task BwaMem2 {
         File ref_bwt
         File ref_pac
 
+        String? read_group
+
         String prefix = "out"
 
         Boolean mark_short_splits_as_secondary = false
@@ -173,6 +175,8 @@ task BwaMem2 {
                       + 4*ceil(size(ref_pac, "GB"))
                       + 4*ceil(size(ref_0123, "GB"))
 
+    String rg_arg = if defined(read_group) then " -R " else ""
+
     command <<<
         set -euxo pipefail
 
@@ -187,12 +191,14 @@ task BwaMem2 {
         # -v INT        verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]
         # -t INT        number of threads [1]
         # -Y            use soft clipping for supplementary alignments
+        # -R STR        read group header line such as '@RG\tID:foo\tSM:bar' [null]
 
         bwa-mem2 mem \
             -K 100000000 \
             -v 3 \
             -t ${np} \
             -Y \
+            ~{rg_arg}'~{default="" sep=" -R " read_group}' \
             ~{true='-M' false="" mark_short_splits_as_secondary} \
             ~{ref_fasta} \
             ~{fq_end1} \
