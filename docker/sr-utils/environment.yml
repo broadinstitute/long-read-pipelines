@@ -7,3 +7,4 @@ dependencies:
   - samtools
   - bwa
   - pysam
+  - numpy

@@ -2,7 +2,7 @@
 
 import numpy as np
 import pysam
-
+import argparse
 
 def n50(lengths):
     all_len = sorted(lengths, reverse=True)
