@@ -462,6 +462,7 @@ task ApplyBQSR {
         File recalibration_report
 
         Boolean bin_base_qualities = true
+        Boolean emit_original_quals = true
 
         String prefix
 
@@ -496,6 +497,7 @@ task ApplyBQSR {
             --use-original-qualities \
             -O ~{prefix}.bam \
             -bqsr ~{recalibration_report} \
+            --emit-original-quals ~{emit_original_quals} \
             ~{true='--static-quantized-quals 10' false='' bin_base_qualities} \
             ~{true='--static-quantized-quals 20' false='' bin_base_qualities} \
             ~{true='--static-quantized-quals 30' false='' bin_base_qualities} \
