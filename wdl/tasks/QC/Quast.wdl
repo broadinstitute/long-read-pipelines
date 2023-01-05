@@ -85,7 +85,6 @@ task QuastBenchmark {
 
     parameter_meta {
         ref:        "reference assembly of the species"
-        ref_gff:    "Reference features (e.g. genes)"
         assemblies: "list of assemblies to evaluate"
         labels:     "Optional list of labels for each assembly (will be used in reports/plots)."
         icarus:     "Include QUAST's Icarus viewer outputs"
