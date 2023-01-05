@@ -6,9 +6,7 @@ import "Utils.wdl" as Utils
 task CreateSampleNameMap {
 
     meta {
-        description: "Creates the sample / name-map file of the GVCFs for ingest into ImportGVCFs.
-                     NOTE: Some of this functionality is duplicated from Utils.InferSampleName.
-                     This is intentional - we don't want to localize all these files or shard over potentially thousands of input GVCFs."
+        description: "Creates the sample / name-map file of the GVCFs for ingest into ImportGVCFs.  NOTE: Some of this functionality is duplicated from Utils.InferSampleName.  This is intentional - we don't want to localize all these files or shard over potentially thousands of input GVCFs."
     }
 
     input {

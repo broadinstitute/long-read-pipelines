@@ -10,15 +10,12 @@ import "tasks/Utils.wdl" as Utils
 import "tasks/CallVariantsIllumina.wdl" as VAR
 import "tasks/HaplotypeCaller.wdl" as HC
 import "tasks/Finalize.wdl" as FF
-
 import "tasks/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow SRWholeGenome {
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais
-
-        File? bed_to_compute_coverage
 
         File ref_map_file
 
@@ -33,7 +30,8 @@ workflow SRWholeGenome {
         Int dvp_threads = 32
         Int dvp_memory = 128
 
-        String mito_contig = "chrM"
+        File? bed_to_compute_coverage
+
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
 
@@ -99,7 +97,7 @@ workflow SRWholeGenome {
                 dvp_threads = dvp_threads,
                 dvp_memory = dvp_memory,
 
-                mito_contig = mito_contig,
+                mito_contig = ref_map['mt_chr_name'],
                 contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
@@ -123,7 +121,7 @@ workflow SRWholeGenome {
 
                 prefix = participant_name + ".haplotype_caller",
 
-                mito_contig = mito_contig,
+                mito_contig = ref_map['mt_chr_name'],
                 contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
