@@ -10,7 +10,6 @@ workflow IllumAssembleWithFusilli {
         Array[File] references
 
         Int k = 47
-        String? gcs_output_file
     }
 
     call Fusilli.FusilliAssemble as Assemble {
@@ -21,15 +20,8 @@ workflow IllumAssembleWithFusilli {
             k = k
     }
 
-    if(defined(gcs_output_file)) {
-        call Fusilli.FinalizeFusilliRun {
-            input:
-                fusilli_output_tar = Assemble.fusilli_output_tar,
-                gcs_output_file = select_first([gcs_output_file])
-        }
-    }
-
     output {
         File contigs = Assemble.contigs
+        File fusilli_tarbal = Assemble.fusilli_output_tar
     }
 }
