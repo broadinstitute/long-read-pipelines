@@ -75,7 +75,6 @@ task Quast {
 task QuastBenchmark {
     input {
         File? ref
-        File? ref_gff
         Array[File] assemblies
         Boolean is_large = false
         Array[String]? labels
@@ -105,7 +104,7 @@ task QuastBenchmark {
         quast ~{true='' false='--no-icarus' icarus} -s \
               "~{size_optimization}" \
               --threads "${num_core}" \
-              ~{'-r ' + ref} ~{'-g gene:' + ref_gff} \
+              ~{'-r ' + ref} \
               ~{true='-l ' false='' defined(labels)} ~{sep=', ' labels} \
               ~{sep=' ' assemblies}
 

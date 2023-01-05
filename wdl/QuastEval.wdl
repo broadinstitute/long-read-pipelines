@@ -5,7 +5,6 @@ import "tasks/Quast.wdl" as Quast
 workflow QuastEval {
     input {
         File reference
-        File? reference_gff
         Array[File] assemblies
         Array[String]? labels
 
@@ -15,7 +14,6 @@ workflow QuastEval {
     call Quast.QuastBenchmark as Benchmark {
         input:
             ref = reference,
-            ref_gff = reference_gff,
             icarus = icarus,
 
             assemblies = assemblies,
