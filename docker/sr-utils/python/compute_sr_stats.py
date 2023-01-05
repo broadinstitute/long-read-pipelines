@@ -3,6 +3,7 @@
 import numpy as np
 import pysam
 import argparse
+from tqdm import tqdm
 
 def n50(lengths):
     all_len = sorted(lengths, reverse=True)

@@ -8,3 +8,5 @@ dependencies:
   - bwa
   - pysam
   - numpy
+  - tqdm
+

@@ -1,5 +1,5 @@
 IMAGE_NAME = sr-utils
-VERSION = 0.2.0
+VERSION = 0.2.1
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
