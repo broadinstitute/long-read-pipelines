@@ -26,8 +26,6 @@ workflow SRWholeGenome {
 
         String gcs_out_root_dir
 
-        File dbsnp_vcf
-
         Boolean call_small_variants = true
 
         Boolean run_HC_analysis = true
@@ -121,6 +119,7 @@ workflow SRWholeGenome {
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
+                dbsnp_vcf         = ref_map["known_sites_vcf"],
 
                 prefix = participant_name + ".haplotype_caller",
 

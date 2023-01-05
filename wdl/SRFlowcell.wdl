@@ -277,12 +277,12 @@ workflow SRFlowcell {
                 t_007_MarkDuplicates.metrics,
                 t_009_BaseRecalibrator.recalibration_report,
                 t_011_SamStats.sam_stats,
-                t_014_ComputeBamStats.results,
-                t_015_ComputeBamStatsQ5.results,
-                t_016_ComputeBamStatsQ7.results,
-                t_017_ComputeBamStatsQ10.results,
-                t_018_ComputeBamStatsQ12.results,
-                t_019_ComputeBamStatsQ15.results,
+                t_014_ComputeBamStats.results_file,
+                t_015_ComputeBamStatsQ5.results_file,
+                t_016_ComputeBamStatsQ7.results_file,
+                t_017_ComputeBamStatsQ10.results_file,
+                t_018_ComputeBamStatsQ12.results_file,
+                t_019_ComputeBamStatsQ15.results_file,
             ],
             keyfile = keyfile
     }
@@ -321,10 +321,10 @@ workflow SRFlowcell {
         Float num_bases = t_014_ComputeBamStats.results['bases']
         Float raw_est_fold_cov = t_014_ComputeBamStats.results['bases']/t_013_ComputeGenomeLength.length
 
-        Float read_length_mean = t_014_ComputeBamStats.results['subread_mean']
-        Float read_length_median = t_014_ComputeBamStats.results['subread_median']
-        Float read_length_stdev = t_014_ComputeBamStats.results['subread_stdev']
-        Float read_length_N50 = t_014_ComputeBamStats.results['subread_n50']
+        Float read_length_mean = t_014_ComputeBamStats.results['read_mean']
+        Float read_length_median = t_014_ComputeBamStats.results['read_median']
+        Float read_length_stdev = t_014_ComputeBamStats.results['read_stdev']
+        Float read_length_N50 = t_014_ComputeBamStats.results['read_n50']
 
         Float read_qual_mean = t_014_ComputeBamStats.results['mean_qual']
         Float read_qual_median = t_014_ComputeBamStats.results['median_qual']

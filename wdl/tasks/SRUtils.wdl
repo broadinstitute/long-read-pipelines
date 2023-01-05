@@ -625,7 +625,7 @@ task ComputeBamStats {
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
+        preemptible_tries:  1,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.1"
     }

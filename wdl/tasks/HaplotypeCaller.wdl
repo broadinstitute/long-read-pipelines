@@ -26,6 +26,8 @@ workflow CallVariantsWithHaplotypeCaller {
 
         Boolean call_vars_on_mitochondria = true
 
+        Int ploidy = 2
+
         String mito_contig = "chrM"
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
@@ -54,6 +56,7 @@ workflow CallVariantsWithHaplotypeCaller {
                 make_bamout = true,
                 single_interval = contig_for_small_var,
                 contamination = 0,
+                ploidy = ploidy,
                 use_spanning_event_genotyping = true
         }
     }
@@ -122,6 +125,8 @@ task HaplotypeCaller_GATK4_VCF {
         File ref_fasta
         File ref_fasta_index
 
+        Int ploidy = 2
+
         Boolean make_gvcf
         Boolean make_bamout
 
@@ -170,6 +175,7 @@ task HaplotypeCaller_GATK4_VCF {
                 ~{interval_arg}~{default="" sep=" -L " interval_list} \
                 -O ~{output_file_name} \
                 -contamination ~{default=0 contamination} \
+                --sample-ploidy ~{ploidy} \
                 -GQB 10 -GQB 20 -GQB 30 -GQB 40 -GQB 50 -GQB 60 -GQB 70 -GQB 80 -GQB 90 \
                 ~{false="--disable-spanning-event-genotyping" true="" use_spanning_event_genotyping} \
                 -G StandardAnnotation -G StandardHCAnnotation ~{true="-G AS_StandardAnnotation" false="" make_gvcf} \
