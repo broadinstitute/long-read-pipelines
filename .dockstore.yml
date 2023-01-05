@@ -114,6 +114,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/IllumPlasmidSPAdes.wdl
   testParameterFiles:
+- name: IllumTrimReads
+  subclass: wdl
+  primaryDescriptorPath: /wdl/IllumTrimReads.wdl
+  testParameterFiles:
 - name: IllumErrorCorrectBayesHammer
   subclass: wdl
   primaryDescriptorPath: /wdl/IllumErrorCorrectBayesHammer.wdl
