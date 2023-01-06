@@ -7,7 +7,7 @@ version 1.0
 import "SRJointGenotyping.wdl" as SRJOINT
 import "tasks/Finalize.wdl" as FF
 
-workflow SRJointCallGVCFs {
+workflow SRJointCallGVCFsWithGenomicsDB {
     input {
         Array[File] gvcfs
         Array[File] tbis
@@ -29,9 +29,15 @@ workflow SRJointCallGVCFs {
         gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/SRJointCallGVCFs/~{prefix}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/SRJointCallGVCFsWithGenomicsDB/~{prefix}"
 
     Map[String, String] ref_map = read_map(ref_map_file)
+
+    # From WARP:
+    # For small callsets (fewer than 1000 samples) we can gather the VCF shards and collect metrics directly.
+    # For anything larger, we need to keep the VCF sharded and gather metrics collected from them.
+    # We allow overriding this default behavior for testing / special requests.
+    Boolean is_small_callset = gvcfs <= 1000
 
     # Create sample-name map:
     call SRJOINT.CreateSampleNameMap as CreateSampleNameMap {
