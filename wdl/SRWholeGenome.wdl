@@ -140,6 +140,8 @@ workflow SRWholeGenome {
                 contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
+        # TODO: Apply VQSR here and have a second VQSR VCF output.  We'll need the raw VCF for joint calling.
+
         call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_vcf])}
         call FF.FinalizeToFile as FinalizeHCTbi { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_vcf_index])}
         call FF.FinalizeToFile as FinalizeHCGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_gvcf])}
