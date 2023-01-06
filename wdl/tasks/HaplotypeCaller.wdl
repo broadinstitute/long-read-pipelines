@@ -69,6 +69,12 @@ workflow CallVariantsWithHaplotypeCaller {
             prefix = prefix
     }
 
+    # Index the GVCF:
+    call SRUTIL.IndexFeatureFile as IndexGVCF {
+        input:
+            feature_file = MergeGVCFs.output_vcf
+    }
+
     # Merge the output BAMs:
     call MergeBamouts as MergeVariantCalledBamOuts {
         input:
@@ -76,11 +82,17 @@ workflow CallVariantsWithHaplotypeCaller {
             prefix = "~{prefix}.bamout"
     }
 
+    # Index the Bamout:
+    call Utils.Index as IndexBamout {
+        input:
+            bam = MergeVariantCalledBamOuts.output_bam
+    }
+
     # Now reblock the GVCF to combine hom ref blocks and save $ / storage:
     call ReblockGVCF {
         input:
             gvcf = MergeGVCFs.output_vcf,
-            gvcf_index = MergeGVCFs.output_vcf_index,
+            gvcf_index = IndexGVCF.index,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             ref_dict = ref_dict,
@@ -91,6 +103,7 @@ workflow CallVariantsWithHaplotypeCaller {
     call SRJOINT.GenotypeGVCFs as CollapseGVCFtoVCF {
         input:
             input_gvcf_data = ReblockGVCF.output_gvcf,
+            input_gvcf_index = ReblockGVCF.output_gvcf_index,
             interval_list = SmallVariantsScatterPrep.interval_list,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
@@ -99,13 +112,15 @@ workflow CallVariantsWithHaplotypeCaller {
             prefix = prefix,
     }
 
+    ## TODO: Add VQSR here.
+
     output {
         File output_gvcf = ReblockGVCF.output_gvcf
         File output_gvcf_index = ReblockGVCF.output_gvcf_index
         File output_vcf = CollapseGVCFtoVCF.output_vcf
         File output_vcf_index = CollapseGVCFtoVCF.output_vcf_index
         File bamout = MergeVariantCalledBamOuts.output_bam
-        File bamout_index = MergeVariantCalledBamOuts.output_bam_index
+        File bamout_index = IndexBamout.bai
     }
 }
 
@@ -172,7 +187,7 @@ task HaplotypeCaller_GATK4_VCF {
             HaplotypeCaller \
                 -R ~{ref_fasta} \
                 -I ~{input_bam} \
-                ~{interval_arg}~{default="" sep=" -L " interval_list} \
+                ~{interval_arg}~{default="" sep=" -L " interval_arg_value} \
                 -O ~{output_file_name} \
                 -contamination ~{default=0 contamination} \
                 --sample-ploidy ~{ploidy} \
@@ -236,7 +251,12 @@ task MergeBamouts {
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
         ithreads=${np}
+
+        # If the number of processors = 1, then `let` will return 1 here:
+        # So we need to turn off `set -e` for this command:
+        set +e
         let mthreads=${np}-1
+        set -e
 
         samtools merge -@${mthreads} ~{prefix}.bam ~{sep=" " bams}
         samtools index -@${ithreads} ~{prefix}.bam
@@ -251,7 +271,7 @@ task MergeBamouts {
        boot_disk_gb:       10,
        preemptible_tries:  1,
        max_retries:        1,
-       docker:             "biocontainers/samtools:1.3.1"
+       docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

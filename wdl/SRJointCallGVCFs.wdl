@@ -64,6 +64,8 @@ workflow SRJointCallGVCFs {
             prefix = prefix,
     }
 
+    ## TODO: Add VQSR here.
+
     # Finalize
     call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = JointCallGVCFs.output_vcf }
     call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = JointCallGVCFs.output_vcf_index }

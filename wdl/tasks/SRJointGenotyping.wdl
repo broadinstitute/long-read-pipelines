@@ -174,6 +174,8 @@ task GenotypeGVCFs {
 
     input {
         File input_gvcf_data
+        File? input_gvcf_index  # Required if passing a VCF file.
+
         File interval_list
 
         File ref_fasta
@@ -231,6 +233,8 @@ task GenotypeGVCFs {
                 -L ~{interval_list} \
                 ~{true='--keep-combined-raw-annotations' false='' keep_combined_raw_annotations} \
                 --merge-input-intervals
+
+        ls
     >>>
     #########################
     RuntimeAttr default_attr = object {
@@ -255,6 +259,6 @@ task GenotypeGVCFs {
 
     output {
         File output_vcf = "~{prefix}.vcf"
-        File output_vcf_index = "~{prefix}.vcf.tbi"
+        File output_vcf_index = "~{prefix}.vcf.idx"
     }
 }

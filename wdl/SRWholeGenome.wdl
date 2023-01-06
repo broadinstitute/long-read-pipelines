@@ -30,6 +30,8 @@ workflow SRWholeGenome {
         Int dvp_threads = 32
         Int dvp_memory = 128
 
+        Int ploidy = 2
+
         File? bed_to_compute_coverage
 
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
@@ -80,6 +82,7 @@ workflow SRWholeGenome {
 
     # Handle DeepVariant First:
     if (run_dv_pepper_analysis) {
+        # TODO: Revert BQSR base qualities here if necessary.  DeepVariant works better on non-BQSR'd data.
         call VAR.CallVariants as CallVariantsWithDeepVariant {
             input:
                 bam               = bam,
@@ -118,6 +121,8 @@ workflow SRWholeGenome {
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
                 dbsnp_vcf         = ref_map["known_sites_vcf"],
+
+                ploidy            = ploidy,
 
                 prefix = participant_name + ".haplotype_caller",
 

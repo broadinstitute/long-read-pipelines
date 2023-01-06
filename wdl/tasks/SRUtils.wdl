@@ -656,21 +656,17 @@ task MergeVCFs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int compression_level = 2
-    Int java_memory_size_mb = 30768
-
     Int disk_size = ceil(size(input_vcfs, "GiB") * 2.5) + 10
 
-    command {
+    command <<<
         java -Xms2000m -Xmx2500m -jar /usr/picard/picard.jar \
           MergeVcfs \
           INPUT=~{sep=' INPUT=' input_vcfs} \
           OUTPUT=~{prefix}.vcf
-    }
+    >>>
 
     output {
         File output_vcf = "~{prefix}.vcf"
-        File output_vcf_index = "~{prefix}.vcf.tbi"
     }
 
     #########################
@@ -693,4 +689,54 @@ task MergeVCFs {
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
+}
+
+
+task IndexFeatureFile {
+    meta {
+        description: "Create a Tribble index for a feature file using GATK.  Feature files are defined inside GATK and include VCF, BED, GTF, and other files."
+    }
+
+    input {
+        File feature_file
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil(size(feature_file, "GiB") * 2) + 10
+
+    String fname = basename(feature_file)
+
+    command <<<
+        mv ~{feature_file} ~{fname}
+        gatk --java-options "-Xmx1500m" \
+            IndexFeatureFile \
+                -I ~{fname}
+    >>>
+
+    output {
+        File index = "~{fname}.idx"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
 }
