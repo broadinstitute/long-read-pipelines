@@ -44,7 +44,9 @@ task CreateSampleNameMap {
 
             # Get our read group from the header:
             samtools view -H ${file_path} > header.txt
-            [ ! $(grep -q '^@RG' header.txt) ] && echo "No read group line found in GVCF: ${file_path}" && exit 1
+
+            # Fail if we don't have a header:
+            grep -q '^@RG' header.txt || echo "No read group line found in GVCF: ${file_path}" && exit 1
 
             # Get the sample name from the read group:
             grep '^@RG' header.txt | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g' | sort | uniq > sample.names.txt

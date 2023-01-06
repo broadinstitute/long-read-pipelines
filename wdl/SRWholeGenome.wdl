@@ -7,6 +7,7 @@ version 1.0
 ######################################################################################
 
 import "tasks/Utils.wdl" as Utils
+import "tasks/SRUtils.wdl" as SRUTIL
 import "tasks/CallVariantsIllumina.wdl" as VAR
 import "tasks/HaplotypeCaller.wdl" as HC
 import "tasks/Finalize.wdl" as FF
@@ -82,11 +83,20 @@ workflow SRWholeGenome {
 
     # Handle DeepVariant First:
     if (run_dv_pepper_analysis) {
-        # TODO: Revert BQSR base qualities here if necessary.  DeepVariant works better on non-BQSR'd data.
+
+        # Deep Variant runs better with raw base quals because it has already learned the error modes.
+        # We need to revert our recalibration before calling variants:
+        call SRUTIL.RevertBaseQualities as RevertBQSRQuals {
+            input:
+                bam = bam,
+                bai = bai,
+                prefix = basename(bam, ".bam") + ".reverted_base_quals"
+        }
+
         call VAR.CallVariants as CallVariantsWithDeepVariant {
             input:
-                bam               = bam,
-                bai               = bai,
+                bam               = RevertBQSRQuals.bam_out,
+                bai               = RevertBQSRQuals.bai_out,
                 sample_id         = participant_name,
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],

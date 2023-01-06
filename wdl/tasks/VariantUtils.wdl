@@ -626,3 +626,241 @@ task FixSnifflesVCF {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+# TODO: Fix these tasks that were copied from WARP:
+
+#task HardFilterAndMakeSitesOnlyVcf {
+#
+#    input {
+#        File vcf
+#        File vcf_index
+#        Float excess_het_threshold
+#
+#        String variant_filtered_vcf_filename
+#        String sites_only_vcf_filename
+#
+#        Int disk_size
+#        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+#    }
+#
+#    command <<<
+#        set -euo pipefail
+#
+#        gatk --java-options "-Xms3000m -Xmx3250m" \
+#            VariantFiltration \
+#            --filter-expression "ExcessHet > ~{excess_het_threshold}" \
+#            --filter-name ExcessHet \
+#            -O ~{variant_filtered_vcf_filename} \
+#            -V ~{vcf}
+#
+#        gatk --java-options "-Xms3000m -Xmx3250m" \
+#            MakeSitesOnlyVcf \
+#            -I ~{variant_filtered_vcf_filename} \
+#            -O ~{sites_only_vcf_filename}
+#    >>>
+#
+#    runtime {
+#        memory: "3750 MiB"
+#        cpu: "1"
+#        bootDiskSizeGb: 15
+#        disks: "local-disk " + disk_size + " HDD"
+#        preemptible: 1
+#        docker: gatk_docker
+#    }
+#
+#    output {
+#        File variant_filtered_vcf = "~{variant_filtered_vcf_filename}"
+#        File variant_filtered_vcf_index = "~{variant_filtered_vcf_filename}.tbi"
+#        File sites_only_vcf = "~{sites_only_vcf_filename}"
+#        File sites_only_vcf_index = "~{sites_only_vcf_filename}.tbi"
+#    }
+#}
+#
+#task IndelsVariantRecalibrator {
+#
+#    input {
+#        String recalibration_filename
+#        String tranches_filename
+#
+#        Array[String] recalibration_tranche_values
+#        Array[String] recalibration_annotation_values
+#
+#        File sites_only_variant_filtered_vcf
+#        File sites_only_variant_filtered_vcf_index
+#
+#        File mills_resource_vcf
+#        File axiomPoly_resource_vcf
+#        File dbsnp_resource_vcf
+#        File mills_resource_vcf_index
+#        File axiomPoly_resource_vcf_index
+#        File dbsnp_resource_vcf_index
+#        Boolean use_allele_specific_annotations
+#        Int max_gaussians = 4
+#
+#        Int disk_size
+#        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+#    }
+#
+#    command <<<
+#        set -euo pipefail
+#
+#        gatk --java-options "-Xms24000m -Xmx25000m" \
+#            VariantRecalibrator \
+#            -V ~{sites_only_variant_filtered_vcf} \
+#            -O ~{recalibration_filename} \
+#            --tranches-file ~{tranches_filename} \
+#            --trust-all-polymorphic \
+#            -tranche ~{sep=' -tranche ' recalibration_tranche_values} \
+#            -an ~{sep=' -an ' recalibration_annotation_values} \
+#            ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
+#            -mode INDEL \
+#            --max-gaussians ~{max_gaussians} \
+#            -resource:mills,known=false,training=true,truth=true,prior=12 ~{mills_resource_vcf} \
+#            -resource:axiomPoly,known=false,training=true,truth=false,prior=10 ~{axiomPoly_resource_vcf} \
+#            -resource:dbsnp,known=true,training=false,truth=false,prior=2 ~{dbsnp_resource_vcf}
+#    >>>
+#
+#    runtime {
+#        memory: "26000 MiB"
+#        cpu: "2"
+#        bootDiskSizeGb: 15
+#        disks: "local-disk " + disk_size + " HDD"
+#        preemptible: 1
+#        docker: gatk_docker
+#    }
+#
+#    output {
+#        File recalibration = "~{recalibration_filename}"
+#        File recalibration_index = "~{recalibration_filename}.idx"
+#        File tranches = "~{tranches_filename}"
+#    }
+#}
+#
+#task SNPsVariantRecalibratorCreateModel {
+#
+#    input {
+#        String recalibration_filename
+#        String tranches_filename
+#        Int downsampleFactor
+#        String model_report_filename
+#
+#        Array[String] recalibration_tranche_values
+#        Array[String] recalibration_annotation_values
+#
+#        File sites_only_variant_filtered_vcf
+#        File sites_only_variant_filtered_vcf_index
+#
+#        File hapmap_resource_vcf
+#        File omni_resource_vcf
+#        File one_thousand_genomes_resource_vcf
+#        File dbsnp_resource_vcf
+#        File hapmap_resource_vcf_index
+#        File omni_resource_vcf_index
+#        File one_thousand_genomes_resource_vcf_index
+#        File dbsnp_resource_vcf_index
+#        Boolean use_allele_specific_annotations
+#        Int max_gaussians = 6
+#
+#        Int disk_size
+#        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+#    }
+#
+#    command <<<
+#        set -euo pipefail
+#
+#        gatk --java-options "-Xms100g -Xmx100g" \
+#            VariantRecalibrator \
+#            -V ~{sites_only_variant_filtered_vcf} \
+#            -O ~{recalibration_filename} \
+#            --tranches-file ~{tranches_filename} \
+#            --trust-all-polymorphic \
+#            -tranche ~{sep=' -tranche ' recalibration_tranche_values} \
+#            -an ~{sep=' -an ' recalibration_annotation_values} \
+#            ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
+#            -mode SNP \
+#            --sample-every-Nth-variant ~{downsampleFactor} \
+#            --output-model ~{model_report_filename} \
+#            --max-gaussians ~{max_gaussians} \
+#            -resource:hapmap,known=false,training=true,truth=true,prior=15 ~{hapmap_resource_vcf} \
+#            -resource:omni,known=false,training=true,truth=true,prior=12 ~{omni_resource_vcf} \
+#            -resource:1000G,known=false,training=true,truth=false,prior=10 ~{one_thousand_genomes_resource_vcf} \
+#            -resource:dbsnp,known=true,training=false,truth=false,prior=7 ~{dbsnp_resource_vcf}
+#    >>>
+#
+#    runtime {
+#        memory: "104 GiB"
+#        cpu: "2"
+#        bootDiskSizeGb: 15
+#        disks: "local-disk " + disk_size + " HDD"
+#        preemptible: 1
+#        docker: gatk_docker
+#    }
+#
+#    output {
+#        File model_report = "~{model_report_filename}"
+#    }
+#}
+#
+#task ApplyRecalibration {
+#
+#    input {
+#        String recalibrated_vcf_filename
+#        File input_vcf
+#        File input_vcf_index
+#        File indels_recalibration
+#        File indels_recalibration_index
+#        File indels_tranches
+#        File snps_recalibration
+#        File snps_recalibration_index
+#        File snps_tranches
+#        Float indel_filter_level
+#        Float snp_filter_level
+#        Boolean use_allele_specific_annotations
+#        Int disk_size
+#        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+#    }
+#
+#    command <<<
+#        set -euo pipefail
+#
+#        gatk --java-options "-Xms5000m -Xmx6500m" \
+#            ApplyVQSR \
+#            -O tmp.indel.recalibrated.vcf \
+#            -V ~{input_vcf} \
+#            --recal-file ~{indels_recalibration} \
+#            ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
+#            --tranches-file ~{indels_tranches} \
+#            --truth-sensitivity-filter-level ~{indel_filter_level} \
+#            --create-output-variant-index true \
+#            -mode INDEL
+#
+#        gatk --java-options "-Xms5000m -Xmx6500m" \
+#            ApplyVQSR \
+#            -O ~{recalibrated_vcf_filename} \
+#            -V tmp.indel.recalibrated.vcf \
+#            --recal-file ~{snps_recalibration} \
+#            ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
+#            --tranches-file ~{snps_tranches} \
+#            --truth-sensitivity-filter-level ~{snp_filter_level} \
+#            --create-output-variant-index true \
+#            -mode SNP
+#    >>>
+#
+#    runtime {
+#        memory: "7000 MiB"
+#        cpu: "1"
+#        bootDiskSizeGb: 15
+#        disks: "local-disk " + disk_size + " HDD"
+#        preemptible: 1
+#        docker: gatk_docker
+#    }
+#
+#    output {
+#        File recalibrated_vcf = "~{recalibrated_vcf_filename}"
+#        File recalibrated_vcf_index = "~{recalibrated_vcf_filename}.tbi"
+#    }
+#}

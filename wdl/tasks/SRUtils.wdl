@@ -738,5 +738,76 @@ task IndexFeatureFile {
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
+}
 
+
+task RevertBaseQualities {
+    meta {
+        description: "Replace base qualities in the bam file with those located in the `OQ` tag.  If  `ApplyBQSR` has not been run on the given bam file, no changes are made and the original file is returned."
+    }
+
+    input {
+        File bam
+        File? bai
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil(size(bam, "GiB") * 4) + 10
+
+    command <<<
+        set -euxo pipefail
+
+        # Check if the input bam has been run through `ApplyBQSR`.
+        # If not, we can just return the input bam.
+        samtools view -H ~{bam} | grep '^@PG' > header.pg.txt
+
+        grep -q 'ID:GATK ApplyBQSR' header.pg.txt > applybqsr.pg.txt
+        rv=$?
+
+        if [[ $rv -eq 0 ]] && grep -q '\-\-emit-original-quals' applybqsr.pg.txt ; then
+            # OK - our data has had it's base quality scores recalibrated.
+            # We must revert them:
+            gatk \
+                RevertBaseQualityScores \
+                    -I ~{bam} \
+                    -O ~{prefix}.bam
+        else
+            # BQSR was not applied.  Just copy input -> output
+            cp ~{bam} ~{prefix}.bam
+            if [[ ! -e '~{bai}' ]] ; then
+                samtools index ~{prefix}.bam
+            else
+                cp ~{bai} ~{prefix}.bam.bai
+            fi
+        fi
+    >>>
+
+    output {
+        File bam_out = "~{prefix}.bam"
+        File bai_out = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
 }
