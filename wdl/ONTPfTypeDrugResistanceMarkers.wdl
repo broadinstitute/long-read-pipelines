@@ -113,15 +113,10 @@ task CallDrugResistanceMutations {
             GENE_ID=$(echo $LINE | awk '{print $2}')
             MUTATION=$(echo $LINE | awk '{print $3}')
 
-            zcat ~{vcf} | \
-                grep $GENE_ID | \
-                grep $MUTATION | \
-                wc -l | \
-                awk -v gene_name=$GENE_NAME \
-                    -v gene_id=$GENE_ID \
-                    -v mutation=$MUTATION \
-                    '{ gene_name "\t" gene_id "\t" mutation "\t" ($1 > 0) }' \
-            >> ~{prefix}.drug_resistance_report.txt
+            zcat ~{vcf} | grep $GENE_ID | grep $MUTATION | wc -l | \
+                awk -v gene_name=$GENE_NAME -v gene_id=$GENE_ID -v mutation=$MUTATION \
+                    '{ print gene_name, gene_id, mutation, ($1 > 0) ? "present" : "absent" }' | \
+                tee -a ~{prefix}.drug_resistance_report.txt
         done <~{drug_resistance_list}
     >>>
 
