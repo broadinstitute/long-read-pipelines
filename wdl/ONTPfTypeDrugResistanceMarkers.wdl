@@ -109,7 +109,8 @@ task CallDrugResistanceMutations {
             GENE_ID=$(echo $LINE | awk '{print $2}')
             MUTATION=$(echo $LINE | awk '{print $3}')
 
-            grep $GENE_ID ~{vcf} | \
+            zcat ~{vcf} | \
+                grep $GENE_ID | \
                 grep $MUTATION | \
                 wc -l | \
                 awk -v gene_name=$GENE_NAME \
