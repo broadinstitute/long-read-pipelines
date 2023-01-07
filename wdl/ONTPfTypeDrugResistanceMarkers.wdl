@@ -16,9 +16,10 @@ workflow ONTPfTypeDrugResistanceMarkers {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTPfTypeDrugResistanceMarkers/~{dir_prefix}"
 
     call FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db }
+
     call CallDrugResistanceMutations {
         input:
-            vcf = vcf,
+            vcf = FunctionallyAnnotateVariants.annotated_vcf,
             drug_resistance_list = drug_resistance_list
     }
 
