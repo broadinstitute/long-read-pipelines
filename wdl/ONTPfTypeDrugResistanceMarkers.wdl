@@ -27,11 +27,15 @@ workflow ONTPfTypeDrugResistanceMarkers {
     String dir = outdir + "/reports"
 
     call FF.FinalizeToFile as FinalizeAnnotatedVCF { input: outdir = dir, file = FunctionallyAnnotateVariants.annotated_vcf }
+    call FF.FinalizeToFile as FinalizeSnpEffSummary { input: outdir = dir, file = FunctionallyAnnotateVariants.snpEff_summary }
+    call FF.FinalizeToFile as FinalizeSnpEffGenes { input: outdir = dir, file = FunctionallyAnnotateVariants.snpEff_genes }
     call FF.FinalizeToFile as FinalizeDRReport { input: outdir = dir, file = CallDrugResistanceMutations.report }
 
     output {
         File annotated_vcf = FinalizeAnnotatedVCF.gcs_path
         File drug_res_report = FinalizeDRReport.gcs_path
+        File snpEff_summary = FinalizeSnpEffSummary.gcs_path
+        File snpEff_genes = FinalizeSnpEffGenes.gcs_path
     }
 }
 
