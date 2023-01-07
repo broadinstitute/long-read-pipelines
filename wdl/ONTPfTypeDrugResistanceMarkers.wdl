@@ -59,7 +59,7 @@ task FunctionallyAnnotateVariants {
             | gzip > ~{prefix}.annotated.vcf.gz
 
         mv snpEff_summary.html ~{prefix}.snpEff_summary.html
-        mv snpEff_genes.html ~{prefix}.snpEff_genes.html
+        mv snpEff_genes.txt ~{prefix}.snpEff_genes.txt
     >>>
 
     output {
