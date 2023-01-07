@@ -44,7 +44,7 @@ task FunctionallyAnnotateVariants {
     }
 
     Int disk_size = 1 + 4*ceil(size([vcf, snpeff_db], "GB"))
-    String prefix = basename(vcf, ".vcf.gz")
+    String prefix = basename(basename(vcf, ".gz"), ".vcf")
 
     command <<<
         set -x
@@ -56,11 +56,16 @@ task FunctionallyAnnotateVariants {
             -dataDir $PWD/snpeff_db/data \
             PlasmoDB-61_Pfalciparum3D7_Genome \
             ~{vcf} \
-            | gzip > ~{prefix}.vcf.gz
+            | gzip > ~{prefix}.annotated.vcf.gz
+
+        mv snpEff_summary.html ~{prefix}.snpEff_summary.html
+        mv snpEff_genes.html ~{prefix}.snpEff_genes.html
     >>>
 
     output {
-        File annotated_vcf = "~{prefix}.vcf.gz"
+        File annotated_vcf = "~{prefix}.annotated.vcf.gz"
+        File snpEff_summary = "~{prefix}.snpEff_summary.html"
+        File snpEff_genes = "~{prefix}.snpEff_genes.txt"
     }
 
     #########################
@@ -94,7 +99,7 @@ task CallDrugResistanceMutations {
     }
 
     Int disk_size = 1 + 2*ceil(size([vcf, drug_resistance_list], "GB"))
-    String prefix = basename(vcf, ".vcf.gz")
+    String prefix = basename(basename(vcf, ".gz"), ".vcf")
 
     command <<<
         set -x
