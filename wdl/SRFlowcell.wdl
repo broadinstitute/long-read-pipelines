@@ -287,6 +287,12 @@ workflow SRFlowcell {
             keyfile = keyfile
     }
 
+    call FF.FinalizeToFile as t_026_FinalizeFastQCReport {
+        input:
+            outdir = metrics_dir,
+            file = t_012_FastQC.report
+    }
+
     # Prep a few files for output:
     if (defined(bam)) {
         File unaligned_bam_o = reads_dir + "/unaligned/" + basename(select_first([bam]))
@@ -346,6 +352,6 @@ workflow SRFlowcell {
 
         Float average_identity = 100.0 - (100.0*t_011_SamStats.stats_map['mismatches']/t_011_SamStats.stats_map['bases_mapped'])
 
-        File fastqc_report = t_012_FastQC.report
+        File fastqc_report = t_026_FinalizeFastQCReport.gcs_path
     }
 }
