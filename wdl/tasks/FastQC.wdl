@@ -25,7 +25,7 @@ task FastQC {
         find . -name 'fastqc_report.html' -exec mv {} fastqc_report.html \;
 
         number_of_reads=$(grep 'Total Sequences' fastqc_data.txt | awk '{ print $3 }')
-        read_length=$(grep 'Sequence length' fastqc_data.txt | awk '{ print $3 }')
+        read_length=$(grep 'Sequence length' fastqc_data.txt | awk '{ print $3 }' | cut -f2 -d'-')
 
         echo $number_of_reads | awk '{ print "number_of_reads\t" $1 }' >> map.txt
         echo $read_length | awk '{ print "read_length\t" $1 }' >> map.txt
