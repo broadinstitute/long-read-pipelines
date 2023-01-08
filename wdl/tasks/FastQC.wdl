@@ -21,18 +21,17 @@ task FastQC {
 
         fastqc -t $num_core --extract ~{bam}
 
-        find . -name 'fastqc_data.txt'
+        find . -name 'fastqc_data.txt' -exec mv {} fastq_data.txt
+        find . -name 'fastqc_report.html' -exec mv {} fastq_report.html
 
-        FASTQC_DATA="$(find . -name 'fastqc_data.txt')"
-
-        number_of_reads=$(grep 'Total Sequences' $FASTQC_DATA | awk '{ print $3 }')
-        read_length=$(grep 'Sequence length' $FASTQC_DATA | awk '{ print $3 }')
+        number_of_reads=$(grep 'Total Sequences' fastqc_data.txt | awk '{ print $3 }')
+        read_length=$(grep 'Sequence length' fastqc_data.txt | awk '{ print $3 }')
 
         echo $number_of_reads | awk '{ print "number_of_reads\t" $3 }' >> map.txt
         echo $read_length | awk '{ print "read_length\t" $3 }' >> map.txt
         echo $number_of_reads $read_length | awk '{ print "number_of_bases\t" $1*$2 }' >> map.txt
 
-        mean_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' $FASTQC_DATA | \
+        mean_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
             grep -v '^#' | \
             grep -v '>>' | \
             awk '{ print $2 }' | \
@@ -40,7 +39,7 @@ task FastQC {
 
         echo $mean_qual | awk '{ print "mean_qual\t" $1 }' >> map.txt
 
-        median_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' $FASTQC_DATA | \
+        median_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
             grep -v '^#' | \
             grep -v '>>' | \
             awk '{ print $2 }' | \
@@ -54,8 +53,8 @@ task FastQC {
     output {
         Map[String, Float] stats_map = read_map("map.txt")
 
-        File stats = "~{basename(bam, '.bam')}_fastqc/fastqc_data.txt"
-        File report = "~{basename(bam, '.bam')}_fastqc/fastqc_report.html"
+        File stats = "fastqc_data.txt"
+        File report = "fastqc_report.html"
     }
 
     #########################
