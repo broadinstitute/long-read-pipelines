@@ -27,8 +27,8 @@ task FastQC {
         number_of_reads=$(grep 'Total Sequences' fastqc_data.txt | awk '{ print $3 }')
         read_length=$(grep 'Sequence length' fastqc_data.txt | awk '{ print $3 }')
 
-        echo $number_of_reads | awk '{ print "number_of_reads\t" $3 }' >> map.txt
-        echo $read_length | awk '{ print "read_length\t" $3 }' >> map.txt
+        echo $number_of_reads | awk '{ print "number_of_reads\t" $1 }' >> map.txt
+        echo $read_length | awk '{ print "read_length\t" $1 }' >> map.txt
         echo $number_of_reads $read_length | awk '{ print "number_of_bases\t" $1*$2 }' >> map.txt
 
         mean_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
