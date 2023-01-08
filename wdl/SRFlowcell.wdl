@@ -12,7 +12,7 @@ version 1.0
 import "tasks/SRUtils.wdl" as SRUTIL
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/NanoPlot.wdl" as NP
+import "tasks/FastQC.wdl" as FastQC
 import "tasks/Finalize.wdl" as FF
 
 workflow SRFlowcell {
@@ -186,12 +186,12 @@ workflow SRFlowcell {
     #
     #############################################
 
-    call AM.SamStats as t_011_SamStats {
+    call AM.SamStatsMap as t_011_SamStats {
         input:
             bam = t_010_ApplyBQSR.recalibrated_bam
     }
 
-    call NP.NanoPlotFromBam as t_012_NanoPlotFromBam { input: bam = t_010_ApplyBQSR.recalibrated_bam, bai = t_010_ApplyBQSR.recalibrated_bai }
+    call FastQC.FastQC as t_012_FastQC { input: bam = t_010_ApplyBQSR.recalibrated_bam, bai = t_010_ApplyBQSR.recalibrated_bai }
     call Utils.ComputeGenomeLength as t_013_ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
     call SRUTIL.ComputeBamStats as t_014_ComputeBamStats { input: bam_file = t_010_ApplyBQSR.recalibrated_bam }
@@ -321,10 +321,7 @@ workflow SRFlowcell {
         Float num_bases = t_014_ComputeBamStats.results['bases']
         Float raw_est_fold_cov = t_014_ComputeBamStats.results['bases']/t_013_ComputeGenomeLength.length
 
-        Float read_length_mean = t_014_ComputeBamStats.results['read_mean']
-        Float read_length_median = t_014_ComputeBamStats.results['read_median']
-        Float read_length_stdev = t_014_ComputeBamStats.results['read_stdev']
-        Float read_length_N50 = t_014_ComputeBamStats.results['read_n50']
+        Float read_length = t_014_ComputeBamStats.results['read_mean']
 
         Float read_qual_mean = t_014_ComputeBamStats.results['mean_qual']
         Float read_qual_median = t_014_ComputeBamStats.results['median_qual']
@@ -336,17 +333,19 @@ workflow SRFlowcell {
         Float num_reads_Q15 = t_019_ComputeBamStatsQ15.results['reads']
 
         # Aligned read stats
-        Float aligned_num_reads = t_012_NanoPlotFromBam.stats_map['number_of_reads']
-        Float aligned_num_bases = t_012_NanoPlotFromBam.stats_map['number_of_bases_aligned']
-        Float aligned_frac_bases = t_012_NanoPlotFromBam.stats_map['fraction_bases_aligned']
-        Float aligned_est_fold_cov = t_012_NanoPlotFromBam.stats_map['number_of_bases_aligned']/t_013_ComputeGenomeLength.length
+        Float aligned_num_reads = t_012_FastQC.stats_map['number_of_reads']
+        Float aligned_num_bases = t_011_SamStats.stats_map['bases_mapped']
+        Float aligned_frac_bases = t_011_SamStats.stats_map['bases_mapped']/t_011_SamStats.stats_map['total_length']
+        Float aligned_est_fold_cov = t_011_SamStats.stats_map['bases_mapped']/t_013_ComputeGenomeLength.length
 
-        Float aligned_read_length_mean = t_012_NanoPlotFromBam.stats_map['mean_read_length']
-        Float aligned_read_length_median = t_012_NanoPlotFromBam.stats_map['median_read_length']
-        Float aligned_read_length_stdev = t_012_NanoPlotFromBam.stats_map['read_length_stdev']
-        Float aligned_read_length_N50 = t_012_NanoPlotFromBam.stats_map['n50']
+        Float aligned_read_length = t_012_FastQC.stats_map['read_length']
 
-        Float average_identity = t_012_NanoPlotFromBam.stats_map['average_identity']
-        Float median_identity = t_012_NanoPlotFromBam.stats_map['median_identity']
+        Float insert_size_average = t_011_SamStats.stats_map['insert_size_average']
+        Float insert_size_standard_deviation = t_011_SamStats.stats_map['insert_size_standard_deviation']
+        Float pct_properly_paired_reads = t_011_SamStats.stats_map['percentage_of_properly_paired_reads_%']
+
+        Float average_identity = 100.0 - (100.0*t_011_SamStats.stats_map['mismatches']/t_011_SamStats.stats_map['bases_mapped'])
+
+        File fastqc_report = t_012_FastQC.report
     }
 }
