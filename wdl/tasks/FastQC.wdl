@@ -21,7 +21,9 @@ task FastQC {
 
         fastqc -t $num_core --extract ~{bam}
 
-        FASTQC_DATA="~{basename(bam, ".bam")}_fastqc/fastqc_data.txt"
+        find . -name 'fastqc_data.txt'
+
+        FASTQC_DATA="$(find . -name 'fastqc_data.txt')"
 
         number_of_reads=$(grep 'Total Sequences' $FASTQC_DATA | awk '{ print $3 }')
         read_length=$(grep 'Sequence length' $FASTQC_DATA | awk '{ print $3 }')
