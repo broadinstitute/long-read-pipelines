@@ -192,6 +192,7 @@ task BwaMem2 {
         # -t INT        number of threads [1]
         # -Y            use soft clipping for supplementary alignments
         # -R STR        read group header line such as '@RG\tID:foo\tSM:bar' [null]
+        # -M            mark shorter split hits as secondary
 
         bwa-mem2 mem \
             -K 100000000 \
