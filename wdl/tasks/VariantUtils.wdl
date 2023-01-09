@@ -631,236 +631,446 @@ task FixSnifflesVCF {
 ########################################################################################################################
 ########################################################################################################################
 
-# TODO: Fix these tasks that were copied from WARP:
+task HardFilterVcf {
 
-#task HardFilterAndMakeSitesOnlyVcf {
-#
-#    input {
-#        File vcf
-#        File vcf_index
-#        Float excess_het_threshold
-#
-#        String variant_filtered_vcf_filename
-#        String sites_only_vcf_filename
-#
-#        Int disk_size
-#        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
-#    }
-#
-#    command <<<
-#        set -euo pipefail
-#
-#        gatk --java-options "-Xms3000m -Xmx3250m" \
-#            VariantFiltration \
-#            --filter-expression "ExcessHet > ~{excess_het_threshold}" \
-#            --filter-name ExcessHet \
-#            -O ~{variant_filtered_vcf_filename} \
-#            -V ~{vcf}
-#
-#        gatk --java-options "-Xms3000m -Xmx3250m" \
-#            MakeSitesOnlyVcf \
-#            -I ~{variant_filtered_vcf_filename} \
-#            -O ~{sites_only_vcf_filename}
-#    >>>
-#
-#    runtime {
-#        memory: "3750 MiB"
-#        cpu: "1"
-#        bootDiskSizeGb: 15
-#        disks: "local-disk " + disk_size + " HDD"
-#        preemptible: 1
-#        docker: gatk_docker
-#    }
-#
-#    output {
-#        File variant_filtered_vcf = "~{variant_filtered_vcf_filename}"
-#        File variant_filtered_vcf_index = "~{variant_filtered_vcf_filename}.tbi"
-#        File sites_only_vcf = "~{sites_only_vcf_filename}"
-#        File sites_only_vcf_index = "~{sites_only_vcf_filename}.tbi"
-#    }
-#}
-#
-#task IndelsVariantRecalibrator {
-#
-#    input {
-#        String recalibration_filename
-#        String tranches_filename
-#
-#        Array[String] recalibration_tranche_values
-#        Array[String] recalibration_annotation_values
-#
-#        File sites_only_variant_filtered_vcf
-#        File sites_only_variant_filtered_vcf_index
-#
-#        File mills_resource_vcf
-#        File axiomPoly_resource_vcf
-#        File dbsnp_resource_vcf
-#        File mills_resource_vcf_index
-#        File axiomPoly_resource_vcf_index
-#        File dbsnp_resource_vcf_index
-#        Boolean use_allele_specific_annotations
-#        Int max_gaussians = 4
-#
-#        Int disk_size
-#        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
-#    }
-#
-#    command <<<
-#        set -euo pipefail
-#
-#        gatk --java-options "-Xms24000m -Xmx25000m" \
-#            VariantRecalibrator \
-#            -V ~{sites_only_variant_filtered_vcf} \
-#            -O ~{recalibration_filename} \
-#            --tranches-file ~{tranches_filename} \
-#            --trust-all-polymorphic \
-#            -tranche ~{sep=' -tranche ' recalibration_tranche_values} \
-#            -an ~{sep=' -an ' recalibration_annotation_values} \
-#            ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
-#            -mode INDEL \
-#            --max-gaussians ~{max_gaussians} \
-#            -resource:mills,known=false,training=true,truth=true,prior=12 ~{mills_resource_vcf} \
-#            -resource:axiomPoly,known=false,training=true,truth=false,prior=10 ~{axiomPoly_resource_vcf} \
-#            -resource:dbsnp,known=true,training=false,truth=false,prior=2 ~{dbsnp_resource_vcf}
-#    >>>
-#
-#    runtime {
-#        memory: "26000 MiB"
-#        cpu: "2"
-#        bootDiskSizeGb: 15
-#        disks: "local-disk " + disk_size + " HDD"
-#        preemptible: 1
-#        docker: gatk_docker
-#    }
-#
-#    output {
-#        File recalibration = "~{recalibration_filename}"
-#        File recalibration_index = "~{recalibration_filename}.idx"
-#        File tranches = "~{tranches_filename}"
-#    }
-#}
-#
-#task SNPsVariantRecalibratorCreateModel {
-#
-#    input {
-#        String recalibration_filename
-#        String tranches_filename
-#        Int downsampleFactor
-#        String model_report_filename
-#
-#        Array[String] recalibration_tranche_values
-#        Array[String] recalibration_annotation_values
-#
-#        File sites_only_variant_filtered_vcf
-#        File sites_only_variant_filtered_vcf_index
-#
-#        File hapmap_resource_vcf
-#        File omni_resource_vcf
-#        File one_thousand_genomes_resource_vcf
-#        File dbsnp_resource_vcf
-#        File hapmap_resource_vcf_index
-#        File omni_resource_vcf_index
-#        File one_thousand_genomes_resource_vcf_index
-#        File dbsnp_resource_vcf_index
-#        Boolean use_allele_specific_annotations
-#        Int max_gaussians = 6
-#
-#        Int disk_size
-#        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
-#    }
-#
-#    command <<<
-#        set -euo pipefail
-#
-#        gatk --java-options "-Xms100g -Xmx100g" \
-#            VariantRecalibrator \
-#            -V ~{sites_only_variant_filtered_vcf} \
-#            -O ~{recalibration_filename} \
-#            --tranches-file ~{tranches_filename} \
-#            --trust-all-polymorphic \
-#            -tranche ~{sep=' -tranche ' recalibration_tranche_values} \
-#            -an ~{sep=' -an ' recalibration_annotation_values} \
-#            ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
-#            -mode SNP \
-#            --sample-every-Nth-variant ~{downsampleFactor} \
-#            --output-model ~{model_report_filename} \
-#            --max-gaussians ~{max_gaussians} \
-#            -resource:hapmap,known=false,training=true,truth=true,prior=15 ~{hapmap_resource_vcf} \
-#            -resource:omni,known=false,training=true,truth=true,prior=12 ~{omni_resource_vcf} \
-#            -resource:1000G,known=false,training=true,truth=false,prior=10 ~{one_thousand_genomes_resource_vcf} \
-#            -resource:dbsnp,known=true,training=false,truth=false,prior=7 ~{dbsnp_resource_vcf}
-#    >>>
-#
-#    runtime {
-#        memory: "104 GiB"
-#        cpu: "2"
-#        bootDiskSizeGb: 15
-#        disks: "local-disk " + disk_size + " HDD"
-#        preemptible: 1
-#        docker: gatk_docker
-#    }
-#
-#    output {
-#        File model_report = "~{model_report_filename}"
-#    }
-#}
-#
-#task ApplyRecalibration {
-#
-#    input {
-#        String recalibrated_vcf_filename
-#        File input_vcf
-#        File input_vcf_index
-#        File indels_recalibration
-#        File indels_recalibration_index
-#        File indels_tranches
-#        File snps_recalibration
-#        File snps_recalibration_index
-#        File snps_tranches
-#        Float indel_filter_level
-#        Float snp_filter_level
-#        Boolean use_allele_specific_annotations
-#        Int disk_size
-#        String gatk_docker = "us.gcr.io/broad-gatk/gatk:4.2.6.1"
-#    }
-#
-#    command <<<
-#        set -euo pipefail
-#
-#        gatk --java-options "-Xms5000m -Xmx6500m" \
-#            ApplyVQSR \
-#            -O tmp.indel.recalibrated.vcf \
-#            -V ~{input_vcf} \
-#            --recal-file ~{indels_recalibration} \
-#            ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
-#            --tranches-file ~{indels_tranches} \
-#            --truth-sensitivity-filter-level ~{indel_filter_level} \
-#            --create-output-variant-index true \
-#            -mode INDEL
-#
-#        gatk --java-options "-Xms5000m -Xmx6500m" \
-#            ApplyVQSR \
-#            -O ~{recalibrated_vcf_filename} \
-#            -V tmp.indel.recalibrated.vcf \
-#            --recal-file ~{snps_recalibration} \
-#            ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
-#            --tranches-file ~{snps_tranches} \
-#            --truth-sensitivity-filter-level ~{snp_filter_level} \
-#            --create-output-variant-index true \
-#            -mode SNP
-#    >>>
-#
-#    runtime {
-#        memory: "7000 MiB"
-#        cpu: "1"
-#        bootDiskSizeGb: 15
-#        disks: "local-disk " + disk_size + " HDD"
-#        preemptible: 1
-#        docker: gatk_docker
-#    }
-#
-#    output {
-#        File recalibrated_vcf = "~{recalibrated_vcf_filename}"
-#        File recalibrated_vcf_index = "~{recalibrated_vcf_filename}.tbi"
-#    }
-#}
+    input {
+        File vcf
+        File vcf_index
+
+        String prefix
+
+        # From WARP:
+        # ExcessHet is a phred-scaled p-value. We want a cutoff of anything more extreme
+        # than a z-score of -4.5 which is a p-value of 3.4e-06, which phred-scaled is 54.69
+        Float excess_het_threshold = 54.69
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 4*ceil(size([vcf, vcf_index], "GB"))
+
+    command <<<
+        set -euo pipefail
+
+        # Get amount of memory to use:
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-1000
+        let mem_max=${mem_available}-750
+
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            VariantFiltration \
+            --filter-expression "ExcessHet > ~{excess_het_threshold}" \
+            --filter-name ExcessHet \
+            -V ~{vcf} \
+            -O ~{prefix}.hard_filtered.vcf
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File variant_filtered_vcf = "~{prefix}.hard_filtered.vcf"
+        File variant_filtered_vcf_index = "~{prefix}.hard_filtered.vcf.tbi"
+    }
+}
+
+task HardFilterAndMakeSitesOnlyVcf {
+
+    input {
+        File vcf
+        File vcf_index
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 4*ceil(size([vcf, vcf_index], "GB"))
+
+    command <<<
+        set -euo pipefail
+
+        # Get amount of memory to use:
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-1000
+        let mem_max=${mem_available}-750
+
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            MakeSitesOnlyVcf \
+            -I ~{vcf} \
+            -O ~{prefix}.sites_only.vcf
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File sites_only_vcf = "~{prefix}.hard_filtered.sites_only.vcf"
+        File sites_only_vcf_index = "~{prefix}.hard_filtered.sites_only.vcf.tbi"
+    }
+}
+
+task IndelsVariantRecalibrator {
+
+    input {
+        File vcf
+        File vcf_index
+
+        String prefix
+
+        Array[String] recalibration_tranche_values
+        Array[String] recalibration_annotation_values
+
+        Array[File] known_reference_variants
+        Array[File] known_reference_variants_index
+        Array[File] known_reference_variants_identifier
+        Array[Boolean] is_known
+        Array[Boolean] is_training
+        Array[Boolean] is_truth
+        Array[Int] prior
+
+        Boolean use_allele_specific_annotations
+        Int max_gaussians = 4
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        vcf:   "Sites only VCF.  Can be pre-filtered using hard-filters."
+        vcf_index: "Tribble Index for sites only VCF."
+        known_reference_variants: "Array of known reference VCF files.  For humans, dbSNP is one example."
+        known_reference_variants_index: "Array of index files for known reference VCF files."
+        known_reference_variants_identifier: "Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as `known_reference_variants`."
+        is_known: "Array of boolean values indicating if the known_reference_variant file at the same array position contains known variants.  Must be the same length as `known_reference_variants`."
+        is_training: "Array of boolean values indicating if the known_reference_variant file at the same array position contains training data.  Must be the same length as `known_reference_variants`."
+        is_truth: "Array of boolean values indicating if the known_reference_variant file at the same array position contains truth data.  Must be the same length as `known_reference_variants`."
+        prior: "Array of integer values indicating the priors for the known_reference_variant file at the same array position.  Must be the same length as `known_reference_variants`."
+    }
+
+
+    Int disk_size = 10 + ceil(size(known_reference_variants, "GB"))
+                  + 4*ceil(size(vcf, "GB"))
+                  + 2*ceil(size(vcf_index, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        # We need to generate resource strings from the input arrays.
+        # First we check that the arrays are the same length:
+        if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_index)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_known)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_training)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_truth)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(prior)} ]] ; then
+            echo "ERROR: Not all input arrays for known variants contain the same number of elements: " 1>&2
+            echo "       known_reference_variants            = ~{length(known_reference_variants)}" 1>&2
+            echo "       known_reference_variants            = ~{length(known_reference_variants_index)}" 1>&2
+            echo "       known_reference_variants_identifier = ~{length(known_reference_variants_identifier)}" 1>&2
+            echo "       is_known                            = ~{length(is_known)}" 1>&2
+            echo "       is_training                         = ~{length(is_training)}" 1>&2
+            echo "       is_truth                            = ~{length(is_truth)}" 1>&2
+            echo "       prior                               = ~{length(prior)}" 1>&2
+            false
+        fi
+
+        # Now we can write out the arrays into a TSV file and add them line by line to the execution:
+        # Create the TSV:
+        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_known, is_training, is_truth, prior, known_reference_variants]))}
+
+        # Now read them into a string:
+        resource_flags=$(awk '{printf("--resource:%s,known=$s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $5, $6)}')
+
+        # Get amount of memory to use:
+        mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-2
+        let mem_max=${mem_available}-1
+
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+            VariantRecalibrator \
+                -V ~{vcf} \
+                -O ~{prefix}.recal \
+                --tranches-file ~{prefix}.tranches \
+                --trust-all-polymorphic \
+                -tranche ~{sep=' -tranche ' recalibration_tranche_values} \
+                -an ~{sep=' -an ' recalibration_annotation_values} \
+                ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
+                -mode INDEL \
+                --output-model ~{prefix}.model.report \
+                --max-gaussians ~{max_gaussians} \
+                ${resource_flags}
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             26,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File recalibration = "~{prefix}.recal"
+        File recalibration_index = "~~{prefix}.recal.idx"
+        File tranches = "~{prefix}.tranches"
+        File model_report = "~{prefix}.model.report"
+    }
+}
+
+task SNPsVariantRecalibratorCreateModel {
+
+    input {
+        File vcf
+        File vcf_index
+
+        String prefix
+
+        Array[String] recalibration_tranche_values
+        Array[String] recalibration_annotation_values
+
+        Array[File] known_reference_variants
+        Array[File] known_reference_variants_index
+        Array[File] known_reference_variants_identifier
+        Array[Boolean] is_known
+        Array[Boolean] is_training
+        Array[Boolean] is_truth
+        Array[Int] prior
+
+        Int? downsampleFactor
+
+        Boolean use_allele_specific_annotations
+        Int max_gaussians = 6
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        vcf:   "Sites only VCF.  Can be pre-filtered using hard-filters."
+        vcf_index: "Tribble Index for sites only VCF."
+        known_reference_variants: "Array of known reference VCF files.  For humans, dbSNP is one example."
+        known_reference_variants_index: "Array of index files for known reference VCF files."
+        known_reference_variants_identifier: "Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as `known_reference_variants`."
+        is_known: "Array of boolean values indicating if the known_reference_variant file at the same array position contains known variants.  Must be the same length as `known_reference_variants`."
+        is_training: "Array of boolean values indicating if the known_reference_variant file at the same array position contains training data.  Must be the same length as `known_reference_variants`."
+        is_truth: "Array of boolean values indicating if the known_reference_variant file at the same array position contains truth data.  Must be the same length as `known_reference_variants`."
+        prior: "Array of integer values indicating the priors for the known_reference_variant file at the same array position.  Must be the same length as `known_reference_variants`."
+    }
+
+    Int disk_size = 10 + ceil(size(known_reference_variants, "GB"))
+              + 4*ceil(size(vcf, "GB"))
+              + 2*ceil(size(vcf_index, "GB"))
+
+    String downsample_factor_arg = if defined(downsampleFactor) then " --sample-every-Nth-variant " else ""
+
+    command <<<
+        set -euxo pipefail
+
+        # We need to generate resource strings from the input arrays.
+        # First we check that the arrays are the same length:
+        if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_index)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_known)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_training)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_truth)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(prior)} ]] ; then
+            echo "ERROR: Not all input arrays for known variants contain the same number of elements: " 1>&2
+            echo "       known_reference_variants            = ~{length(known_reference_variants)}" 1>&2
+            echo "       known_reference_variants            = ~{length(known_reference_variants_index)}" 1>&2
+            echo "       known_reference_variants_identifier = ~{length(known_reference_variants_identifier)}" 1>&2
+            echo "       is_known                            = ~{length(is_known)}" 1>&2
+            echo "       is_training                         = ~{length(is_training)}" 1>&2
+            echo "       is_truth                            = ~{length(is_truth)}" 1>&2
+            echo "       prior                               = ~{length(prior)}" 1>&2
+            false
+        fi
+
+        # Now we can write out the arrays into a TSV file and add them line by line to the execution:
+        # Create the TSV:
+        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_known, is_training, is_truth, prior, known_reference_variants]))}
+
+        # Now read them into a string:
+        resource_flags=$(awk '{printf("--resource:%s,known=$s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $5, $6)}')
+
+        # Get amount of memory to use:
+        mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-2
+        let mem_max=${mem_available}-1
+
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+            VariantRecalibrator \
+                -V ~{vcf} \
+                -O ~{prefix}.recal \
+                --tranches-file ~{prefix}.tranches \
+                --trust-all-polymorphic \
+                -tranche ~{sep=' -tranche ' recalibration_tranche_values} \
+                -an ~{sep=' -an ' recalibration_annotation_values} \
+                ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
+                -mode SNP \
+                ~{downsample_factor_arg}~{default="" sep=" --sample-every-Nth-variant " downsampleFactor} \
+                --output-model ~{prefix}.model.report \
+                --max-gaussians ~{max_gaussians} \
+                ${resource_flags}
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             64,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File recalibration = "~{prefix}.recal"
+        File recalibration_index = "~~{prefix}.recal.idx"
+        File tranches = "~{prefix}.tranches"
+        File model_report = "~{prefix}.model.report"
+    }
+}
+
+task ApplyVqsr {
+
+    input {
+        File vcf
+        File vcf_index
+
+        String prefix
+
+        File snps_recalibration
+        File snps_recalibration_index
+        File snps_tranches
+        Float snp_filter_level
+
+        File indels_recalibration
+        File indels_recalibration_index
+        File indels_tranches
+        Float indel_filter_level
+
+        Boolean use_allele_specific_annotations
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + ceil(size([vcf, vcf_index], "GB"))
+          + 2*ceil(size([snps_recalibration, snps_recalibration_index, snps_tranches], "GB"))
+          + 2*ceil(size([indels_recalibration, indels_recalibration_index, indels_tranches], "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        # Get amount of memory to use:
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-2000
+        let mem_max=${mem_available}-500
+
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            ApplyVQSR \
+                -V ~{vcf} \
+                -O tmp.indel.recalibrated.vcf \
+                --recal-file ~{indels_recalibration} \
+                ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
+                --tranches-file ~{indels_tranches} \
+                --truth-sensitivity-filter-level ~{indel_filter_level} \
+                --create-output-variant-index true \
+                -mode INDEL
+
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            ApplyVQSR \
+                -V tmp.indel.recalibrated.vcf \
+                -O ~{prefix}.recalibrated.vcf \
+                --recal-file ~{snps_recalibration} \
+                ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
+                --tranches-file ~{snps_tranches} \
+                --truth-sensitivity-filter-level ~{snp_filter_level} \
+                --create-output-variant-index true \
+                -mode SNP
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             7,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File recalibrated_vcf = "~{prefix}.recalibrated.vcf"
+        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.tbi"
+    }
+}

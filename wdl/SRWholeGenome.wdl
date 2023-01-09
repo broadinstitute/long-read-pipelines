@@ -8,6 +8,7 @@ version 1.0
 
 import "tasks/Utils.wdl" as Utils
 import "tasks/SRUtils.wdl" as SRUTIL
+import "tasks/VariantUtils.wdl" as VARUTIL
 import "tasks/CallVariantsIllumina.wdl" as VAR
 import "tasks/HaplotypeCaller.wdl" as HC
 import "tasks/Finalize.wdl" as FF
@@ -32,6 +33,14 @@ workflow SRWholeGenome {
         Int dvp_memory = 128
 
         Int ploidy = 2
+
+        Float snp_filter_level = 99.7
+        Array[String] snp_recalibration_annotation_values = ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
+        Array[Float] snp_recalibration_tranche_values = [100.0, 99.95, 99.9, 99.8, 99.6, 99.5, 99.4, 99.3, 99.0, 98.0, 97.0, 90.0 ]
+
+        Float indel_filter_level = 99.0
+        Array[String] indel_recalibration_annotation_values = ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]
+        Array[Float] indel_recalibration_tranche_values = [100.0, 99.95, 99.9, 99.5, 99.0, 97.0, 96.0, 95.0, 94.0, 93.5, 93.0, 92.0, 91.0, 90.0]
 
         File? bed_to_compute_coverage
 
@@ -140,14 +149,71 @@ workflow SRWholeGenome {
                 contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
-        # TODO: Apply VQSR here and have a second VQSR VCF output.  We'll need the raw VCF for joint calling.
+        call VARUTIL.IndelsVariantRecalibrator as TrainVQSROnHCIndelVariants {
+            input:
+                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
+                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                prefix = participant_name + ".indels",
+                recalibration_tranche_values = snp_recalibration_tranche_values,
+                recalibration_annotation_values = snp_recalibration_annotation_values,
+                known_reference_variants = [ref_map["known_sites_vcf"]],
+                known_reference_variants_identifier = [ref_map["known_sites_index"]],
+                is_known = [true],
+                is_training = [true],
+                is_truth = [false],
+                prior = [15],
+                use_allele_specific_annotations = true,
+                max_gaussians = 8,
+        }
 
+        call VARUTIL.SNPsVariantRecalibratorCreateModel as TrainVQSROnHCSnpVariants {
+            input:
+                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
+                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                prefix = participant_name + ".snps",
+                recalibration_tranche_values = snp_recalibration_tranche_values,
+                recalibration_annotation_values = snp_recalibration_annotation_values,
+                known_reference_variants = [ref_map["known_sites_vcf"]],
+                known_reference_variants_identifier = [ref_map["known_sites_index"]],
+                is_known = [true],
+                is_training = [true],
+                is_truth = [false],
+                prior = [15],
+                use_allele_specific_annotations = true,
+                max_gaussians = 8,
+        }
+
+        call VARUTIL.ApplyVqsr as ApplyVqsr {
+            input:
+                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
+                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+
+                prefix = participant_name + ".vqsr_filtered",
+
+                snps_recalibration = TrainVQSROnHCSnpVariants.recalibration,
+                snps_recalibration_index = TrainVQSROnHCSnpVariants.recalibration_index,
+                snps_tranches = TrainVQSROnHCSnpVariants.tranches,
+                snp_filter_level = snp_filter_level,
+
+                indels_recalibration = TrainVQSROnHCIndelVariants.recalibration,
+                indels_recalibration_index = TrainVQSROnHCIndelVariants.recalibration_index,
+                indels_tranches = TrainVQSROnHCIndelVariants.tranches,
+                indel_filter_level = indel_filter_level,
+
+                use_allele_specific_annotations = true,
+        }
+
+        # Finalize the raw Joint Calls:
         call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_vcf])}
         call FF.FinalizeToFile as FinalizeHCTbi { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_vcf_index])}
         call FF.FinalizeToFile as FinalizeHCGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_gvcf])}
         call FF.FinalizeToFile as FinalizeHCGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_gvcf_index])}
         call FF.FinalizeToFile as FinalizeHCBamOut { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.bamout])}
         call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.bamout_index])}
+
+        # Finalize the reclibrated / filtered variants:
+        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, file = select_first([ApplyVqsr.recalibrated_vcf])}
+        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, file = select_first([ApplyVqsr.recalibrated_vcf_index])}
     }
 
     output {
@@ -178,11 +244,14 @@ workflow SRWholeGenome {
 
         ########################################
 
-        File? hc_vcf    = FinalizeHCVcf.gcs_path
-        File? hc_tbi    = FinalizeHCTbi.gcs_path
-        File? hc_g_vcf  = FinalizeHCGVcf.gcs_path
-        File? hc_g_tbi  = FinalizeHCGTbi.gcs_path
-        File? hc_bamout = FinalizeHCBamOut.gcs_path
-        File? hc_baiout = FinalizeHCBaiOut.gcs_path
+        File? hc_vcf      = FinalizeHCVcf.gcs_path
+        File? hc_tbi      = FinalizeHCTbi.gcs_path
+        File? hc_vqsr_vcf = FinalizeHCVqsrVcf.gcs_path
+        File? hc_vqsr_tbi = FinalizeHCVqsrTbi.gcs_path
+        File? hc_g_vcf    = FinalizeHCGVcf.gcs_path
+        File? hc_g_tbi    = FinalizeHCGTbi.gcs_path
+        File? hc_bamout   = FinalizeHCBamOut.gcs_path
+        File? hc_baiout   = FinalizeHCBaiOut.gcs_path
+
     }
 }
