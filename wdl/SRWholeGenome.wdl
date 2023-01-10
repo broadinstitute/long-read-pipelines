@@ -35,11 +35,11 @@ workflow SRWholeGenome {
         Int ploidy = 2
 
         Float snp_filter_level = 99.7
-        Array[String] snp_recalibration_annotation_values = ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
+        Array[String] snp_recalibration_annotation_values = ["QD", "FS", "SOR", "MQRankSum", "ReadPosRankSum"]
         Array[Float] snp_recalibration_tranche_values = [100.0, 99.95, 99.9, 99.8, 99.6, 99.5, 99.4, 99.3, 99.0, 98.0, 97.0, 90.0 ]
 
         Float indel_filter_level = 99.0
-        Array[String] indel_recalibration_annotation_values = ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]
+        Array[String] indel_recalibration_annotation_values = ["QD", "FS", "SOR", "MQRankSum", "ReadPosRankSum"]
         Array[Float] indel_recalibration_tranche_values = [100.0, 99.95, 99.9, 99.5, 99.0, 97.0, 96.0, 95.0, 94.0, 93.5, 93.0, 92.0, 91.0, 90.0]
 
         File? bed_to_compute_coverage
@@ -123,10 +123,10 @@ workflow SRWholeGenome {
                 contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
-        call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_vcf])}
-        call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_tbi])}
-        call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_vcf])}
-        call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_tbi])}
+        call FF.FinalizeToFile as FinalizeDVPepperVcf  { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_vcf]) }
+        call FF.FinalizeToFile as FinalizeDVPepperTbi  { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_tbi]) }
+        call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_vcf]) }
+        call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_tbi]) }
     }
 
     # Now we handle HaplotypeCaller data:
@@ -161,7 +161,7 @@ workflow SRWholeGenome {
                 known_reference_variants_identifier = ["pfcrosses"],
                 is_known = [true],
                 is_training = [true],
-                is_truth = [false],
+                is_truth = [true],
                 prior = [15],
                 use_allele_specific_annotations = true,
                 max_gaussians = 8,
@@ -179,7 +179,7 @@ workflow SRWholeGenome {
                 known_reference_variants_identifier = ["pfcrosses"],
                 is_known = [true],
                 is_training = [true],
-                is_truth = [false],
+                is_truth = [true],
                 prior = [15],
                 use_allele_specific_annotations = true,
                 max_gaussians = 8,
@@ -205,17 +205,31 @@ workflow SRWholeGenome {
                 use_allele_specific_annotations = true,
         }
 
+        # Create a Keyfile for finalization:
+        File keyfile = ApplyVqsr.recalibrated_vcf_index
+
         # Finalize the raw Joint Calls:
-        call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_vcf])}
-        call FF.FinalizeToFile as FinalizeHCTbi { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_vcf_index])}
-        call FF.FinalizeToFile as FinalizeHCGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_gvcf])}
-        call FF.FinalizeToFile as FinalizeHCGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.output_gvcf_index])}
-        call FF.FinalizeToFile as FinalizeHCBamOut { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.bamout])}
-        call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, file = select_first([CallVariantsWithHaplotypeCaller.bamout_index])}
+        call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_vcf }
+        call FF.FinalizeToFile as FinalizeHCTbi { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCGVcf { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_gvcf }
+        call FF.FinalizeToFile as FinalizeHCGTbi { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_gvcf_index }
+        call FF.FinalizeToFile as FinalizeHCBamOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout }
+        call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout_index }
+
+        # Finalize the VQSR files:
+        call FF.FinalizeToFile as FinalizeIndelRecalFile { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration }
+        call FF.FinalizeToFile as FinalizeIndelRecalIndex { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration_index }
+        call FF.FinalizeToFile as FinalizeIndelRecalTranches { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.tranches }
+        call FF.FinalizeToFile as FinalizeIndelRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.model_report }
+
+        call FF.FinalizeToFile as FinalizeSnpRecalFile { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration }
+        call FF.FinalizeToFile as FinalizeSnpRecalIndex { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration_index }
+        call FF.FinalizeToFile as FinalizeSnpRecalTranches { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.tranches }
+        call FF.FinalizeToFile as FinalizeSnpRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.model_report }
 
         # Finalize the reclibrated / filtered variants:
-        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, file = select_first([ApplyVqsr.recalibrated_vcf])}
-        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, file = select_first([ApplyVqsr.recalibrated_vcf_index])}
+        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf }
+        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf_index }
     }
 
     output {
@@ -246,14 +260,23 @@ workflow SRWholeGenome {
 
         ########################################
 
-        File? hc_vcf      = FinalizeHCVcf.gcs_path
-        File? hc_tbi      = FinalizeHCTbi.gcs_path
-        File? hc_vqsr_vcf = FinalizeHCVqsrVcf.gcs_path
-        File? hc_vqsr_tbi = FinalizeHCVqsrTbi.gcs_path
         File? hc_g_vcf    = FinalizeHCGVcf.gcs_path
         File? hc_g_tbi    = FinalizeHCGTbi.gcs_path
         File? hc_bamout   = FinalizeHCBamOut.gcs_path
         File? hc_baiout   = FinalizeHCBaiOut.gcs_path
+        File? hc_raw_vcf  = FinalizeHCVcf.gcs_path
+        File? hc_raw_tbi  = FinalizeHCTbi.gcs_path
+        File? hc_vqsr_vcf = FinalizeHCVqsrVcf.gcs_path
+        File? hc_vqsr_tbi = FinalizeHCVqsrTbi.gcs_path
 
+        File? vqsr_indel_recal_file         = FinalizeIndelRecalFile.gcs_path
+        File? vqsr_indel_recal_file_index   = FinalizeIndelRecalIndex.gcs_path
+        File? vqsr_indel_recal_tranches     = FinalizeIndelRecalTranches.gcs_path
+        File? vqsr_indel_recal_model_report = FinalizeIndelRecalModelReport.gcs_path
+
+        File? vqsr_snp_recal_file         = FinalizeSnpRecalFile.gcs_path
+        File? vqsr_snp_recal_file_index   = FinalizeSnpRecalIndex.gcs_path
+        File? vqsr_snp_recal_tranches     = FinalizeSnpRecalTranches.gcs_path
+        File? vqsr_snp_recal_model_report = FinalizeSnpRecalModelReport.gcs_path
     }
 }

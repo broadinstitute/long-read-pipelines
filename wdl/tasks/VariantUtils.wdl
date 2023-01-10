@@ -662,7 +662,7 @@ task HardFilterVcf {
             --filter-expression "ExcessHet > ~{excess_het_threshold}" \
             --filter-name ExcessHet \
             -V ~{vcf} \
-            -O ~{prefix}.hard_filtered.vcf
+            -O ~{prefix}.hard_filtered.vcf.gz
     >>>
 
     #########################
@@ -687,12 +687,12 @@ task HardFilterVcf {
     }
 
     output {
-        File variant_filtered_vcf = "~{prefix}.hard_filtered.vcf"
+        File variant_filtered_vcf = "~{prefix}.hard_filtered.vcf.gz"
         File variant_filtered_vcf_index = "~{prefix}.hard_filtered.vcf.tbi"
     }
 }
 
-task HardFilterAndMakeSitesOnlyVcf {
+task MakeSitesOnlyVcf {
 
     input {
         File vcf
@@ -716,7 +716,7 @@ task HardFilterAndMakeSitesOnlyVcf {
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             MakeSitesOnlyVcf \
             -I ~{vcf} \
-            -O ~{prefix}.sites_only.vcf
+            -O ~{prefix}.sites_only.vcf.gz
     >>>
 
     #########################
@@ -741,8 +741,8 @@ task HardFilterAndMakeSitesOnlyVcf {
     }
 
     output {
-        File sites_only_vcf = "~{prefix}.hard_filtered.sites_only.vcf"
-        File sites_only_vcf_index = "~{prefix}.hard_filtered.sites_only.vcf.tbi"
+        File sites_only_vcf = "~{prefix}.sites_only.vcf.gz"
+        File sites_only_vcf_index = "~{prefix}.sites_only.vcf.tbi"
     }
 }
 
@@ -759,7 +759,7 @@ task IndelsVariantRecalibrator {
 
         Array[File] known_reference_variants
         Array[File] known_reference_variants_index
-        Array[File] known_reference_variants_identifier
+        Array[String] known_reference_variants_identifier
         Array[Boolean] is_known
         Array[Boolean] is_training
         Array[Boolean] is_truth
@@ -815,7 +815,7 @@ task IndelsVariantRecalibrator {
         options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_known, is_training, is_truth, prior, known_reference_variants]))}
 
         # Now read them into a string:
-        resource_flags=$(awk '{printf("--resource:%s,known=$s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $5, $6)}')
+        resource_flags=$(awk '{printf("--resource:%s,known=%s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $5, $6)}' ${options_tsv})
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
@@ -860,7 +860,7 @@ task IndelsVariantRecalibrator {
 
     output {
         File recalibration = "~{prefix}.recal"
-        File recalibration_index = "~~{prefix}.recal.idx"
+        File recalibration_index = "~{prefix}.recal.idx"
         File tranches = "~{prefix}.tranches"
         File model_report = "~{prefix}.model.report"
     }
@@ -879,7 +879,7 @@ task SNPsVariantRecalibratorCreateModel {
 
         Array[File] known_reference_variants
         Array[File] known_reference_variants_index
-        Array[File] known_reference_variants_identifier
+        Array[String] known_reference_variants_identifier
         Array[Boolean] is_known
         Array[Boolean] is_training
         Array[Boolean] is_truth
@@ -938,7 +938,7 @@ task SNPsVariantRecalibratorCreateModel {
         options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_known, is_training, is_truth, prior, known_reference_variants]))}
 
         # Now read them into a string:
-        resource_flags=$(awk '{printf("--resource:%s,known=$s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $5, $6)}')
+        resource_flags=$(awk '{printf("--resource:%s,known=%s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $5, $6)}' ${options_tsv})
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
@@ -984,7 +984,7 @@ task SNPsVariantRecalibratorCreateModel {
 
     output {
         File recalibration = "~{prefix}.recal"
-        File recalibration_index = "~~{prefix}.recal.idx"
+        File recalibration_index = "~{prefix}.recal.idx"
         File tranches = "~{prefix}.tranches"
         File model_report = "~{prefix}.model.report"
     }
@@ -1071,6 +1071,6 @@ task ApplyVqsr {
 
     output {
         File recalibrated_vcf = "~{prefix}.recalibrated.vcf"
-        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.tbi"
+        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.idx"
     }
 }
