@@ -234,8 +234,6 @@ task GenotypeGVCFs {
                 -L ~{interval_list} \
                 ~{true='--keep-combined-raw-annotations' false='' keep_combined_raw_annotations} \
                 --merge-input-intervals
-
-        ls
     >>>
     #########################
     RuntimeAttr default_attr = object {

@@ -688,7 +688,7 @@ task HardFilterVcf {
 
     output {
         File variant_filtered_vcf = "~{prefix}.hard_filtered.vcf.gz"
-        File variant_filtered_vcf_index = "~{prefix}.hard_filtered.vcf.gz.idx"
+        File variant_filtered_vcf_index = "~{prefix}.hard_filtered.vcf.gz.tbi"
     }
 }
 
@@ -742,7 +742,7 @@ task MakeSitesOnlyVcf {
 
     output {
         File sites_only_vcf = "~{prefix}.sites_only.vcf.gz"
-        File sites_only_vcf_index = "~{prefix}.sites_only.vcf.gz.idx"
+        File sites_only_vcf_index = "~{prefix}.sites_only.vcf.gz.tbi"
     }
 }
 
@@ -837,7 +837,7 @@ task AnnotateVcfWithBedRegions {
 
     output {
         File annotated_vcf = "~{prefix}.vcf.gz"
-        File annotated_vcf_index = "~{prefix}.vcf.gz.idx"
+        File annotated_vcf_index = "~{prefix}.vcf.gz.tbi"
     }
 }
 
@@ -1166,6 +1166,6 @@ task ApplyVqsr {
 
     output {
         File recalibrated_vcf = "~{prefix}.recalibrated.vcf.gz"
-        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.gz.idx"
+        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.gz.tbi"
     }
 }
