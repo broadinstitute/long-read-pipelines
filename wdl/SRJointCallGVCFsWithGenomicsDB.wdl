@@ -11,7 +11,7 @@ import "tasks/Finalize.wdl" as FF
 workflow SRJointCallGVCFsWithGenomicsDB {
     input {
         Array[File] gvcfs
-        Array[File] tbis
+        Array[File] gvcf_indices
 
         File ref_map_file
 
@@ -32,7 +32,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
     parameter_meta {
         gvcfs:            "GCS paths to gVCF files"
-        tbis:             "GCS paths to gVCF tbi files"
+        gvcf_indices:     "GCS paths to gVCF tbi files"
         ref_map_file:     "table indicating reference sequence and auxillary file locations"
         prefix:           "prefix for output joint-called gVCF and tabix index"
         gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
@@ -59,24 +59,24 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     call SRJOINT.ImportGVCFs as ImportGVCFsIntoGenomicsDB {
         input:
             sample_name_map = CreateSampleNameMap.sample_name_map,
-            interval_list = interval_list,
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            ref_dict          = ref_map['dict'],
-            prefix = prefix,
-            batch_size = 50,
+            interval_list   = interval_list,
+            ref_fasta       = ref_map['fasta'],
+            ref_fasta_fai   = ref_map['fai'],
+            ref_dict        = ref_map['dict'],
+            prefix          = prefix,
+            batch_size      = 50,
     }
 
     # Joint call
     call SRJOINT.GenotypeGVCFs as JointCallGVCFs {
         input:
             input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
-            interval_list = interval_list,
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            ref_dict          = ref_map['dict'],
-            dbsnp_vcf         = ref_map["known_sites_vcf"],
-            prefix = prefix,
+            interval_list   = interval_list,
+            ref_fasta       = ref_map['fasta'],
+            ref_fasta_fai   = ref_map['fai'],
+            ref_dict        = ref_map['dict'],
+            dbsnp_vcf       = ref_map["known_sites_vcf"],
+            prefix          = prefix,
     }
 
     # First make a sites-only VCF for recal (smaller file, easier to work with):
