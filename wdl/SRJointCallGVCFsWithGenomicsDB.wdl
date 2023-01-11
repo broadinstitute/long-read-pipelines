@@ -25,6 +25,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[String] indel_recalibration_annotation_values = ["QD", "FS", "SOR", "MQRankSum", "ReadPosRankSum"]
         Array[Float] indel_recalibration_tranche_values = [100.0, 99.95, 99.9, 99.5, 99.0, 97.0, 96.0, 95.0, 94.0, 93.5, 93.0, 92.0, 91.0, 90.0]
 
+        Array[File]?   annotation_bed_files
+        Array[File]?   annotation_bed_file_indexes
+        Array[String]? annotation_bed_file_annotation_names
+
         String prefix
 
         String gcs_out_root_dir
@@ -144,8 +148,21 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             use_allele_specific_annotations = true,
     }
 
+    # Now we need to annotate our variants by region:
+    if (defined(annotation_bed_files)) {
+        call VARUTIL.AnnotateVcfWithBedRegions as AnnotateVcfRegions {
+            input:
+                vcf = ApplyVqsr.recalibrated_vcf,
+                vcf_index = ApplyVqsr.recalibrated_vcf_index,
+                bed_files = select_first([annotation_bed_files]),
+                bed_file_indexes = select_first([annotation_bed_file_indexes]),
+                bed_file_annotation_names = select_first([annotation_bed_file_annotation_names]),
+                prefix = prefix + ".region_annotated"
+        }
+    }
+
     # Finalize:
-    File keyfile = ApplyVqsr.recalibrated_vcf_index
+    File keyfile = select_first([AnnotateVcfRegions.annotated_vcf_index, ApplyVqsr.recalibrated_vcf_index])
 
     call FF.FinalizeToFile as FinalizeGenomicsDB { input: outdir = outdir, keyfile = keyfile, file = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
 
@@ -164,6 +181,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
     call FF.FinalizeToFile as FinalizeVQSRVCF { input: outdir = outdir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf }
     call FF.FinalizeToFile as FinalizeVQSRTBI { input: outdir = outdir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf_index }
+
+    if (defined(annotation_bed_files)) {
+        call FF.FinalizeToFile as FinalizeRegionAnnotatedVcf { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf]) }
+        call FF.FinalizeToFile as FinalizeRegionAnnotatedVcfIndex { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf_index]) }
+    }
 
     ##########
     # store the results into designated bucket

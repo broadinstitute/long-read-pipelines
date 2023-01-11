@@ -27,6 +27,9 @@ task CreateSampleNameMap {
 
     String outfile_name = "~{prefix}.sample_name_map.tsv"
 
+    # Every so often we should reauthorize so `bcftools` can continue to access our data:
+    Int re_auth_interval = 50
+
     command <<<
         set -euxo pipefail
 
@@ -42,24 +45,20 @@ task CreateSampleNameMap {
         let i=1
         while read file_path ; do
 
-            # Get our read group from the header:
-            samtools view -H ${file_path} > header.txt
+            # Get our sample list from our file:
+            bcftools query -l ${file_path} > sample_names.txt
 
-            # Fail if we don't have a header:
-            grep -q '^@RG' header.txt || echo "No read group line found in GVCF: ${file_path}" && exit 1
-
-            # Get the sample name from the read group:
-            grep '^@RG' header.txt | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g' | sort | uniq > sample.names.txt
-            [[ $(wc -l sample.names.txt) -gt 1 ]] && echo "Multiple sample names found in GVCF: ${file_path}" && exit 1
+            # Make sure we only have one sample name:
+            [[ $(wc -l sample_names.txt | awk '{print $1}') -ne 1 ]] && echo "Incorrect number of sample names found in GVCF (there can be only one!): ${file_path}" && exit 1
 
             # Make sure the samplename has an actual name:
-            [ $(grep -iq "unnamedsample" sample.names.txt) ] && echo "Sample name found to be unnamedsample in GVCF: ${file_path}" && exit 1
+            [ $(grep -iq "unnamedsample" sample_names.txt) ] && echo "Sample name found to be unnamedsample in GVCF: ${file_path}" && exit 1
 
             # Add the sample name and GVCF path to the sample name file:
-            echo -e "$(cat ${sample.names.txt})\t${file_path}" >> ~{outfile_name}
+            echo -e "$(cat sample_names.txt)\t${file_path}" >> ~{outfile_name}
 
             let i=$i+1
-            if [[ $i -gt 50 ]] ; then
+            if [[ $i -gt ~{re_auth_interval} ]] ; then
                 # Periodically we should update the token so we don't have problems with long file lists:
                 export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
                 i=0
@@ -227,7 +226,7 @@ task GenotypeGVCFs {
         gatk --java-options "-Xms8000m -Xmx25000m" \
             GenotypeGVCFs \
                 -R ~{ref_fasta} \
-                -O ~{prefix}.vcf \
+                -O ~{prefix}.vcf.gz \
                 -D ~{dbsnp_vcf} \
                 -G StandardAnnotation -G AS_StandardAnnotation \
                 --only-output-calls-starting-in-intervals \

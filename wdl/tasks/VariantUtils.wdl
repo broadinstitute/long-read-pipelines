@@ -688,7 +688,7 @@ task HardFilterVcf {
 
     output {
         File variant_filtered_vcf = "~{prefix}.hard_filtered.vcf.gz"
-        File variant_filtered_vcf_index = "~{prefix}.hard_filtered.vcf.tbi"
+        File variant_filtered_vcf_index = "~{prefix}.hard_filtered.vcf.gz.idx"
     }
 }
 
@@ -742,7 +742,102 @@ task MakeSitesOnlyVcf {
 
     output {
         File sites_only_vcf = "~{prefix}.sites_only.vcf.gz"
-        File sites_only_vcf_index = "~{prefix}.sites_only.vcf.tbi"
+        File sites_only_vcf_index = "~{prefix}.sites_only.vcf.gz.idx"
+    }
+}
+
+task AnnotateVcfWithBedRegions {
+    input {
+        File vcf
+        File vcf_index
+
+        Array[File] bed_files
+        Array[File] bed_file_indexes
+        Array[String] bed_file_annotation_names
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 4*ceil(size([vcf, vcf_index, bed_files, bed_file_indexes], "GB"))
+
+
+
+    command <<<
+        set -euxo pipefail
+
+        # Get amount of memory to use:
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-1000
+        let mem_max=${mem_available}-750
+
+        # We need to generate argument strings from the input arrays.
+        # First we check that the arrays are the same length:
+        if [[ ~{length(bed_files)} -ne ~{length(bed_file_indexes)} ]] || \
+           [[ ~{length(bed_files)} -ne ~{length(bed_file_annotation_names)} ]] || \
+            echo "ERROR: Not all input arrays for known variants contain the same number of elements: " 1>&2
+            echo "       bed_files                 = ~{length(bed_files)}" 1>&2
+            echo "       bed_file_indices          = ~{length(bed_file_indexes)}" 1>&2
+            echo "       bed_file_annotation_names = ~{length(bed_file_annotation_names)}" 1>&2
+            false
+        fi
+
+        # Now we can write out the arrays into a TSV file and add them line by line to the execution:
+        # Create the TSV:
+        options_tsv=~{write_tsv(transpose([bed_files, bed_file_annotation_names]))}
+
+        # Now we have to run `VariantFiltration` multiple times on its own output so that it can
+        # annotate each region in the file:
+        # NOTE: This is dumb, but must be done because the `--mask` and `--mask-name` inputs are not arrays.
+
+        input_vcf=~{vcf}
+        output_vcf=~{prefix}.intermediate.vcf.gz
+        while read mask_options ; do
+
+            bed_file=$(echo "${mask_options}" | awk -F'\t' '{print $1}')
+            mask_name=$(echo "${mask_options}" | awk -F'\t' '{print $2}')
+
+            echo -e "RUNNING GATK ON NEW MASK: ${mask_name}\t${bed_file}"
+
+            gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+                VariantFiltration \
+                -V ${input_vcf} \
+                -O ${output_vcf} \
+                --mask ${bed_file} \
+                --mask-name ${mask_name}
+
+            mv ${output_vcf} ~{prefix}.new_input.vcf.gz
+            input_vcf=~{prefix}.new_input.vcf.gz
+        done < options_tsv
+
+        mv ${output_vcf} ~{prefix}.vcf.gz
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File annotated_vcf = "~{prefix}.vcf.gz"
+        File annotated_vcf_index = "~{prefix}.vcf.gz.idx"
     }
 }
 
@@ -1028,7 +1123,7 @@ task ApplyVqsr {
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             ApplyVQSR \
                 -V ~{vcf} \
-                -O tmp.indel.recalibrated.vcf \
+                -O tmp.indel.recalibrated.vcf.gz \
                 --recal-file ~{indels_recalibration} \
                 ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
                 --tranches-file ~{indels_tranches} \
@@ -1038,8 +1133,8 @@ task ApplyVqsr {
 
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             ApplyVQSR \
-                -V tmp.indel.recalibrated.vcf \
-                -O ~{prefix}.recalibrated.vcf \
+                -V tmp.indel.recalibrated.vcf.gz \
+                -O ~{prefix}.recalibrated.vcf.gz \
                 --recal-file ~{snps_recalibration} \
                 ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
                 --tranches-file ~{snps_tranches} \
@@ -1070,7 +1165,7 @@ task ApplyVqsr {
     }
 
     output {
-        File recalibrated_vcf = "~{prefix}.recalibrated.vcf"
-        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.idx"
+        File recalibrated_vcf = "~{prefix}.recalibrated.vcf.gz"
+        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.gz.idx"
     }
 }
