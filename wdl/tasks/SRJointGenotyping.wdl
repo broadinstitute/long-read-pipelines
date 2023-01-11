@@ -260,6 +260,6 @@ task GenotypeGVCFs {
 
     output {
         File output_vcf = "~{prefix}.vcf.gz"
-        File output_vcf_index = "~{prefix}.vcf.gz.idx"
+        File output_vcf_index = "~{prefix}.vcf.gz.tbi"
     }
 }
