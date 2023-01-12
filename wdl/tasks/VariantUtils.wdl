@@ -762,8 +762,6 @@ task AnnotateVcfWithBedRegions {
 
     Int disk_size = 1 + 4*ceil(size([vcf, vcf_index, bed_files, bed_file_indexes], "GB"))
 
-
-
     command <<<
         set -euxo pipefail
 
@@ -775,7 +773,7 @@ task AnnotateVcfWithBedRegions {
         # We need to generate argument strings from the input arrays.
         # First we check that the arrays are the same length:
         if [[ ~{length(bed_files)} -ne ~{length(bed_file_indexes)} ]] || \
-           [[ ~{length(bed_files)} -ne ~{length(bed_file_annotation_names)} ]] || \
+           [[ ~{length(bed_files)} -ne ~{length(bed_file_annotation_names)} ]] ; then
             echo "ERROR: Not all input arrays for known variants contain the same number of elements: " 1>&2
             echo "       bed_files                 = ~{length(bed_files)}" 1>&2
             echo "       bed_file_indices          = ~{length(bed_file_indexes)}" 1>&2
@@ -808,10 +806,13 @@ task AnnotateVcfWithBedRegions {
                 --mask-name ${mask_name}
 
             mv ${output_vcf} ~{prefix}.new_input.vcf.gz
+            mv ${output_vcf}.tbi ~{prefix}.new_input.vcf.gz.tbi
             input_vcf=~{prefix}.new_input.vcf.gz
-        done < options_tsv
+        done < ${options_tsv}
 
-        mv ${output_vcf} ~{prefix}.vcf.gz
+        # Because of the `mv` at the end of the loop we need to move the "new_input" files here:
+        mv ~{prefix}.new_input.vcf.gz ~{prefix}.vcf.gz
+        mv ~{prefix}.new_input.vcf.gz.tbi ~{prefix}.vcf.gz.tbi
     >>>
 
     #########################
