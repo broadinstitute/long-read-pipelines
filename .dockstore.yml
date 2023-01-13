@@ -126,3 +126,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/QuastEval.wdl
   testParameterFiles:
+- name: UpdatePlasmidDB
+  subclass: wdl
+  primaryDescriptorPath: /wdl/UpdatePlasmidDB.wdl
+  testParameterFiles:
