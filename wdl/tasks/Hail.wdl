@@ -3,6 +3,10 @@ version 1.0
 import "Structs.wdl"
 
 task ConvertToHailMT {
+    meta {
+        description: "Convert a .vcf.bgz file to a Hail MatrixTable and copy it to a final gs:// URL."
+    }
+
     input {
         File gvcf
         File tbi

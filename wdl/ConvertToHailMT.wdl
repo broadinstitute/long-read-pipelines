@@ -17,6 +17,13 @@ workflow ConvertToHailMT {
         String gcs_out_root_dir
     }
 
+    parameter_meta {
+        joint_gvcf:       "joint-called gVCF file"
+        joint_gvcf_tbi:   ".tbi index for joint-called gVCF file"
+        prefix:           "prefix for output Hail MatrixTable"
+        gcs_out_root_dir: "GCS bucket in which to store the Hail MatrixTable"
+    }
+
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"
 
     # Gather across multiple input gVCFs
