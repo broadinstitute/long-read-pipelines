@@ -167,6 +167,9 @@ workflow LRJointCallGVCFsWithGenomicsDB {
         input:
             gvcf = select_first([AnnotateVcfRegions.annotated_vcf, ApplyVqsr.recalibrated_vcf]),
             tbi = select_first([AnnotateVcfRegions.annotated_vcf_index, ApplyVqsr.recalibrated_vcf_index]),
+            reference = sub(sub(ref_map["fasta"], "^.*/", ""), "\.[fasta]*$", ""),
+            ref_fasta = ref_map["fasta"],
+            ref_fai = ref_map["fai"],
             prefix = prefix,
             outdir = outdir
     }
