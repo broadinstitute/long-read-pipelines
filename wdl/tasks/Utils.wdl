@@ -1977,7 +1977,7 @@ task InferSampleName {
 
     input {
         File bam
-        File bai
+        File? bai
     }
 
     parameter_meta {
