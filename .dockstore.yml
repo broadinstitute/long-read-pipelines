@@ -108,3 +108,15 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PBMASIsoSeqDemultiplex.wdl
   testParameterFiles:
+- name: LRJointCallGVCFs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LRJointCallGVCFs.wdl
+  testParameterFiles:
+- name: ConvertToHailMT
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ConvertToHailMT.wdl
+  testParameterFiles:
+- name: LRConvertBCF
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LRConvertBCF.wdl
+  testParameterFiles:
