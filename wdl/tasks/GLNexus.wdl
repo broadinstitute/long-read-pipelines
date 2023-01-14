@@ -84,6 +84,10 @@ workflow JointCall {
 }
 
 task GetRanges {
+    meta {
+        description: "Select loci over which to parallelize downstream operations."
+    }
+
     input {
         File dict
         File? bed
@@ -134,6 +138,10 @@ task GetRanges {
 }
 
 task ShardVCFByRanges {
+    meta {
+        description: "Split VCF into smaller ranges for parallelization."
+    }
+
     input {
         File gvcf
         File tbi
@@ -189,6 +197,10 @@ task ShardVCFByRanges {
 }
 
 task Call {
+    meta {
+        description: "Joint-call gVCFs with GLNexus."
+    }
+
     input {
         Array[File] gvcfs
 
@@ -251,6 +263,10 @@ task Call {
 }
 
 task CompressAndIndex {
+    meta {
+        description: "Convert a BCF file to a vcf.bgz file and index it."
+    }
+
     input {
         File joint_bcf
 
@@ -297,6 +313,10 @@ task CompressAndIndex {
 }
 
 task ConcatBCFs {
+    meta {
+        description: "Concatenate BCFs into a single .vcf.bgz file and index it."
+    }
+
     input {
         Array[File] bcfs
 
