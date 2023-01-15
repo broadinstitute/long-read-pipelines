@@ -156,3 +156,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SRFlowcell.wdl
   testParameterFiles:
+- name: ConvertToZarrStore
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ConvertToZarrStore.wdl
+  testParameterFiles:
