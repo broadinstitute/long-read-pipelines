@@ -11,6 +11,8 @@ import "tasks/SRUtils.wdl" as SRUTIL
 import "tasks/VariantUtils.wdl" as VARUTIL
 import "tasks/CallVariantsIllumina.wdl" as VAR
 import "tasks/HaplotypeCaller.wdl" as HC
+import "tasks/AlignedMetrics.wdl" as AM
+import "tasks/FastQC.wdl" as FastQC
 import "tasks/Finalize.wdl" as FF
 import "tasks/SampleLevelAlignedMetrics.wdl" as COV
 
@@ -64,20 +66,40 @@ workflow SRWholeGenome {
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
-    call COV.SampleLevelAlignedMetrics as coverage {
-        input:
-            aligned_bam = bam,
-            aligned_bai = bai,
-            ref_fasta   = ref_map['fasta'],
-            bed_to_compute_coverage = bed_to_compute_coverage
+    # Collect sample-level metrics:
+    call AM.SamStatsMap as SamStats { input: bam = bam }
+    call FastQC.FastQC as FastQC { input: bam = bam, bai = bai }
+    call Utils.ComputeGenomeLength as ComputeGenomeLength { input: fasta = ref_map['fasta'] }
+    call SRUTIL.ComputeBamStats as ComputeBamStats { input: bam_file = bam }
+
+    if (defined(bed_to_compute_coverage)) {
+        call AM.MosDepthOverBed as MosDepth {
+            input:
+                bam = bam,
+                bai = bai,
+                bed = select_first([bed_to_compute_coverage])
+        }
+
+        call COV.SummarizeDepthOverWholeBed as RegionalCoverage {
+            input:
+                mosdepth_output = MosDepth.regions
+        }
     }
 
-    String dir = outdir + "/alignments"
+    String bam_dir = outdir + "/alignments"
 
-    call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = bam, name = "~{participant_name}.bam" }
-    call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = bai, name = "~{participant_name}.bam.bai" }
+    call FF.FinalizeToFile as FinalizeBam { input: outdir = bam_dir, file = bam, name = "~{participant_name}.bam" }
+    call FF.FinalizeToFile as FinalizeBai { input: outdir = bam_dir, file = bai, name = "~{participant_name}.bam.bai" }
 
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
+    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = bam_dir, file = select_first([RegionalCoverage.cov_summary]) } }
+
+    String metrics_dir = outdir + "/metrics"
+    call FF.FinalizeToFile as FinalizeFastQCReport {
+        input:
+            outdir = metrics_dir,
+            file = FastQC.report
+    }
+
 
     ####################################################################################################
 
@@ -236,18 +258,20 @@ workflow SRWholeGenome {
         File aligned_bam = FinalizeBam.gcs_path
         File aligned_bai = FinalizeBai.gcs_path
 
-        Float aligned_num_reads = coverage.aligned_num_reads
-        Float aligned_num_bases = coverage.aligned_num_bases
-        Float aligned_frac_bases = coverage.aligned_frac_bases
-        Float aligned_est_fold_cov = coverage.aligned_est_fold_cov
+        Float aligned_num_reads = FastQC.stats_map['number_of_reads']
+        Float aligned_num_bases = SamStats.stats_map['bases_mapped']
+        Float aligned_frac_bases = SamStats.stats_map['bases_mapped']/SamStats.stats_map['total_length']
+        Float aligned_est_fold_cov = SamStats.stats_map['bases_mapped']/ComputeGenomeLength.length
 
-        Float aligned_read_length_mean = coverage.aligned_read_length_mean
-        Float aligned_read_length_median = coverage.aligned_read_length_median
-        Float aligned_read_length_stdev = coverage.aligned_read_length_stdev
-        Float aligned_read_length_N50 = coverage.aligned_read_length_N50
+        Float aligned_read_length = FastQC.stats_map['read_length']
 
-        Float average_identity = coverage.average_identity
-        Float median_identity = coverage.median_identity
+        Float insert_size_average = SamStats.stats_map['insert_size_average']
+        Float insert_size_standard_deviation = SamStats.stats_map['insert_size_standard_deviation']
+        Float pct_properly_paired_reads = SamStats.stats_map['percentage_of_properly_paired_reads_%']
+
+        Float average_identity = 100.0 - (100.0*SamStats.stats_map['mismatches']/SamStats.stats_map['bases_mapped'])
+
+        File fastqc_report = FinalizeFastQCReport.gcs_path
 
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
 
