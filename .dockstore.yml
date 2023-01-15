@@ -136,6 +136,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ConvertToHailMT.wdl
   testParameterFiles:
+- name: ConvertToZarrStore
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ConvertToZarrStore.wdl
+  testParameterFiles:
 - name: LRConvertBCF
   subclass: wdl
   primaryDescriptorPath: /wdl/LRConvertBCF.wdl
@@ -155,8 +159,4 @@ workflows:
 - name: SRFlowcell
   subclass: wdl
   primaryDescriptorPath: /wdl/SRFlowcell.wdl
-  testParameterFiles:
-- name: ConvertToZarrStore
-  subclass: wdl
-  primaryDescriptorPath: /wdl/ConvertToZarrStore.wdl
   testParameterFiles:
