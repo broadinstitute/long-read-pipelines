@@ -64,6 +64,7 @@ RUN apt-get -qqy update --fix-missing && \
                  gnupg \
                  less \
                  tabix \
+                 tree \
                  vcftools \
                  wget \
                  zlib1g-dev && \
