@@ -81,7 +81,7 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             prefix          = prefix,
             batch_size      = 50,
             # We need to override this because we're not actually sending the GVCF over (just a list):
-            runtime_attr_override = object {disk_gb: 10 + CreateSampleNameMap.total_gvcf_size + 2 * ceil(size(ref_map['fasta'], "GB"))}
+            runtime_attr_override = object {disk_gb: 10 + CreateSampleNameMap.total_gvcf_size_gb + 2 * ceil(size(ref_map['fasta'], "GB"))}
     }
 
     # Joint call
@@ -266,7 +266,7 @@ task CreateSampleNameMap {
     Int disk_size_gb = 20
 
     String outfile_name = "~{prefix}.sample_name_map.tsv"
-    String size_file = "~{prefix}.total_gvcf_file_size.txt"
+    String size_file = "~{prefix}.total_gvcf_file_size_gb.txt"
 
     # Every so often we should reauthorize so `bcftools` can continue to access our data:
     Int re_auth_interval = 50
@@ -339,7 +339,7 @@ task CreateSampleNameMap {
 
     output {
         File sample_name_map = outfile_name
-        Int total_gvcf_size = read_int(size_file)
+        Int total_gvcf_size_gb = ceil(read_int(size_file) / (1024 * 1024 * 1024)) # Convert bytes to GB
     }
 }
 

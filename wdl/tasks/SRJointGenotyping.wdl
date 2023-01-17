@@ -99,7 +99,7 @@ task CreateSampleNameMap {
 
     output {
         File sample_name_map = outfile_name
-        Int total_gvcf_size = read_int(size_file)
+        Int total_gvcf_size_gb = ceil(read_int(size_file) / (1024 * 1024 * 1024)) # Convert bytes to GB
     }
 }
 
