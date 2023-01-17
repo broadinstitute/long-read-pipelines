@@ -80,6 +80,8 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             ref_dict        = ref_map['dict'],
             prefix          = prefix,
             batch_size      = 50,
+            # We need to override this because we're not actually sending the GVCF over (just a list):
+            runtime_attr_override = object {disk_gb: 4 * CreateSampleNameMap.total_gvcf_size + 2 * ceil(size(ref_map['fasta'], "GB"))}
     }
 
     # Joint call
@@ -264,6 +266,7 @@ task CreateSampleNameMap {
     Int disk_size_gb = 20
 
     String outfile_name = "~{prefix}.sample_name_map.tsv"
+    String size_file = "~{prefix}.total_gvcf_file_size.txt"
 
     # Every so often we should reauthorize so `bcftools` can continue to access our data:
     Int re_auth_interval = 50
@@ -280,6 +283,9 @@ task CreateSampleNameMap {
         # Set our access token:
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
 
+        # Create a temporary file to store file sizes in:
+        size_file=$(mktemp)
+
         let i=1
         while read file_path ; do
 
@@ -295,6 +301,9 @@ task CreateSampleNameMap {
             # Add the sample name and GVCF path to the sample name file:
             echo -e "$(cat sample_names.txt)\t${file_path}" >> ~{outfile_name}
 
+            # Add the file size to the size file:
+            gsutil du -sac ${file_path} | tail -n1 | awk '{print $1}' >> ${size_file}
+
             let i=$i+1
             if [[ $i -gt ~{re_auth_interval} ]] ; then
                 # Periodically we should update the token so we don't have problems with long file lists:
@@ -302,6 +311,9 @@ task CreateSampleNameMap {
                 i=0
             fi
         done < ${gvcf_file_list}
+
+        # Now calculate the final file size:
+        awk '{s += $1}END{print s}' ${size_file} > ~{size_file}
     >>>
 
     #########################
@@ -327,6 +339,7 @@ task CreateSampleNameMap {
 
     output {
         File sample_name_map = outfile_name
+        Int total_gvcf_size = read_int(size_file)
     }
 }
 
