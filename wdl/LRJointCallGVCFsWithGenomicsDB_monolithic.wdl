@@ -277,7 +277,7 @@ task CreateSampleNameMap {
     Int disk_size_gb = 20
 
     String outfile_name = "~{prefix}.sample_name_map.tsv"
-    String size_file = "~{prefix}.total_gvcf_file_size_gb.txt"
+    String size_file_gb = "~{prefix}.total_gvcf_file_size_gb.txt"
 
     # Every so often we should reauthorize so `bcftools` can continue to access our data:
     Int re_auth_interval = 50
@@ -323,8 +323,9 @@ task CreateSampleNameMap {
             fi
         done < ${gvcf_file_list}
 
-        # Now calculate the final file size:
-        awk '{s += $1}END{print s}' ${size_file} > ~{size_file}
+        # Now calculate the final file size in GB:
+        # We include an additional GB in case we have a very small dataset:
+        awk '{s += $1}END{print int(1+s/(1024*1024*1024))}' ${size_file} > ~{size_file_gb}
     >>>
 
     #########################
@@ -350,7 +351,7 @@ task CreateSampleNameMap {
 
     output {
         File sample_name_map = outfile_name
-        Int total_gvcf_size_gb = ceil(read_int(size_file) / (1024 * 1024 * 1024)) # Convert bytes to GB
+        Int total_gvcf_size_gb = read_int(size_file_gb)
     }
 }
 
