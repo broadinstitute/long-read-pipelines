@@ -4,9 +4,6 @@ version 1.0
 ## A workflow that performs joint calling on single-sample gVCFs from GATK4 HaplotypeCaller using GenomicsDB.
 #############################################################################################################
 
-import "tasks/Hail.wdl" as Hail
-import "tasks/Finalize.wdl" as FF
-
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -190,27 +187,27 @@ workflow LRJointCallGVCFsWithGenomicsDB {
     # Finalize:
     File keyfile = select_first([AnnotateVcfRegions.annotated_vcf_index, ApplyVqsr.recalibrated_vcf_index])
 
-    call FF.FinalizeToFile as FinalizeGenomicsDB { input: outdir = outdir, keyfile = keyfile, file = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
+    call FinalizeToFile as FinalizeGenomicsDB { input: outdir = outdir, keyfile = keyfile, file = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
 
-    call FF.FinalizeToFile as FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = JointCallGVCFs.output_vcf }
-    call FF.FinalizeToFile as FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = JointCallGVCFs.output_vcf_index }
+    call FinalizeToFile as FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = JointCallGVCFs.output_vcf }
+    call FinalizeToFile as FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = JointCallGVCFs.output_vcf_index }
 
-    call FF.FinalizeToFile as FinalizeIndelRecalFile { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration }
-    call FF.FinalizeToFile as FinalizeIndelRecalIndex { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration_index }
-    call FF.FinalizeToFile as FinalizeIndelRecalTranches { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.tranches }
-    call FF.FinalizeToFile as FinalizeIndelRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.model_report }
+    call FinalizeToFile as FinalizeIndelRecalFile { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration }
+    call FinalizeToFile as FinalizeIndelRecalIndex { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration_index }
+    call FinalizeToFile as FinalizeIndelRecalTranches { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.tranches }
+    call FinalizeToFile as FinalizeIndelRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.model_report }
 
-    call FF.FinalizeToFile as FinalizeSnpRecalFile { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration }
-    call FF.FinalizeToFile as FinalizeSnpRecalIndex { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration_index }
-    call FF.FinalizeToFile as FinalizeSnpRecalTranches { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.tranches }
-    call FF.FinalizeToFile as FinalizeSnpRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.model_report }
+    call FinalizeToFile as FinalizeSnpRecalFile { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration }
+    call FinalizeToFile as FinalizeSnpRecalIndex { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration_index }
+    call FinalizeToFile as FinalizeSnpRecalTranches { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.tranches }
+    call FinalizeToFile as FinalizeSnpRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.model_report }
 
-    call FF.FinalizeToFile as FinalizeVQSRVCF { input: outdir = outdir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf }
-    call FF.FinalizeToFile as FinalizeVQSRTBI { input: outdir = outdir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf_index }
+    call FinalizeToFile as FinalizeVQSRVCF { input: outdir = outdir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf }
+    call FinalizeToFile as FinalizeVQSRTBI { input: outdir = outdir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf_index }
 
     if (defined(annotation_bed_files)) {
-        call FF.FinalizeToFile as FinalizeRegionAnnotatedVcf { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf]) }
-        call FF.FinalizeToFile as FinalizeRegionAnnotatedVcfIndex { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf_index]) }
+        call FinalizeToFile as FinalizeRegionAnnotatedVcf { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf]) }
+        call FinalizeToFile as FinalizeRegionAnnotatedVcfIndex { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf_index]) }
     }
 
     ##########
@@ -513,7 +510,7 @@ task HardFilterVcf {
         String prefix
 
         # From WARP:
-        # ExcessHet is a phred-scaled p-value. We want a cutoff of anything more extreme
+        # ExcessHet is a phred-scaled p-value. We want a cutoof anything more extreme
         # than a z-score of -4.5 which is a p-value of 3.4e-06, which phred-scaled is 54.69
         Float excess_het_threshold = 54.69
 
@@ -1110,6 +1107,62 @@ task ConvertToHailMT {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FinalizeToFile {
+    input {
+        File file
+        String outdir
+        String? name
+
+        File? keyfile
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        file: {
+            description: "file to finalize",
+            localization_optional: true
+        }
+        keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
+        outdir: "directory to which files should be uploaded"
+        name:   "name to set for uploaded file"
+    }
+
+    String gcs_output_dir = sub(outdir, "/+$", "")
+    String gcs_output_file = gcs_output_dir + "/" + select_first([name, basename(file)])
+
+    command <<<
+        set -euxo pipefail
+
+        gsutil -m cp "~{file}" "~{gcs_output_file}"
+    >>>
+
+    output {
+        String gcs_path = gcs_output_file
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            10,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
