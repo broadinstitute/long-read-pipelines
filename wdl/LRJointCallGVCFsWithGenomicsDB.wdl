@@ -70,8 +70,9 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             ref_dict        = ref_map['dict'],
             prefix          = prefix,
             batch_size      = 50,
-            # We need to override this because we're not actually sending the GVCF over (just a list):
-            runtime_attr_override = object {disk_gb: 10 + CreateSampleNameMap.total_gvcf_size_gb + 2 * ceil(size(ref_map['fasta'], "GB"))}
+            # We need to override this because we're not actually sending the GVCF over (just a list)
+            # ALSO, we're currently tarring the genomicsDB, so we need double the space here, plus some slop:
+            runtime_attr_override = object {disk_gb: 10 + (2 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB")))}
     }
 
     # Joint call
