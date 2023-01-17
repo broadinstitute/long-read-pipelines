@@ -350,7 +350,7 @@ task ImportGVCFs {
 
     Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
 
-    Int disk_size = 1 + 4*ref_size
+    Int disk_size = 8192 + 4*ref_size
 
     command <<<
         set -euxo pipefail
