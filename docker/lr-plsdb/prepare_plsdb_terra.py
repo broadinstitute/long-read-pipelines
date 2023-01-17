@@ -19,13 +19,14 @@ if __name__ == '__main__':
     # We swap the first two columns of the original TSV (using accession as plasmid ID), and add GCS FASTA URL
     first = True
     for line in args.plsdb_tsv:
-        line = line.strip()
+        line = line.strip(' \n')  # don't remove tab characters
         if not line:
             continue
 
         components = line.split('\t')
 
         if first:
+            components[-2] = components[-2].replace("(s)", "")
             print_tsv("entity:plasmid_id", "plasmid_fasta", "UID_NUCCORE", *components[2:])
             first = False
         else:
