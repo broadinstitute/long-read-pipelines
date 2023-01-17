@@ -21,7 +21,7 @@ if __name__ == '__main__':
         for r in skbio.io.read(f, "fasta"):
             plasmid_id = r.metadata['id']
             plasmid_dir = output_dir / plasmid_id
-            plasmid_dir.mkdir(exists_ok=True, parents=True)
+            plasmid_dir.mkdir(exist_ok=True, parents=True)
             print("Writing", plasmid_id)
             with bz2.open(output_dir / plasmid_id / f"{plasmid_id}.fna.bz2", "wt") as o:
                 skbio.io.write(r, "fasta", into=o)

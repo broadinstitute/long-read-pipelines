@@ -1,5 +1,5 @@
 IMAGE_NAME=plsdb
-VERSION=0.1.0
+VERSION=0.1.1
 
 TAG1="us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/$(IMAGE_NAME):$(VERSION)"
 TAG2="us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/$(IMAGE_NAME):latest"

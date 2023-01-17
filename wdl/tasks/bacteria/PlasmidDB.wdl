@@ -14,6 +14,8 @@ task UpdatePlasmidDB {
     }
 
     command <<<
+        set -euxo pipefail
+
         curl -L ~{plsdb_fasta_url} -o plsdb.fna.bz2
         curl -L ~{plsdb_meta_url} -o plsdb_meta.tar.bz2
 
