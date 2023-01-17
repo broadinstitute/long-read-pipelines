@@ -403,7 +403,7 @@ task ImportGVCFs {
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       15,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
     }
