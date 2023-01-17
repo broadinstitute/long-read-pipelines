@@ -13,7 +13,7 @@ task BaktaDBDownload {
         mkdir db
         bakta_db download --output db
 
-        tar -xjf baktadb.tar.bz2 -C db
+        tar -xaf baktadb.tar.bz2 -C db
     >>>
 
     output {
@@ -60,7 +60,7 @@ task BaktaAnnotate {
         set -euxo pipefail
 
         mkdir bakta_db
-        tar -xjf ~{bakta_db_tar} -C bakta_db
+        tar -xaf ~{bakta_db_tar} -C bakta_db
 
         mkdir output
         bakta --db bakta_db --output output --complete --threads ~{num_cores} \
