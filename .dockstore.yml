@@ -130,3 +130,11 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/UpdatePlasmidDB.wdl
   testParameterFiles:
+- name: BaktaDownloadDB
+  subclass: wdl
+  primaryDescriptorPath: /wdl/BaktaDownloadDB.wdl
+  testParameterFiles:
+- name: BaktaAnnotate
+  subclass: wdl
+  primaryDescriptorPath: /wdl/BaktaAnnotate.wdl
+  testParameterFiles:
