@@ -81,8 +81,8 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             prefix          = prefix,
             batch_size      = 50,
             # We need to override this because we're not actually sending the GVCF over (just a list)
-            # ALSO, we're currently tarring the genomicsDB, so we need double the space here, plus some slop:
-            runtime_attr_override = object {disk_gb: 10 + (2 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB")))}
+            # ALSO, we're currently tarring the genomicsDB, so we need at least double the space here, plus some slop:
+            runtime_attr_override = object {disk_gb: 10 + (3 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB"))), preemptible_tries: 0}
     }
 
     # Joint call
@@ -95,6 +95,7 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             ref_dict        = ref_map['dict'],
             dbsnp_vcf       = ref_map["known_sites_vcf"],
             prefix          = prefix,
+            runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
     }
 
     # First make a sites-only VCF for recal (smaller file, easier to work with):
@@ -102,7 +103,8 @@ workflow LRJointCallGVCFsWithGenomicsDB {
         input:
             vcf = JointCallGVCFs.output_vcf,
             vcf_index = JointCallGVCFs.output_vcf_index,
-            prefix = prefix
+            prefix = prefix,
+            runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
     }
 
     # Now we run VariantRecalibrator for indels and snps:
@@ -122,6 +124,7 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             prior = [15],
             use_allele_specific_annotations = true,
             max_gaussians = 8,
+            runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
     }
 
     call SNPsVariantRecalibratorCreateModel as TrainVQSROnHCSnpVariants {
@@ -140,6 +143,7 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             prior = [15],
             use_allele_specific_annotations = true,
             max_gaussians = 8,
+            runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
     }
 
     call ApplyVqsr as ApplyVqsr {
@@ -160,6 +164,8 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             indel_filter_level = indel_filter_level,
 
             use_allele_specific_annotations = true,
+
+            runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
     }
 
     # Now we need to annotate our variants by region:
@@ -171,7 +177,9 @@ workflow LRJointCallGVCFsWithGenomicsDB {
                 bed_files = select_first([annotation_bed_files]),
                 bed_file_indexes = select_first([annotation_bed_file_indexes]),
                 bed_file_annotation_names = select_first([annotation_bed_file_annotation_names]),
-                prefix = prefix + ".region_annotated"
+                prefix = prefix + ".region_annotated",
+
+                runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
         }
     }
 
@@ -184,7 +192,9 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             ref_fasta = ref_map["fasta"],
             ref_fai = ref_map["fai"],
             prefix = prefix,
-            outdir = outdir
+            outdir = outdir,
+
+            runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
     }
 
     # Finalize:
@@ -403,7 +413,7 @@ task ImportGVCFs {
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       15,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
     }
