@@ -13,7 +13,7 @@ task BaktaDBDownload {
         mkdir db
         bakta_db download --output db
 
-        tar -xaf baktadb.tar.bz2 -C db
+        tar -caf baktadb.tar.bz2 -C db
     >>>
 
     output {
