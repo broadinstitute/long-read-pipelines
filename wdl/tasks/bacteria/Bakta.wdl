@@ -25,7 +25,7 @@ task BaktaDBDownload {
         mem_gb:             8,
         disk_gb:            200,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
+        preemptible_tries:  0,
         max_retries:        2,
         docker:             "quay.io/biocontainers/bakta:1.6.1--pyhdfd78af_0"
     }
