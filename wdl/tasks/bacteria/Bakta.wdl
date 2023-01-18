@@ -10,10 +10,9 @@ task BaktaDBDownload {
     command <<<
         set -euxo pipefail
 
-        mkdir db
-        bakta_db download --output db
+        bakta_db download --output .
 
-        tar -caf baktadb.tar.bz2 -C db
+        tar -caf baktadb.tar.bz2 -C db .
     >>>
 
     output {
