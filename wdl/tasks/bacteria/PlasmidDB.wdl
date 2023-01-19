@@ -24,7 +24,7 @@ task UpdatePlasmidDB {
 
         mkdir plsdb/plasmids
         split_plsdb_seq.py plsdb.fna.bz2 plsdb/plasmids/
-        prepare_plsdb_terra.py plsdb/plsdb.tsv ~{gcs_output_directory} > plsdb/plsdb.terra.tsv
+        prepare_plsdb_terra.py plsdb/plsdb.tsv ~{gcs_output_directory}/plasmids/ > plsdb/plsdb.terra.tsv
 
         gsutil -m rsync -r plsdb ~{gcs_output_directory}
     >>>
