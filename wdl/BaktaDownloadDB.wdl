@@ -12,7 +12,10 @@ workflow BaktaDownloadDB {
     String name = basename(gcs_output_fname)
     String outdir = sub(gcs_output_fname, "/([^/]+)$", "")
 
-    call Bakta.BaktaDBDownload as Download { }
+    call Bakta.BaktaDBDownload as Download {
+        input:
+            filename = name
+    }
 
     call Finalize.FinalizeToFile as GCS {
         input:
