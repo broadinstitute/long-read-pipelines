@@ -1,0 +1,10 @@
+name: lr-admixture
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - pip:
+    - pong
+
+prefix: /opt/conda/envs/lr-admixture
