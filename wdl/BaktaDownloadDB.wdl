@@ -17,6 +17,6 @@ workflow BaktaDownloadDB {
     call Finalize.FinalizeToFile as GCS {
         input:
             file = Download.bakta_db,
-            outdir = outdir,
+            outdir = outdir
     }
 }
