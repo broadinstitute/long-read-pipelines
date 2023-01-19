@@ -10,7 +10,7 @@ workflow BaktaDownloadDB {
     }
 
     String name = basename(gcs_output_fname)
-    String outdir = basename(gcs_output_fname, name)
+    String outdir = sub(gcs_output_fname, "/([^/]+)$", "")
 
     call Bakta.BaktaDBDownload as Download { }
 
