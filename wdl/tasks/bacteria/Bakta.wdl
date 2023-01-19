@@ -23,7 +23,7 @@ task BaktaDBDownload {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             8,
+        mem_gb:             16,
         disk_gb:            200,
         boot_disk_gb:       10,
         preemptible_tries:  0,
