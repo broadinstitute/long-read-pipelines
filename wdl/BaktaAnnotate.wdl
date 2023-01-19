@@ -18,6 +18,7 @@ workflow BaktaAnnotate {
 
     output {
         File tsv = Annotate.tsv
+        File json = Annotate.json
         File gff = Annotate.gff
         File genbank = Annotate.genbank
         File embl = Annotate.embl
@@ -27,6 +28,7 @@ workflow BaktaAnnotate {
         File hypotheticals_faa = Annotate.hypotheticals_faa
 
         File summary = Annotate.summary
+        File log = Annotate.log
         File plot_png = Annotate.plot_png
         File plot_svg = Annotate.plot_svg
     }

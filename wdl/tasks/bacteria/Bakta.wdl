@@ -70,6 +70,7 @@ task BaktaAnnotate {
 
     output {
         File tsv = "output/~{prefix}.tsv"
+        File json = "output/~{prefix}.json"
         File gff = "output/~{prefix}.gff3"
         File genbank = "output/~{prefix}.gbff"
         File embl = "output/~{prefix}.embl"
@@ -79,6 +80,7 @@ task BaktaAnnotate {
         File hypotheticals_faa = "output/~{prefix}.hypotheticals.faa"
 
         File summary = "output/~{prefix}.txt"
+        File log = "output/~{prefix}.log"
         File plot_png = "output/~{prefix}.png"
         File plot_svg = "output/~{prefix}.svg"
     }
