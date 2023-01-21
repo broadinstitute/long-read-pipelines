@@ -134,7 +134,11 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/BaktaDownloadDB.wdl
   testParameterFiles:
-- name: BaktaAnnotate
+- name: BaktaAnnotateSingle
   subclass: wdl
-  primaryDescriptorPath: /wdl/BaktaAnnotate.wdl
+  primaryDescriptorPath: /wdl/BaktaAnnotateSingle.wdl
+  testParameterFiles:
+- name: BaktaAnnotateBatch
+  subclass: wdl
+  primaryDescriptorPath: /wdl/BaktaAnnotateBatch.wdl
   testParameterFiles:

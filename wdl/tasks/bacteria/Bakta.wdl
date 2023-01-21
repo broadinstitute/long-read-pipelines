@@ -106,3 +106,109 @@ task BaktaAnnotate {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task BaktaAnnotateBatch {
+    input {
+        File bakta_db_tar
+        String output_dir
+        Array[File] all_genome_fastas
+        Array[String] all_fname_prefixes
+
+        Int worker
+        Int batch_size
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    String gcs_output_dir = sub(output_dir, "/+$", "")
+
+    command <<<
+        set -euxo pipefail
+
+        mkdir bakta_db
+        tar -xaf ~{bakta_db_tar} -C bakta_db
+
+        lines_start=$(( ~{worker} * ~{batch_size} ))
+        lines_end=$(( lines_start + ~{batch_size} - 1 ))
+        lines_quit=$(( lines_end + 1 ))
+        2>&1 echo "Processing batch ${lines_start}-${lines_end}"
+
+        # Extract FASTA filenames to process
+        sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{write_lines(all_genome_fastas)} > to_process_fasta.txt
+        sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{write_lines(all_fname_prefixes)} > to_process_prefixes.txt
+
+        # List all expected output files for this batch
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.tsv"; done > batch_tsv.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.json"; done > batch_json.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gff"; done > batch_gff.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gbff"; done > batch_genbank.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.embl"; done > batch_embl.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.ffn"; done > batch_ffn.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.faa"; done > batch_faa.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.hypotheticals.tsv"; done > batch_hypotheticals_tsv.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.hypotheticals.faa"; done > batch_hypotheticals_faa.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.txt"; done > batch_summaries.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.log"; done > batch_log.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.png"; done > batch_png.txt
+        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.svg"; done > batch_svg.txt
+
+        while IFS=$'\t' read -r fasta fname_prefix tsv json gff genbank embl ffn faa hypotheticals_tsv hypotheticals_faa summary log plot_png plot_svg; do
+            >&2 echo $(date --rfc-3339)
+
+            # Check each output file to see if this genome has already been processed
+            # This ensures we can continue from our last genome when the VM gets pre-empted by Google
+            if gsutil -q stat "${tsv}" "${json}" "${gff}" "${genbank}" "${embl}" "${ffn}" "${faa}" "${hypotheticals_tsv}" \
+                    "${hypotheticals_faa}" "${summary}" "${log}" "${plot_png}" "${plot_svg}"; then
+                >&2 echo "Already processed ${fname_prefix}"
+            else
+                mkdir -p "output/${fname_prefix}"
+                bakta --db bakta_db --output "output/${fname_prefix}" --complete --threads ~{num_cores} \
+                    --keep-contig-headers --prefix ${fname_prefix} --verbose ${fasta}
+
+                gsutil -m cp "output/${fname_prefix}/"* "~{gcs_output_dir}/${fname_prefix}"
+                rm -rf "output/${fname_prefix}"
+            fi
+        done < <(paste to_process_fasta.txt to_process_prefixes.txt batch_tsv.txt batch_json.txt batch_gff.txt batch_genbank.txt \
+            batch_embl.txt batch_ffn.txt batch_faa.txt batch_hypotheticals_tsv.txt batch_hypotheticals_faa.txt batch_summaries.txt \
+            batch_log.txt batch_png.txt batch_svg.txt)
+    >>>
+
+    output {
+        Array[String] tsv = read_lines("batch_tsv.txt")
+        Array[String] json = read_lines("batch_json.txt")
+        Array[String] gff = read_lines("batch_gff.txt")
+        Array[String] genbank = read_lines("batch_genbank.txt")
+        Array[String] embl = read_lines("batch_embl.txt")
+        Array[String] ffn = read_lines("batch_ffn.txt")
+        Array[String] faa = read_lines("batch_faa.txt")
+        Array[String] hypotheticals_tsv = read_lines("batch_hypotheticals_tsv.txt")
+        Array[String] hypotheticals_faa = read_lines("batch_hypotheticals_faa.txt")
+
+        Array[String] summary = read_lines("batch_summaries.txt")
+        Array[String] log = read_lines("batch_log.txt")
+        Array[String] plot_png = read_lines("batch_png.txt")
+        Array[String] plot_svg = read_lines("batch_svg.txt")
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            100,
+        boot_disk_gb:       10,
+        preemptible_tries:  50,
+        max_retries:        0,
+        docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/bakta:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

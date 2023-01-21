@@ -2,7 +2,7 @@ version 1.0
 
 import "tasks/bacteria/Bakta.wdl" as Bakta
 
-workflow BaktaAnnotate {
+workflow BaktaAnnotateSingle {
     input {
         File bakta_db_tar
         File genome_fasta
