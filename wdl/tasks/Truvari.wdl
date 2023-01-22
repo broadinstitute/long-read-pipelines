@@ -9,13 +9,14 @@ task Collapse {
         File ref_fasta
 
         String keep = "first" # {first,maxqual,common}
+        Int num_cpus = 16
 
         String prefix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size([vcf, tbi, ref_fasta], "GB")) + 1
+    Int disk_size = 10*ceil(size([vcf, tbi, ref_fasta], "GB")) + 1
 
     command <<<
         set -euxo pipefail
@@ -27,7 +28,7 @@ task Collapse {
             -i merged.no_cnvs.vcf.gz \
             -c ~{prefix}.truvari_collapsed.vcf \
             -f ~{ref_fasta} \
-            -T 4 \
+            -T ~{num_cpus} \
             -k ~{keep} | \
             bcftools sort /dev/stdin -o ~{prefix}.truvari.vcf.gz -O z
 
@@ -41,11 +42,11 @@ task Collapse {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
+        cpu_cores:          num_cpus,
         mem_gb:             24,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-truvari:3.5.0"
     }
