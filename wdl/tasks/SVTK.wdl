@@ -5,6 +5,7 @@ import "Structs.wdl"
 task Standardize {
     input {
         File vcf
+        File tbi
         File ref_fai
 
         String caller
@@ -13,7 +14,7 @@ task Standardize {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size([vcf, ref_fai], "GB")) + 1
+    Int disk_size = 2*ceil(size([vcf, tbi, ref_fai], "GB")) + 1
 
     command <<<
         set -euxo pipefail
@@ -40,7 +41,7 @@ task Standardize {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-truvari:3.5.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-truvari:3.5.0-yh1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

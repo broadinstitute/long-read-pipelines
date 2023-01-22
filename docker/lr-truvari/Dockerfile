@@ -25,9 +25,9 @@ RUN pip install Cython==0.29.33 scikit-learn==1.2.0
 RUN pip install Truvari==3.5.0
 
 # install svtk
-RUN git clone https://github.com/broadinstitute/gatk-sv.git \
+RUN git clone https://github.com/yuliamostovoy/gatk-sv.git \
 	&& cd gatk-sv \
-	&& git checkout 60b804a168dec6a63765742ed36c9486899c4bf7 \
+	&& git checkout b33c777d52d33a3ca92f8b2f11125ca617187c2b \
 	&& git reset --hard \
 	&& cd src/svtk \
 	&& pip install -e .

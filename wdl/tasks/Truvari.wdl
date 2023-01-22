@@ -5,23 +5,31 @@ import "Structs.wdl"
 task Collapse {
     input {
         File vcf
+        File tbi
         File ref_fasta
+
+        String keep = "first" # {first,maxqual,common}
+
         String prefix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size([vcf, ref_fasta], "GB")) + 1
+    Int disk_size = 2*ceil(size([vcf, tbi, ref_fasta], "GB")) + 1
 
     command <<<
         set -euxo pipefail
 
+        zcat ~{vcf} | grep -v 'SVTYPE=cnv' | bgzip > merged.no_cnvs.vcf.gz
+        tabix -p vcf merged.no_cnvs.vcf.gz
+
         truvari collapse \
-            -i ~{vcf} \
+            -i merged.no_cnvs.vcf.gz \
             -c ~{prefix}.truvari_collapsed.vcf \
             -f ~{ref_fasta} \
-            -T 4 -k maxqual | \
-        bcftools sort /dev/stdin -o ~{prefix}.truvari.vcf.gz -O z
+            -T 4 \
+            -k ~{keep} | \
+            bcftools sort /dev/stdin -o ~{prefix}.truvari.vcf.gz -O z
 
         tabix ~{prefix}.truvari.vcf.gz
     >>>

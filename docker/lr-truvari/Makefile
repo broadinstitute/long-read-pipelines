@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-truvari
-VERSION = 3.5.0 # Should match release number at https://github.com/ACEnglish/truvari
+VERSION = 3.5.0-yh1
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest

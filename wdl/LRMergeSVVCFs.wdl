@@ -34,9 +34,29 @@ workflow LRMergeSVVCFs {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call VariantUtils.MergeVCFs { input: vcfs = vcfs, tbis = tbis }
-    call Truvari.Collapse { input: vcf = MergeVCFs.merged_vcf }
-    call SVTK.Standardize { input: ref_fai = ref_map['fai'], prefix = prefix, caller = caller }
+    call VariantUtils.MergeVCFs {
+        input:
+            vcfs = vcfs,
+            tbis = tbis,
+            prefix = prefix
+    }
+
+    call Truvari.Collapse {
+        input:
+            vcf = MergeVCFs.merged_vcf,
+            tbi = MergeVCFs.merged_tbi,
+            ref_fasta = ref_map['fasta'],
+            prefix = prefix
+    }
+
+    call SVTK.Standardize {
+        input:
+            vcf = Collapse.collapsed_vcf,
+            tbi = Collapse.collapsed_tbi,
+            ref_fai = ref_map['fai'],
+            prefix = prefix,
+            caller = caller
+    }
 
     # Finalize
     call FF.FinalizeToFile as FinalizeStandardizedVCF { input: outdir = outdir, file = Standardize.standardized_vcf }
