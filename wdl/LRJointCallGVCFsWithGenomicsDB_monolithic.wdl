@@ -351,7 +351,7 @@ task CreateSampleNameMap {
 
     output {
         File sample_name_map = outfile_name
-        Int total_gvcf_size_gb = read_int(size_file_gb)
+        Int total_gvcf_size_gb = read_int("~{size_file_gb}")
     }
 }
 

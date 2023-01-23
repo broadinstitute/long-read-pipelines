@@ -112,8 +112,6 @@ workflow CallVariantsWithHaplotypeCaller {
             prefix = prefix,
     }
 
-    ## TODO: Add VQSR here.
-
     output {
         File output_gvcf = ReblockGVCF.output_gvcf
         File output_gvcf_index = ReblockGVCF.output_gvcf_index
