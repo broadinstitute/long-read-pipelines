@@ -31,7 +31,7 @@ workflow BaktaAnnotateBatch {
 
     }
 
-    call Bakta.CreateTerraDataTSV {
+    call Bakta.CreateTerraDataTSV as TSV {
         input:
             plasmid_ids=plasmid_ids,
             tsv = flatten(Annotate.tsv),
@@ -51,19 +51,6 @@ workflow BaktaAnnotateBatch {
     }
 
     output {
-        Array[String] tsv = flatten(Annotate.tsv)
-        Array[String] json = flatten(Annotate.json)
-        Array[String] gff = flatten(Annotate.gff)
-        Array[String] genbank = flatten(Annotate.genbank)
-        Array[String] embl = flatten(Annotate.embl)
-        Array[String] ffn = flatten(Annotate.ffn)
-        Array[String] faa = flatten(Annotate.faa)
-        Array[String] hypotheticals_tsv = flatten(Annotate.hypotheticals_tsv)
-        Array[String] hypotheticals_faa = flatten(Annotate.hypotheticals_faa)
-
-        Array[String] summary = flatten(Annotate.summary)
-        Array[String] log = flatten(Annotate.log)
-        Array[String] plot_png = flatten(Annotate.plot_png)
-        Array[String] plot_svg = flatten(Annotate.plot_svg)
+        File terra_tsv = TSV.terra_tsv
     }
 }
