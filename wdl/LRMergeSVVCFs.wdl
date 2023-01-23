@@ -64,6 +64,7 @@ workflow LRMergeSVVCFs {
         input:
             vcfs = Collapse.collapsed_vcf,
             tbis = Collapse.collapsed_tbi,
+            prefix = prefix
     }
 
     call SVTK.Standardize {
