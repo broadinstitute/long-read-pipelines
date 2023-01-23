@@ -129,8 +129,8 @@ task BaktaAnnotateBatch {
         mkdir bakta_db
         tar -xaf ~{bakta_db_tar} -C bakta_db
 
-        lines_start=$(( ~{worker} * ~{batch_size} ))
-        lines_end=$(( lines_start + ~{batch_size} - 1 ))
+        lines_start=$(( ~{worker} * ~{batch_size} + 1 ))  # Sed starts at 1
+        lines_end=$(( lines_start + ~{batch_size} ))
         lines_quit=$(( lines_end + 1 ))
         2>&1 echo "Processing batch ${lines_start}-${lines_end}"
 
@@ -154,7 +154,7 @@ task BaktaAnnotateBatch {
         for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.svg"; done > batch_svg.txt
 
         while IFS=$'\t' read -r plasmid_id fasta tsv json gff genbank embl ffn faa hypotheticals_tsv hypotheticals_faa summary log plot_png plot_svg; do
-            >&2 echo $(date --rfc-3339)
+            >&2 echo $(date --rfc-3339=seconds)
 
             # Check each output file to see if this genome has already been processed
             # This ensures we can continue from our last genome when the VM gets pre-empted by Google
