@@ -5,14 +5,25 @@ import "tasks/Finalize.wdl" as FF
 import "tasks/utils/CloudUtils.wdl"
 import "tasks/VariantUtils.wdl"
 
+import "blah.wdl"
+
 workflow ResetSampleNameInSingleSampleVcf {
     meta {
         description: "For resetting the sample name in a single-sample VCF file to the requested value"
     }
 
     input {
-        File  VCF
-        File? idx
+        File dvp_g_tbi
+        File dvp_g_vcf
+        File dvp_phased_tbi
+        File dvp_phased_vcf
+        File dvp_tbi
+        File dvp_vcf
+        File pbsv_tbi
+        File pbsv_vcf
+        File sniffles_tbi
+        File sniffles_vcf
+
         String new_sample_name
     }
 
@@ -22,22 +33,34 @@ workflow ResetSampleNameInSingleSampleVcf {
         new_sample_name: "New sample name desired (assumed to be a valid value)."
     }
 
-    call VariantUtils.ReSampleSingleSampleVCF as ReSample {input: vcf = VCF, idx = idx, new_sample_name = new_sample_name, out_prefix = "does_not_matter"}
-
-    call CloudUtils.GetBlobFolder {input: blob = VCF}
-    String outfolder = GetBlobFolder.bucket_and_folder
-    String final_out_prefix = basename(basename(VCF, '.vcf.gz'), ".vcf")
-    call FF.FinalizeToFile as ff_vcf {input: file = ReSample.reheadered_vcf, outdir = outfolder, name = final_out_prefix + ".RH.vcf.gz"}
-    call FF.FinalizeToFile as ff_tbi {input: file = ReSample.reheadered_tbi, outdir = outfolder, name = final_out_prefix + ".RH.vcf.gz.tbi"}
+    call blah.blah as DVP_g      {input: VCF = dvp_g_vcf, idx = dvp_g_tbi, new_sample_name = new_sample_name}
+    call blah.blah as DVP_phased {input: VCF = dvp_phased_vcf, idx = dvp_phased_tbi, new_sample_name = new_sample_name}
+    call blah.blah as DVP        {input: VCF = dvp_vcf, idx = dvp_tbi, new_sample_name = new_sample_name}
+    call blah.blah as PBSV       {input: VCF = pbsv_vcf, idx = pbsv_tbi, new_sample_name = new_sample_name}
+    call blah.blah as Sniffles   {input: VCF = sniffles_vcf, idx = sniffles_tbi, new_sample_name = new_sample_name}
 
     output {
-        File reheadered_vcf = ff_vcf.gcs_path
-        File reheadered_tbi = ff_tbi.gcs_path
+        File rh_dvp_g_tbi = DVP_g.rh_tbi
+        File rh_dvp_g_vcf = DVP_g.rh_vcf
+        File rh_dvp_phased_tbi = DVP_phased.rh_tbi
+        File rh_dvp_phased_vcf = DVP_phased.rh_vcf
+        File rh_dvp_tbi = DVP.rh_tbi
+        File rh_dvp_vcf = DVP.rh_vcf
+        File rh_pbsv_tbi = PBSV.rh_tbi
+        File rh_pbsv_vcf = PBSV.rh_vcf
+        File rh_sniffles_tbi = Sniffles.rh_tbi
+        File rh_sniffles_vcf = Sniffles.rh_vcf
 
         # purely Terra trick
-        File  original_vcf = VCF
-        File? original_idx = idx
+        File orig_dvp_g_tbi = dvp_g_tbi
+        File orig_dvp_g_vcf = dvp_g_vcf
+        File orig_dvp_phased_tbi = dvp_phased_tbi
+        File orig_dvp_phased_vcf = dvp_phased_vcf
+        File orig_dvp_tbi = dvp_tbi
+        File orig_dvp_vcf = dvp_vcf
+        File orig_pbsv_tbi = pbsv_tbi
+        File orig_pbsv_vcf = pbsv_vcf
+        File orig_sniffles_tbi = sniffles_tbi
+        File orig_sniffles_vcf = sniffles_vcf
     }
 }
-
-
