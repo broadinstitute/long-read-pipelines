@@ -41,18 +41,35 @@ workflow LRMergeSVVCFs {
             prefix = prefix
     }
 
-    call Truvari.Collapse {
+    call VariantUtils.GetContigNames { input: vcf = MergeVCFs.merged_vcf }
+
+    scatter (contig_name in GetContigNames.contig_names) {
+        call VariantUtils.SubsetVCF {
+            input:
+                vcf_gz = MergeVCFs.merged_vcf,
+                vcf_tbi = MergeVCFs.merged_tbi,
+                locus = contig_name
+        }
+
+        call Truvari.Collapse {
+            input:
+                vcf = SubsetVCF.subset_vcf,
+                tbi = SubsetVCF.subset_tbi,
+                ref_fasta = ref_map['fasta'],
+                prefix = prefix
+        }
+    }
+
+    call VariantUtils.MergeVCFs as MergeCollapsedVCFs {
         input:
-            vcf = MergeVCFs.merged_vcf,
-            tbi = MergeVCFs.merged_tbi,
-            ref_fasta = ref_map['fasta'],
-            prefix = prefix
+            vcfs = Collapse.collapsed_vcf,
+            tbis = Collapse.collapsed_tbi,
     }
 
     call SVTK.Standardize {
         input:
-            vcf = Collapse.collapsed_vcf,
-            tbi = Collapse.collapsed_tbi,
+            vcf = MergeCollapsedVCFs.merged_vcf,
+            tbi = MergeCollapsedVCFs.merged_tbi,
             ref_fai = ref_map['fai'],
             prefix = prefix,
             caller = caller
