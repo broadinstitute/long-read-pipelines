@@ -111,8 +111,8 @@ task BaktaAnnotateBatch {
     input {
         File bakta_db_tar
         String output_dir
+        Array[String] plasmid_ids
         Array[File] all_genome_fastas
-        Array[String] all_fname_prefixes
 
         Int worker
         Int batch_size
@@ -135,41 +135,41 @@ task BaktaAnnotateBatch {
         2>&1 echo "Processing batch ${lines_start}-${lines_end}"
 
         # Extract FASTA filenames to process
+        sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{write_lines(plasmid_ids)} > to_process_plasmid_ids.txt
         sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{write_lines(all_genome_fastas)} > to_process_fasta.txt
-        sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{write_lines(all_fname_prefixes)} > to_process_prefixes.txt
 
         # List all expected output files for this batch
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.tsv"; done > batch_tsv.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.json"; done > batch_json.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gff"; done > batch_gff.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gbff"; done > batch_genbank.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.embl"; done > batch_embl.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.ffn"; done > batch_ffn.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.faa"; done > batch_faa.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.hypotheticals.tsv"; done > batch_hypotheticals_tsv.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.hypotheticals.faa"; done > batch_hypotheticals_faa.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.txt"; done > batch_summaries.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.log"; done > batch_log.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.png"; done > batch_png.txt
-        for prefix in $(< to_process_prefixes.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.svg"; done > batch_svg.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.tsv"; done > batch_tsv.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.json"; done > batch_json.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gff"; done > batch_gff.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gbff"; done > batch_genbank.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.embl"; done > batch_embl.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.ffn"; done > batch_ffn.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.faa"; done > batch_faa.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.hypotheticals.tsv"; done > batch_hypotheticals_tsv.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.hypotheticals.faa"; done > batch_hypotheticals_faa.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.txt"; done > batch_summaries.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.log"; done > batch_log.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.png"; done > batch_png.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.svg"; done > batch_svg.txt
 
-        while IFS=$'\t' read -r fasta fname_prefix tsv json gff genbank embl ffn faa hypotheticals_tsv hypotheticals_faa summary log plot_png plot_svg; do
+        while IFS=$'\t' read -r plasmid_id fasta tsv json gff genbank embl ffn faa hypotheticals_tsv hypotheticals_faa summary log plot_png plot_svg; do
             >&2 echo $(date --rfc-3339)
 
             # Check each output file to see if this genome has already been processed
             # This ensures we can continue from our last genome when the VM gets pre-empted by Google
             if gsutil -q stat "${tsv}" "${json}" "${gff}" "${genbank}" "${embl}" "${ffn}" "${faa}" "${hypotheticals_tsv}" \
                     "${hypotheticals_faa}" "${summary}" "${log}" "${plot_png}" "${plot_svg}"; then
-                >&2 echo "Already processed ${fname_prefix}"
+                >&2 echo "Already processed ${plasmid_id}"
             else
-                mkdir -p "output/${fname_prefix}"
-                bakta --db bakta_db --output "output/${fname_prefix}" --complete --threads ~{num_cores} \
-                    --keep-contig-headers --prefix ${fname_prefix} --verbose ${fasta}
+                mkdir -p "output/${plasmid_id}"
+                bakta --db bakta_db --output "output/${plasmid_id}" --complete --threads ~{num_cores} \
+                    --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta}
 
-                gsutil -m cp "output/${fname_prefix}/"* "~{gcs_output_dir}/${fname_prefix}"
-                rm -rf "output/${fname_prefix}"
+                gsutil -m cp "output/${plasmid_id}/"* "~{gcs_output_dir}/${plasmid_id}"
+                rm -rf "output/${plasmid_id}"
             fi
-        done < <(paste to_process_fasta.txt to_process_prefixes.txt batch_tsv.txt batch_json.txt batch_gff.txt batch_genbank.txt \
+        done < <(paste to_process_plasmid_ids.txt to_process_fasta.txt batch_tsv.txt batch_json.txt batch_gff.txt batch_genbank.txt \
             batch_embl.txt batch_ffn.txt batch_faa.txt batch_hypotheticals_tsv.txt batch_hypotheticals_faa.txt batch_summaries.txt \
             batch_log.txt batch_png.txt batch_svg.txt)
     >>>
@@ -197,6 +197,68 @@ task BaktaAnnotateBatch {
         disk_gb:            100,
         boot_disk_gb:       10,
         preemptible_tries:  50,
+        max_retries:        0,
+        docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/bakta:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CreateTerraDataTSV {
+    input {
+        Array[String] plasmid_ids
+
+        Array[String] tsv
+        Array[String] json
+        Array[String] gff
+        Array[String] genbank
+        Array[String] embl
+        Array[String] ffn
+        Array[String] faa
+        Array[String] hypotheticals_tsv
+        Array[String] hypotheticals_faa
+
+        Array[String] summary
+        Array[String] log
+        Array[String] plot_png
+        Array[String] plot_svg
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        if [[ -v WORKSPACE_NAMESPACE ]]; then echo $WORKSPACE_NAMESPACE; fi
+        if [[ -v WORKSPACE_NAME ]]; then echo $WORKSPACE_NAME; fi
+
+        echo $'entity:plasmid_id\tannot_tsv\tannot_json\tannot_gff3\tannot_genbank\tannot_embl\tcds_ffn\tprotein_faa\thypotheticals_tsv\thypotheticals_faa\tannot_summary\tannot_log\tplot_png\tplot_svg' > plasmid_annot.tsv
+
+        paste ~{write_lines(plasmid_ids)} ~{write_lines(tsv)} ~{write_lines(json)} ~{write_lines(gff)} ~{write_lines(genbank)} \
+            ~{write_lines(embl)} ~{write_lines(ffn)} ~{write_lines(faa)} ~{write_lines(hypotheticals_tsv)} ~{write_lines(hypotheticals_faa)} \
+            ~{write_lines(summary)} ~{write_lines(log)} ~{write_lines(plot_png)} ~{write_lines(plot_svg)} >> plasmid_annot.tsv
+
+    >>>
+
+    output {
+        File terra_tsv = "plasmid_annot.tsv"
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            10,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
         max_retries:        0,
         docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/bakta:latest"
     }
