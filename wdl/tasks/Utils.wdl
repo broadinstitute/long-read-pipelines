@@ -1022,7 +1022,7 @@ task MergeBedFiles {
             bedtools merge -d ~{dist} -i - \
             > ~{prefix}.bed
 
-        wc -l ~{prefix}.bed > num_loci.txt
+        cat ~{prefix}.bed | wc -l > num_loci.txt
     >>>
 
     output {
