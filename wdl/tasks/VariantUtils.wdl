@@ -258,12 +258,7 @@ task ConcatVCFs {
     command <<<
         set -euxo pipefail
 
-        bcftools concat \
-            --naive \
-            -v 1 \
-            ~{sep=' ' vcfs} | \
-            bgzip > ~{prefix}.vcf.gz
-
+        bcftools concat --naive ~{sep=' ' vcfs} | bgzip > ~{prefix}.vcf.gz
         tabix ~{prefix}.vcf.gz
     >>>
 
