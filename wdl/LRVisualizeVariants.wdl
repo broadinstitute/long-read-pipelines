@@ -51,17 +51,12 @@ workflow LRVisualizeVariants {
         }
     }
 
-    # Finalize
-    #call FF.FinalizeToFile as FinalizeStandardizedVCF { input: outdir = outdir, file = Standardize.standardized_vcf }
-    #call FF.FinalizeToFile as FinalizeStandardizedTBI { input: outdir = outdir, file = Standardize.standardized_tbi }
-
     ##########
     # store the results into designated bucket
     ##########
 
     output {
-        #File standardized_vcf = FinalizeStandardizedVCF.gcs_path
-        #File standardized_tbi = FinalizeStandardizedTBI.gcs_path
+        String viz_path = outdir
     }
 }
 
