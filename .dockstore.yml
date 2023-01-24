@@ -124,3 +124,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LRMergeSVVCFs.wdl
   testParameterFiles:
+- name: LRVisualizeVariants
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LRVisualizeVariants.wdl
+  testParameterFiles:

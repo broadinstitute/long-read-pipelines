@@ -1021,10 +1021,13 @@ task MergeBedFiles {
             bedtools sort -g ~{ref_fai} -i - | \
             bedtools merge -d ~{dist} -i - \
             > ~{prefix}.bed
+
+        wc -l ~{prefix}.bed > num_loci.txt
     >>>
 
     output {
         File merged_bed = "~{prefix}.bed"
+        Int num_loci = read_int("num_loci.txt")
     }
 
     #########################

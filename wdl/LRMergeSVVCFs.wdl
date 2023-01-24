@@ -60,7 +60,7 @@ workflow LRMergeSVVCFs {
         }
     }
 
-    call VariantUtils.MergeVCFs as MergeCollapsedVCFs {
+    call VariantUtils.ConcatVCFs {
         input:
             vcfs = Collapse.collapsed_vcf,
             tbis = Collapse.collapsed_tbi,
@@ -69,8 +69,8 @@ workflow LRMergeSVVCFs {
 
     call SVTK.Standardize {
         input:
-            vcf = MergeCollapsedVCFs.merged_vcf,
-            tbi = MergeCollapsedVCFs.merged_tbi,
+            vcf = ConcatVCFs.concat_vcf,
+            tbi = ConcatVCFs.concat_tbi,
             ref_fai = ref_map['fai'],
             prefix = prefix,
             caller = caller
