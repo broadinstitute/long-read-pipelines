@@ -130,7 +130,7 @@ task BaktaAnnotateBatch {
         tar -xaf ~{bakta_db_tar} -C bakta_db
 
         lines_start=$(( ~{worker} * ~{batch_size} + 1 ))  # Sed starts at 1
-        lines_end=$(( lines_start + ~{batch_size} ))
+        lines_end=$(( lines_start + ~{batch_size} - 1 ))
         lines_quit=$(( lines_end + 1 ))
         2>&1 echo "Processing batch ${lines_start}-${lines_end}"
 
@@ -141,7 +141,7 @@ task BaktaAnnotateBatch {
         # List all expected output files for this batch
         for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.tsv"; done > batch_tsv.txt
         for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.json"; done > batch_json.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gff"; done > batch_gff.txt
+        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gff3"; done > batch_gff.txt
         for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gbff"; done > batch_genbank.txt
         for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.embl"; done > batch_embl.txt
         for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.ffn"; done > batch_ffn.txt
