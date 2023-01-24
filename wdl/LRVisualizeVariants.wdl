@@ -97,9 +97,9 @@ task ExtractLoci {
             gcs_bam_file="~{gcs_out_root_dir}/$local_bam_file"
             gcs_bai_file="~{gcs_out_root_dir}/$local_bai_file"
 
-            if gsutil -q stat "$bam_gcs_file" ; then
+            if gsutil -q stat "$gcs_bam_file" ; then
                 # Skip processing BAMs that we've already written to GCS
-                echo "$bam_gcs_file already exists."
+                echo "$gcs_bam_file already exists."
             else
                 # Remove any lingering subset BAMs
                 rm -f *.subset.bam*
