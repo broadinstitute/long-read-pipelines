@@ -75,7 +75,7 @@ task ExtractLoci {
     }
 
     # estimate required disk size in GB
-    Int disk_size = 1
+    Int disk_size = 10 + ceil(0.3*length(aligned_bams))
 
     command <<<
         # Authorize streaming access to GCS data
