@@ -1020,8 +1020,8 @@ task MergeBedFiles {
 
         cat ~{sep=' ' beds} | \
             bedtools sort -g ~{ref_fai} -i - | \
-            bedtools slop -g ~{ref_fai} -b ~{slop} -i - \
-            bedtools merge -d ~{dist} -i - | \
+            bedtools slop -g ~{ref_fai} -b ~{slop} -i - | \
+            bedtools merge -d ~{dist} -i - \
             > ~{prefix}.bed
 
         cat ~{prefix}.bed | wc -l > num_loci.txt
