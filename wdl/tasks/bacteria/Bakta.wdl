@@ -142,6 +142,7 @@ task BaktaAnnotateBatch {
         awk -F$'\t' '{print $1}' to_process.tsv > batch_ids.txt
         awk -F$'\t' '{print $2}' to_process.tsv > batch_fasta.txt
         awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".tsv"}' to_process.tsv > batch_tsv.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".json"}' to_process.tsv > batch_json.txt
         awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".gff3"}' to_process.tsv > batch_gff.txt
         awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".gbff"}' to_process.tsv > batch_genbank.txt
         awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".embl"}' to_process.tsv > batch_embl.txt
