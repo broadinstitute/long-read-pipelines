@@ -16,8 +16,8 @@ workflow LRVisualizeVariants {
         Array[File]+ aligned_bais
 
         File merged_callset1_vcf
-        File merged_callset2_vcf
-        File merged_callset3_vcf
+        File? merged_callset2_vcf
+        File? merged_callset3_vcf
 
         File ref_map_file
 
@@ -32,7 +32,7 @@ workflow LRVisualizeVariants {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    scatter (vcf in [merged_callset1_vcf, merged_callset2_vcf, merged_callset3_vcf]) {
+    scatter (vcf in select_all([merged_callset1_vcf, merged_callset2_vcf, merged_callset3_vcf])) {
         call VariantUtils.SubsetVCFToSVs { input: vcf = vcf }
         call VariantUtils.VCFToBed { input: vcf = SubsetVCFToSVs.sv_vcf }
     }
