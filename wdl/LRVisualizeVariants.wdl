@@ -15,9 +15,9 @@ workflow LRVisualizeVariants {
         Array[File]+ aligned_bams
         Array[File]+ aligned_bais
 
-        Array[File] callset1_vcfs
-        Array[File] callset2_vcfs
-        Array[File] callset3_vcfs
+        File merged_callset1_vcf
+        File merged_callset2_vcf
+        File merged_callset3_vcf
 
         File ref_map_file
 
@@ -32,31 +32,39 @@ workflow LRVisualizeVariants {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    scatter (vcf in flatten([callset1_vcfs, callset2_vcfs, callset3_vcfs])) {
-        call VariantUtils.VCFToBed { input: vcf = vcf }
+    scatter (vcf in [merged_callset1_vcf, merged_callset2_vcf, merged_callset3_vcf]) {
+        call VariantUtils.SubsetVCFToSVs { input: vcf = vcf }
+        call VariantUtils.VCFToBed { input: vcf = SubsetVCFToSVs.sv_vcf }
     }
 
-    call Utils.MergeBedFiles { input: beds = VCFToBed.bed, ref_fai = ref_map['fai'], dist = 50000, prefix = "union" }
-
-    # Parallelize downloads over num_simultaneous_downloads jobs.
-    scatter (n in range(num_simultaneous_jobs)) {
-        call ExtractLoci {
-            input:
-                aligned_bams     = aligned_bams,
-                aligned_bais     = aligned_bais,
-                bed              = MergeBedFiles.merged_bed,
-                nth              = n,
-                num_jobs         = num_simultaneous_jobs,
-                gcs_out_root_dir = outdir
-        }
+    call Utils.MergeBedFiles {
+        input:
+            beds = VCFToBed.bed,
+            ref_fai = ref_map['fai'],
+            slop = 50000,
+            dist = 50000,
+            prefix = "union"
     }
+
+    # Parallelize read extractions
+#    scatter (n in range(num_simultaneous_jobs)) {
+#        call ExtractLoci {
+#            input:
+#                aligned_bams     = aligned_bams,
+#                aligned_bais     = aligned_bais,
+#                bed              = MergeBedFiles.merged_bed,
+#                nth              = n,
+#                num_jobs         = num_simultaneous_jobs,
+#                gcs_out_root_dir = outdir
+#        }
+#    }
 
     ##########
-    # store the results into designated bucket
+    # return the path to the visualization directory
     ##########
 
     output {
-        String viz_path = outdir
+#        String viz_path = outdir
     }
 }
 

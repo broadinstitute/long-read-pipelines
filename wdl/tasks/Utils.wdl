@@ -1006,6 +1006,7 @@ task MergeBedFiles {
     input {
         Array[File] beds
         File ref_fai
+        Int slop = 0
         Int dist = 0
         String prefix
 
@@ -1019,7 +1020,8 @@ task MergeBedFiles {
 
         cat ~{sep=' ' beds} | \
             bedtools sort -g ~{ref_fai} -i - | \
-            bedtools merge -d ~{dist} -i - \
+            bedtools slop -g ~{ref_fai} -b ~{slop} -i - \
+            bedtools merge -d ~{dist} -i - | \
             > ~{prefix}.bed
 
         cat ~{prefix}.bed | wc -l > num_loci.txt

@@ -289,6 +289,59 @@ task ConcatVCFs {
     }
 }
 
+task SubsetVCFToSVs {
+    meta {
+        description: "Subset VCFs to structural variants (>= 50 bp events)"
+    }
+
+    input {
+        File vcf
+
+        String prefix = "sv_subset"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(vcf, 'GB'))
+
+    command <<<
+        set -euxo pipefail
+
+        bcftools view ~{vcf} | \
+            grep -v 'SVTYPE=SNV' | \
+            perl -lanE '/SVLEN=(\d+);/; print "$_" if abs($1) > 50 || /^#/' | \
+            bgzip > ~{prefix}.vcf.gz
+
+        tabix -p vcf ~{prefix}.vcf.gz
+    >>>
+
+    output {
+        File sv_vcf = "~{prefix}.vcf.gz"
+        File sv_tbi = "~{prefix}.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task CollectDefinitions {
     meta {
         description: "Collect (union) various definitions in vcf files, adddressing a bcftols bug: https://github.com/samtools/bcftools/issues/1629"

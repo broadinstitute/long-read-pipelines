@@ -34,22 +34,12 @@ workflow LRMergeSVVCFs {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call VariantUtils.MergeVCFs {
-        input:
-            vcfs = vcfs,
-            tbis = tbis,
-            prefix = prefix
-    }
+    call VariantUtils.MergeVCFs { input: vcfs = vcfs, tbis = tbis, prefix = prefix }
 
     call VariantUtils.GetContigNames { input: vcf = MergeVCFs.merged_vcf }
 
     scatter (contig_name in GetContigNames.contig_names) {
-        call VariantUtils.SubsetVCF {
-            input:
-                vcf_gz = MergeVCFs.merged_vcf,
-                vcf_tbi = MergeVCFs.merged_tbi,
-                locus = contig_name
-        }
+        call VariantUtils.SubsetVCF { input: vcf_gz = MergeVCFs.merged_vcf, vcf_tbi = MergeVCFs.merged_tbi, locus = contig_name }
 
         call Truvari.Collapse {
             input:
@@ -60,12 +50,7 @@ workflow LRMergeSVVCFs {
         }
     }
 
-    call VariantUtils.ConcatVCFs {
-        input:
-            vcfs = Collapse.collapsed_vcf,
-            tbis = Collapse.collapsed_tbi,
-            prefix = prefix
-    }
+    call VariantUtils.ConcatVCFs { input: vcfs = Collapse.collapsed_vcf, tbis = Collapse.collapsed_tbi, prefix = prefix }
 
     call SVTK.Standardize {
         input:
