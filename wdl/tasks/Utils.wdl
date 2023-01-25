@@ -1019,8 +1019,8 @@ task MergeBedFiles {
         set -euxo pipefail
 
         cat ~{sep=' ' beds} | \
-            bedtools sort -g ~{ref_fai} -i - | \
             bedtools slop -g ~{ref_fai} -b ~{slop} -i - | \
+            bedtools sort -g ~{ref_fai} -i - | \
             bedtools merge -d ~{dist} -i - \
             > ~{prefix}.bed
 
