@@ -8,11 +8,10 @@ workflow BaktaAnnotateBatch {
         Int num_workers = 64
         String gcs_output_dir
 
-        Array[String] plasmid_ids
-        Array[File] genome_fastas
+        File manifest
     }
 
-    Int total = length(genome_fastas)
+    Int total = length(read_lines(manifest)) - 1  # Assuming header row in TSV
     Int batch_size = ceil(total / num_workers)
 
     String output_dir = sub(gcs_output_dir, "/+$", "")
@@ -22,8 +21,7 @@ workflow BaktaAnnotateBatch {
             input:
                 bakta_db_tar=bakta_db_tar,
                 output_dir=output_dir,
-                plasmid_ids=plasmid_ids,
-                all_genome_fastas=genome_fastas,
+                manifest_tsv=manifest,
 
                 worker=i,
                 batch_size=batch_size
@@ -33,7 +31,7 @@ workflow BaktaAnnotateBatch {
 
     call Bakta.CreateTerraDataTSV as TSV {
         input:
-            plasmid_ids=plasmid_ids,
+            plasmid_ids=flatten(Annotate.plasmid_ids),
             tsv = flatten(Annotate.tsv),
             json = flatten(Annotate.json),
             gff = flatten(Annotate.gff),

@@ -111,8 +111,7 @@ task BaktaAnnotateBatch {
     input {
         File bakta_db_tar
         String output_dir
-        Array[String] plasmid_ids
-        Array[File] all_genome_fastas
+        File manifest_tsv
 
         Int worker
         Int batch_size
@@ -127,31 +126,33 @@ task BaktaAnnotateBatch {
         set -euxo pipefail
 
         mkdir bakta_db
+        >&2 echo $(date --rfc-3339=seconds)
         tar -xaf ~{bakta_db_tar} -C bakta_db
+        >&2 echo $(date --rfc-3339=seconds)
 
-        lines_start=$(( ~{worker} * ~{batch_size} + 1 ))  # Sed starts at 1
+        lines_start=$(( ~{worker} * ~{batch_size} + 2 ))  # Skip TSV header and sed line numbers start at 1
         lines_end=$(( lines_start + ~{batch_size} - 1 ))
         lines_quit=$(( lines_end + 1 ))
         2>&1 echo "Processing batch ${lines_start}-${lines_end}"
 
-        # Extract FASTA filenames to process
-        sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{write_lines(plasmid_ids)} > to_process_plasmid_ids.txt
-        sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{write_lines(all_genome_fastas)} > to_process_fasta.txt
+        # Extract plasmid IDs and FASTA filenames to process
+        sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{manifest_tsv} > to_process.tsv
 
         # List all expected output files for this batch
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.tsv"; done > batch_tsv.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.json"; done > batch_json.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gff3"; done > batch_gff.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.gbff"; done > batch_genbank.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.embl"; done > batch_embl.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.ffn"; done > batch_ffn.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.faa"; done > batch_faa.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.hypotheticals.tsv"; done > batch_hypotheticals_tsv.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.hypotheticals.faa"; done > batch_hypotheticals_faa.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.txt"; done > batch_summaries.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.log"; done > batch_log.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.png"; done > batch_png.txt
-        for prefix in $(< to_process_plasmid_ids.txt); do echo "~{gcs_output_dir}/${prefix}/${prefix}.svg"; done > batch_svg.txt
+        awk -F$'\t' '{print $1}' to_process.tsv > batch_ids.txt
+        awk -F$'\t' '{print $2}' to_process.tsv > batch_fasta.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".tsv"}' to_process.tsv > batch_tsv.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".gff3"}' to_process.tsv > batch_gff.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".gbff"}' to_process.tsv > batch_genbank.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".embl"}' to_process.tsv > batch_embl.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".ffn"}' to_process.tsv > batch_ffn.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".faa"}' to_process.tsv > batch_faa.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".hypotheticals.tsv"}' to_process.tsv > batch_hypotheticals_tsv.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".hypotheticals.faa"}' to_process.tsv > batch_hypotheticals_faa.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".txt"}' to_process.tsv > batch_summaries.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".log"}' to_process.tsv > batch_log.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".png"}' to_process.tsv > batch_png.txt
+        awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".svg"}' to_process.tsv > batch_svg.txt
 
         while IFS=$'\t' read -r plasmid_id fasta tsv json gff genbank embl ffn faa hypotheticals_tsv hypotheticals_faa summary log plot_png plot_svg; do
             >&2 echo $(date --rfc-3339=seconds)
@@ -169,12 +170,13 @@ task BaktaAnnotateBatch {
                 gsutil -m cp "output/${plasmid_id}/"* "~{gcs_output_dir}/${plasmid_id}"
                 rm -rf "output/${plasmid_id}"
             fi
-        done < <(paste to_process_plasmid_ids.txt to_process_fasta.txt batch_tsv.txt batch_json.txt batch_gff.txt batch_genbank.txt \
+        done < <(paste batch_ids.txt batch_fasta.txt batch_tsv.txt batch_json.txt batch_gff.txt batch_genbank.txt \
             batch_embl.txt batch_ffn.txt batch_faa.txt batch_hypotheticals_tsv.txt batch_hypotheticals_faa.txt batch_summaries.txt \
             batch_log.txt batch_png.txt batch_svg.txt)
     >>>
 
     output {
+        Array[String] plasmid_ids = read_lines("batch_ids.txt")
         Array[String] tsv = read_lines("batch_tsv.txt")
         Array[String] json = read_lines("batch_json.txt")
         Array[String] gff = read_lines("batch_gff.txt")
@@ -238,15 +240,11 @@ task CreateTerraDataTSV {
     command <<<
         set -euxo pipefail
 
-        if [[ -v WORKSPACE_NAMESPACE ]]; then echo $WORKSPACE_NAMESPACE; fi
-        if [[ -v WORKSPACE_NAME ]]; then echo $WORKSPACE_NAME; fi
-
         echo $'entity:plasmid_id\tannot_tsv\tannot_json\tannot_gff3\tannot_genbank\tannot_embl\tcds_ffn\tprotein_faa\thypotheticals_tsv\thypotheticals_faa\tannot_summary\tannot_log\tplot_png\tplot_svg' > plasmid_annot.tsv
 
         paste ~{write_lines(plasmid_ids)} ~{write_lines(tsv)} ~{write_lines(json)} ~{write_lines(gff)} ~{write_lines(genbank)} \
             ~{write_lines(embl)} ~{write_lines(ffn)} ~{write_lines(faa)} ~{write_lines(hypotheticals_tsv)} ~{write_lines(hypotheticals_faa)} \
             ~{write_lines(summary)} ~{write_lines(log)} ~{write_lines(plot_png)} ~{write_lines(plot_svg)} >> plasmid_annot.tsv
-
     >>>
 
     output {
