@@ -47,24 +47,24 @@ workflow LRVisualizeVariants {
     }
 
     # Parallelize read extractions
-#    scatter (n in range(num_simultaneous_jobs)) {
-#        call ExtractLoci {
-#            input:
-#                aligned_bams     = aligned_bams,
-#                aligned_bais     = aligned_bais,
-#                bed              = MergeBedFiles.merged_bed,
-#                nth              = n,
-#                num_jobs         = num_simultaneous_jobs,
-#                gcs_out_root_dir = outdir
-#        }
-#    }
+    scatter (n in range(num_simultaneous_jobs)) {
+        call ExtractLoci {
+            input:
+                aligned_bams     = aligned_bams,
+                aligned_bais     = aligned_bais,
+                bed              = MergeBedFiles.merged_bed,
+                nth              = n,
+                num_jobs         = num_simultaneous_jobs,
+                gcs_out_root_dir = outdir
+        }
+    }
 
     ##########
     # return the path to the visualization directory
     ##########
 
     output {
-#        String viz_path = outdir
+        String viz_path = outdir
     }
 }
 
