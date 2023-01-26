@@ -133,14 +133,19 @@ task BaktaAnnotateBatch {
         lines_start=$(( ~{worker} * ~{batch_size} + 2 ))  # Skip TSV header and sed line numbers start at 1
         lines_end=$(( lines_start + ~{batch_size} - 1 ))
         lines_quit=$(( lines_end + 1 ))
-        2>&1 echo "Processing batch ${lines_start}-${lines_end}"
+        2>&1 echo "Processing lines ${lines_start}-${lines_end}"
 
         # Extract plasmid IDs and FASTA filenames to process
         sed -n "${lines_start},${lines_end}p;${lines_quit}q" ~{manifest_tsv} > to_process.tsv
 
-        # List all expected output files for this batch
+        # Download plasmid FASTA files
         awk -F$'\t' '{print $1}' to_process.tsv > batch_ids.txt
-        awk -F$'\t' '{print $2}' to_process.tsv > batch_fasta.txt
+        awk -F$'\t' '{print $2}' to_process.tsv > batch_fasta_gcs.txt
+        mkdir -p fasta_files
+        gsutil -m cp -I ./fasta_files < batch_fasta_gcs.txt
+        for gcs_fname in $(< batch_fasta_gcs.txt); do echo "./fasta_files/${gcs_fname##*/}"; done > batch_fasta.txt
+
+        # List all expected output files for this batch
         awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".tsv"}' to_process.tsv > batch_tsv.txt
         awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".json"}' to_process.tsv > batch_json.txt
         awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".gff3"}' to_process.tsv > batch_gff.txt
@@ -197,7 +202,7 @@ task BaktaAnnotateBatch {
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             16,
-        disk_gb:            100,
+        disk_gb:            150,
         boot_disk_gb:       10,
         preemptible_tries:  50,
         max_retries:        0,
