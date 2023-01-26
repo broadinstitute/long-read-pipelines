@@ -1,0 +1,7 @@
+name: lr-shapeit5
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools

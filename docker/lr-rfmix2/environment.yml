@@ -1,0 +1,55 @@
+name: lr-rfmix2
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_kmp_llvm
+  - bzip2=1.0.8=h7b6447c_0
+  - c-ares=1.18.1=h7f8727e_0
+  - ca-certificates=2023.01.10=h06a4308_0
+  - certifi=2022.12.7=py310h06a4308_0
+  - htslib=1.16=h6bc39ce_0
+  - krb5=1.19.4=h568e23c_0
+  - ld_impl_linux-64=2.38=h1181459_1
+  - libcurl=7.84.0=h91b91d3_0
+  - libdeflate=1.13=h166bdaf_0
+  - libedit=3.1.20221030=h5eee18b_0
+  - libev=4.33=h7f8727e_1
+  - libffi=3.3=he6710b0_2
+  - libgcc-ng=12.2.0=h65d4601_19
+  - libnghttp2=1.46.0=hce63b2e_0
+  - libssh2=1.10.0=h8f2d780_0
+  - libstdcxx-ng=11.2.0=h1234567_1
+  - libuuid=1.41.5=h5eee18b_0
+  - libzlib=1.2.12=h166bdaf_3
+  - llvm-openmp=14.0.6=h9e868ea_0
+  - ncurses=6.3=h5eee18b_3
+  - openssl=1.1.1s=h7f8727e_0
+  - pip=22.3.1=py310h06a4308_0
+  - python=3.10.6=haa1d7c7_0
+  - readline=8.2=h5eee18b_0
+  - samtools=1.16.1=h6899075_1
+  - setuptools=65.6.3=py310h06a4308_0
+  - sqlite=3.39.3=h5082296_0
+  - tk=8.6.12=h1ccaba5_0
+  - tzdata=2022g=h04d1e81_0
+  - wheel=0.37.1=pyhd3eb1b0_0
+  - xz=5.2.10=h5eee18b_1
+  - zlib=1.2.12=h5eee18b_3
+  - pip:
+      - munkres==1.1.4
+      - networkx==2.8.8
+      - numpy==1.24.1
+      - packaging==23.0
+      - pandas==1.5.3
+      - patsy==0.5.3
+      - pong==1.5
+      - python-dateutil==2.8.2
+      - pytz==2022.7.1
+      - scipy==1.10.0
+      - six==1.16.0
+      - statsmodels==0.13.5
+      - tornado==6.2
+prefix: /opt/conda/envs/lr-rfmix2
