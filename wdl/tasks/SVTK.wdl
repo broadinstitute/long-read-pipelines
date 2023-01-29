@@ -14,7 +14,7 @@ task Standardize {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size([vcf, tbi, ref_fai], "GB")) + 1
+    Int disk_size = 8*ceil(size([vcf, tbi, ref_fai], "GB")) + 1
 
     command <<<
         set -euxo pipefail
