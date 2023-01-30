@@ -205,7 +205,7 @@ task BaktaAnnotateBatch {
         disk_gb:            150,
         boot_disk_gb:       10,
         preemptible_tries:  50,
-        max_retries:        0,
+        max_retries:        2,
         docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/bakta:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
