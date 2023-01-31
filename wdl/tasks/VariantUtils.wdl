@@ -191,7 +191,7 @@ task MergeAndSortVCFs {
 
 task MergeVCFs {
     meta {
-        description: "Merge VCFs using BCFTools ensuring no multi-allelic entries"
+        description: "Merge VCFs using BCFTools ensuring that: (1) only PASS calls are kept; (2) SVs with the same CHR,POS,REF,ALT, but different SVLEN, END or STRAND, are not collapsed (collapsing such SVs would be the default behavior of bcftools when ALTs are symbolic); (3) no multi-allelic entries result from merging."
     }
 
     input {
@@ -203,12 +203,57 @@ task MergeVCFs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(vcfs, 'GB'))
+    Int disk_size = 8*ceil(size(vcfs, 'GB'))
 
     command <<<
         set -euxo pipefail
-
-        bcftools merge -m none ~{sep=' ' vcfs} | bgzip > ~{prefix}.vcf.gz
+        
+        N_SOCKETS="$(lscpu | grep '^Socket(s):' | awk '{print $NF}')"
+        N_CORES_PER_SOCKET="$(lscpu | grep '^Core(s) per socket:' | awk '{print $NF}')"
+        N_THREADS=$(( ${N_SOCKETS} * ${N_CORES_PER_SOCKET} ))
+        
+        rm -f list.txt; touch list.txt
+        for VCF_FILE in ~{sep=' ' vcfs}; do
+            bcftools filter --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}-pass.vcf
+            bcftools view -h ${VCF_FILE}-pass.vcf > ${VCF_FILE}-distinct.vcf
+            bcftools view -H ${VCF_FILE}-pass.vcf | awk '{ \
+            	tag="artificial"; \
+            	if ($5=="<DEL>" || $5=="<DUP>" || $5=="<INV>" || $5=="<INS>") { \
+            		svtype=substr($5,2,3); \
+            		end=""; \
+            		svlen=""; \
+            		strand=""; \
+            		n=split($8,A,";"); \
+            		for (i=1; i<=n; i++) { \
+            			if (substr(A[i],1,4)=="END=") end=substr(A[i],5); \
+            			else if (substr(A[i],1,6)=="SVLEN=") { \
+            				if (substr(A[i],7,1)=="-") svlen=substr(A[i],8); \
+            				else svlen=substr(A[i],7); \
+            			} \
+            			else if (substr(A[i],1,7)=="STRAND=") strand=substr(A[i],8); \
+            		} \
+            		$5="<" svtype ":" tag ":" (length(end)==0?"?":end) ":" (length(svlen)==0?"?":svlen) ":" (length(strand)==0?"?":strand) ">" \
+            	}; \
+            	printf("%s",$1); \
+            	for (i=2; i<=NF; i++) printf("\t%s",$i); \
+            	printf("\n"); \
+            }' >> ${VCF_FILE}-distinct.vcf
+            rm -f ${VCF_FILE}-pass.vcf
+            bgzip --threads ${N_THREADS} ${VCF_FILE}-distinct.vcf
+            tabix ${VCF_FILE}-distinct.vcf
+            echo ${VCF_FILE}-distinct.vcf.gz >> list.txt
+        done
+        bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --merge none --file-list list.txt --output-type v --output merged.vcf
+        bcftools view -h merged.vcf > ~{prefix}.vcf
+        bcftools view -H merged.vcf | awk '{ \
+        	tag="artificial"; \
+        	if (substr($5,6,length(tag))==tag) $5=substr($5,1,4) ">"; \
+        	printf("%s",$1); \
+        	for (i=2; i<=NF; i++) printf("\t%s",$i); \
+        	printf("\n"); \
+        }' >> ~{prefix}.vcf
+        rm -f merged.vcf
+        bgzip --threads ${N_THREADS} ~{prefix}.vcf
         tabix ~{prefix}.vcf.gz
     >>>
 
