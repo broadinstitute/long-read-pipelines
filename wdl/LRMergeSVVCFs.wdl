@@ -42,11 +42,14 @@ workflow LRMergeSVVCFs {
     String contig_name = "chr1"
         
     call VariantUtils.SubsetVCF { input: vcf_gz = MergeVCFs.merged_vcf, vcf_tbi = MergeVCFs.merged_tbi, locus = contig_name }
-
+    
+    Array[File] test_vcf = [SubsetVCF.subset_vcf]
+    Array[File] test_tbi = [SubsetVCF.subset_tbi]
+    
     call Truvari.Collapse {
         input:
-            vcf = SubsetVCF.subset_vcf,
-            tbi = SubsetVCF.subset_tbi,
+            vcf = test_vcf,
+            tbi = test_tbi,
             ref_fasta = ref_map['fasta'],
             prefix = prefix
     }
