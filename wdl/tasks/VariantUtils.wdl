@@ -214,7 +214,7 @@ task MergeVCFs {
         
         rm -f list.txt; touch list.txt
         for VCF_FILE in ~{sep=' ' vcfs}; do
-            bcftools filter --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}-pass.vcf
+            bcftools filter --regions chr1 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}-pass.vcf
             bcftools view -h ${VCF_FILE}-pass.vcf > ${VCF_FILE}-distinct.vcf
             bcftools view -H ${VCF_FILE}-pass.vcf | awk '{ \
                 tag="artificial"; \
