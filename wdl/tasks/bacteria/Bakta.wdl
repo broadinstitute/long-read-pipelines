@@ -173,6 +173,10 @@ task BaktaAnnotateBatch {
                 bakta --db bakta_db --output "output/${plasmid_id}" --complete --threads ~{num_cores} \
                     --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta}
 
+                if [[ $? != 0 ]]; then
+                    >&2 echo "Bakta failed, potentially OutOfMemory";  # Trigger terra retry with more memory
+                fi
+
                 gsutil -m cp "output/${plasmid_id}/"* "~{gcs_output_dir}/${plasmid_id}"
                 rm -rf "output/${plasmid_id}"
             fi
