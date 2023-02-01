@@ -191,7 +191,7 @@ task MergeAndSortVCFs {
 
 task MergeVCFs {
     meta {
-        description: "Merge VCFs using BCFTools ensuring that: (1) only PASS calls are kept; (2) SVs with the same CHR,POS,REF,ALT, but different SVLEN, END or STRAND, are not collapsed (collapsing such SVs would be the default behavior of bcftools when ALTs are symbolic); (3) no multi-allelic entries result from merging."
+        description: "Merge VCFs using bcftools ensuring that: (1) only PASS calls are kept; (2) ./. genotypes are transformed to 0/0; (3) SVs with the same CHR,POS,REF,ALT, but different SVLEN, END or STRAND, are not collapsed (collapsing such SVs would be the default behavior of bcftools when ALTs are symbolic); (4) no multi-allelic entries result from merging."
     }
 
     input {
@@ -243,7 +243,7 @@ task MergeVCFs {
             tabix ${VCF_FILE}-distinct.vcf
             echo ${VCF_FILE}-distinct.vcf.gz >> list.txt
         done
-        bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --merge none --file-list list.txt --output-type v --output merged.vcf
+        bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf
         bcftools view -h merged.vcf > ~{prefix}.vcf
         bcftools view -H merged.vcf | awk '{ \
             tag="artificial"; \
