@@ -5,6 +5,7 @@ import "Structs.wdl"
 task PhaseCommonVariants {
     input {
         File input_vcf
+        File input_tbi
         Float filter_maf = 0.005
         String interval
 
@@ -13,7 +14,7 @@ task PhaseCommonVariants {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 3*ceil(size(input_vcf, "GB"))
+    Int disk_size = 1 + 3*ceil(size([input_vcf, input_tbi], "GB"))
     String out_bcf = "common.phased_" + sub(interval, "[:-]", "_") + ".bcf"
 
     command <<<

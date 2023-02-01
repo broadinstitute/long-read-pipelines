@@ -50,6 +50,7 @@ workflow LRStatisticallyPhaseVariants {
             call SHAPEIT5.PhaseCommonVariants {
                 input:
                     input_vcf  = SubsetVCF.subset_vcf,
+                    input_tbi  = SubsetVCF.subset_tbi,
                     filter_maf = 0.005,
                     interval   = interval,
             }
