@@ -38,17 +38,19 @@ workflow LRMergeSVVCFs {
 
     call VariantUtils.GetContigNames { input: vcf = MergeVCFs.merged_vcf }
 
-    scatter (contig_name in GetContigNames.contig_names) {
-        call VariantUtils.SubsetVCF { input: vcf_gz = MergeVCFs.merged_vcf, vcf_tbi = MergeVCFs.merged_tbi, locus = contig_name }
+    #scatter (contig_name in GetContigNames.contig_names) {
+    contig_name="chr1"
+        
+    call VariantUtils.SubsetVCF { input: vcf_gz = MergeVCFs.merged_vcf, vcf_tbi = MergeVCFs.merged_tbi, locus = contig_name }
 
-        call Truvari.Collapse {
-            input:
-                vcf = SubsetVCF.subset_vcf,
-                tbi = SubsetVCF.subset_tbi,
-                ref_fasta = ref_map['fasta'],
-                prefix = prefix
-        }
+    call Truvari.Collapse {
+        input:
+            vcf = SubsetVCF.subset_vcf,
+            tbi = SubsetVCF.subset_tbi,
+            ref_fasta = ref_map['fasta'],
+            prefix = prefix
     }
+    #}
 
     call VariantUtils.ConcatVCFs { input: vcfs = Collapse.collapsed_vcf, tbis = Collapse.collapsed_tbi, prefix = prefix }
 
