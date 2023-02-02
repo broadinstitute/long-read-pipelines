@@ -171,7 +171,7 @@ task BaktaAnnotateBatch {
             else
                 mkdir -p "output/${plasmid_id}"
                 bakta --db bakta_db --output "output/${plasmid_id}" --complete --threads ~{num_cores} \
-                    --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta} 2>&1 | tee bakta_out.txt
+                    --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta} || true 2>&1 | tee bakta_out.txt
 
                 if grep -q "Exception: diamond error! error code: -9" bakta_out.txt; then
                     >&2 echo "Diamond was Killed. Likely OutOfMemory."  # Trigger Terra retry with more memory
