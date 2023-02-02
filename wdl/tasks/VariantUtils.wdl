@@ -643,7 +643,7 @@ task FillTags {
         set -euxo pipefail
 
         bcftools +fill-tags ~{vcf} -Ob -o ~{prefix}.bcf -- -t ~{sep="," tags}
-        tabix -p ~{prefix}.bcf
+        tabix -p vcf ~{prefix}.bcf
     >>>
 
     output {
