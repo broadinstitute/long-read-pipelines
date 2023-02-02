@@ -642,13 +642,13 @@ task FillTags {
     command <<<
         set -euxo pipefail
 
-        bcftools +fill-tags ~{vcf} -Ob -o ~{prefix}.bcf -- -t ~{sep="," tags}
-        tabix -p vcf ~{prefix}.bcf
+        bcftools +fill-tags ~{vcf} -Oz -o ~{prefix}.vcf.bgz -- -t ~{sep="," tags}
+        tabix -p vcf ~{prefix}.vcf.bgz
     >>>
 
     output {
-        File filled_bcf = "~{prefix}.bcf"
-        File filled_tbi = "~{prefix}.bcf.tbi"
+        File filled_vcf = "~{prefix}.vcf.bgz"
+        File filled_tbi = "~{prefix}.vcf.bgz.tbi"
     }
 
     #########################

@@ -51,7 +51,7 @@ workflow LRStatisticallyPhaseVariants {
         scatter (interval in [ GenerateCommonVariantIntervals.intervals[0], GenerateCommonVariantIntervals.intervals[1] ]) {
             call SHAPEIT5.PhaseCommonVariants {
                 input:
-                    input_vcf  = FillTags.filled_bcf,
+                    input_vcf  = FillTags.filled_vcf,
                     input_tbi  = FillTags.filled_tbi,
                     filter_maf = 0.005,
                     interval   = interval,
