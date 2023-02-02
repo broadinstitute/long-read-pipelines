@@ -69,7 +69,7 @@ task LigatePhasedCommonVariants {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 3*ceil(size([phased_shard_bcfs, phased_shard_csis], "GB"))
+    Int disk_size = 1 + 3*ceil(size(phased_shard_bcfs, "GB"))
     String out_bcf = "~{prefix}.bcf"
 
     command <<<
