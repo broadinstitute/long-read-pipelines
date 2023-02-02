@@ -34,7 +34,7 @@ workflow LRStatisticallyPhaseVariants {
 
     call IntervalUtils.GetContigNames { input: ref_dict = ref_map['dict'] }
 
-    scatter (contig_name in GetContigNames.contig_names) {
+    scatter (contig_name in [ GetContigNames.contig_names[0] ]) {
         call VariantUtils.SubsetVCF { input: vcf_gz = gvcf, vcf_tbi = tbi, locus = contig_name }
 
         call IntervalUtils.GenerateIntervals as GenerateCommonVariantIntervals {
@@ -46,7 +46,7 @@ workflow LRStatisticallyPhaseVariants {
                 buffer_bp       = 0,
         }
 
-        scatter (interval in GenerateCommonVariantIntervals.intervals) {
+        scatter (interval in [ GenerateCommonVariantIntervals.intervals[0], GenerateCommonVariantIntervals.intervals[1] ]) {
             call SHAPEIT5.PhaseCommonVariants {
                 input:
                     input_vcf  = SubsetVCF.subset_vcf,
@@ -81,7 +81,7 @@ workflow LRStatisticallyPhaseVariants {
                 buffer_bp       = 0
         }
 
-        scatter (p in zip(InputRegionIntervals.intervals, ScaffoldRegionIntervals.intervals)) {
+        scatter (p in zip([ InputRegionIntervals.intervals[0] ], [ ScaffoldRegionIntervals.intervals[0] ])) {
             call SHAPEIT5.PhaseRareVariants {
                 input:
                     input_bcf       = SubsetVCF.subset_vcf,
