@@ -28,13 +28,11 @@ task PhaseCommonVariants {
             --thread ~{num_cpus}
 
         bcftools index ~{out_bcf} --threads ~{num_cpus}
-
-        find . -type f -exec ls -lah {} \;
     >>>
 
     output {
         File common_phased_shard_bcf = "~{out_bcf}"
-        File common_phased_shard_tbi = "~{out_bcf}.tbi"
+        File common_phased_shard_csi = "~{out_bcf}.csi"
     }
 
     #########################
@@ -62,7 +60,7 @@ task PhaseCommonVariants {
 task LigatePhasedCommonVariants {
     input {
         Array[File] phased_shard_bcfs
-        Array[File] phased_shard_tbis
+        Array[File] phased_shard_csis
 
         String prefix = "out"
 
@@ -71,7 +69,7 @@ task LigatePhasedCommonVariants {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 3*ceil(size([phased_shard_bcfs, phased_shard_tbis], "GB"))
+    Int disk_size = 1 + 3*ceil(size([phased_shard_bcfs, phased_shard_csis], "GB"))
     String out_bcf = "~{prefix}.bcf"
 
     command <<<
@@ -86,7 +84,7 @@ task LigatePhasedCommonVariants {
 
     output {
         File scaffold_bcf = "~{out_bcf}"
-        File scaffold_tbi = "~{out_bcf}.tbi"
+        File scaffold_csi = "~{out_bcf}.csi"
     }
 
     #########################
@@ -142,7 +140,7 @@ task PhaseRareVariants {
 
     output {
         File rare_phased_shard_bcf = "~{out_bcf}"
-        File rare_phased_shard_tbi = "~{out_bcf}.tbi"
+        File rare_phased_shard_csi = "~{out_bcf}.csi"
     }
 
     #########################
@@ -170,7 +168,7 @@ task PhaseRareVariants {
 task ConcatenateVariants {
     input {
         Array[File] shard_bcfs
-        Array[File] shard_tbis
+        Array[File] shard_csis
 
         String prefix
         Int num_cpus = 8
@@ -195,7 +193,7 @@ task ConcatenateVariants {
 
     output {
         File full_bcf = "~{out_bcf}"
-        File full_tbi = "~{out_bcf}.tbi"
+        File full_csi = "~{out_bcf}.csi"
     }
 
     #########################

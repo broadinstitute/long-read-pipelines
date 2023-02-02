@@ -61,7 +61,7 @@ workflow LRStatisticallyPhaseVariants {
         call SHAPEIT5.LigatePhasedCommonVariants {
             input:
                 phased_shard_bcfs = PhaseCommonVariants.common_phased_shard_bcf,
-                phased_shard_tbis = PhaseCommonVariants.common_phased_shard_tbi,
+                phased_shard_csis = PhaseCommonVariants.common_phased_shard_csi,
                 prefix = "out",
         }
 
@@ -96,7 +96,7 @@ workflow LRStatisticallyPhaseVariants {
         call SHAPEIT5.ConcatenateVariants as ConcatenateContigVariants {
             input:
                 shard_bcfs = PhaseRareVariants.rare_phased_shard_bcf,
-                shard_tbis = PhaseRareVariants.rare_phased_shard_tbi,
+                shard_csis = PhaseRareVariants.rare_phased_shard_csi,
                 prefix = contig_name
         }
     }
@@ -104,13 +104,13 @@ workflow LRStatisticallyPhaseVariants {
     call SHAPEIT5.ConcatenateVariants as ConcatenateAllVariants {
         input:
             shard_bcfs = ConcatenateContigVariants.full_bcf,
-            shard_tbis = ConcatenateContigVariants.full_tbi,
+            shard_csis = ConcatenateContigVariants.full_csi,
             prefix = prefix
     }
 
     # Finalize
     call FF.FinalizeToFile as FinalizeBCF { input: outdir = outdir, file = ConcatenateAllVariants.full_bcf }
-    call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = ConcatenateAllVariants.full_tbi }
+    call FF.FinalizeToFile as FinalizeCSI { input: outdir = outdir, file = ConcatenateAllVariants.full_csi }
 
     ##########
     # store the results into designated bucket
@@ -118,6 +118,6 @@ workflow LRStatisticallyPhaseVariants {
 
     output {
         File phased_bcf = FinalizeBCF.gcs_path
-        File phased_tbi = FinalizeTBI.gcs_path
+        File phased_csi = FinalizeCSI.gcs_path
     }
 }
