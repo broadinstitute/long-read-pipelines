@@ -86,8 +86,10 @@ workflow LRStatisticallyPhaseVariants {
         scatter (p in zip([ InputRegionIntervals.intervals[0] ], [ ScaffoldRegionIntervals.intervals[0] ])) {
             call SHAPEIT5.PhaseRareVariants {
                 input:
-                    input_bcf       = SubsetVCF.subset_vcf,
+                    input_vcf       = FillTags.filled_vcf,
+                    input_tbi       = FillTags.filled_tbi,
                     scaffold_bcf    = LigatePhasedCommonVariants.scaffold_bcf,
+                    scaffold_csi    = LigatePhasedCommonVariants.scaffold_csi,
                     input_region    = p.left,
                     scaffold_region = p.right,
             }

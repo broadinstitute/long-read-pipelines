@@ -111,8 +111,10 @@ task LigatePhasedCommonVariants {
 
 task PhaseRareVariants {
     input {
-        File input_bcf
+        File input_vcf
+        File input_tbi
         File scaffold_bcf
+        File scaffold_csi
         String input_region
         String scaffold_region
 
@@ -121,14 +123,14 @@ task PhaseRareVariants {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 3*ceil(size([input_bcf, scaffold_bcf], "GB"))
+    Int disk_size = 1 + 3*ceil(size([input_vcf, scaffold_bcf], "GB"))
     String out_bcf = "rare.phased_" + sub(input_region, "[:-]", "_") + ".bcf"
 
     command <<<
         set -euxo pipefail
 
         SHAPEIT5_phase_rare_static \
-            --input-plain ~{input_bcf} \
+            --input-plain ~{input_vcf} \
             --scaffold ~{scaffold_bcf} \
             --output ~{out_bcf} \
             --input-region ~{input_region} \
