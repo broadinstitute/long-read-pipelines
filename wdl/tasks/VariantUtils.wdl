@@ -240,7 +240,7 @@ task MergeVCFs {
             }' >> ${VCF_FILE}-distinct.vcf
             rm -f ${VCF_FILE}-pass.vcf
             bgzip --threads ${N_THREADS} ${VCF_FILE}-distinct.vcf
-            tabix ${VCF_FILE}-distinct.vcf
+            tabix ${VCF_FILE}-distinct.vcf.gz
             echo ${VCF_FILE}-distinct.vcf.gz >> list.txt
         done
         bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf

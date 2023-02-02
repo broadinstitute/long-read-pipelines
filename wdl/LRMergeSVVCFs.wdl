@@ -39,7 +39,6 @@ workflow LRMergeSVVCFs {
     #call VariantUtils.GetContigNames { input: vcf = MergeVCFs.merged_vcf }
 
     #scatter (contig_name in GetContigNames.contig_names) {
-    String contig_name = "chr1"
         
     #call VariantUtils.SubsetVCF { input: vcf_gz = MergeVCFs.merged_vcf, vcf_tbi = MergeVCFs.merged_tbi, locus = contig_name }
     
