@@ -171,8 +171,7 @@ task BaktaAnnotateBatch {
             else
                 mkdir -p "output/${plasmid_id}"
                 bakta --db bakta_db --output "output/${plasmid_id}" --complete --threads ~{num_cores} \
-                    --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta} || true 2>&1 | tee bakta_out.txt
-                bakta_error_code=$?
+                    --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta} 2>&1 | tee bakta_out.txt || true
 
                 if grep -q "Exception: diamond error! error code: -9" bakta_out.txt; then
                     >&2 echo "Diamond was Killed. Likely OutOfMemory."  # Trigger Terra retry with more memory
@@ -181,7 +180,7 @@ task BaktaAnnotateBatch {
                     >&2 echo "PILER-CR crashed. Rerunning bakta without CRISPR predictions."
                     bakta --db bakta_db --output "output/${plasmid_id}" --complete --threads ~{num_cores} --skip-crispr \
                         --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta} 2>&1 | tee bakta_out.txt
-                elif [[ $bakta_error_code != 0 ]]; then
+                elif grep -q "Exception" bakta_out.txt; then
                     >&2 echo "Bakta failed..."
                     exit 1
                 fi
