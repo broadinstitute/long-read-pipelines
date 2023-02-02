@@ -175,6 +175,7 @@ task BaktaAnnotateBatch {
 
                 if grep -q "Exception: diamond error! error code: -9" bakta_out.txt; then
                     >&2 echo "Diamond was Killed. Likely OutOfMemory."  # Trigger Terra retry with more memory
+                    exit 1
                 elif grep -q "Exception: PILER-CR error! error code: -11" bakta_out.txt; then
                     >&2 echo "PILER-CR crashed. Rerunning bakta without CRISPR predictions."
                     bakta --db bakta_db --output "output/${plasmid_id}" --complete --threads ~{num_cores} --skip-crispr \
