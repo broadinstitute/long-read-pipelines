@@ -28,6 +28,8 @@ task PhaseCommonVariants {
             --thread ~{num_cpus}
 
         bcftools index ~{out_bcf} --threads ~{num_cpus}
+
+        find . -type f -exec ls -lah {} \;
     >>>
 
     output {
