@@ -48,7 +48,7 @@ workflow LRStatisticallyPhaseVariants {
 
         call VariantUtils.FillTags { input: vcf = SubsetVCF.subset_vcf, tags = [ 'AC', 'AN' ] }
 
-        scatter (interval in [ GenerateCommonVariantIntervals.intervals[0], GenerateCommonVariantIntervals.intervals[1] ]) {
+        scatter (interval in GenerateCommonVariantIntervals.intervals) {
             call SHAPEIT5.PhaseCommonVariants {
                 input:
                     input_vcf  = FillTags.filled_vcf,
@@ -83,7 +83,7 @@ workflow LRStatisticallyPhaseVariants {
                 buffer_bp       = 0
         }
 
-        scatter (p in zip([ InputRegionIntervals.intervals[0] ], [ ScaffoldRegionIntervals.intervals[0] ])) {
+        scatter (p in zip(InputRegionIntervals.intervals, ScaffoldRegionIntervals.intervals)) {
             call SHAPEIT5.PhaseRareVariants {
                 input:
                     input_vcf       = FillTags.filled_vcf,
