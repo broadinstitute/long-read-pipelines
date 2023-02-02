@@ -637,7 +637,7 @@ task FillTags {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 2*ceil(vcf, "GB")
+    Int disk_size = 1 + 2*ceil(size(vcf, "GB"))
 
     command <<<
         set -euxo pipefail

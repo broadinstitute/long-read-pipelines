@@ -46,7 +46,7 @@ workflow LRStatisticallyPhaseVariants {
 
         call VariantUtils.SubsetVCF { input: vcf_gz = gvcf, vcf_tbi = tbi, locus = contig_name }
 
-        call VariantUtils.FillTags { input: vcf_gz = SubsetVCF.subset_vcf, tags = [ 'AC', 'AN' ] }
+        call VariantUtils.FillTags { input: vcf = SubsetVCF.subset_vcf, tags = [ 'AC', 'AN' ] }
 
         scatter (interval in [ GenerateCommonVariantIntervals.intervals[0], GenerateCommonVariantIntervals.intervals[1] ]) {
             call SHAPEIT5.PhaseCommonVariants {
