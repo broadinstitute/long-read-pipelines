@@ -20,12 +20,18 @@ task PhaseCommonVariants {
     command <<<
         set -euxo pipefail
 
-        SHAPEIT5_phase_common_static \
-            --input ~{input_vcf} \
-            --filter-maf ~{filter_maf} \
-            --output ~{out_bcf} \
-            --region ~{interval} \
-            --thread ~{num_cpus}
+        NUM_VARIANTS=$(bcftools view ~{input_vcf} ~{interval} | grep -c -v '^#')
+
+        if [ $NUM_VARIANTS == 0 ]; then
+            bcftools view -Ob -h ~{input_vcf} ~{interval} > ~{out_bcf}
+        else
+            SHAPEIT5_phase_common_static \
+                --input ~{input_vcf} \
+                --filter-maf ~{filter_maf} \
+                --output ~{out_bcf} \
+                --region ~{interval} \
+                --thread ~{num_cpus}
+        fi
 
         bcftools index ~{out_bcf} --threads ~{num_cpus}
     >>>
