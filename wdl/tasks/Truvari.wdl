@@ -31,13 +31,17 @@ task Collapse {
             -T ~{num_cpus} \
             -k ~{keep} | \
             bcftools sort /dev/stdin -o ~{prefix}.truvari.vcf.gz -O z
-
         tabix ~{prefix}.truvari.vcf.gz
+        
+        N_INS=$(zcat ~{prefix}.truvari.vcf.gz | grep "SVTYPE=INS" | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+        N_DEL=$(zcat ~{prefix}.truvari.vcf.gz | grep "SVTYPE=DEL" | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+        echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
     >>>
 
     output {
         File collapsed_vcf = "~{prefix}.truvari.vcf.gz"
         File collapsed_tbi = "~{prefix}.truvari.vcf.gz.tbi"
+        File counts = "counts.txt"
     }
 
     #########################

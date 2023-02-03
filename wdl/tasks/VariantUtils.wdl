@@ -213,8 +213,12 @@ task MergeVCFs {
         N_THREADS=$(( ${N_SOCKETS} * ${N_CORES_PER_SOCKET} ))
         
         rm -f list.txt; touch list.txt
+        rm -f counts.txt; touch counts.txt
         for VCF_FILE in ~{sep=' ' vcfs}; do
             bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}-pass.vcf
+            N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}-pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}-pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
             bcftools view -h ${VCF_FILE}-pass.vcf > ${VCF_FILE}-distinct.vcf
             bcftools view -H ${VCF_FILE}-pass.vcf | awk '{ \
                 tag="artificial"; \
@@ -253,6 +257,9 @@ task MergeVCFs {
             printf("\n"); \
         }' >> ~{prefix}.vcf
         rm -f merged.vcf
+        N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+        N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+        echo "bcftools_merge,${N_INS},${N_DEL}" >> counts.txt
         bgzip --threads ${N_THREADS} ~{prefix}.vcf
         tabix ~{prefix}.vcf.gz
     >>>
@@ -260,6 +267,7 @@ task MergeVCFs {
     output {
         File merged_vcf = "~{prefix}.vcf.gz"
         File merged_tbi = "~{prefix}.vcf.gz.tbi"
+        File counts = "counts.txt"
     }
 
     #########################
