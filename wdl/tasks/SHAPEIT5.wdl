@@ -18,7 +18,7 @@ task PhaseCommonVariants {
     String out_bcf = "common.phased_" + sub(interval, "[:-]", "_") + ".bcf"
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         NUM_VARIANTS=$(bcftools view ~{input_vcf} ~{interval} | grep -c -v '^#')
 
