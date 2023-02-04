@@ -49,19 +49,28 @@ workflow LRStatisticallyPhaseVariants {
         call VariantUtils.FillTags { input: vcf = SubsetVCF.subset_vcf, tags = [ 'AC', 'AN' ] }
 
         scatter (interval in GenerateCommonVariantIntervals.intervals) {
-            call SHAPEIT5.PhaseCommonVariants {
+            call VariantUtils.CountVariants {
                 input:
-                    input_vcf  = FillTags.filled_vcf,
-                    input_tbi  = FillTags.filled_tbi,
-                    filter_maf = 0.005,
-                    interval   = interval,
+                    vcf = FillTags.filled_vcf,
+                    tbi = FillTags.filled_tbi,
+                    locus = interval
+            }
+
+            if (CountVariants.num_variants > 0) {
+                call SHAPEIT5.PhaseCommonVariants {
+                    input:
+                        input_vcf  = FillTags.filled_vcf,
+                        input_tbi  = FillTags.filled_tbi,
+                        filter_maf = 0.005,
+                        interval   = interval,
+                }
             }
         }
 
         call SHAPEIT5.LigatePhasedCommonVariants {
             input:
-                phased_shard_bcfs = PhaseCommonVariants.common_phased_shard_bcf,
-                phased_shard_csis = PhaseCommonVariants.common_phased_shard_csi,
+                phased_shard_bcfs = select_all(PhaseCommonVariants.common_phased_shard_bcf),
+                phased_shard_csis = select_all(PhaseCommonVariants.common_phased_shard_csi),
                 prefix = "out",
         }
 
