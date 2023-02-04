@@ -22,9 +22,13 @@ task PhaseCommonVariants {
 
         NUM_VARIANTS=$(bcftools view ~{input_vcf} ~{interval} | grep -c -v '^#')
 
-        if [ $NUM_VARIANTS == 0 ]; then
+        if [ "$NUM_VARIANTS" = "0" ]; then
+            echo "No variants found. Preparing dummy file for shard..."
+
             bcftools view -Ob -h ~{input_vcf} ~{interval} > ~{out_bcf}
         else
+            echo "$NUM_VARIANTS variants found. Phasing shard..."
+
             SHAPEIT5_phase_common_static \
                 --input ~{input_vcf} \
                 --filter-maf ~{filter_maf} \
