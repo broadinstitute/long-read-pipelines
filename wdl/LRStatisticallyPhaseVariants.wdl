@@ -39,8 +39,8 @@ workflow LRStatisticallyPhaseVariants {
             input:
                 ref_dict        = ref_map['dict'],
                 selected_contig = contig_name,
-                chunk_bp        = 30000000,
-                stride_bp       = 25000000,
+                chunk_bp        = 40000000,
+                stride_bp       = 35000000,
                 buffer_bp       = 0,
         }
 
@@ -87,9 +87,9 @@ workflow LRStatisticallyPhaseVariants {
             input:
                 ref_dict        = ref_map['dict'],
                 selected_contig = contig_name,
-                chunk_bp        = 30000000,
-                stride_bp       = 25000000,
-                buffer_bp       = 12500000,
+                chunk_bp        = 40000000,
+                stride_bp       = 35000000,
+                buffer_bp       = 17500000,
         }
 
         scatter (p in zip(GenerateRareVariantIntervals.intervals, GenerateCommonVariantIntervals.intervals)) {
