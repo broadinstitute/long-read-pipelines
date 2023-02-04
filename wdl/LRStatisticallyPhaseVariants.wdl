@@ -65,25 +65,34 @@ workflow LRStatisticallyPhaseVariants {
                 prefix = "out",
         }
 
-        call IntervalUtils.GenerateIntervals as InputRegionIntervals {
+#        call IntervalUtils.GenerateIntervals as InputRegionIntervals {
+#            input:
+#                ref_dict        = ref_map['dict'],
+#                selected_contig = contig_name,
+#                chunk_bp        = 12000000,
+#                stride_bp       =  6000000,
+#                buffer_bp       =  3000000,
+#        }
+
+#        call IntervalUtils.GenerateIntervals as ScaffoldRegionIntervals {
+#            input:
+#                ref_dict        = ref_map['dict'],
+#                selected_contig = contig_name,
+#                chunk_bp        = 12000000,
+#                stride_bp       =  6000000,
+#                buffer_bp       =  3000000
+#        }
+
+        call IntervalUtils.GenerateIntervals as GenerateRareVariantIntervals {
             input:
                 ref_dict        = ref_map['dict'],
                 selected_contig = contig_name,
-                chunk_bp        = 12000000,
-                stride_bp       =  6000000,
-                buffer_bp       =  3000000,
+                chunk_bp        = 30000000,
+                stride_bp       = 25000000,
+                buffer_bp       = 12500000,
         }
 
-        call IntervalUtils.GenerateIntervals as ScaffoldRegionIntervals {
-            input:
-                ref_dict        = ref_map['dict'],
-                selected_contig = contig_name,
-                chunk_bp        = 12000000,
-                stride_bp       =  6000000,
-                buffer_bp       =  3000000
-        }
-
-        scatter (p in zip(InputRegionIntervals.intervals, ScaffoldRegionIntervals.intervals)) {
+        scatter (p in zip(GenerateCommonVariantIntervals.intervals, GenerateRareVariantIntervals.intervals)) {
             call SHAPEIT5.PhaseRareVariants {
                 input:
                     input_vcf       = FillTags.filled_vcf,
