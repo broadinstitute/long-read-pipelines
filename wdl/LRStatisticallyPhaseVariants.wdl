@@ -92,7 +92,7 @@ workflow LRStatisticallyPhaseVariants {
                 buffer_bp       = 12500000,
         }
 
-        scatter (p in zip(GenerateCommonVariantIntervals.intervals, GenerateRareVariantIntervals.intervals)) {
+        scatter (p in zip(GenerateRareVariantIntervals.intervals, GenerateCommonVariantIntervals.intervals)) {
             call SHAPEIT5.PhaseRareVariants {
                 input:
                     input_vcf       = FillTags.filled_vcf,
