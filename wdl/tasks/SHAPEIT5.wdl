@@ -18,24 +18,14 @@ task PhaseCommonVariants {
     String out_bcf = "common.phased_" + sub(interval, "[:-]", "_") + ".bcf"
 
     command <<<
-        set -x
+        set -euxo pipefail
 
-        NUM_VARIANTS=$(bcftools view ~{input_vcf} ~{interval} | grep -c -v '^#')
-
-        if [ "$NUM_VARIANTS" = "0" ]; then
-            echo "No variants found. Preparing dummy file for shard..."
-
-            bcftools view -Ob -h ~{input_vcf} ~{interval} > ~{out_bcf}
-        else
-            echo "$NUM_VARIANTS variants found. Phasing shard..."
-
-            SHAPEIT5_phase_common_static \
-                --input ~{input_vcf} \
-                --filter-maf ~{filter_maf} \
-                --output ~{out_bcf} \
-                --region ~{interval} \
-                --thread ~{num_cpus}
-        fi
+        SHAPEIT5_phase_common_static \
+            --input ~{input_vcf} \
+            --filter-maf ~{filter_maf} \
+            --output ~{out_bcf} \
+            --region ~{interval} \
+            --thread ~{num_cpus}
 
         bcftools index ~{out_bcf} --threads ~{num_cpus}
     >>>

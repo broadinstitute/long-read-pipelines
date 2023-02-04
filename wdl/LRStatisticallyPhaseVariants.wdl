@@ -39,8 +39,8 @@ workflow LRStatisticallyPhaseVariants {
             input:
                 ref_dict        = ref_map['dict'],
                 selected_contig = contig_name,
-                chunk_bp        = 6000000,
-                stride_bp       = 2000000,
+                chunk_bp        = 30000000,
+                stride_bp       = 25000000,
                 buffer_bp       = 0,
         }
 
