@@ -41,7 +41,7 @@ task PhaseCommonVariants {
         mem_gb:             4*num_cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-shapeit5:1.0.0-beta"
     }
@@ -93,7 +93,7 @@ task LigatePhasedCommonVariants {
         mem_gb:             2*num_cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-shapeit5:1.0.0-beta"
     }
@@ -115,8 +115,8 @@ task PhaseRareVariants {
         File input_tbi
         File scaffold_bcf
         File scaffold_csi
-        String input_region
-        String scaffold_region
+        String rare_variant_region
+        String common_variant_region
 
         Int num_cpus = 8
 
@@ -124,7 +124,7 @@ task PhaseRareVariants {
     }
 
     Int disk_size = 1 + 3*ceil(size([input_vcf, scaffold_bcf], "GB"))
-    String out_bcf = "rare.phased_" + sub(input_region, "[:-]", "_") + ".bcf"
+    String out_bcf = "rare.phased_" + sub(rare_variant_region, "[:-]", "_") + ".bcf"
 
     command <<<
         set -euxo pipefail
@@ -133,8 +133,8 @@ task PhaseRareVariants {
             --input-plain ~{input_vcf} \
             --scaffold ~{scaffold_bcf} \
             --output ~{out_bcf} \
-            --input-region ~{input_region} \
-            --scaffold-region ~{scaffold_region} \
+            --input-region ~{rare_variant_region} \
+            --scaffold-region ~{common_variant_region} \
             --thread ~{num_cpus}
 
         bcftools index ~{out_bcf} --threads ~{num_cpus}
@@ -151,7 +151,7 @@ task PhaseRareVariants {
         mem_gb:             4*num_cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-shapeit5:1.0.0-beta"
     }
@@ -204,7 +204,7 @@ task ConcatenateVariants {
         mem_gb:             4*num_cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-shapeit5:1.0.0-beta"
     }

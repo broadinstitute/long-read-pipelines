@@ -34,7 +34,7 @@ workflow LRStatisticallyPhaseVariants {
 
     call IntervalUtils.GetContigNames { input: ref_dict = ref_map['dict'] }
 
-    scatter (contig_name in [ GetContigNames.contig_names[0] ]) {
+    scatter (contig_name in GetContigNames.contig_names) {
         call IntervalUtils.GenerateIntervals as GenerateCommonVariantIntervals {
             input:
                 ref_dict        = ref_map['dict'],
@@ -65,24 +65,6 @@ workflow LRStatisticallyPhaseVariants {
                 prefix = "out",
         }
 
-#        call IntervalUtils.GenerateIntervals as InputRegionIntervals {
-#            input:
-#                ref_dict        = ref_map['dict'],
-#                selected_contig = contig_name,
-#                chunk_bp        = 12000000,
-#                stride_bp       =  6000000,
-#                buffer_bp       =  3000000,
-#        }
-
-#        call IntervalUtils.GenerateIntervals as ScaffoldRegionIntervals {
-#            input:
-#                ref_dict        = ref_map['dict'],
-#                selected_contig = contig_name,
-#                chunk_bp        = 12000000,
-#                stride_bp       =  6000000,
-#                buffer_bp       =  3000000
-#        }
-
         call IntervalUtils.GenerateIntervals as GenerateRareVariantIntervals {
             input:
                 ref_dict        = ref_map['dict'],
@@ -95,12 +77,12 @@ workflow LRStatisticallyPhaseVariants {
         scatter (p in zip(GenerateRareVariantIntervals.intervals, GenerateCommonVariantIntervals.intervals)) {
             call SHAPEIT5.PhaseRareVariants {
                 input:
-                    input_vcf       = FillTags.filled_vcf,
-                    input_tbi       = FillTags.filled_tbi,
-                    scaffold_bcf    = LigatePhasedCommonVariants.scaffold_bcf,
-                    scaffold_csi    = LigatePhasedCommonVariants.scaffold_csi,
-                    input_region    = p.left,
-                    scaffold_region = p.right,
+                    input_vcf             = FillTags.filled_vcf,
+                    input_tbi             = FillTags.filled_tbi,
+                    scaffold_bcf          = LigatePhasedCommonVariants.scaffold_bcf,
+                    scaffold_csi          = LigatePhasedCommonVariants.scaffold_csi,
+                    rare_variant_region   = p.left,
+                    common_variant_region = p.right,
             }
         }
 
