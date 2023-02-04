@@ -69,18 +69,18 @@ workflow LRStatisticallyPhaseVariants {
             input:
                 ref_dict        = ref_map['dict'],
                 selected_contig = contig_name,
-                chunk_bp        = 6000000,
-                stride_bp       = 3000000,
-                buffer_bp       = 1500000,
+                chunk_bp        = 12000000,
+                stride_bp       =  6000000,
+                buffer_bp       =  3000000,
         }
 
         call IntervalUtils.GenerateIntervals as ScaffoldRegionIntervals {
             input:
                 ref_dict        = ref_map['dict'],
                 selected_contig = contig_name,
-                chunk_bp        = 6000000,
-                stride_bp       = 3000000,
-                buffer_bp       = 0
+                chunk_bp        = 12000000,
+                stride_bp       =  6000000,
+                buffer_bp       =  3000000
         }
 
         scatter (p in zip(InputRegionIntervals.intervals, ScaffoldRegionIntervals.intervals)) {
