@@ -685,7 +685,7 @@ task CountVariants {
     Int disk_size = 1 + 2*ceil(size([vcf, tbi], "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         bcftools view ~{vcf} ~{locus} | grep -c -v '^#' | wc -l > num_variants.txt
     >>>
