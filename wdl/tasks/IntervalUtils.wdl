@@ -96,7 +96,7 @@ task GenerateIntervals {
 
                                     padded_end = end - buffer_bp
                                     if end == length and not buffer_end:
-                                        padded_end = end
+                                        padded_end = end - 1
 
                                     rw.write(f'{contig}:{padded_start}-{padded_end}\n')
 
