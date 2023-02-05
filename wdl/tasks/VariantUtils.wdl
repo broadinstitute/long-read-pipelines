@@ -687,7 +687,7 @@ task CountVariants {
     command <<<
         set -x
 
-        bcftools view ~{vcf} ~{locus} | grep -c -v '^#' > num_variants.txt
+        bcftools view ~{vcf} ~{locus} | { grep -c -v '^#' || true; } > num_variants.txt
     >>>
 
     output {
