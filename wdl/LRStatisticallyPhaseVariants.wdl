@@ -67,46 +67,48 @@ workflow LRStatisticallyPhaseVariants {
             }
         }
 
-        call SHAPEIT5.LigatePhasedCommonVariants {
-            input:
-                phased_shard_bcfs = select_all(PhaseCommonVariants.common_phased_shard_bcf),
-                phased_shard_csis = select_all(PhaseCommonVariants.common_phased_shard_csi),
-                prefix = "out",
-        }
-
-        call IntervalUtils.GenerateIntervals as GenerateRareVariantIntervals {
-            input:
-                ref_dict        = ref_map['dict'],
-                selected_contig = contig_name,
-                chunk_bp        = 40000000,
-                stride_bp       = 35000000,
-                buffer_bp       = 17500000,
-        }
-
-        scatter (p in zip(GenerateRareVariantIntervals.intervals, GenerateCommonVariantIntervals.intervals)) {
-            call SHAPEIT5.PhaseRareVariants {
+        if (length(select_all(PhaseCommonVariants.common_phased_shard_bcf)) > 0) {
+            call SHAPEIT5.LigatePhasedCommonVariants {
                 input:
-                    input_vcf             = FillTags.filled_vcf,
-                    input_tbi             = FillTags.filled_tbi,
-                    scaffold_bcf          = LigatePhasedCommonVariants.scaffold_bcf,
-                    scaffold_csi          = LigatePhasedCommonVariants.scaffold_csi,
-                    rare_variant_region   = p.left,
-                    common_variant_region = p.right,
+                    phased_shard_bcfs = select_all(PhaseCommonVariants.common_phased_shard_bcf),
+                    phased_shard_csis = select_all(PhaseCommonVariants.common_phased_shard_csi),
+                    prefix = "out",
             }
-        }
 
-        call SHAPEIT5.ConcatenateVariants as ConcatenateContigVariants {
-            input:
-                shard_bcfs = PhaseRareVariants.rare_phased_shard_bcf,
-                shard_csis = PhaseRareVariants.rare_phased_shard_csi,
-                prefix = contig_name
+            call IntervalUtils.GenerateIntervals as GenerateRareVariantIntervals {
+                input:
+                    ref_dict        = ref_map['dict'],
+                    selected_contig = contig_name,
+                    chunk_bp        = 40000000,
+                    stride_bp       = 35000000,
+                    buffer_bp       = 17500000,
+            }
+
+            scatter (p in zip(GenerateRareVariantIntervals.intervals, GenerateCommonVariantIntervals.intervals)) {
+                call SHAPEIT5.PhaseRareVariants {
+                    input:
+                        input_vcf             = FillTags.filled_vcf,
+                        input_tbi             = FillTags.filled_tbi,
+                        scaffold_bcf          = LigatePhasedCommonVariants.scaffold_bcf,
+                        scaffold_csi          = LigatePhasedCommonVariants.scaffold_csi,
+                        rare_variant_region   = p.left,
+                        common_variant_region = p.right,
+                }
+            }
+
+            call SHAPEIT5.ConcatenateVariants as ConcatenateContigVariants {
+                input:
+                    shard_bcfs = PhaseRareVariants.rare_phased_shard_bcf,
+                    shard_csis = PhaseRareVariants.rare_phased_shard_csi,
+                    prefix = contig_name
+            }
         }
     }
 
     call SHAPEIT5.ConcatenateVariants as ConcatenateAllVariants {
         input:
-            shard_bcfs = ConcatenateContigVariants.full_bcf,
-            shard_csis = ConcatenateContigVariants.full_csi,
+            shard_bcfs = select_all(ConcatenateContigVariants.full_bcf),
+            shard_csis = select_all(ConcatenateContigVariants.full_csi),
             prefix = prefix
     }
 
