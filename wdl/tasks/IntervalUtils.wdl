@@ -98,7 +98,8 @@ task GenerateIntervals {
                                     if end == length and not buffer_end:
                                         padded_end = end - 1
 
-                                    rw.write(f'{contig}:{padded_start}-{padded_end}\n')
+                                    if padded_start < padded_end:
+                                        rw.write(f'{contig}:{padded_start}-{padded_end}\n')
 
                                     start += stride_bp
 
