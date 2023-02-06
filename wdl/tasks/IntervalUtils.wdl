@@ -135,6 +135,8 @@ task BufferIntervals {
 
         python3 <<EOF
 
+        import re
+
         buffer_bp = ~{buffer_bp}
 
         with open("~{write_lines(unbuffered_intervals)}", "r") as rd:
