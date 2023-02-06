@@ -159,7 +159,7 @@ task BufferIntervals {
                     else:
                         buffered_stop -= 1
 
-                    rw.write(f'{contig}:{buffered_start}-{buffered_stop}')
+                    rw.write(f'{contig}:{buffered_start}-{buffered_stop}\n')
 
         EOF
     >>>
