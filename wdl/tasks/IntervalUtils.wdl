@@ -49,11 +49,8 @@ task GenerateIntervals {
 
         String selected_contig
 
-        Int chunk_bp  = 6000000
-        Int stride_bp = 2000000
-        Int buffer_bp = 0
-        Boolean buffer_start = false
-        Boolean buffer_end = false
+        Int chunk_bp  = 40000000
+        Int stride_bp = 35000000
 
         RuntimeAttr? runtime_attr_override
     }
@@ -67,11 +64,8 @@ task GenerateIntervals {
 
         import re
 
-        chunk_bp     = ~{chunk_bp}
-        stride_bp    = ~{stride_bp}
-        buffer_bp    = ~{buffer_bp}
-        buffer_start = ~{if buffer_start then "True" else "False"}
-        buffer_end   = ~{if buffer_end then "True" else "False"}
+        chunk_bp  = ~{chunk_bp}
+        stride_bp = ~{stride_bp}
 
         with open("~{ref_dict}", "r") as rd:
             for line in rd:
@@ -87,23 +81,83 @@ task GenerateIntervals {
                             else:
                                 start = 1
                                 end = 1
-                                while end <= length - 1:
+                                while end < length:
                                     end = min(start + chunk_bp - 1, length)
 
-                                    padded_start = start + buffer_bp
-                                    if start == 1 and not buffer_start:
-                                        padded_start = start
-
-                                    padded_end = end - buffer_bp
-                                    if end == length and not buffer_end:
-                                        padded_end = end - 1
-
-                                    if padded_start < padded_end:
-                                        rw.write(f'{contig}:{padded_start}-{padded_end}\n')
+                                    rw.write(f'{contig}:{start}-{end}\n')
 
                                     start += stride_bp
 
                         break
+
+        EOF
+    >>>
+
+    output {
+        Array[String] intervals = read_lines("intervals.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task BufferIntervals {
+    input {
+        Array[String] unbuffered_intervals
+
+        Int buffer_bp = 17500000
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1
+
+    command <<<
+        set -euxo pipefail
+
+        python3 <<EOF
+
+        buffer_bp = ~{buffer_bp}
+
+        with open("~{write_lines(unbuffered_intervals)}", "r") as rd:
+            lines = rd.readlines()
+
+            with open("intervals.txt", "w") as rw:
+                for i, line in enumerate(lines):
+                    pieces = re.split("[:-]", line.rstrip())
+                    contig = pieces[0]
+                    start = int(pieces[1])
+                    stop = int(pieces[2])
+
+                    buffered_start = start
+                    if i > 0:
+                        buffered_start += buffer_bp
+
+                    buffered_stop = stop
+                    if i < len(lines) - 1:
+                        buffered_stop -= buffer_bp
+                    else:
+                        buffered_stop -= 1
+
+                    rw.write(f'{contig}:{buffered_start}-{buffered_stop}')
 
         EOF
     >>>

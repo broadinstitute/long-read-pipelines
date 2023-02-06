@@ -41,7 +41,6 @@ workflow LRStatisticallyPhaseVariants {
                 selected_contig = contig_name,
                 chunk_bp        = 40000000,
                 stride_bp       = 35000000,
-                buffer_bp       = 0,
         }
 
         call VariantUtils.SubsetVCF { input: vcf_gz = gvcf, vcf_tbi = tbi, locus = contig_name }
@@ -75,13 +74,10 @@ workflow LRStatisticallyPhaseVariants {
                     prefix = "out",
             }
 
-            call IntervalUtils.GenerateIntervals as GenerateRareVariantIntervals {
+            call IntervalUtils.BufferIntervals as GenerateRareVariantIntervals {
                 input:
-                    ref_dict        = ref_map['dict'],
-                    selected_contig = contig_name,
-                    chunk_bp        = 40000000,
-                    stride_bp       = 35000000,
-                    buffer_bp       = 17500000,
+                    unbuffered_intervals = GenerateCommonVariantIntervals.intervals,
+                    buffer_bp            = 17500000,
             }
 
             scatter (p in zip(GenerateRareVariantIntervals.intervals, GenerateCommonVariantIntervals.intervals)) {
