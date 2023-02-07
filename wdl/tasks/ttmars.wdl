@@ -83,8 +83,6 @@ task ttmars_t {
         bcftools index ~{svs_file}
     fi
 
-    echo "updated"
-
     mkdir output_files
     mkdir input_files
 
