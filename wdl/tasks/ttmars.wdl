@@ -82,9 +82,12 @@ task ttmars_t {
     then
         bcftools index ~{svs_file}
     fi
-    
+
+    echo "updated"
+
     mkdir output_files
     mkdir input_files
+
     mv ~{non_cov_reg_1_file} input_files/
     mv ~{non_cov_reg_2_file} input_files/
     mv ~{lo_pos_assem1_file} input_files/
