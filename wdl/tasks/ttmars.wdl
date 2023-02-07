@@ -84,18 +84,19 @@ task ttmars_t {
     fi
     
     mkdir output_files
-    
-    python /TT-Mars/ttmars.py output_files \
+    mkdir input_files
+    mv ~{non_cov_reg_1_file} input_files/
+    mv ~{non_cov_reg_2_file} input_files/
+    mv ~{lo_pos_assem1_file} input_files/
+    mv ~{lo_pos_assem2_file} input_files/
+    mv ~{lo_pos_assem1_0_file} input_files/
+    mv ~{lo_pos_assem2_0_file} input_files/
+
+    python /TT-Mars/ttmars.py output_files input_files \
            ~{centromere_file} \
-           ~{non_cov_reg_1_file} \
-           ~{non_cov_reg_2_file} \
            ~{svs_file} \
            $REF $HAP1 $HAP2 \
-           ~{lo_pos_assem1_file} \
-           ~{lo_pos_assem2_file} \
-           ~{lo_pos_assem1_0_file} \
-           ~{lo_pos_assem2_0_file} \
-           ~{trf_file} -s \
+           ~{trf_file} ~{nb_x_chr} \
            ~{arguments}
   >>>
 
