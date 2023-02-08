@@ -38,7 +38,7 @@ task PhaseCommonVariants {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
-        mem_gb:             4*num_cpus,
+        mem_gb:             6*num_cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
