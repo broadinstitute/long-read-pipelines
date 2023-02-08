@@ -72,7 +72,7 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             batch_size      = 50,
             # We need to override this because we're not actually sending the GVCF over (just a list)
             # ALSO, we're currently tarring the genomicsDB, so we need at least double the space here, plus some slop:
-            runtime_attr_override = object {disk_gb: 10 + (3 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB")))}
+            runtime_attr_override = object {disk_gb: 10 + (3 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB"))), preemptible_tries: 0}
     }
 
     # Joint call
@@ -85,6 +85,7 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             ref_dict        = ref_map['dict'],
             dbsnp_vcf       = ref_map["known_sites_vcf"],
             prefix          = prefix,
+            runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
     }
 
     # First make a sites-only VCF for recal (smaller file, easier to work with):
