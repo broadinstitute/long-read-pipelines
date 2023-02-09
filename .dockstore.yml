@@ -142,3 +142,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/BaktaAnnotateBatch.wdl
   testParameterFiles:
+- name: RunPanaroo
+  subclass: wdl
+  primaryDescriptorPath: /wdl/RunPanaroo.wdl
+  testParameterFiles:
