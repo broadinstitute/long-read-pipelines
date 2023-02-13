@@ -197,6 +197,7 @@ task MergeVCFs {
     input {
         Array[File] vcfs
         Array[File] tbis
+        File reference_fa
 
         String prefix
 
@@ -215,12 +216,14 @@ task MergeVCFs {
         rm -f list.txt; touch list.txt
         rm -f counts.txt; touch counts.txt
         for VCF_FILE in ~{sep=' ' vcfs}; do
-            bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}-pass.vcf
-            N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}-pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
-            N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}-pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}_pass.vcf
+            N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
-            bcftools view -h ${VCF_FILE}-pass.vcf > ${VCF_FILE}-distinct.vcf
-            bcftools view -H ${VCF_FILE}-pass.vcf | awk '{ \
+            python3 /preprocess_vcf.py ${VCF_FILE}_pass.vcf ~{reference_fa} > ${VCF_FILE}_pass_alts_fixed.vcf
+            rm -f ${VCF_FILE}_pass.vcf
+            bcftools view -h ${VCF_FILE}_pass_alts_fixed.vcf > ${VCF_FILE}_distinct.vcf
+            bcftools view -H ${VCF_FILE}_pass_alts_fixed.vcf | awk '{ \
                 tag="artificial"; \
                 if ($5=="<DEL>" || $5=="<DUP>" || $5=="<INV>" || $5=="<INS>") { \
                     svtype=substr($5,2,3); \
@@ -241,11 +244,11 @@ task MergeVCFs {
                 printf("%s",$1); \
                 for (i=2; i<=NF; i++) printf("\t%s",$i); \
                 printf("\n"); \
-            }' >> ${VCF_FILE}-distinct.vcf
-            rm -f ${VCF_FILE}-pass.vcf
-            bgzip --threads ${N_THREADS} ${VCF_FILE}-distinct.vcf
-            tabix ${VCF_FILE}-distinct.vcf.gz
-            echo ${VCF_FILE}-distinct.vcf.gz >> list.txt
+            }' >> ${VCF_FILE}_distinct.vcf
+            rm -f ${VCF_FILE}_pass_alts_fixed.vcf
+            bgzip --threads ${N_THREADS} ${VCF_FILE}_distinct.vcf
+            tabix ${VCF_FILE}_distinct.vcf.gz
+            echo ${VCF_FILE}_distinct.vcf.gz >> list.txt
         done
         bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf
         bcftools view -h merged.vcf > ~{prefix}.vcf
@@ -278,7 +281,7 @@ task MergeVCFs {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+        docker:             "fcunial/lr-genotyping"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

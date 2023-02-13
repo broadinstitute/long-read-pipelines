@@ -35,7 +35,7 @@ task Collapse {
         
         N_INS=$(zcat ~{prefix}.truvari.vcf.gz | grep "SVTYPE=INS" | awk '{ if ($7=="PASS") print $0; }' | wc -l)
         N_DEL=$(zcat ~{prefix}.truvari.vcf.gz | grep "SVTYPE=DEL" | awk '{ if ($7=="PASS") print $0; }' | wc -l)
-        echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
+        echo "~{prefix}.truvari.vcf.gz,${N_INS},${N_DEL}" >> counts.txt
     >>>
 
     output {
