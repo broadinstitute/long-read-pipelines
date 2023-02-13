@@ -20,6 +20,8 @@ workflow LRMergeSVVCFs {
 
         String prefix
         String caller
+        Int use_lrcaller
+        Int use_cutesv
         
         Int n_nodes
         Int n_cpus
@@ -67,8 +69,8 @@ workflow LRMergeSVVCFs {
         input:
             merged_vcf_gz = Collapse.collapsed_vcf,
             bam_addresses = bam_addresses,
-            use_lrcaller = 1,
-            use_cutesv = 0,
+            use_lrcaller = use_lrcaller,
+            use_cutesv = use_cutesv,
             reference_fa = ref_map['fasta'],
             reference_fai = ref_map['fai'],
             n_nodes = n_nodes,
