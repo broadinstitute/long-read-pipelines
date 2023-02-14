@@ -2463,11 +2463,11 @@ task CreateIGVSession{
     Array[String] input_files = flatten([input_bams, input_vcfs])
 
     command {
-        bash /usr/writeIGV.sh ~{reference_version} ~{sep=" " input_files} > "~{file_name}.xml"
+        bash /usr/writeIGV.sh ~{reference_short_name} ~{sep=" " input_files} > "~{output_name}.xml"
     }
 
     output {
-        File igv_session = "${file_name}.xml"
+        File igv_session = "${output_name}.xml"
     }
 
     #########################
