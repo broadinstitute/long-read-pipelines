@@ -175,10 +175,18 @@ task SortBam {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         samtools sort -@$num_core -o ~{prefix}.bam ~{input_bam}
         samtools index ~{prefix}.bam
+
+        kill $monitoring_pid
     >>>
 
     output {
@@ -1880,11 +1888,19 @@ task ComputeGenomeLength {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         samtools dict ~{fasta} | \
             grep '^@SQ' | \
             awk '{ print $3 }' | \
             sed 's/LN://' | \
             awk '{ sum += $1 } END { print sum }' > length.txt
+
+        kill $monitoring_pid
     >>>
 
     output {
@@ -2428,5 +2444,50 @@ task MapToTsv {
     runtime {
         disks: "local-disk 100 HDD"
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+task CreateIGVSession{
+    meta {
+        description: "Create an IGV session given a list of IGV compatible file paths.  Adapted / borrowed from https://github.com/broadinstitute/palantir-workflows/blob/mg_benchmark_compare/BenchmarkVCFs ."
+    }
+    input {
+        Array[String] input_bams
+        Array[String] input_vcfs
+        String reference_short_name
+        String output_name
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Array[String] input_files = flatten([input_bams, input_vcfs])
+
+    command {
+        bash /usr/writeIGV.sh ~{reference_version} ~{sep=" " input_files} > "~{file_name}.xml"
+    }
+
+    output {
+        File igv_session = "${file_name}.xml"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            50,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "quay.io/mduran/generate-igv-session_2:v1.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }

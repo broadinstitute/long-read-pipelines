@@ -395,6 +395,12 @@ task SamStatsMap {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
         samtools stats -@${np} ~{bam} > ~{basename}.sam_stats.txt
@@ -406,6 +412,8 @@ task SamStatsMap {
             sed 's/[\(\)]//g' | \
             sed 's/[[:space:]]*#.*//' \
             > map.txt
+
+        kill $monitoring_pid
     >>>
 
     output {

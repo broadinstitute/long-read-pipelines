@@ -15,12 +15,20 @@ task BamToFq {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         samtools sort -n ~{bam} | samtools bam2fq \
             -n \
             -s /dev/null \
             -1 ~{prefix}.end1.fq.gz \
             -2 ~{prefix}.end2.fq.gz \
             -0 ~{prefix}.unpaired.fq.gz
+
+        kill $monitoring_pid
     >>>
 
     output {
@@ -180,6 +188,12 @@ task BwaMem2 {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # Make sure we use all our proocesors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
         if [[ ${np} -gt 2 ]] ; then
@@ -205,6 +219,8 @@ task BwaMem2 {
             ~{fq_end1} \
             ~{fq_end2} | \
         samtools view -1 - > ~{prefix}.bam
+
+        kill $monitoring_pid
     >>>
 
     output {
@@ -256,6 +272,12 @@ task MergeBamAlignment {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # Make sure we use all our proocesors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
         let np=${np}-1
@@ -287,6 +309,8 @@ task MergeBamAlignment {
             ALIGNER_PROPER_PAIR_FLAGS=true \
             UNMAP_CONTAMINANT_READS=true \
             ADD_PG_TAG_TO_READS=false
+
+        kill $monitoring_pid
     >>>
 
     output {
@@ -341,6 +365,13 @@ task MarkDuplicates {
     # While query-grouped isn't actually query-sorted, it's good enough for MarkDuplicates with ASSUME_SORT_ORDER="queryname"
 
     command {
+
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         java -Dsamjdk.compression_level=~{compression_level} -Xms~{java_memory_size_mb}m -jar /usr/picard/picard.jar \
         MarkDuplicates \
         INPUT=~{input_bam} \
@@ -353,6 +384,8 @@ task MarkDuplicates {
         ASSUME_SORT_ORDER="queryname" \
         CLEAR_DT="false" \
         ADD_PG_TAG_TO_READS=false
+
+        kill $monitoring_pid
     }
 
     output {
@@ -416,6 +449,12 @@ task BaseRecalibrator {
     }
 
     command {
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
             -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCDetails \
             -Xloggc:gc_log.log -Xms5000m -Xmx5500m" \
@@ -425,6 +464,8 @@ task BaseRecalibrator {
             --use-original-qualities \
             -O ~{prefix}.txt \
             --known-sites ~{known_sites_vcf}
+
+        kill $monitoring_pid
     }
     #########################
     RuntimeAttr default_attr = object {
@@ -487,6 +528,13 @@ task ApplyBQSR {
                       + 2*ceil(size(recalibration_report, "GB"))
 
     command <<<
+
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         gatk --java-options "-XX:+PrintFlagsFinal -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps \
             -XX:+PrintGCDetails -Xloggc:gc_log.log \
             -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=~{compression_level} -Xms8192m -Xmx~{java_memory_size_mb}m" \
@@ -507,6 +555,8 @@ task ApplyBQSR {
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
         samtools index -@${np} ~{prefix}.bam
+
+        kill $monitoring_pid
     >>>
     #########################
     RuntimeAttr default_attr = object {
@@ -545,11 +595,18 @@ task RevertSam {
     Int compression_level = 2
     Int java_memory_size_mb = 30768
 
-    Int disk_size = 1 + 4*ceil(size(input_bam, "GB"))
+    Int disk_size = 1 + 20*ceil(size(input_bam, "GB"))
 
     # As documented on the GATK website:
     # https://gatk.broadinstitute.org/hc/en-us/articles/4403687183515--How-to-Generate-an-unmapped-BAM-from-FASTQ-or-aligned-BAM
     command {
+
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         java -Dsamjdk.compression_level=~{compression_level} -Xms~{java_memory_size_mb}m -jar /usr/picard/picard.jar \
         RevertSam \
         INPUT=~{input_bam} \
@@ -565,6 +622,8 @@ task RevertSam {
         RESTORE_ORIGINAL_QUALITIES=true \
         REMOVE_DUPLICATE_INFORMATION=true \
         REMOVE_ALIGNMENT_INFORMATION=true
+
+        kill $monitoring_pid
     }
 
     output {
@@ -611,10 +670,18 @@ task ComputeBamStats {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         python3 /python/compute_sr_stats.py \
             ~{qual_thresh_arg}~{default="" sep=" -q " qual_threshold} \
             ~{bam_file} \
         | tee ~{stats_file_name}
+
+        kill $monitoring_pid
     >>>
 
     output {
