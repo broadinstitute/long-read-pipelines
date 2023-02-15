@@ -263,7 +263,7 @@ workflow SRWholeGenome {
         Float aligned_frac_bases = SamStats.stats_map['bases_mapped']/SamStats.stats_map['total_length']
         Float aligned_est_fold_cov = SamStats.stats_map['bases_mapped']/ComputeGenomeLength.length
 
-        Float aligned_read_length = FastQC.stats_map['read_length']
+        Float aligned_read_length_mean = FastQC.stats_map['read_length']
 
         Float insert_size_average = SamStats.stats_map['insert_size_average']
         Float insert_size_standard_deviation = SamStats.stats_map['insert_size_standard_deviation']
