@@ -13,10 +13,14 @@ workflow Benchmark {
         File evalVcf
         String evalLabel
         File evalVcfIndex
+        File? evalBam
+        String? evalBamLabel
 
         File truthVcf
         String truthLabel
         File truthVcfIndex
+        File? truthBam
+        String? truthBamLabel
 
         File confidenceInterval
 
@@ -51,8 +55,12 @@ workflow Benchmark {
         evalVcf: {description: "vcfs to be evaluated"}
         evalLabel: {description: "label to identify vcf to be evaluated"}
         evalVcfIndex: {description: "vcf index for evalVcf"}
+        evalBam: {description: "bam file contaning the reads that generated the evalVcf"}
+        evalBamLabel: {description: "label to use for the evalBam in IGV"}
         truthVcf: {description: "truth vcf against which to evaluate"}
         truthLabel: {description: "label by which to indentify truth set"}
+        truthBam: {description: "bam file contaning the reads that generated the truthVcf"}
+        truthBamLabel: {description: "label to use for the truthBam in IGV"}
         confidenceInterval: {description: "confidence interval for truth set (can be bed or picard interval_list)"}
         ref_map_file: {description: "table indicating reference sequence and auxillary file locations" }
         hapMap: {description: "reference haplotype map for CrosscheckFingerprints"}
@@ -259,8 +267,8 @@ workflow Benchmark {
 
             call WriteXMLfile as VcfEvalWriteXMLfile {
                 input:
-                    input_files=select_all([StandardVcfEval.outVcf,ConfidenceConvertIntervals.bed,stratifier.bed]),
-                    input_names=select_all([outputPrefix+"_vcfeval","confidence_intervals",stratifier.label]),
+                    input_files=flatten(select_all([StandardVcfEval.outVcf,ConfidenceConvertIntervals.bed,stratifier.bed]), select_all([evalBam, truthBam])),
+                    input_names=flatten(select_all([outputPrefix+"_vcfeval","confidence_intervals",stratifier.label]), select_all([evalBamLabel, truthBamLabel])),
                     reference_version=ref_map["fasta"],
                     file_name=outputPrefix+"_vcfeval"
             }
@@ -344,8 +352,8 @@ workflow Benchmark {
 
             call WriteXMLfile as VcfEvalIndelWriteXMLfile {
                         input:
-                            input_files=select_all([EvalIndelLengthVcfEval.selectedTPCall,EvalIndelLengthVcfEval.selectedTPBase,EvalIndelLengthVcfEval.selectedFP,EvalIndelLengthVcfEval.selectedFN,vcfVcfEval,confidenceBed,stratIndelBed]),
-                            input_names=select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",stratIndelLabel]),
+                            input_files=flatten(select_all([EvalIndelLengthVcfEval.selectedTPCall,EvalIndelLengthVcfEval.selectedTPBase,EvalIndelLengthVcfEval.selectedFP,EvalIndelLengthVcfEval.selectedFN,vcfVcfEval,confidenceBed,stratIndelBed]), select_all([evalBam, truthBam])),
+                            input_names=flatten(select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",stratIndelLabel]), select_all([evalBamLabel, truthBamLabel])),
                             reference_version=ref_map["fasta"],
                             file_name=namePrefix+"_vcfeval"
             }
@@ -399,9 +407,9 @@ workflow Benchmark {
                     }
                     call WriteXMLfile as VcfEvalSelectorWriteXMLfile {
                                 input:
-                                    input_files=select_all([EvalSelectorVcfEval.selectedTPCall,EvalSelectorVcfEval.selectedTPBase,EvalSelectorVcfEval.selectedFP,EvalSelectorVcfEval.selectedFN,
-                                        evalStratSelectorCombo.annotatedVcfs.vcfVcfEval,evalStratSelectorCombo.annotatedVcfs.confidenceBed,evalStratSelectorCombo.annotatedVcfs.stratBed]),
-                                    input_names=select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",evalStratSelectorCombo.annotatedVcfs.stratLabel]),
+                                    input_files=flatten(select_all([EvalSelectorVcfEval.selectedTPCall,EvalSelectorVcfEval.selectedTPBase,EvalSelectorVcfEval.selectedFP,EvalSelectorVcfEval.selectedFN,
+                                        evalStratSelectorCombo.annotatedVcfs.vcfVcfEval,evalStratSelectorCombo.annotatedVcfs.confidenceBed,evalStratSelectorCombo.annotatedVcfs.stratBed]), select_all([evalBam, truthBam])),
+                                    input_names=flatten(select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",evalStratSelectorCombo.annotatedVcfs.stratLabel]), select_all([evalBamLabel, truthBamLabel])),
                                     reference_version=ref_map["fasta"],
                                     file_name=evalStratSelectorCombo.annotatedVcfs.namePrefix+"_"+evalStratSelectorCombo.variantSelector.label+"_vcfeval"
                     }
