@@ -21,7 +21,6 @@ workflow Benchmark {
         File confidenceInterval
 
         File ref_map_file
-        String referenceVersion
 
         String? analysisRegion
         File? hapMap
@@ -57,7 +56,6 @@ workflow Benchmark {
         confidenceInterval: {description: "confidence interval for truth set (can be bed or picard interval_list)"}
         ref_map_file: {description: "table indicating reference sequence and auxillary file locations" }
         hapMap: {description: "reference haplotype map for CrosscheckFingerprints"}
-        referenceVersion: {description: "reference version used, for igv xml session (must be either 'hg19' or 'hg38')"}
         stratIntervals: {description: "intervals for stratifiction (can be picard interval_list or bed format)"}
         stratLabels: {description: "labels by which to identify stratification intervals (must be same length as stratIntervals)"}
         jexlVariantSelectors: {description: "variant types to select over (defined by jexl fed to GATK SelectVariants)"}
@@ -263,7 +261,7 @@ workflow Benchmark {
                 input:
                     input_files=select_all([StandardVcfEval.outVcf,ConfidenceConvertIntervals.bed,stratifier.bed]),
                     input_names=select_all([outputPrefix+"_vcfeval","confidence_intervals",stratifier.label]),
-                    reference_version=referenceVersion,
+                    reference_version=ref_map["fasta"],
                     file_name=outputPrefix+"_vcfeval"
             }
 
@@ -348,7 +346,7 @@ workflow Benchmark {
                         input:
                             input_files=select_all([EvalIndelLengthVcfEval.selectedTPCall,EvalIndelLengthVcfEval.selectedTPBase,EvalIndelLengthVcfEval.selectedFP,EvalIndelLengthVcfEval.selectedFN,vcfVcfEval,confidenceBed,stratIndelBed]),
                             input_names=select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",stratIndelLabel]),
-                            reference_version=referenceVersion,
+                            reference_version=ref_map["fasta"],
                             file_name=namePrefix+"_vcfeval"
             }
 
@@ -404,7 +402,7 @@ workflow Benchmark {
                                     input_files=select_all([EvalSelectorVcfEval.selectedTPCall,EvalSelectorVcfEval.selectedTPBase,EvalSelectorVcfEval.selectedFP,EvalSelectorVcfEval.selectedFN,
                                         evalStratSelectorCombo.annotatedVcfs.vcfVcfEval,evalStratSelectorCombo.annotatedVcfs.confidenceBed,evalStratSelectorCombo.annotatedVcfs.stratBed]),
                                     input_names=select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",evalStratSelectorCombo.annotatedVcfs.stratLabel]),
-                                    reference_version=referenceVersion,
+                                    reference_version=ref_map["fasta"],
                                     file_name=evalStratSelectorCombo.annotatedVcfs.namePrefix+"_"+evalStratSelectorCombo.variantSelector.label+"_vcfeval"
                     }
 
@@ -536,19 +534,26 @@ task VcfEval {
     input{
         File truthVCF
         File truthVCFIndex
+
         File evalVCF
         File evalVCFIndex
+
         File confidenceBed
+
         File? stratBed
+
         File ref
         File refDict
         File refIndex
+
         String outputPre
         Boolean passingOnly
+
         String? vcfScoreField
         Int? preemptible
         String? memUser
         Int? threads
+
         Boolean requireMatchingGenotypes
         Boolean enableRefOverlap = false
     }
