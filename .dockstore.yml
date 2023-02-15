@@ -144,3 +144,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LRConvertBCF.wdl
   testParameterFiles:
+- name: BenchmarkVCFs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/BenchmarkVCFs.wdl
+  testParameterFiles:
