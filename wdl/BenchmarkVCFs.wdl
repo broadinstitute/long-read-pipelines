@@ -34,15 +34,15 @@ workflow Benchmark {
         Array[String]? jexlVariantSelectors
         Array[String]? variantSelectorLabels
 
-        Int? threadsVcfEval=2
-        Boolean doIndelLengthStratification=true
+        Int? threadsVcfEval = 2
+        Boolean doIndelLengthStratification = true
         Int? preemptible
         String gatkTag="4.0.11.0"
-        Boolean requireMatchingGenotypes=true
+        Boolean requireMatchingGenotypes = true
         File? gatkJarForAnnotation
         Array[String]? annotationNames
         Boolean enableRefOverlap = false
-        Boolean passingOnly=true
+        Boolean passingOnly = true
         String? vcfScoreField
         String? dummyInputForTerraCallCaching
     }
@@ -94,10 +94,10 @@ workflow Benchmark {
         }
     }
 
-    Array[File] actualStratIntervals=flatten([[""], stratIntervals])
-    Array[String] actualStratLabels=flatten([[""], stratLabels])
-    Array[String] actualSelectorLabels=select_first([variantSelectorLabels,[""]])
-    Array[String] actualSelectorJEXL=select_first([jexlVariantSelectors,[""]])
+    Array[File] actualStratIntervals = flatten([[""], stratIntervals])
+    Array[String] actualStratLabels = flatten([[""], stratLabels])
+    Array[String] actualSelectorLabels = select_first([variantSelectorLabels,[""]])
+    Array[String] actualSelectorJEXL = select_first([jexlVariantSelectors,[""]])
 
     #check that lengths of different arrays are compatible
     if (length(actualStratLabels)!= length(actualStratIntervals)) {
@@ -117,13 +117,13 @@ workflow Benchmark {
     if (defined(hapMap)) {
         call MatchEvalTruth as Match {
             input:
-                evalVcf=evalVcf,
-                truthVcf=truthVcf,
-                evalVcfIndex=evalVcfIndex,
-                truthVcfIndex=truthVcfIndex,
-                hapMap=select_first([hapMap]),
-                gatkTag=gatkTag,
-                preemptible=preemptible
+                evalVcf = evalVcf,
+                truthVcf = truthVcf,
+                evalVcfIndex = evalVcfIndex,
+                truthVcfIndex = truthVcfIndex,
+                hapMap = select_first([hapMap]),
+                gatkTag = gatkTag,
+                preemptible = preemptible
         }
     }
     Array[String] indelLabels=["deletion","insertion","indel_fine_m20","indel_fine_m19","indel_fine_m18","indel_fine_m17","indel_fine_m16","indel_fine_m15",
@@ -181,19 +181,19 @@ workflow Benchmark {
             if(stratIL!="") {
                 call ConvertIntervals as StratConvertIntervals {
                     input:
-                        inputIntervals=stratIL,
-                        refDict=ref_map["dict"],
-                        gatkTag=gatkTag,
-                        subset_interval=CreateIntervalList.interval_list,
-                        preemptible=preemptible,
-                        dummyInputForTerraCallCaching=dummyInputForTerraCallCaching
+                        inputIntervals = stratIL,
+                        refDict = ref_map["dict"],
+                        gatkTag = gatkTag,
+                        subset_interval = CreateIntervalList.interval_list,
+                        preemptible = preemptible,
+                        dummyInputForTerraCallCaching = dummyInputForTerraCallCaching
 
                 }
             }
         }
     }
-    Array[File] stratBeds=select_all(flatten(select_all([[""],StratConvertIntervals.bed])))
-    Array[File] stratILs=select_all(flatten(select_all([[""],StratConvertIntervals.intervalList])))
+    Array[File] stratBeds = select_all(flatten(select_all([[""],StratConvertIntervals.bed])))
+    Array[File] stratILs = select_all(flatten(select_all([[""],StratConvertIntervals.intervalList])))
 
     scatter (strat in zip(zip(stratILs,stratBeds),actualStratLabels)) {
         Stratifier stratifiers = object {intervalList : strat.left.left,
@@ -204,96 +204,94 @@ workflow Benchmark {
 
     call ConvertIntervals as ConfidenceConvertIntervals {
         input:
-            inputIntervals=confidenceInterval,
-            refDict=ref_map["dict"],
-            gatkTag=gatkTag,
-            preemptible=preemptible,
-            subset_interval=CreateIntervalList.interval_list,
-            dummyInputForTerraCallCaching=dummyInputForTerraCallCaching
+            inputIntervals = confidenceInterval,
+            refDict = ref_map["dict"],
+            gatkTag = gatkTag,
+            preemptible = preemptible,
+            subset_interval = CreateIntervalList.interval_list,
+            dummyInputForTerraCallCaching = dummyInputForTerraCallCaching
     }
 
     scatter (stratifier in stratifiers) {
 
         if (stratifier.label != "" && stratifier.intervalList != "") {
-            String stratLabel=select_first([stratifier.label,""])
-            File stratIL=select_first([stratifier.intervalList,""])
-            File stratBed=select_first([stratifier.bed,""])
-            String outputPreStrat=evalLabel+"_"+truthLabel+"_"+stratLabel
+            String stratLabel = select_first([stratifier.label,""])
+            File stratIL = select_first([stratifier.intervalList,""])
+            File stratBed = select_first([stratifier.bed,""])
+            String outputPreStrat = evalLabel+"_"+truthLabel+"_"+stratLabel
         }
-        String outputPrefix=select_first([outputPreStrat,evalLabel+"_"+truthLabel])
-
-
+        String outputPrefix = select_first([outputPreStrat,evalLabel+"_"+truthLabel])
 
         call CheckForVariants as CheckForVariantsEval {
             input:
-                vcf=evalVcf,
-                vcfIndex=evalVcfIndex,
-                confidenceIL=ConfidenceConvertIntervals.intervalList,
-                stratIL=stratIL,
-                gatkTag=gatkTag,
-                preemptible=preemptible
+                vcf = evalVcf,
+                vcfIndex = evalVcfIndex,
+                confidenceIL = ConfidenceConvertIntervals.intervalList,
+                stratIL = stratIL,
+                gatkTag = gatkTag,
+                preemptible = preemptible
         }
 
         call CheckForVariants as CheckForVariantsTruth {
             input:
-                vcf=truthVcf,
-                vcfIndex=truthVcfIndex,
-                confidenceIL=ConfidenceConvertIntervals.intervalList,
-                stratIL=stratIL,
-                gatkTag=gatkTag,
-                preemptible=preemptible
+                vcf = truthVcf,
+                vcfIndex = truthVcfIndex,
+                confidenceIL = ConfidenceConvertIntervals.intervalList,
+                stratIL = stratIL,
+                gatkTag = gatkTag,
+                preemptible = preemptible
         }
 
         if (CheckForVariantsTruth.variantsFound && CheckForVariantsEval.variantsFound) {
             call VcfEval as StandardVcfEval {
                 input:
-                    truthVCF=truthVcf,
-                    truthVCFIndex=truthVcfIndex,
-                    evalVCF=evalVcf,
-                    evalVCFIndex=evalVcfIndex,
-                    confidenceBed=ConfidenceConvertIntervals.bed,
-                    stratBed=stratBed,
-                    ref=ref_map["fasta"],
-                    refDict=ref_map["dict"],
-                    refIndex=ref_map["fai"],
-                    outputPre=outputPrefix+"_vcfeval",
-                    threads=threadsVcfEval,
-                    preemptible=preemptible,
-                    requireMatchingGenotypes=requireMatchingGenotypes,
-                    passingOnly=passingOnly,
-                    vcfScoreField=vcfScoreField,
-                    enableRefOverlap=enableRefOverlap
+                    truthVCF = truthVcf,
+                    truthVCFIndex = truthVcfIndex,
+                    evalVCF = evalVcf,
+                    evalVCFIndex = evalVcfIndex,
+                    confidenceBed = ConfidenceConvertIntervals.bed,
+                    stratBed = stratBed,
+                    ref = ref_map["fasta"],
+                    refDict = ref_map["dict"],
+                    refIndex = ref_map["fai"],
+                    outputPre = outputPrefix+"_vcfeval",
+                    threads = threadsVcfEval,
+                    preemptible = preemptible,
+                    requireMatchingGenotypes = requireMatchingGenotypes,
+                    passingOnly = passingOnly,
+                    vcfScoreField = vcfScoreField,
+                    enableRefOverlap = enableRefOverlap
             }
 
             call WriteXMLfile as VcfEvalWriteXMLfile {
                 input:
-                    input_files=flatten([select_all([StandardVcfEval.outVcf,ConfidenceConvertIntervals.bed,stratifier.bed]), select_all([evalBam, truthBam])]),
-                    input_names=flatten([select_all([outputPrefix+"_vcfeval","confidence_intervals",stratifier.label]), select_all([evalBamLabel, truthBamLabel])]),
-                    reference_version=ref_map["fasta"],
-                    file_name=outputPrefix+"_vcfeval"
+                    input_files = flatten([select_all([StandardVcfEval.outVcf,ConfidenceConvertIntervals.bed,stratifier.bed]), select_all([evalBam, truthBam])]),
+                    input_names = flatten([select_all([outputPrefix+"_vcfeval","confidence_intervals",stratifier.label]), select_all([evalBamLabel, truthBamLabel])]),
+                    reference_version = ref_map["fasta"],
+                    file_name = outputPrefix+"_vcfeval"
             }
 
             call CountUNKVcfEval {
                 input:
-                    vcf=StandardVcfEval.outVcf,
-                    vcfIndex=StandardVcfEval.outVcfIndex,
-                    gatkTag=gatkTag,
-                    preemptible=preemptible
+                    vcf = StandardVcfEval.outVcf,
+                    vcfIndex = StandardVcfEval.outVcfIndex,
+                    gatkTag = gatkTag,
+                    preemptible = preemptible
             }
         }
 
-        String areVariants=if(CheckForVariantsTruth.variantsFound && CheckForVariantsEval.variantsFound) then "yes" else "no"
+        String areVariants = if(CheckForVariantsTruth.variantsFound && CheckForVariantsEval.variantsFound) then "yes" else "no"
         call SummariseVcfEval {
             input:
-                evalLabel=evalLabel,
-                truthLabel=truthLabel,
-                stratLabel=stratLabel,
-                summaryFile=StandardVcfEval.outSummary,
-                igvSession=VcfEvalWriteXMLfile.igv_session,
-                areVariants=areVariants,
-                unkSNP=CountUNKVcfEval.UNK_SNP,
-                unkINDEL=CountUNKVcfEval.UNK_INDEL,
-                preemptible=preemptible
+                evalLabel = evalLabel,
+                truthLabel = truthLabel,
+                stratLabel = stratLabel,
+                summaryFile = StandardVcfEval.outSummary,
+                igvSession = VcfEvalWriteXMLfile.igv_session,
+                areVariants = areVariants,
+                unkSNP = CountUNKVcfEval.UNK_SNP,
+                unkINDEL = CountUNKVcfEval.UNK_INDEL,
+                preemptible = preemptible
         }
     }
 
@@ -317,23 +315,23 @@ workflow Benchmark {
         }
 
     scatter (evalStratIndelCombo in evalStratIndelCombos) {
-        String jexl=evalStratIndelCombo.variantSelector.jexl
-        File? vcfVcfEval=evalStratIndelCombo.annotatedVcfs.vcfVcfEval
-        File? vcfVcfEvalIndex=evalStratIndelCombo.annotatedVcfs.vcfVcfEvalIndex
-        String evalIndelLabel=evalStratIndelCombo.annotatedVcfs.evalLabel
-        String truthIndelLabel=evalStratIndelCombo.annotatedVcfs.truthLabel
-        String? stratIndelLabel=evalStratIndelCombo.annotatedVcfs.stratLabel
-        String indelLabel=evalStratIndelCombo.variantSelector.label
-        File? stratIndelBed=evalStratIndelCombo.annotatedVcfs.stratBed
-        File? confidenceBed=evalStratIndelCombo.annotatedVcfs.confidenceBed
-        String namePrefix=evalStratIndelCombo.annotatedVcfs.namePrefix+"_"+indelLabel
+        String jexl = evalStratIndelCombo.variantSelector.jexl
+        File? vcfVcfEval = evalStratIndelCombo.annotatedVcfs.vcfVcfEval
+        File? vcfVcfEvalIndex = evalStratIndelCombo.annotatedVcfs.vcfVcfEvalIndex
+        String evalIndelLabel = evalStratIndelCombo.annotatedVcfs.evalLabel
+        String truthIndelLabel = evalStratIndelCombo.annotatedVcfs.truthLabel
+        String? stratIndelLabel = evalStratIndelCombo.annotatedVcfs.stratLabel
+        String indelLabel = evalStratIndelCombo.variantSelector.label
+        File? stratIndelBed = evalStratIndelCombo.annotatedVcfs.stratBed
+        File? confidenceBed = evalStratIndelCombo.annotatedVcfs.confidenceBed
+        String namePrefix = evalStratIndelCombo.annotatedVcfs.namePrefix+"_"+indelLabel
 
         if (defined(vcfVcfEval) && defined(vcfVcfEvalIndex) && doIndelLengthStratification) {
             call EvalForVariantSelection as EvalIndelLengthVcfEval {
                 input:
-                    vcf=vcfVcfEval,
-                    vcfIndex=vcfVcfEvalIndex,
-                    jexl=jexl,
+                    vcf = vcfVcfEval,
+                    vcfIndex = vcfVcfEvalIndex,
+                    jexl = jexl,
                     engine="VcfEval",
                     selectTPCall="CALL == 'TP'",
                     selectTPBase="BASE == 'TP'",
@@ -341,36 +339,36 @@ workflow Benchmark {
                     selectFP="(CALL == 'FP' || CALL == 'FP_CA')",
                     sampleCall="CALLS",
                     sampleBase="BASELINE",
-                    gatkTag=gatkTag,
-                    preemptible=preemptible,
-                    gatkJarForAnnotation=gatkJarForAnnotation,
-                    annotationNames=annotationNames,
-                    reference=ref_map["fasta"],
-                    refDict=ref_map["dict"],
-                    refIndex=ref_map["fai"]
+                    gatkTag = gatkTag,
+                    preemptible = preemptible,
+                    gatkJarForAnnotation = gatkJarForAnnotation,
+                    annotationNames = annotationNames,
+                    reference = ref_map["fasta"],
+                    refDict = ref_map["dict"],
+                    refIndex = ref_map["fai"]
             }
 
             call WriteXMLfile as VcfEvalIndelWriteXMLfile {
                         input:
-                            input_files=flatten([select_all([EvalIndelLengthVcfEval.selectedTPCall,EvalIndelLengthVcfEval.selectedTPBase,EvalIndelLengthVcfEval.selectedFP,EvalIndelLengthVcfEval.selectedFN,vcfVcfEval,confidenceBed,stratIndelBed]), select_all([evalBam, truthBam])]),
-                            input_names=flatten([select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",stratIndelLabel]), select_all([evalBamLabel, truthBamLabel])]),
-                            reference_version=ref_map["fasta"],
-                            file_name=namePrefix+"_vcfeval"
+                            input_files = flatten([select_all([EvalIndelLengthVcfEval.selectedTPCall,EvalIndelLengthVcfEval.selectedTPBase,EvalIndelLengthVcfEval.selectedFP,EvalIndelLengthVcfEval.selectedFN,vcfVcfEval,confidenceBed,stratIndelBed]), select_all([evalBam, truthBam])]),
+                            input_names = flatten([select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",stratIndelLabel]), select_all([evalBamLabel, truthBamLabel])]),
+                            reference_version = ref_map["fasta"],
+                            file_name = namePrefix+"_vcfeval"
             }
 
             call SummariseForIndelSelection as VcfEvalSummariseForIndelSelection {
                         input:
-                            evalLabel=evalIndelLabel,
-                            truthLabel=truthIndelLabel,
-                            stratLabel=stratIndelLabel,
-                            indelLabel=indelLabel,
+                            evalLabel = evalIndelLabel,
+                            truthLabel = truthIndelLabel,
+                            stratLabel = stratIndelLabel,
+                            indelLabel = indelLabel,
                             engine="VcfEval",
-                            igvSession=VcfEvalIndelWriteXMLfile.igv_session,
-                            TP_CALL=EvalIndelLengthVcfEval.TP_CALL,
-                            TP_BASE=EvalIndelLengthVcfEval.TP_BASE,
-                            FP=EvalIndelLengthVcfEval.FP,
-                            FN=EvalIndelLengthVcfEval.FN,
-                            preemptible=preemptible
+                            igvSession = VcfEvalIndelWriteXMLfile.igv_session,
+                            TP_CALL = EvalIndelLengthVcfEval.TP_CALL,
+                            TP_BASE = EvalIndelLengthVcfEval.TP_BASE,
+                            FP = EvalIndelLengthVcfEval.FP,
+                            FN = EvalIndelLengthVcfEval.FN,
+                            preemptible = preemptible
             }
         }
     }
@@ -387,9 +385,9 @@ workflow Benchmark {
                 if (defined(evalStratSelectorCombo.annotatedVcfs.vcfVcfEval) && defined(evalStratSelectorCombo.annotatedVcfs.vcfVcfEvalIndex)) {
                     call EvalForVariantSelection as EvalSelectorVcfEval {
                         input:
-                            vcf=evalStratSelectorCombo.annotatedVcfs.vcfVcfEval,
-                            vcfIndex=evalStratSelectorCombo.annotatedVcfs.vcfVcfEvalIndex,
-                            jexl=evalStratSelectorCombo.variantSelector.jexl,
+                            vcf = evalStratSelectorCombo.annotatedVcfs.vcfVcfEval,
+                            vcfIndex = evalStratSelectorCombo.annotatedVcfs.vcfVcfEvalIndex,
+                            jexl = evalStratSelectorCombo.variantSelector.jexl,
                             engine="VcfEval",
                             selectTPCall="CALL == 'TP'",
                             selectTPBase="BASE == 'TP'",
@@ -397,36 +395,36 @@ workflow Benchmark {
                             selectFP="(CALL == 'FP' || CALL == 'FP_CA')",
                             sampleCall="CALLS",
                             sampleBase="BASELINE",
-                            gatkTag=gatkTag,
-                            preemptible=preemptible,
-                            gatkJarForAnnotation=gatkJarForAnnotation,
-                            annotationNames=annotationNames,
-                            reference=ref_map["fasta"],
-                            refDict=ref_map["dict"],
-                            refIndex=ref_map["fai"]
+                            gatkTag = gatkTag,
+                            preemptible = preemptible,
+                            gatkJarForAnnotation = gatkJarForAnnotation,
+                            annotationNames = annotationNames,
+                            reference = ref_map["fasta"],
+                            refDict = ref_map["dict"],
+                            refIndex = ref_map["fai"]
                     }
                     call WriteXMLfile as VcfEvalSelectorWriteXMLfile {
                                 input:
-                                    input_files=flatten([select_all([EvalSelectorVcfEval.selectedTPCall,EvalSelectorVcfEval.selectedTPBase,EvalSelectorVcfEval.selectedFP,EvalSelectorVcfEval.selectedFN,
+                                    input_files = flatten([select_all([EvalSelectorVcfEval.selectedTPCall,EvalSelectorVcfEval.selectedTPBase,EvalSelectorVcfEval.selectedFP,EvalSelectorVcfEval.selectedFN,
                                         evalStratSelectorCombo.annotatedVcfs.vcfVcfEval,evalStratSelectorCombo.annotatedVcfs.confidenceBed,evalStratSelectorCombo.annotatedVcfs.stratBed]), select_all([evalBam, truthBam])]),
-                                    input_names=flatten([select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",evalStratSelectorCombo.annotatedVcfs.stratLabel]), select_all([evalBamLabel, truthBamLabel])]),
-                                    reference_version=ref_map["fasta"],
-                                    file_name=evalStratSelectorCombo.annotatedVcfs.namePrefix+"_"+evalStratSelectorCombo.variantSelector.label+"_vcfeval"
+                                    input_names = flatten([select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",evalStratSelectorCombo.annotatedVcfs.stratLabel]), select_all([evalBamLabel, truthBamLabel])]),
+                                    reference_version = ref_map["fasta"],
+                                    file_name = evalStratSelectorCombo.annotatedVcfs.namePrefix+"_"+evalStratSelectorCombo.variantSelector.label+"_vcfeval"
                     }
 
                     call SummariseForVariantSelection as VcfEvalSummariseForVariantSelection {
                                 input:
-                                    evalLabel=evalStratSelectorCombo.annotatedVcfs.evalLabel,
-                                    truthLabel=evalStratSelectorCombo.annotatedVcfs.truthLabel,
-                                    stratLabel=evalStratSelectorCombo.annotatedVcfs.stratLabel,
-                                    variantLabel=evalStratSelectorCombo.variantSelector.label,
+                                    evalLabel = evalStratSelectorCombo.annotatedVcfs.evalLabel,
+                                    truthLabel = evalStratSelectorCombo.annotatedVcfs.truthLabel,
+                                    stratLabel = evalStratSelectorCombo.annotatedVcfs.stratLabel,
+                                    variantLabel = evalStratSelectorCombo.variantSelector.label,
                                     engine="VcfEval",
-                                    igvSession=VcfEvalSelectorWriteXMLfile.igv_session,
-                                    TP_CALL=EvalSelectorVcfEval.TP_CALL,
-                                    TP_BASE=EvalSelectorVcfEval.TP_BASE,
-                                    FP=EvalSelectorVcfEval.FP,
-                                    FN=EvalSelectorVcfEval.FN,
-                                    preemptible=preemptible
+                                    igvSession = VcfEvalSelectorWriteXMLfile.igv_session,
+                                    TP_CALL = EvalSelectorVcfEval.TP_CALL,
+                                    TP_BASE = EvalSelectorVcfEval.TP_BASE,
+                                    FP = EvalSelectorVcfEval.FP,
+                                    FN = EvalSelectorVcfEval.FN,
+                                    preemptible = preemptible
                     }
                 }
     }
@@ -436,22 +434,22 @@ workflow Benchmark {
 
     call CombineSummaries {
         input:
-            summaries=summaries,
-            preemptible=preemptible
+            summaries = summaries,
+            preemptible = preemptible
     }
 
     ################################################################################
 
     output {
-        File summary=CombineSummaries.summaryOut
-        Float snpPrecision=SummariseVcfEval.snpPrecision[0]
-        Float indelPrecision=SummariseVcfEval.indelPrecision[0]
-        Float snpRecall=SummariseVcfEval.snpRecall[0]
-        Float indelRecall=SummariseVcfEval.indelRecall[0]
-        Float snpF1Score=SummariseVcfEval.snpF1Score[0]
-        Float indelF1Score=SummariseVcfEval.indelF1Score[0]
-        Array[File?] snpRocs=StandardVcfEval.outSnpRoc
-        Array[File?] nonSnpRocs=StandardVcfEval.outNonSnpRoc
+        File summary = CombineSummaries.summaryOut
+        Float snpPrecision = SummariseVcfEval.snpPrecision[0]
+        Float indelPrecision = SummariseVcfEval.indelPrecision[0]
+        Float snpRecall = SummariseVcfEval.snpRecall[0]
+        Float indelRecall = SummariseVcfEval.indelRecall[0]
+        Float snpF1Score = SummariseVcfEval.snpF1Score[0]
+        Float indelF1Score = SummariseVcfEval.indelF1Score[0]
+        Array[File?] snpRocs = StandardVcfEval.outSnpRoc
+        Array[File?] nonSnpRocs = StandardVcfEval.outNonSnpRoc
     }
 }
 
@@ -511,9 +509,9 @@ task CheckForVariants {
         Int? memoryMaybe
         String gatkTag
         }
-        Int memoryDefault=16
-        Int memoryJava=select_first([memoryMaybe,memoryDefault])
-        Int memoryRam=memoryJava+2
+        Int memoryDefault = 16
+        Int memoryJava = select_first([memoryMaybe,memoryDefault])
+        Int memoryRam = memoryJava+2
 
         Int disk_size = 10 + ceil(size(vcf, "GB") + size(vcfIndex, "GB") + size(confidenceIL, "GB") + size(stratIL, "GB"))
 
@@ -533,7 +531,7 @@ task CheckForVariants {
     }
 
     output {
-        Boolean variantsFound=read_boolean("outBool.txt")
+        Boolean variantsFound = read_boolean("outBool.txt")
     }
 }
 
@@ -566,9 +564,9 @@ task VcfEval {
         Boolean enableRefOverlap = false
     }
     String memDefault="16 GB"
-    String mem=select_first([memUser,memDefault])
+    String mem = select_first([memUser,memDefault])
 
-    Int cpu=select_first([threads,1])
+    Int cpu = select_first([threads,1])
     Int disk_size = 50 + ceil(size(truthVCF, "GB") + size(truthVCFIndex, "GB") + 2.2 * size(evalVCF, "GB") + size(evalVCFIndex, "GB") + size(confidenceBed, "GB") + size(stratBed, "GB") + size(ref, "GB") + size(refDict, "GB") + size(refIndex, "GB"))
 
     command <<<
@@ -596,32 +594,32 @@ task VcfEval {
     import gzip
     import sys
 
-    indel_sensitivity=0
-    indel_precision=0
-    indel_fscore=0
-    indel_TP_Base=0
-    indel_TP_Eval=0
-    indel_FP=0
-    indel_FN=0
+    indel_sensitivity = 0
+    indel_precision = 0
+    indel_fscore = 0
+    indel_TP_Base = 0
+    indel_TP_Eval = 0
+    indel_FP = 0
+    indel_FN = 0
 
-    snp_sensitivity=0
-    snp_precision=0
-    snp_fscore=0
-    snp_TP_Base=0
-    snp_TP_Eval=0
-    snp_FP=0
-    snp_FN=0
+    snp_sensitivity = 0
+    snp_precision = 0
+    snp_fscore = 0
+    snp_TP_Base = 0
+    snp_TP_Eval = 0
+    snp_FP = 0
+    snp_FN = 0
 
     with gzip.open(sys.argv[1],"rt") as f_snp:
         for line in f_snp:
             try:
-                snp_sensitivity=float(line.split()[6])
-                snp_precision=float(line.split()[5])
-                snp_fscore=float(line.split()[7])
-                snp_TP_Eval=float(line.split()[3])
-                snp_TP_Base=float(line.split()[1])
-                snp_FP=float(line.split()[2])
-                snp_FN=float(line.split()[4])
+                snp_sensitivity = float(line.split()[6])
+                snp_precision = float(line.split()[5])
+                snp_fscore = float(line.split()[7])
+                snp_TP_Eval = float(line.split()[3])
+                snp_TP_Base = float(line.split()[1])
+                snp_FP = float(line.split()[2])
+                snp_FN = float(line.split()[4])
             except ValueError:
                 continue
             except IndexError:
@@ -630,25 +628,25 @@ task VcfEval {
     with gzip.open(sys.argv[2],"rt") as f_indel:
         for line in f_indel:
             try:
-                indel_sensitivity=float(line.split()[6])
-                indel_precision=float(line.split()[5])
-                indel_fscore=float(line.split()[7])
-                indel_TP_Eval=float(line.split()[3])
-                indel_TP_Base=float(line.split()[1])
-                indel_FP=float(line.split()[2])
-                indel_FN=float(line.split()[4])
+                indel_sensitivity = float(line.split()[6])
+                indel_precision = float(line.split()[5])
+                indel_fscore = float(line.split()[7])
+                indel_TP_Eval = float(line.split()[3])
+                indel_TP_Base = float(line.split()[1])
+                indel_FP = float(line.split()[2])
+                indel_FN = float(line.split()[4])
             except ValueError:
                 continue
             except IndexError:
                 continue
         f_indel.close()
 
-    str_indel_sensitivity=str(indel_sensitivity)
-    str_indel_precision=str(indel_precision)
-    str_indel_fscore=str(indel_fscore)
-    str_snp_sensitivity=str(snp_sensitivity)
-    str_snp_precision=str(snp_precision)
-    str_snp_fscore=str(snp_fscore)
+    str_indel_sensitivity = str(indel_sensitivity)
+    str_indel_precision = str(indel_precision)
+    str_indel_fscore = str(indel_fscore)
+    str_snp_sensitivity = str(snp_sensitivity)
+    str_snp_precision = str(snp_precision)
+    str_snp_fscore = str(snp_fscore)
 
 
     if indel_TP_Eval+indel_FP==0:
@@ -684,7 +682,7 @@ task VcfEval {
     }
 
     output {
-        Array[File] outs=glob("${outputPre}_*")
+        Array[File] outs = glob("${outputPre}_*")
         File outSummary="${outputPre}_summary.csv"
         File outVcf="${outputPre}_output.vcf.gz"
         File outVcfIndex="${outputPre}_output.vcf.gz.tbi"
@@ -713,9 +711,9 @@ task EvalHappy {
         String happyTag
     }
     String memDefault="16 GB"
-    String mem=select_first([memUser,memDefault])
+    String mem = select_first([memUser,memDefault])
 
-    Int cpu=select_first([threads,1])
+    Int cpu = select_first([threads,1])
     Int disk_size = 10 + ceil(size(truthVCF, "GB") + size(truthVCFIndex, "GB") + 2.2 * size(evalVCF, "GB") + size(confidenceBed, "GB") + size(stratBed, "GB") + size(ref, "GB") + size(refDict, "GB") + size(refIndex, "GB"))
 
 
@@ -732,7 +730,7 @@ task EvalHappy {
     }
 
     output {
-        Array[File] outs=glob("${outputPre}*")
+        Array[File] outs = glob("${outputPre}*")
         File outSummary="${outputPre}.summary.csv"
         File outVcf="${outputPre}.vcf.gz"
         File outVcfIndex="${outputPre}.vcf.gz.tbi"
@@ -756,9 +754,9 @@ task EvalGATKGC {
         Int? memoryMaybe
         String gatkTag
     }
-    Int memoryDefault=16
-    Int memoryJava=select_first([memoryMaybe,memoryDefault])
-    Int memoryRam=memoryJava+2
+    Int memoryDefault = 16
+    Int memoryJava = select_first([memoryMaybe,memoryDefault])
+    Int memoryRam = memoryJava+2
     Int disk_size = 10 + ceil(size(truthVCF, "GB") + size(truthVCFIndex, "GB") + 2.2 * size(evalVCF, "GB") + size(intervalList, "GB") + size(stratIL, "GB") + size(evalVCFIndex, "GB") + size(ref, "GB") + size(refDict, "GB") + size(refIndex, "GB"))
 
 
@@ -775,7 +773,7 @@ task EvalGATKGC {
     }
 
     output {
-        Array[File] out=glob("${outputPre}*")
+        Array[File] out = glob("${outputPre}*")
         File outSummary="${outputPre}.genotype_concordance_summary_metrics"
         File outCounts="${outputPre}.genotype_concordance_contingency_metrics"
         File outVcf="${outputPre}.genotype_concordance.vcf.gz"
@@ -795,9 +793,9 @@ task ConvertIntervals {
         String? dummyInputForTerraCallCaching
     }
 
-    Int memoryDefault=16
-    Int memoryJava=select_first([memoryMaybe,memoryDefault])
-    Int memoryRam=memoryJava+2
+    Int memoryDefault = 16
+    Int memoryJava = select_first([memoryMaybe,memoryDefault])
+    Int memoryRam = memoryJava+2
     Int disk_size = 10 + ceil(3 * size(inputIntervals, "GB") + size(refDict, "GB"))
 
     command <<<
@@ -861,9 +859,9 @@ task FixVcfHeader {
         Int? memoryMaybe
         String gatkTag
     }
-    Int memoryDefault=16
-    Int memoryJava=select_first([memoryMaybe,memoryDefault])
-    Int memoryRam=memoryJava+2
+    Int memoryDefault = 16
+    Int memoryJava = select_first([memoryMaybe,memoryDefault])
+    Int memoryRam = memoryJava+2
     Int disk_size = 10 + ceil(2.2 * size(vcf, "GB") + 2.2 * size(vcfIndex, "GB") + size(ref, "GB") + size(refDict, "GB") + size(refIndex, "GB"))
 
     command <<<
@@ -897,9 +895,9 @@ task CountUNKVcfEval {
         Int? memoryMaybe
         String gatkTag
     }
-    Int memoryDefault=16
-    Int memoryJava=select_first([memoryMaybe,memoryDefault])
-    Int memoryRam=memoryJava+2
+    Int memoryDefault = 16
+    Int memoryJava = select_first([memoryMaybe,memoryDefault])
+    Int memoryRam = memoryJava+2
     Int disk_size = 10 + ceil(size(vcf, "GB") + size(vcfIndex, "GB"))
 
     command <<<
@@ -922,8 +920,8 @@ task CountUNKVcfEval {
                 memory: memoryRam + " GB"
     }
     output {
-        Int UNK_SNP=read_int("unk_snp.txt")
-        Int UNK_INDEL=read_int("unk_indel.txt")
+        Int UNK_SNP = read_int("unk_snp.txt")
+        Int UNK_INDEL = read_int("unk_indel.txt")
     }
 }
 
@@ -939,9 +937,9 @@ task CountUNKGC {
             File? stratIL
             String gatkTag
         }
-        Int memoryDefault=16
-        Int memoryJava=select_first([memoryMaybe,memoryDefault])
-        Int memoryRam=memoryJava+2
+        Int memoryDefault = 16
+        Int memoryJava = select_first([memoryMaybe,memoryDefault])
+        Int memoryRam = memoryJava+2
         Int disk_size = 10 + ceil(size(vcfAnnotated, "GB") + size(vcfIndexAnnotated, "GB") + 2 * size(vcfOrig, "GB") + size(vcfIndexOrig, "GB") + size(stratIL, "GB"))
 
         command <<<
@@ -967,8 +965,8 @@ task CountUNKGC {
         }
 
         output {
-            Int UNK_SNP=read_int("unk_snp.txt")
-            Int UNK_INDEL=read_int("unk_indel.txt")
+            Int UNK_SNP = read_int("unk_snp.txt")
+            Int UNK_INDEL = read_int("unk_indel.txt")
         }
 }
 
@@ -996,14 +994,14 @@ task EvalForVariantSelection {
         File refIndex
     }
 
-    Int memoryDefault=16
-    Int memoryJava=select_first([memoryMaybe,memoryDefault])
-    Int memoryRam=memoryJava+2
+    Int memoryDefault = 16
+    Int memoryJava = select_first([memoryMaybe,memoryDefault])
+    Int memoryRam = memoryJava+2
 
-    String selectionTPCall=jexl + " && " + selectTPCall
-    String selectionTPBase=jexl + " && " + selectTPBase
-    String selectionFN=jexl + " && " + selectFN
-    String selectionFP=jexl + " && " + selectFP
+    String selectionTPCall = jexl + " && " + selectTPCall
+    String selectionTPBase = jexl + " && " + selectTPBase
+    String selectionFN = jexl + " && " + selectFN
+    String selectionFP = jexl + " && " + selectFP
 
     Int disk_size = 10 + ceil(4.2 * size(vcf, "GB") + 2.2 * size(vcfIndex, "GB") + size(reference, "GB"))
 
@@ -1013,7 +1011,7 @@ task EvalForVariantSelection {
         VCF=~{vcf}
         if [[ ! -z "~{gatkJarForAnnotation}" ]]; then
             java -jar ~{gatkJarForAnnotation} VariantAnnotator -V ~{vcf} -O annotated.vcf.gz ~{true="-A" false="" length(annotationNames)>0} ~{sep=" -A " annotationNames} -R ~{reference}
-            VCF=annotated.vcf.gz
+            VCF = annotated.vcf.gz
         else
             touch annotated.vcf.gz
         fi
@@ -1043,10 +1041,10 @@ task EvalForVariantSelection {
     }
 
     output {
-        Int TP_CALL=read_int("tp_call.txt")
-        Int TP_BASE=read_int("tp_base.txt")
-        Int FP=read_int("fp.txt")
-        Int FN=read_int("fn.txt")
+        Int TP_CALL = read_int("tp_call.txt")
+        Int TP_BASE = read_int("tp_base.txt")
+        Int FP = read_int("fp.txt")
+        Int FN = read_int("fn.txt")
         File selectedTPCall="selected.TP_CALL.vcf.gz"
         File selectedTPBase="selected.TP_BASE.vcf.gz"
         File selectedFP="selected.FP.vcf.gz"
@@ -1088,12 +1086,12 @@ task SummariseForIndelSelection {
                     return(NA)
                   }
                   pos_start<-regexpr(target,name)
-                  sub=substring(name,pos_start+attr(pos_start,"match.length")+1,nchar(name))
-                  split_sub=strsplit(sub,"_")
-                  val=if(grepl("^m",split_sub[[1]][[1]])) -as.double(gsub("m","",split_sub[[1]][[1]])) else as.double(split_sub[[1]][[1]])
+                  sub = substring(name,pos_start+attr(pos_start,"match.length")+1,nchar(name))
+                  split_sub = strsplit(sub,"_")
+                  val = if(grepl("^m",split_sub[[1]][[1]])) -as.double(gsub("m","",split_sub[[1]][[1]])) else as.double(split_sub[[1]][[1]])
                 }
 
-        args <-commandArgs(trailingOnly=TRUE)
+        args <-commandArgs(trailingOnly = TRUE)
         indel_options <-c("deletion","insertion","indel_fine","indel_coarse")
         indel_type <- mapply(grepl,indel_options,args[7])
         indel_type <- indel_options[indel_type[indel_options]]
@@ -1108,7 +1106,7 @@ task SummariseForIndelSelection {
                             "Recall"=as.numeric(args[2])/(as.numeric(args[2])+as.numeric(args[3])),"Precision"=as.numeric(args[1])/(as.numeric(args[1])+as.numeric(args[4])),"TP_Base"=as.numeric(args[2]),"TP_Eval"=as.numeric(args[1]),
                             "FP"=as.numeric(args[4]),"FN"=as.numeric(args[3]),"IGV_Session"=args[length(args)],"Summary_Type"=indel_type)
         table$F1_Score <- 2*table$Precision*table$Recall/(table$Precision+table$Recall)
-        write.csv(table,paste(args[8],".",indel_type,".summary.csv",sep=""),row.names=FALSE)
+        write.csv(table,paste(args[8],".",indel_type,".summary.csv",sep=""),row.names = FALSE)
         EOF
     >>>
 
@@ -1119,7 +1117,7 @@ task SummariseForIndelSelection {
         }
 
     output {
-        File summaryOut=glob("*.summary.csv")[0]
+        File summaryOut = glob("*.summary.csv")[0]
     }
 
 }
@@ -1145,7 +1143,7 @@ task SummariseForVariantSelection {
         set -xeuo pipefail
 
         Rscript -<<"EOF" ~{TP_CALL} ~{TP_BASE} ~{FN} ~{FP} ~{evalLabel} ~{truthLabel} ~{variantLabel} ~{engine} ~{default="" stratLabel} ~{igvSession}
-        args <-commandArgs(trailingOnly=TRUE)
+        args <-commandArgs(trailingOnly = TRUE)
         if (length(args)<10) {
           stratifier <- NA
         } else {
@@ -1156,7 +1154,7 @@ task SummariseForVariantSelection {
                             "Recall"=as.numeric(args[2])/(as.numeric(args[2])+as.numeric(args[3])),"Precision"=as.numeric(args[1])/(as.numeric(args[1])+as.numeric(args[4])),"TP_Base"=as.numeric(args[2]),"TP_Eval"=as.numeric(args[1]),
                             "FP"=as.numeric(args[4]),"FN"=as.numeric(args[3]),"IGV_Session"=args[length(args)],"Summary_Type"="summary","Type"=args[7])
         table$F1_Score <- 2*table$Precision*table$Recall/(table$Precision+table$Recall)
-        write.csv(table,paste(args[8],".",args[7],".summary.csv",sep=""),row.names=FALSE)
+        write.csv(table,paste(args[8],".",args[7],".summary.csv",sep=""),row.names = FALSE)
         EOF
     >>>
 
@@ -1167,7 +1165,7 @@ task SummariseForVariantSelection {
         }
 
     output {
-        File summaryOut=glob("*.summary.csv")[0]
+        File summaryOut = glob("*.summary.csv")[0]
     }
 
 }
@@ -1238,7 +1236,7 @@ task SummariseVcfEval {
         table_vcfeval$Truth_Set <- args[2]
         table_vcfeval$Summary_Type <- "summary"
         table_vcfeval$Comparison_Engine <-"VcfEval"
-        write.csv(table_vcfeval,"vcfeval.summary.csv",row.names=FALSE)
+        write.csv(table_vcfeval,"vcfeval.summary.csv",row.names = FALSE)
         EOF
     >>>
 
@@ -1250,12 +1248,12 @@ task SummariseVcfEval {
 
     output{
         File summaryOut="vcfeval.summary.csv"
-        Float snpPrecision=read_float("snpPrecision.txt")
-        Float indelPrecision=read_float("indelPrecision.txt")
-        Float snpRecall=read_float("snpRecall.txt")
-        Float indelRecall=read_float("indelRecall.txt")
-        Float snpF1Score=read_float("snpF1Score.txt")
-        Float indelF1Score=read_float("indelF1Score.txt")
+        Float snpPrecision = read_float("snpPrecision.txt")
+        Float indelPrecision = read_float("indelPrecision.txt")
+        Float snpRecall = read_float("snpRecall.txt")
+        Float indelRecall = read_float("indelRecall.txt")
+        Float snpF1Score = read_float("snpF1Score.txt")
+        Float indelF1Score = read_float("indelF1Score.txt")
     }
 }
 
@@ -1282,7 +1280,7 @@ task SummariseHappy {
           colnames(table_happy)[11]<-"Precision"
           colnames(table_happy)[13]<-"F1_Score"
           colnames(table_happy)[4]<-"TP_Base"
-          table_happy$TP_Eval=table_happy$TP_Base
+          table_happy$TP_Eval = table_happy$TP_Base
           colnames(table_happy)[5]<-"FN"
           colnames(table_happy)[7]<-"FP"
           colnames(table_happy)[8]<-"UNK"
@@ -1323,7 +1321,7 @@ task SummariseHappy {
           table_add <- data.frame("Type"="INDEL","Recall"=NA,"Precision"=NA,"F1_Score"=NA,"TP_Eval"=0,"TP_Base"=0,"FP"=0,"FN"=0,"UNK"=0,"Name"=args[1],"Truth_Set"=args[2],"Comparison_Engine"="Happy","Stratifier"=table_happy$Stratifier[1],"IGV_Session"=NA,"Summary_Type"="summary")
           table_happy <- rbind(table_happy,table_add)
         }
-        write.csv(table_happy,"happy.summary.csv",row.names=FALSE)
+        write.csv(table_happy,"happy.summary.csv",row.names = FALSE)
         EOF
     >>>
 
@@ -1361,8 +1359,8 @@ task SummariseGATKGC {
         Rscript -<<"EOF" ~{evalLabel} ~{truthLabel} ~{default="" summaryFile} ~{default="" summaryCounts} ~{default="" stratLabel} ~{default="" igvSession} ~{default="" unkSNP} ~{default="" unkINDEL} ~{areVariants}
         args <- commandArgs(trailingOnly = TRUE)
         if (args[length(args)]=="yes") {
-            table_GC <- read.table(args[3],skip=6, header=TRUE,sep="\t",na.strings="?")
-            table_counts_GC <- read.table(args[4],skip=6, header=TRUE,sep="\t",na.strings="?")
+            table_GC <- read.table(args[3],skip = 6, header = TRUE,sep="\t",na.strings="?")
+            table_counts_GC <- read.table(args[4],skip = 6, header = TRUE,sep="\t",na.strings="?")
             table_GC$F1_Score <- 2*(table_GC$VAR_PPV*table_GC$VAR_SENSITIVITY)/(table_GC$VAR_PPV+table_GC$VAR_SENSITIVITY)
             table_GC$TP_Eval <- table_counts_GC$TP_COUNT
             table_GC$TP_Base <- table_counts_GC$TP_COUNT
@@ -1405,7 +1403,7 @@ task SummariseGATKGC {
         table_GC$Comparison_Engine <-"GATK_GC"
         table_GC$Summary_Type <- "summary"
         table_GC <- table_GC[,c("Type","Recall","Precision","Name","Truth_Set","Comparison_Engine","F1_Score","TP_Eval","TP_Base","FP","FN","UNK","Stratifier","IGV_Session","Summary_Type")]
-        write.csv(table_GC,"gatkgc.summary.csv",row.names=FALSE)
+        write.csv(table_GC,"gatkgc.summary.csv",row.names = FALSE)
         EOF
     >>>
 
@@ -1436,9 +1434,9 @@ task CombineSummaries {
         library(readr)
         library(dplyr)
         library(purrr)
-        summary_files <- read_csv("~{write_lines(summaries)}", col_names=FALSE)
+        summary_files <- read_csv("~{write_lines(summaries)}", col_names = FALSE)
         merged<- as.list(summary_files$X1) %>% map(read_csv) %>% reduce(bind_rows)
-        write.csv(merged,"summary.csv",row.names=FALSE)
+        write.csv(merged,"summary.csv",row.names = FALSE)
         EOF
     >>>
 
@@ -1465,9 +1463,9 @@ task MatchEvalTruth {
         Int? memoryMaybe
         String gatkTag
     }
-    Int memoryDefault=16
-    Int memoryJava=select_first([memoryMaybe,memoryDefault])
-    Int memoryRam=memoryJava+2
+    Int memoryDefault = 16
+    Int memoryJava = select_first([memoryMaybe,memoryDefault])
+    Int memoryRam = memoryJava+2
     Int disk_size = 10 + ceil(size(hapMap, "GB") + size(evalVcf, "GB") + size(evalVcfIndex, "GB") + size(truthVcf, "GB") + size(truthVcfIndex, "GB"))
 
     command <<<
@@ -1492,11 +1490,19 @@ task WriteXMLfile {
         String file_name
 
         Array[String]? input_names=""
-        Array[String] input_names_prefix = if defined(input_names) then prefix('-n ', select_first([input_names])) else []
     }
-    command {
-        bash /usr/writeIGV.sh ~{reference_version} ~{sep=" " input_files} ~{sep=" " input_names_prefix}  > "~{file_name}.xml"
-    }
+
+    Array[String] input_names_prefix = if defined(input_names) then prefix('-n ', select_first([input_names])) else []
+
+    command <<<
+        set -euxo pipefail
+
+        # because of some nonsense above, we need to play some bash tricks here to make sure that
+        # the inputs are labeled correctly:
+        echo '~{sep=" " input_names_prefix}' | sed -e 's#-n[ \t]*-n#-n#g' -e 's#-n[ \t]*$##' > labels.txt
+
+        bash /usr/writeIGV.sh ~{reference_version} ~{sep=" " input_files} $(cat labels.txt) > "~{file_name}.xml"
+    >>>
     runtime {
         docker: "quay.io/mduran/generate-igv-session_2:v1.0"
     }
