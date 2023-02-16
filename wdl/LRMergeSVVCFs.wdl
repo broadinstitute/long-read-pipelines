@@ -96,14 +96,14 @@ workflow LRMergeSVVCFs {
             bam_size_gb = bam_size_gb
     }
 
-    #call SVTK.Standardize {
-    #    input:
-    #        vcf = LRRegenotype.vcf_gz,
-    #        tbi = LRRegenotype.tbi,
-    #        ref_fai = ref_map['fai'],
-    #        prefix = prefix,
-    #        caller = caller
-    #}
+    call SVTK.Standardize {
+        input:
+            vcf = LRRegenotype.vcf_gz,
+            tbi = LRRegenotype.tbi,
+            ref_fai = ref_map['fai'],
+            prefix = prefix,
+            caller = caller
+    }
 
     # Finalize
     call FF.FinalizeToFile as FinalizeStandardizedVCF { input: outdir = outdir, file = Standardize.standardized_vcf }
