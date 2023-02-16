@@ -189,15 +189,27 @@ task MergeAndSortVCFs {
     }
 }
 
-task MergeVCFs {
-    meta {
-        description: "Merge VCFs using bcftools ensuring that: (1) only PASS calls are kept; (2) ./. genotypes are transformed to 0/0; (3) SVs with the same CHR,POS,REF,ALT, but different SVLEN, END or STRAND, are not collapsed (collapsing such SVs would be the default behavior of bcftools when ALTs are symbolic); (4) no multi-allelic entries result from merging."
-    }
 
+# Merges VCFs using one of the following methods:
+# - $bcftools merge$ followed by $truvari collapse$; in $bcftools merge$, ./.
+#   genotypes are transformed to 0/0, and no multi-allelic entries are created;
+# - jasmine
+# - svimmer
+#
+# Every input VCF is reformatted to ensure that: (1) only PASS calls are kept;
+# SVs with the same CHR,POS,REF,ALT, but different SVLEN, END or STRAND, are
+# not collapsed (collapsing such SVs would be the default behavior of $bcftools
+# merge$ when ALTs are symbolic).
+# 
+task MergeVCFs {
     input {
         Array[File] vcfs
         Array[File] tbis
         File reference_fa
+        Int use_truvari
+        String truvari_keep
+        Int use_jasmine
+        Int use_svimmer
 
         String prefix
 
@@ -213,6 +225,7 @@ task MergeVCFs {
         N_CORES_PER_SOCKET="$(lscpu | grep '^Core(s) per socket:' | awk '{print $NF}')"
         N_THREADS=$(( ${N_SOCKETS} * ${N_CORES_PER_SOCKET} ))
         
+        # Reformatting per-sample VCFs
         rm -f list.txt; touch list.txt
         rm -f counts.txt; touch counts.txt
         for VCF_FILE in ~{sep=' ' vcfs}; do
@@ -250,19 +263,47 @@ task MergeVCFs {
             tabix ${VCF_FILE}_distinct.vcf.gz
             echo ${VCF_FILE}_distinct.vcf.gz >> list.txt
         done
-        bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf
-        bcftools view -h merged.vcf > ~{prefix}.vcf
-        bcftools view -H merged.vcf | awk '{ \
-            tag="artificial"; \
-            if (substr($5,6,length(tag))==tag) $5=substr($5,1,4) ">"; \
-            printf("%s",$1); \
-            for (i=2; i<=NF; i++) printf("\t%s",$i); \
-            printf("\n"); \
-        }' >> ~{prefix}.vcf
-        rm -f merged.vcf
-        N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
-        N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
-        echo "bcftools_merge,${N_INS},${N_DEL}" >> counts.txt
+        
+        # Clustering
+        if [ ~{use_truvari} -eq 1 ]; then
+            ${TIME_COMMAND} bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf
+            bcftools view -h merged.vcf > mergedPrime.vcf
+            bcftools view -H merged.vcf | awk '{ \
+                tag="artificial"; \
+                if (substr($5,6,length(tag))==tag) $5=substr($5,1,4) ">"; \
+                printf("%s",$1); \
+                for (i=2; i<=NF; i++) printf("\t%s",$i); \
+                printf("\n"); \
+            }' >> mergedPrime.vcf
+            rm -f merged.vcf
+            N_INS=$(grep "SVTYPE=INS" mergedPrime.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" mergedPrime.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "bcftools_merge,${N_INS},${N_DEL}" >> counts.txt
+            ${TIME_COMMAND} truvari collapse --threads ${N_THREADS} --input mergedPrime.vcf --output ~{prefix}.vcf --collapsed-output collapsed.vcf --reference ~{reference_fa} --keep ~{truvari_keep} --passonly
+        elif [ ~{use_jasmine} -eq 1 ]; then
+            touch list_decompressed.txt
+            while read VCF_GZ_FILE; do
+                gunzip ${VCF_GZ_FILE}
+                echo ${VCF_GZ_FILE%.gz} >> list_decompressed.txt
+            done < list.txt
+            MIN_SEQ_ID="0.7"  # Like truvari's default
+            source activate jasmine
+            ${TIME_COMMAND} jasmine threads=${N_THREADS} min_seq_id=${MIN_SEQ_ID} --output_genotypes genome_file=~{reference_fa} file_list=list_decompressed.txt out_file=~{prefix}.vcf
+            conda deactivate
+        elif [ ~{use_svimmer} -eq 1 ]; then
+            # Remark: SVIMMER uses an absolute size difference instead of a
+            # relative one.
+            # Remark: according to its paper, "svimmer ignores the samples'
+            # genotype information to reduce compute time and memory, as only
+            # SV site information is needed for GraphTyper’s graph
+            # construction." Otherwise they say it's similar to SURVIVOR.
+            touch list_decompressed.txt
+            while read VCF_GZ_FILE; do
+                gunzip ${VCF_GZ_FILE}
+                echo ${VCF_GZ_FILE%.gz} >> list_decompressed.txt
+            done < list.txt
+            ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list_decompressed.txt chr21 chr22
+        fi
         bgzip --threads ${N_THREADS} ~{prefix}.vcf
         tabix ~{prefix}.vcf.gz
     >>>

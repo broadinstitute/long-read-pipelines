@@ -20,6 +20,12 @@ workflow LRMergeSVVCFs {
 
         String prefix
         String caller
+        
+        Int use_truvari
+        String truvari_keep
+        Int use_jasmine
+        Int use_svimmer
+        
         Int use_lrcaller
         Int lrcaller_genotyping_model
         Int use_cutesv
@@ -47,7 +53,17 @@ workflow LRMergeSVVCFs {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call VariantUtils.MergeVCFs { input: vcfs = vcfs, tbis = tbis, reference_fa = ref_map['fasta'], prefix = prefix }
+    call VariantUtils.MergeVCFs { 
+        input: 
+            vcfs = vcfs, 
+            tbis = tbis, 
+            reference_fa = ref_map['fasta'], 
+            use_truvari = use_truvari,
+            truvari_keep = truvari_keep,
+            use_jasmine = use_jasmine,
+            use_svimmer = use_svimmer,
+            prefix = prefix 
+    }
 
     #call VariantUtils.GetContigNames { input: vcf = MergeVCFs.merged_vcf }
 
@@ -55,20 +71,20 @@ workflow LRMergeSVVCFs {
         
     #call VariantUtils.SubsetVCF { input: vcf_gz = MergeVCFs.merged_vcf, vcf_tbi = MergeVCFs.merged_tbi, locus = contig_name }
     
-    call Truvari.Collapse {
-        input:
-            vcf = MergeVCFs.merged_vcf,
-            tbi = MergeVCFs.merged_tbi,
-            ref_fasta = ref_map['fasta'],
-            prefix = prefix
-    }
+    #call Truvari.Collapse {
+    #    input:
+    #        vcf = MergeVCFs.merged_vcf,
+    #        tbi = MergeVCFs.merged_tbi,
+    #        ref_fasta = ref_map['fasta'],
+    #        prefix = prefix
+    #}
     #}
     
     #call VariantUtils.ConcatVCFs { input: vcfs = Collapse.collapsed_vcf, tbis = Collapse.collapsed_tbi, prefix = prefix }
 
     call LRRegenotype.LRRegenotype {
         input:
-            merged_vcf_gz = Collapse.collapsed_vcf,
+            merged_vcf_gz = MergeVCFs.merged_vcf,
             bam_addresses = bam_addresses,
             use_lrcaller = use_lrcaller,
             lrcaller_genotyping_model = lrcaller_genotyping_model,
@@ -80,14 +96,14 @@ workflow LRMergeSVVCFs {
             bam_size_gb = bam_size_gb
     }
 
-    call SVTK.Standardize {
-        input:
-            vcf = LRRegenotype.vcf_gz,
-            tbi = LRRegenotype.tbi,
-            ref_fai = ref_map['fai'],
-            prefix = prefix,
-            caller = caller
-    }
+    #call SVTK.Standardize {
+    #    input:
+    #        vcf = LRRegenotype.vcf_gz,
+    #        tbi = LRRegenotype.tbi,
+    #        ref_fai = ref_map['fai'],
+    #        prefix = prefix,
+    #        caller = caller
+    #}
 
     # Finalize
     call FF.FinalizeToFile as FinalizeStandardizedVCF { input: outdir = outdir, file = Standardize.standardized_vcf }
