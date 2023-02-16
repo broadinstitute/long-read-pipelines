@@ -12,7 +12,7 @@ workflow CompareVcfBenchmarks {
         Array[String]? stratifiers
 
         Boolean include_counts = true
-        Boolean generate_gc_plots = true
+        Boolean generate_gc_plots = false
 
         Array[String]? order_of_samples
         Array[String]? order_of_configurations
