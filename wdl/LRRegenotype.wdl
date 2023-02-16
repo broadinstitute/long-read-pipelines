@@ -200,7 +200,12 @@ task RegenotypeChunk {
             tail -n +$(( ${N_LINES} + 1 )) genotypes.vcf | cut -f 9 >> format.txt
             INDIVIDUAL=$(basename -s .bam ${BAM_FILE})
             echo ${INDIVIDUAL} > new_genotypes.txt
-            tail -n +$(( ${N_LINES} + 1 )) genotypes.vcf | cut -f $(( 9 + ~{lrcaller_genotyping_model})) >> new_genotypes.txt
+            if [ ~{use_lrcaller} -eq 1 ]; then
+                GENOTYPE_COLUMN=$(( 9 + ~{lrcaller_genotyping_model}))
+            else
+                GENOTYPE_COLUMN="10"
+            fi
+            tail -n +$(( ${N_LINES} + 1 )) genotypes.vcf | cut -f ${GENOTYPE_COLUMN} >> new_genotypes.txt
             rm -f genotypes.vcf
             if [ $i -eq 0 ]; then
                 mv new_genotypes.txt genotypes.txt
