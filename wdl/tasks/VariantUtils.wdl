@@ -280,6 +280,9 @@ task MergeVCFs {
             N_DEL=$(grep "SVTYPE=DEL" mergedPrime.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "bcftools_merge,${N_INS},${N_DEL}" >> counts.txt
             ${TIME_COMMAND} truvari collapse --threads ${N_THREADS} --input mergedPrime.vcf --output ~{prefix}.vcf --collapsed-output collapsed.vcf --reference ~{reference_fa} --keep ~{truvari_keep} --passonly
+            N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "truvari_collapse,${N_INS},${N_DEL}" >> counts.txt
         elif [ ~{use_jasmine} -eq 1 ]; then
             touch list_decompressed.txt
             while read VCF_GZ_FILE; do
@@ -290,6 +293,9 @@ task MergeVCFs {
             source activate jasmine
             ${TIME_COMMAND} jasmine threads=${N_THREADS} min_seq_id=${MIN_SEQ_ID} --output_genotypes genome_file=~{reference_fa} file_list=list_decompressed.txt out_file=~{prefix}.vcf
             conda deactivate
+            N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "jasmine,${N_INS},${N_DEL}" >> counts.txt
         elif [ ~{use_svimmer} -eq 1 ]; then
             # Remark: SVIMMER uses an absolute size difference instead of a
             # relative one.
@@ -303,6 +309,9 @@ task MergeVCFs {
                 echo ${VCF_GZ_FILE%.gz} >> list_decompressed.txt
             done < list.txt
             ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list_decompressed.txt chr21 chr22
+            N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "svimmer,${N_INS},${N_DEL}" >> counts.txt
         fi
         bgzip --threads ${N_THREADS} ~{prefix}.vcf
         tabix ~{prefix}.vcf.gz
@@ -322,7 +331,7 @@ task MergeVCFs {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "fcunial/lr-genotyping"
+        docker:             "fcunial/sv-merging"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

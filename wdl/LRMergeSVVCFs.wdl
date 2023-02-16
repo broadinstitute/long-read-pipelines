@@ -117,6 +117,5 @@ workflow LRMergeSVVCFs {
         File standardized_vcf = FinalizeStandardizedVCF.gcs_path
         File standardized_tbi = FinalizeStandardizedTBI.gcs_path
         File counts_MergeVCFs = MergeVCFs.counts
-        File counts_TruvariCollapse = Collapse.counts
     }
 }
