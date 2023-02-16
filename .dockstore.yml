@@ -148,3 +148,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/BenchmarkVCFs.wdl
   testParameterFiles:
+- name: CompareVcfBenchmarks
+  subclass: wdl
+  primaryDescriptorPath: /wdl/CompareVcfBenchmarks.wdl
+  testParameterFiles:
