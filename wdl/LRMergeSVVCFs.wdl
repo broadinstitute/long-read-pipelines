@@ -21,6 +21,7 @@ workflow LRMergeSVVCFs {
         String prefix
         String caller
         Int use_lrcaller
+        Int lrcaller_genotyping_model
         Int use_cutesv
         
         Int n_nodes
@@ -70,6 +71,7 @@ workflow LRMergeSVVCFs {
             merged_vcf_gz = Collapse.collapsed_vcf,
             bam_addresses = bam_addresses,
             use_lrcaller = use_lrcaller,
+            lrcaller_genotyping_model = lrcaller_genotyping_model,
             use_cutesv = use_cutesv,
             reference_fa = ref_map['fasta'],
             reference_fai = ref_map['fai'],
