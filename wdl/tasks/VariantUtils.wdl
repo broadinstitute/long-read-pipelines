@@ -206,6 +206,7 @@ task MergeVCFs {
         Array[File] vcfs
         Array[File] tbis
         File reference_fa
+        Int use_bcftoolsmerge_only
         Int use_truvari
         String truvari_keep
         Int use_jasmine
@@ -266,7 +267,21 @@ task MergeVCFs {
         done
         
         # Clustering
-        if [ ~{use_truvari} -eq 1 ]; then
+        if [ ~{use_bcftoolsmerge_only} -eq 1 ]; then
+            ${TIME_COMMAND} bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf
+            bcftools view -h merged.vcf > ~{prefix}.vcf
+            bcftools view -H merged.vcf | awk '{ \
+                tag="artificial"; \
+                if (substr($5,6,length(tag))==tag) $5=substr($5,1,4) ">"; \
+                printf("%s",$1); \
+                for (i=2; i<=NF; i++) printf("\t%s",$i); \
+                printf("\n"); \
+            }' >> ~{prefix}.vcf
+            rm -f merged.vcf
+            N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "bcftools_merge,${N_INS},${N_DEL}" >> counts.txt
+        elif [ ~{use_truvari} -eq 1 ]; then
             ${TIME_COMMAND} bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf
             bcftools view -h merged.vcf > mergedPrime.vcf
             bcftools view -H merged.vcf | awk '{ \

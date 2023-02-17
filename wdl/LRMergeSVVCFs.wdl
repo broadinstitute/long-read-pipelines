@@ -21,6 +21,7 @@ workflow LRMergeSVVCFs {
         String prefix
         String caller
         
+        Int use_bcftoolsmerge_only
         Int use_truvari
         String truvari_keep
         Int use_jasmine
@@ -58,6 +59,7 @@ workflow LRMergeSVVCFs {
             vcfs = vcfs, 
             tbis = tbis, 
             reference_fa = ref_map['fasta'], 
+            use_bcftoolsmerge_only = use_bcftoolsmerge_only,
             use_truvari = use_truvari,
             truvari_keep = truvari_keep,
             use_jasmine = use_jasmine,
