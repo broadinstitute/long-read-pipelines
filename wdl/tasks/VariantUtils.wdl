@@ -237,30 +237,34 @@ task MergeVCFs {
             echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
             python3 /sv-merging/preprocess_vcf.py ${VCF_FILE}_pass.vcf ~{reference_fa} > ${VCF_FILE}_pass_alts_fixed.vcf
             rm -f ${VCF_FILE}_pass.vcf
-            bcftools view -h ${VCF_FILE}_pass_alts_fixed.vcf > ${VCF_FILE}_distinct.vcf
-            bcftools view -H ${VCF_FILE}_pass_alts_fixed.vcf | awk '{ \
-                tag="artificial"; \
-                if ($5=="<DEL>" || $5=="<DUP>" || $5=="<INV>" || $5=="<INS>") { \
-                    svtype=substr($5,2,3); \
-                    end=""; \
-                    svlen=""; \
-                    strand=""; \
-                    n=split($8,A,";"); \
-                    for (i=1; i<=n; i++) { \
-                        if (substr(A[i],1,4)=="END=") end=substr(A[i],5); \
-                        else if (substr(A[i],1,6)=="SVLEN=") { \
-                            if (substr(A[i],7,1)=="-") svlen=substr(A[i],8); \
-                            else svlen=substr(A[i],7); \
+            if [ ~{use_bcftoolsmerge_only} -eq 1 -o ~{use_truvari} -eq 1 ]; then
+                bcftools view -h ${VCF_FILE}_pass_alts_fixed.vcf > ${VCF_FILE}_distinct.vcf
+                bcftools view -H ${VCF_FILE}_pass_alts_fixed.vcf | awk '{ \
+                    tag="artificial"; \
+                    if ($5=="<DEL>" || $5=="<DUP>" || $5=="<INV>" || $5=="<INS>") { \
+                        svtype=substr($5,2,3); \
+                        end=""; \
+                        svlen=""; \
+                        strand=""; \
+                        n=split($8,A,";"); \
+                        for (i=1; i<=n; i++) { \
+                            if (substr(A[i],1,4)=="END=") end=substr(A[i],5); \
+                            else if (substr(A[i],1,6)=="SVLEN=") { \
+                                if (substr(A[i],7,1)=="-") svlen=substr(A[i],8); \
+                                else svlen=substr(A[i],7); \
+                            } \
+                            else if (substr(A[i],1,7)=="STRAND=") strand=substr(A[i],8); \
                         } \
-                        else if (substr(A[i],1,7)=="STRAND=") strand=substr(A[i],8); \
-                    } \
-                    $5="<" svtype ":" tag ":" (length(end)==0?"?":end) ":" (length(svlen)==0?"?":svlen) ":" (length(strand)==0?"?":strand) ">" \
-                }; \
-                printf("%s",$1); \
-                for (i=2; i<=NF; i++) printf("\t%s",$i); \
-                printf("\n"); \
-            }' >> ${VCF_FILE}_distinct.vcf
-            rm -f ${VCF_FILE}_pass_alts_fixed.vcf
+                        $5="<" svtype ":" tag ":" (length(end)==0?"?":end) ":" (length(svlen)==0?"?":svlen) ":" (length(strand)==0?"?":strand) ">" \
+                    }; \
+                    printf("%s",$1); \
+                    for (i=2; i<=NF; i++) printf("\t%s",$i); \
+                    printf("\n"); \
+                }' >> ${VCF_FILE}_distinct.vcf
+                rm -f ${VCF_FILE}_pass_alts_fixed.vcf
+            else
+                mv ${VCF_FILE}_pass_alts_fixed.vcf ${VCF_FILE}_distinct.vcf
+            fi
             bgzip --threads ${N_THREADS} ${VCF_FILE}_distinct.vcf
             tabix ${VCF_FILE}_distinct.vcf.gz
             echo ${VCF_FILE}_distinct.vcf.gz >> list.txt
