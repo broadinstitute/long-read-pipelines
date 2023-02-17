@@ -233,7 +233,7 @@ task MergeVCFs {
             N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
-            python3 /preprocess_vcf.py ${VCF_FILE}_pass.vcf ~{reference_fa} > ${VCF_FILE}_pass_alts_fixed.vcf
+            python3 /sv-merging/preprocess_vcf.py ${VCF_FILE}_pass.vcf ~{reference_fa} > ${VCF_FILE}_pass_alts_fixed.vcf
             rm -f ${VCF_FILE}_pass.vcf
             bcftools view -h ${VCF_FILE}_pass_alts_fixed.vcf > ${VCF_FILE}_distinct.vcf
             bcftools view -H ${VCF_FILE}_pass_alts_fixed.vcf | awk '{ \
