@@ -224,6 +224,7 @@ task MergeVCFs {
         N_SOCKETS="$(lscpu | grep '^Socket(s):' | awk '{print $NF}')"
         N_CORES_PER_SOCKET="$(lscpu | grep '^Core(s) per socket:' | awk '{print $NF}')"
         N_THREADS=$(( ${N_SOCKETS} * ${N_CORES_PER_SOCKET} ))
+        TIME_COMMAND="/usr/bin/time --verbose"
         
         # Reformatting per-sample VCFs
         rm -f list.txt; touch list.txt
