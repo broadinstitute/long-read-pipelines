@@ -320,7 +320,7 @@ task MergeVCFs {
             touch list_decompressed.txt
             while read VCF_GZ_FILE; do
                 gunzip ${VCF_GZ_FILE}
-                tabix ${VCF_GZ_FILE}
+                tabix ${VCF_GZ_FILE%.gz}
                 echo ${VCF_GZ_FILE%.gz} >> list_decompressed.txt
             done < list.txt
             # Remark: SVIMMER uses an absolute size difference instead of a
