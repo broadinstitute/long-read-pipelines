@@ -334,7 +334,7 @@ task MergeVCFs {
             N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "svimmer,${N_INS},${N_DEL}" >> counts.txt
         fi
-        bcftools sort --threads ${N_THREADS} --output-type z --output ~{prefix}.vcf.gz ~{prefix}.vcf
+        bcftools sort --output-type z --output ~{prefix}.vcf.gz ~{prefix}.vcf
         tabix ~{prefix}.vcf.gz
     >>>
 
