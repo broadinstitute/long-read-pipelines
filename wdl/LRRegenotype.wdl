@@ -76,7 +76,7 @@ task GetVcfToGenotype {
         merged_vcf_gz: "The output of the merging step, whose genotypes must be refined."
     }
     
-    Int disk_size_gb = 2*ceil(size(merged_vcf_gz, "GB")) + ceil(size(reference_fa, "GB"))
+    Int disk_size_gb = 20*ceil(size(merged_vcf_gz, "GB")) + ceil(size(reference_fa, "GB"))
     Int ram_size_gb = 2*ceil(size(reference_fa, "GB"))
 
     command <<<

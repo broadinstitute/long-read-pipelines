@@ -360,6 +360,7 @@ task MergeVCFs {
     }
 }
 
+
 task ConcatVCFs {
     meta {
         description: "Concatenate VCFs using BCFTools"
