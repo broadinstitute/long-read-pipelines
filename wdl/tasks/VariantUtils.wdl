@@ -320,6 +320,7 @@ task MergeVCFs {
             touch list_decompressed.txt
             while read VCF_GZ_FILE; do
                 gunzip ${VCF_GZ_FILE}
+                tabix ${VCF_GZ_FILE}
                 echo ${VCF_GZ_FILE%.gz} >> list_decompressed.txt
             done < list.txt
             # Remark: SVIMMER uses an absolute size difference instead of a
@@ -333,7 +334,7 @@ task MergeVCFs {
             N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "svimmer,${N_INS},${N_DEL}" >> counts.txt
         fi
-        bgzip --threads ${N_THREADS} ~{prefix}.vcf
+        bcftools sort --threads ${N_THREADS} --output-type z --output ~{prefix}.vcf.gz ~{prefix}.vcf
         tabix ~{prefix}.vcf.gz
     >>>
 
@@ -345,7 +346,7 @@ task MergeVCFs {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
+        cpu_cores:          32,
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
