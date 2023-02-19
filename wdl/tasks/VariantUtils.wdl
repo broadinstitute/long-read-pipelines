@@ -317,19 +317,13 @@ task MergeVCFs {
             N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "jasmine,${N_INS},${N_DEL}" >> counts.txt
         elif [ ~{use_svimmer} -eq 1 ]; then
-            touch list_decompressed.txt
-            while read VCF_GZ_FILE; do
-                gunzip ${VCF_GZ_FILE}
-                tabix ${VCF_GZ_FILE%.gz}
-                echo ${VCF_GZ_FILE%.gz} >> list_decompressed.txt
-            done < list.txt
             # Remark: SVIMMER uses an absolute size difference instead of a
             # relative one.
             # Remark: according to its paper, "svimmer ignores the samples'
             # genotype information to reduce compute time and memory, as only
             # SV site information is needed for GraphTyper’s graph
             # construction." Otherwise they say it's similar to SURVIVOR.
-            ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list_decompressed.txt chr21 chr22
+            ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list.txt chr21 chr22
             N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "svimmer,${N_INS},${N_DEL}" >> counts.txt
