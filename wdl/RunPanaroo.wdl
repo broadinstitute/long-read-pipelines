@@ -4,12 +4,12 @@ import "tasks/bacteria/Panaroo.wdl" as Panaroo
 
 workflow RunPanaroo {
     input {
-        Array[File] input_gffs
+        File input_manifest
     }
 
     call Panaroo.Panaroo {
         input:
-            input_gffs = input_gffs
+            input_manifest = input_manifest
     }
 
     output {

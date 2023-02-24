@@ -4,7 +4,7 @@ import "../Structs.wdl"
 
 task Panaroo {
     input {
-        Array[File] input_gffs
+        File input_manifest
         String clean_mode = "sensitive"
         Boolean clean_edges = false
 
@@ -18,15 +18,19 @@ task Panaroo {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        2,
-        docker:             "quay.io/biocontainers/panaroo:1.3.2--pyhdfd78af_0"
+        docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/panaroo:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     Int num_cpu = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
 
     command <<<
+        mkdir gffs
+        tail -n +2 ~{input_manifest} | awk -F$'\t' '{print $2}' > gcp_gffs.txt
+        gsutil -m cp -I gffs < gcp_gffs.txt
+
         mkdir output
-        panaroo -i ~{write_lines(input_gffs)} ~{true="" false="--no_clean_edges" clean_edges} --clean-mode ~{clean_mode} \
+        panaroo -i <(ls -1 gffs/*) ~{true="" false="--no_clean_edges" clean_edges} --clean-mode ~{clean_mode} \
             -t ~{num_cpu} --remove-invalid-genes -o output/
     >>>
 
