@@ -4,8 +4,8 @@
 FROM ubuntu:18.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SAMTOOLS_VERSION=1.13
-ARG BCFTOOLS_VERSION=1.13
+ARG SAMTOOLS_VERSION=1.17
+ARG BCFTOOLS_VERSION=1.17
 RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
@@ -40,7 +40,7 @@ RUN apt-get -qqy update --fix-missing && \
     samtools --help && \
     bcftools --help
 
-############### stage 1: other commonly used bioinformatics utilities 
+############### stage 1: other commonly used bioinformatics utilities
 FROM ubuntu:18.04
 
 ENV HOME=/root
@@ -57,6 +57,7 @@ RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
                  apt-transport-https \
+                 bc \
                  bedtools \
                  ca-certificates \
                  curl \
