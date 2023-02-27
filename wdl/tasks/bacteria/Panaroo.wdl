@@ -25,12 +25,16 @@ task Panaroo {
     Int num_cpu = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
 
     command <<<
+        set -euxo pipefail
+
         mkdir gffs
         tail -n +2 ~{input_manifest} | awk -F$'\t' '{print $2}' > gcp_gffs.txt
         gsutil -m cp -I gffs < gcp_gffs.txt
 
+        ls -1 gffs/* > local_gffs.txt
+
         mkdir output
-        panaroo -i <(ls -1 gffs/*) ~{true="" false="--no_clean_edges" clean_edges} --clean-mode ~{clean_mode} \
+        panaroo -i local_gffs.txt ~{true="" false="--no_clean_edges" clean_edges} --clean-mode ~{clean_mode} \
             -t ~{num_cpu} --remove-invalid-genes -o output/
     >>>
 
