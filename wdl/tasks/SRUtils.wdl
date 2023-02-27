@@ -35,6 +35,7 @@ task BamToFq {
         File fq_end1 = "~{prefix}.end1.fq.gz"
         File fq_end2 = "~{prefix}.end1.fq.gz"
         File fq_unpaired = "~{prefix}.unpaired.fq.gz"
+        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -225,6 +226,7 @@ task BwaMem2 {
 
     output {
         File bam = "~{prefix}.bam"
+        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -315,6 +317,7 @@ task MergeBamAlignment {
 
     output {
         File bam = "~{prefix}.bam"
+        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -391,6 +394,7 @@ task MarkDuplicates {
     output {
         File bam = "~{prefix}.bam"
         File metrics = "~{prefix}.metrics.txt"
+        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -489,6 +493,7 @@ task BaseRecalibrator {
     }
     output {
         File recalibration_report = "~{prefix}.txt"
+        File monitoring_log = "resources.log"
     }
 }
 
@@ -581,6 +586,7 @@ task ApplyBQSR {
     output {
         File recalibrated_bam = "~{prefix}.bam"
         File recalibrated_bai = "~{prefix}.bam.bai"
+        File monitoring_log = "resources.log"
     }
 }
 
@@ -628,6 +634,7 @@ task RevertSam {
 
     output {
         File bam = "~{prefix}.bam"
+        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -687,6 +694,7 @@ task ComputeBamStats {
     output {
         Map[String, Float] results = read_map(stats_file_name)
         File results_file = stats_file_name
+        File monitoring_log = "resources.log"
     }
 
     #########################

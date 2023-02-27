@@ -192,6 +192,7 @@ task SortBam {
     output {
         File sorted_bam = "~{prefix}.bam"
         File sorted_bai = "~{prefix}.bam.bai"
+        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -1905,6 +1906,7 @@ task ComputeGenomeLength {
 
     output {
         Float length = read_float("length.txt")
+        File monitoring_log = "resources.log"
     }
 
     #########################

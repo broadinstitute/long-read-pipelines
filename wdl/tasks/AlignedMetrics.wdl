@@ -419,6 +419,7 @@ task SamStatsMap {
     output {
         File sam_stats = "~{basename}.sam_stats.txt"
         Map[String, Float] stats_map = read_map("map.txt")
+        File monitoring_log = "resources.log"
     }
 
     #########################

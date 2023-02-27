@@ -63,6 +63,7 @@ task FastQC {
 
         File stats = "fastqc_data.txt"
         File report = "fastqc_report.html"
+        File monitoring_log = "resources.log"
     }
 
     #########################
