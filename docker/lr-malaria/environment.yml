@@ -15,8 +15,7 @@ dependencies:
     - statsmodels
     - networkx
     - matplotlib
-    - pyplot
     - patsy
-    - sklearn
+    - scikit-learn
     - numpyencoder
     - tqdm

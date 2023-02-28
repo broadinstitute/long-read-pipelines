@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3
+FROM continuumio/miniconda3:22.11.1
 
 MAINTAINER Jonn Smith
 
@@ -21,6 +21,7 @@ RUN apt-get install -y gcc python3-dev python3-setuptools && \
 
 # copy python scripts
 COPY python/* /python_scripts/
+RUN chmod +x /python_scripts/*
 
 # activate conda environment
 RUN echo "source activate lr-malaria" > ~/.bashrc
