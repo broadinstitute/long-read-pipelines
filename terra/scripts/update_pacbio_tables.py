@@ -70,7 +70,7 @@ def load_new_sample_table(buckets, project):
             experiment_type = "CCS"
         if ('IsoSeq' in e['WellSample'][0] and e['WellSample'][0]['IsoSeq'] == 'true') or (application == 'isoSeq'):
             experiment_type = "ISOSEQ"
-        if ('BioSample' in e and 'MAS' in e['BioSample'][0]['Name']) or ('custom' in application):
+        if ('BioSample' in e and 'MAS' in e['BioSample'][0]['Name']) or ('custom' in application) or ('masSeq' in application):
             experiment_type = "MASSEQ"
 
         if e['Files']['hifi_reads.bam'] != "":
@@ -86,6 +86,12 @@ def load_new_sample_table(buckets, project):
         #correctable = False if e['Files']['subreads.bam'] == "" else is_correctable(e['Files']['subreads.bam'])
         #if correctable:
         #    e['WellSample'][0]['IsCCS'] = 'true'
+
+        if 'm64451e_230109_173107' in e['Files']['ccs_reports.txt']:
+            print("Hello!")
+
+        print(e['Files']['ccs_reports.txt'])
+        print(r)
 
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
@@ -341,8 +347,11 @@ def load_ccs_report(project, ccs_report_path, e):
 
             f = open("ccs_report.txt", "r")
 
-            d = {}
+            #d = {}
             for line in f:
+                if 'Double-Strand' in line:
+                    break
+
                 if len(line) > 1 and 'Exclusive' not in line and 'Additional' not in line:
                     a = line.rstrip().split(":")
 
