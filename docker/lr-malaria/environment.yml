@@ -16,6 +16,7 @@ dependencies:
     - networkx
     - matplotlib
     - patsy
+    - openpyxl
     - scikit-learn
     - numpyencoder
     - tqdm

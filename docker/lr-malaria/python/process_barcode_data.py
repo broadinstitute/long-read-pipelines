@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# Processes barcode data for P. falciparum samples
+# Based on work from the following publication: https://doi.org/10.1093/pnasnexus/pgac187
+# Orignal Author: Wesley Wong
+# Modified by: Jonn Smith
+
 import random
 import copy
 import itertools
 import sys
 import json
+import argparse
 
 import scipy
 import pandas as pd
@@ -23,10 +29,6 @@ from patsy import dmatrices
 from sklearn import linear_model
 from numpyencoder import NumpyEncoder
 from sklearn.neighbors import KernelDensity
-
-
-# F_loci = (h_mono - h_poly) / h_mono
-
 
 def remove_duplicate_df(df, field="Haplotype"):
     duplicate_rows = pd.DataFrame.duplicated(df, field, keep="first")
@@ -67,22 +69,13 @@ def return_stats(s, convert_numpy=True):
         return np.NaN  # missing data present in this comparison, skip
     elif poly_screen.all() == True:
         return 1.0 - (a[0] == a).all()  # 0 = homozygous, #1 = Heterozygous
-        # status =  1. -(a[0] == a).all() #0 = homozygous, #1 = Heterozygous
-        # if status == 1.0:
-        #    random_p = np.random.random()
-        #    if random_p < Ftrue:
-        #        return 1. - status
-        #    else:
-        #        return status
-        # else:
-        #    return status
 
     else:  # N present in one of the comparisons, skip for now
         return np.NaN
 
 
-def quantify_het(barcode_comparison, Ftrue=0, axis=0):
-    null_het = np.nansum(barcode_comparison, axis=axis) * (1 - Ftrue)
+def quantify_het(barcode_comparison, f_true=0, axis=0):
+    null_het = np.nansum(barcode_comparison, axis=axis) * (1 - f_true)
     return null_het
 
 
@@ -135,12 +128,12 @@ def check_combinations(combo_barcodes):
     ), "Duplicate barcodes were sampled"
 
 
-def calculate_RH_sample(H_mono, H_poly):
-    if H_mono > H_poly:
-        RH = (H_mono - H_poly) / H_mono
+def calculate_RH_sample(h_mono, h_poly):
+    if h_mono > h_poly:
+        rh = (h_mono - h_poly) / h_mono
     else:
-        RH = (H_mono - H_poly) / H_mono
-    return RH
+        rh = (h_mono - h_poly) / h_mono
+    return rh
 
 
 def bootstrap(array, iterations):
@@ -148,44 +141,44 @@ def bootstrap(array, iterations):
     return np.mean(resample, axis=1)
 
 
-def RH_classifier(RH):
-    RH = float(RH)
-    if RH > 0.4:
+def rh_classifier(rh):
+    rh = float(rh)
+    if rh > 0.4:
         return "cotx"
-    elif RH > 0.3:
+    elif rh > 0.3:
         return "cotx_probable"
-    elif RH > -0.1:
+    elif rh > -0.1:
         return "coi=2"
-    elif RH > -0.2:
+    elif rh > -0.2:
         return "coi=2_probable"
-    elif RH > -0.4:
+    elif rh > -0.4:
         return "coi=3"
-    elif RH > -0.6:
+    elif rh > -0.6:
         return "coi=3_probable"
-    elif RH > -0.8:
+    elif rh > -0.8:
         return "coi=4_probable"
     else:
         return "coi=4"
 
 
-def calculate_Shannons_index(p_array):
-    H = -np.sum([p_array * np.log(p_array)])
-    return H
+def calculate_shannons_index(p_array):
+    h = -np.sum([p_array * np.log(p_array)])
+    return h
 
 
-def calculate_Evenness(H_array, k):
-    E = H_array / np.log(k)
-    return E
+def calculate_evenness(h_array, k):
+    e = h_array / np.log(k)
+    return e
 
 
-def calculate_H12(p_array):
+def calculate_h12(p_array):
     p_array = sorted(p_array)
     p1 = p_array[0]
     p2 = p_array[1]
     other_p = np.asarray(p_array[2:])
     sum_rest = np.sum(other_p**2)
-    H12 = (p1 + p2) ** 2 + sum_rest
-    return H12
+    h12 = (p1 + p2) ** 2 + sum_rest
+    return h12
 
 
 def interpret_cotx_simbinbarcode(sim, cotx_event=1):
@@ -245,7 +238,7 @@ def wilson(p, n, z=1.96):
     return lower_bound, upper_bound
 
 
-class Barcode_Stats:
+class BarcodeStats:
     cpalette_converter = {
         "green": "viridis",
         "blue": "mako",
@@ -255,21 +248,63 @@ class Barcode_Stats:
         "purple": "Purples_r",
     }
 
-    def __init__(self, file, ISO3, sheet_name=None, adjustedN=False):
+    # Set up field names from sheet:
+    multi_poly_field = "M/P"
+    sample_name_field = "Sample_Name"
+
+    def __init__(self, excel_file, ISO3, barcode_file_path, sheet_name=None, adjusted_n=False):
+
         self.ISO3 = ISO3
+        self.barcode_file_path = barcode_file_path
 
         if not sheet_name:
             sheet_name = ISO3
-            self.master_df = DataFrame(read_excel(file, sheet_name=ISO3))
+            self.master_df = DataFrame(read_excel(excel_file, sheet_name=ISO3))
         else:
-            self.master_df = DataFrame(read_excel(file, sheet_name=sheet_name))
+            self.master_df = DataFrame(read_excel(excel_file, sheet_name=sheet_name))
         self.loci_position_names = list(self.master_df.columns[7:31])
 
+        # Define all the fields we're going to create:
+        self.poly_het_dict = None
+        self.total_mono = None
+        self.repeat_haps = None
+        self.unique_mono_count = None
+        self.popgen_stats = None
+        self.haplotype_counts = None
+        self.loci_allele_dict = None
+        self.n_total = None
+        self.n_poly = None
+        self.n_singles = None
+        self.poly_barcode_year_dfs = None
+        self.mono_barcode_year_dfs = None
+        self.barcode_year_dfs = None
+        self.chrono_years = None
+        self.mono_barcode_df = None
+        self.barcodes_df = None
+        self.barcode_pos_dict = None
+        self.poly_het_timeseries = None
+        self.poly_barcode_het_dist = None
+        self.poly_barcode_het_avg = None
+        self.poly_samples = None
+        self.RH_barcode_dict = None
+        self.observed_RH = None
+        self.H_mono_barcodes = None
+        self.RH_df = None
+        self.poly_df = None
+        self.RH_yearly_averages = None
+        self.RH_yearly_variances = None
+        self.RH_average = None
+        self.RH_weighted_var = None
+        self.RH_ci = None
+        self.model_expectations = None
+        self.cotx_simulation_data = None
+
+        # Now process our data:
         self.extract_region(ISO3)
         self.extract_mono_poly_stats()
         self.calc_stats()
         self.calculate_polyhet_timeseries()
-        self.quantify_observed_poly_het(adjustedN)
+        self.quantify_observed_poly_het(adjusted_n)
         self.calculate_RH()
 
     def label_haplotypes(self):
@@ -277,7 +312,7 @@ class Barcode_Stats:
         unique_barcode_haplotype = 0
         barcode_haplotypes = []
         for row in self.barcodes_df[self.barcodes_df.columns[7:31]].to_numpy():
-            barcode = ("").join(row)
+            barcode = "".join(row)
             if barcode not in barcode_haplotypes_dict:
                 barcode_haplotypes_dict[barcode] = unique_barcode_haplotype
                 unique_barcode_haplotype += 1
@@ -285,18 +320,20 @@ class Barcode_Stats:
         self.barcodes_df["Haplotype"] = barcode_haplotypes
 
     def extract_region(self, ISO3):
-        tmp_df = self.master_df[self.master_df["ISO3"] == ISO3]  # Thies samples only
+        tmp_df = self.master_df[self.master_df["ISO3"] == ISO3]
         for position in self.loci_position_names:
             tmp_df[position] = [
                 x.strip().upper() for x in tmp_df[position]
             ]  # noticed a tab formatting in these columns
+            
         self.barcode_pos_dict = {}
-        fin = open("barcode_pos.txt")
-        for i, line in enumerate(fin.readlines()[1:]):
-            line = line.strip().split("\t")
-            self.barcode_pos_dict[self.loci_position_names[i]] = line[0] + ":" + line[1]
+        with open(self.barcode_file_path) as f:
+            next(f)
+            for i, line in enumerate(f):
+                line = line.strip().split("\t")
+                self.barcode_pos_dict[self.loci_position_names[i]] = line[0] + ":" + line[1]
 
-        tmp_df["M/P"] = [x.strip() for x in tmp_df["M/P"]]
+        tmp_df[BarcodeStats.multi_poly_field] = [x.strip() for x in tmp_df[BarcodeStats.multi_poly_field]]
 
         control_samples = [
             "3D7",
@@ -312,12 +349,12 @@ class Barcode_Stats:
         ]
 
         self.barcodes_df = tmp_df[
-            (tmp_df["X"] <= 2) & (~tmp_df["Sample_Name"].isin(control_samples))
+            (tmp_df["X"] <= 2) & (~tmp_df[BarcodeStats.sample_name_field].isin(control_samples))
         ]
         self.mono_barcode_df = self.barcodes_df[
             (self.barcodes_df["X"] <= 2)
-            & (self.barcodes_df["M/P"] == "M")
-            & (~self.barcodes_df["Sample_Name"].isin(control_samples))
+            & (self.barcodes_df[BarcodeStats.multi_poly_field] == "M")
+            & (~self.barcodes_df[BarcodeStats.sample_name_field].isin(control_samples))
         ]
         self.chrono_years = sorted(Counter(self.barcodes_df["Year"]).keys())
         self.label_haplotypes()
@@ -335,13 +372,13 @@ class Barcode_Stats:
             self.mono_barcode_year_dfs[year] = self.barcodes_df[
                 (self.barcodes_df["Year"] == year)
                 & (self.barcodes_df["X"] <= fail_threshold)
-                & (self.barcodes_df["M/P"] == "M")
+                & (self.barcodes_df[BarcodeStats.multi_poly_field] == "M")
             ]
 
             self.poly_barcode_year_dfs[year] = self.barcodes_df[
                 (self.barcodes_df["Year"] == year)
                 & (self.barcodes_df["X"] <= fail_threshold)
-                & (self.barcodes_df["M/P"] == "P")
+                & (self.barcodes_df[BarcodeStats.multi_poly_field] == "P")
             ]
             self.mono_barcode_year_dfs[year].reset_index(drop=True, inplace=True)
             self.poly_barcode_year_dfs[year].reset_index(drop=True, inplace=True)
@@ -372,7 +409,7 @@ class Barcode_Stats:
         self.haplotype_counts = {}
         for year in self.chrono_years:
             counts = Counter(
-                self.barcode_year_dfs[year][self.barcode_year_dfs[year]["M/P"] == "M"][
+                self.barcode_year_dfs[year][self.barcode_year_dfs[year][BarcodeStats.multi_poly_field] == "M"][
                     "Haplotype"
                 ]
             )
@@ -480,10 +517,10 @@ class Barcode_Stats:
                 sampled_counts = Counter(sampling_idx)
                 sampled_freqs = np.asarray(list(sampled_counts.values())) / 200
 
-                H12 = calculate_H12(sampled_freqs)
-                shannon_idx = calculate_Shannons_index(sampled_freqs)
+                H12 = calculate_h12(sampled_freqs)
+                shannon_idx = calculate_shannons_index(sampled_freqs)
                 shannon_idxes.append(shannon_idx)
-                evenness = calculate_Evenness(
+                evenness = calculate_evenness(
                     shannon_idx, len(list(sampled_counts.keys()))
                 )
                 evenness_scores.append(evenness)
@@ -554,7 +591,7 @@ class Barcode_Stats:
                         self.poly_barcode_year_dfs[year].columns[7:31]
                     ].to_numpy()
                 ):
-                    barcode = ("").join(row)
+                    barcode = "".join(row)
                     barcode_counts = Counter(barcode)
                     barcode_counts.pop("X", 0)
                     total = np.sum(list(barcode_counts.values()))
@@ -562,7 +599,7 @@ class Barcode_Stats:
                     H_poly_barcode = het / total
                     self.poly_barcode_het_dist[year].append(H_poly_barcode)
                 self.poly_samples[year] = list(
-                    self.poly_barcode_year_dfs[year]["Sample_Name"]
+                    self.poly_barcode_year_dfs[year][BarcodeStats.sample_name_field]
                 )
                 self.poly_barcode_het_avg[year] = np.mean(
                     self.poly_barcode_het_dist[year]
@@ -575,11 +612,11 @@ class Barcode_Stats:
                 )
                 self.poly_barcode_het_dist[year] = het
                 self.poly_samples[year] = list(
-                    self.poly_barcode_year_dfs[year]["Sample_Name"]
+                    self.poly_barcode_year_dfs[year][BarcodeStats.sample_name_field]
                 )
                 self.poly_barcode_het_avg[year] = np.mean(het)
 
-    def sample_poly_barcodes(self, year, coi=2, samples=100, Ftrue=0):
+    def sample_poly_barcodes(self, year, coi=2, samples=100):
         combinations = np.random.randint(
             self.mono_barcode_year_dfs[year].index[0],
             self.mono_barcode_year_dfs[year].index[-1],
@@ -606,7 +643,6 @@ class Barcode_Stats:
                 combo, self.loci_position_names
             ]
             check_combinations(combo_barcodes)
-            # sampled_poly_barcodes.append(combo_barcodes.apply(lambda x: return_stats(x, Ftrue), axis = 0).to_list())
             sampled_poly_barcodes.append(
                 combo_barcodes.apply(lambda x: return_stats(x), axis=0).to_list()
             )
@@ -615,7 +651,7 @@ class Barcode_Stats:
 
         return sampled_poly_barcodes
 
-    def simulator(self, n_poly, n_iterations=1000, Ftrue=0, axis=0, coi=2):
+    def simulator(self, n_poly, n_iterations=1000, f_true=0, axis=0, coi=2):
         run_fn_tests()
         poly_simulations = defaultdict(list)
         for year, n in zip(self.chrono_years, n_poly):
@@ -624,7 +660,7 @@ class Barcode_Stats:
                 if n_rep % 100 == 0:
                     print(year, n, n_rep)
                 b = self.sample_poly_barcodes(year, coi=coi, samples=n)
-                heterozygotes = quantify_het(b, Ftrue, axis=axis)
+                heterozygotes = quantify_het(b, f_true, axis=axis)
                 total = quantify_total(b, axis=axis)
                 p_het = heterozygotes / total
                 while (
@@ -633,7 +669,7 @@ class Barcode_Stats:
                     assert attempt_count <= 3, "maximum number of attempts reached"
                     print("attempting resample {x}".format(x=attempt_count))
                     b = self.sample_poly_barcodes(year, samples=n)
-                    heterozygotes = quantify_het(b, Ftrue, axis=axis)
+                    heterozygotes = quantify_het(b, f_true, axis=axis)
                     total = quantify_total(b, axis=axis)
                     p_het = heterozygotes / total
                     attempt_count += 1
@@ -687,19 +723,13 @@ class Barcode_Stats:
             combo_barcodes = self.mono_barcode_year_dfs[year].loc[
                 combo, self.loci_position_names
             ]
-            # print(combo, combo_barcodes)
             check_combinations(combo_barcodes)
 
-            # print(sampled_cotx_barcodes[i])
             relatedness_maps = []
             for n in range(coi):
                 relatedness_maps.append(sampled_cotx_barcodes[i][n])
-                # relatedness_map1 = sampled_cotx_barcodes[i][0]
-                # relatedness_map2 = sampled_cotx_barcodes[i][1]
 
             combo_barcodes = combo_barcodes.to_numpy()
-            # print(relatedness_maps)
-            # print(combo_barcodes)
             cotx_strains = []
             for relatedness_map in relatedness_maps:
                 tmp = [
@@ -707,10 +737,7 @@ class Barcode_Stats:
                     for position, strain_choice in enumerate(relatedness_map)
                 ]
                 cotx_strains.append(tmp)
-            # cotx_strain1 = [combo_barcodes[strain_choice][position] for position,strain_choice in enumerate(relatedness_map1)]
-            # cotx_strain2 = [combo_barcodes[strain_choice][position] for position,strain_choice in enumerate(relatedness_map2)]
-            # print('Cotx Strains')
-            # print(cotx_strains)
+
             df = DataFrame(cotx_strains)  # [cotx_strain1, cotx_strain2])
             sampled_poly_barcodes.append(
                 df.apply(lambda x: return_stats(x), axis=0).to_list()
@@ -795,9 +822,9 @@ class Barcode_Stats:
                 data.append([sample_name, year, np.mean(RH_sample_dist)])
         self.RH_df = DataFrame(data)
         self.RH_df.columns = ["Sample", "Year", "RH"]
-        self.RH_df["classification"] = self.RH_df["RH"].apply(RH_classifier)
+        self.RH_df["classification"] = self.RH_df["RH"].apply(rh_classifier)
         self.poly_df = pd.merge(
-            self.master_df, self.RH_df, left_on="Sample_Name", right_on="Sample"
+            self.master_df, self.RH_df, left_on=BarcodeStats.sample_name_field, right_on="Sample"
         )
 
         for year, df in self.RH_df.groupby("Year"):
@@ -948,15 +975,13 @@ class Barcode_Stats:
             color="grey",
             alpha=0.3,
         )
-        # yerr = np.sqrt(n_total * n_singles/n_total * n_poly/n_total))
 
         bar = ax.bar(
             [year for year in self.chrono_years],
             self.n_poly,
             color=color,
             bottom=self.n_singles,
-        )  # ,  yerr = np.sqrt(n_total * n_singles/n_total * n_poly/n_total))
-
+        )
         for x, y, z in zip(self.chrono_years, self.n_singles, self.n_singles):
             x = round(x, 2)
             y = round(y, 2)
@@ -1063,7 +1088,7 @@ class Barcode_Stats:
                 reverse=True,
             )
             cpalette = sns.color_palette(
-                Barcode_Stats.cpalette_converter[color], len(self.repeat_haps[year])
+                BarcodeStats.cpalette_converter[color], len(self.repeat_haps[year])
             )
             total = np.sum(list(self.repeat_haps[year].values()))
             for i, hid in enumerate(self.repeat_haps[year]):
@@ -1114,7 +1139,7 @@ class Barcode_Stats:
     ):
         if not ax:
             fig, ax = plt.subplots()
-        cpalette = sns.color_palette(Barcode_Stats.cpalette_converter[color], 10)
+        cpalette = sns.color_palette(BarcodeStats.cpalette_converter[color], 10)
         hap_stats = defaultdict(dict)
         total_clusters = 1
         for year in self.chrono_years:
@@ -1128,7 +1153,7 @@ class Barcode_Stats:
                     hap_stats[hid][year] = self.haplotype_counts[year][hid]
                     total_clusters += 1
         cpalette = sns.color_palette(
-            Barcode_Stats.cpalette_converter[color], total_clusters
+            BarcodeStats.cpalette_converter[color], total_clusters
         )
 
         count = 1
@@ -1187,8 +1212,6 @@ class Barcode_Stats:
             ),
             "cotx": ("cotx_average", "cotx_var", "cotx_inv_var"),
         }
-        #'evenness': ('evenness_mean', 'evenness_var', 'evenness_model'),
-        #'H12': ('H12_mean', 'H12_var', 'H12_model')}
 
         p = self.popgen_stats[fields[field][0]]
         variances = self.popgen_stats[fields[field][1]]
@@ -1456,7 +1479,6 @@ class Barcode_Stats:
         classification_counts = Counter(self.RH_df["classification"])
         total = np.sum(list(classification_counts.values()))
         x_array = np.asarray([0, 1, 2, 3])
-        # colors = sns.color_palette(Barcode_Stats.cpalette_converter[color],3)
 
         cat1 = [
             classification_counts[key] / total
@@ -1567,23 +1589,34 @@ def show_stats(ISO3, color):
     fig.savefig(ISO3 + "_summary_figure.svg")
 
 
-file = "barcodes_2.22.2023_coi_results.xlsx"
-BS = {}
+if __name__ == "__main__":
 
-# for ISO3 in ['SLP', 'KDG', 'RTP', 'NDO:PP:PS', 'SES:PP:PS', 'BAN:PP:PS', 'CSS',
-# 'DEG', 'GAB', 'KLD', 'KML', 'MAK', 'MDR', 'SED', 'SMS', 'TAM', 'TBK', 'VLG',
-# 'NDO:PP:DM1', 'SES:PP:DM1', 'BAN:PP:DM1', 'NDO:PP:DM2', 'SES:PP:DM2', 'BAN:PP:DM2',
-# 'NDO:PP:DM3', 'SES:PP:DM3', 'BAN:PP:DM3']:
-#    print(ISO3)
+    # Set up our CLI args:
+    parser = argparse.ArgumentParser(
+        description=f"Processes P. falciparum data from an excel file into actionable information (e.g. CoI estimates)."
+    )
 
-ISO3 = sys.argv[1]
-BS[ISO3] = Barcode_Stats(
-    file, ISO3, sheet_name=ISO3.replace(":", "_"), adjustedN=False
-)  # adjustedN=True)
+    requiredNamed = parser.add_argument_group('required named arguments')
+    requiredNamed.add_argument('-f', '--excel-file',
+                               help='Excel file containing data to process',
+                               required=True)
+    requiredNamed.add_argument('-s', '--sheet',
+                               help='Sheet name to process.',
+                               required=True)
+    requiredNamed.add_argument('-b', '--barcodes',
+                               help='Barcode file to use.',
+                               required=True)
+    args = parser.parse_args()
 
-show_stats(ISO3, color="crimson")
+    # Do the work:
+    BS = {}
+    ISO3 = args.sheet
+    BS[ISO3] = BarcodeStats(
+        args.excel_file, ISO3, args.barcodes, sheet_name=ISO3.replace(":", "_"), adjusted_n=False
+    )
 
-BS[ISO3].generate_summary_report("{ISO3}_summary.csv".format(ISO3=ISO3))
+    show_stats(ISO3, color="crimson")
 
-BS[ISO3].mono_barcode_df.to_csv("{ISO3}_mono_barcodes.csv".format(ISO3=ISO3))
-BS[ISO3].poly_df.to_csv("{ISO3}_poly_barcodes.csv".format(ISO3=ISO3))
+    BS[ISO3].generate_summary_report("{ISO3}_summary.csv".format(ISO3=ISO3))
+    BS[ISO3].mono_barcode_df.to_csv("{ISO3}_mono_barcodes.csv".format(ISO3=ISO3))
+    BS[ISO3].poly_df.to_csv("{ISO3}_poly_barcodes.csv".format(ISO3=ISO3))
