@@ -170,6 +170,12 @@ task HaplotypeCaller_GATK4_VCF {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # We need at least 1 GB of available memory outside of the Java heap in order to execute native code, thus, limit
         # Java's memory by the total memory minus 1 GB. We need to compute the total memory as it might differ from
         # memory_size_gb because of Cromwell's retry with more memory feature.
@@ -199,7 +205,17 @@ task HaplotypeCaller_GATK4_VCF {
 
         # Cromwell doesn't like optional task outputs, so we have to touch this file.
         touch ~{prefix}.bamout.bam
+
+        kill $monitoring_pid
     >>>
+
+    output {
+        File output_vcf = "~{output_file_name}"
+        File output_vcf_index = "~{output_file_name}.tbi"
+        File bamout = "~{prefix}.bamout.bam"
+
+        File monitoring_log = "resources.log"
+    }
 
     #########################
     RuntimeAttr default_attr = object {
@@ -221,12 +237,6 @@ task HaplotypeCaller_GATK4_VCF {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-
-    output {
-        File output_vcf = "~{output_file_name}"
-        File output_vcf_index = "~{output_file_name}.tbi"
-        File bamout = "~{prefix}.bamout.bam"
     }
 }
 

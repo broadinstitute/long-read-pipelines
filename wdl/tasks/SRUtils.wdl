@@ -836,6 +836,12 @@ task RevertBaseQualities {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # Check if the input bam has been run through `ApplyBQSR`.
         # If not, we can just return the input bam.
         samtools view -H ~{bam} | grep '^@PG' > header.pg.txt
@@ -859,11 +865,15 @@ task RevertBaseQualities {
                 cp ~{bai} ~{prefix}.bam.bai
             fi
         fi
+
+        kill $monitoring_pid
     >>>
 
     output {
         File bam_out = "~{prefix}.bam"
         File bai_out = "~{prefix}.bam.bai"
+
+        File monitoring_log = "resources.log"
     }
 
     #########################

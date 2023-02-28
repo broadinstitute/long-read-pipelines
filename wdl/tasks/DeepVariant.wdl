@@ -84,6 +84,12 @@ task DV {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         mkdir -p "~{output_root}"
@@ -98,6 +104,8 @@ task DV {
 
         find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
             > "~{output_root}/dir_structure.txt"
+
+        kill $monitoring_pid
     >>>
 
     output {
@@ -110,6 +118,8 @@ task DV {
         File gVCF_tbi   = "~{output_root}/~{prefix}.g.vcf.gz.tbi"
 
         File visual_report_html = "~{output_root}/~{prefix}.visual_report.html"
+
+        File monitoring_log = "resources.log"
     }
 
     #########################

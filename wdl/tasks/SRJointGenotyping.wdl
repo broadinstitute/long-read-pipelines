@@ -129,6 +129,12 @@ task ImportGVCFs {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # Make sure that the output directory does not exist:
         [ -e ~{prefix} ] && rm -rf ~{prefix}
 
@@ -155,7 +161,15 @@ task ImportGVCFs {
                 --consolidate
 
         tar -cf ~{prefix}.genomicsDB.tar ~{prefix}.genomicsDB
+
+        kill $monitoring_pid
     >>>
+
+    output {
+        File output_genomicsdb = "~{prefix}.genomicsDB.tar"
+
+        File monitoring_log = "resources.log"
+    }
 
     #########################
     RuntimeAttr default_attr = object {
@@ -176,10 +190,6 @@ task ImportGVCFs {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-
-    output {
-        File output_genomicsdb = "~{prefix}.genomicsDB.tar"
     }
 }
 
@@ -218,6 +228,12 @@ task GenotypeGVCFs {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # We must determine if our input variants are in a genomicsdb file or in a VCF.
         # The easiest way is to see if the input is a .tar file:
 
@@ -246,7 +262,17 @@ task GenotypeGVCFs {
                 -L ~{interval_list} \
                 ~{true='--keep-combined-raw-annotations' false='' keep_combined_raw_annotations} \
                 --merge-input-intervals
+
+        kill $monitoring_pid
     >>>
+
+    output {
+        File output_vcf = "~{prefix}.vcf.gz"
+        File output_vcf_index = "~{prefix}.vcf.gz.tbi"
+
+        File monitoring_log = "resources.log"
+    }
+
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
@@ -266,10 +292,5 @@ task GenotypeGVCFs {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-
-    output {
-        File output_vcf = "~{prefix}.vcf.gz"
-        File output_vcf_index = "~{prefix}.vcf.gz.tbi"
     }
 }

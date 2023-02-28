@@ -887,6 +887,12 @@ task IndelsVariantRecalibrator {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # We need to generate resource strings from the input arrays.
         # First we check that the arrays are the same length:
         if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
@@ -931,7 +937,18 @@ task IndelsVariantRecalibrator {
                 --output-model ~{prefix}.model.report \
                 --max-gaussians ~{max_gaussians} \
                 ${resource_flags}
+
+        kill $monitoring_pid
     >>>
+
+    output {
+        File recalibration = "~{prefix}.recal"
+        File recalibration_index = "~{prefix}.recal.idx"
+        File tranches = "~{prefix}.tranches"
+        File model_report = "~{prefix}.model.report"
+
+        File monitoring_log = "resources.log"
+    }
 
     #########################
     RuntimeAttr default_attr = object {
@@ -952,13 +969,6 @@ task IndelsVariantRecalibrator {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-
-    output {
-        File recalibration = "~{prefix}.recal"
-        File recalibration_index = "~{prefix}.recal.idx"
-        File tranches = "~{prefix}.tranches"
-        File model_report = "~{prefix}.model.report"
     }
 }
 
@@ -1010,6 +1020,12 @@ task SNPsVariantRecalibratorCreateModel {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # We need to generate resource strings from the input arrays.
         # First we check that the arrays are the same length:
         if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
@@ -1055,7 +1071,18 @@ task SNPsVariantRecalibratorCreateModel {
                 --output-model ~{prefix}.model.report \
                 --max-gaussians ~{max_gaussians} \
                 ${resource_flags}
+
+        kill $monitoring_pid
     >>>
+
+    output {
+        File recalibration = "~{prefix}.recal"
+        File recalibration_index = "~{prefix}.recal.idx"
+        File tranches = "~{prefix}.tranches"
+        File model_report = "~{prefix}.model.report"
+
+        File monitoring_log = "resources.log"
+    }
 
     #########################
     RuntimeAttr default_attr = object {
@@ -1076,13 +1103,6 @@ task SNPsVariantRecalibratorCreateModel {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-
-    output {
-        File recalibration = "~{prefix}.recal"
-        File recalibration_index = "~{prefix}.recal.idx"
-        File tranches = "~{prefix}.tranches"
-        File model_report = "~{prefix}.model.report"
     }
 }
 
@@ -1116,6 +1136,12 @@ task ApplyVqsr {
     command <<<
         set -euxo pipefail
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         # Get amount of memory to use:
         mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
         let mem_start=${mem_available}-2000
@@ -1142,7 +1168,16 @@ task ApplyVqsr {
                 --truth-sensitivity-filter-level ~{snp_filter_level} \
                 --create-output-variant-index true \
                 -mode SNP
+
+        kill $monitoring_pid
     >>>
+
+    output {
+        File recalibrated_vcf = "~{prefix}.recalibrated.vcf.gz"
+        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.gz.tbi"
+
+        File monitoring_log = "resources.log"
+    }
 
     #########################
     RuntimeAttr default_attr = object {
@@ -1163,10 +1198,5 @@ task ApplyVqsr {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-
-    output {
-        File recalibrated_vcf = "~{prefix}.recalibrated.vcf.gz"
-        File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.gz.tbi"
     }
 }

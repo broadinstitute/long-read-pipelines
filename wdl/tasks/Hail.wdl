@@ -26,6 +26,12 @@ task ConvertToHailMT {
     command <<<
         set -x
 
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
         python3 <<EOF
 
         import hail as hl
@@ -46,10 +52,14 @@ task ConvertToHailMT {
         EOF
 
         gsutil -m rsync -Cr ~{prefix}.mt ~{outdir}/~{prefix}.mt
+
+        kill $monitoring_pid
     >>>
 
     output {
         String gcs_path = "~{outdir}/~{prefix}.mt"
+
+        File monitoring_log = "resources.log"
     }
 
     #########################
