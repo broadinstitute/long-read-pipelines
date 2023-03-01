@@ -257,6 +257,7 @@ class BarcodeStats:
         self.ISO3 = ISO3
         self.barcode_file_path = barcode_file_path
 
+        # Ingest the input file:
         if input_file.endswith(".xls") or input_file.endswith(".xlsx"):
             if not sheet_name:
                 self.master_df = DataFrame(read_excel(input_file, sheet_name=ISO3))
@@ -266,7 +267,13 @@ class BarcodeStats:
             sep = "\t" if input_file.endswith(".tsv") else ","
             self.master_df = DataFrame(read_csv(input_file, sep=sep, header=0))
 
-        self.loci_position_names = list(self.master_df.columns[7:31])
+        # Ingest the barcode file:
+        tmp_barcode_def_df = DataFrame(read_csv(barcode_file_path, sep="\t"))
+        self.loci_position_names = list(tmp_barcode_def_df["name"].values)
+        self.barcode_pos_dict = {name: f"{contig}:{pos}" for name, contig, pos in
+                                 zip(tmp_barcode_def_df['name'], tmp_barcode_def_df['chr'], tmp_barcode_def_df['pos'])}
+        # We don't have to, but we should clean up our mess:
+        del tmp_barcode_def_df
 
         # Define all the fields we're going to create:
         self.poly_het_dict = None
@@ -285,7 +292,6 @@ class BarcodeStats:
         self.chrono_years = None
         self.mono_barcode_df = None
         self.barcodes_df = None
-        self.barcode_pos_dict = None
         self.poly_het_timeseries = None
         self.poly_barcode_het_dist = None
         self.poly_barcode_het_avg = None
@@ -329,13 +335,6 @@ class BarcodeStats:
             tmp_df[position] = [
                 x.strip().upper() for x in tmp_df[position]
             ]  # noticed a tab formatting in these columns
-            
-        self.barcode_pos_dict = {}
-        with open(self.barcode_file_path) as f:
-            next(f)
-            for i, line in enumerate(f):
-                line = line.strip().split("\t")
-                self.barcode_pos_dict[self.loci_position_names[i]] = line[0] + ":" + line[1]
 
         tmp_df[BarcodeStats.multi_poly_field] = [x.strip() for x in tmp_df[BarcodeStats.multi_poly_field]]
 
