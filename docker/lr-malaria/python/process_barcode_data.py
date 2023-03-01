@@ -1573,6 +1573,7 @@ class BarcodeStats:
 def show_stats(ISO3, color):
     fig = plt.figure(figsize=(20, 15))
     axes = [fig.add_subplot(3, 3, i + 1) for i in range(0, 9)]
+
     BS[ISO3].plot_sample_distribution(color, axes[0])
     BS[ISO3].plot_mono_poly_fract(color, axes[1], x_annotate=0.0)
     BS[ISO3].plot_longitudinal("poly_fract", color, axes[2])
@@ -1586,10 +1587,13 @@ def show_stats(ISO3, color):
     BS[ISO3].plot_RHsample_longitudinal(ax=axes[6], color=color)
     BS[ISO3].plot_RH_classification(ax=axes[7], color=color)
 
+    # Calculate some stats:
     counts = Counter(BS[ISO3].RH_df["classification"])
     total = np.sum(list(counts.values()))
     p = (counts["cotx"] + counts["cotx_probable"]) / total
     stdev = np.sqrt(p * (1 - p) / total)
+
+    # We should save both a CSV and a TSV:
     fig.savefig(ISO3 + "_summary_figure.svg")
     fig.savefig(ISO3 + "_summary_figure.png")
 
@@ -1598,7 +1602,7 @@ if __name__ == "__main__":
 
     # Set up our CLI args:
     parser = argparse.ArgumentParser(
-        description=f"Processes P. falciparum data from an excel file into actionable information (e.g. CoI estimates)."
+        description=f"Processes P. falciparum data from a spreadsheet into actionable information (e.g. CoI estimates)."
     )
 
     requiredNamed = parser.add_argument_group('required named arguments')
