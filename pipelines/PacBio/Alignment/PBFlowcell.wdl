@@ -7,17 +7,17 @@ version 1.0
 ## Various metrics are produced along the way.
 ##########################################################################################
 
-import "tasks/PBUtils.wdl" as PB
-import "tasks/AlignReads.wdl" as AR
-import "tasks/Utils.wdl" as Utils
-import "tasks/Longbow.wdl" as Longbow
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/NanoPlot.wdl" as NP
-import "tasks/Finalize.wdl" as FF
+import "../../tasks/Utility/PBUtils.wdl" as PB
+import "../../tasks/Alignment/AlignReads.wdl" as AR
+import "../../tasks/Utility/Utils.wdl" as Utils
+import "../../tasks/Preprocessing/Longbow.wdl" as Longbow
+import "../../tasks/QC/AlignedMetrics.wdl" as AM
+import "../../tasks/Visualization/NanoPlot.wdl" as NP
+import "../../tasks/Utility/Finalize.wdl" as FF
 
-import "tasks/MASSeq.wdl" as MAS
+import "../../tasks/Transcriptomics/MASSeq.wdl" as MAS
 
-import "tasks/JupyterNotebooks.wdl" as JUPYTER
+import "../../tasks/Utility/JupyterNotebooks.wdl" as JUPYTER
 
 workflow PBFlowcell {
     input {

@@ -1,8 +1,8 @@
 version 1.0
 
-import "Structs.wdl"
-import "Utils.wdl"
-import "MASSeq.wdl" as MAS
+import "../../structs/Structs.wdl"
+import "../Utility/Utils.wdl"
+import "../Transcriptomics/MASSeq.wdl" as MAS
 
 struct LongbowModelParams {
     Int umi_length
