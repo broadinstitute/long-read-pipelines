@@ -22,7 +22,7 @@ workflows:
   testParameterFiles:
 - name: PBCCS
   subclass: wdl
-  primaryDescriptorPath: /wdl/PBCCS.wdl
+  primaryDescriptorPath: /pipelines/PacBio/Utility/PBCCS.wdl
   testParameterFiles:
 - name: PBCCSNoSharding
   subclass: wdl
