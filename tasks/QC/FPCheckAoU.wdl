@@ -1,7 +1,7 @@
 version 1.0
 
-import "Fingerprinting.wdl" as FPUtils
-import "../../VariantUtils.wdl"
+import "../QC/Fingerprinting.wdl" as FPUtils
+import "../Utility/VariantUtils.wdl"
 
 workflow FPCheckAoU {
 

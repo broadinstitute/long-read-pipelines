@@ -1,7 +1,7 @@
 version 1.0
 
-import "../PBUtils.wdl" as PB
-import "../NanoPlot.wdl" as NP
+import "../Utility/PBUtils.wdl" as PB
+import "../Visualization/NanoPlot.wdl" as NP
 
 workflow CollectPacBioAlignedMetrics {
     meta {

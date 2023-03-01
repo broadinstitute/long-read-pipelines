@@ -120,3 +120,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LRConvertBCF.wdl
   testParameterFiles:
+- name: AlignAndCheckFingerprintCCS
+  subclass: wdl
+  primaryDescriptorPath: /tasks/Alignment/AlignAndCheckFingerprintCCS.wdl
+  testParameterFiles:

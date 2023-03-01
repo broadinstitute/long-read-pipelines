@@ -1,10 +1,10 @@
 version 1.0
 
-import "qc/FPCheckAoU.wdl" as FPCheck
-import "../metrics/CollectPacBioAlignedMetrics.wdl" as AlnMetrics
-import "../PBUtils.wdl" as PB
-import "../Utils.wdl"
-import "GeneralUtils.wdl"
+import "../QC/FPCheckAoU.wdl" as FPCheck
+import "../QC/CollectPacBioAlignedMetrics.wdl" as AlnMetrics
+import "../Utility/PBUtils.wdl" as PB
+import "../Utility/Utils.wdl"
+import "../Utility/GeneralUtils.wdl"
 
 workflow AlignAndCheckFingerprintCCS {
     meta {
