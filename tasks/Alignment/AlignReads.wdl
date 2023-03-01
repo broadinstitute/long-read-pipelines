@@ -1,6 +1,6 @@
 version 1.0
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 # A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference
 task Minimap2 {

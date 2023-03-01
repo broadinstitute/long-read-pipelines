@@ -1,7 +1,7 @@
 version 1.0
 
-import "Structs.wdl"
-import "Finalize.wdl" as FF
+import "../../structs/Structs.wdl"
+import "../Utility/Finalize.wdl" as FF
 
 workflow AlignedMetrics {
     input {

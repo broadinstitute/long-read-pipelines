@@ -1,7 +1,7 @@
 version 1.0
 
-import "tasks/Structs.wdl"
-import "tasks/Finalize.wdl" as FF
+import "../../structs/Structs.wdl"
+import "../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTPfTypeDrugResistanceMarkers {
     input {

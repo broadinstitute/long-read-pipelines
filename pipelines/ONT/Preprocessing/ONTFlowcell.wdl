@@ -1,11 +1,11 @@
 version 1.0
 
-import "tasks/ONTUtils.wdl" as ONT
-import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/NanoPlot.wdl" as NP
-import "tasks/Finalize.wdl" as FF
+import "../../tasks/Utility/ONTUtils.wdl" as ONT
+import "../../tasks/Utility/Utils.wdl" as Utils
+import "../../tasks/Alignment/AlignReads.wdl" as AR
+import "../../tasks/QC/AlignedMetrics.wdl" as AM
+import "../../tasks/Visualization/NanoPlot.wdl" as NP
+import "../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTFlowcell {
     input {

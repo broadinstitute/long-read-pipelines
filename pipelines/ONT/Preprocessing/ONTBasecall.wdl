@@ -1,7 +1,7 @@
 version 1.0
 
-import "tasks/Guppy.wdl" as Guppy
-import "tasks/Finalize.wdl" as FF
+import "../../tasks/Preprocessing/Guppy.wdl" as Guppy
+import "../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTBasecall {
     input {
