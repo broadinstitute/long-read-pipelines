@@ -4,7 +4,7 @@ version 1.0
 # This pipeline calls small variants using DeepVariant.
 #######################################################
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 task Clair {
     input {

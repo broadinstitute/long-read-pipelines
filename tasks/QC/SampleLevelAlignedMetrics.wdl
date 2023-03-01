@@ -1,8 +1,8 @@
 version 1.0
 
-import "Utils.wdl"
-import "NanoPlot.wdl" as NP
-import "AlignedMetrics.wdl" as AM
+import "../Utility/Utils.wdl"
+import "../Visualization/NanoPlot.wdl" as NP
+import "../QC/AlignedMetrics.wdl" as AM
 
 
 workflow SampleLevelAlignedMetrics {

@@ -1,7 +1,7 @@
 version 1.0
 
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 
 workflow Sniffles2 {
