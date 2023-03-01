@@ -262,10 +262,11 @@ class BarcodeStats:
                 self.master_df = DataFrame(read_excel(input_file, sheet_name=ISO3))
             else:
                 self.master_df = DataFrame(read_excel(input_file, sheet_name=sheet_name))
-            self.loci_position_names = list(self.master_df.columns[7:31])
         else:
             sep = "\t" if input_file.endswith(".tsv") else ","
-            self.master_df = DataFrame(read_csv(input_file, sep=sep))
+            self.master_df = DataFrame(read_csv(input_file, sep=sep, header=0))
+
+        self.loci_position_names = list(self.master_df.columns[7:31])
 
         # Define all the fields we're going to create:
         self.poly_het_dict = None
@@ -1590,6 +1591,7 @@ def show_stats(ISO3, color):
     p = (counts["cotx"] + counts["cotx_probable"]) / total
     stdev = np.sqrt(p * (1 - p) / total)
     fig.savefig(ISO3 + "_summary_figure.svg")
+    fig.savefig(ISO3 + "_summary_figure.png")
 
 
 if __name__ == "__main__":
