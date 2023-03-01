@@ -252,17 +252,20 @@ class BarcodeStats:
     multi_poly_field = "M/P"
     sample_name_field = "Sample_Name"
 
-    def __init__(self, excel_file, ISO3, barcode_file_path, sheet_name=None, adjusted_n=False):
+    def __init__(self, input_file, ISO3, barcode_file_path, sheet_name=None, adjusted_n=False):
 
         self.ISO3 = ISO3
         self.barcode_file_path = barcode_file_path
 
-        if not sheet_name:
-            sheet_name = ISO3
-            self.master_df = DataFrame(read_excel(excel_file, sheet_name=ISO3))
+        if input_file.endswith(".xls") or input_file.endswith(".xlsx"):
+            if not sheet_name:
+                self.master_df = DataFrame(read_excel(input_file, sheet_name=ISO3))
+            else:
+                self.master_df = DataFrame(read_excel(input_file, sheet_name=sheet_name))
+            self.loci_position_names = list(self.master_df.columns[7:31])
         else:
-            self.master_df = DataFrame(read_excel(excel_file, sheet_name=sheet_name))
-        self.loci_position_names = list(self.master_df.columns[7:31])
+            sep = "\t" if input_file.endswith(".tsv") else ","
+            self.master_df = DataFrame(read_csv(input_file, sep=sep))
 
         # Define all the fields we're going to create:
         self.poly_het_dict = None
@@ -1597,8 +1600,8 @@ if __name__ == "__main__":
     )
 
     requiredNamed = parser.add_argument_group('required named arguments')
-    requiredNamed.add_argument('-f', '--excel-file',
-                               help='Excel file containing data to process',
+    requiredNamed.add_argument('-f', '--input-file',
+                               help='TSV/CSV/Excel file containing data to process',
                                required=True)
     requiredNamed.add_argument('-s', '--sheet',
                                help='Sheet name to process.',
@@ -1608,11 +1611,18 @@ if __name__ == "__main__":
                                required=True)
     args = parser.parse_args()
 
+    # Do some validation here:
+    if (args.input_file.endswith(".xls") or args.input_file.endswith(".xlsx")) and not args.sheet:
+        print("ERROR: You must provide a sheet name with an excel file input.", file=sys.stderr)
+        sys.exit(1)
+
     # Do the work:
     BS = {}
     ISO3 = args.sheet
+    sheet_name = ISO3.replace(":", "_")
+
     BS[ISO3] = BarcodeStats(
-        args.excel_file, ISO3, args.barcodes, sheet_name=ISO3.replace(":", "_"), adjusted_n=False
+        args.input_file, ISO3, args.barcodes, sheet_name=sheet_name, adjusted_n=False
     )
 
     show_stats(ISO3, color="crimson")
