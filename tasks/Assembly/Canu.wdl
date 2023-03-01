@@ -7,7 +7,7 @@ version 1.0
 # - Currently assumes nanopore reads
 ##########################################################################################
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 workflow Canu {
     input {

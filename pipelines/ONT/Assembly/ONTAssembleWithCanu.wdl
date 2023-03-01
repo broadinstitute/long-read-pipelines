@@ -6,12 +6,12 @@ version 1.0
 ## genome assembly and variant calling.
 ######################################################################################
 
-import "tasks/Utils.wdl" as Utils
-import "tasks/Canu.wdl" as Canu
-import "tasks/Medaka.wdl" as Medaka
-import "tasks/CallAssemblyVariants.wdl" as AV
-import "tasks/Quast.wdl" as Quast
-import "tasks/Finalize.wdl" as FF
+import "../../tasks/Utility/Utils.wdl" as Utils
+import "../../tasks/Assembly/Canu.wdl" as Canu
+import "../../tasks/Preprocessing/Medaka.wdl" as Medaka
+import "../../tasks/VariantCalling/CallAssemblyVariants.wdl" as AV
+import "../../tasks/QC/Quast.wdl" as Quast
+import "../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTAssembleWithCanu {
     input {

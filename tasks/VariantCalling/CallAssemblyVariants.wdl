@@ -1,7 +1,7 @@
 version 1.0
 
-import "Structs.wdl"
-import "Utils.wdl" as Utils
+import "../../structs/Structs.wdl"
+import "../Utility/Utils.wdl" as Utils
 
 workflow CallAssemblyVariants {
     input {

@@ -6,7 +6,7 @@ version 1.0
 # - Entire Quast output will be tarballed
 ##########################################################################################
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 task Quast {
     input {
