@@ -1623,7 +1623,7 @@ if __name__ == "__main__":
 
     # Do the work:
     BS = {}
-    ISO3 = args.sheet
+    ISO3 = args.sheet.replace(".", ":")  # We have to replace '.' with ':' here because of Terra conventions.
     sheet_name = ISO3.replace(":", "_")
 
     BS[ISO3] = BarcodeStats(
