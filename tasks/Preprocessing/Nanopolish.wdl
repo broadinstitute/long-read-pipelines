@@ -5,7 +5,7 @@ version 1.0
 # Quite computationally expensive so there's a parallelization factor parameter.
 ##########################################################################################
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 workflow PolishAssembly {
     input {

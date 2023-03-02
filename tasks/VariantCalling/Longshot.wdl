@@ -1,6 +1,6 @@
 version 1.0
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 # performs Longshot algo on one particular chromosome
 task Longshot {

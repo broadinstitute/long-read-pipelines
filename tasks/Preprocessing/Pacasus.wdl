@@ -1,7 +1,7 @@
 version 1.0
 
-import "Utils.wdl" as Utils
-import "Structs.wdl"
+import "../Utility/Utils.wdl" as Utils
+import "../../structs/Structs.wdl"
 
 workflow Process {
     input {
