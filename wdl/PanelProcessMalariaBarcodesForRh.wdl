@@ -132,6 +132,41 @@ workflow PanelProcessMalariaBarcodesForRh {
             mccoil_median = mccoil_median
     }
 
+    ############################################
+    #      _____ _             _ _
+    #     |  ___(_)_ __   __ _| (_)_______
+    #     | |_  | | '_ \ / _` | | |_  / _ \
+    #     |  _| | | | | | (_| | | |/ /  __/
+    #     |_|   |_|_| |_|\__,_|_|_/___\___|
+    #
+    ############################################
+    File keyfile = t_002_ProcessBarcodeSpreadsheet.summary_stats
+
+    # Finalize our outputs.  We don't have many so let's do them all together:
+    call FF.FinalizeToDir as t_003_FinalizeOutputs {
+        input:
+            outdir = outdir,
+            files =
+            [
+                t_002_ProcessBarcodeSpreadsheet.summary_figure_svg,
+                t_002_ProcessBarcodeSpreadsheet.summary_figure_png,
+                t_002_ProcessBarcodeSpreadsheet.summary_stats,
+                t_002_ProcessBarcodeSpreadsheet.mono_barcode_stats,
+                t_002_ProcessBarcodeSpreadsheet.poly_barcode_stats,
+                t_002_ProcessBarcodeSpreadsheet.input_tsv,
+            ],
+            keyfile = keyfile
+    }
+
+    ############################################
+    #      ___        _               _
+    #     / _ \ _   _| |_ _ __  _   _| |_
+    #    | | | | | | | __| '_ \| | | | __|
+    #    | |_| | |_| | |_| |_) | |_| | |_
+    #     \___/ \__,_|\__| .__/ \__,_|\__|
+    #                    |_|
+    ############################################
+
     output {
         File summary_figure_svg = t_002_ProcessBarcodeSpreadsheet.summary_figure_svg
         File summary_figure_png = t_002_ProcessBarcodeSpreadsheet.summary_figure_png
@@ -139,9 +174,13 @@ workflow PanelProcessMalariaBarcodesForRh {
         File mono_barcode_stats = t_002_ProcessBarcodeSpreadsheet.mono_barcode_stats
         File poly_barcode_stats = t_002_ProcessBarcodeSpreadsheet.poly_barcode_stats
 
-        File input_tsv =t_002_ProcessBarcodeSpreadsheet.input_tsv
+        File input_tsv = t_002_ProcessBarcodeSpreadsheet.input_tsv
     }
 }
+
+################################################################################
+################################################################################
+################################################################################
 
 task ProcessBarcodeSpreadsheet {
     input {
@@ -197,7 +236,7 @@ task ProcessBarcodeSpreadsheet {
     Array[String] header = ["cc", "ISO3", "Year", "Number_Text", "Sample_Name", "Raw_Name", "Barcode_String", "A1", "B1", "A2", "B2", "A3", "B3", "A4", "B4", "A5", "B5", "A6", "B6", "A7", "B7", "A8", "B8", "A9", "B9", "A10", "B10", "A11", "B11", "A12", "B12", "X", "N", "M_P", "Delta_CT_Threshold", "Adjusted_Het", "mccoil_median"]
 
     String out_base_name = sub(location_code, ":", ".")
-    String input_tsv_path = "~{out_base_name}.tmp_input.tsv"
+    String input_tsv_path = "~{out_base_name}.reconstructed_input.tsv"
 
     command <<<
         source activate lr-malaria
