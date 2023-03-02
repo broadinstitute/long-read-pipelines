@@ -6,12 +6,12 @@ version 1.0
 ## genome assembly and variant calling.
 ######################################################################################
 
-import "../../tasks/Utility/Utils.wdl" as Utils
-import "../../tasks/Assembly/Flye.wdl" as Flye
-import "../../tasks/Preprocessing/Medaka.wdl" as Medaka
-import "../../tasks/VariantCalling/CallAssemblyVariants.wdl" as AV
-import "../../tasks/QC/Quast.wdl" as Quast
-import "../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Assembly/Flye.wdl" as Flye
+import "../../../tasks/Preprocessing/Medaka.wdl" as Medaka
+import "../../../tasks/VariantCalling/CallAssemblyVariants.wdl" as AV
+import "../../../tasks/QC/Quast.wdl" as Quast
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTAssembleWithFlye {
     input {

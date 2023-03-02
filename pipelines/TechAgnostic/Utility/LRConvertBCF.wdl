@@ -5,9 +5,9 @@ version 1.0
 ## transient issues stemming from the LRJointCallGVCFs workflow. Should be removed eventually.
 ############################################################################################
 
-import "../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
-import "../../tasks/Utility/Hail.wdl" as Hail
-import "../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
+import "../../../tasks/Utility/Hail.wdl" as Hail
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow LRConvertBCF {
     input {

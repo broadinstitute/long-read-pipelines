@@ -6,15 +6,15 @@ version 1.0
 ## prior to processing.
 ######################################################################################
 
-import "../../tasks/Utility/Utils.wdl" as Utils
-import "../../tasks/Utility/PBUtils.wdl" as PB
-import "../../tasks/Alignment/AlignReads.wdl" as AR
-import "../../tasks/Utility/StringTie2.wdl" as ST2
-import "../../tasks/Transcriptomics/MASSeq.wdl" as MAS
-import "../../tasks/Transcriptomics/UMI_Tools.wdl" as UMI_TOOLS
-import "../../tasks/Transcriptomics/Preprocessing_Tasks.wdl" as TX_PRE
-import "../../tasks/Transcriptomics/Postprocessing_Tasks.wdl" as TX_POST
-import "../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/PBUtils.wdl" as PB
+import "../../../tasks/Alignment/AlignReads.wdl" as AR
+import "../../../tasks/Utility/StringTie2.wdl" as ST2
+import "../../../tasks/Transcriptomics/MASSeq.wdl" as MAS
+import "../../../tasks/Transcriptomics/UMI_Tools.wdl" as UMI_TOOLS
+import "../../../tasks/Transcriptomics/Preprocessing_Tasks.wdl" as TX_PRE
+import "../../../tasks/Transcriptomics/Postprocessing_Tasks.wdl" as TX_POST
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBMASIsoSeqQuantify {
     meta {

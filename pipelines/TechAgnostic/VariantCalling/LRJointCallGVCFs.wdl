@@ -4,9 +4,9 @@ version 1.0
 ## A workflow that performs joint calling on gVCFs (usually from DeepVariant) using GLNexus.
 ############################################################################################
 
-import "../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
-import "../../tasks/Utility/Hail.wdl" as Hail
-import "../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
+import "../../../tasks/Utility/Hail.wdl" as Hail
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow LRJointCallGVCFs {
     input {

@@ -1,10 +1,10 @@
 version 1.0
 
-import "../../tasks/Utility/Utils.wdl" as Utils
-import "../../tasks/Utility/ONTUtils.wdl" as ONTUtils
-import "../../tasks/Utility/VariantUtils.wdl"
-import "../../tasks/Preprocessing/Guppy.wdl" as Guppy
-import "../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/ONTUtils.wdl" as ONTUtils
+import "../../../tasks/Utility/VariantUtils.wdl"
+import "../../../tasks/Preprocessing/Guppy.wdl" as Guppy
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTMethylation {
     input {

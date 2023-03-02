@@ -6,11 +6,11 @@ version 1.0
 ## prior to genome assembly and variant calling.
 ######################################################################################
 
-import "../../tasks/Utility/Utils.wdl" as Utils
-import "../../tasks/Assembly/Hifiasm.wdl" as HA
-import "../../tasks/VariantCalling/CallAssemblyVariants.wdl" as AV
-import "../../tasks/QC/Quast.wdl" as Quast
-import "../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Assembly/Hifiasm.wdl" as HA
+import "../../../tasks/VariantCalling/CallAssemblyVariants.wdl" as AV
+import "../../../tasks/QC/Quast.wdl" as Quast
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
     input {

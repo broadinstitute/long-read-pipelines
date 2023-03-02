@@ -6,7 +6,7 @@ version 1.0
 # Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
 ##########################################################################################
 
-import "../../structs/Structs.wdl"
+import "../../../structs/Structs.wdl"
 
 workflow DownloadFromFTP {
     input {

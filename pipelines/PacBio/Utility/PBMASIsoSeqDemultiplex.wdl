@@ -1,9 +1,9 @@
 version 1.0
 
-import "../../tasks/Utility/Utils.wdl" as Utils
-import "../../tasks/Utility/PBUtils.wdl" as PB
-import "../../tasks/Preprocessing/Longbow.wdl" as Longbow
-import "../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/PBUtils.wdl" as PB
+import "../../../tasks/Preprocessing/Longbow.wdl" as Longbow
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBMASIsoSeqDemultiplex {
     input {
