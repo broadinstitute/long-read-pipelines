@@ -186,7 +186,8 @@ task ProcessBarcodeSpreadsheet {
     # Create a header for the inputs so we can generate a TSV:
     Array[String] header = ["cc", "ISO3", "Year", "Number_Text", "Sample_Name", "Raw_Name", "Barcode_String", "A1", "B1", "A2", "B2", "A3", "B3", "A4", "B4", "A5", "B5", "A6", "B6", "A7", "B7", "A8", "B8", "A9", "B9", "A10", "B10", "A11", "B11", "A12", "B12", "X", "N", "M_P", "Delta_CT_Threshold", "Adjusted_Het", "mccoil_median"]
 
-    String input_tsv_path = "~{location_code}.tmp_input.tsv"
+    String out_base_name = sub(location_code, ":", ".")
+    String input_tsv_path = "~{out_base_name}.tmp_input.tsv"
 
     command <<<
         source activate lr-malaria
@@ -204,11 +205,11 @@ task ProcessBarcodeSpreadsheet {
     >>>
 
     output {
-        File summary_figure_svg = "~{location_code}_summary_figure.svg"
-        File summary_figure_png = "~{location_code}_summary_figure.png"
-        File summary_stats = "~{location_code}_summary.csv"
-        File mono_barcode_stats = "~{location_code}_mono_barcodes.csv"
-        File poly_barcode_stats = "~{location_code}_poly_barcodes.csv"
+        File summary_figure_svg = "~{out_base_name}_summary_figure.svg"
+        File summary_figure_png = "~{out_base_name}_summary_figure.png"
+        File summary_stats = "~{out_base_name}_summary.csv"
+        File mono_barcode_stats = "~{out_base_name}_mono_barcodes.csv"
+        File poly_barcode_stats = "~{out_base_name}_poly_barcodes.csv"
 
         File input_tsv = input_tsv_path
     }

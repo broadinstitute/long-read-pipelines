@@ -1593,8 +1593,9 @@ def show_stats(ISO3, color):
     stdev = np.sqrt(p * (1 - p) / total)
 
     # We should save both a CSV and a TSV:
-    fig.savefig(ISO3 + "_summary_figure.svg")
-    fig.savefig(ISO3 + "_summary_figure.png")
+    base_name = ISO3.replace(":", ".")  # We have to replace ':' here for ease of use with filenames.
+    fig.savefig(f"{base_name}_summary_figure.svg")
+    fig.savefig(f"{base_name}_summary_figure.png")
 
 
 if __name__ == "__main__":
@@ -1632,6 +1633,7 @@ if __name__ == "__main__":
 
     show_stats(ISO3, color="crimson")
 
-    BS[ISO3].generate_summary_report("{ISO3}_summary.csv".format(ISO3=ISO3))
-    BS[ISO3].mono_barcode_df.to_csv("{ISO3}_mono_barcodes.csv".format(ISO3=ISO3))
-    BS[ISO3].poly_df.to_csv("{ISO3}_poly_barcodes.csv".format(ISO3=ISO3))
+    base_name = ISO3.replace(":", ".")  # We have to replace ':' here for ease of use with filenames.
+    BS[ISO3].generate_summary_report(f"{base_name}_summary.csv")
+    BS[ISO3].mono_barcode_df.to_csv(f"{base_name}_mono_barcodes.csv")
+    BS[ISO3].poly_df.to_csv(f"{base_name}_poly_barcodes.csv")
