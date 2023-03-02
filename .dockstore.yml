@@ -152,3 +152,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/CompareVcfBenchmarks.wdl
   testParameterFiles:
+- name: PanelProcessMalariaBarcodesForRh
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PanelProcessMalariaBarcodesForRh.wdl
+  testParameterFiles:
