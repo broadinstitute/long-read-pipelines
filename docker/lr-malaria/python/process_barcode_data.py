@@ -249,7 +249,7 @@ class BarcodeStats:
     }
 
     # Set up field names from sheet:
-    multi_poly_field = "M/P"
+    multi_poly_field = "M_P"
     sample_name_field = "Sample_Name"
 
     def __init__(self, input_file, ISO3, barcode_file_path, sheet_name=None, adjusted_n=False):
