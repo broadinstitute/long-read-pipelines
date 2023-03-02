@@ -1,9 +1,9 @@
 version 1.0
 
-import "tasks/Finalize.wdl" as FF
+import "../../tasks/Utility/Finalize.wdl" as FF
 
-import "tasks/utils/qc/Fingerprinting.wdl" as FPUtils
-import "tasks/VariantUtils.wdl"
+import "../../tasks/QC/Fingerprinting.wdl" as FPUtils
+import "../../tasks/Utility/VariantUtils.wdl"
 
 workflow VerifyFingerprint {
 

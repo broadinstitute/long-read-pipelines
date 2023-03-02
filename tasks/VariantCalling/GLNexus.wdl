@@ -6,8 +6,8 @@ version 1.0
 # subset of intervals (this can be useful for finding duplicate samples).
 ##########################################################################################
 
-import "Utils.wdl"
-import "VariantUtils.wdl"
+import "../Utility/Utils.wdl"
+import "../Utility/VariantUtils.wdl"
 
 workflow JointCall {
     input {

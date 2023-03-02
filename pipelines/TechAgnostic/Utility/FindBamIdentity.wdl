@@ -1,9 +1,9 @@
 version 1.0
 
-import "tasks/Utils.wdl"
-import "tasks/VariantUtils.wdl"
+import "../../tasks/Utility/Utils.wdl"
+import "../../tasks/Utility/VariantUtils.wdl"
 
-import "tasks/utils/qc/Fingerprinting.wdl" as FPUtils
+import "../../tasks/QC/Fingerprinting.wdl" as FPUtils
 
 workflow FindBamIdentity {
 

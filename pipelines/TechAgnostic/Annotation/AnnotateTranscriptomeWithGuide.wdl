@@ -1,9 +1,9 @@
 version 1.0
 
-import "tasks/PBUtils.wdl" as PB
-import "tasks/Utils.wdl" as Utils
-import "tasks/StringTie2.wdl"
-import "tasks/Finalize.wdl" as FF
+import "../../tasks/Utility/PBUtils.wdl" as PB
+import "../../tasks/Utility/Utils.wdl" as Utils
+import "../../tasks/Utility/StringTie2.wdl"
+import "../../tasks/Utility/Finalize.wdl" as FF
 
 workflow AnnotateTranscriptomeWithGuide {
     input {
