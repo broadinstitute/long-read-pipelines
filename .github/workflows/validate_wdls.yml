@@ -25,7 +25,7 @@ jobs:
                 echo "$CONDA/bin" >> $GITHUB_PATH
 
             - name: Validate Pipelines
-              run: find ./pipelines -type f -name "*.wdl" | while read -r line ; do womtool validate ${line}; done
+              run: find ./pipelines -type f -name "*.wdl" | while read -r line ; do echo ${line}; womtool validate ${line}; done
 
             - name: Validate Tasks
-              run: find ./tasks -type f -name "*.wdl" | while read -r line ; do womtool validate ${line}; done
+              run: find ./tasks -type f -name "*.wdl" | while read -r line ; do echo ${line}; womtool validate ${line}; done
