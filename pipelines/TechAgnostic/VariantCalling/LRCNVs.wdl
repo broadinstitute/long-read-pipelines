@@ -18,7 +18,7 @@
 
 version 1.0
 
-import "tasks/dsde_pipelines_tasks/cnv_common_tasks.wdl" as CNVTasks
+import "../../tasks/Utility/cnv_common_tasks.wdl" as CNVTasks
 
 workflow LRCNVs {
 
