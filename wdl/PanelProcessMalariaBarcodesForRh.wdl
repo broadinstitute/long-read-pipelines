@@ -191,6 +191,10 @@ task ProcessBarcodeSpreadsheet {
     command <<<
         set -euxo pipefail
 
+        which python
+        source activate lr-malaria
+        which python
+
         ## Generate the input TSV:
         tmp_input_tsv=~{write_tsv([header, cc, ISO3, Year, Number_Text, Sample_Name, Raw_Name, Barcode_String, A1, B1, A2, B2, A3, B3, A4, B4, A5, B5, A6, B6, A7, B7, A8, B8, A9, B9, A10, B10, A11, B11, A12, B12, X, N, M_P, Delta_CT_Threshold, Adjusted_Het, mccoil_median])}
         mv ${tmp_input_tsv} ~{input_tsv_path}
