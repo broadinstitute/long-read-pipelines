@@ -1,4 +1,4 @@
-name: validate-wdls
+name: validate-dockstore-yaml
 on: push
 jobs:
     publish-test:
@@ -28,6 +28,9 @@ jobs:
                 source ~/.bashrc
                 mkdir -p ~/.dockstore
                 printf "token: 19dd4c1120940ea0f604cc856826d58eae108eeb72b8bb6186a8ce0e60b96637\nserver-url: https://dockstore.org/api\n" > ~/.dockstore/config
+                ls -al ~
+                ls -al ~/bin
+                cat ~/.bashrc
 
             - name: Validate dockstore.yml
               run: dockstore yaml validate --path .
