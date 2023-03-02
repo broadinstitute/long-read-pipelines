@@ -89,7 +89,7 @@ workflow PanelProcessMalariaBarcodesForRh {
     # Create an outdir:
     String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/PanelProcessMalariaBarcodesForRh/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/PanelProcessMalariaBarcodesForRh/~{dir_prefix}"
 
-    call ProcessBarcodeSpreadsheet {
+    call ProcessBarcodeSpreadsheet as t_002_ProcessBarcodeSpreadsheet {
         input:
             location_code = location_code,
             barcode_def_tsv = barcode_def_tsv,
@@ -130,6 +130,16 @@ workflow PanelProcessMalariaBarcodesForRh {
             Delta_CT_Threshold = Delta_CT_Threshold,
             Adjusted_Het = Adjusted_Het,
             mccoil_median = mccoil_median
+    }
+
+    output {
+        File summary_figure_svg = t_002_ProcessBarcodeSpreadsheet.summary_figure_svg
+        File summary_figure_png = t_002_ProcessBarcodeSpreadsheet.summary_figure_png
+        File summary_stats = t_002_ProcessBarcodeSpreadsheet.summary_stats
+        File mono_barcode_stats = t_002_ProcessBarcodeSpreadsheet.mono_barcode_stats
+        File poly_barcode_stats = t_002_ProcessBarcodeSpreadsheet.poly_barcode_stats
+
+        File input_tsv =t_002_ProcessBarcodeSpreadsheet.input_tsv
     }
 }
 
