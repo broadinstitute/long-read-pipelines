@@ -26,7 +26,7 @@ jobs:
                 chmod +x ~/bin/dockstore
                 echo 'export PATH=~/bin:$PATH' >> ~/.bashrc
                 export PATH=~/bin:$PATH
-                source ~/.bashrc
+                #source ~/.bashrc
                 mkdir -p ~/.dockstore
                 printf "token: 19dd4c1120940ea0f604cc856826d58eae108eeb72b8bb6186a8ce0e60b96637\nserver-url: https://dockstore.org/api\n" > ~/.dockstore/config
                 ls -al ~
