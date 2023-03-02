@@ -4,16 +4,14 @@ jobs:
     publish-test:
         runs-on: ubuntu-18.04
         steps:
+            - name: Checkout branch
+              uses: actions/checkout@v3
+
             - name: Setup Java 11
               uses: actions/setup-java@v2
               with:
                 distribution: 'temurin'
                 java-version: '11'
-                cache: 'gradle'
-            - run: ./gradlew build
-
-            - name: Checkout branch
-              uses: actions/checkout@v3
 
             - name: Cache node_modules
               uses: actions/cache@v2
