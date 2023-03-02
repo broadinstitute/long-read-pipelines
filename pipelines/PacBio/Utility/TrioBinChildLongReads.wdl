@@ -10,9 +10,9 @@ version 1.0
 ##   part two: given the k-mer stats database from part one, classify child long reads
 ##########################################################################################
 
-import "tasks/CollectParentsKmerStats.wdl" as stats
+import "../../tasks/Preprocessing/CollectParentsKmerStats.wdl" as stats
 
-import "tasks/AssignChildLongReads.wdl" as asign
+import "../../tasks/Utility/AssignChildLongReads.wdl" as asign
 
 workflow TrioBinChildLongReads {
     input{

@@ -7,11 +7,10 @@ version 1.0
 ## IsoSeq software.  A number of metrics and figures are produced along the way.
 ##########################################################################################
 
-import "tasks/PBUtils.wdl" as PB
-import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
-import "tasks/Tama.wdl" as TAMA
-import "tasks/Finalize.wdl" as FF
+import "../../tasks/Utility/PBUtils.wdl" as PB
+import "../../tasks/Utility/Utils.wdl" as Utils
+import "../../tasks/Alignment/AlignReads.wdl" as AR
+import "../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBCCSIsoSeq {
     input {

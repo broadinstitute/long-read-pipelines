@@ -9,7 +9,7 @@ version 1.0
 ##   part one: collect k-mer stats given parental (short) reads
 ##########################################################################################
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 workflow CollectParentsKmerStats {
     input{
