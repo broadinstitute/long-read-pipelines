@@ -1,7 +1,7 @@
 version 1.0
 
-import "Utils.wdl"
-import "VariantUtils.wdl"
+import "../Utility/Utils.wdl"
+import "../Utility/VariantUtils.wdl"
 import "PBSV.wdl"
 import "Sniffles2.wdl" as Sniffles2
 import "Clair.wdl" as Clair3
