@@ -16,7 +16,7 @@ jobs:
             - name: Setup docker
               uses: docker-practice/actions-setup-docker@master
               timeout-minutes: 12
-              run: |
+            - run: |
                 sudo usermod -aG docker $USER
                 exec newgrp docker
 
