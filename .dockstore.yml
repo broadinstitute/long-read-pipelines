@@ -3,100 +3,75 @@ workflows:
 - name: MalariaAssembly
   subclass: wdl
   primaryDescriptorPath: /wdl/MalariaAssembly.wdl
-  testParameterFiles:
 - name: ONTWholeGenome
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/VariantCalling/ONTWholeGenome.wdl
-  testParameterFiles:
 - name: ONTFlowcell
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/Preprocessing/ONTFlowcell.wdl
-  testParameterFiles:
 - name: PBFlowcell
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/Alignment/PBFlowcell.wdl
-  testParameterFiles:
 - name: PBCCS
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/Utility/PBCCS.wdl
-  testParameterFiles:
 - name: PBCCSNoSharding
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCSNoSharding.wdl
-  testParameterFiles:
 - name: PBCCSIsoSeq
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/Utility/PBCCSIsoSeq.wdl
-  testParameterFiles:
 - name: PBCCSWholeGenome
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/VariantCalling/PBCCSWholeGenome.wdl
-  testParameterFiles:
 - name: PBCLRWholeGenome
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/VariantCalling/PBCLRWholeGenome.wdl
-  testParameterFiles:
 - name: ExtractAouData
   subclass: wdl
   primaryDescriptorPath: /wdl/ExtractAouData.wdl
-  testParameterFiles:
 - name: LRCNVs
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
-  testParameterFiles:
 - name: ONTBasecall
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/Preprocessing/ONTBasecall.wdl
-  testParameterFiles:
 - name: ONTAssembleWithCanu
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/Assembly/ONTAssembleWithCanu.wdl
-  testParameterFiles:
 - name: ONTAssembleWithFlye
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/Assembly/ONTAssembleWithFlye.wdl
-  testParameterFiles:
 - name: VerifyFingerprint
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
-  testParameterFiles:
 - name: PBAssembleWithHifiasm
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/Assembly/PBAssembleWithHifiasm.wdl
-  testParameterFiles:
 - name: ONTMethylation
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/Epigenomics/ONTMethylation.wdl
-  testParameterFiles:
 - name: ONTPfHrp2Hrp3Status
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/MultiAnalysis/ONTPfHrp2Hrp3Status.wdl
-  testParameterFiles:
 - name: ONTPfTypeDrugResistanceMarkers
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/MultiAnalysis/ONTPfTypeDrugResistanceMarkers.wdl
-  testParameterFiles:
 - name: PBMASIsoSeqQuantify
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/Utility/PBMASIsoSeqQuantify.wdl
-  testParameterFiles:
 - name: PBMASIsoSeqDemultiplex
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/Utility/PBMASIsoSeqDemultiplex.wdl
-  testParameterFiles:
 - name: LRJointCallGVCFs
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/VariantCalling/LRJointCallGVCFs.wdl
-  testParameterFiles:
 - name: ConvertToHailMT
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/Utility/ConvertToHailMT.wdl
-  testParameterFiles:
 - name: LRConvertBCF
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
-  testParameterFiles:
 - name: AlignAndCheckFingerprintCCS
   subclass: wdl
   primaryDescriptorPath: /tasks/Alignment/AlignAndCheckFingerprintCCS.wdl
-  testParameterFiles:
