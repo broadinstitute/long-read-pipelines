@@ -3,6 +3,9 @@ workflows:
 - name: MalariaAssembly
   subclass: wdl
   primaryDescriptorPath: /wdl/MalariaAssembly.wdl
+- name: ONT10x
+  subclass: wdl
+  primaryDescriptorPath: /deprecated_wdl/ONT10x.wdl
 - name: ONTWholeGenome
   subclass: wdl
   primaryDescriptorPath: /pipelines/ONT/VariantCalling/ONTWholeGenome.wdl
@@ -18,12 +21,24 @@ workflows:
 - name: PBCCSNoSharding
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCSNoSharding.wdl
+- name: PBCCS10x
+  subclass: wdl
+  primaryDescriptorPath: /deprecated_wdl/PBCCS10x.wdl
+- name: PBCCSDemultiplex
+  subclass: wdl
+  primaryDescriptorPath: /deprecated_wdl/PBCCSDemultiplex.wdl
+- name: PBCCSDemultiplexWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /deprecated_wdl/PBCCSDemultiplexWholeGenome.wdl
 - name: PBCCSIsoSeq
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/Utility/PBCCSIsoSeq.wdl
 - name: PBCCSWholeGenome
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/VariantCalling/PBCCSWholeGenome.wdl
+- name: PBCLRDemultiplexWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /deprecated_wdl/PBCLRDemultiplexWholeGenome.wdl
 - name: PBCLRWholeGenome
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/VariantCalling/PBCLRWholeGenome.wdl
@@ -45,6 +60,9 @@ workflows:
 - name: VerifyFingerprint
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
+- name: DownloadFromHudsonAlpha
+  subclass: wdl
+  primaryDescriptorPath: /deprecated_wdl/DownloadFromHudsonAlpha.wdl
 - name: PBAssembleWithHifiasm
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/Assembly/PBAssembleWithHifiasm.wdl

@@ -1,11 +1,11 @@
 version 1.0
 
-import "tasks/Utils.wdl" as Utils
-import "tasks/ONTUtils.wdl" as ONT
+import "../tasks/Utility/Utils.wdl" as Utils
+import "../tasks/Utility/ONTUtils.wdl" as ONT
 import "tasks/C3POa.wdl" as C3
-import "tasks/AlignReads.wdl" as AR
-import "tasks/AlignedMetrics.wdl" as AM
-import "tasks/Finalize.wdl" as FF
+import "../tasks/Alignment/AlignReads.wdl" as AR
+import "../tasks/QC/AlignedMetrics.wdl" as AM
+import "../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONT10x {
     input {

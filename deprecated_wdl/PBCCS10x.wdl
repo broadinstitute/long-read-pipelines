@@ -1,11 +1,11 @@
 version 1.0
 
-import "tasks/PBUtils.wdl" as PB
-import "tasks/Utils.wdl" as Utils
-import "tasks/AlignReads.wdl" as AR
-import "tasks/AlignedMetrics.wdl" as AM
+import "../tasks/Utility/PBUtils.wdl" as PB
+import "../tasks/Utility/Utils.wdl" as Utils
+import "../tasks/Alignment/AlignReads.wdl" as AR
+import "../tasks/QC/AlignedMetrics.wdl" as AM
 import "tasks/AnnotateAdapters.wdl" as AA
-import "tasks/Finalize.wdl" as FF
+import "../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBCCS10x {
     input {
