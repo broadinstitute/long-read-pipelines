@@ -11,10 +11,10 @@ workflows:
   primaryDescriptorPath: /pipelines/ONT/Preprocessing/ONTFlowcell.wdl
 - name: PBFlowcell
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/Alignment/PBFlowcell.wdl
+  primaryDescriptorPath: /pipelines/PacBio/Alignment/PBFlowcell.wdl
 - name: PBCCS
   subclass: wdl
-  primaryDescriptorPath: /pipelines/PacBio/Utility/PBCCS.wdl
+  primaryDescriptorPath: /deprecated_wdl/PBCCS.wdl
 - name: PBCCSNoSharding
   subclass: wdl
   primaryDescriptorPath: /wdl/PBCCSNoSharding.wdl
@@ -72,6 +72,3 @@ workflows:
 - name: LRConvertBCF
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
-- name: AlignAndCheckFingerprintCCS
-  subclass: wdl
-  primaryDescriptorPath: /tasks/Alignment/AlignAndCheckFingerprintCCS.wdl
