@@ -18,9 +18,6 @@ workflows:
 - name: PBCCS
   subclass: wdl
   primaryDescriptorPath: /deprecated_wdl/PBCCS.wdl
-- name: PBCCSNoSharding
-  subclass: wdl
-  primaryDescriptorPath: /wdl/PBCCSNoSharding.wdl
 - name: PBCCS10x
   subclass: wdl
   primaryDescriptorPath: /deprecated_wdl/PBCCS10x.wdl
@@ -42,9 +39,6 @@ workflows:
 - name: PBCLRWholeGenome
   subclass: wdl
   primaryDescriptorPath: /pipelines/PacBio/VariantCalling/PBCLRWholeGenome.wdl
-- name: ExtractAouData
-  subclass: wdl
-  primaryDescriptorPath: /wdl/ExtractAouData.wdl
 - name: LRCNVs
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
