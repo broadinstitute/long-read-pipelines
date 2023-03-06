@@ -1,10 +1,10 @@
 version 1.0
 
-import "tasks/utils/AlignAndCheckFingerprintCCS.wdl" as major
-import "tasks/utils/BAMutils.wdl"
-import "tasks/Utils.wdl"
-import "tasks/utils/GeneralUtils.wdl" as GU
-import "tasks/Finalize.wdl" as FF
+import "../tasks/Alignment/AlignAndCheckFingerprintCCS.wdl" as major
+import "../tasks/Utility/BAMutils.wdl"
+import "../tasks/Utility/Utils.wdl"
+import "../tasks/Utility/GeneralUtils.wdl" as GU
+import "../tasks/Utility/Finalize.wdl" as FF
 
 workflow PostprocessCCSedDemultiplexedSMRTCell {
     meta {

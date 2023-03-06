@@ -7,7 +7,7 @@ version 1.0
 #  https://github.com/lh3/minimap2/tree/master/misc#asmvar
 ##########################################################################################
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 workflow Peregrine {
     input {

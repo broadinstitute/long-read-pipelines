@@ -4,7 +4,7 @@ version 1.0
 # Workflow that runs F5C rewrite of Nanopolish to call methylation.
 ##########################################################################################
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 workflow Methylation {
     input {

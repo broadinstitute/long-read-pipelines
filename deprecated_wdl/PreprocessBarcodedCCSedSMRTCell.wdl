@@ -2,11 +2,11 @@ version 1.0
 
 import "tasks/CCSLima.wdl"
 import "tasks/SMRTtools.wdl"
-import "tasks/metrics/CollectSMRTCellUnalignedMetrics.wdl" as uBAMCustomMetrics
-import "tasks/PBUtils.wdl" as PB
-import "tasks/Finalize.wdl" as FF
-import "tasks/Utils.wdl"
-import "tasks/utils/GeneralUtils.wdl" as GU
+import "../tasks/QC/CollectSMRTCellUnalignedMetrics.wdl" as uBAMCustomMetrics
+import "../tasks/Utility//PBUtils.wdl" as PB
+import "../tasks/Utility//Finalize.wdl" as FF
+import "../tasks/Utility/Utils.wdl"
+import "../tasks/Utility/GeneralUtils.wdl" as GU
 
 workflow PreprocessBarcodedCCSedSMRTCell {
     meta {

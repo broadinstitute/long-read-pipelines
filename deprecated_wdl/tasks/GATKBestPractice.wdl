@@ -12,7 +12,7 @@ import "dsde_pipelines_tasks/GermlineVariantDiscovery.wdl" as Calling
 import "dsde_pipelines_tasks/Qc.wdl" as QC
 import "dsde_pipelines_tasks/Utilities.wdl" as DSDEPipelinesUtils
 
-import "Utils.wdl" as Utils
+import "../../tasks/Utility/Utils.wdl" as Utils
 
 workflow GATKBestPraciceForLR {
     input {

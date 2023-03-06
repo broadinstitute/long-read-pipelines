@@ -6,7 +6,7 @@ version 1.0
 # Each individual task/algo. is directly callable, if so desired.
 ##########################################################################################
 
-import "Structs.wdl"
+import "../../structs/Structs.wdl"
 
 task CuteSV {
     input {

@@ -1,8 +1,8 @@
 version 1.0
 
-import "Utils.wdl" as Utils
-import "PBUtils.wdl" as PB
-import "Structs.wdl"
+import "../../tasks/Utility/Utils.wdl" as Utils
+import "../../tasks/Utility/PBUtils.wdl" as PB
+import "../../structs/Structs.wdl"
 
 # TODO: Merge this file and `AnnotateAdapters.wdl`
 
