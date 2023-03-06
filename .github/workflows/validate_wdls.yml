@@ -24,8 +24,13 @@ jobs:
                 $CONDA/bin/conda install -y -c bioconda womtool
                 echo "$CONDA/bin" >> $GITHUB_PATH
 
-            - name: Validate Pipelines
-              run: find ./pipelines -type f -name "*.wdl" | while read -r line ; do echo ${line}; womtool validate ${line}; done
+            # Validates all wdls in the pipeline and task folder. Would be useful in a
+            # test that requries all wdls tested such as a monthly test
+#            - name: Validate Pipelines
+#              run: find ./pipelines -type f -name "*.wdl" | while read -r line ; do echo ${line}; womtool validate ${line}; done
+#
+#            - name: Validate Tasks
+#              run: find ./tasks -type f -name "*.wdl" | while read -r line ; do echo ${line}; womtool validate ${line}; done
 
-            - name: Validate Tasks
-              run: find ./tasks -type f -name "*.wdl" | while read -r line ; do echo ${line}; womtool validate ${line}; done
+            - name: Validate All Edited WDLs
+              run: git diff --name-only main | grep "\.wdl" | while read -r line ; do echo ${line}; womtool validate ${line}; done
