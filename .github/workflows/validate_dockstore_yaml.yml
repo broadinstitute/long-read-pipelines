@@ -2,7 +2,7 @@ name: validate-dockstore-yaml
 on: push
 jobs:
     publish-test:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout branch
               uses: actions/checkout@v3
