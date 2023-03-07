@@ -27,7 +27,7 @@ task ConvertToHailMT {
         set -x
 
         export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
         chmod +x monitoring_script.sh
         ./monitoring_script.sh &> resources.log &
         monitoring_pid=$!

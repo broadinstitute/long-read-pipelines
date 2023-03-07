@@ -71,7 +71,49 @@ workflow PanelProcessMalariaBarcodesForRh {
     }
 
     parameter_meta {
-        # TODO: FILL THIS IN
+        location_code: "Location code of the sample.  Should correspond to the ISO3 value."
+        barcode_def_tsv: "TSV file containing the definition of the SNP barcode sites with the columns: Name, Contig, Position"
+
+        cc: ""
+        ISO3: ""
+        Year: "Year this dataset was collected."
+        Number_Text: ""
+        Sample_Name: ""
+        Raw_Name: ""
+        Barcode_String: "Nucleotide sequence of all barcode SNPs in genomic order."
+        A1: "Nucleotide at the A1 barcode position."
+        B1: "Nucleotide at the B1 barcode position."
+        A2: "Nucleotide at the A2 barcode position."
+        B2: "Nucleotide at the B2 barcode position."
+        A3: "Nucleotide at the A3 barcode position."
+        B3: "Nucleotide at the B3 barcode position."
+        A4: "Nucleotide at the A4 barcode position."
+        B4: "Nucleotide at the B4 barcode position."
+        A5: "Nucleotide at the A5 barcode position."
+        B5: "Nucleotide at the B5 barcode position."
+        A6: "Nucleotide at the A6 barcode position."
+        B6: "Nucleotide at the B6 barcode position."
+        A7: "Nucleotide at the A7 barcode position."
+        B7: "Nucleotide at the B7 barcode position."
+        A8: "Nucleotide at the A8 barcode position."
+        B8: "Nucleotide at the B8 barcode position."
+        A9: "Nucleotide at the A9 barcode position."
+        B9: "Nucleotide at the B9 barcode position."
+        A10:"Nucleotide at the A10 barcode position."
+        B10:"Nucleotide at the B10 barcode position."
+        A11:"Nucleotide at the A11 barcode position."
+        B11:"Nucleotide at the B11 barcode position."
+        A12:"Nucleotide at the A12 barcode position."
+        B12:"Nucleotide at the B12 barcode position."
+        X: ""
+        N: ""
+        M_P: "Mono- / Poly-clonal indicator."
+        Delta_CT_Threshold: ""
+        Adjusted_Het: ""
+        mccoil_median: ""
+
+        dir_prefix: "directory prefix for output files"
+        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
     ####################################
