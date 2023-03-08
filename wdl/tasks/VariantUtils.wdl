@@ -323,7 +323,7 @@ task MergeVCFs {
             # genotype information to reduce compute time and memory, as only
             # SV site information is needed for GraphTyper’s graph
             # construction." Otherwise they say it's similar to SURVIVOR.
-            ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list.txt
+            ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list.txt chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY
             N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "svimmer,${N_INS},${N_DEL}" >> counts.txt
