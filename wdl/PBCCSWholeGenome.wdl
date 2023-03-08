@@ -149,6 +149,7 @@ workflow PBCCSWholeGenome {
 
             call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = select_first([CallVariants.sniffles_vcf]) }
             call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = select_first([CallVariants.sniffles_tbi]) }
+            call FF.FinalizeToFile as FinalizeSnifflesSnf { input: outdir = svdir, file = select_first([CallVariants.sniffles_snf]) }
         }
 
         if (call_small_variants) {
@@ -194,6 +195,7 @@ workflow PBCCSWholeGenome {
 
         File? sniffles_vcf = FinalizeSniffles.gcs_path
         File? sniffles_tbi = FinalizeSnifflesTbi.gcs_path
+        File? sniffles_snf = FinalizeSnifflesSnf.gcs_path
 
         File? clair_vcf = FinalizeClairVcf.gcs_path
         File? clair_tbi = FinalizeClairTbi.gcs_path
