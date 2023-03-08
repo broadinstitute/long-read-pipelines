@@ -231,7 +231,7 @@ task MergeVCFs {
         rm -f list.txt; touch list.txt
         rm -f counts.txt; touch counts.txt
         for VCF_FILE in ~{sep=' ' vcfs}; do
-            bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}_pass.vcf
+            bcftools filter --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}_pass.vcf
             N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
@@ -323,7 +323,7 @@ task MergeVCFs {
             # genotype information to reduce compute time and memory, as only
             # SV site information is needed for GraphTyper’s graph
             # construction." Otherwise they say it's similar to SURVIVOR.
-            ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list.txt chr21 chr22
+            ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list.txt
             N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "svimmer,${N_INS},${N_DEL}" >> counts.txt
