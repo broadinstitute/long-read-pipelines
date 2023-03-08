@@ -152,3 +152,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/TTMarsEvaluateSVs.wdl
   testParameterFiles:
+- name: LRMergeSVVCFs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LRMergeSVVCFs.wdl
+  testParameterFiles:

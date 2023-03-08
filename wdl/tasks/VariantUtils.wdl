@@ -189,14 +189,28 @@ task MergeAndSortVCFs {
     }
 }
 
-task MergeVCFs {
-    meta {
-        description: "Merge VCFs using BCFTools ensuring that: (1) only PASS calls are kept; (2) SVs with the same CHR,POS,REF,ALT, but different SVLEN, END or STRAND, are not collapsed (collapsing such SVs would be the default behavior of bcftools when ALTs are symbolic); (3) no multi-allelic entries result from merging."
-    }
 
+# Merges VCFs using one of the following methods:
+# - $bcftools merge$ followed by $truvari collapse$; in $bcftools merge$, ./.
+#   genotypes are transformed to 0/0, and no multi-allelic entries are created;
+# - jasmine
+# - svimmer
+#
+# Every input VCF is reformatted to ensure that: (1) only PASS calls are kept;
+# SVs with the same CHR,POS,REF,ALT, but different SVLEN, END or STRAND, are
+# not collapsed (collapsing such SVs would be the default behavior of $bcftools
+# merge$ when ALTs are symbolic).
+# 
+task MergeVCFs {
     input {
         Array[File] vcfs
         Array[File] tbis
+        File reference_fa
+        Int use_bcftoolsmerge_only
+        Int use_truvari
+        String truvari_keep
+        Int use_jasmine
+        Int use_svimmer
 
         String prefix
 
@@ -211,66 +225,128 @@ task MergeVCFs {
         N_SOCKETS="$(lscpu | grep '^Socket(s):' | awk '{print $NF}')"
         N_CORES_PER_SOCKET="$(lscpu | grep '^Core(s) per socket:' | awk '{print $NF}')"
         N_THREADS=$(( ${N_SOCKETS} * ${N_CORES_PER_SOCKET} ))
+        TIME_COMMAND="/usr/bin/time --verbose"
         
+        # Reformatting per-sample VCFs
         rm -f list.txt; touch list.txt
+        rm -f counts.txt; touch counts.txt
         for VCF_FILE in ~{sep=' ' vcfs}; do
-            bcftools filter --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}-pass.vcf
-            bcftools view -h ${VCF_FILE}-pass.vcf > ${VCF_FILE}-distinct.vcf
-            bcftools view -H ${VCF_FILE}-pass.vcf | awk '{ \
-                tag="artificial"; \
-                if ($5=="<DEL>" || $5=="<DUP>" || $5=="<INV>" || $5=="<INS>") { \
-                    svtype=substr($5,2,3); \
-                    end=""; \
-                    svlen=""; \
-                    strand=""; \
-                    n=split($8,A,";"); \
-                    for (i=1; i<=n; i++) { \
-                        if (substr(A[i],1,4)=="END=") end=substr(A[i],5); \
-                        else if (substr(A[i],1,6)=="SVLEN=") { \
-                            if (substr(A[i],7,1)=="-") svlen=substr(A[i],8); \
-                            else svlen=substr(A[i],7); \
+            bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}_pass.vcf
+            N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
+            python3 /sv-merging/preprocess_vcf.py ${VCF_FILE}_pass.vcf ~{reference_fa} > ${VCF_FILE}_pass_alts_fixed.vcf
+            rm -f ${VCF_FILE}_pass.vcf
+            if [ ~{use_bcftoolsmerge_only} -eq 1 -o ~{use_truvari} -eq 1 ]; then
+                bcftools view -h ${VCF_FILE}_pass_alts_fixed.vcf > ${VCF_FILE}_distinct.vcf
+                bcftools view -H ${VCF_FILE}_pass_alts_fixed.vcf | awk '{ \
+                    tag="artificial"; \
+                    if ($5=="<DEL>" || $5=="<DUP>" || $5=="<INV>" || $5=="<INS>") { \
+                        svtype=substr($5,2,3); \
+                        end=""; \
+                        svlen=""; \
+                        strand=""; \
+                        n=split($8,A,";"); \
+                        for (i=1; i<=n; i++) { \
+                            if (substr(A[i],1,4)=="END=") end=substr(A[i],5); \
+                            else if (substr(A[i],1,6)=="SVLEN=") { \
+                                if (substr(A[i],7,1)=="-") svlen=substr(A[i],8); \
+                                else svlen=substr(A[i],7); \
+                            } \
+                            else if (substr(A[i],1,7)=="STRAND=") strand=substr(A[i],8); \
                         } \
-                        else if (substr(A[i],1,7)=="STRAND=") strand=substr(A[i],8); \
-                    } \
-                    $5="<" svtype ":" tag ":" (length(end)==0?"?":end) ":" (length(svlen)==0?"?":svlen) ":" (length(strand)==0?"?":strand) ">" \
-                }; \
+                        $5="<" svtype ":" tag ":" (length(end)==0?"?":end) ":" (length(svlen)==0?"?":svlen) ":" (length(strand)==0?"?":strand) ">" \
+                    }; \
+                    printf("%s",$1); \
+                    for (i=2; i<=NF; i++) printf("\t%s",$i); \
+                    printf("\n"); \
+                }' >> ${VCF_FILE}_distinct.vcf
+                rm -f ${VCF_FILE}_pass_alts_fixed.vcf
+            else
+                mv ${VCF_FILE}_pass_alts_fixed.vcf ${VCF_FILE}_distinct.vcf
+            fi
+            bgzip --threads ${N_THREADS} ${VCF_FILE}_distinct.vcf
+            tabix ${VCF_FILE}_distinct.vcf.gz
+            echo ${VCF_FILE}_distinct.vcf.gz >> list.txt
+        done
+        
+        # Clustering
+        if [ ~{use_bcftoolsmerge_only} -eq 1 ]; then
+            ${TIME_COMMAND} bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf
+            bcftools view -h merged.vcf > ~{prefix}.vcf
+            bcftools view -H merged.vcf | awk '{ \
+                tag="artificial"; \
+                if (substr($5,6,length(tag))==tag) $5=substr($5,1,4) ">"; \
                 printf("%s",$1); \
                 for (i=2; i<=NF; i++) printf("\t%s",$i); \
                 printf("\n"); \
-            }' >> ${VCF_FILE}-distinct.vcf
-            rm -f ${VCF_FILE}-pass.vcf
-            bgzip --threads ${N_THREADS} ${VCF_FILE}-distinct.vcf
-            tabix ${VCF_FILE}-distinct.vcf
-            echo ${VCF_FILE}-distinct.vcf.gz >> list.txt
-        done
-        bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --merge none --file-list list.txt --output-type v --output merged.vcf
-        bcftools view -h merged.vcf > ~{prefix}.vcf
-        bcftools view -H merged.vcf | awk '{ \
-            tag="artificial"; \
-            if (substr($5,6,length(tag))==tag) $5=substr($5,1,4) ">"; \
-            printf("%s",$1); \
-            for (i=2; i<=NF; i++) printf("\t%s",$i); \
-            printf("\n"); \
-        }' >> ~{prefix}.vcf
-        rm -f merged.vcf
-        bgzip --threads ${N_THREADS} ~{prefix}.vcf
+            }' >> ~{prefix}.vcf
+            rm -f merged.vcf
+            N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "bcftools_merge,${N_INS},${N_DEL}" >> counts.txt
+        elif [ ~{use_truvari} -eq 1 ]; then
+            ${TIME_COMMAND} bcftools merge --threads ${N_THREADS} --apply-filters .,PASS --missing-to-ref --merge none --file-list list.txt --output-type v --output merged.vcf
+            bcftools view -h merged.vcf > mergedPrime.vcf
+            bcftools view -H merged.vcf | awk '{ \
+                tag="artificial"; \
+                if (substr($5,6,length(tag))==tag) $5=substr($5,1,4) ">"; \
+                printf("%s",$1); \
+                for (i=2; i<=NF; i++) printf("\t%s",$i); \
+                printf("\n"); \
+            }' >> mergedPrime.vcf
+            rm -f merged.vcf
+            N_INS=$(grep "SVTYPE=INS" mergedPrime.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" mergedPrime.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "bcftools_merge,${N_INS},${N_DEL}" >> counts.txt
+            ${TIME_COMMAND} truvari collapse --threads ${N_THREADS} --input mergedPrime.vcf --output ~{prefix}.vcf --collapsed-output collapsed.vcf --reference ~{reference_fa} --keep ~{truvari_keep} --passonly
+            N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "truvari_collapse,${N_INS},${N_DEL}" >> counts.txt
+        elif [ ~{use_jasmine} -eq 1 ]; then
+            touch list_decompressed.txt
+            while read VCF_GZ_FILE; do
+                gunzip ${VCF_GZ_FILE}
+                echo ${VCF_GZ_FILE%.gz} >> list_decompressed.txt
+            done < list.txt
+            MIN_SEQ_ID="0.7"  # Like truvari's default
+            source activate jasmine
+            ${TIME_COMMAND} jasmine threads=${N_THREADS} min_seq_id=${MIN_SEQ_ID} --output_genotypes genome_file=~{reference_fa} file_list=list_decompressed.txt out_file=~{prefix}.vcf
+            conda deactivate
+            N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "jasmine,${N_INS},${N_DEL}" >> counts.txt
+        elif [ ~{use_svimmer} -eq 1 ]; then
+            # Remark: SVIMMER uses an absolute size difference instead of a
+            # relative one.
+            # Remark: according to its paper, "svimmer ignores the samples'
+            # genotype information to reduce compute time and memory, as only
+            # SV site information is needed for GraphTyper’s graph
+            # construction." Otherwise they say it's similar to SURVIVOR.
+            ${TIME_COMMAND} svimmer --threads ${N_THREADS} --ids --output ~{prefix}.vcf list.txt chr21 chr22
+            N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+            echo "svimmer,${N_INS},${N_DEL}" >> counts.txt
+        fi
+        bcftools sort --output-type z --output ~{prefix}.vcf.gz ~{prefix}.vcf
         tabix ~{prefix}.vcf.gz
     >>>
 
     output {
         File merged_vcf = "~{prefix}.vcf.gz"
         File merged_tbi = "~{prefix}.vcf.gz.tbi"
+        File counts = "counts.txt"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             16,
+        cpu_cores:          32,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+        docker:             "fcunial/sv-merging"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -283,6 +359,7 @@ task MergeVCFs {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
 
 task ConcatVCFs {
     meta {
@@ -915,3 +992,4 @@ task FixSnifflesVCF {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
