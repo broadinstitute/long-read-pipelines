@@ -54,6 +54,19 @@ workflow LRMergeSVVCFs {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
+    call VariantUtils.MergeVCFs { 
+        input: 
+            vcfs = vcfs, 
+            tbis = tbis, 
+            reference_fa = ref_map['fasta'], 
+            use_bcftoolsmerge_only = use_bcftoolsmerge_only,
+            use_truvari = use_truvari,
+            truvari_keep = truvari_keep,
+            use_jasmine = use_jasmine,
+            use_svimmer = use_svimmer,
+            prefix = prefix 
+    }
+
     call VariantUtils.GetContigNames { input: vcf = MergeVCFs.merged_vcf }
 
     scatter (contig_name in GetContigNames.contig_names) {
