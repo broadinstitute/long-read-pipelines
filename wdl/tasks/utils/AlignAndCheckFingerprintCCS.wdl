@@ -16,7 +16,7 @@ workflow AlignAndCheckFingerprintCCS {
         File uBAM
         File uPBI
         String bam_sample_name
-        String library
+        String? library
 
         Boolean turn_off_fingperprint_check
         String fp_store
@@ -40,23 +40,25 @@ workflow AlignAndCheckFingerprintCCS {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    ###################################################################################
-    if (ceil(size(uBAM, "GB")) > 50) {# shard & align, but practically never true
+    Int shard_and_align_threshold = 50
 
-        Map[String, String] map_presets = {
-            'CLR':    'SUBREAD',
-            'CCS':    'CCS',
-            'ISOSEQ': 'ISOSEQ',
-            'MASSEQ': 'SUBREAD',
-        }
+    Map[String, String] map_presets = {
+        'CLR':    'SUBREAD',
+        'CCS':    'CCS',
+        'ISOSEQ': 'ISOSEQ',
+        'MASSEQ': 'SUBREAD',
+    }
+    ###################################################################################
+    if (ceil(size(uBAM, "GB")) > shard_and_align_threshold) {# shard & align, but practically never true
 
         call Utils.ComputeAllowedLocalSSD as Guess {input: intended_gb = 3*ceil(size(uBAM, "GB") + size(uPBI, "GB"))}
         call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+        Int num_shards = 10
 
         call PB.ShardLongReads {
             input:
                 unaligned_bam = uBAM, unaligned_pbi = uPBI,
-                num_shards = 50, num_ssds = Guess.numb_of_local_ssd, zones = arbitrary.zones
+                num_shards = num_shards, num_ssds = Guess.numb_of_local_ssd, zones = arbitrary.zones
         }
 
         scatter (unaligned_bam in ShardLongReads.unmapped_shards) {
@@ -72,27 +74,29 @@ workflow AlignAndCheckFingerprintCCS {
                     map_preset  = map_presets['CCS'],
                     drop_per_base_N_pulse_tags = true
             }
-            # call Utils.BamToFastq { input: bam = unaligned_bam, prefix = basename(unaligned_bam, ".bam") }
+            # call Utils.BamToFastq as ShardedFQ { input: bam = unaligned_bam, prefix = basename(unaligned_bam, ".bam") }
         }
 
         call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = basename(uBAM, ".bam") }
-        # call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = BamToFastq.reads_fq }
+        # call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = ShardedFQ.reads_fq }
     }
-    if (! (ceil(size(uBAM, "GB")) > 50)) {
+    if (! (ceil(size(uBAM, "GB")) > shard_and_align_threshold)) {
         call PB.Align as AlignReadsTogether {
             input:
                 bam         = uBAM,
                 ref_fasta   = ref_map['fasta'],
                 sample_name = bam_sample_name,
                 library     = library,
-                map_preset  = 'CCS',
+                map_preset  = map_presets['CCS'],
                 drop_per_base_N_pulse_tags = true
         }
+        # call Utils.BamToFastq { input: bam = uBAM, prefix = basename(uBAM, ".bam") }
     }
 
     File aBAM = select_first([MergeAlignedReads.merged_bam, AlignReadsTogether.aligned_bam])
     File aBAI = select_first([MergeAlignedReads.merged_bai, AlignReadsTogether.aligned_bai])
-    call PB.PBIndex as IndexAlignedReads { input: bam = aBAM }
+    # call PB.PBIndex as IndexAlignedReads { input: bam = aBAM }
+    # File FastQ = select_first([MergeAllFastqs.merged_fastq, BamToFastq.reads_fq])
 
     ###################################################################################
     # alignment metrics and fingerprint check
@@ -100,7 +104,7 @@ workflow AlignAndCheckFingerprintCCS {
         input:
             aligned_bam = aBAM,
             aligned_bai = aBAI,
-            aligned_pbi = IndexAlignedReads.pbi
+            # aligned_pbi = IndexAlignedReads.pbi
     }
 
     call GeneralUtils.TarGZFiles as saveAlnMetrics {
@@ -124,9 +128,11 @@ workflow AlignAndCheckFingerprintCCS {
     output {
         File aligned_bam = aBAM
         File aligned_bai = aBAI
-        File aligned_pbi = IndexAlignedReads.pbi
+        # File aligned_pbi = IndexAlignedReads.pbi
 
         File alignment_metrics_tar_gz = saveAlnMetrics.you_got_it
+
+        # File fastq = FastQ
 
         Float? fp_lod_expected_sample = FPCheckAoU.lod_expected_sample
         String? fp_status = FPCheckAoU.FP_status
