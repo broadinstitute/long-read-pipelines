@@ -12,7 +12,7 @@ workflow CollectPacBioAlignedMetrics {
     input {
         File aligned_bam
         File aligned_bai
-        File aligned_pbi
+        File? aligned_pbi
     }
 
     parameter_meta {
@@ -22,22 +22,25 @@ workflow CollectPacBioAlignedMetrics {
     }
 
     # note: this may not matter anymore if the input bam is HiFi only?
-    call PB.SummarizePBI as SummarizeAlignedPBI    { input: pbi = aligned_pbi }
-    call PB.SummarizePBI as SummarizeAlignedQ5PBI  { input: pbi = aligned_pbi, qual_threshold = 5 }
-    call PB.SummarizePBI as SummarizeAlignedQ7PBI  { input: pbi = aligned_pbi, qual_threshold = 7 }
-    call PB.SummarizePBI as SummarizeAlignedQ10PBI { input: pbi = aligned_pbi, qual_threshold = 10 }
-    call PB.SummarizePBI as SummarizeAlignedQ12PBI { input: pbi = aligned_pbi, qual_threshold = 12 }
-    call PB.SummarizePBI as SummarizeAlignedQ15PBI { input: pbi = aligned_pbi, qual_threshold = 15 }
-
+    if (defined(aligned_pbi)) {
+        call PB.SummarizePBI as SummarizeAlignedPBI    { input: pbi = select_first([aligned_pbi]) }
+        call PB.SummarizePBI as SummarizeAlignedQ5PBI  { input: pbi = select_first([aligned_pbi]), qual_threshold = 5 }
+        call PB.SummarizePBI as SummarizeAlignedQ7PBI  { input: pbi = select_first([aligned_pbi]), qual_threshold = 7 }
+        call PB.SummarizePBI as SummarizeAlignedQ10PBI { input: pbi = select_first([aligned_pbi]), qual_threshold = 10 }
+        call PB.SummarizePBI as SummarizeAlignedQ12PBI { input: pbi = select_first([aligned_pbi]), qual_threshold = 12 }
+        call PB.SummarizePBI as SummarizeAlignedQ15PBI { input: pbi = select_first([aligned_pbi]), qual_threshold = 15 }
+    }
     call NP.NanoPlotFromBam { input: bam = aligned_bam, bai = aligned_bai }
 
     call CustomMetricsSummaryToFile {
         input:
-        attributes = ["num_reads_Q5", "num_reads_Q7", "num_reads_Q10", "num_reads_Q12", "num_reads_Q15",
+        attributes = [
+                    #   "num_reads_Q5", "num_reads_Q7", "num_reads_Q10", "num_reads_Q12", "num_reads_Q15",
                       "aligned_num_reads", "aligned_num_bases", "aligned_frac_bases",
                       "aligned_read_length_mean", "aligned_read_length_median", "aligned_read_length_stdev", "aligned_read_length_N50",
                       "average_identity", "median_identity"],
-        values = [SummarizeAlignedQ5PBI.results['reads'], SummarizeAlignedQ7PBI.results['reads'], SummarizeAlignedQ10PBI.results['reads'], SummarizeAlignedQ12PBI.results['reads'], SummarizeAlignedQ15PBI.results['reads'],
+        values = [
+                #   SummarizeAlignedQ5PBI.results['reads'], SummarizeAlignedQ7PBI.results['reads'], SummarizeAlignedQ10PBI.results['reads'], SummarizeAlignedQ12PBI.results['reads'], SummarizeAlignedQ15PBI.results['reads'],
                   NanoPlotFromBam.stats_map['number_of_reads'], NanoPlotFromBam.stats_map['number_of_bases_aligned'], NanoPlotFromBam.stats_map['fraction_bases_aligned'],
                   NanoPlotFromBam.stats_map['mean_read_length'], NanoPlotFromBam.stats_map['median_read_length'], NanoPlotFromBam.stats_map['read_length_stdev'], NanoPlotFromBam.stats_map['n50'],
                   NanoPlotFromBam.stats_map['average_identity'], NanoPlotFromBam.stats_map['median_identity']]
