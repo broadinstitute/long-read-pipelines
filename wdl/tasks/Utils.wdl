@@ -1053,7 +1053,11 @@ task MergeFastqs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3 * ceil(size(fastqs, "GB"))
+    Int n = length(fastqs)
+    Int m = ((n+1)/2 - (n/2)) + n # trick to make sure m is even
+    Int cpus = if m > 10 then 10 else m
+    Int memory = 4 * cpus
+    Int disk_size = 10 + 3 * ceil(size(fastqs, "GB"))
 
     command <<<
         FILE="~{fastqs[0]}"
@@ -1070,8 +1074,8 @@ task MergeFastqs {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
+        cpu_cores:          cpus,
+        mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
@@ -1082,7 +1086,7 @@ task MergeFastqs {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -1145,14 +1149,20 @@ task MergeBams {
         prefix: "[default-valued] prefix for output BAM"
     }
 
-    Int disk_size = 1 + 4*ceil(size(bams, "GB"))
+    Int n = length(bams)
+    Int m = ((n+1)/2 - (n/2)) + n # trick to make sure m is even
+    Int cpus = if m > 10 then 10 else m
+    Int memory = 4 * cpus
+
+    Int disk_size = 10 + 4*ceil(size(bams, "GB"))
 
     command <<<
         set -euxo pipefail
 
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
         samtools merge \
             -p -c --no-PG \
-            -@ 2 \
+            -@ "${num_core}" \
             --write-index \
             -o "~{prefix}.bam##idx##~{prefix}.bam.bai" \
             ~{sep=" " bams}
@@ -1165,8 +1175,8 @@ task MergeBams {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             20,
+        cpu_cores:          cpus,
+        mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
