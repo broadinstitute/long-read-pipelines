@@ -175,18 +175,20 @@ workflow PBCCSWholeGenome {
         File aligned_bai = FinalizeBai.gcs_path
         File aligned_pbi = FinalizePbi.gcs_path
 
-        Float aligned_num_reads = coverage.aligned_num_reads
-        Float aligned_num_bases = coverage.aligned_num_bases
-        Float aligned_frac_bases = coverage.aligned_frac_bases
-        Float aligned_est_fold_cov = coverage.aligned_est_fold_cov
+        Map[String, Float] aln_summary = {
+            "aligned_num_reads" :coverage.aligned_num_reads,
+            "aligned_num_bases" :coverage.aligned_num_bases,
+            "aligned_frac_bases" :coverage.aligned_frac_bases,
+            "aligned_est_fold_cov" :coverage.aligned_est_fold_cov,
 
-        Float aligned_read_length_mean = coverage.aligned_read_length_mean
-        Float aligned_read_length_median = coverage.aligned_read_length_median
-        Float aligned_read_length_stdev = coverage.aligned_read_length_stdev
-        Float aligned_read_length_N50 = coverage.aligned_read_length_N50
+            "aligned_read_length_mean" :coverage.aligned_read_length_mean,
+            "aligned_read_length_median" :coverage.aligned_read_length_median,
+            "aligned_read_length_stdev" :coverage.aligned_read_length_stdev,
+            "aligned_read_length_N50" :coverage.aligned_read_length_N50,
 
-        Float average_identity = coverage.average_identity
-        Float median_identity = coverage.median_identity
+            "average_identity" :coverage.average_identity,
+            "median_identity" :coverage.median_identity
+        }
 
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
         ########################################
