@@ -1,4 +1,4 @@
-VERSION = 11.0.0.146107
+VERSION = 12.0.0.176214
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-smrttools:$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/lr-smrttools:latest
 

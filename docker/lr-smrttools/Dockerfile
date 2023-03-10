@@ -1,4 +1,4 @@
-ARG SMRTLINK_VERSION=11.0.0.146107
+ARG SMRTLINK_VERSION=12.0.0.176214
 ARG ROOT=/opt/pacbio/smrtlink
 
 ############### stage 0: download the 2 GB zip file
