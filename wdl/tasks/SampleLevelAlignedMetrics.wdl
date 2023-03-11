@@ -70,12 +70,14 @@ task SummarizeDepthOverWholeBed {
     command <<<
         set -euxo pipefail
 
-        echo 'chr start stop gene cov_mean' | awk 'BEGIN {OFS="\t"} {print}' > ~{prefix}.summary.txt
-        zcat ~{mosdepth_output} >> ~{prefix}.summary.txt
+        echo -e 'chr\tstart\tstop\tgene\tcov_mean' > ~{prefix}.summary.tsv
+        zcat ~{mosdepth_output} >> ~{prefix}.summary.tsv
+        zcat ~{mosdepth_output} | awk -F '\t' '{print $4"\t"$5}' > ~{prefix}.for_map.2col.tsv
     >>>
 
     output {
-        File cov_summary = "~{prefix}.summary.txt"
+        File cov_summary = "~{prefix}.summary.tsv"
+        Map[String, Float] feature_2_cov = read_map("~{prefix}.for_map.2col.tsv")
     }
 
     #########################
