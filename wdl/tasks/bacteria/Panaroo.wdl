@@ -42,7 +42,7 @@ task Panaroo {
         File summary_stats = "output/summary_statistics.txt"
         File final_graph = "output/final_graph.gml"
         File pre_filt_graph = "output/pre_filt_graph.gml"
-        File pangenome_reference = "output/pangenome_reference.fa"
+        File pangenome_reference = "output/pan_genome_reference.fa"
 
         File gene_data = "output/gene_data.csv"
         File gene_presence_absence_rtab = "output/gene_presence_absence.Rtab"
