@@ -227,6 +227,24 @@ workflow SRWholeGenome {
                 use_allele_specific_annotations = true,
         }
 
+        ## Rename our samples so we can use them later:
+        ## TODO: Move this to the top!
+        call VARUTIL.RenameSingleSampleVcf as RenameRawHcVcf {
+            input:
+                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
+                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                prefix = participant_name + ".haplotype_caller",
+                new_sample_name = participant_name
+        }
+
+        call VARUTIL.RenameSingleSampleVcf as RenameRawHcGvcf {
+            input:
+                vcf = CallVariantsWithHaplotypeCaller.output_gvcf,
+                vcf_index = CallVariantsWithHaplotypeCaller.output_gvcf_index,
+                prefix = participant_name + ".haplotype_caller",
+                new_sample_name = participant_name
+        }
+
         call VARUTIL.RenameSingleSampleVcf as RenameSingleSampleVcf {
             input:
                 vcf = ApplyVqsr.recalibrated_vcf,
@@ -239,10 +257,10 @@ workflow SRWholeGenome {
         File keyfile = RenameSingleSampleVcf.new_sample_name_vcf_index
 
         # Finalize the raw Joint Calls:
-        call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_vcf }
-        call FF.FinalizeToFile as FinalizeHCTbi { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_vcf_index }
-        call FF.FinalizeToFile as FinalizeHCGVcf { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_gvcf }
-        call FF.FinalizeToFile as FinalizeHCGTbi { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_gvcf_index }
+        call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as FinalizeHCTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCGVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as FinalizeHCGTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf_index }
         call FF.FinalizeToFile as FinalizeHCBamOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout }
         call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout_index }
 
