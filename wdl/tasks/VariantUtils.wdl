@@ -1229,6 +1229,11 @@ task RenameSingleSampleVcf {
             --NEW_SAMPLE_NAME ~{new_sample_name} \
             -I ~{vcf} \
             -O ~{prefix}.vcf.gz
+
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            IndexFeatureFile \
+            -I ~{prefix}.vcf.gz \
+            -O ~{prefix}.vcf.gz.tbi
     >>>
 
     #########################
