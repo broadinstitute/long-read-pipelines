@@ -236,7 +236,7 @@ workflow SRWholeGenome {
         }
 
         # Create a Keyfile for finalization:
-        File keyfile = ApplyVqsr.recalibrated_vcf_index
+        File keyfile = RenameSingleSampleVcf.new_sample_name_vcf_index
 
         # Finalize the raw Joint Calls:
         call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.output_vcf }
