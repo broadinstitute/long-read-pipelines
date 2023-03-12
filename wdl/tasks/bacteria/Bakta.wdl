@@ -130,7 +130,7 @@ task BaktaAnnotateBatch {
         tar -xaf ~{bakta_db_tar} -C bakta_db
         >&2 echo $(date --rfc-3339=seconds)
 
-        lines_start=$(( ~{worker} * ~{batch_size} + 2 ))  # Skip TSV header and sed line numbers start at 1
+        lines_start=$(( (~{worker} * ~{batch_size}) + 2 ))  # Skip TSV header and sed line numbers start at 1
         lines_end=$(( lines_start + ~{batch_size} - 1 ))
         lines_quit=$(( lines_end + 1 ))
         2>&1 echo "Processing lines ${lines_start}-${lines_end}"
