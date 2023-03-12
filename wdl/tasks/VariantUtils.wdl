@@ -1200,3 +1200,60 @@ task ApplyVqsr {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task RenameSingleSampleVcf {
+
+    input {
+        File vcf
+        File vcf_index
+
+        String prefix
+
+        String new_sample_name
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 4*ceil(size([vcf, vcf_index], "GB"))
+
+    command <<<
+        set -euo pipefail
+
+        # Get amount of memory to use:
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-1000
+        let mem_max=${mem_available}-750
+
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            RenameSampleInVcf \
+            --NEW_SAMPLE_NAME ~{new_sample_name} \
+            -V ~{vcf} \
+            -O ~{prefix}.vcf.gz
+    >>>
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File new_sample_name_vcf = "{prefix}.vcf.gz"
+        File new_sample_name_vcf_index = "{prefix}.vcf.gz.tbi"
+    }
+}

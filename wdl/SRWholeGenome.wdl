@@ -227,6 +227,14 @@ workflow SRWholeGenome {
                 use_allele_specific_annotations = true,
         }
 
+        call VARUTIL.RenameSingleSampleVcf as RenameSingleSampleVcf {
+            input:
+                vcf = ApplyVqsr.recalibrated_vcf,
+                vcf_index = ApplyVqsr.recalibrated_vcf_index,
+                prefix = participant_name + ".vqsr_filtered",
+                new_sample_name = participant_name
+        }
+
         # Create a Keyfile for finalization:
         File keyfile = ApplyVqsr.recalibrated_vcf_index
 
@@ -250,8 +258,8 @@ workflow SRWholeGenome {
         call FF.FinalizeToFile as FinalizeSnpRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.model_report }
 
         # Finalize the reclibrated / filtered variants:
-        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf }
-        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf_index }
     }
 
     output {
