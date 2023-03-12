@@ -1258,7 +1258,7 @@ task RenameSingleSampleVcf {
     }
 
     output {
-        File new_sample_name_vcf = "{prefix}.vcf.gz"
-        File new_sample_name_vcf_index = "{prefix}.vcf.gz.tbi"
+        File new_sample_name_vcf = "~{prefix}.vcf.gz"
+        File new_sample_name_vcf_index = "~{prefix}.vcf.gz.tbi"
     }
 }
