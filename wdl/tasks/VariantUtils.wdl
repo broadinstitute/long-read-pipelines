@@ -1227,7 +1227,7 @@ task RenameSingleSampleVcf {
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             RenameSampleInVcf \
             --NEW_SAMPLE_NAME ~{new_sample_name} \
-            -V ~{vcf} \
+            -I ~{vcf} \
             -O ~{prefix}.vcf.gz
     >>>
 
