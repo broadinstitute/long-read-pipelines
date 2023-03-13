@@ -120,3 +120,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LRConvertBCF.wdl
   testParameterFiles:
+- name: ONTQCReport
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTQCReport.wdl
+  testParameterFiles:
