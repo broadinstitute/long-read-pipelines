@@ -29,7 +29,7 @@ task ConvertONTQCNotebook {
         export WORKSPACE_NAMESPACE="~{workspace_namespace}"
         export WORKSPACE_NAME="~{workspace_name}"
 
-        papermill --parameters SAMPLE "~{sample_name}" ~{notebook_path} "~{sample_name}.qc.ipynb"
+        papermill --parameters SAMPLE "~{sample_name}" "~{notebook_path}" "~{sample_name}.qc.ipynb"
         jupyter nbconvert --to html --no-input --no-prompt "~{sample_name}.qc.ipynb"
     >>>
 
