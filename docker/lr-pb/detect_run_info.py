@@ -120,8 +120,15 @@ def main():
                     movieName = info['CollectionMetadata.Context']
                     readType = "SUBREAD"
 
+                    #pp = pprint.PrettyPrinter(width=120, compact=True)
+                    #pp.pprint(info)
+
                     ri['ID'] = f'{movieName}//{readType}'
-                    ri['DT'] = info['WellSample.CreatedAt']
+                    ri['DT'] = '1970-01-01T00:00:00.000000Z'
+                    if 'WellSample.CreatedAt' in info:
+                        ri['DT'] = info['WellSample.CreatedAt']
+                    elif 'Run.CreatedAt' in info:
+                        ri['DT'] = info['Run.CreatedAt']
                     ri['PL'] = 'PACBIO'
                     ri['PM'] = info['CollectionMetadata.InstrumentName']
                     ri['PU'] = info['CollectionMetadata.Context']
