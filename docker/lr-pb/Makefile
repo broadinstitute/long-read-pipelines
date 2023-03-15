@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-pb
-VERSION = 0.1.37
+VERSION = 0.1.38
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
@@ -7,11 +7,11 @@ TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
 all: | build push
 
 build:
-    docker build -t $(TAG1) -t $(TAG2) .
+	docker build -t $(TAG1) -t $(TAG2) .
 
 build_no_cache:
-    docker build --no-cache -t $(TAG1) -t $(TAG2) .
+	docker build --no-cache -t $(TAG1) -t $(TAG2) .
 
 push:
-    docker push $(TAG1)
-    docker push $(TAG2)
+	docker push $(TAG1)
+	docker push $(TAG2)
