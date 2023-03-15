@@ -298,7 +298,7 @@ task Megalodon {
         boot_disk_gb:       30,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+        docker:             "quay.io/ymostovoy/lr-megalodon:2.5.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -346,7 +346,7 @@ task MergeVariantDBs {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+        docker:             "quay.io/ymostovoy/lr-megalodon:2.5.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -389,7 +389,7 @@ task MergeModifiedBaseCallDBs {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+        docker:             "quay.io/ymostovoy/lr-megalodon:2.5.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -439,7 +439,7 @@ task WhatsHapFilter {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+        docker:             "quay.io/ymostovoy/lr-megalodon:2.5.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -649,7 +649,7 @@ task ExtractHaplotypeReads {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+        docker:             "quay.io/ymostovoy/lr-megalodon:2.5.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -707,7 +707,7 @@ task CallHaploidVariants {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
+        docker:             "quay.io/ymostovoy/lr-megalodon:2.5.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
