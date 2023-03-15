@@ -171,6 +171,8 @@ workflow ONTMethylation {
     call FF.FinalizeToFile as FinalizeHaplotype1Tbi { input: outdir = vdir, file = CallHaplotype1Variants.haploid_tbi, name = "~{participant_name}.aggregated.haplotype1.vcf.gz.tbi" }
     call FF.FinalizeToFile as FinalizeHaplotype2Vcf { input: outdir = vdir, file = CallHaplotype2Variants.haploid_vcf, name = "~{participant_name}.aggregated.haplotype2.vcf.gz" }
     call FF.FinalizeToFile as FinalizeHaplotype2Tbi { input: outdir = vdir, file = CallHaplotype2Variants.haploid_tbi, name = "~{participant_name}.aggregated.haplotype2.vcf.gz.tbi" }
+    
+    call FF.FinalizeToFile as FinalizeModifiedBasesTxt { input: outdir = vdir, file = MergeModifiedBaseCallDBs.per_read_modified_base_calls_txt, name = "~{participant_name}.per_read_modified_base_calls.txt" }
 
     output {
         File phased_vcf = FinalizePhasedVcf.gcs_path
@@ -186,6 +188,8 @@ workflow ONTMethylation {
         File haplotype1_tbi = FinalizeHaplotype1Tbi.gcs_path
         File haplotype2_vcf = FinalizeHaplotype2Vcf.gcs_path
         File haplotype2_tbi = FinalizeHaplotype2Tbi.gcs_path
+        
+        File modifiedbasecalls_txt = FinalizeModifiedBasesTxt.gcs_path
     }
 }
 
@@ -375,10 +379,13 @@ task MergeModifiedBaseCallDBs {
         DIRS=$(find /cromwell_root/ -name '*.db' -exec dirname {} \; | tr '\n' ' ')
 
         megalodon_extras merge modified_bases $DIRS
+        megalodon_extras per_read_text modified_bases megalodon_merge_mods_results/
+        
     >>>
 
     output {
         File per_read_modified_base_calls_db = "megalodon_merge_mods_results/per_read_modified_base_calls.db"
+        File per_read_modified_base_calls_txt = "megalodon_merge_mods_results/per_read_modified_base_calls.txt"
     }
 
     #########################
