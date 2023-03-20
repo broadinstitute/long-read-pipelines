@@ -153,3 +153,6 @@ workflows:
 - name: SvQCPlots
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Visualization/SvQCPlots.wdl
+- name: HiFiCNV
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/HiFiCNV.wdl
