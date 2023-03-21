@@ -1,8 +1,8 @@
-import glob
 import os
 import sys
 from pathlib import Path
 import subprocess
+import get_reverse_wdl_deps
 
 ROOT_REPO_PATH = Path(__file__).resolve().parents[2]
 
@@ -35,23 +35,13 @@ else:
 print(f"Comparing branches {input_branch1} and {input_branch2}")
 
 
-def get_wdls_that_import(wdl_basename, dir_path_to_check) -> dict:
-    wild_wdl_path = os.path.join(dir_path_to_check, "**/*.wdl")
-    wdls_that_import = {}
-
-    for wdl in glob.glob(wild_wdl_path, recursive=True):
-        with open(wdl) as f:
-            lines = f.readlines()
-            for line in lines:
-                if "import" and "/" + wdl_basename in line or "import" and '\"' + wdl_basename in line:
-                    more_wdls = get_wdls_that_import(os.path.basename(wdl),
-                                                     dir_path_to_check)
-                    wdls_that_import[wdl] = more_wdls
-
-    return wdls_that_import
-
-
 def get_edited_files_in_repo(branch1, branch2) -> list:
+    """
+    Returns a list of edited files between two branches/tags
+    @param branch1: name of branch/tag
+    @param branch2: name of branch/tag
+    @return:
+    """
     ret = subprocess.run(["git", "diff", "--name-only", branch1, branch2],
                          capture_output=True)
     path_2_edited_files = ret.stdout.decode("utf-8").split("\n")
@@ -61,6 +51,11 @@ def get_edited_files_in_repo(branch1, branch2) -> list:
 
 
 def parse_for_wdl_files_in_list(files: list) -> list:
+    """
+    Returns a list of wdl files from a list of files
+    @param files: list of files
+    @return:
+    """
     wdl_files = []
     for f in files:
         if ".wdl" in f:
@@ -70,6 +65,11 @@ def parse_for_wdl_files_in_list(files: list) -> list:
 
 
 def get_basename_for_files_in_list(files: list) -> list:
+    """
+    Returns a list of basenames for a list of files
+    @param files: list of files
+    @return:
+    """
     basenames = []
     for f in files:
         basenames.append(os.path.basename(f))
@@ -78,6 +78,11 @@ def get_basename_for_files_in_list(files: list) -> list:
 
 
 def convert_dep_wdl_map_dict_to_list(dep_wdl_map: dict) -> list:
+    """
+    Converts a dict of wdl files to a list of wdl files
+    @param dep_wdl_map: dict of wdl files
+    @return:
+    """
     # dict is turned into list of tuples
     some_list = list(dep_wdl_map.items())
 
@@ -94,6 +99,11 @@ def convert_dep_wdl_map_dict_to_list(dep_wdl_map: dict) -> list:
 
 
 def parse_pipeline_wdls_from_list(files: list) -> list:
+    """
+    Returns a list of pipeline wdls from a list of files
+    @param files: list of files
+    @return:
+    """
     pipeline_wdls = []
     for file in files:
         if "/pipelines/" in file:
@@ -103,16 +113,27 @@ def parse_pipeline_wdls_from_list(files: list) -> list:
 
 
 def print_list_as_markdown_bullet_point(items: list) -> None:
+    """
+    Prints a list of items as a markdown bullet point list
+    @param items:
+    @return:
+    """
     for item in items:
         print("- " + item)
 
 
-def remove_edited_wdls_from_list(affected_wdls:list, edited_wdl_names:list) -> list:
-    for name in edited_wdl_names:
-        for aw in affected_wdls:
-            if name in aw:
-                affected_wdls.remove(aw)
-    return affected_wdls
+def remove_edited_wdls_from_list(wdls_affected: list, wdl_edited_names: list) -> list:
+    """
+    Removes edited wdls from the list of affected wdls
+    @param wdls_affected:
+    @param wdl_edited_names:
+    @return:
+    """
+    for name in wdl_edited_names:
+        for wa in wdls_affected:
+            if name in wa:
+                wdls_affected.remove(wa)
+    return wdls_affected
 
 
 edited_files: list = get_edited_files_in_repo(
@@ -132,7 +153,7 @@ else:
 
     all_rev_dep_wdl = {}
     for wdl in edited_wdl_names:
-        reverse_dep_wdl = get_wdls_that_import(
+        reverse_dep_wdl = get_reverse_wdl_deps.get_wdls_that_import(
             wdl_basename=wdl,
             dir_path_to_check=str(ROOT_REPO_PATH),
         )
@@ -142,7 +163,7 @@ else:
 
     affected_wdls: list = convert_dep_wdl_map_dict_to_list(all_rev_dep_wdl)
     nonedited_affected_wdls: list = remove_edited_wdls_from_list(
-        affected_wdls=affected_wdls, edited_wdl_names=edited_wdl_names
+        wdls_affected=affected_wdls, wdl_edited_names=edited_wdl_names
     )
     affected_pipeline_wdls: list = parse_pipeline_wdls_from_list(
         files=nonedited_affected_wdls
