@@ -35,8 +35,8 @@ task Minimap2 {
 
     Boolean do_preserve_tags = if length(tags_to_preserve) != 0 then true else false
 
-    Int cpus = 4
-    Int mem = 30
+    Int cpus = 48
+    Int mem = 256
 
     command <<<
         set -euxo pipefail
@@ -113,7 +113,8 @@ task Minimap2 {
             date
         fi
 
-        samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
+        mv ~{prefix}.pre.bam ~{prefix}.bam
+        # samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
         samtools index -@${NUM_CPUS} ~{prefix}.bam
     >>>
 
