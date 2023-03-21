@@ -146,3 +146,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/RunPanaroo.wdl
   testParameterFiles:
+- name: IllumEvaluateFusilliPlasmids
+  subclass: wdl
+  primaryDescriptorPath: /wdl/IllumEvaluateFusilliPlasmids.wdl
+  testParameterFiles:
