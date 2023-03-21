@@ -66,10 +66,10 @@ workflow IllumEvaluateFusilliPlasmids {
 
         File truth_panaroo_graph = PanarooTruth.final_graph
         File truth_panaroo_gene_data = PanarooTruth.gene_data
-        File truth_panaroo_gene_presence_absence = PanarooTruth.gene_presence_absence
+        File truth_panaroo_gene_presence_absence = PanarooTruth.gene_presence_absence_csv
 
         File spades_panaroo_graph = PanarooSPAdes.final_graph
         File spades_panaroo_gene_data = PanarooSPAdes.gene_data
-        File spades_panaroo_gene_presence_absence = PanarooSPAdes.gene_presence_absence
+        File spades_panaroo_gene_presence_absence = PanarooSPAdes.gene_presence_absence_csv
     }
 }

@@ -1,6 +1,6 @@
 version 1.0
 
-import "Structs.wdl"
+import "../Structs.wdl"
 
 
 task CreateDatabaseFromPanaroo {
@@ -150,6 +150,6 @@ task CallGenes {
     >>>
 
     output {
-        File gene_predicitions = "gene_predictions.tsv"
+        File gene_predictions = "gene_predictions.tsv"
     }
 }
