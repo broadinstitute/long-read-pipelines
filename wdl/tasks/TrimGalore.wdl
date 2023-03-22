@@ -11,6 +11,18 @@ task TrimGalore {
         RuntimeAttr? runtime_attr_override
     }
 
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          8,
+        mem_gb:             32,
+        disk_gb:            ceil((size(reads_fq1, "G") + size(reads_fq2, "G")) * 2 + 10.0),
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "quay.io/biocontainers/trim-galore:0.6.7--hdfd78af_0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
     Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
     Array[File] reads = select_all([reads_fq1, reads_fq2])
     Boolean paired = length(reads) > 1
@@ -30,17 +42,6 @@ task TrimGalore {
         File trimming_report2 = "output/~{basename2}_trimming_report.txt"
     }
 
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          8,
-        mem_gb:             32,
-        disk_gb:            ceil((size(reads_fq1, "G") + size(reads_fq2, "G")) * 2 + 10.0),
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        2,
-        docker:             "quay.io/biocontainers/trim-galore:0.6.7--hdfd78af_0"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
