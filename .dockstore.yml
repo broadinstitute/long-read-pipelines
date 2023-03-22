@@ -150,3 +150,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/IllumEvaluateFusilliPlasmids.wdl
   testParameterFiles:
+- name: FusilliCreateDatabase
+  subclass: wdl
+  primaryDescriptorPath: /wdl/FusilliCreateDatabase.wdl
+  testParameterFiles:
