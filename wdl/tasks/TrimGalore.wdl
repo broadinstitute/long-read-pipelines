@@ -21,6 +21,7 @@ task TrimGalore {
         max_retries:        2,
         docker:             "quay.io/biocontainers/trim-galore:0.6.7--hdfd78af_0"
     }
+
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])

@@ -40,7 +40,7 @@ workflow IllumEvaluateFusilliPlasmids {
 
     Array[String] manifest_lines = read_lines(input_manifest)
 
-    scatter(i in range(len(true_plasmid_ids))) {
+    scatter(i in range(length(true_plasmid_ids))) {
         String tsv_row = "~{true_plasmid_ids[i]}\t~{true_plasmid_gff3s[i]}"
     }
 
