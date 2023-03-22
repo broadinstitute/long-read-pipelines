@@ -42,8 +42,8 @@ task CreateDatabaseFromPanaroo {
 
         mkdir panaroo
         cd panaroo
-        ln -s final_graph.gml ~{panaroo_graph}
-        ln -s gene_data.csv ~{panaroo_gene_data}
+        ln -s ~{panaroo_graph} final_graph.gml
+        ln -s ~{panaroo_gene_data} gene_data.csv
         cd ..
 
         fusilli db create -o "~{db_name}" --from-panaroo panaroo
