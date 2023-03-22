@@ -18,8 +18,8 @@ workflow IllumEvaluateFusilliPlasmids {
         File sample_fq2
         Int graph_k = 49
 
-        String true_plasmid_id
-        String true_plasmid_gff3
+        Array[String] true_plasmid_ids
+        Array[String] true_plasmid_gff3s
     }
 
     call Fusilli.PrepareSample as PrepareSample {
@@ -39,7 +39,12 @@ workflow IllumEvaluateFusilliPlasmids {
     }
 
     Array[String] manifest_lines = read_lines(input_manifest)
-    Array[String] manifest_with_truth = flatten([manifest_lines, ["~{true_plasmid_id}\t~{true_plasmid_gff3}"]])
+
+    scatter(i in range(len(true_plasmid_ids))) {
+        String tsv_row = "~{true_plasmid_ids[i]}\t~{true_plasmid_gff3s[i]}"
+    }
+
+    Array[String] manifest_with_truth = flatten([manifest_lines, tsv_row])
 
     # Create Panaroo graph with truth
     call Panaroo.RunPanaroo as PanarooTruth {
