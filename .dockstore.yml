@@ -156,3 +156,6 @@ workflows:
 - name: HiFiCNV
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/HiFiCNV.wdl
+- name: SummarizeHiFiCNV
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SummarizeHiFiCNV.wdl
