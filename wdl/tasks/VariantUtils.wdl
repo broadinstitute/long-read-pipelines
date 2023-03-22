@@ -98,7 +98,6 @@ task MergeAndSortVCFs {
         echo "==========================================================="
         bcftools \
             concat \
-            --naive \
             --threads ~{cores-1} \
             -f all_raw_vcfs.txt \
             --output-type v \
