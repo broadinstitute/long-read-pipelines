@@ -63,9 +63,6 @@ workflow ProcessMalariaBarcodesDemo {
         Array[String] Adjusted_Het
         Array[String] mccoil_median
 
-        String dir_prefix
-        String gcs_out_root_dir
-
         Boolean DEBUG_MODE = false
     }
 
@@ -73,8 +70,8 @@ workflow ProcessMalariaBarcodesDemo {
         location_code: "Location code of the sample.  Should correspond to the ISO3 value."
         barcode_def_tsv: "TSV file containing the definition of the SNP barcode sites with the columns: Name, Contig, Position"
 
-        cc: ""
-        ISO3: ""
+        cc: "Country Code"
+        ISO3: "ISO3 formatted location code."
         Year: "Year this dataset was collected."
         Number_Text: ""
         Sample_Name: ""
@@ -110,9 +107,6 @@ workflow ProcessMalariaBarcodesDemo {
         Delta_CT_Threshold: ""
         Adjusted_Het: ""
         mccoil_median: ""
-
-        dir_prefix: "directory prefix for output files"
-        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
     ####################################
@@ -126,9 +120,6 @@ workflow ProcessMalariaBarcodesDemo {
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
     call Utils.GetCurrentTimestampString as t_001_WdlExecutionStartTimestamp { input: }
-
-    # Create an outdir:
-    String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/PanelProcessMalariaBarcodesForRh/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/PanelProcessMalariaBarcodesForRh/~{dir_prefix}"
 
     call ProcessBarcodeSpreadsheet as t_002_ProcessBarcodeSpreadsheet {
         input:
