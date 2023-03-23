@@ -153,3 +153,30 @@ task CallGenes {
         File gene_predictions = "gene_predictions.tsv"
     }
 }
+
+task CreateUpdatedManifest {
+    input {
+        File input_manifest
+
+        Array[String] plasmid_ids
+        Array[String] plasmid_gff3s
+    }
+
+    command <<<
+        cat ~{input_manifest} <(paste ~{write_lines(plasmid_ids)} ~{write_lines(plasmid_gff3s)}) > updated_manifest.tsv
+    >>>
+
+    output {
+        File updated_manifest = "updated_manifest.tsv"
+    }
+
+    runtime {
+        cpu:                    1
+        memory:                 "4 GiB"
+        disks:                  "local-disk 5 HDD"
+        bootDiskSizeGb:         10
+        preemptible:            3
+        maxRetries:             3
+        docker:                 "ubuntu:latest"
+    }
+}

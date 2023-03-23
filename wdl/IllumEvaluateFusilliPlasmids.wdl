@@ -3,9 +3,11 @@ version 1.0
 import "RunPanaroo.wdl" as Panaroo
 import "IllumPlasmidSPAdes.wdl" as plasmidSPAdes
 import "tasks/bacteria/Fusilli.wdl" as Fusilli
+import "tasks/bacteria/Bakta.wdl" as Bakta
 
 workflow IllumEvaluateFusilliPlasmids {
     input {
+        File bakta_db_tar
         File input_manifest
         File fusilli_db_tar
         File fusilli_db_index
@@ -38,18 +40,17 @@ workflow IllumEvaluateFusilliPlasmids {
             fusilli_prepared_sample=PrepareSample.fusilli_prepared_sample
     }
 
-    Array[String] manifest_lines = read_lines(input_manifest)
-
-    scatter(i in range(length(true_plasmid_ids))) {
-        String tsv_row = "~{true_plasmid_ids[i]}\t~{true_plasmid_gff3s[i]}"
+    call Fusilli.CreateUpdatedManifest as TruthManifest {
+        input:
+            input_manifest=input_manifest,
+            plasmid_ids=true_plasmid_ids,
+            plasmid_gff3s=true_plasmid_gff3s
     }
-
-    Array[String] manifest_with_truth = flatten([manifest_lines, tsv_row])
 
     # Create Panaroo graph with truth
     call Panaroo.RunPanaroo as PanarooTruth {
         input:
-            input_manifest=write_lines(manifest_with_truth)
+            input_manifest=TruthManifest.updated_manifest
     }
 
     # Create Panaroo graph with plasmidSPAdes assembly
@@ -59,11 +60,24 @@ workflow IllumEvaluateFusilliPlasmids {
             illumina_fq2=sample_fq2
     }
 
-    Array[String] manifest_with_plasmidSPAdes = flatten([manifest_lines, ["plasmidSPAdes\t~{asmPlasmidSPAdes.contigs}"]])
+    call Bakta.BaktaAnnotate as SPAdesAnnotate {
+        input:
+            bakta_db_tar=bakta_db_tar,
+            genome_fasta=asmPlasmidSPAdes.scaffolds,
+            fname_prefix="~{sample_name}_plasmidSPAdes"
+    }
+
+    call Fusilli.CreateUpdatedManifest as SPAdesManifest {
+        input:
+            input_manifest=input_manifest,
+            plasmid_ids=["plasmidSPAdes"],
+            plasmid_gff3s=[SPAdesAnnotate.gff]
+
+    }
 
     call Panaroo.RunPanaroo as PanarooSPAdes {
         input:
-            input_manifest=write_lines(manifest_with_plasmidSPAdes)
+            input_manifest=SPAdesManifest.updated_manifest
     }
 
     output {
