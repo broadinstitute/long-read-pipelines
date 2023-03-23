@@ -156,3 +156,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PanelProcessMalariaBarcodesForRh.wdl
   testParameterFiles:
+- name: ProcessMalariaBarcodesDemo
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ProcessMalariaBarcodesDemo.wdl
+  testParameterFiles:
