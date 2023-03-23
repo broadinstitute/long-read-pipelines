@@ -24,13 +24,13 @@ task TrimGalore {
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    Int num_cpus = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
     Array[File] reads = select_all([reads_fq1, reads_fq2])
     Boolean paired = length(reads) > 1
 
     command <<<
         mkdir output
-        trim_galore -j ~{num_cores} --length ~{min_length} ~{true='--paired' false='' paired} ~{sep=' ' reads} -o output
+        trim_galore -j ~{num_cpus} --length ~{min_length} ~{true='--paired' false='' paired} ~{sep=' ' reads} -o output
     >>>
 
     String basename1 = basename(reads_fq1)
@@ -44,7 +44,7 @@ task TrimGalore {
     }
 
     runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        cpu:                    num_cpus
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
