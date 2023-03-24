@@ -69,7 +69,7 @@ def main():
                 "No affected pipeline WDL found (or is already in the above edited list)")
 
 
-def get_edited_files_in_repo(branch1, branch2) -> list:
+def get_edited_files_in_repo(branch1: str, branch2: str) -> list:
     """
     Returns a list of edited files between two branches/tags
     @param branch1: name of branch/tag
