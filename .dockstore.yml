@@ -1,8 +1,5 @@
 version: 1.2
 workflows:
-- name: MalariaAssembly
-  subclass: wdl
-  primaryDescriptorPath: /wdl/MalariaAssembly.wdl
 - name: ONT10x
   subclass: wdl
   primaryDescriptorPath: /deprecated_wdl/ONT10x.wdl
