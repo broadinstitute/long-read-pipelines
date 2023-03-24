@@ -1,4 +1,6 @@
+import errno
 import glob
+import os
 import subprocess
 import pytest
 from pathlib import Path
@@ -13,7 +15,8 @@ def test_wdl_validity(script_runner, dir_name):
 
     wdl_dir = Path(__file__).resolve().parents[2] / dir_name
     if not wdl_dir.exists():
-        raise Exception(f"{wdl_dir} does not exist")
+        raise FileNotFoundError(
+            errno.ENOENT, os.strerror(errno.ENOENT), wdl_dir)
     wdl_paths = wdl_dir / "**/*.wdl"
 
     for wdl in glob.glob(str(wdl_paths), recursive=True):
