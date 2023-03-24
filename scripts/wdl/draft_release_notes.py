@@ -1,38 +1,72 @@
 import os
-import sys
 from pathlib import Path
 import subprocess
 import get_reverse_wdl_deps
+import argparse
 
-ROOT_REPO_PATH = Path(__file__).resolve().parents[2]
 
-if len(sys.argv) > 1:
-    if sys.argv[1] in ["-h", "--help"]:
-        print("""
-        Compares two branches/tags to retrieve a list of edited wdl files,
-        and a list of affected wdl pipelines. By default compares 'main' branch and
-        latest tag release.
-        Usage:
-        \tdraft_release_notes 
-        or..
-        \tdraft_release_notes [branch/tag 1] [branch/tag 2]
-        
-        Example: 
-        \tdraft_release_notes main 3.0.58
-        """
-              )
-        exit(0)
+def main():
+    ROOT_REPO_PATH = Path(__file__).resolve().parents[2]
 
-if len(sys.argv) == 3:
-    input_branch1 = sys.argv[1]
-    input_branch2 = sys.argv[2]
-else:
-    input_branch1 = "main"
-    input_branch2 = subprocess.run(
-        ["git", "describe", "--tags", "--abbrev=0"], capture_output=True
-    ).stdout.decode("utf-8").split("\n")[0]
+    parser = argparse.ArgumentParser(prog="draft_release_notes",
+                                     description="Compares two branches/tags to retrieve a list of edited wdl files, and a list of affected wdl pipelines. By default compares 'main' branch and latest tag release. "
+                                                 "Example: draft_release_notes main 3.0.58"
+                                     )
 
-print(f"Comparing branches {input_branch1} and {input_branch2}")
+    parser.add_argument("--branch1", action="store")
+    parser.add_argument("--branch2", action="store")
+
+    args = parser.parse_args()
+    if args.branch1 and args.branch2:
+        input_branch1 = args.branch1
+        input_branch2 = args.branch2
+    else:
+        input_branch1 = "main"
+        input_branch2 = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"], capture_output=True
+        ).stdout.decode("utf-8").split("\n")[0]
+
+    print(f"Comparing branches {input_branch1} and {input_branch2}")
+
+    edited_files: list = get_edited_files_in_repo(
+        branch1=input_branch1,
+        branch2=input_branch2,
+    )
+
+    edited_wdl_files = parse_for_wdl_files_in_list(edited_files)
+
+    if len(edited_wdl_files) == 0:
+        print("No edited WDLs found.")
+    else:
+        print("The following wdls haved been edited")
+        print_list_as_markdown_bullet_point(edited_wdl_files)
+
+        edited_wdl_names: list = get_basename_for_files_in_list(edited_wdl_files)
+
+        all_rev_dep_wdl = {}
+        for wdl in edited_wdl_names:
+            reverse_dep_wdl = get_reverse_wdl_deps.get_wdls_that_import(
+                wdl_basename=wdl,
+                dir_path_to_check=str(ROOT_REPO_PATH),
+            )
+
+            if reverse_dep_wdl:
+                all_rev_dep_wdl.update(reverse_dep_wdl)
+
+        affected_wdls: list = convert_dep_wdl_map_dict_to_list(all_rev_dep_wdl)
+        nonedited_affected_wdls: list = remove_edited_wdls_from_list(
+            wdls_affected=affected_wdls, wdl_edited_names=edited_wdl_names
+        )
+        affected_pipeline_wdls: list = parse_pipeline_wdls_from_list(
+            files=nonedited_affected_wdls
+        )
+
+        if affected_pipeline_wdls:
+            print("The following pipeline wdls may have been affected")
+            print_list_as_markdown_bullet_point(affected_pipeline_wdls)
+        else:
+            print(
+                "No affected pipeline WDL found (or is already in the above edited list)")
 
 
 def get_edited_files_in_repo(branch1, branch2) -> list:
@@ -136,41 +170,5 @@ def remove_edited_wdls_from_list(wdls_affected: list, wdl_edited_names: list) ->
     return wdls_affected
 
 
-edited_files: list = get_edited_files_in_repo(
-    branch1=input_branch1,
-    branch2=input_branch2,
-)
-
-edited_wdl_files = parse_for_wdl_files_in_list(edited_files)
-
-if len(edited_wdl_files) == 0:
-    print("No edited WDLs found.")
-else:
-    print("The following wdls haved been edited")
-    print_list_as_markdown_bullet_point(edited_wdl_files)
-
-    edited_wdl_names: list = get_basename_for_files_in_list(edited_wdl_files)
-
-    all_rev_dep_wdl = {}
-    for wdl in edited_wdl_names:
-        reverse_dep_wdl = get_reverse_wdl_deps.get_wdls_that_import(
-            wdl_basename=wdl,
-            dir_path_to_check=str(ROOT_REPO_PATH),
-        )
-
-        if reverse_dep_wdl:
-            all_rev_dep_wdl.update(reverse_dep_wdl)
-
-    affected_wdls: list = convert_dep_wdl_map_dict_to_list(all_rev_dep_wdl)
-    nonedited_affected_wdls: list = remove_edited_wdls_from_list(
-        wdls_affected=affected_wdls, wdl_edited_names=edited_wdl_names
-    )
-    affected_pipeline_wdls: list = parse_pipeline_wdls_from_list(
-        files=nonedited_affected_wdls
-    )
-
-    if affected_pipeline_wdls:
-        print("The following pipeline wdls may have been affected")
-        print_list_as_markdown_bullet_point(affected_pipeline_wdls)
-    else:
-        print("No affected pipeline WDL found (or is already in the above edited list)")
+if __name__ == "__main__":
+    main()
