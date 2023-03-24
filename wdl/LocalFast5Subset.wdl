@@ -120,8 +120,12 @@ task GetFast5Filenames {
     command <<<
         set -euxo pipefail
 
-        sort -k3,3 ~{summary_file} -o ~{summary_file}
-        join -1 1 -2 3 -o 2.2 ~{readnames} ~{summary_file} |sort -u > filenames
+        read_id_col=$(awk -v RS='\t' '/read_id/{print NR; exit}' ~{summary_file})
+        fast5_col=$(awk -v RS='\t' '$0=="filename_fast5"||$0=="filename" {print NR; exit}' ~{summary_file})
+        
+        sort -k${read_id_col},${read_id_col} ~{summary_file} -o ~{summary_file}
+        join -1 1 -2 ${read_id_col} -o 2.${fast5_col} ~{readnames} ~{summary_file} |sort -u > filenames
+        
         awk '{print DIR$1}' DIR="~{fast5_dir}" filenames > full_filenames
         wc -l full_filenames | awk '{print $1}'
     >>>
