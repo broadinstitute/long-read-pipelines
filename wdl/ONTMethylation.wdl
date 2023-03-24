@@ -60,7 +60,7 @@ workflow ONTMethylation {
     call Utils.MergeBams as MergeMappings { input: bams = Megalodon.mappings_bam }
     call Utils.MergeBams as MergeModMappings { input: bams = Megalodon.mod_mappings_bam }
 
-    call MergeModifiedBaseCallDBs {input dbs = Megalodon.per_read_modified_base_calls_db }
+    call MergeModifiedBaseCallDBs {input: dbs = Megalodon.per_read_modified_base_calls_db }
 
     # Finalize
     String adir = outdir + "/alignments"
