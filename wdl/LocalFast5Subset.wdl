@@ -115,7 +115,7 @@ task GetFast5Filenames {
 
     Int disk_size = 3*ceil((size(readnames, "GB")+size(summary_file, "GB")))
 
-    String fast5_dir = sub(summary_file, basename(summary_file), "fast5_pass/")
+    String fast5_dir = sub(summary_file, basename(summary_file), "fast5/")
 
     command <<<
         set -euxo pipefail
