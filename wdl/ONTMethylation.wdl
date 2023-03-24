@@ -60,6 +60,8 @@ workflow ONTMethylation {
     call Utils.MergeBams as MergeMappings { input: bams = Megalodon.mappings_bam }
     call Utils.MergeBams as MergeModMappings { input: bams = Megalodon.mod_mappings_bam }
 
+    call MergeModifiedBaseCallDBs {input dbs = Megalodon.per_read_modified_base_calls_db }
+
     # Finalize
     String adir = outdir + "/alignments"
 
@@ -74,6 +76,8 @@ workflow ONTMethylation {
     call FF.FinalizeToFile as FinalizeSequencingSummary { input: outdir = outdir, file = CatSequencingSummaries.combined, name = "~{participant_name}.sequencing_summary.txt" }
     call FF.FinalizeToFile as FinalizeBasecalls { input: outdir = outdir, file = MergeFastqGzs.merged_fastq_gz, name = "~{participant_name}.merged_fastq.gz" }
 
+    call FF.FinalizeToFile as FinalizePerReadTxt { input: outdir = outdir, file = MergeModifiedBaseCallDBs.per_read_modified_base_calls_txt, name = "~{participant_name}.per_read_modified_base_calls_txt" }
+
     output {
         File mod_mapped_bam = FinalizeModMappedBam.gcs_path
         File mod_mapped_bai = FinalizeModMappedBai.gcs_path
@@ -81,6 +85,7 @@ workflow ONTMethylation {
         File mapped_bai = FinalizeMappedBai.gcs_path
 
         File basecalls = FinalizeBasecalls.gcs_path
+        File perReadModsTxt = FinalizePerReadTxt.gcs_path
     }
 }
 
