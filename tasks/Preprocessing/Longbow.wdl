@@ -90,11 +90,11 @@ workflow Process {
             prefix = prefix + "_array_elements_CBC_corrected_UMI_adjusted",
             bam = bam_for_umi_adjustment,
             umi_length = longbow_umi_adjustment_params[lbmodel].umi_length,
-            pre_pre_umi_seq = [longbow_umi_adjustment_params[lbmodel].pre_pre_umi_seq],
-            pre_umi_seq = [longbow_umi_adjustment_params[lbmodel].pre_umi_seq],
-            pre_umi_tag = [longbow_umi_adjustment_params[lbmodel].pre_umi_tag],
-            post_umi_seq = [longbow_umi_adjustment_params[lbmodel].post_umi_seq],
-            post_umi_tag = [longbow_umi_adjustment_params[lbmodel].post_umi_tag],
+            pre_pre_umi_seq = longbow_umi_adjustment_params[lbmodel].pre_pre_umi_seq,
+            pre_umi_seq = longbow_umi_adjustment_params[lbmodel].pre_umi_seq,
+            pre_umi_tag = longbow_umi_adjustment_params[lbmodel].pre_umi_tag,
+            post_umi_seq = longbow_umi_adjustment_params[lbmodel].post_umi_seq,
+            post_umi_tag = longbow_umi_adjustment_params[lbmodel].post_umi_tag,
     }
 
     # Only call CBC code if we have a single-cell library:
