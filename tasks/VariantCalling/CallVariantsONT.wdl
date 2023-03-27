@@ -22,8 +22,6 @@ workflow CallVariants {
         File ref_fasta_fai
         File ref_dict
 
-        String prefix
-
         Boolean call_svs
         Boolean fast_less_sensitive_sv
         File? tandem_repeat_bed
