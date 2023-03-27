@@ -10,7 +10,7 @@ from pathlib import Path
     "tool, subcommand, dir_names",
     (
         ["womtool", "validate", ["pipelines", "tasks", "deprecated_wdl"]],
-        ["miniwdl",  "check", ["pipelines", "tasks", "deprecated_wdl"]],
+        ["miniwdl",  "check", ["pipelines", "tasks"]],  # miniwdl validation is stricter and takes more time than womtool, so we only run it on 'pipelines' and 'tasks' since 'deprecated_wdl' will eventually be deleted.
     )
 )
 def test_wdl_validity(script_runner, tool: str, subcommand: str, dir_names: list):
