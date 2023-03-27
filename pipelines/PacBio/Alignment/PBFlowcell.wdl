@@ -111,9 +111,7 @@ workflow PBFlowcell {
         call Longbow.Peek as Longbow_Peek { input: bam = ShardLongReads.unmapped_shards[0], n=peek_size }
     }
 
-    if (experiment_type == "MASSEQ" ) {
-        String chosen_mas_seq_model = select_first([mas_seq_model, Longbow_Peek.model])
-    }
+    String chosen_mas_seq_model = if (experiment_type == "MASSEQ") then select_first([mas_seq_model, Longbow_Peek.model]) else ""
 
     # then perform correction and alignment on each of the shard
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
