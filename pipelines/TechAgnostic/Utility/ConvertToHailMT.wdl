@@ -8,7 +8,7 @@ import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
 import "../../../tasks/Utility/Hail.wdl" as Hail
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
-workflow ConvertToHailMT {
+workflow RunConvertToHailMT {
     input {
         File joint_gvcf
         File joint_gvcf_tbi
