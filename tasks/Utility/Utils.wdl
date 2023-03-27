@@ -2362,13 +2362,13 @@ task FailWithWarning {
 task SplitDelimitedString {
     input {
         String s
-        String sep
+        String seperate
     }
 
     command <<<
         set -eux
 
-        echo ~{s} | tr ~{sep} '\n' > result.txt
+        echo ~{s} | tr ~{seperate} '\n' > result.txt
     >>>
 
     output {
