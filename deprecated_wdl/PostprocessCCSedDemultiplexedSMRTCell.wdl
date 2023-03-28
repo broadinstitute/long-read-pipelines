@@ -66,11 +66,11 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
 
     # associate barcode to various forms of sample ids
     Array[Pair[String, String]] barcode_2_folder = read_map(demuxed_barcode_2_folder)  # type coercion Map to Array[Pair] may only work in WDL 1.0
-    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, sep = ','}
-    call Utils.SplitDelimitedString as get_biosamples {input: s = biosample_ids, sep = ','}
-    call Utils.SplitDelimitedString as get_aliquots {input: s = sample_ids, sep = ','}
-    call Utils.SplitDelimitedString as get_ds_ids {input: s = downstream_sample_ids, sep = ','}
-    call Utils.SplitDelimitedString as get_fp_ids {input: s = sample_ids_at_store, sep = ','}
+    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, separate = ','}
+    call Utils.SplitDelimitedString as get_biosamples {input: s = biosample_ids, separate = ','}
+    call Utils.SplitDelimitedString as get_aliquots {input: s = sample_ids, separate = ','}
+    call Utils.SplitDelimitedString as get_ds_ids {input: s = downstream_sample_ids, separate = ','}
+    call Utils.SplitDelimitedString as get_fp_ids {input: s = sample_ids_at_store, separate = ','}
     if (length(barcode_2_folder) != length(get_fp_ids.arr)) {
         call Utils.StopWorkflow as unmatched_barcodes_and_samples {
             input: reason = "Length of barcode names array and sample ids array don't match."
