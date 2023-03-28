@@ -54,7 +54,7 @@ workflow ONTFlowcell {
     if (defined(final_summary)) {
         call ONT.GetRunInfo { input: final_summary = select_first([final_summary]) }
     }
-    String PU = if defined(final_summary) then GetRunInfo.run_info['instrument'] else "unknown"
+    String PU = select_first([GetRunInfo.run_info['instrument'],  "unknown"])
     String DT = if defined(final_summary) then GetRunInfo.run_info['started'] else "2021-01-01T12:00:00.000000-05:00"
 
     if (defined(sequencing_summary)) {
