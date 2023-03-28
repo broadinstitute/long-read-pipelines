@@ -54,8 +54,9 @@ workflow ONTFlowcell {
     if (defined(final_summary)) {
         call ONT.GetRunInfo { input: final_summary = select_first([final_summary]) }
     }
-    String PU = select_first([GetRunInfo.run_info['instrument'],  "unknown"])
-    String DT = select_first([GetRunInfo.run_info['started'], "2021-01-01T12:00:00.000000-05:00"])
+    Map[String, String] runinfo = select_first([GetRunInfo.run_info, { "instrument": "unknown", "started": "2021-01-01T12:00:00.000000-05:00" }])
+    String PU = runinfo['instrument']
+    String DT = runinfo['started']
 
     if (defined(sequencing_summary)) {
         call ONT.ListFiles as ListFastqs {
