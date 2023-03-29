@@ -238,8 +238,8 @@ task Filter {
 
         longbow filter \
             -v INFO \
-            ~{pbi_arg}~{default="" sep=" --pbi " bam_pbi} \
-            ~{model_arg}~{default="" sep=" --model " model} \
+            ~{pbi_arg}~{default="" bam_pbi} \
+            ~{model_arg}~{default="" model} \
             ~{bam} \
             -x ~{prefix}_longbow_filter_failed.bam \
             -o ~{prefix}_longbow_filter_passed.bam 2> >(tee longbow_filter_log.txt >&2) # Get log data from stderr and reprint to stderr
@@ -291,7 +291,7 @@ task Segment {
     command <<<
         set -euxo pipefail
 
-        longbow segment -v INFO ~{model_arg}~{default="" sep=" --model " model} ~{bam} -o ~{prefix}.segmented.bam
+        longbow segment -v INFO ~{model_arg}~{default="" model} ~{bam} -o ~{prefix}.segmented.bam
     >>>
 
     output {
@@ -352,10 +352,10 @@ task Extract {
         longbow extract \
             -v INFO \
             --base-padding ~{base_padding} \
-            ~{start_offset_arg}~{default="" sep=" --start-offset " start_offset} \
-            ~{leading_adapter_arg}~{default="" sep=" --leading-adapter " leading_adapter} \
-            ~{trailing_adapter_arg}~{default="" sep=" --trailing-adapter " trailing_adapter} \
-            ~{pbi_arg}~{default="" sep=" --pbi " bam_pbi} \
+            ~{start_offset_arg}~{default="" start_offset} \
+            ~{leading_adapter_arg}~{default=""  leading_adapter} \
+            ~{trailing_adapter_arg}~{default=""  trailing_adapter} \
+            ~{pbi_arg}~{default="" bam_pbi} \
             ~{bam} \
             -o ~{prefix}.extracted.bam 2> >(tee longbow_extract_log.txt >&2) # Get log data from stderr and reprint to stderr
     >>>
@@ -468,7 +468,7 @@ task PadCBC
         "mas_15_bulk_teloprimeV2_single_none":  "BC",
     }
 
-    String final_barcode_tag = if defined(barcode_tag) then barcode_tag else barcode_tags[model]
+    String final_barcode_tag = select_first([barcode_tag,barcode_tags[model]])
 
     command <<<
         set -euxo pipefail
@@ -611,8 +611,8 @@ task Correct {
     }
 
     # Resolve allow list and barcode tags based on inputs and model:
-    String final_barcode_tag = if defined(barcode_tag) then barcode_tag else barcode_tags[model]
-    String final_corrected_tag = if defined(corrected_tag) then corrected_tag else corrected_tags[model]
+    String final_barcode_tag = select_first([barcode_tag,barcode_tags[model]])
+    String final_corrected_tag = select_first([corrected_tag,corrected_tags[model]])
 
     command <<<
         set -euxo pipefail
@@ -632,7 +632,7 @@ task Correct {
             -t 1 \
             --model ~{model} \
             --allow-list ${allow_list} \
-            ~{barcode_freq_arg}~{default="" sep=" --barcode-freqs " barcode_freq_list} \
+            ~{barcode_freq_arg}~{default="" barcode_freq_list} \
             -v INFO \
             --barcode-tag ~{final_barcode_tag} \
             --corrected-tag ~{final_corrected_tag} \

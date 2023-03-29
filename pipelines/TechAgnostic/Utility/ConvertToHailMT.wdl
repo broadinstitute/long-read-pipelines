@@ -27,7 +27,7 @@ workflow ConvertToHailMT {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"
 
     # Gather across multiple input gVCFs
-    call Hail.ConvertToHailMT {
+    call Hail.ConvertToHailMT as RunConvertToHailMT {
         input:
             gvcf = joint_gvcf,
             tbi = joint_gvcf_tbi,
@@ -40,6 +40,6 @@ workflow ConvertToHailMT {
     ##########
 
     output {
-        String joint_mt = ConvertToHailMT.gcs_path
+        String joint_mt = RunConvertToHailMT.gcs_path
     }
 }

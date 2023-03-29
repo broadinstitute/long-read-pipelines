@@ -51,13 +51,12 @@ workflow ONTFlowcell {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{dir_prefix}"
 
-    String PU = "unknown"
-    String DT = "2021-01-01T12:00:00.000000-05:00"
     if (defined(final_summary)) {
         call ONT.GetRunInfo { input: final_summary = select_first([final_summary]) }
-        String PU = GetRunInfo.run_info['instrument']
-        String DT = GetRunInfo.run_info['started']
     }
+    Map[String, String] runinfo = select_first([GetRunInfo.run_info, { "instrument": "unknown", "started": "2021-01-01T12:00:00.000000-05:00" }])
+    String PU = runinfo['instrument']
+    String DT = runinfo['started']
 
     if (defined(sequencing_summary)) {
         call ONT.ListFiles as ListFastqs {

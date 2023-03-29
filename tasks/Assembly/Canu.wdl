@@ -122,7 +122,7 @@ task Trim {
     parameter_meta {
         corrected_reads:   "reads that have been canu-corrected"
         genome_size:       "estimate on genome size (parameter to canu's 'genomeSize')"
-        corrected_reads:   "parameter to canu's 'correctedErrorRate'"
+        error_rate:   "parameter to canu's 'correctedErrorRate'"
         prefix:            "prefix to output files"
     }
 
