@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-pb
-VERSION = 0.1.38
+VERSION = 0.1.39
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
