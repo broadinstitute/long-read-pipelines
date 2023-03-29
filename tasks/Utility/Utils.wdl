@@ -2350,8 +2350,8 @@ task FailWithWarning {
     }
     runtime {
         cpu:                    default_attr.cpu_cores
-        memory:                 default_attr.mem_gb + " GiB"
-        disks: "local-disk " +  default_attr.disk_gb + " HDD"
+        memory:                 select_first([default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb:         default_attr.boot_disk_gb
         preemptible:            default_attr.preemptible_tries
         maxRetries:             default_attr.max_retries
@@ -2362,13 +2362,13 @@ task FailWithWarning {
 task SplitDelimitedString {
     input {
         String s
-        String sep
+        String separate
     }
 
     command <<<
         set -eux
 
-        echo ~{s} | tr ~{sep} '\n' > result.txt
+        echo ~{s} | tr ~{separate} '\n' > result.txt
     >>>
 
     output {

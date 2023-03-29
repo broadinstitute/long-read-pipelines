@@ -113,7 +113,7 @@ task ParentalReadsRepartitionAndMerylConfigure {
     }
 
     String debug_option = if (run_with_debug) then "-debug" else " "
-    String kmer_option = if (defined(kmerSize)) then ("-triobinK " + kmerSize) else " "
+    String kmer_option = if (defined(kmerSize)) then ("-triobinK " + select_first([kmerSize])) else " "
     String extra_args = kmer_option + debug_option
 
     command <<<

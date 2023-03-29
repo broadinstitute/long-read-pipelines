@@ -93,11 +93,11 @@ task AdjustUmiSequenceWithAdapterAlignment {
             --umi-length ~{umi_length} \
             --existing-umi-tag ~{existing_umi_tag} \
             --new-umi-tag ~{new_umi_tag} \
-            ~{pre_pre_umi_seq_arg}~{default="" sep=" --pre-pre-umi-seq " pre_pre_umi_seq} \
-            ~{pre_umi_seq_arg}~{default="" sep=" --pre-umi-seq " pre_umi_seq} \
-            ~{pre_umi_tag_arg}~{default="" sep=" --pre-umi-tag " pre_umi_tag} \
-            ~{post_umi_seq_arg}~{default="" sep=" --post-umi-seq " post_umi_seq} \
-            ~{post_umi_tag_arg}~{default="" sep=" --post-umi-tag " post_umi_tag} \
+            ~{pre_pre_umi_seq_arg}~{default="" pre_pre_umi_seq} \
+            ~{pre_umi_seq_arg}~{default="" pre_umi_seq} \
+            ~{pre_umi_tag_arg}~{default="" pre_umi_tag} \
+            ~{post_umi_seq_arg}~{default="" post_umi_seq} \
+            ~{post_umi_tag_arg}~{default="" post_umi_tag} \
             -o ~{prefix}.umi_adjusted.bam | tee ~{prefix}.log
     }
 

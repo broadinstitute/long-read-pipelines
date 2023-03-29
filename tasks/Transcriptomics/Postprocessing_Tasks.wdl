@@ -31,7 +31,7 @@ task CreateCountMatrixFromAnnotatedBam {
         set -euxo pipefail
         /python_scripts/create_count_matrix_from_annotated_bam.py \
             -b ~{annotated_transcriptome_bam} \
-            ~{tx_eq_class_assignments_arg} ~{default="" sep=" --tx-eq-class-assignments " tx_equivalence_class_assignments} \
+            ~{tx_eq_class_assignments_arg} ~{default="" tx_equivalence_class_assignments} \
             --umi-tag ~{umi_tag} \
             -o ~{prefix}.tsv
     >>>
@@ -257,10 +257,10 @@ task CreateCountMatrixAnndataFromTsv {
         /python_scripts/create_count_matrix_anndata_from_tsv.py \
             -t ~{count_matrix_tsv} \
             -g ~{genome_annotation_gtf_file} \
-            ~{overlap_intervals_arg}~{default="" sep=" --overlap-intervals " overlap_intervals} \
-            ~{overlap_interval_label_arg}~{default="" sep=" --overlap-interval-label " overlap_interval_label} \
-            ~{gencode_reference_gtf_file_arg}~{default="" sep=" --gencode-reference-gtf " gencode_reference_gtf_file} \
-            ~{eq_class_arg} ~{default="" sep=" --eq-class-defs-tsv " equivalence_class_definitions} \
+            ~{overlap_intervals_arg}~{default="" overlap_intervals} \
+            ~{overlap_interval_label_arg}~{default="" overlap_interval_label} \
+            ~{gencode_reference_gtf_file_arg}~{default="" gencode_reference_gtf_file} \
+            ~{eq_class_arg} ~{default="" equivalence_class_definitions} \
             ~{force_gencode_overwrite_flag} \
             -o ~{prefix}
     >>>
@@ -344,9 +344,9 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
             --tx-eq-class-assignments ~{tx_equivalence_class_assignments} \
             --gene-eq-class-definitions ~{gene_equivalence_class_definitions} \
             --gene-eq-class-assignments ~{gene_equivalence_class_definitions} \
-            ~{overlap_intervals_arg}~{default="" sep=" --overlap-intervals " overlap_intervals} \
-            ~{overlap_interval_label_arg}~{default="" sep=" --overlap-interval-label " overlap_interval_label} \
-            ~{gencode_reference_gtf_file_arg}~{default="" sep=" --gencode-reference-gtf " gencode_reference_gtf_file} \
+            ~{overlap_intervals_arg}~{default="" overlap_intervals} \
+            ~{overlap_interval_label_arg}~{default="" overlap_interval_label} \
+            ~{gencode_reference_gtf_file_arg}~{default="" gencode_reference_gtf_file} \
             ~{force_gencode_overwrite_flag} \
             -o ~{prefix}
     >>>

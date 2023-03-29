@@ -57,8 +57,8 @@ workflow PreprocessBarcodedCCSedSMRTCell {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/" + workflow_name + "/" + movie
     String outdir_metrics = outdir + "/metrics"
 
-    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, sep = ','}
-    call Utils.SplitDelimitedString as get_sample_ids {input: s = downstream_sample_ids, sep = ','}
+    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, separate = ','}
+    call Utils.SplitDelimitedString as get_sample_ids {input: s = downstream_sample_ids, separate = ','}
     if (length(get_barcodes.arr) != length(get_sample_ids.arr)) {
         call Utils.StopWorkflow as unmatched_barcodes_and_samples {
             input: reason = "Length of barcode names array and sample ids array don't match."
