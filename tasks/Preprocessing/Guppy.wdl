@@ -145,6 +145,8 @@ task Basecall {
             ~{barcode_arg} \
             --compress_fastq
 
+        find . -type f -exec ls -lah {} \;
+
         # Make a list of the barcodes that were seen in the data
         find guppy_output/ -name '*fastq*' -not -path '*fail*' -type f | \
             awk -F"/" '{ a=NF-1; a=$a; gsub(/pass/, "unclassified", a); print a }' | \
