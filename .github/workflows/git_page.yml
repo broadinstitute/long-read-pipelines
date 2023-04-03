@@ -36,6 +36,9 @@ jobs:
       - name: Build Docs
         run: |
           wdldoc --debug -o docs ./pipelines ./tasks
+          
+          python3 ./scripts/git_page/create_wdl_png.py ./pipelines --output_path ./docs/dot/
+          
           mkdocs build
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@releases/v3
