@@ -5,8 +5,7 @@ import argparse
 
 import logging
 
-from scripts.git_page.utility import set_logging_level, get_basename, \
-    get_all_files_with_extension, get_absolute_path
+import utility as util
 
 Logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -30,7 +29,7 @@ def main():
 
     args = parser.parse_args()
 
-    set_logging_level(args)
+    util.set_logging_level(args)
 
     md_dir_names = args.md_dir
     dot_png_dir_names = args.dot_dir
@@ -46,9 +45,9 @@ def main():
 
         Logger.debug(f'Processing {md_dir_name}...')
 
-        md_dir = get_absolute_path(md_dir_name)
+        md_dir = util.get_absolute_path(md_dir_name)
 
-        md_paths = get_all_files_with_extension(directory=md_dir, ext='md')
+        md_paths = util.get_all_files_with_extension(directory=md_dir, ext='md')
 
         for md in md_paths:
             Logger.debug(f'Processing {md}...')
@@ -66,12 +65,12 @@ def append_png_to_md(md_path: str, dot_paths: list) -> None:
     @return:
     """
 
-    md_basename = get_basename(md_path)
+    md_basename = util.get_basename(md_path)
 
     dot_png_matches = []
 
     for dot_path in dot_paths:
-        if md_basename == get_basename(dot_path):
+        if md_basename == util.get_basename(dot_path):
             dot_png_matches.append(dot_path)
 
     if len(dot_png_matches) == 1:
@@ -91,10 +90,10 @@ def get_all_dot_png_in_directory(directory_names: list) -> list:
 
     dot_png_paths = []
     for dot_png_dir_name in directory_names:
-        dot_png_dir = get_absolute_path(dot_png_dir_name)
+        dot_png_dir = util.get_absolute_path(dot_png_dir_name)
 
         dot_png_paths = (
-                dot_png_paths + get_all_files_with_extension(
+                dot_png_paths + util.get_all_files_with_extension(
                     directory=dot_png_dir, ext='dot.png'
                 )
         )

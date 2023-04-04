@@ -2,8 +2,7 @@ import glob
 import logging
 from pathlib import Path, PurePosixPath, PurePath
 
-from scripts.git_page.add_dot_link_to_md import Logger
-from scripts.git_page.create_wdl_png import Logger
+Logger = logging.getLogger(__name__)
 
 
 def get_absolute_path(path) -> Path:
