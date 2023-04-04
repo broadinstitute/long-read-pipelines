@@ -2,7 +2,7 @@ import errno
 
 import os
 import argparse
-
+from pathlib import Path
 import logging
 
 import utility as util
@@ -74,9 +74,10 @@ def append_png_to_md(md_path: str, dot_paths: list) -> None:
             dot_png_matches.append(dot_path)
 
     if len(dot_png_matches) == 1:
+        relative_d_p_path = get_relative_path(dot_png_matches[0], md_path)
         with open(md_path, 'a') as md_file:
             md_file.write(f'### Dot Diagram\n')
-            md_file.write(f'![{md_basename}]({dot_png_matches[0]})\n')
+            md_file.write(f'![{md_basename}](../{relative_d_p_path})\n')
     elif len(dot_png_matches) > 1:
         Logger.error(f'Found more than one dot.png for {md_basename}!')
 
@@ -98,6 +99,18 @@ def get_all_dot_png_in_directory(directory_names: list) -> list:
                 )
         )
     return dot_png_paths
+
+
+def get_relative_path(path, relative_to_path) -> Path:
+    """
+    Get the relative path for a path
+    @param relative_to_path:  Path to get relative path to
+    @param path: Path to get relative path for
+    @return:
+    """
+    p = Path(path)
+    parent_dir = Path(relative_to_path).parent
+    return p.relative_to(parent_dir.parent)
 
 
 if __name__ == "__main__":
