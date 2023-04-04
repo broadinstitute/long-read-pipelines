@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
 Visualize a WDL workflow using miniwdl and graphviz
+
+This script is a modified version of the wdlviz.py script from the miniwdl repository:
+https://github.com/chanzuckerberg/miniwdl/blob/main/examples/wdlviz.py
+
 """
 # black -l 100 wdlviz.py && pylint wdlviz.py
 import os
