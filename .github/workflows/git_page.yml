@@ -37,7 +37,9 @@ jobs:
         run: |
           wdldoc --debug -o docs ./pipelines ./tasks
           
-          python3 ./scripts/git_page/create_wdl_png.py ./pipelines --output_path ./docs/dot/
+          python3 ./scripts/git_page/create_wdl_png.py ./pipelines --output_path ./docs/dot
+          
+          python3 ./scripts/git_page/add_dot_link_to_md.py --md_dir ./docs/workflows --dot_dir ./docs/dot
           
           mkdocs build
       - name: Deploy
