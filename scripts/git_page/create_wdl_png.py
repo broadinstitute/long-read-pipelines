@@ -50,8 +50,8 @@ def main():
 def run_wdlviz(wdl_path: str, output_path: str = None) -> None:
     """
     Run wdlviz on a WDL file to create dot and png files
-    @param wdl_path:
-    @param output_path:
+    @param wdl_path: path to WDL file
+    @param output_path: path to output directory
     @return:
     """
     wdlviz_args = [wdl_path]

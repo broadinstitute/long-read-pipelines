@@ -61,8 +61,8 @@ def append_png_to_md(md_path: str, dot_paths: list) -> None:
     """
     Append dot.png link to markdown file
 
-    @param md_path:
-    @param dot_paths:
+    @param md_path: path to markdown file
+    @param dot_paths: list of paths to dot.png files
     @return:
     """
 
@@ -85,8 +85,8 @@ def append_png_to_md(md_path: str, dot_paths: list) -> None:
 def get_all_dot_png_in_directory(directory_names: list) -> list:
     """
     Get all dot.png files in a list of directories
-    @param directory_names:
-    @return:
+    @param directory_names: list of directories to search
+    @return: list of paths to dot.png files
     """
 
     dot_png_paths = []

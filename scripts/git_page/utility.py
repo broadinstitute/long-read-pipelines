@@ -10,7 +10,7 @@ def get_absolute_path(path) -> Path:
     """
     Get the absolute path for a path
     @param path: path to get absolute path for
-    @return:
+    @return: absolute path
     """
 
     Logger.debug(f'Getting absolute path for {path}...')
@@ -35,8 +35,8 @@ def set_logging_level(args):
 def get_basename(path: str) -> str:
     """
     Get the basename of a path
-    @param path:   path to get basename of
-    @return:
+    @param path: path to get basename of
+    @return: basename
     """
     Logger.debug(f'Getting basename of {path}...')
     return PurePath(path).name.split('.')[0]
@@ -46,7 +46,7 @@ def check_dir_exists(directory: Path or str) -> bool:
     """
     Check if a directory exists
     @param directory:  directory to check
-    @return:
+    @return: True if directory exists, False otherwise
     """
     Logger.debug(f'Checking if {directory} exists...')
     return Path(directory).exists()
@@ -57,7 +57,7 @@ def get_all_files_with_extension(directory: Path, ext: str) -> list:
     Get all files with a given extension in a directory
     @param directory: directory to search
     @param ext: extension (e.g. 'md', 'dot.png')
-    @return:
+    @return: list of files with extension
     """
     check_dir_exists(directory)
 
