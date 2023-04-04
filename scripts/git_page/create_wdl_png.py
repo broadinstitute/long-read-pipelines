@@ -1,13 +1,12 @@
-import errno
 import glob
 
-import os
 import argparse
 import wdlviz
 
-from pathlib import Path, PurePosixPath
-
 import logging
+
+from scripts.git_page.utility import set_logging_level, \
+    get_all_files_with_extension, get_absolute_path, check_dir_exists
 
 Logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -27,7 +26,7 @@ def main():
 
     args = parser.parse_args()
 
-    logging.getLogger().setLevel(logging.DEBUG) if args.debug else logging.getLogger().setLevel(logging.INFO)
+    set_logging_level(args)
 
     dir_names = args.wdl_dir
     output_path = str(get_absolute_path(args.output_path)) if args.output_path else None
@@ -37,15 +36,14 @@ def main():
         Logger.debug(f'Processing {dir_name}...')
 
         wdl_dir = get_absolute_path(dir_name)
-        if not wdl_dir.exists():
-            Logger.error(f'Could not find {wdl_dir}!')
-            raise FileNotFoundError(
-                errno.ENOENT, os.strerror(errno.ENOENT), wdl_dir)
-        wdl_paths = wdl_dir / "**/*.wdl"
+
+        check_dir_exists(wdl_dir)
+
+        wdl_paths = get_all_files_with_extension(directory=wdl_dir, ext='wdl')
 
         for wdl in glob.glob(str(wdl_paths), recursive=True):
             Logger.debug(f'Processing {wdl}...')
-            print(f'{wdl}:')
+
             run_wdlviz(wdl_path=wdl, output_path=output_path)
 
 
@@ -63,20 +61,6 @@ def run_wdlviz(wdl_path: str, output_path: str = None) -> None:
 
     Logger.debug(f'Running wdlviz with args: {wdlviz_args}...')
     wdlviz.main(args=wdlviz_args)
-
-
-def get_absolute_path(path) -> Path:
-    """
-    Get the absolute path for a path
-    @param path:
-    @return:
-    """
-
-    Logger.debug(f'Getting absolute path for {path}...')
-    if PurePosixPath(path).is_absolute():
-        return path
-    else:
-        return Path(path).resolve()
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 import errno
-import glob
 
 import os
 import argparse
 
-from pathlib import Path, PurePosixPath, PurePath
-
 import logging
+
+from scripts.git_page.utility import set_logging_level, get_basename, \
+    get_all_files_with_extension, get_absolute_path
 
 Logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -82,65 +82,6 @@ def append_png_to_md(md_path: str, dot_paths: list) -> None:
         Logger.error(f'Found more than one dot.png for {md_basename}!')
 
 
-def get_absolute_path(path) -> Path:
-    """
-    Get the absolute path for a path
-    @param path:
-    @return:
-    """
-
-    Logger.debug(f'Getting absolute path for {path}...')
-    if PurePosixPath(path).is_absolute():
-        return path
-    else:
-        return Path(path).resolve()
-
-
-def get_all_files_with_extension(directory: Path, ext: str) -> list:
-    """
-    Get all files with a given extension in a directory
-    @param directory: directory to search
-    @param ext: extension (e.g. 'md', 'dot.png')
-    @return:
-    """
-    check_dir_exists(directory)
-
-    Logger.debug(f'Getting all files with extension {ext} in {directory}...')
-    return glob.glob(f'{directory}/**/*.{ext}', recursive=True)
-
-
-def check_dir_exists(directory: Path or str) -> bool:
-    """
-    Check if a directory exists
-    @param directory:
-    @return:
-    """
-    Logger.debug(f'Checking if {directory} exists...')
-    return Path(directory).exists()
-
-
-def get_basename(path: str) -> str:
-    """
-    Get the basename of a path
-    @param path:
-    @return:
-    """
-    Logger.debug(f'Getting basename of {path}...')
-    return PurePath(path).name.split('.')[0]
-
-
-def set_logging_level(args):
-    """
-    Set the logging level
-    @param args:
-    @return:
-    """
-    if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
-
-
 def get_all_dot_png_in_directory(directory_names: list) -> list:
     """
     Get all dot.png files in a list of directories
@@ -153,9 +94,9 @@ def get_all_dot_png_in_directory(directory_names: list) -> list:
         dot_png_dir = get_absolute_path(dot_png_dir_name)
 
         dot_png_paths = (
-            dot_png_paths + get_all_files_with_extension(
-                directory=dot_png_dir, ext='dot.png'
-            )
+                dot_png_paths + get_all_files_with_extension(
+                    directory=dot_png_dir, ext='dot.png'
+                )
         )
     return dot_png_paths
 
