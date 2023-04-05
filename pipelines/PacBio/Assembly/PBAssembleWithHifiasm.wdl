@@ -1,11 +1,5 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample genome assembly on PacBio HiFi reads from
-## one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to genome assembly and variant calling.
-######################################################################################
-
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Assembly/Hifiasm.wdl" as HA
 import "../../../tasks/VariantCalling/CallAssemblyVariants.wdl" as AV
@@ -13,16 +7,10 @@ import "../../../tasks/QC/Quast.wdl" as Quast
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
-    input {
-        Array[File] ccs_fqs
 
-        File ref_map_file
-        String participant_name
-        String prefix
-
-        String gcs_out_root_dir
+    meta {
+        description: "A workflow that performs single sample genome assembly on PacBio HiFi reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to genome assembly and variant calling."
     }
-
     parameter_meta {
         ccs_fqs:            "GCS path to CCS fastq files"
 
@@ -31,6 +19,16 @@ workflow PBAssembleWithHifiasm {
         prefix:             "prefix for output files"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+    }
+
+    input {
+        Array[File] ccs_fqs
+
+        File ref_map_file
+        String participant_name
+        String prefix
+
+        String gcs_out_root_dir
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)

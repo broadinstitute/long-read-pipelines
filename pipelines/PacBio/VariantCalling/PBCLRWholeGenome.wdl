@@ -1,11 +1,5 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample variant calling on PacBio CLR reads from one
-## or more flow cells. The workflow merges multiple samples into a single BAM prior to
-## variant calling.
-######################################################################################
-
 import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/VariantCalling/CallVariantsPBCLR.wdl" as VAR
@@ -14,6 +8,25 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow PBCLRWholeGenome {
+
+    meta {
+        description: "A workflow that performs single sample variant calling on PacBio CLR reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to variant calling."
+    }
+    parameter_meta {
+        aligned_bams:       "GCS path to aligned BAM files"
+        aligned_bais:       "GCS path to aligned BAM file indices"
+        participant_name:   "name of the participant from whom these samples were obtained"
+
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+
+        call_svs:               "whether to call SVs"
+        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
+
+        call_small_variants: "whether to call small variants"
+        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
+    }
+
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais
@@ -31,21 +44,6 @@ workflow PBCLRWholeGenome {
 
         Boolean call_small_variants = true
         Boolean? call_small_vars_on_mitochondria = false
-    }
-
-    parameter_meta {
-        aligned_bams:       "GCS path to aligned BAM files"
-        aligned_bais:       "GCS path to aligned BAM file indices"
-        participant_name:   "name of the participant from whom these samples were obtained"
-
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
-
-        call_svs:               "whether to call SVs"
-        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
-
-        call_small_variants: "whether to call small variants"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)

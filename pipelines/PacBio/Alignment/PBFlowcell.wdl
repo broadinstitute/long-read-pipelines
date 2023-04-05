@@ -1,12 +1,5 @@
 version 1.0
 
-##########################################################################################
-## A workflow that performs CCS correction on PacBio HiFi reads from a single flow cell.
-## The workflow shards the subreads into clusters and performs CCS in parallel on each cluster.
-## Ultimately, all the corrected reads (and uncorrected) are gathered into a single BAM.
-## Various metrics are produced along the way.
-##########################################################################################
-
 import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Alignment/AlignReads.wdl" as AR
 import "../../../tasks/Utility/Utils.wdl" as Utils
@@ -20,6 +13,30 @@ import "../../../tasks/Transcriptomics/MASSeq.wdl" as MAS
 import "../../../tasks/Utility/JupyterNotebooks.wdl" as JUPYTER
 
 workflow PBFlowcell {
+
+    meta {
+        description: "A workflow that performs CCS correction on PacBio HiFi reads from a single flow cell. The workflow shards the subreads into clusters and performs CCS in parallel on each cluster. Ultimately, all the corrected reads (and uncorrected) are gathered into a single BAM. Various metrics are produced along the way."
+    }
+    parameter_meta {
+        bam:                "GCS path to raw subread bam"
+        ccs_report_txt:     "GCS path to CCS report txt, required if on-instrument corrected, otherwise CCS is run in this workflow for CCS libraries"
+        pbi:                "GCS path to pbi index for raw subread bam"
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+
+        SM:                 "the value to place in the BAM read group's SM field"
+        LB:                 "the value to place in the BAM read group's LB (library) field"
+
+        num_shards:         "number of shards into which fastq files should be batched"
+        experiment_type:    "type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
+        dir_prefix:         "directory prefix for output files"
+
+        mas_seq_model:      "Longbow model to use for MAS-seq data."
+
+        DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
+
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+    }
+
     input {
         File bam
         File pbi
@@ -43,26 +60,6 @@ workflow PBFlowcell {
         Boolean validate_shards = false
 
         Boolean DEBUG_MODE = false
-    }
-
-    parameter_meta {
-        bam:                "GCS path to raw subread bam"
-        ccs_report_txt:     "GCS path to CCS report txt, required if on-instrument corrected, otherwise CCS is run in this workflow for CCS libraries"
-        pbi:                "GCS path to pbi index for raw subread bam"
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
-
-        SM:                 "the value to place in the BAM read group's SM field"
-        LB:                 "the value to place in the BAM read group's LB (library) field"
-
-        num_shards:         "number of shards into which fastq files should be batched"
-        experiment_type:    "type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
-        dir_prefix:         "directory prefix for output files"
-
-        mas_seq_model:      "Longbow model to use for MAS-seq data."
-
-        DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
-
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
