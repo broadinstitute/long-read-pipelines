@@ -1,11 +1,5 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample genome assembly on ONT reads from one or
-## more flow cells. The workflow merges multiple samples into a single BAM prior to
-## genome assembly and variant calling.
-######################################################################################
-
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Assembly/Canu.wdl" as Canu
 import "../../../tasks/Preprocessing/Medaka.wdl" as Medaka
@@ -14,22 +8,9 @@ import "../../../tasks/QC/Quast.wdl" as Quast
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTAssembleWithCanu {
-    input {
-        String gcs_fastq_dir
-
-        File ref_map_file
-
-        Float correct_error_rate = 0.15
-        Float trim_error_rate = 0.15
-        Float assemble_error_rate = 0.15
-        String medaka_model = "r941_prom_high_g360"
-
-        String participant_name
-        String prefix
-
-        String gcs_out_root_dir
+    meta {
+        description: "A workflow that performs single sample genome assembly on ONT reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to genome assembly and variant calling."
     }
-
     parameter_meta {
         gcs_fastq_dir:       "GCS path to unaligned CCS BAM files"
 
@@ -44,6 +25,22 @@ workflow ONTAssembleWithCanu {
         prefix:              "prefix for output files"
 
         gcs_out_root_dir:    "GCS bucket to store the reads, variants, and metrics files"
+    }
+
+    input {
+        String gcs_fastq_dir
+
+        File ref_map_file
+
+        Float correct_error_rate = 0.15
+        Float trim_error_rate = 0.15
+        Float assemble_error_rate = 0.15
+        String medaka_model = "r941_prom_high_g360"
+
+        String participant_name
+        String prefix
+
+        String gcs_out_root_dir
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
