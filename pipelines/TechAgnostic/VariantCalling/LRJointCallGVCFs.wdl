@@ -1,14 +1,22 @@
 version 1.0
 
-############################################################################################
-## A workflow that performs joint calling on gVCFs (usually from DeepVariant) using GLNexus.
-############################################################################################
-
 import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
 import "../../../tasks/Utility/Hail.wdl" as Hail
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow LRJointCallGVCFs {
+
+    meta {
+        description: "A workflow that performs joint calling on gVCFs (usually from DeepVariant) using GLNexus."
+    }
+    parameter_meta {
+        gvcfs:            "GCS paths to gVCF files"
+        tbis:             "GCS paths to gVCF tbi files"
+        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        prefix:           "prefix for output joint-called gVCF and tabix index"
+        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
+    }
+
     input {
         Array[File] gvcfs
         Array[File] tbis
@@ -17,14 +25,6 @@ workflow LRJointCallGVCFs {
         String prefix
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        gvcfs:            "GCS paths to gVCF files"
-        tbis:             "GCS paths to gVCF tbi files"
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
-        prefix:           "prefix for output joint-called gVCF and tabix index"
-        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"

@@ -1,20 +1,20 @@
 version 1.0
 
-##########################################################################################
-# This WDL pipeline downloads data from SRA in parallel and stores the results in the
-# specified GCS dir.  This pipeline is essentially a Cromwell/GCP reimagining of the
-# Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
-##########################################################################################
+
 
 workflow DownloadFromSRA {
-    input {
-        Array[String] SRA_IDs
-        String gcs_output_dir
-    }
 
+    meta {
+        description: "This WDL pipeline downloads data from SRA in parallel and stores the results in the specified GCS dir. This pipeline is essentially a Cromwell/GCP reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl)."
+    }
     parameter_meta {
         SRA_IDs:        "The SRA ID(s) of the datasets to download."
         gcs_output_dir: "GCS path for storing output"
+    }
+
+    input {
+        Array[String] SRA_IDs
+        String gcs_output_dir
     }
 
     scatter (SRA_ID in SRA_IDs) {

@@ -10,6 +10,22 @@ workflow VerifyFingerprint {
     meta {
         description: "A workflow to check correctness of metadata on a flowcell, by genotyping it's BAM generated with its metadata, against a 'truth' genotyped VCF."
     }
+    parameter_meta {
+        aligned_bam:        "GCS path to aligned BAM file, supposed to be of the same sample as from the fingerprinting VCF"
+        expt_type:          "There will be special treatment for 'CLR' data (minimum base quality for bases used when computing a fingerprint)"
+        artificial_baseQ_for_CLR: "An artificial value for CLR reads used for fingerprint verification (CLR reads come with all 0 base qual)"
+
+        fingerprint_store:  "GS path to where all known fingerprinting GT'ed VCFS are stored"
+        smid:               "SM- prefixed ID"
+        collaborator_smid:  "Collaborator sample ID"
+        collaborator_participant_id:    "Collaborator participant ID"
+
+        use_this_fp_vcf:    "Optional gt VCF, if provided, used for fingerprint verification (fingerprint_store, smid, collaborator_smid, collaborator_participant_id will all be ignored)"
+
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+    }
 
     input {
         File aligned_bam
@@ -28,23 +44,6 @@ workflow VerifyFingerprint {
         File ref_map_file
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        aligned_bam:        "GCS path to aligned BAM file, supposed to be of the same sample as from the fingerprinting VCF"
-        expt_type:          "There will be special treatment for 'CLR' data (minimum base quality for bases used when computing a fingerprint)"
-        artificial_baseQ_for_CLR: "An artificial value for CLR reads used for fingerprint verification (CLR reads come with all 0 base qual)"
-
-        fingerprint_store:  "GS path to where all known fingerprinting GT'ed VCFS are stored"
-        smid:               "SM- prefixed ID"
-        collaborator_smid:  "Collaborator sample ID"
-        collaborator_participant_id:    "Collaborator participant ID"
-
-        use_this_fp_vcf:    "Optional gt VCF, if provided, used for fingerprint verification (fingerprint_store, smid, collaborator_smid, collaborator_participant_id will all be ignored)"
-
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
-
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)

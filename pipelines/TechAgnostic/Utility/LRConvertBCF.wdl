@@ -1,15 +1,20 @@
 version 1.0
 
-############################################################################################
-## A workflow that converts a BCF file into a .vcf.gz file. Meant to temporarily handle some
-## transient issues stemming from the LRJointCallGVCFs workflow. Should be removed eventually.
-############################################################################################
-
 import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
 import "../../../tasks/Utility/Hail.wdl" as Hail
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow LRConvertBCF {
+
+    meta {
+        description: "Convert a BCF file into a .vcf.gz file. Meant to temporarily handle some transient issues stemming from the LRJointCallGVCFs workflow. Should be removed eventually."
+    }
+    parameter_meta {
+        joint_bcf: "The BCF file to convert"
+        prefix: "The prefix to use for the output files"
+        gcs_out_root_dir: "The root directory in GCS to store the output files"
+    }
+
     input {
         File joint_bcf
         String prefix
