@@ -28,7 +28,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install wdldoc~=1.7.0
-          python3 -m pip install mkdocs
+          python3 -m pip install mkdocs~=1.4.2
       - name: Create Site Homepage
         run: |
           cp README.md docs/index.md && sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
@@ -36,7 +36,7 @@ jobs:
         run: |
           wdldoc --debug -o docs ./pipelines ./tasks
           
-          python3 ./scripts/git_page/create_wdl_png.py ./pipelines --output_path ./docs/dot
+          python3 ./scripts/git_page/create_wdl_visual.py ./pipelines --output_path ./docs/dot
           
           python3 ./scripts/git_page/add_dot_link_to_md.py --md_dir ./docs/workflows --dot_dir ./docs/dot
           

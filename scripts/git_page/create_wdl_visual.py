@@ -1,11 +1,8 @@
-import glob
-
 import argparse
-import wdlviz
-
 import logging
 
 import utility as util
+import wdlviz
 
 Logger = logging.getLogger(__name__)
 logging.basicConfig()
