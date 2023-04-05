@@ -5,7 +5,7 @@ from pathlib import Path, PurePosixPath, PurePath
 Logger = logging.getLogger(__name__)
 
 
-def get_absolute_path(path) -> Path:
+def get_absolute_path(path: Path or str) -> Path:
     """
     Get the absolute path for a path
     @param path: path to get absolute path for

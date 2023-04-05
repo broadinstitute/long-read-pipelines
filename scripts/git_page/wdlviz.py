@@ -41,6 +41,14 @@ def main(args=None):
         action="append",
         help="local directory to search for imports",
     )
+    parser.add_argument(
+        "-f",
+        "--format",
+        type=str,
+        help="Format of dot output visual (e.g. png, svg, pdf). see https://graphviz.org/docs/outputs/. Default: png",
+        default="png",
+    )
+
     args = parser.parse_args(args if args is not None else sys.argv[1:])
 
     # load WDL document
@@ -58,7 +66,7 @@ def main(args=None):
     # visualize workflow
     dot = wdlviz(doc.workflow, args.inputs, args.outputs)
     print(dot.source)
-    dot.render(doc.workflow.name + ".dot", format="png", directory=output_path)
+    dot.render(doc.workflow.name + ".dot", format=args.format, directory=output_path)
 
 
 def wdlviz(workflow: WDL.Workflow, inputs=False, outputs=False):
