@@ -6,7 +6,7 @@ version 1.0
 # reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
 ##########################################################################################
 
-import "tasks/Structs.wdl"
+import "../../../tasks/Utility/Utils.wdl" as Utils
 
 workflow DownloadFromWeb {
     input {
@@ -48,9 +48,6 @@ workflow DownloadFromWeb {
 # This task checks to see if a to-be-downloaded file exists at the specified GCS filepath, and if not, initiates a
 # parallel download process.  The downloaded file is then immediately uploaded to the specified GCS filepath.  It
 # is then deleted from local storage here by Cromwell, preventing redundant storage of the data.
-#
-# In the future, it might be interesting to explore gcsfuse (https://cloud.google.com/storage/docs/gcs-fuse) as an
-# option for downloading data directly to a GCS filepath.
 task DownloadFiles {
     input {
         File manifest
