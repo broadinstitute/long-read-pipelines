@@ -10,7 +10,7 @@ workflow LocalFast5 {
         String gcs_output_dir
         File summary_txt
         String prefix
-        String dirname
+        String fast5dir
     }
 
     scatter (locus in loci) {
@@ -41,7 +41,7 @@ workflow LocalFast5 {
         input:
             readnames = GetReadnames.readnames,
             summary_file = summary_txt,
-            dirname = dirname
+            fast5dir = fast5dir
     }
 
     call Utils.ChunkManifest { input: manifest = GetFast5Filenames.filenames, manifest_lines_per_chunk = 100 }
@@ -111,14 +111,14 @@ task GetFast5Filenames {
     input {
         File readnames
         File summary_file
-        String dirname
+        String fast5dir
 
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 3*ceil((size(readnames, "GB")+size(summary_file, "GB")))
 
-    String fast5_dir = sub(summary_file, basename(summary_file), dirname, "/")
+    String fast5_dir = sub(summary_file, basename(summary_file), fast5dir+"/")
 
     command <<<
         set -euxo pipefail
