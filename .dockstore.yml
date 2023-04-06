@@ -81,3 +81,9 @@ workflows:
 - name: LRConvertBCF
   subclass: wdl
   primaryDescriptorPath: /pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
+- name: DownloadFromSRA
+  subclass: wdl
+  primaryDescriptorPath: /pipelines/TechAgnostic/Utility/DownloadFromSRA.wdl
+- name: DownloadFromWeb
+  subclass: wdl
+  primaryDescriptorPath: /pipelines/TechAgnostic/Utility/DownloadFromWeb.wdl
