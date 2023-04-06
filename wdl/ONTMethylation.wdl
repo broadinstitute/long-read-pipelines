@@ -117,7 +117,7 @@ task Megalodon {
 
             megalodon f5 \
                 --guppy-params "-d /rerio/basecall_models" \
-                --guppy-config res_dna_r941_prom_modbases_5mC_CpG_v001.cfg \
+                --guppy-config res_dna_r941_prom_modbases_5mC_v001.cfg \
                 --outputs basecalls mappings mod_mappings mods \
                 --reference ~{ref_fasta} \
                 --mod-motif m CG 0 \
