@@ -2,7 +2,7 @@ version: 1.2
 workflows:
 - name: ONT10x
   subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated_wdl/ONT10x.wdl
+  primaryDescriptorPath: /wdl/deprecated/ONT10x.wdl
 - name: ONTWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/VariantCalling/ONTWholeGenome.wdl
@@ -14,16 +14,16 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/PacBio/Alignment/PBFlowcell.wdl
 - name: PBCCS
   subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated_wdl/PBCCS.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCCS.wdl
 - name: PBCCS10x
   subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated_wdl/PBCCS10x.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCCS10x.wdl
 - name: PBCCSDemultiplex
   subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated_wdl/PBCCSDemultiplex.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCCSDemultiplex.wdl
 - name: PBCCSDemultiplexWholeGenome
   subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated_wdl/PBCCSDemultiplexWholeGenome.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCCSDemultiplexWholeGenome.wdl
 - name: PBCCSIsoSeq
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBCCSIsoSeq.wdl
@@ -32,7 +32,7 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PBCCSWholeGenome.wdl
 - name: PBCLRDemultiplexWholeGenome
   subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated_wdl/PBCLRDemultiplexWholeGenome.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCLRDemultiplexWholeGenome.wdl
 - name: PBCLRWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PBCLRWholeGenome.wdl
@@ -53,7 +53,7 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
 - name: DownloadFromHudsonAlpha
   subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated_wdl/DownloadFromHudsonAlpha.wdl
+  primaryDescriptorPath: /wdl/deprecated/DownloadFromHudsonAlpha.wdl
 - name: PBAssembleWithHifiasm
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/PBAssembleWithHifiasm.wdl
