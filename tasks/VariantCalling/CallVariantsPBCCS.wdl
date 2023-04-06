@@ -226,7 +226,6 @@ workflow CallVariants {
         }
 
         if (!fast_less_sensitive_sv) {
-
             call PBSV.RunPBSV as PBSVslow {
                 input:
                     bam = bam,
@@ -240,20 +239,20 @@ workflow CallVariants {
             }
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
+        }
 
-            call Sniffles2.SampleSV as Sniffles2SV {
-                input:
-                    bam    = bam,
-                    bai    = bai,
-                    minsvlen = minsvlen,
-                    sample_id = sample_id,
-                    prefix = prefix
-            }
+        call Sniffles2.SampleSV as Sniffles2SV {
+            input:
+                bam    = bam,
+                bai    = bai,
+                minsvlen = minsvlen,
+                sample_id = sample_id,
+                prefix = prefix
+        }
 
-            call VariantUtils.ZipAndIndexVCF as ZipAndIndexSnifflesVCF {
-                input:
-                    vcf = Sniffles2SV.vcf
-            }
+        call VariantUtils.ZipAndIndexVCF as ZipAndIndexSnifflesVCF {
+            input:
+                vcf = Sniffles2SV.vcf
         }
     }
 
