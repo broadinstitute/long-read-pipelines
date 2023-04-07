@@ -10,7 +10,7 @@ import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 workflow PBCCSWholeGenome {
 
     meta {
-        description: "A workflow that performs single sample variant calling on PacBio HiFi reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to variant calling."
+        description: "A workflow that performs single sample variant calling on PacBio HiFi reads from one or more flow cells. The workflow merges multiple SMRT cells into a single BAM prior to variant calling."
     }
     parameter_meta {
         aligned_bams:       "GCS path to aligned BAM files"

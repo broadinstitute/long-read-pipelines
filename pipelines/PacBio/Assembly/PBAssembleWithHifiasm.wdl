@@ -9,7 +9,7 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 workflow PBAssembleWithHifiasm {
 
     meta {
-        description: "A workflow that performs single sample genome assembly on PacBio HiFi reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to genome assembly and variant calling."
+        description: "A workflow that performs single sample genome assembly on PacBio HiFi reads from one or more SMRT cells. The multiple SMRT cells data are merged prior to assembly."
     }
     parameter_meta {
         ccs_fqs:            "GCS path to CCS fastq files"
