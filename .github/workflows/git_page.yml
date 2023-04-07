@@ -36,6 +36,8 @@ jobs:
         run: |
           wdldoc --debug -o docs ./pipelines ./tasks
           
+          python3 ./scripts/git_page/md_post_process.py --debug --md_dir ./docs
+          
           python3 ./scripts/git_page/create_wdl_visual.py ./pipelines --output_path ./docs/dot
           
           python3 ./scripts/git_page/add_dot_link_to_md.py --md_dir ./docs/workflows --dot_dir ./docs/dot
