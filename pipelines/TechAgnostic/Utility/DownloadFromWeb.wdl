@@ -1,14 +1,14 @@
 version 1.0
 
 ##########################################################################################
-# This WDL pipeline downloads data from SRA in parallel and stores the results in the
-# specified GCS dir.  This pipeline is essentially a Cromwell/GCP reimagining of the
-# Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
+# This WDL pipeline downloads directories from HTTP/FTP/SFTP servers in parallel and
+# stores the results in the specified GCS dir.  This pipeline is essentially a Cromwell/GCP
+# reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
 ##########################################################################################
 
 import "../../../tasks/Utility/Utils.wdl" as Utils
 
-workflow DownloadFromSRA {
+workflow DownloadFromWeb {
     input {
         File manifest
 
@@ -56,7 +56,7 @@ task DownloadFiles {
         Boolean prepend_dir_name
         String gcs_out_root_dir
 
-        Int disk_size_gb = 50
+        Int disk_size_gb = 100
         Int num_cpus = 4
 
         RuntimeAttr? runtime_attr_override
@@ -67,19 +67,17 @@ task DownloadFiles {
 
         RET=0
 
-        awk 'NR % ~{num_jobs} == ~{nth} { print $0 }' ~{manifest} | while read sra_id; do
-            gcsdir="~{gcs_out_root_dir}~{true="/$sra_id" false="" prepend_dir_name}"
+        awk 'NR % ~{num_jobs} == ~{nth} { print $0 }' ~{manifest} | while read line; do
+            name=$(echo $line | xargs -n 1 basename)
+            dir=$(echo $line | perl -pe 's|(^.*://.*?/)||' | xargs -n 1 dirname)
+            gcsdir="~{gcs_out_root_dir}~{true="/$dir" false="" prepend_dir_name}"
 
-            if gsutil -q stat "${gcsdir}/${sra_id}_*fastq.gz" ; then
-                echo "${gcsdir}/${sra_id}_*fastq.gz already exists."
+            if gsutil -q stat "${gcsdir}/${name}" ; then
+                echo "${gcsdir}/${name} already exists."
             else
-                if fasterq-dump --threads ~{num_cpus} $sra_id ; then
-                    for fastq in *.fastq; do pigz $fastq; done
-                    gsutil -m cp *.gz "$gcsdir/"
-                    rm -f *.gz
-                else
-                    RET=1
-                fi
+                (aria2c $line && gsutil cp $name "$gcsdir/") || RET=1
+
+                rm -f $name
             fi
         done
 
@@ -92,12 +90,12 @@ task DownloadFiles {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          num_cpus,
-        mem_gb:             4,
+        cpu_cores:          1,
+        mem_gb:             2,
         disk_gb:            disk_size_gb,
         boot_disk_gb:       10,
-        preemptible_tries:  5,
-        max_retries:        0,
+        preemptible_tries:  3,
+        max_retries:        3,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
