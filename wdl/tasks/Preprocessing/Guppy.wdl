@@ -122,12 +122,21 @@ task ListFast5s {
 task Basecall {
     input {
         Array[File] fast5_files
-        String config = "dna_r9.4.1_450bps_hac_prom.cfg"
+        String config = "dna_r10.4.1_e8.2_400bps_sup.cfg"
         String? barcode_kit
         Int index = 0
 
         RuntimeAttr? runtime_attr_override
     }
+
+#    dna_r10.3_450bps_sup.cfg
+#    dna_r10.4.1_e8.2_260bps_sup.cfg
+#    dna_r10.4.1_e8.2_400bps_sup.cfg
+#    dna_r10.4_e8.1_sup.cfg
+#    dna_r9.4.1_450bps_sup.cfg
+#    dna_r9.4.1_450bps_sup_prom.cfg
+#    dna_r9.4.1_e8.1_sup.cfg
+#    dna_r9.5_450bps.cfg
 
     Int disk_size = 3 * ceil(size(fast5_files, "GB"))
 
@@ -191,7 +200,7 @@ task Basecall {
         boot_disk_gb:       30,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:6.0.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:6.4.6"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
