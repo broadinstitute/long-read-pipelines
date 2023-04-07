@@ -1,18 +1,8 @@
 version 1.0
 
-
-
 import "../../../tasks/Utility/Utils.wdl" as Utils
 
 workflow DownloadFromSRA {
-    input {
-        File manifest
-
-        Int num_simultaneous_downloads = 10
-        Boolean prepend_dir_name = true
-
-        String gcs_out_root_dir
-    }
 
     meta {
         description: "This WDL pipeline downloads data from SRA in parallel and stores the results in the specified GCS dir. This pipeline is essentially a Cromwell/GCP reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl)."
@@ -22,6 +12,15 @@ workflow DownloadFromSRA {
         num_simultaneous_downloads: "[default-valued] The number of files to fetch simultaneously."
         prepend_dir_name:           "If true, place the files in a subdirectory based on the basename of the FTP dir."
         gcs_out_root_dir:           "GCS bucket to store the reads, variants, and metrics files"
+    }
+
+    input {
+        File manifest
+
+        Int num_simultaneous_downloads = 10
+        Boolean prepend_dir_name = true
+
+        String gcs_out_root_dir
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
