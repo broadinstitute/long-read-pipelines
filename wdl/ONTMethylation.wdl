@@ -116,11 +116,9 @@ task Megalodon {
             mv $fast5 f5/
 
             megalodon f5 \
-                --guppy-params "-d /rerio/basecall_models" \
-                --guppy-config res_dna_r941_prom_modbases_5mC_v001.cfg \
+                --guppy-config dna_r9.4.1_450bps_modbases_5mc_hac_prom.cfg \
                 --outputs basecalls mappings mod_mappings mods \
                 --reference ~{ref_fasta} \
-                --mod-motif m CG 0 \
                 --devices cuda:0 \
                 --processes $num_cores \
                 --guppy-server-path /usr/bin/guppy_basecall_server \
