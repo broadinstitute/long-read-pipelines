@@ -120,6 +120,7 @@ task Megalodon {
                 --outputs basecalls mappings mod_mappings mods \
                 --reference ~{ref_fasta} \
                 --devices cuda:0 \
+                --mod-motif m CG 0 \
                 --processes $num_cores \
                 --guppy-server-path /usr/bin/guppy_basecall_server \
                 --output-directory $TMP_DIR \
