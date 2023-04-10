@@ -3,6 +3,7 @@ import logging
 
 import utility as util
 import wdlviz
+import WDL
 
 Logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -38,7 +39,11 @@ def main():
         for wdl in wdl_paths:
             Logger.debug(f'Processing {wdl}...')
 
-            run_wdlviz(wdl_path=wdl, output_path=output_path)
+            if WDL.load(wdl).workflow:  # check if wdl is a workflow
+                run_wdlviz(wdl_path=wdl, output_path=output_path)
+            else:
+                Logger.debug(f"{wdl} is not a WDL workflow (does not contain a "
+                             "workflow block). Skipping...")
 
 
 def run_wdlviz(wdl_path: str, output_path: str = None) -> None:
