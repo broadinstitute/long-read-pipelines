@@ -93,6 +93,9 @@ workflow ONTAssembleWithCanu {
     call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
     call FF.FinalizeToFile as FinalizeQuastReportTxt  { input: outdir = dir, file = Quast.report_txt }
 
+    call Quast.SummarizeQuastReport as summaryQ {input: quast_report_txt = Quast.report_txt}
+    Map[String, String] q_metrics = read_map(summaryQ.quast_metrics[0])
+
     output {
         File asm_unpolished = FinalizeAsmUnpolished.gcs_path
         File asm_polished = FinalizeAsmPolished.gcs_path
@@ -103,20 +106,6 @@ workflow ONTAssembleWithCanu {
         File quast_report_html = FinalizeQuastReportHtml.gcs_path
         File quast_report_txt = FinalizeQuastReportTxt.gcs_path
 
-        Int num_contigs = Quast.metrics['#_contigs']
-        Int largest_contigs = Quast.metrics['Largest_contig']
-        Int total_length = Quast.metrics['Total_length']
-        Float genome_fraction_pct = Quast.metrics['Genome_fraction_(%)']
-        Float gc_pct = Quast.metrics['GC_(%)']
-        Int n50 = Quast.metrics['N50']
-        Int ng50 = Quast.metrics['NG50']
-        Int nga50 = Quast.metrics['NGA50']
-        Int total_aligned_length = Quast.metrics['Total_aligned_length']
-        Int largest_alignment = Quast.metrics['Largest_alignment']
-        Int unaligned_length = Quast.metrics['Unaligned_length']
-        Float duplication_ratio = Quast.metrics['Duplication_ratio']
-        Int num_misassemblies = Quast.metrics['#_misassemblies']
-        Float num_mismatches_per_100_kbp = Quast.metrics['#_mismatches_per_100_kbp']
-        Float num_indels_per_100_kbp = Quast.metrics['#_indels_per_100_kbp']
+        Map[String, String] quast_summary = q_metrics
     }
 }
