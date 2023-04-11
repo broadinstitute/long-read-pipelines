@@ -45,7 +45,7 @@ are triggered by pushes to the repository and pull requests.
 
 ## Contributing Guidelines:
 
-Here are some best practices for contributing to this repository:
+Please adhere to the following best practices if contributing to this repository:
 
 1. Read Style Guide: Before making any changes to the code, it's important to read the style guide. The style guide contains information on how to write code that is consistent with the rest of the codebase. See [WDL Style Guide](./wdl_style_guide.md) and [Docker Style Guide](./docker_style_guide.md) for more information.
 2. Create a new branch: When making contributions to a repository, it's important to create a new branch for each change you make. The name of the branch should begin with your initials followed by an underscore and a short description of the change. For example, if Jack Sully is making a change to the README file, the name might be `js_update_readme`.
