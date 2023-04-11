@@ -15,8 +15,7 @@ def main():
     )
     parser.add_argument(
         "--md_dir", metavar="MARKDOWN_DIRECTORY", required=True,
-        help="One of or more directories containing markdown "
-             "documentation files for workflow"
+        help="Directory containing markdown documentation files for workflows"
     )
     parser.add_argument("--debug", action="store_true", help="verbose logging")
 
@@ -66,16 +65,18 @@ def check_if_md_file_has_title_header(md_path: str) -> bool:
     :param md_path: Path to markdown file
     :return: True if the markdown file has a title header
     """
+
     with open(md_path, 'r') as md_file:
-        md_lines = md_file.readlines()
-        if len(md_lines) == 0:
-            return False
+        md_lines = [s.strip() for s in md_file.readlines()]
 
-        for line in md_lines:
-            if line.startswith('# '):
-                return True
-
+    if len(md_lines) == 0:
         return False
+
+    for line in md_lines:
+        if line.startswith('# '):
+            return True
+
+    return False
 
 
 def md_path_in_workflows(md_path: str) -> bool:
@@ -95,47 +96,17 @@ def workflow_md_has_multiple_subheaders(md_path: str) -> bool:
     :return: True if the markdown file has multiple subheaders
     """
     with open(md_path, 'r') as md_file:
-        md_lines = md_file.readlines()
-        if len(md_lines) == 0:
-            return False
+        md_lines = [s.strip() for s in md_file.readlines()]
 
-        subheader_count = 0
-        for line in md_lines:
-            if line.startswith('## '):
-                subheader_count += 1
+    if len(md_lines) == 0:
+        return False
 
-        return subheader_count > 1
+    subheader_count = 0
+    for line in md_lines:
+        if line.startswith('## '):
+            subheader_count += 1
 
-
-def add_task_subheader(md_path: Union[str, Path]) -> None:
-    """
-    Adds a task subheader to the markdown file after the first subheader.
-    :param md_path: Path to markdown file
-    :return: None
-    """
-    try:
-        with open(md_path, 'r+') as md_file:
-            md_lines = md_file.readlines()
-
-            try:
-                second_subhead_index = [i for i, line in enumerate(md_lines) if line.startswith("## ")][1]
-            except IndexError:
-                raise IndexError(f"Unable to find second subheader in {md_path}")
-
-            for i, line in enumerate(md_lines[second_subhead_index:]):
-                if line.startswith("#"):
-                    md_lines[second_subhead_index + i] = "#" + line
-
-            task_header = "## Tasks\n\n"
-            md_lines.insert(second_subhead_index, task_header)
-
-            md_file.seek(0, 0)
-            md_file.writelines(md_lines)
-
-    except (FileNotFoundError, IsADirectoryError):
-        Logger.debug(f"Unable to open file at {md_path}")
-
-    Logger.debug(f'Added task subheader to {md_path}')
+    return subheader_count > 1
 
 
 def remove_subheaders_after_first(md_path: Union[str, Path]) -> None:
@@ -145,46 +116,24 @@ def remove_subheaders_after_first(md_path: Union[str, Path]) -> None:
     :return: None
     """
     try:
-        second_subhead_index = None
         with Path(md_path).open('r+') as md_file:
-            lines = md_file.readlines()
-            count = 0
-            for i, line in enumerate(lines):
-                if line.startswith("## "):
-                    count += 1
-                    if count == 2:
-                        second_subhead_index = i
-                        break
-            if second_subhead_index is None:
-                return
-            md_file.seek(0)
-            md_file.truncate()
-            md_file.writelines(lines[:second_subhead_index])
-
+            lines = [s.strip() for s in md_file.readlines()]
     except (FileNotFoundError, IsADirectoryError):
         Logger.debug(f"Unable to open file at {md_path}")
 
-
-def workflow_md_has_task_subheader(md_path: str) -> bool:
-    """
-    Checks if the markdown file has a task subheader
-    :param md_path: Path to markdown file
-    :return: True if the markdown file has a task subheader
-    """
-    try:
-        with open(md_path, 'r') as md_file:
-            md_lines = md_file.readlines()
-            if len(md_lines) == 0:
-                return False
-
-            for line in md_lines:
-                if line.startswith('## Tasks'):
-                    return True
-
-            return False
-    except (FileNotFoundError, IsADirectoryError):
-        Logger.debug(f"Unable to open file at {md_path}")
-        return False
+    second_subhead_index = None
+    count = 0
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            count += 1
+            if count == 2:
+                second_subhead_index = i
+                break
+    if second_subhead_index is None:
+        return
+    md_file.seek(0)
+    md_file.truncate()
+    md_file.writelines(lines[:second_subhead_index])
 
 
 if __name__ == "__main__":
