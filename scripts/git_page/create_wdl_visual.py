@@ -1,5 +1,6 @@
 import argparse
 import logging
+from pathlib import Path
 
 import utility as util
 import wdlviz
@@ -46,9 +47,12 @@ def main():
                              "workflow block). Skipping...")
 
 
-def run_wdlviz(wdl_path: str, output_path: str = None) -> None:
+def run_wdlviz(
+    wdl_path: str, use_basename: bool = True, output_path: str = None
+) -> None:
     """
     Run wdlviz on a WDL file to create dot and png files
+    @param use_basename: name output files using the basename of the WDL file
     @param wdl_path: path to WDL file
     @param output_path: path to output directory
     @return:
@@ -58,6 +62,9 @@ def run_wdlviz(wdl_path: str, output_path: str = None) -> None:
     if output_path is not None:
         wdlviz_args.append("--output_path")
         wdlviz_args.append(output_path)
+    if use_basename:
+        wdlviz_args.append("--dot-basename")
+        wdlviz_args.append(Path(wdl_path).stem)
 
     Logger.debug(f'Running wdlviz with args: {wdlviz_args}...')
     wdlviz.main(args=wdlviz_args)
