@@ -1,14 +1,20 @@
 version 1.0
 
-##########################################################################################
-# This WDL pipeline downloads directories from FTP in parallel and stores the results in
-# the specified GCS dir.  This pipeline is essentially a Cromwell/GCP reimagining of the
-# Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
-##########################################################################################
-
 import "../../../structs/Structs.wdl"
 
 workflow DownloadFromFTP {
+
+    meta {
+        description: "Download files from FTP in parallel and store the results in the specified GCS dir. This pipeline is essentially a Cromwell/GCP reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl)."
+    }
+    parameter_meta {
+        ftp_dirs:                   "The FTP directories to download"
+        num_simultaneous_downloads: "[default-valued] The number of files to fetch simultaneously."
+        prepend_dir_name:           "If true, place the files in a subdirectory based on the basename of the FTP dir."
+        exclude:                    "[default-valued] Simple substring patterns to exclude from the download."
+        gcs_output_dir:             "GCS path for storing output"
+    }
+
     input {
         Array[String] ftp_dirs
 
@@ -17,14 +23,6 @@ workflow DownloadFromFTP {
         Array[String] exclude = []
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        ftp_dirs:                   "The FTP directories to download"
-        num_simultaneous_downloads: "[default-valued] The number of files to fetch simultaneously."
-        prepend_dir_name:           "If true, place the files in a subdirectory based on the basename of the FTP dir."
-        exclude:                    "[default-valued] Simple substring patterns to exclude from the download."
-        gcs_output_dir:             "GCS path for storing output"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")

@@ -8,23 +8,10 @@ import "../../../tasks/Visualization/NanoPlot.wdl" as NP
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTFlowcell {
-    input {
-        File? final_summary
-        File? sequencing_summary
-        String? fastq_dir
 
-        File ref_map_file
-
-        String SM
-        String ID
-
-        Int num_shards = 300
-        String experiment_type
-        String dir_prefix
-
-        String gcs_out_root_dir
+    meta {
+        description: "Align ONT reads to a reference genome"
     }
-
     parameter_meta {
         final_summary:      "GCS path to '*final_summary*.txt*' file for basecalled fastq files"
         sequencing_summary: "GCS path to '*sequencing_summary*.txt*' file for basecalled fastq files"
@@ -40,6 +27,23 @@ workflow ONTFlowcell {
         dir_prefix:         "directory prefix for output files"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+    }
+
+    input {
+        File? final_summary
+        File? sequencing_summary
+        String? fastq_dir
+
+        File ref_map_file
+
+        String SM
+        String ID
+
+        Int num_shards = 300
+        String experiment_type
+        String dir_prefix
+
+        String gcs_out_root_dir
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)

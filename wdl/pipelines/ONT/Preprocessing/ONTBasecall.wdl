@@ -4,6 +4,18 @@ import "../../../tasks/Preprocessing/Guppy.wdl" as Guppy
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTBasecall {
+
+    meta {
+        description: "Basecall ONT reads"
+    }
+    parameter_meta {
+        gcs_fast5_dir: "GCS path to the directory containing fast5 files"
+        config: "Guppy config file"
+        barcode_kit: "Guppy barcode kit"
+        gcs_out_root_dir: "GCS path to the root directory for output"
+        prefix: "Prefix for output directory"
+    }
+
     input {
         String gcs_fast5_dir
         String config = "dna_r10.4.1_e8.2_400bps_sup.cfg"

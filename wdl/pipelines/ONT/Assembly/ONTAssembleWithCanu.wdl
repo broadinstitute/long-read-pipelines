@@ -1,11 +1,5 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample genome assembly on ONT reads from one or
-## more flow cells. The workflow merges multiple samples into a single BAM prior to
-## genome assembly and variant calling.
-######################################################################################
-
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Assembly/Canu.wdl" as Canu
 import "../../../tasks/Preprocessing/Medaka.wdl" as Medaka
@@ -14,22 +8,9 @@ import "../../../tasks/QC/Quast.wdl" as Quast
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTAssembleWithCanu {
-    input {
-        String gcs_fastq_dir
-
-        File ref_map_file
-
-        Float correct_error_rate = 0.15
-        Float trim_error_rate = 0.15
-        Float assemble_error_rate = 0.15
-        String medaka_model = "r941_prom_high_g360"
-
-        String participant_name
-        String prefix
-
-        String gcs_out_root_dir
+    meta {
+        description: "A workflow that performs single sample genome assembly on ONT reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to genome assembly and variant calling."
     }
-
     parameter_meta {
         gcs_fastq_dir:       "GCS path to unaligned CCS BAM files"
 
@@ -44,6 +25,22 @@ workflow ONTAssembleWithCanu {
         prefix:              "prefix for output files"
 
         gcs_out_root_dir:    "GCS bucket to store the reads, variants, and metrics files"
+    }
+
+    input {
+        String gcs_fastq_dir
+
+        File ref_map_file
+
+        Float correct_error_rate = 0.15
+        Float trim_error_rate = 0.15
+        Float assemble_error_rate = 0.15
+        String medaka_model = "r941_prom_high_g360"
+
+        String participant_name
+        String prefix
+
+        String gcs_out_root_dir
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -96,6 +93,9 @@ workflow ONTAssembleWithCanu {
     call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
     call FF.FinalizeToFile as FinalizeQuastReportTxt  { input: outdir = dir, file = Quast.report_txt }
 
+    call Quast.SummarizeQuastReport as summaryQ {input: quast_report_txt = Quast.report_txt}
+    Map[String, String] q_metrics = read_map(summaryQ.quast_metrics[0])
+
     output {
         File asm_unpolished = FinalizeAsmUnpolished.gcs_path
         File asm_polished = FinalizeAsmPolished.gcs_path
@@ -106,20 +106,6 @@ workflow ONTAssembleWithCanu {
         File quast_report_html = FinalizeQuastReportHtml.gcs_path
         File quast_report_txt = FinalizeQuastReportTxt.gcs_path
 
-        Int num_contigs = Quast.metrics['#_contigs']
-        Int largest_contigs = Quast.metrics['Largest_contig']
-        Int total_length = Quast.metrics['Total_length']
-        Float genome_fraction_pct = Quast.metrics['Genome_fraction_(%)']
-        Float gc_pct = Quast.metrics['GC_(%)']
-        Int n50 = Quast.metrics['N50']
-        Int ng50 = Quast.metrics['NG50']
-        Int nga50 = Quast.metrics['NGA50']
-        Int total_aligned_length = Quast.metrics['Total_aligned_length']
-        Int largest_alignment = Quast.metrics['Largest_alignment']
-        Int unaligned_length = Quast.metrics['Unaligned_length']
-        Float duplication_ratio = Quast.metrics['Duplication_ratio']
-        Int num_misassemblies = Quast.metrics['#_misassemblies']
-        Float num_mismatches_per_100_kbp = Quast.metrics['#_mismatches_per_100_kbp']
-        Float num_indels_per_100_kbp = Quast.metrics['#_indels_per_100_kbp']
+        Map[String, String] quast_summary = q_metrics
     }
 }

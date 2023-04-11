@@ -1055,6 +1055,10 @@ task MergeFastqs {
 
     Int disk_size = 3 * ceil(size(fastqs, "GB"))
 
+    String disk_type = if disk_size < 375 then "LOCAL" else "HDD"
+
+    Int memory = 8
+
     command <<<
         FILE="~{fastqs[0]}"
         if [[ "$FILE" =~ \.gz$ ]]; then
@@ -1070,60 +1074,19 @@ task MergeFastqs {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
+        cpu_cores:          2,
+        mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+        docker:             "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task MergeFastqGzs {
-    input {
-        Array[File] fastq_gzs
-
-        String prefix = "merged"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 3 * ceil(size(fastq_gzs, "GB"))
-
-    command <<<
-        cat ~{sep=' ' fastq_gzs} > ~{prefix}.fastq.gz
-    >>>
-
-    output {
-        File merged_fastq_gz = "~{prefix}.fastq.gz"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])

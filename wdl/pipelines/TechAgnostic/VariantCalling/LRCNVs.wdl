@@ -22,6 +22,22 @@ import "../../../tasks/Utility/cnv_common_tasks.wdl" as CNVTasks
 
 workflow LRCNVs {
 
+    meta {
+        description: "Workflow for creating a GATK GermlineCNVCaller denoising model and generating calls given a list of normal samples. Supports both WGS and WES."
+        notes: "<br /> - The intervals argument is required for both WGS and WES workflows and accepts formats compatible with the GATK -L argument (see https://gatkforums.broadinstitute.org/gatk/discussion/11009/intervals-and-interval-lists). These intervals will be padded on both sides by the amount specified by padding (default 250) and split into bins of length specified by bin_length (default 1000; specify 0 to skip binning, e.g., for WES).  For WGS, the intervals should simply cover the chromosomes of interest. <br />  - Intervals can be blacklisted from coverage collection and all downstream steps by using the blacklist_intervals argument, which accepts formats compatible with the GATK -XL argument (see https://gatkforums.broadinstitute.org/gatk/discussion/11009/intervals-and-interval-lists). This may be useful for excluding centromeric regions, etc. from analysis.  Alternatively, these regions may be manually filtered from the final callset."
+    }
+    parameter_meta {
+        intervals: "Required.  Intervals file (in .bed format) containing the regions to be analyzed.  For WGS, this should simply cover the chromosomes of interest.  For WES, this should cover the target regions to be analyzed."
+        blacklist_intervals: "Optional.  Intervals file (in .bed format) containing the regions to be excluded from analysis.  For WGS, this may be useful for excluding centromeric regions, etc. from analysis.  For WES, this may be useful for excluding regions that are not covered by the target capture kit."
+        normal_bams: "Required.  Array of BAM files for the normal samples to be used for denoising model generation."
+        normal_bais: "Required.  Array of BAI index files for the normal samples to be used for denoising model generation."
+        cohort_entity_id: "Required.  String identifier for the cohort used for denoising model generation."
+        contig_ploidy_priors: "Required.  File containing contig ploidy priors."
+        ref_map_file: "Required.  File containing the reference copy-number map."
+        num_intervals_per_scatter: "Optional.  Number of intervals to process in each scatter.  Default is 10000."
+        gatk_docker: "Optional.  Docker image for the GATK tool.  Default is broadinstitute/gatk:broadinstitute/gatk:4.1.7.0."
+    }
+
     input {
         ##################################
         #### required basic arguments ####

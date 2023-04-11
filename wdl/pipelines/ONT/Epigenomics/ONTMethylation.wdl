@@ -7,6 +7,20 @@ import "../../../tasks/Preprocessing/Guppy.wdl" as Guppy
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTMethylation {
+
+    meta {
+        description: "ONT Methylation pipeline"
+    }
+    parameter_meta {
+        gcs_fast5_dir: "GCS directory containing fast5 files"
+        ref_map_file: "Reference map file"
+        variants: "VCF file containing variants"
+        variants_tbi: "Tabix index for VCF file"
+        participant_name: "Participant name"
+        prefix: "Prefix for output files"
+        gcs_out_root_dir: "GCS directory to write output files"
+    }
+
     input {
         String gcs_fast5_dir
 
@@ -40,7 +54,7 @@ workflow ONTMethylation {
     call MergeVariantDBs { input: dbs = Megalodon.per_read_variant_calls_db }
     call MergeModifiedBaseCallDBs { input: dbs = Megalodon.per_read_modified_base_calls_db }
 
-    call Utils.MergeFastqGzs { input: fastq_gzs = Megalodon.basecalls_fastq, prefix = "basecalls" }
+    call Utils.MergeFastqs { input: fastqs = Megalodon.basecalls_fastq, prefix = "basecalls" }
 
     call Utils.Cat as CatModifiedBases5mC {
         input:
