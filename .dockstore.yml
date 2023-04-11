@@ -87,3 +87,9 @@ workflows:
 - name: DownloadFromWeb
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromWeb.wdl
+- name: ONTProcessBasecall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTProcessBasecall.wdl
+- name: ONTFlowcellFromMultipleBasecalls
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
