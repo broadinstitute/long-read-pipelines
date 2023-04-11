@@ -34,11 +34,11 @@ jobs:
           cp README.md docs/index.md && sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
       - name: Build Docs
         run: |
-          wdldoc --debug -o docs ./pipelines ./tasks
+          wdldoc --debug -o docs ./wdl/pipelines ./wdl/tasks
           
           python3 ./scripts/git_page/md_post_process.py --debug --md_dir ./docs
           
-          python3 ./scripts/git_page/create_wdl_visual.py ./pipelines ./tasks --output_path ./docs/dot
+          python3 ./scripts/git_page/create_wdl_visual.py --debug ./wdl/pipelines ./wdl/tasks --output_path ./docs/dot
           
           python3 ./scripts/git_page/add_dot_link_to_md.py --md_dir ./docs/workflows --dot_dir ./docs/dot
           
