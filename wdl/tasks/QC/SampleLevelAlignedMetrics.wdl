@@ -53,6 +53,8 @@ workflow SampleLevelAlignedMetrics {
 
         Float average_identity = NanoPlotFromBam.stats_map['average_identity']
         Float median_identity = NanoPlotFromBam.stats_map['median_identity']
+
+        Map[String, Float] reads_stats = NanoPlotFromBam.stats_map
     }
 }
 
