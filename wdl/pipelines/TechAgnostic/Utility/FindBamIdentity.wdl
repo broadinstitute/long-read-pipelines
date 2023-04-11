@@ -42,9 +42,11 @@ workflow FindBamIdentity {
     call FPUtils.PickGenotypeVCF { input: fingerprinting_vcf_gs_paths = ListGenotypedVCFs.vcf_gs_paths, vcf_name = vcf_filter_expression }
 
     scatter (vcf in PickGenotypeVCF.vcfs) {
+        call FPUtils.ReheaderFullGRCh38VCFtoNoAlt {input: full_GRCh38_vcf = vcf}
+
         call FPUtils.FilterGenotypesVCF {
             input:
-                fingerprint_vcf = vcf
+                fingerprint_vcf = ReheaderFullGRCh38VCFtoNoAlt.reheadered_vcf
         }
         call FPUtils.ExtractGenotypingSites {
             input:
