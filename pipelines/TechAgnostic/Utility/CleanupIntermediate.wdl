@@ -5,14 +5,13 @@ workflow CleanupIntermediate {
     meta {
         description: "A workflow to clean up intermediate files from running workflows on Terra. Use at your own risk."
     }
+    parameter_meta {
+        submissionIDs: "List of submissions whose intermediate files are to be deleted"
+    }
 
     input {
         String workspace_bucket
         Array[String] submissionIDs
-    }
-
-    parameter_meta {
-        submissionIDs: "List of submissions whose intermediate files are to be deleted"
     }
 
     scatter (sid in submissionIDs) {

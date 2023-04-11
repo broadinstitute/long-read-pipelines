@@ -1,18 +1,26 @@
 version 1.0
 
-##########################################################################################
-## A workflow that performs CCS correction and IsoSeq processing on PacBio HiFi reads from
-## a single flow cell. The workflow shards the subreads into clusters and performs CCS in
-## parallel on each cluster.  Error-corrected reads are then processed with PacBio's
-## IsoSeq software.  A number of metrics and figures are produced along the way.
-##########################################################################################
-
 import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Alignment/AlignReads.wdl" as AR
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBCCSIsoSeq {
+
+    meta {
+        description: "A workflow that performs CCS correction and IsoSeq processing on PacBio HiFi reads from a single flow cell. The workflow shards the subreads into clusters and performs CCS in parallel on each cluster. Error-corrected reads are then processed with PacBio's IsoSeq software. A number of metrics and figures are produced along the way."
+    }
+    parameter_meta {
+        ccs_bams:         "GCS path to CCS BAM files"
+        ccs_pbis:         "GCS path to CCS BAM .pbi indices"
+
+        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        participant_name: "name of the participant from whom these samples were obtained"
+        barcode_file:     "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
+
+        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+    }
+
     input {
         Array[File] ccs_bams
         Array[File] ccs_pbis
@@ -24,17 +32,6 @@ workflow PBCCSIsoSeq {
         Boolean drop_per_base_N_pulse_tags = true
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        ccs_bams:         "GCS path to CCS BAM files"
-        ccs_pbis:         "GCS path to CCS BAM .pbi indices"
-
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
-        participant_name: "name of the participant from whom these samples were obtained"
-        barcode_file:     "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
-
-        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)

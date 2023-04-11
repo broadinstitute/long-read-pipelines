@@ -1,11 +1,5 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample genome assembly on ONT reads from one or
-## more flow cells. The workflow merges multiple samples into a single BAM prior to
-## genome assembly and variant calling.
-######################################################################################
-
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Assembly/Flye.wdl" as Flye
 import "../../../tasks/Preprocessing/Medaka.wdl" as Medaka
@@ -14,6 +8,22 @@ import "../../../tasks/QC/Quast.wdl" as Quast
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTAssembleWithFlye {
+    meta {
+        description: "Perform single sample genome assembly on ONT reads from one or more flow cells. The workflow merges multiple samples into a single BAM prior to genome assembly and variant calling."
+    }
+    parameter_meta {
+        gcs_fastq_dir:       "GCS path to unaligned CCS BAM files"
+
+        ref_map_file:        "table indicating reference sequence and auxillary file locations"
+
+        medaka_model:        "Medaka polishing model name"
+
+        participant_name:    "name of the participant from whom these samples were obtained"
+        prefix:              "prefix for output files"
+
+        gcs_out_root_dir:    "GCS bucket to store the reads, variants, and metrics files"
+    }
+
     input {
         String gcs_fastq_dir
 
@@ -27,18 +37,6 @@ workflow ONTAssembleWithFlye {
         String gcs_out_root_dir
     }
 
-    parameter_meta {
-        gcs_fastq_dir:       "GCS path to unaligned CCS BAM files"
-
-        ref_map_file:        "table indicating reference sequence and auxillary file locations"
-
-        medaka_model:        "Medaka polishing model name"
-
-        participant_name:    "name of the participant from whom these samples were obtained"
-        prefix:              "prefix for output files"
-
-        gcs_out_root_dir:    "GCS bucket to store the reads, variants, and metrics files"
-    }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 

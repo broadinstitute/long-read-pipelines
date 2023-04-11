@@ -1,11 +1,5 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs processing of MAS-ISO-seq data on a single sample from
-## one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to processing.
-######################################################################################
-
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Alignment/AlignReads.wdl" as AR
@@ -17,9 +11,27 @@ import "../../../tasks/Transcriptomics/Postprocessing_Tasks.wdl" as TX_POST
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBMASIsoSeqQuantify {
+
     meta {
-        description : "Quantifies RNA isoform expression from given extracted, aligned, UMI- and CBC-annotated MAS-ISO-seq reads."
+        description : "A workflow that performs processing of MAS-ISO-seq data on a single sample from one or more flow cells. The workflow merges multiple samples into a single BAM prior to processing. \n\nQuantifies RNA isoform expression from given extracted, aligned, UMI- and CBC-annotated MAS-ISO-seq reads."
+
     }
+    parameter_meta {
+        aligned_ccs_bams: "GCS path to aligned MAS-ISO-seq CCS BAM files"
+        aligned_ccs_bais: "GCS path to aligned MAS-ISO-seq CCS BAM file indices"
+        participant_name: "name of the participant from whom these samples were obtained"
+
+        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        ref_gtf:          "GTF file to use for quantification"
+
+        intervals_of_interest : "[optional] An interval list file containing intervals to mark in the final anndata object as overlapping the transcripts."
+        interval_overlap_name : "[optional] The name of the annotation to add to the final anndata object for the column containing the overlap flag for transcripts that overlap intervals in the given intervals_of_interest file."
+
+        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+
+        DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
+    }
+
     input {
         Array[File] aligned_ccs_bams
         Array[File] aligned_ccs_bais
@@ -35,22 +47,6 @@ workflow PBMASIsoSeqQuantify {
         String gcs_out_root_dir
 
         Boolean DEBUG_MODE = false
-    }
-
-    parameter_meta {
-        aligned_ccs_bams: "GCS path to aligned MAS-ISO-seq CCS BAM files"
-        aligned_ccs_bais: "GCS path to aligned MAS-ISO-seq CCS BAM file indices"
-        participant_name: "name of the participant from whom these samples were obtained"
-
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
-        ref_gtf:          "GTF file to use for quantification"
-
-        intervals_of_interest : "[optional] An interval list file containing intervals to mark in the final anndata object as overlapping the transcripts."
-        interval_overlap_name : "[optional] The name of the annotation to add to the final anndata object for the column containing the overlap flag for transcripts that overlap intervals in the given intervals_of_interest file."
-
-        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
-
-        DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
     }
 
     Float min_ccs_read_quality = 0.0

@@ -1,20 +1,29 @@
 version 1.0
 
-##########################################################################################
-## A workflow that performs trio-binning of child long reads given parental (short) reads.
-## Based on the trio-canu publication
-##    De novo assembly of haplotype-resolved genomes with trio binning
-##    https://www.nature.com/articles/nbt.4277
-## We divide the workflow into two parts
-##   part one: collect k-mer stats given parental (short) reads
-##   part two: given the k-mer stats database from part one, classify child long reads
-##########################################################################################
-
 import "../../../tasks/Preprocessing/CollectParentsKmerStats.wdl" as stats
 
 import "../../../tasks/Utility/AssignChildLongReads.wdl" as asign
 
 workflow TrioBinChildLongReads {
+
+    meta {
+        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication: <br /> *De novo assembly of haplotype-resolved genomes with trio binning* https://www.nature.com/articles/nbt.4277 <br /> <br /> We divide the workflow into two parts: <br /> - part one: collect k-mer stats given parental (short) reads <br /> - part two: given the k-mer stats database from part one, classify child long reads"
+    }
+    parameter_meta {
+        workdir_name:                  "name of working directory"
+        genome_size:                   "an esimate on genome size of the specicies (affects k-value picking)"
+        kmerSize:                      "[optional] force specifying k-value in collecting k-mer stats on parents"
+        father_short_reads_bucket:     "GCS bucket path holding FASTA/FASTQ of (short) reads of paternal origin"
+        mother_short_reads_bucket:     "GCS bucket path holding FASTA/FASTQ of (short) reads of maternal origin"
+        child_long_reads_bucket:       "GCS bucket path holding FASTA/FASTQ of child long reads"
+        long_read_platform:            "platform of long read sequencing; currently only one of [pacbio-raw, nanopore-raw] is supported"
+        vm_local_monitoring_script:    "GCS file holding a resouce monitoring script that runs locally and collects info for a very specific purpose"
+        meryl_operations_threads_est:  "[default-valued] estimate on how many threads to allocate to k-mer stats collection step"
+        child_read_assign_threads_est: "[default-valued] estimate on how many threads to allocate to the child longread classification step"
+        child_read_assign_memoryG_est: "[default-valued] estimate on how many GB memory to allocate to the child longread classification step"
+        run_with_debug:                "[optional] whether to run in debug mode (takes significantly more disk space and more logs); defaults to false"
+    }
+
     input{
 
         String workdir_name
@@ -40,20 +49,7 @@ workflow TrioBinChildLongReads {
         Boolean? run_with_debug = false
     }
 
-    parameter_meta {
-        workdir_name:                  "name of working directory"
-        genome_size:                   "an esimate on genome size of the specicies (affects k-value picking)"
-        kmerSize:                      "[optional] force specifying k-value in collecting k-mer stats on parents"
-        father_short_reads_bucket:     "GCS bucket path holding FASTA/FASTQ of (short) reads of paternal origin"
-        mother_short_reads_bucket:     "GCS bucket path holding FASTA/FASTQ of (short) reads of maternal origin"
-        child_long_reads_bucket:       "GCS bucket path holding FASTA/FASTQ of child long reads"
-        long_read_platform:            "platform of long read sequencing; currently only one of [pacbio-raw, nanopore-raw] is supported"
-        vm_local_monitoring_script:    "GCS file holding a resouce monitoring script that runs locally and collects info for a very specific purpose"
-        meryl_operations_threads_est:  "[default-valued] estimate on how many threads to allocate to k-mer stats collection step"
-        child_read_assign_threads_est: "[default-valued] estimate on how many threads to allocate to the child longread classification step"
-        child_read_assign_memoryG_est: "[default-valued] estimate on how many GB memory to allocate to the child longread classification step"
-        run_with_debug:                "[optional] whether to run in debug mode (takes significantly more disk space and more logs); defaults to false"
-    }
+
 
     ############################################################################
     # we divide the workflow into two parts

@@ -6,6 +6,22 @@ import "../../../tasks/Utility/StringTie2.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow AnnotateTranscriptomeWithGuide {
+
+    meta {
+        description: "Annotate a transcriptome with a guide GTF"
+    }
+    parameter_meta {
+        aligned_bam:           "GCS path to aligned BAM file"
+        aligned_bai:           "GCS path to aligned BAM file index"
+        ref_map_file:          "table indicating reference sequence and auxillary file locations"
+
+        gtf:                   "guide GTF (e.g. Gencode38)"
+        participant_name:      "name of the participant from whom these samples were obtained"
+        keep_retained_introns: "keep apparently retained introns in new transcriptome annotation"
+
+        gcs_out_root_dir:      "GCS bucket to store the reads, variants, and metrics files"
+    }
+
     input {
         File aligned_bam
         File aligned_bai
@@ -17,18 +33,6 @@ workflow AnnotateTranscriptomeWithGuide {
         Boolean keep_retained_introns = false
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        aligned_bam:           "GCS path to aligned BAM file"
-        aligned_bai:           "GCS path to aligned BAM file index"
-        ref_map_file:          "table indicating reference sequence and auxillary file locations"
-
-        gtf:                   "guide GTF (e.g. Gencode38)"
-        participant_name:      "name of the participant from whom these samples were obtained"
-        keep_retained_introns: "keep apparently retained introns in new transcriptome annotation"
-
-        gcs_out_root_dir:      "GCS bucket to store the reads, variants, and metrics files"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)

@@ -4,6 +4,15 @@ import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTPfHrp2Hrp3Status {
+
+    meta {
+        description: "Determine if HRP2 and HRP3 are deleted in a sample"
+    }
+    parameter_meta {
+        bam: "BAM file"
+        bai: "BAM index file"
+    }
+
     input {
         File bam
         File bai

@@ -1,11 +1,5 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample variant calling on Oxford Nanopore reads
-## from one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to variant calling.
-######################################################################################
-
 import "../../../tasks/Utility/ONTUtils.wdl" as ONT
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/VariantCalling/CallVariantsONT.wdl" as VAR
@@ -14,6 +8,31 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow ONTWholeGenome {
+
+    meta {
+        description: "A workflow that performs single sample variant calling on Oxford Nanopore reads from one or more flow cells. The workflow merges multiple flowcells into a single BAM prior to variant calling."
+    }
+    parameter_meta {
+        aligned_bams:       "GCS path to aligned BAM files"
+        aligned_bais:       "GCS path to aligned BAM file indices"
+        participant_name:   "name of the participant from whom these samples were obtained"
+
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+
+        call_svs:               "whether to call SVs"
+        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
+
+        call_small_variants: "whether to call small variants"
+        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
+        sites_vcf:     "for use with Clair"
+        sites_vcf_tbi: "for use with Clair"
+
+        run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
+        ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
+        ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
+    }
+
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais
@@ -40,27 +59,6 @@ workflow ONTWholeGenome {
         Int? dvp_memory = 128
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
-    }
-
-    parameter_meta {
-        aligned_bams:       "GCS path to aligned BAM files"
-        aligned_bais:       "GCS path to aligned BAM file indices"
-        participant_name:   "name of the participant from whom these samples were obtained"
-
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
-
-        call_svs:               "whether to call SVs"
-        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
-
-        call_small_variants: "whether to call small variants"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
-        sites_vcf:     "for use with Clair"
-        sites_vcf_tbi: "for use with Clair"
-
-        run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
-        ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
-        ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)

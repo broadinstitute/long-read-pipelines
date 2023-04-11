@@ -4,6 +4,16 @@ import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTPfTypeDrugResistanceMarkers {
+
+    meta {
+        description: "Workflow to generate a report of drug resistance markers"
+    }
+    parameter_meta {
+        vcf: "VCF file to process"
+        dir_prefix: "Prefix for output directory"
+        gcs_out_root_dir: "GCS output root directory"
+    }
+
     input {
         File vcf
 

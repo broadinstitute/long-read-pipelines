@@ -7,6 +7,20 @@ import "../../../tasks/Preprocessing/Guppy.wdl" as Guppy
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTMethylation {
+
+    meta {
+        description: "ONT Methylation pipeline"
+    }
+    parameter_meta {
+        gcs_fast5_dir: "GCS directory containing fast5 files"
+        ref_map_file: "Reference map file"
+        variants: "VCF file containing variants"
+        variants_tbi: "Tabix index for VCF file"
+        participant_name: "Participant name"
+        prefix: "Prefix for output files"
+        gcs_out_root_dir: "GCS directory to write output files"
+    }
+
     input {
         String gcs_fast5_dir
 

@@ -10,6 +10,16 @@ workflow FindBamIdentity {
     meta {
         description: "A workflow to identify a flowcell's the true identity, by genotyping it's BAM, against an array of 'truth' genotyped VCF."
     }
+    parameter_meta {
+        aligned_bam:        "GCS path to aligned BAM file of the flowcell"
+        expt_type:          "There will be special treatment for 'CLR' data (minimum base quality for bases used when computing a fingerprint)"
+        artificial_baseQ_for_CLR: "An artificial value for CLR reads used for fingerprint verification (CLR reads come with all 0 base qual)"
+
+        fingerprint_store:      "GS path to where all known fingerprinting GT'ed VCFS are stored"
+        vcf_filter_expression:  "an expression used for picking up VCFs, the filter will be applied to VCF names, any match will lead to the VCF to be included"
+
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+    }
 
     input {
         File aligned_bam
@@ -22,17 +32,6 @@ workflow FindBamIdentity {
         String? vcf_filter_expression
 
         File ref_map_file
-    }
-
-    parameter_meta {
-        aligned_bam:        "GCS path to aligned BAM file of the flowcell"
-        expt_type:          "There will be special treatment for 'CLR' data (minimum base quality for bases used when computing a fingerprint)"
-        artificial_baseQ_for_CLR: "An artificial value for CLR reads used for fingerprint verification (CLR reads come with all 0 base qual)"
-
-        fingerprint_store:      "GS path to where all known fingerprinting GT'ed VCFS are stored"
-        vcf_filter_expression:  "an expression used for picking up VCFs, the filter will be applied to VCF names, any match will lead to the VCF to be included"
-
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)

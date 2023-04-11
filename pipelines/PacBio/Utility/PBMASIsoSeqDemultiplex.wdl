@@ -6,6 +6,17 @@ import "../../../tasks/Preprocessing/Longbow.wdl" as Longbow
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBMASIsoSeqDemultiplex {
+
+    meta {
+        description: "Demultiplex a BAM file based on the UMI tag"
+    }
+    parameter_meta {
+        bam:              "GCS path to BAM file"
+        participant_name: "name of the participant from whom these samples were obtained"
+        tag:              "BAM tag on which to demultiplex"
+        gcs_out_root_dir: "GCS bucket to store the demultiplexed BAMs"
+    }
+
     input {
         File bam
         String participant_name
@@ -13,13 +24,6 @@ workflow PBMASIsoSeqDemultiplex {
         String tag = "CB"
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        bam:              "GCS path to BAM file"
-        participant_name: "name of the participant from whom these samples were obtained"
-        tag:              "BAM tag on which to demultiplex"
-        gcs_out_root_dir: "GCS bucket to store the demultiplexed BAMs"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBMASIsoSeqDemultiplex/~{participant_name}"

@@ -1,17 +1,25 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample genome assembly on PacBio HiFi reads from
-## one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to genome assembly and variant calling.
-######################################################################################
-
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Assembly/Hifiasm.wdl" as HA
 import "../../../tasks/QC/Quast.wdl" as QuastEval
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
+
+    meta {
+        description: "A workflow that performs single sample genome assembly on PacBio HiFi reads from one or more SMRT cells. The multiple SMRT cells data are merged prior to assembly."
+    }
+    parameter_meta {
+        ccs_fqs:            "GCS path to CCS fastq files"
+
+        participant_name:   "name of the participant from whom these samples were obtained"
+        prefix:             "prefix for output files"
+
+        ref_fasta_for_eval: "Reference Fasta used for evaluating "
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+    }
+
     input {
         Array[File] ccs_fqs
 
@@ -21,16 +29,6 @@ workflow PBAssembleWithHifiasm {
         File? ref_fasta_for_eval
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        ccs_fqs:            "GCS path to CCS fastq files"
-
-        participant_name:   "name of the participant from whom these samples were obtained"
-        prefix:             "prefix for output files"
-
-        ref_fasta_for_eval: "Reference Fasta used for evaluating "
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     #########################################################################################
