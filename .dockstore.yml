@@ -2,88 +2,88 @@ version: 1.2
 workflows:
 - name: ONT10x
   subclass: wdl
-  primaryDescriptorPath: /deprecated_wdl/ONT10x.wdl
+  primaryDescriptorPath: /wdl/deprecated/ONT10x.wdl
 - name: ONTWholeGenome
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/VariantCalling/ONTWholeGenome.wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/VariantCalling/ONTWholeGenome.wdl
 - name: ONTFlowcell
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/Preprocessing/ONTFlowcell.wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcell.wdl
 - name: PBFlowcell
   subclass: wdl
-  primaryDescriptorPath: /pipelines/PacBio/Alignment/PBFlowcell.wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Alignment/PBFlowcell.wdl
 - name: PBCCS
   subclass: wdl
-  primaryDescriptorPath: /deprecated_wdl/PBCCS.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCCS.wdl
 - name: PBCCS10x
   subclass: wdl
-  primaryDescriptorPath: /deprecated_wdl/PBCCS10x.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCCS10x.wdl
 - name: PBCCSDemultiplex
   subclass: wdl
-  primaryDescriptorPath: /deprecated_wdl/PBCCSDemultiplex.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCCSDemultiplex.wdl
 - name: PBCCSDemultiplexWholeGenome
   subclass: wdl
-  primaryDescriptorPath: /deprecated_wdl/PBCCSDemultiplexWholeGenome.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCCSDemultiplexWholeGenome.wdl
 - name: PBCCSIsoSeq
   subclass: wdl
-  primaryDescriptorPath: /pipelines/PacBio/Utility/PBCCSIsoSeq.wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBCCSIsoSeq.wdl
 - name: PBCCSWholeGenome
   subclass: wdl
-  primaryDescriptorPath: /pipelines/PacBio/VariantCalling/PBCCSWholeGenome.wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PBCCSWholeGenome.wdl
 - name: PBCLRDemultiplexWholeGenome
   subclass: wdl
-  primaryDescriptorPath: /deprecated_wdl/PBCLRDemultiplexWholeGenome.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCLRDemultiplexWholeGenome.wdl
 - name: PBCLRWholeGenome
   subclass: wdl
-  primaryDescriptorPath: /pipelines/PacBio/VariantCalling/PBCLRWholeGenome.wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PBCLRWholeGenome.wdl
 - name: LRCNVs
   subclass: wdl
-  primaryDescriptorPath: /pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
 - name: ONTBasecall
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/Preprocessing/ONTBasecall.wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTBasecall.wdl
 - name: ONTAssembleWithCanu
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/Assembly/ONTAssembleWithCanu.wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Assembly/ONTAssembleWithCanu.wdl
 - name: ONTAssembleWithFlye
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/Assembly/ONTAssembleWithFlye.wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Assembly/ONTAssembleWithFlye.wdl
 - name: VerifyFingerprint
   subclass: wdl
-  primaryDescriptorPath: /pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
 - name: DownloadFromHudsonAlpha
   subclass: wdl
-  primaryDescriptorPath: /deprecated_wdl/DownloadFromHudsonAlpha.wdl
+  primaryDescriptorPath: /wdl/deprecated/DownloadFromHudsonAlpha.wdl
 - name: PBAssembleWithHifiasm
   subclass: wdl
-  primaryDescriptorPath: /pipelines/PacBio/Assembly/PBAssembleWithHifiasm.wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/PBAssembleWithHifiasm.wdl
 - name: ONTMethylation
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/Epigenomics/ONTMethylation.wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Epigenomics/ONTMethylation.wdl
 - name: ONTPfHrp2Hrp3Status
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/MultiAnalysis/ONTPfHrp2Hrp3Status.wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/MultiAnalysis/ONTPfHrp2Hrp3Status.wdl
 - name: ONTPfTypeDrugResistanceMarkers
   subclass: wdl
-  primaryDescriptorPath: /pipelines/ONT/MultiAnalysis/ONTPfTypeDrugResistanceMarkers.wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/MultiAnalysis/ONTPfTypeDrugResistanceMarkers.wdl
 - name: PBMASIsoSeqQuantify
   subclass: wdl
-  primaryDescriptorPath: /pipelines/PacBio/Utility/PBMASIsoSeqQuantify.wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqQuantify.wdl
 - name: PBMASIsoSeqDemultiplex
   subclass: wdl
-  primaryDescriptorPath: /pipelines/PacBio/Utility/PBMASIsoSeqDemultiplex.wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqDemultiplex.wdl
 - name: LRJointCallGVCFs
   subclass: wdl
-  primaryDescriptorPath: /pipelines/TechAgnostic/VariantCalling/LRJointCallGVCFs.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRJointCallGVCFs.wdl
 - name: ConvertToHailMT
   subclass: wdl
-  primaryDescriptorPath: /pipelines/TechAgnostic/Utility/ConvertToHailMT.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ConvertToHailMT.wdl
 - name: LRConvertBCF
   subclass: wdl
-  primaryDescriptorPath: /pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
 - name: DownloadFromSRA
   subclass: wdl
-  primaryDescriptorPath: /pipelines/TechAgnostic/Utility/DownloadFromSRA.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromSRA.wdl
 - name: DownloadFromWeb
   subclass: wdl
-  primaryDescriptorPath: /pipelines/TechAgnostic/Utility/DownloadFromWeb.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromWeb.wdl
