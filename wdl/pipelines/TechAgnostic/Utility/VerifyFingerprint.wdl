@@ -63,15 +63,16 @@ workflow VerifyFingerprint {
     }
 
     File gt_vcf = if (defined(use_this_fp_vcf)) then select_first([use_this_fp_vcf]) else select_first([PickGenotypeVCF.vcfs])[0]
+    call FPUtils.ReheaderFullGRCh38VCFtoNoAlt as reheader {input: full_GRCh38_vcf = gt_vcf}
 
     call VariantUtils.GetVCFSampleName {
         input:
-            fingerprint_vcf = gt_vcf
+            fingerprint_vcf = reheader.reheadered_vcf
     }
 
     call FPUtils.FilterGenotypesVCF {
         input:
-            fingerprint_vcf = gt_vcf
+            fingerprint_vcf = reheader.reheadered_vcf
     }
 
     call FPUtils.ExtractGenotypingSites {
