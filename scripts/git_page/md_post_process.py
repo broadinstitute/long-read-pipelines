@@ -117,23 +117,24 @@ def remove_subheaders_after_first(md_path: Union[str, Path]) -> None:
     """
     try:
         with Path(md_path).open('r+') as md_file:
-            lines = [s.strip() for s in md_file.readlines()]
+            lines = md_file.readlines()
+
+            second_subhead_index = None
+            count = 0
+            for i, line in enumerate(lines):
+                if line.startswith("## "):
+                    count += 1
+                    if count == 2:
+                        second_subhead_index = i
+                        break
+            if second_subhead_index is None:
+                return
+            md_file.seek(0)
+            md_file.truncate()
+            md_file.writelines(lines[:second_subhead_index])
+
     except (FileNotFoundError, IsADirectoryError):
         Logger.debug(f"Unable to open file at {md_path}")
-
-    second_subhead_index = None
-    count = 0
-    for i, line in enumerate(lines):
-        if line.startswith("## "):
-            count += 1
-            if count == 2:
-                second_subhead_index = i
-                break
-    if second_subhead_index is None:
-        return
-    md_file.seek(0)
-    md_file.truncate()
-    md_file.writelines(lines[:second_subhead_index])
 
 
 if __name__ == "__main__":
