@@ -15,7 +15,7 @@ import "../../../tasks/Utility/JupyterNotebooks.wdl" as JUPYTER
 workflow PBFlowcell {
 
     meta {
-        description: "A workflow that performs CCS correction on PacBio HiFi reads from a single flow cell. The workflow shards the subreads into clusters and performs CCS in parallel on each cluster. Ultimately, all the corrected reads (and uncorrected) are gathered into a single BAM. Various metrics are produced along the way."
+        description: "The workflow performs the alignment of an SMRT cell's worth of data to a reference. For genomic sequencing data, the workflow also optionally performs CCS correction if the data is from a CCS library but did not get corrected on-instrument. For MAS-seq transcriptome data, this workflow will determine the most likely MAS-seq model, then it will use that model to annotate, segment, and filter the CCS reads. These CCS reads will then be aligned to the reference in trascriptome alignemnt mode. Note: Currently the MAS-seq workflow separates CLR reads, but does not process them."
     }
     parameter_meta {
         bam:                "GCS path to raw subread bam"
