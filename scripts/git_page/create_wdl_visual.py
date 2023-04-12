@@ -28,7 +28,8 @@ def main():
 
     dir_names = args.wdl_dir
     output_path = str(util.get_absolute_path(args.output_path)) if args.output_path else None
-    Path(output_path).mkdir() if not Path(output_path).exists() else None
+
+    create_output_dir(Path(output_path))
 
     for dir_name in dir_names:
 
@@ -69,6 +70,17 @@ def run_wdlviz(
 
     Logger.debug(f'Running wdlviz with args: {wdlviz_args}...')
     wdlviz.main(args=wdlviz_args)
+
+
+def create_output_dir(output_path: Path) -> None:
+    """
+    Create output directory if it doesn't exist
+    @param output_path: path to output directory
+    @return:
+    """
+    if not output_path.exists():
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+        Logger.debug(f'Created output directory: {output_path}')
 
 
 if __name__ == "__main__":

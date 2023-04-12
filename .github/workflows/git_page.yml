@@ -40,6 +40,8 @@ jobs:
           
           python3 ./scripts/git_page/md_post_process.py --debug --md_dir ./docs
           
+          ls -l ./docs
+          
           python3 ./scripts/git_page/create_wdl_visual.py --debug ./wdl/pipelines ./wdl/tasks --output_path ./docs/dot
           
           python3 ./scripts/git_page/add_dot_link_to_md.py --md_dir ./docs/workflows --dot_dir ./docs/dot
