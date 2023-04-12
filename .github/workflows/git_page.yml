@@ -31,6 +31,7 @@ jobs:
           python3 -m pip install mkdocs~=1.4.2
       - name: Create Site Homepage
         run: |
+          mkdir -p docs
           cp README.md docs/index.md && sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
       - name: Build Docs
         run: |
