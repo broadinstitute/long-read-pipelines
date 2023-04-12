@@ -26,11 +26,10 @@ jobs:
 
       - name: Install Requirements
         run: |
-          sudo apt-get update && sudo apt-get install -y graphviz=8.0.2
+          sudo apt-get update && sudo apt-get install -y graphviz~=2.47.0
           python3 -m pip install --upgrade pip
           python3 -m pip install wdldoc~=1.7.0
           python3 -m pip install mkdocs~=1.4.2
-          python3 -m pip install graphviz~=0.20.1
       - name: Create Site Homepage
         run: |
           mkdir -p docs
