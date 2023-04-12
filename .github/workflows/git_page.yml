@@ -30,6 +30,7 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install wdldoc~=1.7.0
           python3 -m pip install mkdocs~=1.4.2
+          python3 -m pip install graphviz~=0.20.1
       - name: Create Site Homepage
         run: |
           mkdir -p docs
