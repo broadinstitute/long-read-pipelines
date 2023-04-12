@@ -28,6 +28,7 @@ def main():
 
     dir_names = args.wdl_dir
     output_path = str(util.get_absolute_path(args.output_path)) if args.output_path else None
+    Path(output_path).mkdir() if not Path(output_path).exists() else None
 
     for dir_name in dir_names:
 
