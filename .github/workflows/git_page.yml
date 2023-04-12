@@ -26,6 +26,7 @@ jobs:
 
       - name: Install Requirements
         run: |
+          sudo apt-get update && sudo apt-get install -y graphviz
           python3 -m pip install --upgrade pip
           python3 -m pip install wdldoc~=1.7.0
           python3 -m pip install mkdocs~=1.4.2
