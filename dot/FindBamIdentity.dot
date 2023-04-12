@@ -1,0 +1,67 @@
+// FindBamIdentity
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-ListGenotypedVCFs" [label=ListGenotypedVCFs shape=cds]
+	"call-PickGenotypeVCF" [label=PickGenotypeVCF shape=cds]
+	subgraph "cluster-scatter-L44C5-vcf" {
+		fontname=Roboto label="scatter(PickGenotypeVCF.vcfs)" rank=same
+		"call-ReheaderFullGRCh38VCFtoNoAlt" [label=ReheaderFullGRCh38VCFtoNoAlt shape=cds]
+		"call-FilterGenotypesVCF" [label=FilterGenotypesVCF shape=cds]
+		"call-ExtractGenotypingSites" [label=ExtractGenotypingSites shape=cds]
+		"scatter-L44C5-vcf" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-MergeGenotypingSites" [label=MergeGenotypingSites shape=cds]
+	"call-ExtractRelevantGenotypingReads" [label=ExtractRelevantGenotypingReads shape=cds]
+	subgraph "cluster-if-L66C5" {
+		fontname=Roboto label="if(is_clr_bam)" rank=same
+		"call-ResetCLRBaseQual" [label=ResetCLRBaseQual shape=cds]
+		"if-L66C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L75C5-vcf" {
+		fontname=Roboto label="scatter(FilterGenotypesVCF.ready_to_use_vcf)" rank=same
+		"call-GetVCFSampleName" [label=GetVCFSampleName shape=cds]
+		subgraph "cluster-if-L82C9" {
+			fontname=Roboto label="if(!is_clr_bam)" rank=same
+			"call-CheckFingerprint" [label=CheckFingerprint shape=cds]
+			"decl-non_clr_lod" [label=non_clr_lod shape=plaintext]
+			"if-L82C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		subgraph "cluster-if-L94C9" {
+			fontname=Roboto label="if(is_clr_bam)" rank=same
+			"call-CheckCLRFingerprint" [label=CheckCLRFingerprint shape=cds]
+			"decl-clr_lod" [label=clr_lod shape=plaintext]
+			"if-L94C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"scatter-L75C5-vcf" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-FindMaxLOD" [label=FindMaxLOD shape=cds]
+	subgraph "cluster-if-L113C5" {
+		fontname=Roboto label="if(FindMaxLOD.max_lod < 6)" rank=same
+		"call-StopWorkflow" [label=StopWorkflow shape=cds]
+		"if-L113C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-matching_vcf" [label=matching_vcf shape=plaintext]
+	"call-GetAllIdentityInfo" [label=GetAllIdentityInfo shape=cds]
+	"call-ListGenotypedVCFs" -> "call-PickGenotypeVCF"
+	"call-PickGenotypeVCF" -> "scatter-L44C5-vcf" [lhead="cluster-scatter-L44C5-vcf"]
+	"call-ReheaderFullGRCh38VCFtoNoAlt" -> "call-FilterGenotypesVCF"
+	"call-FilterGenotypesVCF" -> "call-ExtractGenotypingSites"
+	"call-ExtractGenotypingSites" -> "call-MergeGenotypingSites"
+	"call-MergeGenotypingSites" -> "call-ExtractRelevantGenotypingReads"
+	"call-ExtractRelevantGenotypingReads" -> "call-ResetCLRBaseQual"
+	"call-FilterGenotypesVCF" -> "scatter-L75C5-vcf" [lhead="cluster-scatter-L75C5-vcf"]
+	"call-ExtractRelevantGenotypingReads" -> "call-CheckFingerprint"
+	"call-GetVCFSampleName" -> "call-CheckFingerprint"
+	"call-CheckFingerprint" -> "decl-non_clr_lod"
+	"call-GetVCFSampleName" -> "call-CheckCLRFingerprint"
+	"call-ResetCLRBaseQual" -> "call-CheckCLRFingerprint"
+	"call-CheckCLRFingerprint" -> "decl-clr_lod"
+	"decl-non_clr_lod" -> "call-FindMaxLOD"
+	"decl-clr_lod" -> "call-FindMaxLOD"
+	"call-FindMaxLOD" -> "if-L113C5" [lhead="cluster-if-L113C5"]
+	"call-FindMaxLOD" -> "decl-matching_vcf"
+	"call-PickGenotypeVCF" -> "decl-matching_vcf"
+	"decl-matching_vcf" -> "call-GetAllIdentityInfo"
+}

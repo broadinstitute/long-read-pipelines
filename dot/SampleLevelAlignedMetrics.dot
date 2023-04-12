@@ -1,0 +1,15 @@
+// SampleLevelAlignedMetrics
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-ComputeGenomeLength" [label=ComputeGenomeLength shape=cds]
+	"call-NanoPlotFromBam" [label=NanoPlotFromBam shape=cds]
+	subgraph "cluster-if-L26C5" {
+		fontname=Roboto label="if(defined(bed_to_compute_coverage))" rank=same
+		"call-MosDepthOverBed" [label=MosDepthOverBed shape=cds]
+		"call-cov_over_region" [label=cov_over_region shape=cds]
+		"if-L26C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-MosDepthOverBed" -> "call-cov_over_region"
+}

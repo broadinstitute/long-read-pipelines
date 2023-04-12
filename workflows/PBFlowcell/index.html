@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>PBFlowcell - Broad Institute Long Read Pipelines</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "PBFlowcell";
+        var mkdocs_page_input_path = "workflows/PBFlowcell.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Broad Institute Long Read Pipelines
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tasks</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/AlignReads/">AlignReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/BAMutils/">BAMutils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Clair/">Clair</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Finalize/">Finalize</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/GeneralUtils/">GeneralUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Hail/">Hail</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/JupyterNotebooks/">JupyterNotebooks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/MASSeq/">MASSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Medaka/">Medaka</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/NanoPlot/">NanoPlot</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTPepper/">ONTPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTUtils/">ONTUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/PBUtils/">PBUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Postprocessing_Tasks/">Postprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Preprocessing_Tasks/">Preprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Quast/">Quast</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Racon/">Racon</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Sniffles/">Sniffles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SoftClipper/">SoftClipper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/UMI_Tools/">UMI_Tools</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Utils/">Utils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/VariantUtils/">VariantUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/cnv_common_tasks/">cnv_common_tasks</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Workflows</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../AlignAndCheckFingerprintCCS/">AlignAndCheckFingerprintCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../AlignedMetrics/">AlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../AnnotateTranscriptomeWithGuide/">AnnotateTranscriptomeWithGuide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../AssignChildLongReads/">AssignChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CCSPepper/">CCSPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallAssemblyVariants/">CallAssemblyVariants</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsONT/">CallVariantsONT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsPBCCS/">CallVariantsPBCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsPBCLR/">CallVariantsPBCLR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Canu/">Canu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CleanupIntermediate/">CleanupIntermediate</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectPacBioAlignedMetrics/">CollectPacBioAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectParentsKmerStats/">CollectParentsKmerStats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectSMRTCellUnalignedMetrics/">CollectSMRTCellUnalignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ConvertToHailMT/">ConvertToHailMT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromFTP/">DownloadFromFTP</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromSRA/">DownloadFromSRA</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromWeb/">DownloadFromWeb</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FPCheckAoU/">FPCheckAoU</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FindBamIdentity/">FindBamIdentity</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Flye/">Flye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../GLNexus/">GLNexus</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Guppy/">Guppy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Hifiasm/">Hifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRCNVs/">LRCNVs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRConvertBCF/">LRConvertBCF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRJointCallGVCFs/">LRJointCallGVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Longbow/">Longbow</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTAssembleWithCanu/">ONTAssembleWithCanu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTAssembleWithFlye/">ONTAssembleWithFlye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTBasecall/">ONTBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTFlowcell/">ONTFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTFlowcellFromMultipleBasecalls/">ONTFlowcellFromMultipleBasecalls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTMethylation/">ONTMethylation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfHrp2Hrp3Status/">ONTPfHrp2Hrp3Status</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfTypeDrugResistanceMarkers/">ONTPfTypeDrugResistanceMarkers</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTProcessBasecall/">ONTProcessBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTWholeGenome/">ONTWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBAssembleWithHifiasm/">PBAssembleWithHifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBCCSIsoSeq/">PBCCSIsoSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBCCSWholeGenome/">PBCCSWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBCLRWholeGenome/">PBCLRWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">PBFlowcell</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#pbflowcell_1">PBFlowcell</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBMASIsoSeqDemultiplex/">PBMASIsoSeqDemultiplex</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBMASIsoSeqQuantify/">PBMASIsoSeqQuantify</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBSV/">PBSV</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../TrioBinChildLongReads/">TrioBinChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../VerifyFingerprint/">VerifyFingerprint</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Broad Institute Long Read Pipelines</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Workflows &raquo;</li>
+      <li>PBFlowcell</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/PBFlowcell.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="pbflowcell">PBFlowcell</h1>
+<h2 id="pbflowcell_1">PBFlowcell</h2>
+<dl>
+<dt>description</dt>
+<dd>The workflow performs the alignment of an SMRT cell's worth of data to a reference. For genomic sequencing data, the workflow also optionally performs CCS correction if the data is from a CCS library but did not get corrected on-instrument. For MAS-seq transcriptome data, this workflow will determine the most likely MAS-seq model, then it will use that model to annotate, segment, and filter the CCS reads. These CCS reads will then be aligned to the reference in trascriptome alignemnt mode. Note: Currently the MAS-seq workflow separates CLR reads, but does not process them.</dd>
+</dl>
+<h3 id="inputs">Inputs</h3>
+<h4 id="required">Required</h4>
+<ul>
+<li><code>LB</code> (String, <strong>required</strong>): the value to place in the BAM read group's LB (library) field</li>
+<li><code>SM</code> (String, <strong>required</strong>): the value to place in the BAM read group's SM field</li>
+<li><code>bam</code> (File, <strong>required</strong>): GCS path to raw subread bam</li>
+<li><code>dir_prefix</code> (String, <strong>required</strong>): directory prefix for output files</li>
+<li><code>experiment_type</code> (String, <strong>required</strong>): type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)</li>
+<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS bucket to store the reads, variants, and metrics files</li>
+<li><code>pbi</code> (File, <strong>required</strong>): GCS path to pbi index for raw subread bam</li>
+<li><code>ref_map_file</code> (File, <strong>required</strong>): table indicating reference sequence and auxillary file locations</li>
+</ul>
+<h4 id="optional">Optional</h4>
+<ul>
+<li><code>ccs_report_txt</code> (File?): GCS path to CCS report txt, required if on-instrument corrected, otherwise CCS is run in this workflow for CCS libraries</li>
+<li><code>mas_seq_model</code> (String?): Longbow model to use for MAS-seq data.</li>
+<li><code>num_shards</code> (Int?): number of shards into which fastq files should be batched</li>
+<li><code>AlignReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>BamToFastq.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>CCS.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ComputeGenomeLength.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ExtractCcsReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ExtractClrReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ExtractHifiReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeAlignedBai.name</code> (String?)</li>
+<li><code>FinalizeAlignedBai.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeAlignedBam.name</code> (String?)</li>
+<li><code>FinalizeAlignedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeAlignedPbi.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeCCSReport.name</code> (String?)</li>
+<li><code>FinalizeCCSReport.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeCCSUnalignedBai.name</code> (String?)</li>
+<li><code>FinalizeCCSUnalignedBai.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeCCSUnalignedBam.name</code> (String?)</li>
+<li><code>FinalizeCCSUnalignedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeCCSUnalignedPbi.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeFastq.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeFilteredCCSStatsPNGs.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeFilteredCCSStatsSVGs.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeFilteredCCSStatsSummary.name</code> (String?)</li>
+<li><code>FinalizeFilteredCCSStatsSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowAnnotatedBam.name</code> (String?)</li>
+<li><code>FinalizeLongbowAnnotatedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowCorrectLog.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowCorrectedBam.name</code> (String?)</li>
+<li><code>FinalizeLongbowCorrectedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowExtractedBam.name</code> (String?)</li>
+<li><code>FinalizeLongbowExtractedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowFilterFailedBam.name</code> (String?)</li>
+<li><code>FinalizeLongbowFilterFailedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowFilteredBam.name</code> (String?)</li>
+<li><code>FinalizeLongbowFilteredBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowIntermediateBamIndices.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowIntermediateSingleCellBamIndices.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowSegmentedBam.name</code> (String?)</li>
+<li><code>FinalizeLongbowSegmentedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowUmiAdjustmentLog.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeLongbowUncorrectedBam.name</code> (String?)</li>
+<li><code>FinalizeLongbowUncorrectedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeMasSeqLongbowCorrectStats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeMasSeqUnprocessedCLRReads.name</code> (String?)</li>
+<li><code>FinalizeMasSeqUnprocessedCLRReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeMasSeqUnprocessedCLRReadsBai.name</code> (String?)</li>
+<li><code>FinalizeMasSeqUnprocessedCLRReadsBai.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeOverallCCSStatsPNGs.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeOverallCCSStatsSVGs.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeOverallCCSStatsSummary.name</code> (String?)</li>
+<li><code>FinalizeOverallCCSStatsSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FixMasSeqCcsReadTagsPostAlignment.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>GetRawReadGroup.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>GetRunInfo.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>IndexAlignedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>IndexCCSUnalignedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowFilteredCCSStats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowOverallCCSStats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.barcode_allow_list</code> (File?)</li>
+<li><code>LongbowProcessCCS.barcode_tag</code> (String?)</li>
+<li><code>LongbowProcessCCS.corrected_tag</code> (String?)</li>
+<li><code>Longbow_Peek.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MasseqCCSBamToFastq.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeAlignedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeAllFastqs.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeCCSReports.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeCCSUnalignedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeLongbowAnnotatedCCSBams.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeLongbowCorrectedCCSBams.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeLongbowExtractedCCSBams.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeLongbowFilterFailedCCSBams.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeLongbowFilteredCCSBams.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeLongbowSegmentedCCSBams.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeLongbowUncorrectableCCSBams.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MergeMASSeqCLRReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>NanoPlotFromBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>RenameSingleCellBamTagsForMasIsoSeqV0.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ShardLongReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SummarizeAlignedQ10PBI.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SummarizeAlignedQ12PBI.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SummarizeAlignedQ15PBI.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SummarizeAlignedQ5PBI.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SummarizeAlignedQ7PBI.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SummarizeCCSReport.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ValidateShard.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.AggregateCorrectLogStats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.Extract.bam_pbi</code> (File?)</li>
+<li><code>LongbowProcessCCS.Extract.leading_adapter</code> (String?)</li>
+<li><code>LongbowProcessCCS.Extract.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.Extract.start_offset</code> (Int?)</li>
+<li><code>LongbowProcessCCS.Extract.trailing_adapter</code> (String?)</li>
+<li><code>LongbowProcessCCS.t_01_Peek.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.t_02_Annotate.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.t_03_Filter.bam_pbi</code> (File?)</li>
+<li><code>LongbowProcessCCS.t_03_Filter.model</code> (String?)</li>
+<li><code>LongbowProcessCCS.t_03_Filter.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.t_04_Segment.model</code> (String?)</li>
+<li><code>LongbowProcessCCS.t_04_Segment.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.t_05_RemoveMasSeqTruncatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.t_07_PadUMI.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.t_08_PadCBC.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.t_09_Correct.barcode_freq_list</code> (File?)</li>
+<li><code>LongbowProcessCCS.t_09_Correct.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>LongbowProcessCCS.t_10_AdjustUmiSequenceWithAdapterAlignment.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.AlignedFlagStats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.AlignedReadMetrics.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageFullDist.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageFullDist.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageGlobalDist.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageGlobalDist.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageQuantized.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageQuantized.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageQuantizedCsi.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageQuantizedCsi.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageQuantizedDist.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageQuantizedDist.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageRegionDist.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageRegionDist.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageRegions.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageRegions.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageRegionsCsi.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFCoverageRegionsCsi.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFDepthSummaries.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFDepthSummaries.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.FFYieldAligned.keyfile</code> (File?)</li>
+<li><code>PerFlowcellMetrics.FFYieldAligned.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.MakeChrIntervalList.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.MosDepth.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>PerFlowcellMetrics.MosDepth.window_size</code> (Int?)</li>
+<li><code>PerFlowcellMetrics.SummarizeDepth.runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults">Defaults</h4>
+<ul>
+<li><code>DEBUG_MODE</code> (Boolean, default=false): [default valued] enables debugging tasks / subworkflows (default: false)</li>
+<li><code>drop_per_base_N_pulse_tags</code> (Boolean, default=true)</li>
+<li><code>validate_shards</code> (Boolean, default=false)</li>
+<li><code>AlignMasSeqCCSReads.prefix</code> (String, default="out")</li>
+<li><code>AlignReads.prefix</code> (String, default="out")</li>
+<li><code>CCS.all</code> (Boolean, default=true)</li>
+<li><code>CCS.by_strand</code> (Boolean, default=false)</li>
+<li><code>CCS.kinetics</code> (Boolean, default=false)</li>
+<li><code>ExtractHifiReads.prefix</code> (String, default="hifi")</li>
+<li><code>LongbowProcessCCS.same_barcode_per_read</code> (Boolean, default=false)</li>
+<li><code>LongbowProcessCCS.shard_width</code> (Int, default=25)</li>
+<li><code>MergeAllFastqs.prefix</code> (String, default="merged")</li>
+<li><code>ShardLongReads.num_threads</code> (Int, default=8)</li>
+<li><code>ShardLongReads.prefix</code> (String, default="shard")</li>
+<li><code>SummarizeSubreadsPBI.qual_threshold</code> (Int, default=0)</li>
+<li><code>WdlExecutionStartTimestamp.date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
+<li><code>LongbowProcessCCS.Extract.base_padding</code> (Int, default=2)</li>
+<li><code>LongbowProcessCCS.Extract.num_cpus</code> (Int, default=2)</li>
+<li><code>LongbowProcessCCS.t_01_Peek.n</code> (Int, default=100)</li>
+<li><code>LongbowProcessCCS.t_02_Annotate.num_cpus</code> (Int, default=8)</li>
+<li><code>LongbowProcessCCS.t_03_Filter.num_cpus</code> (Int, default=2)</li>
+<li><code>LongbowProcessCCS.t_04_Segment.num_cpus</code> (Int, default=2)</li>
+<li><code>LongbowProcessCCS.t_07_PadUMI.padding</code> (Int, default=2)</li>
+<li><code>LongbowProcessCCS.t_08_PadCBC.padding</code> (Int, default=2)</li>
+<li><code>LongbowProcessCCS.t_09_Correct.ccs_lev_dist_threshold</code> (Int, default=2)</li>
+<li><code>LongbowProcessCCS.t_09_Correct.clr_lev_dist_threshold</code> (Int, default=2)</li>
+<li><code>LongbowProcessCCS.t_10_AdjustUmiSequenceWithAdapterAlignment.existing_umi_tag</code> (String, default="ZU")</li>
+<li><code>LongbowProcessCCS.t_10_AdjustUmiSequenceWithAdapterAlignment.new_umi_tag</code> (String, default="JX")</li>
+</ul>
+<h3 id="outputs">Outputs</h3>
+<ul>
+<li><code>ccs_report</code> (File?)</li>
+<li><code>ccs_zmws_input</code> (Float?)</li>
+<li><code>ccs_zmws_pass_filters</code> (Float?)</li>
+<li><code>ccs_zmws_fail_filters</code> (Float?)</li>
+<li><code>ccs_zmws_shortcut_filters</code> (Float?)</li>
+<li><code>ccs_zmws_pass_filters_pct</code> (Float?)</li>
+<li><code>ccs_zmws_fail_filters_pct</code> (Float?)</li>
+<li><code>ccs_zmws_shortcut_filters_pct</code> (Float?)</li>
+<li><code>polymerase_read_length_mean</code> (Float)</li>
+<li><code>polymerase_read_length_N50</code> (Float)</li>
+<li><code>subread_read_length_mean</code> (Float)</li>
+<li><code>subread_read_length_N50</code> (Float)</li>
+<li><code>fq</code> (File?)</li>
+<li><code>ccs_bam</code> (File?)</li>
+<li><code>ccs_pbi</code> (File?)</li>
+<li><code>aligned_bam</code> (File)</li>
+<li><code>aligned_bai</code> (File)</li>
+<li><code>aligned_pbi</code> (File)</li>
+<li><code>num_reads</code> (Float)</li>
+<li><code>num_bases</code> (Float)</li>
+<li><code>raw_est_fold_cov</code> (Float)</li>
+<li><code>read_length_mean</code> (Float)</li>
+<li><code>read_length_median</code> (Float)</li>
+<li><code>read_length_stdev</code> (Float)</li>
+<li><code>read_length_N50</code> (Float)</li>
+<li><code>read_qual_mean</code> (Float)</li>
+<li><code>read_qual_median</code> (Float)</li>
+<li><code>num_reads_Q5</code> (Float)</li>
+<li><code>num_reads_Q7</code> (Float)</li>
+<li><code>num_reads_Q10</code> (Float)</li>
+<li><code>num_reads_Q12</code> (Float)</li>
+<li><code>num_reads_Q15</code> (Float)</li>
+<li><code>aligned_num_reads</code> (Float)</li>
+<li><code>aligned_num_bases</code> (Float)</li>
+<li><code>aligned_frac_bases</code> (Float)</li>
+<li><code>aligned_est_fold_cov</code> (Float)</li>
+<li><code>aligned_read_length_mean</code> (Float)</li>
+<li><code>aligned_read_length_median</code> (Float)</li>
+<li><code>aligned_read_length_stdev</code> (Float)</li>
+<li><code>aligned_read_length_N50</code> (Float)</li>
+<li><code>average_identity</code> (Float)</li>
+<li><code>median_identity</code> (Float)</li>
+<li><code>library_type</code> (String)</li>
+<li><code>longbow_overall_ccs_stats_plots_png</code> (String?)</li>
+<li><code>longbow_overall_ccs_stats_plots_svg</code> (String?)</li>
+<li><code>longbow_overall_ccs_stats</code> (File?)</li>
+<li><code>longbow_filtered_ccs_stats_plots_png</code> (String?)</li>
+<li><code>longbow_filtered_ccs_stats_plots_svg</code> (String?)</li>
+<li><code>longbow_filtered_ccs_stats</code> (File?)</li>
+</ul>
+<h3 id="dot-diagram">Dot Diagram</h3>
+<p><img alt="PBFlowcell" src="../../dot/PBFlowcell.dot.png" /></p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../PBCLRWholeGenome/" class="btn btn-neutral float-left" title="PBCLRWholeGenome"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../PBMASIsoSeqDemultiplex/" class="btn btn-neutral float-right" title="PBMASIsoSeqDemultiplex">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright (c) 2023, Broad Institute</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/broadinstitute/long-read-pipelines" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../PBCLRWholeGenome/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../PBMASIsoSeqDemultiplex/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>AlignedMetrics - Broad Institute Long Read Pipelines</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "AlignedMetrics";
+        var mkdocs_page_input_path = "workflows/AlignedMetrics.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Broad Institute Long Read Pipelines
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tasks</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/AlignReads/">AlignReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/BAMutils/">BAMutils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Clair/">Clair</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Finalize/">Finalize</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/GeneralUtils/">GeneralUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Hail/">Hail</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/JupyterNotebooks/">JupyterNotebooks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/MASSeq/">MASSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Medaka/">Medaka</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/NanoPlot/">NanoPlot</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTPepper/">ONTPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTUtils/">ONTUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/PBUtils/">PBUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Postprocessing_Tasks/">Postprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Preprocessing_Tasks/">Preprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Quast/">Quast</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Racon/">Racon</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Sniffles/">Sniffles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SoftClipper/">SoftClipper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/UMI_Tools/">UMI_Tools</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Utils/">Utils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/VariantUtils/">VariantUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/cnv_common_tasks/">cnv_common_tasks</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Workflows</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../AlignAndCheckFingerprintCCS/">AlignAndCheckFingerprintCCS</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">AlignedMetrics</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#alignedmetrics_1">AlignedMetrics</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../AnnotateTranscriptomeWithGuide/">AnnotateTranscriptomeWithGuide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../AssignChildLongReads/">AssignChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CCSPepper/">CCSPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallAssemblyVariants/">CallAssemblyVariants</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsONT/">CallVariantsONT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsPBCCS/">CallVariantsPBCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsPBCLR/">CallVariantsPBCLR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Canu/">Canu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CleanupIntermediate/">CleanupIntermediate</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectPacBioAlignedMetrics/">CollectPacBioAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectParentsKmerStats/">CollectParentsKmerStats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectSMRTCellUnalignedMetrics/">CollectSMRTCellUnalignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ConvertToHailMT/">ConvertToHailMT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromFTP/">DownloadFromFTP</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromSRA/">DownloadFromSRA</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromWeb/">DownloadFromWeb</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FPCheckAoU/">FPCheckAoU</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FindBamIdentity/">FindBamIdentity</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Flye/">Flye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../GLNexus/">GLNexus</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Guppy/">Guppy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Hifiasm/">Hifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRCNVs/">LRCNVs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRConvertBCF/">LRConvertBCF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRJointCallGVCFs/">LRJointCallGVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Longbow/">Longbow</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTAssembleWithCanu/">ONTAssembleWithCanu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTAssembleWithFlye/">ONTAssembleWithFlye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTBasecall/">ONTBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTFlowcell/">ONTFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTFlowcellFromMultipleBasecalls/">ONTFlowcellFromMultipleBasecalls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTMethylation/">ONTMethylation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfHrp2Hrp3Status/">ONTPfHrp2Hrp3Status</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfTypeDrugResistanceMarkers/">ONTPfTypeDrugResistanceMarkers</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTProcessBasecall/">ONTProcessBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTWholeGenome/">ONTWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBAssembleWithHifiasm/">PBAssembleWithHifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBCCSIsoSeq/">PBCCSIsoSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBCCSWholeGenome/">PBCCSWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBCLRWholeGenome/">PBCLRWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBFlowcell/">PBFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBMASIsoSeqDemultiplex/">PBMASIsoSeqDemultiplex</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBMASIsoSeqQuantify/">PBMASIsoSeqQuantify</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBSV/">PBSV</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../TrioBinChildLongReads/">TrioBinChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../VerifyFingerprint/">VerifyFingerprint</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Broad Institute Long Read Pipelines</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Workflows &raquo;</li>
+      <li>AlignedMetrics</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/AlignedMetrics.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="alignedmetrics">AlignedMetrics</h1>
+<h2 id="alignedmetrics_1">AlignedMetrics</h2>
+<h3 id="inputs">Inputs</h3>
+<h4 id="required">Required</h4>
+<ul>
+<li><code>aligned_bai</code> (File, <strong>required</strong>)</li>
+<li><code>aligned_bam</code> (File, <strong>required</strong>)</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional">Optional</h4>
+<ul>
+<li><code>gcs_output_dir</code> (String?)</li>
+<li><code>AlignedFlagStats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>AlignedReadMetrics.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFCoverageFullDist.keyfile</code> (File?)</li>
+<li><code>FFCoverageFullDist.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFCoverageGlobalDist.keyfile</code> (File?)</li>
+<li><code>FFCoverageGlobalDist.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFCoverageQuantized.keyfile</code> (File?)</li>
+<li><code>FFCoverageQuantized.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFCoverageQuantizedCsi.keyfile</code> (File?)</li>
+<li><code>FFCoverageQuantizedCsi.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFCoverageQuantizedDist.keyfile</code> (File?)</li>
+<li><code>FFCoverageQuantizedDist.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFCoverageRegionDist.keyfile</code> (File?)</li>
+<li><code>FFCoverageRegionDist.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFCoverageRegions.keyfile</code> (File?)</li>
+<li><code>FFCoverageRegions.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFCoverageRegionsCsi.keyfile</code> (File?)</li>
+<li><code>FFCoverageRegionsCsi.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFDepthSummaries.keyfile</code> (File?)</li>
+<li><code>FFDepthSummaries.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FFYieldAligned.keyfile</code> (File?)</li>
+<li><code>FFYieldAligned.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MakeChrIntervalList.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MosDepth.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MosDepth.window_size</code> (Int?)</li>
+<li><code>SummarizeDepth.runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs">Outputs</h3>
+<ul>
+<li><code>aligned_flag_stats</code> (File)</li>
+<li><code>coverage_full_dist</code> (Array[File])</li>
+<li><code>coverage_global_dist</code> (Array[File])</li>
+<li><code>coverage_region_dist</code> (Array[File])</li>
+<li><code>coverage_regions</code> (Array[File])</li>
+<li><code>coverage_regions_csi</code> (Array[File])</li>
+<li><code>coverage_quantized_dist</code> (Array[File])</li>
+<li><code>coverage_quantized</code> (Array[File])</li>
+<li><code>coverage_quantized_csi</code> (Array[File])</li>
+<li><code>aligned_np_hist</code> (File)</li>
+<li><code>aligned_range_gap_hist</code> (File)</li>
+<li><code>aligned_zmw_hist</code> (File)</li>
+<li><code>aligned_prl_counts</code> (File)</li>
+<li><code>aligned_prl_hist</code> (File)</li>
+<li><code>aligned_prl_nx</code> (File)</li>
+<li><code>aligned_prl_yield_hist</code> (File)</li>
+<li><code>aligned_rl_counts</code> (File)</li>
+<li><code>aligned_rl_hist</code> (File)</li>
+<li><code>aligned_rl_nx</code> (File)</li>
+<li><code>aligned_rl_yield_hist</code> (File)</li>
+<li><code>raw_chr_intervals</code> (File)</li>
+</ul>
+<h3 id="dot-diagram">Dot Diagram</h3>
+<p><img alt="AlignedMetrics" src="../../dot/AlignedMetrics.dot.png" /></p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../AlignAndCheckFingerprintCCS/" class="btn btn-neutral float-left" title="AlignAndCheckFingerprintCCS"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../AnnotateTranscriptomeWithGuide/" class="btn btn-neutral float-right" title="AnnotateTranscriptomeWithGuide">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright (c) 2023, Broad Institute</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/broadinstitute/long-read-pipelines" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../AlignAndCheckFingerprintCCS/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../AnnotateTranscriptomeWithGuide/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

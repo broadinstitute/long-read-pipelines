@@ -1,0 +1,21 @@
+// DownloadFromFTP
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-GetFileManifest" [label=GetFileManifest shape=cds]
+	subgraph "cluster-scatter-L34C5-n" {
+		fontname=Roboto label="scatter(range(num_simultaneous_downloads))" rank=same
+		"call-ComputeDiskSize" [label=ComputeDiskSize shape=cds]
+		subgraph "cluster-if-L48C9" {
+			fontname=Roboto label="if(ComputeDiskSize.max_size_bytes > 0)" rank=same
+			"call-DownloadFTPFile" [label=DownloadFTPFile shape=cds]
+			"if-L48C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"scatter-L34C5-n" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-GetFileManifest" -> "call-ComputeDiskSize"
+	"call-ComputeDiskSize" -> "if-L48C9" [lhead="cluster-if-L48C9"]
+	"call-GetFileManifest" -> "call-DownloadFTPFile"
+	"call-ComputeDiskSize" -> "call-DownloadFTPFile"
+}

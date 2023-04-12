@@ -1,0 +1,56 @@
+// VerifyFingerprint
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L53C5" {
+		fontname=Roboto label="if(!defined(use_this_fp_vcf))" rank=same
+		"call-ListGenotypedVCFs" [label=ListGenotypedVCFs shape=cds]
+		"call-PickGenotypeVCF" [label=PickGenotypeVCF shape=cds]
+		"if-L53C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-gt_vcf" [label=gt_vcf shape=plaintext]
+	"call-reheader" [label=reheader shape=cds]
+	"call-GetVCFSampleName" [label=GetVCFSampleName shape=cds]
+	"call-FilterGenotypesVCF" [label=FilterGenotypesVCF shape=cds]
+	"call-ExtractGenotypingSites" [label=ExtractGenotypingSites shape=cds]
+	"call-ExtractRelevantGenotypingReads" [label=ExtractRelevantGenotypingReads shape=cds]
+	subgraph "cluster-if-L90C5" {
+		fontname=Roboto label="if(expt_type != 'CLR')" rank=same
+		"call-CheckFingerprint" [label=CheckFingerprint shape=cds]
+		"if-L90C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L101C5" {
+		fontname=Roboto label="if(expt_type == 'CLR')" rank=same
+		"call-ResetCLRBaseQual" [label=ResetCLRBaseQual shape=cds]
+		"call-CheckCLRFingerprint" [label=CheckCLRFingerprint shape=cds]
+		"if-L101C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-summary_metrics" [label=summary_metrics shape=plaintext]
+	"decl-detail_metrics" [label=detail_metrics shape=plaintext]
+	"call-FinalizeFingerprintSummaryMetrics" [label=FinalizeFingerprintSummaryMetrics shape=cds]
+	"call-FinalizeFingerprintDetailMetrics" [label=FinalizeFingerprintDetailMetrics shape=cds]
+	"decl-metrics_map" [label=metrics_map shape=plaintext]
+	"call-ListGenotypedVCFs" -> "call-PickGenotypeVCF"
+	"call-PickGenotypeVCF" -> "decl-gt_vcf"
+	"decl-gt_vcf" -> "call-reheader"
+	"call-reheader" -> "call-GetVCFSampleName"
+	"call-reheader" -> "call-FilterGenotypesVCF"
+	"call-FilterGenotypesVCF" -> "call-ExtractGenotypingSites"
+	"call-ExtractGenotypingSites" -> "call-ExtractRelevantGenotypingReads"
+	"call-FilterGenotypesVCF" -> "call-CheckFingerprint"
+	"call-ExtractRelevantGenotypingReads" -> "call-CheckFingerprint"
+	"call-GetVCFSampleName" -> "call-CheckFingerprint"
+	"call-ExtractRelevantGenotypingReads" -> "call-ResetCLRBaseQual"
+	"call-FilterGenotypesVCF" -> "call-CheckCLRFingerprint"
+	"call-GetVCFSampleName" -> "call-CheckCLRFingerprint"
+	"call-ResetCLRBaseQual" -> "call-CheckCLRFingerprint"
+	"call-CheckFingerprint" -> "decl-summary_metrics"
+	"call-CheckCLRFingerprint" -> "decl-summary_metrics"
+	"call-CheckFingerprint" -> "decl-detail_metrics"
+	"call-CheckCLRFingerprint" -> "decl-detail_metrics"
+	"decl-summary_metrics" -> "call-FinalizeFingerprintSummaryMetrics"
+	"decl-detail_metrics" -> "call-FinalizeFingerprintDetailMetrics"
+	"call-CheckFingerprint" -> "decl-metrics_map"
+	"call-CheckCLRFingerprint" -> "decl-metrics_map"
+}

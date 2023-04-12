@@ -1,0 +1,32 @@
+// ONTAssembleWithCanu
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-ComputeGenomeLength" [label=ComputeGenomeLength shape=cds]
+	"call-ListFilesOfType" [label=ListFilesOfType shape=cds]
+	"call-MergeFastqs" [label=MergeFastqs shape=cds]
+	"call-Canu" [label=Canu shape=cds]
+	"call-MedakaPolish" [label=MedakaPolish shape=cds]
+	"call-Quast" [label=Quast shape=cds]
+	"call-CallAssemblyVariants" [label=CallAssemblyVariants shape=cds]
+	"call-FinalizeAsmUnpolished" [label=FinalizeAsmUnpolished shape=cds]
+	"call-FinalizeAsmPolished" [label=FinalizeAsmPolished shape=cds]
+	"call-FinalizeQuastReportHtml" [label=FinalizeQuastReportHtml shape=cds]
+	"call-FinalizeQuastReportTxt" [label=FinalizeQuastReportTxt shape=cds]
+	"call-summaryQ" [label=summaryQ shape=cds]
+	"decl-q_metrics" [label=q_metrics shape=plaintext]
+	"call-ListFilesOfType" -> "call-MergeFastqs"
+	"call-MergeFastqs" -> "call-Canu"
+	"call-ComputeGenomeLength" -> "call-Canu"
+	"call-MergeFastqs" -> "call-MedakaPolish"
+	"call-Canu" -> "call-MedakaPolish"
+	"call-MedakaPolish" -> "call-Quast"
+	"call-MedakaPolish" -> "call-CallAssemblyVariants"
+	"call-Canu" -> "call-FinalizeAsmUnpolished"
+	"call-MedakaPolish" -> "call-FinalizeAsmPolished"
+	"call-Quast" -> "call-FinalizeQuastReportHtml"
+	"call-Quast" -> "call-FinalizeQuastReportTxt"
+	"call-Quast" -> "call-summaryQ"
+	"call-summaryQ" -> "decl-q_metrics"
+}

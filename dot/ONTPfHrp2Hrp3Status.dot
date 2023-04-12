@@ -1,0 +1,8 @@
+// ONTPfHrp2Hrp3Status
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-HRP2Status" [label=HRP2Status shape=cds]
+	"call-HRP3Status" [label=HRP3Status shape=cds]
+}

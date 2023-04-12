@@ -1,0 +1,9 @@
+// ONTPfTypeDrugResistanceMarkers
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-AnnotateEffectsOfSelectedVariants" [label=AnnotateEffectsOfSelectedVariants shape=cds]
+	"call-FinalizeDRReport" [label=FinalizeDRReport shape=cds]
+	"call-AnnotateEffectsOfSelectedVariants" -> "call-FinalizeDRReport"
+}

@@ -1,0 +1,42 @@
+// ONTFlowcellFromMultipleBasecalls
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L36C5" {
+		fontname=Roboto label="if(length(aligned_bams) > 1)" rank=same
+		"call-MergeAllReads" [label=MergeAllReads shape=cds]
+		"if-L36C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-bam" [label=bam shape=plaintext]
+	"decl-bai" [label=bai shape=plaintext]
+	subgraph "cluster-if-L42C5" {
+		fontname=Roboto label="if(bams_suspected_to_contain_dup_record)" rank=same
+		"call-RemoveDuplicates" [label=RemoveDuplicates shape=cds]
+		"if-L42C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-usable_bam" [label=usable_bam shape=plaintext]
+	"decl-usable_bai" [label=usable_bai shape=plaintext]
+	"call-coverage" [label=coverage shape=cds]
+	"call-FinalizeAlignedBam" [label=FinalizeAlignedBam shape=cds]
+	"call-FinalizeAlignedBai" [label=FinalizeAlignedBai shape=cds]
+	subgraph "cluster-if-L64C5" {
+		fontname=Roboto label="if(defined(bed_to_compute_coverage))" rank=same
+		"call-FinalizeRegionalCoverage" [label=FinalizeRegionalCoverage shape=cds]
+		"if-L64C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-today" [label=today shape=cds]
+	"call-MergeAllReads" -> "decl-bam"
+	"call-MergeAllReads" -> "decl-bai"
+	"decl-bai" -> "call-RemoveDuplicates"
+	"decl-bam" -> "call-RemoveDuplicates"
+	"call-RemoveDuplicates" -> "decl-usable_bam"
+	"decl-bam" -> "decl-usable_bam"
+	"call-RemoveDuplicates" -> "decl-usable_bai"
+	"decl-bai" -> "decl-usable_bai"
+	"decl-usable_bai" -> "call-coverage"
+	"decl-usable_bam" -> "call-coverage"
+	"decl-usable_bam" -> "call-FinalizeAlignedBam"
+	"decl-usable_bai" -> "call-FinalizeAlignedBai"
+	"call-coverage" -> "call-FinalizeRegionalCoverage"
+}

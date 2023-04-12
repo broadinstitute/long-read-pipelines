@@ -1,0 +1,7 @@
+// Flye
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-Assemble" [label=Assemble shape=cds]
+}

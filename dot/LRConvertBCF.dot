@@ -1,0 +1,13 @@
+// LRConvertBCF
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-ConcatBCFs" [label=ConcatBCFs shape=cds]
+	"call-ConvertToHailMT" [label=ConvertToHailMT shape=cds]
+	"call-FinalizeGVCF" [label=FinalizeGVCF shape=cds]
+	"call-FinalizeTBI" [label=FinalizeTBI shape=cds]
+	"call-ConcatBCFs" -> "call-ConvertToHailMT"
+	"call-ConcatBCFs" -> "call-FinalizeGVCF"
+	"call-ConcatBCFs" -> "call-FinalizeTBI"
+}

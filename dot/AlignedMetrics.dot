@@ -1,0 +1,42 @@
+// AlignedMetrics
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-AlignedReadMetrics" [label=AlignedReadMetrics shape=cds]
+	"call-MakeChrIntervalList" [label=MakeChrIntervalList shape=cds]
+	subgraph "cluster-scatter-L21C5-chr_info" {
+		fontname=Roboto label="scatter(MakeChrIntervalList.chrs)" rank=same
+		"call-MosDepth" [label=MosDepth shape=cds]
+		"call-SummarizeDepth" [label=SummarizeDepth shape=cds]
+		"scatter-L21C5-chr_info" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-AlignedFlagStats" [label=AlignedFlagStats shape=cds]
+	subgraph "cluster-if-L34C5" {
+		fontname=Roboto label="if(defined(gcs_output_dir))" rank=same
+		"call-FFYieldAligned" [label=FFYieldAligned shape=cds]
+		"call-FFCoverageFullDist" [label=FFCoverageFullDist shape=cds]
+		"call-FFCoverageGlobalDist" [label=FFCoverageGlobalDist shape=cds]
+		"call-FFCoverageRegionDist" [label=FFCoverageRegionDist shape=cds]
+		"call-FFCoverageRegions" [label=FFCoverageRegions shape=cds]
+		"call-FFCoverageRegionsCsi" [label=FFCoverageRegionsCsi shape=cds]
+		"call-FFCoverageQuantizedDist" [label=FFCoverageQuantizedDist shape=cds]
+		"call-FFCoverageQuantized" [label=FFCoverageQuantized shape=cds]
+		"call-FFCoverageQuantizedCsi" [label=FFCoverageQuantizedCsi shape=cds]
+		"call-FFDepthSummaries" [label=FFDepthSummaries shape=cds]
+		"if-L34C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-MakeChrIntervalList" -> "scatter-L21C5-chr_info" [lhead="cluster-scatter-L21C5-chr_info"]
+	"call-MosDepth" -> "call-SummarizeDepth"
+	"call-AlignedReadMetrics" -> "call-FFYieldAligned"
+	"call-AlignedFlagStats" -> "call-FFYieldAligned"
+	"call-MosDepth" -> "call-FFCoverageFullDist"
+	"call-MosDepth" -> "call-FFCoverageGlobalDist"
+	"call-MosDepth" -> "call-FFCoverageRegionDist"
+	"call-MosDepth" -> "call-FFCoverageRegions"
+	"call-MosDepth" -> "call-FFCoverageRegionsCsi"
+	"call-MosDepth" -> "call-FFCoverageQuantizedDist"
+	"call-MosDepth" -> "call-FFCoverageQuantized"
+	"call-MosDepth" -> "call-FFCoverageQuantizedCsi"
+	"call-SummarizeDepth" -> "call-FFDepthSummaries"
+}

@@ -1,0 +1,59 @@
+// ONTFlowcell
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L58C5" {
+		fontname=Roboto label="if(defined(final_summary))" rank=same
+		"call-GetRunInfo" [label=GetRunInfo shape=cds]
+		"if-L58C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-runinfo" [label=runinfo shape=plaintext]
+	"decl-PU" [label=PU shape=plaintext]
+	"decl-DT" [label=DT shape=plaintext]
+	subgraph "cluster-if-L65C5" {
+		fontname=Roboto label="if(defined(sequencing_summary))" rank=same
+		"call-ListFastqs" [label=ListFastqs shape=cds]
+		"call-NanoPlotFromSummary" [label=NanoPlotFromSummary shape=cds]
+		"if-L65C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L75C5" {
+		fontname=Roboto label="if(defined(fastq_dir))" rank=same
+		"call-ListFilesOfType" [label=ListFilesOfType shape=cds]
+		"call-NanoPlotFromRichFastqs" [label=NanoPlotFromRichFastqs shape=cds]
+		"if-L75C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-nanoplot_map" [label=nanoplot_map shape=plaintext]
+	"decl-manifest" [label=manifest shape=plaintext]
+	"decl-RG" [label=RG shape=plaintext]
+	"call-PartitionFastqManifest" [label=PartitionFastqManifest shape=cds]
+	subgraph "cluster-scatter-L95C5-manifest_chunk" {
+		fontname=Roboto label="scatter(PartitionFastqManifest.manifest_chunks)" rank=same
+		"call-AlignReads" [label=AlignReads shape=cds]
+		"scatter-L95C5-manifest_chunk" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-MergeAlignedReads" [label=MergeAlignedReads shape=cds]
+	"call-PerFlowcellMetrics" [label=PerFlowcellMetrics shape=cds]
+	"call-NanoPlotFromBam" [label=NanoPlotFromBam shape=cds]
+	"call-ComputeGenomeLength" [label=ComputeGenomeLength shape=cds]
+	"call-FinalizeAlignedBam" [label=FinalizeAlignedBam shape=cds]
+	"call-FinalizeAlignedBai" [label=FinalizeAlignedBai shape=cds]
+	"call-GetRunInfo" -> "decl-runinfo"
+	"decl-runinfo" -> "decl-PU"
+	"decl-runinfo" -> "decl-DT"
+	"call-ListFilesOfType" -> "call-NanoPlotFromRichFastqs"
+	"call-NanoPlotFromSummary" -> "decl-nanoplot_map"
+	"call-NanoPlotFromRichFastqs" -> "decl-nanoplot_map"
+	"call-ListFastqs" -> "decl-manifest"
+	"call-ListFilesOfType" -> "decl-manifest"
+	"decl-DT" -> "decl-RG"
+	"decl-PU" -> "decl-RG"
+	"decl-manifest" -> "call-PartitionFastqManifest"
+	"call-PartitionFastqManifest" -> "scatter-L95C5-manifest_chunk" [lhead="cluster-scatter-L95C5-manifest_chunk"]
+	"decl-RG" -> "call-AlignReads"
+	"call-AlignReads" -> "call-MergeAlignedReads"
+	"call-MergeAlignedReads" -> "call-PerFlowcellMetrics"
+	"call-MergeAlignedReads" -> "call-NanoPlotFromBam"
+	"call-MergeAlignedReads" -> "call-FinalizeAlignedBam"
+	"call-MergeAlignedReads" -> "call-FinalizeAlignedBai"
+}

@@ -1,0 +1,9 @@
+// CollectSMRTCellUnalignedMetrics
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-SummarizePBI" [label=SummarizePBI shape=cds]
+	"call-MapToTsv" [label=MapToTsv shape=cds]
+	"call-SummarizePBI" -> "call-MapToTsv"
+}

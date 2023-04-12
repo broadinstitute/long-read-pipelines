@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Utils - Broad Institute Long Read Pipelines</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Utils";
+        var mkdocs_page_input_path = "tasks/Utils.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Broad Institute Long Read Pipelines
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tasks</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BAMutils/">BAMutils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Hail/">Hail</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../JupyterNotebooks/">JupyterNotebooks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../MASSeq/">MASSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Medaka/">Medaka</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../NanoPlot/">NanoPlot</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTPepper/">ONTPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTUtils/">ONTUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBUtils/">PBUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Postprocessing_Tasks/">Postprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Preprocessing_Tasks/">Preprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Racon/">Racon</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Sniffles/">Sniffles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SoftClipper/">SoftClipper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../UMI_Tools/">UMI_Tools</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Utils</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#getdefaultdir">GetDefaultDir</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#preparemanifest">PrepareManifest</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_1">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_1">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_1">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#echomanifest">EchoManifest</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_2">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_2">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_2">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#chunkmanifest">ChunkManifest</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_3">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_3">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sortbam">SortBam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_4">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_4">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_4">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sortsam">SortSam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_5">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_5">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_5">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#makechrintervallist">MakeChrIntervalList</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_6">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_6">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_6">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fastatosam">FastaToSam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_7">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_7">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_7">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#countfastqrecords">CountFastqRecords</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_8">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_8">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_8">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#countfastarecords">CountFastaRecords</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_9">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_9">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_9">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#countbamrecords">CountBamRecords</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_10">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_10">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_10">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#filterlistofstrings">FilterListOfStrings</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_11">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_11">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_11">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_11">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#filterreadsbysamflags">FilterReadsBySamFlags</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_12">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_12">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_12">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_12">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#downsamplesam">DownsampleSam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_13">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_13">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_13">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_3">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_13">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#grepcountbamrecords">GrepCountBamRecords</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_14">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_14">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_14">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_4">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_14">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#grepcountuniquebamrecords">GrepCountUniqueBamRecords</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_15">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_15">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_15">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_5">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_15">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sum">Sum</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_16">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_16">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_16">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_6">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_16">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uniq">Uniq</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_17">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_17">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_17">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_17">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#timestamp">Timestamp</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_18">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_18">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_18">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_18">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bamtotable">BamToTable</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_19">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_19">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_19">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_19">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#convertreads">ConvertReads</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_20">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_20">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_20">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bamtobed">BamToBed</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_21">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_21">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_20">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_21">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bamtofastq">BamToFastq</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_22">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_22">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_21">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_22">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#mergefastqs">MergeFastqs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_23">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_23">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_22">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_7">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_23">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#mergebams">MergeBams</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_24">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_24">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_23">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_8">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_24">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#index">Index</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_25">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_25">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_24">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_25">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#filterreadswithtagvalues">FilterReadsWithTagValues</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_26">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_26">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_25">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_9">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_26">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subsetbam">SubsetBam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_27">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_27">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_26">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_10">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_27">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#excluderegionsfrombam">ExcludeRegionsFromBam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_28">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_28">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_27">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_11">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_28">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#selectfirstnreads">SelectFirstNReads</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_29">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_29">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_28">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_12">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_29">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#resilientsubsetbam">ResilientSubsetBam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_30">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_30">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_29">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_30">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#splitbam">SplitBam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_31">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_31">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_30">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_13">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_31">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bamtools">Bamtools</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_32">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_32">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_31">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_14">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_32">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#filterbamontag">FilterBamOnTag</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_33">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_33">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_32">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_15">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_33">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#deduplicatebam">DeduplicateBam</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_34">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_34">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_33">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_16">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_34">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cat">Cat</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_35">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_35">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_34">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_17">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_35">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#listbamcontigs">ListBamContigs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_36">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_36">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_35">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_36">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#computegenomelength">ComputeGenomeLength</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_37">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_37">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_36">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_37">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#listfilesoftype">ListFilesOfType</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_38">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_38">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_37">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_18">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_38">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stopworkflow">StopWorkflow</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_39">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_39">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_39">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#infersamplename">InferSampleName</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_40">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_40">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_40">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#checkonsamplenames">CheckOnSamplenames</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_41">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_41">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_41">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fixsamplename">FixSampleName</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_42">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_42">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_38">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_42">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#computeallowedlocalssd">ComputeAllowedLocalSSD</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_43">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_43">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_43">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#randomzonespewer">RandomZoneSpewer</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_44">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_44">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_44">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#shardreads">ShardReads</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_45">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_45">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_39">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_19">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_45">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#getcurrenttimestampstring">GetCurrentTimestampString</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_46">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_20">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_46">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#getrawreadgroup">GetRawReadGroup</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_47">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_46">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_40">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_47">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#failwithwarning">FailWithWarning</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_48">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_47">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_48">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#splitdelimitedstring">SplitDelimitedString</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_49">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_48">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_49">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#constructmap">ConstructMap</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_50">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_49">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_50">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#maptotsv">MapToTsv</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_51">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_50">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_51">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../VariantUtils/">VariantUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../cnv_common_tasks/">cnv_common_tasks</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Workflows</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/AlignAndCheckFingerprintCCS/">AlignAndCheckFingerprintCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/AlignedMetrics/">AlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/AnnotateTranscriptomeWithGuide/">AnnotateTranscriptomeWithGuide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/AssignChildLongReads/">AssignChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CCSPepper/">CCSPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallAssemblyVariants/">CallAssemblyVariants</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsONT/">CallVariantsONT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsPBCCS/">CallVariantsPBCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsPBCLR/">CallVariantsPBCLR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Canu/">Canu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CleanupIntermediate/">CleanupIntermediate</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CollectPacBioAlignedMetrics/">CollectPacBioAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CollectParentsKmerStats/">CollectParentsKmerStats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CollectSMRTCellUnalignedMetrics/">CollectSMRTCellUnalignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ConvertToHailMT/">ConvertToHailMT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromFTP/">DownloadFromFTP</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromSRA/">DownloadFromSRA</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromWeb/">DownloadFromWeb</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/FPCheckAoU/">FPCheckAoU</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/FindBamIdentity/">FindBamIdentity</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Flye/">Flye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/GLNexus/">GLNexus</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Guppy/">Guppy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Hifiasm/">Hifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/LRCNVs/">LRCNVs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/LRConvertBCF/">LRConvertBCF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/LRJointCallGVCFs/">LRJointCallGVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Longbow/">Longbow</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTAssembleWithCanu/">ONTAssembleWithCanu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTAssembleWithFlye/">ONTAssembleWithFlye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTBasecall/">ONTBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTFlowcell/">ONTFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTFlowcellFromMultipleBasecalls/">ONTFlowcellFromMultipleBasecalls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTMethylation/">ONTMethylation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTPfHrp2Hrp3Status/">ONTPfHrp2Hrp3Status</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTPfTypeDrugResistanceMarkers/">ONTPfTypeDrugResistanceMarkers</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTProcessBasecall/">ONTProcessBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTWholeGenome/">ONTWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBAssembleWithHifiasm/">PBAssembleWithHifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBCCSIsoSeq/">PBCCSIsoSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBCCSWholeGenome/">PBCCSWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBCLRWholeGenome/">PBCLRWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBFlowcell/">PBFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBMASIsoSeqDemultiplex/">PBMASIsoSeqDemultiplex</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBMASIsoSeqQuantify/">PBMASIsoSeqQuantify</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBSV/">PBSV</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/TrioBinChildLongReads/">TrioBinChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/VerifyFingerprint/">VerifyFingerprint</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Broad Institute Long Read Pipelines</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Tasks &raquo;</li>
+      <li>Utils</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/tasks/Utils.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="utils">Utils</h1>
+<h2 id="getdefaultdir">GetDefaultDir</h2>
+<h3 id="inputs">Inputs</h3>
+<h4 id="required">Required</h4>
+<ul>
+<li><code>workflow_name</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs">Outputs</h3>
+<ul>
+<li><code>path</code> (String)</li>
+</ul>
+<h2 id="preparemanifest">PrepareManifest</h2>
+<h3 id="inputs_1">Inputs</h3>
+<h4 id="required_1">Required</h4>
+<ul>
+<li><code>files</code> (Array[String], <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_1">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_1">Outputs</h3>
+<ul>
+<li><code>manifest</code> (File)</li>
+</ul>
+<h2 id="echomanifest">EchoManifest</h2>
+<h3 id="inputs_2">Inputs</h3>
+<h4 id="required_2">Required</h4>
+<ul>
+<li><code>manifest</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_2">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_2">Outputs</h3>
+<ul>
+<li><code>out</code> (File)</li>
+</ul>
+<h2 id="chunkmanifest">ChunkManifest</h2>
+<h3 id="inputs_3">Inputs</h3>
+<h4 id="required_3">Required</h4>
+<ul>
+<li><code>manifest</code> (File, <strong>required</strong>)</li>
+<li><code>manifest_lines_per_chunk</code> (Int, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_3">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_3">Outputs</h3>
+<ul>
+<li><code>manifest_chunks</code> (Array[File])</li>
+</ul>
+<h2 id="sortbam">SortBam</h2>
+<h3 id="inputs_4">Inputs</h3>
+<h4 id="required_4">Required</h4>
+<ul>
+<li><code>input_bam</code> (File, <strong>required</strong>): input BAM</li>
+</ul>
+<h4 id="optional_4">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="sorted"): [default-valued] prefix for output BAM</li>
+</ul>
+<h3 id="outputs_4">Outputs</h3>
+<ul>
+<li><code>sorted_bam</code> (File)</li>
+<li><code>sorted_bai</code> (File)</li>
+</ul>
+<h2 id="sortsam">SortSam</h2>
+<h3 id="inputs_5">Inputs</h3>
+<h4 id="required_5">Required</h4>
+<ul>
+<li><code>compression_level</code> (Int, <strong>required</strong>)</li>
+<li><code>input_bam</code> (File, <strong>required</strong>)</li>
+<li><code>output_bam_basename</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_5">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_5">Outputs</h3>
+<ul>
+<li><code>output_bam</code> (File)</li>
+<li><code>output_bam_index</code> (File)</li>
+<li><code>output_bam_md5</code> (File)</li>
+</ul>
+<h2 id="makechrintervallist">MakeChrIntervalList</h2>
+<h3 id="inputs_6">Inputs</h3>
+<h4 id="required_6">Required</h4>
+<ul>
+<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_6">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_1">Defaults</h4>
+<ul>
+<li><code>filter</code> (Array[String], default=['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV'])</li>
+</ul>
+<h3 id="outputs_6">Outputs</h3>
+<ul>
+<li><code>chrs</code> (Array[Array[String]])</li>
+</ul>
+<h2 id="fastatosam">FastaToSam</h2>
+<h3 id="inputs_7">Inputs</h3>
+<h4 id="required_7">Required</h4>
+<ul>
+<li><code>fasta</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_7">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_7">Outputs</h3>
+<ul>
+<li><code>output_bam</code> (File)</li>
+</ul>
+<h2 id="countfastqrecords">CountFastqRecords</h2>
+<h3 id="inputs_8">Inputs</h3>
+<h4 id="required_8">Required</h4>
+<ul>
+<li><code>fastq</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_8">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_8">Outputs</h3>
+<ul>
+<li><code>num_records</code> (Int)</li>
+</ul>
+<h2 id="countfastarecords">CountFastaRecords</h2>
+<h3 id="inputs_9">Inputs</h3>
+<h4 id="required_9">Required</h4>
+<ul>
+<li><code>fasta</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_9">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_9">Outputs</h3>
+<ul>
+<li><code>num_records</code> (Int)</li>
+</ul>
+<h2 id="countbamrecords">CountBamRecords</h2>
+<h3 id="inputs_10">Inputs</h3>
+<h4 id="required_10">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+</ul>
+<h4 id="optional_10">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_10">Outputs</h3>
+<ul>
+<li><code>samools_error</code> (File?)</li>
+<li><code>num_records</code> (Int)</li>
+</ul>
+<h2 id="filterlistofstrings">FilterListOfStrings</h2>
+<dl>
+<dt>description</dt>
+<dd>Filter a given list of files by a query term (essentially pipes the query into grep).</dd>
+<dt>author</dt>
+<dd>Jonn Smith</dd>
+<dt>email</dt>
+<dd>jonn@broadinstitute.org</dd>
+</dl>
+<h3 id="inputs_11">Inputs</h3>
+<h4 id="required_11">Required</h4>
+<ul>
+<li><code>list_to_filter</code> (Array[String], <strong>required</strong>): Array of strings to filter by the query.</li>
+<li><code>query</code> (String, <strong>required</strong>): Term to use to filter the given strings.</li>
+</ul>
+<h4 id="optional_11">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_11">Outputs</h3>
+<ul>
+<li><code>filtered_list</code> (Array[String])</li>
+</ul>
+<h2 id="filterreadsbysamflags">FilterReadsBySamFlags</h2>
+<dl>
+<dt>description</dt>
+<dd>Filter reads based on sam flags.  Reads with ANY of the given flags will be removed from the given dataset.</dd>
+<dt>author</dt>
+<dd>Jonn Smith</dd>
+<dt>email</dt>
+<dd>jonn@broadinstitute.org</dd>
+</dl>
+<h3 id="inputs_12">Inputs</h3>
+<h4 id="required_12">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to be filtered.</li>
+<li><code>sam_flags</code> (String, <strong>required</strong>): Flags for which to remove reads.  Reads with ANY of the given flags will be removed from the given dataset.</li>
+</ul>
+<h4 id="optional_12">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_2">Defaults</h4>
+<ul>
+<li><code>extra_args</code> (String, default="")</li>
+<li><code>prefix</code> (String, default="filtered_reads"): [Optional] Prefix string to name the output file (Default: filtered_reads).</li>
+</ul>
+<h3 id="outputs_12">Outputs</h3>
+<ul>
+<li><code>output_bam</code> (File)</li>
+<li><code>output_bam_index</code> (File)</li>
+</ul>
+<h2 id="downsamplesam">DownsampleSam</h2>
+<dl>
+<dt>description</dt>
+<dd>Downsample the given bam / sam file using Picard/GATK's DownsampleSam tool.</dd>
+<dt>author</dt>
+<dd>Jonn Smith</dd>
+<dt>email</dt>
+<dd>jonn@broadinstitute.org</dd>
+</dl>
+<h3 id="inputs_13">Inputs</h3>
+<h4 id="required_13">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to be filtered.</li>
+</ul>
+<h4 id="optional_13">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_3">Defaults</h4>
+<ul>
+<li><code>extra_args</code> (String, default=""): [Optional] Extra arguments to pass into DownsampleSam.</li>
+<li><code>prefix</code> (String, default="downsampled_reads"): [Optional] Prefix string to name the output file (Default: downsampled_reads).</li>
+<li><code>probability</code> (Float, default=0.01): [Optional] Probability that a read will be emitted (Default: 0.01).</li>
+<li><code>random_seed</code> (Int, default=1)</li>
+<li><code>strategy</code> (String, default="HighAccuracy"): [Optional] Strategy to use to downsample the given bam file (Default: HighAccuracy).</li>
+</ul>
+<h3 id="outputs_13">Outputs</h3>
+<ul>
+<li><code>output_bam</code> (File)</li>
+<li><code>output_bam_index</code> (File)</li>
+</ul>
+<h2 id="grepcountbamrecords">GrepCountBamRecords</h2>
+<h3 id="inputs_14">Inputs</h3>
+<h4 id="required_14">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>regex</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_14">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_4">Defaults</h4>
+<ul>
+<li><code>invert</code> (Boolean, default=false)</li>
+<li><code>prefix</code> (String, default="sum")</li>
+<li><code>samfilter</code> (String, default="")</li>
+</ul>
+<h3 id="outputs_14">Outputs</h3>
+<ul>
+<li><code>num_records</code> (Int)</li>
+<li><code>num_records_file</code> (File)</li>
+</ul>
+<h2 id="grepcountuniquebamrecords">GrepCountUniqueBamRecords</h2>
+<h3 id="inputs_15">Inputs</h3>
+<h4 id="required_15">Required</h4>
+<ul>
+<li><code>bam</code> (String, <strong>required</strong>)</li>
+<li><code>regex</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_15">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_5">Defaults</h4>
+<ul>
+<li><code>invert</code> (Boolean, default=false)</li>
+<li><code>prefix</code> (String, default="sum")</li>
+<li><code>samfilter</code> (String, default="")</li>
+</ul>
+<h3 id="outputs_15">Outputs</h3>
+<ul>
+<li><code>num_records</code> (Int)</li>
+<li><code>num_records_file</code> (File)</li>
+</ul>
+<h2 id="sum">Sum</h2>
+<h3 id="inputs_16">Inputs</h3>
+<h4 id="required_16">Required</h4>
+<ul>
+<li><code>ints</code> (Array[Int], <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_16">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_6">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="sum")</li>
+</ul>
+<h3 id="outputs_16">Outputs</h3>
+<ul>
+<li><code>sum</code> (Int)</li>
+<li><code>sum_file</code> (File)</li>
+</ul>
+<h2 id="uniq">Uniq</h2>
+<h3 id="inputs_17">Inputs</h3>
+<h4 id="required_17">Required</h4>
+<ul>
+<li><code>strings</code> (Array[String], <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_17">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_17">Outputs</h3>
+<ul>
+<li><code>unique_strings</code> (Array[String])</li>
+</ul>
+<h2 id="timestamp">Timestamp</h2>
+<h3 id="inputs_18">Inputs</h3>
+<h4 id="required_18">Required</h4>
+<ul>
+<li><code>dummy_dependencies</code> (Array[String], <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_18">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_18">Outputs</h3>
+<ul>
+<li><code>timestamp</code> (String)</li>
+</ul>
+<h2 id="bamtotable">BamToTable</h2>
+<h3 id="inputs_19">Inputs</h3>
+<h4 id="required_19">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_19">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_19">Outputs</h3>
+<ul>
+<li><code>table</code> (File)</li>
+</ul>
+<h2 id="convertreads">ConvertReads</h2>
+<h3 id="inputs_20">Inputs</h3>
+<h4 id="required_20">Required</h4>
+<ul>
+<li><code>output_format</code> (String, <strong>required</strong>)</li>
+<li><code>reads</code> (File, <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_20">Outputs</h3>
+<ul>
+<li><code>converted_reads</code> (File)</li>
+</ul>
+<h2 id="bamtobed">BamToBed</h2>
+<h3 id="inputs_21">Inputs</h3>
+<h4 id="required_21">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_20">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_21">Outputs</h3>
+<ul>
+<li><code>bed</code> (File)</li>
+</ul>
+<h2 id="bamtofastq">BamToFastq</h2>
+<h3 id="inputs_22">Inputs</h3>
+<h4 id="required_22">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_21">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_22">Outputs</h3>
+<ul>
+<li><code>reads_fq</code> (File)</li>
+</ul>
+<h2 id="mergefastqs">MergeFastqs</h2>
+<h3 id="inputs_23">Inputs</h3>
+<h4 id="required_23">Required</h4>
+<ul>
+<li><code>fastqs</code> (Array[File], <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_22">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_7">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="merged")</li>
+</ul>
+<h3 id="outputs_23">Outputs</h3>
+<ul>
+<li><code>merged_fastq</code> (File)</li>
+</ul>
+<h2 id="mergebams">MergeBams</h2>
+<h3 id="inputs_24">Inputs</h3>
+<h4 id="required_24">Required</h4>
+<ul>
+<li><code>bams</code> (Array[File], <strong>required</strong>): input array of BAMs to be merged</li>
+</ul>
+<h4 id="optional_23">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_8">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="out"): [default-valued] prefix for output BAM</li>
+</ul>
+<h3 id="outputs_24">Outputs</h3>
+<ul>
+<li><code>merged_bam</code> (File)</li>
+<li><code>merged_bai</code> (File)</li>
+</ul>
+<h2 id="index">Index</h2>
+<h3 id="inputs_25">Inputs</h3>
+<h4 id="required_25">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to be indexed</li>
+</ul>
+<h4 id="optional_24">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_25">Outputs</h3>
+<ul>
+<li><code>bai</code> (File)</li>
+</ul>
+<h2 id="filterreadswithtagvalues">FilterReadsWithTagValues</h2>
+<h3 id="inputs_26">Inputs</h3>
+<h4 id="required_26">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file from which to remove a tag with certain values.</li>
+<li><code>tag</code> (String, <strong>required</strong>): Name of the tag to target for potential removal.</li>
+<li><code>value_to_remove</code> (String, <strong>required</strong>): Tag value to use to remove reads.  Reads will be removed if they have the given tag with this value.</li>
+</ul>
+<h4 id="optional_25">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_9">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="out"): [default-valued] prefix for output BAM</li>
+</ul>
+<h3 id="outputs_26">Outputs</h3>
+<ul>
+<li><code>output_bam</code> (File)</li>
+</ul>
+<h2 id="subsetbam">SubsetBam</h2>
+<h3 id="inputs_27">Inputs</h3>
+<h4 id="required_27">Required</h4>
+<ul>
+<li><code>bai</code> (File, <strong>required</strong>): index for bam file</li>
+<li><code>bam</code> (File, <strong>required</strong>); <strong>description</strong>: bam to subset; <strong>localization_optional</strong>: true</li>
+<li><code>locus</code> (String, <strong>required</strong>): genomic locus to select</li>
+</ul>
+<h4 id="optional_26">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_10">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="subset"): prefix for output bam and bai file names</li>
+</ul>
+<h3 id="outputs_27">Outputs</h3>
+<ul>
+<li><code>subset_bam</code> (File)</li>
+<li><code>subset_bai</code> (File)</li>
+</ul>
+<h2 id="excluderegionsfrombam">ExcludeRegionsFromBam</h2>
+<h3 id="inputs_28">Inputs</h3>
+<h4 id="required_28">Required</h4>
+<ul>
+<li><code>bai</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>loci</code> (Array[String], <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_27">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_11">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="subset")</li>
+</ul>
+<h3 id="outputs_28">Outputs</h3>
+<ul>
+<li><code>subset_bam</code> (File)</li>
+<li><code>subset_bai</code> (File)</li>
+</ul>
+<h2 id="selectfirstnreads">SelectFirstNReads</h2>
+<h3 id="inputs_29">Inputs</h3>
+<h4 id="required_29">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>); <strong>description</strong>: bam to subset; <strong>localization_optional</strong>: true</li>
+<li><code>n</code> (Int, <strong>required</strong>): number of reads to select</li>
+</ul>
+<h4 id="optional_28">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_12">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="selected"): prefix for output bam file</li>
+</ul>
+<h3 id="outputs_29">Outputs</h3>
+<ul>
+<li><code>selected_bam</code> (File)</li>
+</ul>
+<h2 id="resilientsubsetbam">ResilientSubsetBam</h2>
+<dl>
+<dt>description</dt>
+<dd>For subsetting a high-coverage BAM stored in GCS, without localizing (more resilient to auth. expiration).</dd>
+</dl>
+<h3 id="inputs_30">Inputs</h3>
+<h4 id="required_30">Required</h4>
+<ul>
+<li><code>bai</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+<li><code>interval_id</code> (String, <strong>required</strong>): an ID string for representing the intervals in the interval list file</li>
+<li><code>interval_list_file</code> (File, <strong>required</strong>): a Picard-style interval list file to subset reads with</li>
+<li><code>prefix</code> (String, <strong>required</strong>): prefix for output bam and bai file names</li>
+</ul>
+<h4 id="optional_29">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_30">Outputs</h3>
+<ul>
+<li><code>subset_bam</code> (File)</li>
+<li><code>subset_bai</code> (File)</li>
+</ul>
+<h2 id="splitbam">SplitBam</h2>
+<h3 id="inputs_31">Inputs</h3>
+<h4 id="required_31">Required</h4>
+<ul>
+<li><code>bai</code> (File, <strong>required</strong>): index for bam file</li>
+<li><code>bam</code> (File, <strong>required</strong>): bam to split</li>
+</ul>
+<h4 id="optional_30">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_13">Defaults</h4>
+<ul>
+<li><code>filter</code> (Array[String], default=['random', 'chrUn', 'decoy', 'alt', 'HLA']): contigs to ignore</li>
+</ul>
+<h3 id="outputs_31">Outputs</h3>
+<ul>
+<li><code>subset_bams</code> (Array[File])</li>
+<li><code>subset_bais</code> (Array[File])</li>
+</ul>
+<h2 id="bamtools">Bamtools</h2>
+<h3 id="inputs_32">Inputs</h3>
+<h4 id="required_32">Required</h4>
+<ul>
+<li><code>args</code> (String, <strong>required</strong>)</li>
+<li><code>bamfile</code> (File, <strong>required</strong>)</li>
+<li><code>cmd</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_31">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_14">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="out")</li>
+</ul>
+<h3 id="outputs_32">Outputs</h3>
+<ul>
+<li><code>bam</code> (File)</li>
+</ul>
+<h2 id="filterbamontag">FilterBamOnTag</h2>
+<h3 id="inputs_33">Inputs</h3>
+<h4 id="required_33">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>): input BAM file</li>
+<li><code>expression</code> (String, <strong>required</strong>)</li>
+<li><code>tag</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_32">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_15">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="out"): [default-valued] prefix for output BAM</li>
+</ul>
+<h3 id="outputs_33">Outputs</h3>
+<ul>
+<li><code>filtered_bam</code> (File)</li>
+<li><code>filtered_bai</code> (File)</li>
+</ul>
+<h2 id="deduplicatebam">DeduplicateBam</h2>
+<dl>
+<dt>description</dt>
+<dd>Utility to drop (occationally happening) duplicate records in input BAM</dd>
+</dl>
+<h3 id="inputs_34">Inputs</h3>
+<h4 id="required_34">Required</h4>
+<ul>
+<li><code>aligned_bai</code> (File, <strong>required</strong>)</li>
+<li><code>aligned_bam</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_33">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_16">Defaults</h4>
+<ul>
+<li><code>same_name_as_input</code> (Boolean, default=true)</li>
+</ul>
+<h3 id="outputs_34">Outputs</h3>
+<ul>
+<li><code>corrected_bam</code> (File)</li>
+<li><code>corrected_bai</code> (File)</li>
+</ul>
+<h2 id="cat">Cat</h2>
+<h3 id="inputs_35">Inputs</h3>
+<h4 id="required_35">Required</h4>
+<ul>
+<li><code>files</code> (Array[File], <strong>required</strong>): text files to combine</li>
+</ul>
+<h4 id="optional_34">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_17">Defaults</h4>
+<ul>
+<li><code>has_header</code> (Boolean, default=false): files have a redundant header</li>
+<li><code>out</code> (String, default="out.txt"): [default-valued] output filename</li>
+</ul>
+<h3 id="outputs_35">Outputs</h3>
+<ul>
+<li><code>combined</code> (File)</li>
+</ul>
+<h2 id="listbamcontigs">ListBamContigs</h2>
+<h3 id="inputs_36">Inputs</h3>
+<h4 id="required_36">Required</h4>
+<ul>
+<li><code>bam</code> (String, <strong>required</strong>): input BAM from which available contigs should be listed</li>
+</ul>
+<h4 id="optional_35">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_36">Outputs</h3>
+<ul>
+<li><code>contigs</code> (Array[String])</li>
+</ul>
+<h2 id="computegenomelength">ComputeGenomeLength</h2>
+<h3 id="inputs_37">Inputs</h3>
+<h4 id="required_37">Required</h4>
+<ul>
+<li><code>fasta</code> (File, <strong>required</strong>): FASTA file</li>
+</ul>
+<h4 id="optional_36">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_37">Outputs</h3>
+<ul>
+<li><code>length</code> (Float)</li>
+</ul>
+<h2 id="listfilesoftype">ListFilesOfType</h2>
+<h3 id="inputs_38">Inputs</h3>
+<h4 id="required_38">Required</h4>
+<ul>
+<li><code>gcs_dir</code> (String, <strong>required</strong>): input directory</li>
+<li><code>suffixes</code> (Array[String], <strong>required</strong>): suffix(es) for files</li>
+</ul>
+<h4 id="optional_37">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_18">Defaults</h4>
+<ul>
+<li><code>recurse</code> (Boolean, default=false): if true, recurse through subdirectories</li>
+</ul>
+<h3 id="outputs_38">Outputs</h3>
+<ul>
+<li><code>files</code> (Array[String])</li>
+<li><code>manifest</code> (File)</li>
+</ul>
+<h2 id="stopworkflow">StopWorkflow</h2>
+<h3 id="inputs_39">Inputs</h3>
+<h4 id="required_39">Required</h4>
+<ul>
+<li><code>reason</code> (String, <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_39">Outputs</h3>
+<p><strong>None</strong></p>
+<h2 id="infersamplename">InferSampleName</h2>
+<dl>
+<dt>description</dt>
+<dd>Infer sample name encoded on the @RG line of the header section. Fails if multiple values found, or if SM ~= unnamedsample.</dd>
+</dl>
+<h3 id="inputs_40">Inputs</h3>
+<h4 id="required_40">Required</h4>
+<ul>
+<li><code>bai</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+</ul>
+<h3 id="outputs_40">Outputs</h3>
+<ul>
+<li><code>sample_name</code> (String)</li>
+</ul>
+<h2 id="checkonsamplenames">CheckOnSamplenames</h2>
+<dl>
+<dt>description</dt>
+<dd>Makes sure the provided sample names are all same, i.e. no mixture of sample names</dd>
+</dl>
+<h3 id="inputs_41">Inputs</h3>
+<h4 id="required_41">Required</h4>
+<ul>
+<li><code>sample_names</code> (Array[String], <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_41">Outputs</h3>
+<p><strong>None</strong></p>
+<h2 id="fixsamplename">FixSampleName</h2>
+<dl>
+<dt>desciption</dt>
+<dd>This fixes the sample name of a demultiplexed BAM</dd>
+</dl>
+<h3 id="inputs_42">Inputs</h3>
+<h4 id="required_42">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>sample_name</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_38">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_42">Outputs</h3>
+<ul>
+<li><code>reheadered_bam</code> (File)</li>
+</ul>
+<h2 id="computeallowedlocalssd">ComputeAllowedLocalSSD</h2>
+<dl>
+<dt>description</dt>
+<dd>Compute the number of LOCAL ssd's allowed by Google</dd>
+</dl>
+<h3 id="inputs_43">Inputs</h3>
+<h4 id="required_43">Required</h4>
+<ul>
+<li><code>intended_gb</code> (Int, <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_43">Outputs</h3>
+<ul>
+<li><code>numb_of_local_ssd</code> (Int)</li>
+</ul>
+<h2 id="randomzonespewer">RandomZoneSpewer</h2>
+<h3 id="inputs_44">Inputs</h3>
+<h4 id="required_44">Required</h4>
+<ul>
+<li><code>num_of_zones</code> (Int, <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_44">Outputs</h3>
+<ul>
+<li><code>zones</code> (String)</li>
+</ul>
+<h2 id="shardreads">ShardReads</h2>
+<h3 id="inputs_45">Inputs</h3>
+<h4 id="required_45">Required</h4>
+<ul>
+<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_39">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_19">Defaults</h4>
+<ul>
+<li><code>num_shards</code> (Int, default=10)</li>
+<li><code>prefix</code> (String, default="shard")</li>
+</ul>
+<h3 id="outputs_45">Outputs</h3>
+<ul>
+<li><code>shards</code> (Array[File])</li>
+</ul>
+<h2 id="getcurrenttimestampstring">GetCurrentTimestampString</h2>
+<dl>
+<dt>volatile</dt>
+<dd>true</dd>
+</dl>
+<h3 id="inputs_46">Inputs</h3>
+<h4 id="defaults_20">Defaults</h4>
+<ul>
+<li><code>date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
+</ul>
+<h3 id="outputs_46">Outputs</h3>
+<ul>
+<li><code>timestamp_string</code> (String)</li>
+</ul>
+<h2 id="getrawreadgroup">GetRawReadGroup</h2>
+<h3 id="inputs_47">Inputs</h3>
+<h4 id="required_46">Required</h4>
+<ul>
+<li><code>gcs_bam_path</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_40">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_47">Outputs</h3>
+<ul>
+<li><code>rg</code> (String)</li>
+</ul>
+<h2 id="failwithwarning">FailWithWarning</h2>
+<h3 id="inputs_48">Inputs</h3>
+<h4 id="required_47">Required</h4>
+<ul>
+<li><code>warning</code> (String, <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_48">Outputs</h3>
+<p><strong>None</strong></p>
+<h2 id="splitdelimitedstring">SplitDelimitedString</h2>
+<h3 id="inputs_49">Inputs</h3>
+<h4 id="required_48">Required</h4>
+<ul>
+<li><code>s</code> (String, <strong>required</strong>)</li>
+<li><code>separate</code> (String, <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_49">Outputs</h3>
+<ul>
+<li><code>arr</code> (Array[String])</li>
+</ul>
+<h2 id="constructmap">ConstructMap</h2>
+<dl>
+<dt>desciption</dt>
+<dd>Use only when the keys are guaranteed to be unique and the two arrays are of the same length.</dd>
+</dl>
+<h3 id="inputs_50">Inputs</h3>
+<h4 id="required_49">Required</h4>
+<ul>
+<li><code>keys</code> (Array[String], <strong>required</strong>)</li>
+<li><code>values</code> (Array[String], <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_50">Outputs</h3>
+<ul>
+<li><code>converted</code> (Map[String,String])</li>
+</ul>
+<h2 id="maptotsv">MapToTsv</h2>
+<h3 id="inputs_51">Inputs</h3>
+<h4 id="required_50">Required</h4>
+<ul>
+<li><code>my_map</code> (Map[String,Float], <strong>required</strong>)</li>
+<li><code>name_of_file</code> (String, <strong>required</strong>)</li>
+</ul>
+<h3 id="outputs_51">Outputs</h3>
+<ul>
+<li><code>result</code> (File)</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../UMI_Tools/" class="btn btn-neutral float-left" title="UMI_Tools"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../VariantUtils/" class="btn btn-neutral float-right" title="VariantUtils">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright (c) 2023, Broad Institute</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/broadinstitute/long-read-pipelines" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../UMI_Tools/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../VariantUtils/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+// TrioBinChildLongReads
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-CollectParentsKmerStats" [label=CollectParentsKmerStats shape=cds]
+	"call-AssignChildLongReads" [label=AssignChildLongReads shape=cds]
+	"call-CollectParentsKmerStats" -> "call-AssignChildLongReads"
+}

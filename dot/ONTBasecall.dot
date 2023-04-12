@@ -1,0 +1,7 @@
+// ONTBasecall
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-Guppy" [label=Guppy shape=cds]
+}

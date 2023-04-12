@@ -1,0 +1,11 @@
+// CleanupIntermediate
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-scatter-L17C5-sid" {
+		fontname=Roboto label="scatter(submissionIDs)" rank=same
+		"call-CleanupAFolder" [label=CleanupAFolder shape=cds]
+		"scatter-L17C5-sid" [label="" height=0 margin=0 style=invis width=0]
+	}
+}

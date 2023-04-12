@@ -1,0 +1,69 @@
+// PBCCSIsoSeq
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L42C5" {
+		fontname=Roboto label="if(length(ccs_bams) > 1)" rank=same
+		"call-MergeAllReads" [label=MergeAllReads shape=cds]
+		"call-IndexCCSUnalignedReads" [label=IndexCCSUnalignedReads shape=cds]
+		"if-L42C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-bam" [label=bam shape=plaintext]
+	"decl-pbi" [label=pbi shape=plaintext]
+	"call-Demultiplex" [label=Demultiplex shape=cds]
+	"call-SummarizedDemuxReportPNG" [label=SummarizedDemuxReportPNG shape=cds]
+	"call-DetailedDemuxReportPNG" [label=DetailedDemuxReportPNG shape=cds]
+	subgraph "cluster-scatter-L67C5-demux_bam" {
+		fontname=Roboto label="scatter(Demultiplex.demux_bams)" rank=same
+		"call-RefineTranscriptReads" [label=RefineTranscriptReads shape=cds]
+		"call-ClusterTranscripts" [label=ClusterTranscripts shape=cds]
+		"call-AlignTranscripts" [label=AlignTranscripts shape=cds]
+		"call-BamToBed" [label=BamToBed shape=cds]
+		"call-CollapseTranscripts" [label=CollapseTranscripts shape=cds]
+		"call-FinalizeAlignedTranscriptsBam" [label=FinalizeAlignedTranscriptsBam shape=cds]
+		"call-FinalizeAlignedTranscriptsBai" [label=FinalizeAlignedTranscriptsBai shape=cds]
+		"call-FinalizeAlignedTranscriptsBed" [label=FinalizeAlignedTranscriptsBed shape=cds]
+		"call-FinalizeCollapsedTranscripts" [label=FinalizeCollapsedTranscripts shape=cds]
+		"scatter-L67C5-demux_bam" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-MergeBarcodeBams" [label=MergeBarcodeBams shape=cds]
+	"call-IndexAlignedReads" [label=IndexAlignedReads shape=cds]
+	"call-FinalizeBam" [label=FinalizeBam shape=cds]
+	"call-FinalizePbi" [label=FinalizePbi shape=cds]
+	"call-FinalizeAlignedBam" [label=FinalizeAlignedBam shape=cds]
+	"call-FinalizeAlignedBai" [label=FinalizeAlignedBai shape=cds]
+	"call-FinalizeAlignedPbi" [label=FinalizeAlignedPbi shape=cds]
+	"call-FinalizeDemultiplexCounts" [label=FinalizeDemultiplexCounts shape=cds]
+	"call-FinalizeDemultiplexReport" [label=FinalizeDemultiplexReport shape=cds]
+	"call-FinalizeDemultiplexSummary" [label=FinalizeDemultiplexSummary shape=cds]
+	"call-FinalizeLimaSummary" [label=FinalizeLimaSummary shape=cds]
+	"call-FinalizeLimaDetailedPNG" [label=FinalizeLimaDetailedPNG shape=cds]
+	"call-MergeAllReads" -> "call-IndexCCSUnalignedReads"
+	"call-MergeAllReads" -> "decl-bam"
+	"call-IndexCCSUnalignedReads" -> "decl-pbi"
+	"decl-bam" -> "call-Demultiplex"
+	"call-Demultiplex" -> "call-SummarizedDemuxReportPNG"
+	"call-Demultiplex" -> "call-DetailedDemuxReportPNG"
+	"call-Demultiplex" -> "scatter-L67C5-demux_bam" [lhead="cluster-scatter-L67C5-demux_bam"]
+	"call-RefineTranscriptReads" -> "call-ClusterTranscripts"
+	"call-ClusterTranscripts" -> "call-AlignTranscripts"
+	"call-AlignTranscripts" -> "call-BamToBed"
+	"call-AlignTranscripts" -> "call-CollapseTranscripts"
+	"call-AlignTranscripts" -> "call-FinalizeAlignedTranscriptsBam"
+	"call-AlignTranscripts" -> "call-FinalizeAlignedTranscriptsBai"
+	"call-BamToBed" -> "call-FinalizeAlignedTranscriptsBed"
+	"call-CollapseTranscripts" -> "call-FinalizeCollapsedTranscripts"
+	"call-AlignTranscripts" -> "call-MergeBarcodeBams"
+	"call-MergeBarcodeBams" -> "call-IndexAlignedReads"
+	"decl-bam" -> "call-FinalizeBam"
+	"decl-pbi" -> "call-FinalizePbi"
+	"call-MergeBarcodeBams" -> "call-FinalizeAlignedBam"
+	"call-MergeBarcodeBams" -> "call-FinalizeAlignedBai"
+	"call-IndexAlignedReads" -> "call-FinalizeAlignedPbi"
+	"call-Demultiplex" -> "call-FinalizeDemultiplexCounts"
+	"call-Demultiplex" -> "call-FinalizeDemultiplexReport"
+	"call-Demultiplex" -> "call-FinalizeDemultiplexSummary"
+	"call-SummarizedDemuxReportPNG" -> "call-FinalizeLimaSummary"
+	"call-DetailedDemuxReportPNG" -> "call-FinalizeLimaDetailedPNG"
+}

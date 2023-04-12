@@ -1,0 +1,9 @@
+// RunPBSV
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-Discover" [label=Discover shape=cds]
+	"call-Call" [label=Call shape=cds]
+	"call-Discover" -> "call-Call"
+}

@@ -1,0 +1,36 @@
+// ONTAssembleWithFlye
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-ComputeGenomeLength" [label=ComputeGenomeLength shape=cds]
+	"call-ListFilesOfType" [label=ListFilesOfType shape=cds]
+	"call-MergeFastqs" [label=MergeFastqs shape=cds]
+	"call-Flye" [label=Flye shape=cds]
+	"call-MedakaPolish" [label=MedakaPolish shape=cds]
+	"call-Quast" [label=Quast shape=cds]
+	"call-CallAssemblyVariants" [label=CallAssemblyVariants shape=cds]
+	"call-FinalizeAsmUnpolished" [label=FinalizeAsmUnpolished shape=cds]
+	"call-FinalizeAsmPolished" [label=FinalizeAsmPolished shape=cds]
+	"call-FinalizeQuastReportHtml" [label=FinalizeQuastReportHtml shape=cds]
+	"call-FinalizeQuastReportTxt" [label=FinalizeQuastReportTxt shape=cds]
+	"call-FinalizePaf" [label=FinalizePaf shape=cds]
+	"call-FinalizePafToolsVcf" [label=FinalizePafToolsVcf shape=cds]
+	"call-summaryQ" [label=summaryQ shape=cds]
+	"decl-q_metrics" [label=q_metrics shape=plaintext]
+	"call-ListFilesOfType" -> "call-MergeFastqs"
+	"call-MergeFastqs" -> "call-Flye"
+	"call-ComputeGenomeLength" -> "call-Flye"
+	"call-MergeFastqs" -> "call-MedakaPolish"
+	"call-Flye" -> "call-MedakaPolish"
+	"call-MedakaPolish" -> "call-Quast"
+	"call-MedakaPolish" -> "call-CallAssemblyVariants"
+	"call-Flye" -> "call-FinalizeAsmUnpolished"
+	"call-MedakaPolish" -> "call-FinalizeAsmPolished"
+	"call-Quast" -> "call-FinalizeQuastReportHtml"
+	"call-Quast" -> "call-FinalizeQuastReportTxt"
+	"call-CallAssemblyVariants" -> "call-FinalizePaf"
+	"call-CallAssemblyVariants" -> "call-FinalizePafToolsVcf"
+	"call-Quast" -> "call-summaryQ"
+	"call-summaryQ" -> "decl-q_metrics"
+}

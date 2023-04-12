@@ -1,0 +1,25 @@
+// FPCheckAoU
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-ResolveFPVCFPath" [label=ResolveFPVCFPath shape=cds]
+	"call-ReheaderFullGRCh38VCFtoNoAlt" [label=ReheaderFullGRCh38VCFtoNoAlt shape=cds]
+	"call-GetVCFSampleName" [label=GetVCFSampleName shape=cds]
+	"call-FilterGenotypesVCF" [label=FilterGenotypesVCF shape=cds]
+	"call-ExtractGenotypingSites" [label=ExtractGenotypingSites shape=cds]
+	"call-ExtractRelevantGenotypingReads" [label=ExtractRelevantGenotypingReads shape=cds]
+	"call-CheckFingerprint" [label=CheckFingerprint shape=cds]
+	"decl-lod_expected_sample_t" [label=lod_expected_sample_t shape=plaintext]
+	"decl-status" [label=status shape=plaintext]
+	"call-ResolveFPVCFPath" -> "call-ReheaderFullGRCh38VCFtoNoAlt"
+	"call-ReheaderFullGRCh38VCFtoNoAlt" -> "call-GetVCFSampleName"
+	"call-ReheaderFullGRCh38VCFtoNoAlt" -> "call-FilterGenotypesVCF"
+	"call-FilterGenotypesVCF" -> "call-ExtractGenotypingSites"
+	"call-ExtractGenotypingSites" -> "call-ExtractRelevantGenotypingReads"
+	"call-FilterGenotypesVCF" -> "call-CheckFingerprint"
+	"call-ExtractRelevantGenotypingReads" -> "call-CheckFingerprint"
+	"call-GetVCFSampleName" -> "call-CheckFingerprint"
+	"call-CheckFingerprint" -> "decl-lod_expected_sample_t"
+	"decl-lod_expected_sample_t" -> "decl-status"
+}

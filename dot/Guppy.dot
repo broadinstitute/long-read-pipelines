@@ -1,0 +1,37 @@
+// Guppy
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-ListFast5s" [label=ListFast5s shape=cds]
+	"decl-ns" [label=ns shape=plaintext]
+	"call-PartitionFast5Manifest" [label=PartitionFast5Manifest shape=cds]
+	subgraph "cluster-scatter-L37C5-chunk_index" {
+		fontname=Roboto label="scatter(range(length(PartitionFast5Manifest.manifest_chunks)))" rank=same
+		"call-Basecall" [label=Basecall shape=cds]
+		"scatter-L37C5-chunk_index" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-TimestampStopped" [label=TimestampStopped shape=cds]
+	"call-SumPassingFastqs" [label=SumPassingFastqs shape=cds]
+	"call-SumFailingFastqs" [label=SumFailingFastqs shape=cds]
+	"call-MakeSequencingSummary" [label=MakeSequencingSummary shape=cds]
+	"call-MakeFinalSummary" [label=MakeFinalSummary shape=cds]
+	"call-UniqueBarcodes" [label=UniqueBarcodes shape=cds]
+	"call-FinalizeBasecalls" [label=FinalizeBasecalls shape=cds]
+	"call-ListFast5s" -> "decl-ns"
+	"decl-ns" -> "call-PartitionFast5Manifest"
+	"call-ListFast5s" -> "call-PartitionFast5Manifest"
+	"call-PartitionFast5Manifest" -> "scatter-L37C5-chunk_index" [lhead="cluster-scatter-L37C5-chunk_index"]
+	"call-PartitionFast5Manifest" -> "call-Basecall"
+	"call-Basecall" -> "call-TimestampStopped"
+	"call-Basecall" -> "call-SumPassingFastqs"
+	"call-Basecall" -> "call-SumFailingFastqs"
+	"call-Basecall" -> "call-MakeSequencingSummary"
+	"call-TimestampStopped" -> "call-MakeFinalSummary"
+	"call-Basecall" -> "call-MakeFinalSummary"
+	"call-Basecall" -> "call-UniqueBarcodes"
+	"call-MakeSequencingSummary" -> "call-FinalizeBasecalls"
+	"call-MakeFinalSummary" -> "call-FinalizeBasecalls"
+	"call-Basecall" -> "call-FinalizeBasecalls"
+	"call-UniqueBarcodes" -> "call-FinalizeBasecalls"
+}

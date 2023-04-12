@@ -1,0 +1,20 @@
+// CollectPacBioAlignedMetrics
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-SummarizeAlignedPBI" [label=SummarizeAlignedPBI shape=cds]
+	"call-SummarizeAlignedQ5PBI" [label=SummarizeAlignedQ5PBI shape=cds]
+	"call-SummarizeAlignedQ7PBI" [label=SummarizeAlignedQ7PBI shape=cds]
+	"call-SummarizeAlignedQ10PBI" [label=SummarizeAlignedQ10PBI shape=cds]
+	"call-SummarizeAlignedQ12PBI" [label=SummarizeAlignedQ12PBI shape=cds]
+	"call-SummarizeAlignedQ15PBI" [label=SummarizeAlignedQ15PBI shape=cds]
+	"call-NanoPlotFromBam" [label=NanoPlotFromBam shape=cds]
+	"call-CustomMetricsSummaryToFile" [label=CustomMetricsSummaryToFile shape=cds]
+	"call-SummarizeAlignedQ5PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ12PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ10PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-NanoPlotFromBam" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ15PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ7PBI" -> "call-CustomMetricsSummaryToFile"
+}

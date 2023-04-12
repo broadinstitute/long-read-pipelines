@@ -1,0 +1,9 @@
+// CallAssemblyVariants
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-AlignAsPAF" [label=AlignAsPAF shape=cds]
+	"call-Paftools" [label=Paftools shape=cds]
+	"call-AlignAsPAF" -> "call-Paftools"
+}

@@ -1,0 +1,31 @@
+// AnnotateTranscriptomeWithGuide
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-Quantify" [label=Quantify shape=cds]
+	"call-ExtractTranscriptSequences" [label=ExtractTranscriptSequences shape=cds]
+	"call-CompareTranscriptomes" [label=CompareTranscriptomes shape=cds]
+	"call-FinalizeGTF" [label=FinalizeGTF shape=cds]
+	"call-FinalizeFa" [label=FinalizeFa shape=cds]
+	"call-FinalizeFai" [label=FinalizeFai shape=cds]
+	"call-FinalizeDict" [label=FinalizeDict shape=cds]
+	"call-FinalizeAnnotatedGTF" [label=FinalizeAnnotatedGTF shape=cds]
+	"call-FinalizeLoci" [label=FinalizeLoci shape=cds]
+	"call-FinalizeStats" [label=FinalizeStats shape=cds]
+	"call-FinalizeTracking" [label=FinalizeTracking shape=cds]
+	"call-FinalizeRefMap" [label=FinalizeRefMap shape=cds]
+	"call-FinalizeTMap" [label=FinalizeTMap shape=cds]
+	"call-Quantify" -> "call-ExtractTranscriptSequences"
+	"call-Quantify" -> "call-CompareTranscriptomes"
+	"call-Quantify" -> "call-FinalizeGTF"
+	"call-ExtractTranscriptSequences" -> "call-FinalizeFa"
+	"call-ExtractTranscriptSequences" -> "call-FinalizeFai"
+	"call-ExtractTranscriptSequences" -> "call-FinalizeDict"
+	"call-CompareTranscriptomes" -> "call-FinalizeAnnotatedGTF"
+	"call-CompareTranscriptomes" -> "call-FinalizeLoci"
+	"call-CompareTranscriptomes" -> "call-FinalizeStats"
+	"call-CompareTranscriptomes" -> "call-FinalizeTracking"
+	"call-CompareTranscriptomes" -> "call-FinalizeRefMap"
+	"call-CompareTranscriptomes" -> "call-FinalizeTMap"
+}

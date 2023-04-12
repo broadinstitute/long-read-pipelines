@@ -1,0 +1,55 @@
+// LRCNVs
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-PreprocessIntervals" [label=PreprocessIntervals shape=cds]
+	subgraph "cluster-if-L194C5" {
+		fontname=Roboto label="if(select_first([do_explicit_gc_correction, true]))" rank=same
+		"call-AnnotateIntervals" [label=AnnotateIntervals shape=cds]
+		"if-L194C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L213C5-normal_bam_and_bai" {
+		fontname=Roboto label="scatter(normal_bams_and_bais)" rank=same
+		"call-CollectCounts" [label=CollectCounts shape=cds]
+		"scatter-L213C5-normal_bam_and_bai" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-FilterIntervals" [label=FilterIntervals shape=cds]
+	"call-DetermineGermlineContigPloidyCohortMode" [label=DetermineGermlineContigPloidyCohortMode shape=cds]
+	"call-ScatterIntervals" [label=ScatterIntervals shape=cds]
+	subgraph "cluster-scatter-L279C5-scatter_index" {
+		fontname=Roboto label="scatter(range(length(ScatterIntervals.scattered_interval_lists)))" rank=same
+		"call-GermlineCNVCallerCohortMode" [label=GermlineCNVCallerCohortMode shape=cds]
+		"scatter-L279C5-scatter_index" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-call_tars_sample_by_shard" [label=call_tars_sample_by_shard shape=plaintext]
+	subgraph "cluster-scatter-L335C5-sample_index" {
+		fontname=Roboto label="scatter(range(length(CollectCounts.entity_id)))" rank=same
+		"call-PostprocessGermlineCNVCalls" [label=PostprocessGermlineCNVCalls shape=cds]
+		"call-CollectSampleQualityMetrics" [label=CollectSampleQualityMetrics shape=cds]
+		"scatter-L335C5-sample_index" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-CollectModelQualityMetrics" [label=CollectModelQualityMetrics shape=cds]
+	"call-PreprocessIntervals" -> "call-AnnotateIntervals"
+	"call-PreprocessIntervals" -> "call-CollectCounts"
+	"call-PreprocessIntervals" -> "call-FilterIntervals"
+	"call-CollectCounts" -> "call-FilterIntervals"
+	"call-AnnotateIntervals" -> "call-FilterIntervals"
+	"call-FilterIntervals" -> "call-DetermineGermlineContigPloidyCohortMode"
+	"call-CollectCounts" -> "call-DetermineGermlineContigPloidyCohortMode"
+	"call-FilterIntervals" -> "call-ScatterIntervals"
+	"call-ScatterIntervals" -> "scatter-L279C5-scatter_index" [lhead="cluster-scatter-L279C5-scatter_index"]
+	"call-CollectCounts" -> "call-GermlineCNVCallerCohortMode"
+	"call-DetermineGermlineContigPloidyCohortMode" -> "call-GermlineCNVCallerCohortMode"
+	"call-ScatterIntervals" -> "call-GermlineCNVCallerCohortMode"
+	"call-AnnotateIntervals" -> "call-GermlineCNVCallerCohortMode"
+	"call-GermlineCNVCallerCohortMode" -> "decl-call_tars_sample_by_shard"
+	"call-CollectCounts" -> "scatter-L335C5-sample_index" [lhead="cluster-scatter-L335C5-sample_index"]
+	"call-CollectCounts" -> "call-PostprocessGermlineCNVCalls"
+	"call-GermlineCNVCallerCohortMode" -> "call-PostprocessGermlineCNVCalls"
+	"decl-call_tars_sample_by_shard" -> "call-PostprocessGermlineCNVCalls"
+	"call-DetermineGermlineContigPloidyCohortMode" -> "call-PostprocessGermlineCNVCalls"
+	"call-CollectCounts" -> "call-CollectSampleQualityMetrics"
+	"call-PostprocessGermlineCNVCalls" -> "call-CollectSampleQualityMetrics"
+	"call-GermlineCNVCallerCohortMode" -> "call-CollectModelQualityMetrics"
+}

@@ -1,0 +1,8 @@
+// Hifiasm
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-AssembleForAltContigs" [label=AssembleForAltContigs shape=cds]
+	"call-AssembleForHaplotigs" [label=AssembleForHaplotigs shape=cds]
+}

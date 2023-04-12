@@ -1,0 +1,21 @@
+// CollectParentsKmerStats
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-ParentalReadsRepartitionAndMerylConfigure" [label=ParentalReadsRepartitionAndMerylConfigure shape=cds]
+	"call-PrintMerylMemory" [label=PrintMerylMemory shape=cds]
+	subgraph "cluster-scatter-L61C5-pair" {
+		fontname=Roboto label="scatter(ParentalReadsRepartitionAndMerylConfigure.batch_id_and_parental_short_reads_tar)" rank=same
+		"call-MerylCount" [label=MerylCount shape=cds]
+		"scatter-L61C5-pair" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-MerylMergeAndSubtract" [label=MerylMergeAndSubtract shape=cds]
+	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-PrintMerylMemory"
+	"call-ParentalReadsRepartitionAndMerylConfigure" -> "scatter-L61C5-pair" [lhead="cluster-scatter-L61C5-pair"]
+	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylCount"
+	"call-PrintMerylMemory" -> "call-MerylCount"
+	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylMergeAndSubtract"
+	"call-PrintMerylMemory" -> "call-MerylMergeAndSubtract"
+	"call-MerylCount" -> "call-MerylMergeAndSubtract"
+}

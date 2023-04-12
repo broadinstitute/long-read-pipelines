@@ -1,0 +1,11 @@
+// DownloadFromWeb
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-scatter-L31C5-n" {
+		fontname=Roboto label="scatter(range(num_simultaneous_downloads))" rank=same
+		"call-DownloadFiles" [label=DownloadFiles shape=cds]
+		"scatter-L31C5-n" [label="" height=0 margin=0 style=invis width=0]
+	}
+}

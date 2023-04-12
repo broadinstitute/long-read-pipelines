@@ -1,0 +1,19 @@
+// PBMASIsoSeqDemultiplex
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-Demultiplex" [label=Demultiplex shape=cds]
+	subgraph "cluster-scatter-L34C5-demuxed_bam" {
+		fontname=Roboto label="scatter(Demultiplex.demuxed_bams)" rank=same
+		"call-Index" [label=Index shape=cds]
+		"call-PBIndex" [label=PBIndex shape=cds]
+		"call-FinalizeBam" [label=FinalizeBam shape=cds]
+		"call-FinalizeBai" [label=FinalizeBai shape=cds]
+		"call-FinalizePbi" [label=FinalizePbi shape=cds]
+		"scatter-L34C5-demuxed_bam" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-Demultiplex" -> "scatter-L34C5-demuxed_bam" [lhead="cluster-scatter-L34C5-demuxed_bam"]
+	"call-Index" -> "call-FinalizeBai"
+	"call-PBIndex" -> "call-FinalizePbi"
+}

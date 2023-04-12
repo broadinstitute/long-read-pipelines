@@ -1,0 +1,52 @@
+// AlignAndCheckFingerprintCCS
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L44C5" {
+		fontname=Roboto label="if(ceil(size(uBAM,\"GB\")) > 50)" rank=same
+		"call-Guess" [label=Guess shape=cds]
+		"call-arbitrary" [label=arbitrary shape=cds]
+		"call-ShardLongReads" [label=ShardLongReads shape=cds]
+		subgraph "cluster-scatter-L62C9-unaligned_bam" {
+			fontname=Roboto label="scatter(ShardLongReads.unmapped_shards)" rank=same
+			"call-ValidateShard" [label=ValidateShard shape=cds]
+			"call-AlignReads" [label=AlignReads shape=cds]
+			"scatter-L62C9-unaligned_bam" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"call-MergeAlignedReads" [label=MergeAlignedReads shape=cds]
+		"if-L44C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L81C5" {
+		fontname=Roboto label="if(!(ceil(size(uBAM,\"GB\")) > 50))" rank=same
+		"call-AlignReadsTogether" [label=AlignReadsTogether shape=cds]
+		"if-L81C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-aBAM" [label=aBAM shape=plaintext]
+	"decl-aBAI" [label=aBAI shape=plaintext]
+	"call-IndexAlignedReads" [label=IndexAlignedReads shape=cds]
+	"call-CollectPacBioAlignedMetrics" [label=CollectPacBioAlignedMetrics shape=cds]
+	"call-saveAlnMetrics" [label=saveAlnMetrics shape=cds]
+	subgraph "cluster-if-L112C5" {
+		fontname=Roboto label="if(!turn_off_fingperprint_check)" rank=same
+		"call-FPCheckAoU" [label=FPCheckAoU shape=cds]
+		"call-saveFPRes" [label=saveFPRes shape=cds]
+		"if-L112C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-arbitrary" -> "call-ShardLongReads"
+	"call-Guess" -> "call-ShardLongReads"
+	"call-ShardLongReads" -> "scatter-L62C9-unaligned_bam" [lhead="cluster-scatter-L62C9-unaligned_bam"]
+	"call-AlignReads" -> "call-MergeAlignedReads"
+	"call-AlignReadsTogether" -> "decl-aBAM"
+	"call-MergeAlignedReads" -> "decl-aBAM"
+	"call-AlignReadsTogether" -> "decl-aBAI"
+	"call-MergeAlignedReads" -> "decl-aBAI"
+	"decl-aBAM" -> "call-IndexAlignedReads"
+	"call-IndexAlignedReads" -> "call-CollectPacBioAlignedMetrics"
+	"decl-aBAI" -> "call-CollectPacBioAlignedMetrics"
+	"decl-aBAM" -> "call-CollectPacBioAlignedMetrics"
+	"call-CollectPacBioAlignedMetrics" -> "call-saveAlnMetrics"
+	"decl-aBAI" -> "call-FPCheckAoU"
+	"decl-aBAM" -> "call-FPCheckAoU"
+	"call-FPCheckAoU" -> "call-saveFPRes"
+}

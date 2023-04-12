@@ -1,0 +1,13 @@
+// Sniffles2
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-scatter-L33C5-i" {
+		fontname=Roboto label="scatter(range(length(sampleBAMs)))" rank=same
+		"call-SampleSV" [label=SampleSV shape=cds]
+		"scatter-L33C5-i" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-MergeCall" [label=MergeCall shape=cds]
+	"call-SampleSV" -> "call-MergeCall"
+}

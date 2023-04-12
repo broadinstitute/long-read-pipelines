@@ -1,0 +1,11 @@
+// Canu
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-Correct" [label=Correct shape=cds]
+	"call-Trim" [label=Trim shape=cds]
+	"call-Assemble" [label=Assemble shape=cds]
+	"call-Correct" -> "call-Trim"
+	"call-Trim" -> "call-Assemble"
+}

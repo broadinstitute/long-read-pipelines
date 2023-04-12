@@ -1,0 +1,9 @@
+// CCSPepper
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-get_hap_tagged_bam" [label=get_hap_tagged_bam shape=cds]
+	"call-deep_variant" [label=deep_variant shape=cds]
+	"call-get_hap_tagged_bam" -> "call-deep_variant"
+}

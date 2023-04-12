@@ -1,0 +1,43 @@
+// PBAssembleWithHifiasm
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L35C5" {
+		fontname=Roboto label="if(length(ccs_fqs) > 1)" rank=same
+		"call-MergeAllFastqs" [label=MergeAllFastqs shape=cds]
+		"if-L35C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-ccs_fq" [label=ccs_fq shape=plaintext]
+	"call-Hifiasm" [label=Hifiasm shape=cds]
+	"call-primary_h0_h1_quast" [label=primary_h0_h1_quast shape=cds]
+	"call-primary_h0_h1_quast_summary" [label=primary_h0_h1_quast_summary shape=cds]
+	"call-FinalizeHifiasmPrimaryGFA" [label=FinalizeHifiasmPrimaryGFA shape=cds]
+	"call-FinalizeHifiasmPrimaryFA" [label=FinalizeHifiasmPrimaryFA shape=cds]
+	"call-FinalizeHifiasmAlternateGFA" [label=FinalizeHifiasmAlternateGFA shape=cds]
+	"call-FinalizeHifiasmAlternateFA" [label=FinalizeHifiasmAlternateFA shape=cds]
+	"call-FinalizeHifiasmHapGFAs" [label=FinalizeHifiasmHapGFAs shape=cds]
+	"call-FinalizeHifiasmHapFAs" [label=FinalizeHifiasmHapFAs shape=cds]
+	"call-FinalizeQuastReportHtml" [label=FinalizeQuastReportHtml shape=cds]
+	"call-FinalizeQuastReports" [label=FinalizeQuastReports shape=cds]
+	"call-FinalizeQuastSummaryAll" [label=FinalizeQuastSummaryAll shape=cds]
+	subgraph "cluster-scatter-L86C5-report" {
+		fontname=Roboto label="scatter(select_first([primary_h0_h1_quast_summary.quast_metrics]))" rank=same
+		"call-FinalizeQuastIndividualSummary" [label=FinalizeQuastIndividualSummary shape=cds]
+		"scatter-L86C5-report" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-MergeAllFastqs" -> "decl-ccs_fq"
+	"decl-ccs_fq" -> "call-Hifiasm"
+	"call-Hifiasm" -> "call-primary_h0_h1_quast"
+	"call-primary_h0_h1_quast" -> "call-primary_h0_h1_quast_summary"
+	"call-Hifiasm" -> "call-FinalizeHifiasmPrimaryGFA"
+	"call-Hifiasm" -> "call-FinalizeHifiasmPrimaryFA"
+	"call-Hifiasm" -> "call-FinalizeHifiasmAlternateGFA"
+	"call-Hifiasm" -> "call-FinalizeHifiasmAlternateFA"
+	"call-Hifiasm" -> "call-FinalizeHifiasmHapGFAs"
+	"call-Hifiasm" -> "call-FinalizeHifiasmHapFAs"
+	"call-primary_h0_h1_quast" -> "call-FinalizeQuastReportHtml"
+	"call-primary_h0_h1_quast" -> "call-FinalizeQuastReports"
+	"call-primary_h0_h1_quast_summary" -> "call-FinalizeQuastSummaryAll"
+	"call-primary_h0_h1_quast_summary" -> "scatter-L86C5-report" [lhead="cluster-scatter-L86C5-report"]
+}
