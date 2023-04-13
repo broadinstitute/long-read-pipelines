@@ -1,0 +1,50 @@
+name: Build and deploy site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  github-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-modules-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Requirements
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install wdldoc~=1.7.0
+          python3 -m pip install mkdocs~=1.4.2
+      - name: Create Site Homepage
+        run: |
+          cp README.md docs/index.md && sed -i.bak 's/\.\/docs/\.\//g' docs/index.md
+      - name: Build Docs
+        run: |
+          wdldoc --debug -o docs ./wdl/pipelines ./wdl/tasks
+          
+          python3 ./scripts/git_page/md_post_process.py --debug --md_dir ./docs
+          
+          python3 ./scripts/git_page/create_wdl_visual.py --debug ./wdl/pipelines ./wdl/tasks --output_path ./docs/dot
+          
+          python3 ./scripts/git_page/add_dot_link_to_md.py --md_dir ./docs/workflows --dot_dir ./docs/dot
+          
+          mkdocs build
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@releases/v4
+        with:
+          BRANCH: gh-pages
+          FOLDER: ./site
