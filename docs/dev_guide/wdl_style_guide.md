@@ -11,14 +11,46 @@ _This section would cover the basic syntax and formatting rules for writing WDL 
 _This section would describe the overall structure of a WDL workflow, including the input and output declarations, the task section, and the workflow section._
 
 * A common WDL file contains both a workflow block and one or more task blocks. In the pipeline repository, 
-it is recommended to place task blocks in a separate wdl file from the wdl workflow 
-calling the task. This is to help keep the workflow wdls more modular, readable, and maintainable.
+it is recommended to place task blocks in a separate wdl file from the wdl file containing the workflow block.
+This is to help keep the workflow WDLs more modular, readable, and maintainable.
 * The WDL file containing the workflow block should include meta and meta_parameters 
 sections. The meta section should include a description of the workflow, and the 
 meta_parameters section should include a description of the workflow inputs. 
 * For wdl files composed of task blocks it is _recommended_ to include meta and meta_parameters sections within the task blocks.
 
-### Workflow basic structure
+## Task Definitions: 
+_This section would provide guidance on how to define tasks in WDL, including best practices for naming tasks, specifying inputs and outputs, and defining command scripts._
+
+
+WDL files are composed of a task block:
+```WDL
+
+task task_name {
+  meta {
+      description: "A description of the task"
+  }
+  meta_parameters {
+        input1: "A description of the input1"
+        input2: "A description of the input2"
+  }
+  input {
+    # task inputs
+  }
+
+  # task command
+
+  output {
+    # task outputs
+  }
+  runtime {
+    # task runtime
+  }
+}
+```
+## Workflow Definitions: 
+_This section would cover best practices for defining workflows in WDL, including how to specify dependencies between tasks, how to handle errors and exceptions, and how to define scatter and gather blocks._
+
+WDL files are composed of a workflow block:
 ```WDL
 workflow workflow_name {
   meta {
@@ -31,22 +63,15 @@ workflow workflow_name {
   input {
     # workflow inputs
   }
-
-  # task calls
+  call task_name {
+    # task inputs
+  }
 
   output {
     # workflow outputs
   }
 }
 ```
-
-
-
-## Task Definitions: 
-_This section would provide guidance on how to define tasks in WDL, including best practices for naming tasks, specifying inputs and outputs, and defining command scripts._
-
-## Workflow Definitions: 
-_This section would cover best practices for defining workflows in WDL, including how to specify dependencies between tasks, how to handle errors and exceptions, and how to define scatter and gather blocks._
 
 ## Function Definitions: 
 _This section would cover how to define reusable functions in WDL, including how to pass arguments and return values, and how to incorporate functions into workflows._

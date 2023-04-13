@@ -32,7 +32,7 @@ variety of platforms and the ability to isolate the workflows from each other.
 Many of these workflows use specialized containers that are built from the Dockerfiles in the 
 docker directory. The docker directory contains Dockerfiles and other scripts for 
 building containers for several tools. The docker containers are pushed to 
-Google Container Registry (GCR), for internal use. External audiences interested in running workflows
+Google Container Registry (GCR) called `us.gcr.io/broad-dsp-lrma`, for internal use. External audiences interested in running workflows
 using these containers should build and if needed push them to repository they have access to.
 
 ## Testing:
