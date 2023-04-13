@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>StringTie2 - Broad Institute Long Read Pipelines</title>
+    <title>WDL Style Guide - Broad Institute Long Read Pipelines</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "StringTie2";
-        var mkdocs_page_input_path = "tasks/StringTie2.md";
+        var mkdocs_page_name = "WDL Style Guide";
+        var mkdocs_page_input_path = "development_guide/wdl_style_guide.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -45,117 +45,79 @@
                 </li>
               </ul>
               <p class="caption"><span class="caption-text">Development guide</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/">Development Guide</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/docker_style_guide/">Docker Style Guide</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/repo_structure/">Repository Structure</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/wdl_style_guide/">WDL Style Guide</a>
-                  </li>
-              </ul>
-              <p class="caption"><span class="caption-text">Tasks</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../BAMutils/">BAMutils</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../docker_style_guide/">Docker Style Guide</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../repo_structure/">Repository Structure</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Fingerprinting/">Fingerprinting</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Hail/">Hail</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../JupyterNotebooks/">JupyterNotebooks</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../MASSeq/">MASSeq</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Medaka/">Medaka</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../NanoPlot/">NanoPlot</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ONTPepper/">ONTPepper</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ONTUtils/">ONTUtils</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../PBUtils/">PBUtils</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Postprocessing_Tasks/">Postprocessing_Tasks</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Preprocessing_Tasks/">Preprocessing_Tasks</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Racon/">Racon</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Sniffles/">Sniffles</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SoftClipper/">SoftClipper</a>
-                  </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">StringTie2</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">WDL Style Guide</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#quantify">Quantify</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    <li class="toctree-l2"><a class="reference internal" href="#wdl-structure">WDL Structure:</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    <li class="toctree-l2"><a class="reference internal" href="#task-definitions">Task Definitions:</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#task-runtime">Task Runtime:</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#extracttranscriptsequences">ExtractTranscriptSequences</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_1">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_1">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_1">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#comparetranscriptomes">CompareTranscriptomes</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_2">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_2">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_2">Outputs</a>
-    </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#workflow-definitions">Workflow Definitions:</a>
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../UMI_Tools/">UMI_Tools</a>
+              </ul>
+              <p class="caption"><span class="caption-text">Tasks</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/AlignReads/">AlignReads</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Utils/">Utils</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/BAMutils/">BAMutils</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../VariantUtils/">VariantUtils</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Clair/">Clair</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../cnv_common_tasks/">cnv_common_tasks</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Finalize/">Finalize</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/GeneralUtils/">GeneralUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Hail/">Hail</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/JupyterNotebooks/">JupyterNotebooks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/MASSeq/">MASSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Medaka/">Medaka</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/NanoPlot/">NanoPlot</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTPepper/">ONTPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTUtils/">ONTUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/PBUtils/">PBUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Postprocessing_Tasks/">Postprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Preprocessing_Tasks/">Preprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Quast/">Quast</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Racon/">Racon</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Sniffles/">Sniffles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SoftClipper/">SoftClipper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/UMI_Tools/">UMI_Tools</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Utils/">Utils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/VariantUtils/">VariantUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/cnv_common_tasks/">cnv_common_tasks</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Workflows</span></p>
@@ -275,10 +237,10 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-          <li>Tasks &raquo;</li>
-      <li>StringTie2</li>
+          <li>Development guide &raquo;</li>
+      <li>WDL Style Guide</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/tasks/StringTie2.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/development_guide/wdl_style_guide.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -286,81 +248,125 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="stringtie2">StringTie2</h1>
-<h2 id="quantify">Quantify</h2>
-<h3 id="inputs">Inputs</h3>
-<h4 id="required">Required</h4>
+                <h1 id="wdl-style-guide">WDL Style Guide</h1>
+<p>This document describes the style guide for writing WDL workflows and tasks for the pipelines.
+The guide will provide a list of best practices for writing WDL workflows, and will also 
+provide a list of common mistakes to avoid. The guide is for those wanting to contribute
+Dockerfiles to the pipelines repository.</p>
+<h2 id="wdl-structure">WDL Structure:</h2>
+<p>This section describes the overall structure of a WDL workflow, including the input and output declarations, the task section, and the workflow section.</p>
 <ul>
-<li><code>aligned_bai</code> (File, <strong>required</strong>)</li>
-<li><code>aligned_bam</code> (File, <strong>required</strong>)</li>
-<li><code>gtf</code> (File, <strong>required</strong>)</li>
+<li>A common WDL file contains both a workflow block and one or more task blocks. In the pipeline repository, 
+it is recommended to place task blocks in a separate wdl file from the wdl file containing the workflow block.
+This is to help keep the workflow WDLs more modular, readable, and maintainable.</li>
+<li>The WDL file containing the workflow block should include meta and parameter_meta 
+sections. The meta section should include a description of the workflow, and the 
+parameter_meta section should include a description of the workflow inputs. </li>
+<li>For wdl files composed of task blocks it is <em>recommended</em> to include meta and meta_parameters sections within the task blocks.</li>
 </ul>
-<h4 id="optional">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults">Defaults</h4>
-<ul>
-<li><code>keep_retained_introns</code> (Boolean, default=false)</li>
-<li><code>prefix</code> (String, default="out")</li>
-</ul>
-<h3 id="outputs">Outputs</h3>
-<ul>
-<li><code>st_gtf</code> (File)</li>
-<li><code>st_abund</code> (File)</li>
-</ul>
-<h2 id="extracttranscriptsequences">ExtractTranscriptSequences</h2>
-<h3 id="inputs_1">Inputs</h3>
-<h4 id="required_1">Required</h4>
-<ul>
-<li><code>gtf</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
-</ul>
-<h4 id="optional_1">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults_1">Defaults</h4>
-<ul>
-<li><code>prefix</code> (String, default="out")</li>
-</ul>
-<h3 id="outputs_1">Outputs</h3>
-<ul>
-<li><code>transcripts_fa</code> (File)</li>
-<li><code>transcripts_fai</code> (File)</li>
-<li><code>transcripts_dict</code> (File)</li>
-</ul>
-<h2 id="comparetranscriptomes">CompareTranscriptomes</h2>
-<h3 id="inputs_2">Inputs</h3>
-<h4 id="required_2">Required</h4>
-<ul>
-<li><code>guide_gtf</code> (File, <strong>required</strong>)</li>
-<li><code>new_gtf</code> (File, <strong>required</strong>)</li>
-</ul>
-<h4 id="optional_2">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults_2">Defaults</h4>
-<ul>
-<li><code>prefix</code> (String, default="out")</li>
-</ul>
-<h3 id="outputs_2">Outputs</h3>
-<ul>
-<li><code>annotated_gtf</code> (File)</li>
-<li><code>loci</code> (File)</li>
-<li><code>tracking</code> (File)</li>
-<li><code>refmap</code> (File)</li>
-<li><code>tmap</code> (File)</li>
-<li><code>stats</code> (File)</li>
-</ul>
+<h2 id="task-definitions">Task Definitions:</h2>
+<p>This section provides guidance on how to define tasks in WDL, including best practices for naming tasks, specifying inputs and outputs, and defining command scripts.</p>
+<p>The order of the sections in a task block should be as follows:
+1. meta
+2. parameter_meta
+3. input
+4. command
+5. output
+6. runtime</p>
+<p>The following is an example of a task block in WDL:</p>
+<pre><code class="language-WDL">
+task TaskName {
+  meta {
+    description: &quot;A description of the task&quot;
+  }
+  parameter_meta {
+    input1: &quot;A description of the input1&quot;
+    input2: &quot;A description of the input2&quot;
+  }
+  input {
+    # task inputs
+  }
+  command {  
+    # task command
+  }
+  output {
+    # task outputs
+  }
+  runtime {
+    # task runtime
+  }
+}
+</code></pre>
+<h3 id="task-runtime">Task Runtime:</h3>
+<p>The WDLs in the pipeline repository often use a runtime object from the struct.wdl in the task block. Using 
+the struct isn't required but is recommended. </p>
+<p>The following is an example of a runtime struct used in a task block:</p>
+<pre><code class="language-WDL">import &quot;structs.wdl&quot; as structs
+
+task TaskName {
+    input {
+        ...
+        RuntimeAttr? runtime_attr_override
+    }
+    ...
+    output {...}
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          cpus,
+        mem_gb:             mem,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             &quot;us.gcr.io/broad-dsp-lrma/lr-align:0.1.28&quot;
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + &quot; GiB&quot;
+        disks: &quot;local-disk &quot; +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + &quot; HDD&quot;
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+</code></pre>
+<h2 id="workflow-definitions">Workflow Definitions:</h2>
+<p>This section covers best practices for defining workflows in WDL, including how to specify dependencies between tasks, how to handle errors and exceptions, and how to define scatter and gather blocks._</p>
+<p>The order of the sections in a task block should be as follows:
+1. meta
+2. parameter_meta
+3. input
+4. call
+5. output</p>
+<p>The following is an example of a workflow block in WDL:</p>
+<pre><code class="language-WDL">workflow WorkflowName {
+  meta {
+      description: &quot;A description of the workflow&quot;
+  }
+  parameter_meta {
+        input1: &quot;A description of the input1&quot;
+        input2: &quot;A description of the input2&quot;
+  }
+  input {
+    # workflow inputs
+  }
+  call task_name {
+    # task inputs
+  }
+
+  output {
+    # workflow outputs
+  }
+}
+</code></pre>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../SoftClipper/" class="btn btn-neutral float-left" title="SoftClipper"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../UMI_Tools/" class="btn btn-neutral float-right" title="UMI_Tools">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../repo_structure/" class="btn btn-neutral float-left" title="Repository Structure"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../tasks/AlignReads/" class="btn btn-neutral float-right" title="AlignReads">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -388,10 +394,10 @@
         </span>
     
     
-      <span><a href="../SoftClipper/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../repo_structure/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../UMI_Tools/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../../tasks/AlignReads/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

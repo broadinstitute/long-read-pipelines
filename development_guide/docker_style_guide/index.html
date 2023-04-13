@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>StringTie2 - Broad Institute Long Read Pipelines</title>
+    <title>Docker Style Guide - Broad Institute Long Read Pipelines</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "StringTie2";
-        var mkdocs_page_input_path = "tasks/StringTie2.md";
+        var mkdocs_page_name = "Docker Style Guide";
+        var mkdocs_page_input_path = "development_guide/docker_style_guide.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -45,117 +45,79 @@
                 </li>
               </ul>
               <p class="caption"><span class="caption-text">Development guide</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/">Development Guide</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/docker_style_guide/">Docker Style Guide</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/repo_structure/">Repository Structure</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/wdl_style_guide/">WDL Style Guide</a>
-                  </li>
-              </ul>
-              <p class="caption"><span class="caption-text">Tasks</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../BAMutils/">BAMutils</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Fingerprinting/">Fingerprinting</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Hail/">Hail</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../JupyterNotebooks/">JupyterNotebooks</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../MASSeq/">MASSeq</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Medaka/">Medaka</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../NanoPlot/">NanoPlot</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ONTPepper/">ONTPepper</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ONTUtils/">ONTUtils</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../PBUtils/">PBUtils</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Postprocessing_Tasks/">Postprocessing_Tasks</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Preprocessing_Tasks/">Preprocessing_Tasks</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Racon/">Racon</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Sniffles/">Sniffles</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SoftClipper/">SoftClipper</a>
-                  </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">StringTie2</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Docker Style Guide</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#quantify">Quantify</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    <li class="toctree-l2"><a class="reference internal" href="#dockerfiles-organization">Dockerfiles Organization</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    <li class="toctree-l2"><a class="reference internal" href="#docker-subdirectory-folder">Docker Subdirectory Folder</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    <li class="toctree-l2"><a class="reference internal" href="#dockerfile-guidelines">Dockerfile Guidelines:</a>
     </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#image-naming-and-tagging-guidelines">Image Naming and Tagging Guidelines:</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#extracttranscriptsequences">ExtractTranscriptSequences</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_1">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_1">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_1">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#comparetranscriptomes">CompareTranscriptomes</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_2">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_2">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_2">Outputs</a>
-    </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#testing-and-cicd-guidelines">Testing and CI/CD Guidelines:</a>
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../UMI_Tools/">UMI_Tools</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../repo_structure/">Repository Structure</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Utils/">Utils</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../wdl_style_guide/">WDL Style Guide</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../VariantUtils/">VariantUtils</a>
+              </ul>
+              <p class="caption"><span class="caption-text">Tasks</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/AlignReads/">AlignReads</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../cnv_common_tasks/">cnv_common_tasks</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/BAMutils/">BAMutils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Clair/">Clair</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Finalize/">Finalize</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/GeneralUtils/">GeneralUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Hail/">Hail</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/JupyterNotebooks/">JupyterNotebooks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/MASSeq/">MASSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Medaka/">Medaka</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/NanoPlot/">NanoPlot</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTPepper/">ONTPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTUtils/">ONTUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/PBUtils/">PBUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Postprocessing_Tasks/">Postprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Preprocessing_Tasks/">Preprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Quast/">Quast</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Racon/">Racon</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Sniffles/">Sniffles</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SoftClipper/">SoftClipper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/UMI_Tools/">UMI_Tools</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Utils/">Utils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/VariantUtils/">VariantUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/cnv_common_tasks/">cnv_common_tasks</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Workflows</span></p>
@@ -275,10 +237,10 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-          <li>Tasks &raquo;</li>
-      <li>StringTie2</li>
+          <li>Development guide &raquo;</li>
+      <li>Docker Style Guide</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/tasks/StringTie2.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/development_guide/docker_style_guide.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -286,81 +248,83 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="stringtie2">StringTie2</h1>
-<h2 id="quantify">Quantify</h2>
-<h3 id="inputs">Inputs</h3>
-<h4 id="required">Required</h4>
+                <h1 id="docker-style-guide">Docker Style Guide</h1>
+<p>This document will provide a guide for writing Dockerfiles for the pipelines.<br />
+The guide will provide a list of best practices for writing Dockerfiles, and will also 
+provide a list of common mistakes to avoid. The guide is for those wanting to contribute
+Dockerfiles to the pipelines repository.</p>
+<h2 id="dockerfiles-organization">Dockerfiles Organization</h2>
+<p>All docker related resources should be placed in the <code>docker</code> directory of the repository. The <code>docker</code> directory
+contains a subdirectory for each Dockerfile and its related resources. The subdirectory name should 
+start with an abbreviation of data type the docker tool will process followed by the name of the tool.
+For example, the docker image for the <code>bwa</code> aligner that will process long reads would be placed in the <code>docker/lr-bwa</code> directory. </p>
+<h2 id="docker-subdirectory-folder">Docker Subdirectory Folder</h2>
+<p>Each Docker subdirectory should contain the following files and folders:
+- <code>Dockerfile</code>: The Dockerfile for the Docker image.
+- <code>Makefile</code>: A Makefile for building the Docker image.</p>
+<p>Optionaly the subdirectory may contain the following files and folders:
+- <code>README.md</code>: A README file for the Docker image.
+- <code>enironment.yml</code>: A conda environment file for installing dependencies.
+- Any resource files (e.g. python script) needed to build the Docker image.</p>
+<p>Example Directory Tree:</p>
+<pre><code class="language-Text">docker
+|__lr-bwa
+|  |__Dockerfile
+|  |__Makefile
+|  |__README.md
+|__lr-pb
+|__lr-ont
+</code></pre>
+<h2 id="dockerfile-guidelines">Dockerfile Guidelines:</h2>
+<p>This section outlines the guidelines for creating Dockerfiles, including the format, structure, and best practices for creating efficient and maintainable Docker images.
+Docker Docs provides a valuable resource for learning about Dockerfiles. The following 
+links provide a good starting point for creating Dockerfiles using general best practices: <a href="https://docs.docker.com/develop/develop-images/dockerfile_best-practices/">Docker Best Practices</a>
+In addition to the Docker best practices, use the following guidelines when creating Dockerfiles for the pipelines repository.</p>
 <ul>
-<li><code>aligned_bai</code> (File, <strong>required</strong>)</li>
-<li><code>aligned_bam</code> (File, <strong>required</strong>)</li>
-<li><code>gtf</code> (File, <strong>required</strong>)</li>
+<li>When appropriate be sure to add a comment proceeding Docker instructions to explain its purpose.</li>
 </ul>
-<h4 id="optional">Optional</h4>
+<pre><code class="language-Dockerfile"># copy other resources
+COPY ./environment.yml /
+
+# install conda packages
+RUN conda env create -f /environment.yml &amp;&amp; conda clean -a
+ENV PATH=/opt/conda/envs/lr-pb/bin/:/root/google-cloud-sdk/bin/:${PATH}
+
+# install gsutil
+RUN apt install -y curl git-lfs time datamash
+RUN curl https://sdk.cloud.google.com | bash
+</code></pre>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li>Specify a <code>MAINTAINER</code> for the Docker image.</li>
 </ul>
-<h4 id="defaults">Defaults</h4>
+<pre><code class="language-Dockerfile">FROM continuumio/miniconda3
+
+MAINTAINER Bill Mills
+</code></pre>
 <ul>
-<li><code>keep_retained_introns</code> (Boolean, default=false)</li>
-<li><code>prefix</code> (String, default="out")</li>
+<li>Specify version numbers for all packages installed in the Docker image.</li>
 </ul>
-<h3 id="outputs">Outputs</h3>
+<pre><code class="language-Dockerfile">RUN conda install python=3.6.9
+RUN conda create -n venv python=3.6.9 
+</code></pre>
+<h2 id="image-naming-and-tagging-guidelines">Image Naming and Tagging Guidelines:</h2>
+<p>This section outlines the guidelines for naming and tagging Docker images, including the format, structure, and best practices for creating consistent and descriptive image names and tags.</p>
 <ul>
-<li><code>st_gtf</code> (File)</li>
-<li><code>st_abund</code> (File)</li>
+<li>Use descriptive names: Choose a name that clearly identifies the image and its purpose. Avoid using generic names like "docker-image" or "latest".</li>
+<li>Name should match directory name: When possible the name of the Docker image should match the name of the docker subdirectory it is located in.</li>
+<li>Use lowercase letters: Docker image names should be in lowercase letters.</li>
+<li>Use semantic versioning: Follow the semantic versioning pattern (major.minor.patch) to ensure consistency and compatibility between different versions of the image.</li>
+<li>Avoid special characters: Avoid using special characters in the image name or tag, as it may cause issues with some systems or platforms.</li>
 </ul>
-<h2 id="extracttranscriptsequences">ExtractTranscriptSequences</h2>
-<h3 id="inputs_1">Inputs</h3>
-<h4 id="required_1">Required</h4>
-<ul>
-<li><code>gtf</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
-</ul>
-<h4 id="optional_1">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults_1">Defaults</h4>
-<ul>
-<li><code>prefix</code> (String, default="out")</li>
-</ul>
-<h3 id="outputs_1">Outputs</h3>
-<ul>
-<li><code>transcripts_fa</code> (File)</li>
-<li><code>transcripts_fai</code> (File)</li>
-<li><code>transcripts_dict</code> (File)</li>
-</ul>
-<h2 id="comparetranscriptomes">CompareTranscriptomes</h2>
-<h3 id="inputs_2">Inputs</h3>
-<h4 id="required_2">Required</h4>
-<ul>
-<li><code>guide_gtf</code> (File, <strong>required</strong>)</li>
-<li><code>new_gtf</code> (File, <strong>required</strong>)</li>
-</ul>
-<h4 id="optional_2">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults_2">Defaults</h4>
-<ul>
-<li><code>prefix</code> (String, default="out")</li>
-</ul>
-<h3 id="outputs_2">Outputs</h3>
-<ul>
-<li><code>annotated_gtf</code> (File)</li>
-<li><code>loci</code> (File)</li>
-<li><code>tracking</code> (File)</li>
-<li><code>refmap</code> (File)</li>
-<li><code>tmap</code> (File)</li>
-<li><code>stats</code> (File)</li>
-</ul>
+<h2 id="testing-and-cicd-guidelines">Testing and CI/CD Guidelines:</h2>
+<p><em>This section should provide guidelines for testing Docker images and containers, including best practices for creating automated tests and integrating with CI/CD pipelines to ensure consistent builds and deployments.
+TBD: This section is still under development.</em></p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../SoftClipper/" class="btn btn-neutral float-left" title="SoftClipper"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../UMI_Tools/" class="btn btn-neutral float-right" title="UMI_Tools">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../" class="btn btn-neutral float-left" title="Development Guide"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../repo_structure/" class="btn btn-neutral float-right" title="Repository Structure">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -388,10 +352,10 @@
         </span>
     
     
-      <span><a href="../SoftClipper/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../UMI_Tools/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../repo_structure/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

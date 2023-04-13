@@ -15,7 +15,7 @@ digraph {
 	"call-ParentalReadsRepartitionAndMerylConfigure" -> "scatter-L61C5-pair" [lhead="cluster-scatter-L61C5-pair"]
 	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylCount"
 	"call-PrintMerylMemory" -> "call-MerylCount"
-	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylMergeAndSubtract"
 	"call-MerylCount" -> "call-MerylMergeAndSubtract"
+	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylMergeAndSubtract"
 	"call-PrintMerylMemory" -> "call-MerylMergeAndSubtract"
 }
