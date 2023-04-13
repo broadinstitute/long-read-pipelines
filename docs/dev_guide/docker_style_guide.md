@@ -34,7 +34,7 @@ docker
 
 
 ## Dockerfile Guidelines: 
-_This section should outline the guidelines for creating Dockerfiles, including the format, structure, and best practices for creating efficient and maintainable Docker images._
+This section outlines the guidelines for creating Dockerfiles, including the format, structure, and best practices for creating efficient and maintainable Docker images.
 Docker Docs provides a valuable resource for learning about Dockerfiles. The following 
 links provide a good starting point for creating Dockerfiles using general best practices: [Docker Best Practices](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
 In addition to the Docker best practices, use the following guidelines when creating Dockerfiles for the pipelines repository.
@@ -53,7 +53,7 @@ RUN apt install -y curl git-lfs time datamash
 RUN curl https://sdk.cloud.google.com | bash
 ```
 
-- Specifiy a MAINTAINER for the Docker image.
+- Specify a `MAINTAINER` for the Docker image.
 ```Dockerfile
 FROM continuumio/miniconda3
 
@@ -68,16 +68,15 @@ RUN conda create -n venv python=3.6.9
 
 
 ## Image Naming and Tagging Guidelines: 
-_This section should cover guidelines for naming and tagging Docker images, including how to name images based on their functionality, versioning, and tagging best practices.
+This section outlines the guidelines for naming and tagging Docker images, including the format, structure, and best practices for creating consistent and descriptive image names and tags.
 
-## Repository Organization: 
-_This section should outline the guidelines for organizing Docker-related scripts and files within the repository, including the directory structure, naming conventions, and how to maintain version history.
-
-## Security Guidelines: 
-_This section should cover security best practices for Docker images and containers, including how to minimize vulnerabilities, handle secrets and sensitive data, and how to use Docker security features such as namespaces and SELinux.
-
-## Contribution Guidelines: 
-_This section should outline the guidelines for contributing Docker-related scripts and files to the repository, including how to submit pull requests, how to review and test changes, and how to handle conflicts and merge requests.
+* Use descriptive names: Choose a name that clearly identifies the image and its purpose. Avoid using generic names like "docker-image" or "latest".
+* Name should match directory name: When possible the name of the Docker image should match the name of the docker subdirectory it is located in.
+* Use lowercase letters: Docker image names should be in lowercase letters.
+* Use semantic versioning: Follow the semantic versioning pattern (major.minor.patch) to ensure consistency and compatibility between different versions of the image.
+* Avoid special characters: Avoid using special characters in the image name or tag, as it may cause issues with some systems or platforms.
+ 
 
 ## Testing and CI/CD Guidelines: 
 _This section should provide guidelines for testing Docker images and containers, including best practices for creating automated tests and integrating with CI/CD pipelines to ensure consistent builds and deployments.
+TBD: This section is still under development._
