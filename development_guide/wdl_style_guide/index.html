@@ -46,7 +46,7 @@
               </ul>
               <p class="caption"><span class="caption-text">Development guide</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide Overview:</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide Overview</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../docker_style_guide/">Docker Style Guide</a>
                   </li>
@@ -54,15 +54,15 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">WDL Style Guide</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#wdl-structure">WDL Structure:</a>
+    <li class="toctree-l2"><a class="reference internal" href="#wdl-structure">WDL Structure</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#task-definitions">Task Definitions:</a>
+    <li class="toctree-l2"><a class="reference internal" href="#task-definitions">Task Definitions</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#task-runtime">Task Runtime:</a>
+    <li class="toctree-l3"><a class="reference internal" href="#task-runtime">Task Runtime</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#workflow-definitions">Workflow Definitions:</a>
+    <li class="toctree-l2"><a class="reference internal" href="#workflow-definitions">Workflow Definitions</a>
     </li>
     </ul>
                   </li>
@@ -253,7 +253,7 @@
 The guide will provide a list of best practices for writing WDL workflows, and will also 
 provide a list of common mistakes to avoid. The guide is for those wanting to contribute
 Dockerfiles to the pipelines repository.</p>
-<h2 id="wdl-structure">WDL Structure:</h2>
+<h2 id="wdl-structure">WDL Structure</h2>
 <p>This section describes the overall structure of a WDL workflow, including the input and output declarations, the task section, and the workflow section.</p>
 <ul>
 <li>A common WDL file contains both a workflow block and one or more task blocks. In the pipeline repository, 
@@ -264,7 +264,7 @@ sections. The meta section should include a description of the workflow, and the
 parameter_meta section should include a description of the workflow inputs. </li>
 <li>For wdl files composed of task blocks it is <em>recommended</em> to include meta and meta_parameters sections within the task blocks.</li>
 </ul>
-<h2 id="task-definitions">Task Definitions:</h2>
+<h2 id="task-definitions">Task Definitions</h2>
 <p>This section provides guidance on how to define tasks in WDL, including best practices for naming tasks, specifying inputs and outputs, and defining command scripts.</p>
 <p>The order of the sections in a task block should be as follows:
 1. meta
@@ -297,7 +297,7 @@ task TaskName {
   }
 }
 </code></pre>
-<h3 id="task-runtime">Task Runtime:</h3>
+<h3 id="task-runtime">Task Runtime</h3>
 <p>The WDLs in the pipeline repository often use a runtime object from the struct.wdl in the task block. Using 
 the struct isn't required but is recommended. </p>
 <p>The following is an example of a runtime struct used in a task block:</p>
@@ -332,8 +332,8 @@ task TaskName {
     }
 }
 </code></pre>
-<h2 id="workflow-definitions">Workflow Definitions:</h2>
-<p>This section covers best practices for defining workflows in WDL, including how to specify dependencies between tasks, how to handle errors and exceptions, and how to define scatter and gather blocks._</p>
+<h2 id="workflow-definitions">Workflow Definitions</h2>
+<p>This section covers best practices for defining workflows in WDL, including how to specify dependencies between tasks, how to handle errors and exceptions, and how to define scatter and gather blocks.  </p>
 <p>The order of the sections in a task block should be as follows:
 1. meta
 2. parameter_meta

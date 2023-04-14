@@ -46,17 +46,17 @@
               </ul>
               <p class="caption"><span class="caption-text">Development guide</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide Overview:</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide Overview</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../docker_style_guide/">Docker Style Guide</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">Repository Structure</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#wdl-directory-structure">WDL Directory Structure:</a>
+    <li class="toctree-l2"><a class="reference internal" href="#wdl-directory-structure">WDL Directory Structure</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#tasks-directory-structure">Tasks Directory Structure:</a>
+    <li class="toctree-l3"><a class="reference internal" href="#tasks-directory-structure">Tasks Directory Structure</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#pipelines-directory-structure">Pipelines Directory Structure:</a>
+    <li class="toctree-l3"><a class="reference internal" href="#pipelines-directory-structure">Pipelines Directory Structure</a>
     </li>
         </ul>
     </li>
@@ -275,17 +275,17 @@
 <li>README.md: This document, which provides an overview of the repository.</li>
 <li>VERSION: The version number of the repository.</li>
 <li>cloudbuild.yaml: A Cloud Build configuration file that defines how the repository is built.</li>
-<li>docker: A directory containing Dockerfiles for building the pipelines.</li>
-<li>docs: A directory containing documentation for the pipelines.</li>
+<li>docker: Contains Dockerfiles for building docker images used by pipelines.</li>
+<li>docs: Contains documentation for the pipelines and a developer's guide.</li>
 <li>requirements.txt: A file listing the Python dependencies for the pipelines.</li>
 <li>resources: A directory containing resources used by the pipelines.</li>
 <li>mkdocs.yml: A configuration file for the mkdocs documentation generator.</li>
-<li>scripts: A directory containing scripts used to build and run the pipelines.</li>
-<li>test: A directory containing unit tests for the pipelines.</li>
+<li>scripts: Contains scripts used by the repository (e.g. webpage creation).</li>
+<li>test: Contains tests for the pipelines.</li>
 <li>tox.ini: A configuration file for the tox test runner.</li>
-<li>wdl: A directory containing WDL files for the pipelines.</li>
+<li>wdl: Contains WDL files.</li>
 </ul>
-<h2 id="wdl-directory-structure">WDL Directory Structure:</h2>
+<h2 id="wdl-directory-structure">WDL Directory Structure</h2>
 <pre><code class="language-angular2html">└── wdl
     └── pipelines
     │  └── ...
@@ -294,11 +294,13 @@
     └── tasks
          └── ...
 </code></pre>
-<p>The WDL directory is further divided into subdirectories. The subdirectories are as follows:
-* tasks: A directory containing WDL tasks for the pipelines.
-* pipelines: A directory containing WDL workflows for the pipelines.
-* structs: A directory containing WDL structs for the pipelines.</p>
-<h3 id="tasks-directory-structure">Tasks Directory Structure:</h3>
+<p>The WDL directory is further divided into subdirectories. The subdirectories are as follows:</p>
+<ul>
+<li>tasks: Contains WDL files with a list of tasks to be imported and used by pipeline WDLs.</li>
+<li>pipelines: Contains WDL files with workflow blocks.</li>
+<li>structs: Contains WDL structs for the pipelines.</li>
+</ul>
+<h3 id="tasks-directory-structure">Tasks Directory Structure</h3>
 <p>The task directory has an additional subdirectory to organize wdl tasks by analysis type. The subdirectories are as follows:  </p>
 <pre><code class="language-angular2html">└── wdl
     └── tasks
@@ -323,20 +325,9 @@
     │  └── visualization
     │  │  └── ...
 </code></pre>
-<ul>
-<li>alignment: A directory containing WDL tasks for aligning reads to a reference genome.</li>
-<li>annotation: A directory containing WDL tasks for annotating reads.</li>
-<li>assembly: A directory containing WDL tasks for assembling reads.</li>
-<li>epigenomics: A directory containing WDL tasks for epigenomics analysis.</li>
-<li>preprocessing: A directory containing WDL tasks for preprocessing reads.</li>
-<li>qc: A directory containing WDL tasks for quality control of reads.</li>
-<li>transcriptomics: A directory containing WDL tasks for transcriptomics analysis.</li>
-<li>utility: A directory containing WDL tasks for utility functions.</li>
-<li>variantcalling: A directory containing WDL tasks for calling variants from reads.</li>
-<li>visualization: A directory containing WDL tasks for visualizing data.</li>
-</ul>
-<h3 id="pipelines-directory-structure">Pipelines Directory Structure:</h3>
+<h3 id="pipelines-directory-structure">Pipelines Directory Structure</h3>
 <p>The pipelines directory has two additional subdirectories to organize wdl workflows, first by platform then by analysis type.  </p>
+<p>The first level subdirectories are as follows:  </p>
 <pre><code class="language-angular2html">└── wdl
     └── pipelines
     │  └── Illumina
@@ -348,13 +339,7 @@
     │  └── TechAgnostic
     │  │  └── ...
 </code></pre>
-<p>The first level subdirectories are as follows:  </p>
-<ul>
-<li>Illumina: A directory containing WDL workflows for processing Illumina data.</li>
-<li>PacBio: A directory containing WDL workflows for processing PacBio data.</li>
-<li>ONT: A directory containing WDL workflows for processing Oxford Nanopore data.</li>
-<li>TechAgnostic: A directory containing WDL workflows for processing data from PacBio and ONT platforms.</li>
-</ul>
+<p>The second level subdirectories are as follows:  </p>
 <pre><code class="language-angular2html">└── wdl
     └── pipelines
     │  └── Illumina
@@ -375,17 +360,6 @@
     │  │  └── variantcalling
     │  │  │  └── ...
 </code></pre>
-<p>The second level subdirectories are as follows:  </p>
-<ul>
-<li>alignment: A directory containing WDL workflows for aligning reads to a reference genome.</li>
-<li>annotation: A directory containing WDL workflows for annotating reads.</li>
-<li>assembly: A directory containing WDL workflows for assembling reads.</li>
-<li>epigenomics: A directory containing WDL workflows for epigenomics analysis.</li>
-<li>multianalysis: A directory containing WDL workflows for performing multiple analyses on reads.</li>
-<li>preprocessing: A directory containing WDL workflows for preprocessing reads.</li>
-<li>utility: A directory containing WDL workflows for utility functions.</li>
-<li>variantcalling: A directory containing WDL workflows for calling variants from reads.</li>
-</ul>
               
             </div>
           </div><footer>
