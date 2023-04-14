@@ -402,9 +402,6 @@ workflow LRCNVs {
         file = CollectModelQualityMetrics.qc_status_file, outdir = run_specific_outdir
     }
 
-    call FF.FinalizeToDir as FF_RC_EIDs { input:
-        files = CollectCounts.entity_id, outdir = run_specific_outdir + "/ReadCountsEntityIDs/"
-    }
     call FF.FinalizeToDir as FF_RC { input:
         files = CollectCounts.counts, outdir = run_specific_outdir + "/ReadCounts/"
     }
@@ -439,28 +436,47 @@ workflow LRCNVs {
     }
 
     output {
-        File preprocessed_intervals = FF_PI.gcs_path
-        Array[String] read_counts_entity_ids = FF_RC_EIDs.final_paths
-        Array[String] read_counts = FF_RC.final_paths
 
-        File? annotated_intervals = FF_AI.gcs_path
+        Map[String, String] gcnv_output_summary = {
+            "preprocessed_intervals": FF_PI.gcs_path,
+            "read_counts": FF_RC.gcs_dir,
+            "annotated_intervals": select_first([FF_AI.gcs_path, "None"]),
+            "filtered_intervals": FF_FI.gcs_path,
+            "contig_ploidy_model_tar": FF_CPM.gcs_path,
+            "contig_ploidy_calls_tar": FF_CPC.gcs_path,
+            "gcnv_model_tars": FF_Model.gcs_dir,
+            "gcnv_tracking_tars": FF_Tracking.gcs_dir,
+            "genotyped_intervals_vcfs": FF_GTIvcf.gcs_dir,
+            "genotyped_segments_vcfs": FF_GTSvcf.gcs_dir,
+            "sample_qc_status_files": FF_SMQCf.gcs_dir,
+            # "sample_qc_status_strings": "", # commented out because we don't know how to handle this Array of non-file-path strings
+            "model_qc_status_file": FF_MQC_S.gcs_path,
+            "model_qc_string":CollectModelQualityMetrics.qc_status_string,
+            "denoised_copy_ratios":FF_DCR.gcs_dir,
+        }
 
-        File filtered_intervals = FF_FI.gcs_path
+        # File preprocessed_intervals = FF_PI.gcs_path
+        Array[String] read_counts_entity_ids = CollectCounts.entity_id
+        # Array[String] read_counts = FF_RC.final_paths
 
-        File contig_ploidy_model_tar = FF_CPM.gcs_path
-        File contig_ploidy_calls_tar = FF_CPC.gcs_path
+        # File? annotated_intervals = FF_AI.gcs_path
+
+        # File filtered_intervals = FF_FI.gcs_path
+
+        # File contig_ploidy_model_tar = FF_CPM.gcs_path
+        # File contig_ploidy_calls_tar = FF_CPC.gcs_path
 
         Array[Array[String]] gcnv_calls_tars = FF_matrix_row.final_paths
-        Array[String] gcnv_model_tars = FF_Model.final_paths
-        Array[String] gcnv_tracking_tars = FF_Tracking.final_paths
-        Array[String] genotyped_intervals_vcfs = FF_GTIvcf.final_paths
-        Array[String] genotyped_segments_vcfs = FF_GTSvcf.final_paths
-        Array[String] sample_qc_status_files = FF_SMQCf.final_paths
-        Array[String] sample_qc_status_strings = CollectSampleQualityMetrics.qc_status_string
-        File model_qc_status_file = FF_MQC_S.gcs_path
-        String model_qc_string = CollectModelQualityMetrics.qc_status_string
+        # Array[String] gcnv_model_tars = FF_Model.final_paths
+        # Array[String] gcnv_tracking_tars = FF_Tracking.final_paths
+        # Array[String] genotyped_intervals_vcfs = FF_GTIvcf.final_paths
+        # Array[String] genotyped_segments_vcfs = FF_GTSvcf.final_paths
+        # Array[String] sample_qc_status_files = FF_SMQCf.final_paths
+        Array[String] gcnv_sample_qc_status_strings = CollectSampleQualityMetrics.qc_status_string
+        # File model_qc_status_file = FF_MQC_S.gcs_path
+        # String model_qc_string = CollectModelQualityMetrics.qc_status_string
 
-        Array[String] denoised_copy_ratios = FF_DCR.final_paths
+        # Array[String] denoised_copy_ratios = FF_DCR.final_paths
     }
 }
 
