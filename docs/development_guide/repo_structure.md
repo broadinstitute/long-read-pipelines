@@ -1,5 +1,30 @@
 # Repository Structure
 
+```angular2html
+├── cloudbuild.yaml
+├── LICENSE
+├── README.md
+├── mkdocs.yml
+├── requirements.txt
+├── tox.ini
+├── VERSION
+├── docker
+│   └── ...
+├── docs
+│   └── ...
+├── resources
+│   └── ...
+├── scripts
+│   └── ...
+├── terra
+│   └── ...
+├── test
+│   └── ...
+└── wdl
+    └── ...
+```
+
+
 The repository file and directory is as follows:
 
 * LICENSE: The license for the repository.
@@ -10,20 +35,55 @@ The repository file and directory is as follows:
 * docs: A directory containing documentation for the pipelines.
 * requirements.txt: A file listing the Python dependencies for the pipelines.
 * resources: A directory containing resources used by the pipelines.
+* mkdocs.yml: A configuration file for the mkdocs documentation generator.
 * scripts: A directory containing scripts used to build and run the pipelines.
-* site: A directory containing static files for the website.
 * test: A directory containing unit tests for the pipelines.
 * tox.ini: A configuration file for the tox test runner.
 * wdl: A directory containing WDL files for the pipelines.
 
 ## WDL Directory Structure:
+
+```angular2html
+└── wdl
+    └── pipelines
+    │  └── ...
+    └── structs
+    │  └── ...
+    └── tasks
+         └── ...
+```
 The WDL directory is further divided into subdirectories. The subdirectories are as follows:
 * tasks: A directory containing WDL tasks for the pipelines.
 * pipelines: A directory containing WDL workflows for the pipelines.
 * structs: A directory containing WDL structs for the pipelines.
 
-### Tasks Directory Structure:
-The task directory has an additional subdirectory to organize wdl tasks by analysis type. The subdirectories are as follows:
+### Tasks Directory Structure:  
+The task directory has an additional subdirectory to organize wdl tasks by analysis type. The subdirectories are as follows:  
+
+```angular2html
+└── wdl
+    └── tasks
+    │  └── alignment
+    │  │  └── ...
+    │  └── annotation
+    │  │  └── ...
+    │  └── assembly
+    │  │  └── ...
+    │  └── epigenomics
+    │  │  └── ...
+    │  └── preprocessing
+    │  │  └── ...
+    │  └── qc
+    │  │  └── ...
+    │  └── transcriptomics
+    │  │  └── ...
+    │  └── utility
+    │  │  └── ...
+    │  └── variantcalling
+    │  │  └── ...
+    │  └── visualization
+    │  │  └── ...
+```
 
 * alignment: A directory containing WDL tasks for aligning reads to a reference genome.
 * annotation: A directory containing WDL tasks for annotating reads.
@@ -37,14 +97,51 @@ The task directory has an additional subdirectory to organize wdl tasks by analy
 * visualization: A directory containing WDL tasks for visualizing data.
 
 ### Pipelines Directory Structure:
-The pipelines directory has two additional subdirectories to organize wdl workflows, first by platform then by analysis type. 
-The first level subdirectories are as follows:
+The pipelines directory has two additional subdirectories to organize wdl workflows, first by platform then by analysis type.  
+
+```angular2html
+└── wdl
+    └── pipelines
+    │  └── Illumina
+    │  │  └── ...
+    │  └── PacBio
+    │  │  └── ...
+    │  └── ONT
+    │  │  └── ...
+    │  └── TechAgnostic
+    │  │  └── ...
+```
+
+The first level subdirectories are as follows:  
 * Illumina: A directory containing WDL workflows for processing Illumina data.
 * PacBio: A directory containing WDL workflows for processing PacBio data.
 * ONT: A directory containing WDL workflows for processing Oxford Nanopore data.
 * TechAgnostic: A directory containing WDL workflows for processing data from PacBio and ONT platforms.
 
-The second level subdirectories are as follows:
+
+```angular2html
+└── wdl
+    └── pipelines
+    │  └── Illumina
+    │  │  └── alignment
+    │  │  │  └── ...
+    │  │  └── annotation
+    │  │  │  └── ...
+    │  │  └── assembly
+    │  │  │  └── ...
+    │  │  └── epigenomics
+    │  │  │  └── ...
+    │  │  └── multianalysis
+    │  │  │  └── ...
+    │  │  └── preprocessing
+    │  │  │  └── ...
+    │  │  └── utility
+    │  │  │  └── ...
+    │  │  └── variantcalling
+    │  │  │  └── ...
+```
+
+The second level subdirectories are as follows:  
 * alignment: A directory containing WDL workflows for aligning reads to a reference genome.
 * annotation: A directory containing WDL workflows for annotating reads.
 * assembly: A directory containing WDL workflows for assembling reads.

@@ -1,28 +1,26 @@
-# Development Guide
+# Development Guide Overview:
 
-## Overview:
-This repository contains pipelines for processing of long read data from PacBio and/or 
-Oxford Nanopore platforms. The pipelines are written in WDL 1.0 intended for use with 
-Google Cloud Platform via the scientific workflow engine, Cromwell. Processing is 
-designed to be reasonably consistent between both long read platforms, and use 
-platform-specific options or tasks where necessary.
-
-To use the pipelines, you will need access to Cromwell server. The pipelines are 
-designed to be run on Google Cloud Platform, but can be run on other platforms with some modifications. 
-
+This development guide provides information on the structure of the repository, testing infrastructure,
+style guides, and contributing guidelines. The hope is that this guide will help developers 
+create and maintain code that is consistent with the rest of the repository.
 
 ## Repository Structure:
 
 The repository includes files such as the LICENSE and README.md files, which provide legal and informational 
 overviews of the repository. Other directories such as docker, docs, resources, scripts, 
 site, test, and wdl contain various files and directories that are important for 
-building and testing the software in the repository. 
-See [Repository Structure](./repo_structure.md) documentation for further details and [Contributing Guidelines](#contributing-guidelines) for 
+building and testing the software in the repository.  
+See [Repository Structure](./repo_structure.md) documentation for further 
+details and [Contributing Guidelines](#contributing-guidelines) for 
 information on how to contribute to the repository.
 
 ## Workflow Scripts:
-All workflow scripts are located in the wdl directory and are written in WDL 1.0.
 
+All workflow scripts are located in the `/wdl` directory and are written in WDL 1.0 
+and intended for use with Google Cloud Platform via the scientific workflow engine, Cromwell.
+The WDL scripts are divided into three subdirectories: `tasks`, `structs`, and `pipelines`;
+then further divided by sequencing platform and analysis type.
+See [Repository Structure](./wdl_style_guide.md) for more information on directory structure.
 
 ## Docker Containers:
 
