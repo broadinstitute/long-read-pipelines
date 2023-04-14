@@ -20,6 +20,10 @@ version 1.0
 
 import "../../../tasks/Utility/cnv_common_tasks.wdl" as CNVTasks
 
+import "../../../tasks/Utility/Finalize.wdl" as FF
+
+import "../../../structs/Structs.wdl"
+
 workflow LRCNVs {
 
     meta {
@@ -39,6 +43,12 @@ workflow LRCNVs {
     }
 
     input {
+        ##################################
+        #### required basic arguments ####
+        ##################################
+        String gcs_out_root_dir
+        String run_uuid  # used to distinguish different runs, can be empty if not so desired
+
         ##################################
         #### required basic arguments ####
         ##################################
@@ -368,24 +378,89 @@ workflow LRCNVs {
             preemptible_attempts = preemptible_attempts
     }
 
+    #############################################################################
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/LrGCNV"
+    String run_specific_outdir = outdir + if (run_uuid == "") then "" else "/~{run_uuid}"
+    call FF.FinalizeToFile as FF_PI { input:
+        file = PreprocessIntervals.preprocessed_intervals, outdir = run_specific_outdir
+    }
+    if (select_first([do_explicit_gc_correction, true])) {
+        call FF.FinalizeToFile as FF_AI { input:
+            file = select_first([AnnotateIntervals.annotated_intervals]), outdir = run_specific_outdir
+        }
+    }
+    call FF.FinalizeToFile as FF_FI { input:
+        file = FilterIntervals.filtered_intervals, outdir = run_specific_outdir
+    }
+    call FF.FinalizeToFile as FF_CPM { input:
+        file = DetermineGermlineContigPloidyCohortMode.contig_ploidy_model_tar, outdir = run_specific_outdir
+    }
+    call FF.FinalizeToFile as FF_CPC { input:
+        file = DetermineGermlineContigPloidyCohortMode.contig_ploidy_calls_tar, outdir = run_specific_outdir
+    }
+    call FF.FinalizeToFile as FF_MQC_S { input:
+        file = CollectModelQualityMetrics.qc_status_file, outdir = run_specific_outdir
+    }
+
+    call FF.FinalizeToDir as FF_RC_EIDs { input:
+        files = CollectCounts.entity_id, outdir = run_specific_outdir + "/ReadCountsEntityIDs/"
+    }
+    call FF.FinalizeToDir as FF_RC { input:
+        files = CollectCounts.counts, outdir = run_specific_outdir + "/ReadCounts/"
+    }
+    call FF.FinalizeToDir as FF_Model { input:
+        files = GermlineCNVCallerCohortMode.gcnv_model_tar, outdir = run_specific_outdir + "/gCNV_model/"
+    }
+    call FF.FinalizeToDir as FF_Tracking { input:
+        files = GermlineCNVCallerCohortMode.gcnv_tracking_tar, outdir = run_specific_outdir + "/gCNV_tracking/"
+    }
+    call FF.FinalizeToDir as FF_GTIvcf { input:
+        files = PostprocessGermlineCNVCalls.genotyped_intervals_vcf, outdir = run_specific_outdir + "/GTed_intervals_vcfs/"
+    }
+    call FF.FinalizeToDir as FF_GTSvcf { input:
+        files = PostprocessGermlineCNVCalls.genotyped_segments_vcf, outdir = run_specific_outdir + "/GTed_segments_vcfs/"
+    }
+    call FF.FinalizeToDir as FF_SMQCf { input:
+        files = CollectSampleQualityMetrics.qc_status_file, outdir = run_specific_outdir + "/Sample_QC_status/"
+    }
+    call FF.FinalizeToDir as FF_DCR { input:
+        files = PostprocessGermlineCNVCalls.denoised_copy_ratios, outdir = run_specific_outdir + "/Denoised_copy_ratios/"
+    }
+
+    # call FF.FinalizeToDir as FF_matrix { input:
+    #     files = flatten(GermlineCNVCallerCohortMode.gcnv_call_tars), outdir = run_specific_outdir + "/gCNV_calls/"
+    # }
+    Array[Int] dummy = range(length(GermlineCNVCallerCohortMode.gcnv_call_tars))
+    scatter (dummy_pair in zip(dummy, GermlineCNVCallerCohortMode.gcnv_call_tars)) {
+        Int dummy_index = dummy_pair.left
+        call FF.FinalizeToDir as FF_matrix_row { input:
+            files = dummy_pair.right, outdir = run_specific_outdir + "/gCNV_calls/shard-~{dummy_index}"
+        }
+    }
+
     output {
-        File preprocessed_intervals = PreprocessIntervals.preprocessed_intervals
-        Array[File] read_counts_entity_ids = CollectCounts.entity_id
-        Array[File] read_counts = CollectCounts.counts
-        File? annotated_intervals = AnnotateIntervals.annotated_intervals
-        File filtered_intervals = FilterIntervals.filtered_intervals
-        File contig_ploidy_model_tar = DetermineGermlineContigPloidyCohortMode.contig_ploidy_model_tar
-        File contig_ploidy_calls_tar = DetermineGermlineContigPloidyCohortMode.contig_ploidy_calls_tar
-        Array[File] gcnv_model_tars = GermlineCNVCallerCohortMode.gcnv_model_tar
-        Array[Array[File]] gcnv_calls_tars = GermlineCNVCallerCohortMode.gcnv_call_tars
-        Array[File] gcnv_tracking_tars = GermlineCNVCallerCohortMode.gcnv_tracking_tar
-        Array[File] genotyped_intervals_vcfs = PostprocessGermlineCNVCalls.genotyped_intervals_vcf
-        Array[File] genotyped_segments_vcfs = PostprocessGermlineCNVCalls.genotyped_segments_vcf
-        Array[File] sample_qc_status_files = CollectSampleQualityMetrics.qc_status_file
+        File preprocessed_intervals = FF_PI.gcs_path
+        Array[String] read_counts_entity_ids = FF_RC_EIDs.final_paths
+        Array[String] read_counts = FF_RC.final_paths
+
+        File? annotated_intervals = FF_AI.gcs_path
+
+        File filtered_intervals = FF_FI.gcs_path
+
+        File contig_ploidy_model_tar = FF_CPM.gcs_path
+        File contig_ploidy_calls_tar = FF_CPC.gcs_path
+
+        Array[Array[String]] gcnv_calls_tars = FF_matrix_row.final_paths
+        Array[String] gcnv_model_tars = FF_Model.final_paths
+        Array[String] gcnv_tracking_tars = FF_Tracking.final_paths
+        Array[String] genotyped_intervals_vcfs = FF_GTIvcf.final_paths
+        Array[String] genotyped_segments_vcfs = FF_GTSvcf.final_paths
+        Array[String] sample_qc_status_files = FF_SMQCf.final_paths
         Array[String] sample_qc_status_strings = CollectSampleQualityMetrics.qc_status_string
-        File model_qc_status_file = CollectModelQualityMetrics.qc_status_file
+        File model_qc_status_file = FF_MQC_S.gcs_path
         String model_qc_string = CollectModelQualityMetrics.qc_status_string
-        Array[File] denoised_copy_ratios = PostprocessGermlineCNVCalls.denoised_copy_ratios
+
+        Array[String] denoised_copy_ratios = FF_DCR.final_paths
     }
 }
 

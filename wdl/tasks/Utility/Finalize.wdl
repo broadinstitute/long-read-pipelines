@@ -60,7 +60,7 @@ task FinalizeToFile {
 
 task FinalizeToDir {
     input {
-        Array[File] files
+        Array[String] files
         String outdir
 
         File? keyfile
@@ -83,10 +83,15 @@ task FinalizeToDir {
         set -euxo pipefail
 
         cat ~{write_lines(files)} | gsutil -m cp -I "~{gcs_output_dir}"
+
+        cat ~{write_lines(files)} | awk -F '/' '{print $NF}' > final_paths.txt
+        sed -i -e "s#^#~{gcs_output_dir}/#" final_paths.txt
+        tail final_paths.txt
     >>>
 
     output {
         String gcs_dir = gcs_output_dir
+        Array[String] final_paths = read_lines("final_paths.txt")
     }
 
     #########################
