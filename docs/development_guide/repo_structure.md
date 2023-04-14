@@ -113,6 +113,7 @@ The pipelines directory has two additional subdirectories to organize wdl workfl
 ```
 
 The first level subdirectories are as follows:  
+
 * Illumina: A directory containing WDL workflows for processing Illumina data.
 * PacBio: A directory containing WDL workflows for processing PacBio data.
 * ONT: A directory containing WDL workflows for processing Oxford Nanopore data.
@@ -142,6 +143,7 @@ The first level subdirectories are as follows:
 ```
 
 The second level subdirectories are as follows:  
+
 * alignment: A directory containing WDL workflows for aligning reads to a reference genome.
 * annotation: A directory containing WDL workflows for annotating reads.
 * assembly: A directory containing WDL workflows for assembling reads.
