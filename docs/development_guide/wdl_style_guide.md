@@ -4,7 +4,7 @@ The guide will provide a list of best practices for writing WDL workflows, and w
 provide a list of common mistakes to avoid. The guide is for those wanting to contribute
 Dockerfiles to the pipelines repository.
 
-## WDL Structure: 
+## WDL Structure 
 This section describes the overall structure of a WDL workflow, including the input and output declarations, the task section, and the workflow section.
 
 * A common WDL file contains both a workflow block and one or more task blocks. In the pipeline repository, 
@@ -15,7 +15,7 @@ sections. The meta section should include a description of the workflow, and the
 parameter_meta section should include a description of the workflow inputs. 
 * For wdl files composed of task blocks it is _recommended_ to include meta and meta_parameters sections within the task blocks.
 
-## Task Definitions: 
+## Task Definitions 
 This section provides guidance on how to define tasks in WDL, including best practices for naming tasks, specifying inputs and outputs, and defining command scripts.
 
 The order of the sections in a task block should be as follows:
@@ -52,7 +52,7 @@ task TaskName {
 }
 ```
 
-### Task Runtime:
+### Task Runtime
 The WDLs in the pipeline repository often use a runtime object from the struct.wdl in the task block. Using 
 the struct isn't required but is recommended. 
 
@@ -90,8 +90,8 @@ task TaskName {
 }
 ```
 
-## Workflow Definitions: 
-This section covers best practices for defining workflows in WDL, including how to specify dependencies between tasks, how to handle errors and exceptions, and how to define scatter and gather blocks._
+## Workflow Definitions 
+This section covers best practices for defining workflows in WDL, including how to specify dependencies between tasks, how to handle errors and exceptions, and how to define scatter and gather blocks.  
 
 The order of the sections in a task block should be as follows:
 1. meta

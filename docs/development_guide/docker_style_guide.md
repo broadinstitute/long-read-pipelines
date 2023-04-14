@@ -12,16 +12,19 @@ start with an abbreviation of data type the docker tool will process followed by
 For example, the docker image for the `bwa` aligner that will process long reads would be placed in the `docker/lr-bwa` directory. 
 
 ## Docker Subdirectory Folder
-Each Docker subdirectory should contain the following files and folders:
+Each Docker subdirectory should contain the following files and folders:  
+
 - `Dockerfile`: The Dockerfile for the Docker image.
 - `Makefile`: A Makefile for building the Docker image.
 
-Optionaly the subdirectory may contain the following files and folders:
+Optionaly the subdirectory may contain the following files and folders:  
+
 - `README.md`: A README file for the Docker image.
 - `enironment.yml`: A conda environment file for installing dependencies.
 - Any resource files (e.g. python script) needed to build the Docker image.
 
-Example Directory Tree:
+Example Directory Tree:  
+
 ```Text
 docker
 |__lr-bwa
@@ -33,7 +36,7 @@ docker
 ```
 
 
-## Dockerfile Guidelines: 
+## Dockerfile Guidelines 
 This section outlines the guidelines for creating Dockerfiles, including the format, structure, and best practices for creating efficient and maintainable Docker images.
 Docker Docs provides a valuable resource for learning about Dockerfiles. The following 
 links provide a good starting point for creating Dockerfiles using general best practices: [Docker Best Practices](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
@@ -57,7 +60,7 @@ RUN curl https://sdk.cloud.google.com | bash
 ```Dockerfile
 FROM continuumio/miniconda3
 
-MAINTAINER Bill Mills
+MAINTAINER Barbra Mills
 ```
 
 - Specify version numbers for all packages installed in the Docker image.
@@ -67,7 +70,7 @@ RUN conda create -n venv python=3.6.9
 ```
 
 
-## Image Naming and Tagging Guidelines: 
+## Image Naming and Tagging Guidelines  
 This section outlines the guidelines for naming and tagging Docker images, including the format, structure, and best practices for creating consistent and descriptive image names and tags.
 
 * Use descriptive names: Choose a name that clearly identifies the image and its purpose. Avoid using generic names like "docker-image" or "latest".
@@ -77,6 +80,6 @@ This section outlines the guidelines for naming and tagging Docker images, inclu
 * Avoid special characters: Avoid using special characters in the image name or tag, as it may cause issues with some systems or platforms.
  
 
-## Testing and CI/CD Guidelines: 
+## Testing and CI/CD Guidelines 
 _This section should provide guidelines for testing Docker images and containers, including best practices for creating automated tests and integrating with CI/CD pipelines to ensure consistent builds and deployments.
 TBD: This section is still under development._
