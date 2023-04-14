@@ -12,6 +12,7 @@ task Quast {
     input {
         File? ref
         Array[File] assemblies
+        Boolean is_large = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -21,7 +22,9 @@ task Quast {
         assemblies: "list of assemblies to evaluate"
     }
 
-    Int disk_size = 2*(ceil(size(ref, "GB") + size(assemblies, "GB")))
+    Int minimal_disk_size = 2*(ceil(size(ref, "GB") + size(assemblies, "GB")))
+    Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
+    String size_optimization = if is_large then "--large" else " "
 
     command <<<
         set -x
@@ -29,6 +32,7 @@ task Quast {
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         quast --no-icarus \
+             "~{size_optimization}" \
               --threads $num_core \
               ~{true='-r' false='' defined(ref)} ~{select_first([ref, ""])} ~{sep=' ' assemblies}
 
