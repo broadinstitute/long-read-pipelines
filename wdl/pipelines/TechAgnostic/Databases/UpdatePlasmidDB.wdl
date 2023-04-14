@@ -10,7 +10,7 @@ workflow UpdatePlasmidDB {
         String gcs_output_dir
     }
 
-    call PlasmidDB.UpdatePlasmidDB {
+    call PlasmidDB.UpdatePlasmidDB as Update {
         input:
             plsdb_fasta_url=plsdb_fasta_url,
             plsdb_meta_url=plsdb_meta_url,
