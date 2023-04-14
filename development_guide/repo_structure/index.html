@@ -46,7 +46,7 @@
               </ul>
               <p class="caption"><span class="caption-text">Development guide</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide Overview:</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../docker_style_guide/">Docker Style Guide</a>
                   </li>
@@ -247,6 +247,28 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="repository-structure">Repository Structure</h1>
+<pre><code class="language-angular2html">├── cloudbuild.yaml
+├── LICENSE
+├── README.md
+├── mkdocs.yml
+├── requirements.txt
+├── tox.ini
+├── VERSION
+├── docker
+│   └── ...
+├── docs
+│   └── ...
+├── resources
+│   └── ...
+├── scripts
+│   └── ...
+├── terra
+│   └── ...
+├── test
+│   └── ...
+└── wdl
+    └── ...
+</code></pre>
 <p>The repository file and directory is as follows:</p>
 <ul>
 <li>LICENSE: The license for the repository.</li>
@@ -257,19 +279,50 @@
 <li>docs: A directory containing documentation for the pipelines.</li>
 <li>requirements.txt: A file listing the Python dependencies for the pipelines.</li>
 <li>resources: A directory containing resources used by the pipelines.</li>
+<li>mkdocs.yml: A configuration file for the mkdocs documentation generator.</li>
 <li>scripts: A directory containing scripts used to build and run the pipelines.</li>
-<li>site: A directory containing static files for the website.</li>
 <li>test: A directory containing unit tests for the pipelines.</li>
 <li>tox.ini: A configuration file for the tox test runner.</li>
 <li>wdl: A directory containing WDL files for the pipelines.</li>
 </ul>
 <h2 id="wdl-directory-structure">WDL Directory Structure:</h2>
+<pre><code class="language-angular2html">└── wdl
+    └── pipelines
+    │  └── ...
+    └── structs
+    │  └── ...
+    └── tasks
+         └── ...
+</code></pre>
 <p>The WDL directory is further divided into subdirectories. The subdirectories are as follows:
 * tasks: A directory containing WDL tasks for the pipelines.
 * pipelines: A directory containing WDL workflows for the pipelines.
 * structs: A directory containing WDL structs for the pipelines.</p>
 <h3 id="tasks-directory-structure">Tasks Directory Structure:</h3>
-<p>The task directory has an additional subdirectory to organize wdl tasks by analysis type. The subdirectories are as follows:</p>
+<p>The task directory has an additional subdirectory to organize wdl tasks by analysis type. The subdirectories are as follows:  </p>
+<pre><code class="language-angular2html">└── wdl
+    └── tasks
+    │  └── alignment
+    │  │  └── ...
+    │  └── annotation
+    │  │  └── ...
+    │  └── assembly
+    │  │  └── ...
+    │  └── epigenomics
+    │  │  └── ...
+    │  └── preprocessing
+    │  │  └── ...
+    │  └── qc
+    │  │  └── ...
+    │  └── transcriptomics
+    │  │  └── ...
+    │  └── utility
+    │  │  └── ...
+    │  └── variantcalling
+    │  │  └── ...
+    │  └── visualization
+    │  │  └── ...
+</code></pre>
 <ul>
 <li>alignment: A directory containing WDL tasks for aligning reads to a reference genome.</li>
 <li>annotation: A directory containing WDL tasks for annotating reads.</li>
@@ -283,13 +336,44 @@
 <li>visualization: A directory containing WDL tasks for visualizing data.</li>
 </ul>
 <h3 id="pipelines-directory-structure">Pipelines Directory Structure:</h3>
-<p>The pipelines directory has two additional subdirectories to organize wdl workflows, first by platform then by analysis type. 
-The first level subdirectories are as follows:
+<p>The pipelines directory has two additional subdirectories to organize wdl workflows, first by platform then by analysis type.  </p>
+<pre><code class="language-angular2html">└── wdl
+    └── pipelines
+    │  └── Illumina
+    │  │  └── ...
+    │  └── PacBio
+    │  │  └── ...
+    │  └── ONT
+    │  │  └── ...
+    │  └── TechAgnostic
+    │  │  └── ...
+</code></pre>
+<p>The first level subdirectories are as follows:<br />
 * Illumina: A directory containing WDL workflows for processing Illumina data.
 * PacBio: A directory containing WDL workflows for processing PacBio data.
 * ONT: A directory containing WDL workflows for processing Oxford Nanopore data.
 * TechAgnostic: A directory containing WDL workflows for processing data from PacBio and ONT platforms.</p>
-<p>The second level subdirectories are as follows:
+<pre><code class="language-angular2html">└── wdl
+    └── pipelines
+    │  └── Illumina
+    │  │  └── alignment
+    │  │  │  └── ...
+    │  │  └── annotation
+    │  │  │  └── ...
+    │  │  └── assembly
+    │  │  │  └── ...
+    │  │  └── epigenomics
+    │  │  │  └── ...
+    │  │  └── multianalysis
+    │  │  │  └── ...
+    │  │  └── preprocessing
+    │  │  │  └── ...
+    │  │  └── utility
+    │  │  │  └── ...
+    │  │  └── variantcalling
+    │  │  │  └── ...
+</code></pre>
+<p>The second level subdirectories are as follows:<br />
 * alignment: A directory containing WDL workflows for aligning reads to a reference genome.
 * annotation: A directory containing WDL workflows for annotating reads.
 * assembly: A directory containing WDL workflows for assembling reads.

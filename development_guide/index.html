@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Development Guide - Broad Institute Long Read Pipelines</title>
+    <title>Development Guide Overview: - Broad Institute Long Read Pipelines</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Development Guide";
+        var mkdocs_page_name = "Development Guide Overview:";
         var mkdocs_page_input_path = "development_guide/README.md";
         var mkdocs_page_url = null;
       </script>
@@ -46,10 +46,8 @@
               </ul>
               <p class="caption"><span class="caption-text">Development guide</span></p>
               <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Development Guide</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Development Guide Overview:</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview:</a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#repository-structure">Repository Structure:</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#workflow-scripts">Workflow Scripts:</a>
@@ -240,7 +238,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
           <li>Development guide &raquo;</li>
-      <li>Development Guide</li>
+      <li>Development Guide Overview:</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/development_guide/README.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
@@ -250,24 +248,24 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="development-guide">Development Guide</h1>
-<h2 id="overview">Overview:</h2>
-<p>This repository contains pipelines for processing of long read data from PacBio and/or 
-Oxford Nanopore platforms. The pipelines are written in WDL 1.0 intended for use with 
-Google Cloud Platform via the scientific workflow engine, Cromwell. Processing is 
-designed to be reasonably consistent between both long read platforms, and use 
-platform-specific options or tasks where necessary.</p>
-<p>To use the pipelines, you will need access to Cromwell server. The pipelines are 
-designed to be run on Google Cloud Platform, but can be run on other platforms with some modifications. </p>
+                <h1 id="development-guide-overview">Development Guide Overview:</h1>
+<p>This development guide provides information on the structure of the repository, testing infrastructure,
+style guides, and contributing guidelines. The hope is that this guide will help developers 
+create and maintain code that is consistent with the rest of the repository.</p>
 <h2 id="repository-structure">Repository Structure:</h2>
 <p>The repository includes files such as the LICENSE and README.md files, which provide legal and informational 
 overviews of the repository. Other directories such as docker, docs, resources, scripts, 
 site, test, and wdl contain various files and directories that are important for 
-building and testing the software in the repository. 
-See <a href="repo_structure/">Repository Structure</a> documentation for further details and <a href="#contributing-guidelines">Contributing Guidelines</a> for 
+building and testing the software in the repository.<br />
+See <a href="repo_structure/">Repository Structure</a> documentation for further 
+details and <a href="#contributing-guidelines">Contributing Guidelines</a> for 
 information on how to contribute to the repository.</p>
 <h2 id="workflow-scripts">Workflow Scripts:</h2>
-<p>All workflow scripts are located in the wdl directory and are written in WDL 1.0.</p>
+<p>All workflow scripts are located in the <code>/wdl</code> directory and are written in WDL 1.0 
+and intended for use with Google Cloud Platform via the scientific workflow engine, Cromwell.
+The WDL scripts are divided into three subdirectories: <code>tasks</code>, <code>structs</code>, and <code>pipelines</code>;
+then further divided by sequencing platform and analysis type.
+See <a href="wdl_style_guide/">Repository Structure</a> for more information on directory structure.</p>
 <h2 id="docker-containers">Docker Containers:</h2>
 <p>The WDL workflows in this repository are designed to be run using Docker containers. 
 This provides a number of advantages, including the ability to run the workflows on a 

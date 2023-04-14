@@ -35,8 +35,8 @@ digraph {
 		"if-L64C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MakeChrIntervalList" -> "scatter-L73C13-c" [lhead="cluster-scatter-L73C13-c"]
-	"call-arbitrary" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-RunPBSV"
+	"call-arbitrary" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-Sniffles"
 	"call-SubsetBam" -> "call-InferSampleName"
 	"call-InferSampleName" -> "call-FixSnifflesVCF"
@@ -47,6 +47,6 @@ digraph {
 	"call-FixSnifflesVCF" -> "call-MergeSnifflesVCFs"
 	"call-arbitrary" -> "call-PBSVslow"
 	"call-PBSVslow" -> "call-ZipAndIndexPBSV"
-	"call-infer" -> "call-ZipAndIndexSniffles"
 	"call-SnifflesSlow" -> "call-ZipAndIndexSniffles"
+	"call-infer" -> "call-ZipAndIndexSniffles"
 }
