@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/SPAdes.wdl" as SPAdes
+import "../../../tasks/Assembly/SPAdes.wdl" as SPAdes
 
 workflow IllumAssembleWithSPAdes {
     input {

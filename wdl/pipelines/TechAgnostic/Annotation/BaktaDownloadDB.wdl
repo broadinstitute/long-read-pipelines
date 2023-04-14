@@ -1,8 +1,8 @@
 version 1.0
 
-import "tasks/Structs.wdl"
-import "tasks/bacteria/Bakta.wdl" as Bakta
-import "tasks/Finalize.wdl" as Finalize
+import "../../../structs/Structs.wdl"
+import "../../../tasks/GeneAnnotation/Bakta.wdl" as Bakta
+import "../../../tasks/Utility/Finalize.wdl" as Finalize
 
 workflow BaktaDownloadDB {
     input {

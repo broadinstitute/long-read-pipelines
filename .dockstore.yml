@@ -93,64 +93,33 @@ workflows:
 - name: ONTFlowcellFromMultipleBasecalls
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
-  primaryDescriptorPath: /wdl/LRConvertBCF.wdl
-- name: IllumAssembleWithFusilli
-  subclass: wdl
-  primaryDescriptorPath: /wdl/IllumAssembleWithFusilli.wdl
-  testParameterFiles:
-- name: IllumAssembleWithFusilliContinue
-  subclass: wdl
-  primaryDescriptorPath: /wdl/IllumAssembleWithFusilliContinue.wdl
-  testParameterFiles:
-- name: IllumAssembleWithMcCortex
-  subclass: wdl
-  primaryDescriptorPath: /wdl/IllumAssembleWithMcCortex.wdl
-  testParameterFiles:
 - name: IllumAssembleWithSPAdes
   subclass: wdl
-  primaryDescriptorPath: /wdl/IllumAssembleWithSPAdes.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/Illumina/Assembly/IllumAssembleWithSPAdes.wdl
 - name: IllumPlasmidSPAdes
   subclass: wdl
-  primaryDescriptorPath: /wdl/IllumPlasmidSPAdes.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/Illumina/Assembly/IllumPlasmidSPAdes.wdl
 - name: IllumTrimReads
   subclass: wdl
-  primaryDescriptorPath: /wdl/IllumTrimReads.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/Illumina/Preprocessing/IllumTrimReads.wdl
 - name: IllumErrorCorrectBayesHammer
   subclass: wdl
-  primaryDescriptorPath: /wdl/IllumErrorCorrectBayesHammer.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/Illumina/Preprocessing/IllumErrorCorrectBayesHammer.wdl
 - name: QuastEval
   subclass: wdl
-  primaryDescriptorPath: /wdl/QuastEval.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/QC/QuastEval.wdl
 - name: UpdatePlasmidDB
   subclass: wdl
-  primaryDescriptorPath: /wdl/UpdatePlasmidDB.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Databases/UpdatePlasmidDB.wdl
 - name: BaktaDownloadDB
   subclass: wdl
-  primaryDescriptorPath: /wdl/BaktaDownloadDB.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Annotation/BaktaDownloadDB.wdl
 - name: BaktaAnnotateSingle
   subclass: wdl
-  primaryDescriptorPath: /wdl/BaktaAnnotateSingle.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Annotation/BaktaAnnotateSingle.wdl
 - name: BaktaAnnotateBatch
   subclass: wdl
-  primaryDescriptorPath: /wdl/BaktaAnnotateBatch.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Annotation/BaktaAnnotateBatch.wdl
 - name: RunPanaroo
   subclass: wdl
-  primaryDescriptorPath: /wdl/RunPanaroo.wdl
-  testParameterFiles:
-- name: IllumEvaluateFusilliPlasmids
-  subclass: wdl
-  primaryDescriptorPath: /wdl/IllumEvaluateFusilliPlasmids.wdl
-  testParameterFiles:
-- name: FusilliCreateDatabase
-  subclass: wdl
-  primaryDescriptorPath: /wdl/FusilliCreateDatabase.wdl
-  testParameterFiles:
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Pangenome/RunPanaroo.wdl

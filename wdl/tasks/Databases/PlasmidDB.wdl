@@ -1,6 +1,6 @@
 version 1.0
 
-import "../Structs.wdl"
+import "../../structs/Structs.wdl"
 
 
 task UpdatePlasmidDB {
@@ -36,7 +36,7 @@ task UpdatePlasmidDB {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us-east1-docker.pkg.dev/broad-dsp-lrma/fusilli/plsdb:latest"
+        docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/plsdb:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 

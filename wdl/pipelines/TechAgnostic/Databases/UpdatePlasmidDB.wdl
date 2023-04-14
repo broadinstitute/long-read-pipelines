@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/bacteria/PlasmidDB.wdl" as PlasmidDB
+import "../../../tasks/Databases/PlasmidDB.wdl" as PlasmidDB
 
 workflow UpdatePlasmidDB {
     input {

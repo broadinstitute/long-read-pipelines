@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/Quast.wdl" as Quast
+import "../../../tasks/QC/Quast.wdl" as Quast
 
 workflow QuastEval {
     input {

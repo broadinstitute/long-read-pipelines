@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/bacteria/Bakta.wdl" as Bakta
+import "../../../tasks/GeneAnnotation/Bakta.wdl" as Bakta
 
 workflow BaktaAnnotateBatch {
     input {

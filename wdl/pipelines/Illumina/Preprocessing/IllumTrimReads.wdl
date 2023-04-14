@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/TrimGalore.wdl" as TrimGalore
+import "../../../tasks/Preprocessing/TrimGalore.wdl" as TrimGalore
 
 workflow IllumTrimReads {
     input {

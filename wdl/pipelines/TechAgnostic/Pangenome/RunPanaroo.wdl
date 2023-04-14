@@ -1,6 +1,6 @@
 version 1.0
 
-import "tasks/bacteria/Panaroo.wdl" as Panaroo
+import "../../../tasks/Pangenome/Panaroo.wdl" as Panaroo
 
 workflow RunPanaroo {
     input {
