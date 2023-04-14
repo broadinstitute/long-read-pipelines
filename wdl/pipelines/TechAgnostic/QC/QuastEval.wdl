@@ -23,7 +23,6 @@ workflow QuastEval {
     output {
         File report_html = Benchmark.report_html
         File report_txt = Benchmark.report_txt
-        File metrics_tsv = Benchmark.metrics_tsv
 
         Array[File] plots = Benchmark.plots
         Array[File] icarus_html = Benchmark.icarus_html
