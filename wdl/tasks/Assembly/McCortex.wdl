@@ -71,8 +71,8 @@ task McCortexBuild {
     Int max_mem = round(select_first([runtime_attr.mem_gb, default_attr.mem_gb])) - 2  # 2 GB buffer
     Int num_threads = round(select_first([runtime_attr.cpu_cores, default_attr.cpu_cores]))
 
-    String flag_str = if defined(illumina_fq2) && illumina_fq2 != "" then "--seq2 " else "--seq "
-    String flag_sep = if defined(illumina_fq2) && illumina_fq2 != "" then ":" else ""
+    String flag_str = if defined(illumina_fq2) && select_first([illumina_fq2]) != "" then "--seq2 " else "--seq "
+    String flag_sep = if defined(illumina_fq2) && select_first([illumina_fq2]) != "" then ":" else ""
 
     command <<<
         set -euxo pipefail
