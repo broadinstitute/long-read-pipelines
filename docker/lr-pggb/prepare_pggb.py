@@ -11,12 +11,10 @@ import skbio
 
 
 def open_compressed(fpath: Path, *args, **kwargs):
-    suffix = fpath.stem
-
     func = {
         ".gz": gzip.open,
         ".bz2": bz2.open,
-    }.get(suffix, open)
+    }.get(fpath.suffix, open)
 
     return func(fpath, *args, **kwargs)
 
