@@ -7,27 +7,27 @@ workflow RunPanaroo {
         File input_manifest
     }
 
-    call Panaroo.Panaroo {
+    call Panaroo.Panaroo as CallPanaroo {
         input:
             input_manifest = input_manifest
     }
 
     output {
-        File summary_stats = Panaroo.summary_stats
-        File final_graph = Panaroo.final_graph
-        File pre_filt_graph = Panaroo.pre_filt_graph
-        File pangenome_reference = Panaroo.pangenome_reference
+        File summary_stats = CallPanaroo.summary_stats
+        File final_graph = CallPanaroo.final_graph
+        File pre_filt_graph = CallPanaroo.pre_filt_graph
+        File pangenome_reference = CallPanaroo.pangenome_reference
 
-        File gene_data = Panaroo.gene_data
-        File gene_presence_absence_rtab = Panaroo.gene_presence_absence_rtab
-        File gene_presence_absence_csv = Panaroo.gene_presence_absence_csv
-        File gene_presence_absence_roary = Panaroo.gene_presence_absence_roary
+        File gene_data = CallPanaroo.gene_data
+        File gene_presence_absence_rtab = CallPanaroo.gene_presence_absence_rtab
+        File gene_presence_absence_csv = CallPanaroo.gene_presence_absence_csv
+        File gene_presence_absence_roary = CallPanaroo.gene_presence_absence_roary
 
-        File combined_DNA_CDS = Panaroo.combined_DNA_CDS
-        File combined_protein_CDS = Panaroo.combined_protein_CDS
-        File combined_protein_cdhit_out = Panaroo.combined_protein_cdhit_out
-        File combined_protein_cdhit_out_cluster = Panaroo.combined_protein_cdhit_out_cluster
+        File combined_DNA_CDS = CallPanaroo.combined_DNA_CDS
+        File combined_protein_CDS = CallPanaroo.combined_protein_CDS
+        File combined_protein_cdhit_out = CallPanaroo.combined_protein_cdhit_out
+        File combined_protein_cdhit_out_cluster = CallPanaroo.combined_protein_cdhit_out_cluster
 
-        File sv_triplets_presence_absence = Panaroo.sv_triplets_presence_absence
+        File sv_triplets_presence_absence = CallPanaroo.sv_triplets_presence_absence
     }
 }
