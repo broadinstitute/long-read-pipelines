@@ -31,7 +31,7 @@ task FastP {
             --out1 "output/~{basename(illumina_fq1)}" --out2 "output/~{basename(illumina_fq2)}" \
             --unpaired1 "output/unpaired.fq.gz" --unpaired2 "output/unpaired.fq.gz" \
             --html output/fastp.html --json output/fastp.json \
-            --threads ~{num_cpu}
+            --thread ~{num_cpu}
     >>>
 
     output {
