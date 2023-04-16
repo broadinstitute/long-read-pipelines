@@ -123,3 +123,9 @@ workflows:
 - name: RunPanaroo
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Pangenome/RunPanaroo.wdl
+- name: IllumFastP
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Illumina/Preprocessing/IllumFastP.wdl
+- name: AssembleWithUnicycler
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Assembly/AssembleWithUnicycler.wdl
