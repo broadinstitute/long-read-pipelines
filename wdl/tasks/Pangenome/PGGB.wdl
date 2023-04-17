@@ -75,11 +75,10 @@ task PGGB {
         hap_count=$(zcat ~{pangenome_fasta_gz} | grep -c "^>")
 
         # Make sure pggb can find the index
-        mkdir input
-        ln -s "~{pangenome_fasta_gz}" "input/~{basename(pangenome_fasta_gz)}"
-        ln -s "~{pangenome_fai}" "input/~{basename(pangenome_fai)}"
+        ln -s "~{pangenome_fasta_gz}" "~{basename(pangenome_fasta_gz)}"
+        ln -s "~{pangenome_fai}" "~{basename(pangenome_fai)}"
 
-        pggb -i "input/~{basename(pangenome_fasta_gz)}" -n "${hap_count}" -o output -t ~{num_cpu} ~{extra_pggb_args}
+        pggb -i "~{basename(pangenome_fasta_gz)}" -n "${hap_count}" -o output -t ~{num_cpu} ~{extra_pggb_args}
 
         mv output/*.final.gfa "~{pangenome_name}.pggb.gfa"
         mv output/*.wfmash.paf "~{pangenome_name}.wfmash.paf"
