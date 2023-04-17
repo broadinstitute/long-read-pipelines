@@ -76,7 +76,8 @@ task PGGB {
 
         # Make sure pggb can find the index
         cp "~{pangenome_fasta_gz}" .
-        cp "~{pangenome_fai}" .
+        #cp "~{pangenome_fai}" .
+        samtools faidx "~{basename(pangenome_fasta_gz)}"
 
         pggb -i "~{basename(pangenome_fasta_gz)}" -n "${hap_count}" -o output -t ~{num_cpu} ~{extra_pggb_args}
 
