@@ -75,8 +75,8 @@ task PGGB {
         hap_count=$(zcat ~{pangenome_fasta_gz} | grep -c "^>")
 
         # Make sure pggb can find the index
-        ln -s "~{pangenome_fasta_gz}" "~{basename(pangenome_fasta_gz)}"
-        ln -s "~{pangenome_fai}" "~{basename(pangenome_fai)}"
+        cp "~{pangenome_fasta_gz}" .
+        cp "~{pangenome_fai}" .
 
         pggb -i "~{basename(pangenome_fasta_gz)}" -n "${hap_count}" -o output -t ~{num_cpu} ~{extra_pggb_args}
 
