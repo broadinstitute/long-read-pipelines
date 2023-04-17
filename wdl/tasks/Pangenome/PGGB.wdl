@@ -74,7 +74,12 @@ task PGGB {
         # Count number of haplotypes in pangenome
         hap_count=$(zcat ~{pangenome_fasta_gz} | grep -c "^>")
 
-        pggb -i ~{pangenome_fasta_gz} -n "${hap_count}" -o output -t ~{num_cpu} ~{extra_pggb_args}
+        # Make sure pggb can find the index
+        mkdir input
+        ln -s "~{pangenome_fasta_gz}" "input/~{basename(pangenome_fasta_gz)}"
+        ln -s "~{pangenome_fai}" "input/~{basename(pangenome_fai)}"
+
+        pggb -i "input/~{basename(pangenome_fasta_gz)}" -n "${hap_count}" -o output -t ~{num_cpu} ~{extra_pggb_args}
 
         mv output/*.final.gfa "~{pangenome_name}.pggb.gfa"
         mv output/*.wfmash.paf "~{pangenome_name}.wfmash.paf"
