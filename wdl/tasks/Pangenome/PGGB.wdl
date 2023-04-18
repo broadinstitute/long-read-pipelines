@@ -93,7 +93,7 @@ task PGGB {
     >>>
 
     output {
-        File pangenome_gfa = "~{pangenome_name}.gfa"
+        File pangenome_gfa = "~{pangenome_name}.pggb.gfa"
         File pangenome_wfmash_paf = "~{pangenome_name}.wfmash.paf"
 
         File pangenome_odgi = "~{pangenome_name}.og"
