@@ -129,6 +129,9 @@ workflows:
 - name: AssembleWithUnicycler
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Assembly/AssembleWithUnicycler.wdl
+- name: AssemblyWithUnicyclerAndAnnotate
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Assembly/AssembleWithUnicyclerAndAnnotate.wdl
 - name: BuildPGGBPangenome
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Pangenome/BuildPGGBPangenome.wdl

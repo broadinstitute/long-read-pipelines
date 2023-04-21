@@ -53,6 +53,17 @@ task BaktaAnnotate {
         RuntimeAttr? runtime_attr_override
     }
 
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            100,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "quay.io/biocontainers/bakta:1.6.1--pyhdfd78af_0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
     Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
     String prefix = select_first([fname_prefix, basename(genome_fasta)])
 
@@ -85,16 +96,6 @@ task BaktaAnnotate {
         File plot_svg = "output/~{prefix}.svg"
     }
 
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             16,
-        disk_gb:            100,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        2,
-        docker:             "quay.io/biocontainers/bakta:1.6.1--pyhdfd78af_0"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
@@ -119,6 +120,17 @@ task BaktaAnnotateBatch {
         RuntimeAttr? runtime_attr_override
     }
 
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            150,
+        boot_disk_gb:       10,
+        preemptible_tries:  50,
+        max_retries:        2,
+        docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/bakta:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
     Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
     String gcs_output_dir = sub(output_dir, "/+$", "")
 
@@ -126,9 +138,9 @@ task BaktaAnnotateBatch {
         set -euxo pipefail
 
         mkdir bakta_db
-        >&2 echo $(date --rfc-3339=seconds)
+        >&2 date --rfc-3339=seconds
         tar -xaf ~{bakta_db_tar} -C bakta_db
-        >&2 echo $(date --rfc-3339=seconds)
+        >&2 date --rfc-3339=seconds
 
         lines_start=$(( (~{worker} * ~{batch_size}) + 2 ))  # Skip TSV header and sed line numbers start at 1
         lines_end=$(( lines_start + ~{batch_size} - 1 ))
@@ -161,7 +173,7 @@ task BaktaAnnotateBatch {
         awk -F$'\t' '{print "~{gcs_output_dir}/" $1 "/" $1 ".svg"}' to_process.tsv > batch_svg.txt
 
         while IFS=$'\t' read -r plasmid_id fasta tsv json gff genbank embl ffn faa hypotheticals_tsv hypotheticals_faa summary log plot_png plot_svg; do
-            >&2 echo $(date --rfc-3339=seconds)
+            >&2 date --rfc-3339=seconds
 
             # Check each output file to see if this genome has already been processed
             # This ensures we can continue from our last genome when the VM gets pre-empted by Google
@@ -171,7 +183,7 @@ task BaktaAnnotateBatch {
             else
                 mkdir -p "output/${plasmid_id}"
                 bakta --db bakta_db --output "output/${plasmid_id}" --complete --threads ~{num_cores} \
-                    --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta} 2>&1 | tee bakta_out.txt || true
+                    --keep-contig-headers --prefix "${plasmid_id}" --verbose "${fasta}" 2>&1 | tee bakta_out.txt || true
 
                 if grep -q "Exception: diamond error! error code: -9" bakta_out.txt; then
                     >&2 echo "Diamond was Killed. Likely OutOfMemory."  # Trigger Terra retry with more memory
@@ -179,7 +191,7 @@ task BaktaAnnotateBatch {
                 elif grep -q "Exception: PILER-CR error! error code: -11" bakta_out.txt; then
                     >&2 echo "PILER-CR crashed. Rerunning bakta without CRISPR predictions."
                     bakta --db bakta_db --output "output/${plasmid_id}" --complete --threads ~{num_cores} --skip-crispr \
-                        --keep-contig-headers --prefix ${plasmid_id} --verbose ${fasta} 2>&1 | tee bakta_out.txt
+                        --keep-contig-headers --prefix "${plasmid_id}" --verbose "${fasta}" 2>&1 | tee bakta_out.txt
                 elif grep -q "Exception" bakta_out.txt; then
                     >&2 echo "Bakta failed..."
                     exit 1
@@ -210,17 +222,6 @@ task BaktaAnnotateBatch {
         Array[String] plot_png = read_lines("batch_png.txt")
         Array[String] plot_svg = read_lines("batch_svg.txt")
     }
-
-    RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             16,
-        disk_gb:            150,
-        boot_disk_gb:       10,
-        preemptible_tries:  50,
-        max_retries:        2,
-        docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/bakta:latest"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
