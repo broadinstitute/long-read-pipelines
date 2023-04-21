@@ -5,8 +5,13 @@ import "../../structs/Structs.wdl"
 import "../Utility/Utils.wdl"
 
 workflow Hifiasm {
+
     meta {
         description: "We run two HiFiasm jobs, one for getting alternative contigs and one for getting the haplotigs. And we take the primary assembly from the first job."
+    }
+    parameter_meta {
+        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
+        prefix:   "prefix to apply to assembly output filenames"
     }
 
     input {
@@ -14,11 +19,6 @@ workflow Hifiasm {
         String prefix
 
         String zones = "us-central1-a us-central1-b us-central1-c"
-    }
-
-    parameter_meta {
-        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
-        prefix:   "prefix to apply to assembly output filenames"
     }
 
     call AssembleForAltContigs {

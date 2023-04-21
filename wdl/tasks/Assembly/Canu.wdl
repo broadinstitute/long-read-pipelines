@@ -1,15 +1,24 @@
 version 1.0
 
-##########################################################################################
-# A workflow that runs the Canu 3-step assembly (correct, trim, assemble).
-# - Tested on a small genome (malaria ~23mb), larger genomes may require some changes
-#     including tweaks to the default resource allocation.
-# - Currently assumes nanopore reads
-##########################################################################################
-
 import "../../structs/Structs.wdl"
 
 workflow Canu {
+
+    meta {
+        description: "A workflow that runs the Canu 3-step assembly (correct, trim, assemble). \
+                      - Tested on a small genome (malaria ~23mb), larger genomes may require some changes \
+                      including tweaks to the default resource allocation. \
+                      - Currently assumes nanopore reads"
+    }
+    parameter_meta {
+        reads:        "reads to be canu-corrected"
+        genome_size:  "estimate on genome size (parameter to canu's 'genomeSize')"
+        correct_error_rate:   "parameter to canu's 'correctedErrorRate'"
+        trim_error_rate:      "parameter to canu's 'correctedErrorRate'"
+        assemble_error_rate:  "parameter to canu's 'correctedErrorRate'"
+        prefix:       "prefix to output files"
+    }
+
     input {
         File reads
 

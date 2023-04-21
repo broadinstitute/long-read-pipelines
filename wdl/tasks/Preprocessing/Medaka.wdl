@@ -1,13 +1,20 @@
 version 1.0
 
-##########################################################################################
-# Runs Medaka on an ONT draft assembly with GUPPY basecalled ONT reads
-# - Runs within a few hours with 18GB basecalled_reads and a 23Mb genome
-##########################################################################################
-
 import "../../structs/Structs.wdl"
 
 task MedakaPolish {
+
+    meta {
+        description: "Polish an ONT draft assembly with GUPPY basecalled ONT reads. Runs within a few hours with 18GB basecalled_reads and a 23Mb genome"
+    }
+    parameter_meta {
+        basecalled_reads:   "basecalled reads to be used with polishing"
+        draft_assembly:     "draft assembly to be polished"
+        prefix:             "prefix for output files"
+        model:              "run `medaka tools list_models` and pick string with the correct pore type, machine, and guppy version"
+        n_rounds:           "number of polishing rounds to apply"
+    }
+
     input {
         File basecalled_reads
         File draft_assembly
@@ -17,14 +24,6 @@ task MedakaPolish {
         Int n_rounds = 3
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        basecalled_reads:   "basecalled reads to be used with polishing"
-        draft_assembly:     "draft assembly to be polished"
-        prefix:             "prefix for output files"
-        model:              "run `medaka tools list_models` and pick string with the correct pore type, machine, and guppy version"
-        n_rounds:           "number of polishing rounds to apply"
     }
 
     Int disk_size = 4 * n_rounds * ceil(size([basecalled_reads, draft_assembly], "GB"))

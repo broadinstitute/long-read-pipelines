@@ -14,6 +14,22 @@ import "../Utility/ONTUtils.wdl" as ONT
 import "../../structs/Structs.wdl"
 
 workflow Guppy {
+
+    meta {
+        description: "Run Guppy basecaller on ONT FAST5 files. The docker tag number will match the version of Guppy that is being run. You can change this value to run a different version of Guppy. Currently supports... [3.5.2, 3.6.0, 4.0.14]. All fast5 files within the given GCS dir, gcs_fast5_dir, will be processed. Takes a few hours to process 130GB. Best guess is that the processing time scales linearly but untested."
+    }
+    parameter_meta {
+        gcs_fast5_dir: "GCS path to a directory containing ONT FAST5 files."
+        config: "Guppy config file."
+        barcode_kit: "Optional. Barcode kit used for sequencing. "
+        instrument: "Optional. Instrument used for sequencing. Default is 'unknown'."
+        flow_cell_id: "Optional. Flow cell ID used for sequencing. Default is 'unknown'."
+        protocol_run_id: "Optional. Protocol run ID used for sequencing. Default is 'unknown'."
+        sample_name: "Optional. Sample name used for sequencing. Default is 'unknown'."
+        num_shards: "Optional. Number of shards to use for parallelization. Default is 1 + ceil(length(read_lines(ListFast5s.manifest))/100)."
+        gcs_out_root_dir: "GCS path to a directory where the output will be written."
+    }
+
     input {
         String gcs_fast5_dir
 
