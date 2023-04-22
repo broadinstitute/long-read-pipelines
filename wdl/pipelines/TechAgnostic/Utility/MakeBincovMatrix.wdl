@@ -236,9 +236,10 @@ task ZPaste {
   # so this is a reasonably conservative estimate for disk:
   Int disk_gb = select_first([disk_overhead_gb, 10]) + ceil(3.0 * size(column_files, "GiB"))
   # Some memory is used up by the named pipes. Not a lot, but allocate in case the batch is huge:
-  Float mem_gb = mem_overhead_gb + 0.003 * length(column_files)
+  # Float mem_gb = mem_overhead_gb + 0.003 * length(column_files)
+  Float mem_gb = 128
   RuntimeAttr default_attr = object {
-    cpu_cores: 4,
+    cpu_cores: 32,
     mem_gb: mem_gb,
     disk_gb: disk_gb,
     boot_disk_gb: 10,
