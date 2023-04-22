@@ -135,3 +135,6 @@ workflows:
 - name: BuildPGGBPangenome
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Pangenome/BuildPGGBPangenome.wdl
+- name: SupplementMOBsuiteDB
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Plasmids/SupplementMOBsuiteDB.wdl
