@@ -63,3 +63,56 @@ task CreateMOBsuiteDB {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task MOBRecon {
+    input {
+        File assembly_fasta
+        File? MOBsuite_db
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            100,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/general/mobsuite:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    String db_flag = if defined(MOBsuite_db) then "-d mobsuite_db" else ""
+    Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+
+    command <<<
+        set -euxo pipefail
+
+        if [[ "~{MOBsuite_db}" != "" ]]; then
+            mkdir mobsuite_db
+            cd mobsuite_db
+            tar -xaf ~{MOBsuite_db} .
+        fi
+
+        mob_recon -i ~{assembly_fasta} ~{db_flag} -n ~{num_cores} -o results
+    >>>
+
+    output {
+        File chromosome = "results/chromosome.fasta"
+        File contig_report = "results/contig_report.txt"
+        File mge_report = "results/mge.report.txt"
+        File mobtyper_results = "results/mobtyper_results.txt"
+        Array[File] plasmids = glob("results/plasmid_*.fasta")
+    }
+
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
