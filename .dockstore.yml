@@ -138,3 +138,6 @@ workflows:
 - name: SupplementMOBsuiteDB
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Plasmids/SupplementMOBsuiteDB.wdl
+- name: MOBsuiteRecon
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Plasmids/MOBsuiteRecon.wdl
