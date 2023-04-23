@@ -22,21 +22,29 @@ task CreateMOBsuiteDB {
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     command <<<
-        mkdir default_db
+        set -euxo pipefail
 
+        mkdir default_db
         mob_init -d default_db
 
-        mkdir updated_db
-        mob_typer -d default_db -i ~{additional_plasmids_fasta} --multi -o updated_db/typing_results.tsv
+        cp ~{additional_plasmids_fasta} .
+        mob_typer -d default_db -i ~{basename(additional_plasmids_fasta)} --multi -o typing_results.tsv
 
         mob_cluster -d default_db \
-            -f ~{additional_plasmids_fasta} \
+            -f ~{basename(additional_plasmids_fasta)} \
             -t ~{plasmid_host_tsv} \
-            -p updated_db/typing_results.tsv \
+            -p typing_results.tsv \
             -c default_db/clusters.txt \
             -r default_db/ncbi_plasmid_full_seqs.fas \
             -m update \
             -o updated_db
+
+        cp default_db/host_range_literature_plasmidDB.txt updated_db/
+        cp default_db/*.proteins.faa updated_db/
+        cp default_db/orit.fas updated_db/
+        cp default_db/rep.dna.fas updated_db/
+        cp default_db/repetitive* updated_db/
+        cp default_db/taxa* updated_db/
 
         tar -acf mobsuite_updated_db.tar.gz -C updated_db/ .
     >>>

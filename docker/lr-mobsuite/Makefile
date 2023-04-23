@@ -8,3 +8,6 @@ all: build_and_push
 
 build_and_push:
 	docker buildx build --platform linux/amd64 --push -t $(TAG1) -t $(TAG2) .
+
+build_and_push_nocache:
+	docker buildx build --no-cache --platform linux/amd64 --push -t $(TAG1) -t $(TAG2) .
