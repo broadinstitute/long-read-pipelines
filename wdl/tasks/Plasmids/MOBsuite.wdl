@@ -46,12 +46,6 @@ task CreateMOBsuiteDB {
         cp default_db/repetitive* updated_db/
         cp default_db/taxa* updated_db/
 
-        cd updated_db
-        for f in references_updated.fasta*; do
-            mv "$f" "${f/references_updated.fasta/ncbi_plasmid_full_seqs.fas}"
-        done
-        cd ..
-
         tar -acf mobsuite_updated_db.tar.gz -C updated_db/ .
     >>>
 
