@@ -77,6 +77,7 @@ task CreateMOBsuiteDB {
 task MOBRecon {
     input {
         File assembly_fasta
+        Bool unicycler_assembly = false
         File? MOBsuite_db
 
         RuntimeAttr? runtime_attr_override
@@ -106,9 +107,9 @@ task MOBRecon {
             cd ..
         fi
 
-        ls -1 mobsuite_db
-
-        mob_recon -i ~{assembly_fasta} ~{db_flag} -n ~{num_cores} -o results
+        mob_recon -i ~{assembly_fasta} -n ~{num_cores} \
+            ~{true="-u" false="" unicycler_assembly} ~{db_flag} \
+            -o results
     >>>
 
     output {
