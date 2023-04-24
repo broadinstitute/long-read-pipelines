@@ -141,3 +141,6 @@ workflows:
 - name: MOBsuiteRecon
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Plasmids/MOBsuiteRecon.wdl
+- name: FilterChromosomalFeatures
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Plasmids/FilterChromosomalFeatures.wdl

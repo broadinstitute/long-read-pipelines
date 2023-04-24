@@ -130,3 +130,44 @@ task MOBRecon {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task GFFFilterChromosomal {
+    input {
+        File base_gff3
+        File mobsuite_contig_report
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             8,
+        disk_gb:            10,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/general/mobsuite:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        set -euxo pipefail
+
+        fname="~{basename(base_gff3, ".gff3")}.plasmids.gff3"
+        python gff_filter_chromosome.py ~{base_gff3} ~{mobsuite_contig_report} > $fname
+    >>>
+
+    output {
+        File plasmids_gff3 = "~{basename(base_gff3, '.gff3')}.plasmids.gff3"
+    }
+
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
