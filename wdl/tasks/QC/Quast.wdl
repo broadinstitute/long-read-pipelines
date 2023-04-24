@@ -1,25 +1,23 @@
 version 1.0
 
-##########################################################################################
-# A task that runs QUAST to evaluate a given set of assemblies
-# on a species with existing reference assembly.
-# - Entire Quast output will be tarballed
-##########################################################################################
-
 import "../../structs/Structs.wdl"
 
 task Quast {
+
+    meta {
+        description: "A task that runs QUAST to evaluate a given set of assemblies on a species with existing reference assembly. Entire Quast output will be tarballed"
+    }
+    parameter_meta {
+        ref:        "reference assembly of the species"
+        assemblies: "list of assemblies to evaluate"
+    }
+
     input {
         File? ref
         Array[File] assemblies
         Boolean is_large = false
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        ref:        "reference assembly of the species"
-        assemblies: "list of assemblies to evaluate"
     }
 
     Int minimal_disk_size = 2*(ceil(size(ref, "GB") + size(assemblies, "GB")))
@@ -80,6 +78,14 @@ task Quast {
 }
 
 task SummarizeQuastReport {
+
+    meta {
+        description: "A task that summarizes the QUAST report into a single tab-delimited file"
+    }
+    parameter_meta {
+        quast_report_txt: "the QUAST report file"
+    }
+
     input {
         File quast_report_txt
     }

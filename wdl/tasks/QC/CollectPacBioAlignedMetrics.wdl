@@ -4,21 +4,21 @@ import "../Utility/PBUtils.wdl" as PB
 import "../Visualization/NanoPlot.wdl" as NP
 
 workflow CollectPacBioAlignedMetrics {
+
     meta {
         desciption:
         "Collect a few custom metrics on the alignments."
+    }
+    parameter_meta {
+        custom_aln_metrics_summary: "A 2-col TSV holding custom metrics on the alignments: 1-col is attribute name, 2-col is value."
+        nanoplot_stats: "Nanoplot stats file (NanoStats.txt) on the input BAM."
+        nanoplot_pngs: "Nanoplot figures on the input BAM."
     }
 
     input {
         File aligned_bam
         File aligned_bai
         File aligned_pbi
-    }
-
-    parameter_meta {
-        custom_aln_metrics_summary: "A 2-col TSV holding custom metrics on the alignments: 1-col is attribute name, 2-col is value."
-        nanoplot_stats: "Nanoplot stats file (NanoStats.txt) on the input BAM."
-        nanoplot_pngs: "Nanoplot figures on the input BAM."
     }
 
     # note: this may not matter anymore if the input bam is HiFi only?

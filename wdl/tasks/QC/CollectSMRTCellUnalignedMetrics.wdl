@@ -4,6 +4,15 @@ import "../Utility/PBUtils.wdl" as PB
 import "../Utility/Utils.wdl"
 
 workflow CollectSMRTCellUnalignedMetrics {
+
+    meta {
+        description: "Collects metrics from a SMRT Cell unaligned BAM file"
+    }
+    parameter_meta {
+        smrtcell_bam: "SMRT Cell BAM file"
+        smrtcell_pbi: "SMRT Cell PBI file"
+    }
+
     input {
         File smrtcell_pbi
     }
