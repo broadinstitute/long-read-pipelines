@@ -154,7 +154,7 @@ task GFFFilterChromosomal {
         set -euxo pipefail
 
         fname="~{basename(base_gff3, ".gff3")}.plasmids.gff3"
-        python gff_filter_chromosome.py ~{base_gff3} ~{mobsuite_contig_report} > $fname
+        gff_filter_chromosome.py ~{base_gff3} ~{mobsuite_contig_report} > $fname
     >>>
 
     output {
