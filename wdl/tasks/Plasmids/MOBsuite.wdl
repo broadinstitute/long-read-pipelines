@@ -39,12 +39,22 @@ task CreateMOBsuiteDB {
             -m update \
             -o updated_db
 
+        # make it look like a standard MOB-suite DB
         cp default_db/host_range_literature_plasmidDB.txt updated_db/
         cp default_db/*.proteins.faa updated_db/
         cp default_db/orit.fas updated_db/
         cp default_db/rep.dna.fas updated_db/
         cp default_db/repetitive* updated_db/
         cp default_db/taxa* updated_db/
+
+        cd updated_db
+        for f in references_updated.fasta*; do
+            mv "$f" "${f/references_updated.fasta/ncbi_plasmid_full_seqs.fas}"
+        done
+
+        # Because of rename we have to re-run makeblastdb again
+        makeblastdb -in ncbi_plasmid_full_seqs.fas -dbtype nucl
+        cd ..
 
         tar -acf mobsuite_updated_db.tar.gz -C updated_db/ .
     >>>
