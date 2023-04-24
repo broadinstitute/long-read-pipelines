@@ -93,6 +93,7 @@ task MOBRecon {
             mkdir mobsuite_db
             cd mobsuite_db
             tar -xaf ~{MOBsuite_db} .
+            cd ..
         fi
 
         mob_recon -i ~{assembly_fasta} ~{db_flag} -n ~{num_cores} -o results
