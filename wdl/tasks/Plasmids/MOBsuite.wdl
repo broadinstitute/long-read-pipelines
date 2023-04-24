@@ -102,6 +102,8 @@ task MOBRecon {
             cd ..
         fi
 
+        ls -1 mobsuite_db
+
         mob_recon -i ~{assembly_fasta} ~{db_flag} -n ~{num_cores} -o results
     >>>
 
