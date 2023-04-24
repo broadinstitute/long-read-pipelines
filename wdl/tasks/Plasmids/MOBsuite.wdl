@@ -77,7 +77,7 @@ task CreateMOBsuiteDB {
 task MOBRecon {
     input {
         File assembly_fasta
-        Bool unicycler_assembly = false
+        Boolean unicycler_assembly = false
         File? MOBsuite_db
 
         RuntimeAttr? runtime_attr_override
