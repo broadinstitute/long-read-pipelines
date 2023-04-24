@@ -48,7 +48,7 @@ task CreateMOBsuiteDB {
 
         cd updated_db
         for f in references_updated.fasta*; do
-            mv "$f" "${f/references_updated.fasta/ncbi_plasmid_full_seqs.fas/}"
+            mv "$f" "${f/references_updated.fasta/ncbi_plasmid_full_seqs.fas}"
         done
         cd ..
 
