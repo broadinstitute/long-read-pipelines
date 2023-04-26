@@ -10,14 +10,6 @@ workflow Sniffles2 {
         description: "This workflow calls SV candidates using Sniffles2 population mode."
     }
 
-    input {
-        Array[File] sampleBAMs
-        Array[File] sampleBAIs
-        Array[String] sampleIDs
-        String prefix
-        Int minsvlen = 50
-    }
-
     parameter_meta {
         # input
         sampleBAMs:      "GCS paths to aligned BAM files from multiple samples"
@@ -26,8 +18,16 @@ workflow Sniffles2 {
         minsvlen:        "Minimum SV length in bp"
         prefix:          "prefix for output files"
         # output
-        single_snf:      ".snf output containing SV candidates from a single sample"
-        multisample_vcf: "Multi-sample vcf output"
+        single_snf:      "[OUTPUT] .snf output containing SV candidates from a single sample"
+        multisample_vcf: "[OUTPUT] Multi-sample vcf output"
+    }
+
+    input {
+        Array[File] sampleBAMs
+        Array[File] sampleBAIs
+        Array[String] sampleIDs
+        String prefix
+        Int minsvlen = 50
     }
 
     scatter (i in range(length(sampleBAMs))) {

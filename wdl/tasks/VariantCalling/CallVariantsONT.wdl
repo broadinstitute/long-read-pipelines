@@ -8,9 +8,34 @@ import "Clair.wdl" as Clair3
 import "ONTPepper.wdl"
 
 workflow CallVariants {
+
     meta {
         descrition: "A workflow for calling small and/or structural variants from an aligned ONT BAM file."
     }
+
+    parameter_meta {
+        bam: "ONT BAM file"
+        bai: "ONT BAM index file"
+        minsvlen: "Minimum SV length in bp (default: 50)"
+        prefix: "Prefix for output files"
+        sample_id: "Sample ID"
+        ref_fasta: "Reference FASTA file"
+        ref_fasta_fai: "Reference FASTA index file"
+        ref_dict: "Reference FASTA dictionary file"
+        call_svs: "Call structural variants"
+        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
+        tandem_repeat_bed: "BED file containing TRF finder for better PBSV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+        call_small_variants: "Call small variants"
+        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
+        sites_vcf: "for use with Clair"
+        sites_vcf_tbi: "for use with Clair"
+        run_dv_pepper_analysis: "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
+        dvp_threads: "number of threads for DV-Pepper"
+        dvp_memory: "memory for DV-Pepper"
+        ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
+        ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
+    }
+
     input {
         File bam
         File bai
@@ -36,19 +61,6 @@ workflow CallVariants {
         Int? dvp_memory
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
-    }
-
-    parameter_meta {
-        fast_less_sensitive_sv:  "to trade less sensitive SV calling for faster speed"
-        tandem_repeat_bed:       "BED file containing TRF finder for better PBSV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
-        minsvlen :      "Minimum SV length in bp (default: 50)"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
-        sites_vcf:     "for use with Clair"
-        sites_vcf_tbi: "for use with Clair"
-
-        run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
-        ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
-        ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
     }
 
     ######################################################################

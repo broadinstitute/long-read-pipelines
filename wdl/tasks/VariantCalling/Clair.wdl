@@ -7,6 +7,28 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task Clair {
+
+    meta {
+        description: "Call variants using Clair3."
+    }
+
+    parameter_meta {
+        bam:             "input BAM from which to call variants"
+        bai:             "index accompanying the BAM"
+
+        ref_fasta:       "reference to which the BAM was aligned to"
+        ref_fasta_fai:   "index accompanying the reference"
+
+        sites_vcf:       "sites VCF"
+        sites_vcf_tbi:   "sites VCF index"
+
+        chr:             "chr on which to call variants"
+        preset:          "calling preset (CCS, ONT)"
+
+        zones:           "zones to run the task on"
+        runtime_attr_override: "override the default runtime attributes"
+    }
+
     input {
         File bam
         File bai
@@ -23,20 +45,6 @@ task Clair {
         String zones
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam:             "input BAM from which to call variants"
-        bai:             "index accompanying the BAM"
-
-        ref_fasta:       "reference to which the BAM was aligned to"
-        ref_fasta_fai:   "index accompanying the reference"
-
-        sites_vcf:       "sites VCF"
-        sites_vcf_tbi:   "sites VCF index"
-
-        chr:             "chr on which to call variants"
-        preset:          "calling preset (CCS, ONT)"
     }
 
     Int disk_size = 10*ceil(size(select_all([bam, bai, ref_fasta, ref_fasta_fai, sites_vcf]), "GB"))

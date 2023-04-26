@@ -4,15 +4,9 @@ import "../../structs/Structs.wdl"
 
 # Given BAM, call SVs using Sniffles
 task Sniffles {
-    input {
-        File bam
-        File bai
-        Int min_read_support = 2
-        Int min_read_length = 1000
-        Int min_mq = 20
-        String? chr
-        String prefix
-        RuntimeAttr? runtime_attr_override
+
+    meta {
+        description: "Call SVs using Sniffles"
     }
 
     parameter_meta {
@@ -22,7 +16,19 @@ task Sniffles {
         min_read_length:  "[default-valued] filter out reads below minimum read length"
         min_mq:           "[default-valued] minimum mapping quality to accept"
         chr:              "chr on which to call variants"
-        prefix:           "prefix for output"
+        prefix:           "prefix for output file"
+        runtime_attr_override: "override default runtime attributes"
+    }
+
+    input {
+        File bam
+        File bai
+        Int min_read_support = 2
+        Int min_read_length = 1000
+        Int min_mq = 20
+        String? chr
+        String prefix
+        RuntimeAttr? runtime_attr_override
     }
 
     Int cpus = 8
