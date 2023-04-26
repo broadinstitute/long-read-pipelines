@@ -3,6 +3,16 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task NanoPlotFromSummary {
+
+    meta {
+        description: "Use NanoPlot to generate plots from a summary file"
+    }
+
+    parameter_meta {
+        summary_files: "A list of summary files to use as input"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         Array[File] summary_files
 
@@ -89,6 +99,16 @@ task NanoPlotFromSummary {
 }
 
 task NanoPlotFromRichFastqs {
+
+    meta {
+        description: "Use NanoPlot to generate plots from a list of fastq files"
+    }
+
+    parameter_meta {
+        fastqs: "A list of fastq files to use as input"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         Array[File] fastqs
 
@@ -160,6 +180,17 @@ task NanoPlotFromRichFastqs {
 }
 
 task NanoPlotFromBam {
+
+    meta {
+        description: "Use NanoPlot to generate plots from a bam file"
+    }
+
+    parameter_meta {
+        bam: "A bam file to use as input"
+        bai: "The bai file for the bam file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File bam
         File bai
@@ -258,6 +289,16 @@ task NanoPlotFromBam {
 }
 
 task NanoPlotFromUBam {
+
+    meta {
+        description: "NanoPlotFromUBam"
+    }
+
+    parameter_meta {
+        bam: "BAM file"
+        runtime_attr_override: "Runtime attributes to override"
+    }
+
     input {
         File bam
 

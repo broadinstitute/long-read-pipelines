@@ -1,6 +1,18 @@
 version 1.0
 
 task SplitSoftClippedReads {
+
+    meta {
+        description : "Split softclipped reads into multiple reads, each with a different amount of softclipping."
+    }
+
+    parameter_meta {
+        reads_fastq : "Input reads in fastq format."
+        reference_fasta : "Reference fasta file."
+        rounds : "Number of rounds of softclipping to perform."
+        clipping_threshold : "Threshold for softclipping."
+    }
+
     input {
         File reads_fastq
         File reference_fasta
@@ -47,6 +59,20 @@ task SplitSoftClippedReads {
 }
 
 task SplitSoftClippedReadsAssisted {
+
+    meta {
+        description: "Split softclipped reads into multiple reads, each with a different amount of softclipping. This version uses an additional reference to help determine the correct amount of softclipping."
+    }
+
+    parameter_meta {
+        reads_fastq : "Input reads in fastq format."
+        reference_fasta : "Reference fasta file."
+        rounds : "Number of rounds of softclipping to perform."
+        clipping_threshold : "Threshold for softclipping."
+        ref_conflict_threshold : "Threshold for softclipping."
+        aid_reference_fasta : "Reference fasta file."
+    }
+
     input {
         File reads_fastq
         File reference_fasta

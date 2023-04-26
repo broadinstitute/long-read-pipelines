@@ -3,6 +3,16 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task GetDefaultDir {
+
+    meta {
+        description: "Get the default directory for a given workflow"
+    }
+
+    parameter_meta {
+        workflow_name: "The name of the workflow"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         String workflow_name
 
@@ -42,6 +52,16 @@ task GetDefaultDir {
 }
 
 task PrepareManifest {
+
+    meta {
+        description: "Prepare a manifest file for a given workflow"
+    }
+
+    parameter_meta {
+        files: "The files to include in the manifest"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         Array[String] files
 
@@ -79,6 +99,16 @@ task PrepareManifest {
 }
 
 task EchoManifest {
+
+    meta {
+        description: "Echo the contents of a manifest file"
+    }
+
+    parameter_meta {
+        manifest: "The manifest file to echo"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File manifest
 
@@ -118,6 +148,17 @@ task EchoManifest {
 }
 
 task ChunkManifest {
+
+    meta {
+        description: "Chunk a manifest file into smaller files"
+    }
+
+    parameter_meta {
+        manifest: "The manifest file to chunk"
+        manifest_lines_per_chunk: "The number of lines to include in each chunk"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File manifest
         Int manifest_lines_per_chunk
@@ -158,6 +199,17 @@ task ChunkManifest {
 }
 
 task SortBam {
+
+    meta {
+        description: "Sort a BAM file"
+    }
+
+    parameter_meta {
+        input_bam: "The BAM file to sort"
+        prefix: "The prefix for the output BAM file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File input_bam
         String prefix = "sorted"
@@ -211,6 +263,18 @@ task SortBam {
 # copied from "dsde_pipelines_tasks/BamProcessing.wdl", with
 # customization on the runtime block, and "preemptible_tries" taken out
 task SortSam {
+
+    meta {
+        description: "Sort a BAM file by coordinate order"
+    }
+
+    parameter_meta {
+        input_bam: "The BAM file to sort"
+        output_bam_basename: "The basename for the output BAM file"
+        compression_level: "The compression level for the output BAM file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File input_bam
         String output_bam_basename
@@ -265,6 +329,17 @@ task SortSam {
 }
 
 task MakeChrIntervalList {
+
+    meta {
+        description: "Make a list of intervals for each chromosome in the reference genome"
+    }
+
+    parameter_meta {
+        ref_dict: "The reference dictionary"
+        filter: "A list of strings to filter out of the reference dictionary"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File ref_dict
         Array[String] filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
@@ -311,6 +386,16 @@ task MakeChrIntervalList {
 }
 
 task FastaToSam {
+
+    meta {
+        description: "Convert a fasta file to a sam file"
+    }
+
+    parameter_meta {
+        fasta: "The fasta file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File fasta
 
@@ -351,6 +436,16 @@ task FastaToSam {
 }
 
 task CountFastqRecords {
+
+    meta {
+        description: "Count the number of records in a fastq file"
+    }
+
+    parameter_meta {
+        fastq: "The fastq file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File fastq
 
@@ -397,6 +492,16 @@ task CountFastqRecords {
 }
 
 task CountFastaRecords {
+
+    meta {
+        description: "Count the number of records in a fasta file"
+    }
+
+    parameter_meta {
+        fasta: "The fasta file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File fasta
 
@@ -438,6 +543,16 @@ task CountFastaRecords {
 }
 
 task CountBamRecords {
+
+    meta {
+        description: "Count the number of records in a bam file"
+    }
+
+    parameter_meta {
+        bam: "The bam file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
     input {
         File bam
 
@@ -485,10 +600,16 @@ task CountBamRecords {
 }
 
 task FilterListOfStrings {
+
     meta {
         description : "Filter a given list of files by a query term (essentially pipes the query into grep)."
         author : "Jonn Smith"
         email : "jonn@broadinstitute.org"
+    }
+
+    parameter_meta {
+        list_to_filter: "Array of strings to filter by the query."
+        query: "Term to use to filter the given strings."
     }
 
     input {
@@ -497,12 +618,6 @@ task FilterListOfStrings {
 
         RuntimeAttr? runtime_attr_override
     }
-
-    parameter_meta {
-        list_to_filter: "Array of strings to filter by the query."
-        query: "Term to use to filter the given strings."
-    }
-
 
     command <<<
         set -euxo pipefail
@@ -537,10 +652,17 @@ task FilterListOfStrings {
 }
 
 task FilterReadsBySamFlags {
+
     meta {
         description : "Filter reads based on sam flags.  Reads with ANY of the given flags will be removed from the given dataset."
         author : "Jonn Smith"
         email : "jonn@broadinstitute.org"
+    }
+
+    parameter_meta {
+        bam:   "BAM file to be filtered."
+        sam_flags: "Flags for which to remove reads.  Reads with ANY of the given flags will be removed from the given dataset."
+        prefix : "[Optional] Prefix string to name the output file (Default: filtered_reads)."
     }
 
     input {
@@ -552,12 +674,6 @@ task FilterReadsBySamFlags {
         String prefix = "filtered_reads"
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam:   "BAM file to be filtered."
-        sam_flags: "Flags for which to remove reads.  Reads with ANY of the given flags will be removed from the given dataset."
-        prefix : "[Optional] Prefix string to name the output file (Default: filtered_reads)."
     }
 
     Int disk_size = 20 + ceil(11 * size(bam, "GiB"))
@@ -599,10 +715,19 @@ task FilterReadsBySamFlags {
 }
 
 task DownsampleSam {
+
     meta {
         description : "Downsample the given bam / sam file using Picard/GATK's DownsampleSam tool."
         author : "Jonn Smith"
         email : "jonn@broadinstitute.org"
+    }
+
+    parameter_meta {
+        bam:   "BAM file to be filtered."
+        probability : "[Optional] Probability that a read will be emitted (Default: 0.01)."
+        strategy : "[Optional] Strategy to use to downsample the given bam file (Default: HighAccuracy)."
+        prefix : "[Optional] Prefix string to name the output file (Default: downsampled_reads)."
+        extra_args : "[Optional] Extra arguments to pass into DownsampleSam."
     }
 
     input {
@@ -617,14 +742,6 @@ task DownsampleSam {
         String extra_args = ""
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam:   "BAM file to be filtered."
-        probability : "[Optional] Probability that a read will be emitted (Default: 0.01)."
-        strategy : "[Optional] Strategy to use to downsample the given bam file (Default: HighAccuracy)."
-        prefix : "[Optional] Prefix string to name the output file (Default: downsampled_reads)."
-        extra_args : "[Optional] Extra arguments to pass into DownsampleSam."
     }
 
     Int disk_size = 20 + ceil(11 * size(bam, "GiB"))
@@ -666,6 +783,19 @@ task DownsampleSam {
 }
 
 task GrepCountBamRecords {
+
+    meta {
+        description : "Count the number of records in a bam file that match a given regex."
+    }
+
+    parameter_meta {
+        bam: "BAM file to be filtered."
+        samfilter: "[Optional] Extra arguments to pass into samtools view."
+        regex: "Regex to match against the bam file."
+        invert: "[Optional] Invert the regex match."
+        prefix: "[Optional] Prefix string to name the output file (Default: sum)."
+    }
+
     input {
         File bam
         String samfilter = ""
@@ -713,6 +843,19 @@ task GrepCountBamRecords {
 }
 
 task GrepCountUniqueBamRecords {
+
+    meta {
+        description : "Count the number of unique records in a bam file that match a given regex."
+    }
+
+    parameter_meta {
+        bam: "BAM file to be filtered."
+        samfilter: "[Optional] Extra arguments to pass into samtools view."
+        regex: "Regex to match against the bam file."
+        invert: "[Optional] Invert the regex match."
+        prefix: "[Optional] Prefix string to name the output file (Default: sum)."
+    }
+
     input {
         String bam
         String samfilter = ""
@@ -761,6 +904,16 @@ task GrepCountUniqueBamRecords {
 }
 
 task Sum {
+
+    meta {
+        description : "Sum a list of integers."
+    }
+
+    parameter_meta {
+        ints: "List of integers to be summed."
+        prefix: "[Optional] Prefix string to name the output file (Default: sum)."
+    }
+
     input {
         Array[Int] ints
         String prefix = "sum"
@@ -800,6 +953,15 @@ task Sum {
 }
 
 task Uniq {
+
+    meta {
+        description : "Find the unique elements in a list of strings."
+    }
+
+    parameter_meta {
+        strings: "List of strings to be filtered."
+    }
+
     input {
         Array[String] strings
 
@@ -841,6 +1003,16 @@ task Uniq {
 }
 
 task Timestamp {
+
+    meta {
+        description : "Get the current timestamp."
+    }
+
+    parameter_meta {
+        dummy_dependencies: "List of dummy dependencies to force recomputation."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         Array[String] dummy_dependencies
 
@@ -878,6 +1050,17 @@ task Timestamp {
 }
 
 task BamToTable {
+
+    meta {
+        description : "Convert a BAM file to a table txt file."
+    }
+
+    parameter_meta {
+        bam: "BAM file to be converted."
+        prefix: "Prefix for the output table."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         File bam
         String prefix
@@ -918,6 +1101,17 @@ task BamToTable {
 }
 
 task ConvertReads {
+
+    meta {
+        description : "Convert reads from one format to another."
+    }
+
+    parameter_meta {
+        reads: "Reads to be converted."
+        output_format: "Output format."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         File reads
         String output_format
@@ -962,6 +1156,17 @@ task ConvertReads {
 }
 
 task BamToBed {
+
+    meta {
+        description : "Convert a BAM file to a bed file."
+    }
+
+    parameter_meta {
+        bam: "BAM file to be converted."
+        prefix: "Prefix for the output bed file."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         File bam
         String prefix
@@ -1003,6 +1208,17 @@ task BamToBed {
 }
 
 task BamToFastq {
+
+    meta {
+        description : "Convert a BAM file to a fastq file."
+    }
+
+    parameter_meta {
+        bam: "BAM file to be converted."
+        prefix: "Prefix for the output fastq file."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         File bam
         String prefix
@@ -1045,6 +1261,17 @@ task BamToFastq {
 }
 
 task MergeFastqs {
+
+    meta {
+        description : "Merge fastq files."
+    }
+
+    parameter_meta {
+        fastqs: "Fastq files to be merged."
+        prefix: "Prefix for the output fastq file."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         Array[File] fastqs
 
@@ -1096,6 +1323,17 @@ task MergeFastqs {
 
 # A utility to merge several input BAMs into a single BAM.
 task MergeBams {
+
+    meta {
+        description : "Merge several input BAMs into a single BAM."
+    }
+
+    parameter_meta {
+        bams: "Input array of BAMs to be merged."
+        prefix: "Prefix for the output BAM."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         Array[File] bams
         String prefix = "out"
@@ -1149,6 +1387,16 @@ task MergeBams {
 }
 
 task Index {
+
+    meta {
+        description : "Index a BAM file."
+    }
+
+    parameter_meta {
+        bam: "BAM file to be indexed."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         File bam
 
@@ -1197,13 +1445,9 @@ task Index {
 }
 
 task FilterReadsWithTagValues {
-    input {
-        File bam
-        String tag
-        String value_to_remove
-        String prefix = "out"
 
-        RuntimeAttr? runtime_attr_override
+    meta {
+        description : "Filter reads from a BAM file based on the values of a given tag."
     }
 
     parameter_meta {
@@ -1211,6 +1455,15 @@ task FilterReadsWithTagValues {
         tag:   "Name of the tag to target for potential removal."
         value_to_remove:   "Tag value to use to remove reads.  Reads will be removed if they have the given tag with this value."
         prefix: "[default-valued] prefix for output BAM"
+    }
+
+    input {
+        File bam
+        String tag
+        String value_to_remove
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 20 + 11*ceil(size(bam, "GB"))
@@ -1256,6 +1509,19 @@ task FilterReadsWithTagValues {
 
 # A utility to subset a BAM to specifed loci
 task SubsetBam {
+
+    meta {
+        description : "Subset a BAM file to a specified locus."
+    }
+
+    parameter_meta {
+        bam:   "Input BAM file to subset."
+        bai:   "Index for input BAM file."
+        locus: "Genomic locus to select."
+        prefix: "[default-valued] prefix for output BAM and BAI file names."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         File bam
         File bai
@@ -1315,6 +1581,19 @@ task SubsetBam {
 
 # A utility to subset a BAM to specifed loci
 task ExcludeRegionsFromBam {
+
+    meta {
+        description : "Exclude regions from a BAM file."
+    }
+
+    parameter_meta {
+        bam:   "Input BAM file to subset."
+        bai:   "Index for input BAM file."
+        loci: "Genomic loci to exclude."
+        prefix: "[default-valued] prefix for output BAM and BAI file names."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         File bam
         File bai
@@ -1363,6 +1642,18 @@ task ExcludeRegionsFromBam {
 
 # A utility to select the first N reads from a BAM file
 task SelectFirstNReads {
+
+    meta {
+        description : "Select the first N reads from a BAM file."
+    }
+
+    parameter_meta {
+        bam:   "Input BAM file to subset."
+        n:     "Number of reads to select."
+        prefix: "[default-valued] prefix for output BAM file name."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
     input {
         File bam
         Int n
@@ -1422,6 +1713,15 @@ task ResilientSubsetBam {
         description: "For subsetting a high-coverage BAM stored in GCS, without localizing (more resilient to auth. expiration)."
     }
 
+    parameter_meta {
+        bam: {
+            localization_optional: true
+        }
+        interval_list_file:  "a Picard-style interval list file to subset reads with"
+        interval_id:         "an ID string for representing the intervals in the interval list file"
+        prefix: "prefix for output bam and bai file names"
+    }
+
     input {
         File bam
         File bai
@@ -1431,15 +1731,6 @@ task ResilientSubsetBam {
         String prefix
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam: {
-            localization_optional: true
-        }
-        interval_list_file:  "a Picard-style interval list file to subset reads with"
-        interval_id:         "an ID string for representing the intervals in the interval list file"
-        prefix: "prefix for output bam and bai file names"
     }
 
     Array[String] intervals = read_lines(interval_list_file)
@@ -1507,18 +1798,23 @@ task ResilientSubsetBam {
 }
 
 task SplitBam {
-    input {
-        File bam
-        File bai
-        Array[String] filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA']
 
-        RuntimeAttr? runtime_attr_override
+    meta {
+        description: "Takes a BAM file as input, extracts the reference sequence names from the header, filters out any unwanted sequences, and creates new BAM files for each remaining sequence."
     }
 
     parameter_meta {
         bam:    "bam to split"
         bai:    "index for bam file"
         filter: "contigs to ignore"
+    }
+
+    input {
+        File bam
+        File bai
+        Array[String] filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA']
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 4*ceil(size([bam, bai], "GB"))
@@ -1562,6 +1858,17 @@ task SplitBam {
 }
 
 task Bamtools {
+
+    meta {
+        description: "Runs a given bamtools command on a bam file"
+    }
+
+    parameter_meta {
+        bamfile:    "bam file to run bamtools on"
+        cmd:        "bamtools command to run"
+        args:       "arguments to pass to bamtools"
+    }
+
     input {
         File bamfile
         String cmd
@@ -1606,6 +1913,18 @@ task Bamtools {
 
 
 task FilterBamOnTag {
+
+    meta {
+        description: "Filters a BAM file on a given tag and expression"
+    }
+
+    parameter_meta {
+        bam:        "input BAM file"
+        prefix:     "prefix for output bam"
+        tag:        "tag to filter on"
+        expression: "expression to filter on"
+    }
+
     input {
         File bam
         String prefix = "out"
@@ -1613,11 +1932,6 @@ task FilterBamOnTag {
         String expression
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam:    "input BAM file"
-        prefix: "[default-valued] prefix for output BAM"
     }
 
     Int disk_size = 4*ceil(size(bam, "GB"))
@@ -1657,8 +1971,16 @@ task FilterBamOnTag {
 }
 
 task DeduplicateBam {
+
     meta {
         description: "Utility to drop (occationally happening) duplicate records in input BAM"
+    }
+
+    parameter_meta {
+        aligned_bam: "input BAM file"
+        aligned_bai: "input BAM index file"
+        same_name_as_input: "if true, output BAM will have the same name as input BAM, otherwise it will have the input basename with .dedup suffix"
+        runtime_attr_override: "override default runtime attributes"
     }
 
     input {
@@ -1722,18 +2044,23 @@ task DeduplicateBam {
 }
 
 task Cat {
-    input {
-        Array[File] files
-        Boolean has_header = false
-        String out = "out.txt"
 
-        RuntimeAttr? runtime_attr_override
+    meta {
+        description: "Utility to concatenates a group of files into a single output file, with headers in the first line if has_header is true. If has_header is false, the script concatenates the files without headers."
     }
 
     parameter_meta {
         files:      "text files to combine"
         has_header: "files have a redundant header"
         out:        "[default-valued] output filename"
+    }
+
+    input {
+        Array[File] files
+        Boolean has_header = false
+        String out = "out.txt"
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 4*ceil(size(files, "GB"))
@@ -1777,14 +2104,19 @@ task Cat {
 }
 
 task ListBamContigs {
-    input {
-        String bam
 
-        RuntimeAttr? runtime_attr_override
+    meta {
+        description: "Utility to list contigs in a BAM file"
     }
 
     parameter_meta {
         bam:    "input BAM from which available contigs should be listed"
+    }
+
+    input {
+        String bam
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 1
@@ -1823,14 +2155,19 @@ task ListBamContigs {
 }
 
 task ComputeGenomeLength {
-    input {
-        File fasta
 
-        RuntimeAttr? runtime_attr_override
+    meta {
+        description: "Utility to compute the length of a genome from a FASTA file"
     }
 
     parameter_meta {
         fasta:  "FASTA file"
+    }
+
+    input {
+        File fasta
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 2*ceil(size(fasta, "GB"))
@@ -1872,18 +2209,23 @@ task ComputeGenomeLength {
 }
 
 task ListFilesOfType {
-    input {
-        String gcs_dir
-        Array[String] suffixes
-        Boolean recurse = false
 
-        RuntimeAttr? runtime_attr_override
+    meta {
+        description: "Utility to list files of a given type in a directory"
     }
 
     parameter_meta {
         gcs_dir:  "input directory"
         suffixes: "suffix(es) for files"
         recurse:  "if true, recurse through subdirectories"
+    }
+
+    input {
+        String gcs_dir
+        Array[String] suffixes
+        Boolean recurse = false
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 1
@@ -1924,6 +2266,15 @@ task ListFilesOfType {
 }
 
 task StopWorkflow {
+
+    meta {
+        description: "Utility to stop a workflow"
+    }
+
+    parameter_meta {
+        reason: "reason for stopping"
+    }
+
     input {
         String reason
     }
@@ -1938,16 +2289,19 @@ task InferSampleName {
         description: "Infer sample name encoded on the @RG line of the header section. Fails if multiple values found, or if SM ~= unnamedsample."
     }
 
+    parameter_meta {
+        bam: {
+            localization_optional: true,
+            description: "BAM file"
+        }
+    }
+
     input {
         File bam
         File bai
     }
 
-    parameter_meta {
-        bam: {
-            localization_optional: true
-        }
-    }
+
 
     command <<<
         set -euxo pipefail
@@ -1977,8 +2331,13 @@ task InferSampleName {
 }
 
 task CheckOnSamplenames {
+
     meta {
         description: "Makes sure the provided sample names are all same, i.e. no mixture of sample names"
+    }
+
+    parameter_meta {
+        sample_names: "sample names"
     }
 
     input {
@@ -2003,9 +2362,18 @@ task CheckOnSamplenames {
 }
 
 task FixSampleName {
+
     meta {
         desciption:
         "This fixes the sample name of a demultiplexed BAM"
+    }
+
+    parameter_meta {
+        bam: {
+            localization_optional: true,
+            description: "BAM file"
+        }
+        sample_name: "sample name"
     }
 
     input {
@@ -2077,6 +2445,11 @@ task ComputeAllowedLocalSSD {
     meta {
         description: "Compute the number of LOCAL ssd's allowed by Google"
     }
+
+    parameter_meta {
+        intended_gb: "intended number of GB"
+    }
+
     input {
         Int intended_gb
     }
@@ -2111,6 +2484,15 @@ task ComputeAllowedLocalSSD {
 }
 
 task RandomZoneSpewer {
+
+    meta {
+        description: "Spews a random zone"
+    }
+
+    parameter_meta {
+        num_of_zones: "number of zones to spew"
+    }
+
     input {
         Int num_of_zones
     }
@@ -2141,6 +2523,19 @@ task RandomZoneSpewer {
 }
 
 task ShardReads {
+
+    meta {
+        description: "Shard a bam file by number of reads"
+    }
+
+    parameter_meta {
+        bam: "bam file to shard"
+        bam_index: "bam index file"
+        prefix: "prefix for output files"
+        num_shards: "number of shards to create"
+        runtime_attr_override: "override the runtime attributes"
+    }
+
     input {
         File bam
         File bam_index
@@ -2213,6 +2608,11 @@ task GetCurrentTimestampString {
         # exactly what we want for this task.
         # For more info see: https://cromwell.readthedocs.io/en/stable/optimizations/VolatileTasks/
         volatile: true
+        description: "Get the current timestamp as a string"
+    }
+
+    parameter_meta {
+        date_format: "The date format string to use. See the unix `date` command for more info."
     }
 
     input {
@@ -2244,6 +2644,16 @@ task GetCurrentTimestampString {
 
 
 task GetRawReadGroup {
+
+    meta {
+        description: "Get the raw read group from a bam file"
+    }
+
+    parameter_meta {
+        gcs_bam_path: "path to bam file in GCS"
+        runtime_attr_override: "override the runtime attributes"
+    }
+
     input {
         String gcs_bam_path
 
@@ -2291,6 +2701,16 @@ task GetRawReadGroup {
 }
 
 task FailWithWarning {
+
+    meta {
+        description: "Fail with a warning"
+    }
+
+    parameter_meta {
+        warning: "The warning message to print"
+        runtime_attr_override: "override the runtime attributes"
+    }
+
     input {
         String warning
     }
@@ -2323,6 +2743,16 @@ task FailWithWarning {
 }
 
 task SplitDelimitedString {
+
+    meta {
+        description: "Split a delimited string into an array"
+    }
+
+    parameter_meta {
+        s: "The string to split"
+        separate: "The delimiter to split on"
+    }
+
     input {
         String s
         String separate
@@ -2345,10 +2775,17 @@ task SplitDelimitedString {
 }
 
 task ConstructMap {
+
     meta {
         desciption:
         "Use only when the keys are guaranteed to be unique and the two arrays are of the same length."
     }
+
+    parameter_meta {
+        keys: "The keys of the map"
+        values: "The values of the map"
+    }
+
     input {
         Array[String] keys
         Array[String] values
@@ -2370,6 +2807,16 @@ task ConstructMap {
 }
 
 task MapToTsv {
+
+    meta {
+        description: "Convert a map to a tsv file"
+    }
+
+    parameter_meta {
+        map: "The map to convert"
+        name_of_file: "The name of the file to write to"
+    }
+
     input {
         Map[String, Float] my_map
         String name_of_file
