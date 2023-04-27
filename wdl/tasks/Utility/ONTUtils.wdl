@@ -81,7 +81,7 @@ task GetRunInfo {
     }
 
     parameter_meta {
-        sequencing_summary: "Sequencing summary file."
+        final_summary: "Sequencing summary file."
         runtime_attr_override: "Override default runtime attributes."
     }
 

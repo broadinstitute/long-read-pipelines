@@ -1107,7 +1107,6 @@ task ConvertReads {
     parameter_meta {
         reads: "Reads to be converted."
         output_format: "Output format."
-        runtime_attr_override: "Override the default runtime attributes."
     }
 
     input {
@@ -2686,7 +2685,6 @@ task FailWithWarning {
 
     parameter_meta {
         warning: "The warning message to print"
-        runtime_attr_override: "override the runtime attributes"
     }
 
     input {
@@ -2791,7 +2789,7 @@ task MapToTsv {
     }
 
     parameter_meta {
-        map: "The map to convert"
+        my_map: "The map to convert"
         name_of_file: "The name of the file to write to"
     }
 

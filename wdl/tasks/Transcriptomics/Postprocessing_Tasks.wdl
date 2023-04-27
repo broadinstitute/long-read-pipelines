@@ -332,7 +332,7 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
     }
 
     parameter_meta{
-        cont_matrix_tsv: "The TSV file containing the count matrix to convert to anndata."
+        count_matrix_tsv: "The TSV file containing the count matrix to convert to anndata."
         genome_annotation_gtf_file: "The GTF file containing the genome annotation."
         tx_equivalence_class_definitions: "The equivalence class definitions file to use for the anndata object."
         tx_equivalence_class_assignments: "The equivalence class assignments file to use for the anndata object."

@@ -1182,7 +1182,7 @@ task SummarizeXMLMetadata {
     }
 
     parameter_meta {
-        metadata: "Input XML metadata."
+        xml: "Input XML metadata."
         runtime_attr_override: "Override default runtime attributes."
     }
 
