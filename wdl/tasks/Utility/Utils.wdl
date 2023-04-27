@@ -217,11 +217,6 @@ task SortBam {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        input_bam: "input BAM"
-        prefix:    "[default-valued] prefix for output BAM"
-    }
-
     command <<<
         set -euxo pipefail
 
@@ -549,7 +544,10 @@ task CountBamRecords {
     }
 
     parameter_meta {
-        bam: "The bam file"
+        bam: {
+                 localization_optional: true,
+                 description: "The bam file"
+             }
         runtime_attr_override: "Override the default runtime attributes"
     }
 
@@ -559,7 +557,7 @@ task CountBamRecords {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta { bam: { localization_optional: true } }
+
 
     Int disk_size = 100
 
@@ -1341,11 +1339,6 @@ task MergeBams {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        bams:   "input array of BAMs to be merged"
-        prefix: "[default-valued] prefix for output BAM"
-    }
-
     Int disk_size = 1 + 4*ceil(size(bams, "GB"))
 
     command <<<
@@ -1401,10 +1394,6 @@ task Index {
         File bam
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam: "BAM file to be indexed"
     }
 
     Int disk_size = 1 + 2*ceil(size(bam, "GB"))
@@ -1515,10 +1504,13 @@ task SubsetBam {
     }
 
     parameter_meta {
-        bam:   "Input BAM file to subset."
-        bai:   "Index for input BAM file."
-        locus: "Genomic locus to select."
-        prefix: "[default-valued] prefix for output BAM and BAI file names."
+        bam: {
+            description: "bam to subset",
+            localization_optional: true
+        }
+        bai:    "index for bam file"
+        locus:  "genomic locus to select"
+        prefix: "prefix for output bam and bai file names"
         runtime_attr_override: "Override the default runtime attributes."
     }
 
@@ -1531,15 +1523,7 @@ task SubsetBam {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        bam: {
-            description: "bam to subset",
-            localization_optional: true
-        }
-        bai:    "index for bam file"
-        locus:  "genomic locus to select"
-        prefix: "prefix for output bam and bai file names"
-    }
+
 
     Int disk_size = 4*ceil(size([bam, bai], "GB"))
 
@@ -1648,9 +1632,12 @@ task SelectFirstNReads {
     }
 
     parameter_meta {
-        bam:   "Input BAM file to subset."
-        n:     "Number of reads to select."
-        prefix: "[default-valued] prefix for output BAM file name."
+        bam: {
+                 description: "bam to subset",
+                 localization_optional: true
+             }
+        n: "number of reads to select"
+        prefix: "prefix for output bam file"
         runtime_attr_override: "Override the default runtime attributes."
     }
 
@@ -1660,15 +1647,6 @@ task SelectFirstNReads {
         String prefix = "selected"
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam: {
-                 description: "bam to subset",
-                 localization_optional: true
-             }
-        n: "number of reads to select"
-        prefix: "prefix for output bam file"
     }
 
     Int disk_size = ceil(size(bam, "GB"))

@@ -5,10 +5,7 @@ import "../../structs/Structs.wdl"
 workflow Canu {
 
     meta {
-        description: "A workflow that runs the Canu 3-step assembly (correct, trim, assemble). \
-                      - Tested on a small genome (malaria ~23mb), larger genomes may require some changes \
-                      including tweaks to the default resource allocation. \
-                      - Currently assumes nanopore reads"
+        description: "A workflow that runs the Canu 3-step assembly (correct, trim, assemble). Tested on a small genome (malaria ~23mb), larger genomes may require some changes including tweaks to the default resource allocation. Currently assumes nanopore reads"
     }
     parameter_meta {
         reads:        "reads to be canu-corrected"

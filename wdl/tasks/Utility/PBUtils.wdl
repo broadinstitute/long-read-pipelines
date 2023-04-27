@@ -286,8 +286,8 @@ task ExtractHifiReads {
 
     parameter_meta {
         bam: "Input BAM file."
-        sample_name: "Sample name."
-        library: "Library name."
+        sample_name: "Sample name, we always rely explicitly on input SM name"
+        library: "Library name, this will override the LB: entry on the @RG line"
         prefix: "Prefix for output files."
         runtime_attr_override: "Override default runtime attributes."
     }
@@ -301,11 +301,6 @@ task ExtractHifiReads {
         String prefix = "hifi"
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        sample_name: "we always rely explicitly on input SM name"
-        library: "this will override the LB: entry on the @RG line"
     }
 
     Int disk_size = 1 + 3*ceil(size(bam, "GB"))
@@ -488,10 +483,10 @@ task Demultiplex {
         prefix: "Prefix for output files."
         ccs: "Input BAM is CCS."
         isoseq: "Input BAM is IsoSeq."
-        peek_guess: "Peek at the first ~{peek} reads to guess barcodes."
+        peek_guess: "Demultiplex Barcodes will run twice on the input data. For the first 50,000 ZMWs, it will guess the barcodes and store the mask of identified barcodes. In the second run, the barcode mask is used to demultiplex all ZMWs"
         dump_removed: "Dump removed reads to a BAM file."
         split_bam_named: "Split BAM by barcode name."
-        peek: "Peek at the first ~{peek} reads to guess barcodes."
+        peek: "Looks at the first n ZMWs of the input and return the mean"
         min_score: "Minimum barcode score."
         guess: "Guess barcodes."
         guess_min_count: "Minimum number of reads to guess barcodes."
