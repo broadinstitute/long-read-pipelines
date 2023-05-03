@@ -474,7 +474,7 @@ task ExtractUncorrectedReads {
 task Demultiplex {
 
     meta {
-        description: "Demultiplex CCS reads."
+        description: "Demultiplex reads in a multiplexed PacBio bam."
     }
 
     parameter_meta {
