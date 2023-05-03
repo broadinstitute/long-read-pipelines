@@ -2463,7 +2463,7 @@ task ComputeAllowedLocalSSD {
 task RandomZoneSpewer {
 
     meta {
-        description: "Spews a random zone"
+        description: "Spews a random GCP zone"
     }
 
     parameter_meta {
