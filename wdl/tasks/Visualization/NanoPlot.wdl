@@ -101,7 +101,7 @@ task NanoPlotFromSummary {
 task NanoPlotFromRichFastqs {
 
     meta {
-        description: "Use NanoPlot to generate plots from a list of fastq files"
+        description: "Use NanoPlot to generate plots from a list of ONT fastq files"
     }
 
     parameter_meta {
