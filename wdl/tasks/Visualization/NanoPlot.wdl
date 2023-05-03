@@ -291,7 +291,7 @@ task NanoPlotFromBam {
 task NanoPlotFromUBam {
 
     meta {
-        description: "NanoPlotFromUBam"
+        description: "NanoPlot from an unaligned BAM"
     }
 
     parameter_meta {
