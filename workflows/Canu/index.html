@@ -130,10 +130,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">Canu</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#_1"></a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#_2"></a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#canu_1">Canu</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
@@ -259,18 +255,20 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="canu">Canu</h1>
-<h6 id="_1"></h6>
-<h6 id="_2"></h6>
 <h2 id="canu_1">Canu</h2>
+<dl>
+<dt>description</dt>
+<dd>A workflow that runs the Canu 3-step assembly (correct, trim, assemble). Tested on a small genome (malaria ~23mb), larger genomes may require some changes including tweaks to the default resource allocation. Currently assumes nanopore reads</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>assemble_error_rate</code> (Float, <strong>required</strong>)</li>
-<li><code>correct_error_rate</code> (Float, <strong>required</strong>)</li>
-<li><code>genome_size</code> (Int, <strong>required</strong>)</li>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
-<li><code>reads</code> (File, <strong>required</strong>)</li>
-<li><code>trim_error_rate</code> (Float, <strong>required</strong>)</li>
+<li><code>assemble_error_rate</code> (Float, <strong>required</strong>): parameter to canu's 'correctedErrorRate'</li>
+<li><code>correct_error_rate</code> (Float, <strong>required</strong>): parameter to canu's 'correctedErrorRate'</li>
+<li><code>genome_size</code> (Int, <strong>required</strong>): estimate on genome size (parameter to canu's 'genomeSize')</li>
+<li><code>prefix</code> (String, <strong>required</strong>): prefix to output files</li>
+<li><code>reads</code> (File, <strong>required</strong>): reads to be canu-corrected</li>
+<li><code>trim_error_rate</code> (Float, <strong>required</strong>): parameter to canu's 'correctedErrorRate'</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>

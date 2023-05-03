@@ -4,47 +4,47 @@ digraph {
 	node [fontname=Roboto]
 	edge [color="#00000080"]
 	"call-arbitrary" [label=arbitrary shape=cds]
-	subgraph "cluster-if-L64C5" {
+	subgraph "cluster-if-L67C5" {
 		fontname=Roboto label="if(call_svs)" rank=same
-		subgraph "cluster-if-L65C9" {
+		subgraph "cluster-if-L68C9" {
 			fontname=Roboto label="if(fast_less_sensitive_sv)" rank=same
 			"call-MakeChrIntervalList" [label=MakeChrIntervalList shape=cds]
-			subgraph "cluster-scatter-L73C13-c" {
+			subgraph "cluster-scatter-L76C13-c" {
 				fontname=Roboto label="scatter(MakeChrIntervalList.chrs)" rank=same
 				"call-SubsetBam" [label=SubsetBam shape=cds]
 				"call-RunPBSV" [label=RunPBSV shape=cds]
 				"call-Sniffles" [label=Sniffles shape=cds]
 				"call-InferSampleName" [label=InferSampleName shape=cds]
 				"call-FixSnifflesVCF" [label=FixSnifflesVCF shape=cds]
-				"scatter-L73C13-c" [label="" height=0 margin=0 style=invis width=0]
+				"scatter-L76C13-c" [label="" height=0 margin=0 style=invis width=0]
 			}
 			"call-MergePBSVVCFs" [label=MergePBSVVCFs shape=cds]
 			"call-UnionHeadersSnifflesVCFs" [label=UnionHeadersSnifflesVCFs shape=cds]
 			"call-MergeSnifflesVCFs" [label=MergeSnifflesVCFs shape=cds]
-			"if-L65C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L68C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L135C9" {
+		subgraph "cluster-if-L138C9" {
 			fontname=Roboto label="if(!fast_less_sensitive_sv)" rank=same
 			"call-PBSVslow" [label=PBSVslow shape=cds]
 			"call-ZipAndIndexPBSV" [label=ZipAndIndexPBSV shape=cds]
 			"call-SnifflesSlow" [label=SnifflesSlow shape=cds]
 			"call-infer" [label=infer shape=cds]
 			"call-ZipAndIndexSniffles" [label=ZipAndIndexSniffles shape=cds]
-			"if-L135C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L138C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"if-L64C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L67C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	"call-MakeChrIntervalList" -> "scatter-L73C13-c" [lhead="cluster-scatter-L73C13-c"]
+	"call-MakeChrIntervalList" -> "scatter-L76C13-c" [lhead="cluster-scatter-L76C13-c"]
 	"call-arbitrary" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-Sniffles"
 	"call-SubsetBam" -> "call-InferSampleName"
-	"call-InferSampleName" -> "call-FixSnifflesVCF"
 	"call-Sniffles" -> "call-FixSnifflesVCF"
+	"call-InferSampleName" -> "call-FixSnifflesVCF"
 	"call-RunPBSV" -> "call-MergePBSVVCFs"
 	"call-FixSnifflesVCF" -> "call-UnionHeadersSnifflesVCFs"
-	"call-FixSnifflesVCF" -> "call-MergeSnifflesVCFs"
 	"call-UnionHeadersSnifflesVCFs" -> "call-MergeSnifflesVCFs"
+	"call-FixSnifflesVCF" -> "call-MergeSnifflesVCFs"
 	"call-arbitrary" -> "call-PBSVslow"
 	"call-PBSVslow" -> "call-ZipAndIndexPBSV"
 	"call-infer" -> "call-ZipAndIndexSniffles"

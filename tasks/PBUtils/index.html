@@ -548,29 +548,37 @@
               
                 <h1 id="pbutils">PBUtils</h1>
 <h2 id="findbams">FindBams</h2>
+<dl>
+<dt>description</dt>
+<dd>Find all subreads.bam files in a GCS directory.</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>gcs_input_dir</code> (String, <strong>required</strong>)</li>
+<li><code>gcs_input_dir</code> (String, <strong>required</strong>): GCS directory containing subreads.bam files.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>subread_bams</code> (Array[String])</li>
 </ul>
 <h2 id="getruninfo">GetRunInfo</h2>
+<dl>
+<dt>description</dt>
+<dd>Get run info from a PacBio BAM file.</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>SM</code> (String, <strong>required</strong>)</li>
-<li><code>bam</code> (String, <strong>required</strong>)</li>
+<li><code>SM</code> (String, <strong>required</strong>): Sample name.</li>
+<li><code>bam</code> (String, <strong>required</strong>): BAM file.</li>
 </ul>
 <h4 id="optional_1">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
 <ul>
@@ -578,23 +586,27 @@
 <li><code>is_corrected</code> (Boolean)</li>
 </ul>
 <h2 id="shardlongreads">ShardLongReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Shard long reads.</dd>
+</dl>
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>unaligned_bam</code> (File, <strong>required</strong>)</li>
-<li><code>unaligned_pbi</code> (File, <strong>required</strong>)</li>
+<li><code>unaligned_bam</code> (File, <strong>required</strong>): Unaligned BAM file.</li>
+<li><code>unaligned_pbi</code> (File, <strong>required</strong>): Unaligned BAM index file.</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
-<li><code>num_ssds</code> (Int?)</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>num_ssds</code> (Int?): number of SSDs to use</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>drop_per_base_N_pulse_tags</code> (Boolean, default=false)</li>
-<li><code>num_shards</code> (Int, default=300)</li>
-<li><code>num_threads</code> (Int, default=8)</li>
-<li><code>prefix</code> (String, default="shard")</li>
+<li><code>drop_per_base_N_pulse_tags</code> (Boolean, default=false): Drop per-base N and pulse tags.</li>
+<li><code>num_shards</code> (Int, default=300): Number of shards.</li>
+<li><code>num_threads</code> (Int, default=8): Number of threads.</li>
+<li><code>prefix</code> (String, default="shard"): Prefix for shard BAM files.</li>
 <li><code>zones</code> (String, default="us-central1-c us-central1-b"): select which zone (GCP) to run this task</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
@@ -602,20 +614,24 @@
 <li><code>unmapped_shards</code> (Array[File])</li>
 </ul>
 <h2 id="ccs">CCS</h2>
+<dl>
+<dt>description</dt>
+<dd>Run CCS.</dd>
+</dl>
 <h3 id="inputs_3">Inputs</h3>
 <h4 id="required_3">Required</h4>
 <ul>
-<li><code>subreads</code> (File, <strong>required</strong>)</li>
+<li><code>subreads</code> (File, <strong>required</strong>): Subreads BAM file.</li>
 </ul>
 <h4 id="optional_3">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_1">Defaults</h4>
 <ul>
-<li><code>all</code> (Boolean, default=true)</li>
-<li><code>by_strand</code> (Boolean, default=false)</li>
-<li><code>kinetics</code> (Boolean, default=false)</li>
+<li><code>all</code> (Boolean, default=true): Generates one representative sequence per zero mode waveguide (ZMW), irrespective of quality and passes</li>
+<li><code>by_strand</code> (Boolean, default=false): Treats each strand of a ZMW (zero mode waveguide) as an individual entity and generates one consensus read for each strand that passes all filters.</li>
+<li><code>kinetics</code> (Boolean, default=false): Generate SQIIe values.</li>
 </ul>
 <h3 id="outputs_3">Outputs</h3>
 <ul>
@@ -626,85 +642,101 @@
 <li><code>hifi_summary_json</code> (File)</li>
 </ul>
 <h2 id="extracthifireads">ExtractHifiReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Extract HiFi reads from a BAM file.</dd>
+</dl>
 <h3 id="inputs_4">Inputs</h3>
 <h4 id="required_4">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>library</code> (String, <strong>required</strong>): this will override the LB: entry on the @RG line</li>
-<li><code>sample_name</code> (String, <strong>required</strong>): we always rely explicitly on input SM name</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file.</li>
+<li><code>library</code> (String, <strong>required</strong>): Library name, this will override the LB: entry on the @RG line</li>
+<li><code>sample_name</code> (String, <strong>required</strong>): Sample name, we always rely explicitly on input SM name</li>
 </ul>
 <h4 id="optional_4">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_2">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="hifi")</li>
+<li><code>prefix</code> (String, default="hifi"): Prefix for output files.</li>
 </ul>
 <h3 id="outputs_4">Outputs</h3>
 <ul>
 <li><code>hifi_bam</code> (File)</li>
 </ul>
 <h2 id="mergeccsreports">MergeCCSReports</h2>
+<dl>
+<dt>description</dt>
+<dd>Merge CCS reports from shards of a single BAM.</dd>
+</dl>
 <h3 id="inputs_5">Inputs</h3>
 <h4 id="required_5">Required</h4>
 <ul>
-<li><code>reports</code> (Array[File], <strong>required</strong>)</li>
+<li><code>reports</code> (Array[File], <strong>required</strong>): Input CCS reports.</li>
 </ul>
 <h4 id="optional_5">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_3">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out")</li>
+<li><code>prefix</code> (String, default="out"): Prefix for output files.</li>
 </ul>
 <h3 id="outputs_5">Outputs</h3>
 <ul>
 <li><code>report</code> (File)</li>
 </ul>
 <h2 id="extractuncorrectedreads">ExtractUncorrectedReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Extract uncorrected reads from subreads and consensus.</dd>
+</dl>
 <h3 id="inputs_6">Inputs</h3>
 <h4 id="required_6">Required</h4>
 <ul>
-<li><code>consensus</code> (File, <strong>required</strong>)</li>
-<li><code>subreads</code> (File, <strong>required</strong>)</li>
+<li><code>consensus</code> (File, <strong>required</strong>): Input consensus BAM.</li>
+<li><code>subreads</code> (File, <strong>required</strong>): Input subreads BAM.</li>
 </ul>
 <h4 id="optional_6">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_4">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out")</li>
+<li><code>prefix</code> (String, default="out"): Prefix for output files.</li>
 </ul>
 <h3 id="outputs_6">Outputs</h3>
 <ul>
 <li><code>uncorrected</code> (File)</li>
 </ul>
 <h2 id="demultiplex">Demultiplex</h2>
+<dl>
+<dt>description</dt>
+<dd>Demultiplex reads in a multiplexed PacBio bam.</dd>
+</dl>
 <h3 id="inputs_7">Inputs</h3>
 <h4 id="required_7">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>barcode_file</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM.</li>
+<li><code>barcode_file</code> (File, <strong>required</strong>): Input barcode file.</li>
 </ul>
 <h4 id="optional_7">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_5">Defaults</h4>
 <ul>
-<li><code>ccs</code> (Boolean, default=false)</li>
-<li><code>dump_removed</code> (Boolean, default=false)</li>
-<li><code>guess</code> (Int, default=0)</li>
-<li><code>guess_min_count</code> (Int, default=0)</li>
-<li><code>isoseq</code> (Boolean, default=false)</li>
-<li><code>min_score</code> (Int, default=0)</li>
-<li><code>peek</code> (Int, default=0)</li>
-<li><code>peek_guess</code> (Boolean, default=false)</li>
-<li><code>prefix</code> (String, default="demux")</li>
-<li><code>split_bam_named</code> (Boolean, default=false)</li>
+<li><code>ccs</code> (Boolean, default=false): Input BAM is CCS.</li>
+<li><code>dump_removed</code> (Boolean, default=false): Dump removed reads to a BAM file.</li>
+<li><code>guess</code> (Int, default=0): Guess barcodes.</li>
+<li><code>guess_min_count</code> (Int, default=0): Minimum number of reads to guess barcodes.</li>
+<li><code>isoseq</code> (Boolean, default=false): Input BAM is IsoSeq.</li>
+<li><code>min_score</code> (Int, default=0): Minimum barcode score.</li>
+<li><code>peek</code> (Int, default=0): Looks at the first n ZMWs of the input and return the mean</li>
+<li><code>peek_guess</code> (Boolean, default=false): Demultiplex Barcodes will run twice on the input data. For the first 50,000 ZMWs, it will guess the barcodes and store the mask of identified barcodes. In the second run, the barcode mask is used to demultiplex all ZMWs</li>
+<li><code>prefix</code> (String, default="demux"): Prefix for output files.</li>
+<li><code>split_bam_named</code> (Boolean, default=false): Split BAM by barcode name.</li>
 </ul>
 <h3 id="outputs_7">Outputs</h3>
 <ul>
@@ -715,89 +747,109 @@
 <li><code>clips</code> (File?)</li>
 </ul>
 <h2 id="makedetaileddemultiplexingreport">MakeDetailedDemultiplexingReport</h2>
+<dl>
+<dt>description</dt>
+<dd>Make a detailed demultiplexing report.</dd>
+</dl>
 <h3 id="inputs_8">Inputs</h3>
 <h4 id="required_8">Required</h4>
 <ul>
-<li><code>report</code> (File, <strong>required</strong>)</li>
+<li><code>report</code> (File, <strong>required</strong>): Input report.</li>
 </ul>
 <h4 id="optional_8">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_6">Defaults</h4>
 <ul>
-<li><code>type</code> (String, default="png")</li>
+<li><code>type</code> (String, default="png"): Output file type (pdf or png).</li>
 </ul>
 <h3 id="outputs_8">Outputs</h3>
 <ul>
 <li><code>report_files</code> (Array[File])</li>
 </ul>
 <h2 id="makesummarizeddemultiplexingreport">MakeSummarizedDemultiplexingReport</h2>
+<dl>
+<dt>description</dt>
+<dd>Make a summarized demultiplexing report.</dd>
+</dl>
 <h3 id="inputs_9">Inputs</h3>
 <h4 id="required_9">Required</h4>
 <ul>
-<li><code>report</code> (File, <strong>required</strong>)</li>
+<li><code>report</code> (File, <strong>required</strong>): Input report.</li>
 </ul>
 <h4 id="optional_9">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs_9">Outputs</h3>
 <ul>
 <li><code>report_files</code> (Array[File])</li>
 </ul>
 <h2 id="makeperbarcodedemultiplexingreports">MakePerBarcodeDemultiplexingReports</h2>
+<dl>
+<dt>description</dt>
+<dd>Make per-barcode demultiplexing reports.</dd>
+</dl>
 <h3 id="inputs_10">Inputs</h3>
 <h4 id="required_10">Required</h4>
 <ul>
-<li><code>report</code> (File, <strong>required</strong>)</li>
+<li><code>report</code> (File, <strong>required</strong>): Input report.</li>
 </ul>
 <h4 id="optional_10">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_7">Defaults</h4>
 <ul>
-<li><code>type</code> (String, default="png")</li>
+<li><code>type</code> (String, default="png"): Output file type (pdf or png).</li>
 </ul>
 <h3 id="outputs_10">Outputs</h3>
 <ul>
 <li><code>report_files</code> (Array[File])</li>
 </ul>
 <h2 id="refinetranscriptreads">RefineTranscriptReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Refine transcript reads.</dd>
+</dl>
 <h3 id="inputs_11">Inputs</h3>
 <h4 id="required_11">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>barcode_file</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file.</li>
+<li><code>barcode_file</code> (File, <strong>required</strong>): Input barcode file.</li>
 </ul>
 <h4 id="optional_11">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_8">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="flnc")</li>
-<li><code>require_polya</code> (Boolean, default=true)</li>
+<li><code>prefix</code> (String, default="flnc"): Prefix for output BAM file.</li>
+<li><code>require_polya</code> (Boolean, default=true): Require polyA tail.</li>
 </ul>
 <h3 id="outputs_11">Outputs</h3>
 <ul>
 <li><code>refined_bam</code> (File)</li>
 </ul>
 <h2 id="clustertranscripts">ClusterTranscripts</h2>
+<dl>
+<dt>description</dt>
+<dd>Cluster transcripts.</dd>
+</dl>
 <h3 id="inputs_12">Inputs</h3>
 <h4 id="required_12">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file.</li>
 </ul>
 <h4 id="optional_12">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_9">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="clustered")</li>
-<li><code>use_qvs</code> (Boolean, default=true)</li>
+<li><code>prefix</code> (String, default="clustered"): Prefix for output BAM file.</li>
+<li><code>use_qvs</code> (Boolean, default=true): Use CCS Analysis Quality Values.</li>
 </ul>
 <h3 id="outputs_12">Outputs</h3>
 <ul>
@@ -814,20 +866,24 @@
 <li><code>transcriptset_xml</code> (File)</li>
 </ul>
 <h2 id="polishtranscripts">PolishTranscripts</h2>
+<dl>
+<dt>description</dt>
+<dd>Polish transcripts.</dd>
+</dl>
 <h3 id="inputs_13">Inputs</h3>
 <h4 id="required_13">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>subreads_bam</code> (File, <strong>required</strong>)</li>
-<li><code>subreads_pbi</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file.</li>
+<li><code>subreads_bam</code> (File, <strong>required</strong>): Input subreads BAM file.</li>
+<li><code>subreads_pbi</code> (File, <strong>required</strong>): Input subreads PBI file.</li>
 </ul>
 <h4 id="optional_13">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_10">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="polished")</li>
+<li><code>prefix</code> (String, default="polished"): Prefix for output BAM file.</li>
 </ul>
 <h3 id="outputs_13">Outputs</h3>
 <ul>
@@ -835,23 +891,27 @@
 <li><code>polished_fastq</code> (File)</li>
 </ul>
 <h2 id="align">Align</h2>
+<dl>
+<dt>description</dt>
+<dd>Align reads to reference.</dd>
+</dl>
 <h3 id="inputs_14">Inputs</h3>
 <h4 id="required_14">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>drop_per_base_N_pulse_tags</code> (Boolean, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file.</li>
+<li><code>drop_per_base_N_pulse_tags</code> (Boolean, <strong>required</strong>): Drop per-base N and pulse tags.</li>
 <li><code>map_preset</code> (String, <strong>required</strong>)</li>
-<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>): Input reference FASTA file.</li>
 <li><code>sample_name</code> (String, <strong>required</strong>): we always rely explicitly on input SM name</li>
 </ul>
 <h4 id="optional_14">Optional</h4>
 <ul>
 <li><code>library</code> (String?): this will override the LB: entry on the @RG line</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_11">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out")</li>
+<li><code>prefix</code> (String, default="out"): Prefix for output BAM file.</li>
 </ul>
 <h3 id="outputs_14">Outputs</h3>
 <ul>
@@ -859,47 +919,59 @@
 <li><code>aligned_bai</code> (File)</li>
 </ul>
 <h2 id="pbindex">PBIndex</h2>
+<dl>
+<dt>description</dt>
+<dd>Index a BAM file.</dd>
+</dl>
 <h3 id="inputs_15">Inputs</h3>
 <h4 id="required_15">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file.</li>
 </ul>
 <h4 id="optional_15">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs_15">Outputs</h3>
 <ul>
 <li><code>pbi</code> (File)</li>
 </ul>
 <h2 id="collapsetranscripts">CollapseTranscripts</h2>
+<dl>
+<dt>description</dt>
+<dd>Collapse transcripts using isoseq3.</dd>
+</dl>
 <h3 id="inputs_16">Inputs</h3>
 <h4 id="required_16">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file.</li>
 </ul>
 <h4 id="optional_16">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_12">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out")</li>
-<li><code>use_qvs</code> (Boolean, default=true)</li>
+<li><code>prefix</code> (String, default="out"): Prefix for output files.</li>
+<li><code>use_qvs</code> (Boolean, default=true): Use CCS Analysis Quality Values.</li>
 </ul>
 <h3 id="outputs_16">Outputs</h3>
 <ul>
 <li><code>gff</code> (File)</li>
 </ul>
 <h2 id="summarizeccsreport">SummarizeCCSReport</h2>
+<dl>
+<dt>description</dt>
+<dd>Summarize CCS report.</dd>
+</dl>
 <h3 id="inputs_17">Inputs</h3>
 <h4 id="required_17">Required</h4>
 <ul>
-<li><code>report</code> (File, <strong>required</strong>)</li>
+<li><code>report</code> (File, <strong>required</strong>): Input CCS report.</li>
 </ul>
 <h4 id="optional_17">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs_17">Outputs</h3>
 <ul>
@@ -912,14 +984,18 @@
 <li><code>zmws_shortcut_filters_pct</code> (Float)</li>
 </ul>
 <h2 id="summarizexmlmetadata">SummarizeXMLMetadata</h2>
+<dl>
+<dt>description</dt>
+<dd>Summarize XML metadata.</dd>
+</dl>
 <h3 id="inputs_18">Inputs</h3>
 <h4 id="required_18">Required</h4>
 <ul>
-<li><code>xml</code> (File, <strong>required</strong>)</li>
+<li><code>xml</code> (File, <strong>required</strong>): Input XML metadata.</li>
 </ul>
 <h4 id="optional_18">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs_18">Outputs</h3>
 <ul>
@@ -927,18 +1003,22 @@
 <li><code>xml_num_records</code> (Float)</li>
 </ul>
 <h2 id="summarizepbi">SummarizePBI</h2>
+<dl>
+<dt>description</dt>
+<dd>Summarize PBI.</dd>
+</dl>
 <h3 id="inputs_19">Inputs</h3>
 <h4 id="required_19">Required</h4>
 <ul>
-<li><code>pbi</code> (File, <strong>required</strong>)</li>
+<li><code>pbi</code> (File, <strong>required</strong>): Input PBI.</li>
 </ul>
 <h4 id="optional_19">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults_13">Defaults</h4>
 <ul>
-<li><code>qual_threshold</code> (Int, default=0)</li>
+<li><code>qual_threshold</code> (Int, default=0): Quality threshold.</li>
 </ul>
 <h3 id="outputs_19">Outputs</h3>
 <ul>

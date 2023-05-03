@@ -320,10 +320,14 @@
               
                 <h1 id="masseq">MASSeq</h1>
 <h2 id="removemasseqtruncatedreads">RemoveMasSeqTruncatedReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Removes reads that are truncated by the MAS-SEQ adapter.</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): The BAM file to remove truncated reads from.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
@@ -331,7 +335,7 @@
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out")</li>
+<li><code>prefix</code> (String, default="out"): The prefix to use for the output BAM file.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
@@ -350,23 +354,23 @@
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): The BAM file to extract UMIs from.</li>
 </ul>
 <h4 id="optional_1">Optional</h4>
 <ul>
-<li><code>post_umi_seq</code> (String?)</li>
-<li><code>post_umi_tag</code> (String?)</li>
-<li><code>pre_pre_umi_seq</code> (String?)</li>
-<li><code>pre_umi_seq</code> (String?)</li>
-<li><code>pre_umi_tag</code> (String?)</li>
+<li><code>post_umi_seq</code> (String?): The sequence of the adapter following the UMI sequence.</li>
+<li><code>post_umi_tag</code> (String?): The tag to use for the adapter following the UMI sequence.</li>
+<li><code>pre_pre_umi_seq</code> (String?): The sequence of the adapter preceding the UMI sequence.</li>
+<li><code>pre_umi_seq</code> (String?): The sequence of the adapter preceding the UMI sequence.</li>
+<li><code>pre_umi_tag</code> (String?): The tag to use for the adapter preceding the UMI sequence.</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults_1">Defaults</h4>
 <ul>
-<li><code>existing_umi_tag</code> (String, default="ZU")</li>
-<li><code>new_umi_tag</code> (String, default="JX")</li>
-<li><code>prefix</code> (String, default="out")</li>
-<li><code>umi_length</code> (Int, default=10)</li>
+<li><code>existing_umi_tag</code> (String, default="ZU"): The tag to use for the existing UMI sequence.</li>
+<li><code>new_umi_tag</code> (String, default="JX"): The tag to use for the new UMI sequence.</li>
+<li><code>prefix</code> (String, default="out"): The prefix to use for the output BAM file.</li>
+<li><code>umi_length</code> (Int, default=10): The length of the UMI sequence.</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
 <ul>
@@ -374,11 +378,15 @@
 <li><code>log</code> (File)</li>
 </ul>
 <h2 id="filtermasseqreads">FilterMasSeqReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Filters out reads that are likely to be from the MAS-Seq protocol.</dd>
+</dl>
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>input_bai</code> (File, <strong>required</strong>)</li>
-<li><code>input_bam</code> (File, <strong>required</strong>)</li>
+<li><code>input_bai</code> (File, <strong>required</strong>): The BAI file for the BAM file to filter.</li>
+<li><code>input_bam</code> (File, <strong>required</strong>): The BAM file to filter.</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
@@ -386,9 +394,9 @@
 </ul>
 <h4 id="defaults_2">Defaults</h4>
 <ul>
-<li><code>maxEndClipping</code> (Int, default=1000)</li>
-<li><code>maxReadLength</code> (Int, default=15000)</li>
-<li><code>prefix</code> (String, default="out")</li>
+<li><code>maxEndClipping</code> (Int, default=1000): The maximum amount of end clipping to allow.</li>
+<li><code>maxReadLength</code> (Int, default=15000): The maximum read length to allow.</li>
+<li><code>prefix</code> (String, default="out"): The prefix to use for the output BAM file.</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
 <ul>
@@ -407,7 +415,7 @@
 <h3 id="inputs_3">Inputs</h3>
 <h4 id="required_3">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): The BAM file to rename.</li>
 </ul>
 <h4 id="optional_3">Optional</h4>
 <ul>
@@ -415,7 +423,7 @@
 </ul>
 <h4 id="defaults_3">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="tags_renamed")</li>
+<li><code>prefix</code> (String, default="tags_renamed"): The prefix to use for the output BAM file.</li>
 </ul>
 <h3 id="outputs_3">Outputs</h3>
 <ul>
@@ -434,7 +442,7 @@
 <h3 id="inputs_4">Inputs</h3>
 <h4 id="required_4">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): The BAM file to rename.</li>
 </ul>
 <h4 id="optional_4">Optional</h4>
 <ul>
@@ -442,7 +450,7 @@
 </ul>
 <h4 id="defaults_4">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="tags_restored")</li>
+<li><code>prefix</code> (String, default="tags_restored"): The prefix to use for the output BAM file.</li>
 </ul>
 <h3 id="outputs_4">Outputs</h3>
 <ul>

@@ -354,12 +354,16 @@
               
                 <h1 id="variantutils">VariantUtils</h1>
 <h2 id="mergeperchrcalls">MergePerChrCalls</h2>
+<dl>
+<dt>description</dt>
+<dd>Merge per-chromosome calls into a single VCF</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
-<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
-<li><code>vcfs</code> (Array[File], <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix for output VCF</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>): Reference dictionary</li>
+<li><code>vcfs</code> (Array[File], <strong>required</strong>): List of per-chromosome VCFs to merge</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
@@ -400,11 +404,11 @@
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>vcfs</code> (Array[File], <strong>required</strong>)</li>
+<li><code>vcfs</code> (Array[File], <strong>required</strong>): List of VCF files to be concatenated</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
 <ul>
@@ -422,27 +426,31 @@
 </ul>
 <h4 id="optional_3">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
 <h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>sample_name</code> (String)</li>
 </ul>
 <h2 id="subsetvcf">SubsetVCF</h2>
+<dl>
+<dt>description</dt>
+<dd>Subset a VCF file to a given locus</dd>
+</dl>
 <h3 id="inputs_4">Inputs</h3>
 <h4 id="required_4">Required</h4>
 <ul>
-<li><code>locus</code> (String, <strong>required</strong>)</li>
-<li><code>vcf_gz</code> (File, <strong>required</strong>)</li>
-<li><code>vcf_tbi</code> (File, <strong>required</strong>)</li>
+<li><code>locus</code> (String, <strong>required</strong>): Locus to be subsetted</li>
+<li><code>vcf_gz</code> (File, <strong>required</strong>): VCF file to be subsetted</li>
+<li><code>vcf_tbi</code> (File, <strong>required</strong>): Tabix index for the VCF file</li>
 </ul>
 <h4 id="optional_4">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="subset")</li>
+<li><code>prefix</code> (String, default="subset"): Prefix for the output file</li>
 </ul>
 <h3 id="outputs_4">Outputs</h3>
 <ul>
@@ -457,11 +465,11 @@
 <h3 id="inputs_5">Inputs</h3>
 <h4 id="required_5">Required</h4>
 <ul>
-<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>): VCF file to be zipped and indexed</li>
 </ul>
 <h4 id="optional_5">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
 <h3 id="outputs_5">Outputs</h3>
 <ul>
@@ -476,17 +484,21 @@
 <h3 id="inputs_6">Inputs</h3>
 <h4 id="required_6">Required</h4>
 <ul>
-<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>): VCF file to be indexed</li>
 </ul>
 <h4 id="optional_6">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
 <h3 id="outputs_6">Outputs</h3>
 <ul>
 <li><code>tbi</code> (File)</li>
 </ul>
 <h2 id="fixsnifflesvcf">FixSnifflesVCF</h2>
+<dl>
+<dt>description</dt>
+<dd>Fixes the sample information in a VCF file and prepares to fix undefined VCF INFO/FT/FORMATs. It then proceeds to get the missing VCF headers for these undefined formats and filters. Specific to Sniffles-1</dd>
+</dl>
 <h3 id="inputs_7">Inputs</h3>
 <h4 id="required_7">Required</h4>
 <ul>

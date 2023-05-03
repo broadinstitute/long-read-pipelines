@@ -275,7 +275,7 @@
 <li><code>bam</code> (File, <strong>required</strong>): input BAM from which to call SVs</li>
 <li><code>call_small_vars_on_mitochondria</code> (Boolean, <strong>required</strong>): if false, will not attempt to call variants on mitochondria</li>
 <li><code>call_svs</code> (Boolean, <strong>required</strong>)</li>
-<li><code>fast_less_sensitive_sv</code> (Boolean, <strong>required</strong>)</li>
+<li><code>fast_less_sensitive_sv</code> (Boolean, <strong>required</strong>): if true, will run PBSV in a less sensitive mode, which is faster</li>
 <li><code>prefix</code> (String, <strong>required</strong>): prefix for output files</li>
 <li><code>ref_dict</code> (File, <strong>required</strong>): sequence dictionary accompanying the reference</li>
 <li><code>ref_fasta</code> (File, <strong>required</strong>): reference to which the BAM was aligned to</li>
@@ -306,7 +306,7 @@
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>call_small_variants</code> (Boolean, default=false)</li>
+<li><code>call_small_variants</code> (Boolean, default=false): if true, will attempt to call small variants</li>
 <li><code>Sniffles.min_mq</code> (Int, default=20)</li>
 <li><code>Sniffles.min_read_length</code> (Int, default=1000)</li>
 <li><code>Sniffles.min_read_support</code> (Int, default=2)</li>

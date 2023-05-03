@@ -267,20 +267,20 @@
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>aligned_transcriptome_reads</code> (File, <strong>required</strong>)</li>
-<li><code>aligned_transcriptome_reads_index</code> (File, <strong>required</strong>)</li>
+<li><code>aligned_transcriptome_reads</code> (File, <strong>required</strong>): Aligned reads in bam format.</li>
+<li><code>aligned_transcriptome_reads_index</code> (File, <strong>required</strong>): Index for aligned reads in bam format.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>cell_barcode_tag</code> (String, default="CB")</li>
-<li><code>do_per_cell</code> (Boolean, default=true)</li>
-<li><code>gene_tag</code> (String, default="XG")</li>
-<li><code>prefix</code> (String, default="umi_tools_group")</li>
-<li><code>umi_tag</code> (String, default="ZU")</li>
+<li><code>cell_barcode_tag</code> (String, default="CB"): Tag for cell barcode in bam file.</li>
+<li><code>do_per_cell</code> (Boolean, default=true): Whether to do per-cell grouping.</li>
+<li><code>gene_tag</code> (String, default="XG"): Tag for gene name in bam file.</li>
+<li><code>prefix</code> (String, default="umi_tools_group"): Prefix for output files.</li>
+<li><code>umi_tag</code> (String, default="ZU"): Tag for UMI in bam file.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>

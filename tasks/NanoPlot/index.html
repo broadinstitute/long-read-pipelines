@@ -296,14 +296,18 @@
               
                 <h1 id="nanoplot">NanoPlot</h1>
 <h2 id="nanoplotfromsummary">NanoPlotFromSummary</h2>
+<dl>
+<dt>description</dt>
+<dd>Use NanoPlot to generate plots from ONT summary files</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>summary_files</code> (Array[File], <strong>required</strong>)</li>
+<li><code>summary_files</code> (Array[File], <strong>required</strong>): A list of summary files to use as input</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
@@ -326,14 +330,18 @@
 <li><code>Yield_By_Length</code> (File)</li>
 </ul>
 <h2 id="nanoplotfromrichfastqs">NanoPlotFromRichFastqs</h2>
+<dl>
+<dt>description</dt>
+<dd>Use NanoPlot to generate plots from a list of ONT fastq files</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>fastqs</code> (Array[File], <strong>required</strong>)</li>
+<li><code>fastqs</code> (Array[File], <strong>required</strong>): A list of fastq files to use as input</li>
 </ul>
 <h4 id="optional_1">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
 <ul>
@@ -356,15 +364,19 @@
 <li><code>Yield_By_Length</code> (File)</li>
 </ul>
 <h2 id="nanoplotfrombam">NanoPlotFromBam</h2>
+<dl>
+<dt>description</dt>
+<dd>Use NanoPlot to generate plots from a bam file</dd>
+</dl>
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>bai</code> (File, <strong>required</strong>)</li>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bai</code> (File, <strong>required</strong>): The bai file for the bam file</li>
+<li><code>bam</code> (File, <strong>required</strong>): A bam file to use as input</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
 <ul>
@@ -373,14 +385,18 @@
 <li><code>plots</code> (Array[File])</li>
 </ul>
 <h2 id="nanoplotfromubam">NanoPlotFromUBam</h2>
+<dl>
+<dt>description</dt>
+<dd>NanoPlot from an unaligned BAM</dd>
+</dl>
 <h3 id="inputs_3">Inputs</h3>
 <h4 id="required_3">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file</li>
 </ul>
 <h4 id="optional_3">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Runtime attributes to override</li>
 </ul>
 <h3 id="outputs_3">Outputs</h3>
 <ul>

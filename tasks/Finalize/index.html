@@ -338,6 +338,10 @@
               
                 <h1 id="finalize">Finalize</h1>
 <h2 id="finalizetofile">FinalizeToFile</h2>
+<dl>
+<dt>description</dt>
+<dd>Copies the given file to the specified bucket.</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
@@ -355,6 +359,10 @@
 <li><code>gcs_path</code> (String)</li>
 </ul>
 <h2 id="finalizetodir">FinalizeToDir</h2>
+<dl>
+<dt>description</dt>
+<dd>Copies the given file to the specified bucket.</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
@@ -441,13 +449,13 @@
 <h3 id="inputs_5">Inputs</h3>
 <h4 id="required_5">Required</h4>
 <ul>
-<li><code>file</code> (File, <strong>required</strong>)</li>
-<li><code>outdir</code> (String, <strong>required</strong>)</li>
+<li><code>file</code> (File, <strong>required</strong>): File to compress and finalize.</li>
+<li><code>outdir</code> (String, <strong>required</strong>): Google cloud path to the destination folder.</li>
 </ul>
 <h4 id="optional_5">Optional</h4>
 <ul>
-<li><code>name</code> (String?)</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>name</code> (String?): [optional] Name of the file to write.  If not specified, the name of the input file will be used.</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): [optional] Additional runtime parameters.</li>
 </ul>
 <h3 id="outputs_5">Outputs</h3>
 <ul>
@@ -461,13 +469,13 @@
 <h3 id="inputs_6">Inputs</h3>
 <h4 id="required_6">Required</h4>
 <ul>
-<li><code>files</code> (Array[File], <strong>required</strong>)</li>
-<li><code>outdir</code> (String, <strong>required</strong>)</li>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>files</code> (Array[File], <strong>required</strong>): Files to compress and finalize.</li>
+<li><code>outdir</code> (String, <strong>required</strong>): Google cloud path to the destination folder.</li>
+<li><code>prefix</code> (String, <strong>required</strong>): [optional] Prefix to add to the output files.</li>
 </ul>
 <h4 id="optional_6">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): [optional] Additional runtime parameters.</li>
 </ul>
 <h3 id="outputs_6">Outputs</h3>
 <ul>

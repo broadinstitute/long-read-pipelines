@@ -254,12 +254,16 @@
               
                 <h1 id="flye">Flye</h1>
 <h2 id="flye_1">Flye</h2>
+<dl>
+<dt>description</dt>
+<dd>Assemble a genome using Flye</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>genome_size</code> (Float, <strong>required</strong>)</li>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
-<li><code>reads</code> (File, <strong>required</strong>)</li>
+<li><code>genome_size</code> (Float, <strong>required</strong>): Estimated genome size in base pairs</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix to apply to assembly output filenames</li>
+<li><code>reads</code> (File, <strong>required</strong>): Input reads (in fasta or fastq format, compressed or uncompressed)</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>

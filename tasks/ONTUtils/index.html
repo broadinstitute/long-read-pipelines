@@ -296,43 +296,55 @@
               
                 <h1 id="ontutils">ONTUtils</h1>
 <h2 id="findsequencingsummaryfiles">FindSequencingSummaryFiles</h2>
+<dl>
+<dt>description</dt>
+<dd>Find sequencing summary files in an ONT basecall directory.</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>gcs_input_dir</code> (String, <strong>required</strong>)</li>
+<li><code>gcs_input_dir</code> (String, <strong>required</strong>): GCS directory containing sequencing summary files.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>summary_files</code> (Array[String])</li>
 </ul>
 <h2 id="getruninfo">GetRunInfo</h2>
+<dl>
+<dt>description</dt>
+<dd>Get ONT run info from a final summary file.</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>final_summary</code> (String, <strong>required</strong>)</li>
+<li><code>final_summary</code> (String, <strong>required</strong>): Sequencing summary file.</li>
 </ul>
 <h4 id="optional_1">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
 <ul>
 <li><code>run_info</code> (Map[String,String])</li>
 </ul>
 <h2 id="listfiles">ListFiles</h2>
+<dl>
+<dt>description</dt>
+<dd>List files in a GCS directory.</dd>
+</dl>
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>sequencing_summary</code> (String, <strong>required</strong>)</li>
-<li><code>suffix</code> (String, <strong>required</strong>)</li>
+<li><code>sequencing_summary</code> (String, <strong>required</strong>): Sequencing summary file.</li>
+<li><code>suffix</code> (String, <strong>required</strong>): Suffix of files to list.</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
 <ul>
@@ -340,15 +352,19 @@
 <li><code>count</code> (Int)</li>
 </ul>
 <h2 id="partitionmanifest">PartitionManifest</h2>
+<dl>
+<dt>description</dt>
+<dd>Partition a manifest into chunks.</dd>
+</dl>
 <h3 id="inputs_3">Inputs</h3>
 <h4 id="required_3">Required</h4>
 <ul>
-<li><code>N</code> (Int, <strong>required</strong>)</li>
-<li><code>manifest</code> (File, <strong>required</strong>)</li>
+<li><code>N</code> (Int, <strong>required</strong>): Number of chunks to partition into.</li>
+<li><code>manifest</code> (File, <strong>required</strong>): Manifest to partition.</li>
 </ul>
 <h4 id="optional_3">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
 </ul>
 <h3 id="outputs_3">Outputs</h3>
 <ul>

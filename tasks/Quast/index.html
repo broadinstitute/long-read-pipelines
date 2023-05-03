@@ -91,10 +91,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">Quast</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#_1"></a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#_2"></a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#quast_1">Quast</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
@@ -271,9 +267,11 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="quast">Quast</h1>
-<h6 id="_1"></h6>
-<h6 id="_2"></h6>
 <h2 id="quast_1">Quast</h2>
+<dl>
+<dt>description</dt>
+<dd>A task that runs QUAST to evaluate a given set of assemblies on a species with existing reference assembly. Entire Quast output will be tarballed</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
@@ -297,10 +295,14 @@
 <li><code>contigs_reports</code> (File?)</li>
 </ul>
 <h2 id="summarizequastreport">SummarizeQuastReport</h2>
+<dl>
+<dt>description</dt>
+<dd>A task that summarizes the QUAST report into a single tab-delimited file</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>quast_report_txt</code> (File, <strong>required</strong>)</li>
+<li><code>quast_report_txt</code> (File, <strong>required</strong>): the QUAST report file</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
 <ul>

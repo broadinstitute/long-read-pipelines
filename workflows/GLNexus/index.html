@@ -154,10 +154,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">GLNexus</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#_1"></a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#_2"></a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#jointcall">JointCall</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
@@ -261,9 +257,11 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="glnexus">GLNexus</h1>
-<h6 id="_1"></h6>
-<h6 id="_2"></h6>
 <h2 id="jointcall">JointCall</h2>
+<dl>
+<dt>description</dt>
+<dd>This pipeline joint-calls GVCFs with GLNexus (https://github.com/dnanexus-rnd/GLnexus). It also permits intervals to be specified so that joint calling only takes place on a subset of intervals (this can be useful for finding duplicate samples).</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
@@ -275,11 +273,11 @@
 <ul>
 <li><code>bed</code> (File?): intervals to which joint calling should be restricted</li>
 <li><code>num_cpus</code> (Int?): number of CPUs to use</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>Call.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>ConcatBCFs.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>GetRanges.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>ShardVCFByRanges.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
+<li><code>Call.runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
+<li><code>ConcatBCFs.runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
+<li><code>GetRanges.runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
+<li><code>ShardVCFByRanges.runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>

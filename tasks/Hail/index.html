@@ -263,20 +263,20 @@
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>gvcf</code> (File, <strong>required</strong>)</li>
-<li><code>outdir</code> (String, <strong>required</strong>)</li>
-<li><code>tbi</code> (File, <strong>required</strong>)</li>
+<li><code>gvcf</code> (File, <strong>required</strong>): The input .vcf.bgz file.</li>
+<li><code>outdir</code> (String, <strong>required</strong>): The output directory to copy the MatrixTable to.</li>
+<li><code>tbi</code> (File, <strong>required</strong>): The input .vcf.bgz.tbi file.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>ref_fai</code> (String?)</li>
-<li><code>ref_fasta</code> (String?)</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ref_fai</code> (String?): The reference genome FASTA index file.  If not specified, the reference genome will be downloaded from the Hail website.</li>
+<li><code>ref_fasta</code> (String?): The reference genome FASTA file.  If not specified, the reference genome will be downloaded from the Hail website.</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes for this task.</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out")</li>
-<li><code>reference</code> (String, default="GRCh38")</li>
+<li><code>prefix</code> (String, default="out"): The prefix to use for the output MatrixTable.</li>
+<li><code>reference</code> (String, default="GRCh38"): The reference genome to use.  Currently only GRCh38 is supported.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>

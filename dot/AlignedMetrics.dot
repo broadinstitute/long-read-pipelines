@@ -5,14 +5,14 @@ digraph {
 	edge [color="#00000080"]
 	"call-AlignedReadMetrics" [label=AlignedReadMetrics shape=cds]
 	"call-MakeChrIntervalList" [label=MakeChrIntervalList shape=cds]
-	subgraph "cluster-scatter-L21C5-chr_info" {
+	subgraph "cluster-scatter-L33C5-chr_info" {
 		fontname=Roboto label="scatter(MakeChrIntervalList.chrs)" rank=same
 		"call-MosDepth" [label=MosDepth shape=cds]
 		"call-SummarizeDepth" [label=SummarizeDepth shape=cds]
-		"scatter-L21C5-chr_info" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L33C5-chr_info" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-AlignedFlagStats" [label=AlignedFlagStats shape=cds]
-	subgraph "cluster-if-L34C5" {
+	subgraph "cluster-if-L46C5" {
 		fontname=Roboto label="if(defined(gcs_output_dir))" rank=same
 		"call-FFYieldAligned" [label=FFYieldAligned shape=cds]
 		"call-FFCoverageFullDist" [label=FFCoverageFullDist shape=cds]
@@ -24,9 +24,9 @@ digraph {
 		"call-FFCoverageQuantized" [label=FFCoverageQuantized shape=cds]
 		"call-FFCoverageQuantizedCsi" [label=FFCoverageQuantizedCsi shape=cds]
 		"call-FFDepthSummaries" [label=FFDepthSummaries shape=cds]
-		"if-L34C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L46C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	"call-MakeChrIntervalList" -> "scatter-L21C5-chr_info" [lhead="cluster-scatter-L21C5-chr_info"]
+	"call-MakeChrIntervalList" -> "scatter-L33C5-chr_info" [lhead="cluster-scatter-L33C5-chr_info"]
 	"call-MosDepth" -> "call-SummarizeDepth"
 	"call-AlignedReadMetrics" -> "call-FFYieldAligned"
 	"call-AlignedFlagStats" -> "call-FFYieldAligned"

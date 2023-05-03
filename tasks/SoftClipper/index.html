@@ -264,13 +264,17 @@
               
                 <h1 id="softclipper">SoftClipper</h1>
 <h2 id="splitsoftclippedreads">SplitSoftClippedReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Split softclipped reads into multiple reads, each with a different amount of softclipping.</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>clipping_threshold</code> (Int, <strong>required</strong>)</li>
-<li><code>reads_fastq</code> (File, <strong>required</strong>)</li>
-<li><code>reference_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>rounds</code> (Int, <strong>required</strong>)</li>
+<li><code>clipping_threshold</code> (Int, <strong>required</strong>): Threshold for softclipping.</li>
+<li><code>reads_fastq</code> (File, <strong>required</strong>): Input reads in fastq format.</li>
+<li><code>reference_fasta</code> (File, <strong>required</strong>): Reference fasta file.</li>
+<li><code>rounds</code> (Int, <strong>required</strong>): Number of rounds of softclipping to perform.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
@@ -278,15 +282,19 @@
 <li><code>most_split_read</code> (File)</li>
 </ul>
 <h2 id="splitsoftclippedreadsassisted">SplitSoftClippedReadsAssisted</h2>
+<dl>
+<dt>description</dt>
+<dd>Split softclipped reads into multiple reads, each with a different amount of softclipping. This version uses an additional reference to help determine the correct amount of softclipping.</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>aid_reference_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>clipping_threshold</code> (Int, <strong>required</strong>)</li>
-<li><code>reads_fastq</code> (File, <strong>required</strong>)</li>
-<li><code>ref_conflict_threshold</code> (Int, <strong>required</strong>)</li>
-<li><code>reference_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>rounds</code> (Int, <strong>required</strong>)</li>
+<li><code>aid_reference_fasta</code> (File, <strong>required</strong>): Reference fasta file.</li>
+<li><code>clipping_threshold</code> (Int, <strong>required</strong>): Threshold for softclipping.</li>
+<li><code>reads_fastq</code> (File, <strong>required</strong>): Input reads in fastq format.</li>
+<li><code>ref_conflict_threshold</code> (Int, <strong>required</strong>): Threshold for softclipping.</li>
+<li><code>reference_fasta</code> (File, <strong>required</strong>): Reference fasta file.</li>
+<li><code>rounds</code> (Int, <strong>required</strong>): Number of rounds of softclipping to perform.</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
 <ul>

@@ -269,16 +269,16 @@
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>bai</code> (File, <strong>required</strong>)</li>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>memory</code> (Int, <strong>required</strong>)</li>
-<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
-<li><code>threads</code> (Int, <strong>required</strong>)</li>
+<li><code>bai</code> (File, <strong>required</strong>): The input bam index file.</li>
+<li><code>bam</code> (File, <strong>required</strong>): The input bam file.</li>
+<li><code>memory</code> (Int, <strong>required</strong>): The amount of memory to use.</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>): The reference fasta file.</li>
+<li><code>ref_fasta_fai</code> (File, <strong>required</strong>): The reference fasta index file.</li>
+<li><code>threads</code> (Int, <strong>required</strong>): The number of threads to use.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): override the default runtime attributes</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>

@@ -258,17 +258,21 @@
               
                 <h1 id="longbow">Longbow</h1>
 <h2 id="process">Process</h2>
+<dl>
+<dt>description</dt>
+<dd>Process a BAM file using Longbow</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to process</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>barcode_allow_list</code> (File?)</li>
-<li><code>barcode_tag</code> (String?)</li>
-<li><code>corrected_tag</code> (String?)</li>
-<li><code>model</code> (String?)</li>
+<li><code>barcode_allow_list</code> (File?): File containing a list of barcodes to allow</li>
+<li><code>barcode_tag</code> (String?): Tag containing the barcode</li>
+<li><code>corrected_tag</code> (String?): Tag to use for corrected barcode</li>
+<li><code>model</code> (String?): Longbow model to use for processing</li>
 <li><code>AggregateCorrectLogStats.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>Extract.bam_pbi</code> (File?)</li>
 <li><code>Extract.leading_adapter</code> (String?)</li>
@@ -278,9 +282,9 @@
 <li><code>t_01_Peek.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_02_Annotate.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_03_Filter.bam_pbi</code> (File?)</li>
-<li><code>t_03_Filter.model</code> (String?)</li>
+<li><code>t_03_Filter.model</code> (String?): Longbow model to use for processing</li>
 <li><code>t_03_Filter.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_04_Segment.model</code> (String?)</li>
+<li><code>t_04_Segment.model</code> (String?): Longbow model to use for processing</li>
 <li><code>t_04_Segment.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_05_RemoveMasSeqTruncatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_07_PadUMI.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -291,9 +295,9 @@
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out")</li>
-<li><code>same_barcode_per_read</code> (Boolean, default=false)</li>
-<li><code>shard_width</code> (Int, default=25)</li>
+<li><code>prefix</code> (String, default="out"): Prefix for output files</li>
+<li><code>same_barcode_per_read</code> (Boolean, default=false): Whether to assume that all reads in a pair have the same barcode</li>
+<li><code>shard_width</code> (Int, default=25): Width of shards to use for processing</li>
 <li><code>Extract.base_padding</code> (Int, default=2)</li>
 <li><code>Extract.num_cpus</code> (Int, default=2)</li>
 <li><code>t_01_Peek.n</code> (Int, default=100)</li>

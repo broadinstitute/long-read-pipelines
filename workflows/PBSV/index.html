@@ -256,20 +256,24 @@
               
                 <h1 id="pbsv">PBSV</h1>
 <h2 id="runpbsv">RunPBSV</h2>
+<dl>
+<dt>description</dt>
+<dd>Run PBSV to call SVs from a BAM file.</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>bai</code> (File, <strong>required</strong>)</li>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>bai</code> (File, <strong>required</strong>): index accompanying the BAM</li>
+<li><code>bam</code> (File, <strong>required</strong>): input BAM from which to call SVs</li>
 <li><code>is_ccs</code> (Boolean, <strong>required</strong>): if input BAM is CCS reads</li>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
-<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
-<li><code>zones</code> (String, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>): prefix for output</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>): reference to which the BAM was aligned to</li>
+<li><code>ref_fasta_fai</code> (File, <strong>required</strong>): index accompanying the reference</li>
+<li><code>zones</code> (String, <strong>required</strong>): zones to run in</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>tandem_repeat_bed</code> (File?)</li>
+<li><code>tandem_repeat_bed</code> (File?): BED file containing TRF finder results (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)</li>
 <li><code>Call.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>Discover.chr</code> (String?)</li>
 <li><code>Discover.runtime_attr_override</code> (RuntimeAttr?)</li>

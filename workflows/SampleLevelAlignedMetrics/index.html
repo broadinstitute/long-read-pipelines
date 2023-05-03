@@ -263,13 +263,13 @@
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>aligned_bai</code> (File, <strong>required</strong>)</li>
-<li><code>aligned_bam</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>aligned_bai</code> (File, <strong>required</strong>): Index for the aligned BAM file</li>
+<li><code>aligned_bam</code> (File, <strong>required</strong>): Aligned BAM file</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>): Reference FASTA file</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>bed_to_compute_coverage</code> (File?)</li>
+<li><code>bed_to_compute_coverage</code> (File?): Optional BED file to compute coverage over</li>
 <li><code>ComputeGenomeLength.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MosDepthOverBed.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>NanoPlotFromBam.runtime_attr_override</code> (RuntimeAttr?)</li>

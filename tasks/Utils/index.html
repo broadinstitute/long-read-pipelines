@@ -986,75 +986,95 @@
               
                 <h1 id="utils">Utils</h1>
 <h2 id="getdefaultdir">GetDefaultDir</h2>
+<dl>
+<dt>description</dt>
+<dd>Get the default directory for a given workflow</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>workflow_name</code> (String, <strong>required</strong>)</li>
+<li><code>workflow_name</code> (String, <strong>required</strong>): The name of the workflow</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>path</code> (String)</li>
 </ul>
 <h2 id="preparemanifest">PrepareManifest</h2>
+<dl>
+<dt>description</dt>
+<dd>Prepare a manifest file for a given workflow</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>files</code> (Array[String], <strong>required</strong>)</li>
+<li><code>files</code> (Array[String], <strong>required</strong>): The files to include in the manifest</li>
 </ul>
 <h4 id="optional_1">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
 <ul>
 <li><code>manifest</code> (File)</li>
 </ul>
 <h2 id="echomanifest">EchoManifest</h2>
+<dl>
+<dt>description</dt>
+<dd>Echo the contents of a manifest file</dd>
+</dl>
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>manifest</code> (File, <strong>required</strong>)</li>
+<li><code>manifest</code> (File, <strong>required</strong>): The manifest file to echo</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
 <ul>
 <li><code>out</code> (File)</li>
 </ul>
 <h2 id="chunkmanifest">ChunkManifest</h2>
+<dl>
+<dt>description</dt>
+<dd>Chunk a manifest file into smaller files</dd>
+</dl>
 <h3 id="inputs_3">Inputs</h3>
 <h4 id="required_3">Required</h4>
 <ul>
-<li><code>manifest</code> (File, <strong>required</strong>)</li>
-<li><code>manifest_lines_per_chunk</code> (Int, <strong>required</strong>)</li>
+<li><code>manifest</code> (File, <strong>required</strong>): The manifest file to chunk</li>
+<li><code>manifest_lines_per_chunk</code> (Int, <strong>required</strong>): The number of lines to include in each chunk</li>
 </ul>
 <h4 id="optional_3">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>manifest_chunks</code> (Array[File])</li>
 </ul>
 <h2 id="sortbam">SortBam</h2>
+<dl>
+<dt>description</dt>
+<dd>Sort a BAM file</dd>
+</dl>
 <h3 id="inputs_4">Inputs</h3>
 <h4 id="required_4">Required</h4>
 <ul>
-<li><code>input_bam</code> (File, <strong>required</strong>): input BAM</li>
+<li><code>input_bam</code> (File, <strong>required</strong>): The BAM file to sort</li>
 </ul>
 <h4 id="optional_4">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="sorted"): [default-valued] prefix for output BAM</li>
+<li><code>prefix</code> (String, default="sorted"): The prefix for the output BAM file</li>
 </ul>
 <h3 id="outputs_4">Outputs</h3>
 <ul>
@@ -1062,16 +1082,20 @@
 <li><code>sorted_bai</code> (File)</li>
 </ul>
 <h2 id="sortsam">SortSam</h2>
+<dl>
+<dt>description</dt>
+<dd>Sort a BAM file by coordinate order</dd>
+</dl>
 <h3 id="inputs_5">Inputs</h3>
 <h4 id="required_5">Required</h4>
 <ul>
-<li><code>compression_level</code> (Int, <strong>required</strong>)</li>
-<li><code>input_bam</code> (File, <strong>required</strong>)</li>
-<li><code>output_bam_basename</code> (String, <strong>required</strong>)</li>
+<li><code>compression_level</code> (Int, <strong>required</strong>): The compression level for the output BAM file</li>
+<li><code>input_bam</code> (File, <strong>required</strong>): The BAM file to sort</li>
+<li><code>output_bam_basename</code> (String, <strong>required</strong>): The basename for the output BAM file</li>
 </ul>
 <h4 id="optional_5">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_5">Outputs</h3>
 <ul>
@@ -1080,74 +1104,94 @@
 <li><code>output_bam_md5</code> (File)</li>
 </ul>
 <h2 id="makechrintervallist">MakeChrIntervalList</h2>
+<dl>
+<dt>description</dt>
+<dd>Make a Picard-style list of intervals for each chromosome in the reference genome</dd>
+</dl>
 <h3 id="inputs_6">Inputs</h3>
 <h4 id="required_6">Required</h4>
 <ul>
-<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>): The reference dictionary</li>
 </ul>
 <h4 id="optional_6">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h4 id="defaults_1">Defaults</h4>
 <ul>
-<li><code>filter</code> (Array[String], default=['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV'])</li>
+<li><code>filter</code> (Array[String], default=['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']): A list of strings to filter out of the reference dictionary</li>
 </ul>
 <h3 id="outputs_6">Outputs</h3>
 <ul>
 <li><code>chrs</code> (Array[Array[String]])</li>
 </ul>
 <h2 id="fastatosam">FastaToSam</h2>
+<dl>
+<dt>description</dt>
+<dd>Convert a fasta file to a sam file</dd>
+</dl>
 <h3 id="inputs_7">Inputs</h3>
 <h4 id="required_7">Required</h4>
 <ul>
-<li><code>fasta</code> (File, <strong>required</strong>)</li>
+<li><code>fasta</code> (File, <strong>required</strong>): The fasta file</li>
 </ul>
 <h4 id="optional_7">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_7">Outputs</h3>
 <ul>
 <li><code>output_bam</code> (File)</li>
 </ul>
 <h2 id="countfastqrecords">CountFastqRecords</h2>
+<dl>
+<dt>description</dt>
+<dd>Count the number of records in a fastq file</dd>
+</dl>
 <h3 id="inputs_8">Inputs</h3>
 <h4 id="required_8">Required</h4>
 <ul>
-<li><code>fastq</code> (File, <strong>required</strong>)</li>
+<li><code>fastq</code> (File, <strong>required</strong>): The fastq file</li>
 </ul>
 <h4 id="optional_8">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_8">Outputs</h3>
 <ul>
 <li><code>num_records</code> (Int)</li>
 </ul>
 <h2 id="countfastarecords">CountFastaRecords</h2>
+<dl>
+<dt>description</dt>
+<dd>Count the number of records in a fasta file</dd>
+</dl>
 <h3 id="inputs_9">Inputs</h3>
 <h4 id="required_9">Required</h4>
 <ul>
-<li><code>fasta</code> (File, <strong>required</strong>)</li>
+<li><code>fasta</code> (File, <strong>required</strong>): The fasta file</li>
 </ul>
 <h4 id="optional_9">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_9">Outputs</h3>
 <ul>
 <li><code>num_records</code> (Int)</li>
 </ul>
 <h2 id="countbamrecords">CountBamRecords</h2>
+<dl>
+<dt>description</dt>
+<dd>Count the number of records in a bam file</dd>
+</dl>
 <h3 id="inputs_10">Inputs</h3>
 <h4 id="required_10">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+<li><code>bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true; <strong>description</strong>: The bam file</li>
 </ul>
 <h4 id="optional_10">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes</li>
 </ul>
 <h3 id="outputs_10">Outputs</h3>
 <ul>
@@ -1238,11 +1282,15 @@
 <li><code>output_bam_index</code> (File)</li>
 </ul>
 <h2 id="grepcountbamrecords">GrepCountBamRecords</h2>
+<dl>
+<dt>description</dt>
+<dd>Count the number of records in a bam file that match a given regex.</dd>
+</dl>
 <h3 id="inputs_14">Inputs</h3>
 <h4 id="required_14">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>regex</code> (String, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to be filtered.</li>
+<li><code>regex</code> (String, <strong>required</strong>): Regex to match against the bam file.</li>
 </ul>
 <h4 id="optional_14">Optional</h4>
 <ul>
@@ -1250,9 +1298,9 @@
 </ul>
 <h4 id="defaults_4">Defaults</h4>
 <ul>
-<li><code>invert</code> (Boolean, default=false)</li>
-<li><code>prefix</code> (String, default="sum")</li>
-<li><code>samfilter</code> (String, default="")</li>
+<li><code>invert</code> (Boolean, default=false): [Optional] Invert the regex match.</li>
+<li><code>prefix</code> (String, default="sum"): [Optional] Prefix string to name the output file (Default: sum).</li>
+<li><code>samfilter</code> (String, default=""): [Optional] Extra arguments to pass into samtools view.</li>
 </ul>
 <h3 id="outputs_14">Outputs</h3>
 <ul>
@@ -1260,11 +1308,15 @@
 <li><code>num_records_file</code> (File)</li>
 </ul>
 <h2 id="grepcountuniquebamrecords">GrepCountUniqueBamRecords</h2>
+<dl>
+<dt>description</dt>
+<dd>Count the number of unique records in a bam file that match a given regex.</dd>
+</dl>
 <h3 id="inputs_15">Inputs</h3>
 <h4 id="required_15">Required</h4>
 <ul>
-<li><code>bam</code> (String, <strong>required</strong>)</li>
-<li><code>regex</code> (String, <strong>required</strong>)</li>
+<li><code>bam</code> (String, <strong>required</strong>): BAM file to be filtered.</li>
+<li><code>regex</code> (String, <strong>required</strong>): Regex to match against the bam file.</li>
 </ul>
 <h4 id="optional_15">Optional</h4>
 <ul>
@@ -1272,9 +1324,9 @@
 </ul>
 <h4 id="defaults_5">Defaults</h4>
 <ul>
-<li><code>invert</code> (Boolean, default=false)</li>
-<li><code>prefix</code> (String, default="sum")</li>
-<li><code>samfilter</code> (String, default="")</li>
+<li><code>invert</code> (Boolean, default=false): [Optional] Invert the regex match.</li>
+<li><code>prefix</code> (String, default="sum"): [Optional] Prefix string to name the output file (Default: sum).</li>
+<li><code>samfilter</code> (String, default=""): [Optional] Extra arguments to pass into samtools view.</li>
 </ul>
 <h3 id="outputs_15">Outputs</h3>
 <ul>
@@ -1282,10 +1334,14 @@
 <li><code>num_records_file</code> (File)</li>
 </ul>
 <h2 id="sum">Sum</h2>
+<dl>
+<dt>description</dt>
+<dd>Sum a list of integers.</dd>
+</dl>
 <h3 id="inputs_16">Inputs</h3>
 <h4 id="required_16">Required</h4>
 <ul>
-<li><code>ints</code> (Array[Int], <strong>required</strong>)</li>
+<li><code>ints</code> (Array[Int], <strong>required</strong>): List of integers to be summed.</li>
 </ul>
 <h4 id="optional_16">Optional</h4>
 <ul>
@@ -1293,7 +1349,7 @@
 </ul>
 <h4 id="defaults_6">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="sum")</li>
+<li><code>prefix</code> (String, default="sum"): [Optional] Prefix string to name the output file (Default: sum).</li>
 </ul>
 <h3 id="outputs_16">Outputs</h3>
 <ul>
@@ -1301,10 +1357,14 @@
 <li><code>sum_file</code> (File)</li>
 </ul>
 <h2 id="uniq">Uniq</h2>
+<dl>
+<dt>description</dt>
+<dd>Find the unique elements in a list of strings.</dd>
+</dl>
 <h3 id="inputs_17">Inputs</h3>
 <h4 id="required_17">Required</h4>
 <ul>
-<li><code>strings</code> (Array[String], <strong>required</strong>)</li>
+<li><code>strings</code> (Array[String], <strong>required</strong>): List of strings to be filtered.</li>
 </ul>
 <h4 id="optional_17">Optional</h4>
 <ul>
@@ -1315,106 +1375,134 @@
 <li><code>unique_strings</code> (Array[String])</li>
 </ul>
 <h2 id="timestamp">Timestamp</h2>
+<dl>
+<dt>description</dt>
+<dd>Get the current timestamp.</dd>
+</dl>
 <h3 id="inputs_18">Inputs</h3>
 <h4 id="required_18">Required</h4>
 <ul>
-<li><code>dummy_dependencies</code> (Array[String], <strong>required</strong>)</li>
+<li><code>dummy_dependencies</code> (Array[String], <strong>required</strong>): List of dummy dependencies to force recomputation.</li>
 </ul>
 <h4 id="optional_18">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h3 id="outputs_18">Outputs</h3>
 <ul>
 <li><code>timestamp</code> (String)</li>
 </ul>
 <h2 id="bamtotable">BamToTable</h2>
+<dl>
+<dt>description</dt>
+<dd>Convert a BAM file to a table txt file.</dd>
+</dl>
 <h3 id="inputs_19">Inputs</h3>
 <h4 id="required_19">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to be converted.</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix for the output table.</li>
 </ul>
 <h4 id="optional_19">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h3 id="outputs_19">Outputs</h3>
 <ul>
 <li><code>table</code> (File)</li>
 </ul>
 <h2 id="convertreads">ConvertReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Convert reads from one format to another.</dd>
+</dl>
 <h3 id="inputs_20">Inputs</h3>
 <h4 id="required_20">Required</h4>
 <ul>
-<li><code>output_format</code> (String, <strong>required</strong>)</li>
-<li><code>reads</code> (File, <strong>required</strong>)</li>
+<li><code>output_format</code> (String, <strong>required</strong>): Output format.</li>
+<li><code>reads</code> (File, <strong>required</strong>): Reads to be converted.</li>
 </ul>
 <h3 id="outputs_20">Outputs</h3>
 <ul>
 <li><code>converted_reads</code> (File)</li>
 </ul>
 <h2 id="bamtobed">BamToBed</h2>
+<dl>
+<dt>description</dt>
+<dd>Convert a BAM file to a bed file.</dd>
+</dl>
 <h3 id="inputs_21">Inputs</h3>
 <h4 id="required_21">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to be converted.</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix for the output bed file.</li>
 </ul>
 <h4 id="optional_20">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h3 id="outputs_21">Outputs</h3>
 <ul>
 <li><code>bed</code> (File)</li>
 </ul>
 <h2 id="bamtofastq">BamToFastq</h2>
+<dl>
+<dt>description</dt>
+<dd>Convert a BAM file to a fastq file.</dd>
+</dl>
 <h3 id="inputs_22">Inputs</h3>
 <h4 id="required_22">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to be converted.</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix for the output fastq file.</li>
 </ul>
 <h4 id="optional_21">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h3 id="outputs_22">Outputs</h3>
 <ul>
 <li><code>reads_fq</code> (File)</li>
 </ul>
 <h2 id="mergefastqs">MergeFastqs</h2>
+<dl>
+<dt>description</dt>
+<dd>Merge fastq files.</dd>
+</dl>
 <h3 id="inputs_23">Inputs</h3>
 <h4 id="required_23">Required</h4>
 <ul>
-<li><code>fastqs</code> (Array[File], <strong>required</strong>)</li>
+<li><code>fastqs</code> (Array[File], <strong>required</strong>): Fastq files to be merged.</li>
 </ul>
 <h4 id="optional_22">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h4 id="defaults_7">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="merged")</li>
+<li><code>prefix</code> (String, default="merged"): Prefix for the output fastq file.</li>
 </ul>
 <h3 id="outputs_23">Outputs</h3>
 <ul>
 <li><code>merged_fastq</code> (File)</li>
 </ul>
 <h2 id="mergebams">MergeBams</h2>
+<dl>
+<dt>description</dt>
+<dd>Merge several input BAMs into a single BAM.</dd>
+</dl>
 <h3 id="inputs_24">Inputs</h3>
 <h4 id="required_24">Required</h4>
 <ul>
-<li><code>bams</code> (Array[File], <strong>required</strong>): input array of BAMs to be merged</li>
+<li><code>bams</code> (Array[File], <strong>required</strong>): Input array of BAMs to be merged.</li>
 </ul>
 <h4 id="optional_23">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h4 id="defaults_8">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out"): [default-valued] prefix for output BAM</li>
+<li><code>prefix</code> (String, default="out"): Prefix for the output BAM.</li>
 </ul>
 <h3 id="outputs_24">Outputs</h3>
 <ul>
@@ -1422,20 +1510,28 @@
 <li><code>merged_bai</code> (File)</li>
 </ul>
 <h2 id="index">Index</h2>
+<dl>
+<dt>description</dt>
+<dd>samtools index a BAM file.</dd>
+</dl>
 <h3 id="inputs_25">Inputs</h3>
 <h4 id="required_25">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>): BAM file to be indexed</li>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file to be indexed.</li>
 </ul>
 <h4 id="optional_24">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h3 id="outputs_25">Outputs</h3>
 <ul>
 <li><code>bai</code> (File)</li>
 </ul>
 <h2 id="filterreadswithtagvalues">FilterReadsWithTagValues</h2>
+<dl>
+<dt>description</dt>
+<dd>Filter reads from a BAM file based on the values of a given tag.</dd>
+</dl>
 <h3 id="inputs_26">Inputs</h3>
 <h4 id="required_26">Required</h4>
 <ul>
@@ -1456,6 +1552,10 @@
 <li><code>output_bam</code> (File)</li>
 </ul>
 <h2 id="subsetbam">SubsetBam</h2>
+<dl>
+<dt>description</dt>
+<dd>Subset a BAM file to a specified locus.</dd>
+</dl>
 <h3 id="inputs_27">Inputs</h3>
 <h4 id="required_27">Required</h4>
 <ul>
@@ -1465,7 +1565,7 @@
 </ul>
 <h4 id="optional_26">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h4 id="defaults_10">Defaults</h4>
 <ul>
@@ -1477,20 +1577,24 @@
 <li><code>subset_bai</code> (File)</li>
 </ul>
 <h2 id="excluderegionsfrombam">ExcludeRegionsFromBam</h2>
+<dl>
+<dt>description</dt>
+<dd>Exclude regions from a BAM file.</dd>
+</dl>
 <h3 id="inputs_28">Inputs</h3>
 <h4 id="required_28">Required</h4>
 <ul>
-<li><code>bai</code> (File, <strong>required</strong>)</li>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>loci</code> (Array[String], <strong>required</strong>)</li>
+<li><code>bai</code> (File, <strong>required</strong>): Index for input BAM file.</li>
+<li><code>bam</code> (File, <strong>required</strong>): Input BAM file to subset.</li>
+<li><code>loci</code> (Array[String], <strong>required</strong>): Genomic loci to exclude.</li>
 </ul>
 <h4 id="optional_27">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h4 id="defaults_11">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="subset")</li>
+<li><code>prefix</code> (String, default="subset"): [default-valued] prefix for output BAM and BAI file names.</li>
 </ul>
 <h3 id="outputs_28">Outputs</h3>
 <ul>
@@ -1498,6 +1602,10 @@
 <li><code>subset_bai</code> (File)</li>
 </ul>
 <h2 id="selectfirstnreads">SelectFirstNReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Select the first N reads from a BAM file.</dd>
+</dl>
 <h3 id="inputs_29">Inputs</h3>
 <h4 id="required_29">Required</h4>
 <ul>
@@ -1506,7 +1614,7 @@
 </ul>
 <h4 id="optional_28">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override the default runtime attributes.</li>
 </ul>
 <h4 id="defaults_12">Defaults</h4>
 <ul>
@@ -1540,6 +1648,10 @@
 <li><code>subset_bai</code> (File)</li>
 </ul>
 <h2 id="splitbam">SplitBam</h2>
+<dl>
+<dt>description</dt>
+<dd>Takes a BAM file as input, extracts the reference sequence names from the header, filters out any unwanted sequences, and creates new BAM files for each remaining sequence.</dd>
+</dl>
 <h3 id="inputs_31">Inputs</h3>
 <h4 id="required_31">Required</h4>
 <ul>
@@ -1560,12 +1672,16 @@
 <li><code>subset_bais</code> (Array[File])</li>
 </ul>
 <h2 id="bamtools">Bamtools</h2>
+<dl>
+<dt>description</dt>
+<dd>Runs a given bamtools command on a bam file</dd>
+</dl>
 <h3 id="inputs_32">Inputs</h3>
 <h4 id="required_32">Required</h4>
 <ul>
-<li><code>args</code> (String, <strong>required</strong>)</li>
-<li><code>bamfile</code> (File, <strong>required</strong>)</li>
-<li><code>cmd</code> (String, <strong>required</strong>)</li>
+<li><code>args</code> (String, <strong>required</strong>): arguments to pass to bamtools</li>
+<li><code>bamfile</code> (File, <strong>required</strong>): bam file to run bamtools on</li>
+<li><code>cmd</code> (String, <strong>required</strong>): bamtools command to run</li>
 </ul>
 <h4 id="optional_31">Optional</h4>
 <ul>
@@ -1580,12 +1696,16 @@
 <li><code>bam</code> (File)</li>
 </ul>
 <h2 id="filterbamontag">FilterBamOnTag</h2>
+<dl>
+<dt>description</dt>
+<dd>Filters a BAM file on a given tag and expression</dd>
+</dl>
 <h3 id="inputs_33">Inputs</h3>
 <h4 id="required_33">Required</h4>
 <ul>
 <li><code>bam</code> (File, <strong>required</strong>): input BAM file</li>
-<li><code>expression</code> (String, <strong>required</strong>)</li>
-<li><code>tag</code> (String, <strong>required</strong>)</li>
+<li><code>expression</code> (String, <strong>required</strong>): expression to filter on</li>
+<li><code>tag</code> (String, <strong>required</strong>): tag to filter on</li>
 </ul>
 <h4 id="optional_32">Optional</h4>
 <ul>
@@ -1593,7 +1713,7 @@
 </ul>
 <h4 id="defaults_15">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="out"): [default-valued] prefix for output BAM</li>
+<li><code>prefix</code> (String, default="out"): prefix for output bam</li>
 </ul>
 <h3 id="outputs_33">Outputs</h3>
 <ul>
@@ -1608,16 +1728,16 @@
 <h3 id="inputs_34">Inputs</h3>
 <h4 id="required_34">Required</h4>
 <ul>
-<li><code>aligned_bai</code> (File, <strong>required</strong>)</li>
-<li><code>aligned_bam</code> (File, <strong>required</strong>)</li>
+<li><code>aligned_bai</code> (File, <strong>required</strong>): input BAM index file</li>
+<li><code>aligned_bam</code> (File, <strong>required</strong>): input BAM file</li>
 </ul>
 <h4 id="optional_33">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
 </ul>
 <h4 id="defaults_16">Defaults</h4>
 <ul>
-<li><code>same_name_as_input</code> (Boolean, default=true)</li>
+<li><code>same_name_as_input</code> (Boolean, default=true): if true, output BAM will have the same name as input BAM, otherwise it will have the input basename with .dedup suffix</li>
 </ul>
 <h3 id="outputs_34">Outputs</h3>
 <ul>
@@ -1625,6 +1745,10 @@
 <li><code>corrected_bai</code> (File)</li>
 </ul>
 <h2 id="cat">Cat</h2>
+<dl>
+<dt>description</dt>
+<dd>Utility to concatenates a group of files into a single output file, with headers in the first line if has_header is true. If has_header is false, the script concatenates the files without headers.</dd>
+</dl>
 <h3 id="inputs_35">Inputs</h3>
 <h4 id="required_35">Required</h4>
 <ul>
@@ -1644,6 +1768,10 @@
 <li><code>combined</code> (File)</li>
 </ul>
 <h2 id="listbamcontigs">ListBamContigs</h2>
+<dl>
+<dt>description</dt>
+<dd>Utility to list contigs in a BAM file</dd>
+</dl>
 <h3 id="inputs_36">Inputs</h3>
 <h4 id="required_36">Required</h4>
 <ul>
@@ -1658,6 +1786,10 @@
 <li><code>contigs</code> (Array[String])</li>
 </ul>
 <h2 id="computegenomelength">ComputeGenomeLength</h2>
+<dl>
+<dt>description</dt>
+<dd>Utility to compute the length of a genome from a FASTA file</dd>
+</dl>
 <h3 id="inputs_37">Inputs</h3>
 <h4 id="required_37">Required</h4>
 <ul>
@@ -1672,6 +1804,10 @@
 <li><code>length</code> (Float)</li>
 </ul>
 <h2 id="listfilesoftype">ListFilesOfType</h2>
+<dl>
+<dt>description</dt>
+<dd>Utility to list files of a given type in a directory</dd>
+</dl>
 <h3 id="inputs_38">Inputs</h3>
 <h4 id="required_38">Required</h4>
 <ul>
@@ -1692,10 +1828,14 @@
 <li><code>manifest</code> (File)</li>
 </ul>
 <h2 id="stopworkflow">StopWorkflow</h2>
+<dl>
+<dt>description</dt>
+<dd>Utility to stop a workflow</dd>
+</dl>
 <h3 id="inputs_39">Inputs</h3>
 <h4 id="required_39">Required</h4>
 <ul>
-<li><code>reason</code> (String, <strong>required</strong>)</li>
+<li><code>reason</code> (String, <strong>required</strong>): reason for stopping</li>
 </ul>
 <h3 id="outputs_39">Outputs</h3>
 <p><strong>None</strong></p>
@@ -1708,7 +1848,7 @@
 <h4 id="required_40">Required</h4>
 <ul>
 <li><code>bai</code> (File, <strong>required</strong>)</li>
-<li><code>bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+<li><code>bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true; <strong>description</strong>: BAM file</li>
 </ul>
 <h3 id="outputs_40">Outputs</h3>
 <ul>
@@ -1722,7 +1862,7 @@
 <h3 id="inputs_41">Inputs</h3>
 <h4 id="required_41">Required</h4>
 <ul>
-<li><code>sample_names</code> (Array[String], <strong>required</strong>)</li>
+<li><code>sample_names</code> (Array[String], <strong>required</strong>): sample names</li>
 </ul>
 <h3 id="outputs_41">Outputs</h3>
 <p><strong>None</strong></p>
@@ -1734,8 +1874,8 @@
 <h3 id="inputs_42">Inputs</h3>
 <h4 id="required_42">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>sample_name</code> (String, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true; <strong>description</strong>: BAM file</li>
+<li><code>sample_name</code> (String, <strong>required</strong>): sample name</li>
 </ul>
 <h4 id="optional_38">Optional</h4>
 <ul>
@@ -1753,37 +1893,45 @@
 <h3 id="inputs_43">Inputs</h3>
 <h4 id="required_43">Required</h4>
 <ul>
-<li><code>intended_gb</code> (Int, <strong>required</strong>)</li>
+<li><code>intended_gb</code> (Int, <strong>required</strong>): intended number of GB</li>
 </ul>
 <h3 id="outputs_43">Outputs</h3>
 <ul>
 <li><code>numb_of_local_ssd</code> (Int)</li>
 </ul>
 <h2 id="randomzonespewer">RandomZoneSpewer</h2>
+<dl>
+<dt>description</dt>
+<dd>Spews a random GCP zone</dd>
+</dl>
 <h3 id="inputs_44">Inputs</h3>
 <h4 id="required_44">Required</h4>
 <ul>
-<li><code>num_of_zones</code> (Int, <strong>required</strong>)</li>
+<li><code>num_of_zones</code> (Int, <strong>required</strong>): number of zones to spew</li>
 </ul>
 <h3 id="outputs_44">Outputs</h3>
 <ul>
 <li><code>zones</code> (String)</li>
 </ul>
 <h2 id="shardreads">ShardReads</h2>
+<dl>
+<dt>description</dt>
+<dd>Shard a bam file by number of reads</dd>
+</dl>
 <h3 id="inputs_45">Inputs</h3>
 <h4 id="required_45">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>bam_index</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): bam file to shard</li>
+<li><code>bam_index</code> (File, <strong>required</strong>): bam index file</li>
 </ul>
 <h4 id="optional_39">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): override the runtime attributes</li>
 </ul>
 <h4 id="defaults_19">Defaults</h4>
 <ul>
-<li><code>num_shards</code> (Int, default=10)</li>
-<li><code>prefix</code> (String, default="shard")</li>
+<li><code>num_shards</code> (Int, default=10): number of shards to create</li>
+<li><code>prefix</code> (String, default="shard"): prefix for output files</li>
 </ul>
 <h3 id="outputs_45">Outputs</h3>
 <ul>
@@ -1793,44 +1941,58 @@
 <dl>
 <dt>volatile</dt>
 <dd>true</dd>
+<dt>description</dt>
+<dd>Get the current timestamp as a string</dd>
 </dl>
 <h3 id="inputs_46">Inputs</h3>
 <h4 id="defaults_20">Defaults</h4>
 <ul>
-<li><code>date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
+<li><code>date_format</code> (String, default="%Y%m%d_%H%M%S_%N"): The date format string to use. See the unix <code>date</code> command for more info.</li>
 </ul>
 <h3 id="outputs_46">Outputs</h3>
 <ul>
 <li><code>timestamp_string</code> (String)</li>
 </ul>
 <h2 id="getrawreadgroup">GetRawReadGroup</h2>
+<dl>
+<dt>description</dt>
+<dd>Get the raw read group from a bam file (assumed to have 1 read group only)</dd>
+</dl>
 <h3 id="inputs_47">Inputs</h3>
 <h4 id="required_46">Required</h4>
 <ul>
-<li><code>gcs_bam_path</code> (String, <strong>required</strong>)</li>
+<li><code>gcs_bam_path</code> (String, <strong>required</strong>): path to bam file in GCS</li>
 </ul>
 <h4 id="optional_40">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): override the runtime attributes</li>
 </ul>
 <h3 id="outputs_47">Outputs</h3>
 <ul>
 <li><code>rg</code> (String)</li>
 </ul>
 <h2 id="failwithwarning">FailWithWarning</h2>
+<dl>
+<dt>description</dt>
+<dd>Fail with a warning</dd>
+</dl>
 <h3 id="inputs_48">Inputs</h3>
 <h4 id="required_47">Required</h4>
 <ul>
-<li><code>warning</code> (String, <strong>required</strong>)</li>
+<li><code>warning</code> (String, <strong>required</strong>): The warning message to print</li>
 </ul>
 <h3 id="outputs_48">Outputs</h3>
 <p><strong>None</strong></p>
 <h2 id="splitdelimitedstring">SplitDelimitedString</h2>
+<dl>
+<dt>description</dt>
+<dd>Split a delimited string into an array</dd>
+</dl>
 <h3 id="inputs_49">Inputs</h3>
 <h4 id="required_48">Required</h4>
 <ul>
-<li><code>s</code> (String, <strong>required</strong>)</li>
-<li><code>separate</code> (String, <strong>required</strong>)</li>
+<li><code>s</code> (String, <strong>required</strong>): The string to split</li>
+<li><code>separate</code> (String, <strong>required</strong>): The delimiter to split on</li>
 </ul>
 <h3 id="outputs_49">Outputs</h3>
 <ul>
@@ -1844,19 +2006,23 @@
 <h3 id="inputs_50">Inputs</h3>
 <h4 id="required_49">Required</h4>
 <ul>
-<li><code>keys</code> (Array[String], <strong>required</strong>)</li>
-<li><code>values</code> (Array[String], <strong>required</strong>)</li>
+<li><code>keys</code> (Array[String], <strong>required</strong>): The keys of the map</li>
+<li><code>values</code> (Array[String], <strong>required</strong>): The values of the map</li>
 </ul>
 <h3 id="outputs_50">Outputs</h3>
 <ul>
 <li><code>converted</code> (Map[String,String])</li>
 </ul>
 <h2 id="maptotsv">MapToTsv</h2>
+<dl>
+<dt>description</dt>
+<dd>Convert a map to a tsv file</dd>
+</dl>
 <h3 id="inputs_51">Inputs</h3>
 <h4 id="required_50">Required</h4>
 <ul>
-<li><code>my_map</code> (Map[String,Float], <strong>required</strong>)</li>
-<li><code>name_of_file</code> (String, <strong>required</strong>)</li>
+<li><code>my_map</code> (Map[String,Float], <strong>required</strong>): The map to convert</li>
+<li><code>name_of_file</code> (String, <strong>required</strong>): The name of the file to write to</li>
 </ul>
 <h3 id="outputs_51">Outputs</h3>
 <ul>

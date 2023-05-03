@@ -256,17 +256,21 @@
               
                 <h1 id="sniffles">Sniffles</h1>
 <h2 id="sniffles_1">Sniffles</h2>
+<dl>
+<dt>description</dt>
+<dd>Call SVs using Sniffles-1</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
 <li><code>bai</code> (File, <strong>required</strong>): index accompanying the BAM</li>
 <li><code>bam</code> (File, <strong>required</strong>): input BAM from which to call SVs</li>
-<li><code>prefix</code> (String, <strong>required</strong>): prefix for output</li>
+<li><code>prefix</code> (String, <strong>required</strong>): prefix for output file</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
 <li><code>chr</code> (String?): chr on which to call variants</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>

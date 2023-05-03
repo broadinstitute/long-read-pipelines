@@ -391,27 +391,31 @@
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>annotated_transcriptome_bam</code> (File, <strong>required</strong>)</li>
+<li><code>annotated_transcriptome_bam</code> (File, <strong>required</strong>): Annotated transcriptome bam file.  Must contain tags that indicate the gene/transcript (XG), cell barcode (CB), and umi (BX) of the read.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>tx_equivalence_class_assignments</code> (File?)</li>
+<li><code>tx_equivalence_class_assignments</code> (File?): Optional file containing a list of equivalence classes for each transcript. </li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="umi_tools_group")</li>
-<li><code>umi_tag</code> (String, default="ZU")</li>
+<li><code>prefix</code> (String, default="umi_tools_group"): Prefix for the output file.  The output file will be named <prefix>.tsv</li>
+<li><code>umi_tag</code> (String, default="ZU"): The tag that contains the umi.  Default is ZU.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>count_matrix</code> (File)</li>
 </ul>
 <h2 id="aggregateumiadjustmentstats">AggregateUmiAdjustmentStats</h2>
+<dl>
+<dt>description</dt>
+<dd>Aggregates the UMI adjustment stats from the given longbow UMI adjustment log files.</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>longbow_umi_adjustment_log_files</code> (Array[File], <strong>required</strong>)</li>
+<li><code>longbow_umi_adjustment_log_files</code> (Array[File], <strong>required</strong>): The longbow UMI adjustment log files to aggregate.</li>
 </ul>
 <h4 id="optional_1">Optional</h4>
 <ul>
@@ -419,7 +423,7 @@
 </ul>
 <h4 id="defaults_1">Defaults</h4>
 <ul>
-<li><code>out_name</code> (String, default="longbow_umi_adjustment_stats.txt")</li>
+<li><code>out_name</code> (String, default="longbow_umi_adjustment_stats.txt"): The name of the output file.</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
 <ul>
@@ -437,7 +441,7 @@
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>barcode_count_tsv</code> (File, <strong>required</strong>)</li>
+<li><code>barcode_count_tsv</code> (File, <strong>required</strong>): The TSV file containing the barcode counts to merge.</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
@@ -445,7 +449,7 @@
 </ul>
 <h4 id="defaults_2">Defaults</h4>
 <ul>
-<li><code>prefix</code> (String, default="merged_counts")</li>
+<li><code>prefix</code> (String, default="merged_counts"): The prefix to use for the output file.</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
 <ul>
@@ -463,21 +467,21 @@
 <h3 id="inputs_3">Inputs</h3>
 <h4 id="required_3">Required</h4>
 <ul>
-<li><code>count_matrix_tsv</code> (File, <strong>required</strong>)</li>
-<li><code>genome_annotation_gtf_file</code> (File, <strong>required</strong>)</li>
+<li><code>count_matrix_tsv</code> (File, <strong>required</strong>): The TSV file containing the count matrix to convert to anndata.</li>
+<li><code>genome_annotation_gtf_file</code> (File, <strong>required</strong>): The GTF file containing the genome annotation.</li>
 </ul>
 <h4 id="optional_3">Optional</h4>
 <ul>
-<li><code>equivalence_class_definitions</code> (File?)</li>
-<li><code>gencode_reference_gtf_file</code> (File?)</li>
-<li><code>overlap_interval_label</code> (String?)</li>
-<li><code>overlap_intervals</code> (File?)</li>
+<li><code>equivalence_class_definitions</code> (File?): The equivalence class definitions file to use for the anndata object.</li>
+<li><code>gencode_reference_gtf_file</code> (File?): The gencode reference GTF file to use for the anndata object.</li>
+<li><code>overlap_interval_label</code> (String?): The overlap interval label to use for the anndata object.</li>
+<li><code>overlap_intervals</code> (File?): The overlap intervals file to use for the anndata object.</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults_3">Defaults</h4>
 <ul>
-<li><code>force_anndata_gencode_overwrite</code> (Boolean, default=false)</li>
-<li><code>prefix</code> (String, default="umi_tools_group")</li>
+<li><code>force_anndata_gencode_overwrite</code> (Boolean, default=false): Forces the values in <code>gene_names</code> and <code>gene_ids</code> to overwrite <code>gencode_overlap_gene_names</code> and <code>gencode_overlap_gene_ids</code> respectively.</li>
+<li><code>prefix</code> (String, default="umi_tools_group"): The prefix to use for the output file.</li>
 </ul>
 <h3 id="outputs_3">Outputs</h3>
 <ul>
@@ -496,24 +500,24 @@
 <h3 id="inputs_4">Inputs</h3>
 <h4 id="required_4">Required</h4>
 <ul>
-<li><code>count_matrix_tsv</code> (File, <strong>required</strong>)</li>
-<li><code>gene_equivalence_class_assignments</code> (File, <strong>required</strong>)</li>
-<li><code>gene_equivalence_class_definitions</code> (File, <strong>required</strong>)</li>
-<li><code>genome_annotation_gtf_file</code> (File, <strong>required</strong>)</li>
-<li><code>tx_equivalence_class_assignments</code> (File, <strong>required</strong>)</li>
-<li><code>tx_equivalence_class_definitions</code> (File, <strong>required</strong>)</li>
+<li><code>count_matrix_tsv</code> (File, <strong>required</strong>): The TSV file containing the count matrix to convert to anndata.</li>
+<li><code>gene_equivalence_class_assignments</code> (File, <strong>required</strong>): The equivalence class assignments file to use for the anndata object.</li>
+<li><code>gene_equivalence_class_definitions</code> (File, <strong>required</strong>): The equivalence class definitions file to use for the anndata object.</li>
+<li><code>genome_annotation_gtf_file</code> (File, <strong>required</strong>): The GTF file containing the genome annotation.</li>
+<li><code>tx_equivalence_class_assignments</code> (File, <strong>required</strong>): The equivalence class assignments file to use for the anndata object.</li>
+<li><code>tx_equivalence_class_definitions</code> (File, <strong>required</strong>): The equivalence class definitions file to use for the anndata object.</li>
 </ul>
 <h4 id="optional_4">Optional</h4>
 <ul>
-<li><code>gencode_reference_gtf_file</code> (File?)</li>
-<li><code>overlap_interval_label</code> (String?)</li>
-<li><code>overlap_intervals</code> (File?)</li>
+<li><code>gencode_reference_gtf_file</code> (File?): The gencode reference GTF file</li>
+<li><code>overlap_interval_label</code> (String?): The label to use for the overlap intervals.</li>
+<li><code>overlap_intervals</code> (File?): Overlaping interval file.</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults_4">Defaults</h4>
 <ul>
 <li><code>force_anndata_gencode_overwrite</code> (Boolean, default=false)</li>
-<li><code>prefix</code> (String, default="umi_tools_group")</li>
+<li><code>prefix</code> (String, default="umi_tools_group"): The prefix to use for the output anndata object.</li>
 </ul>
 <h3 id="outputs_4">Outputs</h3>
 <ul>
@@ -622,8 +626,8 @@
 <h3 id="inputs_8">Inputs</h3>
 <h4 id="required_8">Required</h4>
 <ul>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>eq_class_file</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>): BAM file containing reads to copy gene assignments into.</li>
+<li><code>eq_class_file</code> (File, <strong>required</strong>): TSV file containing read -&gt; gene equivalence class assignments as produced by QuantifyGffComparison.gene_assignments_file.</li>
 </ul>
 <h4 id="optional_7">Optional</h4>
 <ul>
@@ -631,9 +635,9 @@
 </ul>
 <h4 id="defaults_7">Defaults</h4>
 <ul>
-<li><code>eq_class_tag</code> (String, default="eq")</li>
-<li><code>gene_tag</code> (String, default="XG")</li>
-<li><code>prefix</code> (String, default="combined")</li>
+<li><code>eq_class_tag</code> (String, default="eq"): Tag to copy gene equivalence class into.</li>
+<li><code>gene_tag</code> (String, default="XG"): Tag to copy gene assignment into.</li>
+<li><code>prefix</code> (String, default="combined"): Prefix for ouput file.</li>
 </ul>
 <h3 id="outputs_8">Outputs</h3>
 <ul>

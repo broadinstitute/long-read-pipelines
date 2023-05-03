@@ -374,16 +374,24 @@
               
                 <h1 id="fingerprinting">Fingerprinting</h1>
 <h2 id="listgenotypedvcfs">ListGenotypedVCFs</h2>
+<dl>
+<dt>description</dt>
+<dd>List all VCFs that have been genotyped</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>fingerprint_store</code> (String, <strong>required</strong>)</li>
+<li><code>fingerprint_store</code> (String, <strong>required</strong>): A bucket that holds all fingerprinting VCFs</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>vcf_gs_paths</code> (File)</li>
 </ul>
 <h2 id="pickgenotypevcf">PickGenotypeVCF</h2>
+<dl>
+<dt>description</dt>
+<dd>Pick a subset of VCFs that have been genotyped</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
@@ -398,10 +406,14 @@
 <li><code>vcfs</code> (Array[String])</li>
 </ul>
 <h2 id="filtergenotypesvcf">FilterGenotypesVCF</h2>
+<dl>
+<dt>description</dt>
+<dd>Filter out unwanted genotypes from a VCF</dd>
+</dl>
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>fingerprint_vcf</code> (File, <strong>required</strong>)</li>
+<li><code>fingerprint_vcf</code> (File, <strong>required</strong>): A VCF file that has been genotyped</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
@@ -412,20 +424,28 @@
 <li><code>ready_to_use_vcf</code> (File)</li>
 </ul>
 <h2 id="extractgenotypingsites">ExtractGenotypingSites</h2>
+<dl>
+<dt>description</dt>
+<dd>Extract genotyping sites from a VCF</dd>
+</dl>
 <h3 id="inputs_3">Inputs</h3>
 <h4 id="required_3">Required</h4>
 <ul>
-<li><code>fingerprint_vcf</code> (File, <strong>required</strong>)</li>
+<li><code>fingerprint_vcf</code> (File, <strong>required</strong>): A VCF file that has been genotyped</li>
 </ul>
 <h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>sites</code> (File)</li>
 </ul>
 <h2 id="mergegenotypingsites">MergeGenotypingSites</h2>
+<dl>
+<dt>description</dt>
+<dd>Merge genotyping sites from multiple VCFs</dd>
+</dl>
 <h3 id="inputs_4">Inputs</h3>
 <h4 id="required_4">Required</h4>
 <ul>
-<li><code>all_sites</code> (Array[File], <strong>required</strong>)</li>
+<li><code>all_sites</code> (Array[File], <strong>required</strong>): An array of genotyping sites</li>
 </ul>
 <h3 id="outputs_4">Outputs</h3>
 <ul>
@@ -453,12 +473,16 @@
 <li><code>relevant_reads_bai</code> (File)</li>
 </ul>
 <h2 id="resetclrbasequal">ResetCLRBaseQual</h2>
+<dl>
+<dt>description</dt>
+<dd>Reset base quality scores to a fixed value</dd>
+</dl>
 <h3 id="inputs_6">Inputs</h3>
 <h4 id="required_6">Required</h4>
 <ul>
-<li><code>arbitrary_bq</code> (Int, <strong>required</strong>)</li>
-<li><code>bai</code> (File, <strong>required</strong>)</li>
-<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>arbitrary_bq</code> (Int, <strong>required</strong>): A fixed base quality score</li>
+<li><code>bai</code> (File, <strong>required</strong>): A BAI file</li>
+<li><code>bam</code> (File, <strong>required</strong>): A BAM file</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
@@ -504,7 +528,7 @@
 <li><code>aligned_bai</code> (File, <strong>required</strong>)</li>
 <li><code>aligned_bam</code> (File, <strong>required</strong>)</li>
 <li><code>fingerprint_vcf</code> (File, <strong>required</strong>)</li>
-<li><code>haplotype_map</code> (File, <strong>required</strong>): Happlotype map file for the reference build used. See https://bit.ly/3QyZbwt</li>
+<li><code>haplotype_map</code> (File, <strong>required</strong>): Haplotype map file for the reference build used. See https://bit.ly/3QyZbwt</li>
 <li><code>vcf_sample_name</code> (String, <strong>required</strong>): Sample name in VCF, possibly different from that in the BAM.</li>
 </ul>
 <h4 id="optional_4">Optional</h4>
@@ -529,7 +553,7 @@
 <h3 id="inputs_9">Inputs</h3>
 <h4 id="required_9">Required</h4>
 <ul>
-<li><code>full_GRCh38_vcf</code> (File, <strong>required</strong>)</li>
+<li><code>full_GRCh38_vcf</code> (File, <strong>required</strong>): Full GRCh38 VCF file.</li>
 </ul>
 <h3 id="outputs_9">Outputs</h3>
 <ul>
