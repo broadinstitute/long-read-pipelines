@@ -77,7 +77,7 @@ task FindSequencingSummaryFiles {
 task GetRunInfo {
 
     meta{
-        description: "Get run info from a sequencing summary file."
+        description: "Get ONT run info from a final summary file."
     }
 
     parameter_meta {
