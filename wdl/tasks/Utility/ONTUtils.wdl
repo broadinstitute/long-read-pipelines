@@ -5,7 +5,7 @@ import "../../structs/Structs.wdl"
 task FindSequencingSummaryFiles {
 
     meta {
-        description: "Find sequencing summary files in a GCS directory."
+        description: "Find sequencing summary files in an ONT basecall directory."
     }
 
     parameter_meta {
