@@ -5,7 +5,7 @@ import "../../structs/Structs.wdl"
 task NanoPlotFromSummary {
 
     meta {
-        description: "Use NanoPlot to generate plots from a summary file"
+        description: "Use NanoPlot to generate plots from ONT summary files"
     }
 
     parameter_meta {
