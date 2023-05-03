@@ -6,7 +6,7 @@ import "../../structs/Structs.wdl"
 task Sniffles {
 
     meta {
-        description: "Call SVs using Sniffles"
+        description: "Call SVs using Sniffles-1"
     }
 
     parameter_meta {
