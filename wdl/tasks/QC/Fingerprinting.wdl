@@ -427,7 +427,7 @@ task CheckCLRFingerprint {
     }
     parameter_meta {
         vcf_sample_name:    "Sample name in VCF, possibly different from that in the BAM."
-        haplotype_map:      "Happlotype map file for the reference build used. See https://bit.ly/3QyZbwt"
+        haplotype_map:      "Haplotype map file for the reference build used. See https://bit.ly/3QyZbwt"
     }
 
     input {
