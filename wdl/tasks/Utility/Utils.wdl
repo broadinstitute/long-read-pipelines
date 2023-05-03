@@ -1381,7 +1381,7 @@ task MergeBams {
 task Index {
 
     meta {
-        description : "Index a BAM file."
+        description : "samtools index a BAM file."
     }
 
     parameter_meta {
