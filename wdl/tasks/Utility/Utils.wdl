@@ -326,7 +326,7 @@ task SortSam {
 task MakeChrIntervalList {
 
     meta {
-        description: "Make a list of intervals for each chromosome in the reference genome"
+        description: "Make a Picard-style list of intervals for each chromosome in the reference genome"
     }
 
     parameter_meta {
