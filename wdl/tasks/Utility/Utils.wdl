@@ -2623,7 +2623,7 @@ task GetCurrentTimestampString {
 task GetRawReadGroup {
 
     meta {
-        description: "Get the raw read group from a bam file"
+        description: "Get the raw read group from a bam file (assumed to have 1 read group only)"
     }
 
     parameter_meta {
