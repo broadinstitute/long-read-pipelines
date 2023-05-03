@@ -365,7 +365,7 @@ task ExtractHifiReads {
 task MergeCCSReports {
 
     meta {
-        description: "Merge CCS reports."
+        description: "Merge CCS reports from shards of a single BAM."
     }
 
     parameter_meta {
