@@ -13,8 +13,8 @@ digraph {
 	"call-CustomMetricsSummaryToFile" [label=CustomMetricsSummaryToFile shape=cds]
 	"call-NanoPlotFromBam" -> "call-CustomMetricsSummaryToFile"
 	"call-SummarizeAlignedQ12PBI" -> "call-CustomMetricsSummaryToFile"
-	"call-SummarizeAlignedQ5PBI" -> "call-CustomMetricsSummaryToFile"
-	"call-SummarizeAlignedQ7PBI" -> "call-CustomMetricsSummaryToFile"
 	"call-SummarizeAlignedQ15PBI" -> "call-CustomMetricsSummaryToFile"
 	"call-SummarizeAlignedQ10PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ5PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ7PBI" -> "call-CustomMetricsSummaryToFile"
 }
