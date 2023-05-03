@@ -3,6 +3,15 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task RemoveMasSeqTruncatedReads {
+
+    meta {
+        description: "Removes reads that are truncated by the MAS-SEQ adapter."
+    }
+    parameter_meta {
+        bam: "The BAM file to remove truncated reads from."
+        prefix: "The prefix to use for the output BAM file."
+    }
+
     input {
         File bam
 
@@ -54,6 +63,19 @@ task AdjustUmiSequenceWithAdapterAlignment {
         author : "Jonn Smith"
         email : "jonn@broadinstitute.org"
     }
+    parameter_meta {
+        bam: "The BAM file to extract UMIs from."
+        prefix: "The prefix to use for the output BAM file."
+        umi_length: "The length of the UMI sequence."
+        existing_umi_tag: "The tag to use for the existing UMI sequence."
+        new_umi_tag: "The tag to use for the new UMI sequence."
+        pre_pre_umi_seq: "The sequence of the adapter preceding the UMI sequence."
+        pre_umi_seq: "The sequence of the adapter preceding the UMI sequence."
+        pre_umi_tag: "The tag to use for the adapter preceding the UMI sequence."
+        post_umi_seq: "The sequence of the adapter following the UMI sequence."
+        post_umi_tag: "The tag to use for the adapter following the UMI sequence."
+    }
+
     input {
         File bam
         String prefix = "out"
@@ -129,6 +151,18 @@ task AdjustUmiSequenceWithAdapterAlignment {
 }
 
 task FilterMasSeqReads {
+
+    meta {
+        description : "Filters out reads that are likely to be from the MAS-Seq protocol."
+    }
+    parameter_meta {
+        input_bam: "The BAM file to filter."
+        input_bai: "The BAI file for the BAM file to filter."
+        maxReadLength: "The maximum read length to allow."
+        maxEndClipping: "The maximum amount of end clipping to allow."
+        prefix: "The prefix to use for the output BAM file."
+    }
+
     input {
         File input_bam
         File input_bai
@@ -200,6 +234,10 @@ task RenameSingleCellBamTagsForMasIsoSeqV0 {
         author : "Jonn Smith"
         email : "jonn@broadinstitute.org"
     }
+    parameter_meta {
+        bam: "The BAM file to rename."
+        prefix: "The prefix to use for the output BAM file."
+    }
 
     input {
         File bam
@@ -254,6 +292,10 @@ task RestoreSingleCellBamTagsForMasIsoSeqV0 {
         description : "Restore the single-cell tags in MAS-ISO-seq v0 data (Jp -> Cb; Jq -> ZU ...)."
         author : "Jonn Smith"
         email : "jonn@broadinstitute.org"
+    }
+    parameter_meta {
+        bam: "The BAM file to rename."
+        prefix: "The prefix to use for the output BAM file."
     }
 
     input {

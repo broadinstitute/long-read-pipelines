@@ -3,6 +3,22 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 workflow RunPBSV {
+
+    meta {
+        description: "Run PBSV to call SVs from a BAM file."
+    }
+
+    parameter_meta {
+        bam:               "input BAM from which to call SVs"
+        bai:               "index accompanying the BAM"
+        is_ccs:            "if input BAM is CCS reads"
+        ref_fasta:         "reference to which the BAM was aligned to"
+        ref_fasta_fai:     "index accompanying the reference"
+        prefix:            "prefix for output"
+        zones:             "zones to run in"
+        tandem_repeat_bed: "BED file containing TRF finder results (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+    }
+
     input {
         File bam
         File bai
@@ -15,10 +31,6 @@ workflow RunPBSV {
         String zones
 
         File? tandem_repeat_bed
-    }
-
-    parameter_meta {
-        is_ccs: "if input BAM is CCS reads"
     }
 
     call Discover {

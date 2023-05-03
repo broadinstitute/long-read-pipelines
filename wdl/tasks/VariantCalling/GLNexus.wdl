@@ -1,15 +1,32 @@
 version 1.0
 
-##########################################################################################
-# This pipeline joint-calls GVCFs with GLNexus (https://github.com/dnanexus-rnd/GLnexus).
-# It also permits intervals to be specified so that joint calling only takes place on a
-# subset of intervals (this can be useful for finding duplicate samples).
-##########################################################################################
-
 import "../Utility/Utils.wdl"
 import "../Utility/VariantUtils.wdl"
 
 workflow JointCall {
+
+    meta {
+        description: "This pipeline joint-calls GVCFs with GLNexus (https://github.com/dnanexus-rnd/GLnexus). It also permits intervals to be specified so that joint calling only takes place on a subset of intervals (this can be useful for finding duplicate samples)."
+    }
+
+    parameter_meta {
+        gvcfs:    "gVCF files to perform joint calling upon"
+        tbis:     "gVCF index files"
+        dict:     "reference sequence dictionary"
+        bed:      "intervals to which joint calling should be restricted"
+
+        config:   "configuration preset name or .yml filename"
+        more_PL:  "include PL from reference bands and other cases omitted by default"
+        squeeze:  "reduce pVCF size by suppressing detail in cells derived from reference bands"
+        trim_uncalled_alleles: "remove alleles with no output GT calls in postprocessing"
+
+        num_cpus: "number of CPUs to use"
+        max_cpus: "maximum number of CPUs to allow"
+        prefix:   "output prefix for joined-called BCF and GVCF files"
+
+        runtime_attr_override: "override default runtime attributes"
+    }
+
     input {
         Array[File] gvcfs
         Array[File] tbis
@@ -27,22 +44,6 @@ workflow JointCall {
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        gvcfs:    "gVCF files to perform joint calling upon"
-        tbis:     "gVCF index files"
-        dict:     "reference sequence dictionary"
-        bed:      "intervals to which joint calling should be restricted"
-
-        config:   "configuration preset name or .yml filename"
-        more_PL:  "include PL from reference bands and other cases omitted by default"
-        squeeze:  "reduce pVCF size by suppressing detail in cells derived from reference bands"
-        trim_uncalled_alleles: "remove alleles with no output GT calls in postprocessing"
-
-        num_cpus: "number of CPUs to use"
-        max_cpus: "maximum number of CPUs to allow"
-        prefix:   "output prefix for joined-called BCF and GVCF files"
     }
 
     Int cpus_exp = if defined(num_cpus) then select_first([num_cpus]) else 2*length(gvcfs)

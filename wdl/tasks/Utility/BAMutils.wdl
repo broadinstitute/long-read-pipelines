@@ -6,14 +6,15 @@ task GetReadGroupInfo {
         "Get some read group information Given a single-readgroup BAM. Will fail if the information isn't present."
     }
 
+    parameter_meta {
+        uBAM: "The input BAM file."
+        keys: "A list of requested fields in the RG line, e.g. ID, SM, LB."
+    }
+
     input {
         String uBAM  # not using file as call-caching brings not much benefit
 
         Array[String] keys
-    }
-
-    parameter_meta {
-        keys: "A list of requested fields in the RG line, e.g. ID, SM, LB."
     }
 
     command <<<

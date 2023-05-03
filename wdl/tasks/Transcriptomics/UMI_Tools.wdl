@@ -10,6 +10,17 @@ task Run_Group {
         email : "jonn@broadinstitute.org"
     }
 
+    parameter_meta {
+        aligned_transcriptome_reads: "Aligned reads in bam format."
+        aligned_transcriptome_reads_index: "Index for aligned reads in bam format."
+        gene_tag: "Tag for gene name in bam file."
+        cell_barcode_tag: "Tag for cell barcode in bam file."
+        umi_tag: "Tag for UMI in bam file."
+        do_per_cell: "Whether to do per-cell grouping."
+        prefix: "Prefix for output files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File aligned_transcriptome_reads
         File aligned_transcriptome_reads_index

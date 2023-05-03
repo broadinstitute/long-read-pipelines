@@ -4,11 +4,9 @@ import "../../structs/Structs.wdl"
 import "../Utility/Utils.wdl" as Utils
 
 workflow CallAssemblyVariants {
-    input {
-        File asm_fasta
-        File ref_fasta
-        String participant_name
-        String prefix
+
+    meta {
+        description: "Call variants from an assembly using paftools.js"
     }
 
     parameter_meta {
@@ -16,6 +14,13 @@ workflow CallAssemblyVariants {
         ref_fasta:        "reference to which assembly should be aligned"
         participant_name: "participant name"
         prefix:           "prefix for output files"
+    }
+
+    input {
+        File asm_fasta
+        File ref_fasta
+        String participant_name
+        String prefix
     }
 
     call AlignAsPAF {

@@ -3,6 +3,16 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task FindSequencingSummaryFiles {
+
+    meta {
+        description: "Find sequencing summary files in an ONT basecall directory."
+    }
+
+    parameter_meta {
+        gcs_input_dir: "GCS directory containing sequencing summary files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         String gcs_input_dir
 
@@ -65,6 +75,16 @@ task FindSequencingSummaryFiles {
 }
 
 task GetRunInfo {
+
+    meta{
+        description: "Get ONT run info from a final summary file."
+    }
+
+    parameter_meta {
+        final_summary: "Sequencing summary file."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         String final_summary
 
@@ -104,6 +124,17 @@ task GetRunInfo {
 }
 
 task ListFiles {
+
+    meta {
+        description: "List files in a GCS directory."
+    }
+
+    parameter_meta {
+        sequencing_summary: "Sequencing summary file."
+        suffix: "Suffix of files to list."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         String sequencing_summary
         String suffix
@@ -148,6 +179,17 @@ task ListFiles {
 }
 
 task PartitionManifest {
+
+    meta {
+        description: "Partition a manifest into chunks."
+    }
+
+    parameter_meta {
+        manifest: "Manifest to partition."
+        N: "Number of chunks to partition into."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File manifest
         Int N

@@ -10,14 +10,14 @@ task SplitBamBySampleAndCellBarcodeTask {
         email : "jonn@broadinstitute.org"
     }
 
-    input {
-        File aligned_annotated_bam
-        String output_base_name = "reads"
-    }
-
     parameter_meta {
         aligned_annotated_bam : "Bam file containing aligned reads that have been annotated with the 10x tool."
         output_base_name : "[optional] base name to give to every output file.  Should correspond to some unique identifier from this dataset."
+    }
+
+    input {
+        File aligned_annotated_bam
+        String output_base_name = "reads"
     }
 
     # 10x the total size of the input bam (uncompressed reads)
@@ -57,14 +57,14 @@ task DownsampleToIsoSeqEquivalent {
         email : "jonn@broadinstitute.org"
     }
 
-    input {
-        File array_element_bam
-        String prefix = "downsampled_masseq"
-    }
-
     parameter_meta {
         array_element_bam : "Bam file containing aligned reads that have been annotated with the 10x tool."
         prefix : "[optional] base name to give to every output file.  Should correspond to some unique identifier from this dataset."
+    }
+
+    input {
+        File array_element_bam
+        String prefix = "downsampled_masseq"
     }
 
     Int disk_size = 10 + 20 * ceil(size(array_element_bam, "GB"))
@@ -100,12 +100,12 @@ task DemuxMasSeqDataByIndex {
         email : "jonn@broadinstitute.org"
     }
 
-    input {
-        File array_bam
-    }
-
     parameter_meta {
         array_bam : "Bam file containing annotated MAS-seq array reads that contain a 10bp index near the 3' end.."
+    }
+
+    input {
+        File array_bam
     }
 
     Int disk_size = 10 + 20 * ceil(size(array_bam, "GB"))
@@ -231,6 +231,11 @@ task SplitBamByContig {
         email : "jonn@broadinstitute.org"
     }
 
+    parameter_meta {
+        bam : "Bamfile to be split by contig."
+        prefix : "Prefix for ouput files."
+    }
+
     input {
         File bam
 
@@ -239,10 +244,6 @@ task SplitBamByContig {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        bam : "Bamfile to be split by contig."
-        prefix : "Prefix for ouput files."
-    }
 
     Int disk_size_gb = 10 + 5*ceil(size(bam, "GB"))
 
@@ -288,14 +289,14 @@ task ConvertSplicedBamToGff {
         email : "jonn@broadinstitute.org"
     }
 
+    parameter_meta {
+        bam : "Bamfile to be converted to gff."
+    }
+
     input {
         File bam
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam : "Bamfile to be converted to gff."
     }
 
     String base_name = basename(bam, ".bam")
@@ -339,6 +340,13 @@ task GffCompare {
         email : "jonn@broadinstitute.org"
     }
 
+    parameter_meta {
+        gff_ref : "Gff file to be used as a reference."
+        gff_query : "Gff file to be used as a query (compared against the gff_ref)."
+        ref_fasta : "Reference fasta file."
+        ref_fasta_index : "Reference fasta file index."
+    }
+
     input {
         File gff_ref
         File gff_query
@@ -348,13 +356,6 @@ task GffCompare {
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        gff_ref : "Gff file to be used as a reference."
-        gff_query : "Gff file to be used as a query (compared against the gff_ref)."
-        ref_fasta : "Reference fasta file."
-        ref_fasta_index : "Reference fasta file index."
     }
 
     Int disk_size_gb = 10 + 2*ceil(size(gff_ref, "GB")) + 2*ceil(size(gff_query, "GB")) + 2*ceil(size(ref_fasta, "GB"))
@@ -423,15 +424,15 @@ task RestoreOriginalReadNames {
         email : "jonn@broadinstitute.org"
     }
 
+    parameter_meta {
+        bam : "Bam file in which to restore the original read names."
+    }
+
     input {
         File bam
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam : "Bam file in which to restore the original read names."
     }
 
     Int disk_size_gb = 10 + 2*ceil(size(bam, "GB"))
@@ -481,6 +482,11 @@ task CorrectUmisWithSetCover {
         email : "jonn@broadinstitute.org"
     }
 
+    parameter_meta {
+        bam : "Bam file for which to correct UMIs."
+        prefix : "Prefix to assign to output files."
+    }
+
     input {
         File bam
         String prefix = "out"
@@ -488,11 +494,6 @@ task CorrectUmisWithSetCover {
         Boolean is_extracted = true
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        bam : "Bam file for which to correct UMIs."
-        prefix : "Prefix to assign to output files."
     }
 
     Int disk_size_gb = 10 + 10*ceil(size(bam, "GB"))

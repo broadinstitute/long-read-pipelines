@@ -1,20 +1,32 @@
 version 1.0
 
-##########################################################################################
-## A workflow that performs trio-binning of child long reads given parental (short) reads.
-## Based on the trio-canu publication
-##    De novo assembly of haplotype-resolved genomes with trio binning
-##    https://www.nature.com/articles/nbt.4277
-## This holds the sub-workflow for
-##   part two: given the k-mer stats database from part one, classify child long reads
-##########################################################################################
-
 import "../../structs/Structs.wdl"
 
 # we separate this out based on two concerns:
 #  1. we can test out using different k-value when collecting parental k-mer states
 #  2. we can collect parental k-mer stats once and classify all children reads (different sibblings, technologies) separately
 workflow AssignChildLongReadsGivenParentalKmerStats {
+
+    meta {
+        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication 'De novo assembly of haplotype-resolved genomes with trio binning' https://www.nature.com/articles/nbt.4277 . This holds the sub-workflow for part two: given the k-mer stats database from part one, classify child long reads"
+    }
+
+    parameter_meta {
+        workdir_name:            "name of working directory"
+        child_long_reads_bucket: "GCS bucket path holding FASTA/FASTQ of child long reads"
+        long_read_platform:      "platform of long read sequencing; currently only one of [pacbio-raw, nanopore-raw] is supported"
+
+		meryl_db_files_father: "Meryl databases files on paternal (short) reads"
+		meryl_db_files_mother: "Meryl databases files on maternal (short) reads"
+		meryl_stats_father:    "Meryl statistics single file on paternal (short) reads"
+		meryl_stats_mother:    "Meryl statistics single file on maternal (short) reads"
+
+        vm_local_monitoring_script:    "GCS file holding a resouce monitoring script that runs locally and collects info for a very specific purpose"
+        meryl_operations_threads_est:  "[default-valued] estimate on how many threads to allocate to k-mer stats collection step"
+        child_read_assign_threads_est: "[default-valued] estimate on how many threads to allocate to the child longread classification step"
+        child_read_assign_memoryG_est: "[default-valued] estimate on how many GB memory to allocate to the child longread classification step"
+        run_with_debug:                "[optional] whether to run in debug mode (takes significantly more disk space and more logs); defaults to false"
+    }
 
 	input{
 
@@ -38,22 +50,7 @@ workflow AssignChildLongReadsGivenParentalKmerStats {
         Boolean? run_with_debug = false
     }
 
-	parameter_meta {
-        workdir_name:            "name of working directory"
-        child_long_reads_bucket: "GCS bucket path holding FASTA/FASTQ of child long reads"
-        long_read_platform:      "platform of long read sequencing; currently only one of [pacbio-raw, nanopore-raw] is supported"
 
-		meryl_db_files_father: "Meryl databases files on paternal (short) reads"
-		meryl_db_files_mother: "Meryl databases files on maternal (short) reads"
-		meryl_stats_father:    "Meryl statistics single file on paternal (short) reads"
-		meryl_stats_mother:    "Meryl statistics single file on maternal (short) reads"
-
-        vm_local_monitoring_script:    "GCS file holding a resouce monitoring script that runs locally and collects info for a very specific purpose"
-        meryl_operations_threads_est:  "[default-valued] estimate on how many threads to allocate to k-mer stats collection step"
-        child_read_assign_threads_est: "[default-valued] estimate on how many threads to allocate to the child longread classification step"
-        child_read_assign_memoryG_est: "[default-valued] estimate on how many GB memory to allocate to the child longread classification step"
-        run_with_debug:                "[optional] whether to run in debug mode (takes significantly more disk space and more logs); defaults to false"
-    }
 
 	call AssignChildLongReads {
         input:

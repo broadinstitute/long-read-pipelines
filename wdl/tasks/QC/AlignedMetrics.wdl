@@ -4,6 +4,18 @@ import "../../structs/Structs.wdl"
 import "../Utility/Finalize.wdl" as FF
 
 workflow AlignedMetrics {
+
+    meta {
+        description: "Workflow to generate metrics for aligned BAMs"
+    }
+    parameter_meta {
+        aligned_bam: "Aligned BAM file"
+        aligned_bai: "Index for aligned BAM file"
+        ref_fasta: "Reference FASTA file"
+        ref_dict: "Reference dictionary file"
+        gcs_output_dir: "GCS output directory"
+    }
+
     input {
         File aligned_bam
         File aligned_bai

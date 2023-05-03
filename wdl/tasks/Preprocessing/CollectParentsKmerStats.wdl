@@ -1,17 +1,24 @@
 version 1.0
 
-##########################################################################################
-## A workflow that performs trio-binning of child long reads given parental (short) reads.
-## Based on the trio-canu publication
-##    De novo assembly of haplotype-resolved genomes with trio binning
-##    https://www.nature.com/articles/nbt.4277
-## This holds the sub-workflow for
-##   part one: collect k-mer stats given parental (short) reads
-##########################################################################################
-
 import "../../structs/Structs.wdl"
 
 workflow CollectParentsKmerStats {
+
+    meta {
+        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication https://www.nature.com/articles/nbt.4277. This holds the sub-workflow for part one: collect k-mer stats given parental (short) reads"
+    }
+    parameter_meta {
+        workdir_name:                 "name of working directory"
+        genome_size:                  "an esimate on genome size of the specicies (affects k-value picking)"
+        kmerSize:                     "[optional] force specifying k-value in collecting k-mer stats on parents"
+
+        father_short_reads_bucket:    "GCS bucket path holding FASTA/FASTQ of (short) reads of paternal origin"
+        mother_short_reads_bucket:    "GCS bucket path holding FASTA/FASTQ of (short) reads of maternal origin"
+
+        meryl_operations_threads_est: "[default-valued] estimate on how many threads to allocate to k-mer stats collection step"
+        run_with_debug:               "[optional] whether to run in debug mode (takes significantly more disk space and more logs); defaults to false"
+    }
+
     input{
 
         String workdir_name
@@ -25,18 +32,6 @@ workflow CollectParentsKmerStats {
         Int meryl_operations_threads_est = 8
 
         Boolean? run_with_debug = false
-    }
-
-    parameter_meta {
-        workdir_name:                 "name of working directory"
-        genome_size:                  "an esimate on genome size of the specicies (affects k-value picking)"
-        kmerSize:                     "[optional] force specifying k-value in collecting k-mer stats on parents"
-
-        father_short_reads_bucket:    "GCS bucket path holding FASTA/FASTQ of (short) reads of paternal origin"
-        mother_short_reads_bucket:    "GCS bucket path holding FASTA/FASTQ of (short) reads of maternal origin"
-
-        meryl_operations_threads_est: "[default-valued] estimate on how many threads to allocate to k-mer stats collection step"
-        run_with_debug:               "[optional] whether to run in debug mode (takes significantly more disk space and more logs); defaults to false"
     }
 
     ############################################################################
