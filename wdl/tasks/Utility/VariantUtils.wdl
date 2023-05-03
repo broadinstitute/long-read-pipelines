@@ -489,7 +489,7 @@ task IndexVCF {
 task FixSnifflesVCF {
 
     meta {
-        description: "Fixes the sample information in a VCF file and prepares to fix undefined VCF INFO/FT/FORMATs. It then proceeds to get the missing VCF headers for these undefined formats and filters."
+        description: "Fixes the sample information in a VCF file and prepares to fix undefined VCF INFO/FT/FORMATs. It then proceeds to get the missing VCF headers for these undefined formats and filters. Specific to Sniffles-1"
     }
 
     parameter_meta {
