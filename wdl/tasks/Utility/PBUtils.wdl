@@ -56,7 +56,7 @@ task FindBams {
 task GetRunInfo {
 
     meta {
-        description: "Get run info from a BAM file."
+        description: "Get run info from a PacBio BAM file."
     }
 
     parameter_meta {
