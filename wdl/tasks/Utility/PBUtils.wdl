@@ -3,6 +3,16 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task FindBams {
+
+    meta {
+        description: "Find all subreads.bam files in a GCS directory."
+    }
+
+    parameter_meta {
+        gcs_input_dir: "GCS directory containing subreads.bam files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         String gcs_input_dir
 
@@ -44,6 +54,17 @@ task FindBams {
 }
 
 task GetRunInfo {
+
+    meta {
+        description: "Get run info from a PacBio BAM file."
+    }
+
+    parameter_meta {
+        bam: "BAM file."
+        SM: "Sample name."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         String bam
         String SM
@@ -94,6 +115,26 @@ task GetRunInfo {
 }
 
 task ShardLongReads {
+
+    meta {
+        description: "Shard long reads."
+    }
+
+    parameter_meta {
+        unaligned_bam: "Unaligned BAM file."
+        unaligned_pbi: "Unaligned BAM index file."
+        num_shards: "Number of shards."
+        num_threads: "Number of threads."
+        drop_per_base_N_pulse_tags: "Drop per-base N and pulse tags."
+        prefix: "Prefix for shard BAM files."
+        # when running large scale workflows, we sometimes see errors like the following
+        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
+        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
+        zones: "select which zone (GCP) to run this task"
+        num_ssds: "number of SSDs to use"
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File unaligned_bam
         File unaligned_pbi
@@ -109,13 +150,6 @@ task ShardLongReads {
         Int? num_ssds
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        # when running large scale workflows, we sometimes see errors like the following
-        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
-        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
-        zones: "select which zone (GCP) to run this task"
     }
 
     Int disk_size = if defined(num_ssds) then 1 + 375*select_first([num_ssds]) else 1+3*ceil(size(unaligned_bam, "GB") + size(unaligned_pbi, "GB"))
@@ -163,6 +197,19 @@ task ShardLongReads {
 }
 
 task CCS {
+
+    meta {
+        description: "Run CCS."
+    }
+
+    parameter_meta {
+        subreads: "Subreads BAM file."
+        all: "Generates one representative sequence per zero mode waveguide (ZMW), irrespective of quality and passes"
+        kinetics: "Generate SQIIe values."
+        by_strand: "Treats each strand of a ZMW (zero mode waveguide) as an individual entity and generates one consensus read for each strand that passes all filters."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File subreads
 
@@ -232,6 +279,19 @@ task CCS {
 }
 
 task ExtractHifiReads {
+
+    meta {
+        description: "Extract HiFi reads from a BAM file."
+    }
+
+    parameter_meta {
+        bam: "Input BAM file."
+        sample_name: "Sample name, we always rely explicitly on input SM name"
+        library: "Library name, this will override the LB: entry on the @RG line"
+        prefix: "Prefix for output files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File bam
 
@@ -241,11 +301,6 @@ task ExtractHifiReads {
         String prefix = "hifi"
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        sample_name: "we always rely explicitly on input SM name"
-        library: "this will override the LB: entry on the @RG line"
     }
 
     Int disk_size = 1 + 3*ceil(size(bam, "GB"))
@@ -308,6 +363,17 @@ task ExtractHifiReads {
 }
 
 task MergeCCSReports {
+
+    meta {
+        description: "Merge CCS reports from shards of a single BAM."
+    }
+
+    parameter_meta {
+        reports: "Input CCS reports."
+        prefix: "Prefix for output files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         Array[File] reports
         String prefix = "out"
@@ -350,6 +416,18 @@ task MergeCCSReports {
 }
 
 task ExtractUncorrectedReads {
+
+    meta {
+        description: "Extract uncorrected reads from subreads and consensus."
+    }
+
+    parameter_meta {
+        subreads: "Input subreads BAM."
+        consensus: "Input consensus BAM."
+        prefix: "Prefix for output files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File subreads
         File consensus
@@ -394,6 +472,27 @@ task ExtractUncorrectedReads {
 }
 
 task Demultiplex {
+
+    meta {
+        description: "Demultiplex reads in a multiplexed PacBio bam."
+    }
+
+    parameter_meta {
+        bam: "Input BAM."
+        barcode_file: "Input barcode file."
+        prefix: "Prefix for output files."
+        ccs: "Input BAM is CCS."
+        isoseq: "Input BAM is IsoSeq."
+        peek_guess: "Demultiplex Barcodes will run twice on the input data. For the first 50,000 ZMWs, it will guess the barcodes and store the mask of identified barcodes. In the second run, the barcode mask is used to demultiplex all ZMWs"
+        dump_removed: "Dump removed reads to a BAM file."
+        split_bam_named: "Split BAM by barcode name."
+        peek: "Looks at the first n ZMWs of the input and return the mean"
+        min_score: "Minimum barcode score."
+        guess: "Guess barcodes."
+        guess_min_count: "Minimum number of reads to guess barcodes."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File bam
         File barcode_file
@@ -464,6 +563,17 @@ task Demultiplex {
 }
 
 task MakeDetailedDemultiplexingReport {
+
+    meta {
+        description: "Make a detailed demultiplexing report."
+    }
+
+    parameter_meta {
+        report: "Input report."
+        type: "Output file type (pdf or png)."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File report
         String type = "png"
@@ -506,6 +616,16 @@ task MakeDetailedDemultiplexingReport {
 }
 
 task MakeSummarizedDemultiplexingReport {
+
+    meta {
+        description: "Make a summarized demultiplexing report."
+    }
+
+    parameter_meta {
+        report: "Input report."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File report
 
@@ -547,6 +667,17 @@ task MakeSummarizedDemultiplexingReport {
 }
 
 task MakePerBarcodeDemultiplexingReports {
+
+    meta {
+        description: "Make per-barcode demultiplexing reports."
+    }
+
+    parameter_meta {
+        report: "Input report."
+        type: "Output file type (pdf or png)."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File report
         String type = "png"
@@ -595,6 +726,19 @@ task MakePerBarcodeDemultiplexingReports {
 }
 
 task RefineTranscriptReads {
+
+    meta {
+        description: "Refine transcript reads."
+    }
+
+    parameter_meta {
+        bam: "Input BAM file."
+        barcode_file: "Input barcode file."
+        prefix: "Prefix for output BAM file."
+        require_polya: "Require polyA tail."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File bam
         File barcode_file
@@ -639,6 +783,18 @@ task RefineTranscriptReads {
 }
 
 task ClusterTranscripts {
+
+    meta {
+        description: "Cluster transcripts."
+    }
+
+    parameter_meta {
+        bam: "Input BAM file."
+        prefix: "Prefix for output BAM file."
+        use_qvs: "Use CCS Analysis Quality Values."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File bam
         String prefix = "clustered"
@@ -692,6 +848,19 @@ task ClusterTranscripts {
 }
 
 task PolishTranscripts {
+
+    meta {
+        description: "Polish transcripts."
+    }
+
+    parameter_meta {
+        bam: "Input BAM file."
+        subreads_bam: "Input subreads BAM file."
+        subreads_pbi: "Input subreads PBI file."
+        prefix: "Prefix for output BAM file."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File bam
         File subreads_bam
@@ -737,6 +906,21 @@ task PolishTranscripts {
 }
 
 task Align {
+
+    meta {
+        description: "Align reads to reference."
+    }
+
+    parameter_meta {
+        bam: "Input BAM file."
+        ref_fasta: "Input reference FASTA file."
+        sample_name: "we always rely explicitly on input SM name"
+        library: "this will override the LB: entry on the @RG line"
+        drop_per_base_N_pulse_tags: "Drop per-base N and pulse tags."
+        prefix: "Prefix for output BAM file."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File bam
         File ref_fasta
@@ -749,11 +933,6 @@ task Align {
 
         String prefix = "out"
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        sample_name: "we always rely explicitly on input SM name"
-        library: "this will override the LB: entry on the @RG line"
     }
 
     String median_filter = if map_preset == "SUBREAD" then "--median-filter" else ""
@@ -826,6 +1005,16 @@ task Align {
 }
 
 task PBIndex {
+
+    meta {
+        description: "Index a BAM file."
+    }
+
+    parameter_meta {
+        bam: "Input BAM file."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File bam
 
@@ -869,6 +1058,18 @@ task PBIndex {
 }
 
 task CollapseTranscripts {
+
+    meta {
+        description: "Collapse transcripts using isoseq3."
+    }
+
+    parameter_meta {
+        bam: "Input BAM file."
+        prefix: "Prefix for output files."
+        use_qvs: "Use CCS Analysis Quality Values."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File bam
         String prefix = "out"
@@ -912,6 +1113,16 @@ task CollapseTranscripts {
 }
 
 task SummarizeCCSReport {
+
+    meta {
+        description: "Summarize CCS report."
+    }
+
+    parameter_meta {
+        report: "Input CCS report."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File report
 
@@ -965,6 +1176,16 @@ task SummarizeCCSReport {
 }
 
 task SummarizeXMLMetadata {
+
+    meta {
+        description: "Summarize XML metadata."
+    }
+
+    parameter_meta {
+        xml: "Input XML metadata."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File xml
 
@@ -1008,6 +1229,17 @@ task SummarizeXMLMetadata {
 }
 
 task SummarizePBI {
+
+    meta {
+        description: "Summarize PBI."
+    }
+
+    parameter_meta {
+        pbi: "Input PBI."
+        qual_threshold: "Quality threshold."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File pbi
         Int qual_threshold = 0

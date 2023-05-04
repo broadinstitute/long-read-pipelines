@@ -10,49 +10,6 @@ task MASIsoSeqReport {
         email : "jonn@broadinstitute.org"
     }
 
-    input {
-        File notebook_template
-
-        String sample_name
-
-        File subreads_stats
-        File ccs_reads_stats
-        File array_elements_stats
-        File ccs_report_file
-
-        File raw_ccs_bam_file
-        File array_element_bam_file
-        File array_elements_genome_aligned
-        File ccs_rejected_bam_file
-
-        File annotated_bam_file
-
-        File longbow_passed_reads_file
-        File longbow_failed_reads_file
-
-        File longbow_passed_ccs_reads
-        File longbow_failed_ccs_reads
-        File ccs_reclaimable_reads
-        File ccs_reclaimed_reads
-        File ccs_rejected_longbow_failed_reads
-        File raw_array_elements
-        File ccs_reclaimed_array_elements
-
-        File zmw_stats_json_gz
-
-        File? zmw_subread_stats_file
-        File? polymerase_read_lengths_file
-        File? approx_raw_subread_array_lengths
-
-        File? ten_x_metrics_file
-        String mas_seq_model
-
-        File workflow_dot_file
-
-        String prefix = ""
-        RuntimeAttr? runtime_attr_override
-    }
-
     parameter_meta {
         notebook_template : "Jupyter notebook MASSeq template to run with the given data to produce a MASSeq report."
 
@@ -96,6 +53,51 @@ task MASIsoSeqReport {
         prefix : "[optional] Prefix to prepend to the name of the generated report."
         runtime_attr_override : "[optional] Runtime attributes struct with which to override the docker container runtime.."
     }
+
+    input {
+        File notebook_template
+
+        String sample_name
+
+        File subreads_stats
+        File ccs_reads_stats
+        File array_elements_stats
+        File ccs_report_file
+
+        File raw_ccs_bam_file
+        File array_element_bam_file
+        File array_elements_genome_aligned
+        File ccs_rejected_bam_file
+
+        File annotated_bam_file
+
+        File longbow_passed_reads_file
+        File longbow_failed_reads_file
+
+        File longbow_passed_ccs_reads
+        File longbow_failed_ccs_reads
+        File ccs_reclaimable_reads
+        File ccs_reclaimed_reads
+        File ccs_rejected_longbow_failed_reads
+        File raw_array_elements
+        File ccs_reclaimed_array_elements
+
+        File zmw_stats_json_gz
+
+        File? zmw_subread_stats_file
+        File? polymerase_read_lengths_file
+        File? approx_raw_subread_array_lengths
+
+        File? ten_x_metrics_file
+        String mas_seq_model
+
+        File workflow_dot_file
+
+        String prefix = ""
+        RuntimeAttr? runtime_attr_override
+    }
+
+
 
     String nb_name = prefix + "report.ipynb"
     String html_out = prefix + "report.html"

@@ -7,6 +7,17 @@ task ConvertToHailMT {
         description: "Convert a .vcf.bgz file to a Hail MatrixTable and copy it to a final gs:// URL."
     }
 
+    parameter_meta {
+        gvcf: "The input .vcf.bgz file."
+        tbi: "The input .vcf.bgz.tbi file."
+        reference: "The reference genome to use.  Currently only GRCh38 is supported."
+        ref_fasta: "The reference genome FASTA file.  If not specified, the reference genome will be downloaded from the Hail website."
+        ref_fai: "The reference genome FASTA index file.  If not specified, the reference genome will be downloaded from the Hail website."
+        prefix: "The prefix to use for the output MatrixTable."
+        outdir: "The output directory to copy the MatrixTable to."
+        runtime_attr_override: "Override the default runtime attributes for this task."
+    }
+
     input {
         File gvcf
         File tbi

@@ -9,20 +9,6 @@ workflow FPCheckAoU {
         description:
         "Check correctness of metadata on a (demultiplexed) alignmed BAM, by genotyping it's BAM generated with its metadata, against a fingerprint VCF. Practically assumes human GRCh38 reference."
     }
-
-    input {
-        File aligned_bam
-        File aligned_bai
-
-        String fp_store
-        String sample_id_at_store
-
-        File ref_specific_haplotype_map
-
-        Float lod_pass_threshold =  6.0
-        Float lod_fail_threshold = -3.0
-    }
-
     parameter_meta {
         aligned_bam:        "GCS path to aligned BAM file, supposed to be of the same sample as from the fingerprinting (FP) VCF"
 
@@ -41,6 +27,18 @@ workflow FPCheckAoU {
         fingerprint_details: "A file holding the detailed LOD at each FP site."
     }
 
+    input {
+        File aligned_bam
+        File aligned_bai
+
+        String fp_store
+        String sample_id_at_store
+
+        File ref_specific_haplotype_map
+
+        Float lod_pass_threshold =  6.0
+        Float lod_fail_threshold = -3.0
+    }
 
     ##### Prep work
     call ResolveFPVCFPath {input: fp_store = fp_store, sample_id_at_store = sample_id_at_store}

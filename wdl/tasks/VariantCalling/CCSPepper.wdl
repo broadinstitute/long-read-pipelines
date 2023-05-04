@@ -13,6 +13,21 @@ workflow CCSPepper {
         description: "Workflow for getting haplotagged BAM, VCF and gVCF from DV-pepper. Note VCF is un-phased."
     }
 
+    parameter_meta {
+        bam: "Input BAM file"
+        bai: "Input BAM index file"
+        ref_fasta: "Reference fasta file"
+        ref_fasta_fai: "Reference fasta index file"
+        pepper_threads: "Number of threads for Pepper"
+        pepper_memory: "Memory for Pepper"
+        dv_threads: "Number of threads for DeepVariant"
+        dv_memory: "Memory for DeepVariant"
+        # when running large scale workflows, we sometimes see errors like the following
+        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
+        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
+        zones: "select which zone (GCP) to run this task"
+    }
+
     input {
         File bam
         File bai
@@ -27,13 +42,6 @@ workflow CCSPepper {
         Int dv_memory
 
         String zones = "us-central1-b us-central1-c"
-    }
-
-    parameter_meta {
-        # when running large scale workflows, we sometimes see errors like the following
-        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
-        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
-        zones: "select which zone (GCP) to run this task"
     }
 
     call Pepper as get_hap_tagged_bam {

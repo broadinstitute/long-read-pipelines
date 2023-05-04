@@ -14,6 +14,21 @@ struct LongbowModelParams {
 }
 
 workflow Process {
+
+    meta {
+        description: "Process a BAM file using Longbow"
+    }
+    parameter_meta {
+        bam: "BAM file to process"
+        prefix: "Prefix for output files"
+        model: "Longbow model to use for processing"
+        barcode_allow_list: "File containing a list of barcodes to allow"
+        barcode_tag: "Tag containing the barcode"
+        corrected_tag: "Tag to use for corrected barcode"
+        shard_width: "Width of shards to use for processing"
+        same_barcode_per_read: "Whether to assume that all reads in a pair have the same barcode"
+    }
+
     input {
         File bam
 

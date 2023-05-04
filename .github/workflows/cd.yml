@@ -88,62 +88,45 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - name: Read current version
+    - name: Read Current Version
       id: read_property
       uses: christian-draeger/read-properties@1.0.0
       with:
         path: 'VERSION'
         property: 'version'
 
-    - name: Current version
+    - name: Current Version
       run: echo ${{ steps.read_property.outputs.value }}
 
-    - name: Bump release version
-      id: bump_version
-      uses: christian-draeger/increment-semantic-version@1.0.1
-      with:
-        current-version: ${{ steps.read_property.outputs.value }}
-        version-fragment: 'bug'
-
-    - name: New version
-      run: echo ${{ steps.bump_version.outputs.next-version }}
-
-    - name: Remove existing version file
-      uses: JesseTG/rm@v1.0.0
-      with:
-        path: 'VERSION'
-
-    - name: Write new version
-      uses: christian-draeger/write-properties@1.0.1
-      with:
-        path: 'VERSION'
-        property: 'version'
-        value: ${{ steps.bump_version.outputs.next-version }}
-
-    - name: Update version badge
-      run: sed -i 's/version-.*-blue/version-${{ steps.bump_version.outputs.next-version }}-blue/' README.md
-
-    - name: Write commit message
+    - name: Generate Release Notes
+      # Retrieves the commit message from the last commit in current branch (main)
+      # and writes it to a file called release_notes.txt
       run: git log --format=%B -n 1 ${{ github.event.after }} > release_notes.txt
 
-    - name: Commit changes
-      uses: EndBug/add-and-commit@v4
-      with:
-        author_name: Kiran V Garimella
-        author_email: kiran@broadinstitute.org
-        message: 'Autobump version ${{ steps.read_property.outputs.value }} --> ${{ steps.bump_version.outputs.next-version }}'
-        add: "VERSION README.md"
+    - name: Github Bumpversion Action
+      id: version-bump
+      uses: jasonamyers/github-bumpversion-action@v1.0.4
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEFAULT_BUMP: "patch"
 
-    - name: Create release
+    - name: New Version
+      run: echo ${{ steps.version-bump.outputs.new_ver }}
+
+    - name: Push Changes To Master/Main
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        tags: true
+
+    - name: Create Github release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.bump_version.outputs.next-version }}
-        release_name: 'lrp_${{ steps.bump_version.outputs.next-version }}'
+        tag_name: ${{ steps.version-bump.outputs.new_ver }}
+        release_name: 'lrp_${{ steps.version-bump.outputs.new_ver }}'
         body_path: "release_notes.txt"
         draft: false
         prerelease: false

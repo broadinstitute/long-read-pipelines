@@ -12,6 +12,20 @@ task Pepper {
         description: "A 1-stop shop task offered by Pepper for ONT data."
     }
 
+    parameter_meta {
+        bam: "The input bam file."
+        bai: "The input bam index file."
+        ref_fasta: "The reference fasta file."
+        ref_fasta_fai: "The reference fasta index file."
+        threads: "The number of threads to use."
+        memory: "The amount of memory to use."
+        # when running large scale workflows, we sometimes see errors like the following
+        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
+        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
+        zones: "select which zone (GCP) to run this task"
+        runtime_attr_override: "override the default runtime attributes"
+    }
+
     input {
         File bam
         File bai
@@ -25,13 +39,6 @@ task Pepper {
         String zones = "us-central1-b us-central1-c"
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        # when running large scale workflows, we sometimes see errors like the following
-        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
-        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
-        zones: "select which zone (GCP) to run this task"
     }
 
     Int bam_sz = ceil(size(bam, "GB"))

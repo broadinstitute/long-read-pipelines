@@ -3,14 +3,9 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task FinalizeToFile {
-    input {
-        File file
-        String outdir
-        String? name
 
-        File? keyfile
-
-        RuntimeAttr? runtime_attr_override
+    meta{
+        description: "Copies the given file to the specified bucket."
     }
 
     parameter_meta {
@@ -22,6 +17,18 @@ task FinalizeToFile {
         outdir: "directory to which files should be uploaded"
         name:   "name to set for uploaded file"
     }
+
+    input {
+        File file
+        String outdir
+        String? name
+
+        File? keyfile
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+
 
     String gcs_output_dir = sub(outdir, "/+$", "")
     String gcs_output_file = gcs_output_dir + "/" + select_first([name, basename(file)])
@@ -59,13 +66,9 @@ task FinalizeToFile {
 }
 
 task FinalizeToDir {
-    input {
-        Array[File] files
-        String outdir
 
-        File? keyfile
-
-        RuntimeAttr? runtime_attr_override
+    meta {
+        description: "Copies the given file to the specified bucket."
     }
 
     parameter_meta {
@@ -75,6 +78,15 @@ task FinalizeToDir {
         }
         keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
         outdir: "directory to which files should be uploaded"
+    }
+
+    input {
+        Array[File] files
+        String outdir
+
+        File? keyfile
+
+        RuntimeAttr? runtime_attr_override
     }
 
     String gcs_output_dir = sub(outdir, "/+$", "")
@@ -118,15 +130,6 @@ task FinalizeTarGzContents {
         email : "jonn@broadinstitute.org"
     }
 
-    input {
-        File tar_gz_file
-        String outdir
-
-        File? keyfile
-
-        RuntimeAttr? runtime_attr_override
-    }
-
     parameter_meta {
         tar_gz_file : "Gzipped tar file whose contents we'll copy."
         outdir : "Google cloud path to the destination folder."
@@ -134,6 +137,15 @@ task FinalizeTarGzContents {
         keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
 
         runtime_attr_override : "[optional] Additional runtime parameters."
+    }
+
+    input {
+        File tar_gz_file
+        String outdir
+
+        File? keyfile
+
+        RuntimeAttr? runtime_attr_override
     }
 
     # This idiom ensures that we don't accidentally have double-slashes in our GCS paths
@@ -179,14 +191,14 @@ task WriteCompletionFile {
         email : "jonn@broadinstitute.org"
     }
 
-    input {
-        String outdir
-        File? keyfile
-    }
-
     parameter_meta {
         outdir : "Google cloud path to the destination folder."
         keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
+    }
+
+    input {
+        String outdir
+        File? keyfile
     }
 
     command <<<
@@ -219,16 +231,16 @@ task WriteNamedFile {
         email : "jonn@broadinstitute.org"
     }
 
-    input {
-        String name
-        String outdir
-        File? keyfile
-    }
-
     parameter_meta {
         name : "Name of the file to write."
         outdir : "Google cloud path to the destination folder."
         keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
+    }
+
+    input {
+        String name
+        String outdir
+        File? keyfile
     }
 
     command <<<
@@ -253,9 +265,18 @@ task WriteNamedFile {
 }
 
 task CompressAndFinalize {
+
     meta {
         description: "Gzip a file and finalize"
     }
+
+    parameter_meta {
+        file : "File to compress and finalize."
+        outdir : "Google cloud path to the destination folder."
+        name : "[optional] Name of the file to write.  If not specified, the name of the input file will be used."
+        runtime_attr_override : "[optional] Additional runtime parameters."
+    }
+
     input {
         File file
         String outdir
@@ -308,6 +329,14 @@ task FinalizeAndCompress {
     meta {
         description: "Gzip a bunch of files and finalize to the same \'folder\'"
     }
+
+    parameter_meta {
+        files : "Files to compress and finalize."
+        outdir : "Google cloud path to the destination folder."
+        prefix : "[optional] Prefix to add to the output files."
+        runtime_attr_override : "[optional] Additional runtime parameters."
+    }
+
     input {
         Array[File] files
         String outdir

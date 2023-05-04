@@ -3,6 +3,16 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 workflow Flye {
+
+    meta {
+        description: "Assemble a genome using Flye"
+    }
+    parameter_meta {
+        genome_size: "Estimated genome size in base pairs"
+        reads: "Input reads (in fasta or fastq format, compressed or uncompressed)"
+        prefix: "Prefix to apply to assembly output filenames"
+    }
+
     input {
         File reads
         Float genome_size

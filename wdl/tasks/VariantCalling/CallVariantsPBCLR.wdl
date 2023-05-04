@@ -17,6 +17,26 @@ workflow CallVariants {
     meta {
         descrition: "A workflow for calling small and/or structural variants from an aligned CLR BAM file."
     }
+
+    parameter_meta {
+        bam:               "input BAM from which to call SVs"
+        bai:               "index accompanying the BAM"
+
+        ref_fasta:         "reference to which the BAM was aligned to"
+        ref_fasta_fai:     "index accompanying the reference"
+        ref_dict:          "sequence dictionary accompanying the reference"
+
+        call_small_variants: "if true, will attempt to call small variants"
+        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
+        fast_less_sensitive_sv: "if true, will run PBSV in a less sensitive mode, which is faster"
+        sites_vcf:     "for use with Clair, the small variant caller"
+        sites_vcf_tbi: "for use with Clair, the small variant caller"
+
+        prefix:            "prefix for output files"
+
+        tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+    }
+
     input {
         File bam
         File bai
@@ -33,23 +53,6 @@ workflow CallVariants {
 
         Boolean call_small_variants = false
         Boolean call_small_vars_on_mitochondria
-    }
-
-    parameter_meta {
-        bam:               "input BAM from which to call SVs"
-        bai:               "index accompanying the BAM"
-
-        ref_fasta:         "reference to which the BAM was aligned to"
-        ref_fasta_fai:     "index accompanying the reference"
-        ref_dict:          "sequence dictionary accompanying the reference"
-
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
-        sites_vcf:     "for use with Clair, the small variant caller"
-        sites_vcf_tbi: "for use with Clair, the small variant caller"
-
-        prefix:            "prefix for output files"
-
-        tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 
     call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}

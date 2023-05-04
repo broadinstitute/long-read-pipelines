@@ -3,6 +3,14 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task ListGenotypedVCFs {
+
+    meta {
+        description: "List all VCFs that have been genotyped"
+    }
+    parameter_meta {
+        fingerprint_store: "A bucket that holds all fingerprinting VCFs"
+    }
+
     input {
         String fingerprint_store
     }
@@ -30,14 +38,18 @@ task ListGenotypedVCFs {
 }
 
 task PickGenotypeVCF {
-    input {
-        File fingerprinting_vcf_gs_paths
-        String? vcf_name
-    }
 
+    meta {
+        description: "Pick a subset of VCFs that have been genotyped"
+    }
     parameter_meta {
         fingerprinting_vcf_gs_paths:    "A file holding GS paths to fingerprinting GT'ed VCFs"
         vcf_name: "an expression used for picking up VCFs, the filter will be applied to VCF names, a match will lead to the VCF to be included"
+    }
+
+    input {
+        File fingerprinting_vcf_gs_paths
+        String? vcf_name
     }
 
     Boolean filter = defined(vcf_name)
@@ -67,13 +79,18 @@ task PickGenotypeVCF {
 }
 
 task FilterGenotypesVCF {
+
+    meta {
+        description: "Filter out unwanted genotypes from a VCF"
+    }
+    parameter_meta {
+        fingerprint_vcf: "A VCF file that has been genotyped"
+        filters: "An array of chromosome names to filter out when verifying fingerprints"
+    }
+
     input {
         File fingerprint_vcf
         Array[String] filters = ['_random\\t', '_decoy\\t', '_alt\\t', '^chrUn', '^HLA', '^EBV']
-    }
-
-    parameter_meta {
-        filters: "An array of chromosome names to filter out when verifying fingerprints"
     }
 
     command <<<
@@ -109,6 +126,14 @@ task FilterGenotypesVCF {
 }
 
 task ExtractGenotypingSites {
+
+    meta {
+        description: "Extract genotyping sites from a VCF"
+    }
+    parameter_meta {
+        fingerprint_vcf: "A VCF file that has been genotyped"
+    }
+
     input {
         File fingerprint_vcf
     }
@@ -144,6 +169,14 @@ task ExtractGenotypingSites {
 }
 
 task MergeGenotypingSites {
+
+    meta {
+        description: "Merge genotyping sites from multiple VCFs"
+    }
+    parameter_meta {
+        all_sites: "An array of genotyping sites"
+    }
+
     input {
         Array[File] all_sites
     }
@@ -171,21 +204,22 @@ task MergeGenotypingSites {
 }
 
 task ExtractRelevantGenotypingReads {
+
     meta {
         description: "Based on genotyping (SNP) sites, extract reads that overlap those places"
     }
+    parameter_meta {
+        aligned_bam:{
+            localization_optional: true
+        }
+    }
+
     input {
         File aligned_bam
         File aligned_bai
 
         File genotyping_sites_bed
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        aligned_bam:{
-            localization_optional: true
-        }
     }
 
     command <<<
@@ -229,6 +263,16 @@ task ExtractRelevantGenotypingReads {
 }
 
 task ResetCLRBaseQual {
+
+    meta {
+        description: "Reset base quality scores to a fixed value"
+    }
+    parameter_meta {
+        bam: "A BAM file"
+        bai: "A BAI file"
+        arbitrary_bq: "A fixed base quality score"
+    }
+
     input {
         File bam
         File bai
@@ -285,6 +329,17 @@ task CheckFingerprint {
     meta {
         description: "Uses Picard tool CheckFingerprint to verify if the samples in provided VCF and BAM arise from the same biological sample"
     }
+    parameter_meta {
+        aligned_bam:{
+            description:  "GCS path to aligned BAM file, supposed to be of the same sample as from the fingerprinting VCF",
+            localization_optional: true
+        }
+
+        fingerprint_vcf:    "Fingerprint VCF file from local database; note that sample name must be the same as in BAM"
+        vcf_sample_name:    "Sample name in VCF, possibly different from that in the BAM."
+        haplotype_map:      "Happlotype map file for the reference build used. See https://bit.ly/3QyZbwt"
+    }
+
     input {
         File aligned_bam
         File aligned_bai
@@ -295,17 +350,6 @@ task CheckFingerprint {
         File haplotype_map
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        aligned_bam:{
-            description:  "GCS path to aligned BAM file, supposed to be of the same sample as from the fingerprinting VCF",
-            localization_optional: true
-        }
-
-        fingerprint_vcf:    "Fingerprint VCF file from local database; note that sample name must be the same as in BAM"
-        vcf_sample_name:    "Sample name in VCF, possibly different from that in the BAM."
-        haplotype_map:      "Happlotype map file for the reference build used. See https://bit.ly/3QyZbwt"
     }
 
     Int disk_size = ceil(size([fingerprint_vcf, haplotype_map], "GB"))
@@ -381,6 +425,11 @@ task CheckCLRFingerprint {
     meta {
         description: "Uses Picard tool CheckFingerprint to verify if the samples in provided VCF and the CLR BAM arise from the same biological sample."
     }
+    parameter_meta {
+        vcf_sample_name:    "Sample name in VCF, possibly different from that in the BAM."
+        haplotype_map:      "Haplotype map file for the reference build used. See https://bit.ly/3QyZbwt"
+    }
+
     input {
         File aligned_bam
         File aligned_bai
@@ -392,11 +441,6 @@ task CheckCLRFingerprint {
         File haplotype_map
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        vcf_sample_name:    "Sample name in VCF, possibly different from that in the BAM."
-        haplotype_map:      "Happlotype map file for the reference build used. See https://bit.ly/3QyZbwt"
     }
 
     Int disk_size = 100 + ceil(size(aligned_bam, "GB"))
@@ -470,9 +514,13 @@ task CheckCLRFingerprint {
 }
 
 task ReheaderFullGRCh38VCFtoNoAlt {
+
     meta {
         desciption:
         "Reheader the fingperint VCF that's generated with full GRCh38 reference to the no_alt header; project specific."
+    }
+    parameter_meta {
+        full_GRCh38_vcf:    "Full GRCh38 VCF file."
     }
 
     input {

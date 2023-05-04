@@ -2,7 +2,6 @@ version 1.0
 
 import "../../structs/Structs.wdl"
 
-# A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference
 task Minimap2 {
     input {
         Array[File] reads
@@ -18,7 +17,9 @@ task Minimap2 {
         String prefix = "out"
         RuntimeAttr? runtime_attr_override
     }
-
+    meta {
+        descrpiton: "A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference"
+    }
     parameter_meta {
         reads:            "query sequences to be mapped and aligned"
         ref_fasta:        "reference fasta"
@@ -143,7 +144,6 @@ task Minimap2 {
     }
 }
 
-# A simple task to covert SAM-formatted alignment to PAF format
 task SAMtoPAF {
     input {
         File sam_formatted_file
@@ -151,7 +151,9 @@ task SAMtoPAF {
 
         RuntimeAttr? runtime_attr_override
     }
-
+    meta {
+        description: "Convert SAM-formatted alignment to PAF format using minimap2's paftools.js"
+    }
     parameter_meta {
         sam_formatted_file: "SAM-formated input file to be converted to PAF (note currently we only support SAM or BAM, not CRAM)"
         index:              "[optional] index for sam_formatted_file"

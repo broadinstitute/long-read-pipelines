@@ -3,6 +3,17 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task MergePerChrCalls {
+
+    meta {
+        description: "Merge per-chromosome calls into a single VCF"
+    }
+
+    parameter_meta {
+        vcfs: "List of per-chromosome VCFs to merge"
+        ref_dict: "Reference dictionary"
+        prefix: "Prefix for output VCF"
+    }
+
     input {
         Array[File] vcfs
         File ref_dict
@@ -58,8 +69,13 @@ task MergePerChrCalls {
 }
 
 task MergeAndSortVCFs {
+
     meta {
         description: "Fast merging & sorting VCFs when the default sorting is expected to be slow"
+    }
+
+    parameter_meta {
+        header_definitions_file: "a union of definition header lines for input VCFs (related to https://github.com/samtools/bcftools/issues/1629)"
     }
 
     input {
@@ -71,9 +87,6 @@ task MergeAndSortVCFs {
         String prefix
 
         RuntimeAttr? runtime_attr_override
-    }
-    parameter_meta {
-        header_definitions_file: "a union of definition header lines for input VCFs (related to https://github.com/samtools/bcftools/issues/1629)"
     }
 
     Int sz = ceil(size(vcfs, 'GB'))
@@ -190,9 +203,16 @@ task MergeAndSortVCFs {
 }
 
 task CollectDefinitions {
+
     meta {
         description: "Collect (union) various definitions in vcf files, adddressing a bcftols bug: https://github.com/samtools/bcftools/issues/1629"
     }
+
+    parameter_meta {
+        vcfs: "List of VCF files to be concatenated"
+        runtime_attr_override: "Override default runtime attributes"
+    }
+
     input {
         Array[File] vcfs
 
@@ -258,14 +278,18 @@ task GetVCFSampleName {
     meta {
         description: "Currently mostly used for extracting sample name in fingerprinting genotyped VCF"
     }
+
+    parameter_meta {
+        fingerprint_vcf: "Assumed to be genotyped, and hold only one sample (other samples will be ignored)."
+        runtime_attr_override: "Override default runtime attributes"
+    }
+
     input {
         File fingerprint_vcf
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        fingerprint_vcf: "Assumed to be genotyped, and hold only one sample (other samples will be ignored)."
-    }
+
 
     command <<<
         set -eux
@@ -298,6 +322,19 @@ task GetVCFSampleName {
 }
 
 task SubsetVCF {
+
+    meta {
+        description: "Subset a VCF file to a given locus"
+    }
+
+    parameter_meta {
+        vcf_gz: "VCF file to be subsetted"
+        vcf_tbi: "Tabix index for the VCF file"
+        locus: "Locus to be subsetted"
+        prefix: "Prefix for the output file"
+        runtime_attr_override: "Override default runtime attributes"
+    }
+
     input {
         File vcf_gz
         File vcf_tbi
@@ -349,6 +386,11 @@ task ZipAndIndexVCF {
         description: "gZip plain text VCF and index it."
     }
 
+    parameter_meta {
+        vcf: "VCF file to be zipped and indexed"
+        runtime_attr_override: "Override default runtime attributes"
+    }
+
     input {
         File vcf
         RuntimeAttr? runtime_attr_override
@@ -398,6 +440,11 @@ task IndexVCF {
         description: "Indexing vcf.gz. Note: do NOT use remote index as that's buggy."
     }
 
+    parameter_meta {
+        vcf: "VCF file to be indexed"
+        runtime_attr_override: "Override default runtime attributes"
+    }
+
     input {
         File vcf
         RuntimeAttr? runtime_attr_override
@@ -440,16 +487,21 @@ task IndexVCF {
 }
 
 task FixSnifflesVCF {
-    input {
-        File vcf
-        String sample_name
-        File? ref_fasta_fai
-        RuntimeAttr? runtime_attr_override
+
+    meta {
+        description: "Fixes the sample information in a VCF file and prepares to fix undefined VCF INFO/FT/FORMATs. It then proceeds to get the missing VCF headers for these undefined formats and filters. Specific to Sniffles-1"
     }
 
     parameter_meta {
         sample_name:    "Sniffles infers sample name from the BAM file name, so we fix it here"
         ref_fasta_fai:  "provide only when the contig section of the input vcf is suspected to be corrupted"
+    }
+
+    input {
+        File vcf
+        String sample_name
+        File? ref_fasta_fai
+        RuntimeAttr? runtime_attr_override
     }
 
     Boolean fix_contigs = defined(ref_fasta_fai)

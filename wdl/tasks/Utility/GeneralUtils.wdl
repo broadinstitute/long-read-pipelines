@@ -9,6 +9,11 @@ task TarGZFiles {
         "Zip up a list of files to a tar.gz file."
     }
 
+    parameter_meta {
+        files: "List of files to zip up."
+        name: "Name of the tar.gz file."
+    }
+
     input {
         Array[File] files
         String name

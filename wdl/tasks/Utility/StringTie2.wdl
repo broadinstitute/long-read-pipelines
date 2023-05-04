@@ -3,6 +3,20 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task Quantify {
+
+    meta {
+        description: "Quantify gene expression using StringTie2."
+    }
+
+    parameter_meta {
+        aligned_bam: "Aligned reads in BAM format."
+        aligned_bai: "Aligned reads in BAI format."
+        gtf: "Reference GTF file."
+        keep_retained_introns: "Keep retained introns."
+        prefix: "Prefix for output files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File aligned_bam
         File aligned_bai
@@ -57,6 +71,19 @@ task Quantify {
 }
 
 task ExtractTranscriptSequences {
+
+    meta {
+        description: "Extract transcript sequences from a GTF file."
+    }
+
+    parameter_meta {
+        ref_fasta: "Reference FASTA file."
+        ref_fasta_fai: "Reference FASTA index file."
+        gtf: "Reference GTF file."
+        prefix: "Prefix for output files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File ref_fasta
         File ref_fasta_fai
@@ -105,6 +132,18 @@ task ExtractTranscriptSequences {
 }
 
 task CompareTranscriptomes {
+
+    meta {
+        description: "Compare two GTF files."
+    }
+
+    parameter_meta {
+        guide_gtf: "Reference GTF file."
+        new_gtf: "New GTF file."
+        prefix: "Prefix for output files."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         File guide_gtf
         File new_gtf
