@@ -1950,11 +1950,11 @@ task FilterBamOnTag {
 task DeduplicateBam {
 
     meta {
-        description: "Utility to drop (occationally happening) duplicate records in input BAM"
+        description: "Utility to drop (occationally happening) literal duplicate records in input BAM"
     }
 
     parameter_meta {
-        aligned_bam: "input BAM file"
+        aligned_bam: "input BAM file (must be coordinate sorted)"
         aligned_bai: "input BAM index file"
         same_name_as_input: "if true, output BAM will have the same name as input BAM, otherwise it will have the input basename with .dedup suffix"
         runtime_attr_override: "override default runtime attributes"
@@ -1975,19 +1975,38 @@ task DeduplicateBam {
     String prefix = if (same_name_as_input) then base else (base + ".dedup")
 
     command <<<
+        set -eux
+
+        samtools view -H "~{aligned_bam}" | grep "@HD" > hd.line
+        if ! grep -qF "SO:coordinate" hd.line;
+        then
+            echo "BAM must be coordinate sorted!" && echo && cat hd.line && exit 1
+        fi
         echo "==========================================================="
         echo "collecting duplicate information"
         time \
             samtools view -@ 1 "~{aligned_bam}" | \
-            awk -F "\t" 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $5}' | \
+            awk -F "\t" 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $5, $6}' | \
             sort | uniq -d \
             > "~{aligned_bam}".duplicates.txt
+
+        cnt=$(wc -l "~{aligned_bam}".duplicates.txt | awk '{print $1}')
+        if [[ ${cnt} -eq 0 ]];
+        then
+            echo "No duplicates found"
+            if ! ~{same_name_as_input} ;
+            then
+                mv "~{aligned_bam}" "~{prefix}.bam"
+                mv "~{aligned_bai}" "~{prefix}.bam.bai"
+            fi
+            exit 0
+        fi
         echo "==========================================================="
         echo "de-duplicating"
         time python3 /opt/remove_duplicate_ont_aln.py \
+            "~{aligned_bam}" \
             --prefix "~{prefix}" \
-            --annotations "~{aligned_bam}".duplicates.txt \
-            "~{aligned_bam}"
+            --annotations "~{aligned_bam}".duplicates.txt
         echo "==========================================================="
         echo "DONE"
         samtools index "~{prefix}.bam"
@@ -1996,6 +2015,7 @@ task DeduplicateBam {
     output {
         File corrected_bam = "~{prefix}.bam"
         File corrected_bai = "~{prefix}.bam.bai"
+        File duplicate_record_signatures = "~{prefix}.duplicate.signatures.txt"
     }
 
     #########################
@@ -2006,7 +2026,7 @@ task DeduplicateBam {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.10"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-bam-dedup:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
