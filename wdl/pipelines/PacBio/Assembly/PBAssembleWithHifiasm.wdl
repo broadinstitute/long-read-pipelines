@@ -64,6 +64,18 @@ workflow PBAssembleWithHifiasm {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/" + workflow_name + "/~{prefix}"
     String dir = outdir + "/assembly"
 
+    # merged FASTQ
+    String dummy = basename(ccs_fq)
+    String dummy_b = sub(dummy, ".gz$", "")
+    if (dummy != dummy_b) {
+        call FF.FinalizeToFile as FinalizeMergedFQ { input: outdir = dir, file = ccs_fq, name = prefix + ".fq.gz" }
+    }
+    if (dummy == dummy_b) {
+        call FF.CompressAndFinalize as CompressAndFinalizeMergedFQ { input: outdir = dir, file = ccs_fq, name = prefix + ".fq.gz" }
+    }
+    String finalized_merged_fq_path = select_first([FinalizeMergedFQ.gcs_path, CompressAndFinalizeMergedFQ.gcs_path])
+
+
     # assembly results themselves
     call FF.CompressAndFinalize as FinalizeHifiasmPrimaryGFA   { input: outdir = dir, file = Hifiasm.primary_gfa }
     call FF.CompressAndFinalize as FinalizeHifiasmPrimaryFA    { input: outdir = dir, file = Hifiasm.primary_tigs }
@@ -88,6 +100,8 @@ workflow PBAssembleWithHifiasm {
     }
 
     output {
+        File merged_fq = finalized_merged_fq_path
+
         File hifiasm_primary_gfa  = FinalizeHifiasmPrimaryGFA.gcs_path
         File hifiasm_primary_tigs = FinalizeHifiasmPrimaryFA.gcs_path
 
