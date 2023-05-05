@@ -43,10 +43,10 @@ digraph {
 	"call-InferSampleName" -> "call-FixSnifflesVCF"
 	"call-RunPBSV" -> "call-MergePBSVVCFs"
 	"call-FixSnifflesVCF" -> "call-UnionHeadersSnifflesVCFs"
-	"call-FixSnifflesVCF" -> "call-MergeSnifflesVCFs"
 	"call-UnionHeadersSnifflesVCFs" -> "call-MergeSnifflesVCFs"
+	"call-FixSnifflesVCF" -> "call-MergeSnifflesVCFs"
 	"call-arbitrary" -> "call-PBSVslow"
 	"call-PBSVslow" -> "call-ZipAndIndexPBSV"
-	"call-infer" -> "call-ZipAndIndexSniffles"
 	"call-SnifflesSlow" -> "call-ZipAndIndexSniffles"
+	"call-infer" -> "call-ZipAndIndexSniffles"
 }

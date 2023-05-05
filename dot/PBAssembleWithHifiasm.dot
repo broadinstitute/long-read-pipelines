@@ -12,6 +12,19 @@ digraph {
 	"call-Hifiasm" [label=Hifiasm shape=cds]
 	"call-primary_h0_h1_quast" [label=primary_h0_h1_quast shape=cds]
 	"call-primary_h0_h1_quast_summary" [label=primary_h0_h1_quast_summary shape=cds]
+	"decl-dummy" [label=dummy shape=plaintext]
+	"decl-dummy_b" [label=dummy_b shape=plaintext]
+	subgraph "cluster-if-L70C5" {
+		fontname=Roboto label="if(dummy != dummy_b)" rank=same
+		"call-FinalizeMergedFQ" [label=FinalizeMergedFQ shape=cds]
+		"if-L70C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L73C5" {
+		fontname=Roboto label="if(dummy == dummy_b)" rank=same
+		"call-CompressAndFinalizeMergedFQ" [label=CompressAndFinalizeMergedFQ shape=cds]
+		"if-L73C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-finalized_merged_fq_path" [label=finalized_merged_fq_path shape=plaintext]
 	"call-FinalizeHifiasmPrimaryGFA" [label=FinalizeHifiasmPrimaryGFA shape=cds]
 	"call-FinalizeHifiasmPrimaryFA" [label=FinalizeHifiasmPrimaryFA shape=cds]
 	"call-FinalizeHifiasmAlternateGFA" [label=FinalizeHifiasmAlternateGFA shape=cds]
@@ -21,15 +34,25 @@ digraph {
 	"call-FinalizeQuastReportHtml" [label=FinalizeQuastReportHtml shape=cds]
 	"call-FinalizeQuastReports" [label=FinalizeQuastReports shape=cds]
 	"call-FinalizeQuastSummaryAll" [label=FinalizeQuastSummaryAll shape=cds]
-	subgraph "cluster-scatter-L86C5-report" {
+	subgraph "cluster-scatter-L98C5-report" {
 		fontname=Roboto label="scatter(select_first([primary_h0_h1_quast_summary.quast_metrics]))" rank=same
 		"call-FinalizeQuastIndividualSummary" [label=FinalizeQuastIndividualSummary shape=cds]
-		"scatter-L86C5-report" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L98C5-report" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MergeAllFastqs" -> "decl-ccs_fq"
 	"decl-ccs_fq" -> "call-Hifiasm"
 	"call-Hifiasm" -> "call-primary_h0_h1_quast"
 	"call-primary_h0_h1_quast" -> "call-primary_h0_h1_quast_summary"
+	"decl-ccs_fq" -> "decl-dummy"
+	"decl-dummy" -> "decl-dummy_b"
+	"decl-dummy_b" -> "if-L70C5" [lhead="cluster-if-L70C5"]
+	"decl-dummy" -> "if-L70C5" [lhead="cluster-if-L70C5"]
+	"decl-ccs_fq" -> "call-FinalizeMergedFQ"
+	"decl-dummy_b" -> "if-L73C5" [lhead="cluster-if-L73C5"]
+	"decl-dummy" -> "if-L73C5" [lhead="cluster-if-L73C5"]
+	"decl-ccs_fq" -> "call-CompressAndFinalizeMergedFQ"
+	"call-CompressAndFinalizeMergedFQ" -> "decl-finalized_merged_fq_path"
+	"call-FinalizeMergedFQ" -> "decl-finalized_merged_fq_path"
 	"call-Hifiasm" -> "call-FinalizeHifiasmPrimaryGFA"
 	"call-Hifiasm" -> "call-FinalizeHifiasmPrimaryFA"
 	"call-Hifiasm" -> "call-FinalizeHifiasmAlternateGFA"
@@ -39,5 +62,5 @@ digraph {
 	"call-primary_h0_h1_quast" -> "call-FinalizeQuastReportHtml"
 	"call-primary_h0_h1_quast" -> "call-FinalizeQuastReports"
 	"call-primary_h0_h1_quast_summary" -> "call-FinalizeQuastSummaryAll"
-	"call-primary_h0_h1_quast_summary" -> "scatter-L86C5-report" [lhead="cluster-scatter-L86C5-report"]
+	"call-primary_h0_h1_quast_summary" -> "scatter-L98C5-report" [lhead="cluster-scatter-L98C5-report"]
 }

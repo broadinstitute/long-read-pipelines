@@ -273,6 +273,7 @@
 <h4 id="optional">Optional</h4>
 <ul>
 <li><code>ref_fasta_for_eval</code> (File?): Reference Fasta used for evaluating </li>
+<li><code>CompressAndFinalizeMergedFQ.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeHifiasmAlternateFA.name</code> (String?)</li>
 <li><code>FinalizeHifiasmAlternateFA.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeHifiasmAlternateGFA.name</code> (String?)</li>
@@ -283,6 +284,8 @@
 <li><code>FinalizeHifiasmPrimaryFA.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeHifiasmPrimaryGFA.name</code> (String?)</li>
 <li><code>FinalizeHifiasmPrimaryGFA.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeMergedFQ.keyfile</code> (File?)</li>
+<li><code>FinalizeMergedFQ.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeQuastIndividualSummary.keyfile</code> (File?)</li>
 <li><code>FinalizeQuastIndividualSummary.name</code> (String?)</li>
 <li><code>FinalizeQuastIndividualSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -305,6 +308,7 @@
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
+<li><code>merged_fq</code> (File)</li>
 <li><code>hifiasm_primary_gfa</code> (File)</li>
 <li><code>hifiasm_primary_tigs</code> (File)</li>
 <li><code>hifiasm_haploGFAs</code> (File)</li>
