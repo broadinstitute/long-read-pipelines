@@ -20,6 +20,7 @@ task CreateMOBsuiteDB {
         docker:             "us-central1-docker.pkg.dev/broad-dsp-lrma/general/mobsuite:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    Int num_cores = select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
 
     command <<<
         set -euxo pipefail
@@ -54,6 +55,7 @@ task CreateMOBsuiteDB {
         cat default_db/ncbi_plasmid_full_seqs.fas ~{basename(additional_plasmids_fasta)} > updated_db/ncbi_plasmid_full_seqs.fas
 
         cd updated_db
+        mash sketch ncbi_plasmid_full_seqs.fas -o ncbi_plasmid_full_seqs.fas.msh -p ~{num_cores} -k 21 -s 1000
         makeblastdb -in ncbi_plasmid_full_seqs.fas -dbtype nucl
         cd ..
 
