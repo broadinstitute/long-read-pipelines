@@ -47,12 +47,13 @@ task CreateMOBsuiteDB {
         cp default_db/repetitive* updated_db/
         cp default_db/taxa* updated_db/
 
-        cd updated_db
-        for f in references_updated.fasta*; do
-            mv "$f" "${f/references_updated.fasta/ncbi_plasmid_full_seqs.fas}"
-        done
+        # MOB-suite copies the FASTA from the original database without adding the plasmid contigs from our supplemental
+        # plasmid file, so we add them manually and recreate the BLAST DB. To make it look like the default MOB-suite,
+        # we also name it "ncbi_plasmid_full_seqs.fas"
+        rm updated_db/references_updated.fasta*
+        cat default_db/ncbi_plasmid_full_seqs.fas ~{basename(additional_plasmids_fasta)} > updated_db/ncbi_plasmid_full_seqs.fas
 
-        # Because of rename we have to re-run makeblastdb again
+        cd updated_db
         makeblastdb -in ncbi_plasmid_full_seqs.fas -dbtype nucl
         cd ..
 
