@@ -1,9 +1,11 @@
 version 1.0
 
+import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/Finalize.wdl" as FF
+
 import "../../../tasks/Assembly/Hifiasm.wdl" as HA
 import "../../../tasks/QC/Quast.wdl" as QuastEval
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
 
@@ -12,8 +14,6 @@ workflow PBAssembleWithHifiasm {
     }
     parameter_meta {
         ccs_fqs:            "GCS path to CCS fastq files"
-
-        participant_name:   "name of the participant from whom these samples were obtained"
         prefix:             "prefix for output files"
 
         ref_fasta_for_eval: "Reference Fasta used for evaluating "
@@ -23,12 +23,13 @@ workflow PBAssembleWithHifiasm {
     input {
         Array[File] ccs_fqs
 
-        String participant_name
         String prefix
 
         File? ref_fasta_for_eval
 
         String gcs_out_root_dir
+
+        Array[String] gcp_zones = ['us-central1-a', 'us-central1-b', 'us-central1-c', 'us-central1-f']
     }
 
     #########################################################################################
@@ -37,10 +38,14 @@ workflow PBAssembleWithHifiasm {
     }
     File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, ccs_fqs[0] ])
 
+    call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
+    String wdl_parsable_zones = get_zones.collapsed
+
     call HA.Hifiasm {
         input:
             reads = ccs_fq,
-            prefix = prefix
+            prefix = prefix,
+            zones = wdl_parsable_zones
     }
 
     # todo: assumes ploidy 2
@@ -99,7 +104,14 @@ workflow PBAssembleWithHifiasm {
         call FF.FinalizeToFile as FinalizeQuastIndividualSummary  { input: outdir = dir, file = report }
     }
 
+    ###########################################################
+    call GU.GetTodayDate as today {}
+
+    ###########################################################
     output {
+        String last_processing_date = today.yyyy_mm_dd
+
+        ########################################
         File merged_fq = finalized_merged_fq_path
 
         File hifiasm_primary_gfa  = FinalizeHifiasmPrimaryGFA.gcs_path
