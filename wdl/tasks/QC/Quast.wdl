@@ -97,18 +97,18 @@ task SummarizeQuastReport {
             sed 's/__\+/\t/g' | \
             sed 's/\s\+$//g' | \
             sed 's/>=/gt/g' | \
-            tee report_map.txt
+            tee quast_summary.txt
 
-        for i in $(seq 2 $(awk '{print NF}' report_map.txt | sort -nu | tail -n 1))
+        for i in $(seq 2 $(awk '{print NF}' quast_summary.txt | sort -nu | tail -n 1))
         do
             j=$(( i - 2 ))  # to make sure the primary, assuming it's the 0-th fed in to this task and the left-most value column
-            cut -d$'\t' -f1,${i} < report_map.txt > report_map_${j}.txt
+            cut -d$'\t' -f1,${i} < quast_summary.txt > quast_summary_${j}.txt
         done
     >>>
 
     output {
-        File quast_metrics_together = "report_map.txt"
-        Array[File] quast_metrics = glob("report_map_*.txt")
+        File quast_metrics_together = "quast_summary.txt"
+        Array[File] quast_metrics = glob("quast_summary_*.txt")
     }
 
     runtime {

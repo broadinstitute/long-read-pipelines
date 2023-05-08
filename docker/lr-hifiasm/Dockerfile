@@ -1,12 +1,12 @@
 ############### stage 0: build samtools and bcftools from source
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
-ARG SAMTOOLS_VERSION=1.15.1
-ARG BCFTOOLS_VERSION=1.15.1
+ARG SAMTOOLS_VERSION=1.17
+ARG BCFTOOLS_VERSION=1.17
 
 ARG YAK_VERSION=0.1
-ARG HIFIASM_VERSION=0.16.1
 ARG SEQTK_VERSION=1.3
+ARG HIFIASM_VERSION=0.19.5
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qqy update --fix-missing && \
@@ -63,7 +63,7 @@ RUN apt-get -qqy purge autoconf automake bzip2 gcc g++ make wget && \
 
 
 ############### stage 1: copy over bin, and build necessary lib
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV HOME=/root
 
@@ -94,3 +94,5 @@ RUN apt-get -qqy update --fix-missing && \
            /usr/share/man/?? \
            /usr/share/man/??_* && \
     samtools --help
+
+COPY vm_local_monitoring_script.sh /opt/
