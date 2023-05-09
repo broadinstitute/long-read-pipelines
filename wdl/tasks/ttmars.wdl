@@ -93,6 +93,8 @@ task ttmars_t {
     mv ~{lo_pos_assem1_0_file} input_files/
     mv ~{lo_pos_assem2_0_file} input_files/
 
+    touch output_files/ttmars_chrx_res.txt
+
     python /TT-Mars/ttmars.py output_files input_files \
            ~{centromere_file} \
            ~{svs_file} \
@@ -154,7 +156,7 @@ task liftover_t {
     python /TT-Mars/compress_liftover.py liftover_output lo_pos_assem1_0_result.bed lo_pos_assem1_0_result_compressed.bed
     python /TT-Mars/compress_liftover.py liftover_output lo_pos_assem2_0_result.bed lo_pos_assem2_0_result_compressed.bed
 
-    python /TT-Mars/get_conf_int.py liftover_output ~{hap1_lra_file} ~{hap2_lra_file}
+    python /TT-Mars/get_conf_int.py liftover_output ~{hap1_lra_file} ~{hap2_lra_file} True
   >>>
 
   output {
