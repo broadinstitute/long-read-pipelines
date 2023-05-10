@@ -35,7 +35,7 @@ workflows:
   primaryDescriptorPath: /wdl/deprecated/PBCLRDemultiplexWholeGenome.wdl
 - name: PBCLRWholeGenome
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PBCLRWholeGenome.wdl
+  primaryDescriptorPath: /wdl/deprecated/PBCLRWholeGenome.wdl
 - name: LRCNVs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
