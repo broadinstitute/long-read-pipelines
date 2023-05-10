@@ -261,19 +261,16 @@ workflow CallVariants {
                 bai    = bai,
                 minsvlen = minsvlen,
                 sample_id = sample_id,
-                prefix = prefix
-        }
-
-        call VariantUtils.ZipAndIndexVCF as ZipAndIndexSnifflesVCF {
-            input:
-                vcf = Sniffles2SV.vcf
+                prefix = prefix,
+                tandem_repeat_bed = tandem_repeat_bed
         }
     }
 
     output {
-        File? sniffles_vcf = ZipAndIndexSnifflesVCF.vcfgz
-        File? sniffles_tbi = ZipAndIndexSnifflesVCF.tbi
+        File? sniffles_vcf = Sniffles2SV.vcf
+        File? sniffles_tbi = Sniffles2SV.tbi
         File? sniffles_snf = Sniffles2SV.snf
+
         File? pbsv_vcf = select_first([ZipAndIndexFastPBSV.vcfgz, ZipAndIndexPBSV.vcfgz])
         File? pbsv_tbi = select_first([ZipAndIndexFastPBSV.tbi, ZipAndIndexPBSV.tbi])
 
