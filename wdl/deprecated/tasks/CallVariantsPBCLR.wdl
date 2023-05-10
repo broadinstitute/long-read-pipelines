@@ -6,10 +6,10 @@ version 1.0
 # Each individual task/algo. is directly callable, if so desired.
 ##########################################################################################
 
-import "../Utility/Utils.wdl"
-import "../Utility/VariantUtils.wdl"
+import "../../tasks/Utility/Utils.wdl"
+import "../../tasks/Utility/VariantUtils.wdl"
 
-import "PBSV.wdl"
+import "../../tasks/VariantCalling/PBSV.wdl"
 import "Sniffles.wdl"
 
 

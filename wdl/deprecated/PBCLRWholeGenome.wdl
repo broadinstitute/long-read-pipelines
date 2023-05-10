@@ -1,11 +1,11 @@
 version 1.0
 
-import "../../../tasks/Utility/PBUtils.wdl" as PB
-import "../../../tasks/Utility/Utils.wdl" as Utils
-import "../../../tasks/VariantCalling/CallVariantsPBCLR.wdl" as VAR
-import "../../../tasks/Utility/Finalize.wdl" as FF
+import "../../tasks/Utility/PBUtils.wdl" as PB
+import "../../tasks/Utility/Utils.wdl" as Utils
+import "../../tasks/Utility/Finalize.wdl" as FF
+import "tasks/CallVariantsPBCLR.wdl" as VAR
 
-import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
+import "../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow PBCLRWholeGenome {
 
