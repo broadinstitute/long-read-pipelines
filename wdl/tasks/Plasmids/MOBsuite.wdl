@@ -113,6 +113,9 @@ task MOBRecon {
         mob_recon -i ~{assembly_fasta} -n ~{num_cores} \
             ~{true="-u" false="" unicycler_assembly} ~{db_flag} \
             -o results
+
+        # Make sure the task doesn't fail when no plasmids detected
+        touch results/plasmid_dummy_empty.fasta
     >>>
 
     output {
