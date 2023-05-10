@@ -1,4 +1,4 @@
-VERSION = 2.0.6
+VERSION = 2.2
 
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-sniffles2:$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/lr-sniffles2:latest
