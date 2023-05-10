@@ -202,33 +202,30 @@ workflow CallVariants {
                         locus = contig
                 }
 
-                call PBSV.RunPBSV {
+                call PBSV.Discover as pbsv_discover_chr {
                     input:
                         bam = SubsetBam.subset_bam,
                         bai = SubsetBam.subset_bai,
                         ref_fasta = ref_fasta,
                         ref_fasta_fai = ref_fasta_fai,
                         prefix = prefix,
+                        chr = contig,
                         tandem_repeat_bed = tandem_repeat_bed,
-                        is_ccs = false,
                         zones = arbitrary.zones
                 }
-
-                call Utils.InferSampleName {
-                    input:
-                        bam = SubsetBam.subset_bam,
-                        bai = SubsetBam.subset_bai
-                }
-
             }
 
-            call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
+            call PBSV.Call as pbsv_wg_call {
                 input:
-                    vcfs     = RunPBSV.vcf,
-                    ref_dict = ref_dict,
-                    prefix   = prefix + ".pbsv"
+                    svsigs = pbsv_discover_chr.svsig,
+                    ref_fasta = ref_fasta,
+                    ref_fasta_fai = ref_fasta_fai,
+                    ccs = false,
+                    prefix = prefix + ".pbsv",
+                    zones = arbitrary.zones
             }
 
+            call VariantUtils.ZipAndIndexVCF as ZipAndIndexFastPBSV {input: vcf = pbsv_wg_call.vcf }
         }
 
         if (!fast_less_sensitive_sv) {
@@ -266,8 +263,8 @@ workflow CallVariants {
         File? sniffles_vcf = ZipAndIndexSnifflesVCF.vcfgz
         File? sniffles_tbi = ZipAndIndexSnifflesVCF.tbi
 
-        File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
-        File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
+        File? pbsv_vcf = select_first([ZipAndIndexFastPBSV.vcfgz, ZipAndIndexPBSV.vcfgz])
+        File? pbsv_tbi = select_first([ZipAndIndexFastPBSV.tbi, ZipAndIndexPBSV.tbi])
 
         File? clair_vcf = MergeAndSortClairVCFs.vcf
         File? clair_tbi = MergeAndSortClairVCFs.tbi
