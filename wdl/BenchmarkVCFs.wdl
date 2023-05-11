@@ -909,11 +909,11 @@ task CountUNKVcfEval {
     command <<<
         set -xeuo pipefail
 
-        gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V ~{vcf} -O selected.unk.snp.vcf.gz -select "(CALL == 'OUT')" --select-type-to-include SNP
-        gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V ~{vcf} -O selected.unk.indel.vcf.gz -select "(CALL == 'OUT')" --select-type-to-include INDEL
+        gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V ~{vcf} -O selected.unk.snp.vcf -select "(CALL == 'OUT')" --select-type-to-include SNP
+        gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V ~{vcf} -O selected.unk.indel.vcf -select "(CALL == 'OUT')" --select-type-to-include INDEL
 
-        UNK_SNP="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V selected.unk.snp.vcf.gz | tail -1)"
-        UNK_INDEL="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V selected.unk.indel.vcf.gz | tail -1)"
+        UNK_SNP="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V selected.unk.snp.vcf | tail -1)"
+        UNK_INDEL="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V selected.unk.indel.vcf | tail -1)"
 
         echo "$UNK_SNP" > unk_snp.txt
         echo "$UNK_INDEL" > unk_indel.txt
