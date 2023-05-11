@@ -585,7 +585,8 @@ task VcfEval {
         ~{true="--ref-overlap" false="" enableRefOverlap} \
         -b ~{truthVCF} -c ~{evalVCF} \
         -e ~{confidenceBed} ~{"--bed-regions " + stratBed} \
-        --output-mode combine --decompose -t rtg_ref \
+        ~{false="--output-mode combine" true="" truthIsSitesOnlyVcf} \
+        --decompose -t rtg_ref \
         ~{"--threads "+threads} -o output_dir
 
     for f in output_dir/*; do
