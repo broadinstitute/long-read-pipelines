@@ -116,6 +116,7 @@ task MOBRecon {
 
         # Make sure the task doesn't fail when no plasmids detected
         touch results/plasmid_dummy_empty.fasta
+        touch results/mobtyper_results.txt
     >>>
 
     output {
