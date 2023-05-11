@@ -7,6 +7,8 @@ import "../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 
 import "tasks/CallVariantsPBCLR.wdl" as VAR
 
+import "../pipelines/TechAgnostic/Utility/MergeSampleBamsAndCollectMetrics.wdl" as MERGE
+
 workflow PBCLRWholeGenome {
 
     meta {
@@ -32,6 +34,7 @@ workflow PBCLRWholeGenome {
         Array[File] aligned_bais
 
         File? bed_to_compute_coverage
+        String? bed_descriptor
 
         File ref_map_file
 
@@ -70,8 +73,8 @@ workflow PBCLRWholeGenome {
         input:
             aligned_bam = bam,
             aligned_bai = bai,
-            ref_fasta   = ref_map['fasta'],
-            bed_to_compute_coverage = bed_to_compute_coverage
+            bed_to_compute_coverage = bed_to_compute_coverage,
+            bed_descriptor = bed_descriptor
     }
 
     String dir = outdir + "/alignments"
@@ -125,18 +128,20 @@ workflow PBCLRWholeGenome {
         File aligned_bai = FinalizeBai.gcs_path
         File aligned_pbi = FinalizePbi.gcs_path
 
-        Float aligned_num_reads = coverage.aligned_num_reads
-        Float aligned_num_bases = coverage.aligned_num_bases
-        Float aligned_frac_bases = coverage.aligned_frac_bases
-        Float aligned_est_fold_cov = coverage.aligned_est_fold_cov
+        # Float aligned_num_reads = coverage.aligned_num_reads
+        # Float aligned_num_bases = coverage.aligned_num_bases
+        # Float aligned_frac_bases = coverage.aligned_frac_bases
+        # Float aligned_est_fold_cov = coverage.aligned_est_fold_cov
 
-        Float aligned_read_length_mean = coverage.aligned_read_length_mean
-        Float aligned_read_length_median = coverage.aligned_read_length_median
-        Float aligned_read_length_stdev = coverage.aligned_read_length_stdev
-        Float aligned_read_length_N50 = coverage.aligned_read_length_N50
+        # Float aligned_read_length_mean = coverage.aligned_read_length_mean
+        # Float aligned_read_length_median = coverage.aligned_read_length_median
+        # Float aligned_read_length_stdev = coverage.aligned_read_length_stdev
+        # Float aligned_read_length_N50 = coverage.aligned_read_length_N50
 
-        Float average_identity = coverage.average_identity
-        Float median_identity = coverage.median_identity
+        # Float average_identity = coverage.average_identity
+        # Float median_identity = coverage.median_identity
+
+        Map[String, Float] alignment_metrics = coverage.reads_stats
 
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
         ########################################

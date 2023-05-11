@@ -12,8 +12,8 @@ import "../tasks/Utility/PBUtils.wdl" as PB
 import "../tasks/Utility/Utils.wdl" as Utils
 import "../tasks/Alignment/AlignReads.wdl" as AR
 import "../tasks/QC/AlignedMetrics.wdl" as AM
-import "../tasks/VariantCalling/CallVariantsPBCCS.wdl" as VAR
 import "../tasks/Utility/Finalize.wdl" as FF
+import "../pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl" as VAR
 
 workflow PBCCSDemultiplexWholeGenome {
     input {
@@ -126,10 +126,16 @@ workflow PBCCSDemultiplexWholeGenome {
                 bam               = ccs_bam,
                 bai               = ccs_bai,
 
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict'],
-                tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                prefix = participant_name,
+                is_ont = false,
+                is_r10_4_pore_or_later = false,
+                model_for_dv_andor_pepper = 'PACBIO',
+                ref_map_file = ref_map_file,
+
+                call_svs = true,
+                pbsv_discover_per_chr = true,
+                call_small_variants = true,
+                run_clair3 = false
         }
 
         ##########

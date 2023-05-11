@@ -53,3 +53,29 @@ task GetTodayDate {
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }
+
+task CollapseArrayOfStrings {
+    meta {
+        desciption: "When the next version of WDL is supported on Terra, use the official solution."
+    }
+    input {
+        Array[String] input_array
+        String joiner
+    }
+    output {
+        String collapsed = read_string("result.txt")
+    }
+
+    command <<<
+        set -eux
+        n=$(echo ~{joiner} | wc -c | awk '{print $1}')
+        if [[ ! "${n}" -eq 1 ]]; then echo "joiner must be exactly length 1" && exit 1; fi
+
+        tr '\n' "~{joiner}" < ~{write_lines(input_array)} \
+        > result.txt
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}

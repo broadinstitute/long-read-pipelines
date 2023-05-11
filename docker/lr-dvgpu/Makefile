@@ -1,4 +1,4 @@
-VERSION = 1.5.0
+VERSION = 1.5.0-gpu
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-deepvariant:$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/lr-deepvariant:latest
 

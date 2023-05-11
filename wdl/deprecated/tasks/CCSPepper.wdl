@@ -7,25 +7,6 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task Pepper {
-
-    meta {
-        description: "A 1-stop shop task offered by Pepper for ONT data."
-    }
-
-    parameter_meta {
-        bam: "The input bam file."
-        bai: "The input bam index file."
-        ref_fasta: "The reference fasta file."
-        ref_fasta_fai: "The reference fasta index file."
-        threads: "The number of threads to use."
-        memory: "The amount of memory to use."
-        # when running large scale workflows, we sometimes see errors like the following
-        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
-        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
-        zones: "select which zone (GCP) to run this task"
-        runtime_attr_override: "override the default runtime attributes"
-    }
-
     input {
         File bam
         File bai
@@ -35,21 +16,18 @@ task Pepper {
 
         Int threads
         Int memory
-
-        String zones = "us-central1-b us-central1-c"
+        String zones
+        Boolean use_gpu = false
 
         RuntimeAttr? runtime_attr_override
     }
 
     Int bam_sz = ceil(size(bam, "GB"))
-    Boolean is_big_bam = bam_sz > 100
-    Int inflation_factor = if (is_big_bam) then 10 else 5
-    Int minimal_disk = 1000
-	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
+	Int disk_size = if bam_sz > 200 then 2*bam_sz else bam_sz + 200
 
     String output_root = "/cromwell_root/pepper_output"
 
-    String prefix = basename(bam, ".bam") + ".deepvariant_pepper"
+    String prefix = basename(bam, ".bam") + ".pepper"
 
     command <<<
         # avoid the infamous pipefail 141 https://stackoverflow.com/questions/19120263
@@ -63,6 +41,7 @@ task Pepper {
 
         mkdir -p "~{output_root}"
 
+        # no gVCF as it Pepper simply doesn't produce gVCF on CCS data
         run_pepper_margin_deepvariant \
             call_variant \
             -b ~{bam} \
@@ -71,11 +50,9 @@ task Pepper {
             -s "${SM}" \
             -o "~{output_root}" \
             -p "~{prefix}" \
-            --gvcf \
             --phased_output \
-            --ont
+            --ccs
 
-        df -h .
         find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
             > "~{output_root}/dir_structure.txt"
 
@@ -88,22 +65,11 @@ task Pepper {
     >>>
 
     output {
-        File VCF        = "~{output_root}/~{prefix}.vcf.gz"
-        File VCF_tbi    = "~{output_root}/~{prefix}.vcf.gz.tbi"
-
-        File gVCF       = "~{output_root}/~{prefix}.g.vcf.gz"
-        File gVCF_tbi   = "~{output_root}/~{prefix}.g.vcf.gz.tbi"
-
-        File phasedVCF  = "~{output_root}/~{prefix}.phased.vcf.gz"
-        File phasedtbi  = "~{output_root}/~{prefix}.phased.vcf.gz.tbi"
-
         File hap_tagged_bam = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam"
         File hap_tagged_bai = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam.bai"
 
         # maybe less useful
         File output_dir_structure = "~{output_root}/dir_structure.txt"
-        File phaseset_bed = "~{output_root}/~{prefix}.phaseset.bed"
-        File visual_report_html = "~{output_root}/~{prefix}.visual_report.html"
     }
 
     #########################
@@ -111,10 +77,10 @@ task Pepper {
         cpu_cores:          threads,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       100,
+        boot_disk_gb:       50,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "kishwars/pepper_deepvariant:r0.4.1"
+        docker:             "kishwars/pepper_deepvariant:r0.8" + if use_gpu then "-gpu" else ""
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

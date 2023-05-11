@@ -1,5 +1,5 @@
-IMAGE_NAME = lr-whatshap
-VERSION = 2.0 # This should match the WhatsHap version number
+IMAGE_NAME = lr-margin
+VERSION = 2.2.dev-69f6fff # This should match the margin version number from the base image
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
 

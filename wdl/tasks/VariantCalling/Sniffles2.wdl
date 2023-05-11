@@ -83,9 +83,10 @@ task SampleSV {
 
     Int cpus = 8
     Int disk_size = 2*ceil(size([bam, bai], "GB"))
-    String snf_output = "~{prefix}.sniffles.snf"
-    String vcf_output = "~{prefix}.sniffles.vcf.gz"
-    String tbi_output = "~{prefix}.sniffles.vcf.gz.tbi"
+    String postfix = if phase_sv then "-phased" else ""
+    String snf_output = "~{prefix}.sniffles~{postfix}.snf"
+    String vcf_output = "~{prefix}.sniffles~{postfix}.vcf.gz"
+    String tbi_output = "~{prefix}.sniffles~{postfix}.vcf.gz.tbi"
 
     String local_bam = "/cromwell_root/~{basename(bam)}"
 
@@ -95,6 +96,7 @@ task SampleSV {
         time gcloud storage cp ~{bam} ~{local_bam}
         mv ~{bai} "~{local_bam}.bai"
 
+        touch ~{bai}  # handle the bai-older-than-bam warning
         sniffles -t ~{cpus} \
                  -i ~{local_bam} \
                  --minsvlen ~{minsvlen} \

@@ -1323,6 +1323,7 @@ task MergeBams {
 
     meta {
         description : "Merge several input BAMs into a single BAM."
+        deprecated: true
     }
 
     parameter_meta {
@@ -1510,7 +1511,7 @@ task SubsetBam {
         bai:    "index for bam file"
         locus:  "genomic locus to select"
         prefix: "prefix for output bam and bai file names"
-        runtime_attr_override: "Override the default runtime attributes."
+        is_samtools_failed: "if true, the streaming of BAM from the bucket didn't succeed, so consider the result BAM corrupted."
     }
 
     input {
@@ -1522,8 +1523,6 @@ task SubsetBam {
         RuntimeAttr? runtime_attr_override
     }
 
-
-
     Int disk_size = 4*ceil(size([bam, bai], "GB"))
 
     command <<<
@@ -1531,13 +1530,24 @@ task SubsetBam {
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
 
-        samtools view -bhX ~{bam} ~{bai} ~{locus} > ~{prefix}.bam
-        samtools index ~{prefix}.bam
+        echo "false" > "samtools.failed.txt"
+
+        samtools view \
+            -bhX \
+            -M \
+            -@ 1 \
+            --verbosity=8 \
+            --write-index \
+            -o "~{prefix}.bam##idx##~{prefix}.bam.bai" \
+            ~{bam} ~{bai} \
+            ~{locus} \
+        || { echo "samtools seem to have failed"; echo "true" > "samtools.failed.txt"; exit 77; }
     >>>
 
     output {
         File subset_bam = "~{prefix}.bam"
         File subset_bai = "~{prefix}.bam.bai"
+        Boolean is_samtools_failed = read_boolean("samtools.failed.txt")
     }
 
     #########################
@@ -1548,13 +1558,13 @@ task SubsetBam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -1697,6 +1707,7 @@ task ResilientSubsetBam {
         interval_list_file:  "a Picard-style interval list file to subset reads with"
         interval_id:         "an ID string for representing the intervals in the interval list file"
         prefix: "prefix for output bam and bai file names"
+        is_samtools_failed: "if true, the streaming of BAM from the bucket didn't succeed, so consider the result BAM corrupted."
     }
 
     input {
@@ -1725,6 +1736,8 @@ task ResilientSubsetBam {
         source /opt/re-auth.sh
         set -euxo pipefail
 
+        echo "false" > "samtools.failed.txt"
+
         # see man page for what '-M' means
         samtools view \
             -bhX \
@@ -1734,7 +1747,7 @@ task ResilientSubsetBam {
             --write-index \
             -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
             ~{bam} ~{bai} \
-            ~{sep=" " intervals} && exit 0 || { echo "samtools seem to have failed"; exit 77; } &
+            ~{sep=" " intervals} && exit 0 || { echo "samtools seem to have failed"; echo "true" > "samtools.failed.txt"; exit 77; } &
         pid=$!
 
         set +e
@@ -1742,12 +1755,13 @@ task ResilientSubsetBam {
         while true; do
             sleep 1200 && date && source /opt/re-auth.sh
             count=$(( count+1 ))
-            if [[ ${count} -gt 6 ]]; then exit 0; fi
+            if [[ ${count} -gt 6 ]]; then echo "true" > "samtools.failed.txt" && exit 0; fi  # way too many attempts, get out
             if ! pgrep -x -P $pid; then exit 0; fi
         done
     >>>
 
     output {
+        Boolean is_samtools_failed = read_boolean("samtools.failed.txt")
         File subset_bam = "~{subset_prefix}.bam"
         File subset_bai = "~{subset_prefix}.bam.bai"
     }
@@ -1766,7 +1780,7 @@ task ResilientSubsetBam {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])

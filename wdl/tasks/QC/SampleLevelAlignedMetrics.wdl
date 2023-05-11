@@ -15,52 +15,40 @@ workflow SampleLevelAlignedMetrics {
         aligned_bai: "Index for the aligned BAM file"
         ref_fasta: "Reference FASTA file"
         bed_to_compute_coverage: "Optional BED file to compute coverage over"
+        bed_descriptor: "Description of the BED file, will be used in the file name so be careful naming things"
     }
 
     input {
         File aligned_bam
         File aligned_bai
 
-        File ref_fasta
-
         File? bed_to_compute_coverage
+        String? bed_descriptor
     }
 
-    call Utils.ComputeGenomeLength { input: fasta = ref_fasta }
+    if (defined(bed_to_compute_coverage)) {
+        if (!defined(bed_descriptor)) {
+            call Utils.StopWorkflow { input: reason = "Must provied descriptive name of the BED file if the file is provided."}
+        }
+    }
+
     call NP.NanoPlotFromBam { input: bam = aligned_bam, bai = aligned_bai }
 
-    if (defined(bed_to_compute_coverage)) {
-        call AM.MosDepthOverBed {
-            input:
-                bam = aligned_bam,
-                bai = aligned_bai,
-                bed = select_first([bed_to_compute_coverage])
-        }
+    call AM.MosDepthWGS { input: bam = aligned_bam, bai = aligned_bai, bed = bed_to_compute_coverage, bed_descriptor = bed_descriptor }
 
+    if (defined(bed_to_compute_coverage)) {
         call SummarizeDepthOverWholeBed as cov_over_region {
             input:
-                mosdepth_output = MosDepthOverBed.regions
+                mosdepth_output = select_first([MosDepthWGS.regions])
         }
     }
 
     output {
-
-        File? bed_cov_summary = cov_over_region.cov_summary
-
-        Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
-        Float aligned_num_bases = NanoPlotFromBam.stats_map['number_of_bases_aligned']
-        Float aligned_frac_bases = NanoPlotFromBam.stats_map['fraction_bases_aligned']
-        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/ComputeGenomeLength.length
-
-        Float aligned_read_length_mean = NanoPlotFromBam.stats_map['mean_read_length']
-        Float aligned_read_length_median = NanoPlotFromBam.stats_map['median_read_length']
-        Float aligned_read_length_stdev = NanoPlotFromBam.stats_map['read_length_stdev']
-        Float aligned_read_length_N50 = NanoPlotFromBam.stats_map['n50']
-
-        Float average_identity = NanoPlotFromBam.stats_map['average_identity']
-        Float median_identity = NanoPlotFromBam.stats_map['median_identity']
+        Float coverage = MosDepthWGS.wgs_cov
 
         Map[String, Float] reads_stats = NanoPlotFromBam.stats_map
+
+        File? bed_cov_summary = cov_over_region.cov_summary
     }
 }
 
@@ -86,7 +74,7 @@ task SummarizeDepthOverWholeBed {
     command <<<
         set -euxo pipefail
 
-        echo 'chr start stop gene cov_mean' | awk 'BEGIN {OFS="\t"} {print}' > ~{prefix}.summary.txt
+        echo -e 'chr\tstart\tstop\tgene\tcov_mean' > ~{prefix}.summary.txt
         zcat ~{mosdepth_output} >> ~{prefix}.summary.txt
     >>>
 

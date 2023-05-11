@@ -83,15 +83,16 @@ workflow CallVariants {
                         locus = contig_for_sv
                 }
 
-                call PBSV.RunPBSV {
+                call PBSV.Discover as pbsv_discover_chr {
                     input:
                         bam = SubsetBam.subset_bam,
                         bai = SubsetBam.subset_bai,
+                        is_hifi = true,
                         ref_fasta = ref_fasta,
                         ref_fasta_fai = ref_fasta_fai,
-                        prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
-                        is_ccs = false,
+                        chr = contig_for_sv,
+                        prefix = prefix,
                         zones = arbitrary.zones
                 }
 
@@ -114,12 +115,14 @@ workflow CallVariants {
                         sample_name = InferSampleName.sample_name
                 }
             }
-
-            call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
+            call PBSV.Call as pbsv_wg_call {
                 input:
-                    vcfs     = RunPBSV.vcf,
-                    ref_dict = ref_dict,
-                    prefix   = prefix + ".pbsv"
+                    svsigs = pbsv_discover_chr.svsig,
+                    ref_fasta = ref_fasta,
+                    ref_fasta_fai = ref_fasta_fai,
+                    is_hifi = true,
+                    prefix = prefix + ".pbsv",
+                    zones = arbitrary.zones
             }
 
             call VariantUtils.CollectDefinitions as UnionHeadersSnifflesVCFs {
@@ -145,10 +148,9 @@ workflow CallVariants {
                     ref_fasta_fai = ref_fasta_fai,
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
-                    is_ccs = false,
+                    is_hifi = true,
                     zones = arbitrary.zones
             }
-            call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 
             call Sniffles.Sniffles as SnifflesSlow {
                 input:
@@ -165,7 +167,7 @@ workflow CallVariants {
         File? sniffles_vcf = select_first([MergeSnifflesVCFs.vcf, ZipAndIndexSniffles.sortedVCF])
         File? sniffles_tbi = select_first([MergeSnifflesVCFs.tbi, ZipAndIndexSniffles.tbi])
 
-        File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
-        File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
+        File? pbsv_vcf = select_first([pbsv_wg_call.vcf, PBSVslow.vcf])
+        File? pbsv_tbi = select_first([pbsv_wg_call.tbi, PBSVslow.tbi])
     }
 }
