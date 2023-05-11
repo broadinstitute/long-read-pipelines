@@ -39,6 +39,7 @@ workflow Benchmark {
         Int? preemptible
         String gatkTag="4.0.11.0"
         Boolean requireMatchingGenotypes = true
+        Boolean truthIsSitesOnlyVcf = false
         File? gatkJarForAnnotation
         Array[String]? annotationNames
         Boolean enableRefOverlap = false
@@ -70,6 +71,7 @@ workflow Benchmark {
         variantSelectorLabels: {description: "labels by which to identify variant selectors (must be same length as jexlVariantSelectors)"}
         doIndelLengthStratification: {description: "whether or not to perform stratification by indel length"}
         requireMatchingGenotypes: {description: "whether to require genotypes to match in order to be a true positive"}
+        truthIsSitesOnlyVcf: {description: "whether the truth VCF is a sites-only VCF file without any sample information"}
         gatkTag: {description: "version of gatk docker to use.  Defaults to 4.0.11.0"}
         analysisRegion: {description: "if provided (gatk format, single interval e.g., 'chr20', or 'chr20:1-10') all the analysis will be performed only within the region."}
         passingOnly: {description:"Have vcfEval only consider the passing variants"}
@@ -258,6 +260,7 @@ workflow Benchmark {
                     threads = threadsVcfEval,
                     preemptible = preemptible,
                     requireMatchingGenotypes = requireMatchingGenotypes,
+                    truthIsSitesOnlyVcf = truthIsSitesOnlyVcf,
                     passingOnly = passingOnly,
                     vcfScoreField = vcfScoreField,
                     enableRefOverlap = enableRefOverlap
@@ -561,6 +564,7 @@ task VcfEval {
         Int? threads
 
         Boolean requireMatchingGenotypes
+        Boolean truthIsSitesOnlyVcf
         Boolean enableRefOverlap = false
     }
     String memDefault="16 GB"
@@ -577,6 +581,7 @@ task VcfEval {
         ~{false="--all-records" true="" passingOnly} \
         ~{"--vcf-score-field=" + vcfScoreField} \
         ~{false="--squash-ploidy" true="" requireMatchingGenotypes} \
+        ~{false="--sample ALT" true="" truthIsSitesOnlyVcf} \
         ~{true="--ref-overlap" false="" enableRefOverlap} \
         -b ~{truthVCF} -c ~{evalVCF} \
         -e ~{confidenceBed} ~{"--bed-regions " + stratBed} \
