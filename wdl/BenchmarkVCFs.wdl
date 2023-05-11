@@ -581,7 +581,7 @@ task VcfEval {
         ~{false="--all-records" true="" passingOnly} \
         ~{"--vcf-score-field=" + vcfScoreField} \
         ~{false="--squash-ploidy" true="" requireMatchingGenotypes} \
-        ~{false="--sample ALT" true="" truthIsSitesOnlyVcf} \
+        ~{false="" true="--sample ALT" truthIsSitesOnlyVcf} \
         ~{true="--ref-overlap" false="" enableRefOverlap} \
         -b ~{truthVCF} -c ~{evalVCF} \
         -e ~{confidenceBed} ~{"--bed-regions " + stratBed} \
