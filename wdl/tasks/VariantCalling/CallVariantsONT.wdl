@@ -2,10 +2,18 @@ version 1.0
 
 import "../Utility/Utils.wdl"
 import "../Utility/VariantUtils.wdl"
+
+import "ShardWholeGenome.wdl"
+
 import "PBSV.wdl"
 import "Sniffles2.wdl" as Sniffles2
+
 import "Clair.wdl" as Clair3
-import "ONTPepper.wdl"
+
+import "DeepVariant.wdl"
+import "../Alignment/WhatsHap.wdl"
+import "../../deprecated/tasks/ONTPepper.wdl"
+import "MarginPhase.wdl" as Margin
 
 workflow CallVariants {
 
@@ -14,177 +22,271 @@ workflow CallVariants {
     }
 
     parameter_meta {
-        bam: "ONT BAM file"
-        bai: "ONT BAM index file"
-        minsvlen: "Minimum SV length in bp (default: 50)"
+        bam: "Aligned CCS BAM file"
+        bai: "Index for the aligned CCS BAM file"
         prefix: "Prefix for output files"
         sample_id: "Sample ID"
         ref_fasta: "Reference FASTA file"
-        ref_fasta_fai: "Reference FASTA index file"
-        ref_dict: "Reference FASTA dictionary file"
-        call_svs: "Call structural variants"
-        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
-        tandem_repeat_bed: "BED file containing TRF finder for better PBSV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
-        call_small_variants: "Call small variants"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
-        sites_vcf: "for use with Clair"
-        sites_vcf_tbi: "for use with Clair"
-        run_dv_pepper_analysis: "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
-        dvp_threads: "number of threads for DV-Pepper"
-        dvp_memory: "memory for DV-Pepper"
-        ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
-        ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
+        ref_fasta_fai: "Index for the reference FASTA file"
+        ref_dict: "Dictionary for the reference FASTA file"
+
+        call_svs: "Call structural variants or not"
+        minsvlen: "Minimum SV length in bp (default: 50)"
+        pbsv_discover_per_chr: "Run the discover stage of PBSV per chromosome"
+        tandem_repeat_bed: "BED file containing TRF finder for better SV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+
+        call_small_variants: "Call small variants or not"
+
+        run_clair3: "to turn on Clair3 analysis or not (non-trivial increase in cost and runtime)"
+
+        dv_threads: "number of threads for DeepVariant"
+        dv_memory:  "memory for DeepVariant"
+        use_gpu: "to use GPU acceleration or not on DeepVariant"
+        ref_scatter_interval_list_locator: "A file holding paths to interval_list files; when not provided, will shard WG by contig (possibly slower)"
+        ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
+
+        is_r10_4_pore_or_later: "tell us which pore version was used to generate the data. When true, will use the DV (>=1.5.0) toolchain."
+        model_for_dv_andor_pepper: "model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
     }
 
     input {
+        # sample info
         File bam
         File bai
-        Int minsvlen = 50
         String prefix
         String sample_id
 
+        Boolean is_r10_4_pore_or_later
+        String model_for_dv_andor_pepper
+
+        # reference info
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
 
-        Boolean call_svs
-        Boolean fast_less_sensitive_sv
-        File? tandem_repeat_bed
-
-        Boolean call_small_variants
-        Boolean call_small_vars_on_mitochondria
-        File? sites_vcf
-        File? sites_vcf_tbi
-
-        Boolean run_dv_pepper_analysis
-        Int? dvp_threads
-        Int? dvp_memory
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
+
+        # sv-specific args
+        Boolean call_svs
+        Int minsvlen = 50
+        File? tandem_repeat_bed
+
+        Boolean pbsv_discover_per_chr
+
+        # smallVar-specific args
+        Boolean call_small_variants
+
+        Boolean run_clair3
+
+        Int? dv_threads
+        Int? dv_memory
+        Boolean use_gpu = false
+
+        # optimization
+        String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
 
     ######################################################################
     # Block for small variants handling
     ######################################################################
-
-    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
-
-    # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {
-        # Scatter by chromosome
-        Array[String] default_filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
-        Array[String] use_filter = if (call_small_vars_on_mitochondria) then default_filter else flatten([['chrM'],default_filter])
-        call Utils.MakeChrIntervalList as SmallVariantsScatterPrepp {
+
+        call ShardWholeGenome.Split as SplitBamForSmallVar {
             input:
                 ref_dict = ref_dict,
-                filter = use_filter
+                bam = bam,
+                bai = bai,
+                ref_scatter_interval_list_locator = ref_scatter_interval_list_locator,
+                ref_scatter_interval_list_ids = ref_scatter_interval_list_ids
         }
 
-        scatter (c in SmallVariantsScatterPrepp.chrs) {
-            String chr = c[0]
-
-            call Utils.SubsetBam as SmallVariantsScatter {
-                input:
-                    bam = bam,
-                    bai = bai,
-                    locus = chr
-            }
-
-            call Clair3.Clair {
-                input:
-                    bam = SmallVariantsScatter.subset_bam,
-                    bai = SmallVariantsScatter.subset_bai,
-
-                    ref_fasta     = ref_fasta,
-                    ref_fasta_fai = ref_fasta_fai,
-
-                    sites_vcf = sites_vcf,
-                    sites_vcf_tbi = sites_vcf_tbi,
-
-                    preset = "ONT",
-                    zones = arbitrary.zones
-            }
-        }
-
-        call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
-            input:
-                vcfs = Clair.vcf,
-                ref_fasta_fai = ref_fasta_fai,
-                prefix = prefix + ".clair"
-        }
-
-        call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
-            input:
-                vcfs = Clair.gvcf,
-                ref_fasta_fai = ref_fasta_fai,
-                prefix = prefix + ".clair.g"
-        }
-
-        # size-balanced scatter
-        if (run_dv_pepper_analysis) {
-            File scatter_interval_list_ids = select_first([ref_scatter_interval_list_ids])
-            File scatter_interval_list_loc = select_first([ref_scatter_interval_list_locator])
-            Array[String] interval_list_ids   = read_lines(scatter_interval_list_ids)
-            Array[String] interval_list_files = read_lines(scatter_interval_list_loc)
-            Array[Pair[String, String]] ided_interval_list_files = zip(interval_list_ids, interval_list_files)
-
-            scatter (pair in ided_interval_list_files) {
-                call Utils.ResilientSubsetBam as size_balanced_scatter {
+        #################################
+        # run clair3, if so requested
+        #################################
+        if (run_clair3) {
+            scatter (pair in SplitBamForSmallVar.sharded_bam_bais) {
+                call Clair3.Clair {
                     input:
-                        bam = bam,
-                        bai = bai,
-                        interval_list_file = pair.right,
-                        interval_id = pair.left,
-                        prefix = basename(bam, ".bam")
-                }
+                        bam = pair.left,
+                        bai = pair.right,
 
-                call ONTPepper.Pepper {
-                    input:
-                        bam           = size_balanced_scatter.subset_bam,
-                        bai           = size_balanced_scatter.subset_bai,
                         ref_fasta     = ref_fasta,
                         ref_fasta_fai = ref_fasta_fai,
-                        threads       = select_first([dvp_threads]),
-                        memory        = select_first([dvp_memory]),
-                        zones = arbitrary.zones
+
+                        preset = "CCS",
+                        zones = zones
                 }
             }
+            call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
+                input:
+                    vcfs = Clair.vcf,
+                    ref_fasta_fai = ref_fasta_fai,
+                    prefix = prefix + ".clair"
+            }
+            call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
+                input:
+                    vcfs = Clair.gvcf,
+                    ref_fasta_fai = ref_fasta_fai,
+                    prefix = prefix + ".clair.g"
+            }
+        }
 
-            String dvp_prefix = prefix + ".deepvariant_pepper"
+        #################################
+        # run DeepVariant directly, when the data is new enough
+        #################################
+        if (is_r10_4_pore_or_later){
+            scatter (pair in SplitBamForSmallVar.sharded_bam_bais) {
+                if (!use_gpu) {
+                    call DeepVariant.DV as DeepV {
+                        input:
+                            bam           = pair.left,
+                            bai           = pair.right,
+                            ref_fasta     = ref_fasta,
+                            ref_fasta_fai = ref_fasta_fai,
+
+                            model_type = model_for_dv_andor_pepper,
+
+                            threads = select_first([dv_threads]),
+                            memory  = select_first([dv_memory]),
+                            zones = zones
+                    }
+                }
+
+                if (use_gpu) {
+                    call DeepVariant.DV_gpu as DeepV_G {
+                        input:
+                            bam           = pair.left,
+                            bai           = pair.right,
+                            ref_fasta     = ref_fasta,
+                            ref_fasta_fai = ref_fasta_fai,
+
+                            model_type = model_for_dv_andor_pepper,
+
+                            threads = select_first([dv_threads]),
+                            memory  = select_first([dv_memory]),
+                            zones = zones
+                    }
+                }
+                File dv_vcf = select_first([DeepV.VCF, DeepV_G.VCF])
+                File dv_gvcf = select_first([DeepV.gVCF, DeepV_G.gVCF])
+            }
+
+            String dv_prefix = prefix + ".deepvariant_pepper"
 
             call VariantUtils.MergeAndSortVCFs as MergeDeepVariantGVCFs {
                 input:
-                    vcfs     = Pepper.gVCF,
-                    prefix   = dvp_prefix + ".g",
-                    ref_fasta_fai = ref_fasta_fai
-            }
-
-            call VariantUtils.MergeAndSortVCFs as MergeDeepVariantPhasedVCFs {
-                input:
-                    vcfs     = Pepper.phasedVCF,
-                    prefix   = dvp_prefix + ".phased",
+                    vcfs     = dv_gvcf,
+                    prefix   = dv_prefix + ".g",
                     ref_fasta_fai = ref_fasta_fai
             }
 
             call VariantUtils.MergeAndSortVCFs as MergeDeepVariantVCFs {
                 input:
-                    vcfs     = Pepper.VCF,
-                    prefix   = dvp_prefix,
+                    vcfs     = dv_vcf,
+                    prefix   = dv_prefix,
                     ref_fasta_fai = ref_fasta_fai
             }
 
-            call Utils.MergeBams {
+            #############
+            # to-be-fixed
+            # here we run two phasing methods, because right now DV doesn't seem to do what they claim yet: direct phasing
+            call WhatsHap.Phase as WhatsHapPhase {
+                input :
+                    bam=bam, bai=bai, ref_fasta=ref_fasta, ref_fasta_fai=ref_fasta_fai,
+                    unphased_vcf=MergeDeepVariantVCFs.vcf, unphased_tbi=MergeDeepVariantVCFs.tbi
+            }
+            call WhatsHap.Stats as WHPhaseStats { input: phased_vcf=WhatsHapPhase.phased_vcf, phased_tbi=WhatsHapPhase.phased_tbi}
+
+            call Margin.MarginPhase as MarginPhase {
+                input:
+                    bam=bam, bai=bai, ref_fasta=ref_fasta, ref_fasta_fai=ref_fasta_fai,
+                    unphased_vcf=MergeDeepVariantVCFs.vcf, unphased_tbi=MergeDeepVariantVCFs.tbi,
+                    zones = zones,
+                    data_type='ONT'
+            }
+            call WhatsHap.Stats as MPhaseStats  { input: phased_vcf=MarginPhase.phased_vcf, phased_tbi=MarginPhase.phased_tbi}
+
+            File phased_snp_vcf = MarginPhase.phased_vcf
+            File phased_snp_tbi = MarginPhase.phased_tbi
+            File phasing_stats_tsv = MPhaseStats.stats_tsv
+            File phasing_stats_gtf = MPhaseStats.stats_gtf
+            #############
+
+            call WhatsHap.HaploTagBam as WhatsHapTag {
+                input:
+                    to_tag_bam = bam,
+                    to_tag_bai = bai,
+                    ref_fasta  = ref_fasta,
+                    ref_fasta_fai = ref_fasta_fai,
+                    phased_vcf = phased_snp_vcf,
+                    phased_tbi = phased_snp_tbi
+            }
+        }
+        #################################
+        # run PEPPER if data is old
+        #################################
+        if (! is_r10_4_pore_or_later) {
+            scatter (pair in SplitBamForSmallVar.sharded_bam_bais) {
+                call ONTPepper.Pepper {
+                    input:
+                        bam           = pair.left,
+                        bai           = pair.right,
+                        ref_fasta     = ref_fasta,
+                        ref_fasta_fai = ref_fasta_fai,
+                        model = model_for_dv_andor_pepper,
+                        threads       = select_first([dv_threads]),
+                        memory        = select_first([dv_memory]),
+                        zones = zones
+                }
+            }
+
+            String pepper_prefix = prefix + ".PEPPER_deepvariant_margin"
+
+            call VariantUtils.MergeAndSortVCFs as MergePEPPERGVCFs {
+                input:
+                    vcfs     = Pepper.gVCF,
+                    prefix   = pepper_prefix + ".g",
+                    ref_fasta_fai = ref_fasta_fai
+            }
+
+            call VariantUtils.MergeAndSortVCFs as MergePEPPERPhasedVCFs {
+                input:
+                    vcfs     = Pepper.phasedVCF,
+                    prefix   = pepper_prefix + ".phased",
+                    ref_fasta_fai = ref_fasta_fai
+            }
+
+            call VariantUtils.MergeAndSortVCFs as MergePEPPERVCFs {
+                input:
+                    vcfs     = Pepper.VCF,
+                    prefix   = pepper_prefix,
+                    ref_fasta_fai = ref_fasta_fai
+            }
+
+            call Utils.MergeBams as GetMarginPhaseBam {
                 input:
                     bams = Pepper.hap_tagged_bam,
                     prefix = prefix +  ".MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged"
             }
+
+            call WhatsHap.Stats as PhaseStatsLegacy  { input: phased_vcf=MergePEPPERPhasedVCFs.vcf, phased_tbi=MergePEPPERPhasedVCFs.tbi}
         }
+
+        File use_this_dv_phased_vcf = select_first([phased_snp_vcf, MergePEPPERPhasedVCFs.vcf])
+        File use_this_dv_phased_tbi = select_first([phased_snp_tbi, MergePEPPERPhasedVCFs.tbi])
+        File use_this_dv_g_vcf = select_first([MergeDeepVariantGVCFs.vcf, MergePEPPERGVCFs.vcf])
+        File use_this_dv_g_tbi = select_first([MergeDeepVariantGVCFs.tbi, MergePEPPERGVCFs.tbi])
+        File use_this_haptag_bam = select_first([WhatsHapTag.tagged_bam, GetMarginPhaseBam.merged_bam])
+        File use_this_haptag_bai = select_first([WhatsHapTag.tagged_bai, GetMarginPhaseBam.merged_bai])
+        File use_this_phase_stats_tsv = select_first([phasing_stats_tsv, PhaseStatsLegacy.stats_tsv])
+        File use_this_phase_stats_gtf = select_first([phasing_stats_gtf, PhaseStatsLegacy.stats_gtf])
     }
     ######################################################################
     # Block for SV handling
     ######################################################################
     if (call_svs) {
-        if (fast_less_sensitive_sv) {
+        if (pbsv_discover_per_chr) {
 
             call Utils.MakeChrIntervalList {
             input:
@@ -193,13 +295,13 @@ workflow CallVariants {
             }
 
             scatter (c in MakeChrIntervalList.chrs) {
-                String contig = c[0]
+                String contig_for_sv = c[0]
 
                 call Utils.SubsetBam {
                     input:
                         bam = bam,
                         bai = bai,
-                        locus = contig
+                        locus = contig_for_sv
                 }
 
                 call PBSV.Discover as pbsv_discover_chr {
@@ -209,9 +311,9 @@ workflow CallVariants {
                         ref_fasta = ref_fasta,
                         ref_fasta_fai = ref_fasta_fai,
                         prefix = prefix,
-                        chr = contig,
+                        chr = contig_for_sv,
                         tandem_repeat_bed = tandem_repeat_bed,
-                        zones = arbitrary.zones
+                        zones = zones
                 }
             }
 
@@ -222,13 +324,13 @@ workflow CallVariants {
                     ref_fasta_fai = ref_fasta_fai,
                     ccs = false,
                     prefix = prefix + ".pbsv",
-                    zones = arbitrary.zones
+                    zones = zones
             }
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexFastPBSV {input: vcf = pbsv_wg_call.vcf }
         }
 
-        if (!fast_less_sensitive_sv) {
+        if (!pbsv_discover_per_chr) {
             call PBSV.RunPBSV as PBSVslow {
                 input:
                     bam = bam,
@@ -238,7 +340,7 @@ workflow CallVariants {
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
                     is_ccs = false,
-                    zones = arbitrary.zones
+                    zones = zones
             }
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
@@ -265,15 +367,19 @@ workflow CallVariants {
 
         File? clair_vcf = MergeAndSortClairVCFs.vcf
         File? clair_tbi = MergeAndSortClairVCFs.tbi
-
         File? clair_gvcf = MergeAndSortClair_gVCFs.vcf
         File? clair_gtbi = MergeAndSortClair_gVCFs.tbi
 
-        File? dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
-        File? dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
-        File? dvp_g_vcf = MergeDeepVariantGVCFs.vcf
-        File? dvp_g_tbi = MergeDeepVariantGVCFs.tbi
-        File? dvp_vcf = MergeDeepVariantVCFs.vcf
-        File? dvp_tbi = MergeDeepVariantVCFs.tbi
+        File? dv_g_vcf = use_this_dv_g_vcf
+        File? dv_g_tbi = use_this_dv_g_tbi
+
+        File? dv_phased_vcf = use_this_dv_phased_vcf
+        File? dv_phased_tbi = use_this_dv_phased_tbi
+
+        File? dv_vcf_phasing_stats_tsv = phasing_stats_tsv
+        File? dv_vcf_phasing_stats_gtf = phasing_stats_gtf
+
+        File? haplotagged_bam = use_this_haptag_bam
+        File? haplotagged_bai = use_this_haptag_bai
     }
 }

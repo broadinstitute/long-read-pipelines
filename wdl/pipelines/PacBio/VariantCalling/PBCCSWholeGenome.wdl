@@ -2,6 +2,7 @@ version 1.0
 
 import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 import "../../../tasks/VariantCalling/CallVariantsPBCCS.wdl" as VAR
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
@@ -21,16 +22,15 @@ workflow PBCCSWholeGenome {
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
 
         call_svs:               "whether to call SVs"
-        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
+        pbsv_discover_per_chr:  "Run the discover stage of PBSV per chromosome"
 
         call_small_variants: "whether to call small variants"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
-        sites_vcf:     "for use with Clair"
-        sites_vcf_tbi: "for use with Clair"
 
-        run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
+        run_clair3:  "to turn on Clair3 analysis or not (non-trivial increase in cost and runtime)"
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
         ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
+
+        gcp_zones: "which Google Cloud Zone to use (this has implications on how many GPUs are available and egress costs, so configure carefully)"
     }
 
     input {
@@ -46,18 +46,18 @@ workflow PBCCSWholeGenome {
         String gcs_out_root_dir
 
         Boolean call_svs = true
-        Boolean? fast_less_sensitive_sv = true
+        Boolean pbsv_discover_per_chr = true
 
         Boolean call_small_variants = true
-        Boolean? call_small_vars_on_mitochondria = false
-        File? sites_vcf
-        File? sites_vcf_tbi
 
-        Boolean? run_dv_pepper_analysis = true
-        Int? dvp_threads = 32
-        Int? dvp_memory = 128
+        Boolean run_clair3 = false
+
+        Int dv_threads = 32
+        Int dv_memory = 128
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
+
+        Array[String] gcp_zones = ['us-central1-a', 'us-central1-b', 'us-central1-c', 'us-central1-f']
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -77,9 +77,6 @@ workflow PBCCSWholeGenome {
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
-    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
-    File pbi = IndexCCSUnalignedReads.pbi
-
     call COV.SampleLevelAlignedMetrics as coverage {
         input:
             aligned_bam = bam,
@@ -92,24 +89,21 @@ workflow PBCCSWholeGenome {
 
     call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = bam, name = "~{participant_name}.bam" }
     call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = bai, name = "~{participant_name}.bam.bai" }
-    call FF.FinalizeToFile as FinalizePbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
 
     if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
+
+    ###########################################################
+    # pacbio specific
+    call PB.PBIndex as PBIndexSampleReads { input: bam = bam }
+    File pbi = PBIndexSampleReads.pbi
+    call FF.FinalizeToFile as FinalizePbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
+    ###########################################################
 
     ####################################################################################################
     if (call_svs || call_small_variants) {
 
-        # verify arguments are provided
-        if (call_svs) {
-            if (! defined(fast_less_sensitive_sv)) {call Utils.StopWorkflow as fast_less_sensitive_sv_not_provided {input: reason = "Calling SVs without specifying arg fast_less_sensitive_sv"}}
-        }
-        if (call_small_variants) {
-            if (! defined(call_small_vars_on_mitochondria)) {call Utils.StopWorkflow as call_small_vars_on_mitochondria_not_provided {input: reason = "Unprovided arg call_small_vars_on_mitochondria"}}
-            if (! defined(run_dv_pepper_analysis)) {call Utils.StopWorkflow as run_dv_pepper_analysis_not_provided {input: reason = "Unprovided arg run_dv_pepper_analysis"}}
-            if (! defined(dvp_threads)) {call Utils.StopWorkflow as dvp_threads_not_provided {input: reason = "Unprovided arg dvp_threads"}}
-            if (! defined(ref_scatter_interval_list_locator)) {call Utils.StopWorkflow as ref_scatter_interval_list_locator_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_locator"}}
-            if (! defined(ref_scatter_interval_list_ids)) {call Utils.StopWorkflow as ref_scatter_interval_list_ids_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_ids"}}
-        }
+        call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
+        String wdl_parsable_zones = get_zones.collapsed
 
         call VAR.CallVariants {
             input:
@@ -124,18 +118,19 @@ workflow PBCCSWholeGenome {
                 prefix = participant_name,
 
                 call_svs = call_svs,
-                fast_less_sensitive_sv = select_first([fast_less_sensitive_sv]),
+                pbsv_discover_per_chr = pbsv_discover_per_chr,
 
                 call_small_variants = call_small_variants,
-                call_small_vars_on_mitochondria = select_first([call_small_vars_on_mitochondria]),
-                sites_vcf = sites_vcf,
-                sites_vcf_tbi = sites_vcf_tbi,
 
-                run_dv_pepper_analysis = select_first([run_dv_pepper_analysis]),
-                dvp_threads = select_first([dvp_threads]),
-                dvp_memory = select_first([dvp_memory]),
-                ref_scatter_interval_list_locator = select_first([ref_scatter_interval_list_locator]),
-                ref_scatter_interval_list_ids = select_first([ref_scatter_interval_list_ids])
+                run_clair3 = run_clair3,
+
+                dv_threads = dv_threads,
+                dv_memory = dv_memory,
+
+                ref_scatter_interval_list_locator = ref_scatter_interval_list_locator,
+                ref_scatter_interval_list_ids = ref_scatter_interval_list_ids,
+
+                zones = wdl_parsable_zones
         }
 
         String svdir = outdir + "/variants/sv"
@@ -150,42 +145,49 @@ workflow PBCCSWholeGenome {
         }
 
         if (call_small_variants) {
-            call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_vcf])}
-            call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_tbi])}
+            if (run_clair3) {
+                call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_vcf])}
+                call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_tbi])}
 
-            call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_gvcf])}
-            call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_gtbi])}
-
-            if (select_first([run_dv_pepper_analysis])) {
-                call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
-                call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}
-                call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_tbi])}
-                call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_vcf]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz" }
-                call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_tbi]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz.tbi" }
+                call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_gvcf])}
+                call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_gtbi])}
             }
+
+            call FF.FinalizeToFile as FinalizeDVgVcf { input: outdir = smalldir, file = select_first([CallVariants.dv_g_vcf]), name = "~{participant_name}.deepvariant.g.vcf.gz" }
+            call FF.FinalizeToFile as FinalizeDVgTbi { input: outdir = smalldir, file = select_first([CallVariants.dv_g_tbi]), name = "~{participant_name}.deepvariant.g.vcf.gz.tbi" }
+            call FF.FinalizeToFile as FinalizeDVPhasedVcf { input: outdir = smalldir, file = select_first([CallVariants.dv_phased_vcf]), name = "~{participant_name}.deepvariant.phased.vcf.gz" }
+            call FF.FinalizeToFile as FinalizeDVPhasedTbi { input: outdir = smalldir, file = select_first([CallVariants.dv_phased_tbi]), name = "~{participant_name}.deepvariant.phased.vcf.gz.tbi" }
+            call FF.FinalizeToFile as FinalizeDVPhasedVcfStatusTSV { input: outdir = smalldir, file = select_first([CallVariants.dv_vcf_phasing_stats_tsv]) }
+            call FF.FinalizeToFile as FinalizeDVPhasedVcfStatusGtf { input: outdir = smalldir, file = select_first([CallVariants.dv_vcf_phasing_stats_gtf]) }
         }
     }
 
+    call GU.GetTodayDate as today {}
+
     output {
+        String last_preprocessing_date = today.yyyy_mm_dd
+
         File aligned_bam = FinalizeBam.gcs_path
         File aligned_bai = FinalizeBai.gcs_path
         File aligned_pbi = FinalizePbi.gcs_path
-
-        Float aligned_num_reads = coverage.aligned_num_reads
-        Float aligned_num_bases = coverage.aligned_num_bases
-        Float aligned_frac_bases = coverage.aligned_frac_bases
-        Float aligned_est_fold_cov = coverage.aligned_est_fold_cov
-
-        Float aligned_read_length_mean = coverage.aligned_read_length_mean
-        Float aligned_read_length_median = coverage.aligned_read_length_median
-        Float aligned_read_length_stdev = coverage.aligned_read_length_stdev
-        Float aligned_read_length_N50 = coverage.aligned_read_length_N50
-
-        Float average_identity = coverage.average_identity
-        Float median_identity = coverage.median_identity
-
+        Float coverage = AlignmentMetrics.coverage
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
+
+        Map[String, Float] alignment_metrics = {
+            'aligned_num_reads' : coverage.aligned_num_reads,
+            'aligned_num_bases' : coverage.aligned_num_bases,
+            'aligned_frac_bases' : coverage.aligned_frac_bases,
+            'aligned_est_fold_cov' : coverage.aligned_est_fold_cov,
+
+            'aligned_read_length_mean' : coverage.aligned_read_length_mean,
+            'aligned_read_length_median' : coverage.aligned_read_length_median,
+            'aligned_read_length_stdev' : coverage.aligned_read_length_stdev,
+            'aligned_read_length_N50' : coverage.aligned_read_length_N50,
+
+            'average_identity' : coverage.average_identity,
+            'median_identity' : coverage.median_identity
+        }
+
         ########################################
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? pbsv_tbi = FinalizePBSVtbi.gcs_path
@@ -199,11 +201,11 @@ workflow PBCCSWholeGenome {
         File? clair_gvcf = FinalizeClairGVcf.gcs_path
         File? clair_gtbi = FinalizeClairGTbi.gcs_path
 
-        File? dvp_vcf = FinalizeDVPepperVcf.gcs_path
-        File? dvp_tbi = FinalizeDVPepperTbi.gcs_path
-        File? dvp_g_vcf = FinalizeDVPepperGVcf.gcs_path
-        File? dvp_g_tbi = FinalizeDVPepperGTbi.gcs_path
-        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
-        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
+        File? dv_g_vcf = FinalizeDVgVcf.gcs_path
+        File? dv_g_tbi = FinalizeDVgTbi.gcs_path
+        File? dv_phased_vcf = FinalizeDVPhasedVcf.gcs_path
+        File? dv_phased_tbi = FinalizeDVPhasedTbi.gcs_path
+        File? dv_phased_vcf_stats_tsv = FinalizeDVPhasedVcfStatusTSV.gcs_path
+        File? dv_phased_vcf_stats_gtf = FinalizeDVPhasedVcfStatusGtf.gcs_path
     }
 }
