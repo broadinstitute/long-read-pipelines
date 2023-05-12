@@ -37,6 +37,7 @@ workflow AssembleWithUnicycler {
         File assembly_fasta = Assemble.assembly_fasta
         File assembly_gfa = Assemble.assembly_gfa
         File unicycler_log = Assemble.unicycler_log
+        Array[File] unicycler_intermediate_graphs = Assemble.unicycler_intermediate_graphs
     }
 
 }

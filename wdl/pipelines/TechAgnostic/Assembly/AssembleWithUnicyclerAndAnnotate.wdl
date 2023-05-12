@@ -39,6 +39,7 @@ workflow AssmebleWithUnicyclerAndAnnotate {
         File assembly_fasta = Assembly.assembly_fasta
         File assembly_gfa = Assembly.assembly_gfa
         File unicycler_log = Assembly.unicycler_log
+        Array[File] unicycler_intermediate_graphs = Assembly.unicycler_intermediate_graphs
 
         File annot_tsv = Annotate.tsv
         File annot_json = Annotate.json

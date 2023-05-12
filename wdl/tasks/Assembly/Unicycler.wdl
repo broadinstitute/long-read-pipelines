@@ -44,6 +44,8 @@ task Unicycler {
         File assembly_fasta = "~{sample_name}.fasta"
         File assembly_gfa = "~{sample_name}.gfa"
         File unicycler_log = "output/unicycler.log"
+
+        Array[File] unicycler_intermediate_graphs = glob("output/0*.gfa")
     }
 
     runtime {
