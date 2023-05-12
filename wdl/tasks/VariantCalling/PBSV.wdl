@@ -11,7 +11,7 @@ workflow RunPBSV {
     parameter_meta {
         bam:               "input BAM from which to call SVs"
         bai:               "index accompanying the BAM"
-        is_ccs:            "if input BAM is CCS reads"
+        is_hifi:           "if input BAM is HiFi reads"
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         prefix:            "prefix for output"
@@ -22,7 +22,7 @@ workflow RunPBSV {
     input {
         File bam
         File bai
-        Boolean is_ccs
+        Boolean is_hifi
 
         File ref_fasta
         File ref_fasta_fai
@@ -37,6 +37,7 @@ workflow RunPBSV {
         input:
             bam               = bam,
             bai               = bai,
+            is_hifi           = is_hifi,
             ref_fasta         = ref_fasta,
             ref_fasta_fai     = ref_fasta_fai,
             tandem_repeat_bed = tandem_repeat_bed,
@@ -49,13 +50,14 @@ workflow RunPBSV {
             svsigs        = [ Discover.svsig ],
             ref_fasta     = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
-            ccs           = is_ccs,
+            is_hifi       = is_hifi,
             prefix        = prefix,
             zones         = zones
     }
 
     output {
         File vcf = Call.vcf
+        File tbi = Call.tbi
     }
 }
 
@@ -63,6 +65,7 @@ task Discover {
     input {
         File bam
         File bai
+        Boolean is_hifi
         File ref_fasta
         File ref_fasta_fai
         File? tandem_repeat_bed
@@ -75,6 +78,7 @@ task Discover {
     parameter_meta {
         bam:               "input BAM from which to call SVs"
         bai:               "index accompanying the BAM"
+        is_hifi:           "if input BAM is HiFi reads"
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
@@ -94,6 +98,7 @@ task Discover {
         set -euxo pipefail
 
         pbsv discover \
+            ~{true='--hifi' false='' is_hifi} \
             ~{if defined(tandem_repeat_bed) then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
             ~{bam} \
             ~{fileoutput}
@@ -131,9 +136,10 @@ task Call {
         Array[File] svsigs
         File ref_fasta
         File ref_fasta_fai
-        Boolean ccs
+        Boolean is_hifi
         String prefix
         String zones
+        Boolean DEBUG = false
         RuntimeAttr? runtime_attr_override
     }
 
@@ -141,7 +147,7 @@ task Call {
         svsigs:            "per-chromosome *.svsig.gz files"
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
-        ccs:               "use optimizations for CCS data"
+        is_hifi:           "if input BAM is HiFi reads"
         prefix:            "prefix for output"
     }
 
@@ -150,23 +156,30 @@ task Call {
     command <<<
         set -euxo pipefail
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-
-        pbsv call -j $num_core --log-level INFO ~{true='--ccs' false='' ccs} \
+        pbsv call \
+            -j 0 \
+            --log-level ~{true='INFO' false='WARN' DEBUG} \
+            --log-file pbsv.call.log \
+            ~{true='--hifi' false='' is_hifi} \
             ~{ref_fasta} \
             ~{sep=' ' svsigs} \
             ~{prefix}.pbsv.pre.vcf
 
+        # some trivial postprocessing
         cat ~{prefix}.pbsv.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.pbsv.vcf
+        bgzip -c ~{prefix}.pbsv.vcf > ~{prefix}.pbsv.vcf.gz
+        tabix -p vcf ~{prefix}.pbsv.vcf.gz
     >>>
 
     output {
-        File vcf = "~{prefix}.pbsv.vcf"
+        File call_log = "pbsv.call.log"  # make sure this is always the top, so that in case something goes wrong, we still get the log de-localized
+        File vcf = "~{prefix}.pbsv.vcf.gz"
+        File tbi = "~{prefix}.pbsv.vcf.gz.tbi"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
+        cpu_cores:          16,
         mem_gb:             96,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
@@ -186,4 +199,3 @@ task Call {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
-

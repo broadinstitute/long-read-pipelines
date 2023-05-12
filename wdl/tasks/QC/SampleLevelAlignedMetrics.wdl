@@ -29,24 +29,22 @@ workflow SampleLevelAlignedMetrics {
     call Utils.ComputeGenomeLength { input: fasta = ref_fasta }
     call NP.NanoPlotFromBam { input: bam = aligned_bam, bai = aligned_bai }
 
-    if (defined(bed_to_compute_coverage)) {
-        call AM.MosDepthOverBed {
-            input:
-                bam = aligned_bam,
-                bai = aligned_bai,
-                bed = select_first([bed_to_compute_coverage])
-        }
+    call AM.MosDepthWGS { input: bam = aligned_bam, bai = aligned_bai, bed = bed_to_compute_coverage }
 
+    if (defined(bed_to_compute_coverage)) {
         call SummarizeDepthOverWholeBed as cov_over_region {
             input:
-                mosdepth_output = MosDepthOverBed.regions
+                mosdepth_output = select_first([MosDepthWGS.regions])
         }
     }
 
     output {
 
+        Float coverage = MosDepthWGS.wgs_cov
+
         File? bed_cov_summary = cov_over_region.cov_summary
 
+        # todo: get rid of these
         Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
         Float aligned_num_bases = NanoPlotFromBam.stats_map['number_of_bases_aligned']
         Float aligned_frac_bases = NanoPlotFromBam.stats_map['fraction_bases_aligned']

@@ -308,6 +308,7 @@ workflow CallVariants {
                     input:
                         bam = SubsetBam.subset_bam,
                         bai = SubsetBam.subset_bai,
+                        is_hifi = true,
                         ref_fasta = ref_fasta,
                         ref_fasta_fai = ref_fasta_fai,
                         prefix = prefix,
@@ -322,12 +323,10 @@ workflow CallVariants {
                     svsigs = pbsv_discover_chr.svsig,
                     ref_fasta = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
-                    ccs = false,
+                    is_hifi = true,
                     prefix = prefix + ".pbsv",
                     zones = zones
             }
-
-            call VariantUtils.ZipAndIndexVCF as ZipAndIndexFastPBSV {input: vcf = pbsv_wg_call.vcf }
         }
 
         if (!pbsv_discover_per_chr) {
@@ -339,11 +338,9 @@ workflow CallVariants {
                     ref_fasta_fai = ref_fasta_fai,
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
-                    is_ccs = false,
+                    is_hifi = true,
                     zones = zones
             }
-
-            call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
         }
 
         call Sniffles2.SampleSV as Sniffles2SV {
@@ -362,8 +359,8 @@ workflow CallVariants {
         File? sniffles_tbi = Sniffles2SV.tbi
         File? sniffles_snf = Sniffles2SV.snf
 
-        File? pbsv_vcf = select_first([ZipAndIndexFastPBSV.vcfgz, ZipAndIndexPBSV.vcfgz])
-        File? pbsv_tbi = select_first([ZipAndIndexFastPBSV.tbi, ZipAndIndexPBSV.tbi])
+        File? pbsv_vcf = select_first([pbsv_wg_call.vcf, PBSVslow.vcf])
+        File? pbsv_tbi = select_first([pbsv_wg_call.tbi, PBSVslow.tbi])
 
         File? clair_vcf = MergeAndSortClairVCFs.vcf
         File? clair_tbi = MergeAndSortClairVCFs.tbi

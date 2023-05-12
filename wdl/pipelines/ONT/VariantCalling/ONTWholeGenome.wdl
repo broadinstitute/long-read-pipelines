@@ -96,7 +96,7 @@ workflow ONTWholeGenome {
     File usable_bai = select_first([RemoveDuplicates.corrected_bai, bai])
     ###########################################################
 
-    call COV.SampleLevelAlignedMetrics as coverage {
+    call COV.SampleLevelAlignedMetrics as AlignmentMetrics {
         input:
             aligned_bam = usable_bam,
             aligned_bai = usable_bai,
@@ -109,7 +109,7 @@ workflow ONTWholeGenome {
     call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = usable_bam, name = "~{participant_name}.bam" }
     call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = usable_bai, name = "~{participant_name}.bam.bai" }
 
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
+    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([AlignmentMetrics.bed_cov_summary]) } }
 
     ####################################################################################################
     if (call_svs || call_small_variants) {
@@ -187,22 +187,22 @@ workflow ONTWholeGenome {
 
         File aligned_bam = FinalizeBam.gcs_path
         File aligned_bai = FinalizeBai.gcs_path
-        Float coverage = AlignmentMetrics.wgs_cov
+        Float coverage = AlignmentMetrics.coverage
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
 
         Map[String, Float] alignment_metrics = {
-            'aligned_num_reads' : coverage.aligned_num_reads,
-            'aligned_num_bases' : coverage.aligned_num_bases,
-            'aligned_frac_bases' : coverage.aligned_frac_bases,
-            'aligned_est_fold_cov' : coverage.aligned_est_fold_cov,
+            'aligned_num_reads' : AlignmentMetrics.aligned_num_reads,
+            'aligned_num_bases' : AlignmentMetrics.aligned_num_bases,
+            'aligned_frac_bases' : AlignmentMetrics.aligned_frac_bases,
+            'aligned_est_fold_cov' : AlignmentMetrics.aligned_est_fold_cov,
 
-            'aligned_read_length_mean' : coverage.aligned_read_length_mean,
-            'aligned_read_length_median' : coverage.aligned_read_length_median,
-            'aligned_read_length_stdev' : coverage.aligned_read_length_stdev,
-            'aligned_read_length_N50' : coverage.aligned_read_length_N50,
+            'aligned_read_length_mean' : AlignmentMetrics.aligned_read_length_mean,
+            'aligned_read_length_median' : AlignmentMetrics.aligned_read_length_median,
+            'aligned_read_length_stdev' : AlignmentMetrics.aligned_read_length_stdev,
+            'aligned_read_length_N50' : AlignmentMetrics.aligned_read_length_N50,
 
-            'average_identity' : coverage.average_identity,
-            'median_identity' : coverage.median_identity
+            'average_identity' : AlignmentMetrics.average_identity,
+            'median_identity' : AlignmentMetrics.median_identity
         }
 
         ########################################
