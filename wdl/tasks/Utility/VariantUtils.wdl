@@ -33,11 +33,13 @@ task MergePerChrCalls {
             GREPCMD="zgrep"
         fi
 
-        $GREPCMD '^#' $VCF_WITH_HEADER | grep -v -e '^##contig' -e CHROM > header
-        grep '^@SQ' ~{ref_dict} | awk '{ print "##contig=<ID=" $2 ",length=" $3 ">" }' | sed 's/[SL]N://g' >> header
-        $GREPCMD -m1 CHROM $VCF_WITH_HEADER >> header
+        $GREPCMD '^#' $VCF_WITH_HEADER | grep -v -e '^##contig' -e CHROM > header.txt
+        grep '^@SQ' ~{ref_dict} | awk '{ print "##contig=<ID=" $2 ",length=" $3 ">" }' | sed 's/[SL]N://g' >> header.txt
+        $GREPCMD -m1 CHROM $VCF_WITH_HEADER >> header.txt
 
-        ((cat header) && ($GREPCMD -h -v '^#' ~{sep=' ' vcfs})) | bcftools sort | bgzip > ~{prefix}.vcf.gz
+        cat header.txt <($GREPCMD -h -v '^#' ~{sep=' ' vcfs}) | bcftools sort | bgzip > ~{prefix}.vcf.gz
+        echo $?
+        ls
         tabix -p vcf ~{prefix}.vcf.gz
     >>>
 

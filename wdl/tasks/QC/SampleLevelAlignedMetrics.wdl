@@ -15,6 +15,7 @@ workflow SampleLevelAlignedMetrics {
         aligned_bai: "Index for the aligned BAM file"
         ref_fasta: "Reference FASTA file"
         bed_to_compute_coverage: "Optional BED file to compute coverage over"
+        bed_descriptor: "Description of the BED file, will be used in the file name so be careful naming things"
     }
 
     input {
@@ -24,12 +25,19 @@ workflow SampleLevelAlignedMetrics {
         File ref_fasta
 
         File? bed_to_compute_coverage
+        String? bed_descriptor
+    }
+
+    if (defined(bed_to_compute_coverage)) {
+        if (!defined(bed_descriptor)) {
+            call Utils.StopWorkflow { input: reason = "Must provied descriptive name of the BED file if the file is provided."}
+        }
     }
 
     call Utils.ComputeGenomeLength { input: fasta = ref_fasta }
     call NP.NanoPlotFromBam { input: bam = aligned_bam, bai = aligned_bai }
 
-    call AM.MosDepthWGS { input: bam = aligned_bam, bai = aligned_bai, bed = bed_to_compute_coverage }
+    call AM.MosDepthWGS { input: bam = aligned_bam, bai = aligned_bai, bed = bed_to_compute_coverage, bed_descriptor = bed_descriptor }
 
     if (defined(bed_to_compute_coverage)) {
         call SummarizeDepthOverWholeBed as cov_over_region {
