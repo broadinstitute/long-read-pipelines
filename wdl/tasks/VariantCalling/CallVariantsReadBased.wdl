@@ -131,6 +131,10 @@ workflow CallVariants {
             call FF.FinalizeToFile as FinalizeDVPhasedVcfStatusGtf { input: outdir = smalldir, file = SmallVarJob.dv_vcf_phasing_stats_gtf }
             call FF.FinalizeToFile as FinalizeHapTaggedBam { input: outdir = haptagoutdir, file = SmallVarJob.haplotagged_bam }
             call FF.FinalizeToFile as FinalizeHapTaggedBai { input: outdir = haptagoutdir, file = SmallVarJob.haplotagged_bai }
+            if (defined(SmallVarJob.dv_regular_resources_usage_visual)) {
+                call FF.FinalizeToDir as FinalizeDVResourceUsagesVisual {
+                    input: files = select_first([SmallVarJob.dv_regular_resources_usage_visual]), outdir = smalldir + "/DV_monitoring"}
+            }
 
             if (run_clair3) {
                 call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = select_first([SmallVarJob.clair_vcf])}
@@ -204,5 +208,7 @@ workflow CallVariants {
 
         File? haplotagged_bam = FinalizeHapTaggedBam.gcs_path
         File? haplotagged_bai = FinalizeHapTaggedBai.gcs_path
+
+        String? dv_regular_resources_usage_visual = FinalizeDVResourceUsagesVisual.gcs_dir
     }
 }

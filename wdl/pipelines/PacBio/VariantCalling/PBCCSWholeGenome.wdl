@@ -150,5 +150,7 @@ workflow PBCCSWholeGenome {
         File? dv_phased_tbi = CallVariants.dv_phased_tbi
         File? dv_vcf_phasing_stats_tsv = CallVariants.dv_vcf_phasing_stats_tsv
         File? dv_vcf_phasing_stats_gtf = CallVariants.dv_vcf_phasing_stats_gtf
+
+        String? dv_regular_resources_usage_visual = CallVariants.dv_regular_resources_usage_visual
     }
 }

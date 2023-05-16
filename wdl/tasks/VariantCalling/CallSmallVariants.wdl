@@ -2,7 +2,7 @@ version 1.0
 
 import "../Utility/Utils.wdl"
 import "../Utility/VariantUtils.wdl"
-
+import "../Visualization/VisualizeResourceUsage.wdl"
 import "ShardWholeGenome.wdl"
 
 import "DeepVariant.wdl"
@@ -73,6 +73,9 @@ workflow Work {
 
         File dv_vcf_phasing_stats_tsv = use_this_phasing_stats_tsv
         File dv_vcf_phasing_stats_gtf = use_this_phasing_stats_gtf
+
+        Array[File]? dv_regular_resources_usage_log = regular_resource_usage_log
+        Array[File]? dv_regular_resources_usage_visual = VisualizeDVRegularResoureUsage.plot_pdf
     }
 
     #################################
@@ -168,6 +171,14 @@ workflow Work {
 
             File dv_vcf = select_first([DeepV.VCF, DeepV_G.VCF])
             File dv_gvcf = select_first([DeepV.gVCF, DeepV_G.gVCF])
+            File regular_resource_usage_log = select_first([DeepV.resouce_monitor_log, DeepV_G.resouce_monitor_log])
+
+            call VisualizeResourceUsage.SimpleRscript as VisualizeDVRegularResoureUsage {
+                input:
+                resource_log = regular_resource_usage_log,
+                output_pdf_name = "~{prefix}.deepvariant.regular-resources-usage.~{triplet.left}.pdf",
+                plot_title = "DeepVariant, on input ~{prefix}, at locus ~{triplet.left}"
+            }
         }
 
         String dv_prefix = prefix + ".deepvariant"
