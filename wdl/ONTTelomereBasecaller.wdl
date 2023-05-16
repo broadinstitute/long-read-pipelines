@@ -40,14 +40,15 @@ task Bonito {
         num_cores=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 - 1 }')
         fast5_dir=$(dirname ~{fast5_files[0]})
 
-        source /bonito-0.3.0/venv3/bin/activate
+        source /bonito-0.3.5/venv3/bin/activate
         export LD_LIBRARY_PATH=/usr/local/cuda-10.2/compat:$LD_LIBRARY_PATH
         #export CUDA_VISIBLE_DEVICES=0
+        python -m torch.utils.collect_env
 
         echo $'import torch\nprint("Num GPUs detected: %d" % torch.cuda.device_count())' > tmp.py
         python3 tmp.py
 
-        bonito basecaller $model_dir $fast5_dir | gzip > recalled.fa.gz
+        bonito basecaller --recursive $model_dir $fast5_dir | gzip > recalled.fa.gz
     >>>
 
     output {
@@ -62,7 +63,7 @@ task Bonito {
         boot_disk_gb:       30,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/ymostovoy/lr-bonito:latest"
+        docker:             "quay.io/ymostovoy/lr-bonito:0.3.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
