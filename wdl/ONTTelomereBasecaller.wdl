@@ -63,7 +63,7 @@ task Bonito {
         boot_disk_gb:       30,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "quay.io/ymostovoy/lr-bonito:0.3.5"
+        docker:             "quay.io/ymostovoy/lr-bonito:0.3.5-devel"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
