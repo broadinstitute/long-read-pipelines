@@ -9,6 +9,8 @@ import "ShardWholeGenome.wdl"
 import "CallStructuralVariants.wdl"
 import "CallSmallVariants.wdl"
 
+import "Sniffles2.wdl"
+
 
 workflow CallVariants {
 
@@ -184,10 +186,34 @@ workflow CallVariants {
         }
     }
 
+    ######################################################################
+    # Experiment with Sniffles-2 phased SV calling
+    ######################################################################
+    # clean up the code here if it works
+    if (call_svs && call_small_variants) {
+        File m = select_first([SmallVarJob.haplotagged_bam])
+        File i = select_first([SmallVarJob.haplotagged_bai])
+        call Utils.InferSampleName { input: bam = m, bai = i }
+        call Sniffles2.SampleSV as SnifflesPhaseSV {
+            input:
+                bam = m, bai = i,
+                sample_id = InferSampleName.sample_name, prefix = prefix, tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                phase_sv = true
+        }
+        String svdir_copy = sub(select_first([gcs_out_dir]), "/$", "") + "/variants/sv"
+        call FF.FinalizeToFile as FinalizePhasedSniffles { input: outdir = svdir_copy, file = SnifflesPhaseSV.vcf }
+        call FF.FinalizeToFile as FinalizePhasedSnifflesTbi { input: outdir = svdir_copy, file = SnifflesPhaseSV.tbi }
+        call FF.FinalizeToFile as FinalizePhasedSnifflesSnf { input: outdir = svdir_copy, file = SnifflesPhaseSV.snf }
+    }
+
     output {
         File? sniffles_vcf = FinalizeSniffles.gcs_path
         File? sniffles_tbi = FinalizeSnifflesTbi.gcs_path
         File? sniffles_snf = FinalizeSnifflesSnf.gcs_path
+
+        File? sniffles_phased_vcf = FinalizePhasedSniffles.gcs_path
+        File? sniffles_phased_tbi = FinalizePhasedSnifflesTbi.gcs_path
+        File? sniffles_phased_snf = FinalizePhasedSnifflesSnf.gcs_path
 
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? pbsv_tbi = FinalizePBSVtbi.gcs_path

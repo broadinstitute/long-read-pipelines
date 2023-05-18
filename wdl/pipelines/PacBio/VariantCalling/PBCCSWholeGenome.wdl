@@ -139,6 +139,10 @@ workflow PBCCSWholeGenome {
         File? sniffles_tbi = CallVariants.sniffles_tbi
         File? sniffles_snf = CallVariants.sniffles_snf
 
+        File? sniffles_phased_vcf = CallVariants.sniffles_phased_vcf
+        File? sniffles_phased_tbi = CallVariants.sniffles_phased_tbi
+        File? sniffles_phased_snf = CallVariants.sniffles_phased_snf
+
         File? clair_vcf = CallVariants.clair_vcf
         File? clair_tbi = CallVariants.clair_tbi
         File? clair_gvcf = CallVariants.clair_gvcf
