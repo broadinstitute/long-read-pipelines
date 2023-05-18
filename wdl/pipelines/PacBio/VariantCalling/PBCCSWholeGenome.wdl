@@ -57,7 +57,7 @@ workflow PBCCSWholeGenome {
         Boolean call_small_variants = true
         Boolean run_clair3 = false
         Int dv_threads = 16
-        Int dv_memory = 64
+        Int dv_memory = 40
         Boolean use_gpu = false
 
         Array[String] gcp_zones = ['us-central1-a', 'us-central1-b', 'us-central1-c', 'us-central1-f']

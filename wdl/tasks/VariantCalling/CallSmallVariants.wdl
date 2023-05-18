@@ -49,8 +49,8 @@ workflow Work {
         # smallVar-specific args
         Boolean run_clair3
 
-        Int? dv_threads
-        Int? dv_memory
+        Int dv_threads = 16
+        Int dv_memory  = 40
         Boolean use_gpu = false
 
         # optimization
