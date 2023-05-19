@@ -9,11 +9,15 @@ import json
 # A script to collect which dockers are in use and which latest dockers are available
 # Usage: python3 docker_usage_sum.py
 # Output: dockers.in_use.tsv
-# Note: This script is not perfect. It will not be able to detect dockers that are
+# Note: - This script is not perfect. It will not be able to detect dockers that are
 #       imported from other wdl files. It will only detect dockers that are
 #       explicitly defined in the wdl file.
-#       The script assumes it is executed from the scripts/docker directory, and the
+#       - The script assumes it is executed from the scripts/docker directory, and the
 #       wdl files are in ../../wdl directory.
+#       - The script will retrieve the "latest" tag by date, so if an unofficial tag was
+#       created, after the official tag was created, the script will retrieve the
+#       unofficial tag as the latest tag. (It tries to avoid this by filtering out
+#       tags with no digits).
 
 def main():
     current_dir = os.path.abspath(os.path.dirname(__file__))
