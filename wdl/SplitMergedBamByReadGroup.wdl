@@ -47,6 +47,10 @@ workflow SplitMergedBamByReadGroup {
     call Utils.InferSampleName { input: bam = input_bam, bai = input_bai }
     call BU.ValidateSamFile { input: bam = input_bam }
     # this guarantees that there are no records without RG tag
+    call BU.VerifyPacBioBamHasAppropriatePrimroseRuns as PrimroseCheck { input: bam = input_bam }
+    if (0!= length(PrimroseCheck.readgroups_missing_primrose)) {
+        call Utils.StopWorkflow as MissingPrimrose { input: reason = "Input BAM file has some of its read groups missing primrose calls."}
+    }
 
     # split
     String output_prefix = basename(input_bam, ".bam")

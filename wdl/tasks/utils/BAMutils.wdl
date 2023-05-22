@@ -824,3 +824,43 @@ task DropAlignmentInfo {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task VerifyPacBioBamHasAppropriatePrimroseRuns {
+    meta {
+        desciption: "Verify that a PacBio's BAM has primrose run on all its read groups"
+    }
+    input {
+        String bam
+    }
+
+    output {
+        Array[String] readgroups_missing_primrose = read_lines("movies_without_primrose.txt")
+    }
+
+    command <<<
+        set -eux
+
+        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+        samtools view -H ~{bam} > header.txt
+
+        # get read groups' movies
+        grep "^@RG" header.txt | tr '\t' '\n' | grep "^PU:" | awk -F ':' '{print $2}' | sort > readgroup.movies.txt
+        cat readgroup.movies.txt
+
+        # get primrose PG lines
+        grep "^@PG" header.txt | grep -v "^@SQ" | grep "^@PG" | grep -F 'ID:primrose' | tr '\t' '\n' | grep '^CL:' > primrose.pg.lines.txt
+        cat primrose.pg.lines.txt | tr ' ' '\n' | grep "hifi_reads.bam$" | awk -F '.' '{print $1}' | sort > primrose.movies.txt
+
+        touch movies_without_primrose.txt
+        comm -23 readgroup.movies.txt primrose.movies.txt > movies_without_primrose.txt
+    >>>
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 10 HDD"
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.2"
+    }
+}
