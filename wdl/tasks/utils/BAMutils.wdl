@@ -54,6 +54,39 @@ task GetReadGroupInfo {
     }
 }
 
+task GetReadGroupLines {
+    meta {
+        desciption: "Get the @RG lines in a BAM's header. Will error if there's no read group defined in the header."
+    }
+
+    input {
+        String bam
+    }
+
+    output {
+        Array[String] read_group_ids = read_lines("rgids.txt")
+        Array[String] read_group_lines = read_lines("read_groups.txt")
+    }
+
+    command <<<
+        set -eux
+
+        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+        samtools view -H ~{bam} | grep "^@RG" > read_groups.txt
+
+        awk -F '\t' '{print $2}' read_groups.txt | awk -F ':' '{print $2}' > rgids.txt
+    >>>
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 10 HDD"
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.2"
+    }
+}
+
 task SplitByRG {
     meta {
         description: "Split a BAM file that was aggregated, for the same sample, into pieces by read group."
