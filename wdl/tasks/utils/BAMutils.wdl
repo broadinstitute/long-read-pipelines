@@ -25,7 +25,7 @@ task GetReadGroupInfo {
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         samtools view -H ~{uBAM} | grep "^@RG" > one_rg_per_line.txt
         num_rgs=$(wc -l one_rg_per_line.txt | awk '{pritn $1}')
-        if [[ num_rgs -gt 1 ]]; then exit 1; fi
+        if [[ ${num_rgs} -gt 1 ]]; then exit 1; fi
 
         cat one_rg_per_line.txt | tr '\t' '\n' > rh_header.txt
 
