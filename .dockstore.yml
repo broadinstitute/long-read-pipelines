@@ -99,5 +99,3 @@ workflows:
 - name: HifiasmLocalAssembly
   subclass:wdl 
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/HifiasmLocalAssembly.wdl
-
-
