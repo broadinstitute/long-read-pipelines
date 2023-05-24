@@ -96,3 +96,8 @@ workflows:
 - name: CleanupIntermediate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
+- name: HifiasmLocalAssembly
+  subclass:wdl 
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/HifiasmLocalAssembly.wdl
+
+
