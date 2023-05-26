@@ -231,7 +231,9 @@ task MergeVCFs {
         rm -f list.txt; touch list.txt
         rm -f counts.txt; touch counts.txt
         for VCF_FILE in ~{sep=' ' vcfs}; do
-            bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > ${VCF_FILE}_pass.vcf
+            bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > tmp.vcf
+            java -cp /sv-merging PAV2SVs tmp.vcf 45 ${VCF_FILE}_pass.vcf
+            rm -f tmp.vcf
             N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts.txt
