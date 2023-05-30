@@ -231,7 +231,7 @@ task MergeVCFs {
         rm -f list.txt; touch list.txt
         rm -f counts.txt; touch counts.txt
         for VCF_FILE in ~{sep=' ' vcfs}; do
-            bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\"" --output-type v ${VCF_FILE} > tmp.vcf
+            bcftools filter --regions chr21,chr22 --threads ${N_THREADS} --include "FILTER=\"PASS\" || FILTER=\".\"" --output-type v ${VCF_FILE} > tmp.vcf
             java -cp /sv-merging PAV2SVs tmp.vcf 45 ${VCF_FILE}_pass.vcf
             rm -f tmp.vcf
             N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
@@ -342,11 +342,11 @@ task MergeVCFs {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          32,
+        cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        0,
         docker:             "fcunial/sv-merging"
     }
