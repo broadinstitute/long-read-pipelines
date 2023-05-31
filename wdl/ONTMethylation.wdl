@@ -77,6 +77,7 @@ workflow ONTMethylation {
     call FF.FinalizeToFile as FinalizeBasecalls { input: outdir = outdir, file = MergeFastqGzs.merged_fastq_gz, name = "~{participant_name}.merged_fastq.gz" }
 
     call FF.FinalizeToFile as FinalizePerReadTxt { input: outdir = outdir, file = MergeModifiedBaseCallDBs.per_read_modified_base_calls_txt, name = "~{participant_name}.per_read_modified_base_calls_txt" }
+    call FF.FinalizeToFile as FinalizePerReadDb { input: outdir = outdir, file = MergeModifiedBaseCallDBs.per_read_modified_base_calls_db, name = "~{participant_name}.per_read_modified_base_calls_db" }
 
     output {
         File mod_mapped_bam = FinalizeModMappedBam.gcs_path
@@ -86,6 +87,7 @@ workflow ONTMethylation {
 
         File basecalls = FinalizeBasecalls.gcs_path
         File perReadModsTxt = FinalizePerReadTxt.gcs_path
+        File perReadModsDb = FinalizePerReadDb.gcs_path
     }
 }
 
