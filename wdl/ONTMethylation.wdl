@@ -20,9 +20,7 @@ workflow ONTMethylation {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTMethylation/~{prefix}"
 
-    # removing for doing entire genome
-    # String fast5_dir = sub(gcs_fast5_dir,"/$", "") + "/" + participant_name
-    String fast5_dir = sub(gcs_fast5_dir,"/$", "") + "/"
+    String fast5_dir = sub(gcs_fast5_dir,"/$", "") + "/" + participant_name
 
     call Utils.ListFilesOfType { input: gcs_dir = fast5_dir, suffixes = [ ".fast5" ] }
     call Utils.ChunkManifest { input: manifest = ListFilesOfType.manifest, manifest_lines_per_chunk = 30 }
