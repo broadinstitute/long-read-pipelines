@@ -17,6 +17,7 @@ workflow LRMergeSVVCFs {
         Array[File] tbis
         File bam_addresses
         File ref_map_file
+        File regions_bed_gz
 
         String prefix
         String caller
@@ -58,6 +59,7 @@ workflow LRMergeSVVCFs {
         input: 
             vcfs = vcfs, 
             tbis = tbis, 
+            regions_bed_gz = regions_bed_gz,
             reference_fa = ref_map['fasta'], 
             use_bcftoolsmerge_only = use_bcftoolsmerge_only,
             use_truvari = use_truvari,
