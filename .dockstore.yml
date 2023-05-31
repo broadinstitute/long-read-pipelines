@@ -80,43 +80,83 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/VerifyFingerprint.wdl
   testParameterFiles:
-- name: DownloadFromHudsonAlpha
+- name: CallTranslocator
   subclass: wdl
-  primaryDescriptorPath: /wdl/DownloadFromHudsonAlpha.wdl
+  primaryDescriptorPath: /wdl/CallTranslocator.wdl
+  testParameterFiles:
+- name: LocalAssembly
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LocalAssembly.wdl
+  testParameterFiles:
+- name: LocalJointAssembly
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LocalJointAssembly.wdl
+  testParameterFiles:
+- name: MergedAssemblyCanu
+  subclass: wdl
+  primaryDescriptorPath: /wdl/MergedAssemblyCanu.wdl
+  testParameterFiles:
+- name: BionanoAssemble
+  subclass: wdl
+  primaryDescriptorPath: /wdl/BionanoAssemble.wdl
+  testParameterFiles:
+- name: BionanoAlign
+  subclass: wdl
+  primaryDescriptorPath: /wdl/BionanoAlign.wdl
+  testParameterFiles:
+- name: Winnowmap
+  subclass: wdl
+  primaryDescriptorPath: /wdl/Winnowmap.wdl
   testParameterFiles:
 - name: PBAssembleWithHifiasm
   subclass: wdl
   primaryDescriptorPath: /wdl/PBAssembleWithHifiasm.wdl
   testParameterFiles:
+- name: LocalAssemblyHifiasmTrio
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LocalAssemblyHifiasmTrio.wdl
+  testParameterFiles:
+- name: LocalAssemblyHifiasm
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LocalAssemblyHifiasm.wdl
+  testParameterFiles:
+- name: LocalFast5Subset
+  subclass: wdl
+  primaryDescriptorPath: /wdl/LocalFast5Subset.wdl
+  testParameterFiles:
 - name: ONTMethylation
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTMethylation.wdl
   testParameterFiles:
-- name: ONTPfHrp2Hrp3Status
+- name: Modbam2bed
   subclass: wdl
-  primaryDescriptorPath: /wdl/ONTPfHrp2Hrp3Status.wdl
+  primaryDescriptorPath: /wdl/Modbam2bed.wdl
   testParameterFiles:
-- name: ONTPfTypeDrugResistanceMarkers
+- name: CallSniffles
   subclass: wdl
-  primaryDescriptorPath: /wdl/ONTPfTypeDrugResistanceMarkers.wdl
+  primaryDescriptorPath: /wdl/CallSniffles.wdl
   testParameterFiles:
-- name: PBMASIsoSeqQuantify
+- name: ONTTelomereBasecaller
   subclass: wdl
-  primaryDescriptorPath: /wdl/PBMASIsoSeqQuantify.wdl
+  primaryDescriptorPath: /wdl/ONTTelomereBasecaller.wdl
   testParameterFiles:
-- name: PBMASIsoSeqDemultiplex
+- name: Minimap
   subclass: wdl
-  primaryDescriptorPath: /wdl/PBMASIsoSeqDemultiplex.wdl
+  primaryDescriptorPath: /wdl/Minimap.wdl
   testParameterFiles:
-- name: LRJointCallGVCFs
+- name: Clipper
   subclass: wdl
-  primaryDescriptorPath: /wdl/LRJointCallGVCFs.wdl
+  primaryDescriptorPath: /wdl/Clipper.wdl
   testParameterFiles:
-- name: ConvertToHailMT
+- name: TTMarsEvaluateSVs
   subclass: wdl
-  primaryDescriptorPath: /wdl/ConvertToHailMT.wdl
+  primaryDescriptorPath: /wdl/TTMarsEvaluateSVs.wdl
   testParameterFiles:
-- name: LRConvertBCF
+- name: LRMergeSVVCFs
   subclass: wdl
-  primaryDescriptorPath: /wdl/LRConvertBCF.wdl
+  primaryDescriptorPath: /wdl/LRMergeSVVCFs.wdl
   testParameterFiles:
+ - name: ONTMergeMethylation
+   subclass: wdl
+   primaryDescriptorPath: /wdl/ONTMergeMethylation.wdl
+   testParameterFiles:
