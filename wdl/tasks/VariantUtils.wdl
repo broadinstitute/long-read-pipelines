@@ -291,6 +291,7 @@ task MergeVCFs {
         for CHUNK in $( find . -maxdepth 1 -name 'chunk-*' ); do
             formatVCF ${CHUNK} ${CHUNK#chunk-} &
         done
+        wait
         cat list-* > list.txt; cat counts-* > counts.txt
         
         # Clustering all the formatted VCFs
