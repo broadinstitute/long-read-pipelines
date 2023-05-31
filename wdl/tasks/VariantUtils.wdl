@@ -289,7 +289,7 @@ task MergeVCFs {
         rm -f list.txt
         rm -f counts.txt; touch counts.txt
         for CHUNK in $( find . -maxdepth 1 -name 'chunk-*' ); do
-            formatVCF ${CHUNK} ${CHUNK#chunk-} &
+            formatVCF ${CHUNK} ${CHUNK#*chunk-} &
         done
         wait
         cat list-* > list.txt; cat counts-* > counts.txt
