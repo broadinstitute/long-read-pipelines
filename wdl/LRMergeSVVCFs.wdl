@@ -61,6 +61,7 @@ workflow LRMergeSVVCFs {
             tbis = tbis, 
             regions_bed_gz = regions_bed_gz,
             reference_fa = ref_map['fasta'], 
+            reference_fai = ref_map['fai'], 
             use_bcftoolsmerge_only = use_bcftoolsmerge_only,
             use_truvari = use_truvari,
             truvari_keep = truvari_keep,

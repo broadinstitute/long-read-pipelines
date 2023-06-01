@@ -210,6 +210,7 @@ task MergeVCFs {
         Array[File] tbis
         File regions_bed_gz
         File reference_fa
+        File reference_fai
         Int use_bcftoolsmerge_only
         Int use_truvari
         String truvari_keep
@@ -230,6 +231,15 @@ task MergeVCFs {
         N_CORES_PER_SOCKET="$(lscpu | grep '^Core(s) per socket:' | awk '{print $NF}')"
         N_THREADS=$(( ${N_SOCKETS} * ${N_CORES_PER_SOCKET} ))
         TIME_COMMAND="/usr/bin/time --verbose"
+        N_SLACK_BPS="50"  # Arbitrary
+        
+        
+        # Adding slack to the BED file.
+        # Remark: $bedtools intersect$ works even when there is no END and
+        # SVLEN is negative (sniffles2 outputs negative SVLEN for DELs). But
+        # there seems to be an off-by-one error in how it handles SV positions,
+        # so adding slack is useful.
+        ${TIME_COMMAND} /bedtools slop -b ${N_SLACK_BPS} -i ~{regions_bed_gz} -g ~{reference_fai} > regions.bed
         
         
         function formatVCF() {
@@ -237,15 +247,16 @@ task MergeVCFs {
             local THREAD_ID=$2
             
             while read VCF_FILE; do
-                bcftools filter --regions-file ~{regions_bed_gz} --regions-overlap variant --include "FILTER=\"PASS\" || FILTER=\".\"" --output-type v ${VCF_FILE} > ${VCF_FILE}_pass.vcf
-                N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
-                N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}_pass.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+                bcftools filter --include "FILTER=\"PASS\" || FILTER=\".\"" --output-type v ${VCF_FILE} > ${VCF_FILE}_pass.vcf
+                /bedtools intersect -u -a ${VCF_FILE}_pass.vcf -b regions.bed > ${VCF_FILE}_filtered.vcf
+                N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_filtered.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
+                N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}_filtered.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
                 echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts-${THREAD_ID}.txt
-                python3 /sv-merging/preprocess_vcf.py ${VCF_FILE}_pass.vcf ~{reference_fa} > ${VCF_FILE}_pass_alts_fixed.vcf
-                rm -f ${VCF_FILE}_pass.vcf
+                python3 /sv-merging/preprocess_vcf.py ${VCF_FILE}_filtered.vcf ~{reference_fa} > ${VCF_FILE}_filtered_alts_fixed.vcf
+                rm -f ${VCF_FILE}_filtered.vcf
                 if [ ~{use_bcftoolsmerge_only} -eq 1 -o ~{use_truvari} -eq 1 ]; then
-                    bcftools view -h ${VCF_FILE}_pass_alts_fixed.vcf > ${VCF_FILE}_distinct.vcf
-                    bcftools view -H ${VCF_FILE}_pass_alts_fixed.vcf | awk '{ \
+                    bcftools view -h ${VCF_FILE}_filtered_alts_fixed.vcf > ${VCF_FILE}_distinct.vcf
+                    bcftools view -H ${VCF_FILE}_filtered_alts_fixed.vcf | awk '{ \
                         tag="artificial"; \
                         if ($5=="<DEL>" || $5=="<DUP>" || $5=="<INV>" || $5=="<INS>") { \
                             svtype=substr($5,2,3); \
@@ -267,9 +278,9 @@ task MergeVCFs {
                         for (i=2; i<=NF; i++) printf("\t%s",$i); \
                         printf("\n"); \
                     }' >> ${VCF_FILE}_distinct.vcf
-                    rm -f ${VCF_FILE}_pass_alts_fixed.vcf
+                    rm -f ${VCF_FILE}_filtered_alts_fixed.vcf
                 else
-                    mv ${VCF_FILE}_pass_alts_fixed.vcf ${VCF_FILE}_distinct.vcf
+                    mv ${VCF_FILE}_filtered_alts_fixed.vcf ${VCF_FILE}_distinct.vcf
                 fi
                 bgzip --threads ${N_THREADS} ${VCF_FILE}_distinct.vcf
                 tabix ${VCF_FILE}_distinct.vcf.gz
