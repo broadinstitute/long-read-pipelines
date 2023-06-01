@@ -223,6 +223,7 @@ task MergeVCFs {
     }
 
     Int disk_size = 8*ceil(size(vcfs, 'GB'))
+    String docker_dir = "/sv-merging"
 
     command <<<
         set -euxo pipefail
@@ -239,7 +240,7 @@ task MergeVCFs {
         # SVLEN is negative (sniffles2 outputs negative SVLEN for DELs). But
         # there seems to be an off-by-one error in how it handles SV positions,
         # so adding slack is useful.
-        ${TIME_COMMAND} /bedtools slop -b ${N_SLACK_BPS} -i ~{regions_bed_gz} -g ~{reference_fai} > regions.bed
+        ${TIME_COMMAND} ~{docker_dir}/bedtools slop -b ${N_SLACK_BPS} -i ~{regions_bed_gz} -g ~{reference_fai} > regions.bed
         
         
         function formatVCF() {
@@ -248,7 +249,7 @@ task MergeVCFs {
             
             while read VCF_FILE; do
                 bcftools filter --include "FILTER=\"PASS\" || FILTER=\".\"" --output-type v ${VCF_FILE} > ${VCF_FILE}_pass.vcf
-                /bedtools intersect -u -a ${VCF_FILE}_pass.vcf -b regions.bed > ${VCF_FILE}_filtered.vcf
+                ~{docker_dir}/bedtools intersect -u -a ${VCF_FILE}_pass.vcf -b regions.bed > ${VCF_FILE}_filtered.vcf
                 N_INS=$(grep "SVTYPE=INS" ${VCF_FILE}_filtered.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
                 N_DEL=$(grep "SVTYPE=DEL" ${VCF_FILE}_filtered.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
                 echo "${VCF_FILE},${N_INS},${N_DEL}" >> counts-${THREAD_ID}.txt
