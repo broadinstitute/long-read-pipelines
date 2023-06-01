@@ -375,9 +375,9 @@ task MergeVCFs {
     >>>
 
     output {
-        File merged_vcf = "~{prefix}.vcf.gz"
-        File merged_tbi = "~{prefix}.vcf.gz.tbi"
-        File counts = "counts.txt"
+        File merged_vcf = work_dir + "/" + prefix + ".vcf.gz"
+        File merged_tbi = work_dir + "/" + prefix + ".vcf.gz.tbi"
+        File counts = work_dir + "/counts.txt"
     }
 
     #########################
