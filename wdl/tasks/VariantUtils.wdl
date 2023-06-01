@@ -240,9 +240,7 @@ task MergeVCFs {
         
         # Adding slack to the BED file.
         # Remark: $bedtools intersect$ works even when there is no END and
-        # SVLEN is negative (sniffles2 outputs negative SVLEN for DELs). But
-        # there seems to be an off-by-one error in how it handles SV positions,
-        # so adding slack is useful.
+        # SVLEN is negative (sniffles2 outputs negative SVLEN for DELs).
         ${TIME_COMMAND} ~{docker_dir}/bedtools slop -b ${N_SLACK_BPS} -i ~{regions_bed_gz} -g ~{reference_fai} > ~{work_dir}/regions.bed
         
         
@@ -341,7 +339,9 @@ task MergeVCFs {
             N_INS=$(grep "SVTYPE=INS" mergedPrime.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             N_DEL=$(grep "SVTYPE=DEL" mergedPrime.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "bcftools_merge,${N_INS},${N_DEL}" >> counts.txt
-            ${TIME_COMMAND} truvari collapse --threads ${N_THREADS} --input mergedPrime.vcf --output ~{prefix}.vcf --collapsed-output collapsed.vcf --reference ~{reference_fa} --keep ~{truvari_keep} --passonly
+            bgzip -@ ${N_THREADS} mergedPrime.vcf
+            tabix mergedPrime.vcf.gz
+            ${TIME_COMMAND} truvari collapse --threads ${N_THREADS} --input mergedPrime.vcf.gz --output ~{prefix}.vcf --collapsed-output collapsed.vcf --reference ~{reference_fa} --keep ~{truvari_keep} --passonly
             N_INS=$(grep "SVTYPE=INS" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             N_DEL=$(grep "SVTYPE=DEL" ~{prefix}.vcf | awk '{ if ($7=="PASS") print $0; }' | wc -l)
             echo "truvari_collapse,${N_INS},${N_DEL}" >> counts.txt
