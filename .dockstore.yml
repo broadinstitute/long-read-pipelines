@@ -160,3 +160,7 @@ workflows:
    subclass: wdl
    primaryDescriptorPath: /wdl/ONTMergeMethylation.wdl
    testParameterFiles:
+ - name: ONTDorado
+   subclass: wdl
+   primaryDescriptorPath: /wdl/ONTDorado.wdl
+   testParameterFiles:
