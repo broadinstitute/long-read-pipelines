@@ -99,3 +99,7 @@ workflows:
 - name: HifiasmLocalAssembly
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/HifiasmLocalAssembly.wdl
+- name: MitoHifiLocalAssembly
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/MitoHifiLocalAssembly.wdl
+
