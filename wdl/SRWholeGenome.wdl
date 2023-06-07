@@ -254,6 +254,14 @@ workflow SRWholeGenome {
 
         call VARUTIL.RenameSingleSampleVcf as RenameSingleSampleVcf {
             input:
+                vcf = ApplyVqsr.recalibrated_vcf,
+                vcf_index = ApplyVqsr.recalibrated_vcf_index,
+                prefix = participant_name + ".vqsr",
+                new_sample_name = participant_name
+        }
+
+        call VARUTIL.RenameSingleSampleVcf as RenameSingleSampleVcfFiltered {
+            input:
                 vcf = RemoveFilteredVariants.vcf_out,
                 vcf_index = RemoveFilteredVariants.vcf_out_index,
                 prefix = participant_name + ".vqsr_filtered",
@@ -283,8 +291,10 @@ workflow SRWholeGenome {
         call FF.FinalizeToFile as FinalizeSnpRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.model_report }
 
         # Finalize the reclibrated / filtered variants:
-        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf }
-        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf }
+        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCVqsrFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as FinalizeHCVqsrFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf_index }
     }
 
     output {
@@ -323,8 +333,10 @@ workflow SRWholeGenome {
         File? hc_baiout   = FinalizeHCBaiOut.gcs_path
         File? hc_raw_vcf  = FinalizeHCVcf.gcs_path
         File? hc_raw_tbi  = FinalizeHCTbi.gcs_path
-        File? hc_vqsr_vcf = FinalizeHCVqsrVcf.gcs_path
-        File? hc_vqsr_tbi = FinalizeHCVqsrTbi.gcs_path
+        File? hc_vqsr_vcf = FinalizeHCVqsrFilteredVcf.gcs_path
+        File? hc_vqsr_tbi = FinalizeHCVqsrFilteredTbi.gcs_path
+        File? hc_vqsr_raw_vcf = FinalizeHCVqsrVcf.gcs_path
+        File? hc_vqsr_raw_tbi = FinalizeHCVqsrTbi.gcs_path
 
         File? vqsr_indel_recal_file         = FinalizeIndelRecalFile.gcs_path
         File? vqsr_indel_recal_file_index   = FinalizeIndelRecalIndex.gcs_path
