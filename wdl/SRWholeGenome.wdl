@@ -291,10 +291,10 @@ workflow SRWholeGenome {
         call FF.FinalizeToFile as FinalizeSnpRecalModelReport { input: outdir = outdir, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.model_report }
 
         # Finalize the reclibrated / filtered variants:
-        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf }
-        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, keyfile = keyfile, file = ApplyVqsr.recalibrated_vcf_index }
-        call FF.FinalizeToFile as FinalizeHCVqsrFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf }
-        call FF.FinalizeToFile as FinalizeHCVqsrFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCVqsrVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as FinalizeHCVqsrTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCVqsrFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcfFiltered.new_sample_name_vcf }
+        call FF.FinalizeToFile as FinalizeHCVqsrFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcfFiltered.new_sample_name_vcf_index }
     }
 
     output {
