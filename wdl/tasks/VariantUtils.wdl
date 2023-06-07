@@ -1276,10 +1276,14 @@ task RenameSingleSampleVcf {
 
         String new_sample_name
 
+        Boolean is_gvcf = false
+
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 1 + 4*ceil(size([vcf, vcf_index], "GB"))
+
+    String suffix = if is_gvcf then "g.vcf.gz" else "vcf.gz"
 
     command <<<
         set -euo pipefail
@@ -1293,12 +1297,12 @@ task RenameSingleSampleVcf {
             RenameSampleInVcf \
             --NEW_SAMPLE_NAME ~{new_sample_name} \
             -I ~{vcf} \
-            -O ~{prefix}.vcf.gz
+            -O ~{prefix}.~{suffix}
 
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             IndexFeatureFile \
-            -I ~{prefix}.vcf.gz \
-            -O ~{prefix}.vcf.gz.tbi
+            -I ~{prefix}.~{suffix} \
+            -O ~{prefix}.~{suffix}.tbi
     >>>
 
     #########################
@@ -1323,7 +1327,7 @@ task RenameSingleSampleVcf {
     }
 
     output {
-        File new_sample_name_vcf = "~{prefix}.vcf.gz"
-        File new_sample_name_vcf_index = "~{prefix}.vcf.gz.tbi"
+        File new_sample_name_vcf = "~{prefix}.~{suffix}"
+        File new_sample_name_vcf_index = "~{prefix}.~{suffix}.tbi"
     }
 }

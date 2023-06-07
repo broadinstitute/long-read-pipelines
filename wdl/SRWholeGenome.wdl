@@ -240,7 +240,7 @@ workflow SRWholeGenome {
             input:
                 vcf = CallVariantsWithHaplotypeCaller.output_vcf,
                 vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
-                prefix = participant_name + ".haplotype_caller",
+                prefix = participant_name + ".haplotype_caller.renamed",
                 new_sample_name = participant_name
         }
 
@@ -248,7 +248,8 @@ workflow SRWholeGenome {
             input:
                 vcf = CallVariantsWithHaplotypeCaller.output_gvcf,
                 vcf_index = CallVariantsWithHaplotypeCaller.output_gvcf_index,
-                prefix = participant_name + ".haplotype_caller",
+                prefix = participant_name + ".haplotype_caller.renamed",
+                is_gvcf = true,
                 new_sample_name = participant_name
         }
 
