@@ -227,6 +227,13 @@ workflow SRWholeGenome {
                 use_allele_specific_annotations = true,
         }
 
+        call VARUTIL.SelectVariants as RemoveFilteredVariants {
+            input:
+                vcf = ApplyVqsr.recalibrated_vcf,
+                vcf_index = ApplyVqsr.recalibrated_vcf_index,
+                prefix = participant_name + ".vqsr_filtered"
+        }
+
         ## Rename our samples so we can use them later:
         ## TODO: Move this to the top!
         call VARUTIL.RenameSingleSampleVcf as RenameRawHcVcf {
@@ -247,8 +254,8 @@ workflow SRWholeGenome {
 
         call VARUTIL.RenameSingleSampleVcf as RenameSingleSampleVcf {
             input:
-                vcf = ApplyVqsr.recalibrated_vcf,
-                vcf_index = ApplyVqsr.recalibrated_vcf_index,
+                vcf = RemoveFilteredVariants.vcf_out,
+                vcf_index = RemoveFilteredVariants.vcf_out_index,
                 prefix = participant_name + ".vqsr_filtered",
                 new_sample_name = participant_name
         }

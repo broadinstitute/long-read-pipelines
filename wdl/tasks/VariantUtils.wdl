@@ -1201,6 +1201,71 @@ task ApplyVqsr {
     }
 }
 
+task SelectVariants {
+
+    input {
+        File vcf
+        File vcf_index
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + ceil(size([vcf, vcf_index], "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
+        # Get amount of memory to use:
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-2000
+        let mem_max=${mem_available}-500
+
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            SelectVariants \
+                --exclude-filtered \
+                -V ~{vcf} \
+                -O ~{prefix}.vcf.gz
+
+        kill $monitoring_pid
+    >>>
+
+    output {
+        File vcf_out = "~{prefix}.vcf.gz"
+        File vcf_out_index = "~{prefix}.vcf.gz.tbi"
+
+        File monitoring_log = "resources.log"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             7,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task RenameSingleSampleVcf {
 
     input {
