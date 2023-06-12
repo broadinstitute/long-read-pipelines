@@ -15,11 +15,13 @@ workflow MitoHifiLocalAssembly{
         Purpose:"Mitochondrial genome Local assembly using MitoHifi"
     }
     output{
+        Array[File] Final=MitoHifiAsm.a_files
         File MT_fa=MitoHifiAsm.final_fa
-        File MT_gb=MitoHifiAsm.final_gb
-        File MT_annotation_fig=MitoHifiAsm.final_annotation_fig
-        File MT_coverage_fig=MitoHifiAsm.final_coverage_fig
-        File MT_stats=MitoHifiAsm.final_stats 
+        File MT_stats=MitoHifiAsm.final_stats
+        # File MT_gb=MitoHifiAsm.final_gb
+        # File MT_annotation_fig=MitoHifiAsm.final_annotation_fig
+        # File MT_coverage_fig=MitoHifiAsm.final_coverage_fig
+        # File MT_stats=MitoHifiAsm.final_stats 
     }
 }
 task extract_reads{
@@ -59,31 +61,32 @@ task MitoHifiAsm{
         Int num_cpus
     }
 
-    Int disk_size = 50 + ceil(2 * size(reads, "GiB"))
+    #Int disk_size = 50 + ceil(2 * size(reads, "GiB"))
 
     command <<<
-
-        set -euxo pipefail
-
+        #set -euxo pipefail
         mitohifi.py -r ~{reads} -f ~{reffa} -g ~{refgb} -t ~{num_cpus} -o 1 
+        ls -l
     >>>
 
     output{
+        Array[File] a_files = glob("*")
         File final_fa="final_mitogenome.fasta"
-        File final_gb="final_mitogenome.gb"
-        File final_annotation_fig="final_mitogenome.annotation.png"
-        File final_coverage_fig="final_mitogenome.coverage.png"
         File final_stats="contigs_stats.tsv"
+        # File final_gb="final_mitogenome.gb"
+        # File final_annotation_fig="final_mitogenome.annotation.png"
+        # File final_coverage_fig="final_mitogenome.coverage.png"
+        
 
     }
     runtime {
         cpu: num_cpus
-        memory: "10 GiB"
-        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
-        bootDiskSizeGb: 10
+        memory: "64 GiB"
+        disks: "local-disk " + "256" + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 64
         preemptible: 2
         maxRetries: 1
-        #docker: "ghcr.io/marcelauliano/mitohifi:master"
-        docker:"biocontainers/mitohifi:3.0.0_cv1"
+        docker: "ghcr.io/marcelauliano/mitohifi:master"
+        #docker:"biocontainers/mitohifi:3.0.0_cv1"
     }    
 }
