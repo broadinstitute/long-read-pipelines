@@ -18,6 +18,7 @@ workflow MitoHifiLocalAssembly{
         Array[File] Final=MitoHifiAsm.a_files
         File MT_fa=MitoHifiAsm.final_fa
         File MT_stats=MitoHifiAsm.final_stats
+        File MT_mapping = MitoHifiAsm.mapping_file
         # File MT_gb=MitoHifiAsm.final_gb
         # File MT_annotation_fig=MitoHifiAsm.final_annotation_fig
         # File MT_coverage_fig=MitoHifiAsm.final_coverage_fig
@@ -73,6 +74,7 @@ task MitoHifiAsm{
         Array[File] a_files = glob("*")
         File final_fa="final_mitogenome.fasta"
         File final_stats="contigs_stats.tsv"
+        File mapping_file = "coverage_mapping/HiFi-vs-final_mitogenome.sorted.bam"
         # File final_gb="final_mitogenome.gb"
         # File final_annotation_fig="final_mitogenome.annotation.png"
         # File final_coverage_fig="final_mitogenome.coverage.png"
