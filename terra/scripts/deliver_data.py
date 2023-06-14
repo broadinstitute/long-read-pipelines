@@ -68,7 +68,9 @@ def main():
         b = fapi.update_workspace_acl(ns, rw, owners)
 
         tbl_rw = tbl_filtered[tbl_filtered['workspace'] == rw]
-        deliver_inputs = len(tbl_rw.loc[tbl_rw['workspace_deliver_inputs'] == 'True']) > 0
+        deliver_inputs = len(tbl_rw.loc[tbl_rw['workspace_deliver_inputs'].isin(['True', 'true'])]) > 0
+
+        #print(deliver_inputs)
 
         qa = fapi.get_workspace(ns, rw)
         if qa.status_code == 200:
