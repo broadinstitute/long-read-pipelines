@@ -52,16 +52,15 @@ def load_table(namespace, workspace, table_name, store_membership=False):
 
 def load_new_sample_table(buckets, project):
     ts = load_xmls(buckets, project)
+
     tbl_header = ["entity:sample_id", "flowcell_id", "instrument", "movie_name", "well_name", "created_at", "bio_sample",
                   "well_sample", "insert_size", "is_ccs", "is_isoseq", "is_corrected", "description", "application",
-                  "experiment_type", "num_records", "total_length", "ccs_report", "ccs_zmws_input",
-                  "ccs_zmws_pass_filters", "ccs_zmws_fail_filters", "ccs_zmws_shortcut_filters",
-                  "ccs_zmws_pass_filters_pct", "ccs_zmws_fail_filters_pct", "ccs_zmws_shortcut_filters_pct", "ref_map",
+                  "experiment_type", "num_records", "total_length", "ccs_report",
                   "gcs_input_dir", "subreads_bam", "subreads_pbi", "ccs_bam", "ccs_pbi", "hifi_bam", "hifi_pbi",
                   "input_bam", "input_pbi"]
     tbl_rows = []
     for e in tqdm(ts):
-        r = load_ccs_report(project, e['Files']['ccs_reports.txt'], e)
+        #r = load_ccs_report(project, e['Files']['ccs_reports.txt'], e)
 
         application = e['WellSample'][0]['Application'] if 'Application' in e['WellSample'][0] else "longReads"
         experiment_type = "CLR"
@@ -87,12 +86,6 @@ def load_new_sample_table(buckets, project):
         #if correctable:
         #    e['WellSample'][0]['IsCCS'] = 'true'
 
-        if 'm64451e_230109_173107' in e['Files']['ccs_reports.txt']:
-            print("Hello!")
-
-        print(e['Files']['ccs_reports.txt'])
-        print(r)
-
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
 
@@ -117,18 +110,6 @@ def load_new_sample_table(buckets, project):
             e['DataSetMetadata'][0]['TotalLength'],
 
             e['Files']['ccs_reports.txt'],
-            r['ZMWs input'],
-            r['ZMWs pass filters'],
-            r['ZMWs fail filters'],
-            r['ZMWs shortcut filters'],
-            "{:.2f}".format(100.0 * r['ZMWs pass filters'] / (
-                    r['ZMWs pass filters'] + r['ZMWs fail filters'] + r['ZMWs shortcut filters'] + 1)),
-            "{:.2f}".format(100.0 * r['ZMWs fail filters'] / (
-                    r['ZMWs pass filters'] + r['ZMWs fail filters'] + r['ZMWs shortcut filters'] + 1)),
-            "{:.2f}".format(100.0 * r['ZMWs shortcut filters'] / (
-                    r['ZMWs pass filters'] + r['ZMWs fail filters'] + r['ZMWs shortcut filters'] + 1)),
-
-            'gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt',
 
             e['Files']['input_dir'],
             e['Files']['subreads.bam'],
@@ -169,6 +150,8 @@ def merge_tables(tbl_old, tbl_new):
             hs.append(h)
 
     joined_tbl = pd.DataFrame(hs)
+
+    print(joined_tbl)
 
     if '_merge' in joined_tbl:
         del joined_tbl['_merge']
@@ -394,10 +377,10 @@ def is_correctable(subreads_bam):
 
 def update_sample_table(namespace, workspace, buckets, project, tbl_old):
     tbl_new = load_new_sample_table(buckets, project)
-    joined_tbl = merge_tables(tbl_old, tbl_new)
-    joined_tbl = joined_tbl.replace('^nan$', '', regex=True)
+    #joined_tbl = merge_tables(tbl_old, tbl_new)
+    #joined_tbl = joined_tbl.replace('^nan$', '', regex=True)
 
-    return joined_tbl
+    return tbl_new # joined_tbl
 
 
 def update_sample_set_table(namespace, workspace, ss_old, membership, joined_tbl):
@@ -438,20 +421,8 @@ def upload_table(namespace, workspace, table, label):
         print(a.json())
 
 
-def upload_tables(namespace, workspace, s, ss, nms):
-    for ssname in list(nms[nms['_merge'] == 'right_only']['membership:sample_set_id']):
-        a = fapi.delete_sample_set(namespace, workspace, ssname)
-
-        if a.status_code == 204:
-            print(f'Removed out-of-date sample set {ssname} successfully.')
-        else:
-            print(a.json())
-
-    lms = nms[nms['_merge'] == 'left_only'][['membership:sample_set_id', 'sample']]
-
+def upload_tables(namespace, workspace, s):
     upload_table(namespace, workspace, s, 'sample')
-    upload_table(namespace, workspace, ss, 'sample_set')
-    upload_table(namespace, workspace, lms, 'sample_set membership')
 
 
 def main():
@@ -464,14 +435,14 @@ def main():
     args = parser.parse_args()
 
     tbl_old, _ = load_table(args.namespace, args.workspace, 'sample')
-    ss_old, membership = load_table(args.namespace, args.workspace, 'sample_set', store_membership=True)
 
     s = update_sample_table(args.namespace, args.workspace, args.buckets, args.project, tbl_old)
-    ss, nms = update_sample_set_table(args.namespace, args.workspace, ss_old, membership, s)
+
+    print(s)
 
     if args.run:
         fapi.__SESSION = None
-        upload_tables(args.namespace, args.workspace, s, ss, nms)
+        upload_tables(args.namespace, args.workspace, s)
 
 
 if __name__ == "__main__":
