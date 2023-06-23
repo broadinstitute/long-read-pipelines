@@ -102,4 +102,6 @@ workflows:
 - name: MitoHifiLocalAssembly
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/MitoHifiLocalAssembly.wdl
-
+- name: SvimAsmAssemblyVariants
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/SvimAsmAssemblyVariants.wdl
