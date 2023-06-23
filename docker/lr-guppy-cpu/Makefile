@@ -1,4 +1,4 @@
-IMAGE_NAME = lr-guppy
+IMAGE_NAME = lr-guppy-cpu
 VERSION = 6.5.7 # This version number should follow the Guppy version number
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)

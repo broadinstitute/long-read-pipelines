@@ -13,7 +13,7 @@ import "../Utility/Utils.wdl" as Utils
 import "../Utility/ONTUtils.wdl" as ONT
 import "../../structs/Structs.wdl"
 
-workflow Guppy {
+workflow GuppyCPU {
 
     meta {
         description: "Run Guppy basecaller on ONT FAST5 files. The docker tag number will match the version of Guppy that is being run. You can change this value to run a different version of Guppy. Currently supports... [3.5.2, 3.6.0, 4.0.14]. All fast5 files within the given GCS dir, gcs_fast5_dir, will be processed. Takes a few hours to process 130GB. Best guess is that the processing time scales linearly but untested."
@@ -216,7 +216,7 @@ task Basecall {
         boot_disk_gb:       30,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:6.4.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy-cpu:6.5.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -227,11 +227,6 @@ task Basecall {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        gpuType:                "nvidia-tesla-p100"
-        gpuCount:               1
-        nvidiaDriverVersion:    "418.152.00"
-        zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
-        cpuPlatform:            "Intel Haswell"
     }
 }
 

@@ -1,13 +1,13 @@
-FROM nvidia/cuda:11.8.0-base-ubuntu22.04
+FROM ubuntu:20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get install -y wget lsb-release
 
-RUN wget https://cdn.oxfordnanoportal.com/software/analysis/ont-guppy_6.5.7_linux64.tar.gz
+RUN wget https://cdn.oxfordnanoportal.com/software/analysis/ont-guppy-cpu_6.5.7_linux64.tar.gz
 RUN mkdir -p /opt/ont/guppy/
-RUN tar zxvf ont-guppy_6.5.7_linux64.tar.gz -C /opt/ont/guppy --strip-components=1
-RUN rm -rf ont-guppy_6.5.7_linux64.tar.gz
+RUN tar zxvf ont-guppy-cpu_6.5.7_linux64.tar.gz -C /opt/ont/guppy --strip-components=1
+RUN rm -rf ont-guppy-cpu_6.5.7_linux64.tar.gz
 
 ENV PATH=/opt/ont/guppy/bin/:${PATH}
 
