@@ -165,7 +165,6 @@ task Basecall {
             -r \
             -i /cromwell_root/ \
             -s guppy_output/ \
-            -x "cuda:all" \
             -c ~{config} \
             ~{barcode_arg} \
             --compress_fastq
