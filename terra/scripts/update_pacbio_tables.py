@@ -83,16 +83,6 @@ def load_new_sample_table(buckets, project):
             input_bam = e['Files']['subreads.bam']
             input_pbi = e['Files']['subreads.bam.pbi']
 
-        #correctable = False if e['Files']['subreads.bam'] == "" else is_correctable(e['Files']['subreads.bam'])
-        #if correctable:
-        #    e['WellSample'][0]['IsCCS'] = 'true'
-
-        if 'm64451e_230109_173107' in e['Files']['ccs_reports.txt']:
-            print("Hello!")
-
-        print(e['Files']['ccs_reports.txt'])
-        print(r)
-
         tbl_rows.append([
             e['CollectionMetadata'][0]['UniqueId'] if 'Context' in e['CollectionMetadata'][0] else "",
 
