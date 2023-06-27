@@ -58,6 +58,7 @@ workflow PBFlowcell {
         String? mas_seq_model
 
         Boolean validate_shards = false
+        Boolean extract_hifi_reads = true
 
         Boolean DEBUG_MODE = false
     }
@@ -120,11 +121,13 @@ workflow PBFlowcell {
             File ccs_corrected_bam = select_first([CCS.consensus, unmapped_shard])
 
             if (experiment_type != "MASSEQ") {
-                call PB.ExtractHifiReads as ExtractHifiReads {
-                    input:
-                        bam = ccs_corrected_bam,
-                        sample_name = SM,
-                        library     = LB
+                if (extract_hifi_reads) {
+                    call PB.ExtractHifiReads as ExtractHifiReads {
+                        input:
+                            bam = ccs_corrected_bam,
+                            sample_name = SM,
+                            library     = LB
+                    }
                 }
             }
         }
