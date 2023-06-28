@@ -52,7 +52,7 @@ dependencies:
   - openjdk=8.0.112=zulu8.19.0.1_3
   - openssl=1.1.1u=h7f8727e_0
   - pbbam=1.6.0=h5b7e6e0_0
-  - pbccs=6.2.0=h9ee0642_0
+  - pbccs=6.4.0=h9ee0642_0
   - pbmm2=1.12.0=h9ee0642_0
   - pip=21.0.1=py38h06a4308_0
   - protobuf=3.14.0=py38h2531618_1
