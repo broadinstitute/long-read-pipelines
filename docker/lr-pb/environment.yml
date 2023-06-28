@@ -11,9 +11,9 @@ dependencies:
   - blas=1.0=mkl
   - brotlipy=0.7.0=py38h27cfd23_1003
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2021.4.13=h06a4308_1
+  - ca-certificates=2023.05.30=h06a4308_0
   - cachetools=4.2.1=pyhd3eb1b0_0
-  - certifi=2020.12.5=py38h06a4308_0
+  - certifi=2023.5.7=py38h06a4308_0
   - cffi=1.14.5=py38h261ae71_0
   - chardet=3.0.4=py38h06a4308_1003
   - construct=2.9.45=py_0
@@ -40,7 +40,7 @@ dependencies:
   - libprotobuf=3.14.0=h8c45485_0
   - libssh2=1.9.0=h1ba5d50_1
   - libstdcxx-ng=9.1.0=hdf63c60_0
-  - lima=2.6.0
+  - lima=2.6.0=h9ee0642_0
   - mkl=2020.2=256
   - mkl-service=2.3.0=py38he904b0f_0
   - mkl_fft=1.3.0=py38h54f3939_0
@@ -50,10 +50,10 @@ dependencies:
   - numpy=1.19.2=py38h54aff64_0
   - numpy-base=1.19.2=py38hfa32c7d_0
   - openjdk=8.0.112=zulu8.19.0.1_3
-  - openssl=1.1.1k=h27cfd23_0
+  - openssl=1.1.1u=h7f8727e_0
   - pbbam=1.6.0=h5b7e6e0_0
-  - pbccs=6.2.0
-  - pbmm2=1.4.0=h56fc30b_0
+  - pbccs=6.2.0=h9ee0642_0
+  - pbmm2=1.12.0=h9ee0642_0
   - pip=21.0.1=py38h06a4308_0
   - protobuf=3.14.0=py38h2531618_1
   - pyasn1=0.4.8=py_0
@@ -80,4 +80,6 @@ dependencies:
   - xz=5.2.5=h7b6447c_0
   - yarl=1.6.3=py38h27cfd23_0
   - zlib=1.2.11=h7b6447c_3
+  - pip:
+      - crcmod==1.7
 prefix: /opt/conda/envs/lr-pb
