@@ -81,11 +81,11 @@ workflow PBFlowcell {
 
     call Utils.GetRawReadGroup as GetRawReadGroup { input: gcs_bam_path = bam }
 
-    if (experiment_type != "CLR" && GetRunInfo.is_corrected) {
-        if (!defined(ccs_report_txt)) {
-            call Utils.StopWorkflow as lack_ccs_report {input: reason = "Provided BAM is on-instrument CCS-corrected, but lacks the companion CCS report."}
-        }
-    }
+#    if (experiment_type != "CLR" && GetRunInfo.is_corrected) {
+#        if (!defined(ccs_report_txt)) {
+#            call Utils.StopWorkflow as lack_ccs_report {input: reason = "Provided BAM is on-instrument CCS-corrected, but lacks the companion CCS report."}
+#        }
+#    }
 
     call Utils.ComputeAllowedLocalSSD as Guess {input: intended_gb = ceil(size(bam, "GB") * if experiment_type=='CLR' then 4 else 3 + size(pbi, "GB"))}
     call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
@@ -233,25 +233,27 @@ workflow PBFlowcell {
     String cdir = outdir + "/reads/ccs/unaligned"
     if (experiment_type != "CLR") {
         call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = unaligned_reads_bam, prefix = "~{PU}.reads" }
-#        call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
+        call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 
         call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam, keyfile = keyfile }
         call FF.FinalizeToFile as FinalizeCCSUnalignedBai { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bai, keyfile = keyfile }
-#        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
-#            input:
-#                outdir = cdir,
-#                file = IndexCCSUnalignedReads.pbi,
-#                name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi",
-#                keyfile = keyfile
-#        }
+        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
+            input:
+                outdir = cdir,
+                file = IndexCCSUnalignedReads.pbi,
+                name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi",
+                keyfile = keyfile
+        }
     }
 
     # Merge CCS Reports:
-    if (experiment_type != "CLR" && !GetRunInfo.is_corrected) {
-        call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
-        call PB.SummarizeCCSReport as SummarizeCCSReport { input: report = MergeCCSReports.report }
+    if (experiment_type != "CLR") {
+        if (!GetRunInfo.is_corrected) {
+            call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
+            call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report, keyfile = keyfile }
+        }
 
-        call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report, keyfile = keyfile }
+        call PB.SummarizeCCSReport as SummarizeCCSReport { input: report = select_first([ccs_report_txt, MergeCCSReports.report]) }
     }
 
     if (experiment_type == 'MASSEQ') {
@@ -329,8 +331,8 @@ workflow PBFlowcell {
     }
 
     # Get the correct PBI file on which to calculate stats:
-#    File subreads_pbi_file = if (experiment_type == "MASSEQ") then select_first([IndexCCSUnalignedReads.pbi]) else pbi
-#    call PB.SummarizePBI as SummarizeSubreadsPBI   { input: pbi = subreads_pbi_file, runtime_attr_override = { 'mem_gb': 72 } }
+    File subreads_pbi_file = if (experiment_type == "MASSEQ") then select_first([IndexCCSUnalignedReads.pbi]) else pbi
+    call PB.SummarizePBI as SummarizeSubreadsPBI   { input: pbi = subreads_pbi_file, runtime_attr_override = { 'mem_gb': 72 } }
 
     # Collect stats on aligned reads:
     call PB.SummarizePBI as SummarizeAlignedQ5PBI  { input: pbi = IndexAlignedReads.pbi, qual_threshold = 5 }
@@ -378,13 +380,13 @@ workflow PBFlowcell {
     output {
 #        # Flowcell stats
 #        File? ccs_report = FinalizeCCSReport.gcs_path
-#        Float? ccs_zmws_input = SummarizeCCSReport.zmws_input
-#        Float? ccs_zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
-#        Float? ccs_zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
-#        Float? ccs_zmws_shortcut_filters = SummarizeCCSReport.zmws_shortcut_filters
-#        Float? ccs_zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
-#        Float? ccs_zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
-#        Float? ccs_zmws_shortcut_filters_pct = SummarizeCCSReport.zmws_shortcut_filters_pct
+        Float? ccs_zmws_input = SummarizeCCSReport.zmws_input
+        Float? ccs_zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
+        Float? ccs_zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
+        Float? ccs_zmws_shortcut_filters = SummarizeCCSReport.zmws_shortcut_filters
+        Float? ccs_zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
+        Float? ccs_zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
+        Float? ccs_zmws_shortcut_filters_pct = SummarizeCCSReport.zmws_shortcut_filters_pct
 
 #        Float polymerase_read_length_mean = SummarizeSubreadsPBI.results['polymerase_mean']
 #        Float polymerase_read_length_N50 = SummarizeSubreadsPBI.results['polymerase_n50']
@@ -405,17 +407,17 @@ workflow PBFlowcell {
         File aligned_pbi = FinalizeAlignedPbi.gcs_path
 
         # Unaligned read stats
-#        Float num_reads = SummarizeSubreadsPBI.results['reads']
-#        Float num_bases = SummarizeSubreadsPBI.results['bases']
-#        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/ComputeGenomeLength.length
-#
-#        Float read_length_mean = SummarizeSubreadsPBI.results['subread_mean']
-#        Float read_length_median = SummarizeSubreadsPBI.results['subread_median']
-#        Float read_length_stdev = SummarizeSubreadsPBI.results['subread_stdev']
-#        Float read_length_N50 = SummarizeSubreadsPBI.results['subread_n50']
-#
-#        Float read_qual_mean = SummarizeSubreadsPBI.results['mean_qual']
-#        Float read_qual_median = SummarizeSubreadsPBI.results['median_qual']
+        Float num_reads = SummarizeSubreadsPBI.results['reads']
+        Float num_bases = SummarizeSubreadsPBI.results['bases']
+        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/ComputeGenomeLength.length
+
+        Float read_length_mean = SummarizeSubreadsPBI.results['subread_mean']
+        Float read_length_median = SummarizeSubreadsPBI.results['subread_median']
+        Float read_length_stdev = SummarizeSubreadsPBI.results['subread_stdev']
+        Float read_length_N50 = SummarizeSubreadsPBI.results['subread_n50']
+
+        Float read_qual_mean = SummarizeSubreadsPBI.results['mean_qual']
+        Float read_qual_median = SummarizeSubreadsPBI.results['median_qual']
 
         Float num_reads_Q5 = SummarizeAlignedQ5PBI.results['reads']
         Float num_reads_Q7 = SummarizeAlignedQ7PBI.results['reads']
