@@ -439,7 +439,7 @@ workflow PBFlowcell {
         Float average_identity = NanoPlotFromBam.stats_map['average_identity']
         Float median_identity = NanoPlotFromBam.stats_map['median_identity']
 
-        String library_type = lib_type
+#        String library_type = lib_type
 
 #        # MAS-seq outputs:
 #        # Overall CCS Stats:
