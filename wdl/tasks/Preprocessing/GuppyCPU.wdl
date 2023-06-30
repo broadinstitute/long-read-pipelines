@@ -190,7 +190,7 @@ task Basecall {
         find fail -name '*fastq.gz' | wc -l | tee num_fail.txt
 
         # Extract relevant metadata (e.g. sample id, run id, etc.) from the first fastq file
-        find pass -name '*fastq.gz' -type f | \
+        find . -name '*fastq.gz' -type f | \
             head -1 | \
             xargs -n1 zgrep -m1 '^@' | \
             sed 's/ /\n/g' | \
