@@ -79,8 +79,8 @@ task CreateRefMap {
     input {
         String ref_name
         String ref_fasta
-        File ref_fai
-        File ref_dict
+        String ref_fai
+        String ref_dict
 
         RuntimeAttr? runtime_attr_override
     }
@@ -91,9 +91,9 @@ task CreateRefMap {
     command <<<
         set -euxo pipefail
 
-        echo -e 'fasta\t{ref_fasta}' >> ~{ref_name}.txt
-        echo -e 'fai\t{ref_fai}' >> ~{ref_name}.txt
-        echo -e 'dict\t{ref_dict}' >> ~{ref_name}.txt
+        echo -e 'fasta\t~{ref_fasta}' >> ~{ref_name}.txt
+        echo -e 'fai\t~{ref_fai}' >> ~{ref_name}.txt
+        echo -e 'dict\t~{ref_dict}' >> ~{ref_name}.txt
     >>>
 
     output {
