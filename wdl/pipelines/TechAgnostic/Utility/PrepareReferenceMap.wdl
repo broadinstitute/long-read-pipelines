@@ -46,7 +46,7 @@ task GenerateSequenceDict {
     command <<<
         set -euxo pipefail
 
-        samtools dict ~{fasta} > ~{basename}.dict
+        samtools dict "~{fasta}" > "~{basename}.dict"
     >>>
 
     output {
