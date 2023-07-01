@@ -256,12 +256,15 @@ task GenotypeGVCFs {
                 -R ~{ref_fasta} \
                 -O ~{prefix}.vcf.gz \
                 -D ~{dbsnp_vcf} \
-                -G StandardAnnotation -G AS_StandardAnnotation \
+                -G StandardAnnotation  \
                 --only-output-calls-starting-in-intervals \
                 -V ${INPUT_FILE} \
                 -L ~{interval_list} \
                 ~{true='--keep-combined-raw-annotations' false='' keep_combined_raw_annotations} \
                 --merge-input-intervals
+
+        # Removed for now:
+        # -G AS_StandardAnnotation
 
         kill $monitoring_pid
     >>>

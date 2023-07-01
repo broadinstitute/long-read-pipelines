@@ -106,7 +106,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             is_training = [true],
             is_truth = [true],
             prior = [15],
-            use_allele_specific_annotations = true,
+            use_allele_specific_annotations = false,
             max_gaussians = 8,
     }
 
@@ -124,7 +124,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             is_training = [true],
             is_truth = [true],
             prior = [15],
-            use_allele_specific_annotations = true,
+            use_allele_specific_annotations = false,
             max_gaussians = 8,
     }
 
@@ -145,7 +145,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             indels_tranches = TrainVQSROnHCIndelVariants.tranches,
             indel_filter_level = indel_filter_level,
 
-            use_allele_specific_annotations = true,
+            use_allele_specific_annotations = false,
     }
 
     # Now we need to annotate our variants by region:

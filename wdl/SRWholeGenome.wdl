@@ -185,7 +185,7 @@ workflow SRWholeGenome {
                 is_training = [true],
                 is_truth = [true],
                 prior = [15],
-                use_allele_specific_annotations = true,
+                use_allele_specific_annotations = false,
                 max_gaussians = 8,
         }
 
@@ -203,7 +203,7 @@ workflow SRWholeGenome {
                 is_training = [true],
                 is_truth = [true],
                 prior = [15],
-                use_allele_specific_annotations = true,
+                use_allele_specific_annotations = false,
                 max_gaussians = 8,
         }
 
@@ -224,7 +224,7 @@ workflow SRWholeGenome {
                 indels_tranches = TrainVQSROnHCIndelVariants.tranches,
                 indel_filter_level = indel_filter_level,
 
-                use_allele_specific_annotations = true,
+                use_allele_specific_annotations = false,
         }
 
         call VARUTIL.SelectVariants as RemoveFilteredVariants {
