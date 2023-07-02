@@ -859,7 +859,7 @@ task IndelsVariantRecalibrator {
         Array[Boolean] is_known
         Array[Boolean] is_training
         Array[Boolean] is_truth
-        Array[Int] prior
+        Array[Float] prior
 
         Boolean use_allele_specific_annotations
         Int max_gaussians = 4
@@ -989,7 +989,7 @@ task SNPsVariantRecalibratorCreateModel {
         Array[Boolean] is_known
         Array[Boolean] is_training
         Array[Boolean] is_truth
-        Array[Int] prior
+        Array[Float] prior
 
         Int? downsampleFactor
 

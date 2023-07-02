@@ -27,7 +27,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[Boolean] snp_is_known
         Array[Boolean] snp_is_training
         Array[Boolean] snp_is_truth
-        Array[Int] snp_prior
+        Array[Float] snp_prior
         Int snp_max_gaussians = 8
 
         Float indel_filter_level = 99.0
@@ -40,7 +40,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[Boolean] indel_is_known
         Array[Boolean] indel_is_training
         Array[Boolean] indel_is_truth
-        Array[Int] indel_prior
+        Array[Float] indel_prior
         Int indel_max_gaussians = 8
 
         Array[File]?   annotation_bed_files
