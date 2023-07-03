@@ -22,9 +22,27 @@ workflow LRJointCallGVCFsWithGenomicsDB {
         Array[String] snp_recalibration_annotation_values = ["QD", "FS", "SOR", "MQRankSum", "ReadPosRankSum"]
         Array[Float] snp_recalibration_tranche_values = [100.0, 99.95, 99.9, 99.8, 99.6, 99.5, 99.4, 99.3, 99.0, 98.0, 97.0, 90.0 ]
 
+        Array[File] snp_known_reference_variants
+        Array[File] snp_known_reference_variants_index
+        Array[File] snp_known_reference_variants_identifier
+        Array[Boolean] snp_is_known
+        Array[Boolean] snp_is_training
+        Array[Boolean] snp_is_truth
+        Array[Float] snp_prior
+        Int snp_max_gaussians = 8
+
         Float indel_filter_level = 99.0
         Array[String] indel_recalibration_annotation_values = ["QD", "FS", "SOR", "MQRankSum", "ReadPosRankSum"]
         Array[Float] indel_recalibration_tranche_values = [100.0, 99.95, 99.9, 99.5, 99.0, 97.0, 96.0, 95.0, 94.0, 93.5, 93.0, 92.0, 91.0, 90.0]
+
+        Array[File] indel_known_reference_variants
+        Array[File] indel_known_reference_variants_index
+        Array[File] indel_known_reference_variants_identifier
+        Array[Boolean] indel_is_known
+        Array[Boolean] indel_is_training
+        Array[Boolean] indel_is_truth
+        Array[Float] indel_prior
+        Int indel_max_gaussians = 8
 
         Array[File]?   annotation_bed_files
         Array[File]?   annotation_bed_file_indexes
@@ -102,17 +120,24 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             vcf = MakeSitesOnlyGVCF.sites_only_vcf,
             vcf_index = MakeSitesOnlyGVCF.sites_only_vcf_index,
             prefix = prefix + ".indels",
-            recalibration_tranche_values = snp_recalibration_tranche_values,
-            recalibration_annotation_values = snp_recalibration_annotation_values,
-            known_reference_variants = [ref_map["known_sites_vcf"]],
-            known_reference_variants_index = [ref_map["known_sites_index"]],
-            known_reference_variants_identifier = ["pfcrosses"],
-            is_known = [true],
-            is_training = [true],
-            is_truth = [true],
-            prior = [15],
-            use_allele_specific_annotations = true,
-            max_gaussians = 8,
+            recalibration_tranche_values = indel_recalibration_tranche_values,
+            recalibration_annotation_values = indel_recalibration_annotation_values,
+#                known_reference_variants = [ref_map["known_sites_vcf"]],
+#                known_reference_variants_index = [ref_map["known_sites_index"]],
+#                known_reference_variants_identifier = ["pfcrosses"],
+#                is_known = [true],
+#                is_training = [true],
+#                is_truth = [true],
+#                prior = [15],
+            known_reference_variants = indel_known_reference_variants,
+            known_reference_variants_index = indel_known_reference_variants_index,
+            known_reference_variants_identifier = indel_known_reference_variants_identifier,
+            is_known = indel_is_known,
+            is_training = indel_is_training,
+            is_truth = indel_is_truth,
+            prior = indel_prior,
+            use_allele_specific_annotations = false,
+            max_gaussians = indel_max_gaussians,
     }
 
     call VARUTIL.SNPsVariantRecalibratorCreateModel as TrainVQSROnHCSnpVariants {
@@ -122,15 +147,22 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             prefix = prefix + ".snps",
             recalibration_tranche_values = snp_recalibration_tranche_values,
             recalibration_annotation_values = snp_recalibration_annotation_values,
-            known_reference_variants = [ref_map["known_sites_vcf"]],
-            known_reference_variants_index = [ref_map["known_sites_index"]],
-            known_reference_variants_identifier = ["pfcrosses"],
-            is_known = [true],
-            is_training = [true],
-            is_truth = [true],
-            prior = [15],
-            use_allele_specific_annotations = true,
-            max_gaussians = 8,
+#                known_reference_variants = [ref_map["known_sites_vcf"]],
+#                known_reference_variants_index = [ref_map["known_sites_index"]],
+#                known_reference_variants_identifier = ["pfcrosses"],
+#                is_known = [true],
+#                is_training = [true],
+#                is_truth = [true],
+#                prior = [15],
+            known_reference_variants = snp_known_reference_variants,
+            known_reference_variants_index = snp_known_reference_variants_index,
+            known_reference_variants_identifier = snp_known_reference_variants_identifier,
+            is_known = snp_is_known,
+            is_training = snp_is_training,
+            is_truth = snp_is_truth,
+            prior = snp_prior,
+            use_allele_specific_annotations = false,
+            max_gaussians = snp_max_gaussians,
     }
 
     call VARUTIL.ApplyVqsr as ApplyVqsr {
@@ -150,7 +182,7 @@ workflow LRJointCallGVCFsWithGenomicsDB {
             indels_tranches = TrainVQSROnHCIndelVariants.tranches,
             indel_filter_level = indel_filter_level,
 
-            use_allele_specific_annotations = true,
+            use_allele_specific_annotations = false,
     }
 
     # Now we need to annotate our variants by region:
