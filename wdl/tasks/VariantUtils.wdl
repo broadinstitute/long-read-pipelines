@@ -1331,3 +1331,64 @@ task RenameSingleSampleVcf {
         File new_sample_name_vcf_index = "~{prefix}.~{suffix}.tbi"
     }
 }
+
+task GatherVcfs {
+
+    input {
+        Array[File] input_vcfs
+        Array[File] input_vcf_indices
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + 3*ceil(size(input_vcfs, "GB")) + ceil(size(input_vcf_indices, "GB"))
+
+    parameter_meta {
+        input_vcfs: {
+            localization_optional: true
+        }
+    }
+
+    command <<<
+        set -euo pipefail
+
+        # --ignore-safety-checks makes a big performance difference so we include it in our invocation.
+        # This argument disables expensive checks that the file headers contain the same set of
+        # genotyped samples and that files are in order by position of first record.
+        gatk --java-options "-Xms6000m -Xmx6500m" \
+            GatherVcfsCloud \
+            --ignore-safety-checks \
+            --gather-type BLOCK \
+            --input ~{sep=" --input " input_vcfs} \
+            --output ~{prefix}.vcf
+
+        tabix ~{prefix}.vcf
+    >>>
+
+    output {
+        File output_vcf = "~{prefix}.vcf"
+        File output_vcf_index = "~{prefix}.vcf.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

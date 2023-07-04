@@ -295,11 +295,19 @@ task MakeChrIntervalList {
             tee chrs.txt
 
          cat chrs.txt | awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > intervalList.intervals
+
+        # Now make another output - a set of individual contig interval list files:
+        while read line ; do
+            contig=$(awk '{print $1}' ${line})
+            awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > contig.${contig}.intervals
+        done < chrs.txt
     >>>
 
     output {
         Array[Array[String]] chrs = read_tsv("chrs.txt")
         File interval_list = "intervalList.intervals"
+        Array[String] contig_interval_strings = read_lines("intervalList.intervals")
+        Array[File] contig_interval_list_files = glob("contig.*.intervals")
     }
 
     #########################
