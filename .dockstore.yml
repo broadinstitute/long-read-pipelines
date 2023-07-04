@@ -124,6 +124,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SRFlowcell.wdl
   testParameterFiles:
+- name: SRJointCallGVCFsWithGenomicsDB
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRJointCallGVCFsWithGenomicsDB.wdl
+  testParameterFiles:
 - name: LRJointCallGVCFsWithGenomicsDB
   subclass: wdl
   primaryDescriptorPath: /wdl/LRJointCallGVCFsWithGenomicsDB.wdl
