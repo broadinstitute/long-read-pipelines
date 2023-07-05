@@ -232,7 +232,7 @@ task ReblockGVCF {
           -V ~{input_gvcf} \
           -do-qual-approx \
           --floor-blocks \
-          -GQB ~{sep="-GQB" gq_blocks} \
+          -GQB ~{sep=" -GQB " gq_blocks} \
           ~{annotations_to_keep_command} \
           ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
           -O ~{prefix}.reblocked.g.vcf.gz
