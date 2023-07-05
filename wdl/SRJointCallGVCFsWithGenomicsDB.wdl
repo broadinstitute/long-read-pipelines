@@ -8,6 +8,7 @@ import "tasks/SRJointGenotyping.wdl" as SRJOINT
 import "tasks/VariantUtils.wdl" as VARUTIL
 import "tasks/Utils.wdl" as UTILS
 import "tasks/Hail.wdl" as Hail
+import "tasks/FunctionalAnnotation.wdl" as FUNK
 import "tasks/Finalize.wdl" as FF
 
 workflow SRJointCallGVCFsWithGenomicsDB {
@@ -49,6 +50,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[File]?   annotation_bed_file_indexes
         Array[String]? annotation_bed_file_annotation_names
 
+        File? snpeff_db
+
         String prefix
 
         String gcs_out_root_dir
@@ -72,6 +75,26 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # We allow overriding this default behavior for testing / special requests.
     Boolean is_small_callset = length(gvcfs) <= 1000
 
+    # Create interval list over which to shard the processing:
+    call UTILS.MakeChrIntervalList as MakeChrIntervalList {
+        input:
+            ref_dict = ref_map['dict'],
+    }
+
+    # Reblock our GVCFs:
+    scatter (idx_1 in range(length(gvcfs))) {
+        call SRJOINT.ReblockGVCF as ReblockGVCFs {
+            input:
+                input_gvcf = gvcfs[idx_1],
+                input_gvcf_index = gvcf_indices[idx_1],
+                ref_fasta       = ref_map['fasta'],
+                ref_fasta_fai   = ref_map['fai'],
+                ref_dict        = ref_map['dict'],
+                # Get rid of any and all suffixes:
+                prefix = basename(basename(basename(gvcfs[idx_1], ".g.vcf.gz"), ".vcf.gz"), ".vcf")
+        }
+    }
+
     # Create sample-name map:
     call SRJOINT.CreateSampleNameMap as CreateSampleNameMap {
         input:
@@ -79,17 +102,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             prefix = prefix
     }
 
-    # Create interval list over which to shard the processing:
-    call UTILS.MakeChrIntervalList as MakeChrIntervalList {
-        input:
-            ref_dict = ref_map['dict'],
-    }
-
     # Shard by contig for speed:
-    scatter (idx in range(length(MakeChrIntervalList.contig_interval_list_files))) {
+    scatter (idx_2 in range(length(MakeChrIntervalList.contig_interval_list_files))) {
 
-        String contig = MakeChrIntervalList.chrs[idx][0]
-        File contig_interval_list = MakeChrIntervalList.contig_interval_list_files[idx]
+        String contig = MakeChrIntervalList.chrs[idx_2][0]
+        File contig_interval_list = MakeChrIntervalList.contig_interval_list_files[idx_2]
 
         # Import our data into GenomicsDB:
         call SRJOINT.ImportGVCFs as ImportGVCFsIntoGenomicsDB {
@@ -199,6 +216,22 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File recalibrated_vcf = select_first([AnnotateVcfRegions.annotated_vcf, ApplyVqsr.recalibrated_vcf])
         File recalibrated_vcf_index = select_first([AnnotateVcfRegions.annotated_vcf_index, ApplyVqsr.recalibrated_vcf_index])
+
+        # Now functionally annotate each VCF:
+        if (defined(snpeff_db)) {
+            call FUNK.FunctionallyAnnotateVariants as FunctionallyAnnotate {
+                input:
+                    vcf = recalibrated_vcf,
+                    snpeff_db = select_first([snpeff_db])
+            }
+            call VARUTIL.IndexVCF as IndexFunkyVcf {
+                input:
+                    vcf = FunctionallyAnnotate.annotated_vcf
+            }
+        }
+
+        File vcf_for_merging = select_first([FunctionallyAnnotate.annotated_vcf, recalibrated_vcf])
+        File vcf_index_for_merging = select_first([IndexFunkyVcf.tbi, recalibrated_vcf_index])
     }
 
     # Consolidate files:
@@ -212,8 +245,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Consolidate files:
     call VARUTIL.GatherVcfs as GatherRecalibratedVcfs {
         input:
-            input_vcfs = recalibrated_vcf,
-            input_vcf_indices = recalibrated_vcf_index,
+            input_vcfs = vcf_for_merging,
+            input_vcf_indices = vcf_index_for_merging,
             prefix = prefix + ".recalibrated.combined"
     }
 

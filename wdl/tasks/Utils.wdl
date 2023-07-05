@@ -299,7 +299,7 @@ task MakeChrIntervalList {
         # Now make another output - a set of individual contig interval list files:
         while read line ; do
             contig=$(echo "${line}" | awk '{print $1}')
-            awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > contig.${contig}.intervals
+            echo "${line}" | awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > contig.${contig}.intervals
         done < chrs.txt
     >>>
 
