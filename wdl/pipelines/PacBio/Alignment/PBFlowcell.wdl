@@ -25,6 +25,7 @@ workflow PBFlowcell {
 
         SM:                 "the value to place in the BAM read group's SM field"
         LB:                 "the value to place in the BAM read group's LB (library) field"
+        PU:                 "the value to place in the BAM read group's PU (platform unit) field"
 
         num_shards:         "number of shards into which fastq files should be batched"
         experiment_type:    "type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
@@ -32,6 +33,7 @@ workflow PBFlowcell {
 
         mas_seq_model:      "Longbow model to use for MAS-seq data."
 
+        is_corrected:       "[default valued] identifies that the data has already been CCS-corrected"
         DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
@@ -44,6 +46,7 @@ workflow PBFlowcell {
 
         String SM
         String LB
+        String PU
 
         File ref_map_file
 
@@ -59,7 +62,7 @@ workflow PBFlowcell {
 
         Boolean validate_shards = false
         Boolean extract_hifi_reads = true
-
+        Boolean is_corrected = true
         Boolean DEBUG_MODE = false
     }
 
@@ -76,12 +79,9 @@ workflow PBFlowcell {
 
     String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}/" + WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}"
 
-    call PB.GetRunInfo as GetRunInfo { input: bam = bam, SM = SM }
-    String PU = GetRunInfo.run_info['PU']
-
     call Utils.GetRawReadGroup as GetRawReadGroup { input: gcs_bam_path = bam }
 
-#    if (experiment_type != "CLR" && GetRunInfo.is_corrected) {
+#    if (experiment_type != "CLR" && is_corrected) {
 #        if (!defined(ccs_report_txt)) {
 #            call Utils.StopWorkflow as lack_ccs_report {input: reason = "Provided BAM is on-instrument CCS-corrected, but lacks the companion CCS report."}
 #        }
@@ -116,7 +116,7 @@ workflow PBFlowcell {
         # sometimes we see the sharded bams mising EOF marker, use this as
         if (validate_shards) {call Utils.CountBamRecords as ValidateShard {input: bam = unmapped_shard}}
         if (experiment_type != "CLR") {
-            if (!GetRunInfo.is_corrected) { call PB.CCS as CCS { input: subreads = unmapped_shard } }
+            if (!is_corrected) { call PB.CCS as CCS { input: subreads = unmapped_shard } }
 
             File ccs_corrected_bam = select_first([CCS.consensus, unmapped_shard])
 
@@ -248,7 +248,7 @@ workflow PBFlowcell {
 
     # Merge CCS Reports:
     if (experiment_type != "CLR") {
-        if (!GetRunInfo.is_corrected) {
+        if (!is_corrected) {
             call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
             call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report, keyfile = keyfile }
         }
