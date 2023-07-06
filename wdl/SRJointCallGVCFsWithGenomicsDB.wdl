@@ -253,14 +253,14 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             prefix = prefix + ".recalibrated.combined"
     }
 
-    # Convert to Zarr
-    call SGKit.ConvertToZarrStore as ConvertToZarr {
-        input:
-            gvcf = GatherRecalibratedVcfs.output_vcf,
-            tbi = GatherRecalibratedVcfs.output_vcf_index,
-            prefix = prefix,
-            outdir = outdir
-    }
+#    # Convert to Zarr
+#    call SGKit.ConvertToZarrStore as ConvertToZarr {
+#        input:
+#            gvcf = GatherRecalibratedVcfs.output_vcf,
+#            tbi = GatherRecalibratedVcfs.output_vcf_index,
+#            prefix = prefix,
+#            outdir = outdir
+#    }
 
     # Convert the output to a HAIL Matrix Table:
     call Hail.ConvertToHailMT as CreateHailMatrixTable {
@@ -327,7 +327,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 #        File? annotated_joint_vcf_tbi = AnnotateVcfRegions.annotated_vcf_index
 
         File joint_mt = CreateHailMatrixTable.gcs_path
-        File joint_zarr = ConvertToZarr.gcs_path
+#        File joint_zarr = ConvertToZarr.gcs_path
     }
 }
 
