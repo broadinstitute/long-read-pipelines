@@ -31,9 +31,6 @@ task ConvertToZarrStore {
         python3 <<EOF
 
         from sgkit.io.vcf import vcf_to_zarr
-        from dask.distributed import Client
-
-        client = Client(n_workers=~{num_cpus}, threads_per_worker=1)
 
         vcfs = ["~{gvcf}"]
         target = "~{prefix}.zarr"

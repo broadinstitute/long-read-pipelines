@@ -9,6 +9,7 @@ import "tasks/VariantUtils.wdl" as VARUTIL
 import "tasks/Utils.wdl" as UTILS
 import "tasks/Hail.wdl" as Hail
 import "tasks/FunctionalAnnotation.wdl" as FUNK
+import "tasks/SGKit.wdl" as SGKit
 import "tasks/Finalize.wdl" as FF
 
 workflow SRJointCallGVCFsWithGenomicsDB {
@@ -53,6 +54,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         File? snpeff_db
 
         String prefix
+
+        Boolean convert_to_zarr = false
 
         String gcs_out_root_dir
     }
@@ -250,7 +253,16 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             prefix = prefix + ".recalibrated.combined"
     }
 
-    # Finally convert the output to a HAIL Matrix Table:
+    # Convert to Zarr
+    call SGKit.ConvertToZarrStore as ConvertToZarr {
+        input:
+            gvcf = GatherRecalibratedVcfs.output_vcf,
+            tbi = GatherRecalibratedVcfs.output_vcf_index,
+            prefix = prefix,
+            outdir = outdir
+    }
+
+    # Convert the output to a HAIL Matrix Table:
     call Hail.ConvertToHailMT as CreateHailMatrixTable {
         input:
             gvcf = GatherRecalibratedVcfs.output_vcf,
@@ -315,6 +327,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 #        File? annotated_joint_vcf_tbi = AnnotateVcfRegions.annotated_vcf_index
 
         File joint_mt = CreateHailMatrixTable.gcs_path
+        File joint_zarr = ConvertToZarr.gcs_path
     }
 }
 
