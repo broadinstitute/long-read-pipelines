@@ -194,7 +194,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                 vcf = joint_called_vcf,
                 vcf_index = joint_called_vcf_index,
 
-                prefix = basename(joint_called_vcf, ".vcf") + ".vqsr",
+                prefix = basename(basename(joint_called_vcf, ".vcf.gz"), ".vcf") + ".vqsr",
 
                 snps_recalibration = TrainVQSROnHCSnpVariants.recalibration,
                 snps_recalibration_index = TrainVQSROnHCSnpVariants.recalibration_index,
@@ -218,7 +218,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                     bed_files = select_first([annotation_bed_files]),
                     bed_file_indexes = select_first([annotation_bed_file_indexes]),
                     bed_file_annotation_names = select_first([annotation_bed_file_annotation_names]),
-                    prefix = basename(ApplyVqsr.recalibrated_vcf, ".vcf") + ".region_annotated"
+                    prefix = basename(basename(ApplyVqsr.recalibrated_vcf, ".vcf.gz"), ".vcf") + ".region_annotated",
             }
         }
 
