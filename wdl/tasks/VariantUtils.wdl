@@ -1359,7 +1359,6 @@ task GatherVcfs {
         gatk --java-options "-Xms6000m -Xmx6500m" \
             GatherVcfsCloud \
             --ignore-safety-checks \
-            --gather-type BLOCK \
             --input ~{sep=" --input " input_vcfs} \
             --output ~{prefix}.vcf
 
