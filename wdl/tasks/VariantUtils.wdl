@@ -845,8 +845,8 @@ task AnnotateVcfWithBedRegions {
 task IndelsVariantRecalibrator {
 
     input {
-        File vcf
-        File vcf_index
+        Array[File] vcfs
+        Array[File] vcf_indices
 
         String prefix
 
@@ -868,8 +868,8 @@ task IndelsVariantRecalibrator {
     }
 
     parameter_meta {
-        vcf:   "Sites only VCF.  Can be pre-filtered using hard-filters."
-        vcf_index: "Tribble Index for sites only VCF."
+        vcfs:   "Sites only VCFs.  Can be pre-filtered using hard-filters."
+        vcf_indices: "Tribble Indexes for sites only VCF."
         known_reference_variants: "Array of known reference VCF files.  For humans, dbSNP is one example."
         known_reference_variants_index: "Array of index files for known reference VCF files."
         known_reference_variants_identifier: "Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as `known_reference_variants`."
@@ -881,8 +881,8 @@ task IndelsVariantRecalibrator {
 
 
     Int disk_size = 10 + ceil(size(known_reference_variants, "GB"))
-                  + 4*ceil(size(vcf, "GB"))
-                  + 2*ceil(size(vcf_index, "GB"))
+                  + 4*ceil(size(vcfs, "GB"))
+                  + 2*ceil(size(vcf_indices, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -926,7 +926,7 @@ task IndelsVariantRecalibrator {
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
             VariantRecalibrator \
-                -V ~{vcf} \
+                -V ~{sep=' -V ' vcfs} \
                 -O ~{prefix}.recal \
                 --tranches-file ~{prefix}.tranches \
                 --trust-all-polymorphic \
@@ -975,8 +975,8 @@ task IndelsVariantRecalibrator {
 task SNPsVariantRecalibratorCreateModel {
 
     input {
-        File vcf
-        File vcf_index
+        Array[File] vcfs
+        Array[File] vcf_indices
 
         String prefix
 
@@ -1000,8 +1000,8 @@ task SNPsVariantRecalibratorCreateModel {
     }
 
     parameter_meta {
-        vcf:   "Sites only VCF.  Can be pre-filtered using hard-filters."
-        vcf_index: "Tribble Index for sites only VCF."
+        vcfs:   "Sites only VCFs.  Can be pre-filtered using hard-filters."
+        vcf_indices: "Tribble Indexes for sites only VCF."
         known_reference_variants: "Array of known reference VCF files.  For humans, dbSNP is one example."
         known_reference_variants_index: "Array of index files for known reference VCF files."
         known_reference_variants_identifier: "Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as `known_reference_variants`."
@@ -1012,8 +1012,8 @@ task SNPsVariantRecalibratorCreateModel {
     }
 
     Int disk_size = 10 + ceil(size(known_reference_variants, "GB"))
-              + 4*ceil(size(vcf, "GB"))
-              + 2*ceil(size(vcf_index, "GB"))
+              + 4*ceil(size(vcfs, "GB"))
+              + 2*ceil(size(vcf_indices, "GB"))
 
     String downsample_factor_arg = if defined(downsampleFactor) then " --sample-every-Nth-variant " else ""
 
@@ -1059,7 +1059,7 @@ task SNPsVariantRecalibratorCreateModel {
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
             VariantRecalibrator \
-                -V ~{vcf} \
+                -V ~{sep=' -V ' vcfs} \
                 -O ~{prefix}.recal \
                 --tranches-file ~{prefix}.tranches \
                 --trust-all-polymorphic \

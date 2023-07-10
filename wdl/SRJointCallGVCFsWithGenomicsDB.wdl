@@ -146,50 +146,57 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                 vcf_index = JointCallGVCFs.output_vcf_index,
                 prefix = prefix + "." + contig + ".sites_only"
         }
+    }
 
-        # Now we run VariantRecalibrator for indels and snps:
-        call VARUTIL.IndelsVariantRecalibrator as TrainVQSROnHCIndelVariants {
-            input:
-                vcf = MakeSitesOnlyVCF.sites_only_vcf,
-                vcf_index = MakeSitesOnlyVCF.sites_only_vcf_index,
-                prefix = prefix  + "." + contig + ".indels",
-                recalibration_tranche_values = indel_recalibration_tranche_values,
-                recalibration_annotation_values = indel_recalibration_annotation_values,
-                known_reference_variants = indel_known_reference_variants,
-                known_reference_variants_index = indel_known_reference_variants_index,
-                known_reference_variants_identifier = indel_known_reference_variants_identifier,
-                is_known = indel_is_known,
-                is_training = indel_is_training,
-                is_truth = indel_is_truth,
-                prior = indel_prior,
-                use_allele_specific_annotations = false,
-                max_gaussians = indel_max_gaussians,
-        }
+    # Now we run VariantRecalibrator for indels and snps:
+    call VARUTIL.IndelsVariantRecalibrator as TrainVQSROnHCIndelVariants {
+        input:
+            vcfs = MakeSitesOnlyVCF.sites_only_vcf,
+            vcf_indices = MakeSitesOnlyVCF.sites_only_vcf_index,
+            prefix = prefix + ".indels",
+            recalibration_tranche_values = indel_recalibration_tranche_values,
+            recalibration_annotation_values = indel_recalibration_annotation_values,
+            known_reference_variants = indel_known_reference_variants,
+            known_reference_variants_index = indel_known_reference_variants_index,
+            known_reference_variants_identifier = indel_known_reference_variants_identifier,
+            is_known = indel_is_known,
+            is_training = indel_is_training,
+            is_truth = indel_is_truth,
+            prior = indel_prior,
+            use_allele_specific_annotations = false,
+            max_gaussians = indel_max_gaussians,
+    }
 
-        call VARUTIL.SNPsVariantRecalibratorCreateModel as TrainVQSROnHCSnpVariants {
-            input:
-                vcf = MakeSitesOnlyVCF.sites_only_vcf,
-                vcf_index = MakeSitesOnlyVCF.sites_only_vcf_index,
-                prefix = prefix  + "." + contig + ".snps",
-                recalibration_tranche_values = snp_recalibration_tranche_values,
-                recalibration_annotation_values = snp_recalibration_annotation_values,
-                known_reference_variants = snp_known_reference_variants,
-                known_reference_variants_index = snp_known_reference_variants_index,
-                known_reference_variants_identifier = snp_known_reference_variants_identifier,
-                is_known = snp_is_known,
-                is_training = snp_is_training,
-                is_truth = snp_is_truth,
-                prior = snp_prior,
-                use_allele_specific_annotations = false,
-                max_gaussians = snp_max_gaussians,
-        }
+    call VARUTIL.SNPsVariantRecalibratorCreateModel as TrainVQSROnHCSnpVariants {
+        input:
+            vcfs = MakeSitesOnlyVCF.sites_only_vcf,
+            vcf_indices = MakeSitesOnlyVCF.sites_only_vcf_index,
+            prefix = prefix + ".snps",
+            recalibration_tranche_values = snp_recalibration_tranche_values,
+            recalibration_annotation_values = snp_recalibration_annotation_values,
+            known_reference_variants = snp_known_reference_variants,
+            known_reference_variants_index = snp_known_reference_variants_index,
+            known_reference_variants_identifier = snp_known_reference_variants_identifier,
+            is_known = snp_is_known,
+            is_training = snp_is_training,
+            is_truth = snp_is_truth,
+            prior = snp_prior,
+            use_allele_specific_annotations = false,
+            max_gaussians = snp_max_gaussians,
+    }
+
+    # Shard by contig for speed:
+    scatter (idx_3 in range(length(JointCallGVCFs.output_vcf))) {
+
+        File joint_called_vcf = JointCallGVCFs.output_vcf[idx_3]
+        File joint_called_vcf_index = JointCallGVCFs.output_vcf[idx_3]
 
         call VARUTIL.ApplyVqsr as ApplyVqsr {
             input:
-                vcf = JointCallGVCFs.output_vcf,
-                vcf_index = JointCallGVCFs.output_vcf_index,
+                vcf = joint_called_vcf,
+                vcf_index = joint_called_vcf_index,
 
-                prefix = prefix + "." + contig + ".vqsr_filtered",
+                prefix = basename(joint_called_vcf, ".vcf") + ".vqsr",
 
                 snps_recalibration = TrainVQSROnHCSnpVariants.recalibration,
                 snps_recalibration_index = TrainVQSROnHCSnpVariants.recalibration_index,
@@ -213,7 +220,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                     bed_files = select_first([annotation_bed_files]),
                     bed_file_indexes = select_first([annotation_bed_file_indexes]),
                     bed_file_annotation_names = select_first([annotation_bed_file_annotation_names]),
-                    prefix = prefix + "." + contig + ".region_annotated"
+                    prefix = basename(ApplyVqsr.recalibrated_vcf, ".vcf") + ".region_annotated"
             }
         }
 
@@ -253,14 +260,14 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             prefix = prefix + ".recalibrated.combined"
     }
 
-#    # Convert to Zarr
-#    call SGKit.ConvertToZarrStore as ConvertToZarr {
-#        input:
-#            gvcf = GatherRecalibratedVcfs.output_vcf,
-#            tbi = GatherRecalibratedVcfs.output_vcf_index,
-#            prefix = prefix,
-#            outdir = outdir
-#    }
+    # Convert to Zarr
+    call SGKit.ConvertToZarrStore as ConvertToZarr {
+        input:
+            gvcf = GatherRecalibratedVcfs.output_vcf,
+            tbi = GatherRecalibratedVcfs.output_vcf_index,
+            prefix = prefix,
+            outdir = outdir
+    }
 
     # Convert the output to a HAIL Matrix Table:
     call Hail.ConvertToHailMT as CreateHailMatrixTable {
@@ -327,7 +334,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 #        File? annotated_joint_vcf_tbi = AnnotateVcfRegions.annotated_vcf_index
 
         File joint_mt = CreateHailMatrixTable.gcs_path
-#        File joint_zarr = ConvertToZarr.gcs_path
+        File joint_zarr = ConvertToZarr.gcs_path
     }
 }
 
