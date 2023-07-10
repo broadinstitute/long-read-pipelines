@@ -187,7 +187,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     scatter (idx_3 in range(length(JointCallGVCFs.output_vcf))) {
 
         File joint_called_vcf = JointCallGVCFs.output_vcf[idx_3]
-        File joint_called_vcf_index = JointCallGVCFs.output_vcf[idx_3]
+        File joint_called_vcf_index = JointCallGVCFs.output_vcf_index[idx_3]
 
         call VARUTIL.ApplyVqsr as ApplyVqsr {
             input:
