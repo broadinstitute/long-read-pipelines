@@ -55,8 +55,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         String prefix
 
-        Boolean convert_to_zarr = false
-
         String gcs_out_root_dir
     }
 
