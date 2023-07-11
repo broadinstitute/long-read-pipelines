@@ -22,8 +22,9 @@ task FunctionallyAnnotateVariants {
             -c $PWD/snpeff_db/snpEff.config \
             -dataDir $PWD/snpeff_db/data \
             PlasmoDB-61_Pfalciparum3D7_Genome \
-            ~{vcf} \
-            | bgzip > ~{prefix}.annotated.vcf.gz
+            ~{vcf} > ~{prefix}.annotated.vcf
+
+        bgzip ~{prefix}.annotated.vcf
 
         mv snpEff_summary.html ~{prefix}.snpEff_summary.html
         mv snpEff_genes.txt ~{prefix}.snpEff_genes.txt
