@@ -18,7 +18,7 @@ task FunctionallyAnnotateVariants {
 
         gunzip -c ~{snpeff_db} | tar xvf -
 
-        /usr/local/bin/snpEff ann -v \
+        /snpEff/scripts/snpEff ann -v \
             -c $PWD/snpeff_db/snpEff.config \
             -dataDir $PWD/snpeff_db/data \
             PlasmoDB-61_Pfalciparum3D7_Genome \
@@ -44,7 +44,7 @@ task FunctionallyAnnotateVariants {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/biocontainers/snpeff:5.1d--hdfd78af_0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-functional-annotation:0.0.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
