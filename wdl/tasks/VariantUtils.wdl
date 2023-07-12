@@ -1361,6 +1361,8 @@ task GatherVcfs {
             --ignore-safety-checks \
             --input ~{sep=" --input " input_vcfs} \
             --output ~{prefix}.vcf.gz
+
+        ls -la
     >>>
 
     output {
@@ -1370,7 +1372,7 @@ task GatherVcfs {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
+        cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
