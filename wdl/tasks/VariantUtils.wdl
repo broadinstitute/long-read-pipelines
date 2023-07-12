@@ -1369,7 +1369,7 @@ task GatherVcfs {
 
     output {
         File output_vcf = "~{prefix}.vcf.gz"
-        File output_vcf_index = "~{prefix}.vcf.tbi"
+        File output_vcf_index = "~{prefix}.vcf.gz.tbi"
     }
 
     #########################
