@@ -1362,6 +1362,8 @@ task GatherVcfs {
             --input ~{sep=" --input " input_vcfs} \
             --output ~{prefix}.vcf.gz
 
+        tabix -p vcf ~{prefix}.vcf.gz
+
         ls -la
     >>>
 
