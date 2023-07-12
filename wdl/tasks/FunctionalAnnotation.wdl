@@ -10,7 +10,7 @@ task FunctionallyAnnotateVariants {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 4*ceil(size([vcf, snpeff_db], "GB"))
+    Int disk_size = 1 + 5*ceil(size([vcf, snpeff_db], "GB"))
     String prefix = basename(basename(vcf, ".gz"), ".vcf")
 
     command <<<
@@ -22,9 +22,7 @@ task FunctionallyAnnotateVariants {
             -c $PWD/snpeff_db/snpEff.config \
             -dataDir $PWD/snpeff_db/data \
             PlasmoDB-61_Pfalciparum3D7_Genome \
-            ~{vcf} > ~{prefix}.annotated.vcf
-
-        bgzip ~{prefix}.annotated.vcf
+            ~{vcf} | bgzip > ~{prefix}.annotated.vcf.gz
 
         mv snpEff_summary.html ~{prefix}.snpEff_summary.html
         mv snpEff_genes.txt ~{prefix}.snpEff_genes.txt
