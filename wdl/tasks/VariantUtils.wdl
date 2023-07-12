@@ -1360,13 +1360,13 @@ task GatherVcfs {
             GatherVcfsCloud \
             --ignore-safety-checks \
             --input ~{sep=" --input " input_vcfs} \
-            --output ~{prefix}.vcf
+            --output ~{prefix}.vcf.gz
 
-        tabix ~{prefix}.vcf
+        tabix ~{prefix}.vcf.gz
     >>>
 
     output {
-        File output_vcf = "~{prefix}.vcf"
+        File output_vcf = "~{prefix}.vcf.gz"
         File output_vcf_index = "~{prefix}.vcf.tbi"
     }
 
