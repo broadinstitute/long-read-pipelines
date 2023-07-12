@@ -1351,7 +1351,7 @@ task GatherVcfs {
     }
 
     command <<<
-        set -euo pipefail
+        set -euxo pipefail
 
         # --ignore-safety-checks makes a big performance difference so we include it in our invocation.
         # This argument disables expensive checks that the file headers contain the same set of
@@ -1361,8 +1361,6 @@ task GatherVcfs {
             --ignore-safety-checks \
             --input ~{sep=" --input " input_vcfs} \
             --output ~{prefix}.vcf.gz
-
-        tabix ~{prefix}.vcf.gz
     >>>
 
     output {
