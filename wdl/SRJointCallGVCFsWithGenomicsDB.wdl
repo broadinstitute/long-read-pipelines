@@ -282,28 +282,23 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Finalize:
     File keyfile = CreateHailMatrixTable.monitoring_log
 
-#    call FF.FinalizeToDir as FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, file = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
+    call FF.FinalizeToDir as FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
 
     call FF.FinalizeToFile as FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf }
     call FF.FinalizeToFile as FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf_index }
 
-#    call FF.FinalizeToDir as FinalizeIndelRecalFile { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration }
-#    call FF.FinalizeToDir as FinalizeIndelRecalIndex { input: outdir = outdir + "/recalibration_files, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration_index }
-#    call FF.FinalizeToDir as FinalizeIndelRecalTranches { input: outdir = outdir + "/recalibration_files, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.tranches }
-#    call FF.FinalizeToDir as FinalizeIndelRecalModelReport { input: outdir = outdir + "/recalibration_files, keyfile = keyfile, file = TrainVQSROnHCIndelVariants.model_report }
+    call FF.FinalizeToFile as FinalizeIndelRecalFile { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration }
+    call FF.FinalizeToFile as FinalizeIndelRecalIndex { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCIndelVariants.recalibration_index }
+    call FF.FinalizeToFile as FinalizeIndelRecalTranches { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCIndelVariants.tranches }
+    call FF.FinalizeToFile as FinalizeIndelRecalModelReport { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCIndelVariants.model_report }
 
-#    call FF.FinalizeToDir as FinalizeSnpRecalFile { input: outdir = outdir + "/recalibration_files, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration }
-#    call FF.FinalizeToDir as FinalizeSnpRecalIndex { input: outdir = outdir + "/recalibration_files, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration_index }
-#    call FF.FinalizeToDir as FinalizeSnpRecalTranches { input: outdir = outdir + "/recalibration_files, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.tranches }
-#    call FF.FinalizeToDir as FinalizeSnpRecalModelReport { input: outdir = outdir + "/recalibration_files, keyfile = keyfile, file = TrainVQSROnHCSnpVariants.model_report }
+    call FF.FinalizeToFile as FinalizeSnpRecalFile { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration }
+    call FF.FinalizeToFile as FinalizeSnpRecalIndex { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCSnpVariants.recalibration_index }
+    call FF.FinalizeToFile as FinalizeSnpRecalTranches { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCSnpVariants.tranches }
+    call FF.FinalizeToFile as FinalizeSnpRecalModelReport { input: outdir = outdir + "/recalibration_files", keyfile = keyfile, file = TrainVQSROnHCSnpVariants.model_report }
 
     call FF.FinalizeToFile as FinalizeVQSRVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRecalibratedVcfs.output_vcf }
     call FF.FinalizeToFile as FinalizeVQSRTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRecalibratedVcfs.output_vcf_index }
-
-#    if (defined(annotation_bed_files)) {
-#        call FF.FinalizeToFile as FinalizeRegionAnnotatedVcf { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf]) }
-#        call FF.FinalizeToFile as FinalizeRegionAnnotatedVcfIndex { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf_index]) }
-#    }
 
     # Make an alias for the functionally annotated data:
     if (defined(snpeff_db)) {
@@ -312,20 +307,20 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     output {
-#        File genomicsDB = FinalizeGenomicsDB.gcs_path
+        String genomicsDB = FinalizeGenomicsDB.gcs_dir
 
         File raw_joint_vcf     = FinalizeRawVCF.gcs_path
         File raw_joint_vcf_tbi = FinalizeRawTBI.gcs_path
 
-#        Array[File?] vqsr_indel_recal_file         = FinalizeIndelRecalFile.gcs_path
-#        Array[File?] vqsr_indel_recal_file_index   = FinalizeIndelRecalIndex.gcs_path
-#        Array[File?] vqsr_indel_recal_tranches     = FinalizeIndelRecalTranches.gcs_path
-#        Array[File?] vqsr_indel_recal_model_report = FinalizeIndelRecalModelReport.gcs_path
-#
-#        Array[File?] vqsr_snp_recal_file         = FinalizeSnpRecalFile.gcs_path
-#        Array[File?] vqsr_snp_recal_file_index   = FinalizeSnpRecalIndex.gcs_path
-#        Array[File?] vqsr_snp_recal_tranches     = FinalizeSnpRecalTranches.gcs_path
-#        Array[File?] vqsr_snp_recal_model_report = FinalizeSnpRecalModelReport.gcs_path
+        File vqsr_indel_recal_file         = FinalizeIndelRecalFile.gcs_path
+        File vqsr_indel_recal_file_index   = FinalizeIndelRecalIndex.gcs_path
+        File vqsr_indel_recal_tranches     = FinalizeIndelRecalTranches.gcs_path
+        File vqsr_indel_recal_model_report = FinalizeIndelRecalModelReport.gcs_path
+
+        File vqsr_snp_recal_file         = FinalizeSnpRecalFile.gcs_path
+        File vqsr_snp_recal_file_index   = FinalizeSnpRecalIndex.gcs_path
+        File vqsr_snp_recal_tranches     = FinalizeSnpRecalTranches.gcs_path
+        File vqsr_snp_recal_model_report = FinalizeSnpRecalModelReport.gcs_path
 
         File joint_recalibrated_vcf     = FinalizeVQSRVCF.gcs_path
         File joint_recalibrated_vcf_tbi = FinalizeVQSRTBI.gcs_path
