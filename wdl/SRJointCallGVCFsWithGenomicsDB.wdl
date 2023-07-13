@@ -305,9 +305,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 #        call FF.FinalizeToFile as FinalizeRegionAnnotatedVcfIndex { input: outdir = outdir, keyfile = keyfile, file = select_first([AnnotateVcfRegions.annotated_vcf_index]) }
 #    }
 
-    ##########
-    # store the results into designated bucket
-    ##########
+    # Make an alias for the functionally annotated data:
+    if (defined(snpeff_db)) {
+        File annotated_vcf = FinalizeVQSRVCF.gcs_path
+        File annotated_vcf_tbi = FinalizeVQSRTBI.gcs_path
+    }
 
     output {
 #        File genomicsDB = FinalizeGenomicsDB.gcs_path
@@ -328,8 +330,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         File joint_recalibrated_vcf     = FinalizeVQSRVCF.gcs_path
         File joint_recalibrated_vcf_tbi = FinalizeVQSRTBI.gcs_path
 
-#        File? annotated_joint_vcf     = AnnotateVcfRegions.annotated_vcf
-#        File? annotated_joint_vcf_tbi = AnnotateVcfRegions.annotated_vcf_index
+        File? annotated_joint_vcf     = annotated_vcf
+        File? annotated_joint_vcf_tbi = annotated_vcf_tbi
 
         File joint_mt = CreateHailMatrixTable.gcs_path
         File joint_zarr = ConvertToZarr.gcs_path
