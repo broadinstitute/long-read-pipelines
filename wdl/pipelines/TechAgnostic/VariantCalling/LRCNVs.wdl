@@ -20,9 +20,10 @@ version 1.0
 
 import "../../../tasks/Utility/cnv_common_tasks.wdl" as CNVTasks
 
+import "LRProcessIntervalsForCnv.wdl" as PreProcess
+
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
-import "../../../structs/Structs.wdl"
 
 workflow LRCNVs {
 
@@ -180,70 +181,39 @@ workflow LRCNVs {
         Int maximum_number_events_per_sample = 1000
     }
 
-    Map[String, String] ref_map = read_map(ref_map_file)
-    File ref_fasta_dict = ref_map['dict']
-    File ref_fasta_fai = ref_map['fai']
-    File ref_fasta = ref_map['fasta']
-
-    Array[Pair[String, String]] normal_bams_and_bais = zip(normal_bams, normal_bais)
-
-    call CNVTasks.PreprocessIntervals {
+    #############################################################################
+    String workflow_name = 'LRgCNV'
+    #############################################################################
+    # preprocess
+    call PreProcess.LRProcessIntervalsForCnv as PP {
         input:
+            gcs_out_root_dir = gcs_out_root_dir,
+            run_uuid = run_uuid,
+
             intervals = intervals,
             blacklist_intervals = blacklist_intervals,
-            ref_fasta = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            ref_fasta_dict = ref_fasta_dict,
+            normal_bams = normal_bams,
+            normal_bais = normal_bais,
+            cohort_entity_id = cohort_entity_id,
+            contig_ploidy_priors = contig_ploidy_priors,
+            ref_map_file = ref_map_file,
+            gatk_docker = gatk_docker,
+
+            do_explicit_gc_correction = do_explicit_gc_correction,
+            gatk4_jar_override = gatk4_jar_override,
+            preemptible_attempts = preemptible_attempts,
+
             padding = padding,
             bin_length = bin_length,
-            gatk4_jar_override = gatk4_jar_override,
-            gatk_docker = gatk_docker,
-            preemptible_attempts = preemptible_attempts
-    }
 
-    if (select_first([do_explicit_gc_correction, true])) {
-        call CNVTasks.AnnotateIntervals {
-            input:
-                intervals = PreprocessIntervals.preprocessed_intervals,
-                ref_fasta = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                ref_fasta_dict = ref_fasta_dict,
-                mappability_track_bed = mappability_track_bed,
-                mappability_track_bed_idx = mappability_track_bed_idx,
-                segmental_duplication_track_bed = segmental_duplication_track_bed,
-                segmental_duplication_track_bed_idx = segmental_duplication_track_bed_idx,
-                feature_query_lookahead = feature_query_lookahead,
-                gatk4_jar_override = gatk4_jar_override,
-                gatk_docker = gatk_docker,
-                mem_gb = mem_gb_for_annotate_intervals,
-                preemptible_attempts = preemptible_attempts
-        }
-    }
+            mappability_track_bed = mappability_track_bed,
+            mappability_track_bed_idx = mappability_track_bed_idx,
+            segmental_duplication_track_bed = segmental_duplication_track_bed,
+            segmental_duplication_track_bed_idx = segmental_duplication_track_bed_idx,
+            feature_query_lookahead = feature_query_lookahead,
+            mem_gb_for_annotate_intervals = mem_gb_for_annotate_intervals,
 
-    scatter (normal_bam_and_bai in normal_bams_and_bais) {
-        call CNVTasks.CollectCounts {
-            input:
-                intervals = PreprocessIntervals.preprocessed_intervals,
-                bam = normal_bam_and_bai.left,
-                bam_idx = normal_bam_and_bai.right,
-                ref_fasta = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                ref_fasta_dict = ref_fasta_dict,
-                format = collect_counts_format,
-                enable_indexing = collect_counts_enable_indexing,
-                gatk4_jar_override = gatk4_jar_override,
-                gatk_docker = gatk_docker,
-                mem_gb = mem_gb_for_collect_counts,
-                preemptible_attempts = preemptible_attempts
-        }
-    }
-
-    call CNVTasks.FilterIntervals {
-        input:
-            intervals = PreprocessIntervals.preprocessed_intervals,
-            blacklist_intervals = blacklist_intervals_for_filter_intervals,
-            annotated_intervals = AnnotateIntervals.annotated_intervals,
-            read_count_files = CollectCounts.counts,
+            blacklist_intervals_for_filter_intervals = blacklist_intervals_for_filter_intervals,
             minimum_gc_content = minimum_gc_content,
             maximum_gc_content = maximum_gc_content,
             minimum_mappability = minimum_mappability,
@@ -255,32 +225,24 @@ workflow LRCNVs {
             extreme_count_filter_minimum_percentile = extreme_count_filter_minimum_percentile,
             extreme_count_filter_maximum_percentile = extreme_count_filter_maximum_percentile,
             extreme_count_filter_percentage_of_samples = extreme_count_filter_percentage_of_samples,
-            gatk4_jar_override = gatk4_jar_override,
-            gatk_docker = gatk_docker,
-            mem_gb = mem_gb_for_filter_intervals,
-            preemptible_attempts = preemptible_attempts
-    }
+            mem_gb_for_filter_intervals = mem_gb_for_filter_intervals,
 
-    call DetermineGermlineContigPloidyCohortMode {
-        input:
-            cohort_entity_id = cohort_entity_id,
-            intervals = FilterIntervals.filtered_intervals,
-            read_count_files = CollectCounts.counts,
-            contig_ploidy_priors = contig_ploidy_priors,
-            gatk4_jar_override = gatk4_jar_override,
-            gatk_docker = gatk_docker,
-            mem_gb = mem_gb_for_determine_germline_contig_ploidy,
-            cpu = cpu_for_determine_germline_contig_ploidy,
-            mean_bias_standard_deviation = ploidy_mean_bias_standard_deviation,
-            mapping_error_rate = ploidy_mapping_error_rate,
-            global_psi_scale = ploidy_global_psi_scale,
-            sample_psi_scale = ploidy_sample_psi_scale,
-            preemptible_attempts = preemptible_attempts
-    }
+            collect_counts_format = collect_counts_format,
+            collect_counts_enable_indexing = collect_counts_enable_indexing,
+            mem_gb_for_collect_counts = mem_gb_for_collect_counts,
 
+            ploidy_mean_bias_standard_deviation = ploidy_mean_bias_standard_deviation,
+            ploidy_mapping_error_rate = ploidy_mapping_error_rate,
+            ploidy_global_psi_scale = ploidy_global_psi_scale,
+            ploidy_sample_psi_scale = ploidy_sample_psi_scale,
+            mem_gb_for_determine_germline_contig_ploidy = mem_gb_for_determine_germline_contig_ploidy,
+            cpu_for_determine_germline_contig_ploidy = cpu_for_determine_germline_contig_ploidy
+    }
+    #############################################################################
+    # main
     call CNVTasks.ScatterIntervals {
         input:
-            interval_list = FilterIntervals.filtered_intervals,
+            interval_list = PP.filtered_intervals,
             num_intervals_per_scatter = num_intervals_per_scatter,
             gatk_docker = gatk_docker,
             preemptible_attempts = preemptible_attempts
@@ -291,10 +253,10 @@ workflow LRCNVs {
             input:
                 scatter_index = scatter_index,
                 cohort_entity_id = cohort_entity_id,
-                read_count_files = CollectCounts.counts,
-                contig_ploidy_calls_tar = DetermineGermlineContigPloidyCohortMode.contig_ploidy_calls_tar,
+                read_count_files = PP.read_counts,
+                contig_ploidy_calls_tar = PP.contig_ploidy_calls_tar,
                 intervals = ScatterIntervals.scattered_interval_lists[scatter_index],
-                annotated_intervals = AnnotateIntervals.annotated_intervals,
+                annotated_intervals = PP.annotated_intervals,
                 gatk4_jar_override = gatk4_jar_override,
                 gatk_docker = gatk_docker,
                 mem_gb = mem_gb_for_germline_cnv_caller,
@@ -341,18 +303,20 @@ workflow LRCNVs {
     }
 
     Array[Array[File]] call_tars_sample_by_shard = transpose(GermlineCNVCallerCohortMode.gcnv_call_tars)
-
-    scatter (sample_index in range(length(CollectCounts.entity_id))) {
+    #############################################################################
+    # postprocessing
+    Array[String] sample_names = PP.read_counts_entity_ids
+    scatter (sample_index in range(length(sample_names))) {
         call CNVTasks.PostprocessGermlineCNVCalls {
             input:
-                entity_id = CollectCounts.entity_id[sample_index],
+                entity_id = sample_names[sample_index],
                 gcnv_calls_tars = call_tars_sample_by_shard[sample_index],
                 gcnv_model_tars = GermlineCNVCallerCohortMode.gcnv_model_tar,
                 calling_configs = GermlineCNVCallerCohortMode.calling_config_json,
                 denoising_configs = GermlineCNVCallerCohortMode.denoising_config_json,
                 gcnvkernel_version = GermlineCNVCallerCohortMode.gcnvkernel_version_json,
                 sharded_interval_lists = GermlineCNVCallerCohortMode.sharded_interval_list,
-                contig_ploidy_calls_tar = DetermineGermlineContigPloidyCohortMode.contig_ploidy_calls_tar,
+                contig_ploidy_calls_tar = PP.contig_ploidy_calls_tar,
                 allosomal_contigs = allosomal_contigs,
                 ref_copy_number_autosomal_contigs = ref_copy_number_autosomal_contigs,
                 sample_index = sample_index,
@@ -364,7 +328,7 @@ workflow LRCNVs {
         call CNVTasks.CollectSampleQualityMetrics {
             input:
                 genotyped_segments_vcf = PostprocessGermlineCNVCalls.genotyped_segments_vcf,
-                entity_id = CollectCounts.entity_id[sample_index],
+                entity_id = sample_names[sample_index],
                 maximum_number_events = maximum_number_events_per_sample,
                 gatk_docker = gatk_docker,
                 preemptible_attempts = preemptible_attempts
@@ -377,48 +341,30 @@ workflow LRCNVs {
             gatk_docker = gatk_docker,
             preemptible_attempts = preemptible_attempts
     }
-
     #############################################################################
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/LrGCNV"
+    # save results
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}"
     String run_specific_outdir = outdir + if (run_uuid == "") then "" else "/~{run_uuid}"
-    call FF.FinalizeToFile as FF_PI { input:
-        file = PreprocessIntervals.preprocessed_intervals, outdir = run_specific_outdir
-    }
-    if (select_first([do_explicit_gc_correction, true])) {
-        call FF.FinalizeToFile as FF_AI { input:
-            file = select_first([AnnotateIntervals.annotated_intervals]), outdir = run_specific_outdir
-        }
-    }
-    call FF.FinalizeToFile as FF_FI { input:
-        file = FilterIntervals.filtered_intervals, outdir = run_specific_outdir
-    }
-    call FF.FinalizeToFile as FF_CPM { input:
-        file = DetermineGermlineContigPloidyCohortMode.contig_ploidy_model_tar, outdir = run_specific_outdir
-    }
-    call FF.FinalizeToFile as FF_CPC { input:
-        file = DetermineGermlineContigPloidyCohortMode.contig_ploidy_calls_tar, outdir = run_specific_outdir
-    }
-    call FF.FinalizeToFile as FF_MQC_S { input:
-        file = CollectModelQualityMetrics.qc_status_file, outdir = run_specific_outdir
-    }
 
-    call FF.FinalizeToDir as FF_RC { input:
-        files = CollectCounts.counts, outdir = run_specific_outdir + "/ReadCounts/"
-    }
+    ###########################################
     call FF.FinalizeToDir as FF_Model { input:
         files = GermlineCNVCallerCohortMode.gcnv_model_tar, outdir = run_specific_outdir + "/gCNV_model/"
     }
     call FF.FinalizeToDir as FF_Tracking { input:
         files = GermlineCNVCallerCohortMode.gcnv_tracking_tar, outdir = run_specific_outdir + "/gCNV_tracking/"
     }
+    call FF.FinalizeToFile as FF_MQC_S { input:
+        file = CollectModelQualityMetrics.qc_status_file, outdir = run_specific_outdir
+    }
+    call FF.FinalizeToDir as FF_SMQCf { input:
+        files = CollectSampleQualityMetrics.qc_status_file, outdir = run_specific_outdir + "/Sample_QC_status/"
+    }
+
     call FF.FinalizeToDir as FF_GTIvcf { input:
         files = PostprocessGermlineCNVCalls.genotyped_intervals_vcf, outdir = run_specific_outdir + "/GTed_intervals_vcfs/"
     }
     call FF.FinalizeToDir as FF_GTSvcf { input:
         files = PostprocessGermlineCNVCalls.genotyped_segments_vcf, outdir = run_specific_outdir + "/GTed_segments_vcfs/"
-    }
-    call FF.FinalizeToDir as FF_SMQCf { input:
-        files = CollectSampleQualityMetrics.qc_status_file, outdir = run_specific_outdir + "/Sample_QC_status/"
     }
     call FF.FinalizeToDir as FF_DCR { input:
         files = PostprocessGermlineCNVCalls.denoised_copy_ratios, outdir = run_specific_outdir + "/Denoised_copy_ratios/"
@@ -437,13 +383,16 @@ workflow LRCNVs {
 
     output {
 
+        Array[String] read_counts_entity_ids = PP.read_counts_entity_ids
+
         Map[String, String] gcnv_output_summary = {
-            "preprocessed_intervals": FF_PI.gcs_path,
-            "read_counts": FF_RC.gcs_dir,
-            "annotated_intervals": select_first([FF_AI.gcs_path, "None"]),
-            "filtered_intervals": FF_FI.gcs_path,
-            "contig_ploidy_model_tar": FF_CPM.gcs_path,
-            "contig_ploidy_calls_tar": FF_CPC.gcs_path,
+            "preprocessed_intervals": PP.preprocessed_intervals,
+            "read_counts": run_specific_outdir + "/ReadCounts/", # PP.read_counts -- this is an array of files, would lead to type coersion error if used directly
+            "annotated_intervals": select_first([PP.annotated_intervals, "None"]),
+            "filtered_intervals": PP.filtered_intervals,
+            "contig_ploidy_model_tar": PP.contig_ploidy_model_tar,
+            "contig_ploidy_calls_tar": PP.contig_ploidy_calls_tar,
+
             "gcnv_model_tars": FF_Model.gcs_dir,
             "gcnv_tracking_tars": FF_Tracking.gcs_dir,
             "genotyped_intervals_vcfs": FF_GTIvcf.gcs_dir,
@@ -455,97 +404,17 @@ workflow LRCNVs {
             "denoised_copy_ratios":FF_DCR.gcs_dir,
         }
 
-        # File preprocessed_intervals = FF_PI.gcs_path
-        Array[String] read_counts_entity_ids = CollectCounts.entity_id
-        # Array[String] read_counts = FF_RC.final_paths
-
-        # File? annotated_intervals = FF_AI.gcs_path
-
-        # File filtered_intervals = FF_FI.gcs_path
-
-        # File contig_ploidy_model_tar = FF_CPM.gcs_path
-        # File contig_ploidy_calls_tar = FF_CPC.gcs_path
-
         Array[Array[String]] gcnv_calls_tars = FF_matrix_row.final_paths
+        Array[String] gcnv_sample_qc_status_strings = CollectSampleQualityMetrics.qc_status_string
         # Array[String] gcnv_model_tars = FF_Model.final_paths
         # Array[String] gcnv_tracking_tars = FF_Tracking.final_paths
         # Array[String] genotyped_intervals_vcfs = FF_GTIvcf.final_paths
         # Array[String] genotyped_segments_vcfs = FF_GTSvcf.final_paths
         # Array[String] sample_qc_status_files = FF_SMQCf.final_paths
-        Array[String] gcnv_sample_qc_status_strings = CollectSampleQualityMetrics.qc_status_string
         # File model_qc_status_file = FF_MQC_S.gcs_path
         # String model_qc_string = CollectModelQualityMetrics.qc_status_string
 
         # Array[String] denoised_copy_ratios = FF_DCR.final_paths
-    }
-}
-
-task DetermineGermlineContigPloidyCohortMode {
-    input {
-      String cohort_entity_id
-      File? intervals
-      Array[File] read_count_files
-      File contig_ploidy_priors
-      String? output_dir
-      File? gatk4_jar_override
-
-      # Runtime parameters
-      String gatk_docker
-      Int? mem_gb
-      Int? disk_space_gb
-      Boolean use_ssd = false
-      Int? cpu
-      Int? preemptible_attempts
-
-      # Model parameters
-      Float? mean_bias_standard_deviation
-      Float? mapping_error_rate
-      Float? global_psi_scale
-      Float? sample_psi_scale
-    }
-
-    # We do not expose Hybrid ADVI parameters -- the default values are decent
-
-    Int machine_mem_mb = select_first([mem_gb, 7]) * 1000
-    Int command_mem_mb = machine_mem_mb - 500
-
-    # If optional output_dir not specified, use "out"
-    String output_dir_ = select_first([output_dir, "out"])
-
-    command <<<
-        set -eu
-        export GATK_LOCAL_JAR=~{default="/root/gatk.jar" gatk4_jar_override}
-        export MKL_NUM_THREADS=~{default=8 cpu}
-        export OMP_NUM_THREADS=~{default=8 cpu}
-
-        gatk --java-options "-Xmx~{command_mem_mb}m"  DetermineGermlineContigPloidy \
-            ~{"-L " + intervals} \
-            --input ~{sep=" --input " read_count_files} \
-            --contig-ploidy-priors ~{contig_ploidy_priors} \
-            --interval-merging-rule OVERLAPPING_ONLY \
-            --output ~{output_dir_} \
-            --output-prefix ~{cohort_entity_id} \
-            --verbosity DEBUG \
-            --mean-bias-standard-deviation ~{default="0.01" mean_bias_standard_deviation} \
-            --mapping-error-rate ~{default="0.01" mapping_error_rate} \
-            --global-psi-scale ~{default="0.001" global_psi_scale} \
-            --sample-psi-scale ~{default="0.0001" sample_psi_scale}
-
-        tar czf ~{cohort_entity_id}-contig-ploidy-model.tar.gz -C ~{output_dir_}/~{cohort_entity_id}-model .
-        tar czf ~{cohort_entity_id}-contig-ploidy-calls.tar.gz -C ~{output_dir_}/~{cohort_entity_id}-calls .
-    >>>
-
-    runtime {
-        docker: gatk_docker
-        memory: machine_mem_mb + " MB"
-        disks: "local-disk " + select_first([disk_space_gb, 150]) + if use_ssd then " SSD" else " HDD"
-        cpu: select_first([cpu, 8])
-        preemptible: select_first([preemptible_attempts, 2])
-    }
-
-    output {
-        File contig_ploidy_model_tar = "~{cohort_entity_id}-contig-ploidy-model.tar.gz"
-        File contig_ploidy_calls_tar = "~{cohort_entity_id}-contig-ploidy-calls.tar.gz"
     }
 }
 

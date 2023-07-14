@@ -39,6 +39,9 @@ workflows:
 - name: LRCNVs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
+- name: LRProcessIntervalsForCnv
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRProcessIntervalsForCnv.wdl
 - name: ONTBasecall
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTBasecall.wdl
