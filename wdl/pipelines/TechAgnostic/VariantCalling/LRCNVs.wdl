@@ -50,6 +50,10 @@ workflow LRCNVs {
         String gcs_out_root_dir
         String run_uuid  # used to distinguish different runs, can be empty if not so desired
 
+        Array[String]? preprocessing_readme_string
+        Array[String]? ploidy_tuning_readme_string
+        Array[String]? gcnv_tuning_readme_string
+
         ##################################
         #### required basic arguments ####
         ##################################
@@ -189,6 +193,7 @@ workflow LRCNVs {
         input:
             gcs_out_root_dir = gcs_out_root_dir,
             run_uuid = run_uuid,
+            tuning_readme_string = preprocessing_readme_string,
 
             intervals = intervals,
             blacklist_intervals = blacklist_intervals,
@@ -402,6 +407,8 @@ workflow LRCNVs {
             "model_qc_status_file": FF_MQC_S.gcs_path,
             "model_qc_string":CollectModelQualityMetrics.qc_status_string,
             "denoised_copy_ratios":FF_DCR.gcs_dir,
+
+            "preprocessing_readme": select_first([PP.readme, "None"])
         }
 
         Array[Array[String]] gcnv_calls_tars = FF_matrix_row.final_paths

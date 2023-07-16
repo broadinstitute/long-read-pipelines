@@ -34,6 +34,8 @@ workflow LRProcessIntervalsForCnv {
         String gcs_out_root_dir
         String run_uuid
 
+        Array[String]? tuning_readme_string
+
         ##################################
         #### required basic arguments ####
         ##################################
@@ -208,6 +210,10 @@ workflow LRProcessIntervalsForCnv {
             preemptible_attempts = preemptible_attempts
     }
 
+    if (defined(tuning_readme_string)) {
+        call WriteReadMeString { input: readme_in_lines = select_first([tuning_readme_string]) }
+    }
+
     #############################################################################
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}"
     String run_specific_outdir = outdir + if (run_uuid == "") then "" else "/~{run_uuid}"
@@ -233,6 +239,12 @@ workflow LRProcessIntervalsForCnv {
         file = DetermineGermlineContigPloidyCohortMode.contig_ploidy_calls_tar, outdir = run_specific_outdir
     }
 
+    if (defined(tuning_readme_string)) {
+        call FF.FinalizeToFile as FF_readme { input:
+            file = select_first([WriteReadMeString.readme]), outdir = run_specific_outdir
+        }
+    }
+
     output {
         Array[String] read_counts = FF_RC.final_paths
         Array[String] read_counts_entity_ids = CollectCounts.entity_id
@@ -243,6 +255,8 @@ workflow LRProcessIntervalsForCnv {
 
         File contig_ploidy_model_tar = FF_CPM.gcs_path
         File contig_ploidy_calls_tar = FF_CPC.gcs_path
+
+        File? readme = FF_readme.gcs_path
 
         # Map[String, String] gcnv_output_summary = {
         #     "preprocessed_intervals":   FF_PI.gcs_path,
@@ -319,5 +333,24 @@ task DetermineGermlineContigPloidyCohortMode {
     output {
         File contig_ploidy_model_tar = "~{cohort_entity_id}-contig-ploidy-model.tar.gz"
         File contig_ploidy_calls_tar = "~{cohort_entity_id}-contig-ploidy-calls.tar.gz"
+    }
+}
+
+task WriteReadMeString {
+    input {
+        Array[String] readme_in_lines
+    }
+
+    command <<<
+        mv ~{write_lines(readme_in_lines)} "readme.txt"
+    >>>
+
+    output {
+        File readme = "readme.txt"
+    }
+
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
