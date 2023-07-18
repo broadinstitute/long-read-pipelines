@@ -191,8 +191,8 @@ workflow SRWholeGenome {
 
         call VARUTIL.IndelsVariantRecalibrator as TrainVQSROnHCIndelVariants {
             input:
-                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                vcfs = [CallVariantsWithHaplotypeCaller.output_vcf],
+                vcf_indices = [CallVariantsWithHaplotypeCaller.output_vcf_index],
                 prefix = participant_name + ".indels",
                 recalibration_tranche_values = indel_recalibration_tranche_values,
                 recalibration_annotation_values = indel_recalibration_annotation_values,
@@ -216,8 +216,8 @@ workflow SRWholeGenome {
 
         call VARUTIL.SNPsVariantRecalibratorCreateModel as TrainVQSROnHCSnpVariants {
             input:
-                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                vcfs = [CallVariantsWithHaplotypeCaller.output_vcf],
+                vcf_indices = [CallVariantsWithHaplotypeCaller.output_vcf_index],
                 prefix = participant_name + ".snps",
                 recalibration_tranche_values = snp_recalibration_tranche_values,
                 recalibration_annotation_values = snp_recalibration_annotation_values,
