@@ -293,6 +293,7 @@ workflow SRFlowcell {
             file = t_012_FastQC.report
     }
 
+    
     # Prep a few files for output:
     if (defined(bam)) {
         File unaligned_bam_o = reads_dir + "/unaligned/" + basename(select_first([bam]))
