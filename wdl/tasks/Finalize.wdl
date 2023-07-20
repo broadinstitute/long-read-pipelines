@@ -82,11 +82,27 @@ task FinalizeToDir {
     command <<<
         set -euxo pipefail
 
-        cat ~{write_lines(files)} | gsutil -m cp -I "~{gcs_output_dir}"
+        # Only copy files that are not the same as their destinations.
+        # This is a very far corner case but can come up if you're finalizing input files
+        # and you're re-running data (e.g. re-running `SRFlowcell`).
+
+        clean_out_dir=$(echo "~{gcs_output_dir}" | sed 's@/[ \t]*$@@')
+
+        while read src_file_path ; do
+            bn=$(basename ${src_file_path})
+            if [[ "${src_file_path}" == "${clean_out_dir}/${bn}" ]] ; then
+                echo "Source and destination file paths are the same.  Skipping file: ${src_file_path}"
+            else
+                echo "${src_file_path}"
+            fi
+        done < ~{write_lines(files)} > sanitized_file_list.txt
+
+        cat sanitized_file_list.txt | gsutil -m cp -I "~{gcs_output_dir}"
     >>>
 
     output {
         String gcs_dir = gcs_output_dir
+        File copied_files_list = "sanitized_file_list.txt"
     }
 
     #########################
