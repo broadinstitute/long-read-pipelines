@@ -91,7 +91,7 @@ task FinalizeToDir {
         while read src_file_path ; do
             bn=$(basename ${src_file_path})
             if [[ ${src_file_path} == ${clean_out_dir}/${bn} ]] ; then
-                echo "Source and destination file paths are the same.  Skipping file: ${src_file_path}"
+                echo "Source and destination file paths are the same.  Skipping file: ${src_file_path}" 1>&2
             else
                 echo "${src_file_path}"
             fi
