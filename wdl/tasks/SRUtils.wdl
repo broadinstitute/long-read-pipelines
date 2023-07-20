@@ -33,7 +33,7 @@ task BamToFq {
 
     output {
         File fq_end1 = "~{prefix}.end1.fq.gz"
-        File fq_end2 = "~{prefix}.end1.fq.gz"
+        File fq_end2 = "~{prefix}.end2.fq.gz"
         File fq_unpaired = "~{prefix}.unpaired.fq.gz"
         File monitoring_log = "resources.log"
     }
