@@ -81,7 +81,7 @@ task AnnotateIntervals {
 
     Int machine_mem_mb = select_first([mem_gb, 2]) * 1000
     Int command_mem_mb = machine_mem_mb - 500
-    
+
     # Determine output filename
     String base_filename = basename(intervals, ".interval_list")
 
@@ -142,7 +142,7 @@ task FilterIntervals {
 
     Int machine_mem_mb = select_first([mem_gb, 7]) * 1000
     Int command_mem_mb = machine_mem_mb - 500
-    
+
     # Determine output filename
     String base_filename = basename(intervals, ".interval_list")
 
@@ -168,6 +168,9 @@ task FilterIntervals {
             --extreme-count-filter-percentage-of-samples ~{default="90.0" extreme_count_filter_percentage_of_samples} \
             --interval-merging-rule OVERLAPPING_ONLY \
             --output ~{base_filename}.filtered.interval_list
+
+        find . -name "*.interval_list"
+        find . -name "*.txt"
     >>>
 
     runtime {
@@ -180,6 +183,12 @@ task FilterIntervals {
 
     output {
         File filtered_intervals = "~{base_filename}.filtered.interval_list"
+
+        File? resolved_input_intervals = "~{base_filename}.filtered.input-resolved.interval_list"
+
+        File? filtered_away_by_gc = "~{base_filename}.filtered.0.GC-away.txt"
+        File? filtered_away_by_mappability = "~{base_filename}.filtered.1.Mappability-away.txt"
+        File? filtered_away_by_segdup = "~{base_filename}.filtered.2.SegDup-away.txt"
     }
 }
 
@@ -540,7 +549,7 @@ task CollectSampleQualityMetrics {
         NUM_SEGMENTS=$(gunzip -c ~{genotyped_segments_vcf} | grep -v '#' | wc -l)
         if [ $NUM_SEGMENTS -lt ~{maximum_number_events} ]; then
             echo "PASS" >> ~{entity_id}.qcStatus.txt
-        else 
+        else
             echo "EXCESSIVE_NUMBER_OF_EVENTS" >> ~{entity_id}.qcStatus.txt
         fi
     >>>
@@ -575,7 +584,7 @@ task CollectModelQualityMetrics {
     Int machine_mem_mb = select_first([mem_gb, 1]) * 1000
 
     command <<<
-        sed -e 
+        sed -e
         qc_status="PASS"
 
         gcnv_model_tar_array=(~{sep=" " gcnv_model_tars})
