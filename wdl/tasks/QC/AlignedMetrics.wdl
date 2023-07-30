@@ -209,6 +209,62 @@ task MosDepth {
     }
 }
 
+task MosDepthWGS {
+    input {
+        File bam
+        File bai
+        RuntimeAttr? runtime_attr_override
+    }
+    parameter_meta {
+        bam: {localization_optional: true}
+    }
+
+    Int disk_size = 10 + 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    String basename = basename(bam, ".bam")
+    String prefix = "~{basename}.mosdepth_coverage"
+
+    String local_bam = "/cromwell_root/~{basename}.bam"
+
+    command <<<
+        set -euxo pipefail
+
+        time gcloud storage cp ~{bam} ~{local_bam}
+
+        mv ~{bai} "~{local_bam}.bai"
+        mosdepth -x -n -Q1 ~{prefix} ~{local_bam} || echo "mosdepth failed somehow"
+        ls
+        cat ~{prefix}.mosdepth.summary.txt
+        tail -n1 ~{prefix}.mosdepth.summary.txt | \
+            awk -F '\t' '{print $4}' | \
+            xargs printf "%0.2f\n" > wgs.cov.txt
+    >>>
+
+    output {
+        Float wgs_cov = read_float("wgs.cov.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/mosdepth:0.3.4-gcloud"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task MosDepthOverBed {
     input {
         File bam
