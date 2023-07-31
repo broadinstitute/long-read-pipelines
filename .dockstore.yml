@@ -105,3 +105,6 @@ workflows:
 - name: SvimAsmAssemblyVariants
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/SvimAsmAssemblyVariants.wdl
+- name: HiCanuLocalAssembly
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/HiCanuLocalAssembly.wdl
