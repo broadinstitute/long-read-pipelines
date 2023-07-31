@@ -77,6 +77,7 @@ workflow ONT10x {
                 call AR.Minimap2 as AlignConsensus {
                     input:
                         reads      = [ fq ],
+                        reads_file_basenames = [basename(fq)],
                         ref_fasta  = ref_map['fasta'],
                         RG         = rg_consensus,
                         map_preset = "splice"

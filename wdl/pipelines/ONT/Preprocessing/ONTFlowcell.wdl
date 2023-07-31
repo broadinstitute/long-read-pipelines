@@ -93,9 +93,15 @@ workflow ONTFlowcell {
     call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = manifest, N = num_shards }
 
     scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
+        Array[File] reads_arr = read_lines(manifest_chunk)
+        scatter (dummy in reads_arr) {
+            String read_basename = basename(dummy)
+        }
+        Array[String] reads_file_basenames = read_basename
         call AR.Minimap2 as AlignReads {
             input:
-                reads      = read_lines(manifest_chunk),
+                reads      = reads_arr,
+                reads_file_basenames = reads_file_basenames,
                 ref_fasta  = ref_map['fasta'],
                 RG         = RG,
                 map_preset = map_presets[experiment_type]
