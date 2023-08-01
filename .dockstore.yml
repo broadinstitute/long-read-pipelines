@@ -108,3 +108,7 @@ workflows:
 - name: HiCanuLocalAssembly
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/HiCanuLocalAssembly.wdl
+- name: FlyeLocalAssembly
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/FlyeLocalAssembly.wdl
+~
