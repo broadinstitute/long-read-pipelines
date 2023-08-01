@@ -5,6 +5,11 @@ import "../../../tasks/Visualization/MalariaReports.wdl" as MRS
 
 workflow GenerateMalariaReports {
 
+    meta {
+        author: "Bridget Knight"
+        description: "## Report Generation \n This workflow calls the Python script that generates a sequencing report."
+    }
+
     input {
         Int mem_gb
         String docker_image
@@ -14,11 +19,6 @@ workflow GenerateMalariaReports {
         input: 
             mem_gb = mem_gb 
             docker_image = docker_image
-    }
-
-    meta {
-        author: "Bridget Knight"
-        description: "## Report Generation \n This workflow calls the Python script that generates a sequencing report."
     }
 
 }
