@@ -1,42 +1,6 @@
 version 1.0
 
-workflow runTRGT {
-
-  meta {
-    description: "Uses TRGT to size TRs in a bam file."
-  }
-
-  input {
-    File input_bam
-    File input_bam_bai
-    String basename = basename(input_bam, ".bam")
-    String output_gs_path
-    File ref_dict
-    File ref_fasta
-    File ref_fasta_index
-    File repeatCatalog = "https://zuchnerlab.s3.amazonaws.com/RepeatExpansions/TRGT/adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0.bed"
-
-    #Optional runtime arguments
-    RuntimeAttr? runtime_attr_override
-  }
-
-  call processWithTRGT {
-    input:
-      input_bam = input_bam,
-      input_bam_bai = input_bam_bai,
-      basename = basename,
-      ref_fasta = ref_fasta,
-      ref_fasta_index = ref_fasta_index,
-      ref_dict = ref_dict,
-      repeatCatalog = repeatCatalog,
-      runtime_attr_override = runtime_attr_override
-  }
-
-  output {
-    File trgt_output_vcf = processWithTRGT.trgt_output_vcf
-    File trgt_output_bam = processWithTRGT.trgt_output_bam
-  }
-}
+import "../../structs/Structs.wdl"
 
 task processWithTRGT {
   input {
@@ -46,30 +10,20 @@ task processWithTRGT {
     File ref_fasta
     File ref_fasta_index
     File ref_dict
-    File repeatCatalog
+    String repeatCatalog
+    Int cpuCores = 4
 
     RuntimeAttr? runtime_attr_override
 
   }
-  #########################
-  RuntimeAttr default_attr = object {
-      cpu_cores:          4,
-      mem_gb:             16,
-      disk_gb:            500,
-      boot_disk_gb:       10,
-      preemptible_tries:  3,
-      max_retries:        1,
-      docker:             "public.ecr.aws/s5z5a3q9/lr-trgt:0.4.0"
-  }
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
+  
   meta {
     description: "Uses TRGT to size TRs in a bam file."
   }
 
   command <<<
     set -euo pipefail
-    trgt --genome ~{ref_fasta} --repeats ~{repeatCatalog} --reads ~{input_bam} --threads ~{runtime_attr.cpu_cores} --output-prefix ~{basename}_trgt
+    trgt --genome ~{ref_fasta} --repeats ~{repeatCatalog} --reads ~{input_bam} --threads ~{cpuCores} --output-prefix ~{basename}_trgt
 
   >>>
 
@@ -77,6 +31,18 @@ task processWithTRGT {
     File trgt_output_vcf = "~{basename}_trgt.vcf.gz"
     File trgt_output_bam = "~{basename}_trgt.spanning.bam"
   }
+  
+  #########################
+  RuntimeAttr default_attr = object {
+      cpu_cores:          cpuCores,
+      mem_gb:             16,
+      disk_gb:            500,
+      boot_disk_gb:       10,
+      preemptible_tries:  3,
+      max_retries:        1,
+      docker:             "us.gcr.io/broad-dsp-lrma/lr-trgt:0.4.0"
+  }
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   runtime {
       cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])

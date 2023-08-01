@@ -4,8 +4,6 @@ import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/VariantCalling/CallVariantsPBCCS.wdl" as VAR
 import "../../../tasks/Utility/Finalize.wdl" as FF
-import "../../../tasks/VariantCalling/TRGT.wdl" as TRGT
-
 import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow PBCCSWholeGenome {
@@ -62,9 +60,6 @@ workflow PBCCSWholeGenome {
         Int? dvp_memory = 128
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
-
-        Boolean call_trs = true
-        File? trs_catalog
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -174,17 +169,6 @@ workflow PBCCSWholeGenome {
         }
     }
 
-    if call_trs {
-        call TRGT.runTRGT {
-            input:
-                input_bam         = bam,
-                input_bam_bai     = bai,
-                output_gs_path    = svdir,
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict']
-    }
-
     output {
         File aligned_bam = FinalizeBam.gcs_path
         File aligned_bai = FinalizeBai.gcs_path
@@ -223,8 +207,5 @@ workflow PBCCSWholeGenome {
         File? dvp_g_tbi = FinalizeDVPepperGTbi.gcs_path
         File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
         File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
-
-        File? trgt_vcf = runTRGT.trgt_output_vcf
-        File? trgt_bam = runTRGT.trgt_output_bam
     }
 }
