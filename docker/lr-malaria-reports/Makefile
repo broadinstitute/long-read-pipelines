@@ -15,3 +15,4 @@ build_no_cache:
 push:
 	docker push $(TAG1)
 	docker push $(TAG2)
+

@@ -1,6 +1,7 @@
+# Base image
 FROM continuumio/miniconda3
 
-MAINTAINER Bridget Knight
+LABEL Bridget Knight
 
 # install gsutil
 RUN apt-get --allow-releaseinfo-change update
