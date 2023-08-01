@@ -1,5 +1,9 @@
 version 1.0
 
+import "tasks/Structs.wdl" as Structs
+import "tasks/Utils.wdl" as Utils
+import "tasks/Finalize.wdl" as FF
+
 workflow TrainCnnFilters {
     meta {
         author: "Jonn Smith"
@@ -7,14 +11,109 @@ workflow TrainCnnFilters {
     }
 
     input {
+        Array[File] vcfs
+        Array[File] vcf_indices
 
+        Array[File] bams
+        Array[File] bais
+
+        Array[File] truth_vcfs
+        Array[File] truth_vcf_indices
+        Array[File] truth_beds
+
+        File ref_map_file
+
+        String prefix = "out"
+    }
+
+    parameter_meta {
+        vcfs:               "GCS path to VCF files containing called variants on which to train / test / validate the CNN models."
+        vcf_indices:        "GCS path to index files for called variants on which to train / test / validate the CNN models."
+
+        bams:                "GCS path to bam files containing the either the mapped reads from which variants were called, or a bam-out from the variant caller that produced the input VCF files."
+        bais:                "GCS path to index files for the bam files containing the either the mapped reads from which variants were called, or a bam-out from the variant caller that produced the input VCF files."
+
+        truth_vcfs:         "GCS path to VCF files containing validated variant calls (\"truth\")  for the corresponding called variants in `vcfs`."
+        truth_vcf_indices:  "GCS path to index files for VCF files containing validated variant calls (\"truth\") for the corresponding called variants in `vcfs`."
+        truth_beds:         "GCS path to bed files with confident regions for the given `truth_vcfs`"
+
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+    }
+
+    # Get ref info:
+    Map[String, String] ref_map = read_map(ref_map_file)
+
+    # TODO: Validate that lengths of all inputs are the same:
+    if ((length(vcfs) != length(vcf_indices)) || (length(vcfs) != length(vcf_indices)) || (length(vcfs) != length(vcf_indices)) || (length(vcfs) != length(vcf_indices)) || (length(vcfs) != length(vcf_indices))) {
+        call Utils.FailWithWarning {input: warning="Not all input arrays have the same length!"}
+    }
+
+    # First create tensors for the input data:
+    scatter (idx_1 in range(length(vcfs))) {
+        # 1D CNN:
+        call Create1DReferenceTensors {
+            input:
+                vcf_input = vcfs[idx_1],
+                vcf_idx = vcf_indices[idx_1],
+                ref_fasta = ref_map['fasta'],
+                ref_fasta_fai = ref_map["fai"],
+                ref_dict  = ref_map['dict'],
+                truth_vcf = truth_vcfs[idx_1],
+                truth_vcf_idx = truth_vcf_indices[idx_1],
+                truth_bed = truth_beds[idx_1],
+                prefix = prefix + "_shard_" + idx_1 + "reference"
+        }
+        # 2D CNN:
+        call Create2DReadTensors {
+            input:
+                bam_input = bams[idx_1],
+                bai_input = bais[idx_1],
+                vcf_input = vcfs[idx_1],
+                vcf_idx = vcf_indices[idx_1],
+                ref_fasta = ref_map['fasta'],
+                ref_fasta_fai = ref_map["fai"],
+                ref_dict  = ref_map['dict'],
+                truth_vcf = truth_vcfs[idx_1],
+                truth_vcf_idx = truth_vcf_indices[idx_1],
+                truth_bed = truth_beds[idx_1],
+                prefix = prefix + "_shard_" + idx_1 + "reference"
+        }
+    }
+
+    # Train the models with the created Tensors:
+    # CNN 1D:
+    call TrainCnn as TrainCnn1D {
+        input:
+            tensor_tars = Create1DReferenceTensors.tensor_dir_tar,
+            tensor_type = "reference",
+            epochs = 100,
+            training_steps = 100,
+            validation_steps = 6,
+            prefix = prefix + "_CNN_1D_Model"
+    }
+
+    # CNN 2D:
+    call TrainCnn as TrainCnn2D {
+        input:
+            tensor_tars = Create2DReadTensors.tensor_dir_tar,
+            tensor_type = "read_tensor",
+            epochs = 100,
+            training_steps = 100,
+            validation_steps = 6,
+            prefix = prefix + "_CNN_2D_Model"
     }
 
     output {
+        Array[File] cnn_1d_tensors = Create1DReferenceTensors.tensor_dir_tar
+        Array[File] cnn_2d_tensors = Create2DReadTensors.tensor_dir_tar
 
+        File cnn_1d_model_json = TrainCnn1D.model_json
+        File cnn_1d_model_hd5 = TrainCnn1D.model_hd5
+
+        File cnn_2d_model_json = TrainCnn2D.model_json
+        File cnn_2d_model_hd5 = TrainCnn2D.model_hd5
     }
 }
-
 
 task Create1DReferenceTensors {
 
@@ -25,12 +124,14 @@ task Create1DReferenceTensors {
 
     input {
         File vcf_input
+        File vcf_idx
 
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
 
         File truth_vcf
+        File truth_vcf_idx
         File truth_bed
 
         String prefix = "out"
@@ -106,13 +207,17 @@ task Create2DReadTensors {
 
     input {
         File bam_input
+        File bai_input
+
         File vcf_input
+        File vcf_idx
 
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
 
         File truth_vcf
+        File truth_vcf_idx
         File truth_bed
 
         String prefix = "out"
@@ -181,77 +286,6 @@ task Create2DReadTensors {
     }
 }
 
-task TrainCnn1D {
-
-    meta {
-        author: "Jonn Smith"
-        description: "Task to train the 1D CNN with 1D tensors"
-    }
-
-    input {
-        Array[File] tensor_tars
-
-        Int epochs = 100
-        Int training_steps = 100
-        Int validation_steps = 6
-
-        String prefix = "out"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 1 + 30*ceil(size(tensor_tars, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
-        # Must pre-process the given tensor_tars into a single folder:
-
-        ${GATK} CNNVariantTrain \
-            -tensor-type reference \
-            --epochs ~{epochs} \
-            --training-steps ~{training_steps} \
-            --validation-steps ~{validation_steps} \
-            -input-tensor-dir p_falciparum_ref_model_tensors_all_variants/ \
-            -model-name ~{prefix}_CNN_1D_model \
-
-        kill $monitoring_pid
-    >>>
-
-    output {
-        File monitoring_log = "resources.log"
-        File model_hd5 = "~{prefix}_CNN_1D_model.hd5"
-        File model_json = "~{prefix}_CNN_1D_model.json"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             32,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  1,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
 task TrainCnn {
 
     meta {
@@ -272,7 +306,8 @@ task TrainCnn {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 30*ceil(size(tensor_tars, "GB"))
+    # We need a lot of disk space here for the unpacked tensors and final model:
+    Int disk_size = 1 + 4*ceil(size(tensor_tars, "GB"))
 
     command <<<
         set -euxo pipefail
