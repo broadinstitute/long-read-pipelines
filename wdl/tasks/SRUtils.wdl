@@ -366,7 +366,7 @@ task MarkDuplicates {
     # This works because the output of BWA is query-grouped and therefore, so is the output of MergeBamAlignment.
     # While query-grouped isn't actually query-sorted, it's good enough for MarkDuplicates with ASSUME_SORT_ORDER="queryname"
 
-    command {
+    command <<<
 
         export MONITOR_MOUNT_POINT="/cromwell_root"
         curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
@@ -391,7 +391,7 @@ task MarkDuplicates {
             ADD_PG_TAG_TO_READS=false
 
         kill $monitoring_pid
-    }
+    >>>
 
     output {
         File monitoring_log = "resources.log"
@@ -402,7 +402,7 @@ task MarkDuplicates {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
-        mem_gb:             48,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
