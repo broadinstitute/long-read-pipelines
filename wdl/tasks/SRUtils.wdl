@@ -375,7 +375,7 @@ task MarkDuplicates {
         monitoring_pid=$!
 
         tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
-        let java_memory_size_mb=${tot_mem_mb}-2048
+        let java_memory_size_mb=${tot_mem_mb}-5120
 
         java -Dsamjdk.compression_level=~{compression_level} -Xms${java_memory_size_mb}m -jar /usr/picard/picard.jar \
             MarkDuplicates \
