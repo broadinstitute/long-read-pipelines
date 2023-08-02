@@ -359,7 +359,6 @@ task MarkDuplicates {
     }
 
     Int compression_level = 2
-    Int java_memory_size_mb = 30768
 
     Int disk_size = 1 + 4*ceil(size(input_bam, "GB"))
 
@@ -375,32 +374,35 @@ task MarkDuplicates {
         ./monitoring_script.sh &> resources.log &
         monitoring_pid=$!
 
-        java -Dsamjdk.compression_level=~{compression_level} -Xms~{java_memory_size_mb}m -jar /usr/picard/picard.jar \
-        MarkDuplicates \
-        INPUT=~{input_bam} \
-        OUTPUT=~{prefix}.bam \
-        METRICS_FILE=~{prefix}.metrics.txt \
-        VALIDATION_STRINGENCY=SILENT \
-        ~{"READ_NAME_REGEX=" + read_name_regex} \
-        ~{"SORTING_COLLECTION_SIZE_RATIO=" + sorting_collection_size_ratio} \
-        OPTICAL_DUPLICATE_PIXEL_DISTANCE=2500 \
-        ASSUME_SORT_ORDER="queryname" \
-        CLEAR_DT="false" \
-        ADD_PG_TAG_TO_READS=false
+        tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
+        let java_memory_size_mb=${tot_mem_mb}-2048
+
+        java -Dsamjdk.compression_level=~{compression_level} -Xms${java_memory_size_mb}m -jar /usr/picard/picard.jar \
+            MarkDuplicates \
+            INPUT=~{input_bam} \
+            OUTPUT=~{prefix}.bam \
+            METRICS_FILE=~{prefix}.metrics.txt \
+            VALIDATION_STRINGENCY=SILENT \
+            ~{"READ_NAME_REGEX=" + read_name_regex} \
+            ~{"SORTING_COLLECTION_SIZE_RATIO=" + sorting_collection_size_ratio} \
+            OPTICAL_DUPLICATE_PIXEL_DISTANCE=2500 \
+            ASSUME_SORT_ORDER="queryname" \
+            CLEAR_DT="false" \
+            ADD_PG_TAG_TO_READS=false
 
         kill $monitoring_pid
     }
 
     output {
+        File monitoring_log = "resources.log"
         File bam = "~{prefix}.bam"
         File metrics = "~{prefix}.metrics.txt"
-        File monitoring_log = "resources.log"
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
-        mem_gb:             32,
+        mem_gb:             48,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
