@@ -18,6 +18,9 @@ import plotly.graph_objects as go
 from markupsafe import Markup
 import jinja2
 
+# Argument Parsing
+import argparse
+
 
 '''
 Coverage Plot
@@ -381,7 +384,7 @@ def create_map(coordinates, sample_name):
     m.get_root().height = "397px"
     map_html = m.get_root()._repr_html_()
     
-    with open('github/lr-malaria-automation-report/report_files/templates/map.html', mode='w') as f:
+    with open('/templates/map.html', mode='w') as f:
         f.write(map_html)
     
     return map_html
@@ -437,7 +440,6 @@ class Sample:
         self.map = _map
         self.location_info = location_info
 
-# %%
 class Analysis:
     '''
     This class holds all variables used on the analysis page of the report.
@@ -445,13 +447,13 @@ class Analysis:
     Additionally, it passes in variables needed for plot generation in Javascript.
     '''
     
-    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, reference_info):
+    def __init__(self, sequencing_summary, qscore_reads, qscore_scores):
         '''This function defines the variables used and retrieves them from their respective functions.'''
         
         self.sequencing_summary = sequencing_summary
         self.scores = qscore_scores
         self.reads = qscore_reads
-        self.reference_info = reference_info
+        # self.reference_info = reference_info
 
 
 def create_report(sample, analysis):
@@ -461,30 +463,8 @@ def create_report(sample, analysis):
     It pools all variables and data needed for the report and creates two objects:
     analysis and summary. These objects hold the variables and are passed to their respective
     page templates (analysis or summary).
-
-    These values will later be taken from the Terra workspace. 
-    QC_status will be determined via an undetermined method.
     '''
 
-    ''' Summary Page Variables '''
-    hb3_info = ['2021-07-16', 'P. falciparum', '210', '5,394'+' bp', '1,294'+' bp','17.1']
-    hb3_resistances = create_drug_table('drug_resistance_report.txt')
-    coordinates = [14.5,14.5]
-    _map = create_map(coordinates, 'HB3')
-    coordinates.append('Doundodji, Senegal')
-    hb3_summary = Sample('hb3', 'Positive', 'Negative', 'PASS', hb3_resistances, hb3_info, _map, coordinates)
-
-    '''Analysis Page Variables'''
-    hb3_sequencing_summary = ['sWGA','Pass','15,650,871,313 bp','13,381,441 bp', '0.3', '92.6']
-    with open('github/lr-malaria-automation-report/report_files/templates/qscore_plot.html', 'r') as file:
-        graph_html = file.read()
-    hb3_qscorex = [5, 7, 10, 12, 15] # index
-    hb3_qscorey = [3413205, 3413204, 3413073, 3062945, 2120402] # q scores
-    hb3_reference_info = ['P. falciparum', 'Genes', 'BAM']
-    hb3_analysis = Analysis(hb3_sequencing_summary, hb3_qscorey, hb3_qscorex, hb3_reference_info)
-        
-    
-    
     # creating summary page
     templateLoader = jinja2.FileSystemLoader(searchpath='./')
     templateEnv = jinja2.Environment(loader=templateLoader)
@@ -504,11 +484,101 @@ def create_report(sample, analysis):
     with open('./lrma_report_analysis.html', 'w') as fh:
         fh.write(output)
         
-    print('report generated')
+    print('Report generated!')
 
 if __name__ == '__main__':
     '''Reports will be generated in the current working directory.'''
-    create_report(hb3_summary, hb3_analysis) 
+
+    # define parser object
+    parser = argparse.ArgumentParser()
+
+    # define accepted input arguments
+    ''' Summary Page '''
+    # required inputs
+    
+    # Sample Info
+    parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
+    parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", required=True)
+    parser.add_argument("--species", help="species of sample", required=True)
+    parser.add_argument("--aligned_coverage", help="number of reads uniquely mapped to a reference", required=True, type=int) # check -- fold coverage
+    parser.add_argument("--aligned_read_length_n50", help="number at which 50% of the read lengths are longer than this value", required=True, 
+                        type=int) # check
+    parser.add_argument("--aligned_read_length_median", help="median read length", required=True, type=int)
+    parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=int)
+
+    # Drug Resistance
+    parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", required=True, 
+                        type=argparse.FileType("r"))
+    parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", required=True)
+    parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", required=True)
+
+    # Map
+    parser.add_argument("--longitude", help="longitude value of where the sample was taken", required=True, type=int)
+    parser.add_argument("--latitude", help="latitude value of where the sample was taken", required=True, type=int)
+    parser.add_argument("--location", help="location where the sample was taken from", required=True) # check
+    
+    # QC Status
+    parser.add_argument("--qc_status", help="status to determine whether or not the sequencing run passes quality control standards", required=True)
+
+    ''' Analysis Page '''
+    # required inputs
+
+    # Active Channels
+    parser.add_argument("--active_channels", help="number of channels active in the sequencing device", required=True)
+
+    # Q-Scores Plot
+    parser.add_argument("--num_reads_q5", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 3", required=True)
+    parser.add_argument("--num_reads_q7", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 5", required=True)
+    parser.add_argument("--num_reads_q10", help="the number of reads where the probability of a given base call being wrong is 1 in 10", required=True)
+    parser.add_argument("--num_reads_q12", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 16", required=True)
+    parser.add_argument("--num_reads_q15", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 32", required=True)
+
+    # Sequencing Summary
+    parser.add_argument("--sample_prep", help="type of preparation used for the sample", required=True)
+    parser.add_argument("--analysis_success", help="whether the analysis process completed successfully", required=True)
+    parser.add_argument("--aligned_bases", help="total number of bases aligned to the reference genome", required=True)
+    parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True)
+    parser.add_argument("--fraction_aligned-bases", help="number of bases aligned out of all bases in the sequence", required=True) # check
+    parser.add_argument("--average_identity", help="", required=True) # check
+
+    # Coverage Plot -- incomplete
+
+    # parse given arguments
+    arg_dict = vars(args)
+
+    # prepare arguments for report generation
+    # first : summary page
+    sample_name = arg_dict['sample_name']
+    
+    info = [arg_dict['upload_date'], arg_dict['species'], arg_dict['aligned_coverage'], arg_dict['aligned_read_length'], 
+            arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
+
+    resistances = create_drug_table(arg_dict['drug_resistance_text'])
+
+    qc_status = arg_dict['qc_status']
+
+    coordinates = [arg_dict['latitude'], arg_dict['longitude']]
+    _map = create_map(coordinates, sample_name)
+
+    HRP2 = arg_dict['HRP2']
+    HRP3 = arg_dict['HRP3']
+
+    # second : analysis page
+    sequencing_summary = [arg_dict['sample_prep'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
+                          arg_dict['fraction_aligned_bases'], arg_dict['average_identity']]
+
+    active_channels = arg_dict['active_channels']
+
+    qscorex = [5, 7, 10, 12, 15] # available q-score measures are predetermined
+    qscorey = [arg_dict['num_reads_q5'], arg_dict['num_reads_q7'], arg_dict['num_reads_q10'], arg_dict['num_reads_q12'], arg_dict['num_reads_q15']]
+
+    # create summary and analysis objects to be passed 
+    summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, coordinates)
+
+    analysis = Analysis(sequencing_summary, qscorey, qscorex)
+
+    # finally, call function to populate and generate the report pages
+    create_report(summary, analysis)
 
 
 

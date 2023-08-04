@@ -106,8 +106,15 @@ task RunReportScript {
         # Coverage Plot -- incomplete
     }
 
+    # incomplete
     command <<<
-        python3 ../../docker/lr-malaria-reports/report_gen.py
+
+        python3 ../../docker/lr-malaria-reports/report_gen.py \
+        --sample-name ${sample_name} \
+        --upload-date ${upload_date} \
+        --species ${species} \
+        --aligned-coverage ${aligned_coverage}
+    
     >>>
 
     output {
@@ -115,7 +122,7 @@ task RunReportScript {
         File summary = "summary.html"
     }
     
-    
+
     # ----------------------------------------------------------- #
     # Runtime Config
 
