@@ -246,7 +246,7 @@ task MosDepthWGS {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             8,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
