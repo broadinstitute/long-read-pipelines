@@ -94,6 +94,7 @@ task RunReportScript {
         Int num_reads_q7
         Int num_reads_q10
         Int num_reads_q12
+        Int num_reads_q15
 
         # Sequencing Summary
         String sample_prep
@@ -110,16 +111,36 @@ task RunReportScript {
     command <<<
 
         python3 ../../docker/lr-malaria-reports/report_gen.py \
-        --sample-name ${sample_name} \
-        --upload-date ${upload_date} \
+        --sample_name ${sample_name} \
+        --upload_date ${upload_date} \
         --species ${species} \
-        --aligned-coverage ${aligned_coverage}
-    
+        --aligned_coverage ${aligned_coverage} \
+        --aligned_read_length_n50 ${aligned_read_length_n50} \
+        --aligned_read_length_median ${aligned_read_length_median} \
+        --read_qual_median ${read_qual_median} \
+        --drug_resistance_text ${drug_resistance_text} \
+        --HRP2 ${HRP2} \
+        --HRP3 ${HRP3} \
+        --longitude ${longitude} \
+        --latitude ${latitude} \
+        --location ${location} \
+        --qc_status ${qc_status} \
+        --active_channels ${active_channels} \
+        --num_reads_q5 ${num_reads_q5} \
+        --num_reads_q7 ${num_reads_q7} \
+        --num_reads_q10 ${num_reads_q10} \
+        --num_reads_q12 ${num_reads_q12} \
+        --sample_prep ${sample_prep} \
+        --analysis_success ${analysis_success} \
+        --aligned_reads ${aligned_reads} \
+        --fraction_aligned_bases ${fraction_aligned_bases} \
+        --average_identity ${average_identity}
+
     >>>
 
     output {
-        File analysis = "analysis.html"
-        File summary = "summary.html"
+        File analysis = "lrma_report_analysis.html"
+        File summary = "lrma_report_summary.html"
     }
     
 
