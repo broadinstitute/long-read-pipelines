@@ -111,4 +111,11 @@ workflows:
 - name: FlyeLocalAssembly
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/FlyeLocalAssembly.wdl
-~
+- name: Shapeit5
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/Shapeit5.wdl
+- name: PaftoolAsmVariants
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PaftoolAsmVariants.wdl
+
+
