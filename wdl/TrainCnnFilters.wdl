@@ -225,11 +225,11 @@ task Create2DReadTensors {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 4*ceil(size(bam_input, "GB") +
-                               size(vcf_input, "GB") +
-                               size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB") +
-                               size(truth_vcf, "GB") +
-                               size(truth_bed, "GB")
+    Int disk_size = 10 + 8*ceil(size(bam_input, "GB") +
+                                size(vcf_input, "GB") +
+                                size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB") +
+                                size(truth_vcf, "GB") +
+                                size(truth_bed, "GB")
                           )
 
     command <<<
