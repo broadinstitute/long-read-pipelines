@@ -156,3 +156,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/LRMergeSVVCFs.wdl
   testParameterFiles:
+- name: PALMER
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PALMER.wdl
+  testParameterFiles:

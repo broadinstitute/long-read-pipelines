@@ -1,0 +1,12 @@
+VERSION = 2.0.0
+TAG1 = quay.io/ymostovoy/lr-palmer:$(VERSION)
+TAG2 = quay.io/ymostovoy/lr-palmer:latest
+
+all: build push
+
+build:
+	docker build -t $(TAG1) -t $(TAG2) .
+
+push:
+	docker push $(TAG1)
+	docker push $(TAG2)
