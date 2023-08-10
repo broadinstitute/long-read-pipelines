@@ -323,7 +323,7 @@ task TrainCnn {
         cd tensors
         while read f ; do
             tar --strip-components 1 -xf $f
-        done < ${write_lines(tensor_tars)}
+        done < ~{write_lines(tensor_tars)}
         cd ../
 
         ${GATK} CNNVariantTrain \
