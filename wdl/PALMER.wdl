@@ -11,11 +11,10 @@ workflow CallPALMER {
         String prefix
         String mode
         String MEI_type
+        Array[String] contigs
     }
 
-    call Utils.ListBamContigs { input: bam = bam }
-
-    scatter (contig_name in ListBamContigs.contigs) {
+    scatter (contig_name in contigs) {
       call PALMER {
           input:
               bam = bam,
