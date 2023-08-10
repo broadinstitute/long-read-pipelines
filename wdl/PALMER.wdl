@@ -89,7 +89,7 @@ task PALMER {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "quay.io/ymostovoy/lr-palmer:2.0.0""
+        docker:             "quay.io/ymostovoy/lr-palmer:2.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
