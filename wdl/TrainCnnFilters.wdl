@@ -326,7 +326,7 @@ task TrainCnn {
         done < ~{write_lines(tensor_tars)}
         cd ../
 
-        ${GATK} CNNVariantTrain \
+        gatk CNNVariantTrain \
             -tensor-type reference \
             --epochs ~{epochs} \
             --training-steps ~{training_steps} \
