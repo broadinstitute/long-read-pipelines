@@ -13,7 +13,7 @@ workflow CallPALMER {
         String MEI_type
     }
 
-    call Utils.ListBamContigs { input: bam=bam }
+    call Utils.ListBamContigs { input: bam = bam }
 
     scatter (contig_name in ListBamContigs.contigs) {
       call PALMER {
@@ -23,12 +23,13 @@ workflow CallPALMER {
               ref_fa = ref_fa,
               prefix = prefix,
               mode = mode,
-              MEI_type = MEI_type
+              MEI_type = MEI_type,
+              chrom = contig_name
       }
     }
 
-    call Utils.Cat as merge_calls ( input: files = PALMER.calls, out = "~{prefix}_calls.txt" , has_header = true )
-    call Utils.Cat as merge_TSD_reads ( input: files = PALMER.TSD_reads, out = "~{prefix}_TSD_reads.txt" , has_header = true )
+    call Utils.Cat as merge_calls { input: files = PALMER.calls, out = "~{prefix}_calls.txt" , has_header = true }
+    call Utils.Cat as merge_TSD_reads { input: files = PALMER.TSD_reads, out = "~{prefix}_TSD_reads.txt" , has_header = true }
 
     output {
         File PALMER_calls = merge_calls.combined
