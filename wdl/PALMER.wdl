@@ -68,7 +68,7 @@ task PALMER {
 
         PALMER --input ~{bam} \
                  --ref_fa ~{ref_fa} \
-                 --ref_ver GRCH38 \
+                 --ref_ver GRCh38 \
                  --type ~{MEI_type} \
                  --mode ~{mode} \
                  --output ~{prefix} \
