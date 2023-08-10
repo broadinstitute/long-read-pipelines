@@ -21,10 +21,23 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
 		&& apt-get install google-cloud-sdk -y
 
 # install conda packages
-COPY ./environment.yml /
-RUN conda env create -f /environment.yml && conda clean -a
-RUN echo "source activate lr-malaria-reports" > ~/.bashrc
-ENV PATH=/opt/conda/envs/lr-malaria-reports/bin/:/root/google-cloud-sdk/bin/:${PATH}
+#COPY ./environment.yml /
+#RUN conda env create -f /environment.yml && conda clean -a
+#RUN echo "source activate lr-malaria-reports" > ~/.bashrc
+#ENV PATH=/opt/conda/envs/lr-malaria-reports/bin/:/root/google-cloud-sdk/bin/:${PATH}
+
+# make sure pip is up to date
+RUN pip install --upgrade pip==23.2.1
+
+# install other packages
+FROM python:3.8
+RUN pip3 install NumPy==1.24.4
+RUN pip3 install pandas==1.3.0
+RUN pip3 install --no-cache-dir argparse==1.4.0 folium==0.14.0 jinja2==3.1.2 \
+		MarkupSafe==2.1.3 matplotlib==3.7.2 \
+		plotly==5.15.0 tabulate==0.9.0
+
+ENV PATH=/root/google-cloud-sdk/bin/:${PATH}
 
 # copy other resources
-COPY ./report-files/report_gen.py /
+COPY ./report-files /

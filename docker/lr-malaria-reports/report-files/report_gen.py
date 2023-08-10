@@ -384,7 +384,7 @@ def create_map(coordinates, sample_name):
     m.get_root().height = "397px"
     map_html = m.get_root()._repr_html_()
     
-    with open('/templates/map.html', mode='w') as f:
+    with open('/templates/map.html', mode='w+') as f:
         f.write(map_html)
     
     return map_html
@@ -447,12 +447,13 @@ class Analysis:
     Additionally, it passes in variables needed for plot generation in Javascript.
     '''
     
-    def __init__(self, sequencing_summary, qscore_reads, qscore_scores):
+    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, active_channels):
         '''This function defines the variables used and retrieves them from their respective functions.'''
         
         self.sequencing_summary = sequencing_summary
         self.scores = qscore_scores
         self.reads = qscore_reads
+        self.active_channels = active_channels
         # self.reference_info = reference_info
 
 
@@ -500,7 +501,7 @@ if __name__ == '__main__':
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
     parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", required=True)
     parser.add_argument("--species", help="species of sample", required=True)
-    parser.add_argument("--aligned_coverage", help="number of reads uniquely mapped to a reference", required=True, type=int) # check -- fold coverage
+    parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=int) # check -- fold coverage
     parser.add_argument("--aligned_read_length_n50", help="number at which 50% of the read lengths are longer than this value", required=True, 
                         type=int) # check
     parser.add_argument("--aligned_read_length_median", help="median read length", required=True, type=int)
@@ -513,9 +514,9 @@ if __name__ == '__main__':
     parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", required=True)
 
     # Map
-    parser.add_argument("--longitude", help="longitude value of where the sample was taken", required=True, type=int)
-    parser.add_argument("--latitude", help="latitude value of where the sample was taken", required=True, type=int)
-    parser.add_argument("--location", help="location where the sample was taken from", required=True) # check
+    parser.add_argument("--longitude", help="longitude value of where the sample was collected", required=True, type=int)
+    parser.add_argument("--latitude", help="latitude value of where the sample collected", required=True, type=int)
+    parser.add_argument("--location", help="location where the sample was collected", required=True)
     
     # QC Status
     parser.add_argument("--qc_status", help="status to determine whether or not the sequencing run passes quality control standards", required=True)
@@ -538,25 +539,27 @@ if __name__ == '__main__':
     parser.add_argument("--analysis_success", help="whether the analysis process completed successfully", required=True)
     parser.add_argument("--aligned_bases", help="total number of bases aligned to the reference genome", required=True)
     parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True)
-    parser.add_argument("--fraction_aligned-bases", help="number of bases aligned out of all bases in the sequence", required=True) # check
+    parser.add_argument("--fraction_aligned_bases", help="number of bases aligned out of all bases sequenced", required=True)
     parser.add_argument("--average_identity", help="", required=True) # check
 
     # Coverage Plot -- incomplete
 
     # parse given arguments
+    args = parser.parse_args()
     arg_dict = vars(args)
 
     # prepare arguments for report generation
     # first : summary page
     sample_name = arg_dict['sample_name']
     
-    info = [arg_dict['upload_date'], arg_dict['species'], arg_dict['aligned_coverage'], arg_dict['aligned_read_length'], 
+    info = [arg_dict['upload_date'], arg_dict['species'], arg_dict['aligned_coverage'], arg_dict['aligned_read_length_n50'], 
             arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
 
-    resistances = create_drug_table(arg_dict['drug_resistance_text'])
+    resistances = create_drug_table(arg_dict['drug_resistance_text'].name)
 
     qc_status = arg_dict['qc_status']
 
+    location_info = [arg_dict['latitude'], arg_dict['longitude'], arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
     _map = create_map(coordinates, sample_name)
 
@@ -573,9 +576,9 @@ if __name__ == '__main__':
     qscorey = [arg_dict['num_reads_q5'], arg_dict['num_reads_q7'], arg_dict['num_reads_q10'], arg_dict['num_reads_q12'], arg_dict['num_reads_q15']]
 
     # create summary and analysis objects to be passed 
-    summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, coordinates)
+    summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
 
-    analysis = Analysis(sequencing_summary, qscorey, qscorex)
+    analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels)
 
     # finally, call function to populate and generate the report pages
     create_report(summary, analysis)

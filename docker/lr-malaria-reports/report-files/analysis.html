@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<!-- saved from url=(0023)https://by3p9b.csb.app/ -->
+<html lang="en">
+    <head>
+      <script src="https://cdn.jsdelivr.net/npm/igv@2.15.5/dist/igv.min.js"></script>
+      <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+      <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        
+      <link href="https://fonts.googleapis.com/css2?family=Rubik&display=swap" rel="stylesheet">
+      <title>sample_analysis</title>    
+
+      <style id="/src/components/_resets.module.css:-css" type="text/css">
+          ._src_components_resets_module__storybrainResets,
+          ._src_components_resets_module__storybrainResets :not(span, a, ul, ol, li, p, iframe, script, td, th, table) {
+            display: flex;
+          }
+      </style>
+    </head>
+
+<style id="/src/components/DesktopAnalysis/DesktopAnalysis.module.css:-css" type="text/css">
+
+._src_components_DesktopAnalysis_DesktopAnalysis_module__root {
+  position: relative;
+  width: 1434px;
+  height: 1995px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+
+._src_components_DesktopAnalysis_DesktopAnalysis_module__mainFrame {
+  position: absolute;
+  left: 277px;
+  top: 109px;
+  width: min-content;
+  height: 535px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  outline: solid 1px #dfe1e5;
+  outline-offset: -1px;
+}
+
+/* sample name box */
+._src_components_DesktopAnalysis_DesktopAnalysis_module__titleSampleName {
+  z-index: 0;
+  position: relative;
+  width: 1144px;
+  height: 130px;
+  align-items: flex-start;
+  outline: solid 1px #dfe1e5;
+  outline-offset: -1px;
+  overflow: hidden;
+}
+
+/* sample name spacing */
+._src_components_DesktopAnalysis_DesktopAnalysis_module__sampleNameHB3 {
+  position: absolute;
+  left: 26px;
+  top: 23px;
+  width: 1098px;
+  height: 20px;
+  justify-content: center;
+  flex-direction: column;
+}
+
+/* sample name label */
+._src_components_DesktopAnalysis_DesktopAnalysis_module__label {
+  color: #000;
+  font-size: 30px;
+  line-height: 20px;
+  font-weight: 500;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+}
+
+/* sample name value */
+._src_components_DesktopAnalysis_DesktopAnalysis_module__label2 {
+  color: #000;
+  font-size: 30px;
+  line-height: 20px;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+}
+
+/* general spacing */
+._src_components_DesktopAnalysis_DesktopAnalysis_module__frame8 {
+  z-index: 0;
+  position: relative;
+  width: 1144px;
+  height: 444px;
+  align-items: flex-start;
+}
+
+/* sequencing summary box */
+._src_components_DesktopAnalysis_DesktopAnalysis_module__rectangle1 {
+  position: absolute;
+  left: 18.0054px;
+  top: 150px;
+  width: 553.9928px;
+  height: 294px;
+  outline: solid 1px #dfe1e5;
+  outline-offset: -1px;
+}
+
+/* sequencing summary lines */
+._src_components_DesktopAnalysis_DesktopAnalysis_module__frame3 {
+  position: absolute;
+  left: 19.0072px;
+  top: 184.7412px;
+  width: 553.9928px;
+  height: 300.1917px;
+  flex-direction: column;
+  gap: 35px;
+  padding: 32px 15px;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line4 {
+  width: 512.5175px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, -0.002, 0.0005, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line5 {
+  width: 513px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line6 {
+  width: 513px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line7 {
+  width: 513px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line8 {
+  width: 513px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line9 {
+  width: 513px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line10 {
+  width: 513px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+
+/* sequencing summary title */
+._src_components_DesktopAnalysis_DesktopAnalysis_module__sequencingSummary {
+  color: #000;
+  font-size: 26px;
+  line-height: 20px;
+  font-weight: 500;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 34.0341px;
+  top: 171px;
+  width: 529.507px;
+  height: 37.4482px;
+  justify-content: center;
+  flex-direction: column;
+}
+
+/* sequencing summary right side */
+._sequencing_summary_right_side {
+  position: absolute;
+  left: 281.4775px;
+  top: 222px;
+  width: 267.4793px;
+  height: 218px;
+  flex-direction:column;
+  align-items:flex-end;
+  white-space:nowrap;
+}
+
+
+/* sequencing summary left side */
+._sequencing_summary_left_side {
+    position: absolute;
+    left: 35.0359px;
+    top: 275px;
+    width: 279.5009px;
+    height: 100px;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+.sign-in-text {
+  position: absolute;
+  top: 13px;
+  left: 220px;
+  color: #595959;
+  font-size: 16px;
+  line-height: 20px;
+  width:600px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+}
+._sequencing_summary_text {
+  color: #000;
+  font-size: 18px;
+  line-height: 35px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+}
+
+._src_components_DesktopAnalysis_DesktopAnalysis_module__panel1 {
+    box-sizing: border-box;
+
+    position: absolute;
+    width: 544px;
+    height: 444px;
+    left: 587px;
+    top: 0px;
+
+    border: 1px solid #DFE1E5;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__qScores {
+  color: #000;
+  font-size: 26px;
+  line-height: 20px;
+  font-weight: 500;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 602.2239px;
+  top: 18.3724px;
+  width: 513.3381px;
+  height: 40.9719px;
+  justify-content: center;
+  flex-direction: column;
+}
+._qscores_plot {
+  position: absolute;
+  left: 590px;
+  top: 85px;
+  width: 200.6255px;
+  height: 359.082px;
+}
+
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line42 {
+  position: absolute;
+  left: 603.0768px;
+  top: 67.7104px;
+  width: 510.3719px;
+  max-width: 100%;
+  height: 1px;
+  max-height: 100%;
+  overflow: visible;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__icon2 {
+  width: 100%;
+  height: 100%;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__image7 {
+  opacity: 0.4;
+  position: absolute;
+  left: 1090.403px;
+  top: 13.269px;
+  width: 24.9541px;
+  height: 25.5172px;
+  background-image:/* webpackIgnore: true */ url('static/images/image7.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__rectangle2 {
+  position: absolute;
+  left: 19px;
+  top: 0;
+  width: 553px;
+  height: 138px;
+  outline: solid 1px #dfe1e5;
+  outline-offset: -1px;
+  background-color: #fff;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module___492 {
+  color: #2494c7;
+  font-size: 30px;
+  line-height: 20px;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 265.3364px;
+  top: 44.3212px;
+  width: 54.2945px;
+  height: 20.146px;
+  justify-content: center;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__activeChannels {
+  color: #000;
+  font-size: 20px;
+  line-height: 20px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 202.9982px;
+  top: 74.5401px;
+  width: 185.0036px;
+  height: 19.1387px;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__row1 {
+  z-index: 0;
+  position: relative;
+  width: 1144px;
+  height: 474px;
+  align-items: flex-start;
+  overflow: hidden;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__rectangle12 {
+  position: absolute;
+  left: 18px;
+  top: 10px;
+  width: 1107px;
+  height: 462px;
+  outline: solid 1px #dfe1e5;
+  outline-offset: -1px;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__coveragePlot {
+  color: #000;
+  font-size: 26px;
+  line-height: 20px;
+  font-weight: 500;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 42px;
+  top: 45px;
+  width: 519px;
+  height: 26.9455px;
+  justify-content: center;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line43 {
+  position: absolute;
+  left: 42px;
+  top: 91px;
+  width: 1060.0005px;
+  max-width: 100%;
+  height: 1px;
+  max-height: 100%;
+  overflow: visible;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__icon3 {
+  width: 100%;
+  height: 100%;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__image12 {
+  position: absolute;
+  left: 48px;
+  top: 110px;
+  width: 1048px;
+  height: 342px;
+  background-image:/* webpackIgnore: true */ url('static/images/image12.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__row3Table {
+  z-index: 0;
+  position: relative;
+  width: 1137px;
+  height: 859px;
+  align-items: flex-start;
+  overflow: hidden;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__genomeViewer {
+  color: #000;
+  font-size: 28px;
+  line-height: 20px;
+  font-weight: 500;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 131px;
+  top: 56px;
+  width: 519px;
+  height: 26.9455px;
+  justify-content: center;
+  flex-direction: column;
+}
+.igv_line {
+  color: #000;
+  position: absolute;
+  left: 125px;
+}
+._igv_frame {
+  z-index:2;
+  position: absolute;
+  left: 115px;
+  top: 145px;
+  width: 920.9999px;
+  height: 1.058px;
+  overflow: visible;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__icon4 {
+  width: 100%;
+  height: 100%;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__rectangle3 {
+  position: absolute;
+  left: 18px;
+  top: 10px;
+  width: 1107px;
+  height: 831px;
+  overflow: visible;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__icon5 {
+  width: 100%;
+  height: 100%;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__image6 {
+  position: absolute;
+  left: 44px;
+  top: 34px;
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  background-image:/* webpackIgnore: true */ url('static/images/image6.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  box-shadow: 4px 4px 4px 0px #00000040;
+}
+.igv_div {
+  position: absolute;
+  left: 44px;
+  top: 200px;
+  width: 1054px;
+  height: 469px;
+
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__frame32 {
+  position: absolute;
+  left: 31px;
+  top: 683px;
+  width: 1067px;
+  height: 138px;
+  flex-direction: column;
+  gap: 35px;
+  padding: 32px 15px;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line45 {
+  width: 1051.0089px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, -0.001, 0.0009, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line52 {
+  width: 1052px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line62 {
+  width: 1052px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line72 {
+  width: 1052px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__referenceInfo {
+  color: #000;
+  font-size: 26px;
+  line-height: 20px;
+  font-weight: 500;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 44px;
+  top: 674px;
+  width: 1020px;
+  height: 37px;
+  justify-content: center;
+  flex-direction: column;
+}
+._reference_info_left_side {
+  position: absolute;
+  left: 44px;
+  top: 721px;
+  width: 538px;
+  height: 140px;
+  height: 100px;
+  justify-content: center;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__textBlock13 {
+  color: #000;
+  font-size: 18px;
+  line-height: 35px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__textBlock14 {
+  margin-top: 0;
+  color: #000;
+  font-size: 18px;
+  line-height: 35px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__textBlock15 {
+  margin-top: 0;
+  color: #000;
+  font-size: 18px;
+  line-height: 35px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+}
+
+/* sequencing summary right side */
+._sequencing_summary_right_side {
+  position: absolute;
+  left: 281.4775px;
+  top: 222px;
+  width: 267.4793px;
+  height: 218px;
+  flex-direction:column;
+  align-items:flex-end;
+  white-space:nowrap;
+}
+
+
+/* sequencing summary left side */
+._sequencing_summary_left_side {
+    position: absolute;
+    left: 35.0359px;
+    top: 275px;
+    width: 279.5009px;
+    height: 100px;
+    justify-content: center;
+    flex-direction: column;
+  }
+._reference_info_right_side {
+  position: absolute;
+  left: 559px;
+  top: 721px;
+  width: 538px;
+  height: 140px;
+  flex-direction:column;
+  align-items:flex-end;
+  white-space:nowrap;
+}
+._reference_info_text {
+  color: #000;
+  font-size: 18px;
+  line-height: 35px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line63 {
+  transform-origin: bottom left;
+  position: absolute;
+  left: 18px;
+  top: 644px;
+  width: 1107.0005px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, -0.0009, 0.0009, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__sidebar {
+  position: absolute;
+  left: 0;
+  top: 90px;
+  width: 258px;
+  height: 1966px;
+  align-items: flex-start;
+  background-color: #dfe1e5;
+  overflow: hidden;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__summaryTabInactive {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 259px;
+  height: 62px;
+  align-items: flex-start;
+  outline: solid 1px #dfe1e5;
+  outline-offset: -1px;
+  overflow: hidden;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__background {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 258px;
+  height: 62px;
+  background-color: #dfe1e5;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__summary {
+  color: #000;
+  font-size: 20px;
+  line-height: 20px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 45px;
+  top: 21px;
+  width: 168px;
+  height: min-content;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__analysisTabDefault {
+  position: absolute;
+  left: 0;
+  top: 62px;
+  width: 259px;
+  height: 62px;
+  align-items: flex-start;
+  outline: solid 1px #dfe1e5;
+  outline-offset: -1px;
+  overflow: hidden;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__background2 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 258px;
+  height: 62px;
+  background-color: #dfe1e5;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__analysis {
+  color: #000;
+  font-size: 20px;
+  line-height: 20px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 45px;
+  top: 21px;
+  width: 168px;
+  height: min-content;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__analysisTabDefaultSelected {
+  position: absolute;
+  left: 0;
+  top: 62px;
+  width: 259px;
+  height: 62px;
+  align-items: flex-start;
+  outline: solid 0 #dfe1e5;
+  outline-offset: 0;
+  overflow: hidden;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__background3 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 258px;
+  height: 62px;
+  background-color: #f1f3f6;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__analysis2 {
+  color: #006dae;
+  font-size: 20px;
+  line-height: 20px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 45px;
+  top: 21px;
+  width: 168px;
+  height: min-content;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line3 {
+  transform-origin: bottom left;
+  position: absolute;
+  left: 0;
+  top: -5px;
+  width: 62px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  outline: solid 2.5px #23bfdf;
+  transform: matrix(0, 1, -1, 0, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__analysisTabDefault2 {
+  position: absolute;
+  left: 0;
+  top: 124px;
+  width: 259px;
+  height: 62px;
+  align-items: flex-start;
+  outline: solid 1px #dfe1e5;
+  outline-offset: -1px;
+  overflow: hidden;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__background4 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 258px;
+  height: 62px;
+  background-color: #dfe1e5;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__overview {
+  color: #000;
+  font-size: 20px;
+  line-height: 20px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 45px;
+  top: 21px;
+  width: 168px;
+  height: min-content;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__logo1 {
+  position: absolute;
+  top: 1960px;
+  width: 178px;
+  height: 53px;
+  background-image:/* webpackIgnore: true */ url('static/images/logo1.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line2 {
+  transform-origin: bottom left;
+  position: absolute;
+  left: 258px;
+  top: -2px;
+  width: 923px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(0, 1, -1, 0, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__background5 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 90px;
+  background-color: #fff;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__sequencingReportMalaria {
+  color: #2494c7;
+  font-size: 20px;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 335px;
+  top: 33px;
+  width: 385px;
+  height: 25px;
+  justify-content: center;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__line1 {
+  transform-origin: bottom left;
+  position: absolute;
+  left: 0;
+  top: 90px;
+  width: 1920.0001px;
+  max-width: 100%;
+  height: 0;
+  max-height: 100%;
+  border-bottom: solid 1px #dfe1e5;
+  margin-bottom: -1px;
+  transform: matrix(1, 0, 0, 1, 0, 0);
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__lRMA {
+  color: #000;
+  font-size: 60px;
+  font-weight: 600;
+  font-family: Montserrat, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  position: absolute;
+  left: 129px;
+  top: 10px;
+  width: 188px;
+  height: 70px;
+  justify-content: center;
+  flex-direction: column;
+}
+._src_components_DesktopAnalysis_DesktopAnalysis_module__dnaStrandIconInCircleVector211 {
+  position: absolute;
+  left: 55px;
+  top: 7px;
+  width: 85px;
+  height: 76px;
+  background-image:/* webpackIgnore: true */ url('static/images/dnaStrandIconInCircleVector211.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+
+}
+
+.login-with-google-btn {
+  transition: background-color .3s, box-shadow .3s;
+      
+  padding: 12px 16px 12px 42px;
+  border: none;
+  border-radius: 3px;
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, .04), 0 1px 1px rgba(0, 0, 0, .25);
+
+  color: #757575;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+
+  background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTcuNiA5LjJsLS4xLTEuOEg5djMuNGg0LjhDMTMuNiAxMiAxMyAxMyAxMiAxMy42djIuMmgzYTguOCA4LjggMCAwIDAgMi42LTYuNnoiIGZpbGw9IiM0Mjg1RjQiIGZpbGwtcnVsZT0ibm9uemVybyIvPjxwYXRoIGQ9Ik05IDE4YzIuNCAwIDQuNS0uOCA2LTIuMmwtMy0yLjJhNS40IDUuNCAwIDAgMS04LTIuOUgxVjEzYTkgOSAwIDAgMCA4IDV6IiBmaWxsPSIjMzRBODUzIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNNCAxMC43YTUuNCA1LjQgMCAwIDEgMC0zLjRWNUgxYTkgOSAwIDAgMCAwIDhsMy0yLjN6IiBmaWxsPSIjRkJCQzA1IiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNOSAzLjZjMS4zIDAgMi41LjQgMy40IDEuM0wxNSAyLjNBOSA5IDAgMCAwIDEgNWwzIDIuNGE1LjQgNS40IDAgMCAxIDUtMy43eiIgZmlsbD0iI0VBNDMzNSIgZmlsbC1ydWxlPSJub256ZXJvIi8+PHBhdGggZD0iTTAgMGgxOHYxOEgweiIvPjwvZz48L3N2Zz4=);
+  background-color: white;
+  background-repeat: no-repeat;
+  background-position: 12px 11px;
+
+  &:hover {
+      box-shadow: 0 -1px 0 rgba(0, 0, 0, .04), 0 2px 4px rgba(0, 0, 0, .25);
+  }
+
+  &:active {
+      background-color: #eeeeee;
+  }
+
+  &:focus {
+      outline: none;
+      box-shadow: 
+      0 -1px 0 rgba(0, 0, 0, .04),
+      0 2px 4px rgba(0, 0, 0, .25),
+      0 0 0 3px #c8dafc;
+  }
+}
+
+.google-button {
+  position: relative;
+  top: 93px;
+  left: 135px;
+  z-index: 2;
+}
+
+.tooltip-text {
+  /* General positioning */
+  visibility: hidden;
+  position: absolute;
+  z-index: 2;
+  width: 250px;
+  display: inline-block;
+  margin: 10px;
+
+  /* Text formatting */
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 300;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif;
+  text-align: center;
+
+  /* Shading, coloring, etc. */
+  background-color: #2494C7;
+  border-radius: 10px;
+  padding: 10px 15px 10px 15px;
+  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+  border: 2px solid #0189c3;
+  border-radius: 3px;
+
+  text-align: left;
+}
+
+.tooltip-text::before {
+  margin-left: 3px;
+  content: "";
+  position: absolute;
+  transform: rotate(45deg);
+  background-color: #2494C7;
+  padding: 5px;
+  z-index: -1;
+  border-top: 2px solid #0189c3;
+  border-right: 2px solid #0189c3;
+  left: 95%;
+  z-index: -99;
+}
+
+.tooltip:hover #fade {
+  opacity: 1;
+}
+
+#fade {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+}
+
+#top {
+  top: -40px;
+  left: -50%;
+}
+
+.top::before {
+  top: 80%;
+  left: 45%;
+}
+
+.bottom {
+  top: 25px;
+  left: -50%;
+}
+
+.bottom::before {
+  top: -5%;
+  left: 45%;
+}
+
+.left {
+  top: -20px;
+  right: 120%;
+  width: 380px;
+}
+
+.left::before {
+  top: 35%;
+  left: 98%;
+}
+
+.right {
+  top: -8px;
+  left: 120%;
+}
+
+.right::before {
+  top: 35%;
+  left: -2%;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  z-index: 99;
+}
+
+
+#igv_tooltip {
+  top: 30px;
+  left: 880px;
+}
+
+._buttons {
+    flex-direction:column;
+    justify-content:center;
+    top:0px;
+    left:0px;
+  }
+  
+  ._button {
+    border: none;
+    color: #dfe1e5;
+    width: 259px;
+    height:10px;
+
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  ._button:hover:not(.active) {
+    background:#E8EAED;
+  }
+
+  ._button:active {
+    background:#f1f3f6;
+    color: #006DAE;
+  }
+
+  ._button:focus {
+    background:#E8EAED;
+    color: #006DAE;
+  }
+
+  ._button_summary {
+    color: #000000;
+    background-color: #dfe1e5;
+    font-size: 20px;
+    line-height: 50px;
+    font-weight: 300;
+    font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+      'Liberation Sans', sans-serif;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    padding: 10px 40px;
+    width: 269px;
+    height: min-content;
+    flex-direction: column;
+  }
+
+
+
+  ._button_analysis {
+    background:#f1f3f6;
+    color: #006DAE;
+    border-left: 5px solid #23BFDF;
+    font-size: 20px;
+    line-height: 50px;
+    font-weight: 300;
+    font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+      'Liberation Sans', sans-serif;
+    position: absolute;
+    left: 0px;
+    top: 70px;
+    width: 269px;
+    padding: 10px 40px;
+    height: min-content;
+    flex-direction: column;
+  }
+
+  ._button_overview {
+    color: #000000;
+    font-size: 20px;
+    line-height: 50px;
+    font-weight: 300;
+    font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+      'Liberation Sans', sans-serif;
+    position: absolute;
+    left: 0px;
+    top: 140px;
+    width: 269px;
+    padding: 10px 40px;
+    height: min-content;
+    flex-direction: column;
+  }
+
+  ._broad_logo {
+    height:4%;
+    position: absolute;
+    bottom:0px;
+    left:0.5%;
+    background-image:/* webpackIgnore: true */ url('static/images/logo1.jpg');
+  }
+
+
+
+</style>
+
+<style id="/src/resets.css:-css" type="text/css">html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  display: flex;
+  flex-basis: 100%;
+  width: 100%;
+}
+
+#root {
+  position: relative;
+}
+
+body button:not(:disabled) {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body label {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+</style>
+
+<body>
+  <div id="root">
+    <div class="_src_components_resets_module__storybrainResets _src_App_module__root">
+      <div class="_src_components_resets_module__storybrainResets _src_components_DesktopAnalysis_DesktopAnalysis_module__root">
+        <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__mainFrame"><div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__titleSampleName">
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__sampleNameHB3"><p class="_src_components_DesktopAnalysis_DesktopAnalysis_module__labelWrapper">
+            <span class="_src_components_DesktopAnalysis_DesktopAnalysis_module__label">Sample Name: </span>
+            <span class="_src_components_DesktopAnalysis_DesktopAnalysis_module__label2">{{ sample.name }}</span>
+          </div>
+        </div>
+        <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__frame8">
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__rectangle1">
+
+          </div><div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__frame3">
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line4">
+            </div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line5">
+            </div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line6">
+            </div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line7">
+            </div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line8">
+            </div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line9">
+            </div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line10">
+            </div>
+          </div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__sequencingSummary">Sequencing Summary
+
+          </div>
+          <div class="_sequencing_summary_right_side">
+            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[0] }}</div>
+            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[1] }}</div>
+            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[2] }} bp</div>
+            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[3] }} bp</div>
+            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[4] }}</div>
+            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[5] }}</div>
+          </div>
+          <div class="_sequencing_summary_left_side">
+            <div class="_sequencing_summary_text">Sample Preparation</div>
+            <div class="_sequencing_summary_text">Analysis Completed Successfully</div>
+            <div class="_sequencing_summary_text">Aligned Bases</div>
+            <div class="_sequencing_summary_text">Aligned Reads</div>
+            <div class="_sequencing_summary_text">Fraction of Aligned Bases</div>
+            <div class="_sequencing_summary_text">Average Identity</div>
+          </div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__panel1"></div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__qScores">Q Scores</div>
+            <div class="_qscores_plot">
+              <div id="qscores"></div>
+              <meta name="qscores_y" content="{{ analysis.reads }}">
+              <script type="text/javascript">
+                QSCORES = document.getElementById('qscores');
+                data = document.querySelector("meta[name='qscores_y']").content;
+                console.log(data);
+
+                function createQScoresPlot(data) {
+                    var layout = {
+                      width: 500,
+                      height: 350,
+                      margin: {
+                          l: 95,
+                          r: 80,
+                          b: 90,
+                          t: 10
+                      },
+                      paper_bgcolor:'rgba(0,0,0,0)',
+                      plot_bgcolor:'rgba(0,0,0,0)',
+                      modebar: {
+                          // vertical modebar button layout
+                          orientation: 'v',
+                          // for demonstration purposes
+                          bgcolor: 'white',
+                          color: '#a7a8a8',
+                          activecolor: '#9ED3CD'
+                        },
+                      
+                        // move the legend inside the plot on the top right
+                        xaxis: {
+                          title: {
+                            text: 'Q Score',
+                            font: {
+                              family: 'Rubik',
+                              size: 18,
+                              color: '#7f7f7f'
+                            }
+                          },
+                        },
+                        yaxis: {
+                          title: {
+                            text: 'Number of Reads',
+                            font: {
+                              family: 'Rubik',
+                              size: 18,
+                              color: '#7f7f7f'
+                            }
+                          }
+                        }
+                      
+                    }
+
+                    var config = {
+                      displayModeBar: true // or 'true' for always visible
+                    };
+                
+                    var data = data; // string
+                    data = data.replace(/["']/g, "");
+                    y_values = JSON.parse(data);
+
+                    Plotly.plot(QSCORES, [{
+                    type: 'scatter',
+                    x: [5, 7, 10, 12, 15],
+                    y: y_values
+                    }], layout, config)
+                }
+
+                createQScoresPlot(data);
+                QSCORES.style.zIndex="100";
+              </script>
+            </div> 
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line42">
+              <svg preserveAspectRatio="none" viewBox="0 0 511 1" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopAnalysis_DesktopAnalysis_module__icon2"><path d="M0 0L510.372 0" stroke="#DFE1E5"></path></svg>
+            </div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__image7"></div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__rectangle2"></div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module___492">{{ analysis.active_channels }}</div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__activeChannels">Active Channels</div>
+          </div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__row1">
+              <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__frame32">
+                <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line45"></div>
+                <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line52"></div>
+                <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line62"></div>
+                <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line72"></div>
+              </div>
+              
+              <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__referenceInfo">Reference Info</div>
+              <div class="_reference_info_left_side">
+                <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__textBlock13">Genome</div>
+                <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__textBlock14">Track 1</div>
+                <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__textBlock15">Track 2</div>
+              </div>
+              <div class="_reference_info_right_side">
+                <div class="_reference_info_text">P. falciparum</div>
+                <div class="_reference_info_text">Genes</div>
+                <div class="_reference_info_text">Alignment BAM</div>
+              </div>
+              <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line63"></div>
+            </div>
+          </div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__sidebar">
+            <div class="buttons">
+              <button class="_button _button_summary" onclick="document.location='lrma_report_summary.html'"><a>Summary</a></button>
+              <button class="_button _button_analysis active" autofocus><a>Analysis</a></button>
+              <!---<button class="_button _button_overview"><a>Overview</a></button>--->
+            </div>
+            </div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__logo1"></div>
+            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line2"></div>
+          </div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__background5"></div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__sequencingReportMalaria">Sequencing Report &mdash; Malaria</div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line1"></div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__lRMA">LRMA</div>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__dnaStrandIconInCircleVector211"></div>
+        </div>
+      </div>
+    </div>

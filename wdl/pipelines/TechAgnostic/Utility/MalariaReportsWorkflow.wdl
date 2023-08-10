@@ -11,11 +11,98 @@ workflow GenerateMalariaReports {
     }
 
     parameter_meta {
+        # ------ Summary Page ------ #
+
+        # Sample Info
+        sample_name: "name of sequenced sample"
+        upload_date: "date sample was sequenced and uploaded"
+        species: "species of sample"
+        aligned_coverage: "number of reads uniquely mapped to a reference"
+        aligned_read_length_n50: "number at which 50%\ of the read lengths are longer than this value" # check
+        aligned_read_length_median: "median read length"
+        read_qual_median: "median measure of the uncertainty of base calls"
+
+        # Drug Resistance
+        drug_resistance_text: "text file used for determining and displaying drug resistances"
+        HRP2: "value denoting whether the HRP2 marker is present or not -- true or false"
+        HRP3: "value denoting whether the HRP3 marker is present or not -- true or false"
+
+        # Map
+        longitude: "longitude value of where the sample was taken"
+        latitude: "latitude value of where the sample was taken"
+        location: "location where the sample was taken"
+
+        # QC Status
+        qc_status: "status to determine whether or not the sequencing run passes quality control standards"
+
+        # ------ Analysis Page ------ #
+        # Active Channels
+        active_channels: "number of channels active in the sequencing device"
+
+        # Q-Scores Plot
+        num_reads_q5: "the number of reads where the probability of a given base call being wrong is approximately 1 in 3"
+        num_reads_q7: "the number of reads where the probability of a given base call being wrong is approximately 1 in 5"
+        num_reads_q10: "the number of reads where the probability of a given base call being wrong is 1 in 10"
+        num_reads_q12: "the number of reads where the probability of a given base call being wrong is approximately 1 in 16"
+
+        # Sequencing Summary
+        sample_prep: "type of preparation used for the sample"
+        analysis_success: "whether the analysis process completed successfully"
+        aligned_bases: "total number of bases aligned to the reference genome"
+        aligned_reads: "total number of reads aligned to the reference genome"
+        fraction_aligned_bases: "number of bases aligned out of all bases in the sequence"
+        # average_identity:
+
+        # Coverage Plot -- incomplete
 
     }
 
     input {
+        # ------ Summary Page ------ #
+
+        # Sample Info
+        String sample_name
+        String upload_date
+        String species
+        Int aligned_coverage
+        Int aligned_read_length_n50
+        Int aligned_read_length_median
+        Int read_qual_median
+
+        # Drug Resistance
+        File drug_resistance_text
+        String HRP2
+        String HRP3
+
+        # Map
+        Int longitude
+        Int latitude
+        Int location
         
+        # QC Status
+        String qc_status
+
+        # ------ Analysis Page ------ #
+        
+        # Active Channels
+        Int active_channels
+        
+        # Q-Scores Plot
+        Int num_reads_q5
+        Int num_reads_q7
+        Int num_reads_q10
+        Int num_reads_q12
+        Int num_reads_q15
+
+        # Sequencing Summary
+        String sample_prep
+        String analysis_success
+        Int aligned_bases
+        Int aligned_reads
+        Int fraction_aligned_bases
+        Int average_identity
+
+        # Coverage Plot -- incomplete        
     }
     
     call MRS.RunReportScript { 
