@@ -33,6 +33,7 @@ jobs:
 
             - name: Validate dockstore.yml
               run: |
+                set -euxo pipefail
                 export PATH=~/bin:$PATH
                 dockstore yaml validate --path . 2>&1 | tee dockstore_result.txt
                 if grep -q "error" dockstore_result.txt ; then exit 1 ; fi
