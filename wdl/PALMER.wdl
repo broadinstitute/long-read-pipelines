@@ -13,7 +13,7 @@ workflow CallPALMER {
         String MEI_type
     }
 
-    call Utils.ListBamContigs { input: bam }
+    call Utils.ListBamContigs { input: bam=bam }
 
     scatter (contig_name in ListBamContigs.contigs) {
       call PALMER {
