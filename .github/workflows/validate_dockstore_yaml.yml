@@ -36,7 +36,7 @@ jobs:
                 export PATH=~/bin:$PATH
 
                 validation_output=$(dockstore yaml validate --path .)
-
+                echo "$validation_output"
                 if [[ $validation_output == *"Your .dockstore.yml has the following errors"* ]]; then
                   echo "Dockstore validation failed."
                   exit 1
