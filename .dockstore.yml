@@ -60,6 +60,12 @@ workflows:
 - name: ONTFlowcellFromMultipleBasecalls
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
+- name: RemoveDuplicateFromMergedONTBamAndSplitByReadgroup
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/RemoveDuplicateFromMergedONTBamAndSplitByReadgroup.wdl
+- name: DeduplicateAndResetONTAlignedBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/DeduplicateAndResetONTAlignedBam.wdl
 
 ###################################################
 # PacBio
@@ -81,6 +87,9 @@ workflows:
 - name: PBMASIsoSeqDemultiplex
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqDemultiplex.wdl
+- name: SplitMergedPacBioBamByReadgroup
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/SplitMergedPacBioBamByReadgroup.wdl
 
 ###################################################
 # TechAgnostic
@@ -108,3 +117,6 @@ workflows:
 - name: CleanupIntermediate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
+- name: SplitBamByReadgroup
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SplitBamByReadgroup.wdl
