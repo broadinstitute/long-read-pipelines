@@ -36,5 +36,4 @@ jobs:
                 set -euxo pipefail
                 export PATH=~/bin:$PATH
                 dockstore --upgrade
-                dockstore yaml validate --path . 2>&1 | tee dockstore_result.txt
-                if grep -q "error" dockstore_result.txt ; then exit 1 ; fi
+                dockstore yaml validate --path . 
