@@ -327,12 +327,15 @@ task TrainCnn {
         cd ../
 
         gatk CNNVariantTrain \
+            --verbosity DEBUG \
             -tensor-type reference \
             --epochs ~{epochs} \
             --training-steps ~{training_steps} \
             --validation-steps ~{validation_steps} \
             -input-tensor-dir tensors/ \
             -model-name ~{prefix}_CNN_~{tensor_type}_model \
+
+        ls -la
 
         kill $monitoring_pid
     >>>
