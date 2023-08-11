@@ -93,6 +93,6 @@ workflows:
 - name: ONTFlowcellFromMultipleBasecalls
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
-- name CleanupIntermediate
+- name: CleanupIntermediate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
