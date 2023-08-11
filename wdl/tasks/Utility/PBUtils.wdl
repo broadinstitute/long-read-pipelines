@@ -1280,3 +1280,46 @@ task SummarizePBI {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+# todo: primrose is rebranded as jasmine, take care of that later
+task VerifyPacBioBamHasAppropriatePrimroseRuns {
+    meta {
+        desciption: "Verify that a PacBio's BAM has primrose run on all its read groups"
+    }
+    input {
+        String bam
+    }
+
+    output {
+        Array[String] readgroups_missing_primrose = read_lines("movies_without_primrose.txt")
+    }
+
+    command <<<
+        set -eux
+
+        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+        samtools view -H ~{bam} > header.txt
+
+        # get read groups' movies
+        grep "^@RG" header.txt | tr '\t' '\n' | grep "^PU:" | awk -F ':' '{print $2}' | sort > readgroup.movies.txt
+        cat readgroup.movies.txt
+
+        # get primrose PG lines
+        grep "^@PG" header.txt | grep -v "^@SQ" | grep "^@PG" | grep -F 'ID:primrose' | tr '\t' '\n' | grep '^CL:' > primrose.pg.lines.txt
+        tr ' ' '\n' < primrose.pg.lines.txt
+
+        touch movies_without_primrose.txt
+        while IFS= read -r readgroup; do
+            if ! grep -q "${readgroup}" primrose.pg.lines.txt; then echo "${readgroup}" >> movies_without_primrose.txt; fi
+        done < readgroup.movies.txt
+    >>>
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 10 HDD"
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.2"
+    }
+}

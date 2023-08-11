@@ -229,3 +229,45 @@ task PartitionManifest {
     }
 }
 
+task GetBasecallModel {
+    meta {
+        desciption: "Getting the basecall model string of an ONT BAM"
+    }
+    parameter_meta {
+        bam: {
+            desciption: "BAM to operate on",
+            localization_optional: true
+        }
+        runid_2_model: "The basecall model for each run."
+    }
+    input {
+        File bam
+    }
+    output {
+        Map[String, String] runid_2_model = read_map("results.tsv")
+    }
+
+    command <<<
+        set -eux
+
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -H ~{bam} | grep "^@RG" > one_rg_per_line.txt
+
+        while IFS= read -r line
+        do
+            echo "$line" | tr '\t' '\n' | grep "^DS:" | sed "s/^DS://" | tr ' ' '\n' > tmp.txt
+            runid=$(grep "^runid=" tmp.txt | awk -F '=' '{print $2}')
+            model=$(grep "^basecall_model=" tmp.txt | awk -F '=' '{print $2}')
+            echo -e "${runid}\t${model}" >> results.tsv
+        done < one_rg_per_line.txt
+    >>>
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.2"
+    }
+}
