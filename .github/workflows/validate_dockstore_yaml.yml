@@ -33,7 +33,10 @@ jobs:
 
             - name: Validate dockstore.yml
               run: |
-                set -euxo pipefail
                 export PATH=~/bin:$PATH
                 dockstore --upgrade
                 dockstore yaml validate --path . 
+                if [ $? -ne 0 ]; then
+                  echo "Dockstore validation failed."
+                  exit 1
+                fi
