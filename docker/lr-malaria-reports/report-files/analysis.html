@@ -60,7 +60,7 @@
 }
 
 /* sample name spacing */
-._src_components_DesktopAnalysis_DesktopAnalysis_module__sampleNameHB3 {
+._src_components_DesktopAnalysis_DesktopAnalysis_module__sampleName {
   position: absolute;
   left: 26px;
   top: 23px;
@@ -68,6 +68,8 @@
   height: 20px;
   justify-content: center;
   flex-direction: column;
+  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+      'Liberation Sans', sans-serif;
 }
 
 /* sample name label */
@@ -301,7 +303,7 @@
   top: 13.269px;
   width: 24.9541px;
   height: 25.5172px;
-  background-image:/* webpackIgnore: true */ url('static/images/image7.jpg');
+  background-image:/* webpackIgnore: true */ url('/static/images/image7.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -316,18 +318,20 @@
   outline-offset: -1px;
   background-color: #fff;
 }
-._src_components_DesktopAnalysis_DesktopAnalysis_module___492 {
+.active_channels_value {
   color: #2494c7;
   font-size: 30px;
   line-height: 20px;
   font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
     'Liberation Sans', sans-serif;
   position: absolute;
-  left: 265.3364px;
+  left: 251px;
   top: 44.3212px;
   width: 54.2945px;
   height: 20.146px;
   justify-content: center;
+  text-align: center;
+  align-items: center;
   flex-direction: column;
 }
 ._src_components_DesktopAnalysis_DesktopAnalysis_module__activeChannels {
@@ -340,12 +344,14 @@
   position: absolute;
   left: 202.9982px;
   top: 74.5401px;
-  width: 185.0036px;
+  width: 40;
   height: 19.1387px;
   text-align: center;
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  
+
 }
 ._src_components_DesktopAnalysis_DesktopAnalysis_module__row1 {
   z-index: 0;
@@ -399,7 +405,7 @@
   top: 110px;
   width: 1048px;
   height: 342px;
-  background-image:/* webpackIgnore: true */ url('static/images/image12.jpg');
+  background-image:/* webpackIgnore: true */ url('/static/images/image12.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -464,7 +470,7 @@
   width: 70px;
   height: 70px;
   border-radius: 8px;
-  background-image:/* webpackIgnore: true */ url('static/images/image6.jpg');
+  background-image:/* webpackIgnore: true */ url('/static/images/image6.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -789,7 +795,7 @@
   top: 1960px;
   width: 178px;
   height: 53px;
-  background-image:/* webpackIgnore: true */ url('static/images/logo1.jpg');
+  background-image:/* webpackIgnore: true */ url('/static/images/logo1.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -862,7 +868,7 @@
   top: 7px;
   width: 85px;
   height: 76px;
-  background-image:/* webpackIgnore: true */ url('static/images/dnaStrandIconInCircleVector211.jpg');
+  background-image:/* webpackIgnore: true */ url('/static/images/dnaStrandIconInCircleVector211.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1110,7 +1116,7 @@
     position: absolute;
     bottom:0px;
     left:0.5%;
-    background-image:/* webpackIgnore: true */ url('static/images/logo1.jpg');
+    background-image:/* webpackIgnore: true */ url('/static/images/logo1.jpg');
   }
 
 
@@ -1150,9 +1156,9 @@ body label {
     <div class="_src_components_resets_module__storybrainResets _src_App_module__root">
       <div class="_src_components_resets_module__storybrainResets _src_components_DesktopAnalysis_DesktopAnalysis_module__root">
         <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__mainFrame"><div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__titleSampleName">
-          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__sampleNameHB3"><p class="_src_components_DesktopAnalysis_DesktopAnalysis_module__labelWrapper">
-            <span class="_src_components_DesktopAnalysis_DesktopAnalysis_module__label">Sample Name: </span>
-            <span class="_src_components_DesktopAnalysis_DesktopAnalysis_module__label2">{{ sample.name }}</span>
+          <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__sampleName">
+            <p style="font-size:26px;  font-weight:bold">Sample Name: </span>
+            <span style="font-weight:500">{{ sample.sample_name }}</span></span>
           </div>
         </div>
         <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__frame8">
@@ -1198,81 +1204,14 @@ body label {
             <div class="_qscores_plot">
               <div id="qscores"></div>
               <meta name="qscores_y" content="{{ analysis.reads }}">
-              <script type="text/javascript">
-                QSCORES = document.getElementById('qscores');
-                data = document.querySelector("meta[name='qscores_y']").content;
-                console.log(data);
-
-                function createQScoresPlot(data) {
-                    var layout = {
-                      width: 500,
-                      height: 350,
-                      margin: {
-                          l: 95,
-                          r: 80,
-                          b: 90,
-                          t: 10
-                      },
-                      paper_bgcolor:'rgba(0,0,0,0)',
-                      plot_bgcolor:'rgba(0,0,0,0)',
-                      modebar: {
-                          // vertical modebar button layout
-                          orientation: 'v',
-                          // for demonstration purposes
-                          bgcolor: 'white',
-                          color: '#a7a8a8',
-                          activecolor: '#9ED3CD'
-                        },
-                      
-                        // move the legend inside the plot on the top right
-                        xaxis: {
-                          title: {
-                            text: 'Q Score',
-                            font: {
-                              family: 'Rubik',
-                              size: 18,
-                              color: '#7f7f7f'
-                            }
-                          },
-                        },
-                        yaxis: {
-                          title: {
-                            text: 'Number of Reads',
-                            font: {
-                              family: 'Rubik',
-                              size: 18,
-                              color: '#7f7f7f'
-                            }
-                          }
-                        }
-                      
-                    }
-
-                    var config = {
-                      displayModeBar: true // or 'true' for always visible
-                    };
-                
-                    var data = data; // string
-                    data = data.replace(/["']/g, "");
-                    y_values = JSON.parse(data);
-
-                    Plotly.plot(QSCORES, [{
-                    type: 'scatter',
-                    x: [5, 7, 10, 12, 15],
-                    y: y_values
-                    }], layout, config)
-                }
-
-                createQScoresPlot(data);
-                QSCORES.style.zIndex="100";
-              </script>
+              <script src="scripts/javascript/plots.js"></script>
             </div> 
             <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__line42">
               <svg preserveAspectRatio="none" viewBox="0 0 511 1" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopAnalysis_DesktopAnalysis_module__icon2"><path d="M0 0L510.372 0" stroke="#DFE1E5"></path></svg>
             </div>
             <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__image7"></div>
             <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__rectangle2"></div>
-            <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module___492">{{ analysis.active_channels }}</div>
+            <div class="active_channels_value">{{ analysis.active_channels }}</div>
             <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__activeChannels">Active Channels</div>
           </div>
           <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__row1">
@@ -1300,7 +1239,7 @@ body label {
           <div class="_src_components_DesktopAnalysis_DesktopAnalysis_module__sidebar">
             <div class="buttons">
               <button class="_button _button_summary" onclick="document.location='lrma_report_summary.html'"><a>Summary</a></button>
-              <button class="_button _button_analysis active" autofocus><a>Analysis</a></button>
+              <button class="_button _button_analysis active"><a>Analysis</a></button>
               <!---<button class="_button _button_overview"><a>Overview</a></button>--->
             </div>
             </div>
