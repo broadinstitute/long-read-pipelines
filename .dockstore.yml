@@ -117,5 +117,7 @@ workflows:
 - name: PaftoolAsmVariants
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PaftoolAsmVariants.wdl
-
+- name: WhatshapPhasing.wdl
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/WhatshapPhasing.wdl
 
