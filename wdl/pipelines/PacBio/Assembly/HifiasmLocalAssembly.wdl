@@ -2,27 +2,38 @@ version 1.0
 
 workflow HifiasmLocalAssembly{
     input{
-        File baminput
-        String region
-        Int n_cpus
+        File wholegenomebam
+        File wholegenomebai
+        String asmregion
         String prefix
+        Int nthreads
     }
-    call extract_reads{input: bam_input=baminput, region=region, pref=prefix}
+    call extract_reads{input: bam_input=wholegenomebam, bam_index=wholegenomebai, region=asmregion, pref=prefix}
     call hifiasm_asm{input: reads=extract_reads.local_fq, prefix=prefix}
+    
     meta{
         Purpose:"Local assembly using hifiasm"
+    }
+    output{
+        #File realignedbam=realign_reads.realignedbam
+        File first_assembly_hap1=hifiasm_asm.assembly_hap1
+        File first_assembly_hap2=hifiasm_asm.assembly_hap2
+        #File second_assembly_hap1=hifiasm_asm_reassemble.assembly_hap1
+        #File second_assembly_hap2=hifiasm_asm_reassemble.assembly_hap2
     }
 }
 task extract_reads{
     input{
         File bam_input
+        File bam_index
         String region
         String pref
     }
     command <<<
         samtools index ~{bam_input}
         samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
-        samtools fastq ~{pref}.bam > ~{pref}.fastq
+        #samtools fastq ~{pref}.bam > ~{pref}.fastq
+        bedtools bamtofastq  -i ~{pref}.bam -fq ~{pref}.fastq
     >>>
 
     output{
@@ -62,6 +73,7 @@ task hifiasm_asm{
     >>>
 
     output{
+        File assembly_primary="~{prefix}.bp.p_ctg.fa"
         File assembly_hap1="~{prefix}.bp.hap1.p_ctg.fa"
         File assembly_hap2="~{prefix}.bp.hap2.p_ctg.fa"
     }
@@ -75,3 +87,4 @@ task hifiasm_asm{
         docker: "hangsuunc/assembly:v1"
     }    
 }
+

@@ -17,7 +17,7 @@ workflow RealignHifiasmLocalAssembly{
         Purpose:"Local assembly using hifiasm"
     }
     output{
-        File realignedbam=realign_reads.realignedbam
+        File realignedfq=realign_reads.realignedreadsfq
         File first_assembly_hap1=hifiasm_asm.assembly_hap1
         File first_assembly_hap2=hifiasm_asm.assembly_hap2
         File second_assembly_hap1=hifiasm_asm_reassemble.assembly_hap1
