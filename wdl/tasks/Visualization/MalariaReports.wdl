@@ -65,10 +65,10 @@ task RunReportScript {
         String sample_name
         String upload_date
         String species
-        Int aligned_coverage
-        Int aligned_read_length_n50
-        Int aligned_read_length_median
-        Int read_qual_median
+        Float aligned_coverage
+        Float aligned_read_length_n50
+        Float aligned_read_length_median
+        Float read_qual_median
 
         # Drug Resistance
         File drug_resistance_text
@@ -76,9 +76,9 @@ task RunReportScript {
         String HRP3
 
         # Map
-        Int longitude
-        Int latitude
-        Int location
+        Float longitude
+        Float latitude
+        String location
         
         # QC Status
         String qc_status
@@ -100,8 +100,8 @@ task RunReportScript {
         String analysis_success
         Int aligned_bases
         Int aligned_reads
-        Int fraction_aligned_bases
-        Int average_identity
+        Float fraction_aligned_bases
+        Float average_identity
 
         # Coverage Plot -- incomplete
     }
@@ -110,6 +110,10 @@ task RunReportScript {
 
     # incomplete
     command <<<
+        pwd
+
+        ls -l
+
         python3 report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \

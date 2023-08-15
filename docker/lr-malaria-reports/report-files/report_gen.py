@@ -501,11 +501,11 @@ if __name__ == '__main__':
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
     parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", required=True)
     parser.add_argument("--species", help="species of sample", required=True)
-    parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=int) # check -- fold coverage
+    parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float) # check -- fold coverage
     parser.add_argument("--aligned_read_length_n50", help="number at which 50% of the read lengths are longer than this value", required=True, 
-                        type=int) # check
-    parser.add_argument("--aligned_read_length_median", help="median read length", required=True, type=int)
-    parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=int)
+                        type=float) # check
+    parser.add_argument("--aligned_read_length_median", help="median read length", required=True, type=float)
+    parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float)
 
     # Drug Resistance
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", required=True, 
@@ -514,8 +514,8 @@ if __name__ == '__main__':
     parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", required=True)
 
     # Map
-    parser.add_argument("--longitude", help="longitude value of where the sample was collected", required=True, type=int)
-    parser.add_argument("--latitude", help="latitude value of where the sample collected", required=True, type=int)
+    parser.add_argument("--longitude", help="longitude value of where the sample was collected", required=True, type=float)
+    parser.add_argument("--latitude", help="latitude value of where the sample collected", required=True, type=float)
     parser.add_argument("--location", help="location where the sample was collected", required=True)
     
     # QC Status
@@ -539,8 +539,8 @@ if __name__ == '__main__':
     parser.add_argument("--analysis_success", help="whether the analysis process completed successfully", required=True)
     parser.add_argument("--aligned_bases", help="total number of bases aligned to the reference genome", required=True)
     parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True)
-    parser.add_argument("--fraction_aligned_bases", help="number of bases aligned out of all bases sequenced", required=True)
-    parser.add_argument("--average_identity", help="", required=True) # check
+    parser.add_argument("--fraction_aligned_bases", help="number of bases aligned out of all bases sequenced", required=True, type=float)
+    parser.add_argument("--average_identity", help="", required=True, type=float) # check
 
     # Coverage Plot -- incomplete
 

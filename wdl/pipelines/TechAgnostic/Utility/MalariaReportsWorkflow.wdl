@@ -1,6 +1,6 @@
 version 1.0
 # Import malaria reports/summary generation as MRS
-import "../../../tasks/Visualization/MalariaReports.wdl" as MRS
+import "tasks/Visualization/MalariaReports.wdl" as MRS
 workflow GenerateMalariaReports {
 
     meta {
@@ -75,7 +75,7 @@ workflow GenerateMalariaReports {
         # Map
         Int longitude
         Int latitude
-        Int location
+        String location
         
         # QC Status
         String qc_status
@@ -102,9 +102,39 @@ workflow GenerateMalariaReports {
 
         # Coverage Plot -- incomplete        
     }
-    
-    call MRS.RunReportScript { 
-        input: 
 
+    call MRS.RunReportScript as RunReportScript { 
+        input: 
+            sample_name = sample_name,
+            upload_date = upload_date,
+            species = species,
+            aligned_coverage = aligned_coverage,
+            aligned_read_length_n50 = aligned_read_length_n50,
+            aligned_read_length_median = aligned_read_length_median,
+            read_qual_median = read_qual_median,
+            drug_resistance_text = drug_resistance_text,
+            HRP2 = HRP2,
+            HRP3 = HRP3,
+            longitude = longitude,
+            latitude = latitude,
+            location = location,
+            qc_status = qc_status,
+            active_channels = active_channels,
+            num_reads_q5 = num_reads_q5,
+            num_reads_q7 = num_reads_q7,
+            num_reads_q10 = num_reads_q10,
+            num_reads_q12 = num_reads_q12,
+            num_reads_q15 = num_reads_q15,
+            sample_prep = sample_prep,
+            analysis_success = analysis_success,
+            aligned_bases = aligned_bases,
+            aligned_reads = aligned_reads,
+            fraction_aligned_bases = fraction_aligned_bases,
+            average_identity = average_identity
+    }
+
+    output {
+        File analysis = RunReportScript.analysis
+        File summary = RunReportScript.summary
     }
 }
