@@ -120,5 +120,7 @@ workflows:
 - name: WhatshapPhasing
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/WhatshapPhasing.wdl
-
+- name: Bifrost
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/Bifrost.wdl
 
