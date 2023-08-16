@@ -13,7 +13,9 @@ workflow Bifrost{
     call construct{input: fas = input_fastas, ref = reference_fasta, outputpref = outputprefix, kmersize = k}
     output{
         File graph = construct.graph
+        File graph_index = construct.graph_index
         File colors = construct.color_file
+
     }
 }
 
@@ -31,8 +33,9 @@ task construct{
     >>>
 
     output{
-        File color_file="~{outputpref}_Bfrost_graph.bfg_colors"
-        File graph = "~{outputpref}_Bfrost_graph.gfa"
+        File color_file="~{outputpref}_Bfrost_graph.color.bfg"
+        File graph = "~{outputpref}_Bfrost_graph.gfa.gz"
+        File graph_index = "~{outputpref}_Bfrost_graph.bfi"
     }
 
     Int disk_size = 100 
