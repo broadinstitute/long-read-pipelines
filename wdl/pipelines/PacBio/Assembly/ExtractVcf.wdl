@@ -39,10 +39,10 @@ task extract_vcf{
     Int disk_size = 1 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 1
-        memory: "10 GiB"
+        cpu: 2
+        memory: "8 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
-        bootDiskSizeGb: 10
+        # bootDiskSizeGb: 10
         preemptible: 2
         maxRetries: 1
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
