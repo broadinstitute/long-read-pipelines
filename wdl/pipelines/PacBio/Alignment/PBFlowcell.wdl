@@ -162,6 +162,7 @@ workflow PBFlowcell {
             call AR.Minimap2 as AlignMasSeqCCSReads {
                 input:
                     reads      = [ LongbowProcessCCS.extracted_bam ],
+                    reads_file_basenames = [ basename(LongbowProcessCCS.extracted_bam) ],
                     ref_fasta  = ref_map['fasta'],
                     RG = GetRawReadGroup.rg,
                     library = LB,
