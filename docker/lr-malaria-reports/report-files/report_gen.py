@@ -467,22 +467,20 @@ def create_report(sample, analysis):
     '''
 
     # creating summary page
-    templateLoader = jinja2.FileSystemLoader(searchpath='./')
+    templateLoader = jinja2.FileSystemLoader(searchpath='/report-files/templates/')
     templateEnv = jinja2.Environment(loader=templateLoader)
-    TEMPLATE_FILE = './summary.html' # may need to change if file is moved
+    TEMPLATE_FILE = 'summary.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
     output = template.render(sample=sample)
     
-    with open('./lrma_report_summary.html', 'w') as fh:
+    with open('lrma_report_summary.html', 'w') as fh:
         fh.write(output)        
-        templateLoader = jinja2.FileSystemLoader(searchpath='./')
         
-    templateEnv = jinja2.Environment(loader=templateLoader)
-    TEMPLATE_FILE = './analysis.html' # may need to change if file is moved
+    TEMPLATE_FILE = 'analysis.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
     output = template.render(sample=sample, analysis=analysis)
     
-    with open('./lrma_report_analysis.html', 'w') as fh:
+    with open('lrma_report_analysis.html', 'w') as fh:
         fh.write(output)
         
     print('Report generated!')

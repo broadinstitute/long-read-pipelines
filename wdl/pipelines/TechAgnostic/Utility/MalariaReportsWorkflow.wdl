@@ -63,10 +63,10 @@ workflow GenerateMalariaReports {
         String sample_name
         String upload_date
         String species
-        Int aligned_coverage
-        Int aligned_read_length_n50
-        Int aligned_read_length_median
-        Int read_qual_median
+        Float aligned_coverage
+        Float aligned_read_length_n50
+        Float aligned_read_length_median
+        Float read_qual_median
 
         # Drug Resistance
         File drug_resistance_text
@@ -74,8 +74,8 @@ workflow GenerateMalariaReports {
         String HRP3
 
         # Map
-        Int longitude
-        Int latitude
+        Float longitude
+        Float latitude
         String location
         
         # QC Status
@@ -98,10 +98,10 @@ workflow GenerateMalariaReports {
         String analysis_success
         Int aligned_bases
         Int aligned_reads
-        Int fraction_aligned_bases
-        Int average_identity
+        Float fraction_aligned_bases
+        Float average_identity
 
-        # Coverage Plot -- incomplete        
+        # Coverage Plot -- incomplete       
     }
 
     call MRS.RunReportScript as RunReportScript { 
