@@ -110,11 +110,12 @@ task RunReportScript {
 
     # incomplete
     command <<<
+        set -euxo
+        echo "COMMAND START"
         pwd
-
         ls -l
-
-        python3 report_gen.py \
+        echo "AFTER ls -l"
+        python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
             --species ~{species} \
@@ -134,6 +135,8 @@ task RunReportScript {
             --num_reads_q7 ~{num_reads_q7} \
             --num_reads_q10 ~{num_reads_q10} \
             --num_reads_q12 ~{num_reads_q12} \
+            --num_reads_q15 ~{num_reads_q15} \
+            --aligned_bases ~{aligned_bases} \
             --sample_prep ~{sample_prep} \
             --analysis_success ~{analysis_success} \
             --aligned_reads ~{aligned_reads} \

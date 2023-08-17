@@ -33,4 +33,4 @@ RUN pip3 install --no-cache-dir argparse==1.4.0 folium==0.14.0 jinja2==3.1.2 \
 ENV PATH=/root/google-cloud-sdk/bin/:${PATH}
 
 # copy other resources
-COPY ./report-files /
+COPY ./report-files /report-files/

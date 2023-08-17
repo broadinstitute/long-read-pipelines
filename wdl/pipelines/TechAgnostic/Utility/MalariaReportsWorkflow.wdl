@@ -42,6 +42,7 @@ workflow GenerateMalariaReports {
         num_reads_q7: "the number of reads where the probability of a given base call being wrong is approximately 1 in 5"
         num_reads_q10: "the number of reads where the probability of a given base call being wrong is 1 in 10"
         num_reads_q12: "the number of reads where the probability of a given base call being wrong is approximately 1 in 16"
+        num_reads_q15: "the number of reads where the probability of a given base call being wrong is approximately 1 in 31"
 
         # Sequencing Summary
         sample_prep: "type of preparation used for the sample"

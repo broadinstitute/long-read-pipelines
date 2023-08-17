@@ -384,8 +384,8 @@ def create_map(coordinates, sample_name):
     m.get_root().height = "397px"
     map_html = m.get_root()._repr_html_()
     
-    with open('/templates/map.html', mode='w+') as f:
-        f.write(map_html)
+    #with open('/templates/map.html', mode='w+') as f:
+    #    f.write(map_html)
     
     return map_html
 
