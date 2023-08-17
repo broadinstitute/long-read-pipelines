@@ -13,30 +13,24 @@
 
 
 <!-- primary container -->
-<style id="/src/components/_resets.module.css:-css" type="text/css">._src_components_resets_module__storybrainResets,
-._src_components_resets_module__storybrainResets * {
+<style id="/src/components/_resets.module.css:-css" type="text/css"> * {
   box-sizing: border-box;
   margin: 0;
-  padding: 0;
   background: none;
   border: none;
   flex-shrink: 0;
-  text-decoration: none;
-  min-width: 0;
   overflow-wrap: anywhere;
 }
 
 /* vertical spacing for top row (DRM) */
-._src_components_resets_module__storybrainResets,
-._src_components_resets_module__storybrainResets :not(span, a, ul, ol, li, p, th, tr, thead, tbody, table, td, map, marker, iframe) {
+.overall_spacing,
+.overall_spacing :not(span, a, ul, ol, li, p, th, tr, thead, tbody, table, td, map, marker, iframe) {
   display: flex;
 }
-
 </style>
 
-<style id="/src/components/DesktopSummary/DesktopSummary.module.css:-css" type="text/css">
-
-  ._src_components_DesktopSummary_DesktopSummary_module__root {
+<style>
+  .root {
     position: absolute;
     width: 2214px;
     height: 1240px;
@@ -47,7 +41,7 @@
   /* above is spacing for left-center frame
     below is spacing for center frame */
 
-  ._src_components_DesktopSummary_DesktopSummary_module__mainFrame {
+  .main_frame {
     position: absolute;
     left: calc(50% - 258px);
     top: 109px;
@@ -62,7 +56,7 @@
   }
 
   /* sample name row */
-  ._src_components_DesktopSummary_DesktopSummary_module__titleSampleName {
+  .sample_name_value {
     width: 1144px;
     height: 66px;
     padding: 23px 26px;
@@ -78,7 +72,7 @@
   }
 
   /* vertical spacing */
-  ._src_components_DesktopSummary_DesktopSummary_module__drugResistanceRow1 {
+  .drug_res_box {
     position: relative;
     width: 1144px;
     height: 191px;
@@ -908,19 +902,17 @@ body label {
 </style>
 
 <body>
-  <div id="root">
-    <div class="_src_components_resets_module__storybrainResets _src_App_module__root">
+  <div class="root">
+    <div class="overall_spacing">
 
-      <div class="_src_components_resets_module__storybrainResets _src_components_DesktopSummary_DesktopSummary_module__root">
-
-        <div class="_src_components_DesktopSummary_DesktopSummary_module__mainFrame">
-          <div class="_src_components_DesktopSummary_DesktopSummary_module__titleSampleName"><p style="font-size:26px;  font-weight:bold">Sample Name:
+        <div class="main_frame">
+          <div class="sample_name_value"><p style="font-size:26px;  font-weight:bold">Sample Name:
           <span style="font-weight:500">{{ sample.sample_name }}</span>
           
           </p>
           </div>
           
-          <div class="_src_components_DesktopSummary_DesktopSummary_module__drugResistanceRow1">  
+          <div class="drug_res_box">  
             <div class="_src_components_DesktopSummary_DesktopSummary_module__rectangle3">
             </div>
             <div class="_src_components_DesktopSummary_DesktopSummary_module__drugResistanceMarkers">Drug Resistance Markers
