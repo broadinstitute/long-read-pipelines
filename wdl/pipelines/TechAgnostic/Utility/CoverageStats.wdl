@@ -146,17 +146,17 @@ task CoverageStats {
 
         cat ~{prefix}.cov_stat_summary.txt
 
+        # Replace floating-point numbers suffix ing field names with '_coverage
+        sed -i '1s/([0-9]*\.[0-9]*)/_coverage/g' ~{prefix}.cov_stat_summary.txt
+
         # Calculate covrage percentage with greater than 4x coverage
         total_bases=$(zcat ~{mosdepth_regions} | wc -l)
         bases_above_4x=$(zcat ~{mosdepth_regions} | awk -v cov_col=~{cov_col} '$cov_col > 4' | wc -l)
         percent_above_4x=$(python3 -c "print($bases_above_4x/$total_bases)")
 
         # Append the percentage to the summary tsv file
-        sed -i "1s/$/\tpercent_above_4x/" ~{prefix}.cov_stat_summary.txt
+        sed -i "1s/$/\tpercent_above_4x_coverage/" ~{prefix}.cov_stat_summary.txt
         sed -i "2s/$/\t$percent_above_4x/" ~{prefix}.cov_stat_summary.txt
-
-        # Remove floating-point numbers suffix from field names
-        sed -i '1s/([0-9]*\.[0-9]*)//g' ~{prefix}.cov_stat_summary.txt
 
         # Extract field names from the header
         header=$(head -n 1 ~{prefix}.cov_stat_summary.txt)
