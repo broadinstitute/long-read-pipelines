@@ -100,6 +100,7 @@ workflow TrainCnnFilters {
             epochs = 100,
             training_steps = 100,
             validation_steps = 6,
+            optimizer_learning_rate = 0.000001,
             prefix = prefix + "_CNN_2D_Model"
     }
 
@@ -253,6 +254,38 @@ task Create2DReadTensors {
             --max-tensors 10000000 \
             -output-tensor-dir ~{prefix}_2D_tensor_dir
 
+# Now check if the tensors contain NaN values:
+python << CODE
+
+import os
+import h5py
+
+import numpy as np
+
+print()
+
+def find_files(folder_path, ext):
+    all_files = []
+    for root, directories, files in os.walk(folder_path):
+        for file in files:
+            if file.endswith(ext):
+                all_files.append(os.path.join(root, file))
+    return all_files
+
+hd5_files = find_files("~{prefix}_2D_tensor_dir", "hd5")
+
+print(f"Inspecting {len(hd5_files)} hd5 files... ")
+for f in hd5_files:
+    with h5py.File(f, 'r') as hd5:
+        for k in hd5.keys():
+            n = np.isnan(np.array(hd5[k]))
+            if n.sum() > 0:
+                print(f"File: {f}: Found {n.sum()} NaN(s) in key: {k}")
+print("Done.")
+print()
+
+CODE
+
         # No need to zip - the files are .hd5 formatted:
         tar -cf ~{prefix}_2D_tensor_dir.tar ~{prefix}_2D_tensor_dir
 
@@ -301,6 +334,12 @@ task TrainCnn {
         Int training_steps = 100
         Int validation_steps = 6
 
+        Float optimizer_beta1 = 0.9
+        Float optimizer_beta2 = 0.999
+        Float optimizer_clipnorm = 1.0
+        Float optimizer_epsilon = 0.00000001       # 1.0e-8
+        Float optimizer_learning_rate = 0.0001     # 1.0e-4
+
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
@@ -332,6 +371,11 @@ task TrainCnn {
             --epochs ~{epochs} \
             --training-steps ~{training_steps} \
             --validation-steps ~{validation_steps} \
+            --optimizer-beta-1 ~{optimizer_beta1} \
+            --optimizer-beta-2 ~{optimizer_beta2}  \
+            --optimizer-clipnorm ~{optimizer_clipnorm}  \
+            --optimizer-epsilon ~{optimizer_epsilon}  \
+            --optimizer-learning-rate  ~{optimizer_learning_rate}  \
             -input-tensor-dir tensors/ \
             -model-name ~{prefix}_CNN_~{tensor_type}_model \
 
@@ -354,7 +398,7 @@ task TrainCnn {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "broadinstitute/gatk-nightly:2023-08-18-4.4.0.0-57-g98f63667a-NIGHTLY-SNAPSHOT"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 

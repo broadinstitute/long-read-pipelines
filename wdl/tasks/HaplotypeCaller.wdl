@@ -201,6 +201,7 @@ task HaplotypeCaller_GATK4_VCF {
                 ~{false="--disable-spanning-event-genotyping" true="" use_spanning_event_genotyping} \
                 -G StandardAnnotation -G StandardHCAnnotation  \
                 ~{true="-ERC GVCF" false="" make_gvcf} \
+                --smith-waterman FASTEST_AVAILABLE \
                 ~{bamout_arg}
 
         # Removed for now:
