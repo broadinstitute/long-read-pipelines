@@ -160,9 +160,6 @@ task CoverageStats {
         sed -i "1s/$/\tpercent_above_4x~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
         sed -i "2s/$/\t$percent_above_4x/" ~{prefix}.cov_stat_summary.txt
 
-        # Round Floats seperated by tab in the second line to the nearest hundredth
-        sed -i '2s/[0-9]*\.[0-9]*/&\n/g' ~{prefix}.cov_stat_summary.txt
-
         # Extract field names from the header
         header=$(head -n 1 ~{prefix}.cov_stat_summary.txt)
         IFS=$'\t' read -ra field_names <<< "$header"
