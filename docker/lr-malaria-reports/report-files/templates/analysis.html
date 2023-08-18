@@ -408,161 +408,11 @@
   background-size: cover;
 }
 
-.login-with-google-btn {
-  transition: background-color .3s, box-shadow .3s;
-      
-  padding: 12px 16px 12px 42px;
-  border: none;
-  border-radius: 3px;
-  box-shadow: 0 -1px 0 rgba(0, 0, 0, .04), 0 1px 1px rgba(0, 0, 0, .25);
-
-  color: #757575;
-  font-size: 14px;
-  font-weight: 500;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
-
-  background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTcuNiA5LjJsLS4xLTEuOEg5djMuNGg0LjhDMTMuNiAxMiAxMyAxMyAxMiAxMy42djIuMmgzYTguOCA4LjggMCAwIDAgMi42LTYuNnoiIGZpbGw9IiM0Mjg1RjQiIGZpbGwtcnVsZT0ibm9uemVybyIvPjxwYXRoIGQ9Ik05IDE4YzIuNCAwIDQuNS0uOCA2LTIuMmwtMy0yLjJhNS40IDUuNCAwIDAgMS04LTIuOUgxVjEzYTkgOSAwIDAgMCA4IDV6IiBmaWxsPSIjMzRBODUzIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNNCAxMC43YTUuNCA1LjQgMCAwIDEgMC0zLjRWNUgxYTkgOSAwIDAgMCAwIDhsMy0yLjN6IiBmaWxsPSIjRkJCQzA1IiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNOSAzLjZjMS4zIDAgMi41LjQgMy40IDEuM0wxNSAyLjNBOSA5IDAgMCAwIDEgNWwzIDIuNGE1LjQgNS40IDAgMCAxIDUtMy43eiIgZmlsbD0iI0VBNDMzNSIgZmlsbC1ydWxlPSJub256ZXJvIi8+PHBhdGggZD0iTTAgMGgxOHYxOEgweiIvPjwvZz48L3N2Zz4=);
-  background-color: white;
-  background-repeat: no-repeat;
-  background-position: 12px 11px;
-
-  &:hover {
-      box-shadow: 0 -1px 0 rgba(0, 0, 0, .04), 0 2px 4px rgba(0, 0, 0, .25);
-  }
-
-  &:active {
-      background-color: #eeeeee;
-  }
-
-  &:focus {
-      outline: none;
-      box-shadow: 
-      0 -1px 0 rgba(0, 0, 0, .04),
-      0 2px 4px rgba(0, 0, 0, .25),
-      0 0 0 3px #c8dafc;
-  }
-}
-
-.google-button {
-  position: relative;
-  top: 93px;
-  left: 135px;
-  z-index: 2;
-}
-
-.tooltip-text {
-  /* General positioning */
-  visibility: hidden;
-  position: absolute;
-  z-index: 2;
-  width: 250px;
-  display: inline-block;
-  margin: 10px;
-
-  /* Text formatting */
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 300;
-  font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-    'Liberation Sans', sans-serif;
-  text-align: center;
-
-  /* Shading, coloring, etc. */
-  background-color: #2494C7;
-  border-radius: 10px;
-  padding: 10px 15px 10px 15px;
-  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
-  border: 2px solid #0189c3;
-  border-radius: 3px;
-
-  text-align: left;
-}
-
-.tooltip-text::before {
-  margin-left: 3px;
-  content: "";
-  position: absolute;
-  transform: rotate(45deg);
-  background-color: #2494C7;
-  padding: 5px;
-  z-index: -1;
-  border-top: 2px solid #0189c3;
-  border-right: 2px solid #0189c3;
-  left: 95%;
-  z-index: -99;
-}
-
-.tooltip:hover #fade {
-  opacity: 1;
-}
-
-#fade {
-  opacity: 0;
-  transition: opacity 0.5s;
-}
-
-.tooltip:hover .tooltip-text {
-  visibility: visible;
-}
-
-#top {
-  top: -40px;
-  left: -50%;
-}
-
-.top::before {
-  top: 80%;
-  left: 45%;
-}
-
-.bottom {
-  top: 25px;
-  left: -50%;
-}
-
-.bottom::before {
-  top: -5%;
-  left: 45%;
-}
-
-.left {
-  top: -20px;
-  right: 120%;
-  width: 380px;
-}
-
-.left::before {
-  top: 35%;
-  left: 98%;
-}
-
-.right {
-  top: -8px;
-  left: 120%;
-}
-
-.right::before {
-  top: 35%;
-  left: -2%;
-}
-
-.tooltip {
-  position: relative;
-  display: inline-block;
-  z-index: 99;
-}
-
-
-#igv_tooltip {
-  top: 30px;
-  left: 880px;
-}
-
-._buttons {
-    flex-direction:column;
-    justify-content:center;
-    top:0px;
-    left:0px;
+  ._buttons {
+      flex-direction:column;
+      justify-content:center;
+      top:0px;
+      left:0px;
   }
   
   ._button {
@@ -591,7 +441,7 @@
     color: #006DAE;
   }
 
-  ._button_summary {
+  .a_button_summary {
     color: #000000;
     background-color: #dfe1e5;
     font-size: 20px;
@@ -610,7 +460,7 @@
 
 
 
-  ._button_analysis {
+  .a_button_analysis {
     background:#f1f3f6;
     color: #006DAE;
     border-left: 5px solid #23BFDF;
@@ -740,8 +590,8 @@ body label {
         </div>
         <div class="analysis_sidebar">
           <div class="buttons">
-            <button class="_button _button_summary" onclick="document.location='lrma_report_summary.html'"><a>Summary</a></button>
-            <button class="_button _button_analysis active"><a>Analysis</a></button>
+            <button class="_button a_button_summary" onclick="document.location='lrma_report_summary.html'"><a>Summary</a></button>
+            <button class="_button a_button_analysis active"><a>Analysis</a></button>
             <!---<button class="_button _button_overview"><a>Overview</a></button>--->
           </div>
         </div>

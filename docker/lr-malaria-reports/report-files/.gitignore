@@ -1,9 +1,4 @@
-report_files/igv_test_files/FP0008-C.haplotype_caller.annotated.vcf
-report_files_archive/node_modules/
-lrma_report_analysis.html
-lrma_report_summary.html
 templates/map.html
-map.html
 /.vscode
-static/data
-drug_resistance.txt
+*.drug_resistance_report.txt
+*_report.html

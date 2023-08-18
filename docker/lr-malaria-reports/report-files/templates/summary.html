@@ -13,7 +13,7 @@
 
 
 <!-- primary container -->
-<style id="/src/components/_resets.module.css:-css" type="text/css"> * {
+<style> * {
   box-sizing: border-box;
   margin: 0;
   background: none;
@@ -589,52 +589,6 @@
       'Liberation Sans', sans-serif;
   }
 
-  ._src_components_DesktopSummary_DesktopSummary_module__textBlock8 {
-    margin-top: 0;
-    color: #000;
-    font-size: 18px;
-    line-height: 35px;
-    font-weight: 300;
-    font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-      'Liberation Sans', sans-serif;
-  }
-  ._src_components_DesktopSummary_DesktopSummary_module__textBlock9 {
-    margin-top: 0;
-    color: #000;
-    font-size: 18px;
-    line-height: 35px;
-    font-weight: 300;
-    font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-      'Liberation Sans', sans-serif;
-  }
-  ._src_components_DesktopSummary_DesktopSummary_module__textBlock10 {
-    margin-top: 0;
-    color: #000;
-    font-size: 18px;
-    line-height: 35px;
-    font-weight: 300;
-    font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-      'Liberation Sans', sans-serif;
-  }
-  ._src_components_DesktopSummary_DesktopSummary_module__textBlock11 {
-    margin-top: 0;
-    color: #000;
-    font-size: 18px;
-    line-height: 35px;
-    font-weight: 300;
-    font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-      'Liberation Sans', sans-serif;
-  }
-  ._src_components_DesktopSummary_DesktopSummary_module__textBlock12 {
-    margin-top: 0;
-    color: #000;
-    font-size: 18px;
-    line-height: 35px;
-    font-weight: 300;
-    font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-      'Liberation Sans', sans-serif;
-  }
-
   /* sample info label */
   .sample_info_label {
     position: absolute;
@@ -749,7 +703,7 @@
     color: #006DAE;
   }
 
-  ._button_summary {
+  .s_button_summary {
     background:#f1f3f6;
     color: #006DAE;
     border-left: 5px solid #23BFDF;
@@ -767,7 +721,7 @@
     flex-direction: column;
   }
 
-  ._button_analysis {
+  .s_button_analysis {
     color: #000000;
     font-size: 20px;
     line-height: 50px;
@@ -849,177 +803,179 @@ body label {
 </style>
 
 <body>
-  <div class="summary_root">
-    <div class="module_display">
-        <div class="summary_main_frame">
-          <div class="sample_name_value"><p style="font-size:26px;  font-weight:bold">Sample Name:
-          <span style="font-weight:500">{{ sample.sample_name }}</span></p>
-        </div>
-          <div class="drug_res_box">  
-            <div class="drug_res_outline">
-            </div>
-            <div class="drug_res_title">Drug Resistance Markers
-            </div>            
-            <div class="drug_res_line">
-              <svg preserveAspectRatio="none" viewBox="0 0 1075 1" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon"><path d="M0 0H1060" stroke="#DFE1E5"></path></svg>
-            </div>
-            <div class="drug_res_spacing">
-              <span style="text-align:center; font-family:Rubik;">
-                <table class="drug_res_table" style="table-layout: fixed; width: 1075px;">  
-                  <thead>
-                    <tr>
-                      <th class="th1">&nbsp;</th>      
-                      <th class="th1">Chloroquine</th>      
-                      <th class="th1">Pyrimethamine</th>      
-                      <th class="th1">Sulfadoxine</th>      
-                      <th class="th1">Mefloquine</th>      
-                      <th class="th1">Artemisinin</th>      
-                      <th class="th1">Piperaquine</th>    
-                    </tr>
-                  </thead>  
-                  <tbody>  
-                    <tr>
-                        <th>Sensitivity</th>
-                        {% for item in sample.drug_res %}
-                          {% if item == "RESISTANT" %}
-                                <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #E28080;"> {{ item }} </td> 
-                          {% elif item == "SENSITIVE" %}
-                                <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #8CE280"> {{ item }} </td> 
-                          {% else %}
-                                <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #EBF0F1;"> {{ item }} </td> 
-                          {% endif %}
-                        {% endfor %}
+  <div id="summary_page">
+    <div class="summary_root">
+      <div class="module_display">
+          <div class="summary_main_frame">
+            <div class="sample_name_value"><p style="font-size:26px;  font-weight:bold">Sample Name:
+            <span style="font-weight:500">{{ sample.sample_name }}</span></p>
+          </div>
+            <div class="drug_res_box">  
+              <div class="drug_res_outline">
+              </div>
+              <div class="drug_res_title">Drug Resistance Markers
+              </div>            
+              <div class="drug_res_line">
+                <svg preserveAspectRatio="none" viewBox="0 0 1075 1" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon"><path d="M0 0H1060" stroke="#DFE1E5"></path></svg>
+              </div>
+              <div class="drug_res_spacing">
+                <span style="text-align:center; font-family:Rubik;">
+                  <table class="drug_res_table" style="table-layout: fixed; width: 1075px;">  
+                    <thead>
+                      <tr>
+                        <th class="th1">&nbsp;</th>      
+                        <th class="th1">Chloroquine</th>      
+                        <th class="th1">Pyrimethamine</th>      
+                        <th class="th1">Sulfadoxine</th>      
+                        <th class="th1">Mefloquine</th>      
+                        <th class="th1">Artemisinin</th>      
+                        <th class="th1">Piperaquine</th>    
                       </tr>
-                  </tbody>
-                </table>
-              </span>
+                    </thead>  
+                    <tbody>  
+                      <tr>
+                          <th>Sensitivity</th>
+                          {% for item in sample.drug_res %}
+                            {% if item == "RESISTANT" %}
+                                  <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #E28080;"> {{ item }} </td> 
+                            {% elif item == "SENSITIVE" %}
+                                  <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #8CE280"> {{ item }} </td> 
+                            {% else %}
+                                  <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #EBF0F1;"> {{ item }} </td> 
+                            {% endif %}
+                          {% endfor %}
+                        </tr>
+                    </tbody>
+                  </table>
+                </span>
+              </div>
+            </div>
+
+            <div class="row2_frames">
+              <div class="row2_spacing">
+                <div class="sample_info_box">
+                  <div class="_location_info_label">
+                    Location Info
+                  </div>
+                  <div class="_location_info_lines_frame">
+                    <div class="_location_info_line"></div>
+                    <div class="_location_info_line2"></div>
+                    <div class="_location_info_line3"></div>
+                    <div class="_location_info_line4"></div>
+                  </div>
+                  <div class="_location_info_left_side">
+                    <div class="_location_info_text">Country
+                    </div>
+      
+                    
+                    <div class="_location_info_text">Latitude
+                    </div>
+                    
+                    <div class="_location_info_text">Longitude
+                    </div>
+                  </div>
+                  <div class="location_info_right_side">
+                    <div class="_location_info_text">{{ sample.location_info[2] }}
+                    </div>
+                    
+                    <div class="_location_info_text">{{ sample.location_info[0] }}
+                    </div>
+                    
+                    <div class="_location_info_text">{{ sample.location_info[1] }}
+                    </div>
+                  </div>
+                </div>
+            
+                <div class="qc_status_spacing">
+                  <p class = "_QC_status_text"><span>{{ sample.qc_status }}</span><br><span style="font-weight:300; font-size:20px; color:#000">QC Status</span></p>
+                </div>
+            
+            <div class="hrp_spacing">
+              <div class="HRP_col">
+                <p class = "HRP_2_status"><span>{{ sample.hrp2 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-2 Result</span></p></div>
+              <div class="HRP_col">
+                <p class = "HRP_3_status"><span>{{ sample.hrp3 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-3 Result</span></p></div>
             </div>
           </div>
-
-          <div class="row2_frames">
-            <div class="row2_spacing">
-              <div class="sample_info_box">
-                <div class="_location_info_label">
-                  Location Info
-                </div>
-                <div class="_location_info_lines_frame">
-                  <div class="_location_info_line"></div>
-                  <div class="_location_info_line2"></div>
-                  <div class="_location_info_line3"></div>
-                  <div class="_location_info_line4"></div>
-                </div>
-                <div class="_location_info_left_side">
-                  <div class="_location_info_text">Country
-                  </div>
-    
-                  
-                  <div class="_location_info_text">Latitude
-                  </div>
-                  
-                  <div class="_location_info_text">Longitude
-                  </div>
-                </div>
-                <div class="location_info_right_side">
-                  <div class="_location_info_text">{{ sample.location_info[2] }}
-                  </div>
-                  
-                  <div class="_location_info_text">{{ sample.location_info[0] }}
-                  </div>
-                  
-                  <div class="_location_info_text">{{ sample.location_info[1] }}
-                  </div>
-                </div>
-              </div>
-          
-              <div class="qc_status_spacing">
-                <p class = "_QC_status_text"><span>{{ sample.qc_status }}</span><br><span style="font-weight:300; font-size:20px; color:#000">QC Status</span></p>
-              </div>
-          
-          <div class="hrp_spacing">
-            <div class="HRP_col">
-              <p class = "HRP_2_status"><span>{{ sample.hrp2 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-2 Result</span></p></div>
-            <div class="HRP_col">
-              <p class = "HRP_3_status"><span>{{ sample.hrp3 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-3 Result</span></p></div>
+          <div class="map_module">
+            <div class="map_line">
+              <svg preserveAspectRatio="none" viewBox="0 0 494 3" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon2"><path d="M0 3L494 1.73228e-07" stroke="#DFE1E5"></path></svg>
+            </div>
+            <div class="map_title">Map</div>
+            <div class="_map">
+              {{ sample.map|safe }}
+            </div>
           </div>
-        </div>
-        <div class="map_module">
-          <div class="map_line">
-            <svg preserveAspectRatio="none" viewBox="0 0 494 3" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon2"><path d="M0 3L494 1.73228e-07" stroke="#DFE1E5"></path></svg>
-          </div>
-          <div class="map_title">Map</div>
-          <div class="_map">
-            {{ sample.map|safe }}
-          </div>
-        </div>
-      </div>
-      
-      <div class="sample_info_module">
-        <div class="sample_info_outline"></div>
-        <div class="sample_info_lines">
-          <div class="sample_info_line1"></div>
-          
-          <div class="sample_info_line2"></div>
-
-          <div class="sample_info_line3"></div>
-          
-          <div class="sample_info_line4"></div>
-          
-          <div class="sample_info_line5"></div>
-          
-          <div class="sample_info_line6"></div>
-          
-          <div class="sample_info_line7"></div>
         </div>
         
-        <div class="sample_info_right_text">
-          <div class="upload_date_value">{{ sample.info[0] }}
+        <div class="sample_info_module">
+          <div class="sample_info_outline"></div>
+          <div class="sample_info_lines">
+            <div class="sample_info_line1"></div>
+            
+            <div class="sample_info_line2"></div>
+
+            <div class="sample_info_line3"></div>
+            
+            <div class="sample_info_line4"></div>
+            
+            <div class="sample_info_line5"></div>
+            
+            <div class="sample_info_line6"></div>
+            
+            <div class="sample_info_line7"></div>
           </div>
           
-          <div class="species_value">{{ sample.info[1] }}
+          <div class="sample_info_right_text">
+            <div class="upload_date_value">{{ sample.info[0] }}
+            </div>
+            
+            <div class="species_value">{{ sample.info[1] }}
+            </div>
+            
+            <div class="fold_coverage_value">{{ sample.info[2] }}
+            </div>
+            
+            <div class="read_len_n50_value">{{ sample.info[3] }}
+            </div>
+            
+            <div class="read_len_median_value">{{ sample.info[4] }}
+            </div>
+            
+            <div class="read_qual_median_value">{{ sample.info[5] }}
+            </div>
+          </div>
+          <div class="sample_info_left_side">
+              Upload Date <br>
+              Species <br>
+              Aligned Fold Coverage <br>
+              Aligned Read Length N50 <br>
+              Aligned Read Length Median <br>
+              Read Quality Median
           </div>
           
-          <div class="fold_coverage_value">{{ sample.info[2] }}
-          </div>
-          
-          <div class="read_len_n50_value">{{ sample.info[3] }}
-          </div>
-          
-          <div class="read_len_median_value">{{ sample.info[4] }}
-          </div>
-          
-          <div class="read_qual_median_value">{{ sample.info[5] }}
-          </div>
+          <div class="sample_info_label">Sample Info</div>
         </div>
-        <div class="sample_info_left_side">
-            Upload Date <br>
-            Species <br>
-            Aligned Fold Coverage <br>
-            Aligned Read Length N50 <br>
-            Aligned Read Length Median <br>
-            Read Quality Median
+      </div>
+
+      <!-- Header -->
+      <div class="header">
+        <div class="summary_title">LRMA</div>
+        <div class="summary_subtitle">Sequencing Report &mdash; Malaria</div>
+        <div class="summary_header_line"></div>
+        <div class="dna_logo"></div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="summary_sidebar">
+        <div class="buttons">
+          <button class="_button1 s_button_summary active"><a>Summary</a></button>
+          <button class="_button s_button_analysis" onclick="document.location='lrma_report_analysis.html'"><a>Analysis</a></button>
+          <!-- <button class="_button _button_overview"><a>Overview</a></button> -->
         </div>
-        
-        <div class="sample_info_label">Sample Info</div>
+        <img src="static/images/logo1.jpg" class="_broad_logo">
       </div>
-    </div>
 
-    <!-- Header -->
-    <div class="header">
-      <div class="summary_title">LRMA</div>
-      <div class="summary_subtitle">Sequencing Report &mdash; Malaria</div>
-      <div class="summary_header_line"></div>
-      <div class="dna_logo"></div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="summary_sidebar">
-      <div class="buttons">
-        <button class="_button1 _button_summary active"><a>Summary</a></button>
-        <button class="_button _button_analysis" onclick="document.location='lrma_report_analysis.html'"><a>Analysis</a></button>
-        <!-- <button class="_button _button_overview"><a>Overview</a></button> -->
-      </div>
-      <img src="static/images/logo1.jpg" class="_broad_logo">
-    </div>
-
-  </div> <!-- summary_root -->
+    </div> <!-- summary_root -->
+  </div>
 </div> <!-- body -->
