@@ -126,6 +126,8 @@ task CoverageStats {
         # Runtime parameters
         Int? preemptible_tries = 3
     }
+    Int round = 2
+    String header_suffix = "_coverage"
 
     Int disk_size = 2*ceil(size(mosdepth_regions, "GB"))
     String basename = select_first([basename_input, basename(mosdepth_regions)])
@@ -135,7 +137,7 @@ task CoverageStats {
         set -euxo pipefail
 
         # Use Datamash to calculate summary statistics
-        zcat ~{mosdepth_regions} | datamash -H \
+        zcat ~{mosdepth_regions} | datamash -H -R ~{round} \
         mean ~{cov_col} \
         q1 ~{cov_col} \
         median ~{cov_col} \
@@ -147,16 +149,19 @@ task CoverageStats {
         cat ~{prefix}.cov_stat_summary.txt
 
         # Replace floating-point numbers suffix ing field names with '_coverage
-        sed -i '1s/([0-9]*\.[0-9]*)/_coverage/g' ~{prefix}.cov_stat_summary.txt
+        sed -i '1s/([0-9]*\.[0-9]*)/~{header_suffix}/g' ~{prefix}.cov_stat_summary.txt
 
         # Calculate covrage percentage with greater than 4x coverage
         total_bases=$(zcat ~{mosdepth_regions} | wc -l)
         bases_above_4x=$(zcat ~{mosdepth_regions} | awk -v cov_col=~{cov_col} '$cov_col > 4' | wc -l)
-        percent_above_4x=$(python3 -c "print($bases_above_4x/$total_bases)")
+        percent_above_4x=$(python3 -c "print(round($bases_above_4x/$total_bases, ~{round}))")
 
         # Append the percentage to the summary tsv file
-        sed -i "1s/$/\tpercent_above_4x_coverage/" ~{prefix}.cov_stat_summary.txt
+        sed -i "1s/$/\tpercent_above_4x~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
         sed -i "2s/$/\t$percent_above_4x/" ~{prefix}.cov_stat_summary.txt
+
+        # Round Floats seperated by tab in the second line to the nearest hundredth
+        sed -i '2s/[0-9]*\.[0-9]*/&\n/g' ~{prefix}.cov_stat_summary.txt
 
         # Extract field names from the header
         header=$(head -n 1 ~{prefix}.cov_stat_summary.txt)
