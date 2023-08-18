@@ -39,7 +39,7 @@ task phasing {
         
         samtools index -M ~{sep=' ' inputbams}   
         
-        whatshap phase -o ~{outputprefix}.phased.vcf --tag=HP --reference=~{ref} ~{joint_vcf} ~{sep=" " inputbams}
+        whatshap phase -o ~{outputprefix}.phased.vcf --tag=PS --reference=~{ref} ~{joint_vcf} ~{sep=" " inputbams}
 
         bgzip -c ~{outputprefix}.phased.vcf > ~{outputprefix}.phased.vcf.gz
 
