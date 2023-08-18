@@ -9,7 +9,7 @@
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Rubik&display=swap" rel="stylesheet">
-      
+
       <title>sample_analysis</title>    
 
       <style>
@@ -22,7 +22,7 @@
 
 <style>
 
-.main_frame {
+.analysis_main_frame {
   position: absolute;
   left: 277px;
   top: 109px;
@@ -334,18 +334,18 @@
   }
 
 
-.sidebar {
+.analysis_sidebar {
   position: absolute;
   left: 0;
   top: 90px;
-  width: 258px;
+  width: 259px;
   height: 1966px;
   align-items: flex-start;
   background-color: #dfe1e5;
   overflow: hidden;
 }
 
-.sidebar_line {
+.analysis_sidebar_line {
   transform-origin: bottom left;
   position: absolute;
   left: 258px;
@@ -359,7 +359,7 @@
   transform: matrix(0, 1, -1, 0, 0, 0);
 }
 
-.subtitle {
+.analysis_subtitle {
   color: #2494c7;
   font-size: 20px;
   font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
@@ -372,7 +372,7 @@
   justify-content: center;
   flex-direction: column;
 }
-.header_line {
+.analysis_header_line {
   position: absolute;
   left: 100px;
   top: 90px;
@@ -382,7 +382,7 @@
   border-bottom: solid 1px #dfe1e5;
   margin-bottom: -1px;
 }
-.main_title {
+.analysis_title {
   color: #000;
   font-size: 60px;
   font-weight: 600;
@@ -402,11 +402,10 @@
   top: 7px;
   width: 85px;
   height: 76px;
-  background-image:/* webpackIgnore: true */ url('/static/images/dnaStrandIconInCircleVector211.jpg');
+  background-image: url('/static/images/dnaStrandIconInCircleVector211.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-
 }
 
 .login-with-google-btn {
@@ -659,7 +658,7 @@
 
 <style id="/src/resets.css:-css" type="text/css">html,
 body,
-#root {
+#analysis_root {
   margin: 0;
   padding: 0;
   min-height: 100%;
@@ -668,7 +667,7 @@ body,
   width: 100%;
 }
 
-#root {
+#analysis_root {
   position: relative;
 }
 
@@ -686,50 +685,45 @@ body label {
 </style>
 
 <body>
-  <div id="root">
-      <div class="module_display">
-        <div class="main_frame"><div class="sample_name_box">
-          <div class="sample_name_spacing">
-            <p style="font-size:26px;  font-weight:bold">Sample Name: </span>
-            <span style="font-weight:500">{{ sample.sample_name }}</span></span>
+  <div id="analysis_page">
+    <div id="analysis_root">
+        <div class="module_display">
+          <div class="analysis_main_frame">
+            <div class="sample_name_box">
+              <div class="sample_name_spacing">
+                <p style="font-size:26px;  font-weight:bold">Sample Name:
+                <span style="font-weight:500">{{ sample.sample_name }}</span>
+              </div>
           </div>
-        </div>
-        <div class="top_row_frame">
-          <div class="sequencing_summary_box"></div>
-          <div class="sequencing_summary_lines">
-            <div class="sequencing_summary_line1">
+          <div class="top_row_frame">
+            <div class="sequencing_summary_box"></div>
+            <div class="sequencing_summary_lines">
+              <div class="sequencing_summary_line1"></div>
+              <div class="sequencing_summary_line2"></div>
+              <div class="sequencing_summary_line3"></div>
+              <div class="sequencing_summary_line4"></div>
+              <div class="sequencing_summary_line5"></div>
+              <div class="sequencing_summary_line6"></div>
+              <div class="sequencing_summary_line7"></div>
             </div>
-            <div class="sequencing_summary_line2">
+            <div class="sequencing_summary_title">Sequencing Summary</div>
+            <div class="_sequencing_summary_right_side">
+              <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[0] }}</div>
+              <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[1] }}</div>
+              <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[2] }} bp</div>
+              <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[3] }} bp</div>
+              <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[4] }}</div>
+              <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[5] }}</div>
             </div>
-            <div class="sequencing_summary_line3">
+            <div class="_sequencing_summary_left_side">
+              <div class="_sequencing_summary_text">Sample Preparation</div>
+              <div class="_sequencing_summary_text">Analysis Completed Successfully</div>
+              <div class="_sequencing_summary_text">Aligned Bases</div>
+              <div class="_sequencing_summary_text">Aligned Reads</div>
+              <div class="_sequencing_summary_text">Fraction of Aligned Bases</div>
+              <div class="_sequencing_summary_text">Average Identity</div>
             </div>
-            <div class="sequencing_summary_line4">
-            </div>
-            <div class="sequencing_summary_line5">
-            </div>
-            <div class="sequencing_summary_line6">
-            </div>
-            <div class="sequencing_summary_line7">
-            </div>
-          </div>
-          <div class="sequencing_summary_title">Sequencing Summary</div>
-          <div class="_sequencing_summary_right_side">
-            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[0] }}</div>
-            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[1] }}</div>
-            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[2] }} bp</div>
-            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[3] }} bp</div>
-            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[4] }}</div>
-            <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[5] }}</div>
-          </div>
-          <div class="_sequencing_summary_left_side">
-            <div class="_sequencing_summary_text">Sample Preparation</div>
-            <div class="_sequencing_summary_text">Analysis Completed Successfully</div>
-            <div class="_sequencing_summary_text">Aligned Bases</div>
-            <div class="_sequencing_summary_text">Aligned Reads</div>
-            <div class="_sequencing_summary_text">Fraction of Aligned Bases</div>
-            <div class="_sequencing_summary_text">Average Identity</div>
-          </div>
-          <div class="qscores_box"></div>
+            <div class="qscores_box"></div>
             <div class="qscores_title">Q Scores</div>
             <div class="qscores_plot">
               <div id="qscores"></div>
@@ -744,19 +738,18 @@ body label {
             <div class="active_channels_label">Active Channels</div>
           </div>
         </div>
-        <div class="sidebar">
+        <div class="analysis_sidebar">
           <div class="buttons">
             <button class="_button _button_summary" onclick="document.location='lrma_report_summary.html'"><a>Summary</a></button>
             <button class="_button _button_analysis active"><a>Analysis</a></button>
             <!---<button class="_button _button_overview"><a>Overview</a></button>--->
           </div>
-          </div>
-
-          <div class="sidebar_line"></div>
         </div>
-        <div class="subtitle">Sequencing Report &mdash; Malaria</div>
-        <div class="header_line"></div>
-        <div class="main_title">LRMA</div>
+        <div class="analysis_sidebar_line"></div>
+        <div class="analysis_subtitle">Sequencing Report &mdash; Malaria</div>
+        <div class="analysis_header_line"></div>
+        <div class="analysis_title">LRMA</div>
         <div class="dna_logo"></div>
-      </div>
-    </div>
+      </div> <!-- analysis_root -->
+    </div> <!-- analysis_page -->
+</div> <!-- body -->
