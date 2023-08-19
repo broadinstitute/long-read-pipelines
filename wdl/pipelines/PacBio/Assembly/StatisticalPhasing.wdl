@@ -16,9 +16,9 @@ workflow StatisticalPhasing{
     }
     call whatshapphasing{input: inputbams=baminputs, ref=reference, outputprefix=outputpref, joint_vcf=joint_g_vcf, joint_vcf_tbi=joint_g_tbi}
     call shapeit5{input: vcf_input=joint_g_vcf, vcf_index=joint_g_tbi, mappingfile= geneticmapping, region=genomeregion, num_threads=nthreads}
-    call shapeit4{input: vcf_input=whatshapphasing.phased_vcf, vcf_index=whatshapphasing.phase_vcf_tbi, mappingfile= geneticmapping,scaffold=shapeit5.scaffold_vcf, region=genomeregion,num_threads=nthreads}
+    call shapeit4{input: vcf_input=whatshapphasing.phased_vcf, vcf_index=whatshapphasing.phase_vcf_tbi, mappingfile= geneticmapping,scaffold=shapeit5.scaffold_vcf,scaffold_index=shapeit5.scaffold_vcf_index, region=genomeregion,num_threads=nthreads}
     output{
-        File scaffold = shapeit5.scaffold_vcf
+        File scaffold = shapeit4.scaffold_vcf
     }
 }
 
@@ -37,18 +37,15 @@ task whatshapphasing {
         samtools faidx ~{ref}
         
         samtools index -M ~{sep=' ' inputbams}   
-        
         whatshap phase -o ~{outputprefix}.phased.vcf --tag=PS --reference=~{ref} ~{joint_vcf} ~{sep=" " inputbams}
-
-        bgzip -c ~{outputprefix}.phased.vcf > ~{outputprefix}.phased.vcf.gz
-
-        tabix -p vcf ~{outputprefix}.phased.vcf.gz
+        bcftools +fill-tags ~{outputprefix}.phased.vcf -Ob -o tmp.phased.bcf -- -t AN,AC
+        bcftools index tmp.phased.bcf
 
     >>>
     
     output {
-		File phased_vcf = "~{outputprefix}.phased.vcf.gz"
-        File phase_vcf_tbi = "~{outputprefix}.phased.vcf.gz.tbi"
+		File phased_vcf = "tmp.phased.bcf"
+        File phase_vcf_tbi = "tmp.phased.bcf.csi"
     }
 
 
@@ -80,10 +77,13 @@ task shapeit5{
     bcftools +fill-tags ~{vcf_input} -Ob -o tmp.out.bcf -- -t AN,AC
     bcftools index tmp.out.bcf
     phase_common_static --input tmp.out.bcf --filter-maf ~{minimal_maf} --region ~{region} --map ~{mappingfile} --output scaffold.bcf --thread ~{num_threads}
+    bcftools +fill-tags scaffold.bcf -Ob -o tmp.scaffold.bcf -- -t AN,AC
+    bcftools index tmp.scaffold.bcf
     >>>
 
     output{
-        File scaffold_vcf = "scaffold.bcf"
+        File scaffold_vcf = "tmp.scaffold.bcf"
+        File scaffold_vcf_index = "tmp.scaffold.bcf.csi"
     }
 
     Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
@@ -105,16 +105,13 @@ task shapeit4{
         File vcf_index
         File mappingfile
         File scaffold
+        File scaffold_index
         String region
         Int num_threads
     }
     command <<<
     # add AN AC tag
-    bcftools +fill-tags ~{vcf_input} -Ob -o tmp.out.bcf -- -t AN,AC
-    bcftools index tmp.out.bcf
-    bcftools +fill-tags ~{scaffold} -Ob -o tmp.scaffold.bcf -- -t AN,AC
-    bcftools index tmp.scaffold.bcf
-    shapeit4 --input tmp.out.bcf --map ~{mappingfile} --region ~{region} --scaffold tmp.scaffold.bcf --use-PS 0.0001 --output scaffold.bcf --thread ~{num_threads} --log phased.log
+    shapeit4 --input ~{vcf_input} --map ~{mappingfile} --region ~{region} --scaffold ~{scaffold} --use-PS 0.0001 --output scaffold.bcf --thread ~{num_threads} --log phased.log
 
     >>>
 
