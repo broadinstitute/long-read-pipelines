@@ -46,6 +46,7 @@ workflow CollectPacBioAlignedMetrics {
     output {
         File custom_aln_metrics_summary = CustomMetricsSummaryToFile.custom_aln_metrics_summary
         File nanoplot_stats = NanoPlotFromBam.stats
+        Map[String, Float] alignment_metrics = NanoPlotFromBam.stats_map
         Array[File] nanoplot_pngs = NanoPlotFromBam.plots
     }
 }

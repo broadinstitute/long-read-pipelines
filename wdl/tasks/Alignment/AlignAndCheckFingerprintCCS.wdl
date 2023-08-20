@@ -127,6 +127,7 @@ workflow AlignAndCheckFingerprintCCS {
         File aligned_pbi = IndexAlignedReads.pbi
 
         File alignment_metrics_tar_gz = saveAlnMetrics.you_got_it
+        Map[String, Float] alignment_metrics = CollectPacBioAlignedMetrics.alignment_metrics
 
         Float? fp_lod_expected_sample = FPCheckAoU.lod_expected_sample
         String? fp_status = FPCheckAoU.FP_status
