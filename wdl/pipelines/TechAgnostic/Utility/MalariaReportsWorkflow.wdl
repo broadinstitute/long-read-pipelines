@@ -96,7 +96,7 @@ workflow GenerateMalariaReports {
         # Sequencing Summary
         String sample_prep
         String analysis_success
-        Int aligned_bases
+        Float aligned_bases
         Int aligned_reads
         Float fraction_aligned_bases
         Float average_identity
