@@ -145,8 +145,7 @@ task RunReportScript {
     >>>
 
     output {
-        File analysis = "lrma_report_analysis.html"
-        File summary = "lrma_report_summary.html"
+        File report = "~{sample_name}_lrma_report.html"
     }
     
 

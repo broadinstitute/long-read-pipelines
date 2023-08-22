@@ -135,7 +135,6 @@ workflow GenerateMalariaReports {
     }
 
     output {
-        File analysis = RunReportScript.analysis
-        File summary = RunReportScript.summary
+        File report = RunReportScript.report
     }
 }
