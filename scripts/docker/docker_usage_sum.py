@@ -109,22 +109,38 @@ def get_docker_info_from_string(wdl_lines: [tuple], wdl_path: str) -> list:
     wdl_path_sum = wdl_path[wdl_path.find("/wdl/"):]
 
     for line_num, line_content in wdl_lines:
-        docker_names = re.findall(r'docker:\s*"(\S*?)"', line_content) #
-        if docker_names:
-            docker_name_and_version = docker_names[0]
+        docker_image = re.findall(r'docker:\s*"(\S*?)"', line_content)
+        if docker_image:
+            docker_name_and_version = docker_image[0]
             used_tag = os.path.basename(docker_name_and_version).split(":")[1]
             docker_name = docker_name_and_version.split(":")[0]
-            latest_tag = get_latest_local_docker_tag(docker_name)
+
+            # Get latest tag from list of docker details if it was already retrieved
+            latest_tag = get_tag_from_docker_details(docker_detail=docker_detail, docker_name=docker_name)
+            # Get latest tag from local docker if it was not retrieved from list of docker details
+            latest_tag = get_latest_local_docker_tag(docker_name) if latest_tag == "NA" else latest_tag
             # If the latest tag is not found locally, try to get it from remote
-            latest_tag = get_latest_remote_docker_tag(
-                docker_name) if latest_tag == "NA" else latest_tag
-            docker_detail.append(
-                f"{docker_name}\t{latest_tag}\t{used_tag}\t{line_num}\t{wdl_path_sum}")
+            latest_tag = get_latest_remote_docker_tag(docker_name) if latest_tag == "NA" else latest_tag
+            docker_detail.append(f"{docker_name}\t{latest_tag}\t{used_tag}\t{line_num}\t{wdl_path_sum}")
         else:
             pass
 
     return docker_detail
 
+
+def get_tag_from_docker_details(docker_detail: list, docker_name: str) -> str:
+    """
+    Returns the latest tag of a docker from a list of docker details
+    @param docker_detail: list of docker details e.g. ["docker_name\tlatest_tag\tused_tag\tline_num\twdl_path, ..."]
+    @param docker_name: docker name
+    @return: latest tag
+    """
+    latest_tag = "NA"
+    for docker_info in docker_detail:
+        if docker_name in docker_info:
+            latest_tag = docker_info.split("\t")[1]
+            break
+    return latest_tag
 
 def get_latest_remote_docker_tag(docker_path: str) -> str:
     """
@@ -134,7 +150,7 @@ def get_latest_remote_docker_tag(docker_path: str) -> str:
     """
     if "gcr" in docker_path or "ghcr" in docker_path:
         latest_tag = get_latest_tag_from_gcr(docker_path)
-        if latest_tag == "NA" or latest_tag == "None" or latest_tag == "latest" or latest_tag is None:
+        if latest_tag in ["NA", "None", "latest"] or latest_tag is None:
             latest_tag = get_gcr_tag_with_gcloud(docker_path)
     elif "quay.io" in docker_path:
         latest_tag = get_latest_tag_from_quay(docker_path)
@@ -193,29 +209,7 @@ def get_latest_tag_from_gcr(docker_path: str) -> str:
     try:
         # Send the GET request to the Container Registry API
         with urllib.request.urlopen(registry_url) as response:
-            data = response.read().decode("utf-8")
-            json_data = json.loads(data)
-            tags = json_data.get("tags")
-            manifest = json_data.get("manifest")
-
-            # The manifest is a list of dicts for each version of an image, each dict
-            # has a key called "tag", which is a list of tags for that version.
-            # The image version having "latest" as part of its tag is what we want.
-            for sha_key in manifest:
-                sha_key_tags = manifest[sha_key].get("tag")
-                if "latest" in sha_key_tags:
-                    latest_tag = sha_key_tags[0]
-                    return latest_tag if latest_tag else "NA"
-
-            # If the image doesn't have a "latest" tag, return the tag with the
-            # highest version number.
-            tags_str_removed = [item for item in tags if any(char.isdigit() for char in item)]
-            if tags_str_removed:
-                if tags_str_removed is not None:
-                    latest_tag = max(tags_str_removed)
-                    return latest_tag
-            else:
-                return "NA"
+            return extract_latest_tag_from_registry_response(response)
     except urllib.error.HTTPError as e:
         # print(f"Error: {e.code} - {e.reason}")
         pass
@@ -223,6 +217,41 @@ def get_latest_tag_from_gcr(docker_path: str) -> str:
         # print(f"Error: Failed to reach the server - {e.reason}")
         pass
 
+def extract_latest_tag_from_registry_response(response) -> str:
+    """
+    Extracts the latest tag from the response of a registry API call
+    @param response:
+    @return:
+    """
+
+    response_content = response.read().decode("utf-8")
+    latest_tag = "NA"
+
+    if response_content:
+        json_data = json.loads(response_content)
+        tags = json_data.get("tags")
+        manifest = json_data.get("manifest")
+
+        # The manifest is a dict of dicts for each version of an image, each dict
+        # has a key called "tag", which is a list of tags for that version.
+        # The image version having "latest" as part of its tag is returned.
+        if manifest:
+            for sha_key in manifest:
+                sha_key_tags = manifest[sha_key].get("tag")
+                if "latest" in sha_key_tags:
+                    latest_tag = sha_key_tags[0]
+                    return latest_tag
+
+        # If the image doesn't have a "latest" tag, return the tag with the
+        # highest version number.
+        tags_str_removed = [item for item in tags if any(char.isdigit() for char in item)]
+        if tags_str_removed:
+            latest_tag = max(tags_str_removed)
+            return latest_tag
+        else:
+            return latest_tag # If no numerical version tags are found, return NA
+    else:
+        return latest_tag # If manifest is empty, return NA
 
 def get_gcr_tag_with_gcloud(docker_path: str) -> str or None:
 
@@ -298,16 +327,7 @@ def get_latest_tag_from_quay(docker_path: str) -> str:
     try:
         # Send the GET request to the Container Registry API
         with urllib.request.urlopen(registry_url) as response:
-            data = response.read().decode("utf-8")
-            json_data = json.loads(data)
-            tags = json_data.get("tags")
-
-            tags_str_removed = [item for item in tags if any(char.isdigit() for char in item)]
-            if tags_str_removed:
-                latest_tag = max(tags_str_removed)
-                return latest_tag
-            else:
-                return "NA"
+            return extract_latest_tag_from_registry_response(response)
     except urllib.error.HTTPError as e:
         # print(f"Error: {e.code} - {e.reason}")
         pass
