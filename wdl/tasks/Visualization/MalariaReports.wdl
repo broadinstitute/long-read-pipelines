@@ -111,10 +111,7 @@ task RunReportScript {
     # incomplete
     command <<<
         set -euxo
-        echo "COMMAND START"
-        pwd
-        ls -l
-        echo "AFTER ls -l"
+        echo ~{species}
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
