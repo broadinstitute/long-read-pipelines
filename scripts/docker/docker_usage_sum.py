@@ -21,6 +21,8 @@ logging.basicConfig(level=logging.INFO)
 #       created, after the official tag was created, the script will retrieve the
 #       unofficial tag as the latest tag. (It tries to avoid this by filtering out
 #       tags with no digits).
+#      - The script occasionally uses gcloud to retrieve the latest tag. Its suggested
+#      to have gcloud installed.
 
 # TODO: Future suggestion: have the results be generated for main branch for each merge
 
