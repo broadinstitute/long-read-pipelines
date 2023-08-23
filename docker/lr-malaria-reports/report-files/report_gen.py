@@ -544,7 +544,7 @@ if __name__ == '__main__':
     # first : summary page
     sample_name = arg_dict['sample_name']
 
-    upload_date = arg_dict['upload_date'].split()[0]
+    upload_date = arg_dict['upload_date'][0]
     species = ' '.join(arg_dict['species'])
 
     info = [upload_date, species, arg_dict['aligned_coverage'], arg_dict['aligned_read_length_n50'], 
