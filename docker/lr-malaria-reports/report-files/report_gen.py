@@ -1,3 +1,5 @@
+import os
+
 # Data manipulation
 import numpy as np
 import pandas as pd
@@ -465,9 +467,11 @@ def create_report(sample, analysis):
     analysis and summary. These objects hold the variables and are passed to their respective
     page templates (analysis or summary).
     '''
+    print(os.path.dirname(os.path.realpath(__file__)))
+    print(os.getcwd())
 
     # creating summary page
-    templateLoader = jinja2.FileSystemLoader(searchpath='report-files/templates/')
+    templateLoader = jinja2.FileSystemLoader(searchpath='/report-files/templates/')
     templateEnv = jinja2.Environment(loader=templateLoader)
     TEMPLATE_FILE = 'report.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)

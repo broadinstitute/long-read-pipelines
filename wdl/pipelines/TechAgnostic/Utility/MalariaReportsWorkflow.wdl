@@ -108,7 +108,7 @@ workflow GenerateMalariaReports {
         input: 
             sample_name = sample_name,
             upload_date = upload_date,
-            species = ("\""+species+"\""),
+            species = species,
             aligned_coverage = aligned_coverage,
             aligned_read_length_n50 = aligned_read_length_n50,
             aligned_read_length_median = aligned_read_length_median,
