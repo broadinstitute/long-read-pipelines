@@ -467,8 +467,8 @@ def create_report(sample, analysis):
     analysis and summary. These objects hold the variables and are passed to their respective
     page templates (analysis or summary).
     '''
-    print(os.path.dirname(os.path.realpath(__file__)))
-    print(os.getcwd())
+    print("path: "+os.path.dirname(os.path.realpath(__file__)))
+    print("cwd: "+os.getcwd())
 
     # creating summary page
     templateLoader = jinja2.FileSystemLoader(searchpath='/report-files/templates/')
@@ -478,6 +478,7 @@ def create_report(sample, analysis):
     output = template.render(sample=sample, analysis=analysis)
     
     file_name = sample.sample_name+'_lrma_report.html'
+    print(file_name)
     with open(file_name, 'w') as fh:
         fh.write(output)        
         
