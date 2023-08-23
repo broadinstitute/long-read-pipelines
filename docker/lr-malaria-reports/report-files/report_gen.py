@@ -491,7 +491,7 @@ if __name__ == '__main__':
     
     # Sample Info
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
-    parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", required=True)
+    parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", nargs='+', required=True)
     parser.add_argument("--species", help="species of sample", nargs='+', required=True)
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float) # check -- fold coverage
     parser.add_argument("--aligned_read_length_n50", help="number at which 50% of the read lengths are longer than this value", required=True, 
@@ -546,7 +546,7 @@ if __name__ == '__main__':
 
     upload_date = arg_dict['upload_date'].split()[0]
     species = ' '.join(arg_dict['species'])
-    
+
     info = [upload_date, species, arg_dict['aligned_coverage'], arg_dict['aligned_read_length_n50'], 
             arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
 
