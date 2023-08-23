@@ -477,10 +477,13 @@ def create_report(sample, analysis):
     template = templateEnv.get_template(TEMPLATE_FILE)
     output = template.render(sample=sample, analysis=analysis)
     
+    print(os.listdir())
     file_name = sample.sample_name+'_lrma_report.html'
     print(file_name)
     with open(file_name, 'w') as fh:
-        fh.write(output)        
+        fh.write(output)   
+
+    print(os.listdir())
         
     print('Report generated!')
 
