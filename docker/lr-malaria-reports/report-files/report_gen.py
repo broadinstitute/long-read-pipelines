@@ -492,7 +492,7 @@ if __name__ == '__main__':
     # Sample Info
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
     parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", required=True)
-    parser.add_argument("--species", help="species of sample", required=True)
+    parser.add_argument("--species", help="species of sample", nargs='+', required=True)
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float) # check -- fold coverage
     parser.add_argument("--aligned_read_length_n50", help="number at which 50% of the read lengths are longer than this value", required=True, 
                         type=float) # check
@@ -543,8 +543,11 @@ if __name__ == '__main__':
     # prepare arguments for report generation
     # first : summary page
     sample_name = arg_dict['sample_name']
+
+    upload_date = arg_dict['upload_date'].split()[0]
+    species = ' '.join(arg_dict['species'])
     
-    info = [arg_dict['upload_date'], arg_dict['species'], arg_dict['aligned_coverage'], arg_dict['aligned_read_length_n50'], 
+    info = [upload_date, species, arg_dict['aligned_coverage'], arg_dict['aligned_read_length_n50'], 
             arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
 
     resistances = create_drug_table(arg_dict['drug_resistance_text'].name)
