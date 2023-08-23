@@ -467,7 +467,7 @@ def create_report(sample, analysis):
     '''
 
     # creating summary page
-    templateLoader = jinja2.FileSystemLoader(searchpath='templates/')
+    templateLoader = jinja2.FileSystemLoader(searchpath='report-files/templates/')
     templateEnv = jinja2.Environment(loader=templateLoader)
     TEMPLATE_FILE = 'report.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
