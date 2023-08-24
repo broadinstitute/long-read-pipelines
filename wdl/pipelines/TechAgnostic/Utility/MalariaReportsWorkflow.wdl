@@ -1,6 +1,6 @@
 version 1.0
 # Import malaria reports/summary generation as MRS
-import "../../../tasks/Visualization/MalariaReports.wdl" as MRS
+import "tasks/Visualization/MalariaReports.wdl" as MRS
 workflow GenerateMalariaReports {
 
     meta {
@@ -69,14 +69,14 @@ workflow GenerateMalariaReports {
         Float read_qual_median
 
         # Drug Resistance
-        File drug_resistance_text
-        String HRP2
-        String HRP3
+        File? drug_resistance_text
+        String? HRP2 = "N/A"
+        String? HRP3 = "N/A"
 
         # Map
-        Float longitude
-        Float latitude
-        String location
+        Float? longitude = 0
+        Float? latitude = 0
+        String? location = "Unknown"
         
         # QC Status
         String qc_status
@@ -101,7 +101,7 @@ workflow GenerateMalariaReports {
         Float fraction_aligned_bases
         Float average_identity
 
-        # Coverage Plot -- incomplete       
+        # Coverage Plot -- incomplete     
     }
 
     call MRS.RunReportScript as RunReportScript { 

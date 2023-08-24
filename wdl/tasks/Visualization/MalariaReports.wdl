@@ -71,14 +71,14 @@ task RunReportScript {
         Float read_qual_median
 
         # Drug Resistance
-        File drug_resistance_text
-        String HRP2
-        String HRP3
+        File? drug_resistance_text
+        String? HRP2
+        String? HRP3
 
         # Map
-        Float longitude
-        Float latitude
-        String location
+        Float? longitude
+        Float? latitude
+        String? location
         
         # QC Status
         String qc_status
@@ -103,7 +103,7 @@ task RunReportScript {
         Float fraction_aligned_bases
         Float average_identity
 
-        # Coverage Plot -- incomplete
+        # Coverage Plot -- incomplete  
     }
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))

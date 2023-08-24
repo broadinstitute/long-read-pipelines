@@ -383,11 +383,14 @@ def get_drug_resistance(data, sample_id, sample_df, do_print=False):
 '''
 Map
 '''
-def create_map(coordinates, sample_name, make_default):
+def create_map(coordinates, sample_name):
     m = folium.Map(location=coordinates, zoom_start = 5)
 
     # Check if make_default == True -- if so, do not make a marker
-    if not make_default:
+    #if not make_default:
+    #    folium.Marker(location=coordinates, popup = ('Sample: '+sample_name), icon=folium.Icon(color='red',prefix='fa',icon='circle'), parse_html=True).add_to(m)
+
+    if coordinates != [0,0]:
         folium.Marker(location=coordinates, popup = ('Sample: '+sample_name), icon=folium.Icon(color='red',prefix='fa',icon='circle'), parse_html=True).add_to(m)
 
     m.get_root().width = "473px"
@@ -587,24 +590,21 @@ if __name__ == '__main__':
     latitude, longitude = 0, 0
         
     # Check if values for map are provided
-    if arg_dict['latitude'] is not None and arg_dict['longitude'] is not None and arg_dict['location'] is not None:
-        make_default = False
-        location = arg_dict['location']
-        latitude = arg_dict['latitude']
-        longitude = arg_dict['longitude']
+    #if arg_dict['latitude'] is not None and arg_dict['longitude'] is not None and arg_dict['location'] is not None:
+    #    make_default = False
+    #    location = arg_dict['location']
+    #    latitude = arg_dict['latitude']
+    #    longitude = arg_dict['longitude']
 
-    if arg_dict['location']: 
-        location = arg_dict['location']
+    #if arg_dict['location']: 
+    #    location = arg_dict['location']
 
-    location_info = [latitude, longitude, location]
-    coordinates = [latitude, longitude]
-    _map = create_map(coordinates, sample_name, make_default)
+    #location_info = [latitude, longitude, location]
+    #coordinates = [latitude, longitude]
 
-    if not arg_dict["HRP2"]:
-        HRP2 = "N/A"
-        
-    if not arg_dict["HRP3"]:
-        HRP3 = "N/A"
+    location_info = [arg_dict['latitude'], arg_dict['longitude'], arg_dict['location']]
+    coordinates = [arg_dict['latitude'], arg_dict['longitude']]
+    _map = create_map(coordinates, sample_name)
 
     HRP2 = arg_dict['HRP2']
     HRP3 = arg_dict['HRP3']
