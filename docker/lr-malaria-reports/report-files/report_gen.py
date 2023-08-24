@@ -520,8 +520,7 @@ if __name__ == '__main__':
     parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float)
 
     # Drug Resistance
-    parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances",
-                        type=argparse.FileType("r"), default=None)
+    parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", default=None)
     parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", default="N/A")
     parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", default="N/A")
 
@@ -574,7 +573,7 @@ if __name__ == '__main__':
     if not arg_dict['drug_resistance_text'] or arg_dict['drug_resistance_text'] == "None":
         resistances = create_drug_table(None)
     else:
-        resistances = create_drug_table(arg_dict['drug_resistance_text'].name)
+        resistances = create_drug_table(arg_dict['drug_resistance_text'])
 
     qc_status = arg_dict['qc_status']
 
