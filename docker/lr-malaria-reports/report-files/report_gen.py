@@ -512,7 +512,7 @@ if __name__ == '__main__':
     # Sample Info
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
     parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", nargs='+', required=True)
-    parser.add_argument("--species", help="species of sample", nargs='+', required=True)
+    parser.add_argument("--species", help="species of sample", nargs='+', default="P. falciparum")
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float) # check -- fold coverage
     parser.add_argument("--aligned_read_length_n50", help="number at which 50% of the read lengths are longer than this value", required=True, 
                         type=float) # check
@@ -547,7 +547,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_reads_q15", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 32", required=True)
 
     # Sequencing Summary
-    parser.add_argument("--sample_prep", help="type of preparation used for the sample", required=True)
+    parser.add_argument("--sample_prep", help="type of preparation used for the sample", default="N/A")
     parser.add_argument("--analysis_success", help="whether the analysis process completed successfully", required=True)
     parser.add_argument("--aligned_bases", help="total number of bases aligned to the reference genome", required=True)
     parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True)

@@ -62,7 +62,7 @@ workflow GenerateMalariaReports {
         # Sample Info
         String sample_name
         String upload_date
-        String species
+        String? species
         Float aligned_coverage
         Float aligned_read_length_n50
         Float aligned_read_length_median
@@ -94,7 +94,7 @@ workflow GenerateMalariaReports {
         Int num_reads_q15
 
         # Sequencing Summary
-        String sample_prep
+        String? sample_prep
         String analysis_success
         Float aligned_bases
         Int aligned_reads

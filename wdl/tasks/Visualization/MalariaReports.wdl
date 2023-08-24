@@ -64,7 +64,7 @@ task RunReportScript {
         # Sample Info
         String sample_name
         String upload_date
-        String species
+        String? species
         Float aligned_coverage
         Float aligned_read_length_n50
         Float aligned_read_length_median
@@ -96,7 +96,7 @@ task RunReportScript {
         Int num_reads_q15
 
         # Sequencing Summary
-        String sample_prep
+        String? sample_prep
         String analysis_success
         Float aligned_bases
         Int aligned_reads
@@ -118,7 +118,7 @@ task RunReportScript {
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
-            --species ~{species} \
+            --species ~{default="Unknown" species} \
             --aligned_coverage ~{aligned_coverage} \
             --aligned_read_length_n50 ~{aligned_read_length_n50} \
             --aligned_read_length_median ~{aligned_read_length_median} \
@@ -137,7 +137,7 @@ task RunReportScript {
             --num_reads_q12 ~{num_reads_q12} \
             --num_reads_q15 ~{num_reads_q15} \
             --aligned_bases ~{aligned_bases} \
-            --sample_prep ~{sample_prep} \
+            --sample_prep ~{default="N/A" sample_prep} \
             --analysis_success ~{analysis_success} \
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \
