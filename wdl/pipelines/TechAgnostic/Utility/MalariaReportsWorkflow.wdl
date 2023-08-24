@@ -1,6 +1,6 @@
 version 1.0
 # Import malaria reports/summary generation as MRS
-import "tasks/Visualization/MalariaReports.wdl" as MRS
+import "../../../tasks/Visualization/MalariaReports.wdl" as MRS
 workflow GenerateMalariaReports {
 
     meta {
