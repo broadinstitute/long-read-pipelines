@@ -15,6 +15,8 @@ from matplotlib.ticker import MaxNLocator
 import plotly.express as px
 import folium
 import plotly.graph_objects as go
+from geopy.geocoders import Nominatim
+
 
 # HTML
 from markupsafe import Markup
@@ -592,6 +594,9 @@ if __name__ == '__main__':
         latitude = arg_dict['latitude']
         longitude = arg_dict['longitude']
 
+    if arg_dict['location']: 
+        location = arg_dict['location']
+        
     location_info = [latitude, longitude, location]
     coordinates = [latitude, longitude]
     _map = create_map(coordinates, sample_name, make_default)
