@@ -123,12 +123,12 @@ task RunReportScript {
             --aligned_read_length_n50 ~{aligned_read_length_n50} \
             --aligned_read_length_median ~{aligned_read_length_median} \
             --read_qual_median ~{read_qual_median} \
-            --drug_resistance_text ~{drug_resistance_text} \
+            --drug_resistance_text ~{default=NULL drug_resistance_text} \
             --HRP2 ~{HRP2} \
             --HRP3 ~{HRP3} \
-            --longitude ~{longitude} \
-            --latitude ~{latitude} \
-            --location ~{location} \
+            --longitude ~{default=0 longitude} \
+            --latitude ~{default=0 latitude} \
+            --location ~{default="Unknown" location} \
             --qc_status ~{qc_status} \
             --active_channels ~{active_channels} \
             --num_reads_q5 ~{num_reads_q5} \

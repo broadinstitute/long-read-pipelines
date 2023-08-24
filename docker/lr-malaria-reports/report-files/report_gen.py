@@ -521,14 +521,14 @@ if __name__ == '__main__':
 
     # Drug Resistance
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances",
-                        type=argparse.FileType("r"))
-    parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false")
-    parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false")
+                        type=argparse.FileType("r"), default=NULL)
+    parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", default="N/A")
+    parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", default="N/A")
 
     # Map
-    parser.add_argument("--longitude", help="longitude value of where the sample was collected", type=float)
-    parser.add_argument("--latitude", help="latitude value of where the sample collected", type=float)
-    parser.add_argument("--location", help="location where the sample was collected")
+    parser.add_argument("--longitude", help="longitude value of where the sample was collected", type=float, default=0)
+    parser.add_argument("--latitude", help="latitude value of where the sample collected", type=float, default=0)
+    parser.add_argument("--location", help="location where the sample was collected", default="Unknown")
     
     # QC Status
     parser.add_argument("--qc_status", help="status to determine whether or not the sequencing run passes quality control standards", required=True)

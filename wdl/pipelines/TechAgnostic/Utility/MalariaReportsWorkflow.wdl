@@ -70,13 +70,13 @@ workflow GenerateMalariaReports {
 
         # Drug Resistance
         File? drug_resistance_text
-        String? HRP2 = "N/A"
-        String? HRP3 = "N/A"
+        String? HRP2
+        String? HRP3
 
         # Map
-        Float? longitude = 0
-        Float? latitude = 0
-        String? location = "Unknown"
+        Float? longitude
+        Float? latitude
+        String? location
         
         # QC Status
         String qc_status
