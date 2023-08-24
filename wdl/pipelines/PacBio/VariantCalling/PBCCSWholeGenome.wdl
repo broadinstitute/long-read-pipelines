@@ -2,8 +2,8 @@ version 1.0
 
 import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 
-import "../../../tasks/Alignment/MergeSampleBamsAndMetrics.wdl" as MERGE
-import "../../../tasks/VariantCalling/CallVariantsReadBased.wdl" as VAR
+import "../../TechAgnostic/Utility/MergeSampleBamsAndCollectMetrics.wdl" as MERGE
+import "../../TechAgnostic/VariantCalling/CallVariantsReadBased.wdl" as VAR
 
 workflow PBCCSWholeGenome {
 

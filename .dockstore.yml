@@ -96,3 +96,12 @@ workflows:
 - name: CleanupIntermediate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
+- name: MergeSampleBamsAndCollectMetrics
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/MergeSampleBamsAndCollectMetrics.wdl
+- name: ShardWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ShardWholeGenome.wdl
+- name: CallVariantsReadBased
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl

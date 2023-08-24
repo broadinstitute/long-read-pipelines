@@ -1,10 +1,10 @@
 version 1.0
 
-import "../Utility/Utils.wdl" as Utils
-import "../Utility/Finalize.wdl" as FF
-import "../Utility/PBUtils.wdl" as PB
+import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/PBUtils.wdl" as PB
 
-import "../QC/SampleLevelAlignedMetrics.wdl" as COV
+import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow Work {
     meta {

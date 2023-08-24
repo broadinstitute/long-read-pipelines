@@ -1,15 +1,15 @@
 version 1.0
 
-import "../Utility/GeneralUtils.wdl" as GU
-import "../Utility/Finalize.wdl" as FF
-import "../Utility/Utils.wdl"
+import "../../../tasks/Utility/GeneralUtils.wdl" as GU
+import "../../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/Utils.wdl"
 
-import "ShardWholeGenome.wdl"
+import "../Utility/ShardWholeGenome.wdl"
 
-import "CallStructuralVariants.wdl"
-import "CallSmallVariants.wdl"
+import "../../../tasks/VariantCalling/CallStructuralVariants.wdl"
+import "../../../tasks/VariantCalling/CallSmallVariants.wdl"
 
-import "Sniffles2.wdl"
+import "../../../tasks/VariantCalling/Sniffles2.wdl"
 
 
 workflow CallVariants {

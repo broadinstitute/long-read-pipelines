@@ -1,9 +1,10 @@
 version 1.0
 
+import "../../pipelines/TechAgnostic/Utility/ShardWholeGenome.wdl"  # this isn't optimal; the choice was made assuming ShardWholeGenome could be useful for other users as well.
+
 import "../Utility/Utils.wdl"
 import "../Utility/VariantUtils.wdl"
 import "../Visualization/VisualizeResourceUsage.wdl"
-import "ShardWholeGenome.wdl"
 
 import "DeepVariant.wdl"
 import "MarginPhase.wdl" as Margin
