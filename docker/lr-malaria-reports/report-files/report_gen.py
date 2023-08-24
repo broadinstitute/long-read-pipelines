@@ -167,8 +167,11 @@ def plot_coverage(start_pos_all:np.array, end_pos_all:np.array, start_region:int
 Drug Resistance Table
 '''
 def create_drug_table(file):
-    data = open(file, 'r').read()
-    resistances = list(get_drug_resistance(data, None, None, do_print=True))
+    if not file:
+        resistances = ["UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED"]
+    else:
+        data = open(file, 'r').read()
+        resistances = list(get_drug_resistance(data, None, None, do_print=True))
     
     resistances_tbl = pd.DataFrame(columns = ["Chloroquine", "Pyrimethamine", "Sulfadoxine", "Mefloquine", "Artemisinin", "Piperaquine"])
     resistances = map(str, resistances)
@@ -379,9 +382,13 @@ def get_drug_resistance(data, sample_id, sample_df, do_print=False):
 '''
 Map
 '''
-def create_map(coordinates, sample_name):
+def create_map(coordinates, sample_name, make_default):
     m = folium.Map(location=coordinates, zoom_start = 5)
-    folium.Marker(location=coordinates, popup = ('Sample: '+sample_name), icon=folium.Icon(color='red',prefix='fa',icon='circle'), parse_html=True).add_to(m)
+
+    # Check if make_default == True -- if so, do not make a marker
+    if not make_default:
+        folium.Marker(location=coordinates, popup = ('Sample: '+sample_name), icon=folium.Icon(color='red',prefix='fa',icon='circle'), parse_html=True).add_to(m)
+
     m.get_root().width = "473px"
     m.get_root().height = "397px"
     map_html = m.get_root()._repr_html_()
@@ -509,15 +516,15 @@ if __name__ == '__main__':
     parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float)
 
     # Drug Resistance
-    parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", required=True, 
+    parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances",
                         type=argparse.FileType("r"))
-    parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", required=True)
-    parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", required=True)
+    parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false")
+    parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false")
 
     # Map
-    parser.add_argument("--longitude", help="longitude value of where the sample was collected", required=True, type=float)
-    parser.add_argument("--latitude", help="latitude value of where the sample collected", required=True, type=float)
-    parser.add_argument("--location", help="location where the sample was collected", required=True)
+    parser.add_argument("--longitude", help="longitude value of where the sample was collected", type=float)
+    parser.add_argument("--latitude", help="latitude value of where the sample collected", type=float)
+    parser.add_argument("--location", help="location where the sample was collected")
     
     # QC Status
     parser.add_argument("--qc_status", help="status to determine whether or not the sequencing run passes quality control standards", required=True)
@@ -559,13 +566,41 @@ if __name__ == '__main__':
     info = [upload_date, species, arg_dict['aligned_coverage'], arg_dict['aligned_read_length_n50'], 
             arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
 
-    resistances = create_drug_table(arg_dict['drug_resistance_text'].name)
+    # Check if drug resistance report is provided
+    if not arg_dict['drug_resistance_text']:
+        resistances = create_drug_table(None)
+    else:
+        resistances = create_drug_table(arg_dict['drug_resistance_text'].name)
 
     qc_status = arg_dict['qc_status']
 
-    location_info = [arg_dict['latitude'], arg_dict['longitude'], arg_dict['location']]
-    coordinates = [arg_dict['latitude'], arg_dict['longitude']]
-    _map = create_map(coordinates, sample_name)
+    # Check if location is given
+    if not arg_dict['location']:
+        location = "Unknown"
+    else:
+        location = arg_dict['location']
+
+    # Set default values for map and location info
+    make_default = True
+    location = "Unknown"
+    latitude, longitude = 0, 0
+        
+    # Check if values for map are provided
+    if arg_dict['latitude'] is not None and arg_dict['longitude'] is not None and arg_dict['location'] is not None:
+        make_default = False
+        location = arg_dict['location']
+        latitude = arg_dict['latitude']
+        longitude = arg_dict['longitude']
+
+    location_info = [latitude, longitude, location]
+    coordinates = [latitude, longitude]
+    _map = create_map(coordinates, sample_name, make_default)
+
+    if not arg_dict["HRP2"]:
+        HRP2 = "N/A"
+        
+    if not arg_dict["HRP3"]:
+        HRP3 = "N/A"
 
     HRP2 = arg_dict['HRP2']
     HRP3 = arg_dict['HRP3']
