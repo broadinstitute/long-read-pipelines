@@ -37,6 +37,7 @@ workflow Work {
         File? aligned_pbi = FinalizePbi.gcs_path
 
         Float coverage = AlignmentMetrics.coverage
+        File coverage_per_chr = FinalizeMosdepSumm.gcs_path
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
 
         Map[String, Float] alignment_metrics = AlignmentMetrics.reads_stats
@@ -98,6 +99,7 @@ workflow Work {
             bed_to_compute_coverage = bed_to_compute_coverage,
             bed_descriptor = bed_descriptor
     }
+    call FF.FinalizeToFile as FinalizeMosdepSumm { input: outdir = outdir, file = AlignmentMetrics.coverage_per_chr }
 
     if (defined(bed_to_compute_coverage)) {
         call FF.FinalizeToFile as FinalizeRegionalCoverage { input:

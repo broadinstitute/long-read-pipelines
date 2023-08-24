@@ -61,19 +61,21 @@ task MergeBamsWithSamtools {
         Array[File] bams
         String out_prefix = "out"
 
+        String disk_type = "LOCAL"
+
         RuntimeAttr? runtime_attr_override
     }
-
-    Int disk_size = 1 + 4*ceil(size(bams, "GB"))
 
     command <<<
         set -euxo pipefail
 
         mkdir -p bams_dir
+        time \
         gcloud storage cp ~{sep=' ' bams} /cromwell_root/bams_dir/
         ls bams_dir
 
         cd bams_dir && ls ./*.bam > bams.list
+        time \
         samtools merge \
             -p -c --no-PG \
             -@ 3 \
@@ -90,20 +92,24 @@ task MergeBamsWithSamtools {
         File merged_bai = "~{out_prefix}.bam.bai"
     }
 
+    Int local_ssd_sz = if size(bams, "GiB") > 150 then 750 else 375
+    Int pd_sz = 10 + 3*ceil(size(bams, "GiB"))
+    Int disk_size = if "LOCAL" == disk_type then local_ssd_sz else pd_sz
+
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             16,
+        mem_gb:             8,
         disk_gb:            disk_size,
-        preemptible_tries:  0,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.1"
+        preemptible_tries:  if "LOCAL" == disk_type then 1 else 0,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])

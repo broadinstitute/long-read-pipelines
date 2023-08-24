@@ -45,6 +45,7 @@ workflow SampleLevelAlignedMetrics {
 
     output {
         Float coverage = MosDepthWGS.wgs_cov
+        File coverage_per_chr = MosDepthWGS.summary_txt
 
         Map[String, Float] reads_stats = NanoPlotFromBam.stats_map
 
