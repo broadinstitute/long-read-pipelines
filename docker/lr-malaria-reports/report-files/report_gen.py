@@ -476,12 +476,13 @@ def create_report(sample, analysis):
     TEMPLATE_FILE = 'report.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
     output = template.render(sample=sample, analysis=analysis)
-    
+
     print(os.listdir())
-    file_name = sample.sample_name+'_lrma_report.html'
+    file_name = os.path.join(os.getcwd(),sample.sample_name+'_lrma_report.html')
     print(file_name)
+
     with open(file_name, 'w') as fh:
-        fh.write(output)   
+        fh.write(output)  
 
     print(os.listdir())
         
