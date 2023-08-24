@@ -9,7 +9,7 @@ fi
 echo "VALIDATING WDL FILES IN $PWD"
 (womtool --version || echo "I need womtool to run" ) && echo
 
-for wdl in *.wdl; do
+for wdl in $(find . -name "*.wdl"); do
   echo -e "==============================\n${wdl}";
   womtool validate "${wdl}";
 done

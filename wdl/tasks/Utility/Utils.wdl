@@ -1323,6 +1323,7 @@ task MergeBams {
 
     meta {
         description : "Merge several input BAMs into a single BAM."
+        deprecated: true
     }
 
     parameter_meta {

@@ -52,7 +52,6 @@ workflow ONTFlowcellFromMultipleBasecalls {
         input:
             aligned_bam = usable_bam,
             aligned_bai = usable_bai,
-            ref_fasta   = ref_map['fasta'],
             bed_to_compute_coverage = bed_to_compute_coverage
     }
 

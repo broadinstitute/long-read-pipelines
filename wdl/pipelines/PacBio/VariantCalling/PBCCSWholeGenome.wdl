@@ -78,7 +78,6 @@ workflow PBCCSWholeGenome {
             is_ont = false,
             bams_suspected_to_contain_dup_record = false,
 
-            ref_map_file = ref_map_file,
             bed_to_compute_coverage = bed_to_compute_coverage,
             bed_descriptor = bed_descriptor
     }

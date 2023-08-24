@@ -85,7 +85,6 @@ workflow ONTWholeGenome {
             is_ont = true,
             bams_suspected_to_contain_dup_record = bams_suspected_to_contain_dup_record,
 
-            ref_map_file = ref_map_file,
             bed_to_compute_coverage = bed_to_compute_coverage,
             bed_descriptor = bed_descriptor
     }
