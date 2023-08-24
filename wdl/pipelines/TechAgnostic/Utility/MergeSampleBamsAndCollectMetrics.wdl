@@ -96,9 +96,10 @@ workflow Work {
 
     ###########################################################
     # pacbio specific index
-    call PB.PBIndex as PBIndexSampleReads { input: bam = use_this_bam }
-    call FF.FinalizeToFile as FinalizePbi { input: outdir = outdir, file = PBIndexSampleReads.pbi, name = "~{sample_name}.bam.pbi" }
-
+    if (! is_ont) {
+        call PB.PBIndex as PBIndexSampleReads { input: bam = use_this_bam }
+        call FF.FinalizeToFile as FinalizePbi { input: outdir = outdir, file = PBIndexSampleReads.pbi, name = "~{sample_name}.bam.pbi" }
+    }
     ###########################################################
     Map[String, String] ref_map = read_map(ref_map_file)
     call COV.SampleLevelAlignedMetrics as AlignmentMetrics {
