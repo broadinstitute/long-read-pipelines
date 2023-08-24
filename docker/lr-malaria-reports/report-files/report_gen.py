@@ -521,7 +521,7 @@ if __name__ == '__main__':
 
     # Drug Resistance
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances",
-                        type=argparse.FileType("r"), default=NULL)
+                        type=argparse.FileType("r"), default=None)
     parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", default="N/A")
     parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", default="N/A")
 
@@ -571,7 +571,7 @@ if __name__ == '__main__':
             arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
 
     # Check if drug resistance report is provided
-    if not arg_dict['drug_resistance_text']:
+    if not arg_dict['drug_resistance_text'] or arg_dict['drug_resistance_text'] == "":
         resistances = create_drug_table(None)
     else:
         resistances = create_drug_table(arg_dict['drug_resistance_text'].name)
