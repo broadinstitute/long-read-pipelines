@@ -2,6 +2,8 @@ version 1.0
 
 import "../../../tasks/Utility/Utils.wdl"
 
+import "../../../tasks/Utility/BAMutils.wdl" as BU
+
 workflow Split {
     meta {
         description: "Split input BAM aligned to a reference genome."
@@ -34,6 +36,7 @@ workflow Split {
         Array[Pair[String, String]] ided_interval_list_files = zip(custom_interval_list_ids, custom_interval_list_files)
 
         scatter (pair in ided_interval_list_files) {
+
             call Utils.ResilientSubsetBam as user_controled_split {
                 input:
                     bam = bam,
@@ -42,6 +45,31 @@ workflow Split {
                     interval_id = pair.left,
                     prefix = basename(bam, ".bam")
             }
+            if (user_controled_split.is_samtools_failed) {
+                # attempt again, first retry streaming,
+                call Utils.ResilientSubsetBam as retry_streaming {
+                    input:
+                        bam = bam,
+                        bai = bai,
+                        interval_list_file = pair.right,
+                        interval_id = pair.left,
+                        prefix = basename(bam, ".bam")
+                }
+                # then localize if that still fails
+                if (retry_streaming.is_samtools_failed) {
+                    call BU.SubsetBamToLocusLocal {
+                        input:
+                            bam = bam,
+                            bai = bai,
+                            interval_list_file = pair.right,
+                            interval_id = pair.left,
+                            prefix = basename(bam, ".bam")
+                    }
+                }
+                # call Utils.StopWorkflow as CustomShardFailedStreaming { input: reason = "Streaming from BAM for subsetting into ~{pair.left} failed."}
+            }
+            File custom_shard_bam = select_first([SubsetBamToLocusLocal.subset_bam, retry_streaming.subset_bam, user_controled_split.subset_bam])
+            File custom_shard_bai = select_first([SubsetBamToLocusLocal.subset_bai, retry_streaming.subset_bai, user_controled_split.subset_bai])
         }
     }
 
@@ -59,12 +87,15 @@ workflow Split {
                     bai = bai,
                     locus = contig
             }
+            if (default_split.is_samtools_failed) {
+                call Utils.StopWorkflow as StandardShardFailedStreaming { input: reason = "Streaming from BAM for subsetting into ~{contig} failed."}
+            }
             String default_interval_list_id = contig
         }
     }
 
-    Array[Pair[File, File]] sharded_bam_bais = zip(select_first([user_controled_split.subset_bam, default_split.subset_bam]),
-                                                   select_first([user_controled_split.subset_bai, default_split.subset_bai])
+    Array[Pair[File, File]] sharded_bam_bais = zip(select_first([custom_shard_bam, default_split.subset_bam]),
+                                                   select_first([custom_shard_bai, default_split.subset_bai])
                                                   )
     Array[String] ids_of_interval_lists = select_first([default_interval_list_id, custom_interval_list_ids])
 }

@@ -109,3 +109,77 @@ task MergeBamsWithSamtools {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task SubsetBamToLocusLocal {
+    meta {
+        description: "For subsetting a BAM stored in GCS, expliciting localizing the BAM"
+        note: "This is intended as last resort when streaming from buckets fails"
+    }
+
+    parameter_meta {
+        interval_list_file:  "a Picard-style interval list file to subset reads with"
+        interval_id:         "an ID string for representing the intervals in the interval list file"
+        prefix: "prefix for output bam and bai file names"
+        bam: {localization_optional: true}
+    }
+
+    input {
+        File bam
+        File bai
+
+        File interval_list_file
+        String interval_id
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Array[String] intervals = read_lines(interval_list_file)
+
+    Int disk_size = 4*ceil(size([bam, bai], "GB"))
+
+    String subset_prefix = prefix + "." + interval_id
+
+    String local_bam = "/cromwell_root/~{basename(bam)}"
+
+    command <<<
+        set -euxo pipefail
+
+        time gcloud storage cp ~{bam} ~{local_bam}
+        mv ~{bai} "~{local_bam}.bai" && touch "~{local_bam}.bai"
+
+        # see man page for what '-M' means
+        samtools view \
+            -bhX \
+            -M \
+            -@ 1 \
+            --write-index \
+            -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
+            ~{local_bam} "~{local_bam}.bai" \
+            ~{sep=" " intervals}
+    >>>
+
+    output {
+        File subset_bam = "~{subset_prefix}.bam"
+        File subset_bai = "~{subset_prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"  # expensive, but much faster
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

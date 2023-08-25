@@ -69,8 +69,8 @@ workflow CallVariants {
         Boolean call_small_variants
         Boolean run_clair3
 
-        Int dv_threads = 16
-        Int dv_memory = 40
+        Int dv_threads
+        Int dv_memory
         Boolean use_gpu = false
 
         # optimization
@@ -81,6 +81,9 @@ workflow CallVariants {
         call Utils.StopWorkflow { input: reason = "Why are you calling me if your want neither small variants nor SVs?"}
     }
 
+    ######################################################################
+    # Block for prepping inputs
+    ######################################################################
     Map[String, String] ref_map = read_map(ref_map_file)
 
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
@@ -197,13 +200,16 @@ workflow CallVariants {
         call Sniffles2.SampleSV as SnifflesPhaseSV {
             input:
                 bam = m, bai = i,
+                minsvlen = minsvlen,
                 sample_id = InferSampleName.sample_name, prefix = prefix, tandem_repeat_bed = ref_map['tandem_repeat_bed'],
                 phase_sv = true
         }
-        String svdir_copy = sub(select_first([gcs_out_dir]), "/$", "") + "/variants/sv"
-        call FF.FinalizeToFile as FinalizePhasedSniffles { input: outdir = svdir_copy, file = SnifflesPhaseSV.vcf }
-        call FF.FinalizeToFile as FinalizePhasedSnifflesTbi { input: outdir = svdir_copy, file = SnifflesPhaseSV.tbi }
-        call FF.FinalizeToFile as FinalizePhasedSnifflesSnf { input: outdir = svdir_copy, file = SnifflesPhaseSV.snf }
+        if (defined(gcs_out_dir)) {
+            String svdir_copy = sub(select_first([gcs_out_dir]), "/$", "") + "/variants/sv"
+            call FF.FinalizeToFile as FinalizePhasedSniffles { input: outdir = svdir_copy, file = SnifflesPhaseSV.vcf }
+            call FF.FinalizeToFile as FinalizePhasedSnifflesTbi { input: outdir = svdir_copy, file = SnifflesPhaseSV.tbi }
+            call FF.FinalizeToFile as FinalizePhasedSnifflesSnf { input: outdir = svdir_copy, file = SnifflesPhaseSV.snf }
+        }
     }
 
     output {
