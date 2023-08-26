@@ -11,6 +11,7 @@ workflow Work {
     }
     parameter_meta {
         is_hifi: "Indicate if the input is HiFi data"
+        is_ont: "If the input data is ONT"
         tandem_repeat_bed: "BED file containing TRF finder for better SV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
         pbsv_discover_per_chr: "To run the discover stage of PBSV in per-chromosome style or not. If true, then the WGS bam must be sharded accordingly beforehand."
         per_chr_bam_bai_and_id: "Must be provided when pbsv_discover_per_chr is true."
@@ -22,6 +23,7 @@ workflow Work {
         String prefix
 
         Boolean is_hifi
+        Boolean is_ont
 
         Array[Pair[String, Pair[File, File]]]? per_chr_bam_bai_and_id
 
@@ -72,6 +74,7 @@ workflow Work {
                     bam = shard_bam,
                     bai = shard_bai,
                     is_hifi = is_hifi,
+                    is_ont = is_ont,
                     ref_fasta = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
                     tandem_repeat_bed = tandem_repeat_bed,
@@ -87,6 +90,7 @@ workflow Work {
                 ref_fasta = ref_fasta,
                 ref_fasta_fai = ref_fasta_fai,
                 is_hifi = is_hifi,
+                is_ont = is_ont,
                 prefix = prefix + ".pbsv",
                 zones = zones
         }
@@ -102,6 +106,7 @@ workflow Work {
                 prefix = prefix,
                 tandem_repeat_bed = tandem_repeat_bed,
                 is_hifi = is_hifi,
+                is_ont = is_ont,
                 zones = zones
         }
     }

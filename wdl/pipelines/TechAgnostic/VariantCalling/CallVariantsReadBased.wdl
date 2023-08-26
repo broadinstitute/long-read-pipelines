@@ -158,6 +158,7 @@ workflow CallVariants {
         call CallStructuralVariants.Work as SVjob {
             input:
                 is_hifi = !is_ont,
+                is_ont = is_ont,
 
                 bam = bam,
                 bai = bai,
