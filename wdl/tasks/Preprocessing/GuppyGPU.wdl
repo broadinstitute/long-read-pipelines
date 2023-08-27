@@ -149,14 +149,13 @@ task Basecall {
 #    dna_r10.4.1_e8.2_260bps_sup.cfg
 #    dna_r10.4.1_e8.2_400bps_sup.cfg
 #    dna_r10.4_e8.1_sup.cfg
+#    dna_r9.4.1_450bps_modbases_5mc_cg_sup_prom.cfg
 #    dna_r9.4.1_450bps_sup.cfg
 #    dna_r9.4.1_450bps_sup_prom.cfg
 #    dna_r9.4.1_e8.1_sup.cfg
 #    dna_r9.5_450bps.cfg
 
     Int disk_size = 3 * ceil(size(fast5_files, "GB"))
-
-    String barcode_arg = if defined(barcode_kit) then "--barcode_kits \"~{barcode_kit}\" --trim_barcodes" else ""
 
     command <<<
         set -x
@@ -167,45 +166,13 @@ task Basecall {
             -s guppy_output/ \
             -x "cuda:all" \
             -c ~{config} \
-            ~{barcode_arg} \
-            --compress_fastq
-
-        # Make a list of the barcodes that were seen in the data
-        find guppy_output/ -name '*fastq*' -not -path '*fail*' -type f | \
-            awk -F"/" '{ a=NF-1; a=$a; gsub(/pass/, "unclassified", a); print a }' | \
-            sort -n | \
-            uniq | tee barcodes.txt
-
-        # Reorganize and rename the passing filter data to include the barcode in the filename
-        mkdir pass
-        find guppy_output/ -name '*fastq*' -not -path '*fail*' -type f | \
-            awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/pass/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " pass/" a ".chunk_~{index}." b); }'
-
-        # Reorganize and rename the failing filter data to include the barcode in the filename
-        mkdir fail
-        find guppy_output/ -name '*fastq*' -not -path '*pass*' -type f | \
-            awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/pass/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " fail/" a ".chunk_~{index}." b); }'
-
-        # Count passing and failing files
-        find pass -name '*fastq.gz' | wc -l | tee num_pass.txt
-        find fail -name '*fastq.gz' | wc -l | tee num_fail.txt
-
-        # Extract relevant metadata (e.g. sample id, run id, etc.) from the first fastq file
-        find . -name '*fastq.gz' -type f | \
-            head -1 | \
-            xargs -n1 zgrep -m1 '^@' | \
-            sed 's/ /\n/g' | \
-            grep -v '^@' | \
-            sed 's/=/\t/g' | tee metadata.txt
+            --bam_out
     >>>
 
     output {
-        Array[File] pass_fastqs = glob("pass/*.fastq.gz")
+        Array[File] pass_bam = glob("guppy_output/pass/*.bam")
+        Array[File] fail_bam = glob("guppy_output/fail/*bam")
         File sequencing_summary = "guppy_output/sequencing_summary.txt"
-        Array[String] barcodes = read_lines("barcodes.txt")
-        Map[String, String] metadata = read_map("metadata.txt")
-        Int num_pass_fastqs = read_int("num_pass.txt")
-        Int num_fail_fastqs = read_int("num_fail.txt")
     }
 
     #########################
