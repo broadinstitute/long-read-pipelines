@@ -21,7 +21,6 @@ workflow GuppyCPU {
     parameter_meta {
         gcs_fast5_dir: "GCS path to a directory containing ONT FAST5 files."
         config: "Guppy config file."
-        barcode_kit: "Optional. Barcode kit used for sequencing. "
         instrument: "Optional. Instrument used for sequencing. Default is 'unknown'."
         flow_cell_id: "Optional. Flow cell ID used for sequencing. Default is 'unknown'."
         protocol_run_id: "Optional. Protocol run ID used for sequencing. Default is 'unknown'."
@@ -34,16 +33,17 @@ workflow GuppyCPU {
         String gcs_fast5_dir
 
         String config
-        String? barcode_kit
 
         String instrument = "unknown"
         String flow_cell_id = "unknown"
-        String? protocol_run_id
-        String? sample_name
+        String protocol_run_id = "unknown"
+        String sample_name = "unknown"
         Int? num_shards
 
         String gcs_out_root_dir
     }
+
+    call Utils.Timestamp as TimestampStarted { input: dummy_dependencies = [config] }
 
     call ListFast5s { input: gcs_fast5_dir = gcs_fast5_dir }
 
@@ -55,14 +55,10 @@ workflow GuppyCPU {
             input:
                 fast5_files  = read_lines(PartitionFast5Manifest.manifest_chunks[chunk_index]),
                 config       = config,
-                barcode_kit  = barcode_kit,
-                index        = chunk_index
         }
     }
 
     call Utils.Timestamp as TimestampStopped { input: dummy_dependencies = Basecall.sequencing_summary }
-    call Utils.Sum as SumPassingFastqs { input: ints = Basecall.num_pass_fastqs }
-    call Utils.Sum as SumFailingFastqs { input: ints = Basecall.num_fail_fastqs }
 
     call MakeSequencingSummary { input: sequencing_summaries = Basecall.sequencing_summary }
 
@@ -70,29 +66,22 @@ workflow GuppyCPU {
         input:
             instrument      = instrument,
             flow_cell_id    = flow_cell_id,
-            sample_id       = select_first([sample_name, Basecall.metadata[0]['sampleid']]),
-            protocol_run_id = select_first([protocol_run_id, Basecall.metadata[0]['runid']]),
-            started         = Basecall.metadata[0]['start_time'],
+            sample_id       = sample_name,
+            protocol_run_id = protocol_run_id,
+            started         = TimestampStarted.timestamp,
             stopped         = TimestampStopped.timestamp
     }
 
-    call Utils.Uniq as UniqueBarcodes { input: strings = flatten(Basecall.barcodes) }
-
     call FinalizeBasecalls {
         input:
-            pass_fastqs        = flatten(Basecall.pass_fastqs),
+            pass_bams          = flatten(Basecall.pass_bams),
             sequencing_summary = MakeSequencingSummary.sequencing_summary,
             final_summary      = MakeFinalSummary.final_summary,
-            barcodes           = UniqueBarcodes.unique_strings,
             outdir             = gcs_out_root_dir
     }
 
     output {
         String gcs_dir = FinalizeBasecalls.gcs_dir
-        Array[String] barcodes = UniqueBarcodes.unique_strings
-        Int num_fast5s = length(read_lines(ListFast5s.manifest))
-        Int num_pass_fastqs = SumPassingFastqs.sum
-        Int num_fail_fastqs = SumFailingFastqs.sum
     }
 }
 
@@ -139,8 +128,6 @@ task Basecall {
     input {
         Array[File] fast5_files
         String config = "dna_r10.4.1_e8.2_400bps_sup.cfg"
-        String? barcode_kit
-        Int index = 0
 
         RuntimeAttr? runtime_attr_override
     }
@@ -149,14 +136,13 @@ task Basecall {
 #    dna_r10.4.1_e8.2_260bps_sup.cfg
 #    dna_r10.4.1_e8.2_400bps_sup.cfg
 #    dna_r10.4_e8.1_sup.cfg
+#    dna_r9.4.1_450bps_modbases_5mc_cg_sup_prom.cfg
 #    dna_r9.4.1_450bps_sup.cfg
 #    dna_r9.4.1_450bps_sup_prom.cfg
 #    dna_r9.4.1_e8.1_sup.cfg
 #    dna_r9.5_450bps.cfg
 
     Int disk_size = 3 * ceil(size(fast5_files, "GB"))
-
-    String barcode_arg = if defined(barcode_kit) then "--barcode_kits \"~{barcode_kit}\" --trim_barcodes" else ""
 
     command <<<
         set -x
@@ -166,45 +152,12 @@ task Basecall {
             -i /cromwell_root/ \
             -s guppy_output/ \
             -c ~{config} \
-            ~{barcode_arg} \
-            --compress_fastq
-
-        # Make a list of the barcodes that were seen in the data
-        find guppy_output/ -name '*fastq*' -not -path '*fail*' -type f | \
-            awk -F"/" '{ a=NF-1; a=$a; gsub(/pass/, "unclassified", a); print a }' | \
-            sort -n | \
-            uniq | tee barcodes.txt
-
-        # Reorganize and rename the passing filter data to include the barcode in the filename
-        mkdir pass
-        find guppy_output/ -name '*fastq*' -not -path '*fail*' -type f | \
-            awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/pass/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " pass/" a ".chunk_~{index}." b); }'
-
-        # Reorganize and rename the failing filter data to include the barcode in the filename
-        mkdir fail
-        find guppy_output/ -name '*fastq*' -not -path '*pass*' -type f | \
-            awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/pass/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " fail/" a ".chunk_~{index}." b); }'
-
-        # Count passing and failing files
-        find pass -name '*fastq.gz' | wc -l | tee num_pass.txt
-        find fail -name '*fastq.gz' | wc -l | tee num_fail.txt
-
-        # Extract relevant metadata (e.g. sample id, run id, etc.) from the first fastq file
-        find . -name '*fastq.gz' -type f | \
-            head -1 | \
-            xargs -n1 zgrep -m1 '^@' | \
-            sed 's/ /\n/g' | \
-            grep -v '^@' | \
-            sed 's/=/\t/g' | tee metadata.txt
+            --bam_out
     >>>
 
     output {
-        Array[File] pass_fastqs = glob("pass/*.fastq.gz")
+        Array[File] pass_bams = glob("guppy_output/pass/*.bam")
         File sequencing_summary = "guppy_output/sequencing_summary.txt"
-        Array[String] barcodes = read_lines("barcodes.txt")
-        Map[String, String] metadata = read_map("metadata.txt")
-        Int num_pass_fastqs = read_int("num_pass.txt")
-        Int num_fail_fastqs = read_int("num_fail.txt")
     }
 
     #########################
@@ -330,10 +283,9 @@ task MakeFinalSummary {
 
 task FinalizeBasecalls {
     input {
-        Array[String] pass_fastqs
+        Array[String] pass_bams
         File sequencing_summary
         File final_summary
-        Array[String] barcodes
 
         String outdir
 
@@ -345,25 +297,12 @@ task FinalizeBasecalls {
     command <<<
         set -euxo pipefail
 
-        PASS_FASTQ="~{write_lines(pass_fastqs)}"
+        PASS_BAMS="~{write_lines(pass_bams)}"
 
-        while read b; do
-            OUT_DIR="~{gcs_output_dir}/$b"
-            PASS_DIR="$OUT_DIR/fastq_pass/"
+        cat $PASS_BAMS | gsutil -m cp -I ~{outdir}
 
-            grep -w $b $PASS_FASTQ | gsutil -m cp -I $PASS_DIR
-
-            if [ ~{length(barcodes)} -eq 1 ]; then
-                cp ~{sequencing_summary} sequencing_summary.$b.txt
-                cp ~{final_summary} final_summary.$b.txt
-            else
-                grep -w -e filename -e $b ~{sequencing_summary} > sequencing_summary.$b.txt
-                sed "s/sample_id=/sample_id=$b./" ~{final_summary} > final_summary.$b.txt
-            fi
-
-            gsutil cp sequencing_summary.$b.txt $OUT_DIR/
-            gsutil cp final_summary.$b.txt $OUT_DIR/
-        done <~{write_lines(barcodes)}
+        gsutil cp ~{sequencing_summary} ~{outdir}
+        gsutil cp ~{final_summary} ~{outdir}
     >>>
 
     output {

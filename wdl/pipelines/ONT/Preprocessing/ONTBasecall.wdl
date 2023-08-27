@@ -12,7 +12,6 @@ workflow ONTBasecall {
     parameter_meta {
         gcs_fast5_dir: "GCS path to the directory containing fast5 files"
         config: "Guppy config file"
-        barcode_kit: "Guppy barcode kit"
         use_gpus: "If true, use the GPU version of the basecaller"
         gcs_out_root_dir: "GCS path to the root directory for output"
         prefix: "Prefix for output directory"
@@ -21,7 +20,6 @@ workflow ONTBasecall {
     input {
         String gcs_fast5_dir
         String config = "dna_r10.4.1_e8.2_400bps_sup.cfg"
-        String? barcode_kit
         Boolean use_gpus = true
         String gcs_out_root_dir
         String prefix
@@ -34,7 +32,6 @@ workflow ONTBasecall {
             input:
                 gcs_fast5_dir    = gcs_fast5_dir,
                 config           = config,
-                barcode_kit      = barcode_kit,
                 gcs_out_root_dir = outdir
         }
     }
@@ -44,7 +41,6 @@ workflow ONTBasecall {
             input:
                 gcs_fast5_dir    = gcs_fast5_dir,
                 config           = config,
-                barcode_kit      = barcode_kit,
                 gcs_out_root_dir = outdir
         }
     }
