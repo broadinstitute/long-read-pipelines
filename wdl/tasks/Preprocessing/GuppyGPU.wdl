@@ -40,6 +40,9 @@ workflow GuppyGPU {
         String sample_name = "unknown"
         Int? num_shards
 
+        String gpuType = "nvidia-tesla-p100"
+        Array[String] zones = ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
+
         String gcs_out_root_dir
     }
 
@@ -55,6 +58,8 @@ workflow GuppyGPU {
             input:
                 fast5_files  = read_lines(PartitionFast5Manifest.manifest_chunks[chunk_index]),
                 config       = config,
+                gpuType      = gpuType,
+                zones        = zones
         }
     }
 
@@ -129,8 +134,8 @@ task Basecall {
         Array[File] fast5_files
         String config = "dna_r10.4.1_e8.2_400bps_sup.cfg"
 
-        String gpuType = "nvidia-tesla-p100"
-        Array[String] zones = ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
+        String gpuType
+        Array[String] zones
 
         RuntimeAttr? runtime_attr_override
     }
