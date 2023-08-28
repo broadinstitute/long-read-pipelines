@@ -129,6 +129,9 @@ task Basecall {
         Array[File] fast5_files
         String config = "dna_r10.4.1_e8.2_400bps_sup.cfg"
 
+        String gpuType = "nvidia-tesla-p100"
+        Array[String] zones = ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -180,10 +183,10 @@ task Basecall {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        gpuType:                "nvidia-tesla-p100"
+        gpuType:                gpuType
         gpuCount:               1
         nvidiaDriverVersion:    "418.152.00"
-        zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
+        zones:                  zones
         cpuPlatform:            "Intel Haswell"
     }
 }
