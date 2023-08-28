@@ -35,7 +35,34 @@ workflow ONTWholeGenome {
 
         run_clair3:  "to turn on Clair3 analysis or not (non-trivial increase in cost and runtime)"
 
+        use_margin_for_tagging: "if false, will use margin-phased small-variant VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
+
         gcp_zones: "which Google Cloud Zone to use (this has implications on how many GPUs are available and egress costs, so configure carefully)"
+
+        # outputs
+        haplotagged_bam: "BAM haplotagged using a small variant single-sample VCF."
+        haplotagged_bai: "Index for haplotagged_bam."
+        haplotagged_bam_tagger: "VCF used for doing the haplotagging. 'Legacy' if the input is ONT data generated on pores before R10.4."
+
+        legacy_g_vcf: "PEPPER-MARGIN-DeepVariant gVCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_g_tbi: "Index for PEPPER-MARGIN-DeepVariant gVCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phased_vcf: "Phased PEPPER-MARGIN-DeepVariant VCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phased_tbi: "Indes for phased PEPPER-MARGIN-DeepVariant VCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phasing_stats_tsv: "Phasing stats of legacy_phased_vcf in TSV format; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phasing_stats_gtf: "Phasing stats of legacy_phased_vcf in GTF format; available only when input is ONT data generated on pores older than R10.4."
+
+        dv_g_vcf: "DeepVariant gVCF; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_g_tbi: "Index for DeepVariant ; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_margin_phased_vcf: "Phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_margin_phased_tbi: "Index for phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_vcf_margin_phasing_stats_tsv: "Phasing stats (TSV format) of phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_vcf_margin_phasing_stats_gtf: "Phasing stats (GTF format) of phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_whatshap_phased_vcf: "Phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_whatshap_phased_tbi: "Index for phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_vcf_whatshap_phasing_stats_tsv: "Phasing stats (TSV format) of phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_vcf_whatshap_phasing_stats_gtf: "Phasing stats (GTF format) of phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
+
+        dv_nongpu_resources_usage_visual: "Resource usage monitoring log visualization for DV (per shard); available for CCS data and ONT data generated with pores >= R10.4."
     }
 
     input {
@@ -63,6 +90,7 @@ workflow ONTWholeGenome {
 
         Boolean call_small_variants = true
         Boolean run_clair3 = false
+        Boolean use_margin_for_tagging = true
         Int dv_threads = 16
         Int dv_memory = 64
         Boolean use_gpu = false
@@ -113,6 +141,7 @@ workflow ONTWholeGenome {
 
                 call_small_variants = call_small_variants,
                 run_clair3 = run_clair3,
+                use_margin_for_tagging = use_margin_for_tagging,
                 dv_threads = dv_threads,
                 dv_memory = dv_memory,
                 use_gpu = use_gpu,
@@ -154,13 +183,25 @@ workflow ONTWholeGenome {
         File? clair_gvcf = CallVariants.clair_gvcf
         File? clair_gtbi = CallVariants.clair_gtbi
 
+        # available for ONT >= R10.4 data, if small variants are requested
         File? dv_g_vcf = CallVariants.dv_g_vcf
         File? dv_g_tbi = CallVariants.dv_g_tbi
-        File? dv_phased_vcf = CallVariants.dv_phased_vcf
-        File? dv_phased_tbi = CallVariants.dv_phased_tbi
-        File? dv_vcf_phasing_stats_tsv = CallVariants.dv_vcf_phasing_stats_tsv
-        File? dv_vcf_phasing_stats_gtf = CallVariants.dv_vcf_phasing_stats_gtf
+        File? dv_margin_phased_vcf = CallVariants.dv_margin_phased_vcf
+        File? dv_margin_phased_tbi = CallVariants.dv_margin_phased_tbi
+        File? dv_vcf_margin_phasing_stats_tsv = CallVariants.dv_vcf_margin_phasing_stats_tsv
+        File? dv_vcf_margin_phasing_stats_gtf = CallVariants.dv_vcf_margin_phasing_stats_gtf
+        File? dv_whatshap_phased_vcf = CallVariants.dv_whatshap_phased_vcf
+        File? dv_whatshap_phased_tbi = CallVariants.dv_whatshap_phased_tbi
+        File? dv_vcf_whatshap_phasing_stats_tsv = CallVariants.dv_vcf_whatshap_phasing_stats_tsv
+        File? dv_vcf_whatshap_phasing_stats_gtf = CallVariants.dv_vcf_whatshap_phasing_stats_gtf
+        String? dv_nongpu_resources_usage_visual = CallVariants.dv_nongpu_resources_usage_visual
 
-        String? dv_regular_resources_usage_visual = CallVariants.dv_regular_resources_usage_visual
+        # available for ONT < R10.4 data, if small variants are requested
+        File? legacy_g_vcf = CallVariants.legacy_g_vcf
+        File? legacy_g_tbi = CallVariants.legacy_g_tbi
+        File? legacy_phased_vcf = CallVariants.legacy_phased_vcf
+        File? legacy_phased_tbi = CallVariants.legacy_phased_tbi
+        File? legacy_phasing_stats_tsv = CallVariants.legacy_phasing_stats_tsv
+        File? legacy_phasing_stats_gtf = CallVariants.legacy_phasing_stats_gtf
     }
 }

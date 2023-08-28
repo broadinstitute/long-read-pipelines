@@ -1,6 +1,118 @@
 version 1.0
 
 import "../../structs/Structs.wdl"
+import "../Utility/VariantUtils.wdl"
+import "../Visualization/VisualizeResourceUsage.wdl"
+
+workflow Run {
+    meta {
+        desciption:
+        "For running DeepVariant on CCS/ONT WGS data."
+    }
+    parameter_meta {
+        how_to_shard_wg_for_calling: "An array of the BAM's shard; each element is assumed to be a tuple of (ID for the shard, (BAM of the shard, BAI of the shard))"
+        model_for_dv_andor_pepper: "Model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
+        prefix: "Prefix for output files"
+    }
+
+    input {
+        Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling
+        String prefix
+        String model_for_dv_andor_pepper
+
+        # reference info
+        Map[String, String] ref_map
+
+        # optimizations
+        Int dv_threads
+        Int dv_memory
+        Boolean use_gpu
+        String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
+    }
+
+    output {
+        File g_vcf = MergeDeepVariantGVCFs.vcf
+        File g_tbi = MergeDeepVariantGVCFs.tbi
+        File vcf = MergeDeepVariantVCFs.vcf
+        File tbi = MergeDeepVariantVCFs.tbi
+
+        Array[File] nongpu_resource_usage_logs = nongpu_resource_usage_log
+        Array[File] nongpu_resource_usage_visual = VisualizeDVRegularResoureUsage.plot_pdf
+    }
+
+    ####################################################################################################################################
+
+    #############
+    # per shard DV
+    #############
+    scatter (triplet in how_to_shard_wg_for_calling) {
+        String shard_id = triplet.left
+        File shard_bam = triplet.right.left
+        File shard_bai = triplet.right.right
+
+        if (!use_gpu) {
+            call DV as DeepV {
+                input:
+                    bam           = shard_bam,
+                    bai           = shard_bai,
+                    ref_fasta     = ref_map['fasta'],
+                    ref_fasta_fai = ref_map['fai'],
+
+                    model_type = model_for_dv_andor_pepper,
+
+                    threads = select_first([dv_threads]),
+                    memory  = select_first([dv_memory]),
+                    zones = zones
+            }
+        }
+
+        if (use_gpu) {
+            call DV_gpu as DeepV_G {
+                input:
+                    bam           = shard_bam,
+                    bai           = shard_bai,
+                    ref_fasta     = ref_map['fasta'],
+                    ref_fasta_fai = ref_map['fai'],
+
+                    model_type = model_for_dv_andor_pepper,
+
+                    threads = select_first([dv_threads]),
+                    memory  = select_first([dv_memory]),
+                    zones = zones
+            }
+        }
+
+        File dv_vcf = select_first([DeepV.VCF, DeepV_G.VCF])
+        File dv_gvcf = select_first([DeepV.gVCF, DeepV_G.gVCF])
+        File nongpu_resource_usage_log = select_first([DeepV.resouce_monitor_log, DeepV_G.resouce_monitor_log])
+
+        call VisualizeResourceUsage.SimpleRscript as VisualizeDVRegularResoureUsage {
+            input:
+            resource_log = nongpu_resource_usage_log,
+            output_pdf_name = "~{prefix}.deepvariant.regular-resources-usage.~{triplet.left}.pdf",
+            plot_title = "DeepVariant, on input ~{prefix}, at locus ~{triplet.left}"
+        }
+    }
+
+    #############
+    # merge
+    #############
+    String dv_prefix = prefix + ".deepvariant"
+
+    call VariantUtils.MergeAndSortVCFs as MergeDeepVariantGVCFs {
+        input:
+            vcfs     = dv_gvcf,
+            prefix   = dv_prefix + ".g",
+            ref_fasta_fai = ref_map['fai']
+    }
+
+    call VariantUtils.MergeAndSortVCFs as MergeDeepVariantVCFs {
+        input:
+            vcfs     = dv_vcf,
+            prefix   = dv_prefix,
+            ref_fasta_fai = ref_map['fai']
+    }
+}
 
 task DV {
 

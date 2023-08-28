@@ -5,6 +5,61 @@ version 1.0
 #######################################################
 
 import "../../structs/Structs.wdl"
+import "../Utility/VariantUtils.wdl"
+
+workflow Run {
+    meta {
+        desciption:
+        "Runs Clair3 on the input (sharded) BAM."
+    }
+    parameter_meta {
+        how_to_shard_wg_for_calling: "An array of the BAM's shard; each element is assumed to be a tuple of (ID for the shard, (BAM of the shard, BAI of the shard))"
+        prefix: "Prefix for output files"
+    }
+
+    input {
+        Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling
+        Boolean is_ont
+        String prefix
+        Map[String, String] ref_map
+
+        # optimization
+        String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
+    }
+    output {
+        File clair_vcf = MergeAndSortClairVCFs.vcf
+        File clair_tbi = MergeAndSortClairVCFs.tbi
+        File clair_gvcf = MergeAndSortClair_gVCFs.vcf
+        File clair_gtbi = MergeAndSortClair_gVCFs.tbi
+    }
+
+    #################################################################
+    scatter (triplet in how_to_shard_wg_for_calling) {
+        call Clair {
+            input:
+                bam = triplet.right.left,
+                bai = triplet.right.right,
+
+                ref_fasta     = ref_map['fasta'],
+                ref_fasta_fai = ref_map['fai'],
+
+                preset = if is_ont then "ONT" else "CCS",
+                zones = zones
+        }
+    }
+    call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
+        input:
+            vcfs = Clair.vcf,
+            ref_fasta_fai = ref_map['fai'],
+            prefix = prefix + ".clair"
+    }
+    call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
+        input:
+            vcfs = Clair.gvcf,
+            ref_fasta_fai = ref_map['fai'],
+            prefix = prefix + ".clair.g"
+    }
+}
 
 task Clair {
 
@@ -96,7 +151,7 @@ task Clair {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "hkubal/clair3:v0.1-r6"
+        docker:             "us.gcr.io/broad-dsp-lrma/clair3:v1.0.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -1,23 +1,19 @@
 version 1.0
 
 import "../../pipelines/TechAgnostic/Utility/ShardWholeGenome.wdl"  # this isn't optimal; the choice was made assuming ShardWholeGenome could be useful for other users as well.
-
-import "../Utility/Utils.wdl"
-import "../Utility/VariantUtils.wdl"
-import "../Visualization/VisualizeResourceUsage.wdl"
+import "../../deprecated/tasks/PEPPER-MARGIN-DeepVariant.wdl" as PMDV
 
 import "DeepVariant.wdl"
-import "MarginPhase.wdl" as Margin
-import "../Alignment/WhatsHap.wdl"
-
 import "Clair.wdl" as Clair3
-import "../../deprecated/tasks/ONTPepper.wdl"
+
+import "PhaseSmallVariantsAndTagBam.wdl" as PhaseAndTag
 
 workflow Work {
     meta {
         description: "Call small variants using reads-based methods (i.e. not for assembly-contig-based methods)."
     }
     parameter_meta {
+        # inputs
         prefix: "Prefix for output files"
         per_chr_bam_bai_and_id: "WGS bam sharded per chromosome/contig."
         is_ont: "If the input data is ONT"
@@ -26,6 +22,33 @@ workflow Work {
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files, used for custom sharding the of the input BAM; when not provided, will shard WG by contig (possibly slower)"
         ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
         use_gpu: "Use GPU acceleration for DV (or PEPPER) or not"
+        use_margin_for_tagging: "if false, will use margin-phased VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
+
+        # outputs
+        haplotagged_bam: "BAM haplotagged using a small variant single-sample VCF."
+        haplotagged_bai: "Index for haplotagged_bam."
+        haplotagged_bam_tagger: "VCF used for doing the haplotagging. 'Legacy' if the input is ONT data generated on pores before R10.4."
+
+        legacy_g_vcf: "PEPPER-MARGIN-DeepVariant gVCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_g_tbi: "Index for PEPPER-MARGIN-DeepVariant gVCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phased_vcf: "Phased PEPPER-MARGIN-DeepVariant VCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phased_tbi: "Indes for phased PEPPER-MARGIN-DeepVariant VCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phasing_stats_tsv: "Phasing stats of legacy_phased_vcf in TSV format; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phasing_stats_gtf: "Phasing stats of legacy_phased_vcf in GTF format; available only when input is ONT data generated on pores older than R10.4."
+
+        dv_g_vcf: "DeepVariant gVCF; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_g_tbi: "Index for DeepVariant ; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_margin_phased_vcf: "Phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_margin_phased_tbi: "Index for phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_vcf_margin_phasing_stats_tsv: "Phasing stats (TSV format) of phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_vcf_margin_phasing_stats_gtf: "Phasing stats (GTF format) of phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_whatshap_phased_vcf: "Phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_whatshap_phased_tbi: "Index for phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_vcf_whatshap_phasing_stats_tsv: "Phasing stats (TSV format) of phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
+        dv_vcf_whatshap_phasing_stats_gtf: "Phasing stats (GTF format) of phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
+
+        dv_nongpu_resources_usage_log: "Resource usage monitoring log for DV (per shard); available for CCS data and ONT data generated with pores >= R10.4."
+        dv_nongpu_resources_usage_visual: "Resource usage monitoring log visualization for DV (per shard); available for CCS data and ONT data generated with pores >= R10.4."
     }
     input {
         # sample info
@@ -40,53 +63,67 @@ workflow Work {
         String model_for_dv_andor_pepper
 
         # reference info
-        File ref_fasta
-        File ref_fasta_fai
-        File ref_dict
+        Map[String, String] ref_map
 
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
 
         # smallVar-specific args
         Boolean run_clair3
-
-        Int dv_threads = 16
-        Int dv_memory  = 40
-        Boolean use_gpu = false
+        Boolean use_margin_for_tagging
 
         # optimization
+        Int dv_threads
+        Int dv_memory
+        Boolean use_gpu = false
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
     output {
-        File? clair_vcf = MergeAndSortClairVCFs.vcf
-        File? clair_tbi = MergeAndSortClairVCFs.tbi
-        File? clair_gvcf = MergeAndSortClair_gVCFs.vcf
-        File? clair_gtbi = MergeAndSortClair_gVCFs.tbi
+        File? clair_vcf = RunClair3.clair_vcf
+        File? clair_tbi = RunClair3.clair_tbi
+        File? clair_gvcf = RunClair3.clair_gvcf
+        File? clair_gtbi = RunClair3.clair_gtbi
 
         File haplotagged_bam = use_this_haptag_bam
         File haplotagged_bai = use_this_haptag_bai
+        String haplotagged_bam_tagger = use_this_haptagger
 
-        File dv_g_vcf = use_this_dv_g_vcf
-        File dv_g_tbi = use_this_dv_g_tbi
+        # this block available only for legacy ONT data (those older than R10.4)
+        File? legacy_g_vcf              = WorkOnLegacyONTdata.legacy_ont_dvp_g_vcf
+        File? legacy_g_tbi              = WorkOnLegacyONTdata.legacy_ont_dvp_g_tbi
+        File? legacy_phased_vcf         = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf
+        File? legacy_phased_tbi         = WorkOnLegacyONTdata.legacy_ont_dvp_phased_tbi
+        File? legacy_phasing_stats_tsv  = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_tsv
+        File? legacy_phasing_stats_gtf  = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_gtf
 
-        File dv_phased_vcf = use_this_dv_phased_vcf
-        File dv_phased_tbi = use_this_dv_phased_tbi
+        # this block available for CCS and modern ONT data
+        File? dv_g_vcf = DV.g_vcf
+        File? dv_g_tbi = DV.g_tbi
 
-        File dv_vcf_phasing_stats_tsv = use_this_phasing_stats_tsv
-        File dv_vcf_phasing_stats_gtf = use_this_phasing_stats_gtf
+        File? dv_margin_phased_vcf = PnT.margin_phased_vcf
+        File? dv_margin_phased_tbi = PnT.margin_phased_tbi
 
-        Array[File]? dv_regular_resources_usage_log = regular_resource_usage_log
-        Array[File]? dv_regular_resources_usage_visual = VisualizeDVRegularResoureUsage.plot_pdf
+        File? dv_vcf_margin_phasing_stats_tsv = PnT.margin_phasing_stats_tsv
+        File? dv_vcf_margin_phasing_stats_gtf = PnT.margin_phasing_stats_gtf
+
+        File? dv_whatshap_phased_vcf = PnT.whatshap_phased_vcf
+        File? dv_whatshap_phased_tbi = PnT.whatshap_phased_tbi
+
+        File? dv_vcf_whatshap_phasing_stats_tsv = PnT.whatshap_phasing_stats_tsv
+        File? dv_vcf_whatshap_phasing_stats_gtf = PnT.whatshap_phasing_stats_gtf
+
+        Array[File]? dv_nongpu_resources_usage_log = DV.nongpu_resource_usage_logs
+        Array[File]? dv_nongpu_resources_usage_visual = DV.nongpu_resource_usage_visual
     }
 
-    #################################
-    # shard WG specifically for small variant calling
-    #################################
-    # but if custom sharding isn't requested, then per-chr sharding is already done, so no need to to redo
+    ####################################################################################################################################
+    # custom-shard WG (for load-balancing)
+    ####################################################################################################################################
+    # but if custom sharding isn't requested, then per-chr sharding is already done, so no need to redo
     if (defined(ref_scatter_interval_list_locator)) {
         call ShardWholeGenome.Split as CustomSplitBamForSmallVar {
             input:
-                ref_dict = ref_dict,
+                ref_dict = ref_map['dict'],
                 bam = bam,
                 bai = bai,
                 ref_scatter_interval_list_locator = ref_scatter_interval_list_locator,
@@ -96,225 +133,69 @@ workflow Work {
     Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling = select_first([CustomSplitBamForSmallVar.id_bam_bai_of_shards,
                                                                                       per_chr_bam_bai_and_id])
 
-    #################################
-    # run clair3, if so requested
-    #################################
-    if (run_clair3) {
-        scatter (triplet in how_to_shard_wg_for_calling) {
-            call Clair3.Clair {
-                input:
-                    bam = triplet.right.left,
-                    bai = triplet.right.right,
-
-                    ref_fasta     = ref_fasta,
-                    ref_fasta_fai = ref_fasta_fai,
-
-                    preset = if is_ont then "ONT" else "CCS",
-                    zones = zones
-            }
-        }
-        call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
-            input:
-                vcfs = Clair.vcf,
-                ref_fasta_fai = ref_fasta_fai,
-                prefix = prefix + ".clair"
-        }
-        call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
-            input:
-                vcfs = Clair.gvcf,
-                ref_fasta_fai = ref_fasta_fai,
-                prefix = prefix + ".clair.g"
-        }
-    }
-
-    #################################
-    # DV, major workhorse (except for legacy ONT data)
-    #################################
+    ####################################################################################################################################
+    # DV, major workhorse
+    ####################################################################################################################################
     if ((!is_ont) || is_r10_4_pore_or_later) { # pacbio or recent ONT data
 
-        #############
-        # per shard DV
-        scatter (triplet in how_to_shard_wg_for_calling) {
-            File shard_bam = triplet.right.left
-            File shard_bai = triplet.right.right
-
-            if (!use_gpu) {
-                call DeepVariant.DV as DeepV {
-                    input:
-                        bam           = shard_bam,
-                        bai           = shard_bai,
-                        ref_fasta     = ref_fasta,
-                        ref_fasta_fai = ref_fasta_fai,
-
-                        model_type = model_for_dv_andor_pepper,
-
-                        threads = select_first([dv_threads]),
-                        memory  = select_first([dv_memory]),
-                        zones = zones
-                }
-            }
-
-            if (use_gpu) {
-                call DeepVariant.DV_gpu as DeepV_G {
-                    input:
-                        bam           = shard_bam,
-                        bai           = shard_bai,
-                        ref_fasta     = ref_fasta,
-                        ref_fasta_fai = ref_fasta_fai,
-
-                        model_type = model_for_dv_andor_pepper,
-
-                        threads = select_first([dv_threads]),
-                        memory  = select_first([dv_memory]),
-                        zones = zones
-                }
-            }
-
-            File dv_vcf = select_first([DeepV.VCF, DeepV_G.VCF])
-            File dv_gvcf = select_first([DeepV.gVCF, DeepV_G.gVCF])
-            File regular_resource_usage_log = select_first([DeepV.resouce_monitor_log, DeepV_G.resouce_monitor_log])
-
-            call VisualizeResourceUsage.SimpleRscript as VisualizeDVRegularResoureUsage {
-                input:
-                resource_log = regular_resource_usage_log,
-                output_pdf_name = "~{prefix}.deepvariant.regular-resources-usage.~{triplet.left}.pdf",
-                plot_title = "DeepVariant, on input ~{prefix}, at locus ~{triplet.left}"
-            }
-        }
-
-        String dv_prefix = prefix + ".deepvariant"
-
-        #############
-        # merge
-        call VariantUtils.MergeAndSortVCFs as MergeDeepVariantGVCFs {
+        call DeepVariant.Run as DV {
             input:
-                vcfs     = dv_gvcf,
-                prefix   = dv_prefix + ".g",
-                ref_fasta_fai = ref_fasta_fai
+                how_to_shard_wg_for_calling = how_to_shard_wg_for_calling,
+                prefix = prefix,
+                model_for_dv_andor_pepper = model_for_dv_andor_pepper,
+
+                ref_map = ref_map,
+
+                dv_threads = dv_threads,
+                dv_memory = dv_memory,
+                use_gpu = use_gpu,
+                zones = zones
         }
 
-        call VariantUtils.MergeAndSortVCFs as MergeDeepVariantVCFs {
+        call PhaseAndTag.Run as PnT {
             input:
-                vcfs     = dv_vcf,
-                prefix   = dv_prefix,
-                ref_fasta_fai = ref_fasta_fai
-        }
+                use_margin_for_tagging = use_margin_for_tagging,
 
-        call Margin.MarginPhase as MarginPhase {
-            input:
-                bam=bam, bai=bai, ref_fasta=ref_fasta, ref_fasta_fai=ref_fasta_fai,
-                unphased_vcf=MergeDeepVariantVCFs.vcf, unphased_tbi=MergeDeepVariantVCFs.tbi,
-                zones = zones,
-                data_type= if (is_ont) then "ONT" else "PacBio"
-        }
-        call WhatsHap.Stats as MPhaseStats  { input: phased_vcf=MarginPhase.phased_vcf, phased_tbi=MarginPhase.phased_tbi}
+                bam = bam,
+                bai = bai,
+                per_chr_bam_bai_and_id = per_chr_bam_bai_and_id,
+                is_ont = is_ont,
 
-        #############
-        # phase variant using whatshap phase, because it is much slower than margin phase, we do scatter-gather
-        scatter (triplet in per_chr_bam_bai_and_id) {
-            call VariantUtils.SubsetVCF as ChopDVVCF {
-                input:
-                    vcf_gz  = MergeDeepVariantVCFs.vcf,
-                    vcf_tbi = MergeDeepVariantVCFs.tbi,
-                    locus = triplet.left,
-                    prefix = basename(MergeDeepVariantVCFs.vcf, ".vcf.gz") + "." + triplet.left
-            }
-            call WhatsHap.Phase as WhatsHapPhase {
-                input :
-                    chromosome=triplet.left,
-                    bam=triplet.right.left, bai=triplet.right.right,
-                    unphased_vcf=ChopDVVCF.subset_vcf, unphased_tbi=ChopDVVCF.subset_tbi,
-                    ref_fasta=ref_fasta, ref_fasta_fai=ref_fasta_fai,
-            }
-        }
-        call VariantUtils.MergePerChrCalls as MergeWhatsHapPhasedPerChrVCFs {
-            input:
-            vcfs = WhatsHapPhase.phased_vcf, ref_dict = ref_dict, prefix = basename(MergeDeepVariantVCFs.vcf, ".vcf.gz") + ".whatshap-phased"
-        }
-        call WhatsHap.Stats as WHPhaseStats { input: phased_vcf=MergeWhatsHapPhasedPerChrVCFs.vcf, phased_tbi=MergeWhatsHapPhasedPerChrVCFs.tbi}
+                unphased_vcf = DV.vcf,
+                unphased_tbi = DV.tbi,
 
-        #############
-        # if we later decide whatshap is better, change these
-        File phased_snp_vcf = MarginPhase.phased_vcf
-        File phased_snp_tbi = MarginPhase.phased_tbi
-        File phasing_stats_tsv = MPhaseStats.stats_tsv
-        File phasing_stats_gtf = MPhaseStats.stats_gtf
+                ref_map = ref_map,
 
-        #############
-        # haplotag
-        call WhatsHap.HaploTagBam as WhatsHapTag {
-            input:
-                to_tag_bam = bam,
-                to_tag_bai = bai,
-                ref_fasta  = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                phased_vcf = phased_snp_vcf,
-                phased_tbi = phased_snp_tbi
+                zones = zones
         }
     }
 
-    #################################
-    # PEPPER-Margin-DeepVariant is the ONT data is before the R10.4 simplex/duplex generation
-    #################################
-    # old ONT data
-    if (is_ont && (! is_r10_4_pore_or_later)) {
-        scatter (triplet in how_to_shard_wg_for_calling) {
-            call ONTPepper.Pepper {
-                input:
-                    bam           = triplet.right.left,
-                    bai           = triplet.right.right,
-                    ref_fasta     = ref_fasta,
-                    ref_fasta_fai = ref_fasta_fai,
-                    model = model_for_dv_andor_pepper,
-                    threads       = select_first([dv_threads]),
-                    memory        = select_first([dv_memory]),
-                    zones = zones
-            }
-        }
-
-        String pepper_prefix = prefix + ".PEPPER_deepvariant_margin"
-
-        call VariantUtils.MergeAndSortVCFs as MergePEPPERGVCFs {
+    if (is_ont && (!is_r10_4_pore_or_later)) { # legacy (<R10.4) ONT data
+        call PMDV.Run as WorkOnLegacyONTdata {
             input:
-                vcfs     = Pepper.gVCF,
-                prefix   = pepper_prefix + ".g",
-                ref_fasta_fai = ref_fasta_fai
+                how_to_shard_wg_for_calling = how_to_shard_wg_for_calling,
+                prefix = prefix,
+                model_for_pepper_margin_dv = model_for_dv_andor_pepper,
+                ref_map = ref_map,
+                dv_threads = dv_threads,
+                dv_memory = dv_memory,
+                zones = zones
         }
-
-        call VariantUtils.MergeAndSortVCFs as MergePEPPERPhasedVCFs {
-            input:
-                vcfs     = Pepper.phasedVCF,
-                prefix   = pepper_prefix + ".phased",
-                ref_fasta_fai = ref_fasta_fai
-        }
-
-        call Utils.MergeBams as MergePEPPERHapTaggedBam {
-            input:
-                bams = Pepper.hap_tagged_bam,
-                prefix = prefix +  ".MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged"
-        }
-
-        call WhatsHap.Stats as ONTPhaseStatsLegacy  { input: phased_vcf=MergePEPPERPhasedVCFs.vcf, phased_tbi=MergePEPPERPhasedVCFs.tbi}
-
-        File legacy_ont_dvp_g_vcf = MergePEPPERGVCFs.vcf
-        File legacy_ont_dvp_g_tbi = MergePEPPERGVCFs.tbi
-        File legacy_ont_dvp_phased_vcf = MergePEPPERPhasedVCFs.vcf
-        File legacy_ont_dvp_phased_tbi = MergePEPPERPhasedVCFs.tbi
-        File legacy_ont_dvp_haplotagged_bam = MergePEPPERHapTaggedBam.merged_bam
-        File legacy_ont_dvp_haplotagged_bai = MergePEPPERHapTaggedBam.merged_bai
-        File legacy_ont_dvp_phased_vcf_stats_tsv = ONTPhaseStatsLegacy.stats_tsv
-        File legacy_ont_dvp_phased_vcf_stats_gtf = ONTPhaseStatsLegacy.stats_gtf
     }
 
-    File use_this_dv_g_vcf = select_first([MergeDeepVariantGVCFs.vcf, legacy_ont_dvp_g_vcf])
-    File use_this_dv_g_tbi = select_first([MergeDeepVariantGVCFs.tbi, legacy_ont_dvp_g_tbi])
+    File use_this_haptag_bam = select_first([PnT.hap_tagged_bam, WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bam])
+    File use_this_haptag_bai = select_first([PnT.hap_tagged_bai, WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bai])
+    String use_this_haptagger = select_first([PnT.haplotagged_bam_tagger, "Legacy"])
 
-    File use_this_dv_phased_vcf = select_first([phased_snp_vcf, legacy_ont_dvp_phased_vcf])
-    File use_this_dv_phased_tbi = select_first([phased_snp_tbi, legacy_ont_dvp_phased_tbi])
-
-    File use_this_phasing_stats_tsv = select_first([phasing_stats_tsv, legacy_ont_dvp_phased_vcf_stats_tsv])
-    File use_this_phasing_stats_gtf = select_first([phasing_stats_gtf, legacy_ont_dvp_phased_vcf_stats_gtf])
-
-    File use_this_haptag_bam = select_first([WhatsHapTag.tagged_bam, legacy_ont_dvp_haplotagged_bam])
-    File use_this_haptag_bai = select_first([WhatsHapTag.tagged_bai, legacy_ont_dvp_haplotagged_bai])
+    ####################################################################################################################################
+    # run clair3, if so requested
+    ####################################################################################################################################
+    if (run_clair3) {
+        call Clair3.Run as RunClair3 {
+            input:
+                how_to_shard_wg_for_calling = how_to_shard_wg_for_calling,
+                is_ont = is_ont, prefix = prefix,
+                ref_map = ref_map, zones = zones
+        }
+    }
 }
