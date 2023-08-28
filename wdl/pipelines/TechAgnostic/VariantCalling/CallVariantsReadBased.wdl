@@ -69,11 +69,10 @@ workflow CallVariants {
         Boolean call_small_variants
         Boolean run_clair3
 
+        # optimization, balancing between throughput, wallclock time, and cost
         Int dv_threads
         Int dv_memory
         Boolean use_gpu = false
-
-        # optimization
         Array[String] gcp_zones = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
     }
 
@@ -166,10 +165,7 @@ workflow CallVariants {
 
                 per_chr_bam_bai_and_id = SplitBamByChr.id_bam_bai_of_shards,
 
-                ref_fasta = ref_map['fasta'],
-                ref_fasta_fai = ref_map['fai'],
-                ref_dict = ref_map['dict'],
-                tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                ref_map = ref_map,
 
                 minsvlen = minsvlen,
 
@@ -193,16 +189,15 @@ workflow CallVariants {
     ######################################################################
     # Experiment with Sniffles-2 phased SV calling
     ######################################################################
-    # clean up the code here if it works
     if (call_svs && call_small_variants) {
         File m = select_first([SmallVarJob.haplotagged_bam])
         File i = select_first([SmallVarJob.haplotagged_bai])
         call Utils.InferSampleName { input: bam = m, bai = i }
         call Sniffles2.SampleSV as SnifflesPhaseSV {
             input:
-                bam = m, bai = i,
+                bam = m, bai = i, sample_id = InferSampleName.sample_name,
+                prefix = prefix, tandem_repeat_bed = ref_map['tandem_repeat_bed'],
                 minsvlen = minsvlen,
-                sample_id = InferSampleName.sample_name, prefix = prefix, tandem_repeat_bed = ref_map['tandem_repeat_bed'],
                 phase_sv = true
         }
         if (defined(gcs_out_dir)) {
