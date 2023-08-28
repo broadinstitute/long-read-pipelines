@@ -90,28 +90,29 @@ workflow PBFlowcell {
     call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
 
     # break one raw BAM into fixed number of shards
-    call PB.ShardLongReads as ShardLongReads {
-        input:
-            unaligned_bam = bam,
-            unaligned_pbi = pbi,
-            num_shards = data_presets[experiment_type].num_shards,
-            drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags,
-            num_ssds = Guess.numb_of_local_ssd,
-            zones = arbitrary.zones
-    }
+#    call PB.ShardLongReads as ShardLongReads {
+#        input:
+#            unaligned_bam = bam,
+#            unaligned_pbi = pbi,
+#            num_shards = data_presets[experiment_type].num_shards,
+#            drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags,
+#            num_ssds = Guess.numb_of_local_ssd,
+#            zones = arbitrary.zones
+#    }
 
     # TODO: Peeking should only be done on CCS reads (if available)
     # for MAS-seq data, automatically detect the array model to use
     if (experiment_type == "MASSEQ" && !defined(mas_seq_model) ) {
         Int peek_size = 200
         # TODO: take first (5 * peek_size) reads from input bam, CCS correct them, feed those ccs corrected reads into peek
-        call Longbow.Peek as Longbow_Peek { input: bam = ShardLongReads.unmapped_shards[0], n=peek_size }
+        call Longbow.Peek as Longbow_Peek { input: bam = bam, n=peek_size }
     }
 
     String chosen_mas_seq_model = if (experiment_type == "MASSEQ") then select_first([mas_seq_model, Longbow_Peek.model]) else ""
 
     # then perform correction and alignment on each of the shard
-    scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
+#    scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
+    scatter (unmapped_shard in [bam]) {
         # sometimes we see the sharded bams mising EOF marker, use this as
         if (validate_shards) {call Utils.CountBamRecords as ValidateShard {input: bam = unmapped_shard}}
         if (experiment_type != "CLR") {
