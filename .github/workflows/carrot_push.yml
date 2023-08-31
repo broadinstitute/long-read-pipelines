@@ -3,7 +3,7 @@
 # parameter as string seperated by space.
 
 name: carrot-test-on-push
-on: [push]
+on: [push, workflow_dispatch]
 jobs:
     publish-test:
         runs-on: ubuntu-latest
