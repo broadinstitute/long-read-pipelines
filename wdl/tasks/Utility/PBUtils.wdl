@@ -1251,15 +1251,17 @@ task SummarizePBI {
 
     Int disk_size = 1 + 2*ceil(size(pbi, "GB"))
 
+    String basename = basename(pbi, ".pbi")
+
     command <<<
         set -euxo pipefail
 
-        python3 /usr/local/bin/compute_pbi_stats.py -q ~{qual_threshold} -l ~{length_threshold} ~{pbi} | tee map.txt
+        python3 /usr/local/bin/compute_pbi_stats.py -q ~{qual_threshold} -l ~{length_threshold} ~{pbi} | tee ~{basename}.stats.txt
     >>>
 
     output {
-        Map[String, Float] results = read_map("map.txt")
-        File results_file = "map.txt"
+        Map[String, Float] results = read_map("~{basename}.stats.txt")
+        File results_file = "~{basename}.stats.txt"
     }
 
     #########################
