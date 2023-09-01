@@ -25,7 +25,7 @@ def n50(lengths):
     return all_len[int(ind[0])]
 
 
-def load_index(pbi_file, qual_threshold):
+def load_index(pbi_file, qual_threshold, length_threshold):
     """
     Load .pbi index data
     """
@@ -64,15 +64,16 @@ def load_index(pbi_file, qual_threshold):
             if to_phred_score(idx_contents.readQual[j]) >= qual_threshold:
                 length = idx_contents.qEnd[j] - idx_contents.qStart[j]
 
-                # Save the polymerase and subread lengths
-                if idx_contents.holeNumber[j] not in polymerase_read_lengths:
-                    polymerase_read_lengths[idx_contents.holeNumber[j]] = 0
+                if length >= length_threshold:
+                    # Save the polymerase and subread lengths
+                    if idx_contents.holeNumber[j] not in polymerase_read_lengths:
+                        polymerase_read_lengths[idx_contents.holeNumber[j]] = 0
 
-                n_reads += 1
-                polymerase_read_lengths[idx_contents.holeNumber[j]] += length
-                subread_lengths.append(length)
-                quals.append(to_phred_score(idx_contents.readQual[j]))
-                total_bases += length
+                    n_reads += 1
+                    polymerase_read_lengths[idx_contents.holeNumber[j]] += length
+                    subread_lengths.append(length)
+                    quals.append(to_phred_score(idx_contents.readQual[j]))
+                    total_bases += length
 
     return n_reads, total_bases, numpy.mean(quals), numpy.median(quals), polymerase_read_lengths, subread_lengths
 
@@ -80,12 +81,13 @@ def load_index(pbi_file, qual_threshold):
 def main():
     parser = argparse.ArgumentParser(description='Compute .pbi stats', prog='compute_pbi_stats')
     parser.add_argument('-q', '--qual-threshold', type=int, default=0, help="Phred-scale quality threshold")
+    parser.add_argument('-l', '--length-threshold', type=int, default=0, help="Read length threshold")
     parser.add_argument('pbi', type=str, help=".pbi index")
     args = parser.parse_args()
 
     # Decode PacBio .pbi file and determine the polymerase and subread lengths
     eprint(f"Reading index ({args.pbi}). This may take a few minutes...", flush=True)
-    n_reads, n_bases, mean_qual, median_qual, polymerase_read_lengths, subread_lengths = load_index(args.pbi, args.qual_threshold)
+    n_reads, n_bases, mean_qual, median_qual, polymerase_read_lengths, subread_lengths = load_index(args.pbi, args.qual_threshold, args.length_threshold)
 
     prl = list(polymerase_read_lengths.values())
 

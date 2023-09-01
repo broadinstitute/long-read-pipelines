@@ -1237,12 +1237,14 @@ task SummarizePBI {
     parameter_meta {
         pbi: "Input PBI."
         qual_threshold: "Quality threshold."
+        length_threshold: "Length threshold."
         runtime_attr_override: "Override default runtime attributes."
     }
 
     input {
         File pbi
         Int qual_threshold = 0
+        Int length_threshold = 0
 
         RuntimeAttr? runtime_attr_override
     }
@@ -1252,11 +1254,12 @@ task SummarizePBI {
     command <<<
         set -euxo pipefail
 
-        python3 /usr/local/bin/compute_pbi_stats.py -q ~{qual_threshold} ~{pbi} | tee map.txt
+        python3 /usr/local/bin/compute_pbi_stats.py -q ~{qual_threshold} -l ~{length_threshold} ~{pbi} | tee map.txt
     >>>
 
     output {
         Map[String, Float] results = read_map("map.txt")
+        File results_file = "map.txt"
     }
 
     #########################
@@ -1267,7 +1270,7 @@ task SummarizePBI {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.40"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
