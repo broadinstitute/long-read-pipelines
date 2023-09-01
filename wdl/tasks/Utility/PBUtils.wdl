@@ -1257,6 +1257,8 @@ task SummarizePBI {
         set -euxo pipefail
 
         python3 /usr/local/bin/compute_pbi_stats.py -q ~{qual_threshold} -l ~{length_threshold} ~{pbi} | tee ~{basename}.stats.txt
+
+        echo -e 'name\t~{basename}' >> ~{basename}.stats.txt
     >>>
 
     output {
