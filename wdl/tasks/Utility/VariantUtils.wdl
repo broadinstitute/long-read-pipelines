@@ -678,3 +678,229 @@ task FixSnifflesVCF {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task ComputeBasicSmallVariantStats {
+    input {
+        File vcf
+
+        Int threads = 2
+        Int memory = 8
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(vcf, "GB"))
+    String prefix = basename(basename(vcf, ".gz"), ".vcf")
+
+    command <<<
+        set -euxo pipefail
+
+        bcftools stats ~{vcf} > ~{prefix}.stats.txt
+    >>>
+
+    output {
+        File vcf_stats = "~{prefix}.stats.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+                                   cpu_cores:          threads,
+                                   mem_gb:             memory,
+                                   disk_gb:            disk_size,
+                                   boot_disk_gb:       10,
+                                   preemptible_tries:  2,
+                                   max_retries:        2,
+                                   docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+                               }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ComputeBasicStructuralVariantStats {
+    input {
+        File vcf
+
+        Int threads = 2
+        Int memory = 8
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(vcf, "GB"))
+    String prefix = basename(basename(vcf, ".gz"), ".vcf")
+
+    command <<<
+        set -euxo pipefail
+
+        SURVIVOR stats ~{vcf} -1 -1 -1 ~{prefix}.stats.txt
+
+        cat ~{prefix}.stats.txt
+    >>>
+
+    output {
+        File vcf_stats = "~{prefix}.stats.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+                                   cpu_cores:          threads,
+                                   mem_gb:             memory,
+                                   disk_gb:            disk_size,
+                                   boot_disk_gb:       10,
+                                   preemptible_tries:  2,
+                                   max_retries:        2,
+                                   docker:             "us.gcr.io/broad-dsp-lrma/lr-survivor:0.1.0"
+                               }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FilterSmallVariantsOnQual {
+    input {
+        File vcf
+        File tbi
+        File ref_fasta
+        File ref_fai
+        File ref_dict
+        Int qual_filter
+        String outbase
+        String extension
+    }
+
+    command <<<
+        set -eux
+
+        gatk VariantFiltration \
+        -R ~{ref_fasta} \
+        -V ~{vcf} \
+        -O "~{outbase}.QualFT-~{qual_filter}.~{extension}" \
+        --filter-expression  "QUAL < ~{qual_filter}" \
+        --filter-name "LowQual"
+    >>>
+
+    output {
+        File ft_vcf = "~{outbase}.QualFT-~{qual_filter}.~{extension}"
+        File ft_tbi = "~{outbase}.QualFT-~{qual_filter}.~{extension}.tbi"
+    }
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 50 HDD"
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+}
+
+task FilterToPASSVCF {
+    input {
+        File raw_vcf
+        String outbase
+        String extension
+    }
+
+    command <<<
+        set -eux
+        bcftools view -f "PASS" ~{raw_vcf} -o "~{outbase}.PASS.~{extension}"
+        bcftools index -t "~{outbase}.PASS.~{extension}"
+    >>>
+
+    output {
+        File pass_vcf     = "~{outbase}.PASS.~{extension}"
+        File pass_vcf_tbi = "~{outbase}.PASS.~{extension}.tbi"
+    }
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 50 HDD"
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+task CountSNPs {
+    input {
+        File vcf
+        File tbi
+        File ref_fasta
+        File ref_fai
+        File ref_dict
+    }
+
+    String outbase = basename(vcf, ".vcf.gz")
+
+    command <<<
+        set -eux
+
+        gatk SelectVariants \
+        -R ~{ref_fasta} \
+        -V ~{vcf} \
+        --select-type-to-include SNP \
+        -O "~{outbase}.snp.vcf.gz"
+
+        zgrep -cv "^#" "~{outbase}.snp.vcf.gz" > "count.txt"
+    >>>
+
+    output {
+        Int count = read_int("count.txt")
+    }
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 50 HDD"
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-gatk/gatk:4.2.6.1"
+    }
+}
+
+task CountSVs {
+    meta {
+        description: "Counts the number of non-BND SVs (that have SVLEN annotation and abs(SVLEN)>=50)."
+    }
+    input {
+        File sv_vcf
+    }
+
+    command <<<
+        set -eux
+        zgrep -v "^#" ~{sv_vcf} \
+        | grep -vF "SVTYPE=BND" \
+        | grep -Eo "SVLEN=(-)?[0-9]+" \
+        | sed 's/=-/=/' \
+        | awk -F '=' '{if($2>49) print $2}' \
+        | wc -l | awk '{print $1}' \
+        > sv_counts.txt
+    >>>
+
+    output {
+        Int non_bnd_50bp_sv_count = read_int("sv_counts.txt")
+    }
+
+    runtime {
+        cpu: 1
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
