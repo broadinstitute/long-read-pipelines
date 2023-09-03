@@ -58,7 +58,8 @@ workflow JointCall {
     }
 
     # Joint-call in parallel over chromosomes
-    scatter (i in range(length(ShardVCFByRanges.sharded_gvcfs[0]))) {
+    #scatter (i in range(length(ShardVCFByRanges.sharded_gvcfs[0]))) {
+    scatter (i in [0]) {
         Array[File] per_contig_gvcfs = transpose(ShardVCFByRanges.sharded_gvcfs)[i]
 
         call Call {
