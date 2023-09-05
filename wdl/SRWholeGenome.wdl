@@ -31,6 +31,9 @@ workflow SRWholeGenome {
 
         Boolean run_HC_analysis = true
         Boolean run_dv_pepper_analysis = true
+
+        Boolean enable_hc_pileup_mode = true
+
         Int dvp_threads = 32
         Int dvp_memory = 128
 
@@ -184,6 +187,8 @@ workflow SRWholeGenome {
                 ploidy            = ploidy,
 
                 prefix = participant_name + ".haplotype_caller",
+
+                enable_pileup_mode = enable_hc_pileup_mode,
 
                 mito_contig = ref_map['mt_chr_name'],
                 contigs_names_to_ignore = contigs_names_to_ignore,

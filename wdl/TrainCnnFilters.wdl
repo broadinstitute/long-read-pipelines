@@ -360,9 +360,42 @@ task TrainCnn {
         # Must pre-process the given tensor_tars into a single folder:
         mkdir tensors
         cd tensors
+
+        # Let's try to do this multi-threaded:
+        # NOTE: Yes, I know this is multi-processing, but I'm in a hurry here.
+
+        # Get the max number of threads to use:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        let max_threads=${np}-1
+        if [[ $max_threads -le 0 ]] ; then
+            max_threads=1
+        fi
+
+        # Dispatch some jobs:
+        num_active_threads=0
         while read f ; do
-            tar --strip-components 1 -xf $f
+            # If we have reached the maximum number of threads, we should wait for a while:
+            if [[ $num_active_threads -ge $max_threads ]] ; then
+                # Wait for the next background process to finish:
+                wait -n
+
+                # Give ourselves some wiggle room:
+                sleep 5
+
+                # Refresh the number of active threads:
+                num_active_threads=$(jobs | wc -l)
+            fi
+
+            # Extract our tensors to the `tensors` folder:
+            tar --strip-components 1 -xf $f &
+
+            # Update the number of active threads:
+            let num_active_threads=${num_active_threads}+1
         done < ~{write_lines(tensor_tars)}
+
+        # Wait for the rest of our background processes to finish:
+        wait
+
         cd ../
 
         gatk CNNVariantTrain \

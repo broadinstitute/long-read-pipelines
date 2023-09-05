@@ -28,6 +28,8 @@ workflow CallVariantsWithHaplotypeCaller {
 
         Int ploidy = 2
 
+        Boolean enable_pileup_mode = false
+
         String mito_contig = "chrM"
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
@@ -54,6 +56,7 @@ workflow CallVariantsWithHaplotypeCaller {
                 ref_dict = ref_dict,
                 make_gvcf = true,
                 make_bamout = true,
+                enable_pileup_mode = enable_pileup_mode,
                 single_interval = contig_for_small_var,
                 contamination = 0,
                 ploidy = ploidy,
@@ -88,22 +91,25 @@ workflow CallVariantsWithHaplotypeCaller {
             bam = MergeVariantCalledBamOuts.output_bam
     }
 
-    # Now reblock the GVCF to combine hom ref blocks and save $ / storage:
-    call ReblockGVCF {
-        input:
-            gvcf = MergeGVCFs.output_vcf,
-            gvcf_index = IndexGVCF.index,
-            ref_fasta = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            ref_dict = ref_dict,
-            prefix = prefix
-    }
+#    We're disabling ReblockGVCF for now.
+#    It's removing some annotations we may need later.
+
+#    # Now reblock the GVCF to combine hom ref blocks and save $ / storage:
+#    call ReblockGVCF {
+#        input:
+#            gvcf = MergeGVCFs.output_vcf,
+#            gvcf_index = IndexGVCF.index,
+#            ref_fasta = ref_fasta,
+#            ref_fasta_fai = ref_fasta_fai,
+#            ref_dict = ref_dict,
+#            prefix = prefix
+#    }
 
     # Collapse the GVCF into a regular VCF:
     call SRJOINT.GenotypeGVCFs as CollapseGVCFtoVCF {
         input:
-            input_gvcf_data = ReblockGVCF.output_gvcf,
-            input_gvcf_index = ReblockGVCF.output_gvcf_index,
+            input_gvcf_data = MergeGVCFs.output_vcf,
+            input_gvcf_index = IndexGVCF.index,
             interval_list = SmallVariantsScatterPrep.interval_list,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
@@ -113,8 +119,8 @@ workflow CallVariantsWithHaplotypeCaller {
     }
 
     output {
-        File output_gvcf = ReblockGVCF.output_gvcf
-        File output_gvcf_index = ReblockGVCF.output_gvcf_index
+        File output_gvcf = MergeGVCFs.output_vcf
+        File output_gvcf_index = IndexGVCF.index
         File output_vcf = CollapseGVCFtoVCF.output_vcf
         File output_vcf_index = CollapseGVCFtoVCF.output_vcf_index
         File bamout = MergeVariantCalledBamOuts.output_bam
@@ -148,6 +154,8 @@ task HaplotypeCaller_GATK4_VCF {
         Float? contamination
 
         Boolean use_spanning_event_genotyping = true
+
+        Boolean enable_pileup_mode = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -196,15 +204,17 @@ task HaplotypeCaller_GATK4_VCF {
                 -contamination ~{default=0 contamination} \
                 --sample-ploidy ~{ploidy} \
                 --linked-de-bruijn-graph \
+                ~{true="--pileup-detection --pileup-detection-enable-indel-pileup-calling" false="" enable_pileup_mode} \
                 --annotate-with-num-discovered-alleles \
                 -GQB 10 -GQB 20 -GQB 30 -GQB 40 -GQB 50 -GQB 60 -GQB 70 -GQB 80 -GQB 90 \
                 ~{false="--disable-spanning-event-genotyping" true="" use_spanning_event_genotyping} \
                 -G StandardAnnotation -G StandardHCAnnotation  \
+                -A AssemblyComplexity \
                 ~{true="-ERC GVCF" false="" make_gvcf} \
                 --smith-waterman FASTEST_AVAILABLE \
                 ~{bamout_arg}
 
-        # Removed for now:
+        # Removed for now because we need to qualify the pipeline with standard annotations first.
         # ~{true="-G AS_StandardAnnotation" false="" make_gvcf}
 
         # Cromwell doesn't like optional task outputs, so we have to touch this file.
