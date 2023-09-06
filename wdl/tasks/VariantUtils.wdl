@@ -1579,3 +1579,94 @@ task ExtractVariantAnnotations {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task TrainVariantAnnotationsModel {
+
+    input {
+        File annotation_hdf5
+        String mode
+        String prefix
+
+        File? unlabeled_annotation_hdf5
+        Float calibration_sensitivity_threshold = 0.95
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        annotation_hdf5:   "Labeled-annotations HDF5 file."
+        mode: "SNP or INDEL"
+        prefix: "Prefix of the output files."
+        unlabeled_annotation_hdf5: "Unlabeled-annotations HDF5 file (optional)"
+        calibration_sensitivity_threshold: "Calibration-set sensitivity threshold.  (optional)"
+    }
+
+    Int disk_size = 10 + 4*ceil(size(annotation_hdf5, "GB"))
+                  + 4*ceil(size(unlabeled_annotation_hdf5, "GB"))
+
+    String cal_sense_arg = if defined(unlabeled_annotation_hdf5) then " --calibration-sensitivity-threshold ~{calibration_sensitivity_threshold}" else ""
+
+    command <<<
+        set -euxo pipefail
+
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
+        # Get amount of memory to use:
+        mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-2
+
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+            TrainVariantAnnotationsModel \
+                --annotations-hdf5 ~{annotation_hdf5} \
+                --mode ~{mode} \
+                ~{"--unlabeled-annotations-hdf5  " + unlabeled_annotation_hdf5} \
+                ~{cal_sense_arg} \
+                -O ~{prefix}_train_~{mode} \
+                &> ~{prefix}_TrainVariantAnnotationsModel_~{mode}.log
+
+        # We must ensure the optional outputs all exist:
+        touch ~{prefix}_train_~{mode}.unlabeledScores.hdf5
+        touch ~{prefix}_train_~{mode}.calibrationScores.hdf5
+        touch ~{prefix}_train_~{mode}.negative.scorer.pkl
+
+        kill $monitoring_pid
+    >>>
+
+    output {
+        File training_scores = "~{prefix}_train_~{mode}.trainingScores.hdf5"
+        File positive_model_scorer_pickle = "~{prefix}_train_~{mode}.scorer.pkl"
+
+        File unlabeled_positive_model_scores = "~{prefix}_train_~{mode}.unlabeledScores.hdf5"
+        File calibration_set_scores = "~{prefix}_train_~{mode}.calibrationScores.hdf5"
+        File negative_model_scorer_pickle = "~{prefix}_train_~{mode}.negative.scorer.pkl"
+
+        File log = "~{prefix}_TrainVariantAnnotationsModel_~{mode}.log"
+
+        File monitoring_log = "resources.log"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             26,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
