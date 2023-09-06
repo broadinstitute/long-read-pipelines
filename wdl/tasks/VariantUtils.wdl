@@ -1453,3 +1453,129 @@ task ExtractFingerprint {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+
+task ExtractVariantAnnotations {
+
+    input {
+        File vcf
+        File vcf_index
+
+        String prefix
+
+        String mode
+
+        Array[String] recalibration_annotation_values
+
+        Array[File] known_reference_variants
+        Array[File] known_reference_variants_index
+        Array[String] known_reference_variants_identifier
+        Array[Boolean] is_training
+        Array[Boolean] is_calibration
+
+        Int max_unlabeled_variants = 0
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        vcf:   "VCF File from which to extract annotations."
+        vcf_index: "Index for the given VCF file."
+        prefix: "Prefix of the output files."
+        mode: "SNP or INDEL"
+        known_reference_variants: "Array of known reference VCF files.  For humans, dbSNP is one example."
+        known_reference_variants_index: "Array of index files for known reference VCF files."
+        known_reference_variants_identifier: "Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as `known_reference_variants`."
+        is_training: "Array of boolean values indicating if the known_reference_variant file at the same array position should be used for 'training' data.  Must be the same length as `known_reference_variants`."
+        is_calibration: "Array of boolean values indicating if the known_reference_variant file at the same array position should be used for 'calibration' data.  Must be the same length as `known_reference_variants`."
+        max_unlabeled_variants: "How many sites should be used for unlableled training data.  Setting this to values > 0 will enable a positive-negative training model."
+    }
+
+    Int disk_size = 10 + ceil(size(known_reference_variants, "GB"))
+                  + 4*ceil(size(vcf, "GB"))
+                  + 2*ceil(size(vcf_index, "GB"))
+                  + 2*ceil(size(known_reference_variants, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
+        # We need to generate resource strings from the input arrays.
+        # First we check that the arrays are the same length:
+        if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_index)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_training)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_calibration)} ]] || \
+            echo "ERROR: Not all input arrays for known variants contain the same number of elements: " 1>&2
+            echo "       known_reference_variants            = ~{length(known_reference_variants)}" 1>&2
+            echo "       known_reference_variants            = ~{length(known_reference_variants_index)}" 1>&2
+            echo "       known_reference_variants_identifier = ~{length(known_reference_variants_identifier)}" 1>&2
+            echo "       is_training                         = ~{length(is_training)}" 1>&2
+            echo "       is_calibration                      = ~{length(is_calibration)}" 1>&2
+            false
+        fi
+
+        # Now we can write out the arrays into a TSV file and add them line by line to the execution:
+        # Create the TSV:
+        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_training, is_calibration, known_reference_variants]))}
+
+        # Now read them into a string:
+        resource_flags=$(awk '{printf("--resource:%s,training=%s,calibration=%s %s ", $1, $2, $3, $4)}' ${options_tsv})
+
+        # Get amount of memory to use:
+        mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-2
+
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+          ExtractVariantAnnotations \
+          -V ~{vcf} \
+          -A ~{sep=' -A ' recalibration_annotation_values} \
+          --mode ~{mode} \
+          --maximum-number-of-unlableled-variants ~{max_unlabeled_variants} \
+          ${resource_flags} \
+          -O ~{prefix}_extracted_annotations_~{mode} \
+          &> ~{prefix}_ExtractVariantAnnotations_~{mode}.log
+
+        # If we set max_unlabeled_variants to 0, we need to make sure that file exists:
+        touch ~{prefix}_extracted_annotations_~{mode}.unlabeled.annot.hdf5
+
+        kill $monitoring_pid
+    >>>
+
+    output {
+        File annotation_hdf5 = "~{prefix}_extracted_annotations_~{mode}.annot.hdf5"
+        File unlabeled_annotation_hdf5 = "~{prefix}_extracted_annotations_~{mode}.unlabeled.annot.hdf5"
+        File sites_only_vcf = "~{prefix}_extracted_annotations_~{mode}.vcf.gz"
+        File sites_only_vcf_index = "~{prefix}_extracted_annotations_~{mode}.vcf.tbi"
+
+        File log = "~{prefix}_ExtractVariantAnnotations_~{mode}.log"
+
+        File monitoring_log = "resources.log"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             26,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
