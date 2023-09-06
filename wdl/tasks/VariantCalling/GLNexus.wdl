@@ -1,7 +1,6 @@
 version 1.0
 
-import "../Utility/Utils.wdl"
-import "../Utility/VariantUtils.wdl"
+import "../../structs/Structs.wdl"
 
 workflow JointCall {
 

@@ -8,6 +8,7 @@ version 1.0
 # "https://github.com/PacificBiosciences/hg002-ccs/"
 ##########################################################################################
 
+import "../../structs/Structs.wdl"
 import "dsde_pipelines_tasks/GermlineVariantDiscovery.wdl" as Calling
 import "dsde_pipelines_tasks/Qc.wdl" as QC
 import "dsde_pipelines_tasks/Utilities.wdl" as DSDEPipelinesUtils

@@ -1,5 +1,6 @@
 version 1.0
 
+import "../../structs/Structs.wdl"
 import "../Utility/Utils.wdl"
 import "../Visualization/NanoPlot.wdl" as NP
 import "../QC/AlignedMetrics.wdl" as AM

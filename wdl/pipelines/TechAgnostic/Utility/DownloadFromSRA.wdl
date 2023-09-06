@@ -1,5 +1,6 @@
 version 1.0
 
+import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Utils.wdl" as Utils
 
 workflow DownloadFromSRA {
