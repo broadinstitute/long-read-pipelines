@@ -13,6 +13,8 @@ workflow ExtractBam{
     call extract_bam{input: bam_input=wholegenomebam, bam_index=wholegenomebai, region= genomeregion, pref=prefix}
     output{
         File subset_fa = extract_bam.local_fa
+        File subset_bam = extract_bam.local_bam
+        #File subset_bai = extract_bam.local_bai
     }
 }
 
@@ -28,12 +30,14 @@ task extract_bam{
     command <<<
         samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
         samtools fasta ~{pref}.bam > ~{pref}.fasta
+        sed '/^>/s/$/\_~{pref}/' < ~{pref}.fasta > ~{pref}_out.fasta # add sample information to each of the fasta file
         #samtools index ~{pref}.~{region}.bam
     >>>
 
     output{
-        File local_fa="~{pref}.fasta"
-        #File local_bai="~{pref}.~{region}.bai"
+        File local_fa="~{pref}_out.fasta"
+        File local_bam = "~{pref}.bam"
+        # File local_bai="~{pref}.~{region}.bai"
     }
 
     Int disk_size = 10 + ceil(2 * size(bam_input, "GiB"))
