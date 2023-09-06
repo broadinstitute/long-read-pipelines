@@ -1393,3 +1393,63 @@ task GatherVcfs {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task ExtractFingerprint {
+
+    input {
+        File bam
+        File bai
+
+        File haplotype_database_file
+
+        File ref_fasta
+        File ref_index
+        File ref_dict
+
+        String prefix = "fingerprint"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + 2*ceil((size(bam, "GB")) + ceil(size(bai, "GB")) + ceil(size(ref_fasta, "GB")) + ceil(size(ref_index, "GB")) + ceil(size(ref_dict, "GB")))
+
+    command <<<
+        set -euxo pipefail
+
+        # Extract the fingerprint with the haplotype file:
+        gatk ExtractFingerprint \
+            -H ~{haplotype_database_file} \
+            -I ~{bam} \
+            -R ~{ref_fasta} \
+            -O ~{prefix}.vcf
+
+        # Convert the fingerprint to a string:
+        bcftools query -f '%REF %ALT [%PL]\n' tmp.vcf | awk '{split($3,p,","); if (p[1]==0) {printf("%s",$1)} else {printf("%s",$2)}}' > ~{prefix}.string.txt
+    >>>
+
+    output {
+        File output_vcf = "~{prefix}.vcf"
+        File fingerprint_string = read_string("~{prefix}.string.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
