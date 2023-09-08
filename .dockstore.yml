@@ -99,3 +99,6 @@ workflows:
 - name: DystPeaker
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DystPeaker.wdl
+- name: SmallVariantsSmellTest
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/SmallVariantsSmellTest.wdl
