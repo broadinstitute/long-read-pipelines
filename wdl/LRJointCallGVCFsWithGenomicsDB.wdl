@@ -117,8 +117,8 @@ workflow LRJointCallGVCFsWithGenomicsDB {
     # Now we run VariantRecalibrator for indels and snps:
     call VARUTIL.IndelsVariantRecalibrator as TrainVQSROnHCIndelVariants {
         input:
-            vcf = MakeSitesOnlyGVCF.sites_only_vcf,
-            vcf_index = MakeSitesOnlyGVCF.sites_only_vcf_index,
+            vcfs = [MakeSitesOnlyGVCF.sites_only_vcf],
+            vcf_indices = [MakeSitesOnlyGVCF.sites_only_vcf_index],
             prefix = prefix + ".indels",
             recalibration_tranche_values = indel_recalibration_tranche_values,
             recalibration_annotation_values = indel_recalibration_annotation_values,
@@ -142,8 +142,8 @@ workflow LRJointCallGVCFsWithGenomicsDB {
 
     call VARUTIL.SNPsVariantRecalibratorCreateModel as TrainVQSROnHCSnpVariants {
         input:
-            vcf = MakeSitesOnlyGVCF.sites_only_vcf,
-            vcf_index = MakeSitesOnlyGVCF.sites_only_vcf_index,
+            vcfs = [MakeSitesOnlyGVCF.sites_only_vcf],
+            vcf_indices = [MakeSitesOnlyGVCF.sites_only_vcf_index],
             prefix = prefix + ".snps",
             recalibration_tranche_values = snp_recalibration_tranche_values,
             recalibration_annotation_values = snp_recalibration_annotation_values,

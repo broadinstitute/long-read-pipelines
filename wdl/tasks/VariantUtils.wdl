@@ -1764,18 +1764,18 @@ task ScoreVariantAnnotations {
                 ${resource_flags} \
                 --resource:extracted,extracted=true ~{sites_only_extracted_vcf} \
                 --${mode_lower}-calibration-sensitivity-threshold ~{calibration_sensitivity_threshold} \
-                -O ~{prefix}_~{mode}_scored \
+                -O ~{prefix}_scored \
                 &> ~{prefix}_ScoreVariantAnnotations_~{mode}.log
 
         kill $monitoring_pid
     >>>
 
     output {
-        File scored_vcf = "~{prefix}_~{mode}_scored.vcf.gz"
-        File scored_vcf_index = "~{prefix}_~{mode}_scored.vcf.gz.tbi"
+        File scored_vcf = "~{prefix}_scored.vcf.gz"
+        File scored_vcf_index = "~{prefix}_scored.vcf.gz.tbi"
 
-        File? annotations_hdf5 = "~{prefix}_~{mode}_scored.annot.hdf5"
-        File? scores_hdf5 = "~{prefix}_~{mode}_scored.scores.hdf5"
+        File? annotations_hdf5 = "~{prefix}_scored.annot.hdf5"
+        File? scores_hdf5 = "~{prefix}_scored.scores.hdf5"
 
         File log = "~{prefix}_ExtractVariantAnnotations_~{mode}.log"
 

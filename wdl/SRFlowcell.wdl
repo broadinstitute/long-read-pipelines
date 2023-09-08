@@ -213,12 +213,14 @@ workflow SRFlowcell {
     ############################################
     File keyfile = t_014_ComputeBamStats.results_file
     String reads_dir = outdir + "/reads"
+    String unaligned_reads_dir = outdir + "/reads/unaligned"
+    String aligned_reads_dir = outdir + "/reads/aligned"
     String metrics_dir = outdir + "/metrics"
 
     # Finalize our unaligned reads first:
     call FF.FinalizeToDir as t_020_FinalizeUnalignedFastqReads {
         input:
-            outdir = reads_dir + "/unaligned",
+            outdir = unaligned_reads_dir,
             files =
             [
                 fq_e1,
@@ -229,7 +231,7 @@ workflow SRFlowcell {
     if (defined(bam)) {
         call FF.FinalizeToDir as t_021_FinalizeUnalignedReadsFromBam {
             input:
-                outdir = reads_dir + "/unaligned",
+                outdir = unaligned_reads_dir,
                 files = select_all(
                 [
                     bam,
@@ -242,7 +244,7 @@ workflow SRFlowcell {
 
     call FF.FinalizeToDir as t_022_FinalizeAlignedReads {
         input:
-            outdir = reads_dir + "/aligned",
+            outdir = aligned_reads_dir,
             files =
             [
                 t_005_AlignReads.bam,
@@ -256,14 +258,14 @@ workflow SRFlowcell {
 
     call FF.FinalizeToFile as t_023_FinalizeAlignedBam {
         input:
-            outdir = reads_dir + "/aligned",
+            outdir = aligned_reads_dir,
             file = t_010_ApplyBQSR.recalibrated_bam,
             keyfile = keyfile
     }
 
     call FF.FinalizeToFile as t_024_FinalizeAlignedBai {
         input:
-            outdir = reads_dir + "/aligned",
+            outdir = aligned_reads_dir,
             file = t_010_ApplyBQSR.recalibrated_bai,
             keyfile = keyfile
     }
@@ -295,10 +297,12 @@ workflow SRFlowcell {
 
 
     # Prep a few files for output:
+    File fq1_o = unaligned_reads_dir + "/" + basename(fq_e1)
+    File fq2_o = unaligned_reads_dir + "/" + basename(fq_e2)
     if (defined(bam)) {
-        File unaligned_bam_o = reads_dir + "/unaligned/" + basename(select_first([bam]))
-        File unaligned_bai_o = reads_dir + "/unaligned/" + basename(select_first([bai]))
-        File fqboup = reads_dir + "/unaligned/" + basename(select_first([t_003_Bam2Fastq.fq_unpaired]))
+        File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
+        File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
+        File fqboup = unaligned_reads_dir + "/" + basename(select_first([t_003_Bam2Fastq.fq_unpaired]))
     }
 
     ############################################
@@ -311,9 +315,9 @@ workflow SRFlowcell {
     ############################################
     output {
         # Unaligned reads
-        File fq1 = fq_e1
-        File fq2 = fq_e2
-        File? fq_unpaired = t_003_Bam2Fastq.fq_unpaired
+        File fq1 = fq1_o
+        File fq2 = fq2_o
+        File? fq_unpaired = fqboup
 
         # Unaligned BAM file
         File? unaligned_bam = unaligned_bam_o
