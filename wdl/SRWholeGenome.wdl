@@ -191,12 +191,29 @@ workflow SRWholeGenome {
                 contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
+        # Make sure our sample name is correct:
+        call VARUTIL.RenameSingleSampleVcf as RenameRawHcVcf {
+            input:
+                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
+                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                prefix = participant_name + ".haplotype_caller.renamed",
+                new_sample_name = participant_name
+        }
+        call VARUTIL.RenameSingleSampleVcf as RenameRawHcGvcf {
+            input:
+                vcf = CallVariantsWithHaplotypeCaller.output_gvcf,
+                vcf_index = CallVariantsWithHaplotypeCaller.output_gvcf_index,
+                prefix = participant_name + ".haplotype_caller.renamed",
+                is_gvcf = true,
+                new_sample_name = participant_name
+        }
+
         ########################################################################
         # Call VETS / VQSR-lite:
         call VARUTIL.ExtractVariantAnnotations as ExtractIndelVariantAnnotations {
             input:
-                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                vcf = RenameRawHcVcf.new_sample_name_vcf,
+                vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
 
                 prefix = participant_name,
                 mode = "INDEL",
@@ -214,8 +231,8 @@ workflow SRWholeGenome {
 
         call VARUTIL.ExtractVariantAnnotations as ExtractSnpVariantAnnotations  {
             input:
-                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                vcf = RenameRawHcVcf.new_sample_name_vcf,
+                vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
 
                 prefix = participant_name,
                 mode = "SNP",
@@ -247,8 +264,8 @@ workflow SRWholeGenome {
 
         call VARUTIL.ScoreVariantAnnotations as ScoreSnpVariantAnnotations {
             input:
-                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                vcf = RenameRawHcVcf.new_sample_name_vcf,
+                vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
 
 
                 sites_only_extracted_vcf = ExtractSnpVariantAnnotations.sites_only_vcf,
@@ -320,46 +337,11 @@ workflow SRWholeGenome {
             input:
                 vcf = ScoreIndelVariantAnnotations.scored_vcf,
                 vcf_index = ScoreIndelVariantAnnotations.scored_vcf_index,
-                prefix = participant_name + ".vets_filtered"
-        }
-
-        ## Rename our samples so we can use them later:
-        ## TODO: Move this to the top so we don't have to rename a million files!
-        call VARUTIL.RenameSingleSampleVcf as RenameRawHcVcf {
-            input:
-                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
-                prefix = participant_name + ".haplotype_caller.renamed",
-                new_sample_name = participant_name
-        }
-
-        call VARUTIL.RenameSingleSampleVcf as RenameRawHcGvcf {
-            input:
-                vcf = CallVariantsWithHaplotypeCaller.output_gvcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_gvcf_index,
-                prefix = participant_name + ".haplotype_caller.renamed",
-                is_gvcf = true,
-                new_sample_name = participant_name
-        }
-
-        call VARUTIL.RenameSingleSampleVcf as RenameSingleSampleVcf {
-            input:
-                vcf = ScoreIndelVariantAnnotations.scored_vcf,
-                vcf_index = ScoreIndelVariantAnnotations.scored_vcf_index,
-                prefix = participant_name + ".scored",
-                new_sample_name = participant_name
-        }
-
-        call VARUTIL.RenameSingleSampleVcf as RenameSingleSampleVcfFiltered {
-            input:
-                vcf = RemoveFilteredVariants.vcf_out,
-                vcf_index = RemoveFilteredVariants.vcf_out_index,
-                prefix = participant_name + ".vets_filtered",
-                new_sample_name = participant_name
+                prefix = participant_name + ".filtered"
         }
 
         # Create a Keyfile for finalization:
-        File keyfile = RenameSingleSampleVcf.new_sample_name_vcf_index
+        File keyfile = RemoveFilteredVariants.vcf_out_index
 
         # Finalize the raw Joint Calls:
         call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf }
@@ -370,10 +352,10 @@ workflow SRWholeGenome {
         call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout_index }
 
         # Finalize the reclibrated / filtered variants:
-        call FF.FinalizeToFile as FinalizeHCRescoredVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf }
-        call FF.FinalizeToFile as FinalizeHCRescoredTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf_index }
-        call FF.FinalizeToFile as FinalizeHCRescoredFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcfFiltered.new_sample_name_vcf }
-        call FF.FinalizeToFile as FinalizeHCRescoredFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcfFiltered.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCRescoredVcf { input: outdir = smalldir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf }
+        call FF.FinalizeToFile as FinalizeHCRescoredTbi { input: outdir = smalldir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index }
+        call FF.FinalizeToFile as FinalizeHCRescoredFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RemoveFilteredVariants.vcf_out }
+        call FF.FinalizeToFile as FinalizeHCRescoredFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RemoveFilteredVariants.vcf_out_index }
 
         # Finalize other outputs:
         if (defined(fingerprint_haploytpe_db_file)) {
@@ -482,9 +464,9 @@ workflow SRWholeGenome {
         File? hc_baiout   = FinalizeHCBaiOut.gcs_path
         File? hc_raw_vcf  = FinalizeHCVcf.gcs_path
         File? hc_raw_tbi  = FinalizeHCTbi.gcs_path
-        File? hc_rescored_vcf = FinalizeHCRescoredFilteredVcf.gcs_path
-        File? hc_rescored_tbi = FinalizeHCRescoredFilteredTbi.gcs_path
-        File? hc_rescored_raw_vcf = FinalizeHCRescoredVcf.gcs_path
-        File? hc_rescored_raw_tbi = FinalizeHCRescoredTbi.gcs_path
+        File? hc_rescored_vcf = FinalizeHCRescoredVcf.gcs_path
+        File? hc_rescored_tbi = FinalizeHCRescoredTbi.gcs_path
+        File? hc_rescored_filtered_vcf = FinalizeHCRescoredFilteredVcf.gcs_path
+        File? hc_rescored_filtered_tbi = FinalizeHCRescoredFilteredTbi.gcs_path
     }
 }
