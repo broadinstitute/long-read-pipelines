@@ -12,31 +12,41 @@ workflow ONTPfTypeDrugResistanceMarkers {
 
         String dir_prefix
         String gcs_out_root_dir
+
+        Boolean do_functional_annotation = true
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTPfTypeDrugResistanceMarkers/~{dir_prefix}"
 
-    call FUNK.FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db }
+    if (do_functional_annotation) {
+        call FUNK.FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db }
+    }
 
     call CallDrugResistanceMutations {
         input:
-            vcf = FunctionallyAnnotateVariants.annotated_vcf,
+            vcf = select_first([FunctionallyAnnotateVariants.annotated_vcf, vcf]),
             drug_resistance_list = drug_resistance_list
     }
 
     # Finalize data
     String dir = outdir + "/reports"
 
-    call FF.FinalizeToFile as FinalizeAnnotatedVCF { input: outdir = dir, file = FunctionallyAnnotateVariants.annotated_vcf }
-    call FF.FinalizeToFile as FinalizeSnpEffSummary { input: outdir = dir, file = FunctionallyAnnotateVariants.snpEff_summary }
-    call FF.FinalizeToFile as FinalizeSnpEffGenes { input: outdir = dir, file = FunctionallyAnnotateVariants.snpEff_genes }
     call FF.FinalizeToFile as FinalizeDRReport { input: outdir = dir, file = CallDrugResistanceMutations.report }
 
+    if (do_functional_annotation) {
+        call FF.FinalizeToFile as FinalizeAnnotatedVCF { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.annotated_vcf]) }
+        call FF.FinalizeToFile as FinalizeAnnotatedVCFIndex { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.annotated_vcf_index]) }
+        call FF.FinalizeToFile as FinalizeSnpEffSummary { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.snpEff_summary]) }
+        call FF.FinalizeToFile as FinalizeSnpEffGenes { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.snpEff_genes]) }
+    }
+
     output {
-        File annotated_vcf = FinalizeAnnotatedVCF.gcs_path
         File drug_res_report = FinalizeDRReport.gcs_path
-        File snpEff_summary = FinalizeSnpEffSummary.gcs_path
-        File snpEff_genes = FinalizeSnpEffGenes.gcs_path
+
+        File? annotated_vcf = FinalizeAnnotatedVCF.gcs_path
+        File? annotated_vcf_index = FinalizeAnnotatedVCFIndex.gcs_path
+        File? snpEff_summary = FinalizeSnpEffSummary.gcs_path
+        File? snpEff_genes = FinalizeSnpEffGenes.gcs_path
     }
 }
 

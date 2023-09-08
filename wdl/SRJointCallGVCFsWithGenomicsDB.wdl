@@ -268,14 +268,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                     vcf = recalibrated_vcf,
                     snpeff_db = select_first([snpeff_db])
             }
-            call VARUTIL.IndexVCF as IndexFunkyVcf {
-                input:
-                    vcf = FunctionallyAnnotate.annotated_vcf
-            }
         }
 
         File vcf_for_merging = select_first([FunctionallyAnnotate.annotated_vcf, recalibrated_vcf])
-        File vcf_index_for_merging = select_first([IndexFunkyVcf.tbi, recalibrated_vcf_index])
+        File vcf_index_for_merging = select_first([FunctionallyAnnotate.annotated_vcf_index, recalibrated_vcf_index])
     }
 
     # Consolidate files:
@@ -414,11 +410,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         File joint_recalibrated_vcf     = FinalizeVETSVCF.gcs_path
         File joint_recalibrated_vcf_tbi = FinalizeVETSTBI.gcs_path
 
-        File? annotated_joint_vcf     = annotated_vcf
-        File? annotated_joint_vcf_tbi = annotated_vcf_tbi
-
         File joint_mt = CreateHailMatrixTable.gcs_path
         File joint_zarr = ConvertToZarr.gcs_path
+
+        File? annotated_joint_vcf     = annotated_vcf
+        File? annotated_joint_vcf_tbi = annotated_vcf_tbi
     }
 }
 

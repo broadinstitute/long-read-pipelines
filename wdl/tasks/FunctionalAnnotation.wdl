@@ -26,10 +26,14 @@ task FunctionallyAnnotateVariants {
 
         mv snpEff_summary.html ~{prefix}.snpEff_summary.html
         mv snpEff_genes.txt ~{prefix}.snpEff_genes.txt
+
+        # Index the output VCF file:
+        tabix -p vcf ~{prefix}.annotated.vcf.gz
     >>>
 
     output {
         File annotated_vcf = "~{prefix}.annotated.vcf.gz"
+        File annotated_vcf_index = "~{prefix}.annotated.vcf.gz.tbi"
         File snpEff_summary = "~{prefix}.snpEff_summary.html"
         File snpEff_genes = "~{prefix}.snpEff_genes.txt"
     }
