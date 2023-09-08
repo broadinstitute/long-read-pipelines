@@ -237,7 +237,7 @@ task BwaMem2 {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

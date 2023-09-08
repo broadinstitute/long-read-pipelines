@@ -61,6 +61,8 @@ workflow SRWholeGenome {
 
         File? bed_to_compute_coverage
 
+        File? fingerprint_haploytpe_db_file
+
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
 
@@ -301,6 +303,19 @@ workflow SRWholeGenome {
         }
         ########################################################################
 
+        if (defined(fingerprint_haploytpe_db_file)) {
+            call VARUTIL.ExtractFingerprintAndBarcode as FingerprintAndBarcodeVcf {
+                input:
+                    vcf = ScoreIndelVariantAnnotations.scored_vcf,
+                    vcf_index = ScoreIndelVariantAnnotations.scored_vcf_index,
+                    haplotype_database_file = select_first([fingerprint_haploytpe_db_file]),
+                    ref_fasta         = ref_map['fasta'],
+                    ref_fasta_fai     = ref_map['fai'],
+                    ref_dict          = ref_map['dict'],
+                    prefix = participant_name
+            }
+        }
+
         call VARUTIL.SelectVariants as RemoveFilteredVariants {
             input:
                 vcf = ScoreIndelVariantAnnotations.scored_vcf,
@@ -359,6 +374,11 @@ workflow SRWholeGenome {
         call FF.FinalizeToFile as FinalizeHCRescoredTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcf.new_sample_name_vcf_index }
         call FF.FinalizeToFile as FinalizeHCRescoredFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcfFiltered.new_sample_name_vcf }
         call FF.FinalizeToFile as FinalizeHCRescoredFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameSingleSampleVcfFiltered.new_sample_name_vcf_index }
+
+        # Finalize other outputs:
+        if (defined(fingerprint_haploytpe_db_file)) {
+            call FF.FinalizeToFile as FinalizeFingerprintVcf { input: outdir = smalldir, keyfile = keyfile, file = select_first([FingerprintAndBarcodeVcf.output_vcf]) }
+        }
 
         ################################
         # Finalize the VETS files:
@@ -443,6 +463,9 @@ workflow SRWholeGenome {
         File fastqc_report = FinalizeFastQCReport.gcs_path
 
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
+
+        File? fingerprint_vcf = FinalizeFingerprintVcf.gcs_path
+        String? barcode = FingerprintAndBarcodeVcf.barcode
 
         ########################################
 

@@ -1454,6 +1454,170 @@ task ExtractFingerprint {
     }
 }
 
+task ExtractFingerprintAndBarcode {
+
+    input {
+        File vcf
+        File vcf_index
+
+        File haplotype_database_file
+
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+
+        String prefix = "fingerprint"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + ceil(size(vcf, "GB"))
+                       + ceil(size(vcf_index, "GB"))
+                       + ceil(size(haplotype_database_file, "GB"))
+                       + ceil(size(ref_fasta, "GB"))
+                       + ceil(size(ref_fasta_fai, "GB"))
+                       + ceil(size(ref_dict, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+python << CODE
+
+import pysam
+
+from collections import defaultdict
+from tqdm import tqdm
+
+def read_reference(reference_fasta):
+
+    ref = dict()
+
+    print(f"Ingesting FASTA reference: {reference_fasta}")
+    with pysam.FastaFile(reference_fasta) as f:
+
+        # Get all sequence names
+        contigs = f.references
+
+        for contig in contigs:
+            sequence = f.fetch(contig)
+            ref[contig] = sequence
+
+    return ref
+
+
+def extract_barcode(vcf_file, haplotype_database_file, ref_seq_dict, vcf_out_path):
+    '''Extract a barcode from the given VCF file.
+    Produces a barcode string as well as a VCF file with any variants from the
+    barcode sites in the original file.
+
+    Based on haplotype_database_files used in Picard fingerprinting.
+    Example: gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.haplotype_database.txt
+    '''
+
+    # Read in the fingerprint file:
+    barcode_site_contig_pos_dict = defaultdict(list)
+    with open(haplotype_database_file, 'r') as f:
+        for line in f:
+            if line.startswith("@") or line.startswith("#"):
+                continue
+            fields = line.strip().split('\t')
+            barcode_site_contig_pos_dict[fields[0]].append(int(fields[1]))
+
+    barcode_alleles = []
+    num_sites = sum([len(s) for s in barcode_site_contig_pos_dict.values()])
+    num_found = 0
+
+    with pysam.VariantFile(vcf_file, 'r') as vcf:
+        with pysam.VariantFile(vcf_out_path, 'w', header=vcf.header) as vcf_out:
+            with tqdm(desc="Extracting barcode variants", total=num_sites) as pbar:
+                for contig, sites in barcode_site_contig_pos_dict.items():
+                    for site in sites:
+                        variants = vcf.fetch(contig=contig, start=site-1, stop=site)
+                        found = False
+                        for variant in variants:
+                            # Should only get here if we are at the site.
+                            found = True
+                            gts = [s['GT'] for s in variant.samples.values()]
+                            if len(gts) > 1:
+                                # Too many genotypes, set N:
+                                bca = "N"
+                            elif gts[0] == (0, 0):
+                                # Ref:
+                                bca = ref_seq_dict[contig][site-1]
+                            elif gts[0] == (0, 1) or gts[0] == (1, 0):
+                                # Het -> multi-infection -> N
+                                bca = "N"
+                            # Must be Hom VAR
+                            elif len(variant.alts[0]) != 1:
+                                # INDEL / MNP -> N
+                                bca = "N"
+                            else:
+                                bca = variant.alts[0]
+
+                            barcode_alleles.append(bca)
+
+                            # in any event we have found our variant and we can stop:
+                            break
+
+                        num_found += found
+                        if found:
+                            # Write the variant to the output file:
+                            vcf_out.write(variant)
+                        else:
+                            # We need to pull from the reference for this site:
+                            # Add 1 for genomic coordinates:
+                            bca = ref_seq_dict[contig][site-1]
+
+                            # Add our barcode allele:
+                            barcode_alleles.append(bca)
+
+                        pbar.update(1)
+
+    return "".join(barcode_alleles)
+
+
+
+# Read the reference file:
+ref = read_reference("~{ref_fasta}")
+
+# Calculate the barcode info:
+barcode = extract_barcode(vcf_file, "~{haplotype_database_file}", ref, "~{prefix}.fingerprint.vcf")
+
+print(f"Extracted barcode: {barcode}")
+
+# Write the barcode string to a file:
+with open("~{prefix}.barcode.txt", 'w') as f:
+    f.write(f"{barcode}\n")
+
+CODE
+    >>>
+
+    output {
+        File output_vcf = "~{prefix}.fingerprint.vcf"
+        File barcode = read_string("~{prefix}.barcode.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
 
 task ExtractVariantAnnotations {
 
