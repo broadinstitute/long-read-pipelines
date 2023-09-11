@@ -318,6 +318,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     String recalibration_dir = outdir + "/recalibration_files"
     String recalibration_model_dir = outdir + "/recalibration_files/model"
     String recalibration_results_dir = outdir + "/recalibration_files/results"
+    String snpeff_results_dir = outdir + "/snpEff"
 
     call FF.FinalizeToDir as FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
 
@@ -326,6 +327,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
     call FF.FinalizeToFile as FinalizeVETSVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf }
     call FF.FinalizeToFile as FinalizeVETSTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf_index }
+
+    if (defined(snpeff_db)) {
+        call FF.FinalizeToDir as FinalizeSnpEffSummary { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(FunctionallyAnnotate.snpEff_summary) }
+        call FF.FinalizeToDir as FinalizeSnpEffGenes { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(FunctionallyAnnotate.snpEff_genes) }
+    }
 
     ################################
     # Finalize the VETS files:
@@ -415,6 +421,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File? annotated_joint_vcf     = annotated_vcf
         File? annotated_joint_vcf_tbi = annotated_vcf_tbi
+
+        String? snpEff_summary = FinalizeSnpEffSummary.gcs_dir
+        String? snpEff_genes = FinalizeSnpEffGenes.gcs_dir
     }
 }
 
