@@ -25,14 +25,14 @@ task Minimap2 {
 
     Int disk_size = 1 + 3*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
 
-    Int cpus = 4
-    Int mem = 30
-
     command <<<
         set -euxo pipefail
 
-        MAP_PARAMS="-ayYL --MD -x ~{map_preset} -R ~{RG} -t ~{cpus} ~{ref_fasta}"
-        SORT_PARAMS="-@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam"
+        mem=$(grep '^MemTotal' /proc/meminfo | awk '{ print int($2/1000000) }')
+        cpus=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 }')
+
+        MAP_PARAMS="-ayYL --MD -x ~{map_preset} -R ~{RG} -t $cpus ~{ref_fasta}"
+        SORT_PARAMS="-@ $cpus -m ${mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
 
         if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
@@ -60,8 +60,8 @@ task Minimap2 {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          cpus,
-        mem_gb:             mem,
+        cpu_cores:          4,
+        mem_gb:             30,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,
