@@ -1674,7 +1674,7 @@ task ExtractVariantAnnotations {
         if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
            [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_index)} ]] || \
            [[ ~{length(known_reference_variants)} -ne ~{length(is_training)} ]] || \
-           [[ ~{length(known_reference_variants)} -ne ~{length(is_calibration)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_calibration)} ]] \
             echo "ERROR: Not all input arrays for known variants contain the same number of elements: " 1>&2
             echo "       known_reference_variants            = ~{length(known_reference_variants)}" 1>&2
             echo "       known_reference_variants            = ~{length(known_reference_variants_index)}" 1>&2
@@ -1892,7 +1892,7 @@ task ScoreVariantAnnotations {
         if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
            [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_index)} ]] || \
            [[ ~{length(known_reference_variants)} -ne ~{length(is_training)} ]] || \
-           [[ ~{length(known_reference_variants)} -ne ~{length(is_calibration)} ]] || \
+           [[ ~{length(known_reference_variants)} -ne ~{length(is_calibration)} ]] \
             echo "ERROR: Not all input arrays for known variants contain the same number of elements: " 1>&2
             echo "       known_reference_variants            = ~{length(known_reference_variants)}" 1>&2
             echo "       known_reference_variants            = ~{length(known_reference_variants_index)}" 1>&2
