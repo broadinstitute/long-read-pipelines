@@ -72,12 +72,6 @@ workflow CallVariantsWithHaplotypeCaller {
             prefix = prefix
     }
 
-    # Index the GVCF:
-    call SRUTIL.IndexFeatureFile as IndexGVCF {
-        input:
-            feature_file = MergeGVCFs.output_vcf
-    }
-
     # Merge the output BAMs:
     call MergeBamouts as MergeVariantCalledBamOuts {
         input:
@@ -109,7 +103,7 @@ workflow CallVariantsWithHaplotypeCaller {
     call SRJOINT.GenotypeGVCFs as CollapseGVCFtoVCF {
         input:
             input_gvcf_data = MergeGVCFs.output_vcf,
-            input_gvcf_index = IndexGVCF.index,
+            input_gvcf_index = MergeGVCFs.output_vcf_index,
             interval_list = SmallVariantsScatterPrep.interval_list,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
@@ -120,7 +114,7 @@ workflow CallVariantsWithHaplotypeCaller {
 
     output {
         File output_gvcf = MergeGVCFs.output_vcf
-        File output_gvcf_index = IndexGVCF.index
+        File output_gvcf_index = MergeGVCFs.output_vcf_index
         File output_vcf = CollapseGVCFtoVCF.output_vcf
         File output_vcf_index = CollapseGVCFtoVCF.output_vcf_index
         File bamout = MergeVariantCalledBamOuts.output_bam

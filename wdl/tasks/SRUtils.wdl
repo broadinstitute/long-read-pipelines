@@ -740,11 +740,12 @@ task MergeVCFs {
         java -Xms2000m -Xmx2500m -jar /usr/picard/picard.jar \
           MergeVcfs \
           INPUT=~{sep=' INPUT=' input_vcfs} \
-          OUTPUT=~{prefix}.vcf
+          OUTPUT=~{prefix}.vcf.gz
     >>>
 
     output {
-        File output_vcf = "~{prefix}.vcf"
+        File output_vcf = "~{prefix}.vcf.gz"
+        File output_vcf_index = "~{prefix}.vcf.gz.tbi"
     }
 
     #########################
