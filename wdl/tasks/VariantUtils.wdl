@@ -1701,7 +1701,7 @@ task ExtractVariantAnnotations {
           -V ~{vcf} \
           -A ~{sep=' -A ' recalibration_annotation_values} \
           --mode ~{mode} \
-          --maximum-number-of-unlableled-variants ~{max_unlabeled_variants} \
+          --maximum-number-of-unlabeled-variants ~{max_unlabeled_variants} \
           ${resource_flags} \
           -O ~{prefix}_extracted_annotations_~{mode} \
           &> ~{prefix}_ExtractVariantAnnotations_~{mode}.log
