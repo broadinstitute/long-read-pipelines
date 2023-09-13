@@ -1694,6 +1694,7 @@ task ExtractVariantAnnotations {
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
         let mem_start=${mem_available}-2
+        let mem_max=${mem_available}-2
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
           ExtractVariantAnnotations \
@@ -1780,6 +1781,7 @@ task TrainVariantAnnotationsModel {
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
         let mem_start=${mem_available}-2
+        let mem_max=${mem_available}-2
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
             TrainVariantAnnotationsModel \
@@ -1912,6 +1914,7 @@ task ScoreVariantAnnotations {
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
         let mem_start=${mem_available}-2
+        let mem_max=${mem_available}-2
 
         mode_lower=$(echo ~{mode} | tr 'A-Z' 'a-z')
 
