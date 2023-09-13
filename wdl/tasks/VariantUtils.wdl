@@ -1712,7 +1712,7 @@ task ExtractVariantAnnotations {
     output {
         File annotation_hdf5 = "~{prefix}_extracted_annotations_~{mode}.annot.hdf5"
         File sites_only_vcf = "~{prefix}_extracted_annotations_~{mode}.vcf.gz"
-        File sites_only_vcf_index = "~{prefix}_extracted_annotations_~{mode}.vcf.tbi"
+        File sites_only_vcf_index = "~{prefix}_extracted_annotations_~{mode}.vcf.gz.tbi"
 
         File? unlabeled_annotation_hdf5 = "~{prefix}_extracted_annotations_~{mode}.unlabeled.annot.hdf5"
 
@@ -1944,7 +1944,7 @@ task ScoreVariantAnnotations {
         File? annotations_hdf5 = "~{prefix}_scored.annot.hdf5"
         File? scores_hdf5 = "~{prefix}_scored.scores.hdf5"
 
-        File log = "~{prefix}_ExtractVariantAnnotations_~{mode}.log"
+        File log = "~{prefix}_ScoreVariantAnnotations_~{mode}.log"
 
         File monitoring_log = "resources.log"
     }
