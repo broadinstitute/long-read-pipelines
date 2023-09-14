@@ -1770,7 +1770,7 @@ task TrainVariantAnnotationsModel {
     String cal_sense_arg = if defined(unlabeled_annotation_hdf5) then " --calibration-sensitivity-threshold ~{calibration_sensitivity_threshold}" else ""
 
     # Needed for output.  I think there's a bug in the output naming for this tool.
-    String mode_lower = if mode == "SNP" then "snp" else "INDEL"
+    String mode_lower = if mode == "SNP" then "snp" else "indel"
 
     command <<<
         set -euxo pipefail
