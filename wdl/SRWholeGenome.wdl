@@ -258,7 +258,7 @@ workflow SRWholeGenome {
         call VARUTIL.TrainVariantAnnotationsModel as TrainSnpVariantAnnotationsModel {
             input:
                 annotation_hdf5 = ExtractIndelVariantAnnotations.annotation_hdf5,
-                mode = "INDEL",
+                mode = "SNP",
                 prefix = participant_name,
         }
 
