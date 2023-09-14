@@ -1706,6 +1706,9 @@ task ExtractVariantAnnotations {
           -O ~{prefix}_extracted_annotations_~{mode} \
           &> ~{prefix}_ExtractVariantAnnotations_~{mode}.log
 
+        # Print log to stdout:
+        cat ~{prefix}_ExtractVariantAnnotations_~{mode}.log
+
         kill $monitoring_pid
     >>>
 
@@ -1794,6 +1797,9 @@ task TrainVariantAnnotationsModel {
                 ~{cal_sense_arg} \
                 -O ~{prefix}_train_~{mode} \
                 &> ~{prefix}_TrainVariantAnnotationsModel_~{mode}.log
+
+        # Print log to stdout:
+        cat ~{prefix}_TrainVariantAnnotationsModel_~{mode}.log
 
         kill $monitoring_pid
     >>>
@@ -1925,6 +1931,9 @@ task ScoreVariantAnnotations {
         mkdir model_files
         ln -s ~{sep=" model_files && ln -s " model_files} model_files
 
+        # Debugging:
+        find .
+
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
             ScoreVariantAnnotations \
                 --verbosity DEBUG \
@@ -1938,8 +1947,8 @@ task ScoreVariantAnnotations {
                 -O ~{prefix}_scored \
                 &> ~{prefix}_ScoreVariantAnnotations_~{mode}.log
 
-        # Debugging:
-        find .
+        # Print log to stdout:
+        cat ~{prefix}_ScoreVariantAnnotations_~{mode}.log
 
         kill $monitoring_pid
     >>>
