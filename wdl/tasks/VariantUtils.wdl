@@ -1802,12 +1802,12 @@ task TrainVariantAnnotationsModel {
     >>>
 
     output {
-        File training_scores = "~{prefix}_train_~{mode}.trainingScores.hdf5"
+        File training_scores = "~{prefix}_train_~{mode}.~{mode_lower}.trainingScores.hdf5"
         File positive_model_scorer_pickle = "~{prefix}_train_~{mode}.~{mode_lower}.scorer.pkl"
 
-        File? unlabeled_positive_model_scores = "~{prefix}_train_~{mode}.unlabeledScores.hdf5"
-        File? calibration_set_scores = "~{prefix}_train_~{mode}.calibrationScores.hdf5"
-        File? negative_model_scorer_pickle = "~{prefix}_train_~{mode}.negative.scorer.pkl"
+        File? unlabeled_positive_model_scores = "~{prefix}_train_~{mode}.~{mode_lower}.unlabeledScores.hdf5"
+        File? calibration_set_scores = "~{prefix}_train_~{mode}.~{mode_lower}.calibrationScores.hdf5"
+        File? negative_model_scorer_pickle = "~{prefix}_train_~{mode}.~{mode_lower}.negative.scorer.pkl"
 
         File log = "~{prefix}_TrainVariantAnnotationsModel_~{mode}.log"
 
