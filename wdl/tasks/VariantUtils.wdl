@@ -1795,9 +1795,6 @@ task TrainVariantAnnotationsModel {
                 -O ~{prefix}_train_~{mode} \
                 &> ~{prefix}_TrainVariantAnnotationsModel_~{mode}.log
 
-        # Debugging:
-        find .
-
         kill $monitoring_pid
     >>>
 
@@ -1930,6 +1927,7 @@ task ScoreVariantAnnotations {
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
             ScoreVariantAnnotations \
+                --verbosity DEBUG \
                 -V ~{vcf} \
                 -A ~{sep=' -A ' recalibration_annotation_values} \
                 --mode ~{mode} \
@@ -1939,6 +1937,9 @@ task ScoreVariantAnnotations {
                 --${mode_lower}-calibration-sensitivity-threshold ~{calibration_sensitivity_threshold} \
                 -O ~{prefix}_scored \
                 &> ~{prefix}_ScoreVariantAnnotations_~{mode}.log
+
+        # Debugging:
+        find .
 
         kill $monitoring_pid
     >>>
