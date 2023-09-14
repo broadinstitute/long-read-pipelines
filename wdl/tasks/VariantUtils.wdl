@@ -1940,7 +1940,7 @@ task ScoreVariantAnnotations {
                 -V ~{vcf} \
                 -A ~{sep=' -A ' recalibration_annotation_values} \
                 --mode ~{mode} \
-                --model-prefix model_files/~{model_prefix}.train \
+                --model-prefix model_files/~{model_prefix} \
                 ${resource_flags} \
                 --resource:extracted,extracted=true ~{sites_only_extracted_vcf} \
                 --${mode_lower}-calibration-sensitivity-threshold ~{calibration_sensitivity_threshold} \
