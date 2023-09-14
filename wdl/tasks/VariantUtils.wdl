@@ -1769,6 +1769,9 @@ task TrainVariantAnnotationsModel {
 
     String cal_sense_arg = if defined(unlabeled_annotation_hdf5) then " --calibration-sensitivity-threshold ~{calibration_sensitivity_threshold}" else ""
 
+    # Needed for output.  I think there's a bug in the output naming for this tool.
+    String mode_lower = if mode == "SNP" then "snp" else "INDEL"
+
     command <<<
         set -euxo pipefail
 
@@ -1792,12 +1795,15 @@ task TrainVariantAnnotationsModel {
                 -O ~{prefix}_train_~{mode} \
                 &> ~{prefix}_TrainVariantAnnotationsModel_~{mode}.log
 
+        # Debugging:
+        find .
+
         kill $monitoring_pid
     >>>
 
     output {
         File training_scores = "~{prefix}_train_~{mode}.trainingScores.hdf5"
-        File positive_model_scorer_pickle = "~{prefix}_train_~{mode}.scorer.pkl"
+        File positive_model_scorer_pickle = "~{prefix}_train_~{mode}.~{mode_lower}.scorer.pkl"
 
         File? unlabeled_positive_model_scores = "~{prefix}_train_~{mode}.unlabeledScores.hdf5"
         File? calibration_set_scores = "~{prefix}_train_~{mode}.calibrationScores.hdf5"
