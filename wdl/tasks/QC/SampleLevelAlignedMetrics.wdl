@@ -3,7 +3,6 @@ version 1.0
 import "../../structs/Structs.wdl"
 import "../Utility/Utils.wdl"
 import "../Visualization/NanoPlot.wdl" as NP
-import "../QC/AlignedMetrics.wdl" as AM
 
 
 workflow SampleLevelAlignedMetrics {
@@ -31,7 +30,7 @@ workflow SampleLevelAlignedMetrics {
     call NP.NanoPlotFromBam { input: bam = aligned_bam, bai = aligned_bai }
 
     if (defined(bed_to_compute_coverage)) {
-        call AM.MosDepthOverBed {
+        call MosDepthOverBed {
             input:
                 bam = aligned_bam,
                 bai = aligned_bai,
@@ -62,6 +61,55 @@ workflow SampleLevelAlignedMetrics {
         Float median_identity = NanoPlotFromBam.stats_map['median_identity']
 
         Map[String, Float] reads_stats = NanoPlotFromBam.stats_map
+    }
+}
+
+task MosDepthOverBed {
+    input {
+        File bam
+        File bai
+        File bed
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    String basename = basename(bam, ".bam")
+    String bedname = basename(bed, ".bed")
+    String prefix = "~{basename}.coverage_over_bed.~{bedname}"
+
+    command <<<
+        set -euxo pipefail
+
+        mosdepth -t 4 -b ~{bed} -n -x -Q 1 ~{prefix} ~{bam}
+    >>>
+
+    output {
+        File global_dist      = "~{prefix}.mosdepth.global.dist.txt"
+        File region_dist      = "~{prefix}.mosdepth.region.dist.txt"
+        File regions          = "~{prefix}.regions.bed.gz"
+        File regions_csi      = "~{prefix}.regions.bed.gz.csi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "quay.io/biocontainers/mosdepth:0.2.4--he527e40_0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
 

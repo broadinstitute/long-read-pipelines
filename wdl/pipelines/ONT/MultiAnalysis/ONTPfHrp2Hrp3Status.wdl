@@ -85,7 +85,7 @@ task IsLocusDeleted {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-mosdepth:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-mosdepth:0.3.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
