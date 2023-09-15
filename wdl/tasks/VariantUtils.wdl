@@ -1703,12 +1703,8 @@ task ExtractVariantAnnotations {
           --mode ~{mode} \
           --maximum-number-of-unlabeled-variants ~{max_unlabeled_variants} \
           ${resource_flags} \
-          -O ~{prefix}_extracted_annotations_~{mode} \
-          &> ~{prefix}_ExtractVariantAnnotations_~{mode}.log
-
-        # Print log to stdout:
-        cat ~{prefix}_ExtractVariantAnnotations_~{mode}.log
-
+          -O ~{prefix}_extracted_annotations_~{mode}
+        
         kill $monitoring_pid
     >>>
 
@@ -1795,11 +1791,7 @@ task TrainVariantAnnotationsModel {
                 --mode ~{mode} \
                 ~{"--unlabeled-annotations-hdf5  " + unlabeled_annotation_hdf5} \
                 ~{cal_sense_arg} \
-                -O ~{prefix}_train_~{mode} \
-                &> ~{prefix}_TrainVariantAnnotationsModel_~{mode}.log
-
-        # Print log to stdout:
-        cat ~{prefix}_TrainVariantAnnotationsModel_~{mode}.log
+                -O ~{prefix}_train_~{mode}
 
         kill $monitoring_pid
     >>>
@@ -1944,11 +1936,7 @@ task ScoreVariantAnnotations {
                 ${resource_flags} \
                 --resource:extracted,extracted=true ~{sites_only_extracted_vcf} \
                 --${mode_lower}-calibration-sensitivity-threshold ~{calibration_sensitivity_threshold} \
-                -O ~{prefix}_scored \
-                &> ~{prefix}_ScoreVariantAnnotations_~{mode}.log
-
-        # Print log to stdout:
-        cat ~{prefix}_ScoreVariantAnnotations_~{mode}.log
+                -O ~{prefix}_scored
 
         kill $monitoring_pid
     >>>
@@ -1959,8 +1947,6 @@ task ScoreVariantAnnotations {
 
         File? annotations_hdf5 = "~{prefix}_scored.annot.hdf5"
         File? scores_hdf5 = "~{prefix}_scored.scores.hdf5"
-
-        File log = "~{prefix}_ScoreVariantAnnotations_~{mode}.log"
 
         File monitoring_log = "resources.log"
     }
