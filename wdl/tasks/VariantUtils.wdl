@@ -1581,7 +1581,7 @@ def extract_barcode(vcf_file, haplotype_database_file, ref_seq_dict, vcf_out_pat
 ref = read_reference("~{ref_fasta}")
 
 # Calculate the barcode info:
-barcode = extract_barcode(vcf_file, "~{haplotype_database_file}", ref, "~{prefix}.fingerprint.vcf")
+barcode = extract_barcode("~{vcf}", "~{haplotype_database_file}", ref, "~{prefix}.fingerprint.vcf")
 
 print(f"Extracted barcode: {barcode}")
 
