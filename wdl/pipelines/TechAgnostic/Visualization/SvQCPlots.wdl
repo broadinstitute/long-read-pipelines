@@ -12,7 +12,7 @@ workflow PlotSVQCMetrics{
             input:
                 pbsv_vcf = input_vcf + ".pbsv.vcf.gz",
                 sniffles_vcf = input_vcf + ".sniffles.vcf.gz",
-                pav_vcf = input_vcf + ".pav.vcf.gz"
+#                pav_vcf = input_vcf + ".pav.vcf.gz"
         }
     }
 }
@@ -22,14 +22,14 @@ task bcfQuerySV{
     input{
         File pbsv_vcf
         File sniffles_vcf
-        File pav_vcf
+#        File pav_vcf
         RuntimeAttr? runtime_attr_override
     }
 
     String sample_basename = basename(pbsv_vcf, ".pbsv.vcf.gz") # assuming all vcf files have the same basename (sample name)
     String pbsv_stat_out = sample_basename+ ".pbsv.svlen"
     String sniffles_stat_out = sample_basename+ ".sniffles.svlen"
-    String pav_stat_out = sample_basename+ ".pav.svlen"
+#    String pav_stat_out = sample_basename+ ".pav.svlen"
 
     Int disk_size = size(pbsv_vcf) + size(sniffles_vcf) + size(pav_vcf) + 1000000000 # 1GB buffer
     Int minimal_disk_size = (ceil(size(pbsv_vcf, "GB") + size(sniffles_vcf, "GB") + size(pav_vcf, "GB") ) + 100 ) # 100GB buffer
@@ -39,12 +39,13 @@ task bcfQuerySV{
     command{
         cat ~{pbsv_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pbsv_stat_out}
         cat ~{sniffles_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{sniffles_stat_out}
-        cat ~{pav_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pav_stat_out}
+
     }
+#    cat ~{pav_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pav_stat_out}
     output{
         File pbsv_stat_out = pbsv_stat_out
         File sniffles_stat_out = sniffles_stat_out
-        File pav_stat_out = pav_stat_out
+#        File pav_stat_out = pav_stat_out
     }
         #########################
     RuntimeAttr default_attr = object {
