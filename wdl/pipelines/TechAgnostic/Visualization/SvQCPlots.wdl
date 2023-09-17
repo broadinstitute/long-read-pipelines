@@ -15,8 +15,6 @@ workflow PlotSVQCMetrics{
                 pav_vcf = input_vcf + ".pav.vcf.gz"
         }
     }
-
-
 }
 
 
