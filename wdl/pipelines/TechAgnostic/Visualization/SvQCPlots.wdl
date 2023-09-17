@@ -13,7 +13,7 @@ workflow PlotSVQCMetrics{
             input:
                 sample_name = sample,
                 pbsv_vcf = gcs_dir_to_vcf + "/" + sample + ".pbsv.vcf.gz",
-                sniffles_vcf = gcs_dir_to_vcf + + "/" + sample + ".sniffles.vcf.gz",
+                sniffles_vcf = gcs_dir_to_vcf + "/" + sample + ".sniffles.vcf.gz",
 #                pav_vcf = input_vcf + ".pav.vcf.gz"
         }
     }
