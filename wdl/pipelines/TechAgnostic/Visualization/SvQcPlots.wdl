@@ -2,7 +2,7 @@ version 1.0
 
 import "../../structs/Structs.wdl"
 
-workflow SV_QC_Metrics{
+workflow PlotSVQCMetrics{
 
     input{
         Array[File] vcf_samples
