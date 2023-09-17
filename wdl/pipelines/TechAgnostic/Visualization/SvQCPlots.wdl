@@ -17,6 +17,12 @@ workflow PlotSVQCMetrics{
 #                pav_vcf = input_vcf + ".pav.vcf.gz"
         }
     }
+
+    call concatSVstats{
+        input:
+            pbsv_stat_out = bcfQuerySV.pbsv_stat_out,
+            sniffles_stat_out = bcfQuerySV.sniffles_stat_out,
+    }
 }
 
 
@@ -60,6 +66,50 @@ task bcfQuerySV{
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task concatSVstats{
+    input{
+        Array[File] pbsv_stat_out
+        Array[File] sniffles_stat_out
+#        Array[File] pav_stat_out
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int minimal_disk_size = (ceil(size(pbsv_stat_out, "GB") + size(sniffles_stat_out, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
+
+    command{
+        cat ~{pbsv_stat_out} >> pbsv_all_SV_lengths_by_type.svlen
+        cat ~{sniffles_stat_out} >> sniffles_all_SV_lengths_by_type.svlen
+    }
+#        cat ~{pav_stat_out} >> pav_all_SV_lengths_by_type.svlen
+    output{
+        File pbsv_stat_out = "pbsv_all_SV_lengths_by_type.svlen"
+        File sniffles_stat_out = "sniffles_all_SV_lengths_by_type.svlen"
+#        File pav_stat_out = "pav_all_SV_lengths_by_type.svlen"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             24,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
