@@ -5,13 +5,15 @@ import "../../../structs/Structs.wdl"
 workflow PlotSVQCMetrics{
 
     input{
-        Array[File] vcf_samples
+        String gcs_dir_to_vcf
+        Array[String] samples
     }
-    scatter(input_vcf in vcf_samples){
+    scatter(sample in samples){
         call bcfQuerySV{
             input:
-                pbsv_vcf = input_vcf + ".pbsv.vcf.gz",
-                sniffles_vcf = input_vcf + ".sniffles.vcf.gz",
+                sample_name = sample,
+                pbsv_vcf = gcs_dir_to_vcf + "/" + sample + ".pbsv.vcf.gz",
+                sniffles_vcf = gcs_dir_to_vcf + + "/" + sample + ".sniffles.vcf.gz",
 #                pav_vcf = input_vcf + ".pav.vcf.gz"
         }
     }
@@ -20,15 +22,15 @@ workflow PlotSVQCMetrics{
 
 task bcfQuerySV{
     input{
+        String sample_name
         File pbsv_vcf
         File sniffles_vcf
 #        File pav_vcf
         RuntimeAttr? runtime_attr_override
     }
 
-    String sample_basename = basename(pbsv_vcf, ".pbsv.vcf.gz") # assuming all vcf files have the same basename (sample name)
-    String pbsv_stat_out = sample_basename+ ".pbsv.svlen"
-    String sniffles_stat_out = sample_basename+ ".sniffles.svlen"
+    String pbsv_stat_out = sample_name + ".pbsv.svlen"
+    String sniffles_stat_out = sample_name + ".sniffles.svlen"
 #    String pav_stat_out = sample_basename+ ".pav.svlen"
 
     Int minimal_disk_size = (ceil(size(pbsv_vcf, "GB") + size(sniffles_vcf, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_vcf, "GB")
