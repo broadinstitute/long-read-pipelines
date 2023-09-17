@@ -20,8 +20,8 @@ workflow PlotSVQCMetrics{
 
     call concatSVstats{
         input:
-            pbsv_stat_out = bcfQuerySV.pbsv_stat_out,
-            sniffles_stat_out = bcfQuerySV.sniffles_stat_out,
+            pbsv_stats = bcfQuerySV.pbsv_stat_out,
+            sniffles_stats = bcfQuerySV.sniffles_stat_out,
     }
 }
 
@@ -79,24 +79,24 @@ task bcfQuerySV{
 
 task concatSVstats{
     input{
-        Array[File] pbsv_stat_out
-        Array[File] sniffles_stat_out
+        Array[File] pbsv_stats
+        Array[File] sniffles_stats
 #        Array[File] pav_stat_out
         RuntimeAttr? runtime_attr_override
     }
 
-    Int minimal_disk_size = (ceil(size(pbsv_stat_out, "GB") + size(sniffles_stat_out, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int minimal_disk_size = (ceil(size(pbsv_stats, "GB") + size(sniffles_stats, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command{
-        cat ~{pbsv_stat_out} >> pbsv_all_SV_lengths_by_type.svlen
-        cat ~{sniffles_stat_out} >> sniffles_all_SV_lengths_by_type.svlen
+        cat ~{pbsv_stats} >> pbsv_all_SV_lengths_by_type.svlen
+        cat ~{sniffles_stats} >> sniffles_all_SV_lengths_by_type.svlen
     }
 #        cat ~{pav_stat_out} >> pav_all_SV_lengths_by_type.svlen
     output{
-        File pbsv_stat_out = "pbsv_all_SV_lengths_by_type.svlen"
-        File sniffles_stat_out = "sniffles_all_SV_lengths_by_type.svlen"
-#        File pav_stat_out = "pav_all_SV_lengths_by_type.svlen"
+        File all_pbsv_stats = "pbsv_all_SV_lengths_by_type.svlen"
+        File all_sniffles_stats = "sniffles_all_SV_lengths_by_type.svlen"
+#        File all_pav_stats = "pav_all_SV_lengths_by_type.svlen"
     }
 
     #########################
