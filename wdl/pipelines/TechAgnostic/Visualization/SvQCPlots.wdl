@@ -35,24 +35,24 @@ task bcfQuerySV{
         RuntimeAttr? runtime_attr_override
     }
 
-    String pbsv_stat_out = sample_name + ".pbsv.svlen"
-    String sniffles_stat_out = sample_name + ".sniffles.svlen"
-#    String pav_stat_out = sample_basename+ ".pav.svlen"
+    String pbsv_stat_out_name = sample_name + ".pbsv.svlen"
+    String sniffles_stat_out_name = sample_name + ".sniffles.svlen"
+#    String pav_stat_out_name = sample_basename+ ".pav.svlen"
 
     Int minimal_disk_size = (ceil(size(pbsv_vcf, "GB") + size(sniffles_vcf, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_vcf, "GB")
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
 
     command{
-        cat ~{pbsv_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pbsv_stat_out}
-        cat ~{sniffles_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{sniffles_stat_out}
+        cat ~{pbsv_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pbsv_stat_out_name}
+        cat ~{sniffles_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{sniffles_stat_out_name}
 
     }
 #    cat ~{pav_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pav_stat_out}
     output{
-        File pbsv_stat_out = pbsv_stat_out
-        File sniffles_stat_out = sniffles_stat_out
-#        File pav_stat_out = pav_stat_out
+        File pbsv_stat_out = pbsv_stat_out_name
+        File sniffles_stat_out = sniffles_stat_out_name
+#        File pav_stat_out = pav_stat_out_name
     }
         #########################
     RuntimeAttr default_attr = object {
@@ -88,11 +88,18 @@ task concatSVstats{
     Int minimal_disk_size = (ceil(size(pbsv_stats, "GB") + size(sniffles_stats, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
-    command{
-        cat ~{pbsv_stats} >> pbsv_all_SV_lengths_by_type.svlen
-        cat ~{sniffles_stats} >> sniffles_all_SV_lengths_by_type.svlen
-    }
-#        cat ~{pav_stat_out} >> pav_all_SV_lengths_by_type.svlen
+    command<<<
+        for i in ~{sep=" " pbsv_stats} do
+            cat ${i} >> pbsv_all_SV_lengths_by_type.svlen
+        done
+
+        for i in ~{sep=" " sniffles_stats} do
+            cat ${i} >> sniffles_all_SV_lengths_by_type.svlen
+        done
+    >>>
+#        for i in ~{sep=" " pav_stat_out} do
+#            cat ${i} >> pav_all_SV_lengths_by_type.svlen
+#        done
     output{
         File all_pbsv_stats = "pbsv_all_SV_lengths_by_type.svlen"
         File all_sniffles_stats = "sniffles_all_SV_lengths_by_type.svlen"
