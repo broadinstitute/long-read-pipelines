@@ -1,6 +1,6 @@
 version 1.0
 
-import "../../structs/Structs.wdl"
+import "../../../structs/Structs.wdl"
 
 workflow PlotSVQCMetrics{
 
@@ -31,8 +31,7 @@ task bcfQuerySV{
     String sniffles_stat_out = sample_basename+ ".sniffles.svlen"
 #    String pav_stat_out = sample_basename+ ".pav.svlen"
 
-    Int disk_size = size(pbsv_vcf) + size(sniffles_vcf) + size(pav_vcf) + 1000000000 # 1GB buffer
-    Int minimal_disk_size = (ceil(size(pbsv_vcf, "GB") + size(sniffles_vcf, "GB") + size(pav_vcf, "GB") ) + 100 ) # 100GB buffer
+    Int minimal_disk_size = (ceil(size(pbsv_vcf, "GB") + size(sniffles_vcf, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_vcf, "GB")
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
 
