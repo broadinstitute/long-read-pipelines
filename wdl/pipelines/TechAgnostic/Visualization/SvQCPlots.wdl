@@ -23,6 +23,10 @@ workflow PlotSVQCMetrics{
             pbsv_stats = bcfQuerySV.pbsv_stat_out,
             sniffles_stats = bcfQuerySV.sniffles_stat_out,
     }
+
+    #call compileSVstats
+    #call addcoverageinfo
+    #
 }
 
 
@@ -89,15 +93,18 @@ task concatSVstats{
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command<<<
-        for i in ~{sep=" " pbsv_stats} do
+        for i in ~{sep=" " pbsv_stats}
+        do
             cat ${i} >> pbsv_all_SV_lengths_by_type.svlen
         done
 
-        for i in ~{sep=" " sniffles_stats} do
+        for i in ~{sep=" " sniffles_stats}
+        do
             cat ${i} >> sniffles_all_SV_lengths_by_type.svlen
         done
     >>>
-#        for i in ~{sep=" " pav_stat_out} do
+#        for i in ~{sep=" " pav_stat_out}
+#        do
 #            cat ${i} >> pav_all_SV_lengths_by_type.svlen
 #        done
     output{
