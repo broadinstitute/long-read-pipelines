@@ -1,16 +1,17 @@
 version 1.0
 
-workflow Bifrost{
+workflow Bifrost_DBGWAS{
     meta{
         description: "a workflow that construct bifrost colored de bruijn graph"
     }
     input{
-        Array[File] input_fastas
+        String input_path
         File reference_fasta
         String outputprefix
         Int k
     }
-    call construct{input: fas = input_fastas, ref = reference_fasta, outputpref = outputprefix, kmersize = k}
+    call extractfa{input: filepath=input_path}
+    call construct{input: fas = extractfa.faFiles, ref = reference_fasta, outputpref = outputprefix, kmersize = k}
     output{
         File graph = construct.graph
         File graph_index = construct.graph_index
@@ -20,6 +21,24 @@ workflow Bifrost{
     }
 }
 
+task extractfa{
+    input{
+        String filepath
+    }
+    command{
+        gsutil ls "${filepath}" > fafiles.txt
+        grep -E "\.fna$" fafiles.txt > fa_files.txt
+        cat fa_files.txt
+    }
+    output {
+        Array[String] faFiles = read_lines("fa_files.txt")
+    }
+    runtime {
+        docker: "broadinstitute/gatk:4.4.0.0"
+        disks: "local-disk 100 HDD"
+    }
+
+}
 task construct{
     input{
         Array[File] fas
@@ -30,9 +49,10 @@ task construct{
     }
     command <<<
     set -x pipefail
-    Bifrost build -t ~{num_threads} -k ~{kmersize} -i -d -c -s ~{sep=" -s " fas} -r ~{ref} -o ~{outputpref}_Bfrost_graph
+    Bifrost build -t ~{num_threads} -k ~{kmersize} -i -d -c -s "~{sep='" -s "' fas}" -r ~{ref} -o ~{outputpref}_Bfrost_graph
     cat ~{sep=" " fas} > all.fasta
     >>>
+   
 
     output{
         File color_file="~{outputpref}_Bfrost_graph.color.bfg"
@@ -50,6 +70,6 @@ task construct{
         bootDiskSizeGb: 10
         preemptible: 2
         maxRetries: 1
-        docker: "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel" # "hangsuunc/bifrost:v1"
+        docker: "hangsuunc/bifrost:v1"
     }
 }

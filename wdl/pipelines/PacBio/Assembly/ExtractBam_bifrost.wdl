@@ -1,6 +1,6 @@
 version 1.0
 
-workflow ExtractBam{
+workflow ExtractBam_bifrost{
     meta{
         description: "a workflow that extract vcfs and bams in a genomic interval"
     }
