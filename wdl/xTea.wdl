@@ -67,7 +67,7 @@ task xTea {
                 -p ${dir}/ \
                 -o submit_jobs.sh \
                 --xtea /xTea/xtea_long/ \
-                -n $cpu \
+                -n $cpus \
                 -m $mem \
                 -t 240.00 \
                 -r ~{ref_fa} \
