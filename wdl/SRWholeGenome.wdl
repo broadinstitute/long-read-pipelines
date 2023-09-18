@@ -267,7 +267,6 @@ workflow SRWholeGenome {
                 vcf = RenameRawHcVcf.new_sample_name_vcf,
                 vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
 
-
                 sites_only_extracted_vcf = ExtractSnpVariantAnnotations.sites_only_vcf,
                 sites_only_extracted_vcf_index = ExtractSnpVariantAnnotations.sites_only_vcf_index,
 

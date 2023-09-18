@@ -177,8 +177,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
     call VARUTIL.TrainVariantAnnotationsModel as TrainSnpVariantAnnotationsModel {
         input:
-            annotation_hdf5 = ExtractIndelVariantAnnotations.annotation_hdf5,
-            mode = "INDEL",
+            annotation_hdf5 = ExtractSnpVariantAnnotations.annotation_hdf5,
+            mode = "SNP",
             prefix = prefix,
     }
 
