@@ -1698,13 +1698,14 @@ task ExtractVariantAnnotations {
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
           ExtractVariantAnnotations \
-          -V ~{vcf} \
-          -A ~{sep=' -A ' recalibration_annotation_values} \
-          --mode ~{mode} \
-          --maximum-number-of-unlabeled-variants ~{max_unlabeled_variants} \
-          ${resource_flags} \
-          -O ~{prefix}_extracted_annotations_~{mode}
-        
+            --verbosity DEBUG \
+            -V ~{vcf} \
+            -A ~{sep=' -A ' recalibration_annotation_values} \
+            --mode ~{mode} \
+            --maximum-number-of-unlabeled-variants ~{max_unlabeled_variants} \
+            ${resource_flags} \
+            -O ~{prefix}_extracted_annotations_~{mode}
+
         kill $monitoring_pid
     >>>
 
@@ -1714,8 +1715,6 @@ task ExtractVariantAnnotations {
         File sites_only_vcf_index = "~{prefix}_extracted_annotations_~{mode}.vcf.gz.tbi"
 
         File? unlabeled_annotation_hdf5 = "~{prefix}_extracted_annotations_~{mode}.unlabeled.annot.hdf5"
-
-        File log = "~{prefix}_ExtractVariantAnnotations_~{mode}.log"
 
         File monitoring_log = "resources.log"
     }
@@ -1787,6 +1786,7 @@ task TrainVariantAnnotationsModel {
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
             TrainVariantAnnotationsModel \
+                --verbosity DEBUG \
                 --annotations-hdf5 ~{annotation_hdf5} \
                 --mode ~{mode} \
                 ~{"--unlabeled-annotations-hdf5  " + unlabeled_annotation_hdf5} \
@@ -1803,8 +1803,6 @@ task TrainVariantAnnotationsModel {
         File? unlabeled_positive_model_scores = "~{prefix}_train_~{mode}.~{mode_lower}.unlabeledScores.hdf5"
         File? calibration_set_scores = "~{prefix}_train_~{mode}.~{mode_lower}.calibrationScores.hdf5"
         File? negative_model_scorer_pickle = "~{prefix}_train_~{mode}.~{mode_lower}.negative.scorer.pkl"
-
-        File log = "~{prefix}_TrainVariantAnnotationsModel_~{mode}.log"
 
         File monitoring_log = "resources.log"
     }
