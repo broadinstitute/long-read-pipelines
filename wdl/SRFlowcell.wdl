@@ -13,6 +13,7 @@ import "tasks/SRUtils.wdl" as SRUTIL
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignedMetrics.wdl" as AM
 import "tasks/FastQC.wdl" as FastQC
+import "tasks/RemoveSingleOrganismContamination.wdl" as DECONTAMINATE
 import "tasks/Finalize.wdl" as FF
 
 workflow SRFlowcell {
@@ -27,6 +28,7 @@ workflow SRFlowcell {
         String LB
 
         File ref_map_file
+        String? contaminant_ref_name
         File? contaminant_ref_map_file
 
         String dir_prefix
@@ -46,7 +48,8 @@ workflow SRFlowcell {
         fq_end2:            "GCS path to end2 of paired-end fastq"
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
-        ref_map_file:       "table indicating reference sequence and auxillary file locations for a single-organism contaminant"
+        contaminant_ref_name:                 "Name of the contaminant genome to be used in output files."
+        contaminant_ref_map_file:       "table indicating reference sequence and auxillary file locations for a single-organism contaminant"
 
         SM:                 "the value to place in the BAM read group's SM field"
         LB:                 "the value to place in the BAM read group's LB (library) field"
@@ -95,8 +98,33 @@ workflow SRFlowcell {
         call Utils.GetRawReadGroup as t_004_GetRawReadGroup { input: gcs_bam_path = select_first([bam]) }
     }
 
-    File fq_e1 = select_first([fq_end1, t_003_Bam2Fastq.fq_end1])
-    File fq_e2 = select_first([fq_end2, t_003_Bam2Fastq.fq_end2])
+    # OK, this is inefficient, but let's NOW extract our contaminated reads if we have the info.
+    # TODO: Move this into the sections above to make it more efficient.  Specifically where we convert bam -> fastq.
+    if (defined(contaminant_ref_map_file)) {
+
+        # Call our sub-workflow for decontamination:
+        # NOTE: We don't need to be too concerned with the finalization info.
+        #       This will be partially filled in by the WDL itself, so we can pass the same inputs for
+        #       these things here (e.g. `dir_prefix`):
+        call DECONTAMINATE.RemoveSingleOrganismContamination as DecontaminateSample {
+            input:
+                fq_end1 = select_first([fq_end1, t_003_Bam2Fastq.fq_end1]),
+                fq_end2 = select_first([fq_end2, t_003_Bam2Fastq.fq_end2]),
+
+                SM = SM,
+                LB = LB,
+                platform = platform,
+
+                contaminant_ref_name = select_first([contaminant_ref_name]),
+                contaminant_ref_map_file = select_first([contaminant_ref_map_file]),
+
+                dir_prefix = dir_prefix,
+                gcs_out_root_dir = gcs_out_root_dir
+        }
+    }
+
+    File fq_e1 = select_first([DecontaminateSample.decontaminated_fq1, fq_end1, t_003_Bam2Fastq.fq_end1])
+    File fq_e2 = select_first([DecontaminateSample.decontaminated_fq2, fq_end2, t_003_Bam2Fastq.fq_end2])
 
     String RG = select_first([t_004_GetRawReadGroup.rg, "@RG\tID:" + SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM])
 
@@ -297,14 +325,13 @@ workflow SRFlowcell {
             file = t_012_FastQC.report
     }
 
-
     # Prep a few files for output:
     File fq1_o = unaligned_reads_dir + "/" + basename(fq_e1)
     File fq2_o = unaligned_reads_dir + "/" + basename(fq_e2)
     if (defined(bam)) {
         File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
         File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
-        File fqboup = unaligned_reads_dir + "/" + basename(select_first([t_003_Bam2Fastq.fq_unpaired]))
+        File fqboup = unaligned_reads_dir + "/" + basename(select_first([DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
     }
 
     ############################################
@@ -324,6 +351,10 @@ workflow SRFlowcell {
         # Unaligned BAM file
         File? unaligned_bam = unaligned_bam_o
         File? unaligned_bai = unaligned_bai_o
+
+        # Contaminated BAM file:
+        File? contaminated_bam = DecontaminateSample.contaminated_bam
+        File? contaminated_bai = DecontaminateSample.contaminated_bam_index
 
         # Aligned BAM file
         File aligned_bam = t_023_FinalizeAlignedBam.gcs_path

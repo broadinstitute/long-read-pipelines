@@ -22,7 +22,7 @@ workflow RemoveSingleOrganismContamination {
         String LB
         String platform = "illumina"
 
-        File contaminant_ref_name
+        String contaminant_ref_name
         File contaminant_ref_map_file
 
         String dir_prefix
@@ -167,6 +167,7 @@ workflow RemoveSingleOrganismContamination {
     call FF.FinalizeToFile as t_013_FinalizeContaminatedBai { input: outdir = outdir, file = t_010_SortContaminatedReads.sorted_bai, keyfile = keyfile }
     call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_011_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
     call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_011_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
+    call FF.FinalizeToFile as t_015_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_011_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
 
     ############################################
     #      ___        _               _
@@ -183,5 +184,6 @@ workflow RemoveSingleOrganismContamination {
 
         File decontaminated_fq1 = t_014_FinalizeDecontaminatedFq1.gcs_path
         File decontaminated_fq2 = t_015_FinalizeDecontaminatedFq2.gcs_path
+        File decontaminated_unpaired = t_015_FinalizeDecontaminatedUnpaired.gcs_path
     }
 }
