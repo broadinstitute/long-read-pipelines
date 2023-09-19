@@ -27,6 +27,7 @@ workflow SRFlowcell {
         String LB
 
         File ref_map_file
+        File? contaminant_ref_map_file
 
         String dir_prefix
 
@@ -45,6 +46,7 @@ workflow SRFlowcell {
         fq_end2:            "GCS path to end2 of paired-end fastq"
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        ref_map_file:       "table indicating reference sequence and auxillary file locations for a single-organism contaminant"
 
         SM:                 "the value to place in the BAM read group's SM field"
         LB:                 "the value to place in the BAM read group's LB (library) field"

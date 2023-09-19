@@ -3,6 +3,7 @@ version 1.0
 import "Structs.wdl" as Structs
 import "SRUtils.wdl" as SRUTIL
 import "Utils.wdl" as Utils
+import "Finalize.wdl" as FF
 
 workflow RemoveSingleOrganismContamination {
     meta {
@@ -66,7 +67,7 @@ workflow RemoveSingleOrganismContamination {
     }
 
     # Create an outdir:
-    String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}"
+    String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}"
 
     # Get ref info:
     Map[String, String] ref_map = read_map(contaminant_ref_map_file)
@@ -150,11 +151,37 @@ workflow RemoveSingleOrganismContamination {
             prefix = SM + ".decontaminated"
     }
 
-    output {
-        File contaminated_bam = t_010_SortContaminatedReads.sorted_bam
-        File contaminated_bam_index = t_010_SortContaminatedReads.sorted_bai
+    ############################################
+    #      _____ _             _ _
+    #     |  ___(_)_ __   __ _| (_)_______
+    #     | |_  | | '_ \ / _` | | |_  / _ \
+    #     |  _| | | | | | (_| | | |/ /  __/
+    #     |_|   |_|_| |_|\__,_|_|_/___\___|
+    #
+    ############################################
 
-        File decontaminated_fq1 = t_011_CreateFastqFromDecontaminatedReads.fq_end1
-        File decontaminated_fq2 = t_011_CreateFastqFromDecontaminatedReads.fq_end2
+    # Chosen because it's a relatively small file.
+    File keyfile = t_011_CreateFastqFromDecontaminatedReads.monitoring_log
+
+    call FF.FinalizeToFile as t_012_FinalizeContaminatedBam { input: outdir = outdir, file = t_010_SortContaminatedReads.sorted_bam, keyfile = keyfile }
+    call FF.FinalizeToFile as t_013_FinalizeContaminatedBai { input: outdir = outdir, file = t_010_SortContaminatedReads.sorted_bai, keyfile = keyfile }
+    call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_011_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
+    call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_011_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
+
+    ############################################
+    #      ___        _               _
+    #     / _ \ _   _| |_ _ __  _   _| |_
+    #    | | | | | | | __| '_ \| | | | __|
+    #    | |_| | |_| | |_| |_) | |_| | |_
+    #     \___/ \__,_|\__| .__/ \__,_|\__|
+    #                    |_|
+    ############################################
+
+    output {
+        File contaminated_bam = t_012_FinalizeContaminatedBam.gcs_path
+        File contaminated_bam_index = t_013_FinalizeContaminatedBai.gcs_path
+
+        File decontaminated_fq1 = t_014_FinalizeDecontaminatedFq1.gcs_path
+        File decontaminated_fq2 = t_015_FinalizeDecontaminatedFq2.gcs_path
     }
 }
