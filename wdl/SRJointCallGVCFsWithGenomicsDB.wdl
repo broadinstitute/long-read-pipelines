@@ -318,7 +318,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     String recalibration_dir = outdir + "/recalibration_files"
     String recalibration_model_dir = outdir + "/recalibration_files/model"
     String recalibration_results_dir = outdir + "/recalibration_files/results"
-    String snpeff_results_dir = outdir + "/snpEff"
+    String snpeff_results_dir = outdir + "/snpEff_results"
 
     call FF.FinalizeToDir as FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
 
