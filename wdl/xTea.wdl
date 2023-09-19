@@ -90,6 +90,8 @@ task xTea {
         cp classified_results.txt.merged_ALU.txt  ~{prefix}_xTea_output/
         cp classified_results.txt.merged_LINE1.txt  ~{prefix}_xTea_output/
         tar zcvf ~{prefix}.xTea.tar.gz ~{prefix}_xTea_output/ 
+        cd ${dir}
+        mv ~{sample_name}/~{prefix}.xTea.tar.gz .
     >>>
 
     output {
