@@ -84,18 +84,14 @@ task xTea {
         ./run_xTEA_pipeline.sh
 
         # save outputs
-        mkdir ~{prefix}_xTea_output
-        cp classified_results.txt.merged_HERV.txt  ~{prefix}_xTea_output/
-        cp classified_results.txt.merged_SVA.txt  ~{prefix}_xTea_output/
-        cp classified_results.txt.merged_ALU.txt  ~{prefix}_xTea_output/
-        cp classified_results.txt.merged_LINE1.txt  ~{prefix}_xTea_output/
-        tar zcvf ~{prefix}.xTea.tar.gz ~{prefix}_xTea_output/ 
-        cd ${dir}
-        mv ~{sample_name}/~{prefix}.xTea.tar.gz .
+        cat classified_results.txt.merged_HERV.txt \
+          classified_results.txt.merged_SVA.txt \
+          classified_results.txt.merged_ALU.txt \
+          classified_results.txt.merged_LINE1.txt > ${dir}/~{prefix}_xTea_output.txt
     >>>
 
     output {
-        File outfile = "~{prefix}.xTea.tar.gz"
+        File outfile = "~{prefix}_xTea_output.txt"
     }
 
     #########################
