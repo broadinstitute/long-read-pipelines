@@ -443,6 +443,8 @@ workflow SRWholeGenome {
 
         File fastqc_report = FinalizeFastQCReport.gcs_path
 
+        Boolean successfully_processed = true
+
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
 
         File? fingerprint_vcf = FinalizeFingerprintVcf.gcs_path
