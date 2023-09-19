@@ -162,6 +162,8 @@ task SortBam {
         File input_bam
         String prefix = "sorted"
 
+        String? extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -183,7 +185,7 @@ task SortBam {
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
-        samtools sort -@$num_core -o ~{prefix}.bam ~{input_bam}
+        samtools sort ~{extra_args} -@$num_core -o ~{prefix}.bam ~{input_bam}
         samtools index ~{prefix}.bam
 
         kill $monitoring_pid
