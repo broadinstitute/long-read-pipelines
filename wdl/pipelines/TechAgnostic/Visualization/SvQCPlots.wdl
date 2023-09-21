@@ -26,6 +26,7 @@ workflow PlotSVQCMetrics{
 
     call compileSVstats{
         input:
+            samples = samples,
             pbsv_stats = bcfQuerySV.pbsv_stat_out,
             sniffles_stats = bcfQuerySV.sniffles_stat_out,
     }
@@ -141,14 +142,16 @@ task concatSVstats{
 
 task compileSVstats {
     input {
+        Array[File] samples
         Array[File] pbsv_stats
         Array[File] sniffles_stats
 #        Array[File] pav_stat_out
-        File sampleFile
+
     }
 
     Array[String] callers = ["pbsv", "sniffles"]
     Array[File] callers_stats = flatten([pbsv_stats, sniffles_stats])
+    File sampleFile = write_lines(samples)
 
     # callers variable bellow does not include pav
 
