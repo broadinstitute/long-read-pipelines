@@ -7,6 +7,7 @@ workflow PlotSVQCMetrics{
     input{
         String gcs_vcf_dir
         Array[String] samples
+        File auxiliary_metrics
     }
     scatter(sample in samples){
         call bcfQuerySV{
@@ -53,6 +54,8 @@ task bcfQuerySV{
 
 
     command{
+        set -euo pipefail
+
         cat ~{pbsv_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pbsv_stat_out_name}
         cat ~{sniffles_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{sniffles_stat_out_name}
 
@@ -98,6 +101,8 @@ task concatSVstats{
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command<<<
+        set -euo pipefail
+
         for i in ~{sep=" " pbsv_stats}
         do
             cat ${i} >> pbsv_all_SV_lengths_by_type.svlen
@@ -158,13 +163,15 @@ task compileSVstats {
 
 
     command <<<
+        set -euo pipefail
+
         mkdir -p stats_by_sample
         for file in ~{sep=" " callers_stats}
         do
-            mv file ./stats_by_sample
+            mv $file ./stats_by_sample
         done
 
-        python3 <<CODE
+        python <<CODE
 import os
 
 def main():
