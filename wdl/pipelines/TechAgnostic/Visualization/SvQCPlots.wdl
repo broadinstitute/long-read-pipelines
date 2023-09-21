@@ -142,7 +142,7 @@ task concatSVstats{
 
 task compileSVstats {
     input {
-        Array[File] samples
+        Array[String] samples
         Array[File] pbsv_stats
         Array[File] sniffles_stats
 #        Array[File] pav_stat_out
@@ -153,7 +153,7 @@ task compileSVstats {
     Array[File] callers_stats = flatten([pbsv_stats, sniffles_stats])
     File sampleFile = write_lines(samples)
 
-    Int minimal_disk_size = (ceil(size(callers_stats, "GB") + size(samples, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int minimal_disk_size = (ceil(size(callers_stats, "GB") ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
 
