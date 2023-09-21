@@ -24,7 +24,11 @@ workflow PlotSVQCMetrics{
             sniffles_stats = bcfQuerySV.sniffles_stat_out,
     }
 
-    #call compileSVstats
+    call compileSVstats{
+        input:
+            pbsv_stats = bcfQuerySV.pbsv_stat_out,
+            sniffles_stats = bcfQuerySV.sniffles_stat_out,
+    }
     #call addcoverageinfo
     #
 }
@@ -132,6 +136,91 @@ task concatSVstats{
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task compileSVstats {
+    input {
+        Array[File] pbsv_stats
+        Array[File] sniffles_stats
+#        Array[File] pav_stat_out
+        File sampleFile
+    }
+
+    Array[String] callers = ["pbsv", "sniffles"]
+    Array[File] callers_stats = flatten([pbsv_stats, sniffles_stats])
+
+    # callers variable bellow does not include pav
+
+    command <<<
+        mkdir -p stats_by_sample
+        for file in ~{sep=" " callers_stats}
+        do
+            mv file ./stats_by_sample
+        done
+
+        python3 <<CODE
+import os
+
+def main():
+    svtypes=["ALL","DEL","DUP","CNV","INS","INV","OTH"]
+    basedir=os.getcwd() + "/stats_by_sample"
+    callers=["~{sep='", "' callers}"]
+
+    samplefile = open(~{sampleFile}, 'r')
+    samples = []
+    for line in samplefile:
+        samples.append(line.strip())
+    samplefile.close()
+
+    for caller in callers:
+        outfile=open("%s/%s_all_sample_stats" % (basedir, caller),'w')
+        outfile.write("sample\t%s\n" % '\t'.join(svtypes))
+
+        compile_stats(caller, svtypes, samples, basedir, outfile)
+
+        outfile.close()
+
+def pairwise(iterable):
+    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    a = iter(iterable)
+    return zip(a, a)
+
+def compile_stats(caller, svtypes, samples, basedir, outfile):
+    for sample in samples:
+        ALL=!wc -l {basedir}/{caller}_stats/{sample}|cut -f1 -d' '
+        ALL=int(ALL.spstr)
+        counts_by_SV=!echo `cut -f1 {basedir}/{caller}_stats/{sample}|sort|uniq -c`
+        counts_by_SV=counts_by_SV.spstr.split()
+
+        SVs = {}
+        for svtype in svtypes:
+            SVs[svtype] = 0
+        SVs['ALL'] = ALL
+
+        for num, SV in pairwise(counts_by_SV):
+            SV=SV.upper()
+            if SV in SVs:
+                SVs[SV] = int(num)
+            else:
+                SVs['OTH'] += int(num)
+        outfile.write("%s" % sample)
+
+        for svtype in svtypes:
+            outfile.write("\t%d" % SVs[svtype])
+        outfile.write("\n")
+
+if __name__ == "__main__":
+    main()
+CODE
+  >>>
+
+
+    output {
+#        Array[File] output_stats = glob("*_all_sample_stats")
+#        File pavStatsbysample = "pav_all_sample_stats"
+        File pbsvStatsBySample = "pbsv_all_sample_stats"
+        File snifflesStatsBySample = "sniffles_all_sample_stats"
     }
 }
 
