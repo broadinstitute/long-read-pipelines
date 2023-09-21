@@ -61,7 +61,7 @@ workflow RemoveSingleOrganismContamination {
         }
     }
     if (defined(input_bam) && (defined(fq_end1) || defined(fq_end2))) {
-        call Utils.FailWithWarning as t_002_TooManyInputsProvidedFailure {
+        call Utils.FailWithWarning as t_003_TooManyInputsProvidedFailure {
             input: warning = "Too many inputs provided!  You must provide EITHER an input bam OR input fastq1/fastq2 files."
         }
     }
@@ -74,28 +74,28 @@ workflow RemoveSingleOrganismContamination {
 
     if (defined(input_bam)) {
         # Convert the given bam to a uBAM (needed for previous aligned data):
-        call SRUTIL.RevertSam as t_003_RevertSam {
+        call SRUTIL.RevertSam as t_004_RevertSam {
             input:
                 input_bam = select_first([input_bam]),
                 prefix = SM + ".revertSam"
         }
 
         # Convert input SAM/BAM to FASTQ:
-        call SRUTIL.BamToFq as t_004_Bam2Fastq {
+        call SRUTIL.BamToFq as t_005_Bam2Fastq {
             input:
-                bam = t_003_RevertSam.bam,
+                bam = t_004_RevertSam.bam,
                 prefix = SM
         }
-        call Utils.GetRawReadGroup as t_005_GetRawReadGroup { input: gcs_bam_path = select_first([input_bam]) }
+        call Utils.GetRawReadGroup as t_006_GetRawReadGroup { input: gcs_bam_path = select_first([input_bam]) }
     }
 
-    File fq_e1 = select_first([fq_end1, t_004_Bam2Fastq.fq_end1])
-    File fq_e2 = select_first([fq_end2, t_004_Bam2Fastq.fq_end2])
+    File fq_e1 = select_first([fq_end1, t_005_Bam2Fastq.fq_end1])
+    File fq_e2 = select_first([fq_end2, t_005_Bam2Fastq.fq_end2])
 
-    String RG = select_first([t_005_GetRawReadGroup.rg, "@RG\tID:" + SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM])
+    String RG = select_first([t_006_GetRawReadGroup.rg, "@RG\tID:" + SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM])
 
     # Align data to contaminant reference:
-    call SRUTIL.BwaMem2 as t_006_AlignReads {
+    call SRUTIL.BwaMem2 as t_007_AlignReads {
         input:
             fq_end1 = fq_e1,
             fq_end2 = fq_e2,
@@ -117,39 +117,46 @@ workflow RemoveSingleOrganismContamination {
             runtime_attr_override = object {mem_gb: 64}  # Need a lot of ram to use BWA-MEM2
     }
 
-    call Utils.FilterReadsBySamFlags as t_007_ExtractDecontaminatedReads {
+    # Sort aligned bam:
+    call Utils.SortBam as t_008_SortAlignedBam {
         input:
-            bam = t_006_AlignReads.bam,
+            input_bam = t_007_AlignReads.bam,
+            prefix =SM + ".contaminant_aligned." + contaminant_ref_name + ".sorted"
+    }
+
+    call Utils.FilterReadsBySamFlags as t_009_ExtractDecontaminatedReads {
+        input:
+            bam = t_008_SortAlignedBam.sorted_bam,
             sam_flags = "256",
             extra_args = " -f 12 ",
             prefix = SM + ".decontaminated"
     }
 
-    call Utils.FilterReadsBySamFlags as t_008_ExtractContaminatedReads {
+    call Utils.FilterReadsBySamFlags as t_010_ExtractContaminatedReads {
         input:
-            bam = t_006_AlignReads.bam,
+            bam = t_008_SortAlignedBam.sorted_bam,
             sam_flags = "12",
             prefix = SM + ".contaminated_" + contaminant_ref_name + "_reads"
     }
 
-    call Utils.SortBam as t_009_SortDecontaminatedReads {
+    call Utils.SortBam as t_011_SortDecontaminatedReads {
         input:
-            input_bam = t_007_ExtractDecontaminatedReads.output_bam,
+            input_bam = t_009_ExtractDecontaminatedReads.output_bam,
             extra_args = " -n ",
             prefix = SM + ".decontaminated.sorted"
     }
 
-    call Utils.SortBam as t_010_SortContaminatedReads {
+    call Utils.SortBam as t_012_SortContaminatedReads {
         input:
-            input_bam = t_008_ExtractContaminatedReads.output_bam,
+            input_bam = t_010_ExtractContaminatedReads.output_bam,
             extra_args = " -n ",
             prefix = SM + ".contaminated_" + contaminant_ref_name + "_reads.sorted"
     }
 
     # Convert input SAM/BAM to FASTQ:
-    call SRUTIL.BamToFq as t_011_CreateFastqFromDecontaminatedReads {
+    call SRUTIL.BamToFq as t_013_CreateFastqFromDecontaminatedReads {
         input:
-            bam = t_009_SortDecontaminatedReads.sorted_bam,
+            bam = t_011_SortDecontaminatedReads.sorted_bam,
             prefix = SM + ".decontaminated"
     }
 
@@ -163,13 +170,13 @@ workflow RemoveSingleOrganismContamination {
     ############################################
 
     # Chosen because it's a relatively small file.
-    File keyfile = t_011_CreateFastqFromDecontaminatedReads.monitoring_log
+    File keyfile = t_013_CreateFastqFromDecontaminatedReads.monitoring_log
 
-    call FF.FinalizeToFile as t_012_FinalizeContaminatedBam { input: outdir = outdir, file = t_010_SortContaminatedReads.sorted_bam, keyfile = keyfile }
-    call FF.FinalizeToFile as t_013_FinalizeContaminatedBai { input: outdir = outdir, file = t_010_SortContaminatedReads.sorted_bai, keyfile = keyfile }
-    call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_011_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
-    call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_011_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
-    call FF.FinalizeToFile as t_015_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_011_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
+    call FF.FinalizeToFile as t_014_FinalizeContaminatedBam { input: outdir = outdir, file = t_012_SortContaminatedReads.sorted_bam, keyfile = keyfile }
+    call FF.FinalizeToFile as t_015_FinalizeContaminatedBai { input: outdir = outdir, file = t_012_SortContaminatedReads.sorted_bai, keyfile = keyfile }
+    call FF.FinalizeToFile as t_016_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_013_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
+    call FF.FinalizeToFile as t_017_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_013_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
+    call FF.FinalizeToFile as t_018_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_013_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
 
     ############################################
     #      ___        _               _
@@ -181,11 +188,11 @@ workflow RemoveSingleOrganismContamination {
     ############################################
 
     output {
-        File contaminated_bam = t_012_FinalizeContaminatedBam.gcs_path
-        File contaminated_bam_index = t_013_FinalizeContaminatedBai.gcs_path
+        File contaminated_bam = t_014_FinalizeContaminatedBam.gcs_path
+        File contaminated_bam_index = t_015_FinalizeContaminatedBai.gcs_path
 
-        File decontaminated_fq1 = t_014_FinalizeDecontaminatedFq1.gcs_path
-        File decontaminated_fq2 = t_015_FinalizeDecontaminatedFq2.gcs_path
-        File decontaminated_unpaired = t_015_FinalizeDecontaminatedUnpaired.gcs_path
+        File decontaminated_fq1 = t_016_FinalizeDecontaminatedFq1.gcs_path
+        File decontaminated_fq2 = t_017_FinalizeDecontaminatedFq2.gcs_path
+        File decontaminated_unpaired = t_018_FinalizeDecontaminatedUnpaired.gcs_path
     }
 }
