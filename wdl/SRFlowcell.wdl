@@ -354,7 +354,6 @@ workflow SRFlowcell {
 
         # Contaminated BAM file:
         File? contaminated_bam = DecontaminateSample.contaminated_bam
-        File? contaminated_bai = DecontaminateSample.contaminated_bam_index
 
         # Aligned BAM file
         File aligned_bam = t_023_FinalizeAlignedBam.gcs_path
