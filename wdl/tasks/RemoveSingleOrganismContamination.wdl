@@ -112,7 +112,9 @@ workflow RemoveSingleOrganismContamination {
             mark_short_splits_as_secondary = true,
 
             read_group = RG,
-            prefix = SM + ".contaminant_aligned." + contaminant_ref_name
+            prefix = SM + ".contaminant_aligned." + contaminant_ref_name,
+
+            runtime_attr_override = object {mem_gb: 64}  # Need a lot of ram to use BWA-MEM2
     }
 
     call Utils.FilterReadsBySamFlags as t_007_ExtractDecontaminatedReads {
