@@ -5,15 +5,15 @@ import "../../../structs/Structs.wdl"
 workflow PlotSVQCMetrics{
 
     input{
-        String gcs_dir_to_vcf
+        String gcs_vcf_dir
         Array[String] samples
     }
     scatter(sample in samples){
         call bcfQuerySV{
             input:
                 sample_name = sample,
-                pbsv_vcf = gcs_dir_to_vcf + "/" + sample + ".pbsv.vcf.gz",
-                sniffles_vcf = gcs_dir_to_vcf + "/" + sample + ".sniffles.vcf.gz",
+                pbsv_vcf = gcs_vcf_dir + "/" + sample + ".pbsv.vcf.gz",
+                sniffles_vcf = gcs_vcf_dir + "/" + sample + ".sniffles.vcf.gz",
 #                pav_vcf = input_vcf + ".pav.vcf.gz"
         }
     }
@@ -146,12 +146,14 @@ task compileSVstats {
         Array[File] pbsv_stats
         Array[File] sniffles_stats
 #        Array[File] pav_stat_out
-
+        RuntimeAttr? runtime_attr_override
     }
 
     Array[String] callers = ["pbsv", "sniffles"]
     Array[File] callers_stats = flatten([pbsv_stats, sniffles_stats])
     File sampleFile = write_lines(samples)
+
+    Int disk_size = (ceil(size(callers_stats, "GB") + size(samples, "GB")  ) + 100 ) # 100GB buffer
 
     # callers variable bellow does not include pav
 
@@ -224,6 +226,26 @@ CODE
 #        File pavStatsbysample = "pav_all_sample_stats"
         File pbsvStatsBySample = "pbsv_all_sample_stats"
         File snifflesStatsBySample = "sniffles_all_sample_stats"
+    }
+        #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             24,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
 
