@@ -322,10 +322,14 @@ task ReblockGVCF {
         String prefix
         Float? tree_score_cutoff
 
+        Array[String]? annotations_to_keep
+
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = ceil((size(gvcf, "GiB") * 4) + size(ref_fasta, "GiB") + size(ref_fasta_fai, "GiB") + size(ref_dict, "GiB") + 10)
+
+    String annotations_to_keep_arg = if defined(annotations_to_keep) then "--annotations-to-keep" else ""
 
     command {
         set -euxo pipefail
@@ -337,6 +341,7 @@ task ReblockGVCF {
                 -do-qual-approx \
                 --floor-blocks -GQB 20 -GQB 30 -GQB 40 \
                 ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
+                ~{annotations_to_keep_arg} ~{sep=" --annotations-to-keep " annotations_to_keep} \
                 -O ~{prefix}.rb.g.vcf.gz
     }
 

@@ -117,46 +117,39 @@ workflow RemoveSingleOrganismContamination {
             runtime_attr_override = object {mem_gb: 64}  # Need a lot of ram to use BWA-MEM2
     }
 
-    # Sort aligned bam:
-    call Utils.SortBam as t_008_SortAlignedBam {
+    call ExtractReadsWithSamtools as t_008_ExtractDecontaminatedReads {
         input:
-            input_bam = t_007_AlignReads.bam,
-            prefix =SM + ".contaminant_aligned." + contaminant_ref_name + ".sorted"
-    }
-
-    call Utils.FilterReadsBySamFlags as t_009_ExtractDecontaminatedReads {
-        input:
-            bam = t_008_SortAlignedBam.sorted_bam,
+            bam = t_007_AlignReads.bam,
             sam_flags = "256",
             extra_args = " -f 12 ",
             prefix = SM + ".decontaminated"
     }
 
-    call Utils.FilterReadsBySamFlags as t_010_ExtractContaminatedReads {
+    call ExtractReadsWithSamtools as t_009_ExtractContaminatedReads {
         input:
-            bam = t_008_SortAlignedBam.sorted_bam,
+            bam = t_007_AlignReads.bam,
             sam_flags = "12",
             prefix = SM + ".contaminated_" + contaminant_ref_name + "_reads"
     }
 
-    call Utils.SortBam as t_011_SortDecontaminatedReads {
+    call SortBamWithoutIndexing as t_010_SortDecontaminatedReads {
         input:
-            input_bam = t_009_ExtractDecontaminatedReads.output_bam,
+            input_bam = t_008_ExtractDecontaminatedReads.output_bam,
             extra_args = " -n ",
             prefix = SM + ".decontaminated.sorted"
     }
 
-    call Utils.SortBam as t_012_SortContaminatedReads {
+    call SortBamWithoutIndexing as t_011_SortContaminatedReads {
         input:
-            input_bam = t_010_ExtractContaminatedReads.output_bam,
+            input_bam = t_009_ExtractContaminatedReads.output_bam,
             extra_args = " -n ",
             prefix = SM + ".contaminated_" + contaminant_ref_name + "_reads.sorted"
     }
 
     # Convert input SAM/BAM to FASTQ:
-    call SRUTIL.BamToFq as t_013_CreateFastqFromDecontaminatedReads {
+    call SRUTIL.BamToFq as t_012_CreateFastqFromDecontaminatedReads {
         input:
-            bam = t_011_SortDecontaminatedReads.sorted_bam,
+            bam = t_010_SortDecontaminatedReads.sorted_bam,
             prefix = SM + ".decontaminated"
     }
 
@@ -170,13 +163,12 @@ workflow RemoveSingleOrganismContamination {
     ############################################
 
     # Chosen because it's a relatively small file.
-    File keyfile = t_013_CreateFastqFromDecontaminatedReads.monitoring_log
+    File keyfile = t_012_CreateFastqFromDecontaminatedReads.monitoring_log
 
-    call FF.FinalizeToFile as t_014_FinalizeContaminatedBam { input: outdir = outdir, file = t_012_SortContaminatedReads.sorted_bam, keyfile = keyfile }
-    call FF.FinalizeToFile as t_015_FinalizeContaminatedBai { input: outdir = outdir, file = t_012_SortContaminatedReads.sorted_bai, keyfile = keyfile }
-    call FF.FinalizeToFile as t_016_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_013_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
-    call FF.FinalizeToFile as t_017_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_013_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
-    call FF.FinalizeToFile as t_018_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_013_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
+    call FF.FinalizeToFile as t_013_FinalizeContaminatedBam { input: outdir = outdir, file = t_011_SortContaminatedReads.sorted_bam, keyfile = keyfile }
+    call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
+    call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
+    call FF.FinalizeToFile as t_016_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
 
     ############################################
     #      ___        _               _
@@ -188,11 +180,130 @@ workflow RemoveSingleOrganismContamination {
     ############################################
 
     output {
-        File contaminated_bam = t_014_FinalizeContaminatedBam.gcs_path
-        File contaminated_bam_index = t_015_FinalizeContaminatedBai.gcs_path
+        File contaminated_bam = t_013_FinalizeContaminatedBam.gcs_path
 
-        File decontaminated_fq1 = t_016_FinalizeDecontaminatedFq1.gcs_path
-        File decontaminated_fq2 = t_017_FinalizeDecontaminatedFq2.gcs_path
-        File decontaminated_unpaired = t_018_FinalizeDecontaminatedUnpaired.gcs_path
+        File decontaminated_fq1 = t_014_FinalizeDecontaminatedFq1.gcs_path
+        File decontaminated_fq2 = t_015_FinalizeDecontaminatedFq2.gcs_path
+        File decontaminated_unpaired = t_016_FinalizeDecontaminatedUnpaired.gcs_path
+    }
+}
+
+task ExtractReadsWithSamtools {
+    meta {
+        description : "Filter reads based on sam flags.  Reads with ANY of the given flags will be removed from the given dataset.  Does not sort or index the results."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        File bam
+        String sam_flags
+
+        String extra_args = ""
+
+        String prefix = "filtered_reads"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam:   "BAM file to be filtered."
+        sam_flags: "Flags for which to remove reads.  Reads with ANY of the given flags will be removed from the given dataset."
+        prefix : "[Optional] Prefix string to name the output file (Default: filtered_reads)."
+    }
+
+    Int disk_size = 20 + ceil(11 * size(bam, "GiB"))
+
+    command <<<
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        samtools view -h -b -F ~{sam_flags} -@$np ~{extra_args} ~{bam} > ~{prefix}.bam
+    >>>
+
+    output {
+        File output_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SortBamWithoutIndexing {
+    input {
+        File input_bam
+        String prefix = "sorted"
+
+        String? extra_args = ""
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        input_bam: "input BAM"
+        prefix:    "[default-valued] prefix for output BAM"
+    }
+
+    Int disk_size = 10 + 10*ceil(size(input_bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        export MONITOR_MOUNT_POINT="/cromwell_root"
+        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
+        chmod +x monitoring_script.sh
+        ./monitoring_script.sh &> resources.log &
+        monitoring_pid=$!
+
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
+        samtools sort ~{extra_args} -@$num_core -o ~{prefix}.bam ~{input_bam}
+
+        kill $monitoring_pid
+    >>>
+
+    output {
+        File sorted_bam = "~{prefix}.bam"
+        File monitoring_log = "resources.log"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
