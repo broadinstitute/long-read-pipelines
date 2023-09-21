@@ -153,9 +153,9 @@ task compileSVstats {
     Array[File] callers_stats = flatten([pbsv_stats, sniffles_stats])
     File sampleFile = write_lines(samples)
 
-    Int disk_size = (ceil(size(callers_stats, "GB") + size(samples, "GB")  ) + 100 ) # 100GB buffer
+    Int minimal_disk_size = (ceil(size(callers_stats, "GB") + size(samples, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
-    # callers variable bellow does not include pav
 
     command <<<
         mkdir -p stats_by_sample
