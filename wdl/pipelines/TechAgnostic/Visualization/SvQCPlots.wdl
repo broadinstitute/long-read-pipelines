@@ -173,6 +173,7 @@ task compileSVstats {
 
         python <<CODE
 import os
+import subprocess
 
 def main():
     svtypes=["ALL","DEL","DUP","CNV","INS","INV","OTH"]
@@ -200,22 +201,27 @@ def pairwise(iterable):
 
 def compile_stats(caller, svtypes, samples, basedir, outfile):
     for sample in samples:
-        ALL=!wc -l {basedir}/{caller}_stats/{sample}|cut -f1 -d' '
-        ALL=int(ALL.spstr)
-        counts_by_SV=!echo `cut -f1 {basedir}/{caller}_stats/{sample}|sort|uniq -c`
-        counts_by_SV=counts_by_SV.spstr.split()
+        # Count lines in the file
+        with open(os.path.join(basedir, f"{caller}_stats", sample), 'r') as file:
+            ALL = sum(1 for _ in file)
+
+        counts_by_SV = subprocess.check_output(f"cut -f1 {os.path.join(basedir, f'{caller}_stats', sample)} | sort | uniq -c", shell=True)
+        counts_by_SV = counts_by_SV.decode().split()
 
         SVs = {}
         for svtype in svtypes:
             SVs[svtype] = 0
         SVs['ALL'] = ALL
 
-        for num, SV in pairwise(counts_by_SV):
-            SV=SV.upper()
+        # Process counts_by_SV
+        for i in range(0, len(counts_by_SV), 2):
+            num = int(counts_by_SV[i])
+            SV = counts_by_SV[i + 1].upper()
             if SV in SVs:
-                SVs[SV] = int(num)
+                SVs[SV] = num
             else:
-                SVs['OTH'] += int(num)
+                SVs['OTH'] += num
+
         outfile.write("%s" % sample)
 
         for svtype in svtypes:
@@ -242,7 +248,7 @@ CODE
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -256,3 +262,52 @@ CODE
     }
 }
 
+
+task addCoverageToSVstats{
+    input{
+        File auxiliary_metrics
+        File pbsvStatsBySample
+        File snifflesStatsBySample
+#        Array[File] pav_stat_out
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int minimal_disk_size = (ceil(size([pbsvStatsBySample, snifflesStatsBySample], "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
+
+    command<<<
+        set -euo pipefail
+
+
+    >>>
+#        for i in ~{sep=" " pav_stat_out}
+#        do
+#            cat ${i} >> pav_all_SV_lengths_by_type.svlen
+#        done
+    output{
+        File all_pbsv_stats = "pbsv_all_SV_lengths_by_type.svlen"
+        File all_sniffles_stats = "sniffles_all_SV_lengths_by_type.svlen"
+#        File all_pav_stats = "pav_all_SV_lengths_by_type.svlen"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             24,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
