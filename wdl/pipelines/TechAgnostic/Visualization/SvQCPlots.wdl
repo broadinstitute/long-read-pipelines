@@ -31,8 +31,26 @@ workflow PlotSVQCMetrics{
             pbsv_stats = bcfQuerySV.pbsv_stat_out,
             sniffles_stats = bcfQuerySV.sniffles_stat_out,
     }
-    #call addcoverageinfo
+    #call addCoverageToSVstats{
+    #    input:
+    #        samples = samples,
+    #        pbsv_stats = compileSVstats.pbsv_stat_out,
+    #        sniffles_stats = compileSVstats.sniffles_stat_out,
+    #        pav_stats = compileSVstats.pav_stat_out,
+    #        auxiliary_metrics = auxiliary_metrics
+    #}
     #
+
+output{
+        File pbsv_stat_out = compileSVstats.pbsv_stat_out
+        File sniffles_stat_out = compileSVstats.sniffles_stat_out
+#        File pav_stat_out = compileSVstats.pav_stat_out
+#        File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_stat_out
+#        File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_stat_out
+#        File pav_all_stats_with_coverage = addCoverageToSVstats.pav_stat_out
+    }
+
+
 }
 
 
@@ -180,7 +198,7 @@ def main():
     basedir=os.getcwd() + "/stats_by_sample"
     callers=["~{sep='", "' callers}"]
 
-    samplefile = open(~{sampleFile}, 'r')
+    samplefile = open('~{sampleFile}', 'r')
     samples = []
     for line in samplefile:
         samples.append(line.strip())
@@ -272,22 +290,36 @@ task addCoverageToSVstats{
         RuntimeAttr? runtime_attr_override
     }
 
-    Int minimal_disk_size = (ceil(size([pbsvStatsBySample, snifflesStatsBySample], "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int minimal_disk_size = (ceil(size([pbsvStatsBySample, snifflesStatsBySample, auxiliary_metrics], "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command<<<
         set -euo pipefail
+        cut -f1,2 ~{auxiliary_metrics} | tail -n +2 > sample_cov
+        echo $'sample\tcov' >> sample_cov
 
+        sort -k1,1 sample_cov -o sample_cov
+        sort -k1,1 ~{pbsvStatsBySample} -o pbsv_all_sample_stats
+        sort -k1,1 ~{snifflesStatsBySample} -o sniffles_all_sample_stats
+
+        join -1 1 -2 1 -a 1 -e 0 -o 1.1,2.2 sample_cov pbsv_all_sample_stats > pbsv_all_sample_stats_with_cov
+        join -1 1 -2 1 -a 1 -e 0 -o 1.1,2.2 sample_cov sniffles_all_sample_stats > sniffles_all_sample_stats_with_cov
+
+        # moving the header up to the top...
+        tail -n 1 pbsv_all_sample_stats_with_cov > t1
+        sed '$ d' pbsv_all_sample_stats_with_cov >> t1
+        mv t1 pbsv_all_sample_stats_with_cov
+
+        tail -n 1 sniffles_all_sample_stats_with_cov > t2
+        sed '$ d' sniffles_all_sample_stats_with_cov >> t2
+        mv t2 sniffles_all_sample_stats_with_cov
 
     >>>
-#        for i in ~{sep=" " pav_stat_out}
-#        do
-#            cat ${i} >> pav_all_SV_lengths_by_type.svlen
-#        done
+
     output{
-        File all_pbsv_stats = "pbsv_all_SV_lengths_by_type.svlen"
-        File all_sniffles_stats = "sniffles_all_SV_lengths_by_type.svlen"
-#        File all_pav_stats = "pav_all_SV_lengths_by_type.svlen"
+        File pbsv_all_stats_with_cov = "pbsv_all_sample_stats_with_cov"
+        File sniffles_all_stats_with_cov = "sniffles_all_sample_stats_with_cov"
+#        File pav_all_stats_with_cov = "pav_all_sample_stats_with_cov"
     }
 
     #########################
