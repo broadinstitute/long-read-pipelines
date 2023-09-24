@@ -7,7 +7,7 @@ workflow PlotSVQCMetrics{
     input{
         String gcs_vcf_dir
         Array[String] samples
-        Array[Int] coverage_metrics
+        Array[Float] coverage_metrics
     }
     scatter(sample in samples){
         call bcfQuerySV{
@@ -283,7 +283,7 @@ CODE
 
 task addCoverageToSVstats{
     input{
-        Array[Int] coverage_stats
+        Array[Float] coverage_stats
         Array[String] samples
         File pbsvStatsBySample
         File snifflesStatsBySample
