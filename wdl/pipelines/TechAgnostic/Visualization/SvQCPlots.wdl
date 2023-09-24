@@ -7,7 +7,7 @@ workflow PlotSVQCMetrics{
     input{
         String gcs_vcf_dir
         Array[String] samples
-        File auxiliary_metrics
+        Array[Int] coverage_metrics
     }
     scatter(sample in samples){
         call bcfQuerySV{
@@ -31,22 +31,22 @@ workflow PlotSVQCMetrics{
             pbsv_stats = bcfQuerySV.pbsv_stat_out,
             sniffles_stats = bcfQuerySV.sniffles_stat_out,
     }
-    #call addCoverageToSVstats{
-    #    input:
-    #        samples = samples,
-    #        pbsv_stats = compileSVstats.pbsv_stat_out,
-    #        sniffles_stats = compileSVstats.sniffles_stat_out,
-    #        pav_stats = compileSVstats.pav_stat_out,
-    #        auxiliary_metrics = auxiliary_metrics
-    #}
-    #
+    call addCoverageToSVstats{
+        input:
+            coverage_stats = coverage_metrics,
+            samples = samples,
+            pbsvStatsBySample = compileSVstats.pbsvStatsBySample,
+            snifflesStatsBySample = compileSVstats.snifflesStatsBySample,
+#            pav_stats = compileSVstats.pav_stat_out,
+    }
+
 
 output{
         File pbsv_stat_out = compileSVstats.pbsvStatsBySample
         File sniffles_stat_out = compileSVstats.snifflesStatsBySample
 #        File pav_stat_out = compileSVstats.pav_stat_out
-#        File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_stat_out
-#        File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_stat_out
+        File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_all_stats_with_cov
+        File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_all_stats_with_cov
 #        File pav_all_stats_with_coverage = addCoverageToSVstats.pav_stat_out
     }
 
@@ -283,20 +283,21 @@ CODE
 
 task addCoverageToSVstats{
     input{
-        File auxiliary_metrics
+        Array[Int] coverage_stats
+        Array[String] samples
         File pbsvStatsBySample
         File snifflesStatsBySample
 #        Array[File] pav_stat_out
         RuntimeAttr? runtime_attr_override
     }
 
-    Int minimal_disk_size = (ceil(size([pbsvStatsBySample, snifflesStatsBySample, auxiliary_metrics], "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int minimal_disk_size = (ceil(size([pbsvStatsBySample, snifflesStatsBySample], "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command<<<
         set -euo pipefail
-        cut -f1,2 ~{auxiliary_metrics} | tail -n +2 > sample_cov
-        echo $'sample\tcov' >> sample_cov
+        # Combine the two arrays and write them to a temporary file
+        paste <(printf "%s\n" "${samples[@]}") <(printf "%s\n" "${coverage_stats[@]}") > sample_cov
 
         sort -k1,1 sample_cov -o sample_cov
         sort -k1,1 ~{pbsvStatsBySample} -o pbsv_all_sample_stats
