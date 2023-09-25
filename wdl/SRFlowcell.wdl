@@ -79,6 +79,10 @@ workflow SRFlowcell {
 
     # Create an outdir:
     String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}"
+    String reads_dir = outdir + "/reads"
+    String unaligned_reads_dir = outdir + "/reads/unaligned"
+    String aligned_reads_dir = outdir + "/reads/aligned"
+    String metrics_dir = outdir + "/metrics"
 
     if (defined(bam)) {
         # Convert the given bam to a uBAM (needed for previous aligned data):
@@ -100,7 +104,8 @@ workflow SRFlowcell {
 
     # OK, this is inefficient, but let's NOW extract our contaminated reads if we have the info.
     # TODO: Move this into the sections above to make it more efficient.  Specifically where we convert bam -> fastq.
-    if (defined(contaminant_ref_map_file)) {
+    # TODO: Re-enable this section after decontamination is fixed.  The alignment based method with BWA-MEM doesn't work.  Not clear why, but this does seem somewhat inadequate (simplistic alignment-based strategies).
+    if (false && defined(contaminant_ref_map_file)) {
 
         # Call our sub-workflow for decontamination:
         # NOTE: We don't need to be too concerned with the finalization info.
@@ -223,7 +228,6 @@ workflow SRFlowcell {
 
     call FastQC.FastQC as t_012_FastQC { input: bam = t_010_ApplyBQSR.recalibrated_bam, bai = t_010_ApplyBQSR.recalibrated_bai }
     call Utils.ComputeGenomeLength as t_013_ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-
     call SRUTIL.ComputeBamStats as t_014_ComputeBamStats { input: bam_file = t_010_ApplyBQSR.recalibrated_bam }
 
     # Collect stats on aligned reads:
@@ -232,6 +236,15 @@ workflow SRFlowcell {
     call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ10 { input: bam_file = t_010_ApplyBQSR.recalibrated_bam, qual_threshold = 10 }
     call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ12 { input: bam_file = t_010_ApplyBQSR.recalibrated_bam, qual_threshold = 12 }
     call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ15 { input: bam_file = t_010_ApplyBQSR.recalibrated_bam, qual_threshold = 15 }
+
+    call AM.AlignedMetrics as PerFlowcellMetrics {
+        input:
+            aligned_bam    = t_010_ApplyBQSR.recalibrated_bam,
+            aligned_bai    = t_010_ApplyBQSR.recalibrated_bai,
+            ref_fasta      = ref_map['fasta'],
+            ref_dict       = ref_map['dict'],
+            gcs_output_dir = metrics_dir
+    }
 
     ############################################
     #      _____ _             _ _
@@ -242,10 +255,6 @@ workflow SRFlowcell {
     #
     ############################################
     File keyfile = t_014_ComputeBamStats.results_file
-    String reads_dir = outdir + "/reads"
-    String unaligned_reads_dir = outdir + "/reads/unaligned"
-    String aligned_reads_dir = outdir + "/reads/aligned"
-    String metrics_dir = outdir + "/metrics"
 
     # Finalize our unaligned reads first:
     call FF.FinalizeToDir as t_020_FinalizeUnalignedFastqReads {
