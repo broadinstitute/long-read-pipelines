@@ -14,11 +14,13 @@ workflow PBCCSIsoSeq {
         ccs_bams:         "GCS path to CCS BAM files"
         ccs_pbis:         "GCS path to CCS BAM .pbi indices"
 
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        ref_map_file:     "two-field, tab-separated file; the first field must have value 'fasta' to indicate the location of the reference file"
         participant_name: "name of the participant from whom these samples were obtained"
         barcode_file:     "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
-
-        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+        
+        drop_per_base_N_pulse_tags: "[default valued] remove per-base N and pulse tags (default: true)"
+        
+        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, alignments, and metrics files"
     }
 
     input {

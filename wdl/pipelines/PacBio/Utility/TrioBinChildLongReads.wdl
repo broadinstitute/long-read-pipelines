@@ -2,7 +2,7 @@ version 1.0
 
 import "../../../tasks/Preprocessing/CollectParentsKmerStats.wdl" as stats
 
-import "../../../tasks/Utility/AssignChildLongReads.wdl" as asign
+import "../../../tasks/Utility/AssignChildLongReads.wdl" as assign
 
 workflow TrioBinChildLongReads {
 
@@ -11,17 +11,17 @@ workflow TrioBinChildLongReads {
     }
     parameter_meta {
         workdir_name:                  "name of working directory"
-        genome_size:                   "an esimate on genome size of the specicies (affects k-value picking)"
+        genome_size:                   "an estimate on genome size of the species (affects k-value picking)"
         kmerSize:                      "[optional] force specifying k-value in collecting k-mer stats on parents"
         father_short_reads_bucket:     "GCS bucket path holding FASTA/FASTQ of (short) reads of paternal origin"
         mother_short_reads_bucket:     "GCS bucket path holding FASTA/FASTQ of (short) reads of maternal origin"
         child_long_reads_bucket:       "GCS bucket path holding FASTA/FASTQ of child long reads"
         long_read_platform:            "platform of long read sequencing; currently only one of [pacbio-raw, nanopore-raw] is supported"
         vm_local_monitoring_script:    "GCS file holding a resouce monitoring script that runs locally and collects info for a very specific purpose"
-        meryl_operations_threads_est:  "[default-valued] estimate on how many threads to allocate to k-mer stats collection step"
-        child_read_assign_threads_est: "[default-valued] estimate on how many threads to allocate to the child longread classification step"
-        child_read_assign_memoryG_est: "[default-valued] estimate on how many GB memory to allocate to the child longread classification step"
-        run_with_debug:                "[optional] whether to run in debug mode (takes significantly more disk space and more logs); defaults to false"
+        meryl_operations_threads_est:  "[default valued] estimate on how many threads to allocate to the k-mer stats collection step (default: 8)"
+        child_read_assign_threads_est: "[default valued] estimate on how many threads to allocate to the child long read classification step (default: 36)"
+        child_read_assign_memoryG_est: "[default valued] estimate on how many GB of memory to allocate to the child long read classification step (default: 32)"
+        run_with_debug:                "[optional] whether to run in debug mode (takes significantly more disk space and more logs) (default: false)"
     }
 
     input{
@@ -67,7 +67,7 @@ workflow TrioBinChildLongReads {
     }
 
     # part two: given the k-mer stats database from part one, classify child long reads
-    call asign.AssignChildLongReads as AssignChildLongReads {
+    call assign.AssignChildLongReads as AssignChildLongReads {
         input:
             workdir_name = workdir_name,
 

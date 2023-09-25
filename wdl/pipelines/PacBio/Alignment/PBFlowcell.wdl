@@ -15,26 +15,31 @@ import "../../../tasks/Utility/JupyterNotebooks.wdl" as JUPYTER
 workflow PBFlowcell {
 
     meta {
-        description: "The workflow performs the alignment of an SMRT cell's worth of data to a reference. For genomic sequencing data, the workflow also optionally performs CCS correction if the data is from a CCS library but did not get corrected on-instrument. For MAS-seq transcriptome data, this workflow will determine the most likely MAS-seq model, then it will use that model to annotate, segment, and filter the CCS reads. These CCS reads will then be aligned to the reference in trascriptome alignemnt mode. Note: Currently the MAS-seq workflow separates CLR reads, but does not process them."
+        description: "The workflow performs the alignment of an SMRT cell's worth of data to a reference. For genomic sequencing data, the workflow also optionally performs CCS correction if the data is from a CCS library but did not get corrected on-instrument. For MAS-seq transcriptome data, this workflow will determine the most likely MAS-seq model, then it will use that model to annotate, segment, and filter the CCS reads. These CCS reads will then be aligned to the reference in trascriptome alignment mode. Note: Currently the MAS-seq workflow separates CLR reads, but does not process them."
     }
     parameter_meta {
         bam:                "GCS path to raw subread bam"
-        ccs_report_txt:     "GCS path to CCS report txt, required if on-instrument corrected, otherwise CCS is run in this workflow for CCS libraries"
         pbi:                "GCS path to pbi index for raw subread bam"
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        ccs_report_txt:     "[optional] GCS path to CCS report txt, required if on-instrument corrected, otherwise CCS is run in this workflow for CCS libraries"
 
         SM:                 "the value to place in the BAM read group's SM field"
         LB:                 "the value to place in the BAM read group's LB (library) field"
 
-        num_shards:         "number of shards into which fastq files should be batched"
+        ref_map_file:       "two-field, tab-separated file; the first field must have values 'fasta' and 'dict' to indicate the location of the corresponding reference files"
+        
+        drop_per_base_N_pulse_tags: "[default valued] remove per-base N and pulse tags (default: true)"
+
+        num_shards:         "[optional] number of shards into which the input bam file should be batched"
         experiment_type:    "type of experiment run (CLR, CCS, ISOSEQ, MASSEQ)"
         dir_prefix:         "directory prefix for output files"
 
-        mas_seq_model:      "Longbow model to use for MAS-seq data."
+        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+
+        mas_seq_model:      "[optional] Longbow model to use for MAS-seq data."
+
+        validate_shards:    "[default valued] checks if the sharded bams are missing EOF markers (default: false)"
 
         DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
-
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
     input {
@@ -112,7 +117,7 @@ workflow PBFlowcell {
 
     # then perform correction and alignment on each of the shard
     scatter (unmapped_shard in ShardLongReads.unmapped_shards) {
-        # sometimes we see the sharded bams mising EOF marker, use this as
+        # sometimes we see the sharded bams missing EOF marker
         if (validate_shards) {call Utils.CountBamRecords as ValidateShard {input: bam = unmapped_shard}}
         if (experiment_type != "CLR") {
             if (!GetRunInfo.is_corrected) { call PB.CCS as CCS { input: subreads = unmapped_shard } }

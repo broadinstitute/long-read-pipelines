@@ -12,8 +12,10 @@ workflow PBMASIsoSeqDemultiplex {
     }
     parameter_meta {
         bam:              "GCS path to BAM file"
-        participant_name: "name of the participant from whom these samples were obtained"
-        tag:              "BAM tag on which to demultiplex"
+        participant_name: "name of the participant from whom this sample was obtained"
+        
+        tag:              "[default valued] BAM tag on which to demultiplex (default: CB)"
+        
         gcs_out_root_dir: "GCS bucket to store the demultiplexed BAMs"
     }
 

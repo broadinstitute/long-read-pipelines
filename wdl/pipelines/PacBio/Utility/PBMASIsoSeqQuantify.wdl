@@ -19,15 +19,16 @@ workflow PBMASIsoSeqQuantify {
     parameter_meta {
         aligned_ccs_bams: "GCS path to aligned MAS-ISO-seq CCS BAM files"
         aligned_ccs_bais: "GCS path to aligned MAS-ISO-seq CCS BAM file indices"
+        
         participant_name: "name of the participant from whom these samples were obtained"
 
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        ref_map_file:     "two-field, tab-separated file; the first field must have values 'fasta', 'fai' and 'dict' to indicate the location of the corresponding reference files"
         ref_gtf:          "GTF file to use for quantification"
 
         intervals_of_interest : "[optional] An interval list file containing intervals to mark in the final anndata object as overlapping the transcripts."
         interval_overlap_name : "[optional] The name of the annotation to add to the final anndata object for the column containing the overlap flag for transcripts that overlap intervals in the given intervals_of_interest file."
 
-        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
+        gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, alignments, quantifications, and metrics files"
 
         DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
     }
@@ -318,7 +319,7 @@ workflow PBMASIsoSeqQuantify {
     #       (https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#scatter--gather)
     scatter (i in range(length(t_11_MakeChrIntervalList.chrs))) {
 
-        # NOTE: This must be `the_contg` because all variable names in WDL must be unique!
+        # NOTE: This must be `the_contig` because all variable names in WDL must be unique!
         String the_contig = t_11_MakeChrIntervalList.chrs[i][0]
 
         call FF.FinalizeToDir as t_32_FinalizeTxAndGeneAssignmentsByContig {

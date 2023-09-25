@@ -8,16 +8,17 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 workflow PBAssembleWithHifiasm {
 
     meta {
-        description: "A workflow that performs single sample genome assembly on PacBio HiFi reads from one or more SMRT cells. The multiple SMRT cells data are merged prior to assembly."
+        description: "A workflow that performs single-sample genome assembly on PacBio HiFi reads from one or more SMRT cells. The multiple SMRT cells data are merged prior to assembly."
     }
     parameter_meta {
         ccs_fqs:            "GCS path to CCS fastq files"
 
-        participant_name:   "name of the participant from whom these samples were obtained"
+        participant_name:   "name of the participant from whom all these samples were obtained"
         prefix:             "prefix for output files"
 
-        ref_fasta_for_eval: "Reference Fasta used for evaluating "
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+        ref_fasta_for_eval: "[optional] reference Fasta, used just for evaluating the assembly"
+        
+        gcs_out_root_dir:   "GCS bucket where to store the reads, assemblies, and evaluation metrics files"
     }
 
     input {

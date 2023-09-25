@@ -15,22 +15,28 @@ workflow PBCCSWholeGenome {
     parameter_meta {
         aligned_bams:       "GCS path to aligned BAM files"
         aligned_bais:       "GCS path to aligned BAM file indices"
+        
+        bed_to_compute_coverage: "[optional] BED file to compute coverage over"
+        
+        ref_map_file:       "two-field, tab-separated file; the first field must have values 'fasta', 'fai', 'dict', and 'tandem_repeat_bed' to indicate the location of the corresponding reference files"
+        
         participant_name:   "name of the participant from whom these samples were obtained"
+        
+        gcs_out_root_dir:   "GCS bucket to store the alignments, variants, and metrics files"
 
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+        call_svs:               "[default valued] whether to call SVs (default: true)"
+        fast_less_sensitive_sv: "[optional] [default valued] trade less sensitive SV calling for faster speed (default: true)"
 
-        call_svs:               "whether to call SVs"
-        fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
+        call_small_variants: "[default valued] whether to call small variants (default: true)"
+        call_small_vars_on_mitochondria: "[optional] [default valued] if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal (default: false)"
+        sites_vcf:     "[optional] for use with Clair"
+        sites_vcf_tbi: "[optional] for use with Clair"
 
-        call_small_variants: "whether to call small variants"
-        call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
-        sites_vcf:     "for use with Clair"
-        sites_vcf_tbi: "for use with Clair"
-
-        run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
-        ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
-        ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
+        run_dv_pepper_analysis:  "[optional] [default valued] whether to turn on DV-Pepper analysis (non-trivial increase in cost and runtime) (default: true)"
+        dvp_threads: "[optional] [default valued] number of threads for DV-Pepper (default: 32)"
+        dvp_memory: "[optional] [default valued] memory for DV-Pepper (default: 128)"
+        ref_scatter_interval_list_locator: "[optional] A file holding paths to interval_list files; needed only when running DV-Pepper"
+        ref_scatter_interval_list_ids:     "[optional] A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
     }
 
     input {
