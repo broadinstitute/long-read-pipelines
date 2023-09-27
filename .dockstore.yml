@@ -99,6 +99,9 @@ workflows:
 - name: FASTQstats
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/FASTQstats.wdl
+- name: FASTQstatsFromBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/FASTQstatsFromBam.wdl
 - name: FilterBamByLength
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/FilterBamByLength.wdl

@@ -195,3 +195,60 @@ task InferSampleName {
         docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }
+
+task BamToFastq {
+
+    meta {
+        description : "Convert a BAM file to a fastq file."
+    }
+
+    parameter_meta {
+        bam: {localization_optional: true}
+        prefix: "Prefix for the output fastq file."
+        disk_type: "type of disk to use"
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
+    input {
+        File bam
+        String prefix
+
+        String disk_type = "HDD"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + 3 * ceil(size(bam, "GiB"))
+
+    String base = basename(bam)
+    String local_bam = "/cromwell_root/~{base}"
+    command <<<
+        set -euxo pipefail
+
+        time gcloud storage cp ~{bam} ~{local_bam}
+        time samtools fastq -@1 -t -0 ~{prefix}.fq.gz ~{local_bam}
+    >>>
+
+    output {
+        File reads_fq = "~{prefix}.fq.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             6,
+        disk_gb:            disk_size,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
