@@ -35,8 +35,8 @@ task construct{
     >>>
 
     output{
-        File color_file="~{outputpref}_Bfrost_graph.color.bfg"
-        File graph = "~{outputpref}_Bfrost_graph.gfa.gz"
+        File color_file="~{outputpref}_Bfrost_graph.bfg_colors"
+        File graph = "~{outputpref}_Bfrost_graph.gfa"
         File graph_index = "~{outputpref}_Bfrost_graph.bfi"
         File fasta = "all.fasta"
     }
