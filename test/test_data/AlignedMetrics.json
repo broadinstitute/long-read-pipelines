@@ -1,7 +1,0 @@
-{
-  "AlignedMetrics.aligned_bam": "gs://broad-dsp-lrma-cromwell/test_data/aligned-metrics/NA24385.bam",
-  "AlignedMetrics.aligned_bai": "gs://broad-dsp-lrma-cromwell/test_data/aligned-metrics/NA24385.bam.bai",
-  "AlignedMetrics.ref_dict": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict",
-  "AlignedMetrics.ref_fasta": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-  "AlignedMetrics.gcs_output_dir": "gs://broad-dsp-lrma-ci/test-outputs"
-}
