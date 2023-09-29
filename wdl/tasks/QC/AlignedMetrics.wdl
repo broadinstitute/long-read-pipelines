@@ -212,8 +212,131 @@ task ReadMetrics {
     command <<<
         set -euxo pipefail
 
-        java -jar /usr/local/bin/gatk.jar ComputeLongReadMetrics -I ~{bam} -O ~{basename}.read_metrics -DF WellformedReadFilter
+        cat << "EOF" > summarizeBAM.awk
+        BEGIN { FS=OFS="\t"; lastZMWid =-1; }
+        {
+                # retrieve the number of passes as the value of the "np" tag (default = 1)
+                nPasses=1;
+                for( fld=12;fld<=NF;++fld )
+                        if( substr($fld,1,5)=="np:i:" ) {
+                                nPasses=substr($fld,6);
+                                break;
+                        }
+
+                # get the read length and its bin for histograms
+                readLength=length($10);
+
+                # default the zero-mode waveguide id as last value + 1
+                zmwId=lastZMWid+1;
+
+                #default the range info as 0:0
+                rangeStart=0;
+                rangeStop=0;
+
+                # parse the read name
+                if( split($1,namePieces,"/")==3 ) {
+                        zmwId = namePieces[2];
+                        if( split(namePieces[3],range,"_")==2 ) {
+                                rangeStart = range[0];
+                                rangeStop = range[1];
+                        }
+                }
+
+                # calculate value to report for range gap (or -1 to indicate no report for this read)
+                reportedRangeGap=-1;
+                if( lastRangeStop!=0 && lastZMWid==zmwId ) {
+                        reportedRangeGap=rangeStart-lastRangeStop;
+                }
+
+                # calculate value to report for polymerase read length (or -1 to indicate no report for this read)
+                reportedPRL = -1;
+                if( lastZMWid!=-1 && lastZMWid!=zmwId ) {
+                        reportedPRL=polymeraseRL;
+                }
+
+                # track polymerase read length across reads with the same zmwId
+                if( zmwId!=lastZMWid ) polymeraseRL=0;
+                polymeraseRL+=readLength;
+
+                # update values maintained across reads
+                lastZMWid=zmwId;
+                lastRangeStop=rangeStop;
+
+                # print the parsed data
+                print readLength,nPasses,readLength*nPasses,zmwId,reportedRangeGap,reportedPRL;
+        }
+        EOF
+
+        cat << "EOF" > calculateNX.awk
+        BEGIN { FS=OFS="\t" }
+        {
+                sum+=$1;
+                cent=int(100.*sum/tot);
+                if( cent!=lastCent )
+                        print cent,lastVal;
+                lastCent=cent;
+                lastVal=$1
+        }
+        EOF
+
+        # awkOut.tsv file is a tab delimited file with these columns:
+        # fld:       1        2             3           4          5                      6
+        # datum: readLength nPasses yield(len*passes) zmwId reportedRangeGap reportedPolymeraseReadLength
+        samtools view -F0x900 ~{bam} | awk -f summarizeBAM.awk > awkOut.tsv
+
+        # extract the nPasses column for each read, sort numerically, count each group, add a header line
+        cut -f2 awkOut.tsv | sort -n | datamash -g1 count 1 | \
+            awk 'BEGIN{print "np\tcount"}{print}' > "~{basename}.read_metrics.np_hist.txt"
+
+        # extract the reportedRangeGap column, ignore -1 values, sort numerically, count each group, add header line
+        cut -f5 awkOut.tsv | sed '/^-1$/d' | sort -n | datamash -g1 count 1 | \
+            awk 'BEGIN{print "range_gap\tcount"}{print}' > "~{basename}.read_metrics.range_gap_hist.txt"
+
+        # extract the zmwId column, sort numerically, count each group, extract counts and sort numerically,
+        #    count each group of counts, add header line
+        cut -f4 awkOut.tsv | sort -n | datamash -g1 count 1 | cut -f2 | sort -n | datamash -g1 count 1 | \
+            awk 'BEGIN{print "zmw_count\tcount"}{print}' > "~{basename}.read_metrics.zmw_hist.txt"
+
+        # extract yield and prl, ignore -1 prls, sort numerically, mash some summary stats, add header line
+        cut -f3,6 awkOut.tsv | sed '/	-1$/d' | sort -n | datamash count 2 sum 2 sum 1 min 2 max 2 mean 2 sstdev 2 | \
+            awk 'BEGIN{print "num_polymerase_reads\tpolymerase_read_yield_bp\tpolymerase_read_yield_bp_times_passes\tpolymerase_read_min_length_bp\tpolymerase_read_max_length_bp\tpolymerase_read_mean_length_bp\tpolymerase_read_sd_length_bp"}{print}' > "~{basename}.read_metrics.prl_counts.txt"
+
+        # extract prl rounded to 100s ignoring -1 values, sort numerically, count each group, add header line
+        awk 'BEGIN{FS=OFS="\t"}{if($6>=0)print int(($6+99)/100)*100}' awkOut.tsv | sort -n | datamash -g1 count 1 | \
+            awk 'BEGIN{print "polymerase_read_length\tlength_bp"}{print}' > "~{basename}.read_metrics.prl_hist.txt"
+
+        # calculate total of prl column, ignoring -1 values
+        # then extract the prl column, ignore -1 values, reverse sort numerically, print the centile divisions,
+        #    forget about the 100th percentile, add header line
+        tot=$(cut -f6 < awkOut.tsv | sed '/^-1$/d' | datamash sum 1)
+        cut -f6 < awkOut.tsv | sed '/^-1$/d' | sort -rn | awk -v "tot=$tot" -f calculateNX.awk | sed '/^100	/d' | \
+            awk 'BEGIN{print "NX\tvalue"}{print}' > "~{basename}.read_metrics.prl_nx.txt"
+
+        # extract prl rounded to 100s and the original prl, sort numerically, sum prls for each bin, add header line
+        awk 'BEGIN{FS=OFS="\t"}{if($6>=0)print int(($6+99)/100)*100,$6}' awkOut.tsv | sort -n | datamash -g1 sum 2 | \
+            awk 'BEGIN{print "polymerase_read_length\tyield_bp"}{print}' > "~{basename}.read_metrics.prl_yield_hist.txt"
+
+        # extract readLength and yield columns, sort numerically, mash some summary stats, add header line
+        cut -f1,3 awkOut.tsv | sort -n | datamash count 1 sum 1 sum 2 min 1 max 1 mean 1 sstdev 1 | \
+            awk 'BEGIN{print "num_reads\tread_yield_bp\tread_yield_bp_times_passes\tread_min_length_bp\tread_max_length_bp\tread_mean_length_bp\tread_sd_length_bp"}{print}' > "~{basename}.read_metrics.rl_counts.txt"
+
+        # extract readLength rounded to 100s, sort numerically, count each group, add header line
+        awk 'BEGIN{FS=OFS="\t"}{print int(($1+99)/100)*100}' awkOut.tsv | sort -n | datamash -g1 count 1 | \
+            awk 'BEGIN{print "read_length_bp\tcount"}{print}' > "~{basename}.read_metrics.rl_hist.txt"
+
+        # calculate total of readLength column,
+        # then extract the readLength column, reverse sort numerically, print the centile divisions,
+        #    forget about the 100th percentile, add header line
+        tot=$(cut -f1 < awkOut.tsv | datamash sum 1)
+        cut -f1 < awkOut.tsv | sort -rn | awk -v "tot=$tot" -f calculateNX.awk | sed '/^100	/d' | \
+            awk 'BEGIN{print "NX\tvalue"}{print}' > "~{basename}.read_metrics.rl_nx.txt"
+
+        # extract readLength rounded to 100s and the original readLength, sort numerically, sum each group, add header line
+        awk 'BEGIN{FS=OFS="\t"}{print int(($1+99)/100)*100,$1}' awkOut.tsv | sort -n | datamash -g1 sum 2 | \
+            awk 'BEGIN{print "read_length\tyield_bp"}{print}' > "~{basename}.read_metrics.rl_yield_hist.txt"
+
         samtools flagstat ~{bam} > ~{basename}.flag_stats.txt
+
         if ~{defined(output_dir)}; then
           gsutil -m cp \
             "~{basename}.read_metrics.np_hist.txt" \
@@ -255,7 +378,7 @@ task ReadMetrics {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.12"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-mini:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

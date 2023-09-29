@@ -16,10 +16,9 @@ ENV PATH=/miniconda/bin/:/miniconda/envs/lr-metrics/bin/:/root/google-cloud-sdk/
 
 # install conda packages
 COPY ./environment.yml /
-RUN conda install -n base conda-libmamba-solver && conda config --set solver libmamba
 RUN conda env create -f /environment.yml && conda clean -a
 
-# install super-special version of gatk
+# install gatk
 RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
     && cd gatk \
     && git checkout c9497220ef13beb05da7c7a820c181be00b9b817 \
@@ -30,9 +29,6 @@ RUN git clone https://github.com/broadinstitute/gatk.git -b kvg_pbeap \
 
 # install picard
 RUN wget -O /usr/local/bin/picard.jar https://github.com/broadinstitute/picard/releases/download/2.22.1/picard.jar
-
-# install gsutil
-RUN curl -sSL https://sdk.cloud.google.com | bash
 
 # install various metric and visualization scripts
 COPY lima_report_detail.R /
