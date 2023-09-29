@@ -1,5 +1,7 @@
 version 1.0
 
+import "../../../structs/Structs.wdl"
+
 task CoverageTrack {
     input {
         File bam
