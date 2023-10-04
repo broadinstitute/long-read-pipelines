@@ -1,7 +1,6 @@
 version 1.0
 
 import "../../structs/Structs.wdl"
-import "../Utility/Utils.wdl"
 import "../Transcriptomics/MASSeq.wdl" as MAS
 
 struct LongbowModelParams {
