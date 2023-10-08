@@ -2360,6 +2360,67 @@ task GetRawReadGroup {
     }
 }
 
+task GetReadsInBedFileRegions {
+    meta {
+        desciption: "Get the reads from the given bam path which overlap the regions in the given bed file."
+    }
+
+    input {
+        String gcs_bam_path
+        File regions_bed
+
+        String prefix = "reads"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        gcs_bam_path: "GCS URL to bam file from which to extract reads."
+        regions_bed: "Bed file containing regions for which to extract reads."
+        prefix:    "[default-valued] prefix for output BAM"
+        runtime_attr_override: "Runtime attributes override struct."
+    }
+
+    Int disk_size = 2 * ceil(size([gcs_bam_path, regions_bed], "GB"))
+
+    command <<<
+        set -x
+        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        samtools view -@${np} -b -h -L ~{regions_bed} ~{gcs_bam_path} | samtools sort - > ~{prefix}.bam
+        samtools index -@${np} ~{prefix}.bam
+    >>>
+
+    output {
+        File bam = "~{prefix}.bam"
+        File bai = "~{prefix}.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.30"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task FailWithWarning {
     input {
         String warning

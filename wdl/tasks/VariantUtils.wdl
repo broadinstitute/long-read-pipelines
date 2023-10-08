@@ -1564,9 +1564,11 @@ def extract_barcode(vcf_file, haplotype_database_file, ref_seq_dict, vcf_out_pat
                             # Write the variant to the output file:
                             vcf_out.write(variant)
                         else:
-                            # We need to pull from the reference for this site:
+                            # We need to pull from the reference for this site.
                             # Add 1 for genomic coordinates:
                             bca = ref_seq_dict[contig][site-1]
+
+                            # TODO: it is possible that we should instead add an X here (https://doi.org/10.1093%2Fpnasnexus%2Fpgac187).  Double-check with Wes.
 
                             # Add our barcode allele:
                             barcode_alleles.append(bca)
