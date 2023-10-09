@@ -164,3 +164,11 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ProcessMalariaBarcodesDemo.wdl
   testParameterFiles:
+- name: ExtractRegionsFromBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ExtractRegionsFromBam.wdl
+  testParameterFiles:
+- name: PfalciparumDrugResistanceSummary
+  subclass: wdl
+  primaryDescriptorPath: /wdl/PfalciparumDrugResistanceSummary.wdl
+  testParameterFiles:

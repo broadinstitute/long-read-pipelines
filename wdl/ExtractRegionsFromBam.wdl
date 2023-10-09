@@ -24,6 +24,7 @@ workflow ExtractRegionsFromBam {
         regions_bed: "Bed file containing regions for which to extract reads."
         participant_name:    "Participant (or sample) name for the given bam file."
         extraction_comment: "Comment to add to the end of the output filename."
+        gcs_out_root_dir:    "Output folder into which to place the results of this workflow."
     }
 
     # First clean the extraction comment:
