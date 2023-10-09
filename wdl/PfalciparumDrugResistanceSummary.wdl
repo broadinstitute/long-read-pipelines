@@ -221,12 +221,12 @@ task CreateDrugResistanceSummary {
             return DrugSensitivity.UNDETERMINED
 
         # Get the drug resistances:
-        chloroquine = get_chloroquine_sensitivity(dr_report_contents)
-        pyrimethamine = get_pyrimethamine_sensitivity(dr_report_contents)
-        sulfadoxine = get_sulfadoxine_sensitivity(dr_report_contents)
-        mefloquine = get_mefloquine_sensitivity(dr_report_contents)
-        artemisinin = get_artemisinin_sensitivity(dr_report_contents)
-        piperaquine = get_piperaquine_sensitivity(dr_report_contents)
+        chloroquine = get_chloroquine_sensitivity("~{raw_drug_resistance_report}")
+        pyrimethamine = get_pyrimethamine_sensitivity("~{raw_drug_resistance_report}")
+        sulfadoxine = get_sulfadoxine_sensitivity("~{raw_drug_resistance_report}")
+        mefloquine = get_mefloquine_sensitivity("~{raw_drug_resistance_report}")
+        artemisinin = get_artemisinin_sensitivity("~{raw_drug_resistance_report}")
+        piperaquine = get_piperaquine_sensitivity("~{raw_drug_resistance_report}")
 
         with open("~{outfile_name}", 'w') as f:
             f.write(f"#~{prefix} Drug Resistances:")
