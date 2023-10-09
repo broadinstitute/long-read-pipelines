@@ -229,7 +229,7 @@ task CreateDrugResistanceSummary {
         piperaquine = get_piperaquine_sensitivity("~{raw_drug_resistance_report}")
 
         with open("~{outfile_name}", 'w') as f:
-            f.write(f"#~{prefix} Drug Resistances:")
+            f.write(f"#~{prefix} Drug Resistances:\n")
             f.write(f"Chloroquine: {chloroquine.name}\n")
             f.write(f"Pyrimethamine: {pyrimethamine.name}\n")
             f.write(f"Sulfadoxine: {sulfadoxine.name}\n")
