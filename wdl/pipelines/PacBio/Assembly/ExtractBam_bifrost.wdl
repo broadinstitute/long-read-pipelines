@@ -29,9 +29,12 @@ task extract_bam{
     }
     command <<<
         samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
-        samtools fasta ~{pref}.bam > ~{pref}.fasta
-        sed '/^>/s/$/\_~{pref}/' < ~{pref}.fasta > ~{pref}_out.fasta # add sample information to each of the fasta file
-        #samtools index ~{pref}.~{region}.bam
+        #samtools fasta ~{pref}.bam > ~{pref}.fasta
+        bedtools bamtofastq -i ~{pref}.bam -fq ~{pref}.fastq
+
+        sed -n '1~4s/^@/>/p;2~4p' ~{pref}.fastq > ~{pref}.fasta
+        sed '/^>/s/$/\|~{pref}/' < ~{pref}.fasta > ~{pref}_out.fasta # add sample information to each of the fasta file
+        
     >>>
 
     output{

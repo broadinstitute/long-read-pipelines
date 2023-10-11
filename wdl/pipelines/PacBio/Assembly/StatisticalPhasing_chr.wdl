@@ -1,6 +1,6 @@
 version 1.0
 
-workflow StatisticalPhasing_whole{
+workflow StatisticalPhasing_chr{
     meta{
         description: "a workflow that extract vcfs and bams in a genomic interval"
     }
@@ -20,6 +20,8 @@ workflow StatisticalPhasing_whole{
     Int data_length = length(wholegenomebams)
     Array[Int] indexes= range(data_length)
 
+    call extract_vcf{input: vcf_input=joint_vcf, vcf_index=joint_vcf_tbi, region=genomeregion, prefix=prefix}
+
     scatter (idx in indexes) {
         File bam = wholegenomebams[idx]
         File bai = wholegenomebai[idx]
@@ -29,8 +31,8 @@ workflow StatisticalPhasing_whole{
             inputbams = bam,
             inputbais = bai,
             ref = reference,
-            joint_vcf = joint_vcf,
-            joint_vcf_tbi = joint_vcf_tbi,
+            joint_vcf = extract_vcf.local_vcf,
+            joint_vcf_tbi = extract_vcf.local_tbi,
             region = genomeregion,
             samplename = sampleid
         }
@@ -59,6 +61,67 @@ workflow StatisticalPhasing_whole{
     }
 }
 
+task extract_vcf{
+    input{
+        File vcf_input
+        File vcf_index
+        String region
+        String prefix
+    }
+    command <<<
+        bcftools view -r ~{region} ~{vcf_input} -o ~{prefix}_subset.vcf
+        bgzip -c ~{prefix}_subset.vcf > ~{prefix}_subset.vcf.gz
+        tabix -p vcf ~{prefix}_subset.vcf.gz
+        rm ~{prefix}_subset.vcf
+    >>>
+
+    output{
+        File local_vcf="~{prefix}_subset.vcf.gz"
+        File local_tbi="~{prefix}_subset.vcf.gz.tbi"
+    }
+
+    Int disk_size = 1 + ceil(2 * size(vcf_input, "GiB"))
+
+    runtime {
+        cpu: 4
+        memory: "16 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 0
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+task extract_bam{
+    input{
+        File bam_input
+        File bam_index
+        String region
+        String pref
+    }
+    command <<<
+        samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
+        samtools index ~{pref}.bam
+    >>>
+
+    output{
+        File local_bam="~{pref}.bam"
+        File local_bai= "~{pref}.bam.bai"
+    }
+
+    Int disk_size = 10 + ceil(2 * size(bam_input, "GiB"))
+
+    runtime {
+        cpu: 1
+        memory: "4 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 0
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
 
 
 task whatshap_phasing {
@@ -96,14 +159,14 @@ task whatshap_phasing {
     }
 
 
-    Int disk_size = 100
+    Int disk_size = 100 + ceil(2 * (size(joint_vcf, "GiB")) + size(inputbams, "GiB"))
 
     runtime {
         cpu: 16
         memory: "64 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
-        preemptible: 2
+        preemptible: 0
         maxRetries: 1
         docker: "hangsuunc/whatshap:v1"
     }
@@ -127,14 +190,14 @@ task merge{
         File merged_tbi = "~{pref}.AllSamples.vcf.gz.tbi"
     }
 
-    Int disk_size = 10 + ceil(2 * size(vcf_input, "GiB"))
+    Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 2
-        memory: "8 GiB"
+        cpu: 32
+        memory: "128 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         # bootDiskSizeGb: 10
-        preemptible: 2
+        preemptible: 0
         maxRetries: 1
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
@@ -151,22 +214,22 @@ task shapeit4{
     }
     command <<<
         # add AN AC tag
-        shapeit4 --input ~{vcf_input} --map ~{mappingfile} --region ~{region} --use-PS 0.0001 --sequencing --output scaffold.bcf --thread ~{num_threads} --log phased.log
+        shapeit4 --input ~{vcf_input} --map ~{mappingfile} --region ~{region} --use-PS 0.0001 --sequencing --output ~{region}_scaffold.bcf --thread ~{num_threads} --log phased.log
     
     >>>
 
     output{
-        File scaffold_vcf = "scaffold.bcf"
+        File scaffold_vcf = "~{region}_scaffold.bcf"
     }
 
     Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 1
-        memory: "50 GiB"
+        cpu: 96
+        memory: "600 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
-        preemptible: 2
+        preemptible: 0
         maxRetries: 1
         docker: "lifebitai/shapeit4:latest"
     }

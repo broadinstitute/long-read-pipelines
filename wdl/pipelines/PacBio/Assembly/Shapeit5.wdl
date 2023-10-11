@@ -11,6 +11,7 @@ workflow Shapeit5{
         String genomeregion
         Int nthreads
     }
+    
     call phasing{input: vcf_input=wholegenomevcf, vcf_index=wholegenometbi, mappingfile= geneticmapping, region=genomeregion, num_threads=nthreads}
     output{
         File scaffold = phasing.scaffold_vcf
@@ -31,7 +32,7 @@ task phasing{
     # add AN AC tag
     bcftools +fill-tags ~{vcf_input} -Ob -o tmp.out.bcf -- -t AN,AC
     bcftools index tmp.out.bcf
-phase_common_static --input tmp.out.bcf --filter-maf ~{minimal_maf} --region ~{region} --map ~{mappingfile} --output scaffold.bcf --thread ~{num_threads}
+    phase_common_static --input tmp.out.bcf --filter-maf ~{minimal_maf} --region ~{region} --map ~{mappingfile} --output scaffold.bcf --thread ~{num_threads}
     >>>
 
     output{
@@ -41,8 +42,8 @@ phase_common_static --input tmp.out.bcf --filter-maf ~{minimal_maf} --region ~{r
     Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 1
-        memory: "50 GiB"
+        cpu: 64
+        memory: "416 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 2

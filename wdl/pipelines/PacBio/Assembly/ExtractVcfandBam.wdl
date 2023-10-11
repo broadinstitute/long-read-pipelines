@@ -16,8 +16,10 @@ workflow ExtractVcfandBam{
     call extract_bam{input: bam_input=wholegenomebam, bam_index=wholegenomebai, region= genomeregion, pref=prefix}
     output{
         File subset_vcf = extract_vcf.local_vcf
-        File subset_tbi = extract_vcf.loca_tbi
+        File subset_tbi = extract_vcf.local_tbi
         File subset_bam = extract_bam.local_bam
+        String read_number = read_string(extract_bam.read_number) 
+        #Map[String, Pair[File, File]] data = {prefix:(subset_vcf, subset_bam)}
     }
 }
 
@@ -37,7 +39,7 @@ task extract_vcf{
 
     output{
         File local_vcf="~{prefix}_subset.vcf.gz"
-        File loca_tbi="~{prefix}_subset.vcf.gz.tbi"
+        File local_tbi="~{prefix}_subset.vcf.gz.tbi"
     }
 
     Int disk_size = 1 + ceil(2 * size(vcf_input, "GiB"))
@@ -62,11 +64,13 @@ task extract_bam{
     }
     command <<<
         samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
+        samtools view -c ~{pref}.bam > read_num.txt
         #samtools index ~{pref}.~{region}.bam
     >>>
 
     output{
         File local_bam="~{pref}.bam"
+        File read_number = "read_num.txt"
         #File local_bai="~{pref}.~{region}.bai"
     }
 

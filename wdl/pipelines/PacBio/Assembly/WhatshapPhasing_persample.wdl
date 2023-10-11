@@ -10,7 +10,7 @@ workflow WhatshapPhasing{
     }
     
     
-    call phasing{input: inputbams=baminputs, ref=reference, outputprefix=outputpref, joint_vcf=joint_g_vcf, joint_vcf_tbi=joint_g_tbi}
+    call phasing{input: inputbams=baminputs, ref=reference, joint_vcf=joint_g_vcf, joint_vcf_tbi=joint_g_tbi, samplename=outputpref}
     
     meta{
         Purpose:" read-based phasing by whatshap"
@@ -30,7 +30,6 @@ task phasing {
         File joint_vcf
         File joint_vcf_tbi
         String samplename
-        String outputprefix
     }
     
     command <<<

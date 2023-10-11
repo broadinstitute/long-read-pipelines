@@ -13,10 +13,11 @@ workflow Bifrost_DBGWAS{
     call extractfa{input: filepath=input_path}
     call construct{input: fas = extractfa.faFiles, ref = reference_fasta, outputpref = outputprefix, kmersize = k}
     output{
-        File graph = construct.graph
-        File graph_index = construct.graph_index
-        File colors = construct.color_file
-        File inputfasta = construct.fasta
+        Array[File] output_files = construct.graph_files
+        # File graph = construct.graph
+        # File graph_index = construct.graph_index
+        # File colors = construct.color_file
+        # File inputfasta = construct.fasta
 
     }
 }
@@ -55,10 +56,11 @@ task construct{
    
 
     output{
-        File color_file="~{outputpref}_Bfrost_graph.color.bfg"
-        File graph = "~{outputpref}_Bfrost_graph.gfa.gz"
-        File graph_index = "~{outputpref}_Bfrost_graph.bfi"
-        File fasta = "all.fasta"
+        Array[File] graph_files = glob("*")
+        # File color_file="~{outputpref}_Bfrost_graph.color.bfg"
+        # File graph = "~{outputpref}_Bfrost_graph.gfa.gz"
+        # File graph_index = "~{outputpref}_Bfrost_graph.bfi"
+        # File fasta = "all.fasta"
     }
 
     Int disk_size = 100 
@@ -70,6 +72,6 @@ task construct{
         bootDiskSizeGb: 10
         preemptible: 2
         maxRetries: 1
-        docker: "hangsuunc/bifrost:v1"
+        docker: "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
     }
 }
