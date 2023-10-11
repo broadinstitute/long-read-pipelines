@@ -202,6 +202,36 @@ task MergeAndSortVCFs {
     }
 }
 
+task MergePerChrVcfWithBcftools {
+    input{
+        Array[File] vcf_input
+        Array[File] tbi_input
+        String pref
+    }
+    command <<<
+        bcftools merge --merge all ~{sep=" " vcf_input} -O v -o ~{pref}.AllSamples.vcf
+        bgzip -c ~{pref}.AllSamples.vcf > ~{pref}.AllSamples.vcf.gz
+        tabix -p vcf ~{pref}.AllSamples.vcf.gz
+    >>>
+
+    output{
+        File merged_vcf = "~{pref}.AllSamples.vcf.gz"
+        File merged_tbi = "~{pref}.AllSamples.vcf.gz.tbi"
+    }
+
+    Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
+
+    runtime {
+        cpu: 32
+        memory: "64 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        # bootDiskSizeGb: 10
+        preemptible: 0
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
 task CollectDefinitions {
 
     meta {
