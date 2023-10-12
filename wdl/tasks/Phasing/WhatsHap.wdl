@@ -6,10 +6,8 @@ task Phase {
         File bai
         File ref
         File fai
-        
         File subsetbysample_vcf
         File subsetbysample_vcf_tbi
-        
         String region
         String samplename
     }

@@ -4,7 +4,6 @@ task SplitVCFbySample {
     input{       
         File joint_vcf
         File joint_vcf_tbi
-        
         String region
         String samplename
     }

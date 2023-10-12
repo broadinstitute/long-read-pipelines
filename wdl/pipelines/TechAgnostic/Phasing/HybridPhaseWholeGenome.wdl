@@ -1,6 +1,7 @@
 version 1.0
 
 import "HybridPhaseOneChrSmallVariants.wdl" as PhaseOneChr
+import "../../../tasks/Utility/VariantUtils.wdl" as VU
 
 workflow HybridPhaseWholeGenome {
     meta{
@@ -23,10 +24,13 @@ workflow HybridPhaseWholeGenome {
 
     # double scatter: first by chr, then by sample
     scatter (genome_region in chr_list) {
-        
-        call extract_vcf { input: 
-            vcf_input=joint_vcf, vcf_index=joint_vcf_tbi, region=genome_region, prefix=prefix
+        call VU.SubsetVCF {input:
+            vcf_gz = joint_vcf,
+            vcf_tbi = joint_vcf_tbi,
+            locus = genome_region
         }
+
+
 
     }
 
