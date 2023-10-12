@@ -189,7 +189,7 @@ task compileSVstats {
             mv $file ./stats_by_sample
         done
 
-        python <<CODE
+        python3 <<CODE
 import os
 import subprocess
 
