@@ -22,7 +22,7 @@ workflow HybridPhaseWholeGenome {
     }
     Map[String, String] genetic_mapping_dict = read_map(genetic_mapping_tsv)
 
-    Array[String] chr_list = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8"]
+    Array[String] chr_list = ["chr1", "chr6",]
 
     # double scatter: first by chr, then by sample
     scatter (genome_region in chr_list) {
