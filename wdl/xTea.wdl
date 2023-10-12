@@ -53,7 +53,6 @@ task xTea {
     command <<<
         set -x
 
-        dir=$(pwd)
         mem=$(grep '^MemTotal' /proc/meminfo | awk '{ print int($2/1000000) }')
         cpus=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 }')
 
@@ -64,30 +63,29 @@ task xTea {
         # generate running script
         python /xTea/xtea_long/gnrt_pipeline_local_long_read_v38.py -i sample_name_file \
                 -b bam_file \
-                -p ${dir}/ \
+                -p ./ \
                 -o submit_jobs.sh \
                 --xtea /xTea/xtea_long/ \
                 -n $cpus \
                 -m $mem \
                 -t 240.00 \
                 -r ~{ref_fa} \
-                --cns /rep_lib_annotation/consensus/LINE1.fa \
+                --cns /rep_lib_annotation/consensus/ \
                 --rep /rep_lib_annotation/ \
-                -- min 4000 \
+                --min 4000 \
                 -f 31 \
                 -y 15 \
-                --clean --rmsk /xTea/rep_lib_annotation/LINE/~{ref_name}/~{ref_name}_L1_larger_500_with_all_L1HS.out
+                --clean --rmsk /rep_lib_annotation/LINE/~{ref_name}/~{ref_name}_L1_larger_500_with_all_L1HS.out
 
         # run pipeline
-        cd ~{sample_name}
-        chmod +x run_xTEA_pipeline.sh
-        ./run_xTEA_pipeline.sh
+        chmod +x ~{sample_name}/run_xTEA_pipeline.sh
+        ./~{sample_name}/run_xTEA_pipeline.sh
 
         # save outputs
-        cat classified_results.txt.merged_HERV.txt \
-          classified_results.txt.merged_SVA.txt \
-          classified_results.txt.merged_ALU.txt \
-          classified_results.txt.merged_LINE1.txt > ${dir}/~{prefix}_xTea_output.txt
+        cat ~{sample_name}/classified_results.txt.merged_HERV.txt \
+          ~{sample_name}/classified_results.txt.merged_SVA.txt \
+          ~{sample_name}/classified_results.txt.merged_ALU.txt \
+          ~{sample_name}/classified_results.txt.merged_LINE1.txt > ~{prefix}_xTea_output.txt
     >>>
 
     output {
