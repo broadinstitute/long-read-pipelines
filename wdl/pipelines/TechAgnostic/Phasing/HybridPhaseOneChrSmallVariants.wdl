@@ -51,18 +51,17 @@ workflow HybridPhase {
         call WhatsHap.Phase as whatshap_phasing { input:
             bam = bam,
             bai = bai,
-            ref = reference,
-            fai = reference_index,
-            subsetbysample_vcf = Split.single_sample_vcf,
-            subsetbysample_vcf_tbi = Split.single_sample_vcf_tbi,
-            region = chromosome,
-            samplename = sample_id
+            ref_fasta = reference,
+            ref_fasta_fai = reference_index,
+            unphased_vcf = Split.single_sample_vcf,
+            unphased_tbi = Split.single_sample_vcf_tbi,
+            chromosome = chromosome
         }
     }
         
     call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
         vcf_input = whatshap_phasing.phased_vcf,
-        tbi_input = whatshap_phasing.phase_vcf_tbi,
+        tbi_input = whatshap_phasing.phased_tbi,
         pref = prefix
     }
 
