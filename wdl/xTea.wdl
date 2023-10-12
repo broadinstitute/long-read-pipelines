@@ -61,6 +61,7 @@ task xTea {
         echo ~{sample_name}$'\t'~{bam} > bam_file
 
         # generate running script
+        # note cns and rmsk are both for "ghost" L1 calling so that's why they are L1-specific
         python /xTea/xtea_long/gnrt_pipeline_local_long_read_v38.py -i sample_name_file \
                 -b bam_file \
                 -p ./ \
@@ -70,7 +71,7 @@ task xTea {
                 -m $mem \
                 -t 240.00 \
                 -r ~{ref_fa} \
-                --cns /rep_lib_annotation/consensus/ \
+                --cns /rep_lib_annotation/consensus/LINE1.fa \
                 --rep /rep_lib_annotation/ \
                 --min 4000 \
                 -f 31 \
