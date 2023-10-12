@@ -4,6 +4,7 @@ import "../../../tasks/Utility/Utils.wdl"
 import "../../../tasks/Utility/VariantUtils.wdl" as VU
 import "../../../tasks/Phasing/StatisticalPhasing.wdl" as StatPhase
 import "../../../tasks/Phasing/WhatsHap.wdl"
+import "../../../tasks/Phasing/SplitJointCallbySample.wdl" as SplitJoint
 
 workflow HybridPhase {
     meta{
@@ -19,6 +20,7 @@ workflow HybridPhase {
         Array[File] one_chr_bams_from_all_samples
         Array[File] one_chr_bais_from_all_samples
         File reference
+        File reference_index
         File genetic_mapping_tsv_for_shapeit4
         String chromosome
         String prefix
@@ -30,15 +32,25 @@ workflow HybridPhase {
     scatter (bam_bai in zip(one_chr_bams_from_all_samples, one_chr_bais_from_all_samples)) {
         File bam = bam_bai.left
         File bai = bam_bai.right
-        call Utils.InferSampleName {input: bam = bam, bai = bai}
+        call Utils.InferSampleName { input: 
+            bam = bam, 
+            bai = bai}
         String sample_id = InferSampleName.sample_name
+
+        call SplitJoint.SplitVCFbySample as Split { input:
+            File joint_vcf = one_chr_joint_vcf,
+            File joint_vcf_tbi = one_chr_joint_vcf_tbi,
+            String region = chromosome,
+            String samplename = sample_id
+        }
 
         call WhatsHap.Phase as whatshap_phasing { input:
             bam = bam,
             bai = bai,
             ref = reference,
-            joint_vcf = one_chr_joint_vcf,
-            joint_vcf_tbi = one_chr_joint_vcf_tbi,
+            fai = reference_index,
+            subsetbysample_vcf = Split.single_sample_vcf,
+            subsetbysample_vcf_tbi = Split.single_sample_vcf_tbi,
             region = chromosome,
             samplename = sample_id
         }

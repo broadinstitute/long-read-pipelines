@@ -4,11 +4,11 @@ task Phase {
     input{
         File bam
         File bai
-
         File ref
+        File fai
         
-        File joint_vcf
-        File joint_vcf_tbi
+        File subsetbysample_vcf
+        File subsetbysample_vcf_tbi
         
         String region
         String samplename
@@ -16,15 +16,8 @@ task Phase {
     
     command <<<
         set -x pipefail
-
-        samtools faidx ~{ref}
-
-        time \
-        bcftools view -s ~{samplename} ~{joint_vcf} -r ~{region} -o ~{samplename}.subset.g.vcf.bgz
-
-        tabix -p vcf ~{samplename}.subset.g.vcf.bgz
         
-        whatshap phase -o ~{samplename}.phased.vcf --tag=PS --reference=~{ref} ~{samplename}.subset.g.vcf.bgz ~{bam}
+        whatshap phase -o ~{samplename}.phased.vcf --tag=PS --reference=~{ref} ~{subsetbysample_vcf} ~{bam}
 
         bgzip -c ~{samplename}.phased.vcf > ~{samplename}.phased.vcf.gz
 
@@ -38,7 +31,7 @@ task Phase {
     }
 
 
-    Int disk_size = 100 + ceil(2 * (size(joint_vcf, "GiB")) + size(bam, "GiB"))
+    Int disk_size = 100 + ceil(2 * (size(subsetbysample_vcf, "GiB")) + size(bam, "GiB"))
 
     runtime {
         cpu: 16
