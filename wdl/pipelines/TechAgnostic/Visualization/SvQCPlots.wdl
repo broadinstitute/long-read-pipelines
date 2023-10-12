@@ -221,7 +221,7 @@ def compile_stats(caller, svtypes, samples, basedir, outfile):
     for sample in samples:
         # Count lines in the file
         #with open(os.path.join(basedir, f"{sample}.{caller}.svlen)", 'r') as file:
-        with open(os.path.join(basedir, "{}.{}.svlen".format(sample, caller), 'r') as file:
+        with open(os.path.join(basedir, "{}.{}.svlen".format(sample, caller), 'r')) as file:
             ALL = sum(1 for _ in file)
 
         #counts_by_SV = subprocess.check_output(f"cut -f1 {os.path.join(basedir, f'{caller}_stats', sample)} | sort | uniq -c", shell=True)
