@@ -99,6 +99,9 @@ workflows:
 - name: HybridPhaseOneChrSmallVariants
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseOneChrSmallVariants.wdl
+- name: HybridPhaseOneChrSmallVariantMargin
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseOneChrSmallVariantMargin.wdl
 - name: HybridPhaseWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseWholeGenome.wdl
