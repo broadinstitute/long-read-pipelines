@@ -8,13 +8,11 @@ workflow Statistics {
         description : "..."
     }
     parameter_meta {
-        one_chr_bams_from_all_samples:  "GCS path to subset BAM files"
-        one_chr_bais_from_all_samples:  "GCS path to subset BAI file indices"
+        
     }
 
     input {
         File phased_scaffold
-        File phased_scaffold_index
         String chromosome
         Array[File] SampleIDs
     }
@@ -22,7 +20,6 @@ workflow Statistics {
     scatter (sampleid in SampleIDs) {
         call SplitJointCallbySample.SplitVCFbySample as SP { input:
             joint_vcf = phased_scaffold,
-            joint_vcf_tbi = phased_scaffold_index,
             region = chromosome,
             samplename = sampleid
         }
