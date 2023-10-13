@@ -9,8 +9,8 @@ task SplitVCFbySample {
     
     command <<<
         set -x pipefail
-        
-        bcftools index joint_vcf
+
+        bcftools index ~{joint_vcf}
 
         bcftools view -s ~{samplename} ~{joint_vcf} -r ~{region} -o ~{samplename}.subset.g.vcf.bgz
 
