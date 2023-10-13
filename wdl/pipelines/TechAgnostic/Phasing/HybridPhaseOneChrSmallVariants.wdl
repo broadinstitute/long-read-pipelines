@@ -43,7 +43,6 @@ workflow HybridPhase {
 
         call SplitJointCallbySample.SplitVCFbySample as Split { input:
             joint_vcf = one_chr_joint_vcf,
-            joint_vcf_tbi = one_chr_joint_vcf_tbi,
             region = chromosome,
             samplename = sample_id
         }
