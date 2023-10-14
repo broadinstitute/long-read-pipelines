@@ -94,3 +94,5 @@ RUN apt-get -qqy update --fix-missing && \
            /usr/share/man/?? \
            /usr/share/man/??_* && \
     samtools --help
+
+COPY vm_local_monitoring_script.sh /opt/
