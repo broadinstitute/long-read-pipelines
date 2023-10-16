@@ -7,161 +7,193 @@ import random as rnd
 import tabulate
 import re
 from enum import Enum
-from io import StringIO
+
 
 # Plotting
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import plotly.express as px
 import folium
 import plotly.graph_objects as go
+import math
 
 
 # HTML
 from markupsafe import Markup
 import jinja2
+import io
+from io import StringIO
+import base64
+
 
 # Argument Parsing
 import argparse
 
 
+''' 
+matplotlib render settings
+'''
+# Make big figures:
+gFIG_SIZE_in = [14, 10]
+
+# Set plotting defaults:
+gPLOT_PARAMS = {
+    "legend.fontsize": "x-large",
+    "figure.figsize": gFIG_SIZE_in,
+    "axes.labelsize": "x-large",
+    "axes.titlesize": "x-large",
+    "xtick.labelsize": "x-large",
+    "ytick.labelsize": "x-large"
+}
+matplotlib.rcParams.update(gPLOT_PARAMS)
+plt.rcParams.update(gPLOT_PARAMS)
+
+# Some single-place definitions of sizes for plots / figures:
+gFONT_SIZE_UNITS = "pt"
+gTITLE_FONT_SIZE = 36
+gAXIS_LABEL_FONT_SIZE = 24
+gTICK_LABEL_FONT_SIZE = 16
+gTEXT_FONT_SIZE = 16
+
+# To track global figure number creation:
+gFIG_NUM = 0
+
+
+def fix_plot_visuals(fig,
+                     titlesize=gTITLE_FONT_SIZE,
+                     labelsize=gAXIS_LABEL_FONT_SIZE,
+                     ticklabelsize=gTICK_LABEL_FONT_SIZE,
+                     textsize=gTEXT_FONT_SIZE,
+                     tight_rect=None):
+    """Fix the plot elements to be appropriate sizes for a slide / presentation."""
+
+    if not textsize:
+        textsize = ticklabelsize
+
+    for ax in fig.get_axes():
+
+        for ticklabel in (ax.get_xticklabels()):
+            ticklabel.set_fontsize(ticklabelsize)
+        for ticklabel in (ax.get_yticklabels()):
+            ticklabel.set_fontsize(ticklabelsize)
+        for c in ax.get_children():
+            if c.__class__ == matplotlib.text.Text:
+                c.set_fontsize(textsize)
+
+        ax.xaxis.get_label().set_fontsize(labelsize)
+        ax.yaxis.get_label().set_fontsize(labelsize)
+        ax.title.set_fontsize(titlesize)
+
+    for c in fig.get_children():
+        if c.__class__ == matplotlib.legend.Legend:
+            c.prop.set_size(ticklabelsize)
+            c.get_title().set_size(ticklabelsize)
+
+    if tight_rect:
+        fig.tight_layout(rect=tight_rect)
+    else:
+        fig.tight_layout()
+    
+    if fig._suptitle:
+        sup_title = fig._suptitle.get_text()
+        fig.suptitle(sup_title, fontsize=titlesize)
+    
+    # Make it so we can actually see what's happening on the plots with "dark mode":
+    fig.patch.set_facecolor("white")
+
+
 '''
 Coverage Plot
 '''
-def get_coverage_pos():
-    #load in phage genome fasta
-    fasta_file = open("Plasmodium_falciparum.ASM276v2.dna.chromosome.1.fa")
-    ref_seq = fasta_file.read().split('\n', 1)[1] #remove the header
-    ref_seq = ref_seq.rstrip('\n') #remove trailing newline
-    ref_seq = ref_seq.replace('\n','') #remove middle newlines
-    ref_seq_list = list(ref_seq)
-    len(ref_seq_list)
-
-    #generate 5000 150bp reads - sequence positions are 1-based as in SAM/BAM files
-    rnd.seed(42)
-    start_pos_all = np.array(rnd.choices(range(1,len(ref_seq_list)-150), k = 5000)) #sample with replacement
-    end_pos_all = start_pos_all + 150 #add 150bp to sstart to get where end of the read maps
-
-    print(f'total reads: {len(start_pos_all)}')
-    print(f'covered sequence: {np.min(start_pos_all)} - {np.max(end_pos_all)}bp')
-
-def get_sequence_coverage1(start_pos_all:np.array, end_pos_all:np.array, start_region:int, end_region:int):
-    '''
-    Get coverage over a region of the sequence by jumping between 
-    start and end positions of reads, incrementing coverage as you go. 
-    Infers that until you encounter the start or end of a read, you
-    do not change the coverage value, and therefore you avoid looping 
-    over all bp of interest, saving time.
+# Function to go through each .bed.gz file, iterate through it and bin it, and plot it
+# to a larger table which is plotted later.
+def plot_coverage(directory, sample_name, bin_width=500):
     
-    start_pos_all: array of all sequence start positions for reads 
-    end_pos_all: array of all sequence end positions for reads. Must be greater than start_pos_all for a single read
-    start_region: starting bp of region of interest for plotting (int). min value = 1
-    end_region: end bp of region of interest for plotting (int). Greater than start_region
-    
-    Requires numpy (import as np)
-    '''
-    #start and end values must be sorted low to high
-    start_pos = start_pos_all[~(end_pos_all < start_region)] #ignore all reads that end before region of interest
-    end_pos = end_pos_all[~(end_pos_all < start_region)]
+    # only looking for .bed.gz files
+    ext = (".bed.gz")
 
-    start_pos.sort()
-    end_pos.sort()
-    
-    start_pos[start_pos < start_region] = start_region #truncate reads that start before region of interest
-    
-    #moving pointer for sequence position
-    seq_pos = start_region
-    #running coverage value
-    cov = 0
-    #initialize empty array to store coverage values
-    coverage = np.zeros(end_region-(start_region-1))
-    #moving pointer for index in coverage array
-    idx = 0
-    #initialize indices at 0
-    i=0
-    j=0
-    
-    #while within the index range of the reads
-    while (j < len(start_pos) and i < len(end_pos)): 
-        #if you haven't hit the start of the last read and encounter the start position of a read first
-        if (j < (len(start_pos) - 1) and start_pos[j] < end_pos[i]):
-            seq_pos_jump = start_pos[j] #jump to start_pos[j]
-            j += 1 #increment index
-            cov_increment = 1 #increment coverage value
-        #if you encounter the end position of a read first or you've reached the start of the last read
-        elif (start_pos[j] > end_pos[i] or j == len(start_pos)-1):
-            seq_pos_jump = end_pos[i] #jump to end_pos[i]
-            i += 1 #increment index
-            cov_increment = -1 #decrement coverage value    
-        #if you encounter start and end position of a read at the same position   
-        else:
-            seq_pos_jump = start_pos[j]+1 #jump by 1bp
-            cov_increment = 1 #increment coverage value
-            j+=1
-        #store the constant coverage value from seq_pos to seq_pos_jump, correcting for 0-indexing
-        jump = idx + (seq_pos_jump - seq_pos)  
-        if jump <= len(coverage):
-            coverage[idx:jump] = [cov] * (seq_pos_jump - seq_pos)
-        else:
-            coverage[idx:] = [cov] * (len(coverage) - idx) #if you run out of room in the array
-            break
+    # Set up DF to hold all data
+    beds = pd.DataFrame(columns={"stop", "depth"})
 
-        idx = jump #update index
-        cov += cov_increment #update coverage value
-        seq_pos = seq_pos_jump #update seq position
+    # Reading and sorting files
+    file_list = os.listdir(directory)
+    dir_len = len(file_list)
+    print(f"Files to be plotted: {file_list}")
     
-    return coverage
+    # Plot setup
+    fig, ax = plt.subplots(1,1, figsize=(15, 9))
+    plt.title(f"Coverage Plot of Sample {sample_name}", pad=12, fontsize=12)
+    plt.xlabel("Contig (bp)", labelpad=10, fontsize=12)
+    plt.ylabel("Depth", labelpad=10, fontsize=12)
+    color = plt.cm.viridis(np.linspace(0, 1, dir_len))
+    tick_positions = []
+    contigs = []
+    bin_max = 0
+ 
+    # Iterate over each bed.gz in test_data folder
+    for idx, file in enumerate(file_list):
 
-def get_sequence_coverage2(start_pos_all:np.array, end_pos_all:np.array, start_region:int, end_region:int):
-    '''
-    Get coverage over a region of the sequence by iterating through
-    the reads and incrementing coverage in the region of the genome
-    that the read covers. 
+        if file.endswith(ext):
+            # Reading current .bed.gz file
+            f = os.path.join(directory, file)
+            #print(f"\n{idx} Current file: {f}")
 
-    start_pos_all: array of all sequence start positions for reads 
-    end_pos_all: array of all sequence end positions for reads. Must be greater than start_pos_all for a single read
-    start_region: starting bp of region of interest for plotting (int). min value = 1
-    end_region: end bp of region of interest for plotting (int). Greater than start_region
+            # Create DataFrame per .bed.gz
+            bed_df = pd.read_csv(f, delimiter="\\t", names=["contig", "start", "stop", "depth"], engine="python")
+            
+            # Get bins
+            #print("Getting bins...")
+            start_min = bed_df["start"].min()
+            stop_max = bed_df["stop"].max()
+            bins = np.arange(start_min, stop_max+1, bin_width)
+            values = np.zeros(len(bins)) 
+            #print(f"Max Pos: {stop_max}")
+
+            # Iterrate through each DataFrame and populate bins
+            #print("Populating bins...")
+            for _, row in bed_df.iterrows():
+                avg = (row["stop"]+row["start"])/2
+                index = int(np.floor(avg/bin_width))
+                values[index]+=row["depth"]
+
+            # Append new data to DF
+            #print("Plotting data...")
+            if(idx == 0):
+                ax.plot(bins, values, ".", c=color[idx])
+                tick_positions.append(math.floor(stop_max/2)+bin_max)
+                bin_max = max(bed_df["stop"])
+            else:
+                ax.plot(bins+bin_max, values, ".", c=color[idx])
+                tick_positions.append(math.floor(stop_max/2)+bin_max)
+                bin_max = bin_max + max(bed_df["stop"])                      
+                               
+            # Saving xtick data
+            
+            contigs.append(bed_df["contig"][0])
+            
+            print(f"{idx+1}/{dir_len} files completed!")
+                
+    # Setting xticks
+    ax.set_xticks(ticks=tick_positions)
+    ax.set_xticklabels(labels=contigs, rotation=90)
     
-    Requires numpy (import as np)
-    '''
-    #initialize empty array to store coverage values
-    genome_coverage = np.zeros(end_region-(start_region-1))
+    fix_plot_visuals(fig)
+            
+    return fig
 
-    #pick reads that fall within the region of interest
-    #ignore all reads that end before region of interest and start after region of interest
-    start_pos = start_pos_all[~((end_pos_all < start_region) & (start_pos_all > end_region))]
-    end_pos = end_pos_all[~((end_pos_all < start_region) & (start_pos_all > end_region))]
-
-    #iterate through reads and increment coverage
-    for i in range(0, len(start_pos)):
-        genome_coverage[start_pos[i]:end_pos[i]] += 1
+# Function to convert given plot to b64 using I/O buffer
+def img_to_b64(plot):
     
-    return genome_coverage
-
-def plot_coverage(start_pos_all:np.array, end_pos_all:np.array, start_region:int, end_region:int, version = 1):
+    # Create I/O buffer to save image in bytes
+    stringIObytes = io.BytesIO()
+    plot.savefig(stringIObytes, format="jpeg")
     
-    '''
-    Plots output of get_sequence_coverage(). Requires matplotlib.pyplot (plt)
-    version: 1 uses get_sequence_coverage1, 2 uses get_sequence_coverage2
-    '''
-    if version == 2:
-        coverage = get_sequence_coverage2(start_pos_all, end_pos_all, start_region, end_region)
-    else:
-        coverage = get_sequence_coverage1(start_pos_all, end_pos_all, start_region, end_region)
-        
-    #plotting
-    fig, ax = plt.subplots(1,1, figsize=(20,6))
-    ax.bar(range(start_region, end_region+1), coverage, width=1, \
-           color = 'silver', edgecolor = 'dimgray',linewidth = 1,align='center')
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    # Retrieve byte-string and encode it in base64
+    stringIObytes.seek(0)
+    plot_b64 = base64.b64encode(stringIObytes.read())
     
-    ax.set_xlabel('Sequence Position', fontsize = 18)
-    ax.set_ylabel('Coverage', fontsize = 18)
-    ax.tick_params(labelsize = 16)
-    plt.margins(0,0.05)
-
+    return plot_b64
 
 
 '''
@@ -460,13 +492,14 @@ class Analysis:
     Additionally, it passes in variables needed for plot generation in Javascript.
     '''
     
-    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, active_channels):
+    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, active_channels, coverage_plot):
         '''This function defines the variables used and retrieves them from their respective functions.'''
         
         self.sequencing_summary = sequencing_summary
         self.scores = qscore_scores
         self.reads = qscore_reads
         self.active_channels = active_channels
+        self.coverage_plot = coverage_plot
         # self.reference_info = reference_info
 
 
@@ -482,7 +515,7 @@ def create_report(sample, analysis):
     print("cwd: "+os.getcwd())
 
     # creating summary page
-    templateLoader = jinja2.FileSystemLoader(searchpath='/report-files/templates/')
+    templateLoader = jinja2.FileSystemLoader(searchpath='templates/')
     templateEnv = jinja2.Environment(loader=templateLoader)
     TEMPLATE_FILE = 'report.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
@@ -552,8 +585,9 @@ if __name__ == '__main__':
     parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True)
     parser.add_argument("--fraction_aligned_bases", help="number of bases aligned out of all bases sequenced", required=True, type=float)
     parser.add_argument("--average_identity", help="", required=True, type=float) # check
-
-    # Coverage Plot -- incomplete
+    
+    # Coverage Plot -- in progress
+    parser.add_argument("--coverage_dir", help="location of bed files used for coverage plot")
 
     # parse given arguments
     args = parser.parse_args()
@@ -617,10 +651,17 @@ if __name__ == '__main__':
     qscorex = [5, 7, 10, 12, 15] # available q-score measures are predetermined
     qscorey = [arg_dict['num_reads_q5'], arg_dict['num_reads_q7'], arg_dict['num_reads_q10'], arg_dict['num_reads_q12'], arg_dict['num_reads_q15']]
 
+    coverage_dir = arg_dict['coverage_dir']
+    coverage_plot = plot_coverage(coverage_dir, sample_name, 750) # default bin size = 1000
+    coverage_b64 = img_to_b64(coverage_plot)
+    
+    # For debugging purposes, save plot:
+    coverage_plot.savefig("coverage_plot.jpeg")
+    
     # create summary and analysis objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
 
-    analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels)
+    analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64)
 
     # finally, call function to populate and generate the report pages
     create_report(summary, analysis)
