@@ -27,7 +27,7 @@ RUN pip3 install --upgrade pip==23.2.1
 RUN pip3 install --no-cache-dir NumPy==1.24.4
 RUN pip3 install --no-cache-dir pandas==1.3.0
 RUN pip3 install --no-cache-dir argparse==1.4.0 folium==0.14.0 jinja2==3.1.2 \
-		MarkupSafe==2.1.3 matplotlib==3.7.2 \
+		MarkupSafe==2.1.3 matplotlib==3.8.0 \
 		plotly==5.15.0 tabulate==0.9.0
 
 ENV PATH=/root/google-cloud-sdk/bin/:${PATH}

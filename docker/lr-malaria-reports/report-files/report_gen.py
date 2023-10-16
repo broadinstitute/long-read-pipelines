@@ -12,7 +12,6 @@ from enum import Enum
 # Plotting
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import plotly.express as px
 import folium
 import plotly.graph_objects as go
@@ -515,7 +514,7 @@ def create_report(sample, analysis):
     print("cwd: "+os.getcwd())
 
     # creating summary page
-    templateLoader = jinja2.FileSystemLoader(searchpath='templates/')
+    templateLoader = jinja2.FileSystemLoader(searchpath='/report-files/templates/')
     templateEnv = jinja2.Environment(loader=templateLoader)
     TEMPLATE_FILE = 'report.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
