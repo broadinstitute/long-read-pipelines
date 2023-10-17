@@ -7,10 +7,13 @@ import "../../../tasks/Preprocessing/Longbow.wdl" as Longbow
 import "../../../tasks/QC/AlignedMetrics.wdl" as AM
 import "../../../tasks/Visualization/NanoPlot.wdl" as NP
 import "../../../tasks/Utility/Finalize.wdl" as FF
-
 import "../../../tasks/Transcriptomics/MASSeq.wdl" as MAS
 
-import "../../../tasks/Utility/JupyterNotebooks.wdl" as JUPYTER
+
+struct DataTypeParameters {
+    Int num_shards
+    String map_preset
+}
 
 workflow PBFlowcell {
 

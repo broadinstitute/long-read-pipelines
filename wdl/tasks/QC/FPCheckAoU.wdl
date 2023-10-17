@@ -1,5 +1,6 @@
 version 1.0
 
+import "../../structs/Structs.wdl"
 import "../QC/Fingerprinting.wdl" as FPUtils
 import "../Utility/VariantUtils.wdl"
 

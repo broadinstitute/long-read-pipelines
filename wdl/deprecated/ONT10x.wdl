@@ -1,10 +1,10 @@
 version 1.0
 
+import "../structs/Structs.wdl"
 import "../tasks/Utility/Utils.wdl" as Utils
 import "../tasks/Utility/ONTUtils.wdl" as ONT
 import "tasks/C3POa.wdl" as C3
 import "../tasks/Alignment/AlignReads.wdl" as AR
-import "../tasks/QC/AlignedMetrics.wdl" as AM
 import "../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONT10x {

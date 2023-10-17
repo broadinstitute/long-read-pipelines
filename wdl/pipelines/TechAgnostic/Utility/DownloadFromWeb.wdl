@@ -6,6 +6,7 @@ version 1.0
 # reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
 ##########################################################################################
 
+import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Utils.wdl" as Utils
 
 workflow DownloadFromWeb {

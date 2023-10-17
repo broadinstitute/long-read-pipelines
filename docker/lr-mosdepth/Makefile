@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-mosdepth
-VERSION = 0.3.1 # This should match the MosDepth version number
+VERSION = 0.3.2 # This should match the MosDepth version number
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest

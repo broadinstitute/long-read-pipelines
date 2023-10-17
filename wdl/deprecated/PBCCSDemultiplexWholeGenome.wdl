@@ -10,7 +10,6 @@ version 1.0
 
 import "../tasks/Utility/PBUtils.wdl" as PB
 import "../tasks/Utility/Utils.wdl" as Utils
-import "../tasks/Alignment/AlignReads.wdl" as AR
 import "../tasks/QC/AlignedMetrics.wdl" as AM
 import "../tasks/VariantCalling/CallVariantsPBCCS.wdl" as VAR
 import "../tasks/Utility/Finalize.wdl" as FF
