@@ -28,6 +28,7 @@ def main():
     pysam.set_verbosity(0)
 
     num_alignments, num_dropped_alignments = 0, 0
+    duplicate_signatures = []
     bf = pysam.Samfile(args.bam, 'rb', check_sq=False)
     with pysam.Samfile(f'{args.prefix}.bam', 'wb', header=bf.header) as out:
         # we rely on the observation that for coordinate sorted BAM,
@@ -52,10 +53,11 @@ def main():
                     current_position = pos
                     current_signatures = set()
                     current_signatures.add(signature)
-                elif signature in current_signatures:  # You're wanted!
+                elif signature in current_signatures:  # You're a duplicate record, and not appearing for the 1st time!
                     num_dropped_alignments += 1
+                    duplicate_signatures.append(signature)  # same signature may appear more than twice, hence list and append
                     pass
-                else:  # you are a new group of duplicates that map to this location
+                else:  # you are in a new group of duplicates that map to this location
                     out.write(read)
                     current_signatures.add(signature)
             else:
@@ -64,6 +66,10 @@ def main():
     print(f'num_alignments: {num_alignments}')
     print(f'num_dropped_alignments: {num_dropped_alignments}')
     print(f'num_kept_alignments: {num_alignments - num_dropped_alignments}')
+
+    with open(f'{args.prefix}.duplicate.signatures.txt', 'w') as out:
+        for sig in duplicate_signatures:
+            out.write(f"{sig}\n")
 
 
 if __name__ == "__main__":

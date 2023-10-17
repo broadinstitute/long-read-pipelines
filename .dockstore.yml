@@ -1,17 +1,11 @@
 version: 1.2
 workflows:
+
+###################################################
+# deprecated
 - name: ONT10x
   subclass: wdl
   primaryDescriptorPath: /wdl/deprecated/ONT10x.wdl
-- name: ONTWholeGenome
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/ONT/VariantCalling/ONTWholeGenome.wdl
-- name: ONTFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcell.wdl
-- name: PBFlowcell
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/PacBio/Alignment/PBFlowcell.wdl
 - name: PBCCS
   subclass: wdl
   primaryDescriptorPath: /wdl/deprecated/PBCCS.wdl
@@ -24,21 +18,24 @@ workflows:
 - name: PBCCSDemultiplexWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/deprecated/PBCCSDemultiplexWholeGenome.wdl
-- name: PBCCSIsoSeq
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBCCSIsoSeq.wdl
-- name: PBCCSWholeGenome
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PBCCSWholeGenome.wdl
 - name: PBCLRDemultiplexWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/deprecated/PBCLRDemultiplexWholeGenome.wdl
 - name: PBCLRWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/deprecated/PBCLRWholeGenome.wdl
-- name: LRCNVs
+- name: DownloadFromHudsonAlpha
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
+  primaryDescriptorPath: /wdl/deprecated/DownloadFromHudsonAlpha.wdl
+
+###################################################
+# ONT
+- name: ONTWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/VariantCalling/ONTWholeGenome.wdl
+- name: ONTFlowcell
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcell.wdl
 - name: ONTBasecall
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTBasecall.wdl
@@ -48,15 +45,6 @@ workflows:
 - name: ONTAssembleWithFlye
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Assembly/ONTAssembleWithFlye.wdl
-- name: VerifyFingerprint
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
-- name: DownloadFromHudsonAlpha
-  subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated/DownloadFromHudsonAlpha.wdl
-- name: PBAssembleWithHifiasm
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/PBAssembleWithHifiasm.wdl
 - name: ONTMethylation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Epigenomics/ONTMethylation.wdl
@@ -66,12 +54,51 @@ workflows:
 - name: ONTPfTypeDrugResistanceMarkers
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/MultiAnalysis/ONTPfTypeDrugResistanceMarkers.wdl
+- name: ONTProcessBasecall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTProcessBasecall.wdl
+- name: ONTFlowcellFromMultipleBasecalls
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
+- name: RemoveDuplicateFromMergedONTBamAndSplitByReadgroup
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/RemoveDuplicateFromMergedONTBamAndSplitByReadgroup.wdl
+- name: DeduplicateAndResetONTAlignedBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/DeduplicateAndResetONTAlignedBam.wdl
+
+###################################################
+# PacBio
+- name: PBFlowcell
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Alignment/PBFlowcell.wdl
+- name: PBCCSIsoSeq
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBCCSIsoSeq.wdl
+- name: PBCCSWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PBCCSWholeGenome.wdl
+- name: PBAssembleWithHifiasm
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/PBAssembleWithHifiasm.wdl
 - name: PBMASIsoSeqQuantify
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqQuantify.wdl
 - name: PBMASIsoSeqDemultiplex
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqDemultiplex.wdl
+- name: SplitMergedPacBioBamByReadgroup
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/SplitMergedPacBioBamByReadgroup.wdl
+
+###################################################
+# TechAgnostic
+- name: LRCNVs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
+- name: VerifyFingerprint
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
 - name: LRJointCallGVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRJointCallGVCFs.wdl
@@ -87,12 +114,9 @@ workflows:
 - name: DownloadFromWeb
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromWeb.wdl
-- name: ONTProcessBasecall
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTProcessBasecall.wdl
-- name: ONTFlowcellFromMultipleBasecalls
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
 - name: CleanupIntermediate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
+- name: SplitBamByReadgroup
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SplitBamByReadgroup.wdl

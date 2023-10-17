@@ -1,11 +1,12 @@
-# some basic bioinformatics utilities.
+# incorporate samtools and bcftools, plus some additional but most common genomics tools
+# then support both gsutil and gcloud CLIs
 
 ############### stage 0: build samtools and bcftools from source
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SAMTOOLS_VERSION=1.13
-ARG BCFTOOLS_VERSION=1.13
+ARG SAMTOOLS_VERSION=1.18
+ARG BCFTOOLS_VERSION=1.18
 RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
@@ -40,8 +41,8 @@ RUN apt-get -qqy update --fix-missing && \
     samtools --help && \
     bcftools --help
 
-############### stage 1: other commonly used bioinformatics utilities 
-FROM ubuntu:18.04
+############### stage 1: other commonly used bioinformatics utilities
+FROM ubuntu:20.04
 
 ENV HOME=/root
 
@@ -57,21 +58,20 @@ RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
                  apt-transport-https \
-                 bedtools \
                  ca-certificates \
-                 curl \
-                 gawk \
                  gnupg \
+                 curl \
+                 wget \
+                 bedtools \
+                 gawk \
                  less \
                  tabix \
-                 tree \
                  vcftools \
-                 wget \
                  zlib1g-dev && \
-    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && \
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
     apt-get -qqy update && \
-    apt-get -qqy install --no-install-recommends google-cloud-sdk && \
+    apt-get -qqy install --no-install-recommends google-cloud-cli && \
     gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
     gcloud config set metrics/environment github_docker_image && \
@@ -85,5 +85,6 @@ RUN apt-get -qqy update --fix-missing && \
            /usr/share/man/??_* && \
     samtools --help && \
     bcftools --help
+
 
 COPY re-auth.sh /opt/

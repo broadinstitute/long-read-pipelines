@@ -1,6 +1,6 @@
 VERSION = 0.1.2
-TAG1 = us.gcr.io/broad-dsp-lrma/lr-basic:$(VERSION)
-TAG2 = us.gcr.io/broad-dsp-lrma/lr-basic:latest
+TAG1 = us.gcr.io/broad-dsp-lrma/lr-bam-dedup:$(VERSION)
+TAG2 = us.gcr.io/broad-dsp-lrma/lr-bam-dedup:latest
 
 all: build push
 
