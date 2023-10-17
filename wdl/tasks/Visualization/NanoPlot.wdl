@@ -186,9 +186,7 @@ task NanoPlotFromBam {
     }
 
     parameter_meta {
-        bam: "A bam file to use as input"
-        bai: "The bai file for the bam file"
-        runtime_attr_override: "Override the default runtime attributes"
+        bam: {localization_optional: true}
     }
 
     input {
@@ -199,9 +197,13 @@ task NanoPlotFromBam {
     }
 
     Int disk_size = 2*ceil(size(bam, "GB")) + 10
+    String base = basename(bam)
+    String local_bam = "/cromwell_root/~{base}"
 
     command <<<
         set -euxo pipefail
+
+        time gcloud storage cp ~{bam} ~{local_bam}
 
         touch ~{bai} # avoid the warning bai is older than bam
 
@@ -213,7 +215,7 @@ task NanoPlotFromBam {
                  --tsv_stats \
                  --no_supplementary \
                  --verbose \
-                 --bam "~{bam}"
+                 --bam "~{local_bam}"
 
         cat NanoStats.txt | \
             grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
@@ -223,47 +225,11 @@ task NanoPlotFromBam {
             tee map.txt
     >>>
 
-    #number_of_reads 143488
-    #number_of_bases 993469297.0
-    #number_of_bases_aligned 402067275.0
-    #fraction_bases_aligned  0.4
-    #median_read_length      5081.0
-    #mean_read_length        6923.7
-    #read_length_stdev       6116.7
-    #n50     9210.0
-    #average_identity        92.8
-    #median_identity 94.5
-    #mean_qual       14.6
-    #median_qual     15.0
-    #Reads_Q5        143488
-    #Reads_Q7        143488
-    #Reads_Q10       140551
-    #Reads_Q12       119386
-    #Reads_Q15       71164
-
     output {
         File stats = "NanoStats.txt"
         Map[String, Float] stats_map = read_map("map.txt")
 
         Array[File] plots = glob("*.png")
-#        File AlignedReadlengthvsSequencedReadLength_dot = "AlignedReadlengthvsSequencedReadLength_dot.png"
-#        File AlignedReadlengthvsSequencedReadLength_kde = "AlignedReadlengthvsSequencedReadLength_kde.png"
-#        File LengthvsQualityScatterPlot_dot = "LengthvsQualityScatterPlot_dot.png"
-#        File LengthvsQualityScatterPlot_kde = "LengthvsQualityScatterPlot_kde.png"
-#        File MappingQualityvsAverageBaseQuality_dot = "MappingQualityvsAverageBaseQuality_dot.png"
-#        File MappingQualityvsAverageBaseQuality_kde = "MappingQualityvsAverageBaseQuality_kde.png"
-#        File MappingQualityvsReadLength_dot = "MappingQualityvsReadLength_dot.png"
-#        File MappingQualityvsReadLength_kde = "MappingQualityvsReadLength_kde.png"
-#        File Non_weightedHistogramReadlength = "Non_weightedHistogramReadlength.png"
-#        File Non_weightedLogTransformed_HistogramReadlength = "Non_weightedLogTransformed_HistogramReadlength.png"
-#        File PercentIdentityHistogramDynamic_Histogram_percent_identity = "PercentIdentityHistogramDynamic_Histogram_percent_identity.png"
-#        File PercentIdentityvsAlignedReadLength_dot = "PercentIdentityvsAlignedReadLength_dot.png"
-#        File PercentIdentityvsAlignedReadLength_kde = "PercentIdentityvsAlignedReadLength_kde.png"
-#        File PercentIdentityvsAverageBaseQuality_dot = "PercentIdentityvsAverageBaseQuality_dot.png"
-#        File PercentIdentityvsAverageBaseQuality_kde = "PercentIdentityvsAverageBaseQuality_kde.png"
-#        File WeightedHistogramReadlength = "WeightedHistogramReadlength.png"
-#        File WeightedLogTransformed_HistogramReadlength = "WeightedLogTransformed_HistogramReadlength.png"
-#        File Yield_By_Length = "Yield_By_Length.png"
     }
 
     #########################
@@ -295,20 +261,23 @@ task NanoPlotFromUBam {
     }
 
     parameter_meta {
-        bam: "BAM file"
-        runtime_attr_override: "Runtime attributes to override"
+        uBAM: {localization_optional: true}
     }
 
     input {
-        File bam
+        File uBAM
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(uBAM, "GB"))
+    String base = basename(uBAM)
+    String local_bam = "/cromwell_root/~{base}"
 
     command <<<
         set -euxo pipefail
+
+        time gcloud storage cp ~{uBAM} ~{local_bam}
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
@@ -316,7 +285,7 @@ task NanoPlotFromUBam {
             -c orangered \
             --N50 \
             --tsv_stats \
-            --ubam "~{bam}"
+            --ubam ~{local_bam}
 
         cat NanoStats.txt | \
             grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
@@ -326,30 +295,11 @@ task NanoPlotFromUBam {
             tee map.txt
     >>>
 
-    #number_of_reads 991
-    #number_of_bases 12949457.0
-    #median_read_length      13705.0
-    #mean_read_length        13067.1
-    #read_length_stdev       9581.3
-    #n50     18618.0
-    #mean_qual       0.0
-    #median_qual     0.0
-    #Reads_Q5        0
-    #Reads_Q7        0
-    #Reads_Q10       0
-    #Reads_Q12       0
-    #Reads_Q15       0
-
     output {
         File stats = "NanoStats.txt"
         Map[String, Float] stats_map = read_map("map.txt")
 
         Array[File] plots = glob("*.png")
-        File Non_weightedHistogramReadlength = "Non_weightedHistogramReadlength.png"
-        File Non_weightedLogTransformed_HistogramReadlength = "Non_weightedLogTransformed_HistogramReadlength.png"
-        File WeightedHistogramReadlength = "WeightedHistogramReadlength.png"
-        File WeightedLogTransformed_HistogramReadlength = "WeightedLogTransformed_HistogramReadlength.png"
-        File Yield_By_Length = "Yield_By_Length.png"
     }
 
     #########################
@@ -360,7 +310,7 @@ task NanoPlotFromUBam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-nanoplot:1.40.0-1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

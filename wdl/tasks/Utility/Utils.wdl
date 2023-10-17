@@ -1207,11 +1207,14 @@ task BamToBed {
 task BamToFastq {
 
     meta {
-        description : "Convert a BAM file to a fastq file."
+        description : "Convert a long reads BAM file to a fastq file."
     }
 
     parameter_meta {
-        bam: "BAM file to be converted."
+        bam: {
+            desciption: "BAM file to be converted.",
+            localization_optional: true
+        }
         prefix: "Prefix for the output fastq file."
         runtime_attr_override: "Override the default runtime attributes."
     }
@@ -1220,15 +1223,41 @@ task BamToFastq {
         File bam
         String prefix
 
+        Boolean save_all_tags = false
+        Array[String] tags_to_preserve = []
+
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 3*ceil(size(bam, "GB"))
 
+    String base = basename(bam)
+    String local_bam = "/cromwell_root/~{base}"
+
+    Boolean custom_tags_to_preserve = 0<length(tags_to_preserve)
+
     command <<<
         set -euxo pipefail
 
-        samtools fastq ~{bam} | gzip > ~{prefix}.fq.gz
+        # some checks on inputs
+        if ~{custom_tags_to_preserve} && ~{save_all_tags} ; then
+            echo "cannot ask to save all tags and yet also ask to save a custom list of tags" && exit 1;
+        fi
+        for tag in ~{sep=' ' tags_to_preserve}; do
+            if [[ ${tag} == "RG" ]]; then
+                echo "RG tag is automatically saved for you, no need to save it" && exit 1
+            fi
+        done
+
+        time gcloud storage cp ~{bam} ~{local_bam}
+
+        # when saving all tags, the list can be empty as instructed by samtools doc
+        samtools fastq \
+            ~{true='-T  ' false =' ' save_all_tags} \
+            ~{true='-T ' false =' ' custom_tags_to_preserve} ~{sep=',' tags_to_preserve} \
+            ~{local_bam} \
+        | pigz \
+        > ~{prefix}.fq.gz
     >>>
 
     output {
@@ -1238,18 +1267,18 @@ task BamToFastq {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             4,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
