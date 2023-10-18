@@ -108,6 +108,9 @@ workflows:
 - name: HybridPhaseWholeGenomeMargin
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseWholeGenomeMargin.wdl
+- name: Shapeit4PhaseWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/Shapeit4PhaseWholeGenome.wdl
 - name: PhasingStatistics
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/PhasingStatistics.wdl
