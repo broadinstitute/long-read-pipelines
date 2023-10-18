@@ -1,6 +1,6 @@
 version 1.0
 
-import "HybridPhaseOneChrSmallVariants.wdl" as PhaseOneChr
+import "HybridPhaseOneChrSmallVariantMargin.wdl" as PhaseOneChr
 import "../../../tasks/Utility/VariantUtils.wdl" as VU
 import "../../../tasks/Utility/Utils.wdl" as U
 
@@ -9,6 +9,7 @@ workflow HybridPhaseWholeGenome {
         description: "a workflow that extract vcfs and bams in a genomic interval"
     }
     input{
+        Array[String] chr_list
         Array[File] whole_genome_bams
         Array[File] whole_genome_bais
         File joint_vcf
@@ -20,7 +21,7 @@ workflow HybridPhaseWholeGenome {
     }
     Map[String, String] genetic_mapping_dict = read_map(genetic_mapping_tsv)
 
-    Array[String] chr_list = ["chr1", "chr6",]
+    #Array[String] chr_list = ["chr1", "chr6",]
 
     # double scatter: first by chr, then by sample
     scatter (genome_region in chr_list) {

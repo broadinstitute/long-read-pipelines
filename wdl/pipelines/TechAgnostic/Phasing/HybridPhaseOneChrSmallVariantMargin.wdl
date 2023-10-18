@@ -14,10 +14,17 @@ workflow HybridPhase {
     parameter_meta {
         one_chr_bams_from_all_samples:  "GCS path to subset BAM files"
         one_chr_bais_from_all_samples:  "GCS path to subset BAI file indices"
+        one_chr_joint_vcf:  "path to subset joint vcf per chromosome"
+        one_chr_joint_vcf_tbi:  "path to subset joint vcf index per chromosome"
+        reference: "path to reference genome fasta file"
+        reference_index: "path to reference genome index fai file"
+        genetic_mapping_tsv_for_shapeit4: "path to the tsv file for the genetic mapping file address per chromosome"
+        chromosome: "string for chromosome to be processed"
+        prefix: "output file prefix, usually using chromosome"
+        num_t: "integer for threads"
     }
 
     input {
-
         Array[File] one_chr_bams_from_all_samples
         Array[File] one_chr_bais_from_all_samples
         File one_chr_joint_vcf

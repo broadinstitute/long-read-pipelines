@@ -21,8 +21,8 @@ task Shapeit4 {
     Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 96
-        memory: "600 GiB"
+        cpu: 32
+        memory: "128 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 0
@@ -52,8 +52,8 @@ task MeasurePhasingSwitchErrorRate {
     Int disk_size = 100 + ceil(2 * (size(truth_bcf, "GiB") + size(test_bcf, "GiB")))
 
     runtime {
-        cpu: 64
-        memory: "416 GiB"
+        cpu: 8
+        memory: "32 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 0

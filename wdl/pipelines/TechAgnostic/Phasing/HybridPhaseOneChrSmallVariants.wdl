@@ -17,7 +17,6 @@ workflow HybridPhase {
     }
 
     input {
-
         Array[File] one_chr_bams_from_all_samples
         Array[File] one_chr_bais_from_all_samples
         File one_chr_joint_vcf
