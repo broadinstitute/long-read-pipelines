@@ -119,4 +119,4 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/PhasingStatistics.wdl
 - name: HybridPhaseOneChrSmallVariantHyphase
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseOneChrSmallVariantHyphas.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseOneChrSmallVariantHyphase.wdl
