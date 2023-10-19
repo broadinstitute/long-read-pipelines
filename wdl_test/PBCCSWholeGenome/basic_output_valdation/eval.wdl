@@ -71,8 +71,8 @@ workflow eval_workflow {
         dvp_g_vcf
     ]
 
-    String ubuntu_image = "marketplace.gcr.io/google/ubuntu2004:latest"
-    String gcloud_slim_image = "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    String ubuntu_image_tag = "latest"
+    String gcloud_slim_image_tag = "slim"
 
 ################
     ## Compairing test and expected Floats
@@ -100,7 +100,7 @@ workflow eval_workflow {
             call CheckerWorkflowError{
                 input:
                     message = "Error: Expected a non-zero float but got "+in_float+" .",
-                    image_to_use = ubuntu_image
+                    image_tag = ubuntu_image_tag
             }
         }
     }
@@ -109,7 +109,7 @@ workflow eval_workflow {
     call CheckFileUpdatedDateGCP {
         input:
         file_paths = workflow_out_files,
-        image_to_use = gcloud_slim_image
+        image_tag = gcloud_slim_image_tag
     }
 }
 
@@ -124,8 +124,10 @@ task CheckFileUpdatedDateGCP {
     input {
         Array[String] file_paths
         Int days_back = 1
-        String image_to_use
+        String image_tag
     }
+
+    String image_to_use = "gcr.io/google.com/cloudsdktool/cloud-sdk:" + image_tag
 
     #FILE_DATE description: get file info | grep the 'Update Time' row | parse the date info | reformat date info
 
@@ -168,8 +170,11 @@ task CheckerWorkflowError {
 
     input {
         String message
-        String image_to_use
+        String image_tag
     }
+
+    String image_to_use = "marketplace.gcr.io/google/ubuntu2004:" + image_tag
+
     command <<<
         set -eu pipefail
 
