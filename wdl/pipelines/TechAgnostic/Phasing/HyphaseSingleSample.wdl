@@ -2,9 +2,7 @@ version 1.0
 
 import "../../../tasks/Utility/Utils.wdl" as U
 import "../../../tasks/Utility/VariantUtils.wdl" as VU
-import "../../../tasks/Phasing/StatisticalPhasing.wdl" as StatPhase
 import "../../../tasks/Phasing/Hiphase.wdl"
-import "../../../tasks/Phasing/SplitJointCallbySample.wdl"
 
 
 workflow HybridPhase {
