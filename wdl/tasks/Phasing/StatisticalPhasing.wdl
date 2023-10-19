@@ -21,13 +21,13 @@ task Shapeit4 {
     Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 32
-        memory: "128 GiB"
+        cpu: 64
+        memory: "256 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 0
         maxRetries: 1
-        docker: "lifebitai/shapeit4:latest"
+        docker: "hangsuunc/hiphase:0.7.2"
     }
 }
 
