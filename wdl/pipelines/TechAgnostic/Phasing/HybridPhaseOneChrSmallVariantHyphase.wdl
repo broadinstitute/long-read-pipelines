@@ -69,21 +69,33 @@ workflow HybridPhase {
         }
     }
         
-    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
-        vcf_input = margin.phased_vcf,
-        tbi_input = margin.phased_tbi,
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSNPs { input:
+        vcf_input = hiphase.phased_snp_vcf,
+        tbi_input = hiphase.phased_snp_vcf_tbi,
         pref = prefix
     }
-
-    call StatPhase.Shapeit4 { input:
-        vcf_input = MergeAcrossSamples.merged_vcf,
-        vcf_index = MergeAcrossSamples.merged_tbi,
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
+        vcf_input = hiphase.phased_sv_vcf,
+        tbi_input = hiphase.phased_sv_vcf_tbi,
+        pref = prefix
+    }
+    call StatPhase.Shapeit4 as scaffold { input:
+        vcf_input = MergeAcrossSamplesSNPs.merged_vcf,
+        vcf_index = MergeAcrossSamplesSNPs.merged_tbi,
+        mappingfile = genetic_mapping_dict[chromosome],
+        region = chromosome,
+        num_threads = num_t
+    }
+    call StatPhase.Shapeit4_phaseSVs as SVphase { input:
+        vcf_input = MergeAcrossSamplesSVs.merged_vcf,
+        vcf_index = MergeAcrossSamplesSVs.merged_tbi,
+        scaffold_vcf = scaffold.scaffold_vcf,
         mappingfile = genetic_mapping_dict[chromosome],
         region = chromosome,
         num_threads = num_t
     }
 
     output{
-        File phased_scaffold = Shapeit4.scaffold_vcf
+        File phased_scaffold = SVphase.final_phased_vcf
     }
 }

@@ -31,6 +31,51 @@ task Shapeit4 {
     }
 }
 
+
+task Shapeit4_phaseSVs {
+    input{
+        File vcf_input
+        File vcf_index
+        File scaffold_vcf
+        File mappingfile
+        String region
+        Int num_threads
+    }
+    command <<<
+        # add AN AC tag
+        bcftools index ~{scaffold_vcf}
+
+        shapeit4 \
+        --input ~{vcf_input} \
+        --scaffold ~{scaffold_vcf} \
+        --map ~{mappingfile} \
+        --region ~{region} \
+        --use-PS 0.0001 \
+        --sequencing \
+        --output ~{region}_scaffold.bcf \
+        --thread ~{num_threads} \
+        --log phased.log
+    
+    >>>
+
+    output{
+        File final_phased_vcf = "~{region}_scaffold.bcf"
+    }
+
+    Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
+
+    runtime {
+        cpu: 64
+        memory: "256 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 0
+        maxRetries: 1
+        docker: "hangsuunc/hiphase:0.7.2"
+    }
+}
+
+
 task MeasurePhasingSwitchErrorRate {
     input{
         File truth_bcf
