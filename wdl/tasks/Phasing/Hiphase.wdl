@@ -35,6 +35,8 @@ task Hiphase {
         set -euxo pipefail
 
         hiphase \
+        --threads 16 \
+        --bam ~{bam} \
         --reference ~{ref_fasta} \
         --global-realignment-cputime 300 \
         --vcf ~{unphased_snp_vcf} \
