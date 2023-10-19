@@ -44,22 +44,21 @@ workflow HybridPhase {
     Int data_length = length(wholegenome_bams_from_all_samples)
     Array[Int] indexes= range(data_length)
 
+    call VU.SubsetVCF as SubsetSNPs { input:
+            vcf_gz = wholegenome_joint_vcf,
+            vcf_tbi = wholegenome_joint_vcf_tbi,
+            locus = chromosome
+        }
+
     scatter (idx in indexes)  {
         File all_chr_bam = wholegenome_bams_from_all_samples[idx]
         File all_chr_bai = wholegenome_bais_from_all_samples[idx]
         File pbsv_vcf = wholegenome_sv_vcf[idx]
         File pbsv_vcf_tbi = wholegenome_sv_vcf_tbi[idx]
         
-
         call U.SubsetBam as SubsetBam { input:
             bam = all_chr_bam,
             bai = all_chr_bai,
-            locus = chromosome
-        }
-
-        call VU.SubsetVCF as SubsetSNPs { input:
-            vcf_gz = wholegenome_joint_vcf,
-            vcf_tbi = wholegenome_joint_vcf_tbi,
             locus = chromosome
         }
 
