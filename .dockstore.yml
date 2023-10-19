@@ -111,6 +111,9 @@ workflows:
 - name: Shapeit4PhaseWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/Shapeit4PhaseWholeGenome.wdl
+- name: HyphaseSingleSample
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HyphaseSingleSample.wdl
 - name: PhasingStatistics
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/PhasingStatistics.wdl
