@@ -1,6 +1,6 @@
 version 1.0
 
-import "../../../tasks/Utility/Utils.wdl"
+import "../../../tasks/Utility/Utils.wdl" as U
 import "../../../tasks/Utility/VariantUtils.wdl" as VU
 import "../../../tasks/Phasing/StatisticalPhasing.wdl" as StatPhase
 import "../../../tasks/Phasing/Hiphase.wdl"
@@ -12,10 +12,10 @@ workflow HybridPhase {
         description : "..."
     }
     parameter_meta {
-        one_chr_bams_from_all_samples:  "GCS path to subset BAM files"
-        one_chr_bais_from_all_samples:  "GCS path to subset BAI file indices"
-        one_chr_joint_vcf:  "path to subset joint vcf per chromosome"
-        one_chr_joint_vcf_tbi:  "path to subset joint vcf index per chromosome"
+        wholegenome_bams_from_all_samples:  "GCS path to subset BAM files"
+        wholegenome_bais_from_all_samples:  "GCS path to subset BAI file indices"
+        wholegenome_joint_vcf:  "path to subset joint vcf per chromosome"
+        wholegenome_joint_vcf_tbi:  "path to subset joint vcf index per chromosome"
         reference: "path to reference genome fasta file"
         reference_index: "path to reference genome index fai file"
         genetic_mapping_tsv_for_shapeit4: "path to the tsv file for the genetic mapping file address per chromosome"
@@ -25,12 +25,13 @@ workflow HybridPhase {
     }
 
     input {
-        Array[File] one_chr_bams_from_all_samples
-        Array[File] one_chr_bais_from_all_samples
-        File one_chr_joint_vcf
-        File one_chr_joint_vcf_tbi
-        File one_chr_sv_vcf
-        File one_chr_sv_vcf_tbi
+        Array[File] wholegenome_bams_from_all_samples
+        Array[File] wholegenome_bais_from_all_samples
+        Array[File] wholegenome_sv_vcf
+        Array[File] wholegenome_sv_vcf_tbi
+
+        File wholegenome_joint_vcf
+        File wholegenome_joint_vcf_tbi
         File reference
         File reference_index
         File genetic_mapping_tsv_for_shapeit4
@@ -40,29 +41,52 @@ workflow HybridPhase {
     }
     
     Map[String, String] genetic_mapping_dict = read_map(genetic_mapping_tsv_for_shapeit4)
+    Int data_length = length(wholegenome_bams_from_all_samples)
+    Array[Int] indexes= range(data_length)
 
-    scatter (bam_bai in zip(one_chr_bams_from_all_samples, one_chr_bais_from_all_samples)) {
-        File bam = bam_bai.left
-        File bai = bam_bai.right
+    scatter (idx in indexes)  {
+        File all_chr_bam = wholegenome_bams_from_all_samples[idx]
+        File all_chr_bai = wholegenome_bais_from_all_samples[idx]
+        File pbsv_vcf = wholegenome_sv_vcf[idx]
+        File pbsv_vcf_tbi = wholegenome_sv_vcf_tbi[idx]
         
-        call Utils.InferSampleName { input: 
-            bam = bam, 
-            bai = bai}
+
+        call U.SubsetBam as SubsetBam { input:
+            bam = all_chr_bam,
+            bai = all_chr_bai,
+            locus = chromosome
+        }
+
+        call VU.SubsetVCF as SubsetSNPs { input:
+            vcf_gz = wholegenome_joint_vcf,
+            vcf_tbi = wholegenome_joint_vcf_tbi,
+            locus = chromosome
+        }
+
+        call VU.SubsetVCF as SubsetSVs { input:
+            vcf_gz = pbsv_vcf,
+            vcf_tbi = pbsv_vcf_tbi,
+            locus = chromosome
+        }
+        call U.InferSampleName { input: 
+            bam = all_chr_bam, 
+            bai = all_chr_bai}
+
         String sample_id = InferSampleName.sample_name
 
         call SplitJointCallbySample.SplitVCFbySample as Split { input:
-            joint_vcf = one_chr_joint_vcf,
+            joint_vcf = SubsetSNPs.subset_vcf,
             region = chromosome,
             samplename = sample_id
         }
 
         call Hiphase.Hiphase as hiphase { input:
-            bam = bam,
-            bai = bai,
+            bam = SubsetBam.subset_bam,
+            bai = SubsetBam.subset_bai,
             unphased_snp_vcf = Split.single_sample_vcf,
             unphased_snp_tbi = Split.single_sample_vcf_tbi,
-            unphased_sv_vcf = one_chr_sv_vcf,
-            unphased_sv_tbi = one_chr_sv_vcf_tbi,
+            unphased_sv_vcf = SubsetSVs.subset_vcf,
+            unphased_sv_tbi = SubsetSVs.subset_tbi,
             ref_fasta = reference,
             ref_fasta_fai = reference_index,
             prefix = prefix
