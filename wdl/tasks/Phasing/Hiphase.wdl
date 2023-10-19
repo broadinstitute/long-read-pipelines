@@ -46,12 +46,17 @@ task Hiphase {
         --stats-file ~{prefix}.stats.csv \
         --blocks-file ~{prefix}.blocks.tsv \
         --summary-file ~{prefix}.summary.tsv
+
+        tabix -p vcf ~{unphased_snp_vcf}.phased.vcf.gz
+        tabix -p vcf ~{unphased_sv_vcf}.phased.vcf.gz
         
     >>>
 
     output {
-        File phased_snp_vcf   = "~{unphased_snp_vcf}.phased.vcf.gz"
+        File phased_snp_vcf = "~{unphased_snp_vcf}.phased.vcf.gz"
+        File phased_snp_vcf_tbi = "~{unphased_snp_vcf}.phased.vcf.gz.tbi"
         File phased_sv_vcf   = "~{unphased_sv_vcf}.phased.vcf.gz"
+        File phased_sv_vcf_tbi = "~{unphased_sv_vcf}.phased.vcf.gz.tbi"
     }
 
     #########################
