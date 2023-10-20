@@ -4,3 +4,4 @@ test_data/
 *_report.html
 *.jpeg
 *.txt
+*.bed.gz

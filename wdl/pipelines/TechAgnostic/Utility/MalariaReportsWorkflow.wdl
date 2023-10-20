@@ -52,7 +52,8 @@ workflow GenerateMalariaReports {
         fraction_aligned_bases: "number of bases aligned out of all bases in the sequence"
         # average_identity:
 
-        # Coverage Plot -- incomplete
+        # Coverage Plot
+        coverage_dir: "directory where bam files used for coverage plots are stored"
 
     }
 
@@ -101,7 +102,8 @@ workflow GenerateMalariaReports {
         Float fraction_aligned_bases
         Float average_identity
 
-        # Coverage Plot -- incomplete     
+        # Coverage Plot
+        String coverage_dir   
     }
 
     call MRS.RunReportScript as RunReportScript { 
@@ -131,7 +133,8 @@ workflow GenerateMalariaReports {
             aligned_bases = aligned_bases,
             aligned_reads = aligned_reads,
             fraction_aligned_bases = fraction_aligned_bases,
-            average_identity = average_identity
+            average_identity = average_identity,
+            coverage_dir = coverage_dir
     }
 
     output {

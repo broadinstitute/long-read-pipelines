@@ -52,7 +52,8 @@ task RunReportScript {
         fraction_aligned_bases: "number of bases aligned out of all bases in the sequence"
         # average_identity:
 
-        # Coverage Plot -- incomplete
+        # Coverage Plot
+        coverage_dir: "directory where bam files used for coverage plots are stored"
 
     }
 
@@ -103,7 +104,8 @@ task RunReportScript {
         Float fraction_aligned_bases
         Float average_identity
 
-        # Coverage Plot -- incomplete  
+        # Coverage Plot -- incomplete 
+        String coverage_dir 
     }
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
@@ -141,7 +143,8 @@ task RunReportScript {
             --analysis_success ~{analysis_success} \
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \
-            --average_identity ~{average_identity}
+            --average_identity ~{average_identity} \
+            --coverage_dir ~{coverage_dir}
     >>>
 
     output {
@@ -159,7 +162,7 @@ task RunReportScript {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-malaria-reports:0.0.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-malaria-reports:0.0.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
