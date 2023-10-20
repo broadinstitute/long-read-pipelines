@@ -118,6 +118,7 @@ task PALMER {
           sed -i "s/$/\tLINE/"  LINE_TSD_reads.txt  >> ~{prefix}_TSD_reads.txt
           sed -i "s/$/\tALU/"   ALU_TSD_reads.txt   >> ~{prefix}_TSD_reads.txt
           sed -i "s/$/\tHERVK/" HERVK_TSD_reads.txt >> ~{prefix}_TSD_reads.txt
+        fi
     >>>
 
     output {
