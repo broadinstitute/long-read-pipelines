@@ -35,7 +35,8 @@ task Hiphase {
         set -euxo pipefail
 
         # exclude records with no genotype information
-        bcftools view -e 'GT="."' ~{unphased_sv_vcf} -o ~{unphased_sv_vcf}.filtered.vcf
+        bcftools view -e 'GT="./."' ~{unphased_sv_vcf} -o ~{unphased_sv_vcf}.filtered.vcf
+
 
         hiphase \
         --threads 16 \
