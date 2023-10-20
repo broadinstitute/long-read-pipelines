@@ -34,6 +34,9 @@ task Hiphase {
     command <<<
         set -euxo pipefail
 
+        # exclude records with no genotype information
+        bcftools view -e 'GT="."' ~{unphased_sv_vcf} -o ~{unphased_sv_vcf}.filtered.vcf
+
         hiphase \
         --threads 16 \
         --bam ~{bam} \
@@ -41,7 +44,7 @@ task Hiphase {
         --global-realignment-cputime 300 \
         --vcf ~{unphased_snp_vcf} \
         --output-vcf ~{unphased_snp_vcf}.phased.vcf.gz \
-        --vcf ~{unphased_sv_vcf} \
+        --vcf ~{unphased_sv_vcf}.filtered.vcf \
         --output-vcf ~{unphased_sv_vcf}.phased.vcf.gz \
         --stats-file ~{prefix}.stats.csv \
         --blocks-file ~{prefix}.blocks.tsv \
