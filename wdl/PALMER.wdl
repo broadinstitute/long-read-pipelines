@@ -55,7 +55,7 @@ task PALMER {
         ref_fa:           "fasta of reference used"
         prefix:           "output file prefix"
         mode:             "either raw or asm"
-        MEI_type:         "type of MEI to call, options are LINE, ALU, SVA, HERVK"
+        MEI_type:         "type of MEI to call, options are LINE, ALU, SVA, HERVK, all"
         chrom:            "chromosome to analyze"
     }
 
@@ -66,7 +66,8 @@ task PALMER {
 
         dir=$(pwd)
 
-        /PALMER/PALMER --input ~{bam} \
+        if [ "~{MEI_type}" != "all" ]; then 
+          /PALMER/PALMER --input ~{bam} \
                  --ref_fa ~{ref_fa} \
                  --ref_ver GRCh38 \
                  --type ~{MEI_type} \
@@ -74,6 +75,49 @@ task PALMER {
                  --output ~{prefix} \
                  --chr ~{chrom} \
                  --workdir ${dir}/
+        else
+          /PALMER/PALMER --input ~{bam} \
+                  --ref_fa ~{ref_fa} \
+                  --ref_ver GRCh38 \
+                  --type LINE \
+                  --mode ~{mode} \
+                  --output LINE \
+                  --chr ~{chrom} \
+                  --workdir ${dir}/
+          /PALMER/PALMER --input ~{bam} \
+                  --ref_fa ~{ref_fa} \
+                  --ref_ver GRCh38 \
+                  --type SVA \
+                  --mode ~{mode} \
+                  --output SVA \
+                  --chr ~{chrom} \
+                  --workdir ${dir}/
+          /PALMER/PALMER --input ~{bam} \
+                  --ref_fa ~{ref_fa} \
+                  --ref_ver GRCh38 \
+                  --type ALU \
+                  --mode ~{mode} \
+                  --output ALU \
+                  --chr ~{chrom} \
+                  --workdir ${dir}/
+          /PALMER/PALMER --input ~{bam} \
+                  --ref_fa ~{ref_fa} \
+                  --ref_ver GRCh38 \
+                  --type HERVK \
+                  --mode ~{mode} \
+                  --output HERVK \
+                  --chr ~{chrom} \
+                  --workdir ${dir}/
+
+          sed -i "s/$/\tSVA/"   SVA_calls.txt    > ~{prefix}_calls.txt
+          sed -i "s/$/\tLINE/"  LINE_calls.txt  >> ~{prefix}_calls.txt
+          sed -i "s/$/\tALU/"   ALU_calls.txt   >> ~{prefix}_calls.txt
+          sed -i "s/$/\tHERVK/" HERVK_calls.txt >> ~{prefix}_calls.txt
+
+          sed -i "s/$/\tSVA/"   SVA_TSD_reads.txt    > ~{prefix}_TSD_reads.txt
+          sed -i "s/$/\tLINE/"  LINE_TSD_reads.txt  >> ~{prefix}_TSD_reads.txt
+          sed -i "s/$/\tALU/"   ALU_TSD_reads.txt   >> ~{prefix}_TSD_reads.txt
+          sed -i "s/$/\tHERVK/" HERVK_TSD_reads.txt >> ~{prefix}_TSD_reads.txt
     >>>
 
     output {

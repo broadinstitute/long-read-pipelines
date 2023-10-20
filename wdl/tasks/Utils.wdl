@@ -270,7 +270,7 @@ task Cat {
 
         HAS_HEADER=~{true='1' false='0' has_header}
 
-        if [ HAS_HEADER == 1 ]; then
+        if [ "$HAS_HEADER" = 1 ]; then
             ((head -1 ~{files[0]}) && (cat ~{sep=' ' files} | xargs -n 1 tail -n +2)) > ~{out}
         else
             cat ~{sep=' ' files} > ~{out}
