@@ -10,7 +10,7 @@ workflow ONTBasecall {
         description: "Basecall ONT reads"
     }
     parameter_meta {
-        gcs_fast5_dir: "GCS path to the directory containing fast5 files"
+        gcs_input_dir: "GCS path to the directory containing fast5/pod5 files"
         config: "Guppy config file"
         barcode_kit: "Guppy barcode kit"
         use_gpus: "If true, use the GPU version of the basecaller"
@@ -19,7 +19,7 @@ workflow ONTBasecall {
     }
 
     input {
-        String gcs_fast5_dir
+        String gcs_input_dir
         String config = "dna_r10.4.1_e8.2_400bps_sup.cfg"
         String? barcode_kit
         Boolean use_gpus = true
@@ -32,7 +32,7 @@ workflow ONTBasecall {
     if (use_gpus) {
         call GuppyGPU.GuppyGPU {
             input:
-                gcs_fast5_dir    = gcs_fast5_dir,
+                gcs_input_dir    = gcs_input_dir,
                 config           = config,
                 barcode_kit      = barcode_kit,
                 gcs_out_root_dir = outdir
@@ -42,7 +42,7 @@ workflow ONTBasecall {
     if (!use_gpus) {
         call GuppyCPU.GuppyCPU {
             input:
-                gcs_fast5_dir    = gcs_fast5_dir,
+                gcs_input_dir    = gcs_input_dir,
                 config           = config,
                 barcode_kit      = barcode_kit,
                 gcs_out_root_dir = outdir

@@ -16,22 +16,22 @@ import "../../structs/Structs.wdl"
 workflow GuppyGPU {
 
     meta {
-        description: "Run Guppy basecaller on ONT FAST5 files. The docker tag number will match the version of Guppy that is being run. You can change this value to run a different version of Guppy. Currently supports... [3.5.2, 3.6.0, 4.0.14]. All fast5 files within the given GCS dir, gcs_fast5_dir, will be processed. Takes a few hours to process 130GB. Best guess is that the processing time scales linearly but untested."
+        description: "Run Guppy basecaller on ONT FAST5/POD5 files. The docker tag number will match the version of Guppy that is being run. You can change this value to run a different version of Guppy. Currently supports... [3.5.2, 3.6.0, 4.0.14]. All fast5/pod5 files within the given GCS dir, gcs_input_dir, will be processed. Takes a few hours to process 130GB. Best guess is that the processing time scales linearly but untested."
     }
     parameter_meta {
-        gcs_fast5_dir: "GCS path to a directory containing ONT FAST5 files."
+        gcs_input_dir: "GCS path to a directory containing ONT FAST5/POD5 files."
         config: "Guppy config file."
         barcode_kit: "Optional. Barcode kit used for sequencing. "
         instrument: "Optional. Instrument used for sequencing. Default is 'unknown'."
         flow_cell_id: "Optional. Flow cell ID used for sequencing. Default is 'unknown'."
         protocol_run_id: "Optional. Protocol run ID used for sequencing. Default is 'unknown'."
         sample_name: "Optional. Sample name used for sequencing. Default is 'unknown'."
-        num_shards: "Optional. Number of shards to use for parallelization. Default is 1 + ceil(length(read_lines(ListFast5s.manifest))/100)."
+        num_shards: "Optional. Number of shards to use for parallelization. Default is 1 + ceil(length(read_lines(ListInputs.manifest))/100)."
         gcs_out_root_dir: "GCS path to a directory where the output will be written."
     }
 
     input {
-        String gcs_fast5_dir
+        String gcs_input_dir
 
         String config
         String? barcode_kit
@@ -45,15 +45,15 @@ workflow GuppyGPU {
         String gcs_out_root_dir
     }
 
-    call ListFast5s { input: gcs_fast5_dir = gcs_fast5_dir }
+    call ListInputs { input: gcs_input_dir = gcs_input_dir }
 
-    Int ns = 1 + select_first([num_shards, ceil(length(read_lines(ListFast5s.manifest))/100)])
-    call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = ns }
+    Int ns = 1 + select_first([num_shards, ceil(length(read_lines(ListInputs.manifest))/100)])
+    call ONT.PartitionManifest as PartitionInputManifest { input: manifest = ListInputs.manifest, N = ns }
 
-    scatter (chunk_index in range(length(PartitionFast5Manifest.manifest_chunks))) {
+    scatter (chunk_index in range(length(PartitionInputManifest.manifest_chunks))) {
         call Basecall {
             input:
-                fast5_files  = read_lines(PartitionFast5Manifest.manifest_chunks[chunk_index]),
+                input_files  = read_lines(PartitionInputManifest.manifest_chunks[chunk_index]),
                 config       = config,
                 barcode_kit  = barcode_kit,
                 index        = chunk_index
@@ -90,27 +90,27 @@ workflow GuppyGPU {
     output {
         String gcs_dir = FinalizeBasecalls.gcs_dir
         Array[String] barcodes = UniqueBarcodes.unique_strings
-        Int num_fast5s = length(read_lines(ListFast5s.manifest))
+        Int num_inputs = length(read_lines(ListInputs.manifest))
         Int num_pass_fastqs = SumPassingFastqs.sum
         Int num_fail_fastqs = SumFailingFastqs.sum
     }
 }
 
-task ListFast5s {
+task ListInputs {
     input {
-        String gcs_fast5_dir
+        String gcs_input_dir
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String indir = sub(gcs_fast5_dir, "/$", "")
+    String indir = sub(gcs_input_dir, "/$", "")
 
     command <<<
-        gsutil ls "~{indir}/**.fast5" > fast5_files.txt
+        gsutil ls "~{indir}/**.{fast,pod}5" > input_files.txt
     >>>
 
     output {
-        File manifest = "fast5_files.txt"
+        File manifest = "input_files.txt"
     }
 
     #########################
@@ -137,7 +137,7 @@ task ListFast5s {
 
 task Basecall {
     input {
-        Array[File] fast5_files
+        Array[File] input_files
         String config = "dna_r10.4.1_e8.2_400bps_sup.cfg"
         String? barcode_kit
         Int index = 0
@@ -154,7 +154,7 @@ task Basecall {
 #    dna_r9.4.1_e8.1_sup.cfg
 #    dna_r9.5_450bps.cfg
 
-    Int disk_size = 3 * ceil(size(fast5_files, "GB"))
+    Int disk_size = 3 * ceil(size(input_files, "GB"))
 
     String barcode_arg = if defined(barcode_kit) then "--barcode_kits \"~{barcode_kit}\" --trim_barcodes" else ""
 
