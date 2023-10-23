@@ -8,7 +8,6 @@ task KmerCounts {
         description: "Generates kmer counts table from single sample."
     }
 
-
     input {
         File fasta
         Int kmer_size
@@ -85,7 +84,7 @@ task MergeCounts {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "hangsuunc/jellyfish:v1"
+        docker:             "hangsuunc/jellyfish:v2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -101,26 +100,27 @@ task MergeCounts {
 
 }
 
-task findCommonKmers {
+task CountingKmerInFile {
     meta {
-        description: "find common kmers"
+        description: "get kmer count matrix in multiple files"
     }  
 
     input {
-        File jf
-        String outputprefix
-        Int threads = 16
+        Array[File] jfs
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
         RuntimeAttr? runtime_attr_override
     }
-    Int file_size = ceil(size(jf, "GB"))
+    Int file_size = ceil(size(jfs, "GB"))
 	Int disk_size = if file_size > 200 then 2*file_size else file_size + 200
 
     command <<<
         set -euxo pipefail
-        jellyfish dump -c ~{jf} 
+        count_in_file ~{sep=" " jfs} > kmer_count.jf
+        
     >>>
-    
+    output {
+        File final_counttable = "kmer_count.jf"
+    }    
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
@@ -129,7 +129,7 @@ task findCommonKmers {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "hangsuunc/jellyfish:v1"
+        docker:             "hangsuunc/jellyfish:v2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
