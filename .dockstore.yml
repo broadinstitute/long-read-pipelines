@@ -123,4 +123,6 @@ workflows:
 - name: Bifrost
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/Bifrost.wdl
-
+- name: JellyfishKmerCounting
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/KmerCounting/KmerCounting.wdl
