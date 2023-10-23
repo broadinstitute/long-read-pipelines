@@ -13,7 +13,6 @@ task KmerCounts {
         Int kmer_size
         String prefix
         Int hash_size = 100000000
-        Int threads = 16
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
 
         RuntimeAttr? runtime_attr_override
@@ -24,7 +23,7 @@ task KmerCounts {
 
     command <<<
         set -euxo pipefail
-        jellyfish count -m ~{kmer_size} -s ~{hash_size} -t ~{threads} -C ~{fasta} -o ~{prefix}.jf
+        jellyfish count -m ~{kmer_size} -s ~{hash_size} -t 16 -C ~{fasta} -o ~{prefix}.jf
         
     >>>
 
