@@ -13,11 +13,9 @@ workflow HybridPhase {
 
     input {
         Array[File] fastas
-        Array[File] sampleIDs
+        Array[String] sampleIDs
         File reference_fasta
-        String prefix
         Int k
-        Int num_t
     }
     
     Int data_length = length(fastas)
@@ -28,7 +26,6 @@ workflow HybridPhase {
         String sampleid = sampleIDs[idx]
 
         call Jellyfish.KmerCounts as JF_kmercount { input: 
-
             fasta = fa,
             kmer_size = k,
             prefix = sampleid
@@ -39,7 +36,7 @@ workflow HybridPhase {
 
             fasta = reference_fasta,
             kmer_size = k,
-            prefix = "ref"
+            prefix = "NC_012920.1"
             }
     call Jellyfish.CountingKmerInFile as kmercounttable { input:
         jfs = JF_kmercount.kmercount,
