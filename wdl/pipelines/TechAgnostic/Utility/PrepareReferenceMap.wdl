@@ -15,13 +15,14 @@ workflow PrepareReferenceMap {
     call GenerateReferenceFai { input: fasta = ref_fasta }
     call GenerateSequenceDict { input: fasta = ref_fasta }
 
-    call FF.FinalizeToFile as FinalizeRefFai  { input: outdir = outdir, file = GenerateReferenceFai.fai  }
-    call FF.FinalizeToFile as FinalizeRefDict { input: outdir = outdir, file = GenerateSequenceDict.dict }
+    call FF.FinalizeToFile as FinalizeRefFasta { input: outdir = outdir, file = ref_fasta }
+    call FF.FinalizeToFile as FinalizeRefFai   { input: outdir = outdir, file = GenerateReferenceFai.fai }
+    call FF.FinalizeToFile as FinalizeRefDict  { input: outdir = outdir, file = GenerateSequenceDict.dict }
 
     call CreateRefMap {
         input:
             ref_name = ref_name,
-            ref_fasta = ref_fasta,
+            ref_fasta = FinalizeRefFasta.gcs_path,
             ref_fai = FinalizeRefFai.gcs_path,
             ref_dict = FinalizeRefDict.gcs_path
     }
@@ -29,9 +30,10 @@ workflow PrepareReferenceMap {
     call FF.FinalizeToFile as FinalizeRefMap  { input: outdir = outdir, file = CreateRefMap.ref_map }
 
     output {
-        File ref_fai = FinalizeRefFai.gcs_path
+        File ref_fa   = FinalizeRefFasta.gcs_path
+        File ref_fai  = FinalizeRefFai.gcs_path
         File ref_dict = FinalizeRefDict.gcs_path
-        File ref_map = FinalizeRefMap.gcs_path
+        File ref_map  = FinalizeRefMap.gcs_path
     }
 }
 
