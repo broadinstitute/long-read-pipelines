@@ -35,9 +35,15 @@ workflow HybridPhase {
             }
     }
         
+        call Jellyfish.KmerCounts as JF_kmercount_ref { input: 
 
+            fasta = reference_fasta,
+            kmer_size = k,
+            prefix = "ref"
+            }
     call Jellyfish.CountingKmerInFile as kmercounttable { input:
-        jfs = JF_kmercount.kmercount
+        jfs = JF_kmercount.kmercount,
+        ref_jf = JF_kmercount_ref.kmercount
     }
 
     output{
