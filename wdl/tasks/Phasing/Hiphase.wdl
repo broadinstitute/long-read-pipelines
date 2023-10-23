@@ -41,7 +41,7 @@ task Hiphase {
         --global-realignment-cputime 300 \
         --vcf ~{unphased_snp_vcf} \
         --output-vcf ~{unphased_snp_vcf}.phased.vcf.gz \
-        --vcf ~{unphased_sv_vcf}.filtered.vcf \
+        --vcf ~{unphased_sv_vcf} \
         --output-vcf ~{unphased_sv_vcf}.phased.vcf.gz \
         --stats-file ~{prefix}.stats.csv \
         --blocks-file ~{prefix}.blocks.tsv \
