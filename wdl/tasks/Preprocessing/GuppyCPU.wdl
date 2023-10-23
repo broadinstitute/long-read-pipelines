@@ -106,6 +106,8 @@ task ListInputs {
     String indir = sub(gcs_input_dir, "/$", "")
 
     command <<<
+        set -x
+
         gsutil ls "~{indir}/**.fast5" > input_files.txt
         gsutil ls "~{indir}/**.pod5" >> input_files.txt
     >>>
