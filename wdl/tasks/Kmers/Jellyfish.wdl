@@ -12,7 +12,7 @@ task KmerCounts {
         File fasta
         Int kmer_size
         String prefix
-        Int hash_size = "100M"
+        Int hash_size = 100M
         Int threads = 16
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
 
@@ -116,7 +116,7 @@ task CountingKmerInFile {
 
     command <<<
         set -euxo pipefail
-        count_in_file ref_jf ~{sep=" " jfs} > kmer_count.jf
+        count_in_file ~{ref_jf} ~{sep=" " jfs} > kmer_count.jf
         
     >>>
     output {
