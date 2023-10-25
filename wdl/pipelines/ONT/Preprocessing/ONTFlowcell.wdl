@@ -80,19 +80,19 @@ workflow ONTFlowcell {
                 recurse = true
         }
 
-        call NP.NanoPlotFromRichFastqs { input: fastqs = ListFilesOfType.files }
+        # call NP.NanoPlotFromRichFastqs { input: fastqs = ListFilesOfType.files }
     }
 
-    Map[String, Float] nanoplot_map = select_first([NanoPlotFromRichFastqs.stats_map, NanoPlotFromSummary.stats_map ])
+    # Map[String, Float] nanoplot_map = select_first([NanoPlotFromRichFastqs.stats_map, NanoPlotFromSummary.stats_map ])
 
     File manifest = select_first([ListFilesOfType.manifest, ListBams.manifest])
 
     String PL  = "ONT"
     String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
 
-    call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = manifest, N = num_shards }
+    call ONT.PartitionManifest as PartitionManifest { input: manifest = manifest, N = num_shards }
 
-    scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
+    scatter (manifest_chunk in PartitionManifest.manifest_chunks) {
         call AR.Minimap2 as AlignReads {
             input:
                 reads      = read_lines(manifest_chunk),
@@ -125,30 +125,30 @@ workflow ONTFlowcell {
 
     output {
         # Flowcell stats
-        Float active_channels = nanoplot_map['active_channels']
+        # Float active_channels = nanoplot_map['active_channels']
 
         # Aligned BAM file
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path
 
         # Unaligned read stats
-        Float num_reads = nanoplot_map['number_of_reads']
-        Float num_bases = nanoplot_map['number_of_bases']
-        Float raw_est_fold_cov = nanoplot_map['number_of_bases']/ComputeGenomeLength.length
+        # Float num_reads = nanoplot_map['number_of_reads']
+        # Float num_bases = nanoplot_map['number_of_bases']
+        # Float raw_est_fold_cov = nanoplot_map['number_of_bases']/ComputeGenomeLength.length
 
-        Float read_length_mean = nanoplot_map['mean_read_length']
-        Float read_length_median = nanoplot_map['median_read_length']
-        Float read_length_stdev = nanoplot_map['read_length_stdev']
-        Float read_length_N50 = nanoplot_map['n50']
+        # Float read_length_mean = nanoplot_map['mean_read_length']
+        # Float read_length_median = nanoplot_map['median_read_length']
+        # Float read_length_stdev = nanoplot_map['read_length_stdev']
+        # Float read_length_N50 = nanoplot_map['n50']
 
-        Float read_qual_mean = nanoplot_map['mean_qual']
-        Float read_qual_median = nanoplot_map['median_qual']
+        # Float read_qual_mean = nanoplot_map['mean_qual']
+        # Float read_qual_median = nanoplot_map['median_qual']
 
-        Float num_reads_Q5 = nanoplot_map['Reads_Q5']
-        Float num_reads_Q7 = nanoplot_map['Reads_Q7']
-        Float num_reads_Q10 = nanoplot_map['Reads_Q10']
-        Float num_reads_Q12 = nanoplot_map['Reads_Q12']
-        Float num_reads_Q15 = nanoplot_map['Reads_Q15']
+        # Float num_reads_Q5 = nanoplot_map['Reads_Q5']
+        # Float num_reads_Q7 = nanoplot_map['Reads_Q7']
+        # Float num_reads_Q10 = nanoplot_map['Reads_Q10']
+        # Float num_reads_Q12 = nanoplot_map['Reads_Q12']
+        # Float num_reads_Q15 = nanoplot_map['Reads_Q15']
 
         # Aligned read stats
         Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
