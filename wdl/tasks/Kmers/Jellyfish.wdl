@@ -106,7 +106,6 @@ task CountingKmerInFile {
 
     input {
         Array[File] jfs
-        File ref_jf
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
         RuntimeAttr? runtime_attr_override
     }
@@ -115,7 +114,7 @@ task CountingKmerInFile {
 
     command <<<
         set -euxo pipefail
-        count_in_file ~{ref_jf} ~{sep=" " jfs} > kmer_count.jf
+        count_in_file ~{sep=" " jfs} > kmer_count.jf
         
     >>>
     output {
