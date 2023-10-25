@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import subprocess
@@ -9,24 +10,32 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-# A script to collect which dockers are in use and which latest dockers are available
-# Usage: python3 docker_usage_sum.py
-# Output: dockers.in_use.tsv
-# Note: - This script is not perfect. It will not be able to detect dockers that are
-#       imported from other wdl files. It will only detect dockers that are
-#       explicitly defined in the wdl file.
-#       - The script assumes it is executed from the scripts/docker directory, and the
-#       wdl files are in ../../wdl directory.
-#       - The script will retrieve the "latest" tag by date, so if an unofficial tag was
-#       created, after the official tag was created, the script will retrieve the
-#       unofficial tag as the latest tag. (It tries to avoid this by filtering out
-#       tags with no digits).
-#      - The script occasionally uses gcloud to retrieve the latest tag. Its suggested
-#      to have gcloud installed.
-
 # TODO: Future suggestion: have the results be generated for main branch for each merge
 
 def main():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='''
+Collects docker usage summary from wdl files.
+
+Output: 
+    dockers.in_use.tsv
+Notes: 
+    - This script is not perfect. It will not be able to detect dockers that are
+    imported from other wdl files. It will only detect dockers that are
+    explicitly defined in the wdl file.
+    - The script assumes it is executed from the scripts/docker directory, and the
+    wdl files are in ../../wdl directory.
+    - The script will retrieve the "latest" tag by date, so if an unofficial tag was
+    created, after the official tag was created, the script will retrieve the
+    unofficial tag as the latest tag. (It tries to avoid this by filtering out
+    tags with no digits).
+    - The script occasionally uses gcloud to retrieve the latest tag. Its suggested
+    to have gcloud installed.
+        ''',
+    )
+    parser.parse_args()
+
     current_dir = os.path.abspath(os.path.dirname(__file__))
 
     print("COLLECTING DOCKERS IN USE...")
@@ -48,7 +57,7 @@ def main():
         with open(wdl_path, "r") as file_content:
             content = file_content.read()
             pattern = re.compile(r'.*docker:.*"')
-            if pattern.search(content): # If wdl file contains "docker:"
+            if pattern.search(content):  # If wdl file contains "docker:"
                 matched_lines = []
                 file_content.seek(0)
                 lines = file_content.readlines()
@@ -118,12 +127,16 @@ def get_docker_info_from_string(wdl_lines: [tuple], wdl_path: str) -> list:
             docker_name = docker_name_and_version.split(":")[0]
 
             # Get latest tag from list of docker details if it was already retrieved
-            latest_tag = get_tag_from_docker_details(docker_detail=docker_detail, docker_name=docker_name)
+            latest_tag = get_tag_from_docker_details(docker_detail=docker_detail,
+                                                     docker_name=docker_name)
             # Get latest tag from local docker if it was not retrieved from list of docker details
-            latest_tag = get_latest_local_docker_tag(docker_name) if latest_tag == "NA" else latest_tag
+            latest_tag = get_latest_local_docker_tag(
+                docker_name) if latest_tag == "NA" else latest_tag
             # If the latest tag is not found locally, try to get it from remote
-            latest_tag = get_latest_remote_docker_tag(docker_name) if latest_tag == "NA" else latest_tag
-            docker_detail.append(f"{docker_name}\t{latest_tag}\t{used_tag}\t{line_num}\t{wdl_path_sum}")
+            latest_tag = get_latest_remote_docker_tag(
+                docker_name) if latest_tag == "NA" else latest_tag
+            docker_detail.append(
+                f"{docker_name}\t{latest_tag}\t{used_tag}\t{line_num}\t{wdl_path_sum}")
         else:
             pass
 
@@ -144,6 +157,7 @@ def get_tag_from_docker_details(docker_detail: list, docker_name: str) -> str:
             break
     return latest_tag
 
+
 def get_latest_remote_docker_tag(docker_path: str) -> str:
     """
     Returns the latest tag of a docker from gcr, quay or dockerhub
@@ -162,7 +176,6 @@ def get_latest_remote_docker_tag(docker_path: str) -> str:
 
 
 def get_latest_tag_from_dockerhub(docker_path: str) -> str:
-
     """
     Returns the latest tag of a docker from dockerhub using the dockerhub API
     @param docker_path:
@@ -190,7 +203,6 @@ def get_latest_tag_from_dockerhub(docker_path: str) -> str:
 
 
 def get_latest_tag_from_gcr(docker_path: str) -> str:
-
     """
     Returns the latest tag of a docker from GCR using the Container Registry API
     @param docker_path:
@@ -219,6 +231,7 @@ def get_latest_tag_from_gcr(docker_path: str) -> str:
         # print(f"Error: Failed to reach the server - {e.reason}")
         pass
 
+
 def extract_latest_tag_from_registry_response(response) -> str:
     """
     Extracts the latest tag from the response of a registry API call
@@ -246,17 +259,18 @@ def extract_latest_tag_from_registry_response(response) -> str:
 
         # If the image doesn't have a "latest" tag, return the tag with the
         # highest version number.
-        tags_str_removed = [item for item in tags if any(char.isdigit() for char in item)]
+        tags_str_removed = [item for item in tags if
+                            any(char.isdigit() for char in item)]
         if tags_str_removed:
             latest_tag = max(tags_str_removed)
             return latest_tag
         else:
-            return latest_tag # If no numerical version tags are found, return NA
+            return latest_tag  # If no numerical version tags are found, return NA
     else:
-        return latest_tag # If manifest is empty, return NA
+        return latest_tag  # If manifest is empty, return NA
+
 
 def get_gcr_tag_with_gcloud(docker_path: str) -> str or None:
-
     """
     Returns the latest tag of a docker using gcloud
     @param docker_path:
@@ -282,17 +296,18 @@ def get_gcr_tag_with_gcloud(docker_path: str) -> str or None:
         gc_container_results = subprocess.run(command, capture_output=True, text=True)
         if gc_container_results and gc_container_results.returncode == 0:
             gc_container_results_json = json.loads(gc_container_results.stdout)
-            try :
+            try:
                 latest_tag = gc_container_results_json[0].get("tags")[0]
                 return latest_tag if latest_tag is not None else "NA"
             except IndexError:
 
-                logging.warning(f"Gcloud Container obtain empty tag for : {gc_container_results_json} - {docker_path}")
+                logging.warning(
+                    f"Gcloud Container obtain empty tag for : {gc_container_results_json} - {docker_path}")
                 return "NA"
         else:
             # Error handling
             error_message = gc_container_results.stderr.strip() if gc_container_results.stderr else gc_container_results.stdout.strip()
-            #print(f"Error: {error_message}")
+            # print(f"Error: {error_message}")
     else:
         return "NA"
 
