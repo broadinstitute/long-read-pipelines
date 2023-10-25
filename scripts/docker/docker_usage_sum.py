@@ -56,7 +56,7 @@ Notes:
 
         with open(wdl_path, "r") as file_content:
             content = file_content.read()
-            pattern = re.compile(r'.*docker:.*"')
+            pattern = re.compile(r'\s*docker:\s*"')
             if pattern.search(content):  # If wdl file contains "docker:"
                 matched_lines = []
                 file_content.seek(0)
