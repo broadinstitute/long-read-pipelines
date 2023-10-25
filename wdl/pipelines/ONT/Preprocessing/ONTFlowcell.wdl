@@ -32,7 +32,7 @@ workflow ONTFlowcell {
     input {
         File? final_summary
         File? sequencing_summary
-        String? fastq_dir
+        String? input_dir
 
         File ref_map_file
 
@@ -63,20 +63,20 @@ workflow ONTFlowcell {
     String DT = runinfo['started']
 
     if (defined(sequencing_summary)) {
-        call ONT.ListFiles as ListFastqs {
+        call ONT.ListFiles as ListBams {
             input:
                 sequencing_summary = select_first([sequencing_summary]),
-                suffix = "fastq"
+                suffix = "bam"
         }
 
         call NP.NanoPlotFromSummary { input: summary_files = [ select_first([sequencing_summary]) ] }
     }
 
-    if (defined(fastq_dir)) {
+    if (defined(input_dir)) {
         call Utils.ListFilesOfType {
             input:
-                gcs_dir = select_first([fastq_dir]),
-                suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz' ],
+                gcs_dir = select_first([input_dir]),
+                suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz', '.bam' ],
                 recurse = true
         }
 
@@ -85,7 +85,7 @@ workflow ONTFlowcell {
 
     Map[String, Float] nanoplot_map = select_first([NanoPlotFromRichFastqs.stats_map, NanoPlotFromSummary.stats_map ])
 
-    File manifest = select_first([ListFilesOfType.manifest, ListFastqs.manifest])
+    File manifest = select_first([ListFilesOfType.manifest, ListBams.manifest])
 
     String PL  = "ONT"
     String RG = "@RG\\tID:~{ID}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
@@ -98,7 +98,8 @@ workflow ONTFlowcell {
                 reads      = read_lines(manifest_chunk),
                 ref_fasta  = ref_map['fasta'],
                 RG         = RG,
-                map_preset = map_presets[experiment_type]
+                map_preset = map_presets[experiment_type],
+                tags_to_preserve = [ "*" ]
         }
     }
 
