@@ -64,21 +64,22 @@ workflow HybridPhase {
         }
     }
         
-    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
-        vcf_input = HP.phased_vcf,
-        tbi_input = HP.phased_vcf_tbi,
-        pref = prefix
-    }
+    # call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
+    #     vcf_input = HP.phased_vcf,
+    #     tbi_input = HP.phased_vcf_tbi,
+    #     pref = prefix
+    # }
 
-    call StatPhase.Shapeit4 { input:
-        vcf_input = MergeAcrossSamples.merged_vcf,
-        vcf_index = MergeAcrossSamples.merged_tbi,
-        mappingfile = genetic_mapping_dict[chromosome],
-        region = chromosome,
-        num_threads = num_t
-    }
+    # call StatPhase.Shapeit4 { input:
+    #     vcf_input = MergeAcrossSamples.merged_vcf,
+    #     vcf_index = MergeAcrossSamples.merged_tbi,
+    #     mappingfile = genetic_mapping_dict[chromosome],
+    #     region = chromosome,
+    #     num_threads = num_t
+    # }
 
     output{
-        File phased_scaffold = Shapeit4.scaffold_vcf
+        Array[File] hiphased_vcf = HP.phased_vcf
+        Array[File] hiphased_vcf_tbi = HP.phased_vcf_tbi
     }
 }
