@@ -100,7 +100,7 @@ workflow ONTFlowcell {
                 RG         = RG,
                 map_preset = map_presets[experiment_type],
                 tags_to_preserve = [ "\*" ],
-                runtime_attr_override = { preemptible_tries: 0, max_retries: 0 }
+                runtime_attr_override = { "preemptible_tries": 0, "max_retries": 0 }
         }
     }
 
