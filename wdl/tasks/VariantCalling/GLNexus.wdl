@@ -1,7 +1,6 @@
 version 1.0
 
 import "../Utility/Utils.wdl"
-import "../Utility/VariantUtils.wdl"
 
 workflow JointCall {
 
@@ -245,56 +244,6 @@ task Call {
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
         mem_gb:             mem,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
-        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task CompressAndIndex {
-    meta {
-        description: "Convert a BCF file to a vcf.bgz file and index it."
-    }
-
-    input {
-        File joint_bcf
-
-        Int num_cpus = 8
-        String prefix = "out"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 1 + 3*ceil(size(joint_bcf, "GB"))
-
-    command <<<
-        set -x
-
-        bcftools view ~{joint_bcf} | bgzip -@ ~{num_cpus} -c > ~{prefix}.g.vcf.bgz
-        tabix -p vcf ~{prefix}.g.vcf.bgz
-    >>>
-
-    output {
-        File joint_gvcf = "~{prefix}.g.vcf.bgz"
-        File joint_gvcf_tbi = "~{prefix}.g.vcf.bgz.tbi"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          num_cpus,
-        mem_gb:             4*num_cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,

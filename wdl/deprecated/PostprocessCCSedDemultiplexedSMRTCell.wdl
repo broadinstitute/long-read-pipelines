@@ -1,7 +1,7 @@
 version 1.0
 
+import "tasks/Utility/Utils.wdl" as DeprecatedUtils
 import "../tasks/Alignment/AlignAndCheckFingerprintCCS.wdl" as major
-import "../tasks/Utility/BAMutils.wdl"
 import "../tasks/Utility/Utils.wdl"
 import "../tasks/Utility/GeneralUtils.wdl" as GU
 import "../tasks/Utility/Finalize.wdl" as FF
@@ -66,11 +66,11 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
 
     # associate barcode to various forms of sample ids
     Array[Pair[String, String]] barcode_2_folder = read_map(demuxed_barcode_2_folder)  # type coercion Map to Array[Pair] may only work in WDL 1.0
-    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, separate = ','}
-    call Utils.SplitDelimitedString as get_biosamples {input: s = biosample_ids, separate = ','}
-    call Utils.SplitDelimitedString as get_aliquots {input: s = sample_ids, separate = ','}
-    call Utils.SplitDelimitedString as get_ds_ids {input: s = downstream_sample_ids, separate = ','}
-    call Utils.SplitDelimitedString as get_fp_ids {input: s = sample_ids_at_store, separate = ','}
+    call DeprecatedUtils.SplitDelimitedString as get_barcodes {input: s = barcode_names, separate = ','}
+    call DeprecatedUtils.SplitDelimitedString as get_biosamples {input: s = biosample_ids, separate = ','}
+    call DeprecatedUtils.SplitDelimitedString as get_aliquots {input: s = sample_ids, separate = ','}
+    call DeprecatedUtils.SplitDelimitedString as get_ds_ids {input: s = downstream_sample_ids, separate = ','}
+    call DeprecatedUtils.SplitDelimitedString as get_fp_ids {input: s = sample_ids_at_store, separate = ','}
     if (length(barcode_2_folder) != length(get_fp_ids.arr)) {
         call Utils.StopWorkflow as unmatched_barcodes_and_samples {
             input: reason = "Length of barcode names array and sample ids array don't match."
@@ -93,7 +93,7 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
 
         call GetDemxedFilePaths {input: demux_dir = bc_n_dir.right}
 
-        call BAMutils.GetReadGroupInfo as RG {input: uBAM = GetDemxedFilePaths.bam_path, keys = ['SM', 'LB']}
+        call GetReadGroupInfo as RG {input: uBAM = GetDemxedFilePaths.bam_path, keys = ['SM', 'LB']}
 
         call major.AlignAndCheckFingerprintCCS {
             input:
@@ -261,5 +261,49 @@ task LocateBarcodeSpecificFoldersOrFiles {
     runtime {
         disks: "local-disk 100 HDD"
         docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task GetReadGroupInfo {
+    meta {
+        desciption:
+        "Get some read group information Given a single-readgroup BAM. Will fail if the information isn't present."
+    }
+
+    parameter_meta {
+        uBAM: "The input BAM file."
+        keys: "A list of requested fields in the RG line, e.g. ID, SM, LB."
+    }
+
+    input {
+        String uBAM  # not using file as call-caching brings not much benefit
+
+        Array[String] keys
+    }
+
+    command <<<
+        set -eux
+
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        samtools view -H ~{uBAM} | grep "^@RG" | tr '\t' '\n' > rh_header.txt
+
+        for attribute in ~{sep=' ' keys}; do
+            value=$(grep "^${attribute}" rh_header.txt | awk -F ':' '{print $2}')
+            echo -e "${attribute}\t${value}" >> "result.txt"
+        done
+    >>>
+
+    output {
+        Map[String, String] read_group_info = read_map("result.txt")
+    }
+
+    runtime {
+        cpu:            1
+        memory:         "4 GiB"
+        disks:          "local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible:    2
+        maxRetries:     1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }

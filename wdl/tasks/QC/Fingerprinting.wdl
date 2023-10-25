@@ -119,8 +119,8 @@ task FilterGenotypesVCF {
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
         bootDiskSizeGb: 10
-        preemptible_tries:     3
-        max_retries:           2
+        preemptible:     3
+        maxRetries:      2
         docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
@@ -162,8 +162,8 @@ task ExtractGenotypingSites {
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
         bootDiskSizeGb: 10
-        preemptible_tries:     3
-        max_retries:           2
+        preemptible:     3
+        maxRetries:      2
         docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
@@ -197,8 +197,8 @@ task MergeGenotypingSites {
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
         bootDiskSizeGb: 10
-        preemptible_tries:     3
-        max_retries:           2
+        preemptible:     3
+        maxRetries:      2
         docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
