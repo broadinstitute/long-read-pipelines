@@ -5,6 +5,7 @@ import "../../../tasks/Utility/VariantUtils.wdl" as VU
 import "../../../tasks/Phasing/StatisticalPhasing.wdl" as StatPhase
 import "../../../tasks/Phasing/Hiphase.wdl"
 import "../../../tasks/Phasing/SplitJointCallbySample.wdl"
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 
 workflow HybridPhase {
@@ -34,6 +35,7 @@ workflow HybridPhase {
         File genetic_mapping_tsv_for_shapeit4
         String chromosome
         String prefix
+        String gcs_out_root_dir
         Int num_t
     }
     
@@ -77,6 +79,12 @@ workflow HybridPhase {
     #     region = chromosome,
     #     num_threads = num_t
     # }
+    call FF.FinalizeToDir as Finalizevcfs {
+        input: outdir = gcs_out_root_dir, files = HP.phased_vcf
+    }
+    call FF.FinalizeToDir as Finalizetbis {
+        input: outdir = gcs_out_root_dir, files = HP.phased_vcf_tbi
+    }
 
     output{
         Array[File] hiphased_vcf = HP.phased_vcf
