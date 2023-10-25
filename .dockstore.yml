@@ -126,3 +126,6 @@ workflows:
 - name: JellyfishKmerCounting
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/KmerCounting/KmerCounting.wdl
+- name: JellyfishKmerCountingPerSample
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/KmerCounting/KmerCountingPerSample.wdl

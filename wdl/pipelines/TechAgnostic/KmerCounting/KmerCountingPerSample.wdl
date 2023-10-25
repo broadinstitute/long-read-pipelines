@@ -4,7 +4,7 @@ version 1.0
 import "../../../tasks/Kmers/Jellyfish.wdl" 
 
 
-workflow KmerCounting {
+workflow KmerCountingPerSample {
     meta{
         description : "..."
     }
