@@ -43,7 +43,7 @@ Notes:
     OUT_SUMMARY_TSV = os.path.join(current_dir, "dockers.in_use.tsv")
 
     if os.path.exists(OUT_SUMMARY_TSV):
-        os.remove(OUT_SUMMARY_TSV)
+        os.rename(OUT_SUMMARY_TSV, OUT_SUMMARY_TSV + ".bak")
 
     wdl_files = get_wdl_files(dir_to_wdls=WDLS_DIR)
     global_docker_info = []
