@@ -59,8 +59,6 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../BAMutils/">BAMutils</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
@@ -70,8 +68,6 @@
                   <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Hail/">Hail</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../JupyterNotebooks/">JupyterNotebooks</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../MASSeq/">MASSeq</a>
                   </li>
@@ -121,20 +117,6 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#nanoplotfromubam">NanoPlotFromUBam</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_3">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_3">Outputs</a>
-    </li>
-        </ul>
-    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ONTPepper/">ONTPepper</a>
@@ -149,13 +131,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Racon/">Racon</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SoftClipper/">SoftClipper</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../StringTie2/">StringTie2</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../UMI_Tools/">UMI_Tools</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Utils/">Utils</a>
                   </li>
@@ -377,31 +353,6 @@
 <li><code>stats</code> (File)</li>
 <li><code>stats_map</code> (Map[String,Float])</li>
 <li><code>plots</code> (Array[File])</li>
-</ul>
-<h2 id="nanoplotfromubam">NanoPlotFromUBam</h2>
-<dl>
-<dt>description</dt>
-<dd>NanoPlot from an unaligned BAM</dd>
-</dl>
-<h3 id="inputs_3">Inputs</h3>
-<h4 id="required_3">Required</h4>
-<ul>
-<li><code>bam</code> (File, <strong>required</strong>): BAM file</li>
-</ul>
-<h4 id="optional_3">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?): Runtime attributes to override</li>
-</ul>
-<h3 id="outputs_3">Outputs</h3>
-<ul>
-<li><code>stats</code> (File)</li>
-<li><code>stats_map</code> (Map[String,Float])</li>
-<li><code>plots</code> (Array[File])</li>
-<li><code>Non_weightedHistogramReadlength</code> (File)</li>
-<li><code>Non_weightedLogTransformed_HistogramReadlength</code> (File)</li>
-<li><code>WeightedHistogramReadlength</code> (File)</li>
-<li><code>WeightedLogTransformed_HistogramReadlength</code> (File)</li>
-<li><code>Yield_By_Length</code> (File)</li>
 </ul>
               
             </div>

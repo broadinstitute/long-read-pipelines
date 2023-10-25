@@ -59,8 +59,6 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../BAMutils/">BAMutils</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
@@ -70,8 +68,6 @@
                   <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Hail/">Hail</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../JupyterNotebooks/">JupyterNotebooks</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../MASSeq/">MASSeq</a>
                   </li>
@@ -89,13 +85,11 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">Preprocessing_Tasks</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#splitbambysampleandcellbarcodetask">SplitBamBySampleAndCellBarcodeTask</a>
+    <li class="toctree-l2"><a class="reference internal" href="#demuxmasseqdatabyindex">DemuxMasSeqDataByIndex</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
     </li>
         </ul>
     </li>
@@ -103,13 +97,13 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#downsampletoisoseqequivalent">DownsampleToIsoSeqEquivalent</a>
+    <li class="toctree-l2"><a class="reference internal" href="#convertsplicedbamtogff">ConvertSplicedBamToGff</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#required_1">Required</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
+    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
     </li>
         </ul>
     </li>
@@ -117,11 +111,15 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#demuxmasseqdatabyindex">DemuxMasSeqDataByIndex</a>
+    <li class="toctree-l2"><a class="reference internal" href="#gffcompare">GffCompare</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#required_2">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_1">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
     </li>
         </ul>
     </li>
@@ -129,11 +127,15 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mergedemuxmasseqbyindexlogs">MergeDemuxMasSeqByIndexLogs</a>
+    <li class="toctree-l2"><a class="reference internal" href="#restoreoriginalreadnames">RestoreOriginalReadNames</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#required_3">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_2">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
     </li>
         </ul>
     </li>
@@ -141,13 +143,13 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#splitbambycontig">SplitBamByContig</a>
+    <li class="toctree-l2"><a class="reference internal" href="#correctumiswithsetcover">CorrectUmisWithSetCover</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#required_4">Required</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
     </li>
@@ -157,79 +159,11 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#convertsplicedbamtogff">ConvertSplicedBamToGff</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_5">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_1">Optional</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_5">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#gffcompare">GffCompare</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_6">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_2">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_3">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_6">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#restoreoriginalreadnames">RestoreOriginalReadNames</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_7">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_4">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_7">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#correctumiswithsetcover">CorrectUmisWithSetCover</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_8">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_4">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_5">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_8">Outputs</a>
-    </li>
-        </ul>
-    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Racon/">Racon</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SoftClipper/">SoftClipper</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../StringTie2/">StringTie2</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../UMI_Tools/">UMI_Tools</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Utils/">Utils</a>
                   </li>
@@ -363,52 +297,6 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="preprocessing_tasks">Preprocessing_Tasks</h1>
-<h2 id="splitbambysampleandcellbarcodetask">SplitBamBySampleAndCellBarcodeTask</h2>
-<dl>
-<dt>description</dt>
-<dd>Convert a single annotated (via the 10x tool), aligned bam file into individual FASTA files named by sample name and cell barcode.  Also produces a manifest file for FLAIR to easily quantify output.</dd>
-<dt>author</dt>
-<dd>Jonn Smith</dd>
-<dt>email</dt>
-<dd>jonn@broadinstitute.org</dd>
-</dl>
-<h3 id="inputs">Inputs</h3>
-<h4 id="required">Required</h4>
-<ul>
-<li><code>aligned_annotated_bam</code> (File, <strong>required</strong>): Bam file containing aligned reads that have been annotated with the 10x tool.</li>
-</ul>
-<h4 id="defaults">Defaults</h4>
-<ul>
-<li><code>output_base_name</code> (String, default="reads"): [optional] base name to give to every output file.  Should correspond to some unique identifier from this dataset.</li>
-</ul>
-<h3 id="outputs">Outputs</h3>
-<ul>
-<li><code>flair_manifest</code> (File)</li>
-<li><code>sample_cell_barcode_fasta_files</code> (Array[File])</li>
-<li><code>fasta_tar_gz_out</code> (File)</li>
-</ul>
-<h2 id="downsampletoisoseqequivalent">DownsampleToIsoSeqEquivalent</h2>
-<dl>
-<dt>description</dt>
-<dd>Downsample a given MAS-seq array element bam file into one containing only 1 read per ZMW (equivalent to IsoSeq).</dd>
-<dt>author</dt>
-<dd>Jonn Smith</dd>
-<dt>email</dt>
-<dd>jonn@broadinstitute.org</dd>
-</dl>
-<h3 id="inputs_1">Inputs</h3>
-<h4 id="required_1">Required</h4>
-<ul>
-<li><code>array_element_bam</code> (File, <strong>required</strong>): Bam file containing aligned reads that have been annotated with the 10x tool.</li>
-</ul>
-<h4 id="defaults_1">Defaults</h4>
-<ul>
-<li><code>prefix</code> (String, default="downsampled_masseq"): [optional] base name to give to every output file.  Should correspond to some unique identifier from this dataset.</li>
-</ul>
-<h3 id="outputs_1">Outputs</h3>
-<ul>
-<li><code>downsampled_bam</code> (File)</li>
-</ul>
 <h2 id="demuxmasseqdatabyindex">DemuxMasSeqDataByIndex</h2>
 <dl>
 <dt>description</dt>
@@ -418,12 +306,12 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_2">Inputs</h3>
-<h4 id="required_2">Required</h4>
+<h3 id="inputs">Inputs</h3>
+<h4 id="required">Required</h4>
 <ul>
 <li><code>array_bam</code> (File, <strong>required</strong>): Bam file containing annotated MAS-seq array reads that contain a 10bp index near the 3' end..</li>
 </ul>
-<h3 id="outputs_2">Outputs</h3>
+<h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>demux_i1</code> (File)</li>
 <li><code>demux_i2</code> (File)</li>
@@ -431,51 +319,6 @@
 <li><code>demux_i4</code> (File)</li>
 <li><code>demux_ambiguous</code> (File)</li>
 <li><code>log_file</code> (File)</li>
-</ul>
-<h2 id="mergedemuxmasseqbyindexlogs">MergeDemuxMasSeqByIndexLogs</h2>
-<dl>
-<dt>description</dt>
-<dd>This workflow will merge logs from the DemuxMasSeqDataByIndex task.</dd>
-<dt>author</dt>
-<dd>Jonn Smith</dd>
-<dt>email</dt>
-<dd>jonn@broadinstitute.org</dd>
-</dl>
-<h3 id="inputs_3">Inputs</h3>
-<h4 id="required_3">Required</h4>
-<ul>
-<li><code>demux_logs</code> (Array[File], <strong>required</strong>): Log files from DemuxMasSeqDataByIndex task.</li>
-</ul>
-<h3 id="outputs_3">Outputs</h3>
-<ul>
-<li><code>merged_log</code> (File)</li>
-</ul>
-<h2 id="splitbambycontig">SplitBamByContig</h2>
-<dl>
-<dt>description</dt>
-<dd>Split a given bam file into separate files by contig.</dd>
-<dt>author</dt>
-<dd>Jonn Smith</dd>
-<dt>email</dt>
-<dd>jonn@broadinstitute.org</dd>
-</dl>
-<h3 id="inputs_4">Inputs</h3>
-<h4 id="required_4">Required</h4>
-<ul>
-<li><code>bam</code> (File, <strong>required</strong>): Bamfile to be split by contig.</li>
-</ul>
-<h4 id="optional">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults_2">Defaults</h4>
-<ul>
-<li><code>prefix</code> (String, default="reads"): Prefix for ouput files.</li>
-</ul>
-<h3 id="outputs_4">Outputs</h3>
-<ul>
-<li><code>contig_bams</code> (Array[File])</li>
-<li><code>contig_names</code> (Array[String])</li>
 </ul>
 <h2 id="convertsplicedbamtogff">ConvertSplicedBamToGff</h2>
 <dl>
@@ -486,16 +329,16 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_5">Inputs</h3>
-<h4 id="required_5">Required</h4>
+<h3 id="inputs_1">Inputs</h3>
+<h4 id="required_1">Required</h4>
 <ul>
 <li><code>bam</code> (File, <strong>required</strong>): Bamfile to be converted to gff.</li>
 </ul>
-<h4 id="optional_1">Optional</h4>
+<h4 id="optional">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_5">Outputs</h3>
+<h3 id="outputs_1">Outputs</h3>
 <ul>
 <li><code>gff</code> (File)</li>
 </ul>
@@ -508,23 +351,23 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_6">Inputs</h3>
-<h4 id="required_6">Required</h4>
+<h3 id="inputs_2">Inputs</h3>
+<h4 id="required_2">Required</h4>
 <ul>
 <li><code>gff_query</code> (File, <strong>required</strong>): Gff file to be used as a query (compared against the gff_ref).</li>
 <li><code>gff_ref</code> (File, <strong>required</strong>): Gff file to be used as a reference.</li>
 <li><code>ref_fasta</code> (File, <strong>required</strong>): Reference fasta file.</li>
 </ul>
-<h4 id="optional_2">Optional</h4>
+<h4 id="optional_1">Optional</h4>
 <ul>
 <li><code>ref_fasta_index</code> (File?): Reference fasta file index.</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_3">Defaults</h4>
+<h4 id="defaults">Defaults</h4>
 <ul>
 <li><code>prefix</code> (String, default="out")</li>
 </ul>
-<h3 id="outputs_6">Outputs</h3>
+<h3 id="outputs_2">Outputs</h3>
 <ul>
 <li><code>refmap</code> (File)</li>
 <li><code>tmap</code> (File)</li>
@@ -543,20 +386,20 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_7">Inputs</h3>
-<h4 id="required_7">Required</h4>
+<h3 id="inputs_3">Inputs</h3>
+<h4 id="required_3">Required</h4>
 <ul>
 <li><code>bam</code> (File, <strong>required</strong>): Bam file in which to restore the original read names.</li>
 </ul>
-<h4 id="optional_3">Optional</h4>
+<h4 id="optional_2">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_4">Defaults</h4>
+<h4 id="defaults_1">Defaults</h4>
 <ul>
 <li><code>prefix</code> (String, default="out")</li>
 </ul>
-<h3 id="outputs_7">Outputs</h3>
+<h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>bam_out</code> (File)</li>
 <li><code>bai_out</code> (File)</li>
@@ -570,21 +413,21 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_8">Inputs</h3>
-<h4 id="required_8">Required</h4>
+<h3 id="inputs_4">Inputs</h3>
+<h4 id="required_4">Required</h4>
 <ul>
 <li><code>bam</code> (File, <strong>required</strong>): Bam file for which to correct UMIs.</li>
 </ul>
-<h4 id="optional_4">Optional</h4>
+<h4 id="optional_3">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_5">Defaults</h4>
+<h4 id="defaults_2">Defaults</h4>
 <ul>
 <li><code>is_extracted</code> (Boolean, default=true)</li>
 <li><code>prefix</code> (String, default="out"): Prefix to assign to output files.</li>
 </ul>
-<h3 id="outputs_8">Outputs</h3>
+<h3 id="outputs_4">Outputs</h3>
 <ul>
 <li><code>corrected_umi_reads</code> (File)</li>
 <li><code>corrected_umi_reads_index</code> (File)</li>

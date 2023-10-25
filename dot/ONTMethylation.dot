@@ -5,10 +5,10 @@ digraph {
 	edge [color="#00000080"]
 	"call-ListFilesOfType" [label=ListFilesOfType shape=cds]
 	"call-ChunkManifest" [label=ChunkManifest shape=cds]
-	subgraph "cluster-scatter-L44C5-manifest_chunk" {
+	subgraph "cluster-scatter-L42C5-manifest_chunk" {
 		fontname=Roboto label="scatter(ChunkManifest.manifest_chunks)" rank=same
 		"call-Megalodon" [label=Megalodon shape=cds]
-		"scatter-L44C5-manifest_chunk" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L42C5-manifest_chunk" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MergeVariantDBs" [label=MergeVariantDBs shape=cds]
 	"call-MergeModifiedBaseCallDBs" [label=MergeModifiedBaseCallDBs shape=cds]
@@ -22,13 +22,13 @@ digraph {
 	"call-WhatsHapFilter" [label=WhatsHapFilter shape=cds]
 	"call-IndexVariants" [label=IndexVariants shape=cds]
 	"call-MakeChrIntervalList" [label=MakeChrIntervalList shape=cds]
-	subgraph "cluster-scatter-L93C5-c" {
+	subgraph "cluster-scatter-L91C5-c" {
 		fontname=Roboto label="scatter(MakeChrIntervalList.chrs)" rank=same
 		"call-SubsetBam" [label=SubsetBam shape=cds]
 		"call-SubsetVCF" [label=SubsetVCF shape=cds]
 		"call-PhaseVariants" [label=PhaseVariants shape=cds]
 		"call-Haplotag" [label=Haplotag shape=cds]
-		"scatter-L93C5-c" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L91C5-c" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MergePerChrCalls" [label=MergePerChrCalls shape=cds]
 	"call-MergeHaplotagBams" [label=MergeHaplotagBams shape=cds]
@@ -50,7 +50,7 @@ digraph {
 	"call-FinalizeHaplotype2Vcf" [label=FinalizeHaplotype2Vcf shape=cds]
 	"call-FinalizeHaplotype2Tbi" [label=FinalizeHaplotype2Tbi shape=cds]
 	"call-ListFilesOfType" -> "call-ChunkManifest"
-	"call-ChunkManifest" -> "scatter-L44C5-manifest_chunk" [lhead="cluster-scatter-L44C5-manifest_chunk"]
+	"call-ChunkManifest" -> "scatter-L42C5-manifest_chunk" [lhead="cluster-scatter-L42C5-manifest_chunk"]
 	"call-Megalodon" -> "call-MergeVariantDBs"
 	"call-Megalodon" -> "call-MergeModifiedBaseCallDBs"
 	"call-Megalodon" -> "call-MergeFastqs"
@@ -61,25 +61,25 @@ digraph {
 	"call-Megalodon" -> "call-MergeModMappings"
 	"call-Megalodon" -> "call-MergeVarMappings"
 	"call-WhatsHapFilter" -> "call-IndexVariants"
-	"call-MakeChrIntervalList" -> "scatter-L93C5-c" [lhead="cluster-scatter-L93C5-c"]
+	"call-MakeChrIntervalList" -> "scatter-L91C5-c" [lhead="cluster-scatter-L91C5-c"]
 	"call-MergeVarMappings" -> "call-SubsetBam"
 	"call-IndexVariants" -> "call-SubsetVCF"
-	"call-SubsetBam" -> "call-PhaseVariants"
 	"call-SubsetVCF" -> "call-PhaseVariants"
-	"call-MergeVarMappings" -> "call-Haplotag"
+	"call-SubsetBam" -> "call-PhaseVariants"
 	"call-PhaseVariants" -> "call-Haplotag"
+	"call-MergeVarMappings" -> "call-Haplotag"
 	"call-PhaseVariants" -> "call-MergePerChrCalls"
 	"call-Haplotag" -> "call-MergeHaplotagBams"
-	"call-MergeHaplotagBams" -> "call-ExtractHaplotypeReads"
 	"call-MergePerChrCalls" -> "call-ExtractHaplotypeReads"
-	"call-MergeModifiedBaseCallDBs" -> "call-ExtractHaplotypeReads"
 	"call-MergeVariantDBs" -> "call-ExtractHaplotypeReads"
+	"call-MergeModifiedBaseCallDBs" -> "call-ExtractHaplotypeReads"
+	"call-MergeHaplotagBams" -> "call-ExtractHaplotypeReads"
 	"call-MergeModifiedBaseCallDBs" -> "call-CallHaplotype1Variants"
-	"call-MergeVariantDBs" -> "call-CallHaplotype1Variants"
 	"call-ExtractHaplotypeReads" -> "call-CallHaplotype1Variants"
+	"call-MergeVariantDBs" -> "call-CallHaplotype1Variants"
 	"call-MergeModifiedBaseCallDBs" -> "call-CallHaplotype2Variants"
-	"call-MergeVariantDBs" -> "call-CallHaplotype2Variants"
 	"call-ExtractHaplotypeReads" -> "call-CallHaplotype2Variants"
+	"call-MergeVariantDBs" -> "call-CallHaplotype2Variants"
 	"call-MergePerChrCalls" -> "decl-vcf"
 	"call-MergePerChrCalls" -> "decl-tbi"
 	"call-MergeHaplotagBams" -> "decl-bam"

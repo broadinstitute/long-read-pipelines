@@ -17,8 +17,8 @@ digraph {
 	"call-summaryQ" [label=summaryQ shape=cds]
 	"decl-q_metrics" [label=q_metrics shape=plaintext]
 	"call-ListFilesOfType" -> "call-MergeFastqs"
-	"call-ComputeGenomeLength" -> "call-Canu"
 	"call-MergeFastqs" -> "call-Canu"
+	"call-ComputeGenomeLength" -> "call-Canu"
 	"call-Canu" -> "call-MedakaPolish"
 	"call-MergeFastqs" -> "call-MedakaPolish"
 	"call-MedakaPolish" -> "call-Quast"

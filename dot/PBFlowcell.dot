@@ -8,47 +8,47 @@ digraph {
 	"call-GetRunInfo" [label=GetRunInfo shape=cds]
 	"decl-PU" [label=PU shape=plaintext]
 	"call-GetRawReadGroup" [label=GetRawReadGroup shape=cds]
-	subgraph "cluster-if-L83C5" {
+	subgraph "cluster-if-L81C5" {
 		fontname=Roboto label="if(experiment_type != \"CLR\" && GetRunInfo.is_corrected)" rank=same
-		subgraph "cluster-if-L84C9" {
+		subgraph "cluster-if-L82C9" {
 			fontname=Roboto label="if(!defined(ccs_report_txt))" rank=same
 			"call-lack_ccs_report" [label=lack_ccs_report shape=cds]
-			"if-L84C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L82C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"if-L83C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L81C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-Guess" [label=Guess shape=cds]
 	"call-arbitrary" [label=arbitrary shape=cds]
 	"call-ShardLongReads" [label=ShardLongReads shape=cds]
-	subgraph "cluster-if-L105C5" {
+	subgraph "cluster-if-L103C5" {
 		fontname=Roboto label="if(experiment_type == \"MASSEQ\" && !defined(mas_seq_model))" rank=same
 		"call-Longbow_Peek" [label=Longbow_Peek shape=cds]
-		"if-L105C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L103C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-chosen_mas_seq_model" [label=chosen_mas_seq_model shape=plaintext]
-	subgraph "cluster-scatter-L114C5-unmapped_shard" {
+	subgraph "cluster-scatter-L112C5-unmapped_shard" {
 		fontname=Roboto label="scatter(ShardLongReads.unmapped_shards)" rank=same
-		subgraph "cluster-if-L116C9" {
+		subgraph "cluster-if-L114C9" {
 			fontname=Roboto label="if(validate_shards)" rank=same
 			"call-ValidateShard" [label=ValidateShard shape=cds]
-			"if-L116C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L114C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L117C9" {
+		subgraph "cluster-if-L115C9" {
 			fontname=Roboto label="if(experiment_type != \"CLR\")" rank=same
-			subgraph "cluster-if-L118C13" {
+			subgraph "cluster-if-L116C13" {
 				fontname=Roboto label="if(!GetRunInfo.is_corrected)" rank=same
 				"call-CCS" [label=CCS shape=cds]
-				"if-L118C13" [label="" height=0 margin=0 style=invis width=0]
+				"if-L116C13" [label="" height=0 margin=0 style=invis width=0]
 			}
 			"decl-ccs_corrected_bam" [label=ccs_corrected_bam shape=plaintext]
-			subgraph "cluster-if-L122C13" {
+			subgraph "cluster-if-L120C13" {
 				fontname=Roboto label="if(experiment_type != \"MASSEQ\")" rank=same
 				"call-ExtractHifiReads" [label=ExtractHifiReads shape=cds]
-				"if-L122C13" [label="" height=0 margin=0 style=invis width=0]
+				"if-L120C13" [label="" height=0 margin=0 style=invis width=0]
 			}
-			"if-L117C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L115C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L133C9" {
+		subgraph "cluster-if-L131C9" {
 			fontname=Roboto label="if(experiment_type == \"MASSEQ\")" rank=same
 			"call-ExtractCcsReads" [label=ExtractCcsReads shape=cds]
 			"call-ExtractClrReads" [label=ExtractClrReads shape=cds]
@@ -57,19 +57,19 @@ digraph {
 			"call-MasseqCCSBamToFastq" [label=MasseqCCSBamToFastq shape=cds]
 			"call-FixMasSeqCcsReadTagsPostAlignment" [label=FixMasSeqCcsReadTagsPostAlignment shape=cds]
 			"call-RenameSingleCellBamTagsForMasIsoSeqV0" [label=RenameSingleCellBamTagsForMasIsoSeqV0 shape=cds]
-			"if-L133C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L131C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L189C9" {
+		subgraph "cluster-if-L187C9" {
 			fontname=Roboto label="if(experiment_type != \"MASSEQ\")" rank=same
 			"decl-unaligned_bam" [label=unaligned_bam shape=plaintext]
 			"call-AlignReads" [label=AlignReads shape=cds]
 			"call-BamToFastq" [label=BamToFastq shape=cds]
-			"if-L189C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L187C9" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"decl-unaligned_reads_bam" [label=unaligned_reads_bam shape=plaintext]
 		"decl-aligned_reads_bam" [label=aligned_reads_bam shape=plaintext]
 		"decl-reads_fastq" [label=reads_fastq shape=plaintext]
-		"scatter-L114C5-unmapped_shard" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L112C5-unmapped_shard" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MergeAllFastqs" [label=MergeAllFastqs shape=cds]
 	"call-MergeAlignedReads" [label=MergeAlignedReads shape=cds]
@@ -77,23 +77,23 @@ digraph {
 	"call-PerFlowcellMetrics" [label=PerFlowcellMetrics shape=cds]
 	"decl-keyfile" [label=keyfile shape=plaintext]
 	"decl-cdir" [label=cdir shape=plaintext]
-	subgraph "cluster-if-L231C5" {
+	subgraph "cluster-if-L229C5" {
 		fontname=Roboto label="if(experiment_type != \"CLR\")" rank=same
 		"call-MergeCCSUnalignedReads" [label=MergeCCSUnalignedReads shape=cds]
 		"call-IndexCCSUnalignedReads" [label=IndexCCSUnalignedReads shape=cds]
 		"call-FinalizeCCSUnalignedBam" [label=FinalizeCCSUnalignedBam shape=cds]
 		"call-FinalizeCCSUnalignedBai" [label=FinalizeCCSUnalignedBai shape=cds]
 		"call-FinalizeCCSUnalignedPbi" [label=FinalizeCCSUnalignedPbi shape=cds]
-		"if-L231C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L229C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	subgraph "cluster-if-L247C5" {
+	subgraph "cluster-if-L245C5" {
 		fontname=Roboto label="if(experiment_type != \"CLR\" && !GetRunInfo.is_corrected)" rank=same
 		"call-MergeCCSReports" [label=MergeCCSReports shape=cds]
 		"call-SummarizeCCSReport" [label=SummarizeCCSReport shape=cds]
 		"call-FinalizeCCSReport" [label=FinalizeCCSReport shape=cds]
-		"if-L247C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L245C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	subgraph "cluster-if-L254C5" {
+	subgraph "cluster-if-L252C5" {
 		fontname=Roboto label="if(experiment_type == 'MASSEQ')" rank=same
 		"decl-longbow_stats_dir" [label=longbow_stats_dir shape=plaintext]
 		"call-MergeLongbowAnnotatedCCSBams" [label=MergeLongbowAnnotatedCCSBams shape=cds]
@@ -107,7 +107,7 @@ digraph {
 		"call-FinalizeFilteredCCSStatsSVGs" [label=FinalizeFilteredCCSStatsSVGs shape=cds]
 		"call-FinalizeFilteredCCSStatsSummary" [label=FinalizeFilteredCCSStatsSummary shape=cds]
 		"decl-longbow_intermediate_reads_dir" [label=longbow_intermediate_reads_dir shape=plaintext]
-		subgraph "cluster-if-L276C9" {
+		subgraph "cluster-if-L274C9" {
 			fontname=Roboto label="if(DEBUG_MODE)" rank=same
 			"call-MergeLongbowSegmentedCCSBams" [label=MergeLongbowSegmentedCCSBams shape=cds]
 			"call-MergeLongbowFilterFailedCCSBams" [label=MergeLongbowFilterFailedCCSBams shape=cds]
@@ -118,43 +118,43 @@ digraph {
 			"call-FinalizeLongbowFilterFailedBam" [label=FinalizeLongbowFilterFailedBam shape=cds]
 			"call-FinalizeLongbowExtractedBam" [label=FinalizeLongbowExtractedBam shape=cds]
 			"call-FinalizeLongbowIntermediateBamIndices" [label=FinalizeLongbowIntermediateBamIndices shape=cds]
-			subgraph "cluster-if-L290C13" {
+			subgraph "cluster-if-L288C13" {
 				fontname=Roboto label="if(chosen_mas_seq_model != \"mas_15_bulk_10x5p_single_internal\" && chosen_mas_seq_model != \"mas_15_bulk_10x5p_single_internal\")" rank=same
 				"call-MergeLongbowCorrectedCCSBams" [label=MergeLongbowCorrectedCCSBams shape=cds]
 				"call-MergeLongbowUncorrectableCCSBams" [label=MergeLongbowUncorrectableCCSBams shape=cds]
 				"call-FinalizeLongbowCorrectedBam" [label=FinalizeLongbowCorrectedBam shape=cds]
 				"call-FinalizeLongbowUncorrectedBam" [label=FinalizeLongbowUncorrectedBam shape=cds]
 				"call-FinalizeLongbowIntermediateSingleCellBamIndices" [label=FinalizeLongbowIntermediateSingleCellBamIndices shape=cds]
-				"if-L290C13" [label="" height=0 margin=0 style=invis width=0]
+				"if-L288C13" [label="" height=0 margin=0 style=invis width=0]
 			}
-			"if-L276C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L274C9" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"call-MergeMASSeqCLRReads" [label=MergeMASSeqCLRReads shape=cds]
 		"decl-longbow_intermediate_clr_reads_dir" [label=longbow_intermediate_clr_reads_dir shape=plaintext]
 		"call-FinalizeMasSeqUnprocessedCLRReads" [label=FinalizeMasSeqUnprocessedCLRReads shape=cds]
 		"call-FinalizeMasSeqUnprocessedCLRReadsBai" [label=FinalizeMasSeqUnprocessedCLRReadsBai shape=cds]
 		"decl-longbow_logs_dir" [label=longbow_logs_dir shape=plaintext]
-		subgraph "cluster-scatter-L307C9-i_1" {
+		subgraph "cluster-scatter-L305C9-i_1" {
 			fontname=Roboto label="scatter(range(length(select_all(LongbowProcessCCS.correct_log))))" rank=same
-			subgraph "cluster-if-L310C13" {
+			subgraph "cluster-if-L308C13" {
 				fontname=Roboto label="if(chosen_mas_seq_model != \"mas_15_bulk_10x5p_single_internal\" && chosen_mas_seq_model != \"mas_15_bulk_10x5p_single_internal\")" rank=same
 				"call-FinalizeMasSeqLongbowCorrectStats" [label=FinalizeMasSeqLongbowCorrectStats shape=cds]
-				"if-L310C13" [label="" height=0 margin=0 style=invis width=0]
+				"if-L308C13" [label="" height=0 margin=0 style=invis width=0]
 			}
-			subgraph "cluster-if-L315C13" {
+			subgraph "cluster-if-L313C13" {
 				fontname=Roboto label="if(DEBUG_MODE)" rank=same
 				"call-FinalizeLongbowUmiAdjustmentLog" [label=FinalizeLongbowUmiAdjustmentLog shape=cds]
-				subgraph "cluster-if-L318C17" {
+				subgraph "cluster-if-L316C17" {
 					fontname=Roboto label="if(chosen_mas_seq_model != \"mas_15_bulk_10x5p_single_internal\" && chosen_mas_seq_model != \"mas_15_bulk_10x5p_single_internal\")" rank=same
 					"decl-correct_logs_shard" [label=correct_logs_shard shape=plaintext]
 					"call-FinalizeLongbowCorrectLog" [label=FinalizeLongbowCorrectLog shape=cds]
-					"if-L318C17" [label="" height=0 margin=0 style=invis width=0]
+					"if-L316C17" [label="" height=0 margin=0 style=invis width=0]
 				}
-				"if-L315C13" [label="" height=0 margin=0 style=invis width=0]
+				"if-L313C13" [label="" height=0 margin=0 style=invis width=0]
 			}
-			"scatter-L307C9-i_1" [label="" height=0 margin=0 style=invis width=0]
+			"scatter-L305C9-i_1" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"if-L254C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L252C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-subreads_pbi_file" [label=subreads_pbi_file shape=plaintext]
 	"call-SummarizeSubreadsPBI" [label=SummarizeSubreadsPBI shape=cds]
@@ -175,13 +175,13 @@ digraph {
 	"call-WriteCompletionFile" [label=WriteCompletionFile shape=cds]
 	"call-WdlExecutionStartTimestamp" -> "decl-outdir"
 	"call-GetRunInfo" -> "decl-PU"
-	"call-GetRunInfo" -> "if-L83C5" [lhead="cluster-if-L83C5"]
+	"call-GetRunInfo" -> "if-L81C5" [lhead="cluster-if-L81C5"]
 	"call-Guess" -> "call-ShardLongReads"
 	"call-arbitrary" -> "call-ShardLongReads"
 	"call-ShardLongReads" -> "call-Longbow_Peek"
 	"call-Longbow_Peek" -> "decl-chosen_mas_seq_model"
-	"call-ShardLongReads" -> "scatter-L114C5-unmapped_shard" [lhead="cluster-scatter-L114C5-unmapped_shard"]
-	"call-GetRunInfo" -> "if-L118C13" [lhead="cluster-if-L118C13"]
+	"call-ShardLongReads" -> "scatter-L112C5-unmapped_shard" [lhead="cluster-scatter-L112C5-unmapped_shard"]
+	"call-GetRunInfo" -> "if-L116C13" [lhead="cluster-if-L116C13"]
 	"call-CCS" -> "decl-ccs_corrected_bam"
 	"decl-ccs_corrected_bam" -> "call-ExtractHifiReads"
 	"decl-ccs_corrected_bam" -> "call-ExtractCcsReads"
@@ -193,16 +193,16 @@ digraph {
 	"call-LongbowProcessCCS" -> "call-MasseqCCSBamToFastq"
 	"call-AlignMasSeqCCSReads" -> "call-FixMasSeqCcsReadTagsPostAlignment"
 	"call-FixMasSeqCcsReadTagsPostAlignment" -> "call-RenameSingleCellBamTagsForMasIsoSeqV0"
-	"call-CCS" -> "decl-unaligned_bam"
 	"call-ExtractHifiReads" -> "decl-unaligned_bam"
+	"call-CCS" -> "decl-unaligned_bam"
 	"decl-unaligned_bam" -> "call-AlignReads"
 	"decl-unaligned_bam" -> "call-BamToFastq"
-	"decl-unaligned_bam" -> "decl-unaligned_reads_bam"
 	"call-LongbowProcessCCS" -> "decl-unaligned_reads_bam"
-	"call-RenameSingleCellBamTagsForMasIsoSeqV0" -> "decl-aligned_reads_bam"
+	"decl-unaligned_bam" -> "decl-unaligned_reads_bam"
 	"call-AlignReads" -> "decl-aligned_reads_bam"
-	"call-BamToFastq" -> "decl-reads_fastq"
+	"call-RenameSingleCellBamTagsForMasIsoSeqV0" -> "decl-aligned_reads_bam"
 	"call-MasseqCCSBamToFastq" -> "decl-reads_fastq"
+	"call-BamToFastq" -> "decl-reads_fastq"
 	"decl-reads_fastq" -> "call-MergeAllFastqs"
 	"decl-aligned_reads_bam" -> "call-MergeAlignedReads"
 	"decl-PU" -> "call-MergeAlignedReads"
@@ -211,26 +211,26 @@ digraph {
 	"call-MergeAlignedReads" -> "call-PerFlowcellMetrics"
 	"call-PerFlowcellMetrics" -> "decl-keyfile"
 	"decl-outdir" -> "decl-cdir"
-	"decl-unaligned_reads_bam" -> "call-MergeCCSUnalignedReads"
 	"decl-PU" -> "call-MergeCCSUnalignedReads"
+	"decl-unaligned_reads_bam" -> "call-MergeCCSUnalignedReads"
 	"call-MergeCCSUnalignedReads" -> "call-IndexCCSUnalignedReads"
-	"decl-keyfile" -> "call-FinalizeCCSUnalignedBam"
-	"call-MergeCCSUnalignedReads" -> "call-FinalizeCCSUnalignedBam"
 	"decl-cdir" -> "call-FinalizeCCSUnalignedBam"
-	"decl-keyfile" -> "call-FinalizeCCSUnalignedBai"
-	"call-MergeCCSUnalignedReads" -> "call-FinalizeCCSUnalignedBai"
+	"call-MergeCCSUnalignedReads" -> "call-FinalizeCCSUnalignedBam"
+	"decl-keyfile" -> "call-FinalizeCCSUnalignedBam"
 	"decl-cdir" -> "call-FinalizeCCSUnalignedBai"
-	"call-IndexCCSUnalignedReads" -> "call-FinalizeCCSUnalignedPbi"
-	"decl-keyfile" -> "call-FinalizeCCSUnalignedPbi"
-	"call-MergeCCSUnalignedReads" -> "call-FinalizeCCSUnalignedPbi"
+	"call-MergeCCSUnalignedReads" -> "call-FinalizeCCSUnalignedBai"
+	"decl-keyfile" -> "call-FinalizeCCSUnalignedBai"
 	"decl-cdir" -> "call-FinalizeCCSUnalignedPbi"
-	"call-GetRunInfo" -> "if-L247C5" [lhead="cluster-if-L247C5"]
-	"decl-PU" -> "call-MergeCCSReports"
+	"call-IndexCCSUnalignedReads" -> "call-FinalizeCCSUnalignedPbi"
+	"call-MergeCCSUnalignedReads" -> "call-FinalizeCCSUnalignedPbi"
+	"decl-keyfile" -> "call-FinalizeCCSUnalignedPbi"
+	"call-GetRunInfo" -> "if-L245C5" [lhead="cluster-if-L245C5"]
 	"call-CCS" -> "call-MergeCCSReports"
+	"decl-PU" -> "call-MergeCCSReports"
 	"call-MergeCCSReports" -> "call-SummarizeCCSReport"
-	"decl-keyfile" -> "call-FinalizeCCSReport"
-	"call-MergeCCSReports" -> "call-FinalizeCCSReport"
 	"decl-cdir" -> "call-FinalizeCCSReport"
+	"call-MergeCCSReports" -> "call-FinalizeCCSReport"
+	"decl-keyfile" -> "call-FinalizeCCSReport"
 	"decl-outdir" -> "decl-longbow_stats_dir"
 	"call-LongbowProcessCCS" -> "call-MergeLongbowAnnotatedCCSBams"
 	"decl-PU" -> "call-MergeLongbowAnnotatedCCSBams"
@@ -238,24 +238,24 @@ digraph {
 	"decl-PU" -> "call-MergeLongbowFilteredCCSBams"
 	"call-MergeLongbowAnnotatedCCSBams" -> "call-LongbowOverallCCSStats"
 	"call-LongbowOverallCCSStats" -> "call-FinalizeOverallCCSStatsPNGs"
-	"decl-keyfile" -> "call-FinalizeOverallCCSStatsPNGs"
 	"decl-longbow_stats_dir" -> "call-FinalizeOverallCCSStatsPNGs"
+	"decl-keyfile" -> "call-FinalizeOverallCCSStatsPNGs"
 	"call-LongbowOverallCCSStats" -> "call-FinalizeOverallCCSStatsSVGs"
-	"decl-keyfile" -> "call-FinalizeOverallCCSStatsSVGs"
 	"decl-longbow_stats_dir" -> "call-FinalizeOverallCCSStatsSVGs"
+	"decl-keyfile" -> "call-FinalizeOverallCCSStatsSVGs"
 	"call-LongbowOverallCCSStats" -> "call-FinalizeOverallCCSStatsSummary"
-	"decl-keyfile" -> "call-FinalizeOverallCCSStatsSummary"
 	"decl-longbow_stats_dir" -> "call-FinalizeOverallCCSStatsSummary"
+	"decl-keyfile" -> "call-FinalizeOverallCCSStatsSummary"
 	"call-MergeLongbowFilteredCCSBams" -> "call-LongbowFilteredCCSStats"
-	"decl-keyfile" -> "call-FinalizeFilteredCCSStatsPNGs"
-	"call-LongbowFilteredCCSStats" -> "call-FinalizeFilteredCCSStatsPNGs"
 	"decl-longbow_stats_dir" -> "call-FinalizeFilteredCCSStatsPNGs"
-	"decl-keyfile" -> "call-FinalizeFilteredCCSStatsSVGs"
-	"call-LongbowFilteredCCSStats" -> "call-FinalizeFilteredCCSStatsSVGs"
+	"call-LongbowFilteredCCSStats" -> "call-FinalizeFilteredCCSStatsPNGs"
+	"decl-keyfile" -> "call-FinalizeFilteredCCSStatsPNGs"
 	"decl-longbow_stats_dir" -> "call-FinalizeFilteredCCSStatsSVGs"
-	"decl-keyfile" -> "call-FinalizeFilteredCCSStatsSummary"
-	"call-LongbowFilteredCCSStats" -> "call-FinalizeFilteredCCSStatsSummary"
+	"call-LongbowFilteredCCSStats" -> "call-FinalizeFilteredCCSStatsSVGs"
+	"decl-keyfile" -> "call-FinalizeFilteredCCSStatsSVGs"
 	"decl-longbow_stats_dir" -> "call-FinalizeFilteredCCSStatsSummary"
+	"call-LongbowFilteredCCSStats" -> "call-FinalizeFilteredCCSStatsSummary"
+	"decl-keyfile" -> "call-FinalizeFilteredCCSStatsSummary"
 	"decl-outdir" -> "decl-longbow_intermediate_reads_dir"
 	"call-LongbowProcessCCS" -> "call-MergeLongbowSegmentedCCSBams"
 	"decl-PU" -> "call-MergeLongbowSegmentedCCSBams"
@@ -263,66 +263,66 @@ digraph {
 	"decl-PU" -> "call-MergeLongbowFilterFailedCCSBams"
 	"call-LongbowProcessCCS" -> "call-MergeLongbowExtractedCCSBams"
 	"decl-PU" -> "call-MergeLongbowExtractedCCSBams"
-	"decl-keyfile" -> "call-FinalizeLongbowAnnotatedBam"
 	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowAnnotatedBam"
+	"decl-keyfile" -> "call-FinalizeLongbowAnnotatedBam"
 	"call-MergeLongbowAnnotatedCCSBams" -> "call-FinalizeLongbowAnnotatedBam"
-	"decl-keyfile" -> "call-FinalizeLongbowSegmentedBam"
-	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowSegmentedBam"
 	"call-MergeLongbowSegmentedCCSBams" -> "call-FinalizeLongbowSegmentedBam"
+	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowSegmentedBam"
+	"decl-keyfile" -> "call-FinalizeLongbowSegmentedBam"
 	"call-MergeLongbowFilteredCCSBams" -> "call-FinalizeLongbowFilteredBam"
-	"decl-keyfile" -> "call-FinalizeLongbowFilteredBam"
 	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowFilteredBam"
+	"decl-keyfile" -> "call-FinalizeLongbowFilteredBam"
 	"call-MergeLongbowFilterFailedCCSBams" -> "call-FinalizeLongbowFilterFailedBam"
-	"decl-keyfile" -> "call-FinalizeLongbowFilterFailedBam"
 	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowFilterFailedBam"
+	"decl-keyfile" -> "call-FinalizeLongbowFilterFailedBam"
 	"call-MergeLongbowExtractedCCSBams" -> "call-FinalizeLongbowExtractedBam"
-	"decl-keyfile" -> "call-FinalizeLongbowExtractedBam"
 	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowExtractedBam"
-	"call-MergeLongbowExtractedCCSBams" -> "call-FinalizeLongbowIntermediateBamIndices"
-	"decl-keyfile" -> "call-FinalizeLongbowIntermediateBamIndices"
-	"call-MergeLongbowFilteredCCSBams" -> "call-FinalizeLongbowIntermediateBamIndices"
+	"decl-keyfile" -> "call-FinalizeLongbowExtractedBam"
 	"call-MergeLongbowFilterFailedCCSBams" -> "call-FinalizeLongbowIntermediateBamIndices"
-	"call-MergeLongbowAnnotatedCCSBams" -> "call-FinalizeLongbowIntermediateBamIndices"
+	"call-MergeLongbowExtractedCCSBams" -> "call-FinalizeLongbowIntermediateBamIndices"
 	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowIntermediateBamIndices"
+	"call-MergeLongbowFilteredCCSBams" -> "call-FinalizeLongbowIntermediateBamIndices"
+	"decl-keyfile" -> "call-FinalizeLongbowIntermediateBamIndices"
 	"call-MergeLongbowSegmentedCCSBams" -> "call-FinalizeLongbowIntermediateBamIndices"
-	"decl-chosen_mas_seq_model" -> "if-L290C13" [lhead="cluster-if-L290C13"]
+	"call-MergeLongbowAnnotatedCCSBams" -> "call-FinalizeLongbowIntermediateBamIndices"
+	"decl-chosen_mas_seq_model" -> "if-L288C13" [lhead="cluster-if-L288C13"]
 	"call-LongbowProcessCCS" -> "call-MergeLongbowCorrectedCCSBams"
 	"decl-PU" -> "call-MergeLongbowCorrectedCCSBams"
 	"call-LongbowProcessCCS" -> "call-MergeLongbowUncorrectableCCSBams"
 	"decl-PU" -> "call-MergeLongbowUncorrectableCCSBams"
-	"decl-keyfile" -> "call-FinalizeLongbowCorrectedBam"
-	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowCorrectedBam"
 	"call-MergeLongbowCorrectedCCSBams" -> "call-FinalizeLongbowCorrectedBam"
-	"decl-keyfile" -> "call-FinalizeLongbowUncorrectedBam"
+	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowCorrectedBam"
+	"decl-keyfile" -> "call-FinalizeLongbowCorrectedBam"
 	"call-MergeLongbowUncorrectableCCSBams" -> "call-FinalizeLongbowUncorrectedBam"
 	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowUncorrectedBam"
-	"decl-keyfile" -> "call-FinalizeLongbowIntermediateSingleCellBamIndices"
+	"decl-keyfile" -> "call-FinalizeLongbowUncorrectedBam"
 	"call-MergeLongbowUncorrectableCCSBams" -> "call-FinalizeLongbowIntermediateSingleCellBamIndices"
-	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowIntermediateSingleCellBamIndices"
 	"call-MergeLongbowCorrectedCCSBams" -> "call-FinalizeLongbowIntermediateSingleCellBamIndices"
+	"decl-longbow_intermediate_reads_dir" -> "call-FinalizeLongbowIntermediateSingleCellBamIndices"
+	"decl-keyfile" -> "call-FinalizeLongbowIntermediateSingleCellBamIndices"
 	"call-ExtractClrReads" -> "call-MergeMASSeqCLRReads"
 	"decl-PU" -> "call-MergeMASSeqCLRReads"
 	"decl-outdir" -> "decl-longbow_intermediate_clr_reads_dir"
 	"decl-longbow_intermediate_clr_reads_dir" -> "call-FinalizeMasSeqUnprocessedCLRReads"
-	"call-MergeMASSeqCLRReads" -> "call-FinalizeMasSeqUnprocessedCLRReads"
 	"decl-keyfile" -> "call-FinalizeMasSeqUnprocessedCLRReads"
+	"call-MergeMASSeqCLRReads" -> "call-FinalizeMasSeqUnprocessedCLRReads"
 	"decl-longbow_intermediate_clr_reads_dir" -> "call-FinalizeMasSeqUnprocessedCLRReadsBai"
-	"call-MergeMASSeqCLRReads" -> "call-FinalizeMasSeqUnprocessedCLRReadsBai"
 	"decl-keyfile" -> "call-FinalizeMasSeqUnprocessedCLRReadsBai"
+	"call-MergeMASSeqCLRReads" -> "call-FinalizeMasSeqUnprocessedCLRReadsBai"
 	"decl-outdir" -> "decl-longbow_logs_dir"
-	"call-LongbowProcessCCS" -> "scatter-L307C9-i_1" [lhead="cluster-scatter-L307C9-i_1"]
-	"decl-chosen_mas_seq_model" -> "if-L310C13" [lhead="cluster-if-L310C13"]
+	"call-LongbowProcessCCS" -> "scatter-L305C9-i_1" [lhead="cluster-scatter-L305C9-i_1"]
+	"decl-chosen_mas_seq_model" -> "if-L308C13" [lhead="cluster-if-L308C13"]
 	"call-LongbowProcessCCS" -> "call-FinalizeMasSeqLongbowCorrectStats"
-	"decl-keyfile" -> "call-FinalizeMasSeqLongbowCorrectStats"
 	"decl-longbow_stats_dir" -> "call-FinalizeMasSeqLongbowCorrectStats"
+	"decl-keyfile" -> "call-FinalizeMasSeqLongbowCorrectStats"
+	"decl-longbow_logs_dir" -> "call-FinalizeLongbowUmiAdjustmentLog"
 	"call-LongbowProcessCCS" -> "call-FinalizeLongbowUmiAdjustmentLog"
 	"decl-keyfile" -> "call-FinalizeLongbowUmiAdjustmentLog"
-	"decl-longbow_logs_dir" -> "call-FinalizeLongbowUmiAdjustmentLog"
-	"decl-chosen_mas_seq_model" -> "if-L318C17" [lhead="cluster-if-L318C17"]
+	"decl-chosen_mas_seq_model" -> "if-L316C17" [lhead="cluster-if-L316C17"]
 	"call-LongbowProcessCCS" -> "decl-correct_logs_shard"
 	"decl-correct_logs_shard" -> "call-FinalizeLongbowCorrectLog"
-	"decl-keyfile" -> "call-FinalizeLongbowCorrectLog"
 	"decl-longbow_logs_dir" -> "call-FinalizeLongbowCorrectLog"
+	"decl-keyfile" -> "call-FinalizeLongbowCorrectLog"
 	"call-IndexCCSUnalignedReads" -> "decl-subreads_pbi_file"
 	"decl-subreads_pbi_file" -> "call-SummarizeSubreadsPBI"
 	"call-IndexAlignedReads" -> "call-SummarizeAlignedQ5PBI"
@@ -332,22 +332,22 @@ digraph {
 	"call-IndexAlignedReads" -> "call-SummarizeAlignedQ15PBI"
 	"call-MergeAlignedReads" -> "call-NanoPlotFromBam"
 	"decl-outdir" -> "decl-dir"
+	"decl-dir" -> "call-FinalizeAlignedBam"
 	"decl-keyfile" -> "call-FinalizeAlignedBam"
 	"call-MergeAlignedReads" -> "call-FinalizeAlignedBam"
-	"decl-dir" -> "call-FinalizeAlignedBam"
+	"decl-dir" -> "call-FinalizeAlignedBai"
 	"decl-keyfile" -> "call-FinalizeAlignedBai"
 	"call-MergeAlignedReads" -> "call-FinalizeAlignedBai"
-	"decl-dir" -> "call-FinalizeAlignedBai"
+	"decl-dir" -> "call-FinalizeAlignedPbi"
 	"decl-keyfile" -> "call-FinalizeAlignedPbi"
 	"call-IndexAlignedReads" -> "call-FinalizeAlignedPbi"
 	"call-MergeAlignedReads" -> "call-FinalizeAlignedPbi"
-	"decl-dir" -> "call-FinalizeAlignedPbi"
 	"decl-outdir" -> "decl-fqdir"
 	"decl-fqdir" -> "call-FinalizeFastq"
 	"call-MergeAllFastqs" -> "call-FinalizeFastq"
 	"decl-keyfile" -> "call-FinalizeFastq"
 	"call-MergeAlignedReads" -> "call-FinalizeFastq"
 	"decl-chosen_mas_seq_model" -> "decl-lib_type"
-	"decl-keyfile" -> "call-WriteCompletionFile"
 	"decl-outdir" -> "call-WriteCompletionFile"
+	"decl-keyfile" -> "call-WriteCompletionFile"
 }

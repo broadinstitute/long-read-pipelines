@@ -35,7 +35,7 @@ digraph {
 	"call-FinalizeQuastReports" [label=FinalizeQuastReports shape=cds]
 	"call-FinalizeQuastSummaryAll" [label=FinalizeQuastSummaryAll shape=cds]
 	subgraph "cluster-scatter-L98C5-report" {
-		fontname=Roboto label="scatter(select_first([primary_h0_h1_quast_summary.quast_metrics]))" rank=same
+		fontname=Roboto label="scatter(primary_h0_h1_quast_summary.quast_metrics)" rank=same
 		"call-FinalizeQuastIndividualSummary" [label=FinalizeQuastIndividualSummary shape=cds]
 		"scatter-L98C5-report" [label="" height=0 margin=0 style=invis width=0]
 	}
@@ -45,11 +45,11 @@ digraph {
 	"call-primary_h0_h1_quast" -> "call-primary_h0_h1_quast_summary"
 	"decl-ccs_fq" -> "decl-dummy"
 	"decl-dummy" -> "decl-dummy_b"
-	"decl-dummy_b" -> "if-L70C5" [lhead="cluster-if-L70C5"]
 	"decl-dummy" -> "if-L70C5" [lhead="cluster-if-L70C5"]
+	"decl-dummy_b" -> "if-L70C5" [lhead="cluster-if-L70C5"]
 	"decl-ccs_fq" -> "call-FinalizeMergedFQ"
-	"decl-dummy_b" -> "if-L73C5" [lhead="cluster-if-L73C5"]
 	"decl-dummy" -> "if-L73C5" [lhead="cluster-if-L73C5"]
+	"decl-dummy_b" -> "if-L73C5" [lhead="cluster-if-L73C5"]
 	"decl-ccs_fq" -> "call-CompressAndFinalizeMergedFQ"
 	"call-FinalizeMergedFQ" -> "decl-finalized_merged_fq_path"
 	"call-CompressAndFinalizeMergedFQ" -> "decl-finalized_merged_fq_path"

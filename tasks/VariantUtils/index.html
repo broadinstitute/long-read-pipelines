@@ -59,8 +59,6 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../BAMutils/">BAMutils</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
@@ -70,8 +68,6 @@
                   <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Hail/">Hail</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../JupyterNotebooks/">JupyterNotebooks</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../MASSeq/">MASSeq</a>
                   </li>
@@ -91,13 +87,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Racon/">Racon</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SoftClipper/">SoftClipper</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../StringTie2/">StringTie2</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../UMI_Tools/">UMI_Tools</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Utils/">Utils</a>
                   </li>
@@ -131,7 +121,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#collectdefinitions">CollectDefinitions</a>
+    <li class="toctree-l2"><a class="reference internal" href="#getvcfsamplename">GetVCFSampleName</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
         <ul>
@@ -145,7 +135,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#getvcfsamplename">GetVCFSampleName</a>
+    <li class="toctree-l2"><a class="reference internal" href="#subsetvcf">SubsetVCF</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
         <ul>
@@ -153,13 +143,15 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_3">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#subsetvcf">SubsetVCF</a>
+    <li class="toctree-l2"><a class="reference internal" href="#zipandindexvcf">ZipAndIndexVCF</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
         <ul>
@@ -167,53 +159,9 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_4">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
-    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_4">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#zipandindexvcf">ZipAndIndexVCF</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_5">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_5">Optional</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_5">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#indexvcf">IndexVCF</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_6">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_6">Optional</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_6">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#fixsnifflesvcf">FixSnifflesVCF</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_7">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_7">Optional</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_7">Outputs</a>
     </li>
         </ul>
     </li>
@@ -390,39 +338,21 @@
 <li><code>vcf</code> (File)</li>
 <li><code>tbi</code> (File)</li>
 </ul>
-<h2 id="collectdefinitions">CollectDefinitions</h2>
+<h2 id="getvcfsamplename">GetVCFSampleName</h2>
 <dl>
 <dt>description</dt>
-<dd>Collect (union) various definitions in vcf files, adddressing a bcftols bug: https://github.com/samtools/bcftools/issues/1629</dd>
+<dd>Currently mostly used for extracting sample name in fingerprinting genotyped VCF</dd>
 </dl>
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
 <ul>
-<li><code>vcfs</code> (Array[File], <strong>required</strong>): List of VCF files to be concatenated</li>
+<li><code>fingerprint_vcf</code> (File, <strong>required</strong>): Assumed to be genotyped, and hold only one sample (other samples will be ignored).</li>
 </ul>
 <h4 id="optional_2">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
-<ul>
-<li><code>union_definitions</code> (File)</li>
-</ul>
-<h2 id="getvcfsamplename">GetVCFSampleName</h2>
-<dl>
-<dt>description</dt>
-<dd>Currently mostly used for extracting sample name in fingerprinting genotyped VCF</dd>
-</dl>
-<h3 id="inputs_3">Inputs</h3>
-<h4 id="required_3">Required</h4>
-<ul>
-<li><code>fingerprint_vcf</code> (File, <strong>required</strong>): Assumed to be genotyped, and hold only one sample (other samples will be ignored).</li>
-</ul>
-<h4 id="optional_3">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
-</ul>
-<h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>sample_name</code> (String)</li>
 </ul>
@@ -431,14 +361,14 @@
 <dt>description</dt>
 <dd>Subset a VCF file to a given locus</dd>
 </dl>
-<h3 id="inputs_4">Inputs</h3>
-<h4 id="required_4">Required</h4>
+<h3 id="inputs_3">Inputs</h3>
+<h4 id="required_3">Required</h4>
 <ul>
 <li><code>locus</code> (String, <strong>required</strong>): Locus to be subsetted</li>
 <li><code>vcf_gz</code> (File, <strong>required</strong>): VCF file to be subsetted</li>
 <li><code>vcf_tbi</code> (File, <strong>required</strong>): Tabix index for the VCF file</li>
 </ul>
-<h4 id="optional_4">Optional</h4>
+<h4 id="optional_3">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
@@ -446,7 +376,7 @@
 <ul>
 <li><code>prefix</code> (String, default="subset"): Prefix for the output file</li>
 </ul>
-<h3 id="outputs_4">Outputs</h3>
+<h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>subset_vcf</code> (File)</li>
 <li><code>subset_tbi</code> (File)</li>
@@ -456,57 +386,18 @@
 <dt>description</dt>
 <dd>gZip plain text VCF and index it.</dd>
 </dl>
-<h3 id="inputs_5">Inputs</h3>
-<h4 id="required_5">Required</h4>
+<h3 id="inputs_4">Inputs</h3>
+<h4 id="required_4">Required</h4>
 <ul>
 <li><code>vcf</code> (File, <strong>required</strong>): VCF file to be zipped and indexed</li>
 </ul>
-<h4 id="optional_5">Optional</h4>
+<h4 id="optional_4">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
-<h3 id="outputs_5">Outputs</h3>
+<h3 id="outputs_4">Outputs</h3>
 <ul>
 <li><code>vcfgz</code> (File)</li>
-<li><code>tbi</code> (File)</li>
-</ul>
-<h2 id="indexvcf">IndexVCF</h2>
-<dl>
-<dt>description</dt>
-<dd>Indexing vcf.gz. Note: do NOT use remote index as that's buggy.</dd>
-</dl>
-<h3 id="inputs_6">Inputs</h3>
-<h4 id="required_6">Required</h4>
-<ul>
-<li><code>vcf</code> (File, <strong>required</strong>): VCF file to be indexed</li>
-</ul>
-<h4 id="optional_6">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
-</ul>
-<h3 id="outputs_6">Outputs</h3>
-<ul>
-<li><code>tbi</code> (File)</li>
-</ul>
-<h2 id="fixsnifflesvcf">FixSnifflesVCF</h2>
-<dl>
-<dt>description</dt>
-<dd>Fixes the sample information in a VCF file and prepares to fix undefined VCF INFO/FT/FORMATs. It then proceeds to get the missing VCF headers for these undefined formats and filters. Specific to Sniffles-1</dd>
-</dl>
-<h3 id="inputs_7">Inputs</h3>
-<h4 id="required_7">Required</h4>
-<ul>
-<li><code>sample_name</code> (String, <strong>required</strong>): Sniffles infers sample name from the BAM file name, so we fix it here</li>
-<li><code>vcf</code> (File, <strong>required</strong>)</li>
-</ul>
-<h4 id="optional_7">Optional</h4>
-<ul>
-<li><code>ref_fasta_fai</code> (File?): provide only when the contig section of the input vcf is suspected to be corrupted</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h3 id="outputs_7">Outputs</h3>
-<ul>
-<li><code>sortedVCF</code> (File)</li>
 <li><code>tbi</code> (File)</li>
 </ul>
               

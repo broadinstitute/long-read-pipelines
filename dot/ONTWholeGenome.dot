@@ -3,90 +3,90 @@ digraph {
 	compound=true rankdir=LR
 	node [fontname=Roboto]
 	edge [color="#00000080"]
-	subgraph "cluster-if-L69C5" {
+	subgraph "cluster-if-L68C5" {
 		fontname=Roboto label="if(length(aligned_bams) > 1)" rank=same
-		subgraph "cluster-scatter-L70C9-pair" {
+		subgraph "cluster-scatter-L69C9-pair" {
 			fontname=Roboto label="scatter(zip(aligned_bams,aligned_bais))" rank=same
 			"call-InferSampleName" [label=InferSampleName shape=cds]
-			"scatter-L70C9-pair" [label="" height=0 margin=0 style=invis width=0]
+			"scatter-L69C9-pair" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"call-CheckOnSamplenames" [label=CheckOnSamplenames shape=cds]
 		"call-MergeAllReads" [label=MergeAllReads shape=cds]
-		"if-L69C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L68C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-bam" [label=bam shape=plaintext]
 	"decl-bai" [label=bai shape=plaintext]
-	subgraph "cluster-if-L81C5" {
+	subgraph "cluster-if-L80C5" {
 		fontname=Roboto label="if(bams_suspected_to_contain_dup_record)" rank=same
 		"call-RemoveDuplicates" [label=RemoveDuplicates shape=cds]
-		"if-L81C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L80C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-usable_bam" [label=usable_bam shape=plaintext]
 	"decl-usable_bai" [label=usable_bai shape=plaintext]
 	"call-coverage" [label=coverage shape=cds]
 	"call-FinalizeBam" [label=FinalizeBam shape=cds]
 	"call-FinalizeBai" [label=FinalizeBai shape=cds]
-	subgraph "cluster-if-L102C5" {
+	subgraph "cluster-if-L101C5" {
 		fontname=Roboto label="if(defined(bed_to_compute_coverage))" rank=same
 		"call-FinalizeRegionalCoverage" [label=FinalizeRegionalCoverage shape=cds]
-		"if-L102C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L101C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	subgraph "cluster-if-L105C5" {
+	subgraph "cluster-if-L104C5" {
 		fontname=Roboto label="if(call_svs || call_small_variants)" rank=same
-		subgraph "cluster-if-L108C9" {
+		subgraph "cluster-if-L107C9" {
 			fontname=Roboto label="if(call_svs)" rank=same
-			subgraph "cluster-if-L109C13" {
+			subgraph "cluster-if-L108C13" {
 				fontname=Roboto label="if(!defined(fast_less_sensitive_sv))" rank=same
 				"call-fast_less_sensitive_sv_not_provided" [label=fast_less_sensitive_sv_not_provided shape=cds]
-				"if-L109C13" [label="" height=0 margin=0 style=invis width=0]
+				"if-L108C13" [label="" height=0 margin=0 style=invis width=0]
 			}
-			"if-L108C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L107C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L111C9" {
+		subgraph "cluster-if-L110C9" {
 			fontname=Roboto label="if(call_small_variants)" rank=same
-			subgraph "cluster-if-L112C13" {
+			subgraph "cluster-if-L111C13" {
 				fontname=Roboto label="if(!defined(call_small_vars_on_mitochondria))" rank=same
 				"call-call_small_vars_on_mitochondria_not_provided" [label=call_small_vars_on_mitochondria_not_provided shape=cds]
+				"if-L111C13" [label="" height=0 margin=0 style=invis width=0]
+			}
+			subgraph "cluster-if-L112C13" {
+				fontname=Roboto label="if(!defined(run_dv_pepper_analysis))" rank=same
+				"call-run_dv_pepper_analysis_not_provided" [label=run_dv_pepper_analysis_not_provided shape=cds]
 				"if-L112C13" [label="" height=0 margin=0 style=invis width=0]
 			}
 			subgraph "cluster-if-L113C13" {
-				fontname=Roboto label="if(!defined(run_dv_pepper_analysis))" rank=same
-				"call-run_dv_pepper_analysis_not_provided" [label=run_dv_pepper_analysis_not_provided shape=cds]
+				fontname=Roboto label="if(!defined(dvp_threads))" rank=same
+				"call-dvp_threads_not_provided" [label=dvp_threads_not_provided shape=cds]
 				"if-L113C13" [label="" height=0 margin=0 style=invis width=0]
 			}
 			subgraph "cluster-if-L114C13" {
-				fontname=Roboto label="if(!defined(dvp_threads))" rank=same
-				"call-dvp_threads_not_provided" [label=dvp_threads_not_provided shape=cds]
+				fontname=Roboto label="if(!defined(ref_scatter_interval_list_locator))" rank=same
+				"call-ref_scatter_interval_list_locator_not_provided" [label=ref_scatter_interval_list_locator_not_provided shape=cds]
 				"if-L114C13" [label="" height=0 margin=0 style=invis width=0]
 			}
 			subgraph "cluster-if-L115C13" {
-				fontname=Roboto label="if(!defined(ref_scatter_interval_list_locator))" rank=same
-				"call-ref_scatter_interval_list_locator_not_provided" [label=ref_scatter_interval_list_locator_not_provided shape=cds]
-				"if-L115C13" [label="" height=0 margin=0 style=invis width=0]
-			}
-			subgraph "cluster-if-L116C13" {
 				fontname=Roboto label="if(!defined(ref_scatter_interval_list_ids))" rank=same
 				"call-ref_scatter_interval_list_ids_not_provided" [label=ref_scatter_interval_list_ids_not_provided shape=cds]
-				"if-L116C13" [label="" height=0 margin=0 style=invis width=0]
+				"if-L115C13" [label="" height=0 margin=0 style=invis width=0]
 			}
-			"if-L111C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L110C9" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"call-CallVariants" [label=CallVariants shape=cds]
-		subgraph "cluster-if-L149C9" {
+		subgraph "cluster-if-L148C9" {
 			fontname=Roboto label="if(call_svs)" rank=same
 			"call-FinalizePBSV" [label=FinalizePBSV shape=cds]
 			"call-FinalizePBSVtbi" [label=FinalizePBSVtbi shape=cds]
 			"call-FinalizeSniffles" [label=FinalizeSniffles shape=cds]
 			"call-FinalizeSnifflesTbi" [label=FinalizeSnifflesTbi shape=cds]
-			"if-L149C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L148C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L157C9" {
+		subgraph "cluster-if-L156C9" {
 			fontname=Roboto label="if(call_small_variants)" rank=same
 			"call-FinalizeClairVcf" [label=FinalizeClairVcf shape=cds]
 			"call-FinalizeClairTbi" [label=FinalizeClairTbi shape=cds]
 			"call-FinalizeClairGVcf" [label=FinalizeClairGVcf shape=cds]
 			"call-FinalizeClairGTbi" [label=FinalizeClairGTbi shape=cds]
-			subgraph "cluster-if-L164C13" {
+			subgraph "cluster-if-L163C13" {
 				fontname=Roboto label="if(select_first([run_dv_pepper_analysis]))" rank=same
 				"call-FinalizeDVPepperVcf" [label=FinalizeDVPepperVcf shape=cds]
 				"call-FinalizeDVPepperTbi" [label=FinalizeDVPepperTbi shape=cds]
@@ -94,28 +94,28 @@ digraph {
 				"call-FinalizeDVPepperGTbi" [label=FinalizeDVPepperGTbi shape=cds]
 				"call-FinalizeDVPepperPhasedVcf" [label=FinalizeDVPepperPhasedVcf shape=cds]
 				"call-FinalizeDVPepperPhasedTbi" [label=FinalizeDVPepperPhasedTbi shape=cds]
-				"if-L164C13" [label="" height=0 margin=0 style=invis width=0]
+				"if-L163C13" [label="" height=0 margin=0 style=invis width=0]
 			}
-			"if-L157C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L156C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"if-L105C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L104C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-InferSampleName" -> "call-CheckOnSamplenames"
 	"call-MergeAllReads" -> "decl-bam"
 	"call-MergeAllReads" -> "decl-bai"
 	"decl-bai" -> "call-RemoveDuplicates"
 	"decl-bam" -> "call-RemoveDuplicates"
-	"call-RemoveDuplicates" -> "decl-usable_bam"
 	"decl-bam" -> "decl-usable_bam"
-	"call-RemoveDuplicates" -> "decl-usable_bai"
+	"call-RemoveDuplicates" -> "decl-usable_bam"
 	"decl-bai" -> "decl-usable_bai"
-	"decl-usable_bai" -> "call-coverage"
+	"call-RemoveDuplicates" -> "decl-usable_bai"
 	"decl-usable_bam" -> "call-coverage"
+	"decl-usable_bai" -> "call-coverage"
 	"decl-usable_bam" -> "call-FinalizeBam"
 	"decl-usable_bai" -> "call-FinalizeBai"
 	"call-coverage" -> "call-FinalizeRegionalCoverage"
-	"decl-usable_bai" -> "call-CallVariants"
 	"decl-usable_bam" -> "call-CallVariants"
+	"decl-usable_bai" -> "call-CallVariants"
 	"call-CallVariants" -> "call-FinalizePBSV"
 	"call-CallVariants" -> "call-FinalizePBSVtbi"
 	"call-CallVariants" -> "call-FinalizeSniffles"

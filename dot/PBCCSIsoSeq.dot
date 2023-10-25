@@ -3,18 +3,18 @@ digraph {
 	compound=true rankdir=LR
 	node [fontname=Roboto]
 	edge [color="#00000080"]
-	subgraph "cluster-if-L42C5" {
+	subgraph "cluster-if-L41C5" {
 		fontname=Roboto label="if(length(ccs_bams) > 1)" rank=same
 		"call-MergeAllReads" [label=MergeAllReads shape=cds]
 		"call-IndexCCSUnalignedReads" [label=IndexCCSUnalignedReads shape=cds]
-		"if-L42C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L41C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-bam" [label=bam shape=plaintext]
 	"decl-pbi" [label=pbi shape=plaintext]
 	"call-Demultiplex" [label=Demultiplex shape=cds]
 	"call-SummarizedDemuxReportPNG" [label=SummarizedDemuxReportPNG shape=cds]
 	"call-DetailedDemuxReportPNG" [label=DetailedDemuxReportPNG shape=cds]
-	subgraph "cluster-scatter-L67C5-demux_bam" {
+	subgraph "cluster-scatter-L66C5-demux_bam" {
 		fontname=Roboto label="scatter(Demultiplex.demux_bams)" rank=same
 		"call-RefineTranscriptReads" [label=RefineTranscriptReads shape=cds]
 		"call-ClusterTranscripts" [label=ClusterTranscripts shape=cds]
@@ -25,7 +25,7 @@ digraph {
 		"call-FinalizeAlignedTranscriptsBai" [label=FinalizeAlignedTranscriptsBai shape=cds]
 		"call-FinalizeAlignedTranscriptsBed" [label=FinalizeAlignedTranscriptsBed shape=cds]
 		"call-FinalizeCollapsedTranscripts" [label=FinalizeCollapsedTranscripts shape=cds]
-		"scatter-L67C5-demux_bam" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L66C5-demux_bam" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MergeBarcodeBams" [label=MergeBarcodeBams shape=cds]
 	"call-IndexAlignedReads" [label=IndexAlignedReads shape=cds]
@@ -45,7 +45,7 @@ digraph {
 	"decl-bam" -> "call-Demultiplex"
 	"call-Demultiplex" -> "call-SummarizedDemuxReportPNG"
 	"call-Demultiplex" -> "call-DetailedDemuxReportPNG"
-	"call-Demultiplex" -> "scatter-L67C5-demux_bam" [lhead="cluster-scatter-L67C5-demux_bam"]
+	"call-Demultiplex" -> "scatter-L66C5-demux_bam" [lhead="cluster-scatter-L66C5-demux_bam"]
 	"call-RefineTranscriptReads" -> "call-ClusterTranscripts"
 	"call-ClusterTranscripts" -> "call-AlignTranscripts"
 	"call-AlignTranscripts" -> "call-BamToBed"

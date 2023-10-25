@@ -59,8 +59,6 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../BAMutils/">BAMutils</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
@@ -70,8 +68,6 @@
                   <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Hail/">Hail</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../JupyterNotebooks/">JupyterNotebooks</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../MASSeq/">MASSeq</a>
                   </li>
@@ -103,7 +99,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#aggregateumiadjustmentstats">AggregateUmiAdjustmentStats</a>
+    <li class="toctree-l2"><a class="reference internal" href="#createcountmatrixanndatafromequivalenceclasses">CreateCountMatrixAnndataFromEquivalenceClasses</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
         <ul>
@@ -119,7 +115,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mergebarcodecounts">MergeBarcodeCounts</a>
+    <li class="toctree-l2"><a class="reference internal" href="#quantifygffcomparison">QuantifyGffComparison</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
         <ul>
@@ -135,7 +131,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#createcountmatrixanndatafromtsv">CreateCountMatrixAnndataFromTsv</a>
+    <li class="toctree-l2"><a class="reference internal" href="#combineeqclassfiles">CombineEqClassFiles</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
         <ul>
@@ -151,7 +147,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#createcountmatrixanndatafromequivalenceclasses">CreateCountMatrixAnndataFromEquivalenceClasses</a>
+    <li class="toctree-l2"><a class="reference internal" href="#copyeqclassinfototag">CopyEqClassInfoToTag</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
         <ul>
@@ -167,79 +163,13 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#subsetcountsmatrixbygenes">SubsetCountsMatrixByGenes</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_5">Required</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_5">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#quantifygffcomparison">QuantifyGffComparison</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_6">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_5">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_5">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_6">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#combineeqclassfiles">CombineEqClassFiles</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_7">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_6">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_6">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_7">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#copyeqclassinfototag">CopyEqClassInfoToTag</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_8">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_7">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_7">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_8">Outputs</a>
-    </li>
-        </ul>
-    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Preprocessing_Tasks/">Preprocessing_Tasks</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Racon/">Racon</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SoftClipper/">SoftClipper</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../StringTie2/">StringTie2</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../UMI_Tools/">UMI_Tools</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Utils/">Utils</a>
                   </li>
@@ -401,87 +331,6 @@
 <ul>
 <li><code>count_matrix</code> (File)</li>
 </ul>
-<h2 id="aggregateumiadjustmentstats">AggregateUmiAdjustmentStats</h2>
-<dl>
-<dt>description</dt>
-<dd>Aggregates the UMI adjustment stats from the given longbow UMI adjustment log files.</dd>
-</dl>
-<h3 id="inputs_1">Inputs</h3>
-<h4 id="required_1">Required</h4>
-<ul>
-<li><code>longbow_umi_adjustment_log_files</code> (Array[File], <strong>required</strong>): The longbow UMI adjustment log files to aggregate.</li>
-</ul>
-<h4 id="optional_1">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults_1">Defaults</h4>
-<ul>
-<li><code>out_name</code> (String, default="longbow_umi_adjustment_stats.txt"): The name of the output file.</li>
-</ul>
-<h3 id="outputs_1">Outputs</h3>
-<ul>
-<li><code>stats</code> (File)</li>
-</ul>
-<h2 id="mergebarcodecounts">MergeBarcodeCounts</h2>
-<dl>
-<dt>description</dt>
-<dd>Merge all counts for each unique barcode in the given TSV file.  Assumes file is unheadered and have two columns: BARCODE COUNT.  Merging performed by adding all COUNTs for each BARCODE.</dd>
-<dt>author</dt>
-<dd>Jonn Smith</dd>
-<dt>email</dt>
-<dd>jonn@broadinstitute.org</dd>
-</dl>
-<h3 id="inputs_2">Inputs</h3>
-<h4 id="required_2">Required</h4>
-<ul>
-<li><code>barcode_count_tsv</code> (File, <strong>required</strong>): The TSV file containing the barcode counts to merge.</li>
-</ul>
-<h4 id="optional_2">Optional</h4>
-<ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults_2">Defaults</h4>
-<ul>
-<li><code>prefix</code> (String, default="merged_counts"): The prefix to use for the output file.</li>
-</ul>
-<h3 id="outputs_2">Outputs</h3>
-<ul>
-<li><code>merged_counts</code> (File)</li>
-</ul>
-<h2 id="createcountmatrixanndatafromtsv">CreateCountMatrixAnndataFromTsv</h2>
-<dl>
-<dt>description</dt>
-<dd>Creates a python anndata object from the given countmatrix tsv.  Expects the input to have been generated by CreateCountMatrixFromAnnotatedBam.  The resulting anndata object can be directly read into scanpy for single-cell analysis.</dd>
-<dt>author</dt>
-<dd>Jonn Smith</dd>
-<dt>email</dt>
-<dd>jonn@broadinstitute.org</dd>
-</dl>
-<h3 id="inputs_3">Inputs</h3>
-<h4 id="required_3">Required</h4>
-<ul>
-<li><code>count_matrix_tsv</code> (File, <strong>required</strong>): The TSV file containing the count matrix to convert to anndata.</li>
-<li><code>genome_annotation_gtf_file</code> (File, <strong>required</strong>): The GTF file containing the genome annotation.</li>
-</ul>
-<h4 id="optional_3">Optional</h4>
-<ul>
-<li><code>equivalence_class_definitions</code> (File?): The equivalence class definitions file to use for the anndata object.</li>
-<li><code>gencode_reference_gtf_file</code> (File?): The gencode reference GTF file to use for the anndata object.</li>
-<li><code>overlap_interval_label</code> (String?): The overlap interval label to use for the anndata object.</li>
-<li><code>overlap_intervals</code> (File?): The overlap intervals file to use for the anndata object.</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults_3">Defaults</h4>
-<ul>
-<li><code>force_anndata_gencode_overwrite</code> (Boolean, default=false): Forces the values in <code>gene_names</code> and <code>gene_ids</code> to overwrite <code>gencode_overlap_gene_names</code> and <code>gencode_overlap_gene_ids</code> respectively.</li>
-<li><code>prefix</code> (String, default="umi_tools_group"): The prefix to use for the output file.</li>
-</ul>
-<h3 id="outputs_3">Outputs</h3>
-<ul>
-<li><code>transcript_gene_count_anndata_h5ad</code> (File)</li>
-<li><code>pickles</code> (Array[File])</li>
-</ul>
 <h2 id="createcountmatrixanndatafromequivalenceclasses">CreateCountMatrixAnndataFromEquivalenceClasses</h2>
 <dl>
 <dt>description</dt>
@@ -491,8 +340,8 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_4">Inputs</h3>
-<h4 id="required_4">Required</h4>
+<h3 id="inputs_1">Inputs</h3>
+<h4 id="required_1">Required</h4>
 <ul>
 <li><code>count_matrix_tsv</code> (File, <strong>required</strong>): The TSV file containing the count matrix to convert to anndata.</li>
 <li><code>gene_equivalence_class_assignments</code> (File, <strong>required</strong>): The equivalence class assignments file to use for the anndata object.</li>
@@ -501,42 +350,22 @@
 <li><code>tx_equivalence_class_assignments</code> (File, <strong>required</strong>): The equivalence class assignments file to use for the anndata object.</li>
 <li><code>tx_equivalence_class_definitions</code> (File, <strong>required</strong>): The equivalence class definitions file to use for the anndata object.</li>
 </ul>
-<h4 id="optional_4">Optional</h4>
+<h4 id="optional_1">Optional</h4>
 <ul>
 <li><code>gencode_reference_gtf_file</code> (File?): The gencode reference GTF file</li>
 <li><code>overlap_interval_label</code> (String?): The label to use for the overlap intervals.</li>
 <li><code>overlap_intervals</code> (File?): Overlaping interval file.</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_4">Defaults</h4>
+<h4 id="defaults_1">Defaults</h4>
 <ul>
 <li><code>force_anndata_gencode_overwrite</code> (Boolean, default=false)</li>
 <li><code>prefix</code> (String, default="umi_tools_group"): The prefix to use for the output anndata object.</li>
 </ul>
-<h3 id="outputs_4">Outputs</h3>
+<h3 id="outputs_1">Outputs</h3>
 <ul>
 <li><code>transcript_gene_count_anndata_h5ad</code> (File)</li>
 <li><code>pickles</code> (Array[File])</li>
-</ul>
-<h2 id="subsetcountsmatrixbygenes">SubsetCountsMatrixByGenes</h2>
-<dl>
-<dt>description</dt>
-<dd>Subsets a count matrix TSV file to contain only the transcripts from the given list of genes.  Assumes the count matrix was produced by comparison with Gencode (due to data formatting) and that the table is a TSV with samples as rows and transcripts as columns.</dd>
-<dt>author</dt>
-<dd>Jonn Smith</dd>
-<dt>email</dt>
-<dd>jonn@broadinstitute.org</dd>
-</dl>
-<h3 id="inputs_5">Inputs</h3>
-<h4 id="required_5">Required</h4>
-<ul>
-<li><code>count_matrix_tsv</code> (File, <strong>required</strong>): TSV file containing the counts of each transcript expressed in a sample.  (Transcripts in columns.  Samples in rows.  One header row.)</li>
-<li><code>gene_names</code> (Array[String], <strong>required</strong>): Array of gene names for which to keep data from the given count matrix TSV.</li>
-</ul>
-<h3 id="outputs_5">Outputs</h3>
-<ul>
-<li><code>subset_count_matrix_tsv</code> (File)</li>
-<li><code>subset_count_matrix_h5ad</code> (File)</li>
 </ul>
 <h2 id="quantifygffcomparison">QuantifyGffComparison</h2>
 <dl>
@@ -547,8 +376,8 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_6">Inputs</h3>
-<h4 id="required_6">Required</h4>
+<h3 id="inputs_2">Inputs</h3>
+<h4 id="required_2">Required</h4>
 <ul>
 <li><code>gencode_read_refmap</code> (File, <strong>required</strong>): Refmap file (produced by gffcompare) comparing the genome reference gtf to input reads (in GFF format).</li>
 <li><code>gencode_read_tmap</code> (File, <strong>required</strong>): Tmap file (produced by gffcompare) comparing the genome reference gtf to input reads (in GFF format).</li>
@@ -560,15 +389,15 @@
 <li><code>st2_read_refmap</code> (File, <strong>required</strong>): Refmap file (produced by gffcompare) comparing the stringtie2 discovered transcriptome to input reads (in GFF format).</li>
 <li><code>st2_read_tmap</code> (File, <strong>required</strong>): Tmap file (produced by gffcompare) comparing the stringtie2 discovered transcriptome to input reads (in GFF format).</li>
 </ul>
-<h4 id="optional_5">Optional</h4>
+<h4 id="optional_2">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_5">Defaults</h4>
+<h4 id="defaults_2">Defaults</h4>
 <ul>
 <li><code>prefix</code> (String, default="reads_comparison"): Prefix for ouput file.</li>
 </ul>
-<h3 id="outputs_6">Outputs</h3>
+<h3 id="outputs_2">Outputs</h3>
 <ul>
 <li><code>gene_eq_class_labels_file</code> (File)</li>
 <li><code>gene_assignments_file</code> (File)</li>
@@ -585,23 +414,23 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_7">Inputs</h3>
-<h4 id="required_7">Required</h4>
+<h3 id="inputs_3">Inputs</h3>
+<h4 id="required_3">Required</h4>
 <ul>
 <li><code>equivalence_class_definitions</code> (Array[File], <strong>required</strong>): TSV files containing transcript equivalence class definitions as produced by QuantifyGffComparison.tx_equivalence_class_labels_file.</li>
 <li><code>equivalence_classes</code> (Array[File], <strong>required</strong>): TSV files containing read -&gt; transcript equivalence class assignments as produced by QuantifyGffComparison.tx_equivalence_class_file.</li>
 <li><code>gene_assignment_files</code> (Array[File], <strong>required</strong>): TSV files containing read -&gt; gene equivalence class assignments as produced by QuantifyGffComparison.gene_assignments_file.</li>
 <li><code>gene_eq_class_definitions</code> (Array[File], <strong>required</strong>): TSV files containing equivalence class definitions for genes as produced by QuantifyGffComparison.gene_eq_class_labels_file.</li>
 </ul>
-<h4 id="optional_6">Optional</h4>
+<h4 id="optional_3">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_6">Defaults</h4>
+<h4 id="defaults_3">Defaults</h4>
 <ul>
 <li><code>prefix</code> (String, default="combined"): Prefix for ouput file.</li>
 </ul>
-<h3 id="outputs_7">Outputs</h3>
+<h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>combined_gene_eq_class_defs</code> (File)</li>
 <li><code>combined_gene_eq_class_assignments</code> (File)</li>
@@ -617,23 +446,23 @@
 <dt>email</dt>
 <dd>jonn@broadinstitute.org</dd>
 </dl>
-<h3 id="inputs_8">Inputs</h3>
-<h4 id="required_8">Required</h4>
+<h3 id="inputs_4">Inputs</h3>
+<h4 id="required_4">Required</h4>
 <ul>
 <li><code>bam</code> (File, <strong>required</strong>): BAM file containing reads to copy gene assignments into.</li>
 <li><code>eq_class_file</code> (File, <strong>required</strong>): TSV file containing read -&gt; gene equivalence class assignments as produced by QuantifyGffComparison.gene_assignments_file.</li>
 </ul>
-<h4 id="optional_7">Optional</h4>
+<h4 id="optional_4">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_7">Defaults</h4>
+<h4 id="defaults_4">Defaults</h4>
 <ul>
 <li><code>eq_class_tag</code> (String, default="eq"): Tag to copy gene equivalence class into.</li>
 <li><code>gene_tag</code> (String, default="XG"): Tag to copy gene assignment into.</li>
 <li><code>prefix</code> (String, default="combined"): Prefix for ouput file.</li>
 </ul>
-<h3 id="outputs_8">Outputs</h3>
+<h3 id="outputs_4">Outputs</h3>
 <ul>
 <li><code>bam_out</code> (File)</li>
 <li><code>bai</code> (File)</li>
