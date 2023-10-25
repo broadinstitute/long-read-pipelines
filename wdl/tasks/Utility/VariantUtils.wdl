@@ -219,11 +219,11 @@ task MergePerChrVcfWithBcftools {
         File merged_tbi = "~{pref}.AllSamples.vcf.gz.tbi"
     }
 
-    Int disk_size = 100 + 2 * ceil(size(vcf_input, "GB"))
+    # Int disk_size = 100 + 2 * ceil(size(vcf_input, "GB"))
     runtime {
         cpu: 32
         memory: "128 GiB"
-        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        disks: "local-disk " + 200 + " HDD" #"local-disk 100 HDD"
         # bootDiskSizeGb: 10
         preemptible: 0
         maxRetries: 1

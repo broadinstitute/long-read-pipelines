@@ -48,7 +48,7 @@ workflow HybridPhase {
             bai = bai}
         String sample_id = InferSampleName.sample_name
 
-        call SplitJointCallbySample.SplitVCFbySample as Split { input:
+        call SplitJointCallbySample.SplitVCFbySample as SP { input:
             joint_vcf = one_chr_joint_vcf,
             region = chromosome,
             samplename = sample_id
@@ -57,8 +57,8 @@ workflow HybridPhase {
         call Hiphase.HiphaseSNPs as HP { input:
             bam = bam,
             bai = bai,
-            unphased_snp_vcf = Split.single_sample_vcf,
-            unphased_snp_tbi = Split.single_sample_vcf_tbi,
+            unphased_snp_vcf = SP.single_sample_vcf,
+            unphased_snp_tbi = SP.single_sample_vcf_tbi,
             ref_fasta = reference,
             ref_fasta_fai = reference_index
         }
