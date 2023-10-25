@@ -82,12 +82,13 @@ Notes:
 
         # Clear the previous line and print the progress
         print(f"Progress: {progress:.2f}%\r", end="")
-    with open(OUT_SUMMARY_TSV, "a") as tsv_file:
+    with open(OUT_SUMMARY_TSV, "w") as tsv_file:
         # Add header
-        tsv_file.write(f"DOCKER_NAME\tLATEST_TAG\tUSED_TAG\tFILE_LINE\tWDL_PATH")
+        tsv_file.write("DOCKER_NAME\tLATEST_TAG\tUSED_TAG\tFILE_LINE\tWDL_PATH")
         # Add content
         for docker_info_line in sorted(global_docker_info):
-            tsv_file.write("\n".join(docker_info_line) + "\n")
+            delimiter = "\n"
+            tsv_file.write(delimiter.join(docker_info_line) + "\n")
 
     print(f"DONE. PLEASE CHECKOUT TSV FILE: {OUT_SUMMARY_TSV}")
 
@@ -137,8 +138,6 @@ def get_docker_info_from_string(wdl_lines: [tuple], wdl_path: str) -> list:
                 docker_name) if latest_tag == "NA" else latest_tag
             docker_detail.append(
                 f"{docker_name}\t{latest_tag}\t{used_tag}\t{line_num}\t{wdl_path_sum}")
-        else:
-            pass
 
     return docker_detail
 
