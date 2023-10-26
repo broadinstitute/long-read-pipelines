@@ -89,5 +89,6 @@ workflow HybridPhase {
     output{
         Array[File] hiphased_vcf = HP.phased_vcf
         Array[File] hiphased_vcf_tbi = HP.phased_vcf_tbi
+        File merged_vcf = MergeAcrossSamples.merged_vcf
     }
 }
