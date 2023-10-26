@@ -37,6 +37,7 @@ Notes:
     parser.parse_args()
 
     current_dir = os.path.abspath(os.path.dirname(__file__))
+    repo_dir = os.path.abspath(os.path.join(current_dir, os.pardir, os.pardir))
 
     print("COLLECTING DOCKERS IN USE...")
     WDLS_DIR = os.path.abspath(os.path.join(current_dir, "../../wdl"))
@@ -67,7 +68,7 @@ Notes:
                         matched_lines.append((line_number, line.strip()))
 
                 docker_info: list[str] = get_docker_info_from_string(
-                    wdl_lines=matched_lines, wdl_path=wdl_name
+                    wdl_lines=matched_lines, wdl_path=wdl_name, repo_dir=repo_dir
                 )
 
                 sorted_info: list = sorted(docker_info, reverse=False)
@@ -108,7 +109,7 @@ def get_wdl_files(dir_to_wdls: str) -> list:
     return wdl_files
 
 
-def get_docker_info_from_string(wdl_lines: [tuple], wdl_path: str) -> list:
+def get_docker_info_from_string(wdl_lines: [tuple], wdl_path: str, repo_dir: str) -> list:
     """
     Returns a list of docker info
     @param wdl_path: path to wdl file
@@ -128,11 +129,14 @@ def get_docker_info_from_string(wdl_lines: [tuple], wdl_path: str) -> list:
             docker_name = docker_name_and_version.split(":")[0]
 
             # Get latest tag from list of docker details if it was already retrieved
-            latest_tag = get_tag_from_docker_details(docker_detail=docker_detail,
-                                                     docker_name=docker_name)
+            latest_tag = get_tag_from_docker_details(
+                docker_detail=docker_detail, docker_name=docker_name
+            )
             # Get latest tag from local docker if it was not retrieved from list of docker details
             latest_tag = get_latest_local_docker_tag(
-                docker_name) if latest_tag == "NA" else latest_tag
+                docker_name=docker_name,  repo_dir=repo_dir
+            ) if latest_tag == "NA" else latest_tag
+
             # If the latest tag is not found locally, try to get it from remote
             latest_tag = get_latest_remote_docker_tag(
                 docker_name) if latest_tag == "NA" else latest_tag
@@ -352,14 +356,14 @@ def get_latest_tag_from_quay(docker_path: str) -> str:
         pass
 
 
-def get_latest_local_docker_tag(docker_name: str) -> str:
+def get_latest_local_docker_tag(docker_name: str, repo_dir: str) -> str:
     """
     Returns the latest tag of a docker from the local docker directory
     @param docker_name: name of the docker e.g. "gatk"
     @return:
     """
     docker_name = os.path.basename(docker_name)
-    docker_dir = "../docker"
+    docker_dir = os.path.join(repo_dir, "docker")
     latest_tag = "NA"
 
     for docker_im_dir in os.listdir(docker_dir):
