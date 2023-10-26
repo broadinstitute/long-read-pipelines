@@ -68,150 +68,41 @@ task MergePerChrCalls {
     }
 }
 
-task MergeAndSortVCFs {
-
-    meta {
-        description: "Fast merging & sorting VCFs when the default sorting is expected to be slow"
-    }
-
-    parameter_meta {
-        header_definitions_file: "a union of definition header lines for input VCFs (related to https://github.com/samtools/bcftools/issues/1629)"
-    }
-
-    input {
-        Array[File] vcfs
-
-        File ref_fasta_fai
-        File? header_definitions_file
-
-        String prefix
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int sz = ceil(size(vcfs, 'GB'))
-    Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
-
-    Boolean suspected_incomplete_definitions = defined(header_definitions_file)
-
-    Int cores = 8
-
-    # pending a bug fix (bcftools github issue 1576) in official bcftools release,
-    # bcftools sort can be more efficient in using memory
-    Int machine_memory = 48 # 96
-    Int work_memory = ceil(machine_memory * 0.8)
-
-    command <<<
-        set -euxo pipefail
-
-        echo ~{sep=' ' vcfs} | sed 's/ /\n/g' > all_raw_vcfs.txt
-
-        echo "==========================================================="
-        echo "starting concatenation" && date
-        echo "==========================================================="
-        bcftools \
-            concat \
-            --naive \
-            --threads ~{cores-1} \
-            -f all_raw_vcfs.txt \
-            --output-type v \
-            -o concatedated_raw.vcf.gz  # fast, at the expense of disk space
-        for vcf in ~{sep=' ' vcfs}; do rm $vcf ; done
-
-        # this is another bug in bcftools that's hot fixed but not in official release yet
-        # (see bcftools github issue 1591)
-        echo "==========================================================="
-        echo "done concatenation, fixing header of naively concatenated VCF" && date
-        echo "==========================================================="
-        if ~{suspected_incomplete_definitions}; then
-            # a bug from bcftools concat --naive https://github.com/samtools/bcftools/issues/1629
-            set +e
-            zgrep "^##" concatedated_raw.vcf.gz > header.txt
-            grep -vF 'fileformat' header.txt \
-                | grep -vF 'fileDate=' \
-                | grep -vF 'source=' \
-                | grep -vF 'contig' \
-                | grep -vF 'ALT' \
-                | grep -vF 'FILTER' \
-                | grep -vF 'INFO' \
-                | grep -vF 'FORMAT' \
-                > tmp.others.txt
-            touch tmp.other.txt
-            set -e
-            zgrep "^#CHROM" concatedated_raw.vcf.gz > tmp.sampleline.txt
-            cat \
-                ~{header_definitions_file} \
-                tmp.others.txt \
-                tmp.sampleline.txt \
-                > fixed.header.txt
-            rm -f tmp.*.txt && cat fixed.header.txt
-
-            bcftools reheader \
-                -h fixed.header.txt \
-                -o tmp.wgs.vcf.gz \
-                concatedated_raw.vcf.gz
-            rm concatedated_raw.vcf.gz
-        else
-            mv concatedated_raw.vcf.gz tmp.wgs.vcf.gz
-        fi
-        bcftools reheader \
-            --fai ~{ref_fasta_fai} \
-            -o wgs_raw.vcf.gz \
-            tmp.wgs.vcf.gz
-        rm tmp.wgs.vcf.gz
-
-        echo "==========================================================="
-        echo "starting sort operation" && date
-        echo "==========================================================="
-        bcftools \
-            sort \
-            --temp-dir tm_sort \
-            --output-type z \
-            -o ~{prefix}.vcf.gz \
-            wgs_raw.vcf.gz
-        bcftools index --tbi --force ~{prefix}.vcf.gz
-        echo "==========================================================="
-        echo "done sorting" && date
-        echo "==========================================================="
-    >>>
-
-    output {
-        File vcf = "~{prefix}.vcf.gz"
-        File tbi = "~{prefix}.vcf.gz.tbi"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          cores,
-        mem_gb:             "~{machine_memory}",
-        disk_gb:            disk_sz,
-        boot_disk_gb:       10,
-        preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
 task MergePerChrVcfWithBcftools {
+    parameter_meta {
+        vcf_input: {localization_optional: true}
+        tbi_input: {localization_optional: true}
+    }
     input{
         Array[File] vcf_input
         Array[File] tbi_input
         String pref
     }
+
     command <<<
-        bcftools merge --merge all ~{sep=" " vcf_input} -O v -o ~{pref}.AllSamples.vcf
-        bgzip -c ~{pref}.AllSamples.vcf > ~{pref}.AllSamples.vcf.gz
+        set -eux
+
+        # we do single-sample phased VCFs localization ourselves
+        mkdir -p ssp_vcfs
+        time \
+        gcloud storage cp ~{vcf_input} /cromwell_root/ssp_vcfs/
+
+        time \
+        gcloud storage cp ~{tbi_input} /cromwell_root/ssp_vcfs/
+
+        # then merge, and safely assume all ssp-VCFs are sorted in the same order, on one chr
+        cd ssp_vcfs
+        ls *.vcf.gz > my_vcfs.txt
+        bcftools merge \
+            --merge all \
+            --no-index \
+            -l my_vcfs.txt \
+            -O z \
+            -o ~{pref}.AllSamples.vcf.gz
         tabix -p vcf ~{pref}.AllSamples.vcf.gz
+
+        # move result files to the correct location for cromwell to de-localize
+        mv ~{pref}.AllSamples.vcf.gz ~{pref}.AllSamples.vcf.gz.tbi /cromwell_root/
     >>>
 
     output{
@@ -219,15 +110,13 @@ task MergePerChrVcfWithBcftools {
         File merged_tbi = "~{pref}.AllSamples.vcf.gz.tbi"
     }
 
-    # Int disk_size = 100 + 2 * ceil(size(vcf_input, "GB"))
     runtime {
         cpu: 32
         memory: "128 GiB"
-        disks: "local-disk " + 200 + " HDD" #"local-disk 100 HDD"
-        # bootDiskSizeGb: 10
+        disks: "local-disk 375 LOCAL"
         preemptible: 0
         maxRetries: 1
-        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
     }
 }
 
