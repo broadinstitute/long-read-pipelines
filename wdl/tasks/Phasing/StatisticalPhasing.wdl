@@ -21,6 +21,7 @@ task Shapeit4 {
     >>>
 
     output{
+        File resouce_monitor_log = "resources.log"
         File scaffold_vcf = "~{region}_scaffold.bcf"
     }
 

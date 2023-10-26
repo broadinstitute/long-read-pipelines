@@ -66,11 +66,11 @@ workflow HybridPhase {
         }
     }
         
-    # call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
-    #     vcf_input = HP.phased_vcf,
-    #     tbi_input = HP.phased_vcf_tbi,
-    #     pref = prefix
-    # }
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
+        vcf_input = HP.phased_vcf,
+        tbi_input = HP.phased_vcf_tbi,
+        pref = prefix
+    }
 
     # call StatPhase.Shapeit4 { input:
     #     vcf_input = MergeAcrossSamples.merged_vcf,
