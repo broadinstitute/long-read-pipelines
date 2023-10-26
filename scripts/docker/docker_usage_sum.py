@@ -40,7 +40,7 @@ Notes:
 
     print("COLLECTING DOCKERS IN USE...")
     WDLS_DIR = os.path.abspath(os.path.join(current_dir, "../../wdl"))
-    OUT_SUMMARY_TSV = os.path.join(current_dir, "dockers.in_use.tsv")
+    OUT_SUMMARY_TSV = os.path.join(current_dir, "dockers_in_use.tsv")
 
     if os.path.exists(OUT_SUMMARY_TSV):
         os.rename(OUT_SUMMARY_TSV, OUT_SUMMARY_TSV + ".bak")
