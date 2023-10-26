@@ -10,8 +10,14 @@ task Shapeit4 {
     }
     command <<<
         # add AN AC tag
+
+        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        bash /opt/vm_local_monitoring_script.sh &> resources.log &
+        job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
+
         shapeit4 --input ~{vcf_input} --map ~{mappingfile} --region ~{region} --use-PS 0.0001 --sequencing --output ~{region}_scaffold.bcf --thread ~{num_threads} --log phased.log
-    
+        
+        if ps -p "${job_id}" > /dev/null; then kill "${job_id}"; fi
     >>>
 
     output{

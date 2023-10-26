@@ -40,6 +40,7 @@ RUN wget https://github.com/PacificBiosciences/HiPhase/releases/download/${VERSI
     ./hiphase -h 
 
 ENV PATH="${PATH}:/data/hiphase-v0.7.2-x86_64-unknown-linux-gnu"
+COPY vm_local_monitoring_script.sh /opt/
 
 
 
