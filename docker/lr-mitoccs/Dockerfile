@@ -32,8 +32,11 @@ RUN apt-get -qqy update --fix-missing && \
     cd bcftools-${BCFTOOLS_VERSION} && ./configure --without-curses && make -s && make install && cd - && \
     rm -rf bcftools-${BCFTOOLS_VERSION}*
 
-RUN git clone https://www.github.com/broadinstitute/mito_ccs_read_analyzer.git && \
-    cd mito_ccs_read_analyzer && \
+# mitoccs_git = "https://www.github.com/broadinstitute/mito_ccs_read_analyzer.git"
+RUN python3 -m pip install --upgrade pip setuptools
+RUN python3 -m pip install --upgrade \
+    git https://www.github.com/broadinstitute/mito_ccs_read_analyzer.git
+RUN cd mito_ccs_read_analyzer && \
     python3 -m venv env && \
     pip install -r requirements.txt && \
     cd ..
