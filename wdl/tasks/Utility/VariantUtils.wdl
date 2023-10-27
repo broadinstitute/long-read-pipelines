@@ -74,8 +74,8 @@ task MergePerChrVcfWithBcftools {
         tbi_input: {localization_optional: true}
     }
     input{
-        Array[File?] vcf_input
-        Array[File?] tbi_input
+        Array[File] vcf_input
+        Array[File] tbi_input
         String pref
     }
 
