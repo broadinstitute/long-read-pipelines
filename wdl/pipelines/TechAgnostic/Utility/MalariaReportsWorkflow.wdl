@@ -104,7 +104,9 @@ workflow GenerateMalariaReports {
         Float fraction_aligned_bases
         Float average_identity
 
-        # Coverage Plot -- incomplete     
+        # Coverage Plot -- incomplete   
+        String? fastqc_path
+        Int coverage_bin_size  
     }
 
     call MRS.RunReportScript as RunReportScript { 
@@ -134,7 +136,9 @@ workflow GenerateMalariaReports {
             aligned_bases = aligned_bases,
             aligned_reads = aligned_reads,
             fraction_aligned_bases = fraction_aligned_bases,
-            average_identity = average_identity
+            average_identity = average_identity,
+            fastqc_path = fastqc_path,
+            coverage_bin_size = coverage_bin_size
     }
 
     output {
