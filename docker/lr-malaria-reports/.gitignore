@@ -1,5 +1,6 @@
 templates/map.html
 test_data/
+data/
 /.vscode
 *_report.html
 *.jpeg

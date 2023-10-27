@@ -53,8 +53,9 @@ task RunReportScript {
         # average_identity:
 
         # Coverage Plot
-        coverage_dir: "directory where bam files used for coverage plots are stored"
-
+        # coverage_dir: "directory of BAM files for coverage plot generation"
+        fastqc_path: "directory of fastqc_report used for finding BAM files"
+        coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
     }
 
     input {
@@ -105,12 +106,20 @@ task RunReportScript {
         Float average_identity
 
         # Coverage Plot -- incomplete 
-        String coverage_dir 
+        # String? coverage_dir
+        String? fastqc_path
+        Int? coverage_bin_size
     }
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
 
-    # incomplete
+    # Compute path for BAM files (coverage_dir) using fastqc_path
+    if(fastqc_path) {
+        String coverage_dir = sub(fastqc_path, "fastqc_report.html", "coverage/")
+        print
+    }
+    
+
     command <<<
         set -euxo
         pwd
@@ -144,7 +153,12 @@ task RunReportScript {
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
-            --coverage_dir ~{coverage_dir}
+            --coverage_bin_size ~{coverage_bin_size}
+
+        echo ~{coverage_dir}
+        mkdir /report-files/data/coverage
+        gsutil ls ~{coverage_dir}  > filelist.txt
+        cat filelist.txt | gsutil cp -I /report-files/data/coverage
     >>>
 
     output {
