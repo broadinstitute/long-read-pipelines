@@ -62,7 +62,9 @@ workflow HybridPhase {
             unphased_snp_vcf = SP.single_sample_vcf,
             unphased_snp_tbi = SP.single_sample_vcf_tbi,
             ref_fasta = reference,
-            ref_fasta_fai = reference_index
+            ref_fasta_fai = reference_index,
+            samplename = sample_id
+
         }
     }
         

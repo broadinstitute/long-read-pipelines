@@ -20,6 +20,7 @@ task HiphaseSNPs {
         File ref_fasta
         File ref_fasta_fai
 
+        String samplename
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
 
         RuntimeAttr? runtime_attr_override
@@ -35,16 +36,16 @@ task HiphaseSNPs {
         --threads 16 \
         --bam ~{bam} \
         --vcf ~{unphased_snp_vcf} \
-        --output-vcf phased_snp_vcf.gz \
+        --output-vcf ~{samplename}_phased_snp_vcf.gz \
         --reference ~{ref_fasta} \
 
-        tabix -p vcf phased_snp_vcf.gz
+        tabix -p vcf ~{samplename}_phased_snp_vcf.gz
         
     >>>
 
     output {
-        File phased_vcf = "phased_snp_vcf.gz"
-        File phased_vcf_tbi = "phased_snp_vcf.gz.tbi"
+        File phased_vcf = "~{samplename}_phased_snp_vcf.gz"
+        File phased_vcf_tbi = "~{samplename}_phased_snp_vcf.gz.tbi"
     }
 
     #########################
@@ -90,7 +91,7 @@ task HiphaseSVs {
 
         File ref_fasta
         File ref_fasta_fai
-        String prefix
+        String samplename
 
         Int memory = 200
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
@@ -110,23 +111,23 @@ task HiphaseSVs {
         --reference ~{ref_fasta} \
         --global-realignment-cputime 300 \
         --vcf ~{unphased_snp_vcf} \
-        --output-vcf phased_snp_vcf.gz \
+        --output-vcf ~{samplename}_phased_snp_vcf.gz \
         --vcf ~{unphased_sv_vcf} \
-        --output-vcf phased_sv_vcf.gz \
-        --stats-file ~{prefix}.stats.csv \
-        --blocks-file ~{prefix}.blocks.tsv \
-        --summary-file ~{prefix}.summary.tsv
+        --output-vcf ~{samplename}_phased_sv_vcf.gz \
+        --stats-file ~{samplename}.stats.csv \
+        --blocks-file ~{samplename}.blocks.tsv \
+        --summary-file ~{samplename}.summary.tsv
 
-        tabix -p vcf phased_snp_vcf.gz
-        tabix -p vcf phased_sv_vcf.gz
+        tabix -p vcf ~{samplename}_phased_snp_vcf.gz
+        tabix -p vcf ~{samplename}_phased_sv_vcf.gz
         
     >>>
 
     output {
-        File phased_snp_vcf = "phased_snp_vcf.gz"
-        File phased_snp_vcf_tbi = "phased_snp_vcf.gz.tbi"
-        File phased_sv_vcf   = "phased_sv_vcf.gz"
-        File phased_sv_vcf_tbi = "phased_sv_vcf.gz.tbi"
+        File phased_snp_vcf = "~{samplename}_phased_snp_vcf.gz"
+        File phased_snp_vcf_tbi = "~{samplename}_phased_snp_vcf.gz.tbi"
+        File phased_sv_vcf   = "~{samplename}_phased_sv_vcf.gz"
+        File phased_sv_vcf_tbi = "~{samplename}_phased_sv_vcf.gz.tbi"
     }
 
     #########################
