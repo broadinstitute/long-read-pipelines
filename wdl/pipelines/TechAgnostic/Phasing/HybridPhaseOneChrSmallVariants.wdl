@@ -25,7 +25,7 @@ workflow HybridPhase {
         genetic_mapping_tsv_for_shapeit4: "path to the tsv file for the genetic mapping file address per chromosome"
         chromosome: "string for chromosome to be processed"
         prefix: "output file prefix, usually using chromosome"
-        physical_phasing_type: "Whatshap, Margin, Hiphase"
+        use_margin: "Whatshap, Margin"
         num_t: "integer for threads"
     }
 
@@ -41,7 +41,7 @@ workflow HybridPhase {
         String chromosome
         String prefix
         String gcs_output_directory
-        String physical_phasing_type
+        Boolean use_margin = true
         Int num_t
     }
     
@@ -60,73 +60,73 @@ workflow HybridPhase {
         File bam = bam_bai.left
         File bai = bam_bai.right
         
-        call Utils.InferSampleName { input: 
+        call Utils.InferSampleName as InferSampleNamewhatshap { input: 
             bam = bam, 
             bai = bai}
-        String sample_id = InferSampleName.sample_name
 
-        call SplitJointCallbySample.SplitVCFbySample as Split { input:
+        String sample_id = InferSampleNamewhatshap.sample_name
+
+        call SplitJointCallbySample.SplitVCFbySample as Splitwhatshap { input:
             joint_vcf = joint_call.joint_gvcf,
             region = chromosome,
             samplename = sample_id
         }
 
-        if (physical_phasing_type == "Whatshap") {
+        ########### call whatshap phasing the second time
+        if (use_margin) {
+            call MarginPhase.MarginPhase as M { input:
+                bam = bam,
+                bai = bai,
+                data_type = "PacBio",
+                unphased_vcf = Splitwhatshap.single_sample_vcf,
+                unphased_tbi = Splitwhatshap.single_sample_vcf_tbi,
+                ref_fasta = reference,
+                ref_fasta_fai = reference_index
+            }
+        }
+        if (!use_margin) {
             call WhatsHap.Phase as W { input:
                 bam = bam,
                 bai = bai,
                 ref_fasta = reference,
                 ref_fasta_fai = reference_index,
-                unphased_vcf = Split.single_sample_vcf,
-                unphased_tbi = Split.single_sample_vcf_tbi,
+                unphased_vcf = Splitwhatshap.single_sample_vcf,
+                unphased_tbi = Splitwhatshap.single_sample_vcf_tbi,
                 chromosome = chromosome
-                }
-        }######## Done calling physical phasing #########
-
-        if (physical_phasing_type == "Margin") {
-            call MarginPhase.MarginPhase as M { input:
-                bam = bam,
-                bai = bai,
-                data_type = "PacBio",
-                unphased_vcf = Split.single_sample_vcf,
-                unphased_tbi = Split.single_sample_vcf_tbi,
-                ref_fasta = reference,
-                ref_fasta_fai = reference_index
             }
-        }######## Done calling physical phasing #########
-
-
-    }
-    ##########Merge vcfs given different output##########   
-    if (physical_phasing_type == "Whatshap") {
-        call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
-                vcf_input = W.phased_vcf,
-                tbi_input = W.phased_tbi,
-                pref = prefix
         }
+        ########### call margin phasing the second time
+       
+        ######## Done calling physical phasing #########
     }
-    if (physical_phasing_type == "Margin") {
-        call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
-                vcf_input = M.phased_vcf,
-                tbi_input = M.phased_tbi,
-                pref = prefix
-        }        
+
+
+    # !CHOICE! 
+    #############
+    Array[File?] phased_snp_vcf = if (use_margin) then W.phased_vcf else M.phased_vcf
+    Array[File?] phased_snp_tbi = if (use_margin) then W.phased_tbi else M.phased_tbi
+
+
+    ##########Merge vcfs given different output##########   
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSampleswhatshap { input:
+        vcf_input = phased_snp_vcf,
+        tbi_input = phased_snp_tbi,
+        pref = prefix
     }
     ################ Done Merging #################
-
-    ############# Statistical Phasing ################
     call StatPhase.Shapeit4 as Shapeit4 { input:
-        vcf_input = MergeAcrossSamples.merged_vcf,
-        vcf_index = MergeAcrossSamples.merged_tbi,
+        vcf_input = MergeAcrossSampleswhatshap.merged_vcf,
+        vcf_index = MergeAcrossSampleswhatshap.merged_tbi,
         mappingfile = genetic_mapping_dict[chromosome],
         region = chromosome,
         num_threads = num_t
     }
+    ############# Done Statistical Phasing ################
 
     ############## Finalize##############
-    call FF.FinalizeToFile as FinalizeGVCF { input: outdir = gcs_output_directory, file = Shapeit4.scaffold_vcf }
+    call FF.FinalizeToFile as FinalizeGVCFwhatshap { input: outdir = gcs_output_directory, file = Shapeit4.scaffold_vcf }
     
     output{
-        File phased_scaffold = Shapeit4.scaffold_vcf
+        File phased_whatshap_scaffold = Shapeit4.scaffold_vcf
     }
 }

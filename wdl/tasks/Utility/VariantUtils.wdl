@@ -74,8 +74,8 @@ task MergePerChrVcfWithBcftools {
         tbi_input: {localization_optional: true}
     }
     input{
-        Array[File] vcf_input
-        Array[File] tbi_input
+        Array[File?] vcf_input
+        Array[File?] tbi_input
         String pref
     }
 
@@ -85,10 +85,10 @@ task MergePerChrVcfWithBcftools {
         # we do single-sample phased VCFs localization ourselves
         mkdir -p ssp_vcfs
         time \
-        gcloud storage cp ~{vcf_input} /cromwell_root/ssp_vcfs/
+        gcloud storage cp ~{sep=" " vcf_input} /cromwell_root/ssp_vcfs/
 
         time \
-        gcloud storage cp ~{tbi_input} /cromwell_root/ssp_vcfs/
+        gcloud storage cp ~{sep=" " tbi_input} /cromwell_root/ssp_vcfs/
 
         # then merge, and safely assume all ssp-VCFs are sorted in the same order, on one chr
         cd ssp_vcfs
@@ -119,6 +119,8 @@ task MergePerChrVcfWithBcftools {
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
     }
 }
+
+
 
 task CollectDefinitions {
 
