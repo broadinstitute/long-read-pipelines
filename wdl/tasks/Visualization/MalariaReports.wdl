@@ -107,7 +107,7 @@ task RunReportScript {
 
         # Coverage Plot -- incomplete 
         # String? coverage_dir
-        String? fastqc_path
+        String fastqc_path
         Int? coverage_bin_size
     }
 

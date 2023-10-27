@@ -105,7 +105,7 @@ workflow GenerateMalariaReports {
         Float average_identity
 
         # Coverage Plot -- incomplete   
-        String? fastqc_path
+        String fastqc_path
         Int coverage_bin_size  
     }
 
