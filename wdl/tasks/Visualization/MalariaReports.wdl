@@ -114,9 +114,7 @@ task RunReportScript {
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
 
     # Compute path for BAM files (coverage_dir) using fastqc_path
-    if(fastqc_path) {
-        String coverage_dir = sub(fastqc_path, "fastqc_report.html", "coverage/")
-    }
+    String coverage_dir = sub(fastqc_path, "fastqc_report.html", "coverage/")
     
 
     command <<<
