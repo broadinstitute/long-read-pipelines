@@ -36,16 +36,16 @@ task HiphaseSNPs {
         --threads 16 \
         --bam ~{bam} \
         --vcf ~{unphased_snp_vcf} \
-        --output-vcf ~{samplename}_phased_snp_vcf.gz \
+        --output-vcf ~{samplename}_phased_snp.vcf.gz \
         --reference ~{ref_fasta} \
 
-        tabix -p vcf ~{samplename}_phased_snp_vcf.gz
+        tabix -p vcf ~{samplename}_phased_snp.vcf.gz
         
     >>>
 
     output {
-        File phased_vcf = "~{samplename}_phased_snp_vcf.gz"
-        File phased_vcf_tbi = "~{samplename}_phased_snp_vcf.gz.tbi"
+        File phased_vcf = "~{samplename}_phased_snp.vcf.gz"
+        File phased_vcf_tbi = "~{samplename}_phased_snp.vcf.gz.tbi"
     }
 
     #########################
@@ -111,23 +111,23 @@ task HiphaseSVs {
         --reference ~{ref_fasta} \
         --global-realignment-cputime 300 \
         --vcf ~{unphased_snp_vcf} \
-        --output-vcf ~{samplename}_phased_snp_vcf.gz \
+        --output-vcf ~{samplename}_phased_snp.vcf.gz \
         --vcf ~{unphased_sv_vcf} \
-        --output-vcf ~{samplename}_phased_sv_vcf.gz \
+        --output-vcf ~{samplename}_phased_sv.vcf.gz \
         --stats-file ~{samplename}.stats.csv \
         --blocks-file ~{samplename}.blocks.tsv \
         --summary-file ~{samplename}.summary.tsv
 
-        tabix -p vcf ~{samplename}_phased_snp_vcf.gz
-        tabix -p vcf ~{samplename}_phased_sv_vcf.gz
+        tabix -p vcf ~{samplename}_phased_snp.vcf.gz
+        tabix -p vcf ~{samplename}_phased_sv.vcf.gz
         
     >>>
 
     output {
-        File phased_snp_vcf = "~{samplename}_phased_snp_vcf.gz"
-        File phased_snp_vcf_tbi = "~{samplename}_phased_snp_vcf.gz.tbi"
-        File phased_sv_vcf   = "~{samplename}_phased_sv_vcf.gz"
-        File phased_sv_vcf_tbi = "~{samplename}_phased_sv_vcf.gz.tbi"
+        File phased_snp_vcf = "~{samplename}_phased_snp.vcf.gz"
+        File phased_snp_vcf_tbi = "~{samplename}_phased_snp.vcf.gz.tbi"
+        File phased_sv_vcf   = "~{samplename}_phased_sv.vcf.gz"
+        File phased_sv_vcf_tbi = "~{samplename}_phased_sv.vcf.gz.tbi"
     }
 
     #########################
