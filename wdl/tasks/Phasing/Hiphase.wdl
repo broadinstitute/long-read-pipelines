@@ -35,16 +35,16 @@ task HiphaseSNPs {
         --threads 16 \
         --bam ~{bam} \
         --vcf ~{unphased_snp_vcf} \
-        --output-vcf ~{unphased_snp_vcf}.phased.vcf.gz \
+        --output-vcf phased_snp_vcf.gz \
         --reference ~{ref_fasta} \
 
-        tabix -p vcf ~{unphased_snp_vcf}.phased.vcf.gz
+        tabix -p vcf phased_snp_vcf.gz
         
     >>>
 
     output {
-        File phased_vcf = "~{unphased_snp_vcf}.phased.vcf.gz"
-        File phased_vcf_tbi = "~{unphased_snp_vcf}.phased.vcf.gz.tbi"
+        File phased_vcf = "phased_snp_vcf.gz"
+        File phased_vcf_tbi = "phased_snp_vcf.gz.tbi"
     }
 
     #########################
@@ -110,23 +110,23 @@ task HiphaseSVs {
         --reference ~{ref_fasta} \
         --global-realignment-cputime 300 \
         --vcf ~{unphased_snp_vcf} \
-        --output-vcf ~{unphased_snp_vcf}.phased.vcf.gz \
+        --output-vcf phased_snp_vcf.gz \
         --vcf ~{unphased_sv_vcf} \
-        --output-vcf ~{unphased_sv_vcf}.phased.vcf.gz \
+        --output-vcf phased_sv_vcf.gz \
         --stats-file ~{prefix}.stats.csv \
         --blocks-file ~{prefix}.blocks.tsv \
         --summary-file ~{prefix}.summary.tsv
 
-        tabix -p vcf ~{unphased_snp_vcf}.phased.vcf.gz
-        tabix -p vcf ~{unphased_sv_vcf}.phased.vcf.gz
+        tabix -p vcf phased_snp_vcf.gz
+        tabix -p vcf phased_sv_vcf.gz
         
     >>>
 
     output {
-        File phased_snp_vcf = "~{unphased_snp_vcf}.phased.vcf.gz"
-        File phased_snp_vcf_tbi = "~{unphased_snp_vcf}.phased.vcf.gz.tbi"
-        File phased_sv_vcf   = "~{unphased_sv_vcf}.phased.vcf.gz"
-        File phased_sv_vcf_tbi = "~{unphased_sv_vcf}.phased.vcf.gz.tbi"
+        File phased_snp_vcf = "phased_snp_vcf.gz"
+        File phased_snp_vcf_tbi = "phased_snp_vcf.gz.tbi"
+        File phased_sv_vcf   = "phased_sv_vcf.gz"
+        File phased_sv_vcf_tbi = "phased_sv_vcf.gz.tbi"
     }
 
     #########################
