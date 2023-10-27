@@ -103,8 +103,8 @@ workflow HybridPhase {
 
     # !CHOICE! 
     #############
-    Array[File?] phased_snp_vcf = if (use_margin) then W.phased_vcf else M.phased_vcf
-    Array[File?] phased_snp_tbi = if (use_margin) then W.phased_tbi else M.phased_tbi
+    Array[File?] phased_snp_vcf = if (use_margin) then M.phased_vcf else W.phased_vcf
+    Array[File?] phased_snp_tbi = if (use_margin) then M.phased_tbi else W.phased_tbi
 
 
     ##########Merge vcfs given different output##########   
