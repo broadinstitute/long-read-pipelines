@@ -10,7 +10,6 @@ from enum import Enum
 
 
 # Plotting
-import matplotlib
 import matplotlib.pyplot as plt
 import plotly.express as px
 import folium
@@ -532,8 +531,11 @@ def create_report(sample, analysis):
     print('Report generated!')
 
 if __name__ == '__main__':
-    '''Reports will be generated in the current working directory.'''
-
+    '''Reports will be generated in the current working directory.
+    
+    * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    Set up argument parsing
+    '''
     # define parser object
     parser = argparse.ArgumentParser()
 
@@ -586,13 +588,22 @@ if __name__ == '__main__':
     parser.add_argument("--average_identity", help="", required=True, type=float) # check
     
     # Coverage Plot -- in progress
-    parser.add_argument("--coverage_dir", help="location of bed files used for coverage plot")
+    #parser.add_argument("--coverage_dir", help="location of bed files used for coverage plot")
+    parser.add_argument("--fastqc_path", help="location of fastqc_report file; used to locate BAM files for coverage report generation")
+    parser.add_argument("--coverage_bin_size", help="number to use as size of bins for coverage plot generation; default is 1500", type=int)
 
     # parse given arguments
     args = parser.parse_args()
     arg_dict = vars(args)
 
-    # prepare arguments for report generation
+
+
+
+
+    '''* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    Prepare arguments for report generation
+    '''
+    
     # first : summary page
     sample_name = arg_dict['sample_name']
 
@@ -650,19 +661,21 @@ if __name__ == '__main__':
     qscorex = [5, 7, 10, 12, 15] # available q-score measures are predetermined
     qscorey = [arg_dict['num_reads_q5'], arg_dict['num_reads_q7'], arg_dict['num_reads_q10'], arg_dict['num_reads_q12'], arg_dict['num_reads_q15']]
 
-    coverage_dir = arg_dict['coverage_dir']
-    coverage_plot = plot_coverage(coverage_dir, sample_name, 750) # default bin size = 1000
+    # Create coverage plot and convert it to base64
+    coverage_bin_size = arg_dict["coverage_bin_size"]
+    # coverage_dir = arg_dict['coverage_dir']
+    coverage_plot = plot_coverage("/report-files/data/coverage", sample_name, coverage_bin_size) # default bin size = 1500
     coverage_b64 = img_to_b64(coverage_plot)
     
     # For debugging purposes, save plot:
     coverage_plot.savefig("coverage_plot.jpeg")
     
-    # create summary and analysis objects to be passed 
+    # Create summary and analysis objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
 
     analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64)
 
-    # finally, call function to populate and generate the report pages
+    # Finally, call function to populate and generate the report pages
     create_report(summary, analysis)
 
 
