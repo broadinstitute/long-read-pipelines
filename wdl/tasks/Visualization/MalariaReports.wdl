@@ -52,7 +52,7 @@ task RunReportScript {
         fraction_aligned_bases: "number of bases aligned out of all bases in the sequence"
         # average_identity:
 
-        # Coverage Plot -- incomplete
+        # Coverage Plot
         # coverage_dir: "directory of BAM files for coverage plot generation"
         fastqc_path: "directory of fastqc_report used for finding BAM files"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
@@ -176,7 +176,7 @@ task RunReportScript {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-malaria-reports:0.0.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-malaria-reports:0.0.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

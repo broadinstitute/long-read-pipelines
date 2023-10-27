@@ -112,7 +112,7 @@ def plot_coverage(directory, sample_name, bin_width=500):
     ext = (".bed.gz")
 
     # Set up DF to hold all data
-    beds = pd.DataFrame(columns={"stop", "depth"})
+    beds = pd.DataFrame(columns=["stop", "depth"])
 
     # Reading and sorting files
     file_list = os.listdir(directory)
