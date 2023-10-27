@@ -111,9 +111,9 @@ task MergePerChrVcfWithBcftools {
     }
 
     runtime {
-        cpu: 8
+        cpu: 32
         memory: "128 GiB"
-        disks: "local-disk 375 LOCAL"
+        disks: "local-disk 750 LOCAL"
         preemptible: 0
         maxRetries: 1
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
