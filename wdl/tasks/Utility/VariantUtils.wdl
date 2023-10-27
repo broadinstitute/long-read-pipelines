@@ -111,7 +111,7 @@ task MergePerChrVcfWithBcftools {
     }
 
     runtime {
-        cpu: 32
+        cpu: 8
         memory: "128 GiB"
         disks: "local-disk 375 LOCAL"
         preemptible: 0
