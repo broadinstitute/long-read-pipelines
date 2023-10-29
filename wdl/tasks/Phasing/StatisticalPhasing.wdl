@@ -66,7 +66,7 @@ task Shapeit4_phaseSVs {
     >>>
 
     output{
-        File final_phased_vcf = "~{region}_scaffold.bcf"
+        File final_phased_vcf = "~{region}_finalsv_scaffold.bcf"
     }
 
     Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))

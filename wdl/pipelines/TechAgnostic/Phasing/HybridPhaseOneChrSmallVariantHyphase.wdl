@@ -31,8 +31,8 @@ workflow HybridPhase {
         Array[File] wholegenome_sv_vcf
         Array[File] wholegenome_sv_vcf_tbi
 
-        File one_chr_joint_vcf
-        File one_chr_joint_vcf_tbi
+        File wholegenome_joint_vcf
+        File wholegenome_joint_vcf_tbi
         File reference
         File reference_index
         File genetic_mapping_tsv_for_shapeit4
@@ -48,6 +48,11 @@ workflow HybridPhase {
     Int data_length = length(wholegenome_bams_from_all_samples)
     Array[Int] indexes= range(data_length)
 
+    call VU.SubsetVCF as SubsetSNPs { input:
+            vcf_gz = wholegenome_joint_vcf,
+            vcf_tbi = wholegenome_joint_vcf_tbi,
+            locus = chromosome
+        }
     scatter (idx in indexes)  {
         File all_chr_bam = wholegenome_bams_from_all_samples[idx]
         File all_chr_bai = wholegenome_bais_from_all_samples[idx]
@@ -75,7 +80,7 @@ workflow HybridPhase {
         String sample_id = InferSampleName.sample_name
 
         call SplitJointCallbySample.SplitVCFbySample as SP { input:
-            joint_vcf = one_chr_joint_vcf,
+            joint_vcf = SubsetSNPs.subset_vcf,
             region = chromosome,
             samplename = sample_id
         }

@@ -50,8 +50,8 @@ task HiphaseSNPs {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          64,
-        mem_gb:             200,
+        cpu_cores:          16,
+        mem_gb:             64,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  0,
@@ -132,8 +132,8 @@ task HiphaseSVs {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          64,
-        mem_gb:             200,
+        cpu_cores:          16,
+        mem_gb:             64,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  0,
