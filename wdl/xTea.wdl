@@ -69,7 +69,6 @@ task xTea {
                 --xtea /xTea/xtea_long/ \
                 -n $cpus \
                 -m $mem \
-                -t 240.00 \
                 -r ~{ref_fa} \
                 --cns /rep_lib_annotation/consensus/LINE1.fa \
                 --rep /rep_lib_annotation/ \
