@@ -3,14 +3,6 @@ version 1.0
 import "../../../structs/Structs.wdl"
 
 workflow PlotSVQCMetrics{
-    meta{
-        description : "Plot SV QC metrics"
-    }
-    parameter_meta{
-        samples : "List of sample names"
-        gcs_vcf_dir : "GCS path to the directory containing the SV VCFs"
-        coverage_metrics : "List of coverage metrics for each sample"
-    }
 
     input{
         String gcs_vcf_dir
@@ -197,7 +189,7 @@ task compileSVstats {
             mv $file ./stats_by_sample
         done
 
-        python <<CODE
+        python3 <<CODE
 import os
 import subprocess
 
@@ -232,7 +224,8 @@ def compile_stats(caller, svtypes, samples, basedir, outfile):
         with open(sample_svlen_file, 'r') as file:
             ALL = sum(1 for _ in file)
 
-        counts_by_SV = subprocess.check_output(f"cut -f1 {os.path.join(basedir, f'{caller}_stats', sample)} | sort | uniq -c", shell=True)
+        #counts_by_SV = subprocess.check_output(f"cut -f1 {os.path.join(basedir, f'{caller}_stats', sample)} | sort | uniq -c", shell=True)
+        counts_by_SV = subprocess.check_output("cut -f1 {} | sort | uniq -c".format(os.path.join(basedir, '{}_stats', sample).format(caller)), shell=True)
         counts_by_SV = counts_by_SV.decode().split()
 
         SVs = {}
