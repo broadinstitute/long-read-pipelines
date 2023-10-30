@@ -3,6 +3,14 @@ version 1.0
 import "../../../structs/Structs.wdl"
 
 workflow PlotSVQCMetrics{
+    meta{
+        description : "Plot SV QC metrics"
+    }
+    parameter_meta{
+        samples : "List of sample names"
+        gcs_vcf_dir : "GCS path to the directory containing the SV VCFs"
+        coverage_metrics : "List of coverage metrics for each sample"
+    }
 
     input{
         String gcs_vcf_dir
@@ -220,7 +228,8 @@ def pairwise(iterable):
 def compile_stats(caller, svtypes, samples, basedir, outfile):
     for sample in samples:
         # Count lines in the file
-        with open(os.path.join(basedir, f"{sample}.{caller}.svlen)", 'r') as file:
+        sample_svlen_file = os.path.join(basedir, f"{sample}.{caller}.svlen")
+        with open(sample_svlen_file, 'r') as file:
             ALL = sum(1 for _ in file)
 
         counts_by_SV = subprocess.check_output(f"cut -f1 {os.path.join(basedir, f'{caller}_stats', sample)} | sort | uniq -c", shell=True)
