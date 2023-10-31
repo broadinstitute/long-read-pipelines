@@ -76,8 +76,9 @@ workflow PBFlowcell {
 
     String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}/" + WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/PBFlowcell/~{dir_prefix}"
 
-    call PB.GetRunInfo as GetRunInfo { input: bam = bam, SM = SM }
-    String PU = GetRunInfo.run_info['PU']
+#    call PB.GetRunInfo as GetRunInfo { input: bam = bam, SM = SM }
+#    String PU = GetRunInfo.run_info['PU']
+    String PU = SM
 
     call Utils.GetRawReadGroup as GetRawReadGroup { input: gcs_bam_path = bam }
 
@@ -116,9 +117,10 @@ workflow PBFlowcell {
         # sometimes we see the sharded bams mising EOF marker, use this as
         if (validate_shards) {call Utils.CountBamRecords as ValidateShard {input: bam = unmapped_shard}}
         if (experiment_type != "CLR") {
-            if (!GetRunInfo.is_corrected) { call PB.CCS as CCS { input: subreads = unmapped_shard } }
+#            if (!GetRunInfo.is_corrected) { call PB.CCS as CCS { input: subreads = unmapped_shard } }
 
-            File ccs_corrected_bam = select_first([CCS.consensus, unmapped_shard])
+#            File ccs_corrected_bam = select_first([CCS.consensus, unmapped_shard])
+            File ccs_corrected_bam = unmapped_shard
 
             if (experiment_type != "MASSEQ") {
                 if (extract_hifi_reads) {
@@ -248,12 +250,12 @@ workflow PBFlowcell {
 
     # Merge CCS Reports:
     if (experiment_type != "CLR") {
-        if (!GetRunInfo.is_corrected) {
-            call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
-            call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report, keyfile = keyfile }
-        }
+#        if (!GetRunInfo.is_corrected) {
+#            call PB.MergeCCSReports as MergeCCSReports { input: reports = select_all(CCS.report), prefix = PU }
+#            call FF.FinalizeToFile as FinalizeCCSReport { input: outdir = cdir, file = MergeCCSReports.report, keyfile = keyfile }
+#        }
 
-        call PB.SummarizeCCSReport as SummarizeCCSReport { input: report = select_first([ccs_report_txt, MergeCCSReports.report]) }
+#        call PB.SummarizeCCSReport as SummarizeCCSReport { input: report = select_first([ccs_report_txt, MergeCCSReports.report]) }
     }
 
     if (experiment_type == 'MASSEQ') {
@@ -380,13 +382,13 @@ workflow PBFlowcell {
     output {
 #        # Flowcell stats
 #        File? ccs_report = FinalizeCCSReport.gcs_path
-        Float? ccs_zmws_input = SummarizeCCSReport.zmws_input
-        Float? ccs_zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
-        Float? ccs_zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
-        Float? ccs_zmws_shortcut_filters = SummarizeCCSReport.zmws_shortcut_filters
-        Float? ccs_zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
-        Float? ccs_zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
-        Float? ccs_zmws_shortcut_filters_pct = SummarizeCCSReport.zmws_shortcut_filters_pct
+#        Float? ccs_zmws_input = SummarizeCCSReport.zmws_input
+#        Float? ccs_zmws_pass_filters = SummarizeCCSReport.zmws_pass_filters
+#        Float? ccs_zmws_fail_filters = SummarizeCCSReport.zmws_fail_filters
+#        Float? ccs_zmws_shortcut_filters = SummarizeCCSReport.zmws_shortcut_filters
+#        Float? ccs_zmws_pass_filters_pct = SummarizeCCSReport.zmws_pass_filters_pct
+#        Float? ccs_zmws_fail_filters_pct = SummarizeCCSReport.zmws_fail_filters_pct
+#        Float? ccs_zmws_shortcut_filters_pct = SummarizeCCSReport.zmws_shortcut_filters_pct
 
 #        Float polymerase_read_length_mean = SummarizeSubreadsPBI.results['polymerase_mean']
 #        Float polymerase_read_length_N50 = SummarizeSubreadsPBI.results['polymerase_n50']
