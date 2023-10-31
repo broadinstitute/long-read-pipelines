@@ -35,12 +35,12 @@ task resource_usage {
 
     command <<<
         set -euxo pipefail
-        system(paste("./opt/plot.resources.R", "~{resource_log}", "~{output_pdf}", '~{prefix}'))
+        system(paste("./opt/plot.resources.R", ~{resource_log}, ~{output_pdf}, ~{prefix}))
 
     >>>
 
     output {
-        File resource_plot = "resource_plot.pdf"
+        File resource_plot = "~{output_pdf}"
     }
 
     #########################
