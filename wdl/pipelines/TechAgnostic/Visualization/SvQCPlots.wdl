@@ -218,31 +218,35 @@ def pairwise(iterable):
     return zip(a, a)
 
 def compile_stats(caller, svtypes, samples, basedir, outfile):
-    for sample in samples:
+    for sample_name in samples:
         # Count lines in the file
-        sample_svlen_file = os.path.join(basedir, f"{sample}.{caller}.svlen")
+        sample_svlen_file = os.path.join(basedir, f"{sample_name}.{caller}.svlen")
         with open(sample_svlen_file, 'r') as file:
             ALL = sum(1 for _ in file)
 
-        #counts_by_SV = subprocess.check_output(f"cut -f1 {os.path.join(basedir, f'{caller}_stats', sample)} | sort | uniq -c", shell=True)
-        counts_by_SV = subprocess.check_output("cut -f1 {} | sort | uniq -c".format(os.path.join(basedir, '{}_stats', sample).format(caller)), shell=True)
-        counts_by_SV = counts_by_SV.decode().split()
+        # Count SVs by type
+        # counts_by_sv = subprocess.check_output(f"cut -f1 {os.path.join(basedir, f'{caller}_stats', sample)} | sort | uniq -c", shell=True)
+        # sample_to_process = os.path.join(basedir, '{}_stats', sample_name).format(caller)
+        # cut_sort_uniq_command = "cut -f1 {} | sort | uniq -c".format(sample_to_process)
+        cut_sort_uniq_command = "cut -f1 {} | sort | uniq -c".format(sample_svlen_file)
+        counts_by_sv = subprocess.check_output(cut_sort_uniq_command, shell=True)
+        counts_by_sv_clean = counts_by_sv.decode().split()
 
         SVs = {}
         for svtype in svtypes:
             SVs[svtype] = 0
         SVs['ALL'] = ALL
 
-        # Process counts_by_SV
-        for i in range(0, len(counts_by_SV), 2):
-            num = int(counts_by_SV[i])
-            SV = counts_by_SV[i + 1].upper()
+        # Process counts_by_sv
+        for i in range(0, len(counts_by_sv_clean), 2):
+            num = int(counts_by_sv_clean[i])
+            SV = counts_by_sv_clean[i + 1].upper()
             if SV in SVs:
                 SVs[SV] = num
             else:
                 SVs['OTH'] += num
 
-        outfile.write("%s" % sample)
+        outfile.write("%s" % sample_name)
 
         for svtype in svtypes:
             outfile.write("\t%d" % SVs[svtype])
