@@ -300,17 +300,17 @@ task addCoverageToSVstats{
     command<<<
         set -euo pipefail
         # Combine the two arrays and write them to a file
-        printf "Sample\tCoverage\n" > sample_cov
-        samples=(~{sep=" " samples})
-        coverage_stats=(~{sep=" " coverage_stats})
-        paste <(printf "%s\n" "${samples[@]}") <(printf "%s\n" "${coverage_stats[@]}") > sample_cov
+        printf "sample\tCOV\n" > sample_cov
+        samples=(~{sep="\t" samples})
+        coverage_stats=(~{sep="\t" coverage_stats})
+        paste -d $'\t' <(printf "%s\n" "${samples[@]}") <(printf "%s\n" "${coverage_stats[@]}") > sample_cov
 
         sort -k1,1 sample_cov -o sample_cov
         sort -k1,1 ~{pbsvStatsBySample} -o pbsv_all_sample_stats
         sort -k1,1 ~{snifflesStatsBySample} -o sniffles_all_sample_stats
 
-        join -1 1 -2 1 -a 1 -e 0 -o 1.1,2.2 sample_cov pbsv_all_sample_stats > pbsv_all_sample_stats_with_cov
-        join -1 1 -2 1 -a 1 -e 0 -o 1.1,2.2 sample_cov sniffles_all_sample_stats > sniffles_all_sample_stats_with_cov
+        join -1 1 -2 1 -a 1 -e 0 -t $'\t' sample_cov pbsv_all_sample_stats > pbsv_all_sample_stats_with_cov
+        join -1 1 -2 1 -a 1 -e 0  -t $'\t' sample_cov sniffles_all_sample_stats > sniffles_all_sample_stats_with_cov
 
         # moving the header up to the top...
         tail -n 1 pbsv_all_sample_stats_with_cov > t1
