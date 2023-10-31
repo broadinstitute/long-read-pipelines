@@ -309,17 +309,8 @@ task addCoverageToSVstats{
         sort -k1,1 ~{pbsvStatsBySample} -o pbsv_all_sample_stats
         sort -k1,1 ~{snifflesStatsBySample} -o sniffles_all_sample_stats
 
-        join -1 1 -2 1 -a 1 -e 0 -t $'\t' sample_cov pbsv_all_sample_stats > pbsv_all_sample_stats_with_cov
-        join -1 1 -2 1 -a 1 -e 0  -t $'\t' sample_cov sniffles_all_sample_stats > sniffles_all_sample_stats_with_cov
-
-        # moving the header up to the top...
-        tail -n 1 pbsv_all_sample_stats_with_cov > t1
-        sed '$ d' pbsv_all_sample_stats_with_cov >> t1
-        mv t1 pbsv_all_sample_stats_with_cov.txt
-
-        tail -n 1 sniffles_all_sample_stats_with_cov > t2
-        sed '$ d' sniffles_all_sample_stats_with_cov >> t2
-        mv t2 sniffles_all_sample_stats_with_cov.txt
+        join -1 1 -2 1 -a 1 -e 0 -t $'\t' sample_cov pbsv_all_sample_stats > pbsv_all_sample_stats_with_cov.txt
+        join -1 1 -2 1 -a 1 -e 0  -t $'\t' sample_cov sniffles_all_sample_stats > sniffles_all_sample_stats_with_cov.txt
 
     >>>
 
