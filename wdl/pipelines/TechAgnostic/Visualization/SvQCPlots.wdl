@@ -225,9 +225,6 @@ def compile_stats(caller, svtypes, samples, basedir, outfile):
             ALL = sum(1 for _ in file)
 
         # Count SVs by type
-        # counts_by_sv = subprocess.check_output(f"cut -f1 {os.path.join(basedir, f'{caller}_stats', sample)} | sort | uniq -c", shell=True)
-        # sample_to_process = os.path.join(basedir, '{}_stats', sample_name).format(caller)
-        # cut_sort_uniq_command = "cut -f1 {} | sort | uniq -c".format(sample_to_process)
         cut_sort_uniq_command = "cut -f1 {} | sort | uniq -c".format(sample_svlen_file)
         counts_by_sv = subprocess.check_output(cut_sort_uniq_command, shell=True)
         counts_by_sv_clean = counts_by_sv.decode().split()
@@ -303,6 +300,8 @@ task addCoverageToSVstats{
     command<<<
         set -euo pipefail
         # Combine the two arrays and write them to a temporary file
+        samples=(~{sep=" " samples})
+        coverage_stats=(~{sep=" " coverage_stats})
         paste <(printf "%s\n" "${samples[@]}") <(printf "%s\n" "${coverage_stats[@]}") > sample_cov
 
         sort -k1,1 sample_cov -o sample_cov
@@ -315,17 +314,17 @@ task addCoverageToSVstats{
         # moving the header up to the top...
         tail -n 1 pbsv_all_sample_stats_with_cov > t1
         sed '$ d' pbsv_all_sample_stats_with_cov >> t1
-        mv t1 pbsv_all_sample_stats_with_cov
+        mv t1 pbsv_all_sample_stats_with_cov.txt
 
         tail -n 1 sniffles_all_sample_stats_with_cov > t2
         sed '$ d' sniffles_all_sample_stats_with_cov >> t2
-        mv t2 sniffles_all_sample_stats_with_cov
+        mv t2 sniffles_all_sample_stats_with_cov.txt
 
     >>>
 
     output{
-        File pbsv_all_stats_with_cov = "pbsv_all_sample_stats_with_cov"
-        File sniffles_all_stats_with_cov = "sniffles_all_sample_stats_with_cov"
+        File pbsv_all_stats_with_cov = "pbsv_all_sample_stats_with_cov.txt"
+        File sniffles_all_stats_with_cov = "sniffles_all_sample_stats_with_cov.txt"
 #        File pav_all_stats_with_cov = "pav_all_sample_stats_with_cov"
     }
 
