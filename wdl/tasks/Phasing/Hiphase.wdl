@@ -123,7 +123,7 @@ task HiphaseSVs {
         tabix -p vcf ~{samplename}_phased_snp.sorted.vcf.gz
 
         bcftools sort ~{samplename}_phased_sv.vcf.gz -O z -o ~{samplename}_phased_sv.sorted.vcf.gz
-        tabix -p vcf~{samplename}_phased_sv.sorted.vcf.gz
+        tabix -p vcf ~{samplename}_phased_sv.sorted.vcf.gz
         
     >>>
 
