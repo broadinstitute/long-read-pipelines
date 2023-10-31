@@ -194,9 +194,9 @@ import os
 import subprocess
 
 def main():
-    svtypes=["ALL","DEL","DUP","CNV","INS","INV","OTH"]
-    basedir=os.getcwd() + "/stats_by_sample"
-    callers=["~{sep='", "' callers}"]
+    svtypes = ["ALL", "DEL", "DUP", "CNV", "INS", "INV", "OTH"]
+    basedir = os.getcwd() + "/stats_by_sample"
+    callers = ["~{sep='", "' callers}"]
 
     samplefile = open('~{sampleFile}', 'r')
     samples = []
@@ -205,7 +205,7 @@ def main():
     samplefile.close()
 
     for caller in callers:
-        outfile=open("%s/%s_all_sample_stats" % (basedir, caller),'w')
+        outfile = open("%s/%s_all_sample_stats" % (os.getcwd(), caller), 'w')
         outfile.write("sample\t%s\n" % '\t'.join(svtypes))
 
         compile_stats(caller, svtypes, samples, basedir, outfile)
