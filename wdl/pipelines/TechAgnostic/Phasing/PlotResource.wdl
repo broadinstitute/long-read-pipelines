@@ -27,15 +27,15 @@ task resource_usage {
 
     input {
         File resource_log
+        File output_pdf
+        String prefix
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
         RuntimeAttr? runtime_attr_override
     }
 
     command <<<
         set -euxo pipefail
-        source("./opt/plot.resources.R")
-        resources = get_time_series_df(~{resource_log})
-        plot_time_series_df(resources, "resource_plot.pdf", "resources usage by task")
+        system(paste("./opt/plot.resources.R", "~{resource_log}", "~{output_pdf}", '~{prefix}'))
 
     >>>
 
@@ -45,8 +45,8 @@ task resource_usage {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
-        mem_gb:             64,
+        cpu_cores:          4,
+        mem_gb:             16,
         disk_gb:            100,
         boot_disk_gb:       100,
         preemptible_tries:  0,
