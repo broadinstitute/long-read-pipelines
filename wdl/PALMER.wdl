@@ -76,6 +76,10 @@ task PALMER {
                  --chr ~{chrom} \
                  --workdir ${dir}/
         else
+          mkdir LINE
+          mkdir SVA
+          mkdir ALU
+          mkdir HERVK
           /PALMER/PALMER --input ~{bam} \
                   --ref_fa ~{ref_fa} \
                   --ref_ver GRCh38 \
@@ -83,7 +87,7 @@ task PALMER {
                   --mode ~{mode} \
                   --output LINE \
                   --chr ~{chrom} \
-                  --workdir ${dir}/
+                  --workdir ${dir}/LINE/
           /PALMER/PALMER --input ~{bam} \
                   --ref_fa ~{ref_fa} \
                   --ref_ver GRCh38 \
@@ -91,7 +95,7 @@ task PALMER {
                   --mode ~{mode} \
                   --output SVA \
                   --chr ~{chrom} \
-                  --workdir ${dir}/
+                  --workdir ${dir}/SVA/
           /PALMER/PALMER --input ~{bam} \
                   --ref_fa ~{ref_fa} \
                   --ref_ver GRCh38 \
@@ -99,7 +103,7 @@ task PALMER {
                   --mode ~{mode} \
                   --output ALU \
                   --chr ~{chrom} \
-                  --workdir ${dir}/
+                  --workdir ${dir}/ALU/
           /PALMER/PALMER --input ~{bam} \
                   --ref_fa ~{ref_fa} \
                   --ref_ver GRCh38 \
@@ -107,17 +111,17 @@ task PALMER {
                   --mode ~{mode} \
                   --output HERVK \
                   --chr ~{chrom} \
-                  --workdir ${dir}/
+                  --workdir ${dir}/HERVK/
 
-          sed -i "s/$/\tSVA/"   SVA_calls.txt    > ~{prefix}_calls.txt
-          sed -i "s/$/\tLINE/"  LINE_calls.txt  >> ~{prefix}_calls.txt
-          sed -i "s/$/\tALU/"   ALU_calls.txt   >> ~{prefix}_calls.txt
-          sed -i "s/$/\tHERVK/" HERVK_calls.txt >> ~{prefix}_calls.txt
+          sed "s/$/\tSVA/"   SVA/SVA_calls.txt > ~{prefix}_calls.txt
+          sed "s/$/\tLINE/"  LINE/LINE_calls.txt   | grep -v "^cluster_id" >> ~{prefix}_calls.txt
+          sed "s/$/\tALU/"   ALU/ALU_calls.txt     | grep -v "^cluster_id" >> ~{prefix}_calls.txt
+          sed "s/$/\tHERVK/" HERVK/HERVK_calls.txt | grep -v "^cluster_id" >> ~{prefix}_calls.txt
 
-          sed -i "s/$/\tSVA/"   SVA_TSD_reads.txt    > ~{prefix}_TSD_reads.txt
-          sed -i "s/$/\tLINE/"  LINE_TSD_reads.txt  >> ~{prefix}_TSD_reads.txt
-          sed -i "s/$/\tALU/"   ALU_TSD_reads.txt   >> ~{prefix}_TSD_reads.txt
-          sed -i "s/$/\tHERVK/" HERVK_TSD_reads.txt >> ~{prefix}_TSD_reads.txt
+          sed "s/$/\tSVA/"   SVA/SVA_TSD_reads.txt > ~{prefix}_TSD_reads.txt
+          sed "s/$/\tLINE/"  LINE/LINE_TSD_reads.txt   | grep -v "^cluster_id" >> ~{prefix}_TSD_reads.txt
+          sed "s/$/\tALU/"   ALU/ALU_TSD_reads.txt     | grep -v "^cluster_id" >> ~{prefix}_TSD_reads.txt
+          sed "s/$/\tHERVK/" HERVK/HERVK_TSD_reads.txt | grep -v "^cluster_id" >> ~{prefix}_TSD_reads.txt
         fi
     >>>
 
