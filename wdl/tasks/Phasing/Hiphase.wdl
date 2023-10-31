@@ -39,13 +39,14 @@ task HiphaseSNPs {
         --output-vcf ~{samplename}_phased_snp.vcf.gz \
         --reference ~{ref_fasta} \
 
-        tabix -p vcf ~{samplename}_phased_snp.vcf.gz
+        bcftools sort ~{samplename}_phased_snp.vcf.gz -O z -o ~{samplename}_phased_snp.sorted.vcf.gz
+        tabix -p vcf ~{samplename}_phased_snp.sorted.vcf.gz
         
     >>>
 
     output {
-        File phased_vcf = "~{samplename}_phased_snp.vcf.gz"
-        File phased_vcf_tbi = "~{samplename}_phased_snp.vcf.gz.tbi"
+        File phased_vcf = "~{samplename}_phased_snp.sorted.vcf.gz"
+        File phased_vcf_tbi = "~{samplename}_phased_snp.sorted.vcf.gz.tbi"
     }
 
     #########################
@@ -118,16 +119,19 @@ task HiphaseSVs {
         --blocks-file ~{samplename}.blocks.tsv \
         --summary-file ~{samplename}.summary.tsv
 
-        tabix -p vcf ~{samplename}_phased_snp.vcf.gz
-        tabix -p vcf ~{samplename}_phased_sv.vcf.gz
+        bcftools sort ~{samplename}_phased_snp.vcf.gz -O z -o ~{samplename}_phased_snp.sorted.vcf.gz
+        tabix -p vcf ~{samplename}_phased_snp.sorted.vcf.gz
+
+        bcftools sort ~{samplename}_phased_sv.vcf.gz -O z -o ~{samplename}_phased_sv.sorted.vcf.gz
+        tabix -p vcf~{samplename}_phased_sv.sorted.vcf.gz
         
     >>>
 
     output {
-        File phased_snp_vcf = "~{samplename}_phased_snp.vcf.gz"
-        File phased_snp_vcf_tbi = "~{samplename}_phased_snp.vcf.gz.tbi"
-        File phased_sv_vcf   = "~{samplename}_phased_sv.vcf.gz"
-        File phased_sv_vcf_tbi = "~{samplename}_phased_sv.vcf.gz.tbi"
+        File phased_snp_vcf = "~{samplename}_phased_snp.sorted.vcf.gz"
+        File phased_snp_vcf_tbi = "~{samplename}_phased_snp.sorted.vcf.gz.tbi"
+        File phased_sv_vcf   = "~{samplename}_phased_sv.sorted.vcf.gz"
+        File phased_sv_vcf_tbi = "~{samplename}_phased_sv.sorted.vcf.gz.tbi"
     }
 
     #########################
