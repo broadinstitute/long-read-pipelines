@@ -299,7 +299,8 @@ task addCoverageToSVstats{
 
     command<<<
         set -euo pipefail
-        # Combine the two arrays and write them to a temporary file
+        # Combine the two arrays and write them to a file
+        printf "Sample\tCoverage\n" > sample_cov
         samples=(~{sep=" " samples})
         coverage_stats=(~{sep=" " coverage_stats})
         paste <(printf "%s\n" "${samples[@]}") <(printf "%s\n" "${coverage_stats[@]}") > sample_cov
