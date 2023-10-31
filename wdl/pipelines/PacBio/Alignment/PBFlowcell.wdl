@@ -192,7 +192,8 @@ workflow PBFlowcell {
 
         # All other types of libraries:
         if (experiment_type != "MASSEQ") {
-            File unaligned_bam = select_first([ExtractHifiReads.hifi_bam, CCS.consensus, unmapped_shard])
+#            File unaligned_bam = select_first([ExtractHifiReads.hifi_bam, CCS.consensus, unmapped_shard])
+            File unaligned_bam = select_first([ExtractHifiReads.hifi_bam, unmapped_shard])
 
             call PB.Align as AlignReads {
                 input:
