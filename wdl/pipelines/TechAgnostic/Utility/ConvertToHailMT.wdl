@@ -1,8 +1,6 @@
 version 1.0
 
-import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
 import "../../../tasks/Utility/Hail.wdl" as Hail
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ConvertToHailMT {
 

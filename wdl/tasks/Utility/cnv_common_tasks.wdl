@@ -220,10 +220,6 @@ task CollectCounts {
         if format_ == "HDF5" then "counts.hdf5" else
         (if format_ == "TSV" then "counts.tsv" else
         (if format_ == "TSV_GZ" then "counts.tsv.gz" else "null"))
-    String counts_index_filename_extension =
-        if format_ == "HDF5" then "null" else
-        (if format_ == "TSV" then "counts.tsv.idx" else
-        (if format_ == "TSV_GZ" then "counts.tsv.gz.tbi" else "null"))
     Boolean do_block_compression =
         if format_ == "HDF5" then false else
         (if format_ == "TSV" then false else
