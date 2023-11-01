@@ -25,12 +25,12 @@ task Shapeit4 {
         File scaffold_vcf = "~{region}_scaffold.bcf"
     }
 
-    Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
+    #Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 16
-        memory: "300 GiB"
-        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        cpu: 40
+        memory: "240 GiB"
+        disks: "local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 0
         maxRetries: 1
@@ -69,12 +69,12 @@ task Shapeit4_phaseSVs {
         File final_phased_vcf = "~{region}_finalsv_scaffold.bcf"
     }
 
-    Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
+    #Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 64
-        memory: "256 GiB"
-        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        cpu: 40
+        memory: "240 GiB"
+        disks: "local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 0
         maxRetries: 1
