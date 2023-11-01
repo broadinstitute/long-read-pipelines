@@ -303,7 +303,7 @@ task addCoverageToSVstats{
         printf "sample\tCOV\n" > sample_cov
         samples=(~{sep="\t" samples})
         coverage_stats=(~{sep="\t" coverage_stats})
-        paste -d $'\t' <(printf "%s\n" "${samples[@]}") <(printf "%s\n" "${coverage_stats[@]}") > sample_cov
+        paste -d $'\t' <(printf "%s\n" "${samples[@]}") <(printf "%s\n" "${coverage_stats[@]}") >> sample_cov
 
         sort -k1,1 sample_cov -o sample_cov
         sort -k1,1 ~{pbsvStatsBySample} -o pbsv_all_sample_stats
