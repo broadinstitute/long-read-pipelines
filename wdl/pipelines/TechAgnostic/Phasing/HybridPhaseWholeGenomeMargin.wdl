@@ -9,6 +9,7 @@ workflow HybridPhaseWholeGenome {
         description: "a workflow that extract vcfs and bams in a genomic interval"
     }
     input{
+        String output_dir
         Array[String] chr_list
         Array[File] whole_genome_bams
         Array[File] whole_genome_bais
@@ -52,7 +53,8 @@ workflow HybridPhaseWholeGenome {
             genetic_mapping_tsv_for_shapeit4 = genetic_mapping_tsv,
             chromosome = genome_region,
             prefix = genome_region,
-            num_t = num_t
+            num_t = num_t,
+            gcs_out_root_dir = output_dir
         }
 
     }   
