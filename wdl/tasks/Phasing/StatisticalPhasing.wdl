@@ -28,8 +28,8 @@ task Shapeit4 {
     Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 64
-        memory: "600 GiB"
+        cpu: 16
+        memory: "300 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 0
@@ -59,7 +59,7 @@ task Shapeit4_phaseSVs {
         --region ~{region} \
         --use-PS 0.0001 \
         --sequencing \
-        --output ~{region}_scaffold.bcf \
+        --output ~{region}_finalsv_scaffold.bcf \
         --thread ~{num_threads} \
         --log phased.log
     
