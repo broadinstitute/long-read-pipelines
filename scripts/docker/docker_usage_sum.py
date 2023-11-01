@@ -47,49 +47,19 @@ Notes:
         os.rename(OUT_SUMMARY_TSV, OUT_SUMMARY_TSV + ".bak")
 
     wdl_files = get_wdl_files(dir_to_wdls=WDLS_DIR)
-    global_docker_info = []
 
-    total_files = len(wdl_files)  # Used for Progression calculation
+    pattern = re.compile(r'^\s*docker:\s*"')
+    global_docker_info = process_wdl_files(
+        wdl_files=wdl_files, pattern=pattern, repo_dir=repo_dir
+    )
 
-    for index, wdl_path in enumerate(wdl_files, start=1):
+    # Remove empty elements in list
+    non_empty_docker_info = [x for x in global_docker_info if x]
 
-        wdl_name = wdl_path
-
-        with open(wdl_path, "r") as file_content:
-            content = file_content.read()
-            pattern = re.compile(r'\s*docker:\s*"')
-            if pattern.search(content):  # If wdl file contains "docker:"
-                matched_lines = []
-                file_content.seek(0)
-                lines = file_content.readlines()
-
-                for line_number, line in enumerate(lines, start=1):
-                    if pattern.search(line):
-                        matched_lines.append((line_number, line.strip()))
-
-                docker_info: list[str] = get_docker_info_from_string(
-                    wdl_lines=matched_lines, wdl_path=wdl_name, repo_dir=repo_dir
-                )
-
-                sorted_info: list = sorted(docker_info, reverse=False)
-
-                global_docker_info.append(sorted_info)
-            else:
-                pass
-
-        # Progression
-        # Calculate the percentage completion
-        progress: float = (index + 1) / total_files * 100
-
-        # Clear the previous line and print the progress
-        print(f"Progress: {progress:.2f}%\r", end="")
-    with open(OUT_SUMMARY_TSV, "w") as tsv_file:
-        # Add header
-        tsv_file.write("DOCKER_NAME\tLATEST_TAG\tUSED_TAG\tFILE_LINE\tWDL_PATH")
-        # Add content
-        for docker_info_line in sorted(global_docker_info):
-            delimiter = "\n"
-            tsv_file.write(delimiter.join(docker_info_line) + "\n")
+    write_docker_info_to_tsv(
+        output_summary_tsv=OUT_SUMMARY_TSV,
+        docker_info=non_empty_docker_info
+    )
 
     print(f"DONE. PLEASE CHECKOUT TSV FILE: {OUT_SUMMARY_TSV}")
 
@@ -379,6 +349,64 @@ def get_latest_local_docker_tag(docker_name: str, repo_dir: str) -> str:
                             latest_tag = makefile_line.split("=")[1].strip()
 
     return latest_tag
+
+
+def process_wdl_files(wdl_files: list[str], pattern, repo_dir: str):
+    """
+    Returns a list of docker info
+    @param wdl_files: list of wdl files
+    @param pattern: pattern to search for
+    @param repo_dir: directory of the repo
+    @return:
+    """
+    global_docker_info = []
+    total_files = len(wdl_files)
+
+    for index, wdl_path in enumerate(wdl_files, start=1):
+        wdl_name = wdl_path
+        matched_lines = []
+
+        with open(wdl_path, "r") as file_content:
+            lines = file_content.readlines()
+            for line_number, line in enumerate(lines, start=1):
+                if pattern.search(line):
+                    matched_lines.append((line_number, line.strip()))
+
+        docker_info: list[str] = get_docker_info_from_string(
+            wdl_lines=matched_lines, wdl_path=wdl_name, repo_dir=repo_dir
+        )
+
+        sorted_info: list = sorted(docker_info, reverse=False)
+        global_docker_info.append(sorted_info)
+
+        # Visual progression to show percentage of files processed
+        progress: float = (index + 1) / total_files * 100
+
+        # Clear the previous line and print the progress
+        print(f"Progress: {progress:.2f}%\r", end="")
+
+    return global_docker_info
+
+
+def write_docker_info_to_tsv(
+    output_summary_tsv: str, docker_info: list[list]
+):
+    """
+    Writes docker info to tsv file
+
+    @param output_summary_tsv:
+    @param docker_info:
+    @return:
+    """
+
+    with open(output_summary_tsv, "w") as tsv_file:
+        # Add header
+        tsv_file.write("DOCKER_NAME\tLATEST_TAG\tUSED_TAG\tFILE_LINE\tWDL_PATH\n")
+        # Add content
+        for docker_info_line in sorted(docker_info):
+            delimiter = "\n"
+            tsv_file.write(delimiter.join(docker_info_line) + "\n")
+
 
 
 if __name__ == "__main__":
