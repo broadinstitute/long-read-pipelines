@@ -42,8 +42,8 @@ workflow PlotSVQCMetrics{
 
 
 output{
-        File concatSVstats = concatSVstats.all_pbsv_stats
-        File concatSVstats = concatSVstats.all_sniffles_stats
+        File pbsv_concatSVstats = concatSVstats.all_pbsv_stats
+        File sniffles_concatSVstats = concatSVstats.all_sniffles_stats
 #        File concatSVstats = concatSVstats.all_pav_stats
         File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_all_stats_with_cov
         File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_all_stats_with_cov
