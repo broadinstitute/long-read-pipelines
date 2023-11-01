@@ -42,9 +42,9 @@ workflow PlotSVQCMetrics{
 
 
 output{
-        File pbsv_stat_out = compileSVstats.pbsvStatsBySample
-        File sniffles_stat_out = compileSVstats.snifflesStatsBySample
-#        File pav_stat_out = compileSVstats.pav_stat_out
+        File concatSVstats = concatSVstats.all_pbsv_stats
+        File concatSVstats = concatSVstats.all_sniffles_stats
+#        File concatSVstats = concatSVstats.all_pav_stats
         File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_all_stats_with_cov
         File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_all_stats_with_cov
 #        File pav_all_stats_with_coverage = addCoverageToSVstats.pav_stat_out
@@ -63,8 +63,8 @@ task bcfQuerySV{
         RuntimeAttr? runtime_attr_override
     }
 
-    String pbsv_stat_out_name = sample_name + ".pbsv.svlen"
-    String sniffles_stat_out_name = sample_name + ".sniffles.svlen"
+    String pbsv_stat_out_name = sample_name + ".pbsv.txt"
+    String sniffles_stat_out_name = sample_name + ".sniffles.txt"
 #    String pav_stat_out_name = sample_basename+ ".pav.svlen"
 
     Int minimal_disk_size = (ceil(size(pbsv_vcf, "GB") + size(sniffles_vcf, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_vcf, "GB")
@@ -123,12 +123,12 @@ task concatSVstats{
 
         for i in ~{sep=" " pbsv_stats}
         do
-            cat ${i} >> pbsv_all_SV_lengths_by_type.svlen
+            cat ${i} >> pbsv_all_SV_lengths_by_type.txt
         done
 
         for i in ~{sep=" " sniffles_stats}
         do
-            cat ${i} >> sniffles_all_SV_lengths_by_type.svlen
+            cat ${i} >> sniffles_all_SV_lengths_by_type.txt
         done
     >>>
 #        for i in ~{sep=" " pav_stat_out}
@@ -136,8 +136,8 @@ task concatSVstats{
 #            cat ${i} >> pav_all_SV_lengths_by_type.svlen
 #        done
     output{
-        File all_pbsv_stats = "pbsv_all_SV_lengths_by_type.svlen"
-        File all_sniffles_stats = "sniffles_all_SV_lengths_by_type.svlen"
+        File all_pbsv_stats = "pbsv_all_SV_lengths_by_type.txt"
+        File all_sniffles_stats = "sniffles_all_SV_lengths_by_type.txt"
 #        File all_pav_stats = "pav_all_SV_lengths_by_type.svlen"
     }
 
