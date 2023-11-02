@@ -1,7 +1,6 @@
 version 1.0
 
 import "tasks/Structs.wdl"
-import "tasks/Utils.wdl"
 
 workflow CallPALMER {
     input {
@@ -27,8 +26,8 @@ workflow CallPALMER {
       }
     }
 
-    call Utils.Cat as merge_calls { input: files = PALMER.calls, out = "~{prefix}_calls.txt" , has_header = true }
-    call Utils.Cat as merge_TSD_reads { input: files = PALMER.TSD_reads, out = "~{prefix}_TSD_reads.txt" , has_header = true }
+    call Cat as merge_calls { input: files = PALMER.calls, out = "~{prefix}_calls.txt" }
+    call Cat as merge_TSD_reads { input: files = PALMER.TSD_reads, out = "~{prefix}_TSD_reads.txt" }
 
     output {
         File PALMER_calls = merge_calls.combined
@@ -139,6 +138,52 @@ task PALMER {
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "quay.io/ymostovoy/lr-palmer:2.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+
+task Cat {
+    input {
+      Array[File] files
+      String out
+
+      RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(files, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        head -n1 ~{files[0]} > ~{out}
+
+        echo ~{sep='\n' files} > filenames
+        while read filename; do tail -n +2 $filename >> ~{out}; done < filenames
+    >>>
+
+    output {
+        File combined = "~{out}"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        2,
+        docker:             "ubuntu:16.04"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
