@@ -65,11 +65,11 @@ workflow HybridPhase {
             bai = all_chr_bai,
             locus = chromosome
         }
-        # call VU.SubsetVCF as SubsetSVs { input:
-        #     vcf_gz = pbsv_vcf,
-        #     vcf_tbi = pbsv_vcf_tbi,
-        #     locus = chromosome
-        # }
+        call VU.SubsetVCF as SubsetSVs { input:
+            vcf_gz = pbsv_vcf,
+            vcf_tbi = pbsv_vcf_tbi,
+            locus = chromosome
+        }
         ####### DONE ######
 
 
@@ -84,33 +84,33 @@ workflow HybridPhase {
             region = chromosome,
             samplename = sample_id
         }
-        call Hiphase.HiphaseSNPs as HP{ input:
-            bam = SubsetBam.subset_bam,
-            bai = SubsetBam.subset_bai,
-            unphased_snp_vcf = SP.single_sample_vcf,
-            unphased_snp_tbi = SP.single_sample_vcf_tbi,            
-            ref_fasta = reference,
-            ref_fasta_fai = reference_index,
-            samplename = sample_id
-        }
-        # call Hiphase.HiphaseSVs as HP { input:
+        # call Hiphase.HiphaseSNPs as HP{ input:
         #     bam = SubsetBam.subset_bam,
         #     bai = SubsetBam.subset_bai,
         #     unphased_snp_vcf = SP.single_sample_vcf,
-        #     unphased_snp_tbi = SP.single_sample_vcf_tbi,
-        #     unphased_sv_vcf = SubsetSVs.subset_vcf,
-        #     unphased_sv_tbi = SubsetSVs.subset_tbi,
+        #     unphased_snp_tbi = SP.single_sample_vcf_tbi,            
         #     ref_fasta = reference,
         #     ref_fasta_fai = reference_index,
         #     samplename = sample_id
-
         # }
+        call Hiphase.HiphaseSVs as HP { input:
+            bam = SubsetBam.subset_bam,
+            bai = SubsetBam.subset_bai,
+            unphased_snp_vcf = SP.single_sample_vcf,
+            unphased_snp_tbi = SP.single_sample_vcf_tbi,
+            unphased_sv_vcf = SubsetSVs.subset_vcf,
+            unphased_sv_tbi = SubsetSVs.subset_tbi,
+            ref_fasta = reference,
+            ref_fasta_fai = reference_index,
+            samplename = sample_id
+
+        }
     }
     
     ### phase small variants as scaffold  
     call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
-        vcf_input = HP.phased_vcf,
-        tbi_input = HP.phased_vcf_tbi,
+        vcf_input = HP.phased_snp_vcf,
+        tbi_input = HP.phased_snp_vcf_tbi,
         pref = prefix
     }
     
@@ -125,22 +125,22 @@ workflow HybridPhase {
         input: outdir = gcs_out_root_dir, file = Shapeit4scaffold.scaffold_vcf
     }
     ##### phase structural variants
-    # call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
-    #     vcf_input = HP.phased_sv_vcf,
-    #     tbi_input = HP.phased_sv_vcf_tbi,
-    #     pref = prefix
-    # }
-    # call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
-    #     vcf_input = MergeAcrossSamplesSVs.merged_vcf,
-    #     vcf_index = MergeAcrossSamplesSVs.merged_tbi,
-    #     scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
-    #     mappingfile = genetic_mapping_dict[chromosome],
-    #     region = chromosome,
-    #     num_threads = num_t
-    # }
-    # call FF.FinalizeToFile as FinalizeSVs {
-    #     input: outdir = gcs_out_root_dir, file = Shapeit4SVphase.final_phased_vcf
-    # }
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
+        vcf_input = HP.phased_sv_vcf,
+        tbi_input = HP.phased_sv_vcf_tbi,
+        pref = prefix
+    }
+    call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
+        vcf_input = MergeAcrossSamplesSVs.merged_vcf,
+        vcf_index = MergeAcrossSamplesSVs.merged_tbi,
+        scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
+        mappingfile = genetic_mapping_dict[chromosome],
+        region = chromosome,
+        num_threads = num_t
+    }
+    call FF.FinalizeToFile as FinalizeSVs {
+        input: outdir = gcs_out_root_dir, file = Shapeit4SVphase.final_phased_vcf
+    }
     output{
         File shapeit4scaffold = Shapeit4scaffold.scaffold_vcf
         File resource = Shapeit4scaffold.resouce_monitor_log
