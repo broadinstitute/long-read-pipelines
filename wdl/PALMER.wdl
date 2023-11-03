@@ -75,52 +75,30 @@ task PALMER {
                  --chr ~{chrom} \
                  --workdir ${dir}/
         else
-          mkdir LINE
-          mkdir SVA
-          mkdir ALU
-          mkdir HERVK
-          /PALMER/PALMER --input ~{bam} \
-                  --ref_fa ~{ref_fa} \
-                  --ref_ver GRCh38 \
-                  --type LINE \
-                  --mode ~{mode} \
-                  --output LINE \
-                  --chr ~{chrom} \
-                  --workdir ${dir}/LINE/
-          /PALMER/PALMER --input ~{bam} \
-                  --ref_fa ~{ref_fa} \
-                  --ref_ver GRCh38 \
-                  --type SVA \
-                  --mode ~{mode} \
-                  --output SVA \
-                  --chr ~{chrom} \
-                  --workdir ${dir}/SVA/
-          /PALMER/PALMER --input ~{bam} \
-                  --ref_fa ~{ref_fa} \
-                  --ref_ver GRCh38 \
-                  --type ALU \
-                  --mode ~{mode} \
-                  --output ALU \
-                  --chr ~{chrom} \
-                  --workdir ${dir}/ALU/
-          /PALMER/PALMER --input ~{bam} \
-                  --ref_fa ~{ref_fa} \
-                  --ref_ver GRCh38 \
-                  --type HERVK \
-                  --mode ~{mode} \
-                  --output HERVK \
-                  --chr ~{chrom} \
-                  --workdir ${dir}/HERVK/
+          echo $'LINE\nSVA\nALU\nHERVK' > types
+          while read MEI_type; do
+            mkdir $MEI_type
+            /PALMER/PALMER --input ~{bam} \
+                    --ref_fa ~{ref_fa} \
+                    --ref_ver GRCh38 \
+                    --type $MEI_type \
+                    --mode ~{mode} \
+                   --output $MEI_type \
+                    --chr ~{chrom} \
+                    --workdir {dir}/${MEI_type}/
 
-          sed "s/$/\tSVA/"   SVA/SVA_calls.txt > ~{prefix}_calls.txt
-          sed "s/$/\tLINE/"  LINE/LINE_calls.txt   | grep -v "^cluster_id" >> ~{prefix}_calls.txt
-          sed "s/$/\tALU/"   ALU/ALU_calls.txt     | grep -v "^cluster_id" >> ~{prefix}_calls.txt
-          sed "s/$/\tHERVK/" HERVK/HERVK_calls.txt | grep -v "^cluster_id" >> ~{prefix}_calls.txt
+            touch ${MEI_type}/${MEI_type}_calls.txt
+            touch ${MEI_type}/${MEI_type}_TSD_reads.txt
 
-          sed "s/$/\tSVA/"   SVA/SVA_TSD_reads.txt > ~{prefix}_TSD_reads.txt
-          sed "s/$/\tLINE/"  LINE/LINE_TSD_reads.txt   | grep -v "^cluster_id" >> ~{prefix}_TSD_reads.txt
-          sed "s/$/\tALU/"   ALU/ALU_TSD_reads.txt     | grep -v "^cluster_id" >> ~{prefix}_TSD_reads.txt
-          sed "s/$/\tHERVK/" HERVK/HERVK_TSD_reads.txt | grep -v "^cluster_id" >> ~{prefix}_TSD_reads.txt
+            sed "s/$/\t${MEI_type}/" ${MEI_type}/${MEI_type}_calls.txt >> calls.txt
+            sed "s/$/\t${MEI_type}/" ${MEI_type}/${MEI_type}_TSD_reads.txt >> TSD_reads.txt
+          done < types
+          
+          head -n1 calls.txt > ~{prefix}_calls.txt
+          grep -v '^cluster_id' calls.txt >> ~{prefix}_calls.txt
+
+          head -n1 TSD_reads.txt > ~{prefix}_TSD_reads.txt
+          grep -v '^cluster_id' TSD_reads.txt >> ~{prefix}_TSD_reads.txt
         fi
     >>>
 
