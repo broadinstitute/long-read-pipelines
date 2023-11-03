@@ -85,7 +85,7 @@ task PALMER {
                     --mode ~{mode} \
                    --output $MEI_type \
                     --chr ~{chrom} \
-                    --workdir {dir}/${MEI_type}/
+                    --workdir ${dir}/${MEI_type}/
 
             touch ${MEI_type}/${MEI_type}_calls.txt
             touch ${MEI_type}/${MEI_type}_TSD_reads.txt
