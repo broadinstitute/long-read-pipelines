@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM us.gcr.io/broad-dsp-lrma/mito_ccs_read_preprocessor:0.0.1
 COPY .gitconfig .
 ARG SAMTOOLS_VERSION=1.15.1
 ARG BCFTOOLS_VERSION=1.15.1
@@ -32,14 +32,14 @@ RUN apt-get -qqy update --fix-missing && \
     cd bcftools-${BCFTOOLS_VERSION} && ./configure --without-curses && make -s && make install && cd - && \
     rm -rf bcftools-${BCFTOOLS_VERSION}*
 
-# mitoccs_git = "https://www.github.com/broadinstitute/mito_ccs_read_analyzer.git"
-RUN python3 -m pip install --upgrade pip setuptools
-RUN python3 -m pip install --upgrade \
-    git https://www.github.com/broadinstitute/mito_ccs_read_analyzer.git
-RUN cd mito_ccs_read_analyzer && \
-    python3 -m venv env && \
-    pip install -r requirements.txt && \
-    cd ..
-    # bash ./driver.sh
+# # mitoccs_git = "https://www.github.com/broadinstitute/mito_ccs_read_analyzer.git"
+# RUN python3 -m pip install --upgrade pip setuptools
+# RUN python3 -m pip install --upgrade \
+#     git https://www.github.com/broadinstitute/mito_ccs_read_analyzer.git
+# RUN cd mito_ccs_read_analyzer && \
+#     python3 -m venv env && \
+#     pip install -r requirements.txt && \
+#     cd ..
+#     # bash ./driver.sh
 
 

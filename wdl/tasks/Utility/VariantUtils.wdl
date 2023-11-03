@@ -95,7 +95,6 @@ task MergePerChrVcfWithBcftools {
         ls *.vcf.gz > my_vcfs.txt
         bcftools merge \
             --merge all \
-            --no-index \
             -l my_vcfs.txt \
             -O z \
             -o ~{pref}.AllSamples.vcf.gz
