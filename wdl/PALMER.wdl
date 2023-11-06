@@ -145,7 +145,7 @@ task Cat {
 
         head -n1 ~{files[0]} > ~{out}
 
-        echo ~{sep='\n' files} > filenames
+        echo ~{sep=' ' files} | sed 's/ /\n/g' > filenames
         while read filename; do tail -n +2 $filename >> ~{out}; done < filenames
     >>>
 
