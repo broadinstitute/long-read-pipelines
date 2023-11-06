@@ -49,7 +49,7 @@ task ValidateSamFile {
     String log_name = basename(input_bam, ".bam") + ".log"
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         gatk --java-options -Xms6000m \
             ValidateSamFile \
