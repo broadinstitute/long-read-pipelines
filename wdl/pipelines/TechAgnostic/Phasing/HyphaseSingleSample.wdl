@@ -58,6 +58,8 @@ workflow HybridPhase {
 
     output{
         File phased_snp_vcf = hiphase.phased_snp_vcf
+        File phased_snp_tbi = hiphase.phased_snp_vcf_tbi
         File phased_sv_vcf = hiphase.phased_sv_vcf
+        File phased_sv_tbi = hiphase.phased_sv_vcf_tbi
     }
 }
