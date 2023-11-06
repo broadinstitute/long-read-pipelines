@@ -120,6 +120,6 @@ workflows:
 - name: HybridPhaseOneChrSmallVariantHyphase
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseOneChrSmallVariantHyphase.wdl
-- name: PlotResource
+- name: SingleSampleStats
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/PlotResource.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/SingleSampleStats.wdl
