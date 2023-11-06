@@ -164,3 +164,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/xTea.wdl
   testParameterFiles:
+- name: AlignedMetrics
+  subclass: wdl
+  primaryDescriptorPath: /wdl/tasks/SampleLevelAlignedMetrics.wdl
+  testParameterFiles:
