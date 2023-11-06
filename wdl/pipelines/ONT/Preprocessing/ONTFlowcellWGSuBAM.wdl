@@ -25,6 +25,8 @@ workflow ONTFlowcellWGSuBAM {
         fingerprint_store:           "Bucket name and prefix (gs://...) storing the fingerprinting VCFs"
         sample_id_at_store: "Name of the sample at the fingerprint store."
 
+        aln_disk_type: "An optimization specifying which type of disk to use for the minimap2 alignment step."
+
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
 
@@ -41,6 +43,8 @@ workflow ONTFlowcellWGSuBAM {
         String flowcell
         String bam_SM_ID
         Array[String] uBAM_tags_to_preserve = ['MM', 'ML']
+
+        String aln_disk_type = 'SSD'
 
         String? fingerprint_store
         String? sample_id_at_store
@@ -105,7 +109,8 @@ workflow ONTFlowcellWGSuBAM {
             uBAM_tags_to_preserve = uBAM_tags_to_preserve,
             bam_sample_name = bam_SM_ID,
             flowcell = flowcell,
-            ref_map_file = ref_map_file
+            ref_map_file = ref_map_file,
+            aln_disk_type = aln_disk_type
     }
     call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = outdir_aln, file = ALN.aligned_bam }
     call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = outdir_aln, file = ALN.aligned_bai }

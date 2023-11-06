@@ -16,6 +16,7 @@ task Minimap2 {
         Array[String] tags_to_preserve = []
 
         String prefix = "out"
+        String disk_type = "SSD"
         RuntimeAttr? runtime_attr_override
     }
     meta {
@@ -38,7 +39,9 @@ task Minimap2 {
 
     Boolean fix_library_entry = if defined(library) then true else false
 
-    Int disk_size = 1 + 10*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
+    Int pd_disk_size = 1 + 20*ceil(size(reads, "GB") + ceil(size(ref_fasta, "GB")))
+    Int local_disk_size = if(size(reads, "GB")>150) then 750 else 375
+    Int disk_size = if('LOCAL'==disk_type) then local_disk_size else pd_disk_size
 
     Boolean do_preserve_tags = if length(tags_to_preserve) != 0 then true else false
 
@@ -194,7 +197,7 @@ task Minimap2 {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])

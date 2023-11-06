@@ -1326,7 +1326,7 @@ task MergeBams {
     }
 
     parameter_meta {
-        bams: "Input array of BAMs to be merged."
+        bams: {desciption: "Input array of BAMs to be merged.", localization_optional: true}
         prefix: "Prefix for the output BAM."
         runtime_attr_override: "Override the default runtime attributes."
     }
@@ -1338,17 +1338,24 @@ task MergeBams {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 4*ceil(size(bams, "GB"))
+    Int disk_size = 375 # 1 + 4*ceil(size(bams, "GB"))
 
     command <<<
         set -euxo pipefail
 
+        mkdir -p all_bams
+        time \
+        gcloud storage cp ~{sep=" " bams} /cromwell_root/all_bams/
+
+        cd all_bams && ls ./*.bam > bam.list
         samtools merge \
             -p -c --no-PG \
             -@ 2 \
             --write-index \
             -o "~{prefix}.bam##idx##~{prefix}.bam.bai" \
-            ~{sep=" " bams}
+            -b bam.list
+        mv "~{prefix}.bam" "~{prefix}.bam.bai" /cromwell_root
+        cd -
     >>>
 
     output {
@@ -1364,7 +1371,7 @@ task MergeBams {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

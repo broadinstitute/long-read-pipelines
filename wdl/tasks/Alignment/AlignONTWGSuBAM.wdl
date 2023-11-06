@@ -20,6 +20,8 @@ workflow AlignONTWGSuBAM {
         uBAM_tags_to_preserve: "Please be careful with this: methylation tags MM, ML are usually what you want to keep at minimum"
         flowcell:              "Name of the flowcell."
 
+        aln_disk_type: "An optimization specifying which type of disk to use for the minimap2 alignment step."
+
         # outputs
         wgs_cov: "whole genome mean coverage"
         aln_summary: "summary on alignment metrics"
@@ -31,6 +33,8 @@ workflow AlignONTWGSuBAM {
         Array[String] uBAM_tags_to_preserve # please be careful with this: methylation tags MM, ML are usually what you want to keep
         String bam_sample_name
         String flowcell
+
+        String aln_disk_type = 'SSD'
 
         File ref_map_file
     }
@@ -76,8 +80,10 @@ workflow AlignONTWGSuBAM {
     Int emperical_bam_sz_threshold = if('LOCAL'==aln_disk_type) then 32 else 16
 
     if (emperical_bam_sz_threshold < ceil(size(uBAM, "GiB"))) {
-        call BU.SplitNameSortedUbam {  # 576K reads is emperical, takes roughly 2 hours for minimap2 task
-            input: uBAM = uBAM, n_reads = 576000
+        # 576K reads is emperical, takes roughly 2 hours for minimap2 task on SSD-type PD
+        Int emperical_n_reads_per_shard = (if('LOCAL'==aln_disk_type) then 4 else 2) * 576000
+        call BU.SplitNameSortedUbam {
+            input: uBAM = uBAM, n_reads = emperical_n_reads_per_shard
         }
         Int num_shards = length(SplitNameSortedUbam.split)
         scatter (i in range(num_shards)) {
@@ -93,7 +99,8 @@ workflow AlignONTWGSuBAM {
 
                     tags_to_preserve = uBAM_tags_to_preserve,
 
-                    prefix = bam_sample_name + "." + flowcell + "." + "~{i}"
+                    prefix = bam_sample_name + "." + flowcell + "." + "~{i}",
+                    disk_type = aln_disk_type
             }
         }
         call Utils.MergeBams { input: bams = MapShard.aligned_bam, prefix = bam_sample_name + "." + flowcell }
@@ -110,7 +117,8 @@ workflow AlignONTWGSuBAM {
 
                 tags_to_preserve = uBAM_tags_to_preserve,
 
-                prefix = bam_sample_name + "." + flowcell
+                prefix = bam_sample_name + "." + flowcell,
+                disk_type = aln_disk_type
         }
     }
     File aBAM = select_first([Minimap2.aligned_bam, MergeBams.merged_bam])
