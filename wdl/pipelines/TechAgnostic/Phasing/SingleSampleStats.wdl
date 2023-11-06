@@ -16,17 +16,23 @@ workflow Statistics {
         File phased_vcf
         File phased_vcf_tbi
         String chromosome
-    }
-    
-    call VU.SubsetVCF as SP { input:
-        vcf_gz = phased_vcf,
-        vcf_tbi = phased_vcf_tbi,
-        locus = chromosome
+        String sampleID
     }
 
+    call SplitJointCallbySample.SplitVCFbySample as SP { input:
+            joint_vcf = phased_vcf,
+            region = chromosome,
+            samplename = sampleID
+        }
+    # call VU.SubsetVCF as SP { input:
+    #     vcf_gz = Splitbysample.single_sample_vcf,
+    #     vcf_tbi = Splitbysample.single_sample_vcf_tbi,
+    #     locus = chromosome
+    # }
+
     call WhatsHap.Stats as WS { input:
-        phased_vcf = SP.subset_vcf,
-        phased_tbi = SP.subset_tbi
+        phased_vcf = SP.single_sample_vcf,
+        phased_tbi = SP.single_sample_vcf_tbi
     }
 
     output{
