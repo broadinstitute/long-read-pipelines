@@ -22,7 +22,7 @@ workflow HybridPhase {
         File reference
         File reference_index
         String chromosome
-        String prefix
+        String samplename
         Int num_t
     }
 
@@ -53,7 +53,7 @@ workflow HybridPhase {
             unphased_sv_tbi = SubsetSVs.subset_tbi,
             ref_fasta = reference,
             ref_fasta_fai = reference_index,
-            prefix = prefix
+            samplename = samplename
         }
 
     output{
