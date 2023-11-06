@@ -98,5 +98,5 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
 - name: RepairBam
   subclass: wdl
-  primaryDescriptionPath: /wdl/pipelines/TechAgnostic/Utility/RepairBam.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/RepairBam.wdl
 
