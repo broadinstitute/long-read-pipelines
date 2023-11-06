@@ -220,3 +220,62 @@ task Stats {
     }
 }
 
+
+task Compare {
+    meta {
+        description: "Uses whatshap to Compare phased vcf and a truth vcf file."
+    }
+
+    parameter_meta {
+        phased_vcf: "phased VCF from physical phasing tool"
+        phased_tbi: "phased VCF index file from physical phasing tool"
+    }
+
+    input {
+        File phased_vcf
+        File phased_tbi
+        File truth_vcf
+        File truth_tbi
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String vcf_prefix = basename(phased_vcf, ".vcf.gz")
+
+    Int disk_size = 10 + 2*ceil(size(phased_vcf, "GiB"))
+
+    command <<<
+        set -eux
+
+        mv ~{phased_vcf} ~{vcf_prefix}.vcf.gz
+        mv ~{phased_tbi} ~{vcf_prefix}.vcf.gz.tbi
+
+        # for visualization
+        whatshap compare --names truth,physicalphasing --tsv-pairwise ~{vcf_prefix}.eval-stats.tsv ~{truth_vcf} ~{vcf_prefix}.vcf.gz
+
+        ls
+    >>>
+
+    output {
+        File stats_tsv = "~{vcf_prefix}.eval-stats.tsv"
+    }
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        preemptible_tries:  3,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
