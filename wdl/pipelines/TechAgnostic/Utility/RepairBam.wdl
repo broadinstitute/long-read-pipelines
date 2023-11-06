@@ -58,6 +58,8 @@ task ValidateSamFile {
             O=~{log_name} \
             IGNORE_WARNINGS=true \
             MODE=VERBOSE
+
+        cat ~{log_name}
     >>>
 
     output {
