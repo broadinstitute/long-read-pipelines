@@ -5,6 +5,7 @@ workflow DeepSomatic{
     }
     input{
         File reference
+        File reference_index
         File input_baseline_bam
         File input_baseline_bam_bai
         File input_sample_bam
@@ -17,6 +18,7 @@ workflow DeepSomatic{
 
     call deep_somatic{ input:
         reference_fasta = reference,
+        reference_index = reference_index,
         input_baseline_bam = input_baseline_bam,
         input_baseline_bam_bai = input_baseline_bam_bai,
         input_sample_bam = input_sample_bam,
@@ -38,6 +40,7 @@ workflow DeepSomatic{
 task deep_somatic{
     input{
         File reference_fasta
+        File reference_index
         File input_baseline_bam
         File input_baseline_bam_bai
         File input_sample_bam
