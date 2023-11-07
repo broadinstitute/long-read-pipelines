@@ -8,6 +8,7 @@ import "AlignReads.wdl" as AR
 
 import "../QC/AlignedMetrics.wdl" as AM
 import "../Visualization/NanoPlot.wdl" as NP
+import "../Visualization/VisualizeResourceUsage.wdl"
 
 workflow AlignONTWGSuBAM {
     meta {
@@ -50,6 +51,8 @@ workflow AlignONTWGSuBAM {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
+    String output_prefix = bam_sample_name + "." + flowcell
+
     ###################################################################################
     # massage the RG line to prepare for minimap2
 
@@ -88,6 +91,7 @@ workflow AlignONTWGSuBAM {
         Int num_shards = length(SplitNameSortedUbam.split)
         scatter (i in range(num_shards)) {
             File shard_ubam = SplitNameSortedUbam.split[i]
+            String shard_out_prefix = output_prefix + "." + "~{i}"
             call AR.Minimap2 as MapShard {
                 input:
                     reads = [shard_ubam],
@@ -99,11 +103,17 @@ workflow AlignONTWGSuBAM {
 
                     tags_to_preserve = uBAM_tags_to_preserve,
 
-                    prefix = bam_sample_name + "." + flowcell + "." + "~{i}",
+                    prefix = shard_out_prefix,
                     disk_type = aln_disk_type
             }
+            call VisualizeResourceUsage.SimpleRscript as VisualizeMM2ShardResoureUsage {
+                input:
+                resource_log = MapShard.resouce_monitor_log,
+                output_pdf_name = "~{shard_out_prefix}.minimap2.resources-usage.pdf",
+                plot_title = "minimap2, to generate ~{shard_out_prefix}.bam"
+            }
         }
-        call Utils.MergeBams { input: bams = MapShard.aligned_bam, prefix = bam_sample_name + "." + flowcell }
+        call Utils.MergeBams { input: bams = MapShard.aligned_bam, prefix = output_prefix }
     }
     if (emperical_bam_sz_threshold >= ceil(size(uBAM, "GiB"))) {
         call AR.Minimap2 {
@@ -117,8 +127,14 @@ workflow AlignONTWGSuBAM {
 
                 tags_to_preserve = uBAM_tags_to_preserve,
 
-                prefix = bam_sample_name + "." + flowcell,
+                prefix = output_prefix,
                 disk_type = aln_disk_type
+        }
+        call VisualizeResourceUsage.SimpleRscript as VisualizeMM2WholeResoureUsage {
+            input:
+            resource_log = Minimap2.resouce_monitor_log,
+            output_pdf_name = "~{output_prefix}.minimap2.resources-usage.pdf",
+            plot_title = "minimap2, to generate ~{output_prefix}.bam"
         }
     }
     File aBAM = select_first([Minimap2.aligned_bam, MergeBams.merged_bam])
