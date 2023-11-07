@@ -138,6 +138,9 @@ workflows:
 - name: VerifyBamFingerprint
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyBamFingerprint.wdl
+- name: FilterAnnotateVCF
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Annotation/FilterAnnotateVCF.wdl
 
 ###################################################
 # TechAgnostic - utility
