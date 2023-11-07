@@ -1,12 +1,11 @@
 version 1.0
 
 import "../../../tasks/Utility/Hail.wdl" as Hail
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ConvertToHailMT {
 
     meta {
-        description: "Convert a gVCF to a Hail MatrixTable"
+        description: "Convert a (g)VCF to a Hail MatrixTable"
     }
     parameter_meta {
         joint_gvcf:       "joint-called gVCF file"
@@ -21,30 +20,24 @@ workflow ConvertToHailMT {
         String prefix
 
         String gcs_out_root_dir
+
+        String reference
+        String? ref_fasta
+        String? ref_fai
     }
-
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"
-
-    # Gather across multiple input gVCFs
-    call Hail.ConvertToHailMT as RunConvertToHailMT {
-        input:
-            gvcf = joint_gvcf,
-            tbi = joint_gvcf_tbi,
-            prefix = prefix
-    }
-
-    call FF.FinalizeToFile as FinalizeMT {
-        input:
-            file = RunConvertToHailMT.mt_tar,
-            outdir = outdir
-    }
-
-
-    ##########
-    # store the results into designated bucket
-    ##########
 
     output {
-        String joint_mt = FinalizeMT.gcs_path
+        String joint_mt = ConvertToHailMT.gcs_path
+    }
+
+    call Hail.ConvertToHailMT { input:
+        gvcf = joint_gvcf,
+        tbi  = joint_gvcf_tbi,
+        prefix = prefix,
+        outdir = sub(gcs_out_root_dir, "/$", ""),
+
+        reference = reference,
+        ref_fasta = ref_fasta,
+        ref_fai = ref_fai
     }
 }

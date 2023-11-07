@@ -32,33 +32,32 @@ workflow LRJointCallGVCFs {
     Map[String, String] ref_map = read_map(ref_map_file)
 
     # Gather across multiple input gVCFs
-    call GLNexus.JointCall {
-        input:
-            gvcfs = gvcfs,
-            tbis = tbis,
-            dict = ref_map['dict'],
-            prefix = prefix
+    call GLNexus.JointCall { input:
+        gvcfs = gvcfs,
+        tbis = tbis,
+        dict = ref_map['dict'],
+        prefix = prefix
     }
 
-    call Hail.ConvertToHailMT {
-        input:
-            gvcf = JointCall.joint_gvcf,
-            tbi = JointCall.joint_gvcf_tbi,
-            prefix = prefix
+    call Hail.ConvertToHailMT { input:
+        gvcf = JointCall.joint_gvcf,
+        tbi = JointCall.joint_gvcf_tbi,
+        prefix = prefix,
+        outdir = outdir,
+        reference = ref_map['name'],
+        ref_fasta = ref_map['fasta'],
+        ref_fai = ref_map['fai'],
     }
-
-    # Finalize
-    call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = JointCall.joint_gvcf }
-    call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = JointCall.joint_gvcf_tbi }
-    call FF.FinalizeToFile as FinalizeMT { input: outdir = outdir, file = ConvertToHailMT.mt_tar }
 
     ##########
     # store the results into designated bucket
     ##########
+    call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = JointCall.joint_gvcf }
+    call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = JointCall.joint_gvcf_tbi }
 
     output {
         File joint_gvcf = FinalizeGVCF.gcs_path
         File joint_gvcf_tbi = FinalizeTBI.gcs_path
-        String joint_mt = FinalizeMT.gcs_path
+        String joint_mt = select_first([ConvertToHailMT.gcs_path])
     }
 }
