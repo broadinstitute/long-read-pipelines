@@ -135,3 +135,6 @@ workflows:
 - name: ConsensusAsmFromShapeitScaffold
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/ConsensusAsmFromShapeitScaffold.wdl
+- name: DeepSomatic
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/DeepSomatic.wdl
