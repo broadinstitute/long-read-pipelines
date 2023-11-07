@@ -38,7 +38,7 @@ task Minimap2 {
 
     Boolean fix_library_entry = if defined(library) then true else false
 
-    Int disk_size = 1 + 10*2*2*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
+    Int disk_size = 1 + 10*ceil(size(reads, "GB") + size(ref_fasta, "GB"))
 
     Boolean do_preserve_tags = if length(tags_to_preserve) != 0 then true else false
 
@@ -88,6 +88,11 @@ task Minimap2 {
         # samtools sort
         MEM_FOR_SORT=$( echo "" | awk "{print int(($RAM_IN_GB - 1)/$NUM_CPUS)}" )
         SORT_PARAMS="-@4 -m~{cpus}G --no-PG -o ~{prefix}.pre.bam"
+
+        ############
+        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        bash /opt/vm_local_monitoring_script.sh &> /cromwell_root/resources.log &
+        job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
 
         ############
         # minimap2
@@ -170,6 +175,8 @@ task Minimap2 {
     >>>
 
     output {
+        File resouce_monitor_log = "resources.log"
+
         File aligned_bam = "~{prefix}.bam"
         File aligned_bai = "~{prefix}.bam.bai"
     }

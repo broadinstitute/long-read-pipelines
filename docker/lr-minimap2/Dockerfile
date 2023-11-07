@@ -94,3 +94,5 @@ RUN cd /tmp/ && curl -L ${MINIMAP2_REPO}/v${MINIMAP2_VERSION}/minimap2-${MINIMAP
 COPY prepare_run.py /usr/local/bin/
 COPY merge_read_group_tags.py /usr/local/bin/
 COPY cat_as_fastq.py /usr/local/bin/
+
+COPY vm_local_monitoring_script.sh /opt/
