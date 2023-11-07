@@ -132,3 +132,6 @@ workflows:
 - name: JellyfishMergingKmerCount
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/KmerCounting/MergingKmercount.wdl
+- name: ConsensusAsmFromShapeitScaffold
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/ConsensusAsmFromShapeitScaffold.wdl

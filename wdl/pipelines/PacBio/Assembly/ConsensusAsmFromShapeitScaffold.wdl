@@ -42,12 +42,12 @@ task merge_scaffold{
     input{
         File input_sv_scaffold
         File input_snp_scaffold
-        File prefix
+        String prefix
     }
     command <<<
         bcftools index ~{input_sv_scaffold}
         bcftools index ~{input_snp_scaffold}
-        bcftools concat -a -D ~{input_sv_scaffold} ~{input_snp_scaffold} -O z -o ~{prefix}.combined_scaffold.bcf
+        bcftools concat -a -D ~{input_sv_scaffold} ~{input_snp_scaffold} -o ~{prefix}.combined_scaffold.bcf
         bcftools index ~{prefix}.combined_scaffold.bcf
     >>>
    
@@ -67,7 +67,7 @@ task merge_scaffold{
         bootDiskSizeGb: 10
         preemptible: 2
         maxRetries: 1
-        docker: "us-central1-docker.pkg.dev/broad-dsp-lrma/fusilli/fusilli:devel"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }
 
@@ -119,8 +119,8 @@ task ConstructConsensus {
     command <<<
         set -x pipefail
         bcftools index ~{single_sample_vcf}
-        bcftools consensus -H 1 -f ~{reference} ~{single_sample_vcf} > ~{samplename}_MHC_hap1.fasta
-        bcftools consensus -H 2 -f ~{reference} ~{single_sample_vcf} > ~{samplename}_MHC_hap2.fasta
+        bcftools consensus -e 'ALT~"<.*>"' -H 1 -f ~{reference} ~{single_sample_vcf} > ~{samplename}_MHC_hap1.fasta
+        bcftools consensus -e 'ALT~"<.*>"' -H 2 -f ~{reference} ~{single_sample_vcf} > ~{samplename}_MHC_hap2.fasta
 
     >>>
     
