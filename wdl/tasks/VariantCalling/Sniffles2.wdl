@@ -1,58 +1,6 @@
 version 1.0
 
-
 import "../../structs/Structs.wdl"
-
-
-workflow Sniffles2 {
-
-    meta {
-        description: "This workflow calls SV candidates using Sniffles2 population mode."
-    }
-
-    parameter_meta {
-        # input
-        sampleBAMs:      "GCS paths to aligned BAM files from multiple samples"
-        sampleBAIs:       "GCS paths to aligned BAM files indices from multiple samples"
-        sampleIDs:       "matching sample IDs of the BAMs"
-        minsvlen:        "Minimum SV length in bp"
-        prefix:          "prefix for output files"
-        # output
-        single_snf:      "[OUTPUT] .snf output containing SV candidates from a single sample"
-        multisample_vcf: "[OUTPUT] Multi-sample vcf output"
-    }
-
-    input {
-        Array[File] sampleBAMs
-        Array[File] sampleBAIs
-        Array[String] sampleIDs
-        String prefix
-        Int minsvlen = 50
-    }
-
-    scatter (i in range(length(sampleBAMs))) {
-        call SampleSV {
-            input:
-                bam = sampleBAMs[i],
-                bai = sampleBAIs[i],
-                minsvlen = minsvlen,
-                prefix = prefix,
-                sample_id = sampleIDs[i]
-        }
-    }
-
-    call MergeCall {
-        input:
-            snfs = SampleSV.snf,
-            prefix = prefix
-    }
-
-
-    output {
-         Array[File] single_snf = SampleSV.snf
-         File multisample_vcf = MergeCall.vcf
-    }
-}
 
 task SampleSV {
 
@@ -135,54 +83,57 @@ task SampleSV {
     }
 }
 
-task MergeCall {
+task Joint {
 
     meta {
         description: "This tasks performs joined-calling from multiple .snf files and produces a single .vcf"
     }
 
+    parameter_meta {
+        snfs: ".snf files for each sample in the cohort"
+    }
+
     input {
         Array[File] snfs
         String prefix
-        RuntimeAttr? runtime_attr_override
-    }
 
-    parameter_meta {
-        snfs: ".snf files"
+        Int cores
+        String disk_type = "HDD"
+
+        RuntimeAttr? runtime_attr_override
     }
 
     command <<<
         set -eux
-        sniffles --input ~{sep=" " snfs} \
-            --vcf multisample.vcf
-        tree
+
+        sniffles \
+            --input ~{sep=" " snfs} \
+            --vcf ~{prefix}.sniffles2-joint.vcf.gz
+
+        find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
     >>>
 
     output {
-        File vcf = "~{prefix}.vcf"
+        File vcf = "~{prefix}.sniffles2-joint.vcf.gz"
+        File tbi = "~{prefix}.sniffles2-joint.vcf.gz.tbi"
     }
 
-    Int cpus = 8
-    Int disk_size = 3*ceil(size(snfs, "GB"))
-                                                                                                                                                                                                                                                                                                                                                                                                                                   #########################
+    Int disk_size = 100 + 2*ceil(size(snfs, "GB"))
     RuntimeAttr default_attr = object {
-        cpu_cores:          cpus,
-        mem_gb:             46,
+        cpu_cores:          cores,
+        mem_gb:             cores * 6,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        2,
+        preemptible_tries:  2,
+        max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-sniffles2:2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
-
 }

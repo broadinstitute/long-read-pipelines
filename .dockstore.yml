@@ -105,3 +105,6 @@ workflows:
 - name: CallVariantsReadBased
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl
+- name: Sniffles2JointCallSV
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/Sniffles2JointCallSV.wdl
