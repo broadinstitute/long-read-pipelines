@@ -93,9 +93,10 @@ task Minimap2 {
         SORT_PARAMS="-@4 -m~{cpus}G --no-PG -o ~{prefix}.pre.bam"
 
         ############
-        export MONITOR_MOUNT_POINT="/cromwell_root/"
-        bash /opt/vm_local_monitoring_script.sh &> /cromwell_root/resources.log &
-        job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
+        # export MONITOR_MOUNT_POINT="/cromwell_root/"
+        # bash /opt/vm_local_monitoring_script.sh &> /cromwell_root/resources.log &
+        # job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
+        touch /cromwell_root/resources.log
 
         ############
         # minimap2
