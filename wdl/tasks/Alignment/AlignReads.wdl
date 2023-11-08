@@ -39,7 +39,7 @@ task Minimap2 {
 
     Boolean fix_library_entry = if defined(library) then true else false
 
-    Int pd_disk_size = 1 + 20*ceil(size(reads, "GB") + ceil(size(ref_fasta, "GB")))
+    Int pd_disk_size = 1 + 40*ceil(size(reads, "GB") + ceil(size(ref_fasta, "GB")))
     Int local_disk_size = if(size(reads, "GB")>150) then 750 else 375
     Int disk_size = if('LOCAL'==disk_type) then local_disk_size else pd_disk_size
 

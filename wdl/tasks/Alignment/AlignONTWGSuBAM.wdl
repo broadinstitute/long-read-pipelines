@@ -80,11 +80,11 @@ workflow AlignONTWGSuBAM {
     ###################################################################################
     # BAMs bigger than this should be handled per-shard, approximately 576K ONT reads translates to 8G.
     # also, since LOCAL SSD comes in 375G/pieces, we can compsensate the reads number with IO speed
-    Int emperical_bam_sz_threshold = if('LOCAL'==aln_disk_type) then 32 else 16
+    Int emperical_bam_sz_threshold = 8 # if('LOCAL'==aln_disk_type) then 32 else 16
 
     if (emperical_bam_sz_threshold < ceil(size(uBAM, "GiB"))) {
         # 576K reads is emperical, takes roughly 2 hours for minimap2 task on SSD-type PD
-        Int emperical_n_reads_per_shard = (if('LOCAL'==aln_disk_type) then 4 else 2) * 576000
+        Int emperical_n_reads_per_shard = 576000 # (if('LOCAL'==aln_disk_type) then 4 else 2) * 576000
         call BU.SplitNameSortedUbam {
             input: uBAM = uBAM, n_reads = emperical_n_reads_per_shard
         }
