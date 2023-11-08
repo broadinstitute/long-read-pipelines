@@ -90,7 +90,10 @@ task Joint {
     }
 
     parameter_meta {
-        snfs: ".snf files for each sample in the cohort"
+        snfs: {
+            desciption: ".snf files for each sample in the cohort",
+            localization_optional: true
+        }
     }
 
     input {
@@ -106,11 +109,18 @@ task Joint {
     command <<<
         set -eux
 
+        mkdir -p signals
+        time \
+        gcloud storage cp ~{sep=' ' snfs} /cromwell_root/signals/
+
+        cd signals
         sniffles \
-            --input ~{sep=" " snfs} \
+            --input ./*.snf \
             --vcf ~{prefix}.sniffles2-joint.vcf.gz
 
         find . | sed -e "s/[^-][^\/]*\// |/g" -e "s/|\([^ ]\)/|-\1/"
+
+        mv ~{prefix}.sniffles2-joint.vcf.gz ~{prefix}.sniffles2-joint.vcf.gz.tbi /cromwell_root/
     >>>
 
     output {
