@@ -239,3 +239,67 @@ task Call {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task Joint {
+    meta {
+        desciption: "This is for joint calling with multiple samples' svsig file."
+    }
+    input {
+
+        Array[File] svsigs
+        File ref_fasta
+        File ref_fasta_fai
+        Boolean is_hifi
+
+        String prefix
+
+        Int cores = 32
+        String disk_type = "HDD"
+
+        Boolean DEBUG = false
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    output {
+        File call_log = "pbsv.call.log"  # make sure this is always the top, so that in case something goes wrong, we still get the log de-localized
+        File vcf = "~{prefix}.pbsv.vcf.gz"
+        File tbi = "~{prefix}.pbsv.vcf.gz.tbi"
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        pbsv call \
+            -j 0 \
+            --log-level ~{true='INFO' false='WARN' DEBUG} \
+            --log-file pbsv.call.log \
+            ~{true='--hifi' false='' is_hifi} \
+            ~{ref_fasta} \
+            ~{sep=' ' svsigs} \
+            ~{prefix}.pbsv.pre.vcf
+
+        # some trivial postprocessing
+        cat ~{prefix}.pbsv.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.pbsv.vcf
+        bgzip -c ~{prefix}.pbsv.vcf > ~{prefix}.pbsv.vcf.gz
+        tabix -p vcf ~{prefix}.pbsv.vcf.gz
+    >>>
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          cores,
+        mem_gb:             cores * 6,
+        disk_gb:            500, # disk_size,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
