@@ -32,7 +32,10 @@ workflow Sniffles2JointCallSV {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}"
 
     ##################
-    Array[File] cohort_snfs = if (defined(list_of_snfs) ) then read_lines(select_first([list_of_snfs])) else select_first([snfs])
+    if (defined(list_of_snfs) ) {
+        call ReadLines { input: one_record_per_line = select_first([list_of_snfs])}
+    }
+    Array[File] cohort_snfs = select_first([ReadLines.records, snfs])
 
     call SNF.Joint as SNF2Join { input:
         snfs = cohort_snfs, prefix = out_prefix, cores = cores, disk_type = disk_type
@@ -40,4 +43,25 @@ workflow Sniffles2JointCallSV {
     ##################
     call FF.FinalizeToFile as FinalizeVCF { input: outdir = outdir, file = SNF2Join.vcf }
     call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = SNF2Join.tbi }
+}
+
+task ReadLines {
+    meta {
+        desciption: "When a file is long enough, WDL stdlib read_lines can get stuck, so we do the work here ourselves"
+    }
+    input {
+        File one_record_per_line
+    }
+    output {
+        Array[String] records = read_lines("unnecessary.txt")
+    }
+
+    command <<<
+        set -eux
+        cat ~{one_record_per_line} > "unnecessary.txt"
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
 }
