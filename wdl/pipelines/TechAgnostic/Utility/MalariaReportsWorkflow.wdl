@@ -106,7 +106,7 @@ workflow GenerateMalariaReports {
 
         # Coverage Plot -- incomplete   
         String fastqc_path
-        Int coverage_bin_size  
+        Int? coverage_bin_size  
     }
 
     call MRS.RunReportScript as RunReportScript { 
