@@ -123,6 +123,11 @@ task RunReportScript {
         ls
         echo "BEGIN COMMAND"
 
+        echo ~{coverage_dir}
+        mkdir -p /report-files/data/coverage
+        gsutil ls ~{coverage_dir}  > filelist.txt
+        cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
+        
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
@@ -151,11 +156,6 @@ task RunReportScript {
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
             --coverage_bin_size ~{coverage_bin_size}
-
-        echo ~{coverage_dir}
-        mkdir /report-files/data/coverage
-        gsutil ls ~{coverage_dir}  > filelist.txt
-        cat filelist.txt | gsutil cp -I /report-files/data/coverage
     >>>
 
     output {
