@@ -114,7 +114,9 @@ task RunReportScript {
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
 
     # Compute path for BAM files (coverage_dir) using fastqc_path
-    String coverage_dir = sub(fastqc_path, "fastqc_report.html", "coverage/")
+    
+    String results_dir = sub(fastqc_path, "results\/.*", "")
+    String coverage_dir = "~{results_dir}/SRFlowcell/~{sample_name}/metrics/coverage/"
     
 
     command <<<
