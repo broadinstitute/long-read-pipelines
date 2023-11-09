@@ -126,8 +126,11 @@ task RunReportScript {
         echo ~{coverage_dir}
         mkdir -p /report-files/data/coverage
         gsutil ls ~{coverage_dir}  > filelist.txt
+        cat filelist.txt
+        echo "COPYING..."
         cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
         
+        echo "CREATING REPORT..."
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
