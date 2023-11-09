@@ -40,6 +40,15 @@ workflow PlotSVQCMetrics{
 #            pav_stats = compileSVstats.pav_stat_out,
     }
 
+    call plotSVQCMetrics{
+        input:
+            pbsv_all_stats_with_cov = addCoverageToSVstats.pbsv_all_stats_with_cov,
+            sniffles_all_stats_with_cov = addCoverageToSVstats.sniffles_all_stats_with_cov,
+            all_pbsv_stats = concatSVstats.all_pbsv_stats,
+            all_sniffles_stats = concatSVstats.all_sniffles_stats,
+            reference_in = "GRCh38"
+    }
+
 
 output{
         File pbsv_concatSVstats = concatSVstats.all_pbsv_stats
@@ -48,6 +57,8 @@ output{
         File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_all_stats_with_cov
         File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_all_stats_with_cov
 #        File pav_all_stats_with_coverage = addCoverageToSVstats.pav_stat_out
+        Array[File] metric_plot_pdfs = plotSVQCMetrics.output_pdfs
+        File plot_notebook = plotSVQCMetrics.out_plot_single_sample_stats
     }
 
 
@@ -324,6 +335,52 @@ task addCoverageToSVstats{
 #        File pav_all_stats_with_cov = "pav_all_sample_stats_with_cov"
     }
 
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             24,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task plotSVQCMetrics{
+    input{
+        File pbsv_all_stats_with_cov
+        File sniffles_all_stats_with_cov
+        File all_pbsv_stats
+        File all_sniffles_stats
+        String reference_in
+        RuntimeAttr? runtime_attr_override
+    }
+    Array[File] input_files = [pbsv_all_stats_with_cov, sniffles_all_stats_with_cov, all_pbsv_stats, all_sniffles_stats]
+
+    Int minimal_disk_size = (ceil(size(input_files, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
+
+    command{
+        set -euo pipefail
+        mkdir ~{reference_in}
+        mv ~{sep=" " input_files} ~{reference_in}
+        papermill plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}
+    }
+    output{
+        File out_plot_single_sample_stats = "out_plot_single_sample_stats.ipynb"
+        Array[File] output_pdfs = glob("*.pdf")
+    }
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
