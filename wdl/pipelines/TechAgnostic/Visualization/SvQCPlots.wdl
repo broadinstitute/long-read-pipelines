@@ -231,7 +231,7 @@ def pairwise(iterable):
 def compile_stats(caller, svtypes, samples, basedir, outfile):
     for sample_name in samples:
         # Count lines in the file
-        sample_svlen_file = os.path.join(basedir, f"{sample_name}.{caller}.svlen")
+        sample_svlen_file = os.path.join(basedir, f"{sample_name}.{caller}.txt")
         with open(sample_svlen_file, 'r') as file:
             ALL = sum(1 for _ in file)
 
