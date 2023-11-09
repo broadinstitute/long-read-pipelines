@@ -117,6 +117,7 @@ task RunReportScript {
     
     String results_dir = sub(fastqc_path, "results\/.*", "")
     String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
+    String coverage_regex = "~{coverage_dir}/*?[0-9]_v3.regions.bed.gz"
     
 
     command <<<
@@ -127,8 +128,7 @@ task RunReportScript {
 
         echo ~{coverage_dir}
         mkdir -p /report-files/data/coverage
-        gsutil ls ~{coverage_dir}  > filelist.txt
-        cat filelist.txt
+        gsutil ls ~{coverage_regex}  > filelist.txt
         echo "COPYING..."
         cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
         
@@ -161,6 +161,7 @@ task RunReportScript {
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
             --coverage_bin_size ~{coverage_bin_size}
+        echo "REPORT GENERATED!"
     >>>
 
     output {
