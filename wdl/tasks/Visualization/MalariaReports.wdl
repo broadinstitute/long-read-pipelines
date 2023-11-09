@@ -116,7 +116,7 @@ task RunReportScript {
     # Compute path for BAM files (coverage_dir) using fastqc_path
     
     String results_dir = sub(fastqc_path, "results\/.*", "")
-    String coverage_dir = "~{results_dir}/SRFlowcell/~{sample_name}/metrics/coverage/"
+    String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
     
 
     command <<<
