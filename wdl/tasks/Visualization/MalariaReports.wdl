@@ -117,7 +117,7 @@ task RunReportScript {
     
     String results_dir = sub(fastqc_path, "results\/.*", "")
     String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
-    String coverage_regex = "~{coverage_dir}/*?[0-9]_v3.regions.bed.gz"
+    String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
     
 
     command <<<
