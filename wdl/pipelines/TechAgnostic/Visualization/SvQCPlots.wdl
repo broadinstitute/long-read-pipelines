@@ -373,8 +373,20 @@ task plotSVQCMetrics{
 
     command{
         set -euo pipefail
+
+        echo "Making directory for input files"
         mkdir ~{reference_in}
-        mv ~{sep=" " input_files} ~{reference_in}
+        echo "Current Directory"
+        ls
+        echo "Moving input files to ~{reference_in}"
+        mv ~{sep=" " input_files} ~{reference_in}/
+        echo "Current Directory After Moving Files"
+        ls
+
+        echo "Files in ~{reference_in} directory:"
+        ls ~{reference_in}
+
+        echo "Running jupyter notebook"
         papermill plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}
     }
     output{
