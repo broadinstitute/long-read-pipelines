@@ -18,6 +18,7 @@ task Minimap2 {
         String prefix = "out"
         String disk_type = "SSD"
         RuntimeAttr? runtime_attr_override
+        Boolean monitor_resource = false
     }
     meta {
         descrpiton: "A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference. Note that this only works for reads belonging to a single readgroup."
@@ -49,7 +50,7 @@ task Minimap2 {
     Int max_cpus = 32
     Int desired_cpus = 16 * length(reads)
     Int cpus = if max_cpus < desired_cpus then max_cpus else desired_cpus  # WDL 1.0 doesn't have a max(,)....
-    Int mem = cpus * 6
+    Int mem = cpus * 5   # we are sure this is an even number
 
     Int mm2_threads = cpus - 2
 
@@ -57,6 +58,8 @@ task Minimap2 {
         set -euxo pipefail
 
         FILE="~{reads[0]}"
+
+        export MONITOR_MOUNT_POINT="/cromwell_root/"
 
         ############
         # localize data (much faster than Cromwell)
@@ -93,16 +96,16 @@ task Minimap2 {
         SORT_PARAMS="-@4 -m~{cpus}G --no-PG -o ~{prefix}.pre.bam"
 
         ############
-        # export MONITOR_MOUNT_POINT="/cromwell_root/"
-        # bash /opt/vm_local_monitoring_script.sh &> /cromwell_root/resources.log &
-        # job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
-        touch /cromwell_root/resources.log
-
-        ############
         # minimap2
         # We write to a SAM file before sorting and indexing because rarely, doing everything
         # in a single one-liner leads to a truncated file error and segmentation fault of unknown
         # origin.  Separating these commands requires more resources, but is more reliable overall.
+
+        if ~{monitor_resource}; then
+            cp /opt/vm_local_monitoring_script.sh map_monitor_script.sh
+            bash map_monitor_script.sh &> /cromwell_root/map_resources.log &
+            map_monitor_job_id=$(ps -aux | grep -F 'map_monitor_script.sh' | head -1 | awk '{print $2}')
+        fi
 
         if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
             cat ~{sep=' ' reads_file_basenames} | minimap2 $MAP_PARAMS - > tmp.sam
@@ -122,11 +125,11 @@ task Minimap2 {
                 if ~{do_preserve_tags} ; then
                     samtools fastq ~{true=' ' false='-t' is_custom_rg} -T ~{sep=',' tags_to_preserve} "$f" \
                     | minimap2 ${MAP_PARAMS} - \
-                    | samtools sort -@"~{mm2_threads}" -m"~{mm2_threads}"G --no-PG -o  "to-merge.${idx}.bam" - &
+                    | samtools sort -@"~{mm2_threads}" -m4G --no-PG -o "to-merge.${idx}.bam" - &
                 else
                     samtools fastq ~{true=' ' false='-t' is_custom_rg}                                "$f" \
                     | minimap2 ${MAP_PARAMS} - \
-                    | samtools sort -@"~{mm2_threads}" -m"~{mm2_threads}"G --no-PG -o  "to-merge.${idx}.bam" - &
+                    | samtools sort -@"~{mm2_threads}" -m4G --no-PG -o "to-merge.${idx}.bam" - &
                 fi
                 idx=$(( idx + 1 ))
                 job=$(( job + 1 ))
@@ -134,10 +137,14 @@ task Minimap2 {
             done
             wait
             date
+            if ~{monitor_resource}; then
+                if ps -p "${map_monitor_job_id}" > /dev/null; then kill "${map_monitor_job_id}"; fi
+            fi
             if [[ ${idx} == 1 ]]; then
                 mv to-merge.0.bam ~{prefix}.pre.bam
             else
-                time samtools merge -@"${NUM_CPUS}" -c --no-PG -o ~{prefix}.pre.bam to-merge.*.bam;
+                time \
+                samtools merge -@"${NUM_CPUS}" -c --no-PG -o ~{prefix}.pre.bam to-merge.*.bam;
             fi
         else
             echo "Did not understand file format for '$FILE'"
@@ -170,8 +177,10 @@ task Minimap2 {
 
         ############
         # MD tag and index
-        time samtools calmd -@"${NUM_CPUS}" -b ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
-        time samtools index -@"${NUM_CPUS}" ~{prefix}.bam
+        time \
+        samtools calmd -@"${NUM_CPUS}" -b ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
+        time \
+        samtools index -@"${NUM_CPUS}" ~{prefix}.bam
 
         ############
         # move results up
@@ -179,7 +188,7 @@ task Minimap2 {
     >>>
 
     output {
-        File resouce_monitor_log = "resources.log"
+        File? resouce_monitor_log = "resources.log"
 
         File aligned_bam = "~{prefix}.bam"
         File aligned_bai = "~{prefix}.bam.bai"

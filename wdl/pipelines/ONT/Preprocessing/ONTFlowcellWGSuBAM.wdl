@@ -30,6 +30,8 @@ workflow ONTFlowcellWGSuBAM {
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
 
+        log_aln_step: 'for developers to tune mm2; if enabled, log the resource usage of the mm2 step'
+
         # outputs
         alignment_metrics_tar_gz : "A tar.gz file holding the custom alignment metrics."
 
@@ -53,6 +55,8 @@ workflow ONTFlowcellWGSuBAM {
         File ref_map_file
 
         String gcs_out_root_dir
+
+        Boolean log_aln_step = false
     }
 
     output {
@@ -110,7 +114,8 @@ workflow ONTFlowcellWGSuBAM {
             bam_sample_name = bam_SM_ID,
             flowcell = flowcell,
             ref_map_file = ref_map_file,
-            aln_disk_type = aln_disk_type
+            aln_disk_type = aln_disk_type,
+            log_aln_step = log_aln_step
     }
     call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = outdir_aln, file = ALN.aligned_bam }
     call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = outdir_aln, file = ALN.aligned_bai }

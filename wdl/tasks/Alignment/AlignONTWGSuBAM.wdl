@@ -23,6 +23,8 @@ workflow AlignONTWGSuBAM {
 
         aln_disk_type: "An optimization specifying which type of disk to use for the minimap2 alignment step."
 
+        log_aln_step: 'for developers to tune mm2; if enabled, log the resource usage of the mm2 step'
+
         # outputs
         wgs_cov: "whole genome mean coverage"
         aln_summary: "summary on alignment metrics"
@@ -38,6 +40,8 @@ workflow AlignONTWGSuBAM {
         String aln_disk_type = 'SSD'
 
         File ref_map_file
+
+        Boolean log_aln_step = false
     }
 
     output {
@@ -104,13 +108,16 @@ workflow AlignONTWGSuBAM {
                     tags_to_preserve = uBAM_tags_to_preserve,
 
                     prefix = shard_out_prefix,
-                    disk_type = aln_disk_type
+                    disk_type = aln_disk_type,
+                    monitor_resource = log_aln_step
             }
-            call VisualizeResourceUsage.SimpleRscript as VisualizeMM2ShardResoureUsage {
-                input:
-                resource_log = MapShard.resouce_monitor_log,
-                output_pdf_name = "~{shard_out_prefix}.minimap2.resources-usage.pdf",
-                plot_title = "minimap2, to generate ~{shard_out_prefix}.bam"
+            if (log_aln_step) {
+                call VisualizeResourceUsage.SimpleRscript as VisualizeMM2ShardResoureUsage {
+                    input:
+                    resource_log = select_first([MapShard.resouce_monitor_log]),
+                    output_pdf_name = "~{shard_out_prefix}.minimap2.resources-usage.pdf",
+                    plot_title = "minimap2, to generate ~{shard_out_prefix}.bam"
+                }
             }
         }
         call Utils.MergeBams { input: bams = MapShard.aligned_bam, prefix = output_prefix }
@@ -128,13 +135,16 @@ workflow AlignONTWGSuBAM {
                 tags_to_preserve = uBAM_tags_to_preserve,
 
                 prefix = output_prefix,
-                disk_type = aln_disk_type
+                disk_type = aln_disk_type,
+                monitor_resource = log_aln_step
         }
-        call VisualizeResourceUsage.SimpleRscript as VisualizeMM2WholeResoureUsage {
-            input:
-            resource_log = Minimap2.resouce_monitor_log,
-            output_pdf_name = "~{output_prefix}.minimap2.resources-usage.pdf",
-            plot_title = "minimap2, to generate ~{output_prefix}.bam"
+        if (log_aln_step) {
+            call VisualizeResourceUsage.SimpleRscript as VisualizeMM2WholeResoureUsage {
+                input:
+                resource_log = select_first([Minimap2.resouce_monitor_log]),
+                output_pdf_name = "~{output_prefix}.minimap2.resources-usage.pdf",
+                plot_title = "minimap2, to generate ~{output_prefix}.bam"
+            }
         }
     }
     File aBAM = select_first([Minimap2.aligned_bam, MergeBams.merged_bam])
