@@ -57,8 +57,8 @@ task deep_somatic{
         --reads_normal=~{input_baseline_bam} \
         --reads_tumor=~{input_sample_bam} \
         --output_vcf=~{sample_id}_deepsomatic_output.vcf.gz \
-        --sample_name_tumor="baseline" \
-        --sample_name_normal=~{sample_id} \
+        --sample_name_tumor=~{sample_id} \
+        --sample_name_normal="HG002" \
         --num_shards=~{nthread} \
         --logging_dir=~{output_directory} \
         --intermediate_results_dir=~{output_directory} \
