@@ -1,4 +1,4 @@
-VERSION = 2.26-gcloud
+VERSION = 2.26-gcloud-monitor
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-minimap2:$(VERSION)
 
 all: build push

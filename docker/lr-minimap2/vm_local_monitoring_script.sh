@@ -1,21 +1,33 @@
 #!/bin/bash
 
-# ADDED NOTE: this script is intended to be localized to your google cloud 
-# vm and run in the following fashion to get resources usage
+## ADDED NOTE: this script is intended to be localized to your
+# GCE instance and monitor resources usages.
+# It must be launched manually, like the following
+#
 # ```
 # export MONITOR_MOUNT_POINT=${your_home_dir_or_cromwell_root}
 # bash vm_local_monitoring_script.sh &> resources.log &
-# job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
-# ${you_resource_intensive_jobs}
-# # we recommend only run the following if manually launched
-# kill $job_id
-# # if running on a cromwell providisioned VM
-# # remember to delocalize the "resources.log"
+# monitor_job_id=$(pgrep -f 'vm_local_monitoring_script.sh')
 # ```
+#
+# Then run your resource intensive jobs.
+# And terminate the monitoring job when done
+# ```
+# kill $monitor_job_id
+# ```
+#
+# If your program also writes to the /tmp/ directory, we recommend
+# setting the TMPDIR variable too via
+# ```
+# export TMPDIR=${your_preferred_tmp_file_location}
+# ```
+#
+# Remember to de-localize the "resources.log"
+# if this is for workflows run Terra.
 
 
 # NOTE: this script is intended to be placed in google cloud storage
-# and invoked by adding the following line to your cromwell workflow
+# and invoked by adding the following line to your Cromwell workflow
 # options:
 #    "monitoring_script": "gs://bucket/path/to/cromwell_monitoring_script.sh"
 # Upon task completion "monitoring.log" will be added to the appropriate
@@ -34,15 +46,15 @@ function getCpuUsage() {
     IDLE_TIME=${CPU_TIMES[3]}
     # total cpu time is sum of all fields
     TOTAL_TIME=0
-    for T in ${CPU_TIMES[@]}; do
+    for T in "${CPU_TIMES[@]}"; do
         ((TOTAL_TIME += T))
     done
     
     # get the previous times from temp file
-    read PREVIOUS_IDLE PREVIOUS_TOTAL < $TEMP_CPU
+    read -r PREVIOUS_IDLE PREVIOUS_TOTAL < "${TEMP_CPU}"
     
     # write current times to temp file
-    echo "$IDLE_TIME $TOTAL_TIME" > $TEMP_CPU
+    echo "$IDLE_TIME $TOTAL_TIME" > "${TEMP_CPU}"
     
     # get the difference in idle and total times since the previous
     # update, and report the usage as: non-idle time as a percentage
@@ -89,7 +101,7 @@ function getMem_with_free() {
     # Second argument is desired column.
     MEM_ROW=$(echo "$1" | awk '{print tolower($1)}')
     MEM_COLUMN=$(echo "$2" | awk '{print tolower($1)}')
-    free -m | awk -v MEM_ROW=$MEM_ROW -v MEM_COLUMN=$MEM_COLUMN \
+    free -m | awk -v MEM_ROW="${MEM_ROW}" -v MEM_COLUMN="${MEM_COLUMN}" \
         'NR=1 {
             for(i=1; i<=NF; i++) { f[tolower($i)]=NF+1-i }
         }
@@ -133,7 +145,7 @@ function getDisk() {
     VALUE=$(\
         df -h "$MOUNT_POINT" \
         | sed 's/Mounted on/Mounted-on/' \
-        | awk -v DISK_COLUMN=$DISK_COLUMN '
+        | awk -v DISK_COLUMN="${DISK_COLUMN}" '
             FNR==1 {
                 NF_HEADER=NF
                 for(i=1; i<=NF; i++) { f[tolower($i)]=NF-i }
@@ -149,7 +161,7 @@ function getDisk() {
                 }
             }' \
     )
-    # If value is a number follwed by letters, it is a value with units
+    # If value is a number followed by letters, it is a value with units
     # and needs to be converted. Otherwise just print value
     if [[ "$VALUE" =~ [0-9.]+[A-z]+ ]]; then
         echo "$VALUE"\
@@ -194,12 +206,12 @@ function findBlockDevice() {
         # couldn't find, possibly mounted by mapper.
         # look for block device that is just the name of the symlinked
         # original file. if not found, echo empty string (no device found)
-        BLOCK_DEVICE=$(ls -l "$FILESYSTEM" 2>/dev/null \
+        BLOCK_DEVICE=$(ls -l "${FILESYSTEM}" 2>/dev/null \
                         | cut -d'>' -f2 \
                         | xargs basename 2>/dev/null \
                         || echo)
         if [[ -z "$BLOCK_DEVICE" ]]; then
-            1>&2 echo "Unable to find block device for filesystem $FILESYSTEM."
+            1>&2 echo "Unable to find block device for filesystem ${FILESYSTEM}."
             if [[ -d /sys/block/sdb ]] && ! grep -qE "^/dev/sdb" /etc/mtab; then
                 1>&2 echo "Guessing present but unused sdb is the correct block device."
                 echo "/sys/block/sdb"
@@ -226,20 +238,20 @@ function getBlockDeviceIO() {
     STAT_FILE="$1"
     if [[ -f "$STAT_FILE" ]]; then
         # get IO stats as comma-separated list to extract 3rd and 7th fields
-        STATS=$(sed -E 's/[[:space:]]+/,/g' $STAT_FILE | sed -E 's/^,//'\
+        STATS=$(sed -E 's/[[:space:]]+/,/g' "${STAT_FILE}" | sed -E 's/^,//'\
                 | cut -d, -f3,7 | sed -E 's/,/ /g')
         # get results of previous poll
-        read OLD_READ OLD_WRITE < $TEMP_IO
+        read -r OLD_READ OLD_WRITE < "${TEMP_IO}"
         # save new poll results
-        read READ_SECTORS WRITE_SECTORS <<<$STATS
-        echo "$READ_SECTORS $WRITE_SECTORS" > $TEMP_IO
+        read -r READ_SECTORS WRITE_SECTORS <<< "${STATS}"
+        echo "$READ_SECTORS $WRITE_SECTORS" > "${TEMP_IO}"
         # update read and write sectors as difference since previous poll
         READ_SECTORS=$(handle_integer_wrap $((READ_SECTORS - OLD_READ)))
         WRITE_SECTORS=$(handle_integer_wrap $((WRITE_SECTORS - OLD_WRITE)))
 
         # output change in read/write sectors in kiB/s
         echo "$READ_SECTORS $WRITE_SECTORS" \
-            | awk -v T=$SLEEP_TIME -v B=$SECTOR_BYTES \
+            | awk -v T="${SLEEP_TIME}" -v B="${SECTOR_BYTES}" \
                 '{ printf "%.3f MiB/s %.3f MiB/s",  $1*B/T/1048576, $2*B/T/1048576 }'
     else
         echo "N/A MiB/s N/A MiB/s"
@@ -248,7 +260,7 @@ function getBlockDeviceIO() {
 
 
 function runtimeInfo() {
-    echo "  [$(date)]"
+    echo "  [$(TZ=UTC date '+%Y-%m-%d-%H-%M-%S %a')]"
     echo \* CPU usage: $(getCpuUsage)
     echo \* Memory usage: $(getMemUnavailable)
     echo \* Disk usage: $(getDisk Used $MONITOR_MOUNT_POINT) $(getDisk Use% $MONITOR_MOUNT_POINT)
@@ -267,11 +279,11 @@ echo
 echo --- Runtime Information ---
 
 
-# make a temp file to store io information, remove it on exit
+# make a temp file to store IO information, remove it on exit
 TEMP_IO=$(mktemp "${TMPDIR:-/tmp/}$(basename $0).XXXXXXXXXXXX")
-# make a temp file to store cpu information, remove it on exit
-# remove temp files on exit
+# make a temp file to store CPU information, remove it on exit
 TEMP_CPU=$(mktemp "${TMPDIR:-/tmp/}$(basename $0).XXXXXXXXXXXX")
+# remove temp files on exit
 trap "rm -f $TEMP_IO $TEMP_CPU" EXIT
 
 
@@ -291,15 +303,15 @@ fi
 # since getBlockDeviceIO looks at differences in stat file, run the
 # update so the first reported update has a sensible previous result to
 # compare to
-echo "0 0" > $TEMP_IO
+echo "0 0" > "${TEMP_IO}"
 getBlockDeviceIO "$BLOCK_DEVICE_STAT_FILE" > /dev/null
 
 # same thing for getCpuUsage
-echo "0 0" > $TEMP_CPU
+echo "0 0" > "${TEMP_CPU}"
 getCpuUsage > /dev/null
 
 
 while true; do
     runtimeInfo
-    sleep $SLEEP_TIME
+    sleep "${SLEEP_TIME}"
 done

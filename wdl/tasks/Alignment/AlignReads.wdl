@@ -60,6 +60,8 @@ task Minimap2 {
         FILE="~{reads[0]}"
 
         export MONITOR_MOUNT_POINT="/cromwell_root/"
+        export TMPDIR="/cromwell_root/monitor_tmp"
+        mkdir -p "${TMPDIR}"
 
         ############
         # localize data (much faster than Cromwell)
