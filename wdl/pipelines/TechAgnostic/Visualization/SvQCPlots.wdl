@@ -387,7 +387,7 @@ task plotSVQCMetrics{
         ls ~{reference_in}
 
         echo "Running jupyter notebook"
-        papermill plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}
+        papermill /plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}
     }
     output{
         File out_plot_single_sample_stats = "out_plot_single_sample_stats.ipynb"
