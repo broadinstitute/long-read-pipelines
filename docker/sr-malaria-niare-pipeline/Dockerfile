@@ -11,15 +11,17 @@ WORKDIR /
 ########################################################################################################################
 # DEPENDENCIES
 
-# install gsutil
+# Install some dependencies for gsutil:
 RUN apt-get --allow-releaseinfo-change update
 RUN apt install -y curl git-lfs parallel
-RUN curl https://sdk.cloud.google.com | bash
 
 # Setup crcmodc for gsutil:
-RUN apt-get install -y gcc python3-dev python3-setuptools && \
+RUN apt-get install -y gcc python3 python3-pip python3-dev python3-setuptools && \
 			pip3 uninstall -y crcmod && \
 			pip3 install --no-cache-dir -U crcmod
+
+# Install gsutil:
+RUN curl https://sdk.cloud.google.com | bash
 
 # Dependencies for samtools:
 RUN apt-get install -y bzip2 curl gnupg2 libc-dev ncurses-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev
@@ -30,11 +32,11 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
 		&& apt-get update -y \
 		&& apt-get install google-cloud-sdk -y
 
+# Additional Dependencies:
+RUN apt-get install -y curl wget datamash pkg-config zip unzip
+
 ########################################################################################################################
 # SOFTWARE:
-
-# Datamash:
-RUN apt-get install -y datamash
 
 RUN mkdir -p /usr/local/bin /usr/local/lib /usr/local/etc
 
@@ -114,7 +116,8 @@ RUN mkdir plink && \
 # trimmomatic/0.36:
 RUN wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.36.zip && \
     mkdir -p /opt && \
-    mv Trimmomatic-0.36 /opt/ \
+    unzip Trimmomatic-0.36.zip && \
+    mv Trimmomatic-0.36 /opt/ && \
     echo -ne "#!/usr/local/env bash\n\njava -jar /opt/Trimmomatic-0.36/trimmomatic-0.36.jar $@\n\n" > /usr/local/bin/TrimmomaticPE && \
     chmod +x /usr/local/bin/TrimmomaticPE && \
     rm Trimmomatic-0.36.zip
