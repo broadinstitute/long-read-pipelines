@@ -33,7 +33,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
 		&& apt-get install google-cloud-sdk -y
 
 # Additional Dependencies:
-RUN apt-get install -y curl wget datamash pkg-config zip unzip
+RUN apt install -y curl wget datamash pkg-config zip unzip default-jre python
 
 ########################################################################################################################
 # SOFTWARE:
@@ -118,8 +118,9 @@ RUN wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmoma
     mkdir -p /opt && \
     unzip Trimmomatic-0.36.zip && \
     mv Trimmomatic-0.36 /opt/ && \
-    echo -ne "#!/usr/local/env bash\n\njava -jar /opt/Trimmomatic-0.36/trimmomatic-0.36.jar $@\n\n" > /usr/local/bin/TrimmomaticPE && \
-    chmod +x /usr/local/bin/TrimmomaticPE && \
+    echo "#!/usr/bin/env bash\n\njava -jar /opt/Trimmomatic-0.36/trimmomatic-0.36.jar PE $@\n\n" > /usr/local/bin/TrimmomaticPE && \
+    echo "#!/usr/bin/env bash\n\njava -jar /opt/Trimmomatic-0.36/trimmomatic-0.36.jar SE $@\n\n" > /usr/local/bin/TrimmomaticSE && \
+    chmod +x /usr/local/bin/Trimmomatic*E && \
     rm Trimmomatic-0.36.zip
 
 ########################################################################################################################
