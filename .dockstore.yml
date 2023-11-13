@@ -99,3 +99,6 @@ workflows:
 - name: StatisticalPhasing
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly
+- name: BandagePlotGraph
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BandagePlotGraph.wdl
