@@ -123,3 +123,6 @@ workflows:
 - name: SingleSampleStats
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/SingleSampleStats.wdl
+- name: HybridPhaseWholeGenomeHiphase
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseWholeGenomeHiphase.wdl

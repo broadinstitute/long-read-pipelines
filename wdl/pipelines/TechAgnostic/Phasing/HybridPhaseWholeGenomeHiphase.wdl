@@ -1,8 +1,6 @@
 version 1.0
 
 import "HybridPhaseOneChrSmallVariantHyphase.wdl" as PhaseOneChr
-import "../../../tasks/Utility/VariantUtils.wdl" as VU
-import "../../../tasks/Utility/Utils.wdl" as U
 
 workflow HybridPhaseWholeGenome {
     meta{
