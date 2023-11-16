@@ -1,6 +1,5 @@
 version 1.0
 
-import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/VariantCalling/CallVariantsPBCCS.wdl" as VAR
 import "../../../tasks/Utility/Finalize.wdl" as FF
@@ -14,7 +13,6 @@ workflow PBCCSWholeGenome {
     }
     parameter_meta {
         aligned_bams:       "GCS path to aligned BAM files"
-        aligned_bais:       "GCS path to aligned BAM file indices"
         participant_name:   "name of the participant from whom these samples were obtained"
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
@@ -35,7 +33,6 @@ workflow PBCCSWholeGenome {
 
     input {
         Array[File] aligned_bams
-        Array[File] aligned_bais
 
         File? bed_to_compute_coverage
 
@@ -46,16 +43,16 @@ workflow PBCCSWholeGenome {
         String gcs_out_root_dir
 
         Boolean call_svs = true
-        Boolean? fast_less_sensitive_sv = true
+        Boolean fast_less_sensitive_sv = true
 
         Boolean call_small_variants = true
-        Boolean? call_small_vars_on_mitochondria = false
+        Boolean call_small_vars_on_mitochondria = false
         File? sites_vcf
         File? sites_vcf_tbi
 
-        Boolean? run_dv_pepper_analysis = true
-        Int? dvp_threads = 32
-        Int? dvp_memory = 128
+        Boolean run_dv_pepper_analysis = true
+        Int dvp_threads = 32
+        Int dvp_memory = 128
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
     }
@@ -65,20 +62,11 @@ workflow PBCCSWholeGenome {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/~{participant_name}"
 
     # gather across (potential multiple) input CCS BAMs
-    if (length(aligned_bams) > 1) {
-        scatter (pair in zip(aligned_bams, aligned_bais)) {
-            call Utils.InferSampleName {input: bam = pair.left, bai = pair.right}
-        }
-        call Utils.CheckOnSamplenames {input: sample_names = InferSampleName.sample_name}
+    call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
 
-        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
-    }
-
-    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
-    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
-
-    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
-    File pbi = IndexCCSUnalignedReads.pbi
+    File bam = MergeAllReads.merged_bam
+    File bai = MergeAllReads.merged_bai
+    File pbi = select_first([MergeAllReads.merged_pbi])
 
     call COV.SampleLevelAlignedMetrics as coverage {
         input:
@@ -100,13 +88,7 @@ workflow PBCCSWholeGenome {
     if (call_svs || call_small_variants) {
 
         # verify arguments are provided
-        if (call_svs) {
-            if (! defined(fast_less_sensitive_sv)) {call Utils.StopWorkflow as fast_less_sensitive_sv_not_provided {input: reason = "Calling SVs without specifying arg fast_less_sensitive_sv"}}
-        }
         if (call_small_variants) {
-            if (! defined(call_small_vars_on_mitochondria)) {call Utils.StopWorkflow as call_small_vars_on_mitochondria_not_provided {input: reason = "Unprovided arg call_small_vars_on_mitochondria"}}
-            if (! defined(run_dv_pepper_analysis)) {call Utils.StopWorkflow as run_dv_pepper_analysis_not_provided {input: reason = "Unprovided arg run_dv_pepper_analysis"}}
-            if (! defined(dvp_threads)) {call Utils.StopWorkflow as dvp_threads_not_provided {input: reason = "Unprovided arg dvp_threads"}}
             if (! defined(ref_scatter_interval_list_locator)) {call Utils.StopWorkflow as ref_scatter_interval_list_locator_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_locator"}}
             if (! defined(ref_scatter_interval_list_ids)) {call Utils.StopWorkflow as ref_scatter_interval_list_ids_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_ids"}}
         }
@@ -124,16 +106,16 @@ workflow PBCCSWholeGenome {
                 prefix = participant_name,
 
                 call_svs = call_svs,
-                fast_less_sensitive_sv = select_first([fast_less_sensitive_sv]),
+                fast_less_sensitive_sv = fast_less_sensitive_sv,
 
                 call_small_variants = call_small_variants,
-                call_small_vars_on_mitochondria = select_first([call_small_vars_on_mitochondria]),
+                call_small_vars_on_mitochondria = call_small_vars_on_mitochondria,
                 sites_vcf = sites_vcf,
                 sites_vcf_tbi = sites_vcf_tbi,
 
-                run_dv_pepper_analysis = select_first([run_dv_pepper_analysis]),
-                dvp_threads = select_first([dvp_threads]),
-                dvp_memory = select_first([dvp_memory]),
+                run_dv_pepper_analysis = run_dv_pepper_analysis,
+                dvp_threads = dvp_threads,
+                dvp_memory = dvp_memory,
                 ref_scatter_interval_list_locator = select_first([ref_scatter_interval_list_locator]),
                 ref_scatter_interval_list_ids = select_first([ref_scatter_interval_list_ids])
         }
@@ -156,7 +138,7 @@ workflow PBCCSWholeGenome {
             call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_gvcf])}
             call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_gtbi])}
 
-            if (select_first([run_dv_pepper_analysis])) {
+            if (run_dv_pepper_analysis) {
                 call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_vcf])}
                 call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
                 call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}

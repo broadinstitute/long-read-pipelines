@@ -7,14 +7,12 @@ version 1.0
 ## Various metrics are produced along the way.
 ##########################################################################################
 
-import "../tasks/Utility/PBUtils.wdl" as PB
 import "../tasks/Utility/Utils.wdl" as Utils
 import "../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBCCS {
     input {
         Array[File] aligned_bams
-        Array[File] aligned_bais
 
         String participant_name
 
@@ -23,7 +21,6 @@ workflow PBCCS {
 
     parameter_meta {
         aligned_bams:       "GCS path to aligned BAM files"
-        aligned_bais:       "GCS path to aligned BAM file indices"
 
         participant_name:   "name of the participant from whom these samples were obtained"
 
@@ -33,15 +30,15 @@ workflow PBCCS {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCS/~{participant_name}"
 
     # gather across (potential multiple) input CCS BAMs
-    if (length(aligned_bams) > 1) {
-        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
+    call Utils.MergeBams as MergeAllReads {
+        input:
+            bams = aligned_bams,
+            prefix = participant_name,
+            pacBioBams = true
     }
-
-    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
-    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
-
-    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
-    File pbi = IndexCCSUnalignedReads.pbi
+    File bam = MergeAllReads.merged_bam
+    File bai = MergeAllReads.merged_bai
+    File pbi = select_first([MergeAllReads.merged_pbi])
 
     # Finalize
     String dir = outdir + "/alignments"

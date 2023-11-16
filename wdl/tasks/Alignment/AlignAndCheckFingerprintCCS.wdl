@@ -75,7 +75,12 @@ workflow AlignAndCheckFingerprintCCS {
             # call Utils.BamToFastq { input: bam = unaligned_bam, prefix = basename(unaligned_bam, ".bam") }
         }
 
-        call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = basename(uBAM, ".bam") }
+        call Utils.MergeBams as MergeAlignedReads {
+            input:
+                bams = AlignReads.aligned_bam,
+                prefix = basename(uBAM, ".bam"),
+                pacBioBams = true
+        }
         # call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = BamToFastq.reads_fq }
     }
     if (! (ceil(size(uBAM, "GB")) > 50)) {
@@ -88,11 +93,12 @@ workflow AlignAndCheckFingerprintCCS {
                 map_preset  = 'CCS',
                 drop_per_base_N_pulse_tags = true
         }
+        call PB.PBIndex as IndexAlignedReads { input: bam = AlignReadsTogether.aligned_bam }
     }
 
     File aBAM = select_first([MergeAlignedReads.merged_bam, AlignReadsTogether.aligned_bam])
     File aBAI = select_first([MergeAlignedReads.merged_bai, AlignReadsTogether.aligned_bai])
-    call PB.PBIndex as IndexAlignedReads { input: bam = aBAM }
+    File aPBI = select_first([MergeAlignedReads.merged_pbi, IndexAlignedReads.pbi])
 
     ###################################################################################
     # alignment metrics and fingerprint check
@@ -100,7 +106,7 @@ workflow AlignAndCheckFingerprintCCS {
         input:
             aligned_bam = aBAM,
             aligned_bai = aBAI,
-            aligned_pbi = IndexAlignedReads.pbi
+            aligned_pbi = aPBI
     }
 
     call GeneralUtils.TarGZFiles as saveAlnMetrics {
@@ -124,7 +130,7 @@ workflow AlignAndCheckFingerprintCCS {
     output {
         File aligned_bam = aBAM
         File aligned_bai = aBAI
-        File aligned_pbi = IndexAlignedReads.pbi
+        File aligned_pbi = aPBI
 
         File alignment_metrics_tar_gz = saveAlnMetrics.you_got_it
 

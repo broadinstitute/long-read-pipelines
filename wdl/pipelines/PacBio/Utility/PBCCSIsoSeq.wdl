@@ -39,12 +39,16 @@ workflow PBCCSIsoSeq {
 
     # gather across (potential multiple) input CCS BAMs
     if (length(ccs_bams) > 1) {
-        call Utils.MergeBams as MergeAllReads { input: bams = ccs_bams, prefix = participant_name }
-        call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeAllReads.merged_bam }
+        call Utils.MergeBams as MergeAllReads {
+            input:
+                bams = ccs_bams,
+                prefix = participant_name,
+                pacBioBams = true
+        }
     }
 
     File bam = select_first([MergeAllReads.merged_bam, ccs_bams[0]])
-    File pbi = select_first([IndexCCSUnalignedReads.pbi, ccs_pbis[0]])
+    File pbi = select_first([MergeAllReads.merged_pbi, ccs_pbis[0]])
 
     # demultiplex CCS-ed BAM
     call PB.Demultiplex {
@@ -113,9 +117,12 @@ workflow PBCCSIsoSeq {
     }
 
     # merge demultiplexed BAMs into a single BAM (one readgroup per file)
-    call Utils.MergeBams as MergeBarcodeBams { input: bams = AlignTranscripts.aligned_bam, prefix = "barcodes" }
-
-    call PB.PBIndex as IndexAlignedReads { input: bam = MergeBarcodeBams.merged_bam }
+    call Utils.MergeBams as MergeBarcodeBams {
+        input:
+            bams = AlignTranscripts.aligned_bam,
+            prefix = "barcodes",
+            pacBioBams = true
+    }
 
     # Finalize
     String rdir = outdir + "/reads"
@@ -128,7 +135,7 @@ workflow PBCCSIsoSeq {
 
     call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bdir, file = MergeBarcodeBams.merged_bam, name = "~{participant_name}.all_barcodes.bam" }
     call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bdir, file = MergeBarcodeBams.merged_bai, name = "~{participant_name}.all_barcodes.bam.bai"  }
-    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bdir, file = IndexAlignedReads.pbi, name = "~{participant_name}.all_barcodes.bam.pbi"  }
+    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bdir, file = select_first([MergeBarcodeBams.merged_pbi]), name = "~{participant_name}.all_barcodes.bam.pbi"  }
 
     call FF.FinalizeToFile as FinalizeDemultiplexCounts { input: outdir = mdir, file = Demultiplex.counts, name = "~{participant_name}.lima.counts.txt" }
     call FF.FinalizeToFile as FinalizeDemultiplexReport { input: outdir = mdir, file = Demultiplex.report, name = "~{participant_name}.lima.report.txt" }

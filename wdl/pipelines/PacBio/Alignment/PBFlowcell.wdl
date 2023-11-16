@@ -209,8 +209,13 @@ workflow PBFlowcell {
     call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = reads_fastq }
 
     # Merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-    call Utils.MergeBams as MergeAlignedReads { input: bams = aligned_reads_bam, prefix = PU }
-    call PB.PBIndex as IndexAlignedReads { input: bam = MergeAlignedReads.merged_bam }
+    call Utils.MergeBams as MergeAlignedReads {
+        input:
+            bams = aligned_reads_bam,
+            prefix = PU,
+            pacBioBams = true
+    }
+    File pbiIndex = select_first([MergeAlignedReads.merged_pbi])
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
         input:
@@ -227,15 +232,14 @@ workflow PBFlowcell {
     # Merge corrected, unaligned reads:
     String cdir = outdir + "/reads/ccs/unaligned"
     if (experiment_type != "CLR") {
-        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = unaligned_reads_bam, prefix = "~{PU}.reads" }
-        call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
+        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = unaligned_reads_bam, prefix = "~{PU}.reads", pacBioBams = true }
 
         call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam, keyfile = keyfile }
         call FF.FinalizeToFile as FinalizeCCSUnalignedBai { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bai, keyfile = keyfile }
         call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
             input:
                 outdir = cdir,
-                file = IndexCCSUnalignedReads.pbi,
+                file = select_first([MergeCCSUnalignedReads.merged_pbi]),
                 name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi",
                 keyfile = keyfile
         }
@@ -324,15 +328,15 @@ workflow PBFlowcell {
     }
 
     # Get the correct PBI file on which to calculate stats:
-    File subreads_pbi_file = if (experiment_type == "MASSEQ") then select_first([IndexCCSUnalignedReads.pbi]) else pbi
+    File subreads_pbi_file = if (experiment_type == "MASSEQ") then select_first([MergeCCSUnalignedReads.merged_pbi]) else pbi
     call PB.SummarizePBI as SummarizeSubreadsPBI   { input: pbi = subreads_pbi_file, runtime_attr_override = { 'mem_gb': 72 } }
 
     # Collect stats on aligned reads:
-    call PB.SummarizePBI as SummarizeAlignedQ5PBI  { input: pbi = IndexAlignedReads.pbi, qual_threshold = 5 }
-    call PB.SummarizePBI as SummarizeAlignedQ7PBI  { input: pbi = IndexAlignedReads.pbi, qual_threshold = 7 }
-    call PB.SummarizePBI as SummarizeAlignedQ10PBI { input: pbi = IndexAlignedReads.pbi, qual_threshold = 10 }
-    call PB.SummarizePBI as SummarizeAlignedQ12PBI { input: pbi = IndexAlignedReads.pbi, qual_threshold = 12 }
-    call PB.SummarizePBI as SummarizeAlignedQ15PBI { input: pbi = IndexAlignedReads.pbi, qual_threshold = 15 }
+    call PB.SummarizePBI as SummarizeAlignedQ5PBI  { input: pbi = pbiIndex, qual_threshold = 5 }
+    call PB.SummarizePBI as SummarizeAlignedQ7PBI  { input: pbi = pbiIndex, qual_threshold = 7 }
+    call PB.SummarizePBI as SummarizeAlignedQ10PBI { input: pbi = pbiIndex, qual_threshold = 10 }
+    call PB.SummarizePBI as SummarizeAlignedQ12PBI { input: pbi = pbiIndex, qual_threshold = 12 }
+    call PB.SummarizePBI as SummarizeAlignedQ15PBI { input: pbi = pbiIndex, qual_threshold = 15 }
 
     call NP.NanoPlotFromBam as NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
     call Utils.ComputeGenomeLength as ComputeGenomeLength { input: fasta = ref_map['fasta'] }
@@ -345,7 +349,7 @@ workflow PBFlowcell {
     call FF.FinalizeToFile as FinalizeAlignedPbi {
         input:
             outdir = dir,
-            file = IndexAlignedReads.pbi,
+            file = pbiIndex,
             name = basename(MergeAlignedReads.merged_bam) + ".pbi",
             keyfile = keyfile
     }

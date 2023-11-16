@@ -684,12 +684,16 @@ task MergeBams {
     parameter_meta {
         bams: "Input array of BAMs to be merged."
         prefix: "Prefix for the output BAM."
+        checkSingleSample: "Set to true to check that all BAMs agree on a single sample."
+        pacBioBams: "Set to true to create a .pbi index when all BAMs are PacBio BAMs."
         runtime_attr_override: "Override the default runtime attributes."
     }
 
     input {
         Array[File] bams
         String prefix = "out"
+        Boolean checkSingleSample = false
+        Boolean pacBioBams = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -699,17 +703,42 @@ task MergeBams {
     command <<<
         set -euxo pipefail
 
-        samtools merge \
-            -p -c --no-PG \
-            -@ 2 \
-            --write-index \
-            -o "~{prefix}.bam##idx##~{prefix}.bam.bai" \
-            ~{sep=" " bams}
+        nBams="~{length(bams)}"
+        if [ "$nBams" -eq 0 ]; then echo "no input BAMs provided" 1>&2 && exit 1; fi
+
+        if ~{checkSingleSample}; then
+            for fil in "~{sep='" "' bams}"; do
+                # the sed expression says: if the line doesn't start with @RG, forget it. otherwise, look for
+                #      anything<TAB>SM:xxxxx<TAB>anything
+                # and replace the whole mess with just the xxxxx part
+                samtools view -H "$fil" | sed '/^@RG/!d;s/.*	SM:\([^	]*\).*/\1/' | sort -u > sampleNames
+                nSamples=$(wc -l < sampleNames)
+                if [ "$nSamples" -ne 1 ]; then echo "$fil has $nSamples sample names" 1>&2 && exit 2; fi
+                sampleName="$(cat samplesNames)"
+                if [ -z "$sampleName" ] || [ "$sampleName" == "unnamedsample" ]; then echo "$fil has an unnamed sample" 1>&2 && exit 3; fi
+                cat sampleNames >> allSampleNames
+            done;
+            nSamples=$(sort -u allSampleNames | wc -l)
+            if [ "$nSamples" -ne 1 ]; then echo "multiple sample names are present across input BAMs" 1>&2 && exit 4; fi
+            rm sampleNames allSampleNames
+        fi
+
+        if [ "$nBams" -eq 1 ]; then
+            mv "~{bams[0]}" "~{prefix}.bam"
+            samtools index -@ 2 -o "~{prefix}.bam.bai" "~{prefix}.bam"
+        else
+            samtools merge -p -c --no-PG -@ 2 --write-index -o "~{prefix}.bam##idx##~{prefix}.bam.bai" "~{sep='" "' bams}"
+        fi
+
+        if ~{pacBioBams}; then
+            pbindex "~{prefix}.bam"
+        fi
     >>>
 
     output {
         File merged_bam = "~{prefix}.bam"
         File merged_bai = "~{prefix}.bam.bai"
+        File? merged_pbi = "~{prefix}.bam.pbi"
     }
 
     #########################
@@ -720,7 +749,7 @@ task MergeBams {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pbbam:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

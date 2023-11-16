@@ -1,6 +1,5 @@
 version 1.0
 
-import "../tasks/Utility/PBUtils.wdl" as PB
 import "../tasks/Utility/Utils.wdl" as Utils
 import "../tasks/Utility/Finalize.wdl" as FF
 import "../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
@@ -14,7 +13,6 @@ workflow PBCLRWholeGenome {
     }
     parameter_meta {
         aligned_bams:       "GCS path to aligned BAM files"
-        aligned_bais:       "GCS path to aligned BAM file indices"
         participant_name:   "name of the participant from whom these samples were obtained"
 
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
@@ -29,7 +27,6 @@ workflow PBCLRWholeGenome {
 
     input {
         Array[File] aligned_bams
-        Array[File] aligned_bais
 
         File? bed_to_compute_coverage
 
@@ -51,20 +48,16 @@ workflow PBCLRWholeGenome {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/~{participant_name}"
 
     # gather across (potential multiple) input CLR BAMs
-    if (length(aligned_bams) > 1) {
-        scatter (pair in zip(aligned_bams, aligned_bais)) {
-            call Utils.InferSampleName {input: bam = pair.left, bai = pair.right}
-        }
-        call Utils.CheckOnSamplenames {input: sample_names = InferSampleName.sample_name}
-
-        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
+    call Utils.MergeBams as MergeAllReads {
+        input:
+            bams = aligned_bams,
+            prefix = participant_name,
+            checkSingleSample = true,
+            pacBioBams = true
     }
-
-    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
-    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
-
-    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
-    File pbi = IndexCCSUnalignedReads.pbi
+    File bam = MergeAllReads.merged_bam
+    File bai = MergeAllReads.merged_bai
+    File pbi = select_first([MergeAllReads.merged_pbi])
 
     call COV.SampleLevelAlignedMetrics as coverage {
         input:
