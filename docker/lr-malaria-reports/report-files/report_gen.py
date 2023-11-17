@@ -46,7 +46,7 @@ gPLOT_PARAMS = {
     "xtick.labelsize": "x-large",
     "ytick.labelsize": "x-large"
 }
-plt.rcParams.update(gPLOT_PARAMS)
+matplotlib.rcParams.update(gPLOT_PARAMS)
 
 # Some single-place definitions of sizes for plots / figures:
 gFONT_SIZE_UNITS = "pt"
