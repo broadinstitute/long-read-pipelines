@@ -142,8 +142,8 @@ task RunReportScript {
             --aligned_read_length_median ~{aligned_read_length_median} \
             --read_qual_median ~{read_qual_median} \
             --drug_resistance_text ~{default="None" drug_resistance_text} \
-            --HRP2 ~{HRP2} \
-            --HRP3 ~{HRP3} \
+            --HRP2 ~{default="N/A" HRP2} \
+            --HRP3 ~{default="N/A" HRP3} \
             --longitude ~{default=0 longitude} \
             --latitude ~{default=0 latitude} \
             --location ~{default="Unknown" location} \
