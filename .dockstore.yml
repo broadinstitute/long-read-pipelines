@@ -126,3 +126,6 @@ workflows:
 - name: HybridPhaseWholeGenomeHiphase
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HybridPhaseWholeGenomeHiphase.wdl
+- name: LongphaseSingleSample
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/LongphaseSingleSample.wdl
