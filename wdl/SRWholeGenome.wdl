@@ -39,6 +39,11 @@ workflow SRWholeGenome {
 
         Int ploidy = 2
 
+        Float heterozygosity = 0.001
+        Float heterozygosity_stdev = 0.01
+        Float indel_heterozygosity = 0.000125
+
+
         Float snp_calibration_sensitivity = 0.99
         Int snp_max_unlabeled_variants = 0
         Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
@@ -182,6 +187,9 @@ workflow SRWholeGenome {
                 dbsnp_vcf         = ref_map["known_sites_vcf"],
 
                 ploidy            = ploidy,
+                heterozygosity    = heterozygosity,
+                heterozygosity_stdev = heterozygosity_stdev,
+                indel_heterozygosity = indel_heterozygosity,
 
                 prefix = participant_name + ".haplotype_caller",
 

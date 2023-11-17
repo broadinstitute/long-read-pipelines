@@ -28,6 +28,10 @@ workflow CallVariantsWithHaplotypeCaller {
 
         Int ploidy = 2
 
+        Float heterozygosity = 0.001
+        Float heterozygosity_stdev = 0.01
+        Float indel_heterozygosity = 0.000125
+
         Boolean enable_pileup_mode = false
 
         String mito_contig = "chrM"
@@ -60,6 +64,9 @@ workflow CallVariantsWithHaplotypeCaller {
                 single_interval = contig_for_small_var,
                 contamination = 0,
                 ploidy = ploidy,
+                heterozygosity = heterozygosity,
+                heterozygosity_stdev = heterozygosity_stdev,
+                indel_heterozygosity = indel_heterozygosity,
                 use_spanning_event_genotyping = true
         }
     }
@@ -140,6 +147,10 @@ task HaplotypeCaller_GATK4_VCF {
 
         Int ploidy = 2
 
+        Float heterozygosity = 0.001
+        Float heterozygosity_stdev = 0.01
+        Float indel_heterozygosity = 0.000125
+
         Boolean make_gvcf
         Boolean make_bamout
 
@@ -197,6 +208,9 @@ task HaplotypeCaller_GATK4_VCF {
                 -O ~{output_file_name} \
                 -contamination ~{default=0 contamination} \
                 --sample-ploidy ~{ploidy} \
+                --heterozygosity ~{heterozygosity} \
+                --heterozygosity-stdev ~{heterozygosity_stdev} \
+                --indel-heterozygosity ~{indel_heterozygosity} \
                 --linked-de-bruijn-graph \
                 ~{true="--pileup-detection --pileup-detection-enable-indel-pileup-calling" false="" enable_pileup_mode} \
                 --annotate-with-num-discovered-alleles \
