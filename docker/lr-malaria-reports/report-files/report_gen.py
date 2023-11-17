@@ -12,6 +12,7 @@ import glob
 
 # Plotting
 import matplotlib.pyplot as plt
+import matplotlib
 import plotly.express as px
 import folium
 import plotly.graph_objects as go
@@ -76,7 +77,7 @@ def fix_plot_visuals(fig,
         for ticklabel in (ax.get_yticklabels()):
             ticklabel.set_fontsize(ticklabelsize)
         for c in ax.get_children():
-            if c.__class__ == plt.text.Text:
+            if c.__class__ == matplotlib.text.Text:
                 c.set_fontsize(textsize)
 
         ax.xaxis.get_label().set_fontsize(labelsize)
@@ -84,7 +85,7 @@ def fix_plot_visuals(fig,
         ax.title.set_fontsize(titlesize)
 
     for c in fig.get_children():
-        if c.__class__ == plt.legend.Legend:
+        if c.__class__ == matplotlib.legend.Legend:
             c.prop.set_size(ticklabelsize)
             c.get_title().set_size(ticklabelsize)
 
