@@ -658,7 +658,9 @@ if __name__ == '__main__':
                           arg_dict['fraction_aligned_bases'], arg_dict['average_identity']]
 
     active_channels = arg_dict['active_channels']
-
+    if active_channels == 0:
+        active_channels = "N/A"
+        
     qscorex = [5, 7, 10, 12, 15] # available q-score measures are predetermined
     qscorey = [arg_dict['num_reads_q5'], arg_dict['num_reads_q7'], arg_dict['num_reads_q10'], arg_dict['num_reads_q12'], arg_dict['num_reads_q15']]
 
