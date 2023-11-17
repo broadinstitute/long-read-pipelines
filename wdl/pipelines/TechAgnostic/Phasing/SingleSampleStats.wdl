@@ -14,7 +14,6 @@ workflow Statistics {
 
     input {
         File phased_vcf
-        File phased_vcf_tbi
         String chromosome
         String sampleID
     }

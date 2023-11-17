@@ -17,8 +17,6 @@ workflow HybridPhase {
         File all_chr_bais
         File deep_var_vcf
         File deep_var_vcf_tbi
-        File pbsv_vcf
-        File pbsv_vcf_tbi
         File reference
         File reference_index
         String chromosome
@@ -38,11 +36,6 @@ workflow HybridPhase {
             locus = chromosome
         }
 
-    call VU.SubsetVCF as SubsetSVs { input:
-        vcf_gz = pbsv_vcf,
-        vcf_tbi = pbsv_vcf_tbi,
-        locus = chromosome
-    }
     
     call Longphase.LongphaseSNPs as longphase { input:
             bam = SubsetBam.subset_bam,

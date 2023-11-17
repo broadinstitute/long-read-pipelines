@@ -14,5 +14,3 @@ RUN git clone https://github.com/twolinin/longphase.git /opt/longphase && \
     rm -rf /opt/longphase/.git
 
 ENV PATH="${PATH}":${HOME}/bin:/opt/longphase
-
-CMD ["longphase", "phase", "--help"]
