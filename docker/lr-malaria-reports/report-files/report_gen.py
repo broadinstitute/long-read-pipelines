@@ -654,6 +654,10 @@ if __name__ == '__main__':
     HRP3 = arg_dict['HRP3']
 
     # second : analysis page
+    frac_bases = arg_dict["fraction_aligned_bases"]
+    if frac_bases == 0:
+        frac_bases = "N/A"
+        
     sequencing_summary = [arg_dict['sample_prep'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
                           arg_dict['fraction_aligned_bases'], arg_dict['average_identity']]
 
