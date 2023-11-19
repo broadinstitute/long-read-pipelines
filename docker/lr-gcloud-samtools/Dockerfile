@@ -13,6 +13,7 @@ RUN apt-get -qqy update --fix-missing && \
                  ca-certificates \
                  libbz2-dev \
                  libcurl4-openssl-dev \
+                 libdeflate-dev \
                  liblzma-dev \
                  libncurses5-dev \
                  autoconf \
@@ -24,12 +25,18 @@ RUN apt-get -qqy update --fix-missing && \
                  zlib1g-dev && \
     wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2 && \
     tar xjf samtools-${SAMTOOLS_VERSION}.tar.bz2 && \
-    cd samtools-${SAMTOOLS_VERSION} && ./configure --without-curses --enable-libcurl && make -s all all-htslib && make install install-htslib && cd - && \
-    rm -rf samtools-${SAMTOOLS_VERSION}* && \
+    cd samtools-${SAMTOOLS_VERSION} \
+        && ./configure --without-curses --enable-libcurl --with-libdeflate \
+        && make -s all all-htslib \
+        && make install install-htslib && \
+    cd - && rm -rf samtools-${SAMTOOLS_VERSION}* && \
     wget https://github.com/samtools/bcftools/releases/download/${BCFTOOLS_VERSION}/bcftools-${BCFTOOLS_VERSION}.tar.bz2 && \
     tar xjf bcftools-${BCFTOOLS_VERSION}.tar.bz2 && \
-    cd bcftools-${BCFTOOLS_VERSION} && ./configure --without-curses && make -s && make install && cd - && \
-    rm -rf bcftools-${BCFTOOLS_VERSION}* && \
+    cd bcftools-${BCFTOOLS_VERSION} \
+        && ./configure --without-curses \
+        && make -s \
+        && make install && \
+    cd - && rm -rf bcftools-${BCFTOOLS_VERSION}* && \
     apt-get -qqy purge autoconf automake bzip2 gcc make wget && \
     apt-get -qqy clean && \
     rm -rf /tmp/* \
@@ -62,10 +69,13 @@ RUN apt-get -qqy update --fix-missing && \
                  gnupg \
                  curl \
                  wget \
+                 bc \
                  bedtools \
+                 datamash \
                  gawk \
                  less \
                  tabix \
+                 tree \
                  vcftools \
                  zlib1g-dev && \
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
@@ -83,8 +93,8 @@ RUN apt-get -qqy update --fix-missing && \
            /var/lib/apt/lists/* \
            /usr/share/man/?? \
            /usr/share/man/??_* && \
-    samtools --help && \
-    bcftools --help
+    samtools --version && \
+    bcftools --version
 
 
 COPY re-auth.sh /opt/
