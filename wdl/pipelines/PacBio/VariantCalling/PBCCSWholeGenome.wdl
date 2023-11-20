@@ -62,7 +62,7 @@ workflow PBCCSWholeGenome {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/~{participant_name}"
 
     # gather across (potential multiple) input CCS BAMs
-    call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
+    call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name, pacBioBams = true }
 
     File bam = MergeAllReads.merged_bam
     File bai = MergeAllReads.merged_bai
