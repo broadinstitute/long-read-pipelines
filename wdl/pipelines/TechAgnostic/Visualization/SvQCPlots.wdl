@@ -4,15 +4,22 @@ import "../../../structs/Structs.wdl"
 
 workflow PlotSVQCMetrics{
 
+    meta{
+        description: "This workflow takes in a list of SV callers and a list of samples and runs the SV callers on each sample. It then concatenates the SV stats for each sample and plots the stats."
+    }
+    parameter_meta{
+        gcs_vcf_dir: "GCS path to directory containing VCFs. Files should be named <sample_name>.<caller>.vcf.gz"
+        samples: "List of sample names"
+        coverage_metrics: "List of coverage metrics for each sample"
+        callers: "List of SV callers"
+    }
+
     input{
         String gcs_vcf_dir
         Array[String] samples
         Array[Float] coverage_metrics
         Array[String] callers
     }
-
-
-
 
     scatter(caller in callers){
         scatter(sample in samples){
