@@ -8,55 +8,60 @@ workflow PlotSVQCMetrics{
         String gcs_vcf_dir
         Array[String] samples
         Array[Float] coverage_metrics
+        Array[String] callers
     }
-    scatter(sample in samples){
-        call bcfQuerySV{
-            input:
-                sample_name = sample,
-                pbsv_vcf = gcs_vcf_dir + "/" + sample + ".pbsv.vcf.gz",
-                sniffles_vcf = gcs_vcf_dir + "/" + sample + ".sniffles.vcf.gz",
-#                pav_vcf = input_vcf + ".pav.vcf.gz"
+
+
+
+
+    scatter(caller in callers){
+        scatter(sample in samples){
+            call bcfQuerySV{
+                input:
+                    sample_name = sample,
+                    input_vcf = gcs_vcf_dir + "/" + sample + "." + caller + ".vcf.gz",
+                    caller = caller,
+            }
         }
     }
+    Array[File] all_SV_stats = flatten(bcfQuerySV.all_SV_stat_out)
 
     call concatSVstats{
         input:
-            pbsv_stats = bcfQuerySV.pbsv_stat_out,
-            sniffles_stats = bcfQuerySV.sniffles_stat_out,
+            all_stats = all_SV_stats,
+            callers = callers,
     }
 
     call compileSVstats{
         input:
             samples = samples,
-            pbsv_stats = bcfQuerySV.pbsv_stat_out,
-            sniffles_stats = bcfQuerySV.sniffles_stat_out,
+            all_stats = all_SV_stats,
+            callers = callers,
     }
     call addCoverageToSVstats{
         input:
             coverage_stats = coverage_metrics,
             samples = samples,
-            pbsvStatsBySample = compileSVstats.pbsvStatsBySample,
-            snifflesStatsBySample = compileSVstats.snifflesStatsBySample,
-#            pav_stats = compileSVstats.pav_stat_out,
+            allStatsBySample = compileSVstats.allStatsBySample,
+            callers = callers,
     }
 
     call plotSVQCMetrics{
         input:
-            pbsv_all_stats_with_cov = addCoverageToSVstats.pbsv_all_stats_with_cov,
-            sniffles_all_stats_with_cov = addCoverageToSVstats.sniffles_all_stats_with_cov,
-            all_pbsv_stats = concatSVstats.all_pbsv_stats,
-            all_sniffles_stats = concatSVstats.all_sniffles_stats,
+            all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov,
+            all_stats_by_type = concatSVstats.all_stats_by_type,
+            callers = callers,
             reference_in = "GRCh38"
     }
 
 
 output{
-        File pbsv_concatSVstats = concatSVstats.all_pbsv_stats
-        File sniffles_concatSVstats = concatSVstats.all_sniffles_stats
-#        File concatSVstats = concatSVstats.all_pav_stats
-        File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_all_stats_with_cov
-        File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_all_stats_with_cov
-#        File pav_all_stats_with_coverage = addCoverageToSVstats.pav_stat_out
+        Array[File] all_stats_by_type = concatSVstats.all_stats_by_type
+        Array[File] all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov
+#        File pbsv_concatSVstats = concatSVstats.all_pbsv_stats
+#        File sniffles_concatSVstats = concatSVstats.all_sniffles_stats
+#        File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_all_stats_with_cov
+#        File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_all_stats_with_cov
         Array[File] metric_plot_pdfs = plotSVQCMetrics.output_pdfs
         File plot_notebook = plotSVQCMetrics.out_plot_single_sample_stats
     }
@@ -68,32 +73,25 @@ output{
 task bcfQuerySV{
     input{
         String sample_name
-        File pbsv_vcf
-        File sniffles_vcf
-#        File pav_vcf
+        File input_vcf
+        String caller
         RuntimeAttr? runtime_attr_override
     }
 
-    String pbsv_stat_out_name = sample_name + ".pbsv.txt"
-    String sniffles_stat_out_name = sample_name + ".sniffles.txt"
-#    String pav_stat_out_name = sample_basename+ ".pav.svlen"
+    String sample_stat_out = sample_name + "." + caller + ".txt"
 
-    Int minimal_disk_size = (ceil(size(pbsv_vcf, "GB") + size(sniffles_vcf, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_vcf, "GB")
+    Int minimal_disk_size = (ceil(size(input_vcf, "GB") + 100 )) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
-
 
     command{
         set -euo pipefail
 
-        cat ~{pbsv_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pbsv_stat_out_name}
-        cat ~{sniffles_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{sniffles_stat_out_name}
+        cat ~{input_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{sample_stat_out}
 
     }
-#    cat ~{pav_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{pav_stat_out}
+
     output{
-        File pbsv_stat_out = pbsv_stat_out_name
-        File sniffles_stat_out = sniffles_stat_out_name
-#        File pav_stat_out = pav_stat_out_name
+        File all_SV_stat_out = sample_stat_out
     }
         #########################
     RuntimeAttr default_attr = object {
@@ -120,36 +118,32 @@ task bcfQuerySV{
 
 task concatSVstats{
     input{
-        Array[File] pbsv_stats
-        Array[File] sniffles_stats
-#        Array[File] pav_stat_out
+        Array[File] all_stats
+        Array[String] callers
         RuntimeAttr? runtime_attr_override
     }
 
-    Int minimal_disk_size = (ceil(size(pbsv_stats, "GB") + size(sniffles_stats, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int minimal_disk_size = (ceil(size(all_stats, "GB"))  + 100 ) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command<<<
         set -euo pipefail
 
-        for i in ~{sep=" " pbsv_stats}
+        for caller in ~{sep=" " callers}
         do
-            cat ${i} >> pbsv_all_SV_lengths_by_type.txt
+            for stat_file in ~{sep=" " all_stats}
+            do
+                if ${caller} in ${stat_file}
+                then
+                    cat ${stat_file} >> ${caller}_all_SV_lengths_by_type.txt
+                fi
+            done
         done
 
-        for i in ~{sep=" " sniffles_stats}
-        do
-            cat ${i} >> sniffles_all_SV_lengths_by_type.txt
-        done
     >>>
-#        for i in ~{sep=" " pav_stat_out}
-#        do
-#            cat ${i} >> pav_all_SV_lengths_by_type.svlen
-#        done
+
     output{
-        File all_pbsv_stats = "pbsv_all_SV_lengths_by_type.txt"
-        File all_sniffles_stats = "sniffles_all_SV_lengths_by_type.txt"
-#        File all_pav_stats = "pav_all_SV_lengths_by_type.svlen"
+        Array[File] all_stats_by_type = glob("*_all_SV_lengths_by_type.txt")
     }
 
     #########################
@@ -177,17 +171,14 @@ task concatSVstats{
 task compileSVstats {
     input {
         Array[String] samples
-        Array[File] pbsv_stats
-        Array[File] sniffles_stats
-#        Array[File] pav_stat_out
+        Array[File] all_stats
+        Array[String] callers
         RuntimeAttr? runtime_attr_override
     }
 
-    Array[String] callers = ["pbsv", "sniffles"]
-    Array[File] callers_stats = flatten([pbsv_stats, sniffles_stats])
     File sampleFile = write_lines(samples)
 
-    Int minimal_disk_size = (ceil(size(callers_stats, "GB") ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int minimal_disk_size = (ceil(size(all_stats, "GB") ) + 100 ) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
 
@@ -195,7 +186,7 @@ task compileSVstats {
         set -euo pipefail
 
         mkdir -p stats_by_sample
-        for file in ~{sep=" " callers_stats}
+        for file in ~{sep=" " all_stats}
         do
             mv $file ./stats_by_sample
         done
@@ -267,10 +258,7 @@ CODE
 
 
     output {
-#        Array[File] output_stats = glob("*_all_sample_stats")
-#        File pavStatsbysample = "pav_all_sample_stats"
-        File pbsvStatsBySample = "pbsv_all_sample_stats"
-        File snifflesStatsBySample = "sniffles_all_sample_stats"
+        Array[File] allStatsBySample = glob("*_all_sample_stats")
     }
         #########################
     RuntimeAttr default_attr = object {
@@ -299,13 +287,12 @@ task addCoverageToSVstats{
     input{
         Array[Float] coverage_stats
         Array[String] samples
-        File pbsvStatsBySample
-        File snifflesStatsBySample
-#        Array[File] pav_stat_out
+        Array[File] allStatsBySample
+        Array[String] callers
         RuntimeAttr? runtime_attr_override
     }
 
-    Int minimal_disk_size = (ceil(size([pbsvStatsBySample, snifflesStatsBySample], "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int minimal_disk_size = (ceil(size(allStatsBySample, "GB")  ) + 100 ) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command<<<
@@ -317,22 +304,18 @@ task addCoverageToSVstats{
         paste -d $'\t' <(printf "%s\n" "${samples[@]}") <(printf "%s\n" "${coverage_stats[@]}") >> sample_cov
 
         sort -k1,1 sample_cov -o sample_cov
-        sort -k1,1 ~{pbsvStatsBySample} -o pbsv_all_sample_stats
-        sort -k1,1 ~{snifflesStatsBySample} -o sniffles_all_sample_stats
 
-        join -1 1 -2 1 -a 1 -e 0 -t $'\t' sample_cov pbsv_all_sample_stats > pbsv_all_sample_stats_with_cov
-        join -1 1 -2 1 -a 1 -e 0  -t $'\t' sample_cov sniffles_all_sample_stats > sniffles_all_sample_stats_with_cov
-
-        # Move header to top of file
-        { grep -m 1 '^sample' pbsv_all_sample_stats_with_cov; grep -v '^sample' pbsv_all_sample_stats_with_cov; } > pbsv_all_sample_stats_with_cov.txt
-        { grep -m 1 '^sample' sniffles_all_sample_stats_with_cov; grep -v '^sample' sniffles_all_sample_stats_with_cov; } > sniffles_all_sample_stats_with_cov.txt
+        for caller in ~{sep=" " callers}
+        do
+            sort -k1,1 ${caller}_all_sample_stats -o ${caller}_all_sample_stats
+            join -1 1 -2 1 -a 1 -e 0 -t $'\t' sample_cov ${caller}_all_sample_stats > ${caller}_all_sample_stats_with_cov
+            { grep -m 1 '^sample' ${caller}_all_sample_stats_with_cov; grep -v '^sample' ${caller}_all_sample_stats_with_cov; } > ${caller}_all_sample_stats_with_cov.txt
+        done
 
     >>>
 
     output{
-        File pbsv_all_stats_with_cov = "pbsv_all_sample_stats_with_cov.txt"
-        File sniffles_all_stats_with_cov = "sniffles_all_sample_stats_with_cov.txt"
-#        File pav_all_stats_with_cov = "pav_all_sample_stats_with_cov"
+        Array[File] all_stats_with_cov = glob("*_all_sample_stats_with_cov.txt")
     }
 
     #########################
@@ -359,16 +342,15 @@ task addCoverageToSVstats{
 
 task plotSVQCMetrics{
     input{
-        File pbsv_all_stats_with_cov
-        File sniffles_all_stats_with_cov
-        File all_pbsv_stats
-        File all_sniffles_stats
+        Array[File] all_stats_with_cov
+        Array[File] all_stats_by_type
+        Array[String] callers
         String reference_in
         RuntimeAttr? runtime_attr_override
     }
-    Array[File] input_files = [pbsv_all_stats_with_cov, sniffles_all_stats_with_cov, all_pbsv_stats, all_sniffles_stats]
+    Array[File] input_files = flatten([all_stats_with_cov, all_stats_by_type])
 
-    Int minimal_disk_size = (ceil(size(input_files, "GB")  ) + 100 ) # 100GB buffer #+ size(pav_stat_out, "GB")
+    Int minimal_disk_size = (ceil(size(input_files, "GB")  ) + 100 ) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command{
