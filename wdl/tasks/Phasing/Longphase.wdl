@@ -41,14 +41,15 @@ task LongphaseSNPs {
         --indels \
         --pb # or --pb for PacBio Hifi
 
-        # bcftools sort ~{samplename}.vcf.gz -O z -o ~{samplename}.sorted.vcf.gz
-        # tabix -p vcf ~{samplename}.sorted.vcf.gz
+        bcftools view ~{samplename}.vcf -Oz -o ~{samplename}.vcf.gz
+        bcftools sort ~{samplename}.vcf.gz -O z -o ~{samplename}.sorted.vcf.gz
+        tabix -p vcf ~{samplename}.sorted.vcf.gz
         
     >>>
 
     output {
-        File phased_vcf = "~{samplename}.vcf"
-        # File phased_vcf_tbi = "~{samplename}.sorted.vcf.gz.tbi"
+        File phased_vcf = "~{samplename}.sorted.vcf.gz"
+        File phased_vcf_tbi = "~{samplename}.sorted.vcf.gz.tbi"
     }
 
     #########################
