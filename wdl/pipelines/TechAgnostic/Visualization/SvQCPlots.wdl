@@ -133,12 +133,20 @@ task concatSVstats{
         do
             for stat_file in ~{sep=" " all_stats}
             do
-                if ${caller} in ${stat_file}
+                if [[ ${caller} =~ ${stat_file} ]]
                 then
                     cat ${stat_file} >> ${caller}_all_SV_lengths_by_type.txt
                 fi
             done
         done
+
+        # Check if the files created match the number of callers
+        if [[ $(ls *_all_SV_lengths_by_type.txt | wc -l) -ne ~{size(callers)} ]]
+        then
+            echo "ERROR: Number of callers does not match number of files created"
+            ls *_all_SV_lengths_by_type.txt
+            exit 1
+        fi
 
     >>>
 
