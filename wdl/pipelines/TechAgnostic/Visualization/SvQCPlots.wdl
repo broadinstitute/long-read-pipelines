@@ -148,7 +148,7 @@ task concatSVstats{
         done
 
         # Check if the files created match the number of callers
-        if [[ $(ls *_all_SV_lengths_by_type.txt | wc -l) -ne ~{size(callers)} ]]
+        if [[ $(ls *_all_SV_lengths_by_type.txt | wc -l) -ne ~{length(callers)} ]]
         then
             echo "ERROR: Number of callers does not match number of files created"
             ls *_all_SV_lengths_by_type.txt
