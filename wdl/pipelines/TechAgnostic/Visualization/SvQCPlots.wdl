@@ -313,6 +313,8 @@ task addCoverageToSVstats{
 
         sort -k1,1 sample_cov -o sample_cov
 
+        cp ~{sep=" " allStatsBySample} .
+
         for caller in ~{sep=" " callers}
         do
             sort -k1,1 ${caller}_all_sample_stats -o ${caller}_all_sample_stats
