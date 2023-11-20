@@ -682,7 +682,10 @@ task MergeBams {
     }
 
     parameter_meta {
-        bams: "Input array of BAMs to be merged."
+        bams: {
+            description: "Input array of BAMs to be merged.",
+            localization_optional: true
+        }
         prefix: "Prefix for the output BAM."
         checkSingleSample: "Set to true to check that all BAMs agree on a single sample."
         pacBioBams: "Set to true to create a .pbi index when all BAMs are PacBio BAMs."
@@ -706,16 +709,19 @@ task MergeBams {
         nBams="~{length(bams)}"
         if [ "$nBams" -eq 0 ]; then echo "no input BAMs provided" 1>&2 && exit 1; fi
 
+        mkdir -p bams_dir
+        gcloud storage cp "~{sep='" "' bams}" bams_dir
+
         if ~{checkSingleSample}; then
-            for fil in "~{sep='" "' bams}"; do
+            for fil in bams_dir/*; do
                 # the sed expression says: if the line doesn't start with @RG, forget it. otherwise, look for
                 #      anything<TAB>SM:xxxxx<TAB>anything
                 # and replace the whole mess with just the xxxxx part
                 samtools view -H "$fil" | sed '/^@RG/!d;s/.*	SM:\([^	]*\).*/\1/' | sort -u > sampleNames
                 nSamples=$(wc -l < sampleNames)
-                if [ "$nSamples" -ne 1 ]; then echo "$fil has $nSamples sample names" 1>&2 && exit 2; fi
+                if [ "$nSamples" -ne 1 ]; then echo "$(basename "$fil") has $nSamples sample names" 1>&2 && exit 2; fi
                 sampleName="$(cat samplesNames)"
-                if [ -z "$sampleName" ] || [ "$sampleName" == "unnamedsample" ]; then echo "$fil has an unnamed sample" 1>&2 && exit 3; fi
+                if [ -z "$sampleName" ] || [ unnamedsample = "$sampleName" ]; then echo "$(basename "$fil") has an unnamed sample" 1>&2 && exit 3; fi
                 cat sampleNames >> allSampleNames
             done;
             nSamples=$(sort -u allSampleNames | wc -l)
@@ -724,10 +730,10 @@ task MergeBams {
         fi
 
         if [ "$nBams" -eq 1 ]; then
-            mv "~{bams[0]}" "~{prefix}.bam"
+            mv bams_dir/* "~{prefix}.bam"
             samtools index -@ 2 -o "~{prefix}.bam.bai" "~{prefix}.bam"
         else
-            samtools merge -p -c --no-PG -@ 2 --write-index -o "~{prefix}.bam##idx##~{prefix}.bam.bai" "~{sep='" "' bams}"
+            samtools merge -p -c --no-PG -@ 2 --write-index -o "~{prefix}.bam##idx##~{prefix}.bam.bai" bams_dir/*
         fi
 
         if ~{pacBioBams}; then
