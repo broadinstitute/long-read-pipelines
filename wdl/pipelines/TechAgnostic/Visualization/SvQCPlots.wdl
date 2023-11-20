@@ -143,6 +143,7 @@ task concatSVstats{
                 if [[ ${stat_file} =~ ${caller} ]]
                 then
                     cat ${stat_file} >> ${caller}_all_SV_lengths_by_type.txt
+                fi
             done
         done
 
