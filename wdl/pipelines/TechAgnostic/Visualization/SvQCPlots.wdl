@@ -140,10 +140,9 @@ task concatSVstats{
         do
             for stat_file in ~{sep=" " all_stats}
             do
-                if [[ ${caller} =~ ${stat_file} ]]
+                if [[ ${stat_file} =~ ${caller} ]]
                 then
                     cat ${stat_file} >> ${caller}_all_SV_lengths_by_type.txt
-                fi
             done
         done
 
