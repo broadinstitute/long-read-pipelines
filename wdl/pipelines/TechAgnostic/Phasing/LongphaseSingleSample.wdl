@@ -49,5 +49,6 @@ workflow HybridPhase {
 
     output{
         File phased_snp_vcf = longphase.phased_vcf
+        File phased_snp_tbi = longphase.phased_vcf_tbi
     }
 }
