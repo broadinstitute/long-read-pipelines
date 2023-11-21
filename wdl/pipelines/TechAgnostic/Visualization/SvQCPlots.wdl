@@ -102,11 +102,11 @@ task bcfQuerySV{
     }
         #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             24,
+        cpu_cores:          2,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
     }
@@ -163,11 +163,11 @@ task concatSVstats{
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             24,
+        cpu_cores:          2,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
     }
@@ -277,11 +277,11 @@ CODE
     }
         #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             24,
+        cpu_cores:          2,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:latest"
     }
@@ -337,11 +337,11 @@ task addCoverageToSVstats{
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             24,
+        cpu_cores:          2,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
     }
@@ -386,7 +386,7 @@ task plotSVQCMetrics{
         ls ~{reference_in}
 
         echo "Running jupyter notebook"
-        papermill /plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}  -p callers "~{sep="," callers}"
+        papermill /plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}  -p callers_in "~{sep="," callers}"
     }
     output{
         File out_plot_single_sample_stats = "out_plot_single_sample_stats.ipynb"
@@ -398,7 +398,7 @@ task plotSVQCMetrics{
         mem_gb:             24,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-plot-sv-metrics:beta.0.0.4"
     }
