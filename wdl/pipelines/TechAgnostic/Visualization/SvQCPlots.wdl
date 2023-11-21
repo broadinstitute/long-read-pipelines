@@ -12,6 +12,7 @@ workflow PlotSVQCMetrics{
         samples: "List of sample names"
         coverage_metrics: "List of coverage metrics for each sample"
         callers: "List of SV callers"
+        sv_num: "The number of randomly sampled SVs from the dataset to be used for creating subsample plot. Should be lower than the number of SVs in the dataset"
     }
 
     input{
@@ -19,6 +20,7 @@ workflow PlotSVQCMetrics{
         Array[String] samples
         Array[Float] coverage_metrics
         Array[String] callers
+        Int sv_num = 1000000
     }
 
     scatter(caller in callers){
@@ -58,17 +60,14 @@ workflow PlotSVQCMetrics{
             all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov,
             all_stats_by_type = concatSVstats.all_stats_by_type,
             callers = callers,
-            reference_in = "GRCh38"
+            reference_in = "GRCh38",
+            sv_num = sv_num,
     }
 
 
 output{
         Array[File] all_stats_by_type = concatSVstats.all_stats_by_type
         Array[File] all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov
-#        File pbsv_concatSVstats = concatSVstats.all_pbsv_stats
-#        File sniffles_concatSVstats = concatSVstats.all_sniffles_stats
-#        File pbsv_all_stats_with_coverage = addCoverageToSVstats.pbsv_all_stats_with_cov
-#        File sniffles_all_stats_with_coverage = addCoverageToSVstats.sniffles_all_stats_with_cov
         Array[File] metric_plot_pdfs = plotSVQCMetrics.output_pdfs
         File plot_notebook = plotSVQCMetrics.out_plot_single_sample_stats
     }
@@ -363,6 +362,7 @@ task plotSVQCMetrics{
         Array[File] all_stats_by_type
         Array[String] callers
         String reference_in
+        Int sv_num
         RuntimeAttr? runtime_attr_override
     }
     Array[File] input_files = flatten([all_stats_with_cov, all_stats_by_type])
@@ -386,7 +386,10 @@ task plotSVQCMetrics{
         ls ~{reference_in}
 
         echo "Running jupyter notebook"
-        papermill /plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}  -p callers_in "~{sep="," callers}"
+        papermill /plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb \
+        -p reference_in ~{reference_in}  \
+        -p callers_in "~{sep="," callers}" \
+        -p sv_numbers_in ~{sv_num}
     }
     output{
         File out_plot_single_sample_stats = "out_plot_single_sample_stats.ipynb"
