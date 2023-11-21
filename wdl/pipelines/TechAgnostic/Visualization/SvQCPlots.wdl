@@ -386,7 +386,7 @@ task plotSVQCMetrics{
         ls ~{reference_in}
 
         echo "Running jupyter notebook"
-        papermill /plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}
+        papermill /plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb -p reference_in ~{reference_in}  -p callers "~{sep="," callers}"
     }
     output{
         File out_plot_single_sample_stats = "out_plot_single_sample_stats.ipynb"
@@ -400,7 +400,7 @@ task plotSVQCMetrics{
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-plot-sv-metrics:beta.0.0.3"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-plot-sv-metrics:beta.0.0.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
