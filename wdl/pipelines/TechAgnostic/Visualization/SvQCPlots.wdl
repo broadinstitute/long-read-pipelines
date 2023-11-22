@@ -77,6 +77,13 @@ output{
 
 
 task bcfQuerySV{
+
+    parameter_meta{
+        sample_name: "Sample name"
+        input_vcf: "Input vcf file"
+        caller: "SV caller used to generate input vcf file"
+    }
+
     input{
         String sample_name
         File input_vcf
@@ -123,6 +130,12 @@ task bcfQuerySV{
 }
 
 task concatSVstats{
+
+    parameter_meta{
+        all_stats: "List of files containing SV stats for each sample"
+        callers: "List of SV callers used to generate input vcf files"
+    }
+
     input{
         Array[File] all_stats
         Array[String] callers
@@ -147,7 +160,7 @@ task concatSVstats{
         done
 
         # Check if the files created match the number of callers
-        if [[ $(ls *_all_SV_lengths_by_type.txt | wc -l) -ne ~{length(callers)} ]]
+        if [[ $(find ./*_all_SV_lengths_by_type.txt | wc -l) -ne ~{length(callers)} ]]
         then
             echo "ERROR: Number of callers does not match number of files created"
             ls *_all_SV_lengths_by_type.txt
@@ -183,6 +196,13 @@ task concatSVstats{
 }
 
 task compileSVstats {
+
+    parameter_meta{
+        samples: "List of sample names"
+        all_stats: "List of files containing SV stats for each sample"
+        callers: "List of SV callers used to generate input vcf files"
+    }
+
     input {
         Array[String] samples
         Array[File] all_stats
@@ -298,6 +318,14 @@ CODE
 
 
 task addCoverageToSVstats{
+
+    parameter_meta{
+        coverage_stats: "List of coverage metrics for each sample"
+        samples: "List of sample names"
+        allStatsBySample: "List of files containing SV stats by sample"
+        callers: "List of SV callers used to generate input vcf files"
+    }
+
     input{
         Array[Float] coverage_stats
         Array[String] samples
@@ -357,6 +385,15 @@ task addCoverageToSVstats{
 }
 
 task plotSVQCMetrics{
+
+    parameter_meta{
+        all_stats_with_cov: "List of files containing SV summary stats with coverage"
+        all_stats_by_type: "List of files containing SV stats by type"
+        callers: "List of SV callers used to generate input vcf files"
+        reference_in: "Reference genome name"
+        sv_num: "The number of randomly sampled SVs from the dataset to be used for creating subsample plot. Should be lower than the number of SVs in the dataset"
+    }
+
     input{
         Array[File] all_stats_with_cov
         Array[File] all_stats_by_type
