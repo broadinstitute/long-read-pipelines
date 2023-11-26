@@ -22,7 +22,7 @@ workflow AlignAssemblies {
         input:
             reads      = [ fa_gz ],
             ref_fasta  = ref_map['fasta'],
-            RG         = "@RG\tID:~{prefix}\tSM:~{prefix}",
+            RG         = "@RG\\tID:~{prefix}\\tSM:~{prefix}",
             map_preset = "asm10"
     }
 
