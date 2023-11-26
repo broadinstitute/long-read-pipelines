@@ -60,6 +60,9 @@ workflows:
 - name: ONTFlowcellFromMultipleBasecalls
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellFromMultipleBasecalls.wdl
+- name: ONTFlowcellWGSuBAM
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTFlowcellWGSuBAM.wdl
 
 ###################################################
 # PacBio
