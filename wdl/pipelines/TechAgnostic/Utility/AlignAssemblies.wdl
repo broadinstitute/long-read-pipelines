@@ -23,7 +23,8 @@ workflow AlignAssemblies {
             reads      = [ fa_gz ],
             ref_fasta  = ref_map['fasta'],
             RG         = "@RG\\tID:~{prefix}\\tSM:~{prefix}",
-            map_preset = "asm10"
+            map_preset = "asm10",
+            runtime_attr_override = { 'disk_size': 500 }
     }
 
     # Finalize
