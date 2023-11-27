@@ -589,10 +589,10 @@ task VcfEval {
         --decompose -t rtg_ref \
         ~{"--threads "+threads} -o output_dir
 
-    # Debugging:
-    echo "DEBUG Directory Listing:"
-    ls *
-    ls */*
+#    # Debugging:
+#    echo "DEBUG Directory Listing:"
+#    ls *
+#    ls */*
 
     for f in output_dir/*; do
         mv $f ~{outputPre}_"$(basename "$f")";
