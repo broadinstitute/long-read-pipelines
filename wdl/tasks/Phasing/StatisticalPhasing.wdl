@@ -29,7 +29,7 @@ task Shapeit4 {
 
     runtime {
         cpu: 40
-        memory: "240 GiB"
+        memory: "300 GiB"
         disks: "local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 0
