@@ -9,9 +9,9 @@ version 1.0
 #   linearly but untested.
 ##########################################################################################
 
+import "../../structs/Structs.wdl"
 import "../Utility/Utils.wdl" as Utils
 import "../Utility/ONTUtils.wdl" as ONT
-import "../../structs/Structs.wdl"
 
 workflow Guppy {
 

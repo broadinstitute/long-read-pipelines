@@ -37,8 +37,8 @@ task CleanupAFolder {
         cpu: 1
         memory:  "4 GiB"
         disks: "local-disk 10 HDD"
-        preemptible_tries:     1
-        max_retries:           1
+        preemptible:     1
+        maxRetries:           1
         docker:"us.gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine"
     }
 }
