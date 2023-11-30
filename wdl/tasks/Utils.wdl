@@ -2564,3 +2564,68 @@ task CreateIGVSession{
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task SplitContigToIntervals {
+    meta {
+        author: "Jonn Smith"
+        notes: "Splits the given contig into intervals of the given size."
+    }
+
+    input {
+        File ref_dict
+        String contig
+        Int size = 200000
+
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2
+
+    command <<<
+        set -euxo pipefail
+
+        cat ~{ref_dict} | awk '{print $2,$3}' | grep '^SN' | sed -e 's@SN:@@' -e 's@LN:@@' | tr ' ' '\t' > genome.txt
+        grep "~{contig}" genome.txt > genome.contig.txt
+
+        bedtools makewindows -g genome.contig.txt -w ~{size} > ~{contig}.~{size}bp_intervals.bed
+
+        # Make individual bed files from each line:
+        while read line ; do
+            start=$(echo "${line}" | cut -d $'\t' -f 2)
+            end=$(echo "${line}" | cut -d $'\t' -f 3)
+            echo "${line}" > ~{contig}.${start}-${end}.single_interval.bed
+        done < ~{contig}.~{size}bp_intervals.bed
+    >>>
+
+    output {
+        File full_bed_file = "~{contig}.~{size}bp_intervals.bed"
+        Array[File] individual_bed_files = glob("*.single_interval.bed")
+    }
+
+    #########################
+        RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  0,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

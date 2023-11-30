@@ -281,7 +281,7 @@ task GenotypeGVCFs {
         File ref_fasta_fai
         File ref_dict
 
-        String dbsnp_vcf
+        String? dbsnp_vcf
 
         String prefix
 
@@ -293,6 +293,8 @@ task GenotypeGVCFs {
     Int db_snp_size = ceil(size(dbsnp_vcf, "GB"))
 
     Int disk_size = 1 + 4*ceil(size(input_gvcf_data, "GB")) + ref_size + db_snp_size
+
+    String dbsnp_vcf_arg = if defined(dbsnp_vcf) then "-D ~{dbsnp_vcf} " else ""
 
     parameter_meta {
         input_gvcf_data: { help: "Either a single GVCF file or a GenomicsDB Tar file." }
@@ -331,7 +333,7 @@ task GenotypeGVCFs {
             GenotypeGVCFs \
                 -R ~{ref_fasta} \
                 -O ~{prefix}.vcf.gz \
-                -D ~{dbsnp_vcf} \
+                ~{dbsnp_vcf_arg} \
                 -G StandardAnnotation  \
                 --only-output-calls-starting-in-intervals \
                 -V ${INPUT_FILE} \
