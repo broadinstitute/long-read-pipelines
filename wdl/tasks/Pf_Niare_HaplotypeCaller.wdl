@@ -771,6 +771,7 @@ task ApplyVqsrSnp {
         File input_vcf_index
 
         File recal_file
+        File recal_file_index
         File recal_tranches
 
         String prefix

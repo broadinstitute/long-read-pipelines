@@ -137,6 +137,7 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
                 input_vcf = NormalizeVcfPreVqsr.output_vcf,
                 input_vcf_index = NormalizeVcfPreVqsr.output_vcf_index,
                 recal_file = VariantRecalibratorIndel.recalibration,
+                recal_file_index = VariantRecalibratorIndel.recalibration_index,
                 recal_tranches = VariantRecalibratorIndel.tranches,
                 prefix = participant_name + "." + contig_for_small_var + ".norm",
         }
@@ -157,8 +158,9 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
             input:
                 input_vcf = ApplyVqsrIndel.output_vcf,
                 input_vcf_index = ApplyVqsrIndel.output_vcf_index,
-                recal_file = VariantRecalibratorIndel.recalibration,
-                recal_tranches = VariantRecalibratorIndel.tranches,
+                recal_file = VariantRecalibratorSnp.recalibration,
+                recal_file_index = VariantRecalibratorSnp.recalibration_index,
+                recal_tranches = VariantRecalibratorSnp.tranches,
                 prefix = participant_name + "." + contig_for_small_var + ".norm.indel_recal",
         }
 
