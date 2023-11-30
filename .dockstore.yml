@@ -172,3 +172,19 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/PfalciparumDrugResistanceSummary.wdl
   testParameterFiles:
+- name: SRWholeGenome_Pf_Niare_VQSR
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRWholeGenome_Pf_Niare_VQSR.wdl
+  testParameterFiles:
+- name: SRWholeGenome_Pf_Niare_VETS
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRWholeGenome_Pf_Niare_VETS.wdl
+  testParameterFiles:
+- name: SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR.wdl
+  testParameterFiles:
+- name: SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS.wdl
+  testParameterFiles:
