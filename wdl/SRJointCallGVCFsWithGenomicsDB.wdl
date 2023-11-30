@@ -314,7 +314,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     ################################
     # Finalize the regular output files:
     ############
-    File keyfile = CreateHailMatrixTable.monitoring_log
+
+    File keyfile = CreateHailMatrixTable.completion_file
     String recalibration_dir = outdir + "/recalibration_files"
     String recalibration_model_dir = outdir + "/recalibration_files/model"
     String recalibration_results_dir = outdir + "/recalibration_files/results"

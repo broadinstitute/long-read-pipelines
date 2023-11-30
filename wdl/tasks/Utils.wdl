@@ -177,24 +177,15 @@ task SortBam {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         samtools sort ~{extra_args} -@$num_core -o ~{prefix}.bam ~{input_bam}
         samtools index ~{prefix}.bam
-
-        kill $monitoring_pid
     >>>
 
     output {
         File sorted_bam = "~{prefix}.bam"
         File sorted_bai = "~{prefix}.bam.bai"
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -1899,24 +1890,15 @@ task ComputeGenomeLength {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         samtools dict ~{fasta} | \
             grep '^@SQ' | \
             awk '{ print $3 }' | \
             sed 's/LN://' | \
             awk '{ sum += $1 } END { print sum }' > length.txt
-
-        kill $monitoring_pid
     >>>
 
     output {
         Float length = read_float("length.txt")
-        File monitoring_log = "resources.log"
     }
 
     #########################

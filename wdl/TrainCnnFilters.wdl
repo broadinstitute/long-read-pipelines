@@ -149,12 +149,6 @@ task Create1DReferenceTensors {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         gatk CNNVariantWriteTensors \
             -R ~{ref_fasta} \
             -V ~{vcf_input}  \
@@ -168,12 +162,9 @@ task Create1DReferenceTensors {
 
         # No need to zip - the files are .hd5 formatted:
         tar -cf ~{prefix}_1D_tensor_dir.tar ~{prefix}_1D_tensor_dir
-
-        kill $monitoring_pid
     >>>
 
     output {
-        File monitoring_log = "resources.log"
         File tensor_dir_tar = "~{prefix}_1D_tensor_dir.tar"
     }
 
@@ -236,12 +227,6 @@ task Create2DReadTensors {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         gatk CNNVariantWriteTensors \
             -R ~{ref_fasta} \
             -V ~{vcf_input}  \
@@ -288,12 +273,9 @@ CODE
 
         # No need to zip - the files are .hd5 formatted:
         tar -cf ~{prefix}_2D_tensor_dir.tar ~{prefix}_2D_tensor_dir
-
-        kill $monitoring_pid
     >>>
 
     output {
-        File monitoring_log = "resources.log"
         File tensor_dir_tar = "~{prefix}_2D_tensor_dir.tar"
     }
 
@@ -351,12 +333,6 @@ task TrainCnn {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # Must pre-process the given tensor_tars into a single folder:
         mkdir tensors
         cd tensors
@@ -413,12 +389,9 @@ task TrainCnn {
             -model-name ~{prefix}_CNN_~{tensor_type}_model \
 
         ls -la
-
-        kill $monitoring_pid
     >>>
 
     output {
-        File monitoring_log = "resources.log"
         File model_hd5 = "~{prefix}_CNN_~{tensor_type}_model.hd5"
         File model_json = "~{prefix}_CNN_~{tensor_type}_model.json"
     }

@@ -887,12 +887,6 @@ task IndelsVariantRecalibrator {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # We need to generate resource strings from the input arrays.
         # First we check that the arrays are the same length:
         if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
@@ -937,8 +931,6 @@ task IndelsVariantRecalibrator {
                 --output-model ~{prefix}.model.report \
                 --max-gaussians ~{max_gaussians} \
                 ${resource_flags}
-
-        kill $monitoring_pid
     >>>
 
     output {
@@ -946,8 +938,6 @@ task IndelsVariantRecalibrator {
         File recalibration_index = "~{prefix}.recal.idx"
         File tranches = "~{prefix}.tranches"
         File model_report = "~{prefix}.model.report"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -1020,12 +1010,6 @@ task SNPsVariantRecalibratorCreateModel {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # We need to generate resource strings from the input arrays.
         # First we check that the arrays are the same length:
         if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
@@ -1071,8 +1055,6 @@ task SNPsVariantRecalibratorCreateModel {
                 --output-model ~{prefix}.model.report \
                 --max-gaussians ~{max_gaussians} \
                 ${resource_flags}
-
-        kill $monitoring_pid
     >>>
 
     output {
@@ -1080,8 +1062,6 @@ task SNPsVariantRecalibratorCreateModel {
         File recalibration_index = "~{prefix}.recal.idx"
         File tranches = "~{prefix}.tranches"
         File model_report = "~{prefix}.model.report"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -1136,12 +1116,6 @@ task ApplyVqsr {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # Get amount of memory to use:
         mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
         let mem_start=${mem_available}-2000
@@ -1168,15 +1142,11 @@ task ApplyVqsr {
                 --truth-sensitivity-filter-level ~{snp_filter_level} \
                 --create-output-variant-index true \
                 -mode SNP
-
-        kill $monitoring_pid
     >>>
 
     output {
         File recalibrated_vcf = "~{prefix}.recalibrated.vcf.gz"
         File recalibrated_vcf_index = "~{prefix}.recalibrated.vcf.gz.tbi"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -1217,12 +1187,6 @@ task SelectVariants {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # Get amount of memory to use:
         mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
         let mem_start=${mem_available}-2000
@@ -1233,15 +1197,11 @@ task SelectVariants {
                 --exclude-filtered \
                 -V ~{vcf} \
                 -O ~{prefix}.vcf.gz
-
-        kill $monitoring_pid
     >>>
 
     output {
         File vcf_out = "~{prefix}.vcf.gz"
         File vcf_out_index = "~{prefix}.vcf.gz.tbi"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -1665,12 +1625,6 @@ task ExtractVariantAnnotations {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # We need to generate resource strings from the input arrays.
         # First we check that the arrays are the same length:
         if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
@@ -1707,8 +1661,6 @@ task ExtractVariantAnnotations {
             --maximum-number-of-unlabeled-variants ~{max_unlabeled_variants} \
             ${resource_flags} \
             -O ~{prefix}_extracted_annotations_~{mode}
-
-        kill $monitoring_pid
     >>>
 
     output {
@@ -1717,8 +1669,6 @@ task ExtractVariantAnnotations {
         File sites_only_vcf_index = "~{prefix}_extracted_annotations_~{mode}.vcf.gz.tbi"
 
         File? unlabeled_annotation_hdf5 = "~{prefix}_extracted_annotations_~{mode}.unlabeled.annot.hdf5"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -1775,12 +1725,6 @@ task TrainVariantAnnotationsModel {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
         let mem_start=${mem_available}-2
@@ -1794,8 +1738,6 @@ task TrainVariantAnnotationsModel {
                 ~{"--unlabeled-annotations-hdf5  " + unlabeled_annotation_hdf5} \
                 ~{cal_sense_arg} \
                 -O ~{prefix}_train_~{mode}
-
-        kill $monitoring_pid
     >>>
 
     output {
@@ -1805,8 +1747,6 @@ task TrainVariantAnnotationsModel {
         File? unlabeled_positive_model_scores = "~{prefix}_train_~{mode}.~{mode_lower}.unlabeledScores.hdf5"
         File? calibration_set_scores = "~{prefix}_train_~{mode}.~{mode_lower}.calibrationScores.hdf5"
         File? negative_model_scorer_pickle = "~{prefix}_train_~{mode}.~{mode_lower}.negative.scorer.pkl"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -1884,12 +1824,6 @@ task ScoreVariantAnnotations {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # We need to generate resource strings from the input arrays.
         # First we check that the arrays are the same length:
         if [[ ~{length(known_reference_variants)} -ne ~{length(known_reference_variants_identifier)} ]] || \
@@ -1937,8 +1871,6 @@ task ScoreVariantAnnotations {
                 --resource:extracted,extracted=true ~{sites_only_extracted_vcf} \
                 --${mode_lower}-calibration-sensitivity-threshold ~{calibration_sensitivity_threshold} \
                 -O ~{prefix}_scored
-
-        kill $monitoring_pid
     >>>
 
     output {
@@ -1947,8 +1879,6 @@ task ScoreVariantAnnotations {
 
         File? annotations_hdf5 = "~{prefix}_scored.annot.hdf5"
         File? scores_hdf5 = "~{prefix}_scored.scores.hdf5"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################

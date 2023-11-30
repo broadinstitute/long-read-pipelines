@@ -163,7 +163,7 @@ workflow RemoveSingleOrganismContamination {
     ############################################
 
     # Chosen because it's a relatively small file.
-    File keyfile = t_012_CreateFastqFromDecontaminatedReads.monitoring_log
+    File keyfile = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired
 
     call FF.FinalizeToFile as t_013_FinalizeContaminatedBam { input: outdir = outdir, file = t_011_SortContaminatedReads.sorted_bam, keyfile = keyfile }
     call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
@@ -268,22 +268,13 @@ task SortBamWithoutIndexing {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        curl https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh > monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         samtools sort ~{extra_args} -@$num_core -o ~{prefix}.bam ~{input_bam}
-
-        kill $monitoring_pid
     >>>
 
     output {
         File sorted_bam = "~{prefix}.bam"
-        File monitoring_log = "resources.log"
     }
 
     #########################

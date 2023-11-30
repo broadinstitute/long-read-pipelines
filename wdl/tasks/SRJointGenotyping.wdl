@@ -129,12 +129,6 @@ task ImportGVCFs {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # Make sure that the output directory does not exist:
         [ -e ~{prefix} ] && rm -rf ~{prefix}
 
@@ -161,14 +155,10 @@ task ImportGVCFs {
                 --consolidate
 
         tar -cf ~{prefix}.genomicsDB.tar ~{prefix}.genomicsDB
-
-        kill $monitoring_pid
     >>>
 
     output {
         File output_genomicsdb = "~{prefix}.genomicsDB.tar"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -220,12 +210,6 @@ task ReblockGVCF {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         gatk --java-options "-Xms3000m -Xmx3000m" \
           ReblockGVCF \
           -R ~{ref_fasta} \
@@ -236,15 +220,11 @@ task ReblockGVCF {
           ~{annotations_to_keep_command} \
           ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
           -O ~{prefix}.reblocked.g.vcf.gz
-
-        kill $monitoring_pid
     >>>
 
     output {
         File output_gvcf = "~{prefix}.reblocked.g.vcf.gz"
         File output_gvcf_index = "~{prefix}.reblocked.g.vcf.gz.tbi"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################
@@ -306,12 +286,6 @@ task GenotypeGVCFs {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         # We must determine if our input variants are in a genomicsdb file or in a VCF.
         # The easiest way is to see if the input is a .tar file:
 
@@ -343,15 +317,11 @@ task GenotypeGVCFs {
 
         # Removed for now:
         # -G AS_StandardAnnotation
-
-        kill $monitoring_pid
     >>>
 
     output {
         File output_vcf = "~{prefix}.vcf.gz"
         File output_vcf_index = "~{prefix}.vcf.gz.tbi"
-
-        File monitoring_log = "resources.log"
     }
 
     #########################

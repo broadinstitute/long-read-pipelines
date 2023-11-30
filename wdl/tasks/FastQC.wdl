@@ -17,12 +17,6 @@ task FastQC {
     command <<<
         set -euxo pipefail
 
-        export MONITOR_MOUNT_POINT="/cromwell_root"
-        wget https://raw.githubusercontent.com/broadinstitute/long-read-pipelines/jts_kvg_sp_malaria/scripts/monitor/legacy/vm_local_monitoring_script.sh -O monitoring_script.sh
-        chmod +x monitoring_script.sh
-        ./monitoring_script.sh &> resources.log &
-        monitoring_pid=$!
-
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         fastqc -t $num_core --extract ~{bam}
@@ -54,8 +48,6 @@ task FastQC {
             awk '{ a[i++]=$1; } END { x=int((i+1)/2); if (x < (i+1)/2) print (a[x-1]+a[x])/2; else print a[x-1]; }')
 
         echo $median_qual | awk '{ print "median_qual\t" $1 }' >> map.txt
-
-        kill $monitoring_pid
     >>>
 
     output {
@@ -63,7 +55,6 @@ task FastQC {
 
         File stats = "fastqc_data.txt"
         File report = "fastqc_report.html"
-        File monitoring_log = "resources.log"
     }
 
     #########################
