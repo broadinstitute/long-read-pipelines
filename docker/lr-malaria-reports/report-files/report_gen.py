@@ -659,7 +659,7 @@ if __name__ == '__main__':
         frac_bases = "N/A"
         
     sequencing_summary = [arg_dict['sample_prep'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
-                          arg_dict['fraction_aligned_bases'], arg_dict['average_identity']]
+                          frac_bases, arg_dict['average_identity']]
 
     active_channels = arg_dict['active_channels']
     if active_channels == 0:
