@@ -117,3 +117,6 @@ workflows:
 - name: CallVariantsReadBased
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl
+- name: CountTheBeans
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CountTheBeans.wdl
