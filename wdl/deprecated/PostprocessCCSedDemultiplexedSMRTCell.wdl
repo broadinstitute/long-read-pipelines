@@ -93,7 +93,7 @@ workflow PostprocessCCSedDemultiplexedSMRTCell {
 
         call GetDemxedFilePaths {input: demux_dir = bc_n_dir.right}
 
-        call BAMutils.GetReadGroupInfo as RG {input: uBAM = GetDemxedFilePaths.bam_path, keys = ['SM', 'LB']}
+        call BAMutils.GetReadGroupInfo as RG {input: bam = GetDemxedFilePaths.bam_path, keys = ['SM', 'LB']}
 
         call major.AlignAndCheckFingerprintCCS {
             input:
