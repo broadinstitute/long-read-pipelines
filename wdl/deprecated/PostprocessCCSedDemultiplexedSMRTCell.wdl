@@ -1,6 +1,6 @@
 version 1.0
 
-import "../tasks/Alignment/AlignAndCheckFingerprintCCS.wdl" as major
+import "AlignAndCheckFingerprintCCS.wdl" as major
 import "../tasks/Utility/BAMutils.wdl"
 import "../tasks/Utility/Utils.wdl"
 import "../tasks/Utility/GeneralUtils.wdl" as GU

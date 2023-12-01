@@ -1,7 +1,7 @@
 version 1.0
 
-import "../Utility/PBUtils.wdl" as PB
-import "../Utility/Utils.wdl"
+import "../tasks/Utility/PBUtils.wdl" as PB
+import "../tasks/Utility/Utils.wdl"
 
 workflow CollectSMRTCellUnalignedMetrics {
 

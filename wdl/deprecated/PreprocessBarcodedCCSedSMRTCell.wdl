@@ -2,9 +2,10 @@ version 1.0
 
 import "tasks/CCSLima.wdl"
 import "tasks/SMRTtools.wdl"
-import "../tasks/QC/CollectSMRTCellUnalignedMetrics.wdl" as uBAMCustomMetrics
-import "../tasks/Utility//PBUtils.wdl" as PB
-import "../tasks/Utility//Finalize.wdl" as FF
+import "CollectSMRTCellUnalignedMetrics.wdl" as uBAMCustomMetrics
+
+import "../tasks/Utility/PBUtils.wdl" as PB
+import "../tasks/Utility/Finalize.wdl" as FF
 import "../tasks/Utility/Utils.wdl"
 import "../tasks/Utility/GeneralUtils.wdl" as GU
 
