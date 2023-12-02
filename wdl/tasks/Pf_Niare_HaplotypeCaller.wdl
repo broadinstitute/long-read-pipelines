@@ -121,8 +121,7 @@ task HaplotypeCaller_NIARE_GATK4_VCF {
 
     String output_file_name = prefix + ".g.vcf.gz"
 
-    Float ref_size = size(ref_fasta, "GiB") + size(ref_fasta_index, "GiB") + size(ref_dict, "GiB")
-    Int disk_size = 2*ceil(((size(input_bam, "GiB") + 30)) + ref_size) + 20
+    Int disk_size = 2*ceil(size([ref_fasta, ref_fasta_index, ref_dict, input_bam], "GiB") + 50)
 
     parameter_meta {
         input_bam: { localization_optional: true }
@@ -195,8 +194,8 @@ task HaplotypeCaller_NIARE_GATK4_VCF {
 
     #########################
     RuntimeAttr default_attr = object {
-       cpu_cores:          2,
-       mem_gb:             16,
+       cpu_cores:          4,
+       mem_gb:             32,
        disk_gb:            disk_size,
        boot_disk_gb:       15,
        preemptible_tries:  1,
