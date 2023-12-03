@@ -578,7 +578,7 @@ task VariantRecalibratorIndel {
                 -O ~{prefix}.indel_recal \
                 --output-model ~{prefix}.indel.model.report \
                 --tranches-file  ~{prefix}.raw.indel.tranches \
-                --rscript-file  ~{prefix}.raw.indel.plots.R
+#                --rscript-file  ~{prefix}.raw.indel.plots.R
 
     >>>
 
@@ -663,7 +663,7 @@ task VariantRecalibratorSnp {
                 -O ~{prefix}.snp_recal \
                 --tranches-file  ~{prefix}.raw.snp.tranches \
                 --output-model ~{prefix}.snp.model.report \
-                --rscript-file  ~{prefix}.raw.snp.plots.R
+#                --rscript-file  ~{prefix}.raw.snp.plots.R
 
     >>>
 
