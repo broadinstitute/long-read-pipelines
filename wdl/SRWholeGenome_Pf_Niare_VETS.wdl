@@ -245,8 +245,6 @@ workflow SRWholeGenome_Pf_Niare_VETS {
     # Finalize the reclibrated / filtered variants:
     call FF.FinalizeToFile as FinalizeHCRescoredVcf { input: outdir = smalldir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf }
     call FF.FinalizeToFile as FinalizeHCRescoredTbi { input: outdir = smalldir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index }
-    call FF.FinalizeToFile as FinalizeHCRescoredFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RemoveFilteredVariants.vcf_out }
-    call FF.FinalizeToFile as FinalizeHCRescoredFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RemoveFilteredVariants.vcf_out_index }
 
     output {
         Boolean successfully_processed = true
@@ -261,7 +259,5 @@ workflow SRWholeGenome_Pf_Niare_VETS {
         File? hc_raw_tbi  = FinalizeRawHCTbi.gcs_path
         File? hc_rescored_vcf = FinalizeHCRescoredVcf.gcs_path
         File? hc_rescored_tbi = FinalizeHCRescoredVcf.gcs_path
-        File? hc_rescored_hard_filtered_vcf = FinalizeHCRescoredFilteredVcf.gcs_path
-        File? hc_rescored_hard_filtered_tbi = FinalizeHCRescoredFilteredTbi.gcs_path
     }
 }
