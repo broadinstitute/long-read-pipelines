@@ -587,7 +587,6 @@ task VariantRecalibratorIndel {
         File recalibration_index = "~{prefix}.indel_recal.idx"
         File tranches = "~{prefix}.raw.indel.tranches"
         File model_report = "~{prefix}.indel.model.report"
-        File r_script_file = "~{prefix}.raw.indel.plots.R"
     }
 
     #########################
@@ -672,7 +671,6 @@ task VariantRecalibratorSnp {
         File recalibration_index = "~{prefix}.snp_recal.idx"
         File tranches = "~{prefix}.raw.snp.tranches"
         File model_report = "~{prefix}.snp.model.report"
-        File r_script_file = "~{prefix}.raw.snp.plots.R"
     }
 
     #########################
