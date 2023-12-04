@@ -2,6 +2,7 @@ version 1.0
 
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Utility/GeneralUtils.wdl" as GU
+import "../../../tasks/Utility/ONTUtils.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
@@ -40,7 +41,7 @@ workflow ONTFlowcellFromMultipleBasecalls {
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
     if (bams_suspected_to_contain_dup_record) {
-        call Utils.DeduplicateBam as RemoveDuplicates {
+        call ONTUtils.DeduplicateBam as RemoveDuplicates {
             input: aligned_bam = bam, aligned_bai = bai, same_name_as_input = true
         }
     }

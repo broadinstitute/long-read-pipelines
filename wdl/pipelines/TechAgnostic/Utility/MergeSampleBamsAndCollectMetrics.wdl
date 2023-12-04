@@ -2,6 +2,7 @@ version 1.0
 
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Utility/PBUtils.wdl" as PB
+import "../../../tasks/Utility/ONTUtils.wdl" as ONT
 import "../../../tasks/Utility/BAMutils.wdl" as BU
 
 import "../../../tasks/Utility/Finalize.wdl" as FF
@@ -71,7 +72,7 @@ workflow Work {
     ###########################################################
     # ont specific: sometimes there are duplicate reads
     if (is_ont && bams_suspected_to_contain_dup_record) {
-        call Utils.DeduplicateBam as RemoveONTDuplicates {
+        call ONT.DeduplicateBam as RemoveONTDuplicates {
             input: aligned_bam = bam, aligned_bai = bai
         }
     }

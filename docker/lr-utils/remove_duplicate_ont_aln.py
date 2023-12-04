@@ -21,6 +21,9 @@ def main():
             guilty_dict_per_chr.setdefault(chrom, set())
             guilty_dict_per_chr[chrom].add(name)
 
+    print("chromosomes on which there are duplicate records:")
+    print(f"  {guilty_dict_per_chr}")
+
     # Silence message about the .bai file not being found.
     pysam.set_verbosity(0)
 
@@ -36,12 +39,13 @@ def main():
 
             chrom = read.reference_name
             n = read.query_name
-            if n in guilty_dict_per_chr[chrom]:
+            if chrom in guilty_dict_per_chr and n in guilty_dict_per_chr[chrom]:
 
                 mq = read.mapping_quality
                 sam_flag = read.flag
                 pos = read.reference_start
-                signature = f"{n}-{chrom}-{pos}-{mq}-{sam_flag}-"
+                cigar = read.cigarstring
+                signature = f"{n}-{chrom}-{pos}-{mq}-{sam_flag}-{cigar}"
 
                 if current_position != pos:  # new position, let's write and reset
                     out.write(read)
