@@ -1288,13 +1288,15 @@ task SummarizePBI {
     }
 }
 
-# todo: primrose is rebranded as jasmine, take care of that later
 task VerifyPacBioBamHasAppropriatePrimroseRuns {
     meta {
         desciption: "Verify that a PacBio's BAM has primrose run on all its read groups"
     }
+    parameter_meta {
+        bam: {localization_optional: true}
+    }
     input {
-        String bam
+        File bam
     }
 
     output {
@@ -1307,12 +1309,33 @@ task VerifyPacBioBamHasAppropriatePrimroseRuns {
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
         samtools view -H ~{bam} > header.txt
 
+        # get read groups' ICS version
+        PACBIO_ON_INSTRUMENT_METHYLATION_CALLER='primrose'
+        grep "^@RG" header.txt | tr '\t' '\n' | grep "^DS:" | tr ';' '\n' > tmp.DS.lines.txt
+        cat tmp.DS.lines.txt
+        set +e
+        grep '^ICSVERSION=' tmp.DS.lines.txt | awk -F '=' '{print $2}' | awk -F '.' '{print $1}' | sort | uniq > readgroup.ics.main.versions.txt
+        rm -f tmp.DS.lines.txt
+        set -e
+        xxx=$(wc -l readgroup.ics.main.versions.txt | awk '{print $1}')
+        if [[ ${xxx} -eq 0 ]]; then
+            echo "Assuming ICS version 11 or earlier"
+        elif [[ ${xxx} -eq 1 ]]; then
+            ics_version=$(cat readgroup.ics.main.versions.txt)
+            if [[ ${ics_version} -ge 13 ]]; then
+                PACBIO_ON_INSTRUMENT_METHYLATION_CALLER='jasmine'
+            fi
+        elif [[ ${xxx} -gt 1 ]]; then
+            echo "ERROR: more than one ICS version found in read groups. It is bad practice to mix data generated under different ICS versions in a single BAM file."
+            exit 1
+        fi
+
         # get read groups' movies
         grep "^@RG" header.txt | tr '\t' '\n' | grep "^PU:" | awk -F ':' '{print $2}' | sort > readgroup.movies.txt
         cat readgroup.movies.txt
 
-        # get primrose PG lines
-        grep "^@PG" header.txt | grep -v "^@SQ" | grep "^@PG" | grep -F 'ID:primrose' | tr '\t' '\n' | grep '^CL:' > primrose.pg.lines.txt
+        # get primrose/jasmine PG lines
+        grep "^@PG" header.txt | grep -v "^@SQ" | grep "^@PG" | grep -F "ID:${PACBIO_ON_INSTRUMENT_METHYLATION_CALLER}" | tr '\t' '\n' | grep '^CL:' > primrose.pg.lines.txt
         tr ' ' '\n' < primrose.pg.lines.txt
 
         touch movies_without_primrose.txt
