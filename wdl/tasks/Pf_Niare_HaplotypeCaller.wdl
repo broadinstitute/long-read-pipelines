@@ -901,7 +901,6 @@ task MergeMultiAllelicSitesPostRecalibration {
             --threads ${np}
 
         tabix -p vcf ~{prefix}.pass.merged.vcf.gz
-done
 
     >>>
 
