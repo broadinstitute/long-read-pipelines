@@ -22,7 +22,6 @@ workflow CallVariantsWithHaplotypeCaller {
         File ref_fasta_fai
         File ref_dict
 
-        File vcf_calling_interval_list
         File genotype_gvcfs_intervals
 
         Boolean call_vars_on_mitochondria = false

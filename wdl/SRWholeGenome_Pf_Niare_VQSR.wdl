@@ -69,7 +69,6 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
             ref_fasta_fai     = ref_map['fai'],
             ref_dict          = ref_map['dict'],
 
-            vcf_calling_interval_list = vcf_calling_interval_list,
             genotype_gvcfs_intervals = genotype_gvcfs_intervals,
 
             prefix = participant_name + ".haplotype_caller",
