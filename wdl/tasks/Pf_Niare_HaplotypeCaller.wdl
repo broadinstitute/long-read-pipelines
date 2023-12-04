@@ -51,7 +51,7 @@ workflow CallVariantsWithHaplotypeCaller {
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_fai,
                 ref_dict = ref_dict,
-                interval_list = vcf_calling_interval_list
+                interval_list = contig_for_small_var
         }
     }
 
