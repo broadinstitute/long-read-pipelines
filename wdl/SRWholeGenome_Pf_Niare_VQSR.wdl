@@ -110,10 +110,18 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
     scatter (c in SmallVariantsScatterPrep.chrs) {
         String contig_for_small_var = c[0]
 
+        call VARUTIL.SubsetVCF as GetHcCallsForContig {
+            input:
+                vcf_gz = RenameRawHcVcf.new_sample_name_vcf,
+                vcf_tbi = RenameRawHcVcf.new_sample_name_vcf_index,
+                locus = contig_for_small_var,
+                prefix = participant_name + "." + contig_for_small_var,
+        }
+
         call Niare_HC.NormalizeVcfSplittingMultiallelics as NormalizeVcfPreVqsr {
             input:
-                input_vcf = RenameRawHcVcf.new_sample_name_vcf,
-                input_vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
+                input_vcf = GetHcCallsForContig.subset_vcf,
+                input_vcf_index = GetHcCallsForContig.subset_tbi,
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
