@@ -21,7 +21,7 @@
             // make sure current layer is not layer to show
             if(shown!=global_shown) {
                 // hide "hidden" and show "shown"
-                console.log(shown);
+                console.log("Showing "+shown+" and hiding "+hidden);
                 document.getElementById(shown).style.display='block';
                 document.getElementById(hidden).style.display='none';
 
@@ -41,7 +41,7 @@
             return false;
         }
         
-        //Home button active on page load
+        // summary button active on page load
         $(document).ready(function(){
             shown_id = "summary_button"
             global_shown = "summary_page";
@@ -1568,22 +1568,21 @@
             </div>
 
           </div> <!-- analysis_root -->
-        </div> <!-- analysis_page -->
+        </div> 
+    </div> <!-- analysis_page -->
 
-        <!-- FASTQC_REPORT PAGE -->
-        <div id="fastqc_page" style="display: none;">
-            <div id="fastqc_root">
-                <div class="main_frame">
-                    <div class="module_display">
-                        <p style="top:50px; left:100px; font-size:100px;">SSSSSSSSS</p>
-                        <div class="fastqc_report">
-                            <iframe id="report_frame" src="../test_data/FP0008-C_FastQC_Report.html">
-                        </div>
+    <!-- FASTQC_REPORT PAGE -->
+    <div id="fastqc_page" style="display: none;">
+        <div id="fastqc_root">
+            <div class="main_frame">
+                <div class="module_display">
+                    <div class="fastqc_report">
+                        
                     </div>
                 </div>
-
-            </div> <!-- fastqc_root -->
-        </div> <!-- fastqc_page -->
+            </div>
+        </div> <!-- fastqc_root -->
+    </div> <!-- fastqc_page -->
 </body>
 
   
