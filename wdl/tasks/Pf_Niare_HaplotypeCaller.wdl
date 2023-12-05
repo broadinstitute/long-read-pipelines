@@ -113,7 +113,7 @@ task HaplotypeCaller_NIARE_GATK4_VCF {
         File ref_fasta
         File ref_fasta_index
 
-        File interval_list
+        String interval_list
 
         RuntimeAttr? runtime_attr_override
     }
