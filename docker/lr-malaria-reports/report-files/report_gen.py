@@ -435,7 +435,7 @@ def create_map(coordinates, sample_name):
 
 
 '''
-Q-Score Plot
+Q-Score Plot -- Not used
 '''
 def create_qscore_plot():
     '''
@@ -459,6 +459,23 @@ def create_qscore_plot():
     return fig1.write_html(outpath,
                 full_html=False,
                 include_plotlyjs=True)
+
+
+'''
+FastQC Report
+'''
+def read_fastqc(file):
+    '''
+    Function to read HTML from FastQC report as string to pass to Jinja template IFrame
+    '''
+    if(file):
+        with open(file, "r", encoding="utf-8") as f:
+            html = f.read()
+    else:
+        html = None
+
+    return html
+
 
 
 '''
@@ -501,8 +518,11 @@ class Analysis:
         self.coverage_plot = coverage_plot
         # self.reference_info = reference_info
 
+class FastQC:
+    def __init__(self, fastqc_html):
+        self.fastqc_html = fastqc_html
 
-def create_report(sample, analysis):
+def create_report(sample, analysis, fastQC):
     '''
     This function handles the final steps of report generation.
     
@@ -518,7 +538,7 @@ def create_report(sample, analysis):
     templateEnv = jinja2.Environment(loader=templateLoader)
     TEMPLATE_FILE = 'report.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
-    output = template.render(sample=sample, analysis=analysis)
+    output = template.render(sample=sample, analysis=analysis, fastQC = fastQC)
 
     print(os.listdir())
     file_name = os.path.join(os.getcwd(),sample.sample_name+'_lrma_report.html')
@@ -598,9 +618,6 @@ if __name__ == '__main__':
     arg_dict = vars(args)
 
 
-
-
-
     '''* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     Prepare arguments for report generation
     '''
@@ -677,13 +694,18 @@ if __name__ == '__main__':
     # For debugging purposes, save plot:
     coverage_plot.savefig("coverage_plot.jpeg")
     
-    # Create summary and analysis objects to be passed 
+    # third : fastqc_page
+    fastqc_html = read_fastqc(fastqc_path)
+
+    # Create summary, analysis, and fastQC objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
 
     analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64)
 
+    fastQC = FastQC(fastqc_html)
+
     # Finally, call function to populate and generate the report pages
-    create_report(summary, analysis)
+    create_report(summary, analysis, fastQC)
 
 
 
