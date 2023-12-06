@@ -30,8 +30,8 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
         File vqsr_sites_vcf_index
 
         Boolean call_vars_on_mitochondria = false
-        String mito_contig = "chrM"
-        Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
+        String mito_contig = "Pf3D7_MIT_v3"
+        Array[String] contigs_names_to_ignore = ["Pf3D7_API_v3"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
