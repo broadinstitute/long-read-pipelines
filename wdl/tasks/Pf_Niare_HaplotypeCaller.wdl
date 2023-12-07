@@ -815,7 +815,7 @@ task ApplyVqsrSnp {
             --lod-score-cutoff 0.0 \
             --exclude-filtered false \
             -mode SNP \
-            -O ~{prefix}.indel_recal.vcf.gz
+            -O ~{prefix}.snp_recal.vcf.gz
 
     >>>
 
