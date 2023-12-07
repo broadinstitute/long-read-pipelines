@@ -820,8 +820,8 @@ task ApplyVqsrSnp {
     >>>
 
     output {
-        File output_vcf = "~{prefix}.indel_recal.vcf.gz"
-        File output_vcf_index = "~{prefix}.indel_recal.vcf.gz.tbi"
+        File output_vcf = "~{prefix}.snp_recal.vcf.gz"
+        File output_vcf_index = "~{prefix}.snp_recal.vcf.gz.tbi"
     }
 
     #########################

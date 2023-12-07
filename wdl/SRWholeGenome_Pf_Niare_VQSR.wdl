@@ -105,94 +105,158 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
             filter = use_filter
     }
 
-    # Call over the scattered intervals:
-    scatter (c in SmallVariantsScatterPrep.chrs) {
-        String contig_for_small_var = c[0]
+#    # Call over the scattered intervals:
+#    scatter (c in SmallVariantsScatterPrep.chrs) {
+#        String contig_for_small_var = c[0]
+#
+#        call VARUTIL.SubsetVCF as GetHcCallsForContig {
+#            input:
+#                vcf_gz = RenameRawHcVcf.new_sample_name_vcf,
+#                vcf_tbi = RenameRawHcVcf.new_sample_name_vcf_index,
+#                locus = contig_for_small_var,
+#                prefix = participant_name + "." + contig_for_small_var,
+#        }
+#
+#        call Niare_HC.NormalizeVcfSplittingMultiallelics as NormalizeVcfPreVqsr {
+#            input:
+#                input_vcf = GetHcCallsForContig.subset_vcf,
+#                input_vcf_index = GetHcCallsForContig.subset_tbi,
+#                ref_fasta         = ref_map['fasta'],
+#                ref_fasta_fai     = ref_map['fai'],
+#                ref_dict          = ref_map['dict'],
+#                prefix = participant_name + "." + contig_for_small_var + ".norm"
+#        }
+#
+#        call Niare_HC.VariantRecalibratorIndel as VariantRecalibratorIndel {
+#            input:
+#                input_vcf = NormalizeVcfPreVqsr.output_vcf,
+#                input_vcf_index = NormalizeVcfPreVqsr.output_vcf_index,
+#                ref_fasta         = ref_map['fasta'],
+#                ref_fasta_fai     = ref_map['fai'],
+#                ref_dict          = ref_map['dict'],
+#                sites_only_vcf = vqsr_sites_vcf,
+#                sites_only_vcf_index = vqsr_sites_vcf_index,
+#                prefix = participant_name + "." + contig_for_small_var + ".norm",
+#        }
+#
+#        call Niare_HC.ApplyVqsrIndel as ApplyVqsrIndel {
+#            input:
+#                input_vcf = NormalizeVcfPreVqsr.output_vcf,
+#                input_vcf_index = NormalizeVcfPreVqsr.output_vcf_index,
+#                recal_file = VariantRecalibratorIndel.recalibration,
+#                recal_file_index = VariantRecalibratorIndel.recalibration_index,
+#                recal_tranches = VariantRecalibratorIndel.tranches,
+#                prefix = participant_name + "." + contig_for_small_var + ".norm",
+#        }
+#
+#        call Niare_HC.VariantRecalibratorSnp as VariantRecalibratorSnp {
+#            input:
+#                input_vcf = ApplyVqsrIndel.output_vcf,
+#                input_vcf_index = ApplyVqsrIndel.output_vcf_index,
+#                ref_fasta         = ref_map['fasta'],
+#                ref_fasta_fai     = ref_map['fai'],
+#                ref_dict          = ref_map['dict'],
+#                sites_only_vcf = vqsr_sites_vcf,
+#                sites_only_vcf_index = vqsr_sites_vcf_index,
+#                prefix = participant_name + "." + contig_for_small_var + ".norm",
+#        }
+#
+#        call Niare_HC.ApplyVqsrSnp as ApplyVqsrSnp {
+#            input:
+#                input_vcf = ApplyVqsrIndel.output_vcf,
+#                input_vcf_index = ApplyVqsrIndel.output_vcf_index,
+#                recal_file = VariantRecalibratorSnp.recalibration,
+#                recal_file_index = VariantRecalibratorSnp.recalibration_index,
+#                recal_tranches = VariantRecalibratorSnp.tranches,
+#                prefix = participant_name + "." + contig_for_small_var + ".norm.indel_recal",
+#        }
+#
+#        call Niare_HC.MergeMultiAllelicSitesPostRecalibration as MergeMultiAllelicSitesPostRecalibration {
+#            input:
+#                input_vcf = ApplyVqsrSnp.output_vcf,
+#                input_vcf_index = ApplyVqsrSnp.output_vcf_index,
+#                ref_fasta         = ref_map['fasta'],
+#                ref_fasta_fai     = ref_map['fai'],
+#                ref_dict          = ref_map['dict'],
+#                prefix = participant_name + "." + contig_for_small_var,
+#        }
+#    }
+#
+#    call SRUTIL.MergeVCFs as MergeVCFs {
+#        input:
+#            input_vcfs = MergeMultiAllelicSitesPostRecalibration.output_vcf,
+#            input_vcfs_indexes = MergeMultiAllelicSitesPostRecalibration.output_vcf_index,
+#            prefix = participant_name + ".recalibrated"
+#    }
 
-        call VARUTIL.SubsetVCF as GetHcCallsForContig {
-            input:
-                vcf_gz = RenameRawHcVcf.new_sample_name_vcf,
-                vcf_tbi = RenameRawHcVcf.new_sample_name_vcf_index,
-                locus = contig_for_small_var,
-                prefix = participant_name + "." + contig_for_small_var,
-        }
-
-        call Niare_HC.NormalizeVcfSplittingMultiallelics as NormalizeVcfPreVqsr {
-            input:
-                input_vcf = GetHcCallsForContig.subset_vcf,
-                input_vcf_index = GetHcCallsForContig.subset_tbi,
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict'],
-                prefix = participant_name + "." + contig_for_small_var + ".norm"
-        }
-
-        call Niare_HC.VariantRecalibratorIndel as VariantRecalibratorIndel {
-            input:
-                input_vcf = NormalizeVcfPreVqsr.output_vcf,
-                input_vcf_index = NormalizeVcfPreVqsr.output_vcf_index,
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict'],
-                sites_only_vcf = vqsr_sites_vcf,
-                sites_only_vcf_index = vqsr_sites_vcf_index,
-                prefix = participant_name + "." + contig_for_small_var + ".norm",
-        }
-
-        call Niare_HC.ApplyVqsrIndel as ApplyVqsrIndel {
-            input:
-                input_vcf = NormalizeVcfPreVqsr.output_vcf,
-                input_vcf_index = NormalizeVcfPreVqsr.output_vcf_index,
-                recal_file = VariantRecalibratorIndel.recalibration,
-                recal_file_index = VariantRecalibratorIndel.recalibration_index,
-                recal_tranches = VariantRecalibratorIndel.tranches,
-                prefix = participant_name + "." + contig_for_small_var + ".norm",
-        }
-
-        call Niare_HC.VariantRecalibratorSnp as VariantRecalibratorSnp {
-            input:
-                input_vcf = ApplyVqsrIndel.output_vcf,
-                input_vcf_index = ApplyVqsrIndel.output_vcf_index,
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict'],
-                sites_only_vcf = vqsr_sites_vcf,
-                sites_only_vcf_index = vqsr_sites_vcf_index,
-                prefix = participant_name + "." + contig_for_small_var + ".norm",
-        }
-
-        call Niare_HC.ApplyVqsrSnp as ApplyVqsrSnp {
-            input:
-                input_vcf = ApplyVqsrIndel.output_vcf,
-                input_vcf_index = ApplyVqsrIndel.output_vcf_index,
-                recal_file = VariantRecalibratorSnp.recalibration,
-                recal_file_index = VariantRecalibratorSnp.recalibration_index,
-                recal_tranches = VariantRecalibratorSnp.tranches,
-                prefix = participant_name + "." + contig_for_small_var + ".norm.indel_recal",
-        }
-
-        call Niare_HC.MergeMultiAllelicSitesPostRecalibration as MergeMultiAllelicSitesPostRecalibration {
-            input:
-                input_vcf = ApplyVqsrSnp.output_vcf,
-                input_vcf_index = ApplyVqsrSnp.output_vcf_index,
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict'],
-                prefix = participant_name + "." + contig_for_small_var,
-        }
+    call Niare_HC.NormalizeVcfSplittingMultiallelics as NormalizeVcfPreVqsr {
+        input:
+            input_vcf = RenameRawHcVcf.new_sample_name_vcf,
+            input_vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
+            ref_fasta         = ref_map['fasta'],
+            ref_fasta_fai     = ref_map['fai'],
+            ref_dict          = ref_map['dict'],
+            prefix = participant_name + ".norm"
     }
 
-    call SRUTIL.MergeVCFs as MergeVCFs {
+    call Niare_HC.VariantRecalibratorIndel as VariantRecalibratorIndel {
         input:
-            input_vcfs = MergeMultiAllelicSitesPostRecalibration.output_vcf,
-            input_vcfs_indexes = MergeMultiAllelicSitesPostRecalibration.output_vcf_index,
-            prefix = participant_name + ".recalibrated"
+            input_vcf = NormalizeVcfPreVqsr.output_vcf,
+            input_vcf_index = NormalizeVcfPreVqsr.output_vcf_index,
+            ref_fasta         = ref_map['fasta'],
+            ref_fasta_fai     = ref_map['fai'],
+            ref_dict          = ref_map['dict'],
+            sites_only_vcf = vqsr_sites_vcf,
+            sites_only_vcf_index = vqsr_sites_vcf_index,
+            prefix = participant_name + ".norm",
+    }
+
+    call Niare_HC.ApplyVqsrIndel as ApplyVqsrIndel {
+        input:
+            input_vcf = NormalizeVcfPreVqsr.output_vcf,
+            input_vcf_index = NormalizeVcfPreVqsr.output_vcf_index,
+            recal_file = VariantRecalibratorIndel.recalibration,
+            recal_file_index = VariantRecalibratorIndel.recalibration_index,
+            recal_tranches = VariantRecalibratorIndel.tranches,
+            prefix = participant_name + ".norm",
+    }
+
+    call Niare_HC.VariantRecalibratorSnp as VariantRecalibratorSnp {
+        input:
+            input_vcf = ApplyVqsrIndel.output_vcf,
+            input_vcf_index = ApplyVqsrIndel.output_vcf_index,
+            ref_fasta         = ref_map['fasta'],
+            ref_fasta_fai     = ref_map['fai'],
+            ref_dict          = ref_map['dict'],
+            sites_only_vcf = vqsr_sites_vcf,
+            sites_only_vcf_index = vqsr_sites_vcf_index,
+            prefix = participant_name + ".norm",
+    }
+
+    call Niare_HC.ApplyVqsrSnp as ApplyVqsrSnp {
+        input:
+            input_vcf = ApplyVqsrIndel.output_vcf,
+            input_vcf_index = ApplyVqsrIndel.output_vcf_index,
+            recal_file = VariantRecalibratorSnp.recalibration,
+            recal_file_index = VariantRecalibratorSnp.recalibration_index,
+            recal_tranches = VariantRecalibratorSnp.tranches,
+            prefix = participant_name + ".norm.indel_recal",
+    }
+
+    call Niare_HC.MergeMultiAllelicSitesPostRecalibration as MergeMultiAllelicSitesPostRecalibration {
+        input:
+            input_vcf = ApplyVqsrSnp.output_vcf,
+            input_vcf_index = ApplyVqsrSnp.output_vcf_index,
+            ref_fasta         = ref_map['fasta'],
+            ref_fasta_fai     = ref_map['fai'],
+            ref_dict          = ref_map['dict'],
+            prefix = participant_name + ".recalibrated",
     }
 
     ################################################################################################
 
     # Create a Keyfile for finalization:
-    File keyfile = MergeVCFs.output_vcf_index
+    File keyfile = MergeMultiAllelicSitesPostRecalibration.output_vcf_index
 
     # Finalize the raw Joint Calls:
     call FF.FinalizeToFile as FinalizeRawHCVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf }
@@ -201,8 +265,8 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
     call FF.FinalizeToFile as FinalizeHCGTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf_index }
     call FF.FinalizeToFile as FinalizeHCBamOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout }
     call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout_index }
-    call FF.FinalizeToFile as FinalizeRecalibratedVcf { input: outdir = smalldir, keyfile = keyfile, file = MergeVCFs.output_vcf }
-    call FF.FinalizeToFile as FinalizeRecalibratedVcfIndex { input: outdir = smalldir, keyfile = keyfile, file = MergeVCFs.output_vcf_index }
+    call FF.FinalizeToFile as FinalizeRecalibratedVcf { input: outdir = smalldir, keyfile = keyfile, file = MergeMultiAllelicSitesPostRecalibration.output_vcf }
+    call FF.FinalizeToFile as FinalizeRecalibratedVcfIndex { input: outdir = smalldir, keyfile = keyfile, file = MergeMultiAllelicSitesPostRecalibration.output_vcf_index }
 
     ################################
     # Finalize the VETS files:
