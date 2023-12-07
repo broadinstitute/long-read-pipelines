@@ -35,6 +35,8 @@ workflow SRFlowcell {
 
         String gcs_out_root_dir
 
+        Boolean perform_BQSR = true
+
         Boolean DEBUG_MODE = false
 
         String platform = "illumina"
@@ -182,35 +184,40 @@ workflow SRFlowcell {
 
 #    TODO: Add Fingerprinting?
 
-    # Recalibrate Base Scores:
-    call SRUTIL.BaseRecalibrator as t_009_BaseRecalibrator {
-        input:
-            input_bam = t_008_SortAlignedDuplicateMarkedBam.sorted_bam,
-            input_bam_index = t_008_SortAlignedDuplicateMarkedBam.sorted_bai,
+    if (perform_BQSR) {
+        # Recalibrate Base Scores:
+        call SRUTIL.BaseRecalibrator as t_009_BaseRecalibrator {
+            input:
+                input_bam = t_008_SortAlignedDuplicateMarkedBam.sorted_bam,
+                input_bam_index = t_008_SortAlignedDuplicateMarkedBam.sorted_bai,
 
-            ref_fasta = ref_map["fasta"],
-            ref_fasta_index = ref_map["fai"],
-            ref_dict = ref_map["dict"],
+                ref_fasta = ref_map["fasta"],
+                ref_fasta_index = ref_map["fai"],
+                ref_dict = ref_map["dict"],
 
-            known_sites_vcf = ref_map["known_sites_vcf"],
-            known_sites_index = ref_map["known_sites_index"],
+                known_sites_vcf = ref_map["known_sites_vcf"],
+                known_sites_index = ref_map["known_sites_index"],
 
-            prefix = SM + ".baseRecalibratorReport"
+                prefix = SM + ".baseRecalibratorReport"
+        }
+
+        call SRUTIL.ApplyBQSR as t_010_ApplyBQSR {
+            input:
+                input_bam = t_008_SortAlignedDuplicateMarkedBam.sorted_bam,
+                input_bam_index = t_008_SortAlignedDuplicateMarkedBam.sorted_bai,
+
+                ref_fasta = ref_map["fasta"],
+                ref_fasta_index = ref_map["fai"],
+                ref_dict = ref_map["dict"],
+
+                recalibration_report = t_009_BaseRecalibrator.recalibration_report,
+
+                prefix = SM + ".aligned.merged.markDuplicates.sorted.BQSR"
+        }
     }
 
-    call SRUTIL.ApplyBQSR as t_010_ApplyBQSR {
-        input:
-            input_bam = t_008_SortAlignedDuplicateMarkedBam.sorted_bam,
-            input_bam_index = t_008_SortAlignedDuplicateMarkedBam.sorted_bai,
-
-            ref_fasta = ref_map["fasta"],
-            ref_fasta_index = ref_map["fai"],
-            ref_dict = ref_map["dict"],
-
-            recalibration_report = t_009_BaseRecalibrator.recalibration_report,
-
-            prefix = SM + ".aligned.merged.markDuplicates.sorted.BQSR"
-    }
+    File final_bam = select_first([t_010_ApplyBQSR.recalibrated_bam, t_008_SortAlignedDuplicateMarkedBam.sorted_bam])
+    File final_bai = select_first([t_010_ApplyBQSR.recalibrated_bai, t_008_SortAlignedDuplicateMarkedBam.sorted_bai])
 
     #############################################
     #      __  __      _        _
@@ -223,24 +230,24 @@ workflow SRFlowcell {
 
     call AM.SamStatsMap as t_011_SamStats {
         input:
-            bam = t_010_ApplyBQSR.recalibrated_bam
+            bam = final_bam
     }
 
-    call FastQC.FastQC as t_012_FastQC { input: bam = t_010_ApplyBQSR.recalibrated_bam, bai = t_010_ApplyBQSR.recalibrated_bai }
+    call FastQC.FastQC as t_012_FastQC { input: bam = final_bam, bai = final_bai }
     call Utils.ComputeGenomeLength as t_013_ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-    call SRUTIL.ComputeBamStats as t_014_ComputeBamStats { input: bam_file = t_010_ApplyBQSR.recalibrated_bam }
+    call SRUTIL.ComputeBamStats as t_014_ComputeBamStats { input: bam_file = final_bam }
 
     # Collect stats on aligned reads:
-    call SRUTIL.ComputeBamStats as t_015_ComputeBamStatsQ5 { input: bam_file = t_010_ApplyBQSR.recalibrated_bam, qual_threshold = 5 }
-    call SRUTIL.ComputeBamStats as t_016_ComputeBamStatsQ7 { input: bam_file = t_010_ApplyBQSR.recalibrated_bam, qual_threshold = 7 }
-    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ10 { input: bam_file = t_010_ApplyBQSR.recalibrated_bam, qual_threshold = 10 }
-    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ12 { input: bam_file = t_010_ApplyBQSR.recalibrated_bam, qual_threshold = 12 }
-    call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ15 { input: bam_file = t_010_ApplyBQSR.recalibrated_bam, qual_threshold = 15 }
+    call SRUTIL.ComputeBamStats as t_015_ComputeBamStatsQ5 { input: bam_file  = final_bam, qual_threshold = 5 }
+    call SRUTIL.ComputeBamStats as t_016_ComputeBamStatsQ7 { input: bam_file  = final_bam, qual_threshold = 7 }
+    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ10 { input: bam_file = final_bam, qual_threshold = 10 }
+    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ12 { input: bam_file = final_bam, qual_threshold = 12 }
+    call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ15 { input: bam_file = final_bam, qual_threshold = 15 }
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
         input:
-            aligned_bam    = t_010_ApplyBQSR.recalibrated_bam,
-            aligned_bai    = t_010_ApplyBQSR.recalibrated_bai,
+            aligned_bam    = final_bam,
+            aligned_bai    = final_bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = metrics_dir
@@ -298,14 +305,14 @@ workflow SRFlowcell {
     call FF.FinalizeToFile as t_023_FinalizeAlignedBam {
         input:
             outdir = aligned_reads_dir,
-            file = t_010_ApplyBQSR.recalibrated_bam,
+            file = final_bam,
             keyfile = keyfile
     }
 
     call FF.FinalizeToFile as t_024_FinalizeAlignedBai {
         input:
             outdir = aligned_reads_dir,
-            file = t_010_ApplyBQSR.recalibrated_bai,
+            file = final_bai,
             keyfile = keyfile
     }
 
@@ -316,7 +323,6 @@ workflow SRFlowcell {
             files =
             [
                 t_007_MarkDuplicates.metrics,
-                t_009_BaseRecalibrator.recalibration_report,
                 t_011_SamStats.sam_stats,
                 t_014_ComputeBamStats.results_file,
                 t_015_ComputeBamStatsQ5.results_file,
@@ -328,7 +334,18 @@ workflow SRFlowcell {
             keyfile = keyfile
     }
 
-    call FF.FinalizeToFile as t_026_FinalizeFastQCReport {
+    # Finalize BQSR Metrics if it was run:
+    if (perform_BQSR) {
+        call FF.FinalizeToDir as t_026_FinalizeBQSRMetrics {
+            input:
+                outdir = metrics_dir,
+                files = select_all([t_009_BaseRecalibrator.recalibration_report]),
+                keyfile = keyfile
+        }
+
+    }
+
+    call FF.FinalizeToFile as t_027_FinalizeFastQCReport {
         input:
             outdir = metrics_dir,
             file = t_012_FastQC.report
@@ -398,6 +415,6 @@ workflow SRFlowcell {
 
         Float average_identity = 100.0 - (100.0*t_011_SamStats.stats_map['mismatches']/t_011_SamStats.stats_map['bases_mapped'])
 
-        File fastqc_report = t_026_FinalizeFastQCReport.gcs_path
+        File fastqc_report = t_027_FinalizeFastQCReport.gcs_path
     }
 }
