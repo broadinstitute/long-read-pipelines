@@ -1134,13 +1134,13 @@ task SummarizeCCSReport {
     command <<<
         set -euxo pipefail
 
-        cat ~{report} | grep 'ZMWs input' | awk -F": " '{ print $2 }' > zmws_input.txt
-        cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_pass_filters.txt
-        cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_fail_filters.txt
-        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' > zmws_shortcut_filters.txt
-        cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_pass_filters_pct.txt
-        cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_fail_filters_pct.txt
-        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' > zmws_shortcut_filters_pct.txt
+        cat ~{report} | grep 'ZMWs input' | awk -F": " '{ print $2 }' | sed 's/,//g' > zmws_input.txt
+        cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' | sed 's/,//g' > zmws_pass_filters.txt
+        cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' | sed 's/,//g' > zmws_fail_filters.txt
+        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $1 }' | sed 's/,//g' > zmws_shortcut_filters.txt
+        cat ~{report} | grep 'ZMWs pass filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' | sed 's/,//g' > zmws_pass_filters_pct.txt
+        cat ~{report} | grep 'ZMWs fail filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' | sed 's/,//g' > zmws_fail_filters_pct.txt
+        cat ~{report} | grep 'ZMWs shortcut filters' | awk -F": " '{ print $2 }' | awk '{ print $2 }' | sed 's/[()%]//g' | sed 's/,//g' > zmws_shortcut_filters_pct.txt
     >>>
 
     output {
