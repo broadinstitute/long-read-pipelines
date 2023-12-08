@@ -55,6 +55,7 @@ workflow GenerateMalariaReports {
         # Coverage Plot -- incomplete
         # coverage_dir: "directory of BAM files for coverage plot generation"
         fastqc_path: "directory of fastqc_report used for finding BAM files"
+        fastqc_file: "file contents of fastqc_report -- same source as fastqc_path"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
 
     }
@@ -104,7 +105,8 @@ workflow GenerateMalariaReports {
         Float fraction_aligned_bases
         Float average_identity
 
-        # Coverage Plot -- incomplete   
+        # Coverage Plot -- incomplete  
+        File? fastqc_file 
         String fastqc_path
         Int? coverage_bin_size  
     }
@@ -138,7 +140,8 @@ workflow GenerateMalariaReports {
             fraction_aligned_bases = fraction_aligned_bases,
             average_identity = average_identity,
             fastqc_path = fastqc_path,
-            coverage_bin_size = coverage_bin_size
+            coverage_bin_size = coverage_bin_size,
+            fastqc_file = fastqc_file
     }
 
     output {
