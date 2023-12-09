@@ -32,7 +32,7 @@ workflow PBFindAndSummarizeBAMs {
             recurse = true
     }
 
-    scatter (bam in [ ListFilesOfType.files[0] ]) {
+    scatter (bam in ListFilesOfType.files) {
         call PB.PBIndex { input: bam = bam }
 
         call PB.SummarizePBI as SummarizeFullPBI { input: pbi = PBIndex.pbi, length_threshold = 0 }
