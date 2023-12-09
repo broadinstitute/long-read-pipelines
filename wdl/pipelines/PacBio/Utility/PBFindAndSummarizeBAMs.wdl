@@ -48,7 +48,7 @@ workflow PBFindAndSummarizeBAMs {
         call FF.FinalizeToFile as FinalizePBIFilteredSummary {
             input:
                 outdir = outdir,
-                file = SummarizeFilteredPBI.results_file
+                file = SummarizeFilteredPBI.results_file,
                 name = basename(SummarizeFilteredPBI.results_file, ".txt") + ".filtered.txt"
         }
     }
