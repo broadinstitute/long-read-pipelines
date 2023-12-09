@@ -41,13 +41,15 @@ workflow PBFindAndSummarizeBAMs {
         call FF.FinalizeToFile as FinalizePBIFullSummary {
             input:
                 outdir = outdir,
-                file = SummarizeFullPBI.results_file
+                file = SummarizeFullPBI.results_file,
+                name = basename(SummarizeFullPBI.results_file, ".txt") + ".full.txt"
         }
 
         call FF.FinalizeToFile as FinalizePBIFilteredSummary {
             input:
                 outdir = outdir,
                 file = SummarizeFilteredPBI.results_file
+                name = basename(SummarizeFilteredPBI.results_file, ".txt") + ".filtered.txt"
         }
     }
 
