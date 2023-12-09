@@ -34,12 +34,20 @@ workflow PBFindAndSummarizeBAMs {
 
     scatter (bam in [ ListFilesOfType.files[0] ]) {
         call PB.PBIndex { input: bam = bam }
-        call PB.SummarizePBI { input: pbi = PBIndex.pbi, length_threshold = length_threshold }
 
-        call FF.FinalizeToFile as FinalizePBISummary {
+        call PB.SummarizePBI as SummarizeFullPBI { input: pbi = PBIndex.pbi, length_threshold = 0 }
+        call PB.SummarizePBI as SummarizeFilteredPBI { input: pbi = PBIndex.pbi, length_threshold = length_threshold }
+
+        call FF.FinalizeToFile as FinalizePBIFullSummary {
             input:
                 outdir = outdir,
-                file = SummarizePBI.results_file
+                file = SummarizeFullPBI.results_file
+        }
+
+        call FF.FinalizeToFile as FinalizePBIFilteredSummary {
+            input:
+                outdir = outdir,
+                file = SummarizeFilteredPBI.results_file
         }
     }
 
