@@ -141,3 +141,6 @@ workflows:
 - name: CollectBamFlagStats
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CollectBamFlagStats.wdl
+- name: SaveFilesToDestination
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SaveFilesToDestination.wdl
