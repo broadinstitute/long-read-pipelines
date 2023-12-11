@@ -11,6 +11,8 @@ workflow VerifyBamFingerprint {
     }
 
     parameter_meta {
+        tech: "The technology used to generate this BAM. Currently, the following values are accepted: [ONT, Sequel, Revio]."
+
         fp_store: "GCS storage bucket and folder where the fingperprint VCF files are stored."
         sample_id_at_store: "sample id of the data at the storage; CRITICAL: it's assumsed that the fingerprint VCF file follow the naming convention that start with this sample id."
         ref_specific_haplotype_map: "Reference-specific haplotype map file to be passed on to Picard's `CheckFingerprint`"
@@ -22,6 +24,7 @@ workflow VerifyBamFingerprint {
     input {
         File aligned_bam
         File aligned_bai
+        String tech
 
         String fp_store
         String sample_id_at_store

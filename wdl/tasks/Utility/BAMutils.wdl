@@ -627,7 +627,7 @@ task CountAlignmentRecordsByFlag {
         Int num_local_ssds
     }
 
-    Int n = length(names_and_decimal_flags)
+    # Int n = length(names_and_decimal_flags)
 
     String base = basename(aligned_bam, ".bam")
     String local_bam = "/cromwell_root/~{base}.bam"
@@ -636,9 +636,13 @@ task CountAlignmentRecordsByFlag {
 
         two_col_tsv=~{write_map(names_and_decimal_flags)}
         cat "${two_col_tsv}"
-        x=$(wc -l "${two_col_tsv}" | awk '{print $1}')
+        # x=$(wc -l "${two_col_tsv}" | awk '{print $1}')
+        # if [[ 3 -ne "${x}" ]]; then ## 3 here is used in place of n to avoid validation error (yes, validation false positive)
+        #     sed -i -e '$a\' "${two_col_tsv}"
+        # fi
+        wc -l "${two_col_tsv}"
         # because some Cromwell versions' stdlib function write_map() doesn't have new line at end of file, so we add it explicitly
-        if [[ ~{n} -ne "${x}" ]]; then
+        if [[ $(tail -c1 "${two_col_tsv}" | wc -l) -eq 0 ]]; then
             sed -i -e '$a\' "${two_col_tsv}"
         fi
         # '

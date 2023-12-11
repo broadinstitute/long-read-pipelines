@@ -94,9 +94,17 @@ task CoerceMapToArrayOfPairs {
     command <<<
         set -eux
 
-        tmp_tsv=~{write_map(input_map)}
-        awk -F '\t' '{print $1}' ${tmp_tsv} > keys.txt
-        awk -F '\t' '{print $2}' ${tmp_tsv} > values.txt
+        two_col_tsv=~{write_map(input_map)}
+        cat "${two_col_tsv}"
+        wc -l "${two_col_tsv}"
+        # because some Cromwell versions' stdlib function write_map() doesn't have new line at end of file, so we add it explicitly
+        if [[ $(tail -c1 "${two_col_tsv}" | wc -l) -eq 0 ]]; then
+            sed -i -e '$a\' "${two_col_tsv}"
+        fi
+        # '
+        wc -l "${two_col_tsv}"
+        awk -F '\t' '{print $1}' ${two_col_tsv} > keys.txt
+        awk -F '\t' '{print $2}' ${two_col_tsv} > values.txt
     >>>
 
     output {
@@ -128,6 +136,109 @@ task CoerceArrayOfPairsToMap {
     output {
         Map[String, String] output_map = read_map("result.tsv")
     }
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task MergeMaps {
+    meta {
+        desciption:
+        "For merging two maps into one."
+        note:
+        "User is responsible for ensuring uniqueness of keys."
+    }
+    input {
+        Map[String, String] one
+        Map[String, String] two
+    }
+    output {
+        Map[String, String] merged = read_map("merged.tsv")
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        ####### one
+        two_col_tsv=~{write_map(one)}
+        cat "${two_col_tsv}"
+        wc -l "${two_col_tsv}"
+        # because some Cromwell versions' stdlib function write_map() doesn't have new line at end of file, so we add it explicitly
+        if [[ $(tail -c1 "${two_col_tsv}" | wc -l) -eq 0 ]]; then
+            sed -i -e '$a\' "${two_col_tsv}"
+        fi
+        # '
+        wc -l "${two_col_tsv}"
+        mv "${two_col_tsv}" "one.tsv"
+        ####### two
+        two_col_tsv=~{write_map(two)}
+        cat "${two_col_tsv}"
+        wc -l "${two_col_tsv}"
+        # because some Cromwell versions' stdlib function write_map() doesn't have new line at end of file, so we add it explicitly
+        if [[ $(tail -c1 "${two_col_tsv}" | wc -l) -eq 0 ]]; then
+            sed -i -e '$a\' "${two_col_tsv}"
+        fi
+        # '
+        wc -l "${two_col_tsv}"
+        mv "${two_col_tsv}" "two.tsv"
+        ####### merge
+        cat "one.tsv" "two.tsv" > "merged.tsv"
+        cat "merged.tsv"
+    >>>
+
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task MapToTsv {
+    meta {
+        desciption:
+        "For fixing an issue of some Cromwell servers where write_map misses the last line"
+    }
+    input {
+        Map[String, String] m
+    }
+    output {
+        File tsv = "two_col.tsv"
+    }
+    command <<<
+        two_col_tsv=~{write_map(m)}
+        cat "${two_col_tsv}"
+        wc -l "${two_col_tsv}"
+        # because some Cromwell versions' stdlib function write_map() doesn't have new line at end of file, so we add it explicitly
+        if [[ $(tail -c1 "${two_col_tsv}" | wc -l) -eq 0 ]]; then
+            sed -i -e '$a\' "${two_col_tsv}"
+        fi
+        # '
+        wc -l "${two_col_tsv}"
+        mv "${two_col_tsv}" "two_col.tsv"
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task ConcatenateFiles {
+    meta {
+        desciption:
+        "For concatinating files"
+    }
+    input {
+        Array[File]+ af
+        String out_name
+    }
+    output {
+        File merged = "~{out_name}"
+    }
+    command <<<
+        set -euxo pipefail
+
+        cat ~{sep=' ' af} > "~{out_name}"
+    >>>
     runtime {
         disks: "local-disk 10 HDD"
         docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"

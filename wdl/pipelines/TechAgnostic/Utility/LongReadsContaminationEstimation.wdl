@@ -4,6 +4,19 @@ import "../../../tasks/Utility/Utils.wdl"
 import "../../../tasks/Utility/BAMutils.wdl" as BU
 import "../../../tasks/QC/Contamination.wdl"
 
+# this is a model that other sub-workflows can potentially follow,
+# i.e. define a custom struct so that super workflows can use pre-defined JSON files
+struct VBID2_config {
+    File genotyping_sites
+
+    Boolean is_hgdp_sites
+    Boolean is_100k_sites
+
+    Boolean disable_baq
+
+    String? tech
+}
+
 workflow LongReadsContaminationEstimation {
     meta {
         desciption:
