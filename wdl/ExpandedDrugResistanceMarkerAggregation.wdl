@@ -78,11 +78,19 @@ task CombineExpandedDrugResistanceMarkers {
         for i, expanded_drug_report in enumerate(drug_res_files):
             sample_id = sample_names[i]
             with open(expanded_drug_report, 'r') as f:
-                next(f)
+                # NOTE: Header should be the same for all samples, so we can reuse it later
+                header = next(f).strip().split("\t")
+
+                gt_field = header.index("GT")
+                error_field = header.index("ERRORS / WARNINGS / INFO")
+
                 for line in f:
-                    fields = line.strip().split()
-                    marker = "_".join(fields[:3])
-                    sample_marker_dict[sample_id][marker] = 1 if fields[4] == "hom" else -2
+                    fields = [fld.strip() for fld in line.split("\t")]
+                    gt = fields[gt_field]
+
+                    marker = tuple([item for i, item in enumerate(fields) if i not in (gt_field, error_field)])
+
+                    sample_marker_dict[sample_id][marker] = 1 if (gt=="1/1" or gt=="1|1") else -2
 
         # Make lists of the things we want to iterate over:
         marker_list_list = list([v.keys() for v in sample_marker_dict.values()])
@@ -91,12 +99,15 @@ task CombineExpandedDrugResistanceMarkers {
         sample_list = sorted([k for k in sample_marker_dict.keys()])
 
         # # Second pass to actually aggregate the markers:
+        out_header = [item for i, item in enumerate(header) if i not in (gt_field, error_field)]
         with open(aggregated_report, 'w') as f:
             # Write header:
-            f.write("Marker\t" + "\t".join(sample_list))
+            f.write("\t".join(out_header) + "\t" + "\t".join(sample_list))
             f.write("\n")
             for marker in marker_list:
-                f.write(marker + "\t")
+                # Markers are now tuples, so we need to write each element first:
+                f.write("\t".join(marker))
+                f.write("\t")
                 for sample in sample_list:
                     f.write(str(sample_marker_dict[sample][marker]))
                     f.write("\t")
