@@ -82,7 +82,7 @@ task CombineExpandedDrugResistanceMarkers {
                 for line in f:
                     fields = line.strip().split()
                     marker = "_".join(fields[:3])
-                    sample_marker_dict[sample_id][marker] = 1 if fields[4] == "hom" else -1
+                    sample_marker_dict[sample_id][marker] = 1 if fields[4] == "hom" else -2
 
         # Make lists of the things we want to iterate over:
         marker_list_list = list([v.keys() for v in sample_marker_dict.values()])
