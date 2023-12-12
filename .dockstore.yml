@@ -188,3 +188,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS.wdl
   testParameterFiles:
+- name: ExpandedDrugResistanceMarkerExtraction
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ExpandedDrugResistanceMarkerExtraction.wdl
+  testParameterFiles:

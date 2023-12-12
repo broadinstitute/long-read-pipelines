@@ -4,7 +4,7 @@ import "tasks/Structs.wdl"
 import "tasks/FunctionalAnnotation.wdl" as FUNK
 import "tasks/Finalize.wdl" as FF
 
-workflow DrugResistanceMarkerCollection {
+workflow ExpandedDrugResistanceMarkerExtraction {
     input {
         String sample_name
 
@@ -19,7 +19,7 @@ workflow DrugResistanceMarkerCollection {
         Boolean do_functional_annotation = true
     }
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/DrugResistanceMarkerCollection/~{dir_prefix}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ExpandedDrugResistanceMarkerExtraction/~{dir_prefix}"
 
     if (do_functional_annotation) {
         call FUNK.FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db }
