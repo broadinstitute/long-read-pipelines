@@ -125,7 +125,7 @@ task CallDrugResistanceMutations {
             return s.index(x[0])
 
         annotations = []
-        with gzip.open(vcf, 'rt') as f:
+        with gzip.open("~{vcf}", 'rt') as f:
             for line in f:
                 if line.startswith("##INFO=<ID=ANN"):
                     needle = 'Functional annotations: '
