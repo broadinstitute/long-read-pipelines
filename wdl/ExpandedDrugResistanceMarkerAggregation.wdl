@@ -45,7 +45,7 @@ task CombineExpandedDrugResistanceMarkers {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 + 10*ceil(size([sample_names, expanded_drug_res_markers], "GB"))
+    Int disk_size = 10 + 10*ceil(size(expanded_drug_res_markers, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -128,7 +128,7 @@ task CombineExpandedDrugResistanceMarkers {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "quay.io/biocontainers/snpeff:5.1d--hdfd78af_0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
