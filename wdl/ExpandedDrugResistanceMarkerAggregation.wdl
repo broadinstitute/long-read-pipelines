@@ -54,8 +54,8 @@ task CombineExpandedDrugResistanceMarkers {
 
         aggregated_report = "~{prefix}.expanded_drug_report_combined.tsv"
 
-        sample_name_file = ~{write_lines(sample_names)}
-        drug_res_file = ~{write_lines(expanded_drug_res_markers)}
+        sample_name_file = "~{write_lines(sample_names)}"
+        drug_res_file = "~{write_lines(expanded_drug_res_markers)}"
 
         # Read in the sample names:
         sample_names = []
