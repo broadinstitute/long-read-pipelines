@@ -158,9 +158,9 @@ task CallDrugResistanceMutations {
                         if gene_id in ann_dict["Gene_Name"] or gene_id in ann_dict["Gene_ID"]:
                             # is it protein coding?
                             if len(ann_dict["HGVS.p"]) > 0:
-                                gene_annotations.append((ann_dict["Annotation_Impact"], gene_name, gene_id, ann_dict['HGVS.p'], ann_dict["Annotation"], gt_str))
+                                gene_annotations.append((ann_dict["Annotation_Impact"], chrom, pos, gene_name, gene_id, ann_dict["Feature_Type"], ann_dict["Feature_ID"], ann_dict['HGVS.p'], ann_dict["Annotation"], gt_str))
                             else:
-                                gene_annotations.append((ann_dict["Annotation_Impact"], gene_name, gene_id, ann_dict['HGVS.c'], ann_dict["Annotation"], gt_str))
+                                gene_annotations.append((ann_dict["Annotation_Impact"], chrom, pos, gene_name, gene_id, ann_dict["Feature_Type"], ann_dict["Feature_ID"], ann_dict['HGVS.c'], ann_dict["Annotation"], gt_str))
 
                 if len(gene_annotations) > 0:
                     # Sort gene annotations to make the highest / worst effect at the front:
@@ -174,19 +174,19 @@ task CallDrugResistanceMutations {
                     for ann_dict in ann_dicts:
                         if gene_id in ann_dict["Gene_Name"] or gene_id in ann_dict["Gene_ID"]:
                             if len(ann_dict["HGVS.p"]) > 0 and ann_dict["HGVS.p"] == prot_change:
-                                annotations.append((gene_name, gene_id, ann_dict['HGVS.p'], ann_dict["Annotation"], gt_str))
+                                annotations.append((chrom, pos, gene_name, gene_id, ann_dict["Feature_Type"], ann_dict["Feature_ID"], ann_dict['HGVS.p'], ann_dict["Annotation"], gt_str))
 
         with open(gene_drug_report_all, 'w') as f:
-            f.write(f"Gene_Name\tGene_ID\tChange_String\tAnnotation_Type\tGT\n")
+            f.write(f"Chrom\tPos\tGene_Name\tGene_ID\tFeatureType\tFeature_ID\tChange_String\tAnnotation_Type\tGT\n")
             for a in annotations:
-                if a[3] != "synonymous_variant":
+                if a[-2] != "synonymous_variant":
                     f.write("\t".join(a))
                     f.write("\n")
 
         with open(gene_drug_report_prot, 'w') as f:
-            f.write(f"Gene_Name\tGene_ID\tChange_String\tAnnotation_Type\tGT\n")
+            f.write(f"Chrom\tPos\tGene_Name\tGene_ID\tFeatureType\tFeature_ID\tChange_String\tAnnotation_Type\tGT\n")
             for a in annotations:
-                if a[2].startswith("p.") and a[3] != "synonymous_variant":
+                if a[-3].startswith("p.") and a[-2] != "synonymous_variant":
                     f.write("\t".join(a))
                     f.write("\n")
         CODE
