@@ -149,46 +149,42 @@ task CallDrugResistanceMutations {
 
                 i = gt_f.index("GT")
                 gt = gt_d[i]
-                gt_str = "hom" if (gt == "1/1" or gt=="1|1") else "het"
+
+                base_out_data = [chrom, pos, ref, alt, gt]
 
                 # Now check if our Gene level drug markers:
                 gene_annotations = []
                 for gene_name, gene_id in gene_info:
                     for ann_dict in ann_dicts:
                         if gene_id in ann_dict["Gene_Name"] or gene_id in ann_dict["Gene_ID"]:
-                            # is it protein coding?
-                            if len(ann_dict["HGVS.p"]) > 0:
-                                gene_annotations.append((ann_dict["Annotation_Impact"], chrom, pos, gene_name, gene_id, ann_dict["Feature_Type"], ann_dict["Feature_ID"], ann_dict['HGVS.p'], ann_dict["Annotation"], gt_str))
-                            else:
-                                gene_annotations.append((ann_dict["Annotation_Impact"], chrom, pos, gene_name, gene_id, ann_dict["Feature_Type"], ann_dict["Feature_ID"], ann_dict['HGVS.c'], ann_dict["Annotation"], gt_str))
+                            gene_annotations.append(tuple(base_out_data + [ann_dict[a] for a in annotation_fields]))
 
-                if len(gene_annotations) > 0:
-                    # Sort gene annotations to make the highest / worst effect at the front:
-                    gene_annotations = sorted(gene_annotations, key=ann_impact_sort_key)
-                    # Only output the greatest effect annotation
-                    # only output the fields from gene_name onward - we dont need the impact
-                    annotations.append(gene_annotations[0][1:])
+                for g in gene_annotations:
+                    annotations.append(g)
 
                 # Now check for our protein change string drug markers:
                 for gene_name, gene_id, prot_change in p_change_marker_info:
                     for ann_dict in ann_dicts:
                         if gene_id in ann_dict["Gene_Name"] or gene_id in ann_dict["Gene_ID"]:
                             if len(ann_dict["HGVS.p"]) > 0 and ann_dict["HGVS.p"] == prot_change:
-                                annotations.append((chrom, pos, gene_name, gene_id, ann_dict["Feature_Type"], ann_dict["Feature_ID"], ann_dict['HGVS.p'], ann_dict["Annotation"], gt_str))
+                                annotations.append(tuple(base_out_data + [ann_dict[a] for a in annotation_fields]))
 
+        header = "Chrom\tPos\tRef\tAlt\tGT\t" + "\t".join(annotation_fields)
         with open(gene_drug_report_all, 'w') as f:
-            f.write(f"Chrom\tPos\tGene_Name\tGene_ID\tFeatureType\tFeature_ID\tChange_String\tAnnotation_Type\tGT\n")
+            f.write(f"{header}\n")
             for a in annotations:
-                if a[-2] != "synonymous_variant":
+                if "synonymous_variant" not in a:
                     f.write("\t".join(a))
                     f.write("\n")
 
         with open(gene_drug_report_prot, 'w') as f:
-            f.write(f"Chrom\tPos\tGene_Name\tGene_ID\tFeatureType\tFeature_ID\tChange_String\tAnnotation_Type\tGT\n")
+            f.write(f"{header}\n")
             for a in annotations:
-                if a[-3].startswith("p.") and a[-2] != "synonymous_variant":
+                if "synonymous_variant" not in a:
                     f.write("\t".join(a))
                     f.write("\n")
+
+        print('Done')
         CODE
 
     >>>
