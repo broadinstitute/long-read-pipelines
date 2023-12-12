@@ -192,3 +192,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ExpandedDrugResistanceMarkerExtraction.wdl
   testParameterFiles:
+- name: ExpandedDrugResistanceMarkerAggregation
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ExpandedDrugResistanceMarkerAggregation.wdl
+  testParameterFiles:
