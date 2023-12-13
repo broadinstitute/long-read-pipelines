@@ -1,5 +1,5 @@
-IMAGE_NAME = lr-clair
-VERSION = 2.1.2
+IMAGE_NAME = lr-pbsv
+VERSION = 0.1.1
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest

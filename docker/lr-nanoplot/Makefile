@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-nanoplot
-VERSION = 1.40.0-1
+VERSION = 1.40.1
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
 

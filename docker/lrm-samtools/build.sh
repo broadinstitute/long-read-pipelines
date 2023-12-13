@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ############### build samtools and bcftools from source
 SAMTOOLS_VERSION=1.13
 BCFTOOLS_VERSION=1.13
@@ -30,25 +29,15 @@ make install
 cd ..
 rm -rf bcftools-${BCFTOOLS_VERSION}* # removes the tar file and the directory into which it was extracted
 
-apt-get -qqy purge ${PREREQ_PACKAGES} ${EXTRA_PACKAGES}
-apt-get -qqy autoremove
-apt-get -qqy clean
-rm -rf /tmp/* \
-       /var/tmp/* \
-       /var/cache/apt/* \
-       /var/lib/apt/lists/* \
-       /usr/share/man/?? \
-       /usr/share/man/??_*
-
 mkdir /install
 tar -C / -czf /install/install.tgz usr/local
-rm -rf /usr/local
+
 cat <<EOF >/install/install.sh
 #!/bin/bash
+tar -C / -xzf /install/install.tgz
 apt-get update --fix-missing
 export DEBIAN_FRONTEND=noninteractive
 apt-get -qqy install --no-install-recommends ${PREREQ_PACKAGES}
-apt-get -qqy autoremove
 apt-get -qqy clean
 rm -rf /tmp/* \
        /var/tmp/* \
@@ -56,9 +45,7 @@ rm -rf /tmp/* \
        /var/lib/apt/lists/* \
        /usr/share/man/?? \
        /usr/share/man/??_*
-tar -C / -xzf /install/install.tgz
-ldconfig
-rm -rf /install
 EOF
+
 chmod a+x /install/install.sh
 rm build.sh

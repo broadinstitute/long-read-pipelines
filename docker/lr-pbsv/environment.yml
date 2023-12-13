@@ -1,0 +1,6 @@
+name: lr-pbsv
+channels:
+  - bioconda
+dependencies:
+  - pbsv=2.9.0
+prefix: /opt/conda/envs/lr-pbsv
