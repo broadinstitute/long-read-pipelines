@@ -11,7 +11,6 @@ workflow AlignedMetrics {
     parameter_meta {
         aligned_bam: "Aligned BAM file"
         aligned_bai: "Index for aligned BAM file"
-        ref_fasta: "Reference FASTA file"
         ref_dict: "Reference dictionary file"
         gcs_output_dir: "GCS output directory"
     }
@@ -20,7 +19,6 @@ workflow AlignedMetrics {
         File aligned_bam
         File aligned_bai
 
-        File ref_fasta
         File ref_dict
 
         String? gcs_output_dir
@@ -44,7 +42,7 @@ workflow AlignedMetrics {
     call FlagStats as AlignedFlagStats { input: bam = aligned_bam }
 
     if (defined(gcs_output_dir)) {
-        String outdir = sub(gcs_output_dir + "", "/$", "")
+        String outdir = sub(select_first([gcs_output_dir]), "/$", "")
 
         call FF.FinalizeToDir as FFYieldAligned {
             input:
@@ -209,55 +207,6 @@ task MosDepth {
     }
 }
 
-task MosDepthOverBed {
-    input {
-        File bam
-        File bai
-        File bed
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
-    String basename = basename(bam, ".bam")
-    String bedname = basename(bed, ".bed")
-    String prefix = "~{basename}.coverage_over_bed.~{bedname}"
-
-    command <<<
-        set -euxo pipefail
-
-        mosdepth -t 4 -b ~{bed} -n -x -Q 1 ~{prefix} ~{bam}
-    >>>
-
-    output {
-        File global_dist      = "~{prefix}.mosdepth.global.dist.txt"
-        File region_dist      = "~{prefix}.mosdepth.region.dist.txt"
-        File regions          = "~{prefix}.regions.bed.gz"
-        File regions_csi      = "~{prefix}.regions.bed.gz.csi"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             8,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "quay.io/biocontainers/mosdepth:0.2.4--he527e40_0"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
 task SummarizeDepth {
     input {
         File regions
@@ -271,9 +220,9 @@ task SummarizeDepth {
     command <<<
         set -euxo pipefail
 
-        ((echo 'chr start stop cov_mean cov_sd cov_q1 cov_median cov_q3 cov_iqr') && \
-         (zcat ~{regions} | datamash first 1 first 2 last 3 mean 4 sstdev 4 q1 4 median 4 q3 4 iqr 4)) | \
-         column -t > ~{chrName}.summary.txt
+        echo 'chr start stop cov_mean cov_sd cov_q1 cov_median cov_q3 cov_iqr' | gzip > header.gz
+        zcat -f header.gz "~{regions}" | datamash first 1 first 2 last 3 mean 4 sstdev 4 q1 4 median 4 q3 4 iqr 4 | \
+            column -t > ~{chrName}.summary.txt
     >>>
 
     output {

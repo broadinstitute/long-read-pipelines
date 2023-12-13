@@ -686,7 +686,8 @@ task MergeBams {
             description: "Input array of BAMs to be merged.",
             localization_optional: true
         }
-        prefix: "Prefix for the output BAM."
+        outputBamName: "Name for the output BAM."
+        outputBucket: "If supplied, output files will be copied to this cloud path."
         checkSingleSample: "Set to true to check that all BAMs agree on a single sample."
         pacBioBams: "Set to true to create a .pbi index when all BAMs are PacBio BAMs."
         runtime_attr_override: "Override the default runtime attributes."
@@ -694,7 +695,8 @@ task MergeBams {
 
     input {
         Array[File] bams
-        String prefix = "out"
+        String outputBamName = "out.bam"
+        String? outputBucket
         Boolean checkSingleSample = false
         Boolean pacBioBams = false
 
@@ -729,22 +731,40 @@ task MergeBams {
             rm sampleNames allSampleNames
         fi
 
+        outputBAM="~{outputBamName}"
+        outputBAI="~{outputBamName}.bai"
+
         if [ "$nBams" -eq 1 ]; then
-            mv bams_dir/* "~{prefix}.bam"
-            samtools index -@ 2 -o "~{prefix}.bam.bai" "~{prefix}.bam"
+            mv bams_dir/* "$outputBAM"
+            samtools index -@ 2 -o "$outputBAI" "$outputBAM"
         else
-            samtools merge -p -c --no-PG -@ 2 --write-index -o "~{prefix}.bam##idx##~{prefix}.bam.bai" bams_dir/*
+            samtools merge -p -c --no-PG -@ 2 --write-index -o "${outputBAM}##idx##${outputBAI}" bams_dir/*
         fi
 
+        outputPBI=""
         if ~{pacBioBams}; then
-            pbindex "~{prefix}.bam"
+            pbindex "~{outputBamName}"
+            outputPBI="~{outputBamName}.pbi"
+        fi
+
+        outDir="."
+        if ~{defined(outputBucket)}; then
+            outDir=$(echo "~{outputBucket}" | sed 's+/$++')
+            if [ -n "$outputPBI" ]; then
+                gcloud storage cp "$outputBAM" "$outputBAI" "$outputPBI" "${outDir}/"
+                outputPBI="$outDir/$outputPBI"
+            else
+                gcloud storage cp "$outputBAM" "$outputBAI" "${outDir}/"
+            fi
+            outputBAM="$outDir/$outputBAM"
+            outputBAI="$outDir/$outputBAI"
         fi
     >>>
 
     output {
-        File merged_bam = "~{prefix}.bam"
-        File merged_bai = "~{prefix}.bam.bai"
-        File? merged_pbi = "~{prefix}.bam.pbi"
+        File merged_bam = "$outputBAM"
+        File merged_bai = "$outputBAI"
+        File? merged_pbi = "$outputPBI"
     }
 
     #########################

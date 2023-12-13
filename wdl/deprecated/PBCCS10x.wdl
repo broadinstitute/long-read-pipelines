@@ -2,7 +2,6 @@ version 1.0
 
 import "../tasks/Utility/PBUtils.wdl" as PB
 import "../tasks/Utility/Utils.wdl" as Utils
-import "../tasks/Alignment/AlignReads.wdl" as AR
 import "../tasks/QC/AlignedMetrics.wdl" as AM
 import "tasks/AnnotateAdapters.wdl" as AA
 import "../tasks/Utility/Finalize.wdl" as FF
@@ -80,7 +79,6 @@ workflow PBCCS10x {
             input:
                 aligned_bam    = MergeCorrected.merged_bam,
                 aligned_bai    = MergeCorrected.merged_bai,
-                ref_fasta      = ref_map['fasta'],
                 ref_dict       = ref_map['dict'],
                 gcs_output_dir = outdir + "/metrics/per_flowcell/" + ID
         }
@@ -102,8 +100,8 @@ workflow PBCCS10x {
 
     # gather across (potential multiple) input raw BAMs
     if (length(bams) > 1) {
-        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, prefix = "~{participant_name}.corrected" }
-        call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
+        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, outputBamName = "~{participant_name}.corrected.bam" }
+        call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, outputBamName = "~{participant_name}.annotated.bam" }
 
         call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
     }
@@ -137,7 +135,6 @@ workflow PBCCS10x {
         input:
             aligned_bam    = annotated_bam,
             aligned_bai    = annotated_bai,
-            ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics/combined/" + participant_name
     }

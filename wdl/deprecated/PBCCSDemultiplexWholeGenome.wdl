@@ -11,7 +11,6 @@ version 1.0
 import "tasks/Utility/PBUtils.wdl" as DeprecatedPB
 import "../tasks/Utility/PBUtils.wdl" as PB
 import "../tasks/Utility/Utils.wdl" as Utils
-import "../tasks/Alignment/AlignReads.wdl" as AR
 import "../tasks/QC/AlignedMetrics.wdl" as AM
 import "../tasks/VariantCalling/CallVariantsPBCCS.wdl" as VAR
 import "../tasks/Utility/Finalize.wdl" as FF
@@ -61,13 +60,13 @@ workflow PBCCSDemultiplexWholeGenome {
         }
 
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-        call Utils.MergeBams as MergeCorrected { input: bams = CCS.consensus, prefix = "~{participant_name}.~{ID}.corrected" }
+        call Utils.MergeBams as MergeCorrected { input: bams = CCS.consensus, outputBamName = "~{participant_name}.~{ID}.corrected.bam" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
     }
 
     # gather across (potential multiple) input raw BAMs
     if (length(bams) > 1) {
-        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, prefix = "~{participant_name}.corrected" }
+        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, outputBamName = "~{participant_name}.corrected.bam" }
         call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
     }
 
@@ -114,7 +113,6 @@ workflow PBCCSDemultiplexWholeGenome {
             input:
                 aligned_bam    = AlignBarcode.aligned_bam,
                 aligned_bai    = AlignBarcode.aligned_bai,
-                ref_fasta      = ref_map['fasta'],
                 ref_dict       = ref_map['dict'],
                 gcs_output_dir = outdir + "/" + BC + "/metrics/per_barcode"
         }
@@ -126,11 +124,17 @@ workflow PBCCSDemultiplexWholeGenome {
             input:
                 bam               = ccs_bam,
                 bai               = ccs_bai,
-
+                prefix            = participant_name,
+                sample_id         = participant_name,
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
+                regions_file      = ref_map['regionsNoM'],
+                call_svs          = true,
+                fast_less_sensitive_sv = true,
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                call_small_variants = true,
+                run_dv_pepper_analysis = true
         }
 
         ##########
@@ -145,7 +149,7 @@ workflow PBCCSDemultiplexWholeGenome {
     }
 
     # merge demultiplexed BAMs into a single BAM (one readgroup per file)
-    call Utils.MergeBams as MergeBarcodeBams { input: bams = AlignBarcode.aligned_bam, prefix = "barcodes" }
+    call Utils.MergeBams as MergeBarcodeBams { input: bams = AlignBarcode.aligned_bam, outputBamName = "barcodes.bam" }
 
     ##########
     # store the results into designated bucket

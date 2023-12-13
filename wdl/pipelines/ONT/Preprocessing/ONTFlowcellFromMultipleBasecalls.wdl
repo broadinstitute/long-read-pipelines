@@ -28,13 +28,11 @@ workflow ONTFlowcellFromMultipleBasecalls {
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
-    Map[String, String] ref_map = read_map(ref_map_file)
-
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/~{flowcell}"
+    String outdir = sub(gcs_out_root_dir, "/?$", "/ONTFlowcell/~{flowcell}/alignments")
 
     ## Merge & deduplicate
     if (length(aligned_bams) > 1) {
-        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = flowcell }
+        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, outputBamName = "~{flowcell}.bam" }
     }
 
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
@@ -51,17 +49,20 @@ workflow ONTFlowcellFromMultipleBasecalls {
     call COV.SampleLevelAlignedMetrics as coverage {
         input:
             aligned_bam = usable_bam,
-            aligned_bai = usable_bai,
-            ref_fasta   = ref_map['fasta'],
-            bed_to_compute_coverage = bed_to_compute_coverage
+            aligned_bai = usable_bai
     }
-
+    if (defined(bed_to_compute_coverage)) {
+        call COV.MosDepthOverBed {
+            input:
+                bam = usable_bam,
+                bai = usable_bai,
+                bed = select_first([bed_to_compute_coverage]),
+                outputBucket = outdir
+        }
+    }
     # Finalize data
-    String dir = outdir + "/alignments"
-
-    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = usable_bam }
-    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = usable_bai }
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
+    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = outdir, file = usable_bam }
+    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = outdir, file = usable_bai }
 
     call GU.GetTodayDate as today {}
 
@@ -74,7 +75,7 @@ workflow ONTFlowcellFromMultipleBasecalls {
         # todo: aggregate raw reads stats from basecall directories
 
         # Aligned read stats
-        File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
+        File? bed_cov_summary = MosDepthOverBed.regions
 
         Map[String, Float] aligned_reads_stats = coverage.reads_stats
     }

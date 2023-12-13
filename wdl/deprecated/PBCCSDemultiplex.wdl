@@ -54,13 +54,13 @@ workflow PBCCSDemultiplex {
         }
 
         # merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-        call Utils.MergeBams as MergeCorrected { input: bams = CCS.consensus, prefix = "~{participant_name}.~{ID}.corrected" }
+        call Utils.MergeBams as MergeCorrected { input: bams = CCS.consensus, outputBamName = "~{participant_name}.~{ID}.corrected.bam" }
         call PB.MergeCCSReports as MergeCCSReports { input: reports = CCS.report }
     }
 
     # gather across (potential multiple) input raw BAMs
     if (length(bams) > 1) {
-        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, prefix = "~{participant_name}.corrected" }
+        call Utils.MergeBams as MergeAllCorrected { input: bams = MergeCorrected.merged_bam, outputBamName = "~{participant_name}.corrected.bam" }
         call PB.MergeCCSReports as MergeAllCCSReports { input: reports = MergeCCSReports.report }
     }
 

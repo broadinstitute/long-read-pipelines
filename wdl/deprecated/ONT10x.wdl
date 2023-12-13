@@ -4,7 +4,7 @@ import "../tasks/Utility/Utils.wdl" as Utils
 import "../tasks/Utility/ONTUtils.wdl" as ONT
 import "tasks/C3POa.wdl" as C3
 import "../tasks/Alignment/AlignReads.wdl" as AR
-import "../tasks/QC/AlignedMetrics.wdl" as AM
+#import "../tasks/QC/AlignedMetrics.wdl" as AM
 import "../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONT10x {
@@ -132,12 +132,12 @@ workflow ONT10x {
         call Utils.Sum as CountConsensusReadsInRun4 { input: ints = CountConsensusReadsInPartition4.num_records }
 
 #        call Utils.MergeBams as MergeAnnotated { input: bams = AnnotateAdapters.annotated_bam }
-#        call Utils.MergeBams as MergeSubreads { input: bams = align_subreads_bam, prefix = "~{participant_name}.subreads" }
+#        call Utils.MergeBams as MergeSubreads { input: bams = align_subreads_bam, outputBamName = "~{participant_name}.subreads.bam" }
 
-        call Utils.MergeBams as MergeConsensus1 { input: bams = align_consensus_bam1, prefix = "~{participant_name}.consensus1" }
-        call Utils.MergeBams as MergeConsensus2 { input: bams = align_consensus_bam2, prefix = "~{participant_name}.consensus2" }
-        call Utils.MergeBams as MergeConsensus3 { input: bams = align_consensus_bam3, prefix = "~{participant_name}.consensus3" }
-        call Utils.MergeBams as MergeConsensus4 { input: bams = align_consensus_bam4, prefix = "~{participant_name}.consensus4" }
+        call Utils.MergeBams as MergeConsensus1 { input: bams = align_consensus_bam1, outputBamName = "~{participant_name}.consensus1.bam" }
+        call Utils.MergeBams as MergeConsensus2 { input: bams = align_consensus_bam2, outputBamName = "~{participant_name}.consensus2.bam" }
+        call Utils.MergeBams as MergeConsensus3 { input: bams = align_consensus_bam3, outputBamName = "~{participant_name}.consensus3.bam" }
+        call Utils.MergeBams as MergeConsensus4 { input: bams = align_consensus_bam4, outputBamName = "~{participant_name}.consensus4.bam" }
     }
 
     call Utils.Sum as CountNoSplintReads  { input: ints = CountNoSplintReadsInRun.sum,  prefix = "~{participant_name}.no_splint_reads" }
@@ -161,15 +161,15 @@ workflow ONT10x {
     call Utils.Sum as CountConsensusReads3 { input: ints = CountConsensusReadsInRun3.sum, prefix = "~{participant_name}.num_consensus3" }
     call Utils.Sum as CountConsensusReads4 { input: ints = CountConsensusReadsInRun4.sum, prefix = "~{participant_name}.num_consensus4" }
 
-#    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
+#    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, outputBamName = "~{participant_name}.annotated.bam" }
 
     if (length(MergeConsensus1.merged_bam) > 1) {
-#        call Utils.MergeBams as MergeAllSubreads { input: bams = MergeSubreads.merged_bam, prefix = "~{participant_name}.subreads" }
+#        call Utils.MergeBams as MergeAllSubreads { input: bams = MergeSubreads.merged_bam, outputBamName = "~{participant_name}.subreads.bam" }
 
-        call Utils.MergeBams as MergeAllConsensus1 { input: bams = MergeConsensus1.merged_bam, prefix = "~{participant_name}.consensus1" }
-        call Utils.MergeBams as MergeAllConsensus2 { input: bams = MergeConsensus2.merged_bam, prefix = "~{participant_name}.consensus2" }
-        call Utils.MergeBams as MergeAllConsensus3 { input: bams = MergeConsensus3.merged_bam, prefix = "~{participant_name}.consensus3" }
-        call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, prefix = "~{participant_name}.consensus4" }
+        call Utils.MergeBams as MergeAllConsensus1 { input: bams = MergeConsensus1.merged_bam, outputBamName = "~{participant_name}.consensus1.bam" }
+        call Utils.MergeBams as MergeAllConsensus2 { input: bams = MergeConsensus2.merged_bam, outputBamName = "~{participant_name}.consensus2.bam" }
+        call Utils.MergeBams as MergeAllConsensus3 { input: bams = MergeConsensus3.merged_bam, outputBamName = "~{participant_name}.consensus3.bam" }
+        call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, outputBamName = "~{participant_name}.consensus4.bam" }
     }
 
 #    File subreads_bam = select_first([MergeAllSubreads.merged_bam, MergeSubreads.merged_bam[0]])
@@ -205,7 +205,6 @@ workflow ONT10x {
 #        input:
 #            aligned_bam    = MergeAllConsensus.merged_bam,
 #            aligned_bai    = MergeAllConsensus.merged_bai,
-#            ref_fasta      = ref_map['fasta'],
 #            ref_dict       = ref_map['dict'],
 #            gcs_output_dir = outdir + "/metrics/combined/" + participant_name
 #    }

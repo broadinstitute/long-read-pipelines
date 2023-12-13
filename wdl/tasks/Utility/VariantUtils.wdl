@@ -85,6 +85,7 @@ task MergeAndSortVCFs {
         File? header_definitions_file
 
         String prefix
+        String? output_bucket
 
         RuntimeAttr? runtime_attr_override
     }
@@ -162,21 +163,30 @@ task MergeAndSortVCFs {
         echo "==========================================================="
         echo "starting sort operation" && date
         echo "==========================================================="
+        vcfName="~{prefix}.vcf.gz"
         bcftools \
             sort \
             --temp-dir tm_sort \
             --output-type z \
-            -o ~{prefix}.vcf.gz \
+            -o "$vcfName" \
             wgs_raw.vcf.gz
         bcftools index --tbi --force ~{prefix}.vcf.gz
         echo "==========================================================="
         echo "done sorting" && date
         echo "==========================================================="
+
+        tbiName="${vcfName}.tbi"
+        if ~{defined(output_bucket)}; then
+            outDir="~{sub(select_first([output_bucket]), "/?$", "/")}"
+            gcloud storage cp "$vcfName" "$tbiName" "$outDir"
+            vcfName="${outDir}$vcfName"
+            tbiName="${outDir}$tbiName"
+        fi
     >>>
 
     output {
-        File vcf = "~{prefix}.vcf.gz"
-        File tbi = "~{prefix}.vcf.gz.tbi"
+        File vcf = "$vcfName"
+        File tbi = "$tbiName"
     }
 
     #########################

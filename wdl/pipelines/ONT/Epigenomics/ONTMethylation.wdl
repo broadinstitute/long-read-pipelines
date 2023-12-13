@@ -75,9 +75,24 @@ workflow ONTMethylation {
             out = "sequencing_summary.txt"
     }
 
-    call Utils.MergeBams as MergeMappings { input: bams = Megalodon.mappings_bam }
-    call Utils.MergeBams as MergeModMappings { input: bams = Megalodon.mod_mappings_bam }
-    call Utils.MergeBams as MergeVarMappings { input: bams = Megalodon.variant_mappings_bam }
+    String adir = outdir + "/alignments/haplotagged"
+
+    call Utils.MergeBams as MergeMappings {
+        input:
+            bams = Megalodon.mappings_bam,
+            outputBamName = "~{participant_name}.mapped.bam"
+    }
+    call Utils.MergeBams as MergeModMappings {
+        input:
+            bams = Megalodon.mod_mappings_bam,
+            outputBamName = "~{participant_name}.mod_mapped.bam",
+            outputBucket = adir
+    }
+    call Utils.MergeBams as MergeVarMappings {
+        input:
+            bams = Megalodon.variant_mappings_bam,
+            outputBamName = "~{participant_name}.var_mapped.bam"
+    }
 
     call WhatsHapFilter { input: variants = variants, variants_tbi = variants_tbi }
     call IndexVariants { input: variants = WhatsHapFilter.whatshap_filt_vcf }
@@ -134,7 +149,12 @@ workflow ONTMethylation {
             prefix = "phased.merged"
     }
 
-    call Utils.MergeBams as MergeHaplotagBams { input: bams = Haplotag.variant_mappings_haplotagged_bam }
+    call Utils.MergeBams as MergeHaplotagBams {
+        input:
+            bams = Haplotag.variant_mappings_haplotagged_bam,
+            outputBamName = "~{participant_name}.haplotagged.bam",
+            outputBucket = adir
+    }
 
     call ExtractHaplotypeReads {
          input:
@@ -163,21 +183,11 @@ workflow ONTMethylation {
 
     # Finalize
     String vdir = outdir + "/variants/phased"
-    String adir = outdir + "/alignments/haplotagged"
-
     File vcf = MergePerChrCalls.vcf
     File tbi = MergePerChrCalls.tbi
-    File bam = MergeHaplotagBams.merged_bam
-    File bai = MergeHaplotagBams.merged_bai
 
     call FF.FinalizeToFile as FinalizePhasedVcf { input: outdir = vdir, file = vcf, name = "~{participant_name}.phased.vcf.gz" }
     call FF.FinalizeToFile as FinalizePhasedTbi { input: outdir = vdir, file = tbi, name = "~{participant_name}.phased.vcf.gz.tbi" }
-
-    call FF.FinalizeToFile as FinalizeModMappedBam { input: outdir = adir, file = MergeModMappings.merged_bam, name = "~{participant_name}.mod_mapped.bam" }
-    call FF.FinalizeToFile as FinalizeModMappedBai { input: outdir = adir, file = MergeModMappings.merged_bai, name = "~{participant_name}.mod_mapped.bam.bai" }
-
-    call FF.FinalizeToFile as FinalizeHaplotaggedBam { input: outdir = adir, file = bam, name = "~{participant_name}.haplotagged.bam" }
-    call FF.FinalizeToFile as FinalizeHaplotaggedBai { input: outdir = adir, file = bai, name = "~{participant_name}.haplotagged.bam.bai" }
 
     call FF.FinalizeToFile as FinalizeHaplotype1Vcf { input: outdir = vdir, file = CallHaplotype1Variants.haploid_vcf, name = "~{participant_name}.aggregated.haplotype1.vcf.gz" }
     call FF.FinalizeToFile as FinalizeHaplotype1Tbi { input: outdir = vdir, file = CallHaplotype1Variants.haploid_tbi, name = "~{participant_name}.aggregated.haplotype1.vcf.gz.tbi" }
@@ -188,11 +198,11 @@ workflow ONTMethylation {
         File phased_vcf = FinalizePhasedVcf.gcs_path
         File phased_tbi = FinalizePhasedTbi.gcs_path
 
-        File mod_mapped_bam = FinalizeModMappedBam.gcs_path
-        File mod_mapped_bai = FinalizeModMappedBai.gcs_path
+        File mod_mapped_bam = MergeModMappings.merged_bam
+        File mod_mapped_bai = MergeModMappings.merged_bai
 
-        File haplotagged_bam = FinalizeHaplotaggedBam.gcs_path
-        File haplotagged_bai = FinalizeHaplotaggedBai.gcs_path
+        File haplotagged_bam = MergeHaplotagBams.merged_bam
+        File haplotagged_bai = MergeHaplotagBams.merged_bai
 
         File haplotype1_vcf = FinalizeHaplotype1Vcf.gcs_path
         File haplotype1_tbi = FinalizeHaplotype1Tbi.gcs_path

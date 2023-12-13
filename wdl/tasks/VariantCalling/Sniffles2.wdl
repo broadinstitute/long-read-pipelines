@@ -17,7 +17,6 @@ workflow Sniffles2 {
         sampleIDs:       "matching sample IDs of the BAMs"
         minsvlen:        "Minimum SV length in bp"
         prefix:          "prefix for output files"
-        # output
         single_snf:      "[OUTPUT] .snf output containing SV candidates from a single sample"
         multisample_vcf: "[OUTPUT] Multi-sample vcf output"
     }
@@ -68,6 +67,7 @@ task SampleSV {
         Int minsvlen = 50
         String sample_id
         String prefix
+        String? output_bucket
         RuntimeAttr? runtime_attr_override
     }
 
@@ -77,39 +77,48 @@ task SampleSV {
         minsvlen:         "minimum SV length in bp. Default 50"
         sample_id:        "Sample ID"
         prefix:           "prefix for output"
+        output_bucket:    "cloud path for output files"
     }
 
-    Int cpus = 8
     Int disk_size = 2*ceil(size([bam, bai], "GB"))
-    String snf_output = "~{prefix}.sniffles.snf"
-    String vcf_output = "~{prefix}.sniffles.vcf"
 
     command <<<
         set -eux
 
-        sniffles -t ~{cpus} \
-                 -i ~{bam} \
-                 --minsvlen ~{minsvlen} \
-                 --sample-id ~{sample_id} \
-                 --vcf ~{vcf_output} \
-                 --snf ~{snf_output}
-        tree
+        vcfName="~{prefix}.sniffles.vcf.gz"
+        tbiName="~{prefix}.sniffles.vcf.gz.tbi"
+        snfName="~{prefix}.sniffles.snf"
+        sniffles -t "$(nproc)" \
+                 -i "~{bam}" \
+                 --minsvlen "~{minsvlen}" \
+                 --sample-id "~{sample_id}" \
+                 --vcf "${vcfName}" \
+                 --snf "${snfName}"
+
+        if ~{defined(output_bucket)}; then
+            outDir="~{sub(select_first([output_bucket]), "/?$", "/")}"
+            gcloud storage cp "$vcfName" "tbiName" "snfName" "$outDir"
+            vcfName="${outDir}$vcfName"
+            tbiName="${outDir}$tbiName"
+            svfName="${outDir}$svfName"
+        fi
     >>>
 
     output {
-        File snf = "~{snf_output}"
-        File vcf = "~{vcf_output}"
+        File snf = "$snfName"
+        File vcf = "$vcfName"
+        File tbi = "$tbiName"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          cpus,
+        cpu_cores:          8,
         mem_gb:             46,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sniffles2:2.0.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sniffles2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -144,7 +153,6 @@ task MergeCall {
         set -eux
         sniffles --input ~{sep=" " snfs} \
             --vcf multisample.vcf
-        tree
     >>>
 
     output {
@@ -161,7 +169,7 @@ task MergeCall {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sniffles2:2.0.6"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-sniffles2:2.2.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -173,5 +181,4 @@ task MergeCall {
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
-
 }

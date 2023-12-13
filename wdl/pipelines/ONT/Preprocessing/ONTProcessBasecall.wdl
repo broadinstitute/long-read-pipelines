@@ -3,7 +3,6 @@ version 1.0
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 import "../../../tasks/Utility/ONTUtils.wdl" as ONT
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 import "../../../tasks/Alignment/AlignReads.wdl" as AR
 import "../../../tasks/QC/AlignedMetrics.wdl" as AM
@@ -105,33 +104,30 @@ workflow ONTProcessBasecall {
         }
     }
 
-    call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = ID }
+    call Utils.MergeBams as MergeAlignedReads {
+        input:
+            bams = AlignReads.aligned_bam,
+            outputBamName = "~{ID}.bam",
+            outputBucket = outdir + "/alignments"
+    }
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
         input:
             aligned_bam    = MergeAlignedReads.merged_bam,
             aligned_bai    = MergeAlignedReads.merged_bai,
-            ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics"
     }
 
     call NP.NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
-    call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-
-    # Finalize data
-    String dir = outdir + "/alignments"
-
-    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = MergeAlignedReads.merged_bam }
-    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = MergeAlignedReads.merged_bai }
 
     call GU.GetTodayDate as today {}
 
     output {
         String last_process_date = today.yyyy_mm_dd
 
-        File aligned_bam = FinalizeAlignedBam.gcs_path
-        File aligned_bai = FinalizeAlignedBai.gcs_path
+        File aligned_bam = MergeAlignedReads.merged_bam
+        File aligned_bai = MergeAlignedReads.merged_bai
 
         Map[String, Float] raw_reads_stats = nanoplot_map
 

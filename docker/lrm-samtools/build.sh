@@ -45,6 +45,7 @@ rm -rf /tmp/* \
        /var/lib/apt/lists/* \
        /usr/share/man/?? \
        /usr/share/man/??_*
+rm -rf /install
 EOF
 
 chmod a+x /install/install.sh

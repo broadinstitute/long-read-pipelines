@@ -9,7 +9,6 @@ version 1.0
 import "tasks/Utility/PBUtils.wdl" as DeprecatedPB
 import "../tasks/Utility/PBUtils.wdl" as PB
 import "../tasks/Utility/Utils.wdl" as Utils
-import "../tasks/Alignment/AlignReads.wdl" as AR
 import "../tasks/QC/AlignedMetrics.wdl" as AM
 import "../tasks/Utility/Finalize.wdl" as FF
 
@@ -46,7 +45,7 @@ workflow PBCLRDemultiplexWholeGenome {
 
     # gather across (potential multiple) input raw BAMs
     if (length(bams) > 1) {
-        call Utils.MergeBams as MergeAllUncorrected { input: bams = bams, prefix = "~{participant_name}.uncorrected" }
+        call Utils.MergeBams as MergeAllUncorrected { input: bams = bams, outputBamName = "~{participant_name}.uncorrected.bam" }
     }
 
     File uncorrected_bam = select_first([ MergeAllUncorrected.merged_bam, bams[0] ])
@@ -90,7 +89,6 @@ workflow PBCLRDemultiplexWholeGenome {
             input:
                 aligned_bam    = AlignBarcode.aligned_bam,
                 aligned_bai    = AlignBarcode.aligned_bai,
-                ref_fasta      = ref_map['fasta'],
                 ref_dict       = ref_map['dict'],
                 gcs_output_dir = outdir + "/" + BC + "/metrics/per_barcode"
         }
@@ -122,17 +120,16 @@ workflow PBCLRDemultiplexWholeGenome {
     }
 
     # merge demultiplexed BAMs into a single BAM (one readgroup per file)
-    call Utils.MergeBams as MergeBarcodeBams { input: bams = AlignBarcode.aligned_bam, prefix = "barcodes" }
+    call Utils.MergeBams as MergeBarcodeBams {
+        input:
+            bams = AlignBarcode.aligned_bam,
+            outputBamName = "barcodes.bam",
+            outputBucket = outdir + "/combined/alignments"
+    }
 
     ##########
     # store the results into designated bucket
     ##########
-
-    call FF.FinalizeToDir as FinalizeDemuxCombinedReads {
-        input:
-            files = [ MergeBarcodeBams.merged_bam, MergeBarcodeBams.merged_bai ],
-            outdir = outdir + "/combined/alignments"
-    }
 
     call FF.FinalizeToDir as FinalizeLimaMetrics {
         input:

@@ -78,7 +78,7 @@ workflow AlignAndCheckFingerprintCCS {
         call Utils.MergeBams as MergeAlignedReads {
             input:
                 bams = AlignReads.aligned_bam,
-                prefix = basename(uBAM, ".bam"),
+                outputBamName = basename(uBAM),
                 pacBioBams = true
         }
         # call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = BamToFastq.reads_fq }

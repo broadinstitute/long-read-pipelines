@@ -212,7 +212,7 @@ workflow PBFlowcell {
     call Utils.MergeBams as MergeAlignedReads {
         input:
             bams = aligned_reads_bam,
-            prefix = PU,
+            outputBamName = "~{PU}.bam",
             pacBioBams = true
     }
     File pbiIndex = select_first([MergeAlignedReads.merged_pbi])
@@ -221,7 +221,6 @@ workflow PBFlowcell {
         input:
             aligned_bam    = MergeAlignedReads.merged_bam,
             aligned_bai    = MergeAlignedReads.merged_bai,
-            ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics"
     }
@@ -232,7 +231,7 @@ workflow PBFlowcell {
     # Merge corrected, unaligned reads:
     String cdir = outdir + "/reads/ccs/unaligned"
     if (experiment_type != "CLR") {
-        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = unaligned_reads_bam, prefix = "~{PU}.reads", pacBioBams = true }
+        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = unaligned_reads_bam, outputBamName = "~{PU}.reads.bam", pacBioBams = true }
 
         call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam, keyfile = keyfile }
         call FF.FinalizeToFile as FinalizeCCSUnalignedBai { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bai, keyfile = keyfile }
@@ -257,8 +256,8 @@ workflow PBFlowcell {
         String longbow_stats_dir = outdir + "/metrics/longbow"
 
         # Merge all longbow intermediate files:
-        call Utils.MergeBams as MergeLongbowAnnotatedCCSBams { input: bams = select_all(LongbowProcessCCS.annotated_bam), prefix = "~{PU}.reads.longbow_annotated" }
-        call Utils.MergeBams as MergeLongbowFilteredCCSBams { input: bams = select_all(LongbowProcessCCS.filtered_bam), prefix = "~{PU}.reads.longbow_annotated_filter_passed" }
+        call Utils.MergeBams as MergeLongbowAnnotatedCCSBams { input: bams = select_all(LongbowProcessCCS.annotated_bam), outputBamName = "~{PU}.reads.longbow_annotated.bam" }
+        call Utils.MergeBams as MergeLongbowFilteredCCSBams { input: bams = select_all(LongbowProcessCCS.filtered_bam), outputBamName = "~{PU}.reads.longbow_annotated_filter_passed.bam" }
 
         # Overall CCS Stats:
         call Longbow.Stats as LongbowOverallCCSStats { input: bam = MergeLongbowAnnotatedCCSBams.merged_bam, prefix="overall_ccs" }
@@ -276,9 +275,9 @@ workflow PBFlowcell {
         String longbow_intermediate_reads_dir = outdir + "/reads/longbow/intermediate"
 
         if (DEBUG_MODE) {
-            call Utils.MergeBams as MergeLongbowSegmentedCCSBams { input: bams = select_all(LongbowProcessCCS.segmented_bam), prefix = "~{PU}.reads.longbow_annotated_segmented" }
-            call Utils.MergeBams as MergeLongbowFilterFailedCCSBams { input: bams = select_all(LongbowProcessCCS.filter_failed_bam), prefix = "~{PU}.reads.longbow_annotated_filter_failed" }
-            call Utils.MergeBams as MergeLongbowExtractedCCSBams { input: bams = select_all(LongbowProcessCCS.extracted_bam), prefix = "~{PU}.reads.longbow_annotated_segmented_filter_passed_corrected_extracted" }
+            call Utils.MergeBams as MergeLongbowSegmentedCCSBams { input: bams = select_all(LongbowProcessCCS.segmented_bam), outputBamName = "~{PU}.reads.longbow_annotated_segmented.bam" }
+            call Utils.MergeBams as MergeLongbowFilterFailedCCSBams { input: bams = select_all(LongbowProcessCCS.filter_failed_bam), outputBamName = "~{PU}.reads.longbow_annotated_filter_failed.bam" }
+            call Utils.MergeBams as MergeLongbowExtractedCCSBams { input: bams = select_all(LongbowProcessCCS.extracted_bam), outputBamName = "~{PU}.reads.longbow_annotated_segmented_filter_passed_corrected_extracted.bam" }
 
             call FF.FinalizeToFile as FinalizeLongbowAnnotatedBam { input: outdir = longbow_intermediate_reads_dir, file = MergeLongbowAnnotatedCCSBams.merged_bam, keyfile = keyfile }
             call FF.FinalizeToFile as FinalizeLongbowSegmentedBam { input: outdir = longbow_intermediate_reads_dir, file = MergeLongbowSegmentedCCSBams.merged_bam, keyfile = keyfile }
@@ -290,8 +289,8 @@ workflow PBFlowcell {
 
             # Only merge and finalize these files if they were created:
             if (chosen_mas_seq_model != "mas_15_bulk_10x5p_single_internal" && chosen_mas_seq_model != "mas_15_bulk_10x5p_single_internal") {
-                call Utils.MergeBams as MergeLongbowCorrectedCCSBams { input: bams = select_all(LongbowProcessCCS.corrected_bam), prefix = "~{PU}.reads.longbow_annotated_segmented_filter_passed_corrected" }
-                call Utils.MergeBams as MergeLongbowUncorrectableCCSBams { input: bams = select_all(LongbowProcessCCS.uncorrectable_bam), prefix = "~{PU}.reads.longbow_annotated_segmented_filter_passed_uncorrectable" }
+                call Utils.MergeBams as MergeLongbowCorrectedCCSBams { input: bams = select_all(LongbowProcessCCS.corrected_bam), outputBamName = "~{PU}.reads.longbow_annotated_segmented_filter_passed_corrected.bam" }
+                call Utils.MergeBams as MergeLongbowUncorrectableCCSBams { input: bams = select_all(LongbowProcessCCS.uncorrectable_bam), outputBamName = "~{PU}.reads.longbow_annotated_segmented_filter_passed_uncorrectable.bam" }
                 call FF.FinalizeToFile as FinalizeLongbowCorrectedBam { input: outdir = longbow_intermediate_reads_dir, file = MergeLongbowCorrectedCCSBams.merged_bam, keyfile = keyfile }
                 call FF.FinalizeToFile as FinalizeLongbowUncorrectedBam { input: outdir = longbow_intermediate_reads_dir, file = MergeLongbowUncorrectableCCSBams.merged_bam, keyfile = keyfile }
                 call FF.FinalizeToDir as FinalizeLongbowIntermediateSingleCellBamIndices { input: outdir = longbow_intermediate_reads_dir, files = [ MergeLongbowCorrectedCCSBams.merged_bai, MergeLongbowUncorrectableCCSBams.merged_bai], keyfile = keyfile}
@@ -299,7 +298,7 @@ workflow PBFlowcell {
         }
 
         # Merge and finalize CLR reads:
-        call Utils.MergeBams as MergeMASSeqCLRReads { input: bams = select_all(ExtractClrReads.bam), prefix = "~{PU}.CLR_reads" }
+        call Utils.MergeBams as MergeMASSeqCLRReads { input: bams = select_all(ExtractClrReads.bam), outputBamName = "~{PU}.CLR_reads.bam" }
         String longbow_intermediate_clr_reads_dir = outdir + "/reads/clr"
         call FF.FinalizeToFile as FinalizeMasSeqUnprocessedCLRReads { input: outdir = longbow_intermediate_clr_reads_dir, file = MergeMASSeqCLRReads.merged_bam, keyfile = keyfile }
         call FF.FinalizeToFile as FinalizeMasSeqUnprocessedCLRReadsBai { input: outdir = longbow_intermediate_clr_reads_dir, file = MergeMASSeqCLRReads.merged_bai, keyfile = keyfile }
@@ -339,7 +338,6 @@ workflow PBFlowcell {
     call PB.SummarizePBI as SummarizeAlignedQ15PBI { input: pbi = pbiIndex, qual_threshold = 15 }
 
     call NP.NanoPlotFromBam as NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
-    call Utils.ComputeGenomeLength as ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
     # Finalize data
     String dir = outdir + "/" + if (experiment_type != "CLR") then "reads/ccs/aligned" else "reads/subreads/aligned"
@@ -406,7 +404,7 @@ workflow PBFlowcell {
         # Unaligned read stats
         Float num_reads = SummarizeSubreadsPBI.results['reads']
         Float num_bases = SummarizeSubreadsPBI.results['bases']
-        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/ComputeGenomeLength.length
+        Float raw_est_fold_cov = SummarizeSubreadsPBI.results['bases']/NanoPlotFromBam.stats_map['genome_length']
 
         Float read_length_mean = SummarizeSubreadsPBI.results['subread_mean']
         Float read_length_median = SummarizeSubreadsPBI.results['subread_median']
@@ -426,7 +424,7 @@ workflow PBFlowcell {
         Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
         Float aligned_num_bases = NanoPlotFromBam.stats_map['number_of_bases_aligned']
         Float aligned_frac_bases = NanoPlotFromBam.stats_map['fraction_bases_aligned']
-        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/ComputeGenomeLength.length
+        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/NanoPlotFromBam.stats_map['genome_length']
 
         Float aligned_read_length_mean = NanoPlotFromBam.stats_map['mean_read_length']
         Float aligned_read_length_median = NanoPlotFromBam.stats_map['median_read_length']

@@ -50,8 +50,8 @@ rm -rf /tmp/* \
        /usr/share/man/?? \
        /usr/share/man/??_*
 
-mkdir /install
 rm -rf /usr/local/include/boost
+mkdir -p /install
 tar -C / -czf /install/install.tgz usr/local
 rm -rf /usr/local
 cat <<EOF >/install/install.sh

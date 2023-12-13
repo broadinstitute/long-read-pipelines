@@ -8,7 +8,6 @@ version 1.0
 ##########################################################################################
 
 import "../tasks/Utility/Utils.wdl" as Utils
-import "../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBCCS {
     input {
@@ -33,27 +32,14 @@ workflow PBCCS {
     call Utils.MergeBams as MergeAllReads {
         input:
             bams = aligned_bams,
-            prefix = participant_name,
+            outputBamName = "~{participant_name}.bam",
+            outputBucket = outdir + "/alignments",
             pacBioBams = true
     }
-    File bam = MergeAllReads.merged_bam
-    File bai = MergeAllReads.merged_bai
-    File pbi = select_first([MergeAllReads.merged_pbi])
-
-    # Finalize
-    String dir = outdir + "/alignments"
-
-    call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = bam, name = "~{participant_name}.bam" }
-    call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = bai, name = "~{participant_name}.bam.bai" }
-    call FF.FinalizeToFile as FinalizePbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
-
-    ##########
-    # store the results into designated bucket
-    ##########
 
     output {
-        File aligned_bam = FinalizeBam.gcs_path
-        File aligned_bai = FinalizeBai.gcs_path
-        File aligned_pbi = FinalizePbi.gcs_path
+        File aligned_bam = MergeAllReads.merged_bam
+        File aligned_bai = MergeAllReads.merged_bai
+        File aligned_pbi = select_first([MergeAllReads.merged_pbi])
     }
 }

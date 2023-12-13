@@ -58,7 +58,7 @@ workflow PBMASIsoSeqQuantify {
 
 
     # Gather across (potential multiple) input BAMs
-    call Utils.MergeBams as t_02_MergeAllReads { input: bams = aligned_ccs_bams, prefix = participant_name }
+    call Utils.MergeBams as t_02_MergeAllReads { input: bams = aligned_ccs_bams, outputBamName = "~{participant_name}.bam" }
 
     File bam = t_02_MergeAllReads.merged_bam
     File bai = t_02_MergeAllReads.merged_bai

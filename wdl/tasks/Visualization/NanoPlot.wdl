@@ -24,20 +24,16 @@ task NanoPlotFromSummary {
     command <<<
         set -euxo pipefail
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(nproc)
 
-        NanoPlot -t ${num_core} \
+        NanoPlot -t "${num_core}" \
                  -c orangered \
                  --N50 \
                  --tsv_stats \
-                 --summary "~{sep=' ' summary_files}"
+                 --summary "~{sep='" "' summary_files}"
 
-        cat NanoStats.txt | \
-            grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
-            sed 's/ >/_/' | \
-            sed 's/://' | \
-            awk '{ print $1 "\t" $2 }' | \
-            tee map.txt
+        grep -v -e '^Metrics' -e '^highest' -e '^longest' < NanoStats.txt | \
+            sed -e 's/ >/_/' -e 's/://' -e 's/  */	/' > map.txt
     >>>
 
     #number_of_reads 88000
@@ -120,20 +116,16 @@ task NanoPlotFromRichFastqs {
     command <<<
         set -euxo pipefail
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(nproc)
 
-        NanoPlot -t ${num_core} \
+        NanoPlot -t "${num_core}" \
                  -c orangered \
                  --N50 \
                  --tsv_stats \
-                 --fastq_rich ~{sep=' ' fastqs}
+                 --fastq_rich "~{sep='" "' fastqs}"
 
-        cat NanoStats.txt | \
-            grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
-            sed 's/ >/_/' | \
-            sed 's/://' | \
-            awk '{ print $1 "\t" $2 }' | \
-            tee map.txt
+        grep -v -e '^Metrics' -e '^highest' -e '^longest' < NanoStats.txt | \
+            sed -e 's/ >/_/' -e 's/://' -e 's/  */	/' > map.txt
     >>>
 
     output {
@@ -205,9 +197,9 @@ task NanoPlotFromBam {
 
         touch ~{bai} # avoid the warning bai is older than bam
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(nproc)
 
-        NanoPlot -t ${num_core} \
+        NanoPlot -t "${num_core}" \
                  -c orangered \
                  --N50 \
                  --tsv_stats \
@@ -215,12 +207,11 @@ task NanoPlotFromBam {
                  --verbose \
                  --bam "~{bam}"
 
-        cat NanoStats.txt | \
-            grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
-            sed 's/ >/_/' | \
-            sed 's/://' | \
-            awk '{ print $1 "\t" $2 }' | \
-            tee map.txt
+        grep -v -e '^Metrics' -e '^highest' -e '^longest' < NanoStats.txt | \
+            sed -e 's/ >/_/' -e 's/://' -e 's/  */	/' > map.txt
+
+        # add the genome length to the map
+        samtools view -H "~{bam}" | sed '/^@SQ/!d;s/.*	LN:\([^	]*\).*/\1/' | awk '{sum+=$0}END{print "genome_length\t" sum}' >> map.txt
     >>>
 
     #number_of_reads 143488
@@ -274,7 +265,7 @@ task NanoPlotFromBam {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-nanoplot:1.40.0-1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-nanoplot:1.40.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

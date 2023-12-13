@@ -48,10 +48,12 @@ workflow PBCLRWholeGenome {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCLRWholeGenome/~{participant_name}"
 
     # gather across (potential multiple) input CLR BAMs
+    String dir = outdir + "/alignments"
     call Utils.MergeBams as MergeAllReads {
         input:
             bams = aligned_bams,
-            prefix = participant_name,
+            outputBamName = "~{participant_name}.bam",
+            outputBucket = dir,
             checkSingleSample = true,
             pacBioBams = true
     }
@@ -62,18 +64,17 @@ workflow PBCLRWholeGenome {
     call COV.SampleLevelAlignedMetrics as coverage {
         input:
             aligned_bam = bam,
-            aligned_bai = bai,
-            ref_fasta   = ref_map['fasta'],
-            bed_to_compute_coverage = bed_to_compute_coverage
+            aligned_bai = bai
     }
-
-    String dir = outdir + "/alignments"
-
-    call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = bam, name = "~{participant_name}.bam" }
-    call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = bai, name = "~{participant_name}.bam.bai" }
-    call FF.FinalizeToFile as FinalizePbi { input: outdir = dir, file = pbi, name = "~{participant_name}.bam.pbi" }
-
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
+    if (defined(bed_to_compute_coverage)) {
+        call COV.MosDepthOverBed {
+            input:
+                bam = bam,
+                bai = bai,
+                bed = select_first([bed_to_compute_coverage]),
+                outputBucket = dir
+        }
+    }
 
     if (call_svs || call_small_variants) {
 
@@ -114,9 +115,9 @@ workflow PBCLRWholeGenome {
     }
 
     output {
-        File aligned_bam = FinalizeBam.gcs_path
-        File aligned_bai = FinalizeBai.gcs_path
-        File aligned_pbi = FinalizePbi.gcs_path
+        File aligned_bam = bam
+        File aligned_bai = bai
+        File aligned_pbi = pbi
 
         Float aligned_num_reads = coverage.aligned_num_reads
         Float aligned_num_bases = coverage.aligned_num_bases
@@ -131,7 +132,7 @@ workflow PBCLRWholeGenome {
         Float average_identity = coverage.average_identity
         Float median_identity = coverage.median_identity
 
-        File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
+        File? bed_cov_summary = MosDepthOverBed.regions
         ########################################
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? pbsv_tbi = FinalizePBSVtbi.gcs_path

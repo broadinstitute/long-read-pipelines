@@ -5,7 +5,6 @@ import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Alignment/AlignReads.wdl" as AR
 import "../../../tasks/QC/AlignedMetrics.wdl" as AM
 import "../../../tasks/Visualization/NanoPlot.wdl" as NP
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTFlowcell {
 
@@ -102,38 +101,35 @@ workflow ONTFlowcell {
         }
     }
 
-    call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = ID }
+    call Utils.MergeBams as MergeAlignedReads {
+        input:
+            bams = AlignReads.aligned_bam,
+            outputBamName = "~{ID}.bam",
+            outputBucket = outdir + "/alignments"
+    }
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
         input:
             aligned_bam    = MergeAlignedReads.merged_bam,
             aligned_bai    = MergeAlignedReads.merged_bai,
-            ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = outdir + "/metrics"
     }
 
     call NP.NanoPlotFromBam { input: bam = MergeAlignedReads.merged_bam, bai = MergeAlignedReads.merged_bai }
-    call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-
-    # Finalize data
-    String dir = outdir + "/alignments"
-
-    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = dir, file = MergeAlignedReads.merged_bam }
-    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = dir, file = MergeAlignedReads.merged_bai }
 
     output {
         # Flowcell stats
         Float active_channels = nanoplot_map['active_channels']
 
         # Aligned BAM file
-        File aligned_bam = FinalizeAlignedBam.gcs_path
-        File aligned_bai = FinalizeAlignedBai.gcs_path
+        File aligned_bam = MergeAlignedReads.merged_bam
+        File aligned_bai = MergeAlignedReads.merged_bai
 
         # Unaligned read stats
         Float num_reads = nanoplot_map['number_of_reads']
         Float num_bases = nanoplot_map['number_of_bases']
-        Float raw_est_fold_cov = nanoplot_map['number_of_bases']/ComputeGenomeLength.length
+        Float raw_est_fold_cov = nanoplot_map['number_of_bases']/nanoplot_map['genome_length']
 
         Float read_length_mean = nanoplot_map['mean_read_length']
         Float read_length_median = nanoplot_map['median_read_length']
@@ -153,7 +149,7 @@ workflow ONTFlowcell {
         Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
         Float aligned_num_bases = NanoPlotFromBam.stats_map['number_of_bases_aligned']
         Float aligned_frac_bases = NanoPlotFromBam.stats_map['fraction_bases_aligned']
-        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/ComputeGenomeLength.length
+        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/NanoPlotFromBam.stats_map['genome_length']
 
         Float aligned_read_length_mean = NanoPlotFromBam.stats_map['mean_read_length']
         Float aligned_read_length_median = NanoPlotFromBam.stats_map['median_read_length']

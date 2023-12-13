@@ -55,8 +55,6 @@ workflow CallVariants {
         Boolean call_small_vars_on_mitochondria
     }
 
-    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
-
     ######################################################################
     # Block for small variants handling
     ######################################################################
@@ -91,8 +89,7 @@ workflow CallVariants {
                         ref_fasta_fai = ref_fasta_fai,
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
-                        is_ccs = false,
-                        zones = arbitrary.zones
+                        is_ccs = false
                 }
 
                 call Sniffles.Sniffles {
@@ -145,8 +142,7 @@ workflow CallVariants {
                     ref_fasta_fai = ref_fasta_fai,
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
-                    is_ccs = false,
-                    zones = arbitrary.zones
+                    is_ccs = false
             }
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 

@@ -2,55 +2,30 @@ version 1.0
 
 import "../Utility/Utils.wdl"
 import "../Visualization/NanoPlot.wdl" as NP
-import "../QC/AlignedMetrics.wdl" as AM
 
 
 workflow SampleLevelAlignedMetrics {
 
     meta {
-        description: "A utility (sub-)workflow to compute coverage on sample-leve BAM, and optionally over a provided BED file"
+        description: "A utility (sub-)workflow to compute coverage on sample-leve BAM"
     }
     parameter_meta {
         aligned_bam: "Aligned BAM file"
         aligned_bai: "Index for the aligned BAM file"
-        ref_fasta: "Reference FASTA file"
-        bed_to_compute_coverage: "Optional BED file to compute coverage over"
     }
 
     input {
         File aligned_bam
         File aligned_bai
-
-        File ref_fasta
-
-        File? bed_to_compute_coverage
     }
 
-    call Utils.ComputeGenomeLength { input: fasta = ref_fasta }
     call NP.NanoPlotFromBam { input: bam = aligned_bam, bai = aligned_bai }
 
-    if (defined(bed_to_compute_coverage)) {
-        call AM.MosDepthOverBed {
-            input:
-                bam = aligned_bam,
-                bai = aligned_bai,
-                bed = select_first([bed_to_compute_coverage])
-        }
-
-        call SummarizeDepthOverWholeBed as cov_over_region {
-            input:
-                mosdepth_output = MosDepthOverBed.regions
-        }
-    }
-
     output {
-
-        File? bed_cov_summary = cov_over_region.cov_summary
-
         Float aligned_num_reads = NanoPlotFromBam.stats_map['number_of_reads']
         Float aligned_num_bases = NanoPlotFromBam.stats_map['number_of_bases_aligned']
         Float aligned_frac_bases = NanoPlotFromBam.stats_map['fraction_bases_aligned']
-        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/ComputeGenomeLength.length
+        Float aligned_est_fold_cov = NanoPlotFromBam.stats_map['number_of_bases_aligned']/NanoPlotFromBam.stats_map['genome_length']
 
         Float aligned_read_length_mean = NanoPlotFromBam.stats_map['mean_read_length']
         Float aligned_read_length_median = NanoPlotFromBam.stats_map['median_read_length']
@@ -64,45 +39,59 @@ workflow SampleLevelAlignedMetrics {
     }
 }
 
-task SummarizeDepthOverWholeBed {
-
+task MosDepthOverBed {
     meta {
-        description: "Summarize the output of MosDepth over a BED file"
+        description: "Compute coverage on sample-leve BAM over a provided BED file"
     }
     parameter_meta {
-        mosdepth_output: "Output of MosDepth over a BED file"
+        bam: "Aligned BAM file"
+        bai: "Index for the aligned BAM file"
+        bed: "BED file to compute coverage over"
+        outputBucket: "Cloud directory where output will be stored"
     }
-
     input {
-        File mosdepth_output
+        File bam
+        File bai
+        File bed
+        String? outputBucket
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(mosdepth_output, "GB"))
-
-    String prefix = sub(basename(mosdepth_output, ".regions.bed.gz"), "out.coverage.", "")
+    Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
+    String basename = basename(bam, ".bam")
+    String bedname = basename(bed, ".bed")
+    String prefix = "~{basename}.coverage_over_bed.~{bedname}"
 
     command <<<
         set -euxo pipefail
 
-        echo 'chr start stop gene cov_mean' | awk 'BEGIN {OFS="\t"} {print}' > ~{prefix}.summary.txt
-        zcat ~{mosdepth_output} >> ~{prefix}.summary.txt
+        mosdepth -t 4 -b ~{bed} -n -x -Q 1 ~{prefix} ~{bam}
+
+        outFil="~{prefix}.regions.bed"
+        echo 'chr	start	stop	gene	cov_mean' > "$outFil"
+        zcat "~{prefix}.regions.bed.gz" >> "$outFil"
+
+        if ~{defined(outputBucket)}; then
+            outDir=$(echo "~{outputBucket}" | sed 's+/$++')
+            gcloud storage cp "$outFil" "$outDir/$outFil"
+            outFil="$outDir/$outFil"
+        fi
     >>>
 
     output {
-        File cov_summary = "~{prefix}.summary.txt"
+        File regions = "$outFil"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             2,
+        cpu_cores:          4,
+        mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-mosdepth:0.3.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

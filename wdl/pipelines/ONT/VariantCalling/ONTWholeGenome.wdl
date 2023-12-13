@@ -69,7 +69,7 @@ workflow ONTWholeGenome {
         call Utils.MergeBams as MergeAllReads {
             input:
                 bams = aligned_bams,
-                prefix = participant_name,
+                outputBamName = "~{participant_name}.bam",
                 checkSingleSample = true
         }
     }
@@ -88,17 +88,24 @@ workflow ONTWholeGenome {
     call COV.SampleLevelAlignedMetrics as coverage {
         input:
             aligned_bam = usable_bam,
-            aligned_bai = usable_bai,
-            ref_fasta   = ref_map['fasta'],
-            bed_to_compute_coverage = bed_to_compute_coverage
+            aligned_bai = usable_bai
     }
+    if (defined(bed_to_compute_coverage)) {
+        call COV.MosDepthOverBed {
+            input:
+                bam = usable_bam,
+                bai = usable_bai,
+                bed = select_first([bed_to_compute_coverage]),
+                outputBucket = outdir
+        }
+    }
+
 
     String dir = outdir + "/alignments"
 
     call FF.FinalizeToFile as FinalizeBam { input: outdir = dir, file = usable_bam, name = "~{participant_name}.bam" }
     call FF.FinalizeToFile as FinalizeBai { input: outdir = dir, file = usable_bai, name = "~{participant_name}.bam.bai" }
 
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = dir, file = select_first([coverage.bed_cov_summary]) } }
 
     ####################################################################################################
     if (call_svs || call_small_variants) {
@@ -188,7 +195,7 @@ output {
         Float average_identity = coverage.average_identity
         Float median_identity = coverage.median_identity
 
-        File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
+        File? bed_cov_summary = MosDepthOverBed.regions
         ########################################
         File? pbsv_vcf = FinalizePBSV.gcs_path
         File? pbsv_tbi = FinalizePBSVtbi.gcs_path

@@ -15,8 +15,10 @@ workflow RunPBSV {
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         prefix:            "prefix for output"
-        zones:             "zones to run in"
+        output_bucket:     "cloud path for output files"
         tandem_repeat_bed: "BED file containing TRF finder results (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+        regions:           "genomic regions to process"
+        n_tasks:           "number of tasks into which a whole genome is divided"
     }
 
     input {
@@ -27,152 +29,115 @@ workflow RunPBSV {
         File ref_fasta
         File ref_fasta_fai
         String prefix
-
-        String zones
+        String? output_bucket
 
         File? tandem_repeat_bed
+        Array[String]? regions
+        Int n_tasks = 1
     }
 
-    call Discover {
+    call PBSV {
         input:
             bam               = bam,
             bai               = bai,
+            is_ccs            = is_ccs,
             ref_fasta         = ref_fasta,
             ref_fasta_fai     = ref_fasta_fai,
-            tandem_repeat_bed = tandem_repeat_bed,
             prefix            = prefix,
-            zones             = zones
-    }
-
-    call Call {
-        input:
-            svsigs        = [ Discover.svsig ],
-            ref_fasta     = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            ccs           = is_ccs,
-            prefix        = prefix,
-            zones         = zones
+            output_bucket     = output_bucket,
+            tandem_repeat_bed = tandem_repeat_bed,
+            regions           = regions,
+            n_tasks           = n_tasks
     }
 
     output {
-        File vcf = Call.vcf
+        File vcf = PBSV.vcf
+        File tbi = PBSV.tbi
     }
 }
 
-task Discover {
+task PBSV {
     input {
         File bam
         File bai
+        Boolean is_ccs
         File ref_fasta
         File ref_fasta_fai
-        File? tandem_repeat_bed
-        String? chr
         String prefix
-        String zones
+        String? output_bucket
+        File? tandem_repeat_bed
+        Array[String]? regions
+        Int n_tasks
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        bam:               "input BAM from which to call SVs"
-        bai:               "index accompanying the BAM"
+        bam:               {description: "input BAM from which to call SVs",
+                            localization_optional: true}
+        bai:               {description: "index accompanying the BAM",
+                            localization_optional: true}
+        is_ccs:            "if input BAM is CCS reads"
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
-        tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
-        chr:               "chr on which to call variants"
         prefix:            "prefix for output"
+        output_bucket:     "cloud path for output files"
+        tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+        regions:           "genomic regions to process"
+        n_tasks:           "number of tasks into which a whole genome is divided"
     }
 
     Int MINIMAL_DISK = 500
-    Boolean is_big_bam = size(bam, "GB") > 100
-    Int inflation_factor = if (is_big_bam) then 5 else 2
-    Int disk_size = inflation_factor * (ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
+    Float bam_size = size(bam, "GB")/n_tasks
+    Int inflation_factor = if (bam_size > 100) then 5 else 2
+    Int disk_size = inflation_factor * (ceil(bam_size + size(ref_fasta, "GB")) + 1)
     Int runtime_disk_size = if disk_size < MINIMAL_DISK then MINIMAL_DISK else disk_size
-
-    String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
 
     command <<<
         set -euxo pipefail
 
+        if ~{defined(regions)}; then
+            GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+            export GCS_OAUTH_TOKEN
+            samtools view -h -1 -o local.bam -X "~{bai}" "~{bam}" "~{sep='" "' regions}"
+        else
+            gcloud storage cp "~{bam}" local.bam
+        fi
+
         pbsv discover \
-            ~{if defined(tandem_repeat_bed) then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
-            ~{bam} \
-            ~{fileoutput}
+            ~{"--tandem-repeats " + tandem_repeat_bed} local.bam local.svsig.gz
+
+        pbsv call -j "$(nproc)" --log-level INFO ~{true='--ccs' false='' is_ccs} \
+            "~{ref_fasta}" \
+            local.svsig.gz \
+            "~{prefix}.pbsv.vcf"
+
+        vcfName="~{prefix}.pbsv.vcf.gz"
+        grep -v '##fileDate' < "~{prefix}.pbsv.vcf" | bgzip > "$vcfName"
+        tabix -p vcf "~{prefix}.pbsv.vcf.gz"
+
+        tbiName="${vcfName}.tbi"
+        if ~{defined(output_bucket)}; then
+            outDir="~{sub(select_first([output_bucket]), "/?$", "/")}"
+            gcloud storage cp "$vcfName" "tbiName" "$outDir"
+            vcfName="${outDir}$vcfName"
+            tbiName="${outDir}$tbiName"
+        fi
     >>>
 
     output {
-        File svsig = "~{fileoutput}"
+        File vcf = "$vcfName"
+        File tbi = "$tbiName"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          if(defined(chr)) then 8 else 32,
-        mem_gb:             if(defined(chr)) then 32 else 128,
+        cpu_cores:          if(defined(regions)) then 8 else 32,
+        mem_gb:             if(defined(regions)) then 32 else 128,
         disk_gb:            runtime_disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        zones: zones
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task Call {
-    input {
-        Array[File] svsigs
-        File ref_fasta
-        File ref_fasta_fai
-        Boolean ccs
-        String prefix
-        String zones
-        RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        svsigs:            "per-chromosome *.svsig.gz files"
-        ref_fasta:         "reference to which the BAM was aligned to"
-        ref_fasta_fai:     "index accompanying the reference"
-        ccs:               "use optimizations for CCS data"
-        prefix:            "prefix for output"
-    }
-
-    Int disk_size = 2*ceil(size(svsigs, "GiB") + size([ref_fasta, ref_fasta_fai], "GiB"))
-
-    command <<<
-        set -euxo pipefail
-
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-
-        pbsv call -j $num_core --log-level INFO ~{true='--ccs' false='' ccs} \
-            ~{ref_fasta} \
-            ~{sep=' ' svsigs} \
-            ~{prefix}.pbsv.pre.vcf
-
-        cat ~{prefix}.pbsv.pre.vcf | grep -v -e '##fileDate' > ~{prefix}.pbsv.vcf
-    >>>
-
-    output {
-        File vcf = "~{prefix}.pbsv.vcf"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             96,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  1,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pbsv:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -180,10 +145,8 @@ task Call {
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        zones: zones
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
-

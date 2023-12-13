@@ -42,7 +42,7 @@ workflow PBCCSIsoSeq {
         call Utils.MergeBams as MergeAllReads {
             input:
                 bams = ccs_bams,
-                prefix = participant_name,
+                outputBamName = "~{participant_name}.bam",
                 pacBioBams = true
         }
     }
@@ -120,22 +120,18 @@ workflow PBCCSIsoSeq {
     call Utils.MergeBams as MergeBarcodeBams {
         input:
             bams = AlignTranscripts.aligned_bam,
-            prefix = "barcodes",
+            outputBamName = "~{participant_name}.all_barcodes.bam",
+            outputBucket = outdir + "/alignments/all_barcodes",
             pacBioBams = true
     }
 
     # Finalize
     String rdir = outdir + "/reads"
-    String bdir = outdir + "/alignments/all_barcodes"
     String mdir = outdir + "/metrics/combined/lima"
     String fdir = outdir + "/figures"
 
     call FF.FinalizeToFile as FinalizeBam { input: outdir = rdir, file = bam, name = "~{participant_name}.bam" }
     call FF.FinalizeToFile as FinalizePbi { input: outdir = rdir, file = pbi, name = "~{participant_name}.bam.pbi" }
-
-    call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bdir, file = MergeBarcodeBams.merged_bam, name = "~{participant_name}.all_barcodes.bam" }
-    call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bdir, file = MergeBarcodeBams.merged_bai, name = "~{participant_name}.all_barcodes.bam.bai"  }
-    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bdir, file = select_first([MergeBarcodeBams.merged_pbi]), name = "~{participant_name}.all_barcodes.bam.pbi"  }
 
     call FF.FinalizeToFile as FinalizeDemultiplexCounts { input: outdir = mdir, file = Demultiplex.counts, name = "~{participant_name}.lima.counts.txt" }
     call FF.FinalizeToFile as FinalizeDemultiplexReport { input: outdir = mdir, file = Demultiplex.report, name = "~{participant_name}.lima.report.txt" }
@@ -148,9 +144,9 @@ workflow PBCCSIsoSeq {
         File ccs_bam = FinalizeBam.gcs_path
         File ccs_pbi = FinalizePbi.gcs_path
 
-        File aligned_bam = FinalizeAlignedBam.gcs_path
-        File aligned_bai = FinalizeAlignedBai.gcs_path
-        File aligned_pbi = FinalizeAlignedPbi.gcs_path
+        File aligned_bam = MergeBarcodeBams.merged_bam
+        File aligned_bai = MergeBarcodeBams.merged_bai
+        File aligned_pbi = select_first([MergeBarcodeBams.merged_pbi])
 
         File demux_counts = FinalizeDemultiplexCounts.gcs_path
         File demux_reports = FinalizeDemultiplexReport.gcs_path
