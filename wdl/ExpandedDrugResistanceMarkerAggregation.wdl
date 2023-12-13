@@ -51,6 +51,7 @@ task CombineExpandedDrugResistanceMarkers {
         set -euxo pipefail
 
         python3 <<CODE
+        from collections import defaultdict
 
         aggregated_report = "~{prefix}.expanded_drug_report_combined.tsv"
 
