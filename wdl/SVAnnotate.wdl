@@ -50,7 +50,7 @@ task Standardize {
         tabix ~{vcf}
         svtk standardize --contigs ~{ref_fai} --prefix ~{prefix} ~{vcf} - ~{caller} | bcftools sort /dev/stdin -o ~{prefix}.std.vcf.gz -O z
         tabix ~{prefix}.std.vcf.gz
-        python format_svtk_vcf_for_gatk.py --vcf ~{prefix}.std.vcf.gz --fix-end --out ~{prefix}.std.final.vcf.gz --ploidy-table ~{ploidy}
+        python ./format_svtk_vcf_for_gatk.py --vcf ~{prefix}.std.vcf.gz --fix-end --out ~{prefix}.std.final.vcf.gz --ploidy-table ~{ploidy}
     >>>
 
     output {
