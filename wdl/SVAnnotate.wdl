@@ -82,7 +82,7 @@ task Standardize {
 task Annotate {
     input {
         File vcf
-        File gft
+        File gtf
         String prefix
 
         RuntimeAttr? runtime_attr_override
