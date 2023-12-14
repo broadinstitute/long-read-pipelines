@@ -44,10 +44,25 @@ task CombineExpandedDrugResistanceMarkers {
         RuntimeAttr? runtime_attr_override
     }
 
+    parameter_meta {
+        expanded_drug_res_markers: { localization_optional: true }
+    }
+
     Int disk_size = 10 + 10*ceil(size(expanded_drug_res_markers, "GB"))
 
     command <<<
         set -euxo pipefail
+
+        # Copy the files from the cloud to this machine here so it goes faster:
+        mkdir -p expanded_drug_reports
+        cd expanded_drug_reports
+        remote_sample_files=~{write_lines(expanded_drug_res_markers)}
+        cat ${remote_sample_files} | gsutil -m cp -I .
+
+        # Create local file list:
+        cat ${remote_sample_files} | sed -e 's@^.*/@@' -e "s@^@$(pwd)@g" > local_sample_files.txt
+
+        cd ..
 
         python3 <<CODE
         from collections import defaultdict
@@ -55,7 +70,7 @@ task CombineExpandedDrugResistanceMarkers {
         aggregated_report = "~{prefix}.expanded_drug_report_combined.tsv"
 
         sample_name_file = "~{write_lines(sample_names)}"
-        drug_res_file = "~{write_lines(expanded_drug_res_markers)}"
+        drug_res_file = "expanded_drug_reports/local_sample_files.txt"
 
         # Read in the sample names:
         sample_names = []
