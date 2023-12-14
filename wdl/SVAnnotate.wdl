@@ -27,7 +27,7 @@ workflow SVAnnotate {
 
     output {
 #        File vcf_annotated = Annotate.vcf
-      File vcf_standardized = Standardize.vcf
+      File vcf_standardized = Standardize.std_vcf
     }
 }
 
@@ -54,7 +54,7 @@ task Standardize {
     >>>
 
     output {
-        File vcf = "~{prefix}.std.final.vcf.gz"
+        File std_vcf = "~{prefix}.std.final.vcf.gz"
     }
 
     #########################
