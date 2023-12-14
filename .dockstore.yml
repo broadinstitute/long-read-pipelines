@@ -168,3 +168,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/tasks/SampleLevelAlignedMetrics.wdl
   testParameterFiles:
+- name: SVAnnotate
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SVAnnotate.wdl
+  testParameterFiles:
