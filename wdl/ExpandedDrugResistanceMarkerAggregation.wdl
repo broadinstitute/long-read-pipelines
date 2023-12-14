@@ -65,9 +65,10 @@ task CombineExpandedDrugResistanceMarkers {
         cd ..
 
         python3 <<CODE
+        import gzip
         from collections import defaultdict
 
-        aggregated_report = "~{prefix}.expanded_drug_report_combined.tsv"
+        aggregated_report = "~{prefix}.expanded_drug_report_combined.tsv.gz"
 
         sample_name_file = "~{write_lines(sample_names)}"
         drug_res_file = "expanded_drug_reports/local_sample_files.txt"
@@ -115,7 +116,7 @@ task CombineExpandedDrugResistanceMarkers {
 
         # # Second pass to actually aggregate the markers:
         out_header = [item for i, item in enumerate(header) if i not in (gt_field, error_field)]
-        with open(aggregated_report, 'w') as f:
+        with gzip.open(aggregated_report, 'wt') as f:
             # Write header:
             f.write("\t".join(out_header) + "\t" + "\t".join(sample_list))
             f.write("\n")
@@ -123,16 +124,17 @@ task CombineExpandedDrugResistanceMarkers {
                 # Markers are now tuples, so we need to write each element first:
                 f.write("\t".join(marker))
                 f.write("\t")
-                for sample in sample_list:
+                for i, sample in enumerate(sample_list):
                     f.write(str(sample_marker_dict[sample][marker]))
-                    f.write("\t")
+                    if i != (len(sample_list)-1):
+                        f.write("\t")
                 f.write("\n")
         CODE
 
     >>>
 
     output {
-        File combined_report = "~{prefix}.expanded_drug_report_combined.tsv"
+        File combined_report = "~{prefix}.expanded_drug_report_combined.tsv.gz"
     }
 
     #########################
