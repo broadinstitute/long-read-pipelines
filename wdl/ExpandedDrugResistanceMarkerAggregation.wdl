@@ -60,7 +60,7 @@ task CombineExpandedDrugResistanceMarkers {
         cat ${remote_sample_files} | gsutil -m cp -I .
 
         # Create local file list:
-        cat ${remote_sample_files} | sed -e 's@^.*/@@' -e "s@^@$(pwd)@g" > local_sample_files.txt
+        cat ${remote_sample_files} | sed -e 's@^.*/@@' -e "s@^@$(pwd)/@g" > local_sample_files.txt
 
         cd ..
 
