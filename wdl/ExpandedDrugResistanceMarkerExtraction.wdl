@@ -173,16 +173,14 @@ task CallDrugResistanceMutations {
         with open(gene_drug_report_all, 'w') as f:
             f.write(f"{header}\n")
             for a in annotations:
-                if "synonymous_variant" not in a:
-                    f.write("\t".join(a))
-                    f.write("\n")
+                f.write("\t".join(a))
+                f.write("\n")
 
         with open(gene_drug_report_prot, 'w') as f:
             f.write(f"{header}\n")
             for a in annotations:
-                if "synonymous_variant" not in a:
-                    f.write("\t".join(a))
-                    f.write("\n")
+                f.write("\t".join(a))
+                f.write("\n")
 
         print('Done')
         CODE

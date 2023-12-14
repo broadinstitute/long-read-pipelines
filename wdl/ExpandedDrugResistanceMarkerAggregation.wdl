@@ -1,7 +1,6 @@
 version 1.0
 
 import "tasks/Structs.wdl"
-import "tasks/FunctionalAnnotation.wdl" as FUNK
 import "tasks/Finalize.wdl" as FF
 
 workflow ExpandedDrugResistanceMarkerExtraction {
