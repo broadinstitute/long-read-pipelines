@@ -138,3 +138,6 @@ workflows:
 - name: DeepSomatic
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/DeepSomatic.wdl
+- name: Spade_assembly
+  subclass: wdl
+  primaryDescriptorPath: wdl/pipelines/PacBio/Assembly/Spade_assembly.wdl
