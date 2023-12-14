@@ -42,7 +42,8 @@ task Standardize {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = max(10, 5*ceil(size(vcf, "GB")))
+    Int disk_size = 5*ceil(size(vcf, "GB"))
+    if disk_size < 10 then disk_size=10
 
     command <<<
         set -euxo pipefail
