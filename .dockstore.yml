@@ -144,3 +144,6 @@ workflows:
 - name: SaveFilesToDestination
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SaveFilesToDestination.wdl
+- name: AlignedBamQCandMetrics
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/AlignedBamQCandMetrics.wdl

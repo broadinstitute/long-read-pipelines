@@ -1,0 +1,249 @@
+version 1.0
+
+import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/BAMutils.wdl" as BU
+
+import "../../../tasks/QC/AlignedMetrics.wdl" as AM
+import "../../../tasks/Visualization/NanoPlot.wdl" as NP
+
+import "../../../tasks/QC/FPCheckAoU.wdl" as QC0
+import "../../TechAgnostic/Utility/LongReadsContaminationEstimation.wdl" as QC1
+import "../../TechAgnostic/Utility/SexCheckNaive.wdl" as QC2
+import "../../TechAgnostic/Utility/CountTheBeans.wdl" as QC3
+
+import "SaveFilesToDestination.wdl" as SAVE
+
+workflow Work {
+    meta {
+        desciption:
+        "A workflow that unifies standard human WGS aligned BAM QC checks and metrics collection."
+    }
+
+    parameter_meta {
+
+        #########
+        # inputs
+        bam_descriptor:
+        "A description of the purpose of the BAM (e.g. a single readgroup, per sample, etc; doesn't need to be single-file specific)."
+        tech:
+        "The technology used to generate this BAM. Currently, the following values are accepted: [ONT, Sequel, Revio]."
+
+        gcs_out_root_dir:
+        "output files will be copied over there"
+
+        cov_bed:
+        "An optional BED file on which coverage will be collected (a mean value for each interval)"
+        cov_bed_descriptor:
+        "A short description of the BED provided for targeted coverage estimation; will be used in naming output files."
+
+        fingerprint_store:
+        "A GCS 'folder' holding fingerprint VCF files"
+        sample_id_at_store:
+        "The ID of the sample supposedly this BAM belongs to; note that the fingerprint VCF is assumed to be located at {fingerprint_store}/{sample_id_at_store}*.vcf(.gz?)"
+
+        vbid2_config_json:
+        "A config json to for running the VBID2 contamination estimation sub-workflow; if provided, will trigger the VBID2 sub-workflow for cross-(human)individual contamination estimation."
+
+        expected_sex_type:
+        "If provided, triggers sex concordance check. Accepted value: [M, F, NA, na]"
+
+        check_postaln_methyl_tags:
+        "If true, will run a sub-workflow to collect methylation tags information."
+
+        #########
+        # outputs
+        wgs_cov:
+        "whole genome mean coverage"
+
+        nanoplot_summ:
+        "Summary on alignment metrics provided by Nanoplot (todo: study the value of this output)"
+
+        sam_flag_stats:
+        "SAM flag stats"
+
+        contamination_est:
+        "cross-(human)individual contamination estimation by VerifyBAMID2"
+
+        inferred_sex_info:
+        "Inferred sex concordance information if expected sex type is provided"
+
+        methyl_tag_simple_stats:
+        "Simple stats on the reads with & without SAM methylation tags (MM/ML)."
+
+        aBAM_metrics_files_out:
+        "A map where keys are summary-names and values are paths to files generated from the various QC/metrics tasks"
+    }
+
+    input {
+        File bam
+        File bai
+
+        String bam_descriptor
+        String tech
+
+        File?   cov_bed
+        String? cov_bed_descriptor
+
+        String? fingerprint_store
+        String? sample_id_at_store
+
+        File? vbid2_config_json
+        String? expected_sex_type
+        Boolean check_postaln_methyl_tags = true
+
+        File ref_map_file
+        String disk_type
+
+        String output_prefix # String output_prefix = bam_sample_name + "." + flowcell
+        String gcs_out_root_dir
+    }
+
+    output {
+        Float wgs_cov                     = MosDepthWGS.wgs_cov
+        Map[String, Float] nanoplot_summ   = NanoPlotFromBam.stats_map
+        Map[String, Float] sam_flag_stats = ParseFlagStatsJson.qc_pass_reads_SAM_flag_stats
+
+        # fingerprint
+        Map[String, String]? fingerprint_check = fp_res
+
+        # contam
+        Float? contamination_est = VBID2.contamination_est
+
+        # sex concordance
+        Map[String, String]? inferred_sex_info = SexConcordance.inferred_sex_info
+
+        # methyl
+        Map[String, String]? methyl_tag_simple_stats = NoMissingBeans.methyl_tag_simple_stats
+
+        # file-based outputs all packed into a finalization map
+        Map[String, String] aBAM_metrics_files_out = FF.result
+    }
+
+    String workflow_name = "AlignedBamQCandMetrics"
+    String metrics_output_dir = sub(gcs_out_root_dir, "/+$","") + "/~{workflow_name}/~{output_prefix}"
+
+    ###################################################################################
+    # arg validation and prep
+    ###################################################################################
+    Map[String, String] ref_map = read_map(ref_map_file)
+
+    if (defined(fingerprint_store) != defined(sample_id_at_store)) {
+        call Utils.StopWorkflow as MisingFingerprintArgs { input:
+            reason = "fingerprint_store and sample_id_at_store must be specified together or omitted together"
+        }
+    }
+
+    if (defined(cov_bed) != defined(cov_bed_descriptor)) {
+        call Utils.StopWorkflow as MisingCoverageBEDdescriptor { input:
+            reason = "cov_bed and cov_bed_descriptor must be specified together or omitted together"
+        }
+    }
+    ###################################################################################
+    # ALWAYS ON QC/METRICS
+    ###################################################################################
+    ################################
+    # coverage
+    call AM.MosDepthWGS { input:
+        bam = bam, bai = bai, disk_type = disk_type,
+        bed = cov_bed, bed_descriptor = cov_bed_descriptor
+    }
+    FinalizationManifestLine a = object
+                                 {files_to_save: [MosDepthWGS.summary_txt],
+                                  is_singleton_file: true,
+                                  destination: metrics_output_dir,
+                                  output_attribute_name: "cov_per_chr"}
+
+    ################################
+    # SAM flag stats
+    call BU.SamtoolsFlagStats  { input: bam = bam, output_format = 'JSON', disk_type = disk_type }
+    call BU.ParseFlagStatsJson { input: sam_flag_stats_json = SamtoolsFlagStats.flag_stats }
+
+    ################################
+    # nanoplot
+    call NP.NanoPlotFromBam { input: bam = bam, bai = bai, disk_type = disk_type }
+    FinalizationManifestLine b = object
+                                 {files_to_save: flatten([[NanoPlotFromBam.stats], NanoPlotFromBam.plots]),
+                                  is_singleton_file: false,
+                                  destination: metrics_output_dir + "/nanoplot",
+                                  output_attribute_name: "nanoplot"}
+
+    ###################################################################################
+    # OPTIONAL QC/METRICS
+    ###################################################################################
+    ################################
+    # (optional) fingerprint
+    if (defined(fingerprint_store)) {
+        call QC0.FPCheckAoU as fingerprint {
+            input:
+                aligned_bam = bam,
+                aligned_bai = bai,
+                tech = tech,
+                fp_store = select_first([fingerprint_store]),
+                sample_id_at_store = select_first([sample_id_at_store]),
+                ref_specific_haplotype_map = ref_map['haplotype_map']
+        }
+        Map[String, String] fp_res = {'status': fingerprint.FP_status,
+                                      'LOD': fingerprint.lod_expected_sample}
+        String dummy = fingerprint.fingerprint_summary # this supposedly File type output may be a null because the input BAM is teeny
+        if ("None"!=dummy) {
+            FinalizationManifestLine c = object
+                                         {files_to_save: [fingerprint.fingerprint_summary, fingerprint.fingerprint_details],
+                                          pack_name: "fingerprint.details.tar.gz",
+                                          is_singleton_file: false,
+                                          destination: metrics_output_dir,
+                                          output_attribute_name: "fingerprint_check"}
+        }
+    }
+    ################################
+    # (optional) contamination
+    if (defined(vbid2_config_json)) {
+        VBID2_config vb_conf = read_json(select_first([vbid2_config_json]))
+        call QC1.LongReadsContaminationEstimation as VBID2 { input:
+            bam=bam,
+            bai=bai,
+            ref_map_file=ref_map_file,
+            tech = tech,
+            gt_sites_bed  = vb_conf.genotyping_sites,
+            is_hgdp_sites = vb_conf.is_hgdp_sites,
+            is_100k_sites = vb_conf.is_100k_sites,
+            disable_baq   = vb_conf.disable_baq,
+            disk_type = disk_type,
+        }
+        # no file to save from contam.est.
+    }
+    ################################
+    # (optional) sex concordance
+    if (defined(expected_sex_type)) {
+        call QC2.SexCheckNaive as SexConcordance { input:
+            bam=bam,
+            bai=bai,
+            expected_sex_type=select_first([expected_sex_type]),
+            mosdepth_summary_txt=MosDepthWGS.summary_txt
+        }
+        # no file to save from sex concordance
+    }
+    ################################
+    # (optional) verify methylation tags aren't missing
+    if (check_postaln_methyl_tags) {
+        call QC3.CountTheBeans as NoMissingBeans { input:
+            bam=bam,
+            bai=bai,
+            bam_descriptor=bam_descriptor,
+            gcs_out_root_dir=metrics_output_dir,
+            use_local_ssd=disk_type=='LOCAL'
+        }
+        Map[String, String] methyl_out = {"missing_methyl_tag_reads":
+                                          NoMissingBeans.methyl_tag_simple_stats['files_holding_reads_without_tags']}
+    }
+
+    ###################################################################################
+    # save results
+    ###################################################################################
+    call SAVE.SaveFilestoDestination as FF { input:
+        instructions = select_all([a, b, c]),
+        already_finalized = select_all([methyl_out]),
+        key_file = select_first(select_all([MosDepthWGS.summary_txt,
+                                            NanoPlotFromBam.stats,
+                                            fingerprint.fingerprint_summary,]))
+    }
+}
