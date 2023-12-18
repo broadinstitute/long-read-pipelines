@@ -28,7 +28,7 @@ workflow PBFindAndSummarizeBAMs {
     call Utils.ListFilesOfType {
         input:
             gcs_dir = gcs_input_dir,
-            suffixes = [".bam"],
+            suffixes = [".unaligned.bam"],
             recurse = true
     }
 
