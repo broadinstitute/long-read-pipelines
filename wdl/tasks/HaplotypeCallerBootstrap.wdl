@@ -5,7 +5,7 @@ import "Utils.wdl"
 import "SRUtils.wdl" as SRUTIL
 import "SRJointGenotyping.wdl" as SRJOINT
 
-workflow CallVariantsWithHaplotypeCallerBootstrap {
+workflow CallVariantsWithHaplotypeCaller {
     meta {
         author: "Jonn Smith, adapted by Raphael Brosula"
         description: "A workflow for calling small variants with GATK HaplotypeCaller from an Illumina BAM file, with optional specification of a SNP VCF."
