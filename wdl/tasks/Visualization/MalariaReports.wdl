@@ -107,16 +107,19 @@ task RunReportScript {
 
         # Coverage Plot -- incomplete 
         # String? coverage_dir
-        File? fastqc_file
+        File? fastqc_path
         Int? coverage_bin_size
     }
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
 
-    # Compute path for BAM files (coverage_dir) using fastqc_path
-    String results_dir = sub(fastqc_file, "results\/.*", "")
-    String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
-    String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
+    # Compute path for BAM files (coverage_dir) using fastqc_path if given
+    if(fastqc_path) {
+        String results_dir = sub(fastqc_path, "results\/.*", "")
+        String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
+        String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
+    }
+
 
     # Wrap location in quotes in case it has spaces
     String wrap_location = "'~{location}'"
