@@ -83,13 +83,13 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqDemultiplex.wdl
 
 ###################################################
-# TechAgnostic
+# TechAgnostic - *mics data processing
+- name: CallVariantsReadBased
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl
 - name: LRCNVs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
-- name: VerifyFingerprint
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
 - name: LRJointCallGVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRJointCallGVCFs.wdl
@@ -99,24 +99,21 @@ workflows:
 - name: LRConvertBCF
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
-- name: DownloadFromSRA
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromSRA.wdl
-- name: DownloadFromWeb
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromWeb.wdl
-- name: CleanupIntermediate
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
-- name: MergeSampleBamsAndCollectMetrics
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/MergeSampleBamsAndCollectMetrics.wdl
+
+###################################################
+# TechAgnostic - *mics data QC & metrics
 - name: ShardWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ShardWholeGenome.wdl
-- name: CallVariantsReadBased
+- name: MergeSampleBamsAndCollectMetrics
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/MergeSampleBamsAndCollectMetrics.wdl
+- name: AlignedBamQCandMetrics
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/AlignedBamQCandMetrics.wdl
+- name: CollectBamFlagStats
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CollectBamFlagStats.wdl
 - name: CountTheBeans
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CountTheBeans.wdl
@@ -135,15 +132,24 @@ workflows:
 - name: SexCheckNaive
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SexCheckNaive.wdl
+- name: VerifyFingerprint
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyFingerprint.wdl
 - name: VerifyBamFingerprint
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/VerifyBamFingerprint.wdl
-- name: CollectBamFlagStats
+
+###################################################
+# TechAgnostic - utility
+- name: CleanupIntermediate
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CollectBamFlagStats.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
+- name: DownloadFromSRA
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromSRA.wdl
+- name: DownloadFromWeb
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromWeb.wdl
 - name: SaveFilesToDestination
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SaveFilesToDestination.wdl
-- name: AlignedBamQCandMetrics
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/AlignedBamQCandMetrics.wdl
