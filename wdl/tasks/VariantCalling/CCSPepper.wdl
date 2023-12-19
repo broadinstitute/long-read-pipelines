@@ -303,11 +303,8 @@ task MarginPhase {
         tbiName="${vcfName}.tbi"
         bedName="~{output_root}/~{prefix}.phaseset.bed"
         if ~{defined(output_bucket)}; then
-            outDir="~{sub(select_first([output_bucket]), "/?$", "/")}"
+            outDir=$(echo "~{output_bucket}" | sed 's+/?$+/+')
             gcloud storage cp "$vcfName" "$tbiName" "$bedName" "$outDir"
-            vcfName="${outDir}~{prefix}.phased.vcf.gz"
-            tbiName="${vcfName}.tbi"
-            bedName="${outDir}~{prefix}.phaseset.bed"
         fi
     >>>
 

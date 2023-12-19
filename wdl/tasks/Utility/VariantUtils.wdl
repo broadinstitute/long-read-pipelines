@@ -177,10 +177,8 @@ task MergeAndSortVCFs {
 
         tbiName="${vcfName}.tbi"
         if ~{defined(output_bucket)}; then
-            outDir="~{sub(select_first([output_bucket]), "/?$", "/")}"
+            outDir=$(echo "~{output_bucket}" | sed 's+/?$+/+')
             gcloud storage cp "$vcfName" "$tbiName" "$outDir"
-            vcfName="${outDir}$vcfName"
-            tbiName="${outDir}$tbiName"
         fi
     >>>
 

@@ -84,12 +84,8 @@ task Clair {
         mv merge_output.gvcf.gz "$gvcfName"
         mv merge_output.gvcf.gz.tbi "$gtbiName"
         if ~{defined(output_bucket)}; then
-            outDir="~{sub(select_first([output_bucket]), "/?$", "/")}"
+            outDir=$(echo "~{output_bucket}" | sed 's+/?$+/+')
             gcloud storage cp "$vcfName" "$tbiName" "$gvcfName" "$gtbiName" "$outDir"
-            vcfName="${outDir}$vcfName"
-            tbiName="${outDir}$tbiName"
-            gvcfName="${outDir}$gvcfName"
-            gtbiName="${outDir}$gtbiName"
         fi
     >>>
 

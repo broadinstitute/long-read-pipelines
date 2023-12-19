@@ -52,7 +52,7 @@ workflow PBCCSWholeGenome {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/?$", "/PBCCSWholeGenome/~{participant_name}")
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/" + participant_name
     String alignments_dir = outdir + "/alignments"
 
     # gather across (potential multiple) input CCS BAMs

@@ -49,7 +49,7 @@ workflow ONTWholeGenome {
         Boolean? fast_less_sensitive_sv = true
 
         Boolean call_small_variants = true
-        Boolean? call_small_vars_on_mitochondria = false
+        Boolean call_small_vars_on_mitochondria = false
         File? sites_vcf
         File? sites_vcf_tbi
 
@@ -115,7 +115,6 @@ workflow ONTWholeGenome {
             if (! defined(fast_less_sensitive_sv)) {call Utils.StopWorkflow as fast_less_sensitive_sv_not_provided {input: reason = "Calling SVs without specifying arg fast_less_sensitive_sv"}}
         }
         if (call_small_variants) {
-            if (! defined(call_small_vars_on_mitochondria)) {call Utils.StopWorkflow as call_small_vars_on_mitochondria_not_provided {input: reason = "Unprovided arg call_small_vars_on_mitochondria"}}
             if (! defined(run_dv_pepper_analysis)) {call Utils.StopWorkflow as run_dv_pepper_analysis_not_provided {input: reason = "Unprovided arg run_dv_pepper_analysis"}}
             if (! defined(dvp_threads)) {call Utils.StopWorkflow as dvp_threads_not_provided {input: reason = "Unprovided arg dvp_threads"}}
             if (! defined(ref_scatter_interval_list_locator)) {call Utils.StopWorkflow as ref_scatter_interval_list_locator_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_locator"}}
@@ -130,6 +129,7 @@ workflow ONTWholeGenome {
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
+                regions_file      = ref_map[if (call_small_vars_on_mitochondria) then 'regions' else 'regionsNoM'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
 
                 prefix = participant_name,
@@ -138,7 +138,6 @@ workflow ONTWholeGenome {
                 fast_less_sensitive_sv = select_first([fast_less_sensitive_sv]),
 
                 call_small_variants = call_small_variants,
-                call_small_vars_on_mitochondria = select_first([call_small_vars_on_mitochondria]),
                 sites_vcf = sites_vcf,
                 sites_vcf_tbi = sites_vcf_tbi,
 

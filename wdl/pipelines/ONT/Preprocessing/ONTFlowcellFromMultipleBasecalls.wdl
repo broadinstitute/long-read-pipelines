@@ -28,7 +28,7 @@ workflow ONTFlowcellFromMultipleBasecalls {
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
-    String outdir = sub(gcs_out_root_dir, "/?$", "/ONTFlowcell/~{flowcell}/alignments")
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTFlowcell/" + flowcell + "/alignments"
 
     ## Merge & deduplicate
     if (length(aligned_bams) > 1) {

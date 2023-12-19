@@ -46,13 +46,13 @@ workflow CallVariants {
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
+	File regions_file
 
         Boolean call_svs
         Boolean fast_less_sensitive_sv
         File? tandem_repeat_bed
 
         Boolean call_small_variants
-        Boolean call_small_vars_on_mitochondria
         File? sites_vcf
         File? sites_vcf_tbi
 
@@ -67,38 +67,21 @@ workflow CallVariants {
     # Block for small variants handling
     ######################################################################
 
-    # todo: merge the two scattering scheme into a better one
+    # read a tsv file listing the chromosomal regions to process
+    Array[Array[String]] regionsArray = read_tsv(regions_file)
+
     if (call_small_variants) {
-        # Scatter by chromosome
-        Array[String] default_filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
-        Array[String] use_filter = if (call_small_vars_on_mitochondria) then default_filter else flatten([['chrM'],default_filter])
-        call Utils.MakeChrIntervalList as SmallVariantsScatterPrepp {
-            input:
-                ref_dict = ref_dict,
-                filter = use_filter
-        }
-
-        scatter (c in SmallVariantsScatterPrepp.chrs) {
-            String chr = c[0]
-
-            call Utils.SubsetBam as SmallVariantsScatter {
+        scatter (regions in regionsArray) {
+            call Clair3.Clair {
                 input:
                     bam = bam,
                     bai = bai,
-                    locus = chr
-            }
-
-            call Clair3.Clair {
-                input:
-                    bam = SmallVariantsScatter.subset_bam,
-                    bai = SmallVariantsScatter.subset_bai,
-
+                    prefix = prefix,
                     ref_fasta     = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
-
                     sites_vcf = sites_vcf,
                     sites_vcf_tbi = sites_vcf_tbi,
-
+                    regions = regions,
                     preset = "ONT"
             }
         }

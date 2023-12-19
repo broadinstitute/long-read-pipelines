@@ -47,13 +47,13 @@ task MosDepthOverBed {
         bam: "Aligned BAM file"
         bai: "Index for the aligned BAM file"
         bed: "BED file to compute coverage over"
-        outputBucket: "Cloud directory where output will be stored"
+        output_bucket: "Cloud directory where output will be stored"
     }
     input {
         File bam
         File bai
         File bed
-        String? outputBucket
+        String? output_bucket
 
         RuntimeAttr? runtime_attr_override
     }
@@ -70,12 +70,11 @@ task MosDepthOverBed {
 
         outFil="~{prefix}.regions.bed"
         echo 'chr	start	stop	gene	cov_mean' > "$outFil"
-        zcat "~{prefix}.regions.bed.gz" >> "$outFil"
+        zcat "${outFil}.gz" >> "$outFil"
 
-        if ~{defined(outputBucket)}; then
-            outDir=$(echo "~{outputBucket}" | sed 's+/$++')
+        if ~{defined(output_bucket)}; then
+            outDir=$(echo "~{output_bucket}" | sed 's+/$++')
             gcloud storage cp "$outFil" "$outDir/$outFil"
-            outFil="$outDir/$outFil"
         fi
     >>>
 

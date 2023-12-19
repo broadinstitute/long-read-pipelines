@@ -736,9 +736,9 @@ task MergeBams {
 
         if [ "$nBams" -eq 1 ]; then
             mv bams_dir/* "$outputBAM"
-            samtools index -@ 2 -o "$outputBAI" "$outputBAM"
+            samtools index -@ 3 "$outputBAM" "$outputBAI"
         else
-            samtools merge -p -c --no-PG -@ 2 --write-index -o "${outputBAM}##idx##${outputBAI}" bams_dir/*
+            samtools merge -p -c --no-PG -@ 3 --write-index -o "${outputBAM}##idx##${outputBAI}" bams_dir/*
         fi
 
         outputPBI=""
@@ -747,24 +747,21 @@ task MergeBams {
             outputPBI="~{outputBamName}.pbi"
         fi
 
-        outDir="."
         if ~{defined(outputBucket)}; then
-            outDir=$(echo "~{outputBucket}" | sed 's+/$++')
+            gcloud config set storage/parallel_composite_upload_enabled True
+            outDir=$(echo "~{outputBucket}" | sed 's+/?$+/+')
             if [ -n "$outputPBI" ]; then
-                gcloud storage cp "$outputBAM" "$outputBAI" "$outputPBI" "${outDir}/"
-                outputPBI="$outDir/$outputPBI"
+                gcloud storage cp "$outputBAM" "$outputBAI" "$outputPBI" "${outDir}"
             else
-                gcloud storage cp "$outputBAM" "$outputBAI" "${outDir}/"
+                gcloud storage cp "$outputBAM" "$outputBAI" "${outDir}"
             fi
-            outputBAM="$outDir/$outputBAM"
-            outputBAI="$outDir/$outputBAI"
         fi
     >>>
 
     output {
-        File merged_bam = "$outputBAM"
-        File merged_bai = "$outputBAI"
-        File? merged_pbi = "$outputPBI"
+        File merged_bam = "~{outputBamName}"
+        File merged_bai = "~{outputBamName}.bai"
+        File? merged_pbi = "~{outputBamName}.pbi"
     }
 
     #########################

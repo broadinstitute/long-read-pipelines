@@ -96,11 +96,8 @@ task SampleSV {
                  --snf "${snfName}"
 
         if ~{defined(output_bucket)}; then
-            outDir="~{sub(select_first([output_bucket]), "/?$", "/")}"
-            gcloud storage cp "$vcfName" "tbiName" "snfName" "$outDir"
-            vcfName="${outDir}$vcfName"
-            tbiName="${outDir}$tbiName"
-            svfName="${outDir}$svfName"
+            outDir=$(echo "~{output_bucket}" | sed 's+/?$+/+')
+            gcloud storage cp "$vcfName" "$tbiName" "$snfName" "$outDir"
         fi
     >>>
 
