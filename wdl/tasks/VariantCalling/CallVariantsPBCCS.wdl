@@ -154,7 +154,7 @@ workflow CallVariants {
     # Block for SV handling
     ######################################################################
     if (call_svs) {
-        String? sv_dir = if (defined(output_bucket)) then sub(select_first([output_bucket]), "/$", "" + "/variants/sv" else output_bucket
+        String? sv_dir = if (defined(output_bucket)) then sub(select_first([output_bucket]), "/$", "") + "/variants/sv" else output_bucket
         if (fast_less_sensitive_sv) {
             scatter (regions in regionsArray) {
                 call PBSV.RunPBSV {

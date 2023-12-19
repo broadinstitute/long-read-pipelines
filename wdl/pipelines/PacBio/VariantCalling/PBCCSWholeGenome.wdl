@@ -74,7 +74,7 @@ workflow PBCCSWholeGenome {
                 bam = MergeAllReads.merged_bam,
                 bai = MergeAllReads.merged_bai,
                 bed = select_first([bed_to_compute_coverage]),
-                outputBucket = alignments_dir
+                output_bucket = alignments_dir
         }
     }
 
