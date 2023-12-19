@@ -54,8 +54,7 @@ task RunReportScript {
 
         # Coverage Plot
         # coverage_dir: "directory of BAM files for coverage plot generation"
-        fastqc_path: "directory of fastqc_report used for finding BAM files"
-        fastqc_file: "file contents of fastqc_report -- same source as fastqc_path"
+        fastqc_file: "directory of fastqc_report used for finding BAM files"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
     }
 
@@ -108,7 +107,6 @@ task RunReportScript {
 
         # Coverage Plot -- incomplete 
         # String? coverage_dir
-        String fastqc_path
         File? fastqc_file
         Int? coverage_bin_size
     }
@@ -116,7 +114,7 @@ task RunReportScript {
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
 
     # Compute path for BAM files (coverage_dir) using fastqc_path
-    String results_dir = sub(fastqc_path, "results\/.*", "")
+    String results_dir = sub(fastqc_file, "results\/.*", "")
     String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
     String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
 
@@ -165,7 +163,7 @@ task RunReportScript {
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
             --coverage_bin_size ~{coverage_bin_size} \
-            --fastqc_file ~{default="None" fastqc_file}
+            --fastqc_path ~{default="None" fastqc_path}
         echo "REPORT GENERATED!"
     >>>
 

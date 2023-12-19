@@ -55,7 +55,7 @@ workflow GenerateMalariaReports {
         # Coverage Plot -- incomplete
         # coverage_dir: "directory of BAM files for coverage plot generation"
         fastqc_path: "directory of fastqc_report used for finding BAM files"
-        fastqc_file: "file contents of fastqc_report -- same source as fastqc_path"
+        fastqc_file: "file contents of fastqc_report"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
 
     }
