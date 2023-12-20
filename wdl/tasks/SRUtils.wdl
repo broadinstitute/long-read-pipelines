@@ -771,10 +771,12 @@ task RevertBaseQualities {
 
         # Check if the input bam has been run through `ApplyBQSR`.
         # If not, we can just return the input bam.
+        echo "Starting RevertBaseQualities..."
         samtools view -H ~{bam} | grep '^@PG' > header.pg.txt
 
         grep -q 'ID:GATK ApplyBQSR' header.pg.txt > applybqsr.pg.txt
         rv=$?
+        echo rv
 
         if [[ $rv -eq 0 ]] && grep -q '\-\-emit-original-quals' applybqsr.pg.txt ; then
             # OK - our data has had it's base quality scores recalibrated.
