@@ -43,27 +43,6 @@ workflow SRWholeGenome {
         Float heterozygosity_stdev = 0.01
         Float indel_heterozygosity = 0.000125
 
-
-        Float snp_calibration_sensitivity = 0.99
-        Int snp_max_unlabeled_variants = 0
-        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
-
-        Array[File] snp_known_reference_variants
-        Array[File] snp_known_reference_variants_index
-        Array[File] snp_known_reference_variants_identifier
-        Array[Boolean] snp_is_training
-        Array[Boolean] snp_is_calibration
-
-        Float indel_calibration_sensitivity = 0.99
-        Int indel_max_unlabeled_variants = 0
-        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
-
-        Array[File] indel_known_reference_variants
-        Array[File] indel_known_reference_variants_index
-        Array[File] indel_known_reference_variants_identifier
-        Array[Boolean] indel_is_training
-        Array[Boolean] indel_is_calibration
-
         File? bed_to_compute_coverage
 
         File? fingerprint_haploytpe_db_file
@@ -217,122 +196,14 @@ workflow SRWholeGenome {
         }
 
         ########################################################################
-        
-        # Call VETS / VQSR-lite:
-        call VARUTIL.ExtractVariantAnnotations as ExtractIndelVariantAnnotations {
-            input:
-                vcf = RenameRawHcVcf.new_sample_name_vcf,
-                vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
-
-                prefix = participant_name,
-                mode = "INDEL",
-
-                recalibration_annotation_values = indel_recalibration_annotation_values,
-
-                known_reference_variants = indel_known_reference_variants,
-                known_reference_variants_index = indel_known_reference_variants_index,
-                known_reference_variants_identifier = indel_known_reference_variants_identifier,
-                is_training = indel_is_training,
-                is_calibration = indel_is_calibration,
-
-                max_unlabeled_variants = indel_max_unlabeled_variants,
-        }
-
-        call VARUTIL.ExtractVariantAnnotations as ExtractSnpVariantAnnotations  {
-            input:
-                vcf = RenameRawHcVcf.new_sample_name_vcf,
-                vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
-
-                prefix = participant_name,
-                mode = "SNP",
-
-                recalibration_annotation_values = snp_recalibration_annotation_values,
-
-                known_reference_variants = snp_known_reference_variants,
-                known_reference_variants_index = snp_known_reference_variants_index,
-                known_reference_variants_identifier = snp_known_reference_variants_identifier,
-                is_training = snp_is_training,
-                is_calibration = snp_is_calibration,
-
-                max_unlabeled_variants = snp_max_unlabeled_variants,
-        }
-
-        call VARUTIL.TrainVariantAnnotationsModel as TrainIndelVariantAnnotationsModel {
-            input:
-                annotation_hdf5 = ExtractIndelVariantAnnotations.annotation_hdf5,
-                mode = "INDEL",
-                prefix = participant_name,
-        }
-
-        call VARUTIL.TrainVariantAnnotationsModel as TrainSnpVariantAnnotationsModel {
-            input:
-                annotation_hdf5 = ExtractSnpVariantAnnotations.annotation_hdf5,
-                mode = "SNP",
-                prefix = participant_name,
-        }
-
-        call VARUTIL.ScoreVariantAnnotations as ScoreSnpVariantAnnotations {
-            input:
-                vcf = RenameRawHcVcf.new_sample_name_vcf,
-                vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
-
-                sites_only_extracted_vcf = ExtractSnpVariantAnnotations.sites_only_vcf,
-                sites_only_extracted_vcf_index = ExtractSnpVariantAnnotations.sites_only_vcf_index,
-
-                model_prefix = participant_name + "_train_SNP",
-                model_files = flatten([[TrainSnpVariantAnnotationsModel.training_scores, TrainSnpVariantAnnotationsModel.positive_model_scorer_pickle], select_all([
-                    TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores,
-                    TrainSnpVariantAnnotationsModel.calibration_set_scores,
-                    TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle
-                ])]),
-                prefix = participant_name + "_SNP",
-                mode = "SNP",
-
-                calibration_sensitivity_threshold = snp_calibration_sensitivity,
-
-                recalibration_annotation_values = snp_recalibration_annotation_values,
-
-                known_reference_variants = snp_known_reference_variants,
-                known_reference_variants_index = snp_known_reference_variants_index,
-                known_reference_variants_identifier = snp_known_reference_variants_identifier,
-                is_training = snp_is_training,
-                is_calibration = snp_is_calibration,
-        }
-
-        call VARUTIL.ScoreVariantAnnotations as ScoreIndelVariantAnnotations {
-            input:
-                vcf = ScoreSnpVariantAnnotations.scored_vcf,
-                vcf_index = ScoreSnpVariantAnnotations.scored_vcf_index,
-
-                sites_only_extracted_vcf = ExtractIndelVariantAnnotations.sites_only_vcf,
-                sites_only_extracted_vcf_index = ExtractIndelVariantAnnotations.sites_only_vcf_index,
-
-                model_prefix = participant_name + "_train_INDEL",
-                model_files = flatten([[TrainIndelVariantAnnotationsModel.training_scores, TrainIndelVariantAnnotationsModel.positive_model_scorer_pickle], select_all([
-                    TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores,
-                    TrainIndelVariantAnnotationsModel.calibration_set_scores,
-                    TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle
-                ])]),
-                prefix = participant_name + "_ALL",
-                mode = "INDEL",
-
-                calibration_sensitivity_threshold = indel_calibration_sensitivity,
-
-                recalibration_annotation_values = indel_recalibration_annotation_values,
-
-                known_reference_variants = indel_known_reference_variants,
-                known_reference_variants_index = indel_known_reference_variants_index,
-                known_reference_variants_identifier = indel_known_reference_variants_identifier,
-                is_training = indel_is_training,
-                is_calibration = indel_is_calibration,
-        }
+        # Removed VETS
         ########################################################################
-
+        # Fingerprinting
         if (defined(fingerprint_haploytpe_db_file)) {
             call VARUTIL.ExtractFingerprintAndBarcode as FingerprintAndBarcodeVcf {
                 input:
-                    vcf = ScoreIndelVariantAnnotations.scored_vcf,
-                    vcf_index = ScoreIndelVariantAnnotations.scored_vcf_index,
+                    vcf = RenameRawHcVcf.new_sample_name_vcf,
+                    vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
                     haplotype_database_file = select_first([fingerprint_haploytpe_db_file]),
                     ref_fasta         = ref_map['fasta'],
                     ref_fasta_fai     = ref_map['fai'],
@@ -341,15 +212,12 @@ workflow SRWholeGenome {
             }
         }
 
-        call VARUTIL.SelectVariants as RemoveFilteredVariants {
-            input:
-                vcf = ScoreIndelVariantAnnotations.scored_vcf,
-                vcf_index = ScoreIndelVariantAnnotations.scored_vcf_index,
-                prefix = participant_name + ".filtered"
-        }
+        ######################################################################## 
+        # Removed variant filtering
+        ######################################################################## 
 
         # Create a Keyfile for finalization:
-        File keyfile = RemoveFilteredVariants.vcf_out_index
+        File keyfile = RenameRawHcGvcf.new_sample_name_vcf
 
         # Finalize the raw Joint Calls:
         call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf }
@@ -359,78 +227,15 @@ workflow SRWholeGenome {
         call FF.FinalizeToFile as FinalizeHCBamOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout }
         call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout_index }
 
-        # Finalize the reclibrated / filtered variants:
-        call FF.FinalizeToFile as FinalizeHCRescoredVcf { input: outdir = smalldir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf }
-        call FF.FinalizeToFile as FinalizeHCRescoredTbi { input: outdir = smalldir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index }
-        call FF.FinalizeToFile as FinalizeHCRescoredFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RemoveFilteredVariants.vcf_out }
-        call FF.FinalizeToFile as FinalizeHCRescoredFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RemoveFilteredVariants.vcf_out_index }
-
         # Finalize other outputs:
         if (defined(fingerprint_haploytpe_db_file)) {
             call FF.FinalizeToFile as FinalizeFingerprintVcf { input: outdir = smalldir, keyfile = keyfile, file = select_first([FingerprintAndBarcodeVcf.output_vcf]) }
         }
+        
+        ########################################################################
+        # Removed finalization of VETS files
+        ########################################################################
 
-        ################################
-        # Finalize the VETS files:
-        ############
-
-        # ExtractVariantAnnotations:
-        call FF.FinalizeToFile as FinalizeSnpExtractedAnnotations { input: outdir = recalibration_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.annotation_hdf5 }
-        call FF.FinalizeToFile as FinalizeSnpExtractedSitesOnlyVcf { input: outdir = recalibration_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.sites_only_vcf }
-        call FF.FinalizeToFile as FinalizeSnpExtractedSitesOnlyVcfIndex { input: outdir = recalibration_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.sites_only_vcf_index }
-        if (defined(ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5)) {
-            call FF.FinalizeToFile as FinalizeSnpExtractedUnlabeledAnnotations { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5]) }
-        }
-        call FF.FinalizeToFile as FinalizeIndelExtractedAnnotations { input: outdir = recalibration_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.annotation_hdf5 }
-        call FF.FinalizeToFile as FinalizeIndelExtractedSitesOnlyVcf { input: outdir = recalibration_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.sites_only_vcf }
-        call FF.FinalizeToFile as FinalizeIndelExtractedSitesOnlyVcfIndex { input: outdir = recalibration_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.sites_only_vcf_index }
-        if (defined(ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5)) {
-            call FF.FinalizeToFile as FinalizeIndelExtractedUnlabeledAnnotations { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5]) }
-        }
-
-        # TrainVariantAnnotationsModel
-        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsTrainingScores { input: outdir = recalibration_dir, keyfile = keyfile, file = TrainSnpVariantAnnotationsModel.training_scores }
-        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsPositiveModelScorer { input: outdir = recalibration_dir, keyfile = keyfile, file = TrainSnpVariantAnnotationsModel.positive_model_scorer_pickle }
-        if (defined(TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores)) {
-            call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores]) }
-        }
-        if (defined(TrainSnpVariantAnnotationsModel.calibration_set_scores)) {
-            call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsCalibrationSetScores { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.calibration_set_scores]) }
-        }
-        if (defined(TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle)) {
-            call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle]) }
-        }
-
-        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsTrainingScores { input: outdir = recalibration_dir, keyfile = keyfile, file = TrainIndelVariantAnnotationsModel.training_scores }
-        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsPositiveModelScorer { input: outdir = recalibration_dir, keyfile = keyfile, file = TrainIndelVariantAnnotationsModel.positive_model_scorer_pickle }
-        if (defined(TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores)) {
-            call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores]) }
-        }
-        if (defined(TrainIndelVariantAnnotationsModel.calibration_set_scores)) {
-            call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsCalibrationSetScores { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.calibration_set_scores]) }
-        }
-        if (defined(TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle)) {
-            call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle]) }
-        }
-
-        # ScoreVariantAnnotations
-        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcf { input: outdir = recalibration_dir, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf }
-        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_dir, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf_index }
-        if (defined(ScoreSnpVariantAnnotations.annotations_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.annotations_hdf5]) }
-        }
-        if (defined(ScoreSnpVariantAnnotations.scores_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoresHdf5 { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.scores_hdf5]) }
-        }
-
-        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcf { input: outdir = recalibration_dir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf }
-        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_dir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index }
-        if (defined(ScoreIndelVariantAnnotations.annotations_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.annotations_hdf5]) }
-        }
-        if (defined(ScoreIndelVariantAnnotations.scores_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoresHdf5 { input: outdir = recalibration_dir, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.scores_hdf5]) }
-        }
     }
 
     output {
@@ -458,7 +263,6 @@ workflow SRWholeGenome {
 
         File? fingerprint_vcf = FinalizeFingerprintVcf.gcs_path
         String? barcode = FingerprintAndBarcodeVcf.barcode
-
         ########################################
 
         File? dvp_vcf   = FinalizeDVPepperVcf.gcs_path
@@ -474,9 +278,5 @@ workflow SRWholeGenome {
         File? hc_baiout   = FinalizeHCBaiOut.gcs_path
         File? hc_raw_vcf  = FinalizeHCVcf.gcs_path
         File? hc_raw_tbi  = FinalizeHCTbi.gcs_path
-        File? hc_rescored_vcf = FinalizeHCRescoredVcf.gcs_path
-        File? hc_rescored_tbi = FinalizeHCRescoredTbi.gcs_path
-        File? hc_rescored_filtered_vcf = FinalizeHCRescoredFilteredVcf.gcs_path
-        File? hc_rescored_filtered_tbi = FinalizeHCRescoredFilteredTbi.gcs_path
     }
 }
