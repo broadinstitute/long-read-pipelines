@@ -785,11 +785,15 @@ task RevertBaseQualities {
                     -O ~{prefix}.bam
         else
             # BQSR was not applied.  Just copy input -> output
+            echo "Copying bam ~{bam}..."
             cp ~{bam} ~{prefix}.bam
             if [[ ! -e '~{bai}' ]] ; then
+                echo "Indexing bam ~{bam}..."
                 samtools index ~{prefix}.bam
             else
+                echo "Copying bai ~{bai} to ~{prefix}.bam.bai"
                 cp ~{bai} ~{prefix}.bam.bai
+                echo "Finished copying to ~{prefix}.bam.bai"
             fi
         fi
     >>>
