@@ -45,7 +45,7 @@ workflow SRWholeGenome {
 
         File? bed_to_compute_coverage
 
-        File? fingerprint_haploytpe_db_file
+        File? fingerprint_haplotype_db_file
 
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
@@ -200,12 +200,12 @@ workflow SRWholeGenome {
         ########################################################################
         # Fingerprinting
 
-        if (defined(fingerprint_haploytpe_db_file)) {
+        if (defined(fingerprint_haplotype_db_file)) {
             call VARUTIL.ExtractFingerprintAndBarcode as t_021_FingerprintAndBarcodeVcf {
                 input:
                     vcf = t_020_RenameRawHcVcf.new_sample_name_vcf,
                     vcf_index = t_020_RenameRawHcVcf.new_sample_name_vcf_index,
-                    haplotype_database_file = select_first([fingerprint_haploytpe_db_file]),
+                    haplotype_database_file = select_first([fingerprint_haplotype_db_file]),
                     ref_fasta         = ref_map['fasta'],
                     ref_fasta_fai     = ref_map['fai'],
                     ref_dict          = ref_map['dict'],
@@ -229,7 +229,7 @@ workflow SRWholeGenome {
         call FF.FinalizeToFile as t_027_FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = t_019_CallVariantsWithHaplotypeCaller.bamout_index }
 
         # Finalize other outputs:
-        if (defined(fingerprint_haploytpe_db_file)) {
+        if (defined(fingerprint_haplotype_db_file)) {
             call FF.FinalizeToFile as t_028_FinalizeFingerprintVcf { input: outdir = smalldir, keyfile = keyfile, file = select_first([t_021_FingerprintAndBarcodeVcf.output_vcf]) }
         }
         
