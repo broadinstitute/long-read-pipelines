@@ -62,43 +62,43 @@ workflow SRWholeGenome {
     # gather across (potential multiple) input CCS BAMs
     if (length(aligned_bams) > 1) {
         scatter (pair in zip(aligned_bams, aligned_bais)) {
-            call Utils.InferSampleName {input: bam = pair.left, bai = pair.right}
+            call Utils.InferSampleName as t_001_InferSampleName {input: bam = pair.left, bai = pair.right}
         }
-        call Utils.CheckOnSamplenames {input: sample_names = InferSampleName.sample_name}
+        call Utils.CheckOnSamplenames as t_002_CheckOnSampleNames {input: sample_names = InferSampleName.sample_name}
 
-        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
+        call Utils.MergeBams as t_003_MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
     # Collect sample-level metrics:
-    call AM.SamStatsMap as SamStats { input: bam = bam }
-    call FastQC.FastQC as FastQC { input: bam = bam, bai = bai }
-    call Utils.ComputeGenomeLength as ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-    call SRUTIL.ComputeBamStats as ComputeBamStats { input: bam_file = bam }
+    call AM.SamStatsMap as t_004_SamStats { input: bam = bam }
+    call FastQC.FastQC as t_005_FastQC { input: bam = bam, bai = bai }
+    call Utils.ComputeGenomeLength as t_006_ComputeGenomeLength { input: fasta = ref_map['fasta'] }
+    call SRUTIL.ComputeBamStats as t_007_ComputeBamStats { input: bam_file = bam }
 
     if (defined(bed_to_compute_coverage)) {
-        call AM.MosDepthOverBed as MosDepth {
+        call AM.MosDepthOverBed as t_008_MosDepth {
             input:
                 bam = bam,
                 bai = bai,
                 bed = select_first([bed_to_compute_coverage])
         }
 
-        call COV.SummarizeDepthOverWholeBed as RegionalCoverage {
+        call COV.SummarizeDepthOverWholeBed as t_009_RegionalCoverage {
             input:
                 mosdepth_output = MosDepth.regions
         }
     }
 
-    call FF.FinalizeToFile as FinalizeBam { input: outdir = bam_dir, file = bam, name = "~{participant_name}.bam" }
-    call FF.FinalizeToFile as FinalizeBai { input: outdir = bam_dir, file = bai, name = "~{participant_name}.bam.bai" }
+    call FF.FinalizeToFile as t_010_FinalizeBam { input: outdir = bam_dir, file = bam, name = "~{participant_name}.bam" }
+    call FF.FinalizeToFile as t_011_FinalizeBai { input: outdir = bam_dir, file = bai, name = "~{participant_name}.bam.bai" }
 
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = bam_dir, file = select_first([RegionalCoverage.cov_summary]) } }
+    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as t_012_FinalizeRegionalCoverage { input: outdir = bam_dir, file = select_first([RegionalCoverage.cov_summary]) } }
 
 
-    call FF.FinalizeToFile as FinalizeFastQCReport {
+    call FF.FinalizeToFile as t_013_FinalizeFastQCReport {
         input:
             outdir = metrics_dir,
             file = FastQC.report
@@ -119,14 +119,14 @@ workflow SRWholeGenome {
 
         # Deep Variant runs better with raw base quals because it has already learned the error modes.
         # We need to revert our recalibration before calling variants:
-        call SRUTIL.RevertBaseQualities as RevertBQSRQuals {
+        call SRUTIL.RevertBaseQualities as t_013_RevertBQSRQuals {
             input:
                 bam = bam,
                 bai = bai,
                 prefix = basename(bam, ".bam") + ".reverted_base_quals"
         }
 
-        call VAR.CallVariants as CallVariantsWithDeepVariant {
+        call VAR.CallVariants as t_014_CallVariantsWithDeepVariant {
             input:
                 bam               = RevertBQSRQuals.bam_out,
                 bai               = RevertBQSRQuals.bai_out,
@@ -147,15 +147,15 @@ workflow SRWholeGenome {
                 contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
-        call FF.FinalizeToFile as FinalizeDVPepperVcf  { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_vcf]) }
-        call FF.FinalizeToFile as FinalizeDVPepperTbi  { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_tbi]) }
-        call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_vcf]) }
-        call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_tbi]) }
+        call FF.FinalizeToFile as t_015_FinalizeDVPepperVcf  { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_vcf]) }
+        call FF.FinalizeToFile as t_016_FinalizeDVPepperTbi  { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_tbi]) }
+        call FF.FinalizeToFile as t_017_FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_vcf]) }
+        call FF.FinalizeToFile as t_018_FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_tbi]) }
     }
 
     # Now we handle HaplotypeCaller data:
     if (run_HC_analysis) {
-        call HCBootstrap.CallVariantsWithHaplotypeCaller {
+        call HCBootstrap.CallVariantsWithHaplotypeCaller as t_019_CallVariantsWithHaplotypeCaller {
             input:
                 bam               = bam,
                 bai               = bai,
@@ -179,14 +179,14 @@ workflow SRWholeGenome {
         }
 
         # Make sure our sample name is correct:
-        call VARUTIL.RenameSingleSampleVcf as RenameRawHcVcf {
+        call VARUTIL.RenameSingleSampleVcf as t_020_RenameRawHcVcf {
             input:
                 vcf = CallVariantsWithHaplotypeCaller.output_vcf,
                 vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
                 prefix = participant_name + ".haplotype_caller.renamed",
                 new_sample_name = participant_name
         }
-        call VARUTIL.RenameSingleSampleVcf as RenameRawHcGvcf {
+        call VARUTIL.RenameSingleSampleVcf as t_021_RenameRawHcGvcf {
             input:
                 vcf = CallVariantsWithHaplotypeCaller.output_gvcf,
                 vcf_index = CallVariantsWithHaplotypeCaller.output_gvcf_index,
@@ -200,7 +200,7 @@ workflow SRWholeGenome {
         ########################################################################
         # Fingerprinting
         if (defined(fingerprint_haploytpe_db_file)) {
-            call VARUTIL.ExtractFingerprintAndBarcode as FingerprintAndBarcodeVcf {
+            call VARUTIL.ExtractFingerprintAndBarcode as t_021_FingerprintAndBarcodeVcf {
                 input:
                     vcf = RenameRawHcVcf.new_sample_name_vcf,
                     vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
@@ -220,16 +220,16 @@ workflow SRWholeGenome {
         File keyfile = RenameRawHcGvcf.new_sample_name_vcf
 
         # Finalize the raw Joint Calls:
-        call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf }
-        call FF.FinalizeToFile as FinalizeHCTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf_index }
-        call FF.FinalizeToFile as FinalizeHCGVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf }
-        call FF.FinalizeToFile as FinalizeHCGTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf_index }
-        call FF.FinalizeToFile as FinalizeHCBamOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout }
-        call FF.FinalizeToFile as FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout_index }
+        call FF.FinalizeToFile as t_022_FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as t_023_FinalizeHCTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as t_024_FinalizeHCGVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as t_025_FinalizeHCGTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as t_026_FinalizeHCBamOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout }
+        call FF.FinalizeToFile as t_027_FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout_index }
 
         # Finalize other outputs:
         if (defined(fingerprint_haploytpe_db_file)) {
-            call FF.FinalizeToFile as FinalizeFingerprintVcf { input: outdir = smalldir, keyfile = keyfile, file = select_first([FingerprintAndBarcodeVcf.output_vcf]) }
+            call FF.FinalizeToFile as t_028_FinalizeFingerprintVcf { input: outdir = smalldir, keyfile = keyfile, file = select_first([FingerprintAndBarcodeVcf.output_vcf]) }
         }
         
         ########################################################################
