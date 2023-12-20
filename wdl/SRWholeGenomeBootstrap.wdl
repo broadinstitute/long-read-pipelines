@@ -64,13 +64,13 @@ workflow SRWholeGenome {
         scatter (pair in zip(aligned_bams, aligned_bais)) {
             call Utils.InferSampleName as t_001_InferSampleName {input: bam = pair.left, bai = pair.right}
         }
-        call Utils.CheckOnSamplenames as t_002_CheckOnSampleNames {input: sample_names = InferSampleName.sample_name}
+        call Utils.CheckOnSamplenames as t_002_CheckOnSampleNames {input: sample_names = t_001_InferSampleName.sample_name}
 
         call Utils.MergeBams as t_003_MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
     }
 
-    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
-    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
+    File bam = select_first([t_003_MergeAllReads.merged_bam, aligned_bams[0]])
+    File bai = select_first([t_003_MergeAllReads.merged_bai, aligned_bais[0]])
 
     # Collect sample-level metrics:
     call AM.SamStatsMap as t_004_SamStats { input: bam = bam }
@@ -88,20 +88,20 @@ workflow SRWholeGenome {
 
         call COV.SummarizeDepthOverWholeBed as t_009_RegionalCoverage {
             input:
-                mosdepth_output = MosDepth.regions
+                mosdepth_output = t_008_MosDepth.regions
         }
     }
 
     call FF.FinalizeToFile as t_010_FinalizeBam { input: outdir = bam_dir, file = bam, name = "~{participant_name}.bam" }
     call FF.FinalizeToFile as t_011_FinalizeBai { input: outdir = bam_dir, file = bai, name = "~{participant_name}.bam.bai" }
 
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as t_012_FinalizeRegionalCoverage { input: outdir = bam_dir, file = select_first([RegionalCoverage.cov_summary]) } }
+    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as t_012_FinalizeRegionalCoverage { input: outdir = bam_dir, file = select_first([t_009_RegionalCoverage.cov_summary]) } }
 
 
     call FF.FinalizeToFile as t_013_FinalizeFastQCReport {
         input:
             outdir = metrics_dir,
-            file = FastQC.report
+            file = t_005_FastQC.report
     }
 
 
@@ -128,8 +128,8 @@ workflow SRWholeGenome {
 
         call VAR.CallVariants as t_014_CallVariantsWithDeepVariant {
             input:
-                bam               = RevertBQSRQuals.bam_out,
-                bai               = RevertBQSRQuals.bai_out,
+                bam               = t_013_RevertBQSRQuals.bam_out,
+                bai               = t_013_RevertBQSRQuals.bai_out,
                 sample_id         = participant_name,
                 ref_fasta         = ref_map['fasta'],
                 ref_fasta_fai     = ref_map['fai'],
@@ -147,10 +147,10 @@ workflow SRWholeGenome {
                 contigs_names_to_ignore = contigs_names_to_ignore,
         }
 
-        call FF.FinalizeToFile as t_015_FinalizeDVPepperVcf  { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_vcf]) }
-        call FF.FinalizeToFile as t_016_FinalizeDVPepperTbi  { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_tbi]) }
-        call FF.FinalizeToFile as t_017_FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_vcf]) }
-        call FF.FinalizeToFile as t_018_FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariantsWithDeepVariant.dvp_g_tbi]) }
+        call FF.FinalizeToFile as t_015_FinalizeDVPepperVcf  { input: outdir = smalldir, file = select_first([t_014_CallVariantsWithDeepVariant.dvp_vcf]) }
+        call FF.FinalizeToFile as t_016_FinalizeDVPepperTbi  { input: outdir = smalldir, file = select_first([t_014_CallVariantsWithDeepVariant.dvp_tbi]) }
+        call FF.FinalizeToFile as t_017_FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([t_014_CallVariantsWithDeepVariant.dvp_g_vcf]) }
+        call FF.FinalizeToFile as t_018_FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([t_014_CallVariantsWithDeepVariant.dvp_g_tbi]) }
     }
 
     # Now we handle HaplotypeCaller data:
@@ -181,15 +181,15 @@ workflow SRWholeGenome {
         # Make sure our sample name is correct:
         call VARUTIL.RenameSingleSampleVcf as t_020_RenameRawHcVcf {
             input:
-                vcf = CallVariantsWithHaplotypeCaller.output_vcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_vcf_index,
+                vcf = t_019_CallVariantsWithHaplotypeCaller.output_vcf,
+                vcf_index = t_019_CallVariantsWithHaplotypeCaller.output_vcf_index,
                 prefix = participant_name + ".haplotype_caller.renamed",
                 new_sample_name = participant_name
         }
         call VARUTIL.RenameSingleSampleVcf as t_021_RenameRawHcGvcf {
             input:
-                vcf = CallVariantsWithHaplotypeCaller.output_gvcf,
-                vcf_index = CallVariantsWithHaplotypeCaller.output_gvcf_index,
+                vcf = t_019_CallVariantsWithHaplotypeCaller.output_gvcf,
+                vcf_index = t_019_CallVariantsWithHaplotypeCaller.output_gvcf_index,
                 prefix = participant_name + ".haplotype_caller.renamed",
                 is_gvcf = true,
                 new_sample_name = participant_name
@@ -199,11 +199,12 @@ workflow SRWholeGenome {
         # Removed VETS
         ########################################################################
         # Fingerprinting
+
         if (defined(fingerprint_haploytpe_db_file)) {
             call VARUTIL.ExtractFingerprintAndBarcode as t_021_FingerprintAndBarcodeVcf {
                 input:
-                    vcf = RenameRawHcVcf.new_sample_name_vcf,
-                    vcf_index = RenameRawHcVcf.new_sample_name_vcf_index,
+                    vcf = t_020_RenameRawHcVcf.new_sample_name_vcf,
+                    vcf_index = t_020_RenameRawHcVcf.new_sample_name_vcf_index,
                     haplotype_database_file = select_first([fingerprint_haploytpe_db_file]),
                     ref_fasta         = ref_map['fasta'],
                     ref_fasta_fai     = ref_map['fai'],
@@ -217,19 +218,19 @@ workflow SRWholeGenome {
         ######################################################################## 
 
         # Create a Keyfile for finalization:
-        File keyfile = RenameRawHcGvcf.new_sample_name_vcf
+        File keyfile = t_021_RenameRawHcGvcf.new_sample_name_vcf
 
         # Finalize the raw Joint Calls:
-        call FF.FinalizeToFile as t_022_FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf }
-        call FF.FinalizeToFile as t_023_FinalizeHCTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf_index }
-        call FF.FinalizeToFile as t_024_FinalizeHCGVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf }
-        call FF.FinalizeToFile as t_025_FinalizeHCGTbi { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcGvcf.new_sample_name_vcf_index }
-        call FF.FinalizeToFile as t_026_FinalizeHCBamOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout }
-        call FF.FinalizeToFile as t_027_FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = CallVariantsWithHaplotypeCaller.bamout_index }
+        call FF.FinalizeToFile as t_022_FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = t_020_RenameRawHcVcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as t_023_FinalizeHCTbi { input: outdir = smalldir, keyfile = keyfile, file = t_020_RenameRawHcVcf.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as t_024_FinalizeHCGVcf { input: outdir = smalldir, keyfile = keyfile, file = t_021_RenameRawHcGvcf.new_sample_name_vcf }
+        call FF.FinalizeToFile as t_025_FinalizeHCGTbi { input: outdir = smalldir, keyfile = keyfile, file = t_021_RenameRawHcGvcf.new_sample_name_vcf_index }
+        call FF.FinalizeToFile as t_026_FinalizeHCBamOut { input: outdir = smalldir, keyfile = keyfile, file = t_019_CallVariantsWithHaplotypeCaller.bamout }
+        call FF.FinalizeToFile as t_027_FinalizeHCBaiOut { input: outdir = smalldir, keyfile = keyfile, file = t_019_CallVariantsWithHaplotypeCaller.bamout_index }
 
         # Finalize other outputs:
         if (defined(fingerprint_haploytpe_db_file)) {
-            call FF.FinalizeToFile as t_028_FinalizeFingerprintVcf { input: outdir = smalldir, keyfile = keyfile, file = select_first([FingerprintAndBarcodeVcf.output_vcf]) }
+            call FF.FinalizeToFile as t_028_FinalizeFingerprintVcf { input: outdir = smalldir, keyfile = keyfile, file = select_first([t_021_FingerprintAndBarcodeVcf.output_vcf]) }
         }
         
         ########################################################################
@@ -239,44 +240,43 @@ workflow SRWholeGenome {
     }
 
     output {
-        File aligned_bam = FinalizeBam.gcs_path
-        File aligned_bai = FinalizeBai.gcs_path
+        File aligned_bam = t_010_FinalizeBam.gcs_path
+        File aligned_bai = t_011_FinalizeBai.gcs_path
 
-        Float aligned_num_reads = FastQC.stats_map['number_of_reads']
-        Float aligned_num_bases = SamStats.stats_map['bases_mapped']
-        Float aligned_frac_bases = SamStats.stats_map['bases_mapped']/SamStats.stats_map['total_length']
-        Float aligned_est_fold_cov = SamStats.stats_map['bases_mapped']/ComputeGenomeLength.length
+        Float aligned_num_reads = t_005_FastQC.stats_map['number_of_reads']
+        Float aligned_num_bases = t_004_SamStats.stats_map['bases_mapped']
+        Float aligned_frac_bases = t_004_SamStats.stats_map['bases_mapped']/t_004_SamStats.stats_map['total_length']
+        Float aligned_est_fold_cov = t_004_SamStats.stats_map['bases_mapped']/t_006_ComputeGenomeLength.length
 
-        Float aligned_read_length_mean = FastQC.stats_map['read_length']
+        Float aligned_read_length_mean = t_005_FastQC.stats_map['read_length']
 
-        Float insert_size_average = SamStats.stats_map['insert_size_average']
-        Float insert_size_standard_deviation = SamStats.stats_map['insert_size_standard_deviation']
-        Float pct_properly_paired_reads = SamStats.stats_map['percentage_of_properly_paired_reads_%']
+        Float insert_size_average = t_004_SamStats.stats_map['insert_size_average']
+        Float insert_size_standard_deviation = t_004_SamStats.stats_map['insert_size_standard_deviation']
+        Float pct_properly_paired_reads = t_004_SamStats.stats_map['percentage_of_properly_paired_reads_%']
 
-        Float average_identity = 100.0 - (100.0*SamStats.stats_map['mismatches']/SamStats.stats_map['bases_mapped'])
+        Float average_identity = 100.0 - (100.0*t_004_SamStats.stats_map['mismatches']/t_004_SamStats.stats_map['bases_mapped'])
 
-        File fastqc_report = FinalizeFastQCReport.gcs_path
+        File fastqc_report = t_013_FinalizeFastQCReport.gcs_path
 
         Boolean successfully_processed = true
 
-        File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
+        File? bed_cov_summary = t_012_FinalizeRegionalCoverage.gcs_path
 
-        File? fingerprint_vcf = FinalizeFingerprintVcf.gcs_path
-        String? barcode = FingerprintAndBarcodeVcf.barcode
+        File? fingerprint_vcf = t_028_FinalizeFingerprintVcf.gcs_path
+        String? barcode = t_021_FingerprintAndBarcodeVcf.barcode
         ########################################
 
-        File? dvp_vcf   = FinalizeDVPepperVcf.gcs_path
-        File? dvp_tbi   = FinalizeDVPepperTbi.gcs_path
-        File? dvp_g_vcf = FinalizeDVPepperGVcf.gcs_path
-        File? dvp_g_tbi = FinalizeDVPepperGTbi.gcs_path
+        File? dvp_vcf   = t_015_FinalizeDVPepperVcf.gcs_path
+        File? dvp_tbi   = t_016_FinalizeDVPepperTbi.gcs_path
+        File? dvp_g_vcf = t_017_FinalizeDVPepperGVcf.gcs_path
+        File? dvp_g_tbi = t_018_FinalizeDVPepperGTbi.gcs_path
 
         ########################################
-
-        File? hc_g_vcf    = FinalizeHCGVcf.gcs_path
-        File? hc_g_tbi    = FinalizeHCGTbi.gcs_path
-        File? hc_bamout   = FinalizeHCBamOut.gcs_path
-        File? hc_baiout   = FinalizeHCBaiOut.gcs_path
-        File? hc_raw_vcf  = FinalizeHCVcf.gcs_path
-        File? hc_raw_tbi  = FinalizeHCTbi.gcs_path
+        File? hc_raw_vcf  = t_022_FinalizeHCVcf.gcs_path
+        File? hc_raw_tbi  = t_023_FinalizeHCTbi.gcs_path
+        File? hc_g_vcf    = t_024_FinalizeHCGVcf.gcs_path
+        File? hc_g_tbi    = t_025_FinalizeHCGTbi.gcs_path
+        File? hc_bamout   = t_026_FinalizeHCBamOut.gcs_path
+        File? hc_baiout   = t_027_FinalizeHCBaiOut.gcs_path
     }
 }
