@@ -150,3 +150,72 @@ task FilterByLenSeqTk {
         docker:                select_first([runtime_attr.docker, default_attr.docker])
     }
 }
+
+task MergeFastqs {
+
+    meta {
+        description : "Merge fastq files."
+    }
+
+    parameter_meta {
+        fastqs: {
+            desciption: "Fastq files to be merged.",
+            localization_optional: true
+        }
+        prefix: "Prefix for the output fastq file."
+        disk_type: "type of disk for the VM"
+    }
+
+    input {
+        Array[File] fastqs
+        String prefix
+
+        String disk_type
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+    set -eux
+
+        mkdir -p input_fastqs
+        time \
+        gcloud storage cp \
+            ~{sep=' ' fastqs} \
+            input_fastqs/
+
+        cd input_fastqs && ls
+        FILE="~{fastqs[0]}"
+        if [[ "$FILE" =~ \.gz$ ]]; then
+            cat * > ~{prefix}.fq.gz
+        else
+            cat * | pigz > ~{prefix}.fq.gz
+        fi
+        mv ~{prefix}.fq.gz ..
+    >>>
+
+    output {
+        File merged_fastq = "~{prefix}.fq.gz"
+    }
+
+    #########################
+    Int memory = 8
+    Int disk_size = 3 * ceil(size(fastqs, "GiB"))
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             memory,
+        disk_gb:            disk_size,
+        preemptible_tries:  2,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

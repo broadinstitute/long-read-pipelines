@@ -80,10 +80,10 @@ workflow ONTFlowcell {
                 recurse = true
         }
 
-        call NP.NanoPlotFromRichFastqs { input: fastqs = ListFilesOfType.files }
+        call NP.NanoPlotFromFastqs { input: fastqs = ListFilesOfType.files, is_ont_rich_fastq = true }
     }
 
-    Map[String, Float] nanoplot_map = select_first([NanoPlotFromRichFastqs.stats_map, NanoPlotFromSummary.stats_map ])
+    Map[String, Float] nanoplot_map = select_first([NanoPlotFromFastqs.stats_map, NanoPlotFromSummary.stats_map ])
 
     File manifest = select_first([ListFilesOfType.manifest, ListFastqs.manifest])
 

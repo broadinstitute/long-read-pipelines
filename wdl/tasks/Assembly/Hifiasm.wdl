@@ -1,73 +1,6 @@
 version 1.0
 
 import "../../structs/Structs.wdl"
-import "../Visualization/VisualizeResourceUsage.wdl"
-
-workflow Hifiasm {
-
-    meta {
-        description: "We run two HiFiasm jobs, one for getting alternative contigs and one for getting the haplotigs. And we take the primary assembly from the first job. Note that we've only tested on diploid organisms."
-    }
-    parameter_meta {
-        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
-        prefix:   "prefix to apply to assembly output filenames"
-    }
-
-    input {
-        File reads
-        String prefix
-
-        String zones = "us-central1-a us-central1-b us-central1-c"
-    }
-
-    call AssembleForAltContigs {  input:
-        reads  = reads,
-        prefix = prefix,
-        zones = zones
-    }
-
-    call AssembleForHaplotigs { input:
-        reads  = reads,
-        prefix = prefix,
-        zones = zones
-    }
-
-    call VisualizeResourceUsage.SimpleRscript as VisualizeHapAsmResoureUsage { input:
-        resource_log = AssembleForHaplotigs.resouce_monitor_log,
-        output_pdf_name = "~{prefix}.hifiasm.resources-usage.hap-mode.pdf",
-        plot_title = "Hifiasm, on input ~{prefix}, in haplotype-resolve mode"
-    }
-
-    output {
-        File primary_gfa  = AssembleForAltContigs.primary_gfa
-        File primary_tigs = AssembleForAltContigs.primary_tigs
-        File primary_tigs_gzi = AssembleForAltContigs.primary_fa_gzi
-
-        File alternate_gfa  = AssembleForAltContigs.alternate_gfa
-        File alternate_tigs = AssembleForAltContigs.alternate_tigs
-        File alternate_tigs_gzi = AssembleForAltContigs.alternate_tigs_gzi
-
-        File log_in_pVSa_mode = AssembleForAltContigs.log
-        File resource_usage_in_pVSa_mode = AssembleForAltContigs.resouce_monitor_log
-
-        ###########
-        File hap1_gfa = AssembleForHaplotigs.hap1_gfa
-        File hap1_tigs = AssembleForHaplotigs.hap1_tigs
-        File hap1_tig_gzi = AssembleForHaplotigs.hap1_tig_gzi
-
-        File hap2_gfa = AssembleForHaplotigs.hap2_gfa
-        File hap2_tigs = AssembleForHaplotigs.hap2_tigs
-        File hap2_tig_gzi = AssembleForHaplotigs.hap2_tig_gzi
-
-        File log_in_hap_mode = AssembleForHaplotigs.log
-        File resource_usage_in_hap_mode = AssembleForHaplotigs.resouce_monitor_log
-        File resource_usage_visual_in_hap_mode = VisualizeHapAsmResoureUsage.plot_pdf
-
-        # these two are saved, but the one generated in the primary VS alternate mode are preferred
-        File primary_gfa_in_hap_mode  = AssembleForHaplotigs.primary_gfa
-        File primary_tigs_in_hap_mode = AssembleForHaplotigs.primary_fa
-    }
-}
 
 task AssembleForHaplotigs {
     input {
@@ -77,16 +10,6 @@ task AssembleForHaplotigs {
 
         RuntimeAttr? runtime_attr_override
     }
-
-    Int proposed_memory = 4 * ceil(size(reads, "GB"))
-    Int memory = if proposed_memory < 96 then 96 else proposed_memory  # this 96 magic number is purely empirical
-    Int n = memory / 4  # this might be an odd number
-    Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
-    Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
-
-    Int min_disk = 75
-    Int proposed_disk = 5 * ceil(size(reads, "GB"))
-    Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
     command <<<
         set -euxo pipefail
@@ -146,11 +69,21 @@ task AssembleForHaplotigs {
     }
 
     #########################
+    Int proposed_memory = 4 * ceil(size(reads, "GB"))
+    Int memory = if proposed_memory < 96 then 96 else proposed_memory  # this 96 magic number is purely empirical
+    Int n = memory / 4  # this might be an odd number
+    Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
+    Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
+
+    Int min_disk = 75
+    Int proposed_disk = 5 * ceil(size(reads, "GB"))
+    Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
+
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        preemptible_tries:  0,
+        preemptible_tries:  0,  # don't bother with premption on GCP with resource request + the expected long run, you'll end up waiting longer & paying more because GCP will prempt you anyway
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
     }
@@ -174,15 +107,6 @@ task AssembleForAltContigs {
 
         RuntimeAttr? runtime_attr_override
     }
-    Int proposed_memory = 4 * ceil(size(reads, "GB"))
-    Int memory = if proposed_memory < 96 then 96 else if proposed_memory > 512 then 512 else proposed_memory # this 96 magic number is purely empirical
-    Int n = memory / 4  # this might be an odd number
-    Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
-    Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
-
-    Int min_disk = 75
-    Int proposed_disk = 5 * ceil(size(reads, "GB"))
-    Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
     command <<<
         set -euxo pipefail
@@ -232,11 +156,21 @@ task AssembleForAltContigs {
     }
 
     #########################
+    Int proposed_memory = 4 * ceil(size(reads, "GB"))
+    Int memory = if proposed_memory < 96 then 96 else if proposed_memory > 512 then 512 else proposed_memory # this 96 magic number is purely empirical
+    Int n = memory / 4  # this might be an odd number
+    Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
+    Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
+
+    Int min_disk = 75
+    Int proposed_disk = 5 * ceil(size(reads, "GB"))
+    Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
+
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        preemptible_tries:  0,
+        preemptible_tries:  0, # don't bother with premption on GCP with resource request + the expected long run, you'll end up waiting longer & paying more because GCP will prempt you anyway
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
     }

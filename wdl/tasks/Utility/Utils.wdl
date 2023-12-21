@@ -1261,6 +1261,7 @@ task MergeFastqs {
 
     meta {
         description : "Merge fastq files."
+        deprecated: true
     }
 
     parameter_meta {

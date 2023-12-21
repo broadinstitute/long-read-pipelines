@@ -116,3 +116,66 @@ task SummarizeQuastReport {
         docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
+
+task SummarizeAssemblyMetrics {
+    meta {
+        desciption:
+        "Parse and convert most critical metrics from the QUAST report on the [primary, H1 and H2] assemblies"
+    }
+
+    parameter_meta {
+        quast_summary: {
+            desciption: "produced by task SummarizeQuastReport",
+            note: "It should be a Map[String, Int] conceptually, but given that WDL/Cromwell/Terra enforces a Int32 max value on Int types, human genomes sizes overflow that value, hence we use String"
+        }
+    }
+
+    input {
+        File quast_summary
+    }
+
+    output {
+        Map[String, String] summary = read_map("result.tsv")
+    }
+
+    command <<<
+        set -eux
+
+        python <<CODE
+        import csv
+
+        asm_length = list()
+        auN = list()
+        num_tigs = list()
+        with open("~{quast_summary}") as inf:
+            rd = csv.reader(inf, delimiter="\t", quotechar='"')
+            for row in rd:
+                s = row[0]
+                if 'Total_length' == s:
+                    asm_length = [int(e) for e in row[1:4]]
+                elif 'auN' == s:
+                    auN = [round(float(e)) for e in row[1:4]]
+                elif '#_contigs' == s:
+                    num_tigs = [int(e) for e in row[1:4]]
+
+        with open("result.tsv", 'w') as outf:
+
+            outf.write(f"primary_length\t{asm_length[0]}\n")
+            outf.write(f"h1_length\t{asm_length[1]}\n")
+            outf.write(f"h2_length\t{asm_length[2]}\n")
+
+            outf.write(f"primary_auN\t{auN[0]}\n")
+            outf.write(f"h1_auN\t{auN[1]}\n")
+            outf.write(f"h2_auN\t{auN[2]}\n")
+
+            outf.write(f"primary_nTigs\t{num_tigs[0]}\n")
+            outf.write(f"h1_nTigs\t{num_tigs[1]}\n")
+            outf.write(f"h2_nTigs\t{num_tigs[2]}\n")
+        CODE
+    >>>
+
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "us.gcr.io/broad-dsp-lrma/python:3.9.18-slim-bullseye"
+    }
+}

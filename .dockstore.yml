@@ -75,6 +75,12 @@ workflows:
 - name: PBAssembleWithHifiasm
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/PBAssembleWithHifiasm.wdl
+- name: HifiasmOnDiploid
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/HifiasmOnDiploid.wdl
+- name: MergeHiFiFastQs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/MergeHiFiFastQs.wdl
 - name: PBMASIsoSeqQuantify
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqQuantify.wdl
