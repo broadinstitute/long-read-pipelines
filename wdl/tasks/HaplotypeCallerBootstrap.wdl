@@ -214,7 +214,9 @@ task HaplotypeCaller_GATK4_VCF {
                 -A AssemblyComplexity \
                 ~{true="-ERC GVCF" false="" make_gvcf} \
                 --smith-waterman FASTEST_AVAILABLE \
-                ~{bamout_arg}
+                ~{bamout_arg} \
+                --verbosity DEBUG \
+                --debug-assembly true
 
         # Removed for now because we need to qualify the pipeline with standard annotations first.
         # ~{true="-G AS_StandardAnnotation" false="" make_gvcf}
