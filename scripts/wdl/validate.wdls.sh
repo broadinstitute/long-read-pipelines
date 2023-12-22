@@ -10,6 +10,7 @@ echo "VALIDATING WDL FILES IN $PWD"
 (womtool --version || echo "I need womtool to run" ) && echo
 
 for wdl in $(find . -type f -name "*.wdl"); do
-  echo -e "==============================\n${wdl}";
-  womtool validate "${wdl}";
+  womtool validate "${wdl}" 2>/dev/null
+  test $? -eq 0 || \
+    (echo -e "==============================\n${wdl}"; womtool validate "${wdl}")
 done
