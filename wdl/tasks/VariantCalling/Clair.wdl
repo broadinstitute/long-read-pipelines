@@ -55,7 +55,10 @@ task Clair {
     command <<<
         set -euxo pipefail
 
-        samtools view -h -1 --write-index -o "local.bam##idx##local.bam.bai" -X "~{bai}" "~{bam}" "~{sep='" "' regions}"
+        GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_OAUTH_TOKEN
+
+        samtools view -h1X --write-index -o "local.bam##idx##local.bam.bai" "~{bam}" "~{bai}" "~{sep='" "' regions}"
 
         SAMPLE=$(samtools view -H local.bam | sed '/^@RG/!d;s/.*	SM:\([^	]*\).*/\1/' | sed '2,$d')
 
@@ -68,7 +71,7 @@ task Clair {
             --model_path="/opt/models/~{platform}" \
             --sample_name="$SAMPLE" \
             --gvcf \
-            --include_all_contigs \
+            --include_all_ctgs \
             --output="./"
 
         # for chrM, Clair3 creates a header only vcf, copy it to gVCF as-is
@@ -96,10 +99,10 @@ task Clair {
         File? full_alignment_tbi = "full_alignment.vcf.gz.tbi"
 
         # save both VCF and gVCF
-        File vcf = "$vcfName"
-        File? vcf_tbi = "$tbiName"
-        File gvcf = "$gvcfName"
-        File? gvcf_tbi = "$gtbiName"
+        File vcf = "~{prefix}.clair.vcf.gz"
+        File? vcf_tbi = "~{prefix}.clair.vcf.gz.tbi"
+        File gvcf = "~{prefix}.clair.gvcf.gz"
+        File? gvcf_tbi = "~{prefix}.clair.gvcf.gz.tbi"
     }
 
     #########################

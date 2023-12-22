@@ -85,13 +85,16 @@ task Pepper {
     Int bam_sz = ceil(size(bam, "GB"))
     Int disk_size = if bam_sz > 200 then 2*bam_sz else bam_sz + 200
 
-    String output_root = "pepper_output"
+    String output_root = "/cromwell_root/pepper_output"
     String prefix = basename(bam, ".bam") + ".pepper"
 
     command <<<
         set -euxo pipefail
 
-        samtools view -h -1 --write-index -o "local.bam##idx##local.bam.bai" -X "~{bai}" "~{bam}" "~{sep='" "' regions}"
+        GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_OAUTH_TOKEN
+
+        samtools view -h1X --write-index -o "local.bam##idx##local.bam.bai" "~{bam}" "~{bai}" "~{sep='" "' regions}"
         SAMPLE=$(samtools view -H local.bam | sed '/^@RG/!d;s/.*	SM:\([^	]*\).*/\1/' | sed '2,$d')
 
         mkdir -p "~{output_root}"
@@ -106,7 +109,7 @@ task Pepper {
             -o "~{output_root}" \
             -p "~{prefix}" \
             --phased_output \
-            --ccs
+            --hifi
 
         find "~{output_root}/" -print | sed -e 's+[^/]*/+|____+g;s+____|+ |+g' \
             > "~{output_root}/dir_structure.txt"
@@ -135,7 +138,7 @@ task Pepper {
         boot_disk_gb:       100,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "kishwars/pepper_deepvariant:r0.4.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-marginphase:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -184,7 +187,10 @@ task DV {
     command <<<
         set -euxo pipefail
 
-        samtools view -h -1 --write-index -o "local.bam##idx##local.bam.bai" -X "~{bai}" "~{bam}" "~{sep='" "' regions}"
+        GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_OAUTH_TOKEN
+
+        samtools view -h1X --write-index -o "local.bam##idx##local.bam.bai" "~{bam}" "~{bai}" "~{sep='" "' regions}"
 
         export MONITOR_MOUNT_POINT=$PWD
         bash vm_local_monitoring_script.sh &> resources.log &
@@ -310,9 +316,9 @@ task MarginPhase {
 
 
     output {
-        File phaseset_bed = "$bedName"
-        File phasedVCF  = "$vcfName"
-        File phasedtbi  = "$tbiName"
+        File phaseset_bed = "~{output_root}/~{prefix}.phaseset.bed"
+        File phasedVCF  = "~{output_root}/~{prefix}.phased.vcf.gz"
+        File phasedtbi  = "~{output_root}/~{prefix}.phased.vcf.gz.tbi"
     }
 
     #########################

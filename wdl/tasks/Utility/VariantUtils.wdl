@@ -183,8 +183,8 @@ task MergeAndSortVCFs {
     >>>
 
     output {
-        File vcf = "$vcfName"
-        File tbi = "$tbiName"
+        File vcf = "~{prefix}.vcf.gz"
+        File tbi = "~{prefix}.vcf.gz.tbi"
     }
 
     #########################

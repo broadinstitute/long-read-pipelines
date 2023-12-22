@@ -102,9 +102,9 @@ task SampleSV {
     >>>
 
     output {
-        File snf = "$snfName"
-        File vcf = "$vcfName"
-        File tbi = "$tbiName"
+        File snf = "~{prefix}.sniffles.snf"
+        File vcf = "~{prefix}.sniffles.vcf.gz"
+        File tbi = "~{prefix}.sniffles.vcf.gz.tbi"
     }
 
     #########################

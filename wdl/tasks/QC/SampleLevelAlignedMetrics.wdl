@@ -66,7 +66,7 @@ task MosDepthOverBed {
     command <<<
         set -euxo pipefail
 
-        mosdepth -t 4 -b ~{bed} -n -x -Q 1 ~{prefix} ~{bam}
+        mosdepth -t3 -b ~{bed} -n -x -Q1 ~{prefix} ~{bam}
 
         outFil="~{prefix}.regions.bed"
         echo 'chr	start	stop	gene	cov_mean' > "$outFil"
@@ -79,7 +79,7 @@ task MosDepthOverBed {
     >>>
 
     output {
-        File regions = "$outFil"
+        File regions = "~{prefix}.regions.bed"
     }
 
     #########################
@@ -90,7 +90,7 @@ task MosDepthOverBed {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-mosdepth:0.3.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-mosdepth:0.3.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -1,4 +1,4 @@
-VERSION = 1.3.0
+VERSION = 1.3.0.1
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-deepvariant:$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/lr-deepvariant:latest
 

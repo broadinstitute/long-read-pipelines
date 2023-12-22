@@ -98,10 +98,12 @@ task PBSV {
         if ~{defined(regions)}; then
             GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
             export GCS_OAUTH_TOKEN
-            samtools view -h -1 -o local.bam -X "~{bai}" "~{bam}" "~{sep='" "' regions}"
+            samtools view -h1X --write-index -o "local.bam##idx##local.bam.bai" "~{bam}" "~{bai}" "~{sep='" "' regions}"
         else
             gcloud storage cp "~{bam}" local.bam
         fi
+
+        env # testing: having trouble finding pbsv
 
         pbsv discover \
             ~{"--tandem-repeats " + tandem_repeat_bed} local.bam local.svsig.gz
@@ -113,24 +115,23 @@ task PBSV {
 
         vcfName="~{prefix}.pbsv.vcf.gz"
         grep -v '##fileDate' < "~{prefix}.pbsv.vcf" | bgzip > "$vcfName"
-        tabix -p vcf "~{prefix}.pbsv.vcf.gz"
+        tabix -p vcf "$vcfName"
 
-        tbiName="${vcfName}.tbi"
         if ~{defined(output_bucket)}; then
             outDir=$(echo "~{output_bucket}" | sed 's+/?$+/+')
-            gcloud storage cp "$vcfName" "$tbiName" "$outDir"
+            gcloud storage cp "$vcfName" "${vcfName}.tbi" "$outDir"
         fi
     >>>
 
     output {
-        File vcf = "$vcfName"
-        File tbi = "$tbiName"
+        File vcf = "~{prefix}.pbsv.vcf.gz"
+        File tbi = "~{prefix}.pbsv.vcf.gz.tbi"
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          if(defined(regions)) then 8 else 32,
-        mem_gb:             if(defined(regions)) then 32 else 128,
+        mem_gb:             if(defined(regions)) then 64 else 128,
         disk_gb:            runtime_disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,

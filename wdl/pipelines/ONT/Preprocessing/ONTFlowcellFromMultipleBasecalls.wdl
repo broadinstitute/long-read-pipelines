@@ -57,7 +57,7 @@ workflow ONTFlowcellFromMultipleBasecalls {
                 bam = usable_bam,
                 bai = usable_bai,
                 bed = select_first([bed_to_compute_coverage]),
-                outputBucket = outdir
+                output_bucket = outdir
         }
     }
     # Finalize data

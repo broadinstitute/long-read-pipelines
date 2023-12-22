@@ -33,7 +33,7 @@ task NanoPlotFromSummary {
                  --summary "~{sep='" "' summary_files}"
 
         grep -v -e '^Metrics' -e '^highest' -e '^longest' < NanoStats.txt | \
-            sed -e 's/ >/_/' -e 's/://' -e 's/  */	/' > map.txt
+            sed -e 's/ >/_/' -e 's/://' | awk '{print $1 "\t" $2}' > map.txt
     >>>
 
     #number_of_reads 88000
@@ -125,7 +125,7 @@ task NanoPlotFromRichFastqs {
                  --fastq_rich "~{sep='" "' fastqs}"
 
         grep -v -e '^Metrics' -e '^highest' -e '^longest' < NanoStats.txt | \
-            sed -e 's/ >/_/' -e 's/://' -e 's/  */	/' > map.txt
+            sed -e 's/ >/_/' -e 's/://' | awk '{print $1 "\t" $2}' > map.txt
     >>>
 
     output {
@@ -208,7 +208,7 @@ task NanoPlotFromBam {
                  --bam "~{bam}"
 
         grep -v -e '^Metrics' -e '^highest' -e '^longest' < NanoStats.txt | \
-            sed -e 's/ >/_/' -e 's/://' -e 's/  */	/' > map.txt
+            sed -e 's/ >/_/' -e 's/://' | awk '{print $1 "\t" $2}' > map.txt
 
         # add the genome length to the map
         samtools view -H "~{bam}" | sed '/^@SQ/!d;s/.*	LN:\([^	]*\).*/\1/' | awk '{sum+=$0}END{print "genome_length\t" sum}' >> map.txt
@@ -265,7 +265,7 @@ task NanoPlotFromBam {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-nanoplot:1.40.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-nanoplot:1.42.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

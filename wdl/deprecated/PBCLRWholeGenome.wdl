@@ -72,7 +72,7 @@ workflow PBCLRWholeGenome {
                 bam = bam,
                 bai = bai,
                 bed = select_first([bed_to_compute_coverage]),
-                outputBucket = dir
+                output_bucket = dir
         }
     }
 
