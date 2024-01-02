@@ -5,7 +5,7 @@ import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 import "../../../tasks/Utility/ONTUtils.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
-import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
+import "../../../deprecated/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow ONTFlowcellFromMultipleBasecalls {
     input {

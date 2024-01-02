@@ -7,7 +7,7 @@ import "../../../tasks/Utility/BAMutils.wdl" as BU
 
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
-import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
+import "../../../deprecated/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow Work {
     meta {

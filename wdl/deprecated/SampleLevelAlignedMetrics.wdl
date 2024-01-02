@@ -1,8 +1,9 @@
 version 1.0
 
-import "../Utility/Utils.wdl"
-import "../Visualization/NanoPlot.wdl" as NP
-import "../QC/AlignedMetrics.wdl" as AM
+import "../tasks/Utility/Utils.wdl"
+import "../tasks/Utility/BAMutils.wdl" as BU
+import "../tasks/Visualization/NanoPlot.wdl" as NP
+import "../tasks/QC/AlignedMetrics.wdl" as AM
 
 
 workflow SampleLevelAlignedMetrics {
@@ -36,6 +37,9 @@ workflow SampleLevelAlignedMetrics {
 
     call AM.MosDepthWGS { input: bam = aligned_bam, bai = aligned_bai, bed = bed_to_compute_coverage, bed_descriptor = bed_descriptor }
 
+    call BU.SamtoolsFlagStats  { input: bam = aligned_bam, output_format = 'JSON' }
+    call BU.ParseFlagStatsJson { input: sam_flag_stats_json = SamtoolsFlagStats.flag_stats }
+
     if (defined(bed_to_compute_coverage)) {
         call SummarizeDepthOverWholeBed as cov_over_region {
             input:
@@ -45,8 +49,12 @@ workflow SampleLevelAlignedMetrics {
 
     output {
         Float coverage = MosDepthWGS.wgs_cov
+        File coverage_per_chr = MosDepthWGS.summary_txt
 
         Map[String, Float] reads_stats = NanoPlotFromBam.stats_map
+        Array[File] nano_plots = NanoPlotFromBam.plots
+
+        Map[String, Float] sam_flag_stats = ParseFlagStatsJson.qc_pass_reads_SAM_flag_stats
 
         File? bed_cov_summary = cov_over_region.cov_summary
     }
