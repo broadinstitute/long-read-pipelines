@@ -25,8 +25,20 @@ workflow ONTWholeGenome {
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files, used for custom sharding the of the input BAM; when not provided, will shard WG by contig (possibly slower)"
         ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
 
-        bed_to_compute_coverage: "BED file holding regions-of-interest for computing coverage over."
-        bed_descriptor: "Description of the BED file, will be used in the file name so be careful naming things"
+        qc_metrics_config_json:
+        "A config json to for running the QC and metrics-collection sub-workflow 'AlignedBamQCandMetrics'"
+
+        fingerprint_sample_id:
+        "For fingerprint verification: the ID of the sample supposedly this BAM belongs to; note that the fingerprint VCF is assumed to be located at {fingerprint_store}/{fingerprint_sample_id}*.vcf(.gz)?"
+
+        expected_sex_type:
+        "If provided, triggers sex concordance check. Accepted value: [M, F, NA, na]"
+
+        run_seqkit_stats:
+        "if true, collect more metrics using seqkit; if processing HiFi data, consider getting this metrics via MergeHiFiFastQs; if alignning to multiple references, you just need to collect this once"
+
+        short_reads_threshold:
+        "if provided, will trigger read length metrics collection; a length threshold below which reads are classified as short; does not filter reads; if processing HiFi data, consider getting this metrics via MergeHiFiFastQs"
 
         call_svs:               "whether to call SVs"
         pbsv_discover_per_chr:  "Run the discover stage of PBSV per chromosome"
@@ -39,18 +51,31 @@ workflow ONTWholeGenome {
 
         gcp_zones: "which Google Cloud Zone to use (this has implications on how many GPUs are available and egress costs, so configure carefully)"
 
-        # outputs
-        haplotagged_bam: "BAM haplotagged using a small variant single-sample VCF."
-        haplotagged_bai: "Index for haplotagged_bam."
-        haplotagged_bam_tagger: "VCF used for doing the haplotagging. 'Legacy' if the input is ONT data generated on pores before R10.4."
+        # metrics outputs
+        nanoplot_summ:
+        "Summary on alignment metrics provided by Nanoplot (todo: study the value of this output)"
+        seqkit_stats:
+        "A few metrics output by seqkit stats"
+        read_len_summaries:
+        "A few metrics summarizing the read length distribution"
+        read_len_peaks:
+        "Peaks of the read length distribution (heruistic)"
+        read_len_deciles:
+        "Deciles of the read length distribution"
+        sam_flag_stats:
+        "SAM flag stats"
+        fingerprint_check:
+        "Summary on (human) fingerprint checking results"
+        contamination_est:
+        "cross-(human)individual contamination estimation by VerifyBAMID2"
+        inferred_sex_info:
+        "Inferred sex concordance information if expected sex type is provided"
+        methyl_tag_simple_stats:
+        "Simple stats on the reads with & without SAM methylation tags (MM/ML)."
+        aBAM_metrics_files:
+        "A map where keys are summary-names and values are paths to files generated from the various QC/metrics tasks"
 
-        legacy_g_vcf: "PEPPER-MARGIN-DeepVariant gVCF; available only when input is ONT data generated on pores older than R10.4."
-        legacy_g_tbi: "Index for PEPPER-MARGIN-DeepVariant gVCF; available only when input is ONT data generated on pores older than R10.4."
-        legacy_phased_vcf: "Phased PEPPER-MARGIN-DeepVariant VCF; available only when input is ONT data generated on pores older than R10.4."
-        legacy_phased_tbi: "Indes for phased PEPPER-MARGIN-DeepVariant VCF; available only when input is ONT data generated on pores older than R10.4."
-        legacy_phasing_stats_tsv: "Phasing stats of legacy_phased_vcf in TSV format; available only when input is ONT data generated on pores older than R10.4."
-        legacy_phasing_stats_gtf: "Phasing stats of legacy_phased_vcf in GTF format; available only when input is ONT data generated on pores older than R10.4."
-
+        # variants outputs
         dv_g_vcf: "DeepVariant gVCF; available for CCS data and ONT data generated with pores >= R10.4."
         dv_g_tbi: "Index for DeepVariant ; available for CCS data and ONT data generated with pores >= R10.4."
         dv_margin_phased_vcf: "Phased DeepVariant VCF genrated with Margin; available for CCS data and ONT data generated with pores >= R10.4."
@@ -63,6 +88,13 @@ workflow ONTWholeGenome {
         dv_vcf_whatshap_phasing_stats_gtf: "Phasing stats (GTF format) of phased DeepVariant VCF genrated with WhatsHap; available for CCS data and ONT data generated with pores >= R10.4."
 
         dv_nongpu_resources_usage_visual: "Resource usage monitoring log visualization for DV (per shard); available for CCS data and ONT data generated with pores >= R10.4."
+
+        legacy_g_vcf: "PEPPER-MARGIN-DeepVariant gVCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_g_tbi: "Index for PEPPER-MARGIN-DeepVariant gVCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phased_vcf: "Phased PEPPER-MARGIN-DeepVariant VCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phased_tbi: "Indes for phased PEPPER-MARGIN-DeepVariant VCF; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phasing_stats_tsv: "Phasing stats of legacy_phased_vcf in TSV format; available only when input is ONT data generated on pores older than R10.4."
+        legacy_phasing_stats_gtf: "Phasing stats of legacy_phased_vcf in GTF format; available only when input is ONT data generated on pores older than R10.4."
     }
 
     input {
@@ -80,10 +112,8 @@ workflow ONTWholeGenome {
         File ref_map_file
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
-        File? bed_to_compute_coverage
-        String? bed_descriptor
 
-        # user choice
+        # variant-calling user choice
         Boolean call_svs = true
         Boolean pbsv_discover_per_chr = true
         Int minsvlen = 50
@@ -94,6 +124,14 @@ workflow ONTWholeGenome {
         Int dv_threads = 16
         Int dv_memory = 64
         Boolean use_gpu = false
+
+        # for QC/metrics
+        File? qc_metrics_config_json
+        String? fingerprint_sample_id
+        String? expected_sex_type
+
+        Boolean run_seqkit_stats
+        Int? short_reads_threshold
 
         Array[String] gcp_zones = ['us-central1-a', 'us-central1-b', 'us-central1-c', 'us-central1-f']
     }
@@ -110,11 +148,17 @@ workflow ONTWholeGenome {
             aligned_bams = aligned_bams,
             aligned_bais = aligned_bais,
 
-            is_ont = true,
+            ref_map_file = ref_map_file,
+
+            tech = 'ONT',
             bams_suspected_to_contain_dup_record = bams_suspected_to_contain_dup_record,
 
-            bed_to_compute_coverage = bed_to_compute_coverage,
-            bed_descriptor = bed_descriptor
+            qc_metrics_config_json = qc_metrics_config_json,
+            fingerprint_sample_id = fingerprint_sample_id,
+            expected_sex_type = expected_sex_type,
+
+            run_seqkit_stats = run_seqkit_stats,
+            short_reads_threshold = short_reads_threshold
     }
 
     ####################################################################################################
@@ -162,11 +206,35 @@ workflow ONTWholeGenome {
         File aligned_bai = MergeAndMetrics.aligned_bai
 
         Float coverage = MergeAndMetrics.coverage
-        File? bed_cov_summary = MergeAndMetrics.bed_cov_summary
-
-        Map[String, Float] alignment_metrics = MergeAndMetrics.alignment_metrics
 
         ########################################
+        # QC/metrics
+        Map[String, Float] nanoplot_summ             = MergeAndMetrics.nanoplot_summ
+        Map[String, Float] sam_flag_stats            = MergeAndMetrics.sam_flag_stats
+
+        # metrics for ONT
+        Map[String, Float]? seqkit_stats             = MergeAndMetrics.seqkit_stats
+        Map[String, String]? read_len_summaries      = MergeAndMetrics.read_len_summaries
+        Array[Int]? read_len_peaks                   = MergeAndMetrics.read_len_peaks
+        Array[Int]? read_len_deciles                 = MergeAndMetrics.read_len_deciles
+
+        # fingerprint
+        Map[String, String]? fingerprint_check       = MergeAndMetrics.fingerprint_check
+
+        # contam
+        Float? contamination_est                     = MergeAndMetrics.contamination_est
+
+        # sex concordance
+        Map[String, String]? inferred_sex_info       = MergeAndMetrics.inferred_sex_info
+
+        # methyl
+        Map[String, String]? methyl_tag_simple_stats = MergeAndMetrics.methyl_tag_simple_stats
+
+        # file-based QC/metrics outputs all packed into a finalization map
+        Map[String, String] aBAM_metrics_files      = MergeAndMetrics.aBAM_metrics_files
+
+        ########################################
+        # variants
         File? pbsv_vcf = CallVariants.pbsv_vcf
         File? pbsv_tbi = CallVariants.pbsv_tbi
 
