@@ -13,8 +13,8 @@ workflow FPCheckAoU {
         aligned_bam:        "GCS path to aligned BAM file, supposed to be of the same sample as from the fingerprinting (FP) VCF"
         tech:               "The technology used to generate this BAM. Currently, the following values are accepted: [ONT, Sequel, Revio]."
 
-        fp_store:           "Name of the bucket and prefix holding the fingerprint VCFs."
-        sample_id_at_store: "UUID of the sample at the fingerprint store, used to fetch the fingerprinting VCF"
+        fp_vcf_store:       "Name of the bucket and prefix holding the fingerprint VCFs."
+        fp_sample_id:       "UUID of the sample at the fingerprint store, used to fetch the fingerprinting VCF"
 
         ref_specific_haplotype_map: "Happlotype map file for the reference build used. See https://bit.ly/3QyZbwt "
 
@@ -33,8 +33,8 @@ workflow FPCheckAoU {
         File aligned_bai
         String tech
 
-        String fp_store
-        String sample_id_at_store
+        String fp_vcf_store
+        String fp_sample_id
 
         File ref_specific_haplotype_map
 
@@ -59,7 +59,7 @@ workflow FPCheckAoU {
     Int bam_sz_mb = ceil(size(aligned_bam, "MiB"))
     if (bam_sz_mb >= teeny_bam_def_sz[tech]) {
         ##### Prep work
-        call ResolveFPVCFPath {input: fp_store = fp_store, sample_id_at_store = sample_id_at_store}
+        call ResolveFPVCFPath {input: fp_vcf_store = fp_vcf_store, fp_sample_id = fp_sample_id}
         call ReheaderFullGRCh38VCFtoNoAlt {input: full_GRCh38_vcf = ResolveFPVCFPath.fp_vcf}
 
         call VariantUtils.GetVCFSampleName {
@@ -109,19 +109,19 @@ task ResolveFPVCFPath {
     }
 
     input {
-        String fp_store
-        String sample_id_at_store
+        String fp_vcf_store
+        String fp_sample_id
         RuntimeAttr? runtime_attr_override
     }
 
-    String fp_store_formatted = sub(fp_store, "/$", "")
+    String fp_vcf_store_formatted = sub(fp_vcf_store, "/$", "")
 
     command <<<
         set -eux
 
         # note the addition of the wildcard character *
-        FP_SEARCH="~{fp_store_formatted}/~{sample_id_at_store}*.fingerprint.liftedover.vcf"
-        # this will error if no paths match, i.e. no FP file exists with this sample_id_at_store
+        FP_SEARCH="~{fp_vcf_store_formatted}/~{fp_sample_id}*.fingerprint.liftedover.vcf"
+        # this will error if no paths match, i.e. no FP file exists with this fp_sample_id
         FP_PATH=$(gsutil ls "${FP_SEARCH}" | head -n 1)
         FP_INDEX_PATH="${FP_PATH}.idx"
 

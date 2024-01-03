@@ -128,8 +128,8 @@ workflow AlignAndCheckFingerprintCCS {
                 aligned_bam = aBAM,
                 aligned_bai = aBAI,
                 tech = 'Sequel',  # making assumption that data to process here are all Sequel data (no critial impact though)
-                fp_store = fp_store,
-                sample_id_at_store = sample_id_at_store,
+                fp_vcf_store = fp_store,
+                fp_sample_id = sample_id_at_store,
                 ref_specific_haplotype_map = ref_map['haplotype_map']
         }
         call GeneralUtils.TarGZFiles as saveFPRes {input: files = [FPCheckAoU.fingerprint_summary, FPCheckAoU.fingerprint_details], name = 'fingerprint_check.summary_and_details'}

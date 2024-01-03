@@ -13,8 +13,8 @@ workflow VerifyBamFingerprint {
     parameter_meta {
         tech: "The technology used to generate this BAM. Currently, the following values are accepted: [ONT, Sequel, Revio]."
 
-        fp_store: "GCS storage bucket and folder where the fingperprint VCF files are stored."
-        sample_id_at_store: "sample id of the data at the storage; CRITICAL: it's assumsed that the fingerprint VCF file follow the naming convention that start with this sample id."
+        fp_vcf_store: "GCS storage bucket and folder where the fingperprint VCF files are stored."
+        fp_sample_id: "sample id of the data at the storage; CRITICAL: it's assumsed that the fingerprint VCF file follow the naming convention that start with this sample id."
         ref_specific_haplotype_map: "Reference-specific haplotype map file to be passed on to Picard's `CheckFingerprint`"
 
         lod_pass_threshold: "Threshold for LOD above which the BAM will be declared as PASSing this QC check"
@@ -26,8 +26,8 @@ workflow VerifyBamFingerprint {
         File aligned_bai
         String tech
 
-        String fp_store
-        String sample_id_at_store
+        String fp_vcf_store
+        String fp_sample_id
 
         File ref_specific_haplotype_map
 
@@ -44,8 +44,8 @@ workflow VerifyBamFingerprint {
         input:
             aligned_bam = aligned_bam,
             aligned_bai = aligned_bai,
-            fp_store = fp_store,
-            sample_id_at_store = sample_id_at_store,
+            fp_vcf_store = fp_vcf_store,
+            fp_sample_id = fp_sample_id,
             ref_specific_haplotype_map = ref_specific_haplotype_map,
             lod_pass_threshold = lod_pass_threshold,
             lod_fail_threshold = lod_fail_threshold

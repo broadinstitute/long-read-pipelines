@@ -23,8 +23,6 @@ workflow Work {
 
         #########
         # inputs
-        bam_descriptor:
-        "A description of the purpose of the BAM (e.g. a single readgroup, per sample, etc; doesn't need to be single-file specific)."
         tech:
         "The technology used to generate this BAM. Currently, the following values are accepted: [ONT, Sequel, Revio]."
 
@@ -36,10 +34,10 @@ workflow Work {
         cov_bed_descriptor:
         "A short description of the BED provided for targeted coverage estimation; will be used in naming output files."
 
-        fingerprint_store:
+        fingerprint_vcf_store:
         "A GCS 'folder' holding fingerprint VCF files"
-        sample_id_at_store:
-        "The ID of the sample supposedly this BAM belongs to; note that the fingerprint VCF is assumed to be located at {fingerprint_store}/{sample_id_at_store}*.vcf(.gz?)"
+        fingerprint_sample_id:
+        "The ID of the sample supposedly this BAM belongs to; note that the fingerprint VCF is assumed to be located at {fingerprint_vcf_store}/{fingerprint_sample_id}*.vcf(.gz?)"
 
         vbid2_config_json:
         "A config json to for running the VBID2 contamination estimation sub-workflow; if provided, will trigger the VBID2 sub-workflow for cross-(human)individual contamination estimation."
@@ -47,8 +45,8 @@ workflow Work {
         expected_sex_type:
         "If provided, triggers sex concordance check. Accepted value: [M, F, NA, na]"
 
-        check_postaln_methyl_tags:
-        "If true, will run a sub-workflow to collect methylation tags information."
+        methyl_tag_check_bam_descriptor:
+        "If provided, triggers workflow that collects information on reads that miss MM/ML SAM tags; this is meant to be a short description of the purpose of the BAM (e.g. input, a single readgroup, per sample, etc; doesn't need to be single-file specific); used for saving the reads that miss MM/ML tags."
 
         #########
         # outputs
@@ -78,18 +76,17 @@ workflow Work {
         File bam
         File bai
 
-        String bam_descriptor
         String tech
 
         File?   cov_bed
         String? cov_bed_descriptor
 
-        String? fingerprint_store
-        String? sample_id_at_store
+        String? fingerprint_vcf_store
+        String? fingerprint_sample_id
 
         File? vbid2_config_json
         String? expected_sex_type
-        Boolean check_postaln_methyl_tags = true
+        String? methyl_tag_check_bam_descriptor
 
         File ref_map_file
         String disk_type
@@ -127,9 +124,9 @@ workflow Work {
     ###################################################################################
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    if (defined(fingerprint_store) != defined(sample_id_at_store)) {
+    if (defined(fingerprint_vcf_store) != defined(fingerprint_sample_id)) {
         call Utils.StopWorkflow as MisingFingerprintArgs { input:
-            reason = "fingerprint_store and sample_id_at_store must be specified together or omitted together"
+            reason = "fingerprint_vcf_store and fingerprint_sample_id must be specified together or omitted together"
         }
     }
 
@@ -172,14 +169,14 @@ workflow Work {
     ###################################################################################
     ################################
     # (optional) fingerprint
-    if (defined(fingerprint_store)) {
+    if (defined(fingerprint_vcf_store)) {
         call QC0.FPCheckAoU as fingerprint {
             input:
                 aligned_bam = bam,
                 aligned_bai = bai,
                 tech = tech,
-                fp_store = select_first([fingerprint_store]),
-                sample_id_at_store = select_first([sample_id_at_store]),
+                fp_vcf_store = select_first([fingerprint_vcf_store]),
+                fp_sample_id = select_first([fingerprint_sample_id]),
                 ref_specific_haplotype_map = ref_map['haplotype_map']
         }
         Map[String, String] fp_res = {'status': fingerprint.FP_status,
@@ -224,11 +221,11 @@ workflow Work {
     }
     ################################
     # (optional) verify methylation tags aren't missing
-    if (check_postaln_methyl_tags) {
+    if (defined(methyl_tag_check_bam_descriptor)) {
         call QC3.CountTheBeans as NoMissingBeans { input:
             bam=bam,
             bai=bai,
-            bam_descriptor=bam_descriptor,
+            bam_descriptor=select_first([methyl_tag_check_bam_descriptor]),
             gcs_out_root_dir=metrics_output_dir,
             use_local_ssd=disk_type=='LOCAL'
         }
@@ -246,4 +243,20 @@ workflow Work {
                                             NanoPlotFromBam.stats,
                                             fingerprint.fingerprint_summary,]))
     }
+}
+
+# if you want to call me as sub-workflow in a standard run
+struct AlignedBamQCnMetricsConfig {
+    File?   cov_bed                         # An optional BED file on which coverage will be collected (a mean value for each interval)
+    String? cov_bed_descriptor              # A short description of the BED provided for targeted coverage estimation; will be used in naming output files.
+
+    String? fingerprint_vcf_store           # A GCS 'folder' holding fingerprint VCF files
+
+    File?   vbid2_config_json               # A config json to for running the VBID2 contamination estimation sub-workflow;
+                                            # if provided, will trigger the VBID2 sub-workflow for cross-(human)individual contamination estimation.
+
+    String? methyl_tag_check_bam_descriptor # A one-word description of the purpose of the BAM
+                                            # (e.g. 'rg_post_aln' for "readgroup post alignment", "sm_post_merge" for "sample post merging");
+                                            # used for saving the reads that miss MM/ML tags;
+                                            # doesn't need to be single-file specific
 }
