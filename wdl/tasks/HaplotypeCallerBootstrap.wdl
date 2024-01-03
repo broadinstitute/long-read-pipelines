@@ -116,7 +116,7 @@ workflow CallVariantsWithHaplotypeCaller {
             ref_fasta_fai = ref_fasta_fai,
             ref_dict = ref_dict,
             prefix = prefix,
-            dbsnp_vcf = if defined(dbsnp_vcf) then dbsnp_vcf else "" 
+            dbsnp_vcf = dbsnp_vcf 
     }
 
     output {
