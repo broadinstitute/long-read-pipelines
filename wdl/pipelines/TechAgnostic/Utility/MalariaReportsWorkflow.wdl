@@ -138,8 +138,7 @@ workflow GenerateMalariaReports {
             fraction_aligned_bases = fraction_aligned_bases,
             average_identity = average_identity,
             fastqc_path = fastqc_path,
-            coverage_bin_size = coverage_bin_size,
-            fastqc_file = fastqc_file
+            coverage_bin_size = coverage_bin_size
     }
 
     output {
