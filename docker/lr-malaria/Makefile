@@ -1,5 +1,5 @@
-IMAGE_NAME = sr-utils
-VERSION = 0.2.1
+IMAGE_NAME = lr-malaria
+VERSION = 0.0.1
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
@@ -15,4 +15,3 @@ build_no_cache:
 push:
 	docker push $(TAG1)
 	docker push $(TAG2)
-

@@ -346,3 +346,44 @@ task FinalizeAndCompress {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task WriteNamedFile {
+
+    meta {
+        description : "Write a file to the given directory with the given name."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        String name
+        String outdir
+        File? keyfile
+    }
+
+    parameter_meta {
+        name : "Name of the file to write."
+        outdir : "Google cloud path to the destination folder."
+        keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        touch "~{name}"
+
+        gsutil cp "~{name}" ~{outdir}
+    >>>
+
+    #########################
+
+    runtime {
+        cpu:                    1
+        memory:                 1 + " GiB"
+        disks: "local-disk " +  10 + " HDD"
+        bootDiskSizeGb:         10
+        preemptible:            2
+        maxRetries:             2
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+    }
+}
