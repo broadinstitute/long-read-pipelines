@@ -107,8 +107,15 @@ workflow GenerateMalariaReports {
         # Coverage Plot -- incomplete  
         File? fastqc_path
         Int? coverage_bin_size  
+
     }
 
+    # Compute path for BAM files (coverage_dir) using fastqc_path if given
+#    if (defined(fastqc_path)) {
+#
+#    }
+
+    
     call MRS.RunReportScript as RunReportScript { 
         input: 
             sample_name = sample_name,
@@ -138,7 +145,7 @@ workflow GenerateMalariaReports {
             fraction_aligned_bases = fraction_aligned_bases,
             average_identity = average_identity,
             fastqc_path = fastqc_path,
-            coverage_bin_size = coverage_bin_size
+            coverage_bin_size = coverage_bin_size,
     }
 
     output {

@@ -112,34 +112,27 @@ task RunReportScript {
     }
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
-    #String results_dir = ""
-    #String coverage_dir = ""
-    #String coverage_regex = ""
-
-    # Compute path for BAM files (coverage_dir) using fastqc_path if given
-    #if (fastqc_path) {
-        #String results_dir = sub(fastqc_path, "results\/.*", "")
-        #String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
-        #String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
-    #}
-    if (fastqc_path) {
-        call ParseFastQC {
-            input:
-                fastqc_path = fastqc_path
-        }
-    }
-
 
     # Wrap location in quotes in case it has spaces
     String wrap_location = "'~{location}'"
-    
 
+    String results_dir = if (defined(fastqc_path)) then sub(select_first([fastqc_path]), "results\/.*", "") else ""
+    String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
+    String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
+    
     command <<<
         set -euxo
         pwd
         ls
+        echo "BEGIN COMMAND"
+
+        echo ~{coverage_dir}
+        mkdir -p /report-files/data/coverage
+        gsutil ls ~{coverage_regex}  > filelist.txt
+        echo "COPYING..."
+        cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
         
-        echo "Creating report..."
+        echo "CREATING REPORT..."
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
@@ -168,7 +161,7 @@ task RunReportScript {
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
             --coverage_bin_size ~{coverage_bin_size} \
-            --fastqc_path ~{default="None" fastqc_path}
+            --~{"-O" + fastqc_path}
         echo "REPORT GENERATED!"
     >>>
 
@@ -200,35 +193,4 @@ task RunReportScript {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 
-}
-
-task ParseFastQC {
-    meta {
-        description: "Parses the location of output BAM files using the FastQC path, if present"
-    }
-
-    parameter_meta {
-        fastqc_path: "Google bucket path of corresponding FastQC report"
-    }
-
-    input {
-        File fastqc_path
-    }
-
-    String results_dir = sub(fastqc_path, "results\/.*", "")
-    String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
-    String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
-
-    command <<<
-        set -euxo
-        pwd
-        ls
-        echo "Retrieving BAM files..."
-
-        echo ~{coverage_dir}
-        mkdir -p /report-files/data/coverage
-        gsutil ls ~{coverage_regex}  > filelist.txt
-        echo "COPYING..."
-        cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
-    >>>
 }
