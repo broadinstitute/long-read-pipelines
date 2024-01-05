@@ -26,7 +26,7 @@ workflow ConvertToZarrStore {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"
 
     # Gather across multiple input gVCFs
-    call SGKit.ConvertToZarrStore {
+    call SGKit.ConvertToZarrStore as PerformZarrStoreConversion {
         input:
             gvcf = joint_gvcf,
             tbi = joint_gvcf_tbi,
@@ -39,6 +39,6 @@ workflow ConvertToZarrStore {
     ##########
 
     output {
-        String joint_zarr = ConvertToZarrStore.gcs_path
+        String joint_zarr = PerformZarrStoreConversion.gcs_path
     }
 }

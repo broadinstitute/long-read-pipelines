@@ -179,11 +179,15 @@ workflow Benchmark {
     Array[VariantSelector] actualVariantSelectors = flatten(select_all([defaultVS,variantSelectors]))
 
     if (defined(stratIntervals)) {
-        scatter (stratIL in actualStratIntervals) {
-            if(stratIL!="") {
+        scatter (actStratIL in actualStratIntervals) {
+
+            # Required because of `miniwdl check`:
+            String string_conversion_of_actStratIL = actStratIL
+
+            if(string_conversion_of_actStratIL != "") {
                 call ConvertIntervals as StratConvertIntervals {
                     input:
-                        inputIntervals = stratIL,
+                        inputIntervals = actStratIL,
                         refDict = ref_map["dict"],
                         gatkTag = gatkTag,
                         subset_interval = CreateIntervalList.interval_list,
@@ -216,7 +220,10 @@ workflow Benchmark {
 
     scatter (stratifier in stratifiers) {
 
-        if (stratifier.label != "" && stratifier.intervalList != "") {
+        # Required because of `miniwdl check`
+        String tmp_strat_interval_list = select_first([stratifier.intervalList])
+
+        if (stratifier.label != "" && tmp_strat_interval_list != "") {
             String stratLabel = select_first([stratifier.label,""])
             File stratIL = select_first([stratifier.intervalList,""])
             File stratBed = select_first([stratifier.bed,""])
@@ -1495,7 +1502,7 @@ task WriteXMLfile {
         String reference_version
         String file_name
 
-        Array[String]? input_names=""
+        Array[String]? input_names
     }
 
     Array[String] input_names_prefix = if defined(input_names) then prefix('-n ', select_first([input_names])) else []

@@ -199,7 +199,7 @@ task BwaMem2 {
             -v 3 \
             -t ${np} \
             -Y \
-            ~{rg_arg}'~{default="" sep=" -R " read_group}' \
+            ~{rg_arg}'~{default="" read_group}' \
             ~{true='-M' false="" mark_short_splits_as_secondary} \
             ~{ref_fasta} \
             ~{fq_end1} \
@@ -610,7 +610,7 @@ task ComputeBamStats {
     Int disk_size = 1 + 2*ceil(size(bam_file, "GB"))
     String qual_thresh_arg = if defined(qual_threshold) then " -q " else ""
 
-    String qual_stats_file_decoration = if defined(qual_threshold) then ".q" + qual_threshold else ""
+    String qual_stats_file_decoration = if defined(qual_threshold) then ".q" + select_first([qual_threshold]) else ""
 
     String stats_file_name = basename(bam_file, ".bam") + ".stats_map" + qual_stats_file_decoration + ".txt"
 
@@ -618,7 +618,7 @@ task ComputeBamStats {
         set -euxo pipefail
 
         python3 /python/compute_sr_stats.py \
-            ~{qual_thresh_arg}~{default="" sep=" -q " qual_threshold} \
+            ~{qual_thresh_arg}~{default="" qual_threshold} \
             ~{bam_file} \
         | tee ~{stats_file_name}
 

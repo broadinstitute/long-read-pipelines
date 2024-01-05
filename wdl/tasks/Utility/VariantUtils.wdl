@@ -794,7 +794,7 @@ task AnnotateVcfWithBedRegions {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 4*ceil(size([vcf, vcf_index, bed_files, bed_file_indexes], "GB"))
+    Int disk_size = 1 + 4*ceil(size(vcf, "GB")) + 4*ceil(size(vcf_index, "GB")) + 4*ceil(size(bed_files, "GB")) + 4*ceil(size(bed_file_indexes, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -942,10 +942,13 @@ task IndelsVariantRecalibrator {
 
         # Now we can write out the arrays into a TSV file and add them line by line to the execution:
         # Create the TSV:
-        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_known, is_training, is_truth, prior, known_reference_variants]))}
+        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_known, is_training, is_truth, known_reference_variants, prior]))}
 
         # Now read them into a string:
-        resource_flags=$(awk '{printf("--resource:%s,known=%s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $5, $6)}' ${options_tsv})
+        # NOTE THE ORDERING HERE!
+        # THIS HAS TO BE DONE BECAUSE OF A BUG IN `miniwdl check` with the `transpose` call above.
+        # https://github.com/chanzuckerberg/miniwdl/issues/669
+        resource_flags=$(awk '{printf("--resource:%s,known=%s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $6, $5)}' ${options_tsv})
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
@@ -1065,10 +1068,13 @@ task SNPsVariantRecalibratorCreateModel {
 
         # Now we can write out the arrays into a TSV file and add them line by line to the execution:
         # Create the TSV:
-        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_known, is_training, is_truth, prior, known_reference_variants]))}
+        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_known, is_training, is_truth, known_reference_variants, prior]))}
 
         # Now read them into a string:
-        resource_flags=$(awk '{printf("--resource:%s,known=%s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $5, $6)}' ${options_tsv})
+        # NOTE THE ORDERING HERE!
+        # THIS HAS TO BE DONE BECAUSE OF A BUG IN `miniwdl check` with the `transpose` call above.
+        # https://github.com/chanzuckerberg/miniwdl/issues/669
+        resource_flags=$(awk '{printf("--resource:%s,known=%s,training=%s,truth=%s,prior=%d %s ", $1, $2, $3, $4, $6, $5)}' ${options_tsv})
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
@@ -1085,7 +1091,7 @@ task SNPsVariantRecalibratorCreateModel {
                 -an ~{sep=' -an ' recalibration_annotation_values} \
                 ~{true='--use-allele-specific-annotations' false='' use_allele_specific_annotations} \
                 -mode SNP \
-                ~{downsample_factor_arg}~{default="" sep=" --sample-every-Nth-variant " downsampleFactor} \
+                ~{downsample_factor_arg}~{default="" downsampleFactor} \
                 --output-model ~{prefix}.model.report \
                 --max-gaussians ~{max_gaussians} \
                 ${resource_flags}
@@ -1676,10 +1682,13 @@ task ExtractVariantAnnotations {
 
         # Now we can write out the arrays into a TSV file and add them line by line to the execution:
         # Create the TSV:
-        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_training, is_calibration, known_reference_variants]))}
+        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, known_reference_variants, is_training, is_calibration]))}
 
         # Now read them into a string:
-        resource_flags=$(awk '{printf("--resource:%s,training=%s,calibration=%s %s ", $1, $2, $3, $4)}' ${options_tsv})
+        # NOTE THE ORDERING HERE!
+        # THIS HAS TO BE DONE BECAUSE OF A BUG IN `miniwdl check` with the `transpose` call above.
+        # https://github.com/chanzuckerberg/miniwdl/issues/669
+        resource_flags=$(awk '{printf("--resource:%s,training=%s,calibration=%s %s ", $1, $3, $4, $2)}' ${options_tsv})
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
@@ -1875,10 +1884,13 @@ task ScoreVariantAnnotations {
 
         # Now we can write out the arrays into a TSV file and add them line by line to the execution:
         # Create the TSV:
-        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, is_training, is_calibration, known_reference_variants]))}
+        options_tsv=~{write_tsv(transpose([known_reference_variants_identifier, known_reference_variants, is_training, is_calibration]))}
 
         # Now read them into a string:
-        resource_flags=$(awk '{printf("--resource:%s,training=%s,calibration=%s %s ", $1, $2, $3, $4)}' ${options_tsv})
+        # NOTE THE ORDERING HERE!
+        # THIS HAS TO BE DONE BECAUSE OF A BUG IN `miniwdl check` with the `transpose` call above.
+        # https://github.com/chanzuckerberg/miniwdl/issues/669
+        resource_flags=$(awk '{printf("--resource:%s,training=%s,calibration=%s %s ", $1, $3, $4, $2)}' ${options_tsv})
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')

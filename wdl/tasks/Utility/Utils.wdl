@@ -1692,7 +1692,6 @@ task SplitContigToIntervals {
 
         File ref_fasta
         File ref_fasta_fai
-        File ref_dict
 
         String prefix
 
