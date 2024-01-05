@@ -36,6 +36,8 @@ workflow CallVariantsWithHaplotypeCaller {
 
         String mito_contig = "chrM"
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
+
+        RuntimeAttr? runtime_attr_override
     }
 
     # Scatter by chromosome:
@@ -67,7 +69,8 @@ workflow CallVariantsWithHaplotypeCaller {
                 heterozygosity = heterozygosity,
                 heterozygosity_stdev = heterozygosity_stdev,
                 indel_heterozygosity = indel_heterozygosity,
-                use_spanning_event_genotyping = true
+                use_spanning_event_genotyping = true,
+                runtime_attr_override = runtime_attr_override
         }
     }
 
@@ -169,7 +172,7 @@ task HaplotypeCaller_GATK4_VCF {
     String output_file_name = prefix + output_suffix
 
     Float ref_size = size(ref_fasta, "GiB") + size(ref_fasta_index, "GiB") + size(ref_dict, "GiB")
-    Int disk_size = 2*ceil(((size(input_bam, "GiB") + 30)) + ref_size) + 20
+    Int disk_size = 2*ceil(((size(input_bam, "GiB") + 30)) + ref_size) + 30
 
     String bamout_arg = if make_bamout then "-bamout ~{prefix}.bamout.bam" else ""
 
@@ -232,9 +235,9 @@ task HaplotypeCaller_GATK4_VCF {
     #########################
     RuntimeAttr default_attr = object {
        cpu_cores:          2,
-       mem_gb:             16,
+       mem_gb:             24,
        disk_gb:            disk_size,
-       boot_disk_gb:       15,
+       boot_disk_gb:       23,
        preemptible_tries:  1,
        max_retries:        1,
        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
