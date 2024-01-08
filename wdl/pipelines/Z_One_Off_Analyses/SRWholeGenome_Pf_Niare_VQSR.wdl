@@ -13,6 +13,25 @@ import "../../tasks/Utility/VariantUtils.wdl" as VARUTIL
 import "../../tasks/Z_One_Off_Analyses/Pf_Niare_HaplotypeCaller.wdl" as Niare_HC
 
 workflow SRWholeGenome_Pf_Niare_VQSR {
+
+    meta {
+        description: "This workflow replicates the single-sample pipeline from Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) using LRMA conventions."
+    }
+    parameter_meta {
+        aligned_bams:   "Array of aligned bam files to process."
+        aligned_bais:   "Array of aligned bam indices to process.  Order must correspond to `aligned_bams`."
+        ref_map_file:  "Reference map file indicating reference sequence and auxillary file locations"
+        participant_name:    "The unique identifier of this sample being processed."
+        vcf_calling_interval_list: "Intervals over which to call variants."
+        genotype_gvcfs_intervals:  "Intervals over which to batch Joint Genotyping."
+        vqsr_sites_vcf:    "Sites-only VCF to use with VQSR for training."
+        vqsr_sites_vcf_index:  "VCF index of `vqsr_sites_vcf`"
+        call_vars_on_mitochondria:  "If true, will call variants on the mitochondrial contig."
+        mito_contig: "Name of the mitochondrial contig."
+        contigs_names_to_ignore:  "Array of names of contigs to ignore for the purposes of reporting variants."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+    }
+
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais

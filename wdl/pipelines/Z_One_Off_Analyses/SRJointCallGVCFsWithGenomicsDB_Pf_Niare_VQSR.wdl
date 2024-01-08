@@ -11,6 +11,20 @@ import "../../tasks/Utility/Finalize.wdl" as FF
 import "../../tasks/Z_One_Off_Analyses/Pf_Niare_HaplotypeCaller.wdl" as Niare_HC
 
 workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR {
+
+    meta {
+        description: "This workflow replicates the joint-calling pipeline from Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) using LRMA conventions."
+    }
+    parameter_meta {
+        gvcfs:  "Array of GVCF files to use as inputs for joint calling."
+        gvcf_indices:   "Array of gvcf index files for `gvcfs`.  Order should correspond to that in `gvcfs`."
+        ref_map_file:  "Reference map file indicating reference sequence and auxillary file locations"
+        vqsr_sites_vcf:    "Sites-only VCF to use with VQSR for training."
+        vqsr_sites_vcf_index:  "VCF index of `vqsr_sites_vcf`"
+        prefix: "Prefix to use for output files."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+    }
+
     input {
         Array[File] gvcfs
         Array[File] gvcf_indices
@@ -23,14 +37,6 @@ workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR {
         String prefix
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        gvcfs:            "GCS paths to gVCF files"
-        gvcf_indices:     "GCS paths to gVCF tbi files"
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
-        prefix:           "prefix for output joint-called gVCF and tabix index"
-        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR/~{prefix}"

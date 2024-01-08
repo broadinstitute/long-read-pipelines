@@ -11,6 +11,20 @@ workflow CallVariantsWithHaplotypeCaller {
         description: "A workflow for calling small variants with GATK HaplotypeCaller from an Illumina BAM file using the methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0)."
     }
 
+    parameter_meta {
+        bam: "Input bam file containing reads from which to call variants."
+        bai: "Input bam index for `bam`."
+
+        prefix: "Prefix to use for output files."
+        sample_id: "ID of the sample being called."
+
+        call_vars_on_mitochondria:  "If true, will call variants on the mitochondrial contig."
+
+        mito_contig: "Name of the mitochondrial contig."
+        contigs_names_to_ignore:  "Array of names of contigs to ignore for the purposes of reporting variants."
+        prefix: "Prefix to use for output files."
+    }
+
     input {
         File bam
         File bai
@@ -100,7 +114,7 @@ workflow CallVariantsWithHaplotypeCaller {
 task HaplotypeCaller_NIARE_GATK4_VCF {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing."
+        notes: "Call variants with GATK 4 in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing."
     }
 
     input {
@@ -217,6 +231,11 @@ task HaplotypeCaller_NIARE_GATK4_VCF {
 # This task is here because merging bamout files using Picard produces an error.
 task MergeBamouts {
 
+    meta {
+        author: "Jonn Smith"
+        notes: "Merge separate bamouts into a single file using `samtools merge`."
+    }
+
     input {
         Array[File] bams
         String prefix
@@ -277,7 +296,7 @@ task MergeBamouts {
 task GenomicsDbImport {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing."
+        notes: "Import variants into Genomics DB in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing."
     }
 
     input {
@@ -354,7 +373,7 @@ task GenomicsDbImport {
 task GenotypeGVCFs {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing.  Mild adaptations due to infrastructure."
+        notes: "Genotype GVCFs with GATK 4 in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing.  Minor adaptations due to infrastructure."
     }
 
     input {
@@ -457,7 +476,7 @@ task GenotypeGVCFs {
 task NormalizeVcfSplittingMultiallelics {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing.  Mild adaptations due to infrastructure."
+        notes: "Normalize multiallelic variants in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing.  Minor adaptations due to infrastructure."
     }
 
     input {
@@ -529,7 +548,7 @@ task NormalizeVcfSplittingMultiallelics {
 task VariantRecalibratorIndel {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing.  Mild adaptations due to infrastructure."
+        notes: "Run VariantRecalibrator on INDELs in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing.  Minor adaptations due to infrastructure."
     }
 
     input {
@@ -613,7 +632,7 @@ task VariantRecalibratorIndel {
 task VariantRecalibratorSnp {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing.  Mild adaptations due to infrastructure."
+        notes: "Run VariantRecalibrator on SNPs in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing.  Minor adaptations due to infrastructure."
     }
 
     input {
@@ -697,7 +716,7 @@ task VariantRecalibratorSnp {
 task ApplyVqsrIndel {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing.  Mild adaptations due to infrastructure."
+        notes: "Run GATK 4 ApplyVqsr for INDELs in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing.  Minor adaptations due to infrastructure."
     }
 
     input {
@@ -773,7 +792,7 @@ task ApplyVqsrIndel {
 task ApplyVqsrSnp {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing.  Mild adaptations due to infrastructure."
+        notes: "Run GATK 4 ApplyVQSR for SNPs in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing.  Minor adaptations due to infrastructure."
     }
 
     input {
@@ -849,7 +868,7 @@ task ApplyVqsrSnp {
 task MergeMultiAllelicSitesPostRecalibration {
     meta {
         author: "Jonn Smith"
-        notes: "Reproducing methods laid out by Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) to perform testing.  Mild adaptations due to infrastructure."
+        notes: "Merge multi-allelic sites in accordance with Niare et al. (https://doi.org/10.1186/s12936-023-04632-0).  Reproducing methods laid out by to perform testing.  Minor adaptations due to infrastructure."
     }
 
     input {

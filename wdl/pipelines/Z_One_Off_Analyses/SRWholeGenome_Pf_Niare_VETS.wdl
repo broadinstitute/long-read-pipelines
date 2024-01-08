@@ -13,6 +13,45 @@ import "../../tasks/Utility/VariantUtils.wdl" as VARUTIL
 import "../../tasks/Z_One_Off_Analyses/Pf_Niare_HaplotypeCaller.wdl" as Niare_HC
 
 workflow SRWholeGenome_Pf_Niare_VETS {
+
+    meta {
+        description: "This workflow implements a modified version of the single-sample pipeline from Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) using LRMA conventions.  The modification is that this pipeline uses VETS instead of VQSR."
+    }
+    parameter_meta {
+        aligned_bams:   "Array of aligned bam files to process."
+        aligned_bais:   "Array of aligned bam indices to process.  Order must correspond to `aligned_bams`."
+        ref_map_file:  "Reference map file indicating reference sequence and auxillary file locations"
+        participant_name:    "The unique identifier of this sample being processed."
+        vcf_calling_interval_list: "Intervals over which to call variants."
+        genotype_gvcfs_intervals:  "Intervals over which to batch Joint Genotyping."
+
+        snp_calibration_sensitivity:    "VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered."
+        snp_max_unlabeled_variants: "VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites."
+        snp_recalibration_annotation_values:    "VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants."
+
+        snp_known_reference_variants: "Array of VCF files to use as input reference variants for SNPs.  Each can be designated as either calibration or training using `snp_is_training` and `snp_is_calibration`."
+        snp_known_reference_variants_index: "Array of VCF index files for `snp_known_reference_variants`.  Order should correspond to that in `snp_known_reference_variants`."
+        snp_known_reference_variants_identifier: "Array of names to give to the VCF files given in `snp_known_reference_variants`.  Order should correspond to that in `snp_known_reference_variants`."
+        snp_is_training: "Array of booleans indicating which files in `snp_known_reference_variants` should be used as training sets.  True -> training set.  False -> NOT a training set."
+        snp_is_calibration: "Array of booleans indicating which files in `snp_known_reference_variants` should be used as calibration sets.  True ->calibration set.  False -> NOT a calibration set."
+
+        indel_calibration_sensitivity:    "VETS (ScoreVariantAnnotations) parameter - score below which INDEL variants will be filtered."
+        indel_max_unlabeled_variants: "VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled INDEL variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites."
+        indel_recalibration_annotation_values:    "VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the INDEL variant scoring model and over which to score INDEL variants."
+
+        indel_known_reference_variants: "Array of VCF files to use as input reference variants for INDELs.  Each can be designated as either calibration or training using `indel_is_training` and `indel_is_calibration`."
+        indel_known_reference_variants_index: "Array of VCF index files for `indel_known_reference_variants`.  Order should correspond to that in `indel_known_reference_variants`."
+        indel_known_reference_variants_identifier: "Array of names to give to the VCF files given in `indel_known_reference_variants`.  Order should correspond to that in `indel_known_reference_variants`."
+        indel_is_training: "Array of booleans indicating which files in `indel_known_reference_variants` should be used as training sets.  True -> training set.  False -> NOT a training set."
+        indel_is_calibration: "Array of booleans indicating which files in `indel_known_reference_variants` should be used as calibration sets.  True ->calibration set.  False -> NOT a calibration set."
+
+
+        bed_to_compute_coverage: "Bed file to use as regions over which to measure coverage."
+
+        contigs_names_to_ignore:  "Array of names of contigs to ignore for the purposes of reporting variants."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+    }
+
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais
