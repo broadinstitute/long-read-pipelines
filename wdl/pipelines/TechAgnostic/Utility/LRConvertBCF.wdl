@@ -2,6 +2,7 @@ version 1.0
 
 import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
 import "../../../tasks/Utility/Hail.wdl" as Hail
+import "../../../tasks/Utility/VariantUtils" as VarUtils
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow LRConvertBCF {
@@ -25,7 +26,7 @@ workflow LRConvertBCF {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"
 
     # Convert the joint .bcf callset into a single joint .vcf.bgz callset
-    call GLNexus.ConcatBCFs { input: bcfs = [ joint_bcf ], prefix = prefix }
+    call VarUtils.ConcatBCFs { input: bcfs = [ joint_bcf ], prefix = prefix }
 
     call Hail.ConvertToHailMT {
         input:

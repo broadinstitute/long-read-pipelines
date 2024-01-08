@@ -63,28 +63,6 @@ workflow SRFlowcell {
         String platform = "illumina"
     }
 
-    parameter_meta {
-        bam:                "GCS path to unmapped bam"
-        bai:                "GCS path to bai index for unmapped bam"
-
-        fq_end1:            "GCS path to end1 of paired-end fastq"
-        fq_end2:            "GCS path to end2 of paired-end fastq"
-
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
-        contaminant_ref_name:                 "Name of the contaminant genome to be used in output files."
-        contaminant_ref_map_file:       "table indicating reference sequence and auxillary file locations for a single-organism contaminant"
-
-        SM:                 "the value to place in the BAM read group's SM field"
-        LB:                 "the value to place in the BAM read group's LB (library) field"
-
-        num_shards:         "number of shards into which fastq files should be batched"
-        dir_prefix:         "directory prefix for output files"
-
-        DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
-
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
-    }
-
     ####################################
     #     _____         _
     #    |_   _|_ _ ___| | _____

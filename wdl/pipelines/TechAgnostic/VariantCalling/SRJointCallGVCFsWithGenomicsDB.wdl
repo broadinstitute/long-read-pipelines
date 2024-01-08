@@ -319,7 +319,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Convert to Zarr
     call SGKit.ConvertToZarrStore as ConvertToZarr {
         input:
-            gvcf = GatherRescoredVcfs.output_vcf,
+            vcf = GatherRescoredVcfs.output_vcf,
             tbi = GatherRescoredVcfs.output_vcf_index,
             prefix = prefix,
             outdir = outdir

@@ -57,7 +57,10 @@ task CombineExpandedDrugResistanceMarkers {
 
     parameter_meta {
         sample_names: "Array of sample names corresponding to each file in `expanded_drug_res_markers`."
-        expanded_drug_res_markers: "Array of per-sample drug resistance marker reports to aggregate."
+        expanded_drug_res_markers: {
+            description: "Array of per-sample drug resistance marker reports to aggregate.",
+            localization_optional: true
+        }
         prefix: "Prefix to use for output files."
         gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
         runtime_attr_override: "Override for default runtime attributes."
@@ -70,10 +73,6 @@ task CombineExpandedDrugResistanceMarkers {
         String prefix
 
         RuntimeAttr? runtime_attr_override
-    }
-
-    parameter_meta {
-        expanded_drug_res_markers: { localization_optional: true }
     }
 
     Int disk_size = 10 + 10*ceil(size(expanded_drug_res_markers, "GB"))
