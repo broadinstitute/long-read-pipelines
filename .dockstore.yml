@@ -200,3 +200,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SRWholeGenomeBootstrap.wdl
   testParameterFiles: 
+- name: SRJointCallGVCFsWithGenomicsDBBootstrap.wdl
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SRJointCallGVCFsWithGenomicsDBBootstrap.wdl
+  testParameterFiles:
