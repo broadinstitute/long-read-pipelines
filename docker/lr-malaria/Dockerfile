@@ -6,7 +6,7 @@ MAINTAINER Jonn Smith
 RUN conda update -y -n base conda && \
     conda install -y -c conda-forge conda-pack libmamba && \
     conda config --set solver libmamba && \
-    clean --all --yes
+    conda clean --all --yes
 
 # copy other resources
 COPY ./environment.yml /
