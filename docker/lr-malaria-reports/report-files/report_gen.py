@@ -470,8 +470,8 @@ def read_fastqc(directory):
     '''
     if(directory):
         # There should only be one file in the directory (report-files/data/fastqc)
-        for f in directory:
-            with open(f, "r", encoding="utf-8") as f:
+        for file in directory:
+            with open(file, "r", encoding="utf-8") as f:
                 html = f.read()
     else:
         html = None
