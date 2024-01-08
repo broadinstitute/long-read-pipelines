@@ -22,7 +22,6 @@ workflow CallVariantsWithHaplotypeCaller {
 
         mito_contig: "Name of the mitochondrial contig."
         contigs_names_to_ignore:  "Array of names of contigs to ignore for the purposes of reporting variants."
-        prefix: "Prefix to use for output files."
     }
 
     input {
