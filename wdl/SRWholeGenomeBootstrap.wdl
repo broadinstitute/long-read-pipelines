@@ -175,7 +175,7 @@ workflow SRWholeGenome {
                 enable_pileup_mode = enable_hc_pileup_mode,
 
                 mito_contig = ref_map['mt_chr_name'],
-                contigs_names_to_ignore = contigs_names_to_ignore,
+                contigs_names_to_ignore = contigs_names_to_ignore
         }
 
         # Make sure our sample name is correct:
