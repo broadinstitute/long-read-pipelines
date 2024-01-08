@@ -1,17 +1,15 @@
 version 1.0
 
-##########################################################################################
-## A workflow that processes P. falciparum SNP panels (read: barcodes) and calculates several
-## metrics that are relevant to studying the epidemiology of the disease.
-##
-## This WDL calls a script written by Wes Wong and based on the following paper:
-## https://doi.org/10.1093/pnasnexus/pgac187
-##########################################################################################
-
 import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Utils.wdl" as Utils
 
 workflow ProcessMalariaBarcodesDemo {
+
+    meta {
+        author: "Jonn Smith"
+        description: "A workflow that processes P. falciparum SNP panels (read: barcodes) and calculates several metrics that are relevant to studying the epidemiology of the disease.  This WDL calls a script written by Wes Wong and based on the following paper: https://doi.org/10.1093/pnasnexus/pgac187"
+    }
+
     input {
 
         # Unfortunately the easiest way to make this work would be to pass a spreadsheet into the script.

@@ -13,6 +13,7 @@ import "../../tasks/Z_One_Off_Analyses/Pf_Niare_HaplotypeCaller.wdl" as Niare_HC
 workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR {
 
     meta {
+        author: "Jonn Smith"
         description: "This workflow implements a modified version of the joint calling pipeline from Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) using LRMA conventions.  The modification is that this pipeline uses VETS instead of VQSR."
     }
     parameter_meta {
