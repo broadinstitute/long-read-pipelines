@@ -1,9 +1,5 @@
 version 1.0
 
-#############################################################################################################
-## A workflow that performs joint calling on single-sample gVCFs from GATK4 HaplotypeCaller using GenomicsDB.
-#############################################################################################################
-
 import "../../tasks/VariantCalling/SRJointGenotyping.wdl" as SRJOINT
 import "../../tasks/Utility/VariantUtils.wdl" as VARUTIL
 import "../../tasks/Utility/Utils.wdl" as UTILS

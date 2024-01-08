@@ -5,6 +5,26 @@ import "../../../tasks/TertiaryAnalysis/FunctionalAnnotation.wdl" as FUNK
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ExpandedDrugResistanceMarkerExtraction {
+
+    meta {
+        author: "Jonn Smith"
+        description: "Extract drug resistance marker information from a single-sample VCF."
+    }
+
+    parameter_meta {
+        sample_name: "Name of the sample in the given single-sample VCF file."
+        vcf: "Input VCF.gz file containing variant calls from which to create an expanded drug resistance marker report."
+        snpeff_db: "SNPEff database file to use for functional annotations (if necessary)."
+
+        protein_drug_resistance_list: "List of specific protein changes to include in the expanded drug resistance report."
+        gene_drug_resistance_list: "List of genes over which to include any variants in the expanded drug resistance report."
+
+        dir_prefix: "Directory prefix to use for finalized location."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+
+        do_functional_annotation:    "If true, will perform functional annotation on the input VCF file prior to extracting drug resistance marker information."
+    }
+
     input {
         String sample_name
 
@@ -58,6 +78,22 @@ workflow ExpandedDrugResistanceMarkerExtraction {
 }
 
 task CallDrugResistanceMutations {
+
+    meta {
+        author: "Jonn Smith"
+        description: "Extract drug resistance marker information from a functionally annotated single-sample VCF."
+    }
+
+    parameter_meta {
+        vcf: "Input VCF.gz file containing variant calls from which to create an expanded drug resistance marker report."
+        protein_drug_resistance_list: "List of specific protein changes to include in the expanded drug resistance report."
+        gene_drug_resistance_list: "List of genes over which to include any variants in the expanded drug resistance report."
+
+        prefix: "Prefix to use for output files."
+
+        runtime_attr_override: "Override for default runtime attributes."
+    }
+
     input {
         File vcf
         File protein_drug_resistance_list

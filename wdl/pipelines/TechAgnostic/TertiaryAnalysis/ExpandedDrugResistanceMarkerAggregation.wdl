@@ -4,6 +4,20 @@ import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ExpandedDrugResistanceMarkerExtraction {
+
+    meta {
+        author: "Jonn Smith"
+        description: "Combine multiple expanded drug resistance marker reports together for a set of samples."
+    }
+
+    parameter_meta {
+        sample_names: "Array of sample names corresponding to each file in `expanded_drug_res_markers`."
+        expanded_drug_res_markers: "Array of per-sample drug resistance marker reports to aggregate."
+        out_file_prefix: "Prefix to use for output files."
+        dir_prefix: "Directory prefix to use for finalized location."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+    }
+
     input {
         Array[String] sample_names
         Array[File] expanded_drug_res_markers
@@ -35,6 +49,20 @@ workflow ExpandedDrugResistanceMarkerExtraction {
 }
 
 task CombineExpandedDrugResistanceMarkers {
+
+    meta {
+        author: "Jonn Smith"
+        description: "Combine multiple expanded drug resistance marker reports together for a set of samples."
+    }
+
+    parameter_meta {
+        sample_names: "Array of sample names corresponding to each file in `expanded_drug_res_markers`."
+        expanded_drug_res_markers: "Array of per-sample drug resistance marker reports to aggregate."
+        prefix: "Prefix to use for output files."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+        runtime_attr_override: "Override for default runtime attributes."
+    }
+
     input {
         Array[String] sample_names
         Array[File] expanded_drug_res_markers

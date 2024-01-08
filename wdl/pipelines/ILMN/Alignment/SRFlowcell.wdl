@@ -1,14 +1,5 @@
 version 1.0
 
-##########################################################################################
-## A workflow that preprocesses short read flowcell data in preparation for variant calling.
-## This workflow contains the following steps:
-##   1) Sam -> Fastq (if necessary)
-##   2) Alignment to reference with bwa-mem2 (https://github.com/bwa-mem2/bwa-mem2)
-##   3) Mark Duplicate reads
-##   4) Recalibrate base quality scores.
-##########################################################################################
-
 import "../../../tasks/Utility/SRUtils.wdl" as SRUTIL
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/QC/AlignedMetrics.wdl" as AM
@@ -17,6 +8,36 @@ import "../../../tasks/Preprocessing/RemoveSingleOrganismContamination.wdl" as D
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow SRFlowcell {
+
+    meta {
+        author: "Jonn Smith"
+        description: "This workflow preprocesses short read flowcell data in preparation for variant calling.  This workflow contains the following steps: 1) Sam -> Fastq (if necessary), 2) Alignment to reference with bwa-mem2 (https://github.com/bwa-mem2/bwa-mem2), 3) Mark Duplicate reads, 4) Recalibrate base quality scores."
+    }
+
+    parameter_meta {
+        bam: "Bam file containing reads to align and process.  `bai` must be defined if this argument is.  This argument and `bai` are mutually exclusive with `fq_end1` and `fq_end2`"
+        bai: "Index for `bam`.  `bam` must be defined if this argument is.  This argument and `bam` are mutually exclusive with `fq_end1` and `fq_end2`"
+
+        fq_end1: "FASTQ file containing end 1 of the short read data to process.  `fq_end2` must be defined if this argument is.  This argument and `fq_end2` are mutually exclusive with `bam` and `bai`"
+        fq_end2: "FASTQ file containing end 2 of the short read data to process.  `fq_end1` must be defined if this argument is.  This argument and `fq_end1` are mutually exclusive with `bam` and `bai`"
+
+        SM: "Sample name for the given bam file."
+        LM: "Library name for the given bam file."
+
+        ref_map_file:  "Reference map file for the primary reference sequence and auxillary file locations."
+        contaminant_ref_name:  "Name for the contaminant reference."
+        contaminant_ref_map_file:  "Reference map file for the contaminant reference sequence and auxillary file locations."
+
+        dir_prefix: "Directory prefix to use for finalized location."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+
+        perform_BQSR: "If true, will perform Base Quality Score Recalibration.  If false will not recalibrate base qualities."
+
+        DEBUG_MODE: "If true, will add extra logging and extra debugging outputs."
+
+        platform: "Platform on which the sample for the given bam file was sequenced."
+    }
+
     input {
         File? bam
         File? bai

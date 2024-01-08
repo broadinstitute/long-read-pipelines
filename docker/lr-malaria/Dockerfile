@@ -2,6 +2,12 @@ FROM continuumio/miniconda3:22.11.1
 
 MAINTAINER Jonn Smith
 
+# Set the resolver to libmamba:
+RUN conda update -y -n base conda && \
+    conda install -y -c conda-forge conda-pack libmamba && \
+    conda config --set solver libmamba && \
+    clean --all --yes
+
 # copy other resources
 COPY ./environment.yml /
 

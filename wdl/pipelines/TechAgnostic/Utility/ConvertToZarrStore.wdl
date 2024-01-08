@@ -1,16 +1,24 @@
 version 1.0
 
-#################################################################
-## A workflow that converts a joint-called gVCF to a Zarr store.
-#################################################################
-
 import "../../../tasks/Utility/SGKit.wdl" as SGKit
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ConvertToZarrStore {
+
+    meta {
+        description: "A workflow that converts a joint-called VCF to a Zarr store."
+    }
+
+    parameter_meta {
+        vcf: "Input joint called VCF file to convert to Zarr store format."
+        joint_vcf_tbi: "VCF Index for `vcf`."
+
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+    }
+
     input {
-        File joint_gvcf
-        File joint_gvcf_tbi
+        File joint_vcf
+        File joint_vcf_tbi
         String prefix
 
         String gcs_out_root_dir
@@ -28,8 +36,8 @@ workflow ConvertToZarrStore {
     # Gather across multiple input gVCFs
     call SGKit.ConvertToZarrStore as PerformZarrStoreConversion {
         input:
-            gvcf = joint_gvcf,
-            tbi = joint_gvcf_tbi,
+            gvcf = joint_vcf,
+            tbi = joint_vcf_tbi,
             prefix = prefix,
             outdir = outdir
     }

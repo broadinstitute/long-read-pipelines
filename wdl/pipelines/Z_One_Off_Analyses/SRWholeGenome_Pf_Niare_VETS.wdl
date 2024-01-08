@@ -1,11 +1,5 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample variant calling on Illumina reads from
-## one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to variant calling.
-######################################################################################
-
 import "../../tasks/Utility/Utils.wdl" as Utils
 import "../../tasks/Utility/SRUtils.wdl" as SRUTIL
 import "../../tasks/Utility/Finalize.wdl" as FF

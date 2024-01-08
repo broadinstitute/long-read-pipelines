@@ -8,6 +8,40 @@ version 1.0
 # https://github.com/broadinstitute/palantir-workflows/blob/0bf48efc6de818364993e46d89591a035cfd80c7/BenchmarkVCFs/BenchmarkVCFs.wdl
 
 workflow Benchmark {
+
+    meta {
+        description: "A workflow to calculate sensitivity and precision of a germline variant calling pipeline by comparing a 'call' vcf produced by the pipeline to a gold standard 'truth' vcf.  Allows for stratification based on interval lists, bed files, or variant types defined according to GATK SelectVariants.  Borrowed and adapted from the Broad Institute's Hydrogen/Palantir repo, courtesy of Michael Gatzen (https://github.com/broadinstitute/palantir-workflows/tree/mg_benchmark_compare/BenchmarkVCFs ; permalink: https://github.com/broadinstitute/palantir-workflows/blob/0bf48efc6de818364993e46d89591a035cfd80c7/BenchmarkVCFs/BenchmarkVCFs.wdl)."
+    }
+
+    parameter_meta {
+        evalVcf: {description: "vcfs to be evaluated"}
+        evalLabel: {description: "label to identify vcf to be evaluated"}
+        evalVcfIndex: {description: "vcf index for evalVcf"}
+        evalBam: {description: "bam file contaning the reads that generated the evalVcf"}
+        evalBamLabel: {description: "label to use for the evalBam in IGV"}
+        truthVcf: {description: "truth vcf against which to evaluate"}
+        truthLabel: {description: "label by which to indentify truth set"}
+        truthBam: {description: "bam file contaning the reads that generated the truthVcf"}
+        truthBamLabel: {description: "label to use for the truthBam in IGV"}
+        confidenceInterval: {description: "confidence interval for truth set (can be bed or picard interval_list)"}
+        ref_map_file: {description: "table indicating reference sequence and auxillary file locations" }
+        hapMap: {description: "reference haplotype map for CrosscheckFingerprints"}
+        stratIntervals: {description: "intervals for stratifiction (can be picard interval_list or bed format)"}
+        stratLabels: {description: "labels by which to identify stratification intervals (must be same length as stratIntervals)"}
+        jexlVariantSelectors: {description: "variant types to select over (defined by jexl fed to GATK SelectVariants)"}
+        variantSelectorLabels: {description: "labels by which to identify variant selectors (must be same length as jexlVariantSelectors)"}
+        doIndelLengthStratification: {description: "whether or not to perform stratification by indel length"}
+        requireMatchingGenotypes: {description: "whether to require genotypes to match in order to be a true positive"}
+        truthIsSitesOnlyVcf: {description: "whether the truth VCF is a sites-only VCF file without any sample information"}
+        gatkTag: {description: "version of gatk docker to use.  Defaults to 4.0.11.0"}
+        analysisRegion: {description: "if provided (gatk format, single interval e.g., 'chr20', or 'chr20:1-10') all the analysis will be performed only within the region."}
+        passingOnly: {description:"Have vcfEval only consider the passing variants"}
+        vcfScoreField: {description:"Have vcfEval use this field for making the roc-plot. If this is an info field (like VSQLOD) it should be provided as INFO.VQSLOD, otherewise it is assumed to be a format field."}
+        gatkJarForAnnotation: {description:"GATK jar that can calculate necessary annotations for jexl Selections when using VCFEval."}
+        annotationNames: {description:"Annotation arguments to GATK (-A argument, multiple OK)"}
+        dummyInputForTerraCallCaching: {description:"When running on Terra, use workspace.name as this input to ensure that all tasks will only cache hit to runs in your own workspace. This will prevent call caching from failing with 'Cache Miss (10 failed copy attempts)'. Outside of Terra this can be left empty. This dummy input is only needed for tasks that have no inputs specific to the sample being run (such as CreateIntervalList which does not take in any sample data)."}
+    }
+
     input{
 
         File evalVcf
@@ -46,39 +80,6 @@ workflow Benchmark {
         Boolean passingOnly = true
         String? vcfScoreField
         String? dummyInputForTerraCallCaching
-    }
-
-    meta {
-        description: "A workflow to calculate sensitivity and precision of a germline variant calling pipeline by comparing a 'call' vcf produced by the pipeline to a gold standard 'truth' vcf.  Allows for stratification based on interval lists, bed files, or variant types defined according to GATK SelectVariants."
-    }
-
-    parameter_meta {
-        evalVcf: {description: "vcfs to be evaluated"}
-        evalLabel: {description: "label to identify vcf to be evaluated"}
-        evalVcfIndex: {description: "vcf index for evalVcf"}
-        evalBam: {description: "bam file contaning the reads that generated the evalVcf"}
-        evalBamLabel: {description: "label to use for the evalBam in IGV"}
-        truthVcf: {description: "truth vcf against which to evaluate"}
-        truthLabel: {description: "label by which to indentify truth set"}
-        truthBam: {description: "bam file contaning the reads that generated the truthVcf"}
-        truthBamLabel: {description: "label to use for the truthBam in IGV"}
-        confidenceInterval: {description: "confidence interval for truth set (can be bed or picard interval_list)"}
-        ref_map_file: {description: "table indicating reference sequence and auxillary file locations" }
-        hapMap: {description: "reference haplotype map for CrosscheckFingerprints"}
-        stratIntervals: {description: "intervals for stratifiction (can be picard interval_list or bed format)"}
-        stratLabels: {description: "labels by which to identify stratification intervals (must be same length as stratIntervals)"}
-        jexlVariantSelectors: {description: "variant types to select over (defined by jexl fed to GATK SelectVariants)"}
-        variantSelectorLabels: {description: "labels by which to identify variant selectors (must be same length as jexlVariantSelectors)"}
-        doIndelLengthStratification: {description: "whether or not to perform stratification by indel length"}
-        requireMatchingGenotypes: {description: "whether to require genotypes to match in order to be a true positive"}
-        truthIsSitesOnlyVcf: {description: "whether the truth VCF is a sites-only VCF file without any sample information"}
-        gatkTag: {description: "version of gatk docker to use.  Defaults to 4.0.11.0"}
-        analysisRegion: {description: "if provided (gatk format, single interval e.g., 'chr20', or 'chr20:1-10') all the analysis will be performed only within the region."}
-        passingOnly: {description:"Have vcfEval only consider the passing variants"}
-        vcfScoreField: {description:"Have vcfEval use this field for making the roc-plot. If this is an info field (like VSQLOD) it should be provided as INFO.VQSLOD, otherewise it is assumed to be a format field."}
-        gatkJarForAnnotation: {description:"GATK jar that can calculate necessary annotations for jexl Selections when using VCFEval."}
-        annotationNames: {description:"Annotation arguments to GATK (-A argument, multiple OK)"}
-        dummyInputForTerraCallCaching: {description:"When running on Terra, use workspace.name as this input to ensure that all tasks will only cache hit to runs in your own workspace. This will prevent call caching from failing with 'Cache Miss (10 failed copy attempts)'. Outside of Terra this can be left empty. This dummy input is only needed for tasks that have no inputs specific to the sample being run (such as CreateIntervalList which does not take in any sample data)."}
     }
 
     # Get ref info:

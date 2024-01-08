@@ -1,12 +1,6 @@
 version 1.0
 
-######################################################################################
-## A workflow that performs single sample variant calling on Illumina reads from
-## one or more flow cells. The workflow merges multiple samples into a single BAM
-## prior to variant calling.
-######################################################################################
-
-import "../../../tasks/Utility/Utils.wdl" as Utils 
+import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Utility/SRUtils.wdl" as SRUTIL                                          
 import "../../../tasks/Utility/VariantUtils.wdl" as VARUTIL
 import "../../../tasks/QC/FastQC.wdl" as FastQC
@@ -17,6 +11,57 @@ import "../../../tasks/VariantCalling/HaplotypeCaller.wdl" as HC
 import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow SRWholeGenome {
+
+    meta {
+        author: "Jonn Smith"
+        description: "This workflow performs single-sample variant calling on Illumina reads from one or more flow cells containing replicates of the same sample. The workflow merges multiple samples into a single BAM prior to variant calling."
+    }
+
+    parameter_meta {
+        aligned_bams:   "Array of aligned bam files to process."
+        aligned_bais:   "Array of aligned bam indices to process.  Order must correspond to `aligned_bams`."
+        ref_map_file:  "Reference map file indicating reference sequence and auxillary file locations"
+        participant_name:    "The unique identifier of this sample being processed."
+
+        call_small_variants:    "If true, will call small variants with DeepVariant."
+        run_HC_analysis:    "If true, will run HaplotypeCaller to produce variant calls.  Either this or `run_dv_pepper_analysis` are required."
+        run_dv_pepper_analysis: "If true, will run DeepVariant to produce variant calls.  Either this or `run_HC_analysis` are required."
+        enable_hc_pileup_mode:  "If true, will enable `pileup mode` in HaplotypeCaller."
+        dvp_threads:    "Number of threads to use for DeepVariant."
+        dvp_memory: "Amount of memory (Gb) to use for DeepVariant."
+        ploidy: "Ploidy of the species being variant called."
+        heterozygosity: "HaplotypeCaller Parameter - Heterozygosity value used to compute prior likelihoods for any locus. See the GATKDocs for full details on the meaning of this population genetics concept"
+        heterozygosity_stdev: "HaplotypeCaller Parameter - Standard deviation of heterozygosity for SNP and indel calling."
+        indel_heterozygosity: "HaplotypeCaller Parameter - Heterozygosity for indel calling. See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept"
+
+        snp_calibration_sensitivity:    "VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered."
+        snp_max_unlabeled_variants: "VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites."
+        snp_recalibration_annotation_values:    "VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants."
+
+        snp_known_reference_variants: "Array of VCF files to use as input reference variants for SNPs.  Each can be designated as either calibration or training using `snp_is_training` and `snp_is_calibration`."
+        snp_known_reference_variants_index: "Array of VCF index files for `snp_known_reference_variants`.  Order should correspond to that in `snp_known_reference_variants`."
+        snp_known_reference_variants_identifier: "Array of names to give to the VCF files given in `snp_known_reference_variants`.  Order should correspond to that in `snp_known_reference_variants`."
+        snp_is_training: "Array of booleans indicating which files in `snp_known_reference_variants` should be used as training sets.  True -> training set.  False -> NOT a training set."
+        snp_is_calibration: "Array of booleans indicating which files in `snp_known_reference_variants` should be used as calibration sets.  True ->calibration set.  False -> NOT a calibration set."
+
+        indel_calibration_sensitivity:    "VETS (ScoreVariantAnnotations) parameter - score below which INDEL variants will be filtered."
+        indel_max_unlabeled_variants: "VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled INDEL variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites."
+        indel_recalibration_annotation_values:    "VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the INDEL variant scoring model and over which to score INDEL variants."
+
+        indel_known_reference_variants: "Array of VCF files to use as input reference variants for INDELs.  Each can be designated as either calibration or training using `indel_is_training` and `indel_is_calibration`."
+        indel_known_reference_variants_index: "Array of VCF index files for `indel_known_reference_variants`.  Order should correspond to that in `indel_known_reference_variants`."
+        indel_known_reference_variants_identifier: "Array of names to give to the VCF files given in `indel_known_reference_variants`.  Order should correspond to that in `indel_known_reference_variants`."
+        indel_is_training: "Array of booleans indicating which files in `indel_known_reference_variants` should be used as training sets.  True -> training set.  False -> NOT a training set."
+        indel_is_calibration: "Array of booleans indicating which files in `indel_known_reference_variants` should be used as calibration sets.  True ->calibration set.  False -> NOT a calibration set."
+
+        bed_to_compute_coverage: "Bed file to use as regions over which to measure coverage."
+
+        fingerprint_haploytpe_db_file: "Haplotype DB file from which to fingerprint the input data."
+
+        contigs_names_to_ignore:  "Array of names of contigs to ignore for the purposes of reporting variants."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+    }
+
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais

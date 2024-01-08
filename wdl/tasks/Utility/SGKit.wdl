@@ -8,7 +8,7 @@ task ConvertToZarrStore {
     }
 
     input {
-        File gvcf
+        File vcf
         File tbi
 
         String reference = "GRCh38"
@@ -23,7 +23,7 @@ task ConvertToZarrStore {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 3*ceil(size(gvcf, "GB"))
+    Int disk_size = 1 + 3*ceil(size(vcf, "GB"))
 
     command <<<
         set -x
@@ -32,7 +32,7 @@ task ConvertToZarrStore {
 
         from sgkit.io.vcf import vcf_to_zarr
 
-        vcfs = ["~{gvcf}"]
+        vcfs = ["~{vcf}"]
         target = "~{prefix}.zarr"
 
         vcf_to_zarr(vcfs, target, tempdir="tmp")

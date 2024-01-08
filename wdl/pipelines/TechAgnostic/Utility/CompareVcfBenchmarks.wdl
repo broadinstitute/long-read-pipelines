@@ -1,10 +1,24 @@
 version 1.0
 
-# Adapted from the palantir / Hydrogen team repository (https://github.com/broadinstitute/palantir-workflows/tree/mg_benchmark_compare/BenchmarkVCFs)
-# Original Author: Michael Gatzen
-# Documentation: https://github.com/broadinstitute/palantir-workflows/blob/mg_benchmark_compare/BenchmarkVCFs/README_CompareBenchmarks.md
-
 workflow CompareVcfBenchmarks {
+
+    meta {
+        description: "The purpose of this workflow is to create a table to facilitate a comparison of precision and sensitivity between different configurations (e.g. pipeline versions, chemistry changes) of samples vs. truth that have been obtained with the BenchmarkVCFs workflow.  After the CompareBenchmarks workflow is run, you can export the generated CSV table into a Google Sheets spreadsheet with automatic formatting using the ExportToGoogleSheets Colab Notebook (https://github.com/broadinstitute/palantir-workflows/blob/mg_benchmark_compare/BenchmarkVCFs/README_CompareBenchmarks.md)."
+    }
+    parameter_meta {
+        sample_ids: "The names of one or more different samples. The comparisons will be made between configurations for each sample individually."
+        configurations: "The labels for the different configurations that should be compared to each other."
+        benchmark_summaries: "The output summary.tsv files from the BenchmarkVCFs workflow."
+        stratifiers: "This input requires the same labels as the stratLabels input that has been passed to BenchmarkVCFs."
+        include_counts: "If set to false, the resulting metrics will be Sensitivity, Precision and F-Measure. If set to true, the output table will also include the number of TP, FP and FN variants for each stratifier."
+        generate_gc_plots: "If set to true, will generate plots of GC."
+        order_of_samples: "If multiple different sample names are provided you can specify the order of those samples in the resulting table. Here, each sample name only has to be specified once, not once for each input VCF. If not specified, the order will be determined by the input files."
+        order_of_configurations: "This input determines the order of the configurations in the resulting table. Just as above, each configuration only has to be specified once, not once for each input VCF. If not specified, the order will be determined by the input files."
+        deltas: "If specified, the output table will contain columns that compares the results of different configurations to each other. Each delta column is defined by two entries in the array (referenced by zero-based index). If, for example there are three configurations A, B and C and you want to compare configurations B to A and C to A, provide the following data: [1, 0, 2, 0]. Note that you will want to define the order_of_configurations in this case to make sure that the indices refer to the correct configurations."
+        mem_gb: "Optional input overriding the default memory."
+        preemptible: "Optional input overriding the default number of preemptible attempts."
+    }
+
     input {
         Array[String] sample_ids
         Array[String] configurations

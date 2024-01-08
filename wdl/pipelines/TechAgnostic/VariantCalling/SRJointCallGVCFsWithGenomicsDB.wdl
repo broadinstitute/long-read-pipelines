@@ -1,9 +1,5 @@
 version 1.0
 
-#############################################################################################################
-## A workflow that performs joint calling on single-sample gVCFs from GATK4 HaplotypeCaller using GenomicsDB.
-#############################################################################################################
-
 import "../../../tasks/VariantCalling/SRJointGenotyping.wdl" as SRJOINT
 import "../../../tasks/Utility/VariantUtils.wdl" as VARUTIL
 import "../../../tasks/Utility/Utils.wdl" as UTILS
@@ -13,6 +9,44 @@ import "../../../tasks/Utility/SGKit.wdl" as SGKit
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow SRJointCallGVCFsWithGenomicsDB {
+
+    meta {
+        author: "Jonn Smith"
+        description: "A workflow that performs joint calling on single-sample gVCFs from GATK4 HaplotypeCaller using GenomicsDB."
+    }
+    parameter_meta {
+        gvcfs:  "Array of GVCF files to use as inputs for joint calling."
+        gvcf_indices:   "Array of gvcf index files for `gvcfs`.  Order should correspond to that in `gvcfs`."
+        ref_map_file:  "Reference map file indicating reference sequence and auxillary file locations"
+
+        snp_calibration_sensitivity:    "VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered."
+        snp_max_unlabeled_variants: "VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites."
+        snp_recalibration_annotation_values:    "VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants."
+
+        snp_known_reference_variants: "Array of VCF files to use as input reference variants for SNPs.  Each can be designated as either calibration or training using `snp_is_training` and `snp_is_calibration`."
+        snp_known_reference_variants_index: "Array of VCF index files for `snp_known_reference_variants`.  Order should correspond to that in `snp_known_reference_variants`."
+        snp_known_reference_variants_identifier: "Array of names to give to the VCF files given in `snp_known_reference_variants`.  Order should correspond to that in `snp_known_reference_variants`."
+        snp_is_training: "Array of booleans indicating which files in `snp_known_reference_variants` should be used as training sets.  True -> training set.  False -> NOT a training set."
+        snp_is_calibration: "Array of booleans indicating which files in `snp_known_reference_variants` should be used as calibration sets.  True ->calibration set.  False -> NOT a calibration set."
+
+        indel_calibration_sensitivity:    "VETS (ScoreVariantAnnotations) parameter - score below which INDEL variants will be filtered."
+        indel_max_unlabeled_variants: "VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled INDEL variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites."
+        indel_recalibration_annotation_values:    "VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the INDEL variant scoring model and over which to score INDEL variants."
+
+        indel_known_reference_variants: "Array of VCF files to use as input reference variants for INDELs.  Each can be designated as either calibration or training using `indel_is_training` and `indel_is_calibration`."
+        indel_known_reference_variants_index: "Array of VCF index files for `indel_known_reference_variants`.  Order should correspond to that in `indel_known_reference_variants`."
+        indel_known_reference_variants_identifier: "Array of names to give to the VCF files given in `indel_known_reference_variants`.  Order should correspond to that in `indel_known_reference_variants`."
+        indel_is_training: "Array of booleans indicating which files in `indel_known_reference_variants` should be used as training sets.  True -> training set.  False -> NOT a training set."
+        indel_is_calibration: "Array of booleans indicating which files in `indel_known_reference_variants` should be used as calibration sets.  True ->calibration set.  False -> NOT a calibration set."
+
+        annotation_bed_files:   "Array of bed files to use to FILTER/annotate variants in the output file.  Annotations will be placed in the FILTER column, effectively filtering variants that overlap these regions."
+        annotation_bed_file_indexes:    "Array of bed indexes for `annotation_bed_files`.  Order should correspond to `annotation_bed_files`."
+        annotation_bed_file_annotation_names:   "Array of names/FILTER column entries to use for each given file in `annotation_bed_files`.  Order should correspond to `annotation_bed_files`."
+
+        prefix: "Prefix to use for output files."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+    }
+
     input {
         Array[File] gvcfs
         Array[File] gvcf_indices
@@ -50,14 +84,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         String prefix
 
         String gcs_out_root_dir
-    }
-
-    parameter_meta {
-        gvcfs:            "GCS paths to gVCF files"
-        gvcf_indices:     "GCS paths to gVCF tbi files"
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
-        prefix:           "prefix for output joint-called gVCF and tabix index"
-        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/SRJointCallGVCFsWithGenomicsDB/~{prefix}"
