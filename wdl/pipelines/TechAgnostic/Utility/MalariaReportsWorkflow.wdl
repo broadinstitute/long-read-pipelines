@@ -109,12 +109,6 @@ workflow GenerateMalariaReports {
         Int? coverage_bin_size  
 
     }
-
-    # Compute path for BAM files (coverage_dir) using fastqc_path if given
-#    if (defined(fastqc_path)) {
-#
-#    }
-
     
     call MRS.RunReportScript as RunReportScript { 
         input: 

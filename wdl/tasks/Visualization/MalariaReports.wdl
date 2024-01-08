@@ -124,15 +124,20 @@ task RunReportScript {
         set -euxo
         pwd
         ls
-        echo "BEGIN COMMAND"
 
+        echo "RETRIEVING BAM FILES..."
         echo ~{coverage_dir}
         mkdir -p /report-files/data/coverage
         gsutil ls ~{coverage_regex}  > filelist.txt
         echo "COPYING..."
         cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
+
+        echo "RETRIEVING FASTQC REPORT..."
+        mkdir -p /report-files/data/fastqc
+        echo ~{fastqc_path}
+        gsutil cp ~{fastqc_path} /report-files/data/fastqc
         
-        echo "CREATING REPORT..."
+        echo "CREATING SUMMARY REPORT..."
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
@@ -160,9 +165,8 @@ task RunReportScript {
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
-            --coverage_bin_size ~{coverage_bin_size} \
-            --~{"-O" + fastqc_path}
-        echo "REPORT GENERATED!"
+            --coverage_bin_size ~{coverage_bin_size}
+        echo "DONE!"
     >>>
 
     output {

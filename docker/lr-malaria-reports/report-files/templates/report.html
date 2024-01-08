@@ -1578,7 +1578,7 @@
         </div> 
     </div> <!-- analysis_page -->
 
-    {% if fastQC.fastQC is defined and fastQC.fastQC %}
+    {% if fastQC.fastqc_html is defined and fastQC.fastqc_html %}
 
     <!-- FASTQC_REPORT PAGE -->
     <div id="fastqc_page" style="display: none;">
@@ -1587,7 +1587,7 @@
                     <script>
                         fastqc_frame.contentDocument.querySelector("div.main").style.height = "100vh";
                     </script>
-                    <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc={{ fastQC.fastQC }}></iframe>
+                    <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc={{ fastQC.fastqc_html }}></iframe>
                 </div>
             </div>
         </div> <!-- fastqc_root -->
