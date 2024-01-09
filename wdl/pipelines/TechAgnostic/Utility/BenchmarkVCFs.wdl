@@ -1,12 +1,5 @@
 version 1.0
 
-# Borrowed and adapted from the Broad Institute's Hydrogen/Palantir repo, courtesy of Michael Gatzen:
-#
-# https://github.com/broadinstitute/palantir-workflows/tree/mg_benchmark_compare/BenchmarkVCFs
-#
-# Permalink:
-# https://github.com/broadinstitute/palantir-workflows/blob/0bf48efc6de818364993e46d89591a035cfd80c7/BenchmarkVCFs/BenchmarkVCFs.wdl
-
 workflow Benchmark {
 
     meta {

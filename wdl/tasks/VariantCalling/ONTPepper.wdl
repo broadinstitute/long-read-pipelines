@@ -1,15 +1,11 @@
 version 1.0
 
-#######################################################
-# This pipeline calls small variants using DeepVariant.
-#######################################################
-
 import "../../structs/Structs.wdl"
 
 task Pepper {
 
     meta {
-        description: "A 1-stop shop task offered by Pepper for ONT data."
+        description: "A 1-stop shop task offered by Pepper for ONT data.  This pipeline calls small variants using DeepVariant."
     }
 
     parameter_meta {
