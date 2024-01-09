@@ -62,7 +62,6 @@ task CombineExpandedDrugResistanceMarkers {
             localization_optional: true
         }
         prefix: "Prefix to use for output files."
-        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
         runtime_attr_override: "Override for default runtime attributes."
     }
 
