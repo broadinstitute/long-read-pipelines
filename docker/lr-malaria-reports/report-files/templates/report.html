@@ -1587,7 +1587,7 @@
                     <script>
                         fastqc_frame.contentDocument.querySelector("div.main").style.height = "100vh";
                     </script>
-                    <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc={{ fastQC.fastqc_html }}></iframe>
+                    <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc={{ fastQC.fastqc_html|safe }}></iframe>
                 </div>
             </div>
         </div> <!-- fastqc_root -->
