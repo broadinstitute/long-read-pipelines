@@ -700,6 +700,7 @@ task HardFilterVcfByGATKDefault_Snp {
         File vcf
         File vcf_index
         File ref_fasta
+        File ref_fasta_fai
     
         String prefix
 
@@ -801,6 +802,7 @@ task HardFilterVcfByGATKDefault_Indel {
         File vcf
         File vcf_index
         File ref_fasta
+        File ref_fasta_fai
     
         String prefix
 
