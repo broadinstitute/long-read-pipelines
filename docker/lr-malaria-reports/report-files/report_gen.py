@@ -471,7 +471,8 @@ def read_fastqc(directory):
     if(os.path.exists(directory)):
         # There should only be one file in the directory (report-files/data/fastqc)
         for file in os.listdir(directory):
-            with open(file, "r", encoding="utf-8") as f:
+            print(f"{directory} + {file}")
+            with open(os.path.join(directory, file), "r", encoding="utf-8") as f:
                 html = f.read()
     else:
         html = None
@@ -697,7 +698,7 @@ if __name__ == '__main__':
     coverage_plot.savefig("coverage_plot.jpeg")
     
     # third : fastqc_page
-    fastqc_html = read_fastqc("/report-files/data/fastqc")
+    fastqc_html = read_fastqc("/report-files/data/fastqc/")
 
     # Create summary, analysis, and fastQC objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
