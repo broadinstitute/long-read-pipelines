@@ -287,7 +287,7 @@ task MakeChrIntervalList {
             grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
             tee chrs.txt
 
-         cat chrs.txt | awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > intervalList.intervals
+        cat chrs.txt | awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > intervalList.intervals
 
         # Now make another output - a set of individual contig interval list files:
         while read line ; do
@@ -2502,7 +2502,7 @@ task MapToTsv {
     }
 }
 
-task CreateIGVSession{
+task CreateIGVSession {
     meta {
         description: "Create an IGV session given a list of IGV compatible file paths.  Adapted / borrowed from https://github.com/broadinstitute/palantir-workflows/blob/mg_benchmark_compare/BenchmarkVCFs ."
     }

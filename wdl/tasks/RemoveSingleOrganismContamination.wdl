@@ -56,13 +56,13 @@ workflow RemoveSingleOrganismContamination {
 
     # Some basic error handling:
     if (!defined(input_bam) && (!defined(fq_end1) || !defined(fq_end2))) {
-        call Utils.FailWithWarning as t_002_NoInputFileProvidedFailure {
-            input: warning = "No input file has been provided!  You must provide either an input bam or input fastq1/fastq2 files."
+        call Utils.StopWorkflow as t_002_NoInputFileProvidedFailure {
+            input: reason = "No input file has been provided!  You must provide either an input bam or input fastq1/fastq2 files."
         }
     }
     if (defined(input_bam) && (defined(fq_end1) || defined(fq_end2))) {
-        call Utils.FailWithWarning as t_003_TooManyInputsProvidedFailure {
-            input: warning = "Too many inputs provided!  You must provide EITHER an input bam OR input fastq1/fastq2 files."
+        call Utils.StopWorkflow as t_003_TooManyInputsProvidedFailure {
+            input: reason = "Too many inputs provided!  You must provide EITHER an input bam OR input fastq1/fastq2 files."
         }
     }
 

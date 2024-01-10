@@ -45,7 +45,7 @@ workflow TrainCnnFilters {
 
     # TODO: Validate that lengths of all inputs are the same:
     if ((length(vcfs) != length(vcf_indices)) || (length(vcfs) != length(vcf_indices)) || (length(vcfs) != length(vcf_indices)) || (length(vcfs) != length(vcf_indices)) || (length(vcfs) != length(vcf_indices))) {
-        call Utils.FailWithWarning {input: warning="Not all input arrays have the same length!"}
+        call Utils.StopWorkflow {input: reason="Not all input arrays have the same length!"}
     }
 
     # First create tensors for the input data:

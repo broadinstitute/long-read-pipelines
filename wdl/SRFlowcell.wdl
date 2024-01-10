@@ -176,10 +176,11 @@ workflow SRFlowcell {
     }
 
     # Sort Duplicate Marked Bam:
-    call Utils.SortBam as t_008_SortAlignedDuplicateMarkedBam {
+    call Utils.SortSam as t_008_SortAlignedDuplicateMarkedBam {
         input:
             input_bam = t_007_MarkDuplicates.bam,
-            prefix = SM + ".aligned.merged.markDuplicates.sorted"
+            output_bam_basename = SM + ".aligned.merged.markDuplicates.sorted",
+            compression_level = 2
     }
 
 #    TODO: Add Fingerprinting?
