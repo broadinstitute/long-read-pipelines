@@ -19,27 +19,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File ref_map_file
 
-        File interval_list
-
-        Float snp_calibration_sensitivity = 0.99
-        Int snp_max_unlabeled_variants = 0
-        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
-
-        Array[File] snp_known_reference_variants
-        Array[File] snp_known_reference_variants_index
-        Array[File] snp_known_reference_variants_identifier
-        Array[Boolean] snp_is_training
-        Array[Boolean] snp_is_calibration
-
-        Float indel_calibration_sensitivity = 0.99
-        Int indel_max_unlabeled_variants = 0
-        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
-
-        Array[File] indel_known_reference_variants
-        Array[File] indel_known_reference_variants_index
-        Array[File] indel_known_reference_variants_identifier
-        Array[Boolean] indel_is_training
-        Array[Boolean] indel_is_calibration
+        File? interval_list
 
         Array[File]?   annotation_bed_files
         Array[File]?   annotation_bed_file_indexes
