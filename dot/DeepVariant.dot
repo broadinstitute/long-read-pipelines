@@ -1,0 +1,7 @@
+// DeepVariant
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-deep_variant" [label=deep_variant shape=cds]
+}

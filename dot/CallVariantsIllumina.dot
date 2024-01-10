@@ -1,0 +1,18 @@
+// CallVariants
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-arbitrary" [label=arbitrary shape=cds]
+	subgraph "cluster-if-L40C5" {
+		fontname=Roboto label="if(call_small_variants)" rank=same
+		"call-SmallVariantsScatterPrepp" [label=SmallVariantsScatterPrepp shape=cds]
+		subgraph "cluster-if-L50C9" {
+			fontname=Roboto label="if(run_dv_pepper_analysis)" rank=same
+			"call-DeepVariant" [label=DeepVariant shape=cds]
+			"if-L50C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"if-L40C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-arbitrary" -> "call-DeepVariant"
+}

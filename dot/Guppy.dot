@@ -6,10 +6,10 @@ digraph {
 	"call-ListFast5s" [label=ListFast5s shape=cds]
 	"decl-ns" [label=ns shape=plaintext]
 	"call-PartitionFast5Manifest" [label=PartitionFast5Manifest shape=cds]
-	subgraph "cluster-scatter-L53C5-chunk_index" {
+	subgraph "cluster-scatter-L44C5-chunk_index" {
 		fontname=Roboto label="scatter(range(length(PartitionFast5Manifest.manifest_chunks)))" rank=same
 		"call-Basecall" [label=Basecall shape=cds]
-		"scatter-L53C5-chunk_index" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L44C5-chunk_index" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-TimestampStopped" [label=TimestampStopped shape=cds]
 	"call-SumPassingFastqs" [label=SumPassingFastqs shape=cds]
@@ -21,7 +21,7 @@ digraph {
 	"call-ListFast5s" -> "decl-ns"
 	"call-ListFast5s" -> "call-PartitionFast5Manifest"
 	"decl-ns" -> "call-PartitionFast5Manifest"
-	"call-PartitionFast5Manifest" -> "scatter-L53C5-chunk_index" [lhead="cluster-scatter-L53C5-chunk_index"]
+	"call-PartitionFast5Manifest" -> "scatter-L44C5-chunk_index" [lhead="cluster-scatter-L44C5-chunk_index"]
 	"call-PartitionFast5Manifest" -> "call-Basecall"
 	"call-Basecall" -> "call-TimestampStopped"
 	"call-Basecall" -> "call-SumPassingFastqs"
@@ -31,7 +31,7 @@ digraph {
 	"call-Basecall" -> "call-MakeFinalSummary"
 	"call-Basecall" -> "call-UniqueBarcodes"
 	"call-MakeFinalSummary" -> "call-FinalizeBasecalls"
-	"call-UniqueBarcodes" -> "call-FinalizeBasecalls"
 	"call-MakeSequencingSummary" -> "call-FinalizeBasecalls"
+	"call-UniqueBarcodes" -> "call-FinalizeBasecalls"
 	"call-Basecall" -> "call-FinalizeBasecalls"
 }

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>RemoveSingleOrganismContamination - Broad Institute Long Read Pipelines</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "RemoveSingleOrganismContamination";
+        var mkdocs_page_input_path = "workflows/RemoveSingleOrganismContamination.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Broad Institute Long Read Pipelines
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Development guide</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/">Development Guide Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/docker_style_guide/">Docker Style Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/repo_structure/">Repository Structure</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/wdl_style_guide/">WDL Style Guide</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Pipeline documentation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="#">Sp malaria</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../pipeline_documentation/sp_malaria/workspace_markdown_doc/">_P. falciparum_ Short Read Whole Genome Workspace</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tasks</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/AlignReads/">AlignReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Clair/">Clair</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/FastQC/">FastQC</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Finalize/">Finalize</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/FunctionalAnnotation/">FunctionalAnnotation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/GeneralUtils/">GeneralUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Hail/">Hail</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/MASSeq/">MASSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Medaka/">Medaka</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/NanoPlot/">NanoPlot</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTPepper/">ONTPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTUtils/">ONTUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/PBUtils/">PBUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Postprocessing_Tasks/">Postprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Preprocessing_Tasks/">Preprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Quast/">Quast</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SGKit/">SGKit</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SRJointGenotyping/">SRJointGenotyping</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SRUtils/">SRUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Utils/">Utils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/VariantUtils/">VariantUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/cnv_common_tasks/">cnv_common_tasks</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Workflows</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../AlignAndCheckFingerprintCCS/">AlignAndCheckFingerprintCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../AlignedMetrics/">AlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../AnnotateTranscriptomeWithGuide/">AnnotateTranscriptomeWithGuide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../AssignChildLongReads/">AssignChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFs/">BenchmarkVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CCSPepper/">CCSPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallAssemblyVariants/">CallAssemblyVariants</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsIllumina/">CallVariantsIllumina</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsONT/">CallVariantsONT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsPBCCS/">CallVariantsPBCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Canu/">Canu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CleanupIntermediate/">CleanupIntermediate</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectPacBioAlignedMetrics/">CollectPacBioAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectParentsKmerStats/">CollectParentsKmerStats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CollectSMRTCellUnalignedMetrics/">CollectSMRTCellUnalignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CompareVcfBenchmarks/">CompareVcfBenchmarks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ConvertToHailMT/">ConvertToHailMT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ConvertToZarrStore/">ConvertToZarrStore</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DeepVariant/">DeepVariant</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromFTP/">DownloadFromFTP</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromSRA/">DownloadFromSRA</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DownloadFromWeb/">DownloadFromWeb</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ExpandedDrugResistanceMarkerAggregation/">ExpandedDrugResistanceMarkerAggregation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ExpandedDrugResistanceMarkerExtraction/">ExpandedDrugResistanceMarkerExtraction</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ExtractRegionsFromBam/">ExtractRegionsFromBam</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FPCheckAoU/">FPCheckAoU</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FindBamIdentity/">FindBamIdentity</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Flye/">Flye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../GLNexus/">GLNexus</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Guppy/">Guppy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../HaplotypeCaller/">HaplotypeCaller</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Hifiasm/">Hifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRCNVs/">LRCNVs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRConvertBCF/">LRConvertBCF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../LRJointCallGVCFs/">LRJointCallGVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Longbow/">Longbow</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTAssembleWithCanu/">ONTAssembleWithCanu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTAssembleWithFlye/">ONTAssembleWithFlye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTBasecall/">ONTBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTFlowcell/">ONTFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTFlowcellFromMultipleBasecalls/">ONTFlowcellFromMultipleBasecalls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTMethylation/">ONTMethylation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfHrp2Hrp3Status/">ONTPfHrp2Hrp3Status</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfTypeDrugResistanceMarkers/">ONTPfTypeDrugResistanceMarkers</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTProcessBasecall/">ONTProcessBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ONTWholeGenome/">ONTWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBAssembleWithHifiasm/">PBAssembleWithHifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBCCSIsoSeq/">PBCCSIsoSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBCCSWholeGenome/">PBCCSWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBFlowcell/">PBFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBMASIsoSeqDemultiplex/">PBMASIsoSeqDemultiplex</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBMASIsoSeqQuantify/">PBMASIsoSeqQuantify</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PBSV/">PBSV</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PanelProcessMalariaBarcodesForRh/">PanelProcessMalariaBarcodesForRh</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Pf_Niare_HaplotypeCaller/">Pf_Niare_HaplotypeCaller</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PfalciparumDrugResistanceSummary/">PfalciparumDrugResistanceSummary</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ProcessMalariaBarcodesDemo/">ProcessMalariaBarcodesDemo</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">RemoveSingleOrganismContamination</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#removesingleorganismcontamination_1">RemoveSingleOrganismContamination</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRBamToFq/">SRBamToFq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRFlowcell/">SRFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRIndexBam/">SRIndexBam</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointCallGVCFsWithGenomicsDB/">SRJointCallGVCFsWithGenomicsDB</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome/">SRWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome_Pf_Niare_VETS/">SRWholeGenome_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome_Pf_Niare_VQSR/">SRWholeGenome_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../TrainCnnFilters/">TrainCnnFilters</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../TrioBinChildLongReads/">TrioBinChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../VerifyFingerprint/">VerifyFingerprint</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Broad Institute Long Read Pipelines</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
+          <li>Workflows &raquo;</li>
+      <li>RemoveSingleOrganismContamination</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/RemoveSingleOrganismContamination.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="removesingleorganismcontamination">RemoveSingleOrganismContamination</h1>
+<h2 id="removesingleorganismcontamination_1">RemoveSingleOrganismContamination</h2>
+<dl>
+<dt>author</dt>
+<dd>Jonn Smith</dd>
+<dt>description</dt>
+<dd>A workflow to remove contamination originating from a single organism from a dataset.</dd>
+</dl>
+<h3 id="inputs">Inputs</h3>
+<h4 id="required">Required</h4>
+<ul>
+<li><code>LB</code> (String, <strong>required</strong>): the value to place in the BAM read group's LB (library) field</li>
+<li><code>SM</code> (String, <strong>required</strong>): the value to place in the BAM read group's SM field</li>
+<li><code>contaminant_ref_map_file</code> (File, <strong>required</strong>): Table indicating reference sequence and auxillary file locations.</li>
+<li><code>contaminant_ref_name</code> (String, <strong>required</strong>): Name of the contaminant genome to be used in output files.</li>
+<li><code>dir_prefix</code> (String, <strong>required</strong>): directory prefix for output files</li>
+<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS bucket to store the reads, variants, and metrics files</li>
+</ul>
+<h4 id="optional">Optional</h4>
+<ul>
+<li><code>fq_end1</code> (File?): GCS path to end1 of paired-end fastq</li>
+<li><code>fq_end2</code> (File?): GCS path to end2 of paired-end fastq</li>
+<li><code>input_bai</code> (File?): GCS path to bai index for unmapped bam</li>
+<li><code>input_bam</code> (File?): GCS path to unmapped bam</li>
+<li><code>t_004_RevertSam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_005_Bam2Fastq.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_006_GetRawReadGroup.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_008_ExtractDecontaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_009_ExtractContaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_010_SortDecontaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_011_SortContaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_012_CreateFastqFromDecontaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_013_FinalizeContaminatedBam.name</code> (String?)</li>
+<li><code>t_013_FinalizeContaminatedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_014_FinalizeDecontaminatedFq1.name</code> (String?)</li>
+<li><code>t_014_FinalizeDecontaminatedFq1.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_015_FinalizeDecontaminatedFq2.name</code> (String?)</li>
+<li><code>t_015_FinalizeDecontaminatedFq2.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_016_FinalizeDecontaminatedUnpaired.name</code> (String?)</li>
+<li><code>t_016_FinalizeDecontaminatedUnpaired.runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults">Defaults</h4>
+<ul>
+<li><code>DEBUG_MODE</code> (Boolean, default=false): [default valued] enables debugging tasks / subworkflows (default: false)</li>
+<li><code>platform</code> (String, default="illumina"): [default valued] the value to place in the BAM read group's PL (platform) field (default: illumina)</li>
+<li><code>t_001_WdlExecutionStartTimestamp.date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
+<li><code>t_009_ExtractContaminatedReads.extra_args</code> (String, default="")</li>
+</ul>
+<h3 id="outputs">Outputs</h3>
+<ul>
+<li><code>contaminated_bam</code> (File)</li>
+<li><code>decontaminated_fq1</code> (File)</li>
+<li><code>decontaminated_fq2</code> (File)</li>
+<li><code>decontaminated_unpaired</code> (File)</li>
+</ul>
+<h3 id="dot-diagram">Dot Diagram</h3>
+<p><img alt="RemoveSingleOrganismContamination" src="../../dot/RemoveSingleOrganismContamination.dot.png" /></p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ProcessMalariaBarcodesDemo/" class="btn btn-neutral float-left" title="ProcessMalariaBarcodesDemo"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../SRBamToFq/" class="btn btn-neutral float-right" title="SRBamToFq">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright (c) 2023, Broad Institute</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/broadinstitute/long-read-pipelines" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../ProcessMalariaBarcodesDemo/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../SRBamToFq/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+// ConvertToZarrStore
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-PerformZarrStoreConversion" [label=PerformZarrStoreConversion shape=cds]
+}

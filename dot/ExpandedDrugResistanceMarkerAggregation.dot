@@ -1,0 +1,9 @@
+// ExpandedDrugResistanceMarkerExtraction
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-CombineExpandedDrugResistanceMarkers" [label=CombineExpandedDrugResistanceMarkers shape=cds]
+	"call-FinalizeDRReportAllMarkers" [label=FinalizeDRReportAllMarkers shape=cds]
+	"call-CombineExpandedDrugResistanceMarkers" -> "call-FinalizeDRReportAllMarkers"
+}

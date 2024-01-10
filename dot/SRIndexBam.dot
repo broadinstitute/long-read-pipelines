@@ -1,0 +1,9 @@
+// SRIndexBam
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-Index" [label=Index shape=cds]
+	"call-FinalizeBamIndex" [label=FinalizeBamIndex shape=cds]
+	"call-Index" -> "call-FinalizeBamIndex"
+}

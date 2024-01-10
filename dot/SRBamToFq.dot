@@ -1,0 +1,13 @@
+// SRBamToFq
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-BamToFq" [label=BamToFq shape=cds]
+	"call-FinalizeFqEnd1" [label=FinalizeFqEnd1 shape=cds]
+	"call-FinalizeFqEnd2" [label=FinalizeFqEnd2 shape=cds]
+	"call-FinalizeFqUnpaired" [label=FinalizeFqUnpaired shape=cds]
+	"call-BamToFq" -> "call-FinalizeFqEnd1"
+	"call-BamToFq" -> "call-FinalizeFqEnd2"
+	"call-BamToFq" -> "call-FinalizeFqUnpaired"
+}

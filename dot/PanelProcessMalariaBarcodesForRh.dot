@@ -1,0 +1,16 @@
+// PanelProcessMalariaBarcodesForRh
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-t_001_WdlExecutionStartTimestamp" [label=t_001_WdlExecutionStartTimestamp shape=cds]
+	"decl-outdir" [label=outdir shape=plaintext]
+	"call-t_002_ProcessBarcodeSpreadsheet" [label=t_002_ProcessBarcodeSpreadsheet shape=cds]
+	"decl-keyfile" [label=keyfile shape=plaintext]
+	"call-t_003_FinalizeOutputs" [label=t_003_FinalizeOutputs shape=cds]
+	"call-t_001_WdlExecutionStartTimestamp" -> "decl-outdir"
+	"call-t_002_ProcessBarcodeSpreadsheet" -> "decl-keyfile"
+	"decl-keyfile" -> "call-t_003_FinalizeOutputs"
+	"decl-outdir" -> "call-t_003_FinalizeOutputs"
+	"call-t_002_ProcessBarcodeSpreadsheet" -> "call-t_003_FinalizeOutputs"
+}

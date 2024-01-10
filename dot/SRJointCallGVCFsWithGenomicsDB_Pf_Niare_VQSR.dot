@@ -1,0 +1,67 @@
+// SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-MakeChrIntervalList" [label=MakeChrIntervalList shape=cds]
+	"call-CreateSampleNameMap" [label=CreateSampleNameMap shape=cds]
+	subgraph "cluster-scatter-L57C5-idx_1" {
+		fontname=Roboto label="scatter(range(length(MakeChrIntervalList.contig_interval_list_files)))" rank=same
+		"decl-contig" [label=contig shape=plaintext]
+		"decl-contig_interval_list" [label=contig_interval_list shape=plaintext]
+		"call-GenomicsDbImport" [label=GenomicsDbImport shape=cds]
+		"call-SplitContigToIntervals" [label=SplitContigToIntervals shape=cds]
+		subgraph "cluster-scatter-L79C9-idx_2" {
+			fontname=Roboto label="scatter(range(length(SplitContigToIntervals.individual_bed_files)))" rank=same
+			"decl-genotype_gvcfs_intervals" [label=genotype_gvcfs_intervals shape=plaintext]
+			"call-GenotypeGVCFs" [label=GenotypeGVCFs shape=cds]
+			"scatter-L79C9-idx_2" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"call-GatherVcfs" [label=GatherVcfs shape=cds]
+		"call-NormalizeVcfSplittingMultiallelics" [label=NormalizeVcfSplittingMultiallelics shape=cds]
+		"call-VariantRecalibratorIndel" [label=VariantRecalibratorIndel shape=cds]
+		"call-ApplyVqsrIndel" [label=ApplyVqsrIndel shape=cds]
+		"call-VariantRecalibratorSnp" [label=VariantRecalibratorSnp shape=cds]
+		"call-ApplyVqsrSnp" [label=ApplyVqsrSnp shape=cds]
+		"call-MergeMultiAllelicSitesPostRecalibration" [label=MergeMultiAllelicSitesPostRecalibration shape=cds]
+		"scatter-L57C5-idx_1" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-GatherRescoredVcfs" [label=GatherRescoredVcfs shape=cds]
+	"decl-keyfile" [label=keyfile shape=plaintext]
+	"call-FinalizeVETSVCF" [label=FinalizeVETSVCF shape=cds]
+	"call-FinalizeVETSTBI" [label=FinalizeVETSTBI shape=cds]
+	"call-MakeChrIntervalList" -> "scatter-L57C5-idx_1" [lhead="cluster-scatter-L57C5-idx_1"]
+	"call-MakeChrIntervalList" -> "decl-contig"
+	"call-MakeChrIntervalList" -> "decl-contig_interval_list"
+	"call-CreateSampleNameMap" -> "call-GenomicsDbImport"
+	"decl-contig_interval_list" -> "call-GenomicsDbImport"
+	"decl-contig" -> "call-GenomicsDbImport"
+	"decl-contig" -> "call-SplitContigToIntervals"
+	"call-SplitContigToIntervals" -> "scatter-L79C9-idx_2" [lhead="cluster-scatter-L79C9-idx_2"]
+	"call-SplitContigToIntervals" -> "decl-genotype_gvcfs_intervals"
+	"decl-genotype_gvcfs_intervals" -> "call-GenotypeGVCFs"
+	"decl-contig" -> "call-GenotypeGVCFs"
+	"call-GenomicsDbImport" -> "call-GenotypeGVCFs"
+	"decl-contig" -> "call-GatherVcfs"
+	"call-GenotypeGVCFs" -> "call-GatherVcfs"
+	"decl-contig" -> "call-NormalizeVcfSplittingMultiallelics"
+	"call-GatherVcfs" -> "call-NormalizeVcfSplittingMultiallelics"
+	"decl-contig" -> "call-VariantRecalibratorIndel"
+	"call-NormalizeVcfSplittingMultiallelics" -> "call-VariantRecalibratorIndel"
+	"decl-contig" -> "call-ApplyVqsrIndel"
+	"call-NormalizeVcfSplittingMultiallelics" -> "call-ApplyVqsrIndel"
+	"call-VariantRecalibratorIndel" -> "call-ApplyVqsrIndel"
+	"call-ApplyVqsrIndel" -> "call-VariantRecalibratorSnp"
+	"decl-contig" -> "call-VariantRecalibratorSnp"
+	"decl-contig" -> "call-ApplyVqsrSnp"
+	"call-VariantRecalibratorSnp" -> "call-ApplyVqsrSnp"
+	"call-ApplyVqsrIndel" -> "call-ApplyVqsrSnp"
+	"call-ApplyVqsrSnp" -> "call-MergeMultiAllelicSitesPostRecalibration"
+	"decl-contig" -> "call-MergeMultiAllelicSitesPostRecalibration"
+	"call-MergeMultiAllelicSitesPostRecalibration" -> "call-GatherRescoredVcfs"
+	"call-GatherRescoredVcfs" -> "decl-keyfile"
+	"decl-keyfile" -> "call-FinalizeVETSVCF"
+	"call-GatherRescoredVcfs" -> "call-FinalizeVETSVCF"
+	"decl-keyfile" -> "call-FinalizeVETSTBI"
+	"call-GatherRescoredVcfs" -> "call-FinalizeVETSTBI"
+}

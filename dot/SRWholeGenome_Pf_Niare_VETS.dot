@@ -1,0 +1,73 @@
+// SRWholeGenome_Pf_Niare_VETS
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L98C5" {
+		fontname=Roboto label="if(length(aligned_bams) > 1)" rank=same
+		subgraph "cluster-scatter-L99C9-pair" {
+			fontname=Roboto label="scatter(zip(aligned_bams,aligned_bais))" rank=same
+			"call-InferSampleName" [label=InferSampleName shape=cds]
+			"scatter-L99C9-pair" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"call-CheckOnSamplenames" [label=CheckOnSamplenames shape=cds]
+		"call-MergeAllReads" [label=MergeAllReads shape=cds]
+		"if-L98C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-bam" [label=bam shape=plaintext]
+	"decl-bai" [label=bai shape=plaintext]
+	"call-CallVariantsWithHaplotypeCaller" [label=CallVariantsWithHaplotypeCaller shape=cds]
+	"call-RenameRawHcVcf" [label=RenameRawHcVcf shape=cds]
+	"call-RenameRawHcGvcf" [label=RenameRawHcGvcf shape=cds]
+	"call-ExtractIndelVariantAnnotations" [label=ExtractIndelVariantAnnotations shape=cds]
+	"call-ExtractSnpVariantAnnotations" [label=ExtractSnpVariantAnnotations shape=cds]
+	"call-TrainIndelVariantAnnotationsModel" [label=TrainIndelVariantAnnotationsModel shape=cds]
+	"call-TrainSnpVariantAnnotationsModel" [label=TrainSnpVariantAnnotationsModel shape=cds]
+	"call-ScoreSnpVariantAnnotations" [label=ScoreSnpVariantAnnotations shape=cds]
+	"call-ScoreIndelVariantAnnotations" [label=ScoreIndelVariantAnnotations shape=cds]
+	"call-RemoveFilteredVariants" [label=RemoveFilteredVariants shape=cds]
+	"decl-keyfile" [label=keyfile shape=plaintext]
+	"call-FinalizeRawHCVcf" [label=FinalizeRawHCVcf shape=cds]
+	"call-FinalizeRawHCTbi" [label=FinalizeRawHCTbi shape=cds]
+	"call-FinalizeHCGVcf" [label=FinalizeHCGVcf shape=cds]
+	"call-FinalizeHCGTbi" [label=FinalizeHCGTbi shape=cds]
+	"call-FinalizeHCBamOut" [label=FinalizeHCBamOut shape=cds]
+	"call-FinalizeHCBaiOut" [label=FinalizeHCBaiOut shape=cds]
+	"call-FinalizeHCRescoredVcf" [label=FinalizeHCRescoredVcf shape=cds]
+	"call-FinalizeHCRescoredTbi" [label=FinalizeHCRescoredTbi shape=cds]
+	"call-InferSampleName" -> "call-CheckOnSamplenames"
+	"call-MergeAllReads" -> "decl-bam"
+	"call-MergeAllReads" -> "decl-bai"
+	"decl-bam" -> "call-CallVariantsWithHaplotypeCaller"
+	"decl-bai" -> "call-CallVariantsWithHaplotypeCaller"
+	"call-CallVariantsWithHaplotypeCaller" -> "call-RenameRawHcVcf"
+	"call-CallVariantsWithHaplotypeCaller" -> "call-RenameRawHcGvcf"
+	"call-RenameRawHcVcf" -> "call-ExtractIndelVariantAnnotations"
+	"call-RenameRawHcVcf" -> "call-ExtractSnpVariantAnnotations"
+	"call-ExtractIndelVariantAnnotations" -> "call-TrainIndelVariantAnnotationsModel"
+	"call-ExtractSnpVariantAnnotations" -> "call-TrainSnpVariantAnnotationsModel"
+	"call-TrainSnpVariantAnnotationsModel" -> "call-ScoreSnpVariantAnnotations"
+	"call-ExtractSnpVariantAnnotations" -> "call-ScoreSnpVariantAnnotations"
+	"call-RenameRawHcVcf" -> "call-ScoreSnpVariantAnnotations"
+	"call-TrainIndelVariantAnnotationsModel" -> "call-ScoreIndelVariantAnnotations"
+	"call-ExtractIndelVariantAnnotations" -> "call-ScoreIndelVariantAnnotations"
+	"call-ScoreSnpVariantAnnotations" -> "call-ScoreIndelVariantAnnotations"
+	"call-ScoreIndelVariantAnnotations" -> "call-RemoveFilteredVariants"
+	"call-RemoveFilteredVariants" -> "decl-keyfile"
+	"call-RenameRawHcVcf" -> "call-FinalizeRawHCVcf"
+	"decl-keyfile" -> "call-FinalizeRawHCVcf"
+	"call-RenameRawHcVcf" -> "call-FinalizeRawHCTbi"
+	"decl-keyfile" -> "call-FinalizeRawHCTbi"
+	"decl-keyfile" -> "call-FinalizeHCGVcf"
+	"call-RenameRawHcGvcf" -> "call-FinalizeHCGVcf"
+	"decl-keyfile" -> "call-FinalizeHCGTbi"
+	"call-RenameRawHcGvcf" -> "call-FinalizeHCGTbi"
+	"call-CallVariantsWithHaplotypeCaller" -> "call-FinalizeHCBamOut"
+	"decl-keyfile" -> "call-FinalizeHCBamOut"
+	"call-CallVariantsWithHaplotypeCaller" -> "call-FinalizeHCBaiOut"
+	"decl-keyfile" -> "call-FinalizeHCBaiOut"
+	"decl-keyfile" -> "call-FinalizeHCRescoredVcf"
+	"call-ScoreIndelVariantAnnotations" -> "call-FinalizeHCRescoredVcf"
+	"decl-keyfile" -> "call-FinalizeHCRescoredTbi"
+	"call-ScoreIndelVariantAnnotations" -> "call-FinalizeHCRescoredTbi"
+}

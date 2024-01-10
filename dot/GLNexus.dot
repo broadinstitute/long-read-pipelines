@@ -4,20 +4,20 @@ digraph {
 	node [fontname=Roboto]
 	edge [color="#00000080"]
 	"call-GetRanges" [label=GetRanges shape=cds]
-	subgraph "cluster-scatter-L55C5-p" {
+	subgraph "cluster-scatter-L56C5-p" {
 		fontname=Roboto label="scatter(zip(gvcfs,tbis))" rank=same
 		"call-ShardVCFByRanges" [label=ShardVCFByRanges shape=cds]
-		"scatter-L55C5-p" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L56C5-p" [label="" height=0 margin=0 style=invis width=0]
 	}
-	subgraph "cluster-scatter-L60C5-i" {
+	subgraph "cluster-scatter-L61C5-i" {
 		fontname=Roboto label="scatter(range(length(ShardVCFByRanges.sharded_gvcfs[0])))" rank=same
 		"decl-per_contig_gvcfs" [label=per_contig_gvcfs shape=plaintext]
 		"call-Call" [label=Call shape=cds]
-		"scatter-L60C5-i" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L61C5-i" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-ConcatBCFs" [label=ConcatBCFs shape=cds]
 	"call-GetRanges" -> "call-ShardVCFByRanges"
-	"call-ShardVCFByRanges" -> "scatter-L60C5-i" [lhead="cluster-scatter-L60C5-i"]
+	"call-ShardVCFByRanges" -> "scatter-L61C5-i" [lhead="cluster-scatter-L61C5-i"]
 	"call-ShardVCFByRanges" -> "decl-per_contig_gvcfs"
 	"decl-per_contig_gvcfs" -> "call-Call"
 	"call-Call" -> "call-ConcatBCFs"

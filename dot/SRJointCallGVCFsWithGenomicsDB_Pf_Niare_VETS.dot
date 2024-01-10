@@ -1,0 +1,95 @@
+// SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-MakeChrIntervalList" [label=MakeChrIntervalList shape=cds]
+	"call-CreateSampleNameMap" [label=CreateSampleNameMap shape=cds]
+	subgraph "cluster-scatter-L101C5-idx_1" {
+		fontname=Roboto label="scatter(range(length(MakeChrIntervalList.contig_interval_list_files)))" rank=same
+		"decl-contig" [label=contig shape=plaintext]
+		"decl-contig_interval_list" [label=contig_interval_list shape=plaintext]
+		"call-GenomicsDbImport" [label=GenomicsDbImport shape=cds]
+		"call-SplitContigToIntervals" [label=SplitContigToIntervals shape=cds]
+		subgraph "cluster-scatter-L123C9-idx_2" {
+			fontname=Roboto label="scatter(range(length(SplitContigToIntervals.individual_bed_files)))" rank=same
+			"decl-genotype_gvcfs_intervals" [label=genotype_gvcfs_intervals shape=plaintext]
+			"call-GenotypeGVCFs" [label=GenotypeGVCFs shape=cds]
+			"scatter-L123C9-idx_2" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"call-GatherVcfs" [label=GatherVcfs shape=cds]
+		"call-MakeSitesOnlyVCF" [label=MakeSitesOnlyVCF shape=cds]
+		"scatter-L101C5-idx_1" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-GatherSitesOnlyVCFs" [label=GatherSitesOnlyVCFs shape=cds]
+	"call-ExtractIndelVariantAnnotations" [label=ExtractIndelVariantAnnotations shape=cds]
+	"call-ExtractSnpVariantAnnotations" [label=ExtractSnpVariantAnnotations shape=cds]
+	"call-TrainIndelVariantAnnotationsModel" [label=TrainIndelVariantAnnotationsModel shape=cds]
+	"call-TrainSnpVariantAnnotationsModel" [label=TrainSnpVariantAnnotationsModel shape=cds]
+	subgraph "cluster-scatter-L218C5-idx_3" {
+		fontname=Roboto label="scatter(range(length(GatherVcfs.output_vcf)))" rank=same
+		"decl-contig_2" [label=contig_2 shape=plaintext]
+		"decl-joint_called_vcf" [label=joint_called_vcf shape=plaintext]
+		"decl-joint_called_vcf_index" [label=joint_called_vcf_index shape=plaintext]
+		"call-ScoreSnpVariantAnnotations" [label=ScoreSnpVariantAnnotations shape=cds]
+		"call-ScoreIndelVariantAnnotations" [label=ScoreIndelVariantAnnotations shape=cds]
+		subgraph "cluster-if-L281C9" {
+			fontname=Roboto label="if(defined(annotation_bed_files))" rank=same
+			"call-AnnotateVcfRegions" [label=AnnotateVcfRegions shape=cds]
+			"if-L281C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"decl-vcf_for_merging" [label=vcf_for_merging shape=plaintext]
+		"decl-vcf_index_for_merging" [label=vcf_index_for_merging shape=plaintext]
+		"scatter-L218C5-idx_3" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-GatherRescoredVcfs" [label=GatherRescoredVcfs shape=cds]
+	"decl-keyfile" [label=keyfile shape=plaintext]
+	"call-FinalizeVETSVCF" [label=FinalizeVETSVCF shape=cds]
+	"call-FinalizeVETSTBI" [label=FinalizeVETSTBI shape=cds]
+	"call-MakeChrIntervalList" -> "scatter-L101C5-idx_1" [lhead="cluster-scatter-L101C5-idx_1"]
+	"call-MakeChrIntervalList" -> "decl-contig"
+	"call-MakeChrIntervalList" -> "decl-contig_interval_list"
+	"call-CreateSampleNameMap" -> "call-GenomicsDbImport"
+	"decl-contig_interval_list" -> "call-GenomicsDbImport"
+	"decl-contig" -> "call-GenomicsDbImport"
+	"decl-contig" -> "call-SplitContigToIntervals"
+	"call-SplitContigToIntervals" -> "scatter-L123C9-idx_2" [lhead="cluster-scatter-L123C9-idx_2"]
+	"call-SplitContigToIntervals" -> "decl-genotype_gvcfs_intervals"
+	"decl-genotype_gvcfs_intervals" -> "call-GenotypeGVCFs"
+	"decl-contig" -> "call-GenotypeGVCFs"
+	"call-GenomicsDbImport" -> "call-GenotypeGVCFs"
+	"decl-contig" -> "call-GatherVcfs"
+	"call-GenotypeGVCFs" -> "call-GatherVcfs"
+	"decl-contig" -> "call-MakeSitesOnlyVCF"
+	"call-GatherVcfs" -> "call-MakeSitesOnlyVCF"
+	"call-MakeSitesOnlyVCF" -> "call-GatherSitesOnlyVCFs"
+	"call-GatherSitesOnlyVCFs" -> "call-ExtractIndelVariantAnnotations"
+	"call-GatherSitesOnlyVCFs" -> "call-ExtractSnpVariantAnnotations"
+	"call-ExtractIndelVariantAnnotations" -> "call-TrainIndelVariantAnnotationsModel"
+	"call-ExtractSnpVariantAnnotations" -> "call-TrainSnpVariantAnnotationsModel"
+	"call-GatherVcfs" -> "scatter-L218C5-idx_3" [lhead="cluster-scatter-L218C5-idx_3"]
+	"call-MakeChrIntervalList" -> "decl-contig_2"
+	"call-GatherVcfs" -> "decl-joint_called_vcf"
+	"call-GatherVcfs" -> "decl-joint_called_vcf_index"
+	"decl-contig_2" -> "call-ScoreSnpVariantAnnotations"
+	"decl-joint_called_vcf_index" -> "call-ScoreSnpVariantAnnotations"
+	"decl-joint_called_vcf" -> "call-ScoreSnpVariantAnnotations"
+	"call-ExtractSnpVariantAnnotations" -> "call-ScoreSnpVariantAnnotations"
+	"call-TrainSnpVariantAnnotationsModel" -> "call-ScoreSnpVariantAnnotations"
+	"call-TrainIndelVariantAnnotationsModel" -> "call-ScoreIndelVariantAnnotations"
+	"decl-contig_2" -> "call-ScoreIndelVariantAnnotations"
+	"call-ExtractIndelVariantAnnotations" -> "call-ScoreIndelVariantAnnotations"
+	"call-ScoreSnpVariantAnnotations" -> "call-ScoreIndelVariantAnnotations"
+	"call-ScoreIndelVariantAnnotations" -> "call-AnnotateVcfRegions"
+	"call-AnnotateVcfRegions" -> "decl-vcf_for_merging"
+	"call-ScoreIndelVariantAnnotations" -> "decl-vcf_for_merging"
+	"call-AnnotateVcfRegions" -> "decl-vcf_index_for_merging"
+	"call-ScoreIndelVariantAnnotations" -> "decl-vcf_index_for_merging"
+	"decl-vcf_index_for_merging" -> "call-GatherRescoredVcfs"
+	"decl-vcf_for_merging" -> "call-GatherRescoredVcfs"
+	"call-GatherRescoredVcfs" -> "decl-keyfile"
+	"decl-keyfile" -> "call-FinalizeVETSVCF"
+	"call-GatherRescoredVcfs" -> "call-FinalizeVETSVCF"
+	"decl-keyfile" -> "call-FinalizeVETSTBI"
+	"call-GatherRescoredVcfs" -> "call-FinalizeVETSTBI"
+}

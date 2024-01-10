@@ -55,15 +55,28 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/wdl_style_guide/">WDL Style Guide</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Pipeline documentation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="#">Sp malaria</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../pipeline_documentation/sp_malaria/workspace_markdown_doc/">_P. falciparum_ Short Read Whole Genome Workspace</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
               <p class="caption"><span class="caption-text">Tasks</span></p>
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FastQC/">FastQC</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FunctionalAnnotation/">FunctionalAnnotation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
                   </li>
@@ -87,12 +100,24 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SGKit/">SGKit</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointGenotyping/">SRJointGenotyping</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRUtils/">SRUtils</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../StringTie2/">StringTie2</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Utils/">Utils</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">VariantUtils</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#_1"></a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_2"></a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_3"></a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#mergeperchrcalls">MergePerChrCalls</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
@@ -121,7 +146,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#getvcfsamplename">GetVCFSampleName</a>
+    <li class="toctree-l2"><a class="reference internal" href="#collectdefinitions">CollectDefinitions</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
         <ul>
@@ -135,7 +160,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#subsetvcf">SubsetVCF</a>
+    <li class="toctree-l2"><a class="reference internal" href="#getvcfsamplename">GetVCFSampleName</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
         <ul>
@@ -143,15 +168,13 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
-    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_3">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#zipandindexvcf">ZipAndIndexVCF</a>
+    <li class="toctree-l2"><a class="reference internal" href="#subsetvcf">SubsetVCF</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
         <ul>
@@ -159,9 +182,299 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_4">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_4">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#zipandindexvcf">ZipAndIndexVCF</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_5">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_5">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_5">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#indexvcf">IndexVCF</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_6">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_6">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_6">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fixsnifflesvcf">FixSnifflesVCF</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_7">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_7">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_7">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#hardfiltervcf">HardFilterVcf</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_8">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_8">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_8">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#makesitesonlyvcf">MakeSitesOnlyVcf</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_9">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_9">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_9">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#annotatevcfwithbedregions">AnnotateVcfWithBedRegions</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_10">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_10">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_10">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#indelsvariantrecalibrator">IndelsVariantRecalibrator</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_11">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_11">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_11">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_11">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#snpsvariantrecalibratorcreatemodel">SNPsVariantRecalibratorCreateModel</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_12">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_12">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_12">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_3">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_12">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#applyvqsr">ApplyVqsr</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_13">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_13">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_13">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_13">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#selectvariants">SelectVariants</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_14">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_14">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_14">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_14">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#renamesinglesamplevcf">RenameSingleSampleVcf</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_15">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_15">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_15">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_4">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_15">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gathervcfs">GatherVcfs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_16">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_16">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_16">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_16">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#extractfingerprint">ExtractFingerprint</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_17">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_17">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_17">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_5">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_17">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#extractfingerprintandbarcode">ExtractFingerprintAndBarcode</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_18">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_18">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_18">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_6">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_18">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#extractvariantannotations">ExtractVariantAnnotations</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_19">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_19">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_19">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_7">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_19">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#trainvariantannotationsmodel">TrainVariantAnnotationsModel</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_20">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_20">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_20">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_8">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_20">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#scorevariantannotations">ScoreVariantAnnotations</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_21">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_21">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_21">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_9">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_21">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#compressandindex">CompressAndIndex</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_22">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_22">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_22">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_10">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_22">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#concatbcfs">ConcatBCFs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_23">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_23">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_23">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_11">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_23">Outputs</a>
     </li>
         </ul>
     </li>
@@ -180,9 +493,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/AssignChildLongReads/">AssignChildLongReads</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BenchmarkVCFs/">BenchmarkVCFs</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CCSPepper/">CCSPepper</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallAssemblyVariants/">CallAssemblyVariants</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsIllumina/">CallVariantsIllumina</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsONT/">CallVariantsONT</a>
                   </li>
@@ -198,13 +515,25 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CollectSMRTCellUnalignedMetrics/">CollectSMRTCellUnalignedMetrics</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CompareVcfBenchmarks/">CompareVcfBenchmarks</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/ConvertToHailMT/">ConvertToHailMT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ConvertToZarrStore/">ConvertToZarrStore</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DeepVariant/">DeepVariant</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromFTP/">DownloadFromFTP</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromSRA/">DownloadFromSRA</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromWeb/">DownloadFromWeb</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExpandedDrugResistanceMarkerAggregation/">ExpandedDrugResistanceMarkerAggregation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExpandedDrugResistanceMarkerExtraction/">ExpandedDrugResistanceMarkerExtraction</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExtractRegionsFromBam/">ExtractRegionsFromBam</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/FPCheckAoU/">FPCheckAoU</a>
                   </li>
@@ -215,6 +544,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/GLNexus/">GLNexus</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/Guppy/">Guppy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/HaplotypeCaller/">HaplotypeCaller</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/Hifiasm/">Hifiasm</a>
                   </li>
@@ -260,9 +591,39 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBSV/">PBSV</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PanelProcessMalariaBarcodesForRh/">PanelProcessMalariaBarcodesForRh</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Pf_Niare_HaplotypeCaller/">Pf_Niare_HaplotypeCaller</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PfalciparumDrugResistanceSummary/">PfalciparumDrugResistanceSummary</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ProcessMalariaBarcodesDemo/">ProcessMalariaBarcodesDemo</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/RemoveSingleOrganismContamination/">RemoveSingleOrganismContamination</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRBamToFq/">SRBamToFq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRFlowcell/">SRFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRIndexBam/">SRIndexBam</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB/">SRJointCallGVCFsWithGenomicsDB</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome/">SRWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Pf_Niare_VETS/">SRWholeGenome_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Pf_Niare_VQSR/">SRWholeGenome_Pf_Niare_VQSR</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/TrainCnnFilters/">TrainCnnFilters</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/TrioBinChildLongReads/">TrioBinChildLongReads</a>
                   </li>
@@ -295,6 +656,9 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="variantutils">VariantUtils</h1>
+<h6 id="_1"></h6>
+<h6 id="_2"></h6>
+<h6 id="_3"></h6>
 <h2 id="mergeperchrcalls">MergePerChrCalls</h2>
 <dl>
 <dt>description</dt>
@@ -338,21 +702,39 @@
 <li><code>vcf</code> (File)</li>
 <li><code>tbi</code> (File)</li>
 </ul>
+<h2 id="collectdefinitions">CollectDefinitions</h2>
+<dl>
+<dt>description</dt>
+<dd>Collect (union) various definitions in vcf files, adddressing a bcftols bug: https://github.com/samtools/bcftools/issues/1629</dd>
+</dl>
+<h3 id="inputs_2">Inputs</h3>
+<h4 id="required_2">Required</h4>
+<ul>
+<li><code>vcfs</code> (Array[File], <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_2">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_2">Outputs</h3>
+<ul>
+<li><code>union_definitions</code> (File)</li>
+</ul>
 <h2 id="getvcfsamplename">GetVCFSampleName</h2>
 <dl>
 <dt>description</dt>
 <dd>Currently mostly used for extracting sample name in fingerprinting genotyped VCF</dd>
 </dl>
-<h3 id="inputs_2">Inputs</h3>
-<h4 id="required_2">Required</h4>
+<h3 id="inputs_3">Inputs</h3>
+<h4 id="required_3">Required</h4>
 <ul>
 <li><code>fingerprint_vcf</code> (File, <strong>required</strong>): Assumed to be genotyped, and hold only one sample (other samples will be ignored).</li>
 </ul>
-<h4 id="optional_2">Optional</h4>
+<h4 id="optional_3">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
-<h3 id="outputs_2">Outputs</h3>
+<h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>sample_name</code> (String)</li>
 </ul>
@@ -361,14 +743,14 @@
 <dt>description</dt>
 <dd>Subset a VCF file to a given locus</dd>
 </dl>
-<h3 id="inputs_3">Inputs</h3>
-<h4 id="required_3">Required</h4>
+<h3 id="inputs_4">Inputs</h3>
+<h4 id="required_4">Required</h4>
 <ul>
 <li><code>locus</code> (String, <strong>required</strong>): Locus to be subsetted</li>
 <li><code>vcf_gz</code> (File, <strong>required</strong>): VCF file to be subsetted</li>
 <li><code>vcf_tbi</code> (File, <strong>required</strong>): Tabix index for the VCF file</li>
 </ul>
-<h4 id="optional_3">Optional</h4>
+<h4 id="optional_4">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
@@ -376,7 +758,7 @@
 <ul>
 <li><code>prefix</code> (String, default="subset"): Prefix for the output file</li>
 </ul>
-<h3 id="outputs_3">Outputs</h3>
+<h3 id="outputs_4">Outputs</h3>
 <ul>
 <li><code>subset_vcf</code> (File)</li>
 <li><code>subset_tbi</code> (File)</li>
@@ -386,19 +768,446 @@
 <dt>description</dt>
 <dd>gZip plain text VCF and index it.</dd>
 </dl>
-<h3 id="inputs_4">Inputs</h3>
-<h4 id="required_4">Required</h4>
+<h3 id="inputs_5">Inputs</h3>
+<h4 id="required_5">Required</h4>
 <ul>
 <li><code>vcf</code> (File, <strong>required</strong>): VCF file to be zipped and indexed</li>
 </ul>
-<h4 id="optional_4">Optional</h4>
+<h4 id="optional_5">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes</li>
 </ul>
-<h3 id="outputs_4">Outputs</h3>
+<h3 id="outputs_5">Outputs</h3>
 <ul>
 <li><code>vcfgz</code> (File)</li>
 <li><code>tbi</code> (File)</li>
+</ul>
+<h2 id="indexvcf">IndexVCF</h2>
+<dl>
+<dt>description</dt>
+<dd>Indexing vcf.gz. Note: do NOT use remote index as that's buggy.</dd>
+</dl>
+<h3 id="inputs_6">Inputs</h3>
+<h4 id="required_6">Required</h4>
+<ul>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_6">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_6">Outputs</h3>
+<ul>
+<li><code>tbi</code> (File)</li>
+</ul>
+<h2 id="fixsnifflesvcf">FixSnifflesVCF</h2>
+<h3 id="inputs_7">Inputs</h3>
+<h4 id="required_7">Required</h4>
+<ul>
+<li><code>sample_name</code> (String, <strong>required</strong>): Sniffles infers sample name from the BAM file name, so we fix it here</li>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_7">Optional</h4>
+<ul>
+<li><code>ref_fasta_fai</code> (File?): provide only when the contig section of the input vcf is suspected to be corrupted</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_7">Outputs</h3>
+<ul>
+<li><code>sortedVCF</code> (File)</li>
+<li><code>tbi</code> (File)</li>
+</ul>
+<h2 id="hardfiltervcf">HardFilterVcf</h2>
+<h3 id="inputs_8">Inputs</h3>
+<h4 id="required_8">Required</h4>
+<ul>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_8">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_1">Defaults</h4>
+<ul>
+<li><code>excess_het_threshold</code> (Float, default=54.69)</li>
+</ul>
+<h3 id="outputs_8">Outputs</h3>
+<ul>
+<li><code>variant_filtered_vcf</code> (File)</li>
+<li><code>variant_filtered_vcf_index</code> (File)</li>
+</ul>
+<h2 id="makesitesonlyvcf">MakeSitesOnlyVcf</h2>
+<h3 id="inputs_9">Inputs</h3>
+<h4 id="required_9">Required</h4>
+<ul>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_9">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_9">Outputs</h3>
+<ul>
+<li><code>sites_only_vcf</code> (File)</li>
+<li><code>sites_only_vcf_index</code> (File)</li>
+</ul>
+<h2 id="annotatevcfwithbedregions">AnnotateVcfWithBedRegions</h2>
+<h3 id="inputs_10">Inputs</h3>
+<h4 id="required_10">Required</h4>
+<ul>
+<li><code>bed_file_annotation_names</code> (Array[String], <strong>required</strong>)</li>
+<li><code>bed_file_indexes</code> (Array[File], <strong>required</strong>)</li>
+<li><code>bed_files</code> (Array[File], <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_10">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_10">Outputs</h3>
+<ul>
+<li><code>annotated_vcf</code> (File)</li>
+<li><code>annotated_vcf_index</code> (File)</li>
+</ul>
+<h2 id="indelsvariantrecalibrator">IndelsVariantRecalibrator</h2>
+<h3 id="inputs_11">Inputs</h3>
+<h4 id="required_11">Required</h4>
+<ul>
+<li><code>is_known</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position contains known variants.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>is_training</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position contains training data.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>is_truth</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position contains truth data.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>known_reference_variants</code> (Array[File], <strong>required</strong>): Array of known reference VCF files.  For humans, dbSNP is one example.</li>
+<li><code>known_reference_variants_identifier</code> (Array[String], <strong>required</strong>): Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>known_reference_variants_index</code> (Array[File], <strong>required</strong>): Array of index files for known reference VCF files.</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>prior</code> (Array[Float], <strong>required</strong>): Array of integer values indicating the priors for the known_reference_variant file at the same array position.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>recalibration_annotation_values</code> (Array[String], <strong>required</strong>)</li>
+<li><code>recalibration_tranche_values</code> (Array[String], <strong>required</strong>)</li>
+<li><code>use_allele_specific_annotations</code> (Boolean, <strong>required</strong>)</li>
+<li><code>vcf_indices</code> (Array[File], <strong>required</strong>): Tribble Indexes for sites only VCF.</li>
+<li><code>vcfs</code> (Array[File], <strong>required</strong>): Sites only VCFs.  Can be pre-filtered using hard-filters.</li>
+</ul>
+<h4 id="optional_11">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_2">Defaults</h4>
+<ul>
+<li><code>max_gaussians</code> (Int, default=4)</li>
+</ul>
+<h3 id="outputs_11">Outputs</h3>
+<ul>
+<li><code>recalibration</code> (File)</li>
+<li><code>recalibration_index</code> (File)</li>
+<li><code>tranches</code> (File)</li>
+<li><code>model_report</code> (File)</li>
+</ul>
+<h2 id="snpsvariantrecalibratorcreatemodel">SNPsVariantRecalibratorCreateModel</h2>
+<h3 id="inputs_12">Inputs</h3>
+<h4 id="required_12">Required</h4>
+<ul>
+<li><code>is_known</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position contains known variants.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>is_training</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position contains training data.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>is_truth</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position contains truth data.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>known_reference_variants</code> (Array[File], <strong>required</strong>): Array of known reference VCF files.  For humans, dbSNP is one example.</li>
+<li><code>known_reference_variants_identifier</code> (Array[String], <strong>required</strong>): Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>known_reference_variants_index</code> (Array[File], <strong>required</strong>): Array of index files for known reference VCF files.</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>prior</code> (Array[Float], <strong>required</strong>): Array of integer values indicating the priors for the known_reference_variant file at the same array position.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>recalibration_annotation_values</code> (Array[String], <strong>required</strong>)</li>
+<li><code>recalibration_tranche_values</code> (Array[String], <strong>required</strong>)</li>
+<li><code>use_allele_specific_annotations</code> (Boolean, <strong>required</strong>)</li>
+<li><code>vcf_indices</code> (Array[File], <strong>required</strong>): Tribble Indexes for sites only VCF.</li>
+<li><code>vcfs</code> (Array[File], <strong>required</strong>): Sites only VCFs.  Can be pre-filtered using hard-filters.</li>
+</ul>
+<h4 id="optional_12">Optional</h4>
+<ul>
+<li><code>downsampleFactor</code> (Int?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_3">Defaults</h4>
+<ul>
+<li><code>max_gaussians</code> (Int, default=6)</li>
+</ul>
+<h3 id="outputs_12">Outputs</h3>
+<ul>
+<li><code>recalibration</code> (File)</li>
+<li><code>recalibration_index</code> (File)</li>
+<li><code>tranches</code> (File)</li>
+<li><code>model_report</code> (File)</li>
+</ul>
+<h2 id="applyvqsr">ApplyVqsr</h2>
+<h3 id="inputs_13">Inputs</h3>
+<h4 id="required_13">Required</h4>
+<ul>
+<li><code>indel_filter_level</code> (Float, <strong>required</strong>)</li>
+<li><code>indels_recalibration</code> (File, <strong>required</strong>)</li>
+<li><code>indels_recalibration_index</code> (File, <strong>required</strong>)</li>
+<li><code>indels_tranches</code> (File, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>snp_filter_level</code> (Float, <strong>required</strong>)</li>
+<li><code>snps_recalibration</code> (File, <strong>required</strong>)</li>
+<li><code>snps_recalibration_index</code> (File, <strong>required</strong>)</li>
+<li><code>snps_tranches</code> (File, <strong>required</strong>)</li>
+<li><code>use_allele_specific_annotations</code> (Boolean, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_13">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_13">Outputs</h3>
+<ul>
+<li><code>recalibrated_vcf</code> (File)</li>
+<li><code>recalibrated_vcf_index</code> (File)</li>
+</ul>
+<h2 id="selectvariants">SelectVariants</h2>
+<h3 id="inputs_14">Inputs</h3>
+<h4 id="required_14">Required</h4>
+<ul>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_14">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_14">Outputs</h3>
+<ul>
+<li><code>vcf_out</code> (File)</li>
+<li><code>vcf_out_index</code> (File)</li>
+</ul>
+<h2 id="renamesinglesamplevcf">RenameSingleSampleVcf</h2>
+<h3 id="inputs_15">Inputs</h3>
+<h4 id="required_15">Required</h4>
+<ul>
+<li><code>new_sample_name</code> (String, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_15">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_4">Defaults</h4>
+<ul>
+<li><code>is_gvcf</code> (Boolean, default=false)</li>
+</ul>
+<h3 id="outputs_15">Outputs</h3>
+<ul>
+<li><code>new_sample_name_vcf</code> (File)</li>
+<li><code>new_sample_name_vcf_index</code> (File)</li>
+</ul>
+<h2 id="gathervcfs">GatherVcfs</h2>
+<h3 id="inputs_16">Inputs</h3>
+<h4 id="required_16">Required</h4>
+<ul>
+<li><code>input_vcf_indices</code> (Array[File], <strong>required</strong>)</li>
+<li><code>input_vcfs</code> (Array[File], <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_16">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_16">Outputs</h3>
+<ul>
+<li><code>output_vcf</code> (File)</li>
+<li><code>output_vcf_index</code> (File)</li>
+</ul>
+<h2 id="extractfingerprint">ExtractFingerprint</h2>
+<h3 id="inputs_17">Inputs</h3>
+<h4 id="required_17">Required</h4>
+<ul>
+<li><code>bai</code> (File, <strong>required</strong>)</li>
+<li><code>bam</code> (File, <strong>required</strong>)</li>
+<li><code>haplotype_database_file</code> (File, <strong>required</strong>)</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>ref_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_17">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_5">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="fingerprint")</li>
+</ul>
+<h3 id="outputs_17">Outputs</h3>
+<ul>
+<li><code>output_vcf</code> (File)</li>
+<li><code>fingerprint_string</code> (File)</li>
+</ul>
+<h2 id="extractfingerprintandbarcode">ExtractFingerprintAndBarcode</h2>
+<h3 id="inputs_18">Inputs</h3>
+<h4 id="required_18">Required</h4>
+<ul>
+<li><code>haplotype_database_file</code> (File, <strong>required</strong>)</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>)</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_18">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_6">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="fingerprint")</li>
+</ul>
+<h3 id="outputs_18">Outputs</h3>
+<ul>
+<li><code>output_vcf</code> (File)</li>
+<li><code>barcode</code> (String)</li>
+</ul>
+<h2 id="extractvariantannotations">ExtractVariantAnnotations</h2>
+<h3 id="inputs_19">Inputs</h3>
+<h4 id="required_19">Required</h4>
+<ul>
+<li><code>is_calibration</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position should be used for 'calibration' data.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>is_training</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position should be used for 'training' data.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>known_reference_variants</code> (Array[File], <strong>required</strong>): Array of known reference VCF files.  For humans, dbSNP is one example.</li>
+<li><code>known_reference_variants_identifier</code> (Array[String], <strong>required</strong>): Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>known_reference_variants_index</code> (Array[File], <strong>required</strong>): Array of index files for known reference VCF files.</li>
+<li><code>mode</code> (String, <strong>required</strong>): SNP or INDEL</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix of the output files.</li>
+<li><code>recalibration_annotation_values</code> (Array[String], <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>): VCF File from which to extract annotations.</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>): Index for the given VCF file.</li>
+</ul>
+<h4 id="optional_19">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_7">Defaults</h4>
+<ul>
+<li><code>max_unlabeled_variants</code> (Int, default=0): How many sites should be used for unlableled training data.  Setting this to values &gt; 0 will enable a positive-negative training model.</li>
+</ul>
+<h3 id="outputs_19">Outputs</h3>
+<ul>
+<li><code>annotation_hdf5</code> (File)</li>
+<li><code>sites_only_vcf</code> (File)</li>
+<li><code>sites_only_vcf_index</code> (File)</li>
+<li><code>unlabeled_annotation_hdf5</code> (File?)</li>
+</ul>
+<h2 id="trainvariantannotationsmodel">TrainVariantAnnotationsModel</h2>
+<h3 id="inputs_20">Inputs</h3>
+<h4 id="required_20">Required</h4>
+<ul>
+<li><code>annotation_hdf5</code> (File, <strong>required</strong>): Labeled-annotations HDF5 file.</li>
+<li><code>mode</code> (String, <strong>required</strong>): SNP or INDEL</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix of the output files.</li>
+</ul>
+<h4 id="optional_20">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>unlabeled_annotation_hdf5</code> (File?): Unlabeled-annotations HDF5 file (optional)</li>
+</ul>
+<h4 id="defaults_8">Defaults</h4>
+<ul>
+<li><code>calibration_sensitivity_threshold</code> (Float, default=0.95): Calibration-set sensitivity threshold.  (optional)</li>
+</ul>
+<h3 id="outputs_20">Outputs</h3>
+<ul>
+<li><code>training_scores</code> (File)</li>
+<li><code>positive_model_scorer_pickle</code> (File)</li>
+<li><code>unlabeled_positive_model_scores</code> (File?)</li>
+<li><code>calibration_set_scores</code> (File?)</li>
+<li><code>negative_model_scorer_pickle</code> (File?)</li>
+</ul>
+<h2 id="scorevariantannotations">ScoreVariantAnnotations</h2>
+<h3 id="inputs_21">Inputs</h3>
+<h4 id="required_21">Required</h4>
+<ul>
+<li><code>is_calibration</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position should be used for 'calibration' data.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>is_training</code> (Array[Boolean], <strong>required</strong>): Array of boolean values indicating if the known_reference_variant file at the same array position should be used for 'training' data.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>known_reference_variants</code> (Array[File], <strong>required</strong>): Array of known reference VCF files.  For humans, dbSNP is one example.</li>
+<li><code>known_reference_variants_identifier</code> (Array[String], <strong>required</strong>): Array of boolean values the identifier / name for the known_reference_variant file at the same array position.  Must be the same length as <code>known_reference_variants</code>.</li>
+<li><code>known_reference_variants_index</code> (Array[File], <strong>required</strong>): Array of index files for known reference VCF files.</li>
+<li><code>mode</code> (String, <strong>required</strong>): SNP or INDEL</li>
+<li><code>model_files</code> (Array[File], <strong>required</strong>)</li>
+<li><code>model_prefix</code> (String, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix of the output files.</li>
+<li><code>recalibration_annotation_values</code> (Array[String], <strong>required</strong>)</li>
+<li><code>sites_only_extracted_vcf</code> (File, <strong>required</strong>)</li>
+<li><code>sites_only_extracted_vcf_index</code> (File, <strong>required</strong>)</li>
+<li><code>vcf</code> (File, <strong>required</strong>): VCF File from which to extract annotations.</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>): Index for the given VCF file.</li>
+</ul>
+<h4 id="optional_21">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_9">Defaults</h4>
+<ul>
+<li><code>calibration_sensitivity_threshold</code> (Float, default=0.99)</li>
+</ul>
+<h3 id="outputs_21">Outputs</h3>
+<ul>
+<li><code>scored_vcf</code> (File)</li>
+<li><code>scored_vcf_index</code> (File)</li>
+<li><code>annotations_hdf5</code> (File?)</li>
+<li><code>scores_hdf5</code> (File?)</li>
+</ul>
+<h2 id="compressandindex">CompressAndIndex</h2>
+<dl>
+<dt>description</dt>
+<dd>Convert a BCF file to a vcf.bgz file and index it.</dd>
+</dl>
+<h3 id="inputs_22">Inputs</h3>
+<h4 id="required_22">Required</h4>
+<ul>
+<li><code>joint_bcf</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_22">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_10">Defaults</h4>
+<ul>
+<li><code>num_cpus</code> (Int, default=8)</li>
+<li><code>prefix</code> (String, default="out")</li>
+</ul>
+<h3 id="outputs_22">Outputs</h3>
+<ul>
+<li><code>joint_gvcf</code> (File)</li>
+<li><code>joint_gvcf_tbi</code> (File)</li>
+</ul>
+<h2 id="concatbcfs">ConcatBCFs</h2>
+<dl>
+<dt>description</dt>
+<dd>Concatenate BCFs into a single .vcf.bgz file and index it.</dd>
+</dl>
+<h3 id="inputs_23">Inputs</h3>
+<h4 id="required_23">Required</h4>
+<ul>
+<li><code>bcfs</code> (Array[File], <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_23">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_11">Defaults</h4>
+<ul>
+<li><code>num_cpus</code> (Int, default=4)</li>
+<li><code>prefix</code> (String, default="out")</li>
+</ul>
+<h3 id="outputs_23">Outputs</h3>
+<ul>
+<li><code>joint_gvcf</code> (File)</li>
+<li><code>joint_gvcf_tbi</code> (File)</li>
 </ul>
               
             </div>

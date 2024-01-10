@@ -3,7 +3,25 @@ digraph {
 	compound=true rankdir=LR
 	node [fontname=Roboto]
 	edge [color="#00000080"]
-	"call-AnnotateEffectsOfSelectedVariants" [label=AnnotateEffectsOfSelectedVariants shape=cds]
+	subgraph "cluster-if-L36C5" {
+		fontname=Roboto label="if(do_functional_annotation)" rank=same
+		"call-FunctionallyAnnotateVariants" [label=FunctionallyAnnotateVariants shape=cds]
+		"if-L36C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-CallDrugResistanceMutations" [label=CallDrugResistanceMutations shape=cds]
 	"call-FinalizeDRReport" [label=FinalizeDRReport shape=cds]
-	"call-AnnotateEffectsOfSelectedVariants" -> "call-FinalizeDRReport"
+	subgraph "cluster-if-L51C5" {
+		fontname=Roboto label="if(do_functional_annotation)" rank=same
+		"call-FinalizeAnnotatedVCF" [label=FinalizeAnnotatedVCF shape=cds]
+		"call-FinalizeAnnotatedVCFIndex" [label=FinalizeAnnotatedVCFIndex shape=cds]
+		"call-FinalizeSnpEffSummary" [label=FinalizeSnpEffSummary shape=cds]
+		"call-FinalizeSnpEffGenes" [label=FinalizeSnpEffGenes shape=cds]
+		"if-L51C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-FunctionallyAnnotateVariants" -> "call-CallDrugResistanceMutations"
+	"call-CallDrugResistanceMutations" -> "call-FinalizeDRReport"
+	"call-FunctionallyAnnotateVariants" -> "call-FinalizeAnnotatedVCF"
+	"call-FunctionallyAnnotateVariants" -> "call-FinalizeAnnotatedVCFIndex"
+	"call-FunctionallyAnnotateVariants" -> "call-FinalizeSnpEffSummary"
+	"call-FunctionallyAnnotateVariants" -> "call-FinalizeSnpEffGenes"
 }

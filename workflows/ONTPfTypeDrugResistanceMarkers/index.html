@@ -55,15 +55,28 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/wdl_style_guide/">WDL Style Guide</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Pipeline documentation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="#">Sp malaria</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../pipeline_documentation/sp_malaria/workspace_markdown_doc/">_P. falciparum_ Short Read Whole Genome Workspace</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
               <p class="caption"><span class="caption-text">Tasks</span></p>
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/AlignReads/">AlignReads</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Clair/">Clair</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/FastQC/">FastQC</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Finalize/">Finalize</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/FunctionalAnnotation/">FunctionalAnnotation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/GeneralUtils/">GeneralUtils</a>
                   </li>
@@ -87,6 +100,12 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Quast/">Quast</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SGKit/">SGKit</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SRJointGenotyping/">SRJointGenotyping</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SRUtils/">SRUtils</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/StringTie2/">StringTie2</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Utils/">Utils</a>
@@ -106,9 +125,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../AssignChildLongReads/">AssignChildLongReads</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFs/">BenchmarkVCFs</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../CCSPepper/">CCSPepper</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../CallAssemblyVariants/">CallAssemblyVariants</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CallVariantsIllumina/">CallVariantsIllumina</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../CallVariantsONT/">CallVariantsONT</a>
                   </li>
@@ -124,13 +147,25 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../CollectSMRTCellUnalignedMetrics/">CollectSMRTCellUnalignedMetrics</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CompareVcfBenchmarks/">CompareVcfBenchmarks</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ConvertToHailMT/">ConvertToHailMT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ConvertToZarrStore/">ConvertToZarrStore</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../DeepVariant/">DeepVariant</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../DownloadFromFTP/">DownloadFromFTP</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../DownloadFromSRA/">DownloadFromSRA</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../DownloadFromWeb/">DownloadFromWeb</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ExpandedDrugResistanceMarkerAggregation/">ExpandedDrugResistanceMarkerAggregation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ExpandedDrugResistanceMarkerExtraction/">ExpandedDrugResistanceMarkerExtraction</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ExtractRegionsFromBam/">ExtractRegionsFromBam</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../FPCheckAoU/">FPCheckAoU</a>
                   </li>
@@ -141,6 +176,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../GLNexus/">GLNexus</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Guppy/">Guppy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../HaplotypeCaller/">HaplotypeCaller</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Hifiasm/">Hifiasm</a>
                   </li>
@@ -176,6 +213,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
@@ -204,9 +243,39 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../PBSV/">PBSV</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PanelProcessMalariaBarcodesForRh/">PanelProcessMalariaBarcodesForRh</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Pf_Niare_HaplotypeCaller/">Pf_Niare_HaplotypeCaller</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PfalciparumDrugResistanceSummary/">PfalciparumDrugResistanceSummary</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ProcessMalariaBarcodesDemo/">ProcessMalariaBarcodesDemo</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../RemoveSingleOrganismContamination/">RemoveSingleOrganismContamination</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRBamToFq/">SRBamToFq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRFlowcell/">SRFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRIndexBam/">SRIndexBam</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointCallGVCFsWithGenomicsDB/">SRJointCallGVCFsWithGenomicsDB</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome/">SRWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome_Pf_Niare_VETS/">SRWholeGenome_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome_Pf_Niare_VQSR/">SRWholeGenome_Pf_Niare_VQSR</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../TrainCnnFilters/">TrainCnnFilters</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../TrioBinChildLongReads/">TrioBinChildLongReads</a>
                   </li>
@@ -248,19 +317,42 @@
 <h4 id="required">Required</h4>
 <ul>
 <li><code>dir_prefix</code> (String, <strong>required</strong>): Prefix for output directory</li>
+<li><code>drug_resistance_list</code> (File, <strong>required</strong>): List of drug resistance markers for which to search</li>
 <li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS output root directory</li>
+<li><code>snpeff_db</code> (File, <strong>required</strong>): SnpEff database for functional annotation</li>
 <li><code>vcf</code> (File, <strong>required</strong>): VCF file to process</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>AnnotateEffectsOfSelectedVariants.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>CallDrugResistanceMutations.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeAnnotatedVCF.keyfile</code> (File?)</li>
+<li><code>FinalizeAnnotatedVCF.name</code> (String?)</li>
+<li><code>FinalizeAnnotatedVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeAnnotatedVCFIndex.keyfile</code> (File?)</li>
+<li><code>FinalizeAnnotatedVCFIndex.name</code> (String?)</li>
+<li><code>FinalizeAnnotatedVCFIndex.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeDRReport.keyfile</code> (File?)</li>
 <li><code>FinalizeDRReport.name</code> (String?)</li>
 <li><code>FinalizeDRReport.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeSnpEffGenes.keyfile</code> (File?)</li>
+<li><code>FinalizeSnpEffGenes.name</code> (String?)</li>
+<li><code>FinalizeSnpEffGenes.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeSnpEffSummary.keyfile</code> (File?)</li>
+<li><code>FinalizeSnpEffSummary.name</code> (String?)</li>
+<li><code>FinalizeSnpEffSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FunctionallyAnnotateVariants.runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults">Defaults</h4>
+<ul>
+<li><code>do_functional_annotation</code> (Boolean, default=true): Whether to perform functional annotation</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>drug_res_report</code> (File)</li>
+<li><code>annotated_vcf</code> (File?)</li>
+<li><code>annotated_vcf_index</code> (File?)</li>
+<li><code>snpEff_summary</code> (File?)</li>
+<li><code>snpEff_genes</code> (File?)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="ONTPfTypeDrugResistanceMarkers" src="../../dot/ONTPfTypeDrugResistanceMarkers.dot.png" /></p>

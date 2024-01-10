@@ -1,0 +1,21 @@
+// TrainCnnFilters
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L47C5" {
+		fontname=Roboto label="if(length(vcfs) != length(vcf_indices) || length(vcfs) != length(vcf_indices) || length(vcfs) != length(vcf_indices) || length(vcfs) != length(vcf_indices) || length(vcfs) != length(vcf_indices))" rank=same
+		"call-StopWorkflow" [label=StopWorkflow shape=cds]
+		"if-L47C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L52C5-idx_1" {
+		fontname=Roboto label="scatter(range(length(vcfs)))" rank=same
+		"call-Create1DReferenceTensors" [label=Create1DReferenceTensors shape=cds]
+		"call-Create2DReadTensors" [label=Create2DReadTensors shape=cds]
+		"scatter-L52C5-idx_1" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-TrainCnn1D" [label=TrainCnn1D shape=cds]
+	"call-TrainCnn2D" [label=TrainCnn2D shape=cds]
+	"call-Create1DReferenceTensors" -> "call-TrainCnn1D"
+	"call-Create2DReadTensors" -> "call-TrainCnn2D"
+}

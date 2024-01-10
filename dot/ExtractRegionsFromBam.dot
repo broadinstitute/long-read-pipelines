@@ -1,0 +1,19 @@
+// ExtractRegionsFromBam
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-GetReadsInBedFileRegions" [label=GetReadsInBedFileRegions shape=cds]
+	"call-Bam2Fastq" [label=Bam2Fastq shape=cds]
+	"call-FinalizeBam" [label=FinalizeBam shape=cds]
+	"call-FinalizeBai" [label=FinalizeBai shape=cds]
+	"call-FinalizeFqEnd1" [label=FinalizeFqEnd1 shape=cds]
+	"call-FinalizeFqEnd2" [label=FinalizeFqEnd2 shape=cds]
+	"call-FinalizeFqUnpaired" [label=FinalizeFqUnpaired shape=cds]
+	"call-GetReadsInBedFileRegions" -> "call-Bam2Fastq"
+	"call-GetReadsInBedFileRegions" -> "call-FinalizeBam"
+	"call-GetReadsInBedFileRegions" -> "call-FinalizeBai"
+	"call-Bam2Fastq" -> "call-FinalizeFqEnd1"
+	"call-Bam2Fastq" -> "call-FinalizeFqEnd2"
+	"call-Bam2Fastq" -> "call-FinalizeFqUnpaired"
+}

@@ -1,0 +1,9 @@
+// PfalciparumDrugResistanceSummary
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-CreateDrugResistanceSummary" [label=CreateDrugResistanceSummary shape=cds]
+	"call-FinalizeDrugResistanceSummary" [label=FinalizeDrugResistanceSummary shape=cds]
+	"call-CreateDrugResistanceSummary" -> "call-FinalizeDrugResistanceSummary"
+}

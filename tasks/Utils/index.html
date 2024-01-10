@@ -55,15 +55,28 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/wdl_style_guide/">WDL Style Guide</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Pipeline documentation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="#">Sp malaria</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../pipeline_documentation/sp_malaria/workspace_markdown_doc/">_P. falciparum_ Short Read Whole Genome Workspace</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
               <p class="caption"><span class="caption-text">Tasks</span></p>
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FastQC/">FastQC</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Finalize/">Finalize</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../FunctionalAnnotation/">FunctionalAnnotation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../GeneralUtils/">GeneralUtils</a>
                   </li>
@@ -86,6 +99,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../Preprocessing_Tasks/">Preprocessing_Tasks</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Quast/">Quast</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SGKit/">SGKit</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointGenotyping/">SRJointGenotyping</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRUtils/">SRUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../StringTie2/">StringTie2</a>
                   </li>
@@ -489,15 +508,61 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#maptotsv">MapToTsv</a>
+    <li class="toctree-l2"><a class="reference internal" href="#getreadsinbedfileregions">GetReadsInBedFileRegions</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_28">Inputs</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#required_27">Required</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_21">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_11">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_28">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#maptotsv">MapToTsv</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_29">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_28">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_29">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#createigvsession">CreateIGVSession</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_30">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_29">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_22">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_30">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#splitcontigtointervals">SplitContigToIntervals</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_31">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_30">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_23">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_12">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_31">Outputs</a>
     </li>
         </ul>
     </li>
@@ -518,9 +583,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/AssignChildLongReads/">AssignChildLongReads</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BenchmarkVCFs/">BenchmarkVCFs</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CCSPepper/">CCSPepper</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallAssemblyVariants/">CallAssemblyVariants</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsIllumina/">CallVariantsIllumina</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsONT/">CallVariantsONT</a>
                   </li>
@@ -536,13 +605,25 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CollectSMRTCellUnalignedMetrics/">CollectSMRTCellUnalignedMetrics</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CompareVcfBenchmarks/">CompareVcfBenchmarks</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/ConvertToHailMT/">ConvertToHailMT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ConvertToZarrStore/">ConvertToZarrStore</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DeepVariant/">DeepVariant</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromFTP/">DownloadFromFTP</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromSRA/">DownloadFromSRA</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromWeb/">DownloadFromWeb</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExpandedDrugResistanceMarkerAggregation/">ExpandedDrugResistanceMarkerAggregation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExpandedDrugResistanceMarkerExtraction/">ExpandedDrugResistanceMarkerExtraction</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExtractRegionsFromBam/">ExtractRegionsFromBam</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/FPCheckAoU/">FPCheckAoU</a>
                   </li>
@@ -553,6 +634,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/GLNexus/">GLNexus</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/Guppy/">Guppy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/HaplotypeCaller/">HaplotypeCaller</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/Hifiasm/">Hifiasm</a>
                   </li>
@@ -598,9 +681,39 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBSV/">PBSV</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PanelProcessMalariaBarcodesForRh/">PanelProcessMalariaBarcodesForRh</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Pf_Niare_HaplotypeCaller/">Pf_Niare_HaplotypeCaller</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PfalciparumDrugResistanceSummary/">PfalciparumDrugResistanceSummary</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ProcessMalariaBarcodesDemo/">ProcessMalariaBarcodesDemo</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/RemoveSingleOrganismContamination/">RemoveSingleOrganismContamination</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRBamToFq/">SRBamToFq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRFlowcell/">SRFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRIndexBam/">SRIndexBam</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB/">SRJointCallGVCFsWithGenomicsDB</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome/">SRWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Pf_Niare_VETS/">SRWholeGenome_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Pf_Niare_VQSR/">SRWholeGenome_Pf_Niare_VQSR</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/TrainCnnFilters/">TrainCnnFilters</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/TrioBinChildLongReads/">TrioBinChildLongReads</a>
                   </li>
@@ -695,6 +808,9 @@
 <h3 id="outputs_2">Outputs</h3>
 <ul>
 <li><code>chrs</code> (Array[Array[String]])</li>
+<li><code>interval_list</code> (File)</li>
+<li><code>contig_interval_strings</code> (Array[String])</li>
+<li><code>contig_interval_list_files</code> (Array[File])</li>
 </ul>
 <h2 id="countbamrecords">CountBamRecords</h2>
 <dl>
@@ -1183,20 +1299,94 @@
 <ul>
 <li><code>rg</code> (String)</li>
 </ul>
+<h2 id="getreadsinbedfileregions">GetReadsInBedFileRegions</h2>
+<dl>
+<dt>desciption</dt>
+<dd>Get the reads from the given bam path which overlap the regions in the given bed file.</dd>
+</dl>
+<h3 id="inputs_28">Inputs</h3>
+<h4 id="required_27">Required</h4>
+<ul>
+<li><code>gcs_bam_path</code> (String, <strong>required</strong>): GCS URL to bam file from which to extract reads.</li>
+<li><code>regions_bed</code> (File, <strong>required</strong>): Bed file containing regions for which to extract reads.</li>
+</ul>
+<h4 id="optional_21">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Runtime attributes override struct.</li>
+</ul>
+<h4 id="defaults_11">Defaults</h4>
+<ul>
+<li><code>prefix</code> (String, default="reads"): [default-valued] prefix for output BAM</li>
+</ul>
+<h3 id="outputs_28">Outputs</h3>
+<ul>
+<li><code>bam</code> (File)</li>
+<li><code>bai</code> (File)</li>
+</ul>
 <h2 id="maptotsv">MapToTsv</h2>
 <dl>
 <dt>description</dt>
 <dd>Convert a map to a tsv file</dd>
 </dl>
-<h3 id="inputs_28">Inputs</h3>
-<h4 id="required_27">Required</h4>
+<h3 id="inputs_29">Inputs</h3>
+<h4 id="required_28">Required</h4>
 <ul>
 <li><code>my_map</code> (Map[String,Float], <strong>required</strong>): The map to convert</li>
 <li><code>name_of_file</code> (String, <strong>required</strong>): The name of the file to write to</li>
 </ul>
-<h3 id="outputs_28">Outputs</h3>
+<h3 id="outputs_29">Outputs</h3>
 <ul>
 <li><code>result</code> (File)</li>
+</ul>
+<h2 id="createigvsession">CreateIGVSession</h2>
+<dl>
+<dt>description</dt>
+<dd>Create an IGV session given a list of IGV compatible file paths.  Adapted / borrowed from https://github.com/broadinstitute/palantir-workflows/blob/mg_benchmark_compare/BenchmarkVCFs .</dd>
+</dl>
+<h3 id="inputs_30">Inputs</h3>
+<h4 id="required_29">Required</h4>
+<ul>
+<li><code>input_bams</code> (Array[String], <strong>required</strong>)</li>
+<li><code>input_vcfs</code> (Array[String], <strong>required</strong>)</li>
+<li><code>output_name</code> (String, <strong>required</strong>)</li>
+<li><code>reference_short_name</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_22">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_30">Outputs</h3>
+<ul>
+<li><code>igv_session</code> (File)</li>
+</ul>
+<h2 id="splitcontigtointervals">SplitContigToIntervals</h2>
+<dl>
+<dt>author</dt>
+<dd>Jonn Smith</dd>
+<dt>notes</dt>
+<dd>Splits the given contig into intervals of the given size.</dd>
+</dl>
+<h3 id="inputs_31">Inputs</h3>
+<h4 id="required_30">Required</h4>
+<ul>
+<li><code>contig</code> (String, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_23">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_12">Defaults</h4>
+<ul>
+<li><code>size</code> (Int, default=200000)</li>
+</ul>
+<h3 id="outputs_31">Outputs</h3>
+<ul>
+<li><code>full_bed_file</code> (File)</li>
+<li><code>individual_bed_files</code> (Array[File])</li>
 </ul>
               
             </div>

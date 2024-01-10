@@ -1,0 +1,154 @@
+// Benchmark
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L81C5" {
+		fontname=Roboto label="if(defined(analysisRegion))" rank=same
+		"call-CreateIntervalList" [label=CreateIntervalList shape=cds]
+		"if-L81C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L99C5" {
+		fontname=Roboto label="if(length(actualStratLabels) != length(actualStratIntervals))" rank=same
+		"call-Error6" [label=Error6 shape=cds]
+		"if-L99C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L106C5" {
+		fontname=Roboto label="if(length(actualSelectorLabels) != length(actualSelectorJEXL))" rank=same
+		"call-Error7" [label=Error7 shape=cds]
+		"if-L106C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L113C5" {
+		fontname=Roboto label="if(defined(hapMap))" rank=same
+		"call-Match" [label=Match shape=cds]
+		"if-L113C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L155C5-indel" {
+		fontname=Roboto label="scatter(zip(indelLabels,indelJexl))" rank=same
+		"scatter-L155C5-indel" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L161C5" {
+		fontname=Roboto label="if(defined(jexlVariantSelectors))" rank=same
+		subgraph "cluster-scatter-L162C9-select" {
+			fontname=Roboto label="scatter(zip(actualSelectorLabels,actualSelectorJEXL))" rank=same
+			"scatter-L162C9-select" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"if-L161C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-actualVariantSelectors" [label=actualVariantSelectors shape=plaintext]
+	subgraph "cluster-if-L175C5" {
+		fontname=Roboto label="if(defined(stratIntervals))" rank=same
+		subgraph "cluster-scatter-L176C9-actStratIL" {
+			fontname=Roboto label="scatter(actualStratIntervals)" rank=same
+			subgraph "cluster-if-L181C13" {
+				fontname=Roboto label="if(string_conversion_of_actStratIL != \"\")" rank=same
+				"call-StratConvertIntervals" [label=StratConvertIntervals shape=cds]
+				"if-L181C13" [label="" height=0 margin=0 style=invis width=0]
+			}
+			"scatter-L176C9-actStratIL" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"if-L175C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-stratBeds" [label=stratBeds shape=plaintext]
+	"decl-stratILs" [label=stratILs shape=plaintext]
+	subgraph "cluster-scatter-L198C5-strat" {
+		fontname=Roboto label="scatter(zip(zip(stratILs,stratBeds),actualStratLabels))" rank=same
+		"scatter-L198C5-strat" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-ConfidenceConvertIntervals" [label=ConfidenceConvertIntervals shape=cds]
+	subgraph "cluster-scatter-L215C5-stratifier" {
+		fontname=Roboto label="scatter(stratifiers)" rank=same
+		subgraph "cluster-if-L220C9" {
+			fontname=Roboto label="if(stratifier.label != \"\" && tmp_strat_interval_list != \"\")" rank=same
+			"if-L220C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"decl-outputPrefix" [label=outputPrefix shape=plaintext]
+		"call-CheckForVariantsEval" [label=CheckForVariantsEval shape=cds]
+		"call-CheckForVariantsTruth" [label=CheckForVariantsTruth shape=cds]
+		subgraph "cluster-if-L248C9" {
+			fontname=Roboto label="if(CheckForVariantsTruth.variantsFound && CheckForVariantsEval.variantsFound)" rank=same
+			"call-StandardVcfEval" [label=StandardVcfEval shape=cds]
+			"call-VcfEvalWriteXMLfile" [label=VcfEvalWriteXMLfile shape=cds]
+			"call-CountUNKVcfEval" [label=CountUNKVcfEval shape=cds]
+			"if-L248C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"decl-areVariants" [label=areVariants shape=plaintext]
+		"call-SummariseVcfEval" [label=SummariseVcfEval shape=cds]
+		"scatter-L215C5-stratifier" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L302C5-i" {
+		fontname=Roboto label="scatter(range(length(stratifiers)))" rank=same
+		"decl-annotatedVcfsList" [label=annotatedVcfsList shape=plaintext]
+		"scatter-L302C5-i" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L315C5-indelCombo" {
+		fontname=Roboto label="scatter(cross(annotatedVcfsList,indelSelectors))" rank=same
+		"scatter-L315C5-indelCombo" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L321C5-evalStratIndelCombo" {
+		fontname=Roboto label="scatter(evalStratIndelCombos)" rank=same
+		subgraph "cluster-if-L333C9" {
+			fontname=Roboto label="if(defined(vcfVcfEval) && defined(vcfVcfEvalIndex) && doIndelLengthStratification)" rank=same
+			"call-EvalIndelLengthVcfEval" [label=EvalIndelLengthVcfEval shape=cds]
+			"call-VcfEvalIndelWriteXMLfile" [label=VcfEvalIndelWriteXMLfile shape=cds]
+			"call-VcfEvalSummariseForIndelSelection" [label=VcfEvalSummariseForIndelSelection shape=cds]
+			"if-L333C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"scatter-L321C5-evalStratIndelCombo" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L383C5-selectorCombo" {
+		fontname=Roboto label="scatter(cross(annotatedVcfsList,actualVariantSelectors))" rank=same
+		"scatter-L383C5-selectorCombo" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L388C5-evalStratSelectorCombo" {
+		fontname=Roboto label="scatter(evalStratSelectorCombos)" rank=same
+		subgraph "cluster-if-L389C17" {
+			fontname=Roboto label="if(defined(evalStratSelectorCombo.annotatedVcfs.vcfVcfEval) && defined(evalStratSelectorCombo.annotatedVcfs.vcfVcfEvalIndex))" rank=same
+			"call-EvalSelectorVcfEval" [label=EvalSelectorVcfEval shape=cds]
+			"call-VcfEvalSelectorWriteXMLfile" [label=VcfEvalSelectorWriteXMLfile shape=cds]
+			"call-VcfEvalSummariseForVariantSelection" [label=VcfEvalSummariseForVariantSelection shape=cds]
+			"if-L389C17" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"scatter-L388C5-evalStratSelectorCombo" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-summaries" [label=summaries shape=plaintext]
+	"call-CombineSummaries" [label=CombineSummaries shape=cds]
+	"call-CreateIntervalList" -> "call-StratConvertIntervals"
+	"call-StratConvertIntervals" -> "decl-stratBeds"
+	"call-StratConvertIntervals" -> "decl-stratILs"
+	"decl-stratBeds" -> "scatter-L198C5-strat" [lhead="cluster-scatter-L198C5-strat"]
+	"decl-stratILs" -> "scatter-L198C5-strat" [lhead="cluster-scatter-L198C5-strat"]
+	"call-CreateIntervalList" -> "call-ConfidenceConvertIntervals"
+	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsEval"
+	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsTruth"
+	"call-CheckForVariantsEval" -> "if-L248C9" [lhead="cluster-if-L248C9"]
+	"call-CheckForVariantsTruth" -> "if-L248C9" [lhead="cluster-if-L248C9"]
+	"call-ConfidenceConvertIntervals" -> "call-StandardVcfEval"
+	"decl-outputPrefix" -> "call-StandardVcfEval"
+	"call-StandardVcfEval" -> "call-VcfEvalWriteXMLfile"
+	"decl-outputPrefix" -> "call-VcfEvalWriteXMLfile"
+	"call-ConfidenceConvertIntervals" -> "call-VcfEvalWriteXMLfile"
+	"call-StandardVcfEval" -> "call-CountUNKVcfEval"
+	"call-CheckForVariantsEval" -> "decl-areVariants"
+	"call-CheckForVariantsTruth" -> "decl-areVariants"
+	"call-StandardVcfEval" -> "call-SummariseVcfEval"
+	"call-CountUNKVcfEval" -> "call-SummariseVcfEval"
+	"decl-areVariants" -> "call-SummariseVcfEval"
+	"call-VcfEvalWriteXMLfile" -> "call-SummariseVcfEval"
+	"call-StandardVcfEval" -> "decl-annotatedVcfsList"
+	"decl-outputPrefix" -> "decl-annotatedVcfsList"
+	"call-ConfidenceConvertIntervals" -> "decl-annotatedVcfsList"
+	"decl-annotatedVcfsList" -> "scatter-L315C5-indelCombo" [lhead="cluster-scatter-L315C5-indelCombo"]
+	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalIndelWriteXMLfile"
+	"call-VcfEvalIndelWriteXMLfile" -> "call-VcfEvalSummariseForIndelSelection"
+	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalSummariseForIndelSelection"
+	"decl-annotatedVcfsList" -> "scatter-L383C5-selectorCombo" [lhead="cluster-scatter-L383C5-selectorCombo"]
+	"decl-actualVariantSelectors" -> "scatter-L383C5-selectorCombo" [lhead="cluster-scatter-L383C5-selectorCombo"]
+	"call-EvalSelectorVcfEval" -> "call-VcfEvalSelectorWriteXMLfile"
+	"call-VcfEvalSelectorWriteXMLfile" -> "call-VcfEvalSummariseForVariantSelection"
+	"call-EvalSelectorVcfEval" -> "call-VcfEvalSummariseForVariantSelection"
+	"call-VcfEvalSummariseForIndelSelection" -> "decl-summaries"
+	"call-SummariseVcfEval" -> "decl-summaries"
+	"call-VcfEvalSummariseForVariantSelection" -> "decl-summaries"
+	"decl-summaries" -> "call-CombineSummaries"
+}
