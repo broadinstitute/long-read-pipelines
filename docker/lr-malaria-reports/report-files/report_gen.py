@@ -699,6 +699,7 @@ if __name__ == '__main__':
     
     # third : fastqc_page
     fastqc_html = read_fastqc("/report-files/data/fastqc/")
+    print(fastqc_html[:200]) # debug
 
     # Create summary, analysis, and fastQC objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
