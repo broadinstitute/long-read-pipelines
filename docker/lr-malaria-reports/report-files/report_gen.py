@@ -25,7 +25,7 @@ import jinja2
 import io
 from io import StringIO
 import base64
-
+import urllib.parse
 
 # Argument Parsing
 import argparse
@@ -474,9 +474,15 @@ def read_fastqc(directory):
             print(f"{directory} + {file}")
             with open(os.path.join(directory, file), "r", encoding="utf-8") as f:
                 html = f.read()
+                
+                # Encode HTMl as base64 data URL to be used in IFrame
+                encoded_bytes = base64.b64encode(html.encode("utf-8"))
+                encoded_string = encoded_bytes.decode("utf-8")
+                data_url = "data:text/html;charset=utf-8," + urllib.parse.quote(encoded_string)
+                return data_url
     else:
         html = None
-
+    
     return html
 
 
