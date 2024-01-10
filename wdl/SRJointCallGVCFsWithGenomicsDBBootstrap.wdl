@@ -65,28 +65,28 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     Map[String, String] ref_map = read_map(ref_map_file)
 
     # Create interval list over which to shard the processing:
-    call UTILS.MakeChrIntervalList as MakeChrIntervalList {
+    call UTILS.MakeChrIntervalList as t_001_MakeChrIntervalList {
         input:
             ref_dict = ref_map['dict'],
     }
 
     # Create sample-name map:
-    call SRJOINT.CreateSampleNameMap as CreateSampleNameMap {
+    call SRJOINT.CreateSampleNameMap as t_002_CreateSampleNameMap {
         input:
             gvcfs = gvcfs,
             prefix = prefix
     }
 
     # Shard by contig for speed:
-    scatter (idx_1 in range(length(MakeChrIntervalList.contig_interval_list_files))) {
+    scatter (idx_1 in range(length(t_001_MakeChrIntervalList.contig_interval_list_files))) {
 
-        String contig = MakeChrIntervalList.chrs[idx_1][0]
-        File contig_interval_list = MakeChrIntervalList.contig_interval_list_files[idx_1]
+        String contig = t_001_MakeChrIntervalList.chrs[idx_1][0]
+        File contig_interval_list = t_001_MakeChrIntervalList.contig_interval_list_files[idx_1]
 
         # Import our data into GenomicsDB:
-        call SRJOINT.ImportGVCFs as ImportGVCFsIntoGenomicsDB {
+        call SRJOINT.ImportGVCFs as t_003_ImportGVCFsIntoGenomicsDB {
             input:
-                sample_name_map = CreateSampleNameMap.sample_name_map,
+                sample_name_map = t_002_CreateSampleNameMap.sample_name_map,
                 interval_list   = contig_interval_list,
                 ref_fasta       = ref_map['fasta'],
                 ref_fasta_fai   = ref_map['fai'],
@@ -95,215 +95,136 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                 batch_size      = 50,
                 # We need to override this because we're not actually sending the GVCF over (just a list)
                 # ALSO, we're currently tarring the genomicsDB, so we need at least double the space here, plus some slop:
-                runtime_attr_override = object {disk_gb: 10 + (3 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB"))), preemptible_tries: 0}
+                runtime_attr_override = object {disk_gb: 10 + (3 * t_002_CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB"))), preemptible_tries: 0}
         }
 
         # Joint call
-        call SRJOINT.GenotypeGVCFs as JointCallGVCFs {
+        call SRJOINT.GenotypeGVCFs as t_004_JointCallGVCFs {
             input:
-                input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
+                input_gvcf_data = t_003_ImportGVCFsIntoGenomicsDB.output_genomicsdb,
                 interval_list   = contig_interval_list,
                 ref_fasta       = ref_map['fasta'],
                 ref_fasta_fai   = ref_map['fai'],
                 ref_dict        = ref_map['dict'],
-                dbsnp_vcf       = ref_map["known_sites_vcf"],
+                # dbsnp_vcf       = ref_map["known_sites_vcf"], #Turn off dbsnp_vcf here
                 prefix          = prefix + "." + contig + ".raw",
                 runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
         }
 
         # First make a sites-only VCF for recal (smaller file, easier to work with):
-        call VARUTIL.MakeSitesOnlyVcf as MakeSitesOnlyVCF {
+        call VARUTIL.MakeSitesOnlyVcf as t_005_MakeSitesOnlyVCF {
             input:
-                vcf = JointCallGVCFs.output_vcf,
-                vcf_index = JointCallGVCFs.output_vcf_index,
+                vcf = t_004_JointCallGVCFs.output_vcf,
+                vcf_index = t_004_JointCallGVCFs.output_vcf_index,
                 prefix = prefix + "." + contig + ".sites_only"
         }
     }
 
     # Merge all sites-only VCFs
-    call VARUTIL.GatherVcfs as MergeSitesOnlyVCFs {
+    call VARUTIL.GatherVcfs as t_006_MergeSitesOnlyVCFs {
         input:
-            input_vcfs = MakeSitesOnlyVCF.sites_only_vcf,
-            input_vcf_indices = MakeSitesOnlyVCF.sites_only_vcf_index,
+            input_vcfs = t_005_MakeSitesOnlyVCF.sites_only_vcf,
+            input_vcf_indices = t_005_MakeSitesOnlyVCF.sites_only_vcf_index,
             prefix = prefix + ".sites_only"
     }
 
-    ########################################################################
-    # Call VETS / VQSR-lite:
-    call VARUTIL.ExtractVariantAnnotations as ExtractIndelVariantAnnotations {
+    # Call hard filtering
+
+    # Hard filter SNPs
+    call VARUTIL.HardFilterVcfByGATKDefault_Snp as t_007_HardFilterSnps {
         input:
-            vcf = MergeSitesOnlyVCFs.output_vcf,
-            vcf_index = MergeSitesOnlyVCFs.output_vcf_index,
-
-            prefix = prefix,
-            mode = "INDEL",
-
-            recalibration_annotation_values = indel_recalibration_annotation_values,
-
-            known_reference_variants = indel_known_reference_variants,
-            known_reference_variants_index = indel_known_reference_variants_index,
-            known_reference_variants_identifier = indel_known_reference_variants_identifier,
-            is_training = indel_is_training,
-            is_calibration = indel_is_calibration,
-
-            max_unlabeled_variants = indel_max_unlabeled_variants,
+            vcf = t_006_MergeSitesOnlyVCFs.output_vcf,
+            vcf_index = t_006_MergeSitesOnlyVCFs.output_vcf_index,
+            ref_fasta = ref_map['fasta'],
+            prefix = prefix
     }
 
-    call VARUTIL.ExtractVariantAnnotations as ExtractSnpVariantAnnotations  {
+    # Hard filter indels
+    call VARUTIL.HardFilterVcfByGATKDefault_Indel as t_008_HardFilterIndels {
         input:
-            vcf = MergeSitesOnlyVCFs.output_vcf,
-            vcf_index = MergeSitesOnlyVCFs.output_vcf_index,
-
-            prefix = prefix,
-            mode = "SNP",
-
-            recalibration_annotation_values = snp_recalibration_annotation_values,
-
-            known_reference_variants = snp_known_reference_variants,
-            known_reference_variants_index = snp_known_reference_variants_index,
-            known_reference_variants_identifier = snp_known_reference_variants_identifier,
-            is_training = snp_is_training,
-            is_calibration = snp_is_calibration,
-
-            max_unlabeled_variants = snp_max_unlabeled_variants,
+            vcf = t_006_MergeSitesOnlyVCFs.output_vcf,
+            vcf_index = t_006_MergeSitesOnlyVCFs.output_vcf_index,
+            ref_fasta = ref_map['fasta'],
+            prefix = prefix
     }
 
-    call VARUTIL.TrainVariantAnnotationsModel as TrainIndelVariantAnnotationsModel {
-        input:
-            annotation_hdf5 = ExtractIndelVariantAnnotations.annotation_hdf5,
-            mode = "INDEL",
-            prefix = prefix,
-    }
+    Array[File] filtered_vcfs = [t_007_HardFilterSnps.snp_filtered_vcf, t_008_HardFilterIndels.indel_filtered_vcf]
 
-    call VARUTIL.TrainVariantAnnotationsModel as TrainSnpVariantAnnotationsModel {
+    # Merge Snp and Indel VCF files
+    call VARUTIL.MergeAndSortVCFs as t_009_MergeSnpsAndIndels {
         input:
-            annotation_hdf5 = ExtractSnpVariantAnnotations.annotation_hdf5,
-            mode = "SNP",
+            vcfs = filtered_vcfs,
+            ref_fasta_fai = ref_map["fai"],
             prefix = prefix,
+            optional_flags = "--allow-overlaps"
     }
 
     # Shard by contig for speed:
-    scatter (idx_2 in range(length(JointCallGVCFs.output_vcf))) {
+    scatter (idx_2 in range(length(t_004_JointCallGVCFs.output_vcf))) {
 
-        String contig_2 = MakeChrIntervalList.chrs[idx_2][0]
-        File joint_called_vcf = JointCallGVCFs.output_vcf[idx_2]
-        File joint_called_vcf_index = JointCallGVCFs.output_vcf_index[idx_2]
+        String contig_2 = t_001_MakeChrIntervalList.chrs[idx_2][0]
+        File joint_called_vcf = t_004_JointCallGVCFs.output_vcf[idx_2]
+        File joint_called_vcf_index = t_004_JointCallGVCFs.output_vcf_index[idx_2]
 
-        call VARUTIL.ScoreVariantAnnotations as ScoreSnpVariantAnnotations {
-            input:
-                vcf = joint_called_vcf,
-                vcf_index = joint_called_vcf_index,
-
-                sites_only_extracted_vcf = ExtractSnpVariantAnnotations.sites_only_vcf,
-                sites_only_extracted_vcf_index = ExtractSnpVariantAnnotations.sites_only_vcf_index,
-
-                model_prefix = prefix + "_train_SNP",
-                model_files = flatten([[TrainSnpVariantAnnotationsModel.training_scores, TrainSnpVariantAnnotationsModel.positive_model_scorer_pickle], select_all([
-                    TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores,
-                    TrainSnpVariantAnnotationsModel.calibration_set_scores,
-                    TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle
-                ])]),
-                prefix = prefix + "_SNP_" + contig_2,
-                mode = "SNP",
-
-                calibration_sensitivity_threshold = snp_calibration_sensitivity,
-
-                recalibration_annotation_values = snp_recalibration_annotation_values,
-
-                known_reference_variants = snp_known_reference_variants,
-                known_reference_variants_index = snp_known_reference_variants_index,
-                known_reference_variants_identifier = snp_known_reference_variants_identifier,
-                is_training = snp_is_training,
-                is_calibration = snp_is_calibration,
-        }
-
-        call VARUTIL.ScoreVariantAnnotations as ScoreIndelVariantAnnotations {
-            input:
-                vcf = ScoreSnpVariantAnnotations.scored_vcf,
-                vcf_index = ScoreSnpVariantAnnotations.scored_vcf_index,
-
-                sites_only_extracted_vcf = ExtractIndelVariantAnnotations.sites_only_vcf,
-                sites_only_extracted_vcf_index = ExtractIndelVariantAnnotations.sites_only_vcf_index,
-
-                model_prefix = prefix + "_train_INDEL",
-                model_files = flatten([[TrainIndelVariantAnnotationsModel.training_scores, TrainIndelVariantAnnotationsModel.positive_model_scorer_pickle], select_all([
-                    TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores,
-                    TrainIndelVariantAnnotationsModel.calibration_set_scores,
-                    TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle
-                ])]),
-                prefix = prefix + "_ALL_" + contig_2,
-                mode = "INDEL",
-
-                calibration_sensitivity_threshold = indel_calibration_sensitivity,
-
-                recalibration_annotation_values = indel_recalibration_annotation_values,
-
-                known_reference_variants = indel_known_reference_variants,
-                known_reference_variants_index = indel_known_reference_variants_index,
-                known_reference_variants_identifier = indel_known_reference_variants_identifier,
-                is_training = indel_is_training,
-                is_calibration = indel_is_calibration,
-        }
-
-        # Now we need to annotate our variants by region:
+        # Annotating our variants by region:
         if (defined(annotation_bed_files)) {
-            call VARUTIL.AnnotateVcfWithBedRegions as AnnotateVcfRegions {
+            call VARUTIL.AnnotateVcfWithBedRegions as t_010_AnnotateVcfRegions {
                 input:
-                    vcf = ScoreIndelVariantAnnotations.scored_vcf,
-                    vcf_index = ScoreIndelVariantAnnotations.scored_vcf_index,
+                    vcf = t_009_MergeSnpsAndIndels.vcf,
+                    vcf_index = t_009_MergeSnpsAndIndels.tbi,
                     bed_files = select_first([annotation_bed_files]),
                     bed_file_indexes = select_first([annotation_bed_file_indexes]),
                     bed_file_annotation_names = select_first([annotation_bed_file_annotation_names]),
-                    prefix = basename(basename(ScoreIndelVariantAnnotations.scored_vcf, ".vcf.gz"), ".vcf") + ".region_annotated",
+                    prefix = basename(basename(t_009_MergeSnpsAndIndels.vcf, ".vcf.gz"), ".vcf") + ".region_annotated",
             }
         }
 
-        File recalibrated_vcf = select_first([AnnotateVcfRegions.annotated_vcf, ScoreIndelVariantAnnotations.scored_vcf])
-        File recalibrated_vcf_index = select_first([AnnotateVcfRegions.annotated_vcf_index, ScoreIndelVariantAnnotations.scored_vcf_index])
+        File recalibrated_vcf = select_first([t_010_AnnotateVcfRegions.annotated_vcf, t_009_MergeSnpsAndIndels.vcf])
+        File recalibrated_vcf_index = select_first([t_010_AnnotateVcfRegions.annotated_vcf_index, t_009_MergeSnpsAndIndels.tbi])
 
         # Now functionally annotate each VCF:
         if (defined(snpeff_db)) {
-            call FUNK.FunctionallyAnnotateVariants as FunctionallyAnnotate {
+            call FUNK.FunctionallyAnnotateVariants as t_011_FunctionallyAnnotate {
                 input:
                     vcf = recalibrated_vcf,
                     snpeff_db = select_first([snpeff_db])
             }
         }
 
-        File vcf_for_merging = select_first([FunctionallyAnnotate.annotated_vcf, recalibrated_vcf])
-        File vcf_index_for_merging = select_first([FunctionallyAnnotate.annotated_vcf_index, recalibrated_vcf_index])
+        File vcf_for_merging = select_first([t_011_FunctionallyAnnotate.annotated_vcf, recalibrated_vcf])
+        File vcf_index_for_merging = select_first([t_011_FunctionallyAnnotate.annotated_vcf_index, recalibrated_vcf_index])
     }
 
     # Consolidate files:
-    call VARUTIL.GatherVcfs as GatherRawVcfs {
+    call VARUTIL.GatherVcfs as t_012_GatherRawVcfs {
         input:
-            input_vcfs = JointCallGVCFs.output_vcf,
-            input_vcf_indices = JointCallGVCFs.output_vcf_index,
+            input_vcfs = t_004_JointCallGVCFs.output_vcf,
+            input_vcf_indices = t_004_JointCallGVCFs.output_vcf_index,
             prefix = prefix + ".raw.combined"
     }
 
     # Consolidate files:
-    call VARUTIL.GatherVcfs as GatherRescoredVcfs {
+    call VARUTIL.GatherVcfs as t_013_GatherFilteredVcfs {
         input:
             input_vcfs = vcf_for_merging,
             input_vcf_indices = vcf_index_for_merging,
-            prefix = prefix + ".rescored.combined"
+            prefix = prefix + ".filtered.combined"
     }
 
     # Convert to Zarr
-    call SGKit.ConvertToZarrStore as ConvertToZarr {
+    call SGKit.ConvertToZarrStore as t_014_ConvertToZarr {
         input:
-            gvcf = GatherRescoredVcfs.output_vcf,
-            tbi = GatherRescoredVcfs.output_vcf_index,
+            gvcf = t_013_GatherFilteredVcfs.output_vcf,
+            tbi = t_013_GatherFilteredVcfs.output_vcf_index,
             prefix = prefix,
             outdir = outdir
     }
 
     # Convert the output to a HAIL Matrix Table:
-    call Hail.ConvertToHailMT as CreateHailMatrixTable {
+    call Hail.ConvertToHailMT as t_015_CreateHailMatrixTable {
         input:
-            gvcf = GatherRescoredVcfs.output_vcf,
-            tbi = GatherRescoredVcfs.output_vcf_index,
+            gvcf = t_013_GatherFilteredVcfs.output_vcf,
+            tbi = t_013_GatherFilteredVcfs.output_vcf_index,
             reference = sub(sub(ref_map["fasta"], "^.*/", ""), "\.[fasta]*$", ""),
             ref_fasta = ref_map["fasta"],
             ref_fai = ref_map["fai"],
@@ -315,116 +236,64 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Finalize the regular output files:
     ############
 
-    File keyfile = CreateHailMatrixTable.completion_file
+    File keyfile = t_015_CreateHailMatrixTable.completion_file
     String recalibration_dir = outdir + "/recalibration_files"
     String recalibration_model_dir = outdir + "/recalibration_files/model"
     String recalibration_results_dir = outdir + "/recalibration_files/results"
     String snpeff_results_dir = outdir + "/snpEff_results"
 
-    call FF.FinalizeToDir as FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
+    call FF.FinalizeToDir as t_016_FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = t_003_ImportGVCFsIntoGenomicsDB.output_genomicsdb }
 
-    call FF.FinalizeToFile as FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf }
-    call FF.FinalizeToFile as FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf_index }
+    call FF.FinalizeToFile as t_017_FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = t_012_GatherRawVcfs.output_vcf }
+    call FF.FinalizeToFile as t_018_FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = t_012_GatherRawVcfs.output_vcf_index }
 
-    call FF.FinalizeToFile as FinalizeVETSVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf }
-    call FF.FinalizeToFile as FinalizeVETSTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf_index }
+    call FF.FinalizeToFile as t_019_FinalizeFilteredVCF { input: outdir = outdir, keyfile = keyfile, file = t_013_GatherFilteredVcfs.output_vcf }
+    call FF.FinalizeToFile as t_020_FinalizeFilteredTBI { input: outdir = outdir, keyfile = keyfile, file = t_013_GatherFilteredVcfs.output_vcf_index }
 
     if (defined(snpeff_db)) {
-        call FF.FinalizeToDir as FinalizeSnpEffSummary { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(FunctionallyAnnotate.snpEff_summary) }
-        call FF.FinalizeToDir as FinalizeSnpEffGenes { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(FunctionallyAnnotate.snpEff_genes) }
+        call FF.FinalizeToDir as t_021_FinalizeSnpEffSummary { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(t_011_FunctionallyAnnotate.snpEff_summary) }
+        call FF.FinalizeToDir as t_022_FinalizeSnpEffGenes { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(t_011_FunctionallyAnnotate.snpEff_genes) }
     }
 
-    ################################
-    # Finalize the VETS files:
-    ############
+    #####################################
+    # Finalize the hard filtered files:
+    #####################################
+    call FF.FinalizeToFile as t_023_FinalizeFilteredSnpsVCF { input: outdir = outdir, keyfile = keyfile, file = t_007_HardFilterSnps.snp_filtered_vcf }
+    call FF.FinalizeToFile as t_024_FinalizeFilteredSnpsTBI { input: outdir = outdir, keyfile = keyfile, file = t_007_HardFilterSnps.snp_filtered_vcf_index }
 
-    # ExtractVariantAnnotations:
-    call FF.FinalizeToFile as FinalizeSnpExtractedAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.annotation_hdf5 }
-    call FF.FinalizeToFile as FinalizeSnpExtractedSitesOnlyVcf { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.sites_only_vcf }
-    call FF.FinalizeToFile as FinalizeSnpExtractedSitesOnlyVcfIndex { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.sites_only_vcf_index }
-    if (defined(ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5)) {
-        call FF.FinalizeToFile as FinalizeSnpExtractedUnlabeledAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5]) }
-    }
-    call FF.FinalizeToFile as FinalizeIndelExtractedAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.annotation_hdf5 }
-    call FF.FinalizeToFile as FinalizeIndelExtractedSitesOnlyVcf { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.sites_only_vcf }
-    call FF.FinalizeToFile as FinalizeIndelExtractedSitesOnlyVcfIndex { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.sites_only_vcf_index }
-    if (defined(ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5)) {
-        call FF.FinalizeToFile as FinalizeIndelExtractedUnlabeledAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5]) }
-    }
+    call FF.FinalizeToFile as t_025_FinalizeFilteredIndelsVCF { input: outdir = outdir, keyfile = keyfile, file = t_008_HardFilterIndels.indel_filtered_vcf }
+    call FF.FinalizeToFile as t_026_FinalizeFilteredIndelsTBI { input: outdir = outdir, keyfile = keyfile, file = t_008_HardFilterIndels.indel_filtered_vcf_index}
 
-    # TrainVariantAnnotationsModel
-    call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsTrainingScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainSnpVariantAnnotationsModel.training_scores }
-    call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsPositiveModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainSnpVariantAnnotationsModel.positive_model_scorer_pickle }
-    if (defined(TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores)) {
-        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores]) }
-    }
-    if (defined(TrainSnpVariantAnnotationsModel.calibration_set_scores)) {
-        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsCalibrationSetScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.calibration_set_scores]) }
-    }
-    if (defined(TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle)) {
-        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle]) }
-    }
-
-    call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsTrainingScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainIndelVariantAnnotationsModel.training_scores }
-    call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsPositiveModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainIndelVariantAnnotationsModel.positive_model_scorer_pickle }
-    if (defined(TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores)) {
-        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores]) }
-    }
-    if (defined(TrainIndelVariantAnnotationsModel.calibration_set_scores)) {
-        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsCalibrationSetScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.calibration_set_scores]) }
-    }
-    if (defined(TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle)) {
-        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle]) }
-    }
-
-    # ScoreVariantAnnotations
-    # This was done per-contig, so we need to finalize per-contig:
-    scatter (idx_3 in range(length(MakeChrIntervalList.contig_interval_list_files))) {
-
-        String contig_3 = MakeChrIntervalList.chrs[idx_3][0]
-
-        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf[idx_3] }
-        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf_index[idx_3] }
-        if (defined(ScoreSnpVariantAnnotations.annotations_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.annotations_hdf5[idx_3]]) }
-        }
-        if (defined(ScoreSnpVariantAnnotations.scores_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.scores_hdf5[idx_3]]) }
-        }
-
-        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf[idx_3] }
-        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index[idx_3] }
-        if (defined(ScoreIndelVariantAnnotations.annotations_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.annotations_hdf5[idx_3]]) }
-        }
-        if (defined(ScoreIndelVariantAnnotations.scores_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.scores_hdf5[idx_3]]) }
-        }
-    }
 
     # Make an alias for the functionally annotated data:
     if (defined(snpeff_db)) {
-        File annotated_vcf = FinalizeVETSVCF.gcs_path
-        File annotated_vcf_tbi = FinalizeVETSTBI.gcs_path
+        File annotated_vcf = t_019_FinalizeFilteredVCF.gcs_path
+        File annotated_vcf_tbi = t_020_FinalizeFilteredTBI.gcs_path
     }
 
     output {
-        String genomicsDB = FinalizeGenomicsDB.gcs_dir
+        String genomicsDB = t_016_FinalizeGenomicsDB.gcs_dir
 
-        File raw_joint_vcf     = FinalizeRawVCF.gcs_path
-        File raw_joint_vcf_tbi = FinalizeRawTBI.gcs_path
+        File raw_joint_vcf     = t_017_FinalizeRawVCF.gcs_path
+        File raw_joint_vcf_tbi = t_018_FinalizeRawTBI.gcs_path
 
-        File joint_recalibrated_vcf     = FinalizeVETSVCF.gcs_path
-        File joint_recalibrated_vcf_tbi = FinalizeVETSTBI.gcs_path
+        File joint_filtered_vcf     = t_019_FinalizeFilteredVCF.gcs_path
+        File joint_filtered_vcf_tbi = t_019_FinalizeFilteredVCF.gcs_path
 
-        File joint_mt = CreateHailMatrixTable.gcs_path
-        File joint_zarr = ConvertToZarr.gcs_path
+        File joint_mt = t_015_CreateHailMatrixTable.gcs_path
+        File joint_zarr = t_014_ConvertToZarr.gcs_path
+
+        File joint_snps_filtered_vcf     = t_023_FinalizeFilteredSnpsVCF.gcs_path
+        File joint_snps_filtered_vcf_tbi = t_024_FinalizeFilteredSnpsTBI.gcs_path
+
+        File joint_indels_filtered_vcf     = t_025_FinalizeFilteredIndelsVCF.gcs_path
+        File joint_indels_filtered_vcf_tbi = t_026_FinalizeFilteredIndelsTBI.gcs_path
 
         File? annotated_joint_vcf     = annotated_vcf
         File? annotated_joint_vcf_tbi = annotated_vcf_tbi
 
-        String? snpEff_summary = FinalizeSnpEffSummary.gcs_dir
-        String? snpEff_genes = FinalizeSnpEffGenes.gcs_dir
+        String? snpEff_summary = t_021_FinalizeSnpEffSummary.gcs_dir
+        String? snpEff_genes = t_022_FinalizeSnpEffGenes.gcs_dir
     }
 }
 
