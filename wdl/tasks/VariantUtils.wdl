@@ -747,17 +747,17 @@ task HardFilterVcfByGATKDefault_Snp {
         # Get SNPs from vcf
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             SelectVariants \
-            -R {ref_fasta} \
-            -V {vcf} \
+            -R ~{ref_fasta} \
+            -V ~{vcf} \
             -select-type SNP \
-            -O {snp_only_vcf} 
+            -O ~{snp_only_vcf} 
         
         echo "Finished selecting SNPs only. Now filtering..."
 
         # Filter SNPs from vcf
         gatk --java-options "-Xms${men_start}m -Xmx${mem_max}m" \
             VariantFiltration \
-            -V {snp_only_vcf} \
+            -V ~{snp_only_vcf} \
             -filter "QD < ~{snp_qd_threshold}" --filter-name "QD~{snp_qd_threshold}" \
             -filter "QUAL < ~{snp_qual_threshold}" --filter-name "QUAL~{snp_qual_threshold}" \
             -filter "SOR > ~{snp_sor_threshold}" --filter-name "SOR~{snp_sor_threshold}" \
@@ -844,16 +844,16 @@ task HardFilterVcfByGATKDefault_Indel {
         # Filter indels
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             SelectVariants \
-            -R {ref_fasta} \
-            -V {vcf} \
+            -R ~{ref_fasta} \
+            -V ~{vcf} \
             -select-type INDEL \
-            -O {indel_only_vcf}
+            -O ~{indel_only_vcf}
 
         echo "Finished selecting indels only. Now filtering..."
 
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             VariantFiltration \
-            -V {indel_only_vcf} \
+            -V ~{indel_only_vcf} \
             -filter "QD < ~{indel_qd_threshold}" --filter-name "QD~{indel_qd_threshold}" \
             -filter "QUAL < ~{indel_qual_threshold}" --filter-name "QUAL~{indel_qual_threshold}" \
             -filter "FS > ~{indel_fs_threshold}" --filter-name "FS~{indel_fs_threshold}" \
