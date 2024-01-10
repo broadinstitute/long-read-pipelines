@@ -468,7 +468,7 @@ def read_fastqc(directory):
     '''
     Function to read HTML from FastQC report as string to pass to Jinja template IFrame
     '''
-    if(directory):
+    if(os.path.exists(directory)):
         # There should only be one file in the directory (report-files/data/fastqc)
         for file in directory:
             with open(file, "r", encoding="utf-8") as f:
