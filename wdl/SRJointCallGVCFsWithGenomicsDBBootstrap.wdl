@@ -108,7 +108,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             prefix = prefix + ".sites_only"
     }
 
-    # Call hard filtering
+    ##################################################################################
+    #                                Hard Filtering                                  #
+    ##################################################################################
 
     # Hard filter SNPs
     call VARUTIL.HardFilterVcfByGATKDefault_Snp as t_007_HardFilterSnps {
@@ -141,24 +143,24 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     scatter (idx_2 in range(length(t_004_JointCallGVCFs.output_vcf))) {
 
         String contig_2 = t_001_MakeChrIntervalList.chrs[idx_2][0]
-        File joint_called_vcf = t_004_JointCallGVCFs.output_vcf[idx_2]
-        File joint_called_vcf_index = t_004_JointCallGVCFs.output_vcf_index[idx_2]
+        File joint_called_vcf = t_009_MergeSnpsAndIndels.output_vcf[idx_2]
+        File joint_called_vcf_index = t_009_MergeSnpsAndIndels.output_vcf_index[idx_2]
 
         # Annotating our variants by region:
         if (defined(annotation_bed_files)) {
             call VARUTIL.AnnotateVcfWithBedRegions as t_010_AnnotateVcfRegions {
                 input:
-                    vcf = t_009_MergeSnpsAndIndels.vcf,
-                    vcf_index = t_009_MergeSnpsAndIndels.tbi,
+                    vcf = joint_called_vcf,
+                    vcf_index = joint_called_vcf_index,
                     bed_files = select_first([annotation_bed_files]),
                     bed_file_indexes = select_first([annotation_bed_file_indexes]),
                     bed_file_annotation_names = select_first([annotation_bed_file_annotation_names]),
                     prefix = basename(basename(t_009_MergeSnpsAndIndels.vcf, ".vcf.gz"), ".vcf") + ".region_annotated",
             }
         }
-
-        File recalibrated_vcf = select_first([t_010_AnnotateVcfRegions.annotated_vcf, t_009_MergeSnpsAndIndels.vcf])
-        File recalibrated_vcf_index = select_first([t_010_AnnotateVcfRegions.annotated_vcf_index, t_009_MergeSnpsAndIndels.tbi])
+        # Wait this is wrong.... This is because this is sharded over contigs but the Merged SNPs and Indels are not spread out across contigs....
+        File recalibrated_vcf = select_first([t_010_AnnotateVcfRegions.annotated_vcf, joint_called_vcf])
+        File recalibrated_vcf_index = select_first([t_010_AnnotateVcfRegions.annotated_vcf_index, joint_called_vcf_index])
 
         # Now functionally annotate each VCF:
         if (defined(snpeff_db)) {
