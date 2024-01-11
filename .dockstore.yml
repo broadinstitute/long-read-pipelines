@@ -172,7 +172,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SVAnnotate.wdl
   testParameterFiles:
-- name: AnnotateVCFInsRM.wdl
+- name: AnnotateVCFInsRM
   subclass: wdl
   primaryDescriptorPath: /wdl/AnnotateVCFInsRM.wdl
   testParameterFiles:
