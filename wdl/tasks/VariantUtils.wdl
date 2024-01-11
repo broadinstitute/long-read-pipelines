@@ -758,7 +758,7 @@ task HardFilterVcfByGATKDefault_Snp {
         echo "Finished selecting SNPs only. Now filtering..."
 
         # Filter SNPs from vcf
-        gatk --java-options "-Xms${men_start}m -Xmx${mem_max}m" \
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             VariantFiltration \
             -V ~{snp_only_vcf} \
             -filter "QD < ~{snp_qd_threshold}" --filter-name "QD~{snp_qd_threshold}" \
