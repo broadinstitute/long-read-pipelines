@@ -115,9 +115,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         input:
             vcf = t_006_MergeSitesOnlyVCFs.output_vcf,
             vcf_index = t_006_MergeSitesOnlyVCFs.output_vcf_index,
-            ref_fasta = ref_map['fasta'],
-            ref_fasta_fai = ref_map['fai'],
-            ref_fasta_dict = ref_map['dict'],
             prefix = prefix
     }
 
@@ -126,9 +123,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         input:
             vcf = t_006_MergeSitesOnlyVCFs.output_vcf,
             vcf_index = t_006_MergeSitesOnlyVCFs.output_vcf_index,
-            ref_fasta = ref_map['fasta'],
-            ref_fasta_fai = ref_map['fai'],
-            ref_fasta_dict = ref_map['dict'],
             prefix = prefix
     }
 

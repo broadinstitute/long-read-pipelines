@@ -863,7 +863,7 @@ task HardFilterVcfByGATKDefault_Indel {
             -filter "QD < ~{indel_qd_threshold}" --filter-name "QD~{indel_qd_threshold}" \
             -filter "QUAL < ~{indel_qual_threshold}" --filter-name "QUAL~{indel_qual_threshold}" \
             -filter "FS > ~{indel_fs_threshold}" --filter-name "FS~{indel_fs_threshold}" \
-            -filter "ReadPosRankSum < {indel_readposranksum_threshold}" --filter-name "ReadPosRankSum~{indel_readposranksum_threshold}" \
+            -filter "ReadPosRankSum < ~{indel_readposranksum_threshold}" --filter-name "ReadPosRankSum~{indel_readposranksum_threshold}" \
             -O ~{prefix}.hard_filtered.indel.vcf.gz
     >>>
     #########################
