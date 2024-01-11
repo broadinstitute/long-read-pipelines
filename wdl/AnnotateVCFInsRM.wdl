@@ -29,6 +29,8 @@ task VCF_INS_to_fa {
     input {
         File VCF
         String prefix
+
+        RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 2*ceil(size(VCF, "GB"))+20
@@ -36,7 +38,7 @@ task VCF_INS_to_fa {
     command <<<
         set -euxo pipefail
   
-        bcftools view -i 'INFO/SVLEN>50 && INFO/SVTYPE=="INS" ~{VCF} | bcftools view -e 'ALT ~ "<"' > ~{prefix}.INS.nosymb.vcf
+        bcftools view -i 'INFO/SVLEN>50 && INFO/SVTYPE=="INS"' ~{VCF} | bcftools view -e 'ALT ~ "<"' > ~{prefix}.INS.nosymb.vcf
         bcftools query -f '>%CHROM:%POS;%ID\n%ALT\n' ~{prefix}.INS.nosymb.vcf > ~{prefix}_INS.fa
     >>>
 
