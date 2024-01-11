@@ -699,8 +699,10 @@ task HardFilterVcfByGATKDefault_Snp {
     input {
         File vcf
         File vcf_index
-        File ref_fasta
-        File ref_fasta_fai
+
+        File? ref_fasta
+        File? ref_fasta_fai
+        File? ref_fasta_dict
     
         String prefix
 
@@ -748,7 +750,7 @@ task HardFilterVcfByGATKDefault_Snp {
         # Get SNPs from vcf
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             SelectVariants \
-            -R ~{ref_fasta} \
+            ~{"-R " + ref_fasta} \
             -V ~{vcf} \
             -select-type SNP \
             -O ~{snp_only_vcf} 
@@ -801,8 +803,10 @@ task HardFilterVcfByGATKDefault_Indel {
     input {
         File vcf
         File vcf_index
-        File ref_fasta
-        File ref_fasta_fai
+
+        File? ref_fasta
+        File? ref_fasta_fai
+        File? ref_fasta_dict
     
         String prefix
 
@@ -846,7 +850,7 @@ task HardFilterVcfByGATKDefault_Indel {
         # Filter indels
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             SelectVariants \
-            -R ~{ref_fasta} \
+            ~{"-R " + ref_fasta} \
             -V ~{vcf} \
             -select-type INDEL \
             -O ~{indel_only_vcf}
