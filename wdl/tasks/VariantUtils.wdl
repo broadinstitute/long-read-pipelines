@@ -236,18 +236,30 @@ task MergeAndSortVCFsAllowOverlap {
             --threads ~{cores-1} \
             -f all_raw_vcfs.txt \
             --output-type v \
-            -o concatedated_raw.vcf.gz  # fast, at the expense of disk space
+            -o concatedated_raw.vcf.gz 
         for vcf in ~{sep=' ' vcfs}; do rm $vcf ; done
 
         echo "==========================================================="
-        echo "done concatenating, starting sort operation" && date
+        echo "done concatenating" && date
         echo "==========================================================="
+        
+        bcftools reheader \
+            --fai ~{ref_fasta_fai} \
+            -o wgs_raw.vcf.gz \
+            concatedated_raw.vcf.gz
+        rm concatedated_raw.vcf.gz
+
+        echo "==========================================================="
+        echo "starting sort" && date
+        echo "==========================================================="
+
         bcftools \
             sort \
             --temp-dir tm_sort \
             --output-type z \
             -o ~{prefix}.vcf.gz \
             wgs_raw.vcf.gz
+
         bcftools index --tbi --force ~{prefix}.vcf.gz
         echo "==========================================================="
         echo "done sorting" && date
