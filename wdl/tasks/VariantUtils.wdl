@@ -192,6 +192,70 @@ task MergeAndSortVCFs {
     }
 }
 
+task MergeAndSortVCFsAllowOverlap {
+    meta {
+        description: "Merge and sort VCFs without using the --naive flag and while allowing for overlaps."
+    }
+
+    input {
+        Array[File] vcfs
+        File ref_fasta_fai
+
+        String prefix
+        String? optional_flags
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        optional_flags: "Optional flags that can be given to bcftools concat."
+    }
+
+    Int sz = ceil(size(vcfs, 'GB'))
+    Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
+    
+    Int cores = 8
+
+    # pending a bug fix (bcftools github issue 1576) in official bcftools release,
+    # bcftools sort can be more efficient in using memory
+    Int machine_memory = 48 # 96
+    Int work_memory = ceil(machine_memory * 0.8)
+
+    command <<<
+        set -euxo pipefail
+
+        echo ~{sep=' ' vcfs} | sed 's/ /\n/g' > all_raw_vcfs.txt
+
+        echo "==========================================================="
+        echo "starting concatenation" && date
+        echo "==========================================================="
+        bcftools \
+            concat \
+            --allow-overlaps \
+            --threads ~{cores-1} \
+            -f all_raw_vcfs.txt \
+            --output-type v \
+            -o concatedated_raw.vcf.gz  # fast, at the expense of disk space
+        for vcf in ~{sep=' ' vcfs}; do rm $vcf ; done
+
+        echo "==========================================================="
+        echo "done concatenating, starting sort operation" && date
+        echo "==========================================================="
+        bcftools \
+            sort \
+            --temp-dir tm_sort \
+            --output-type z \
+            -o ~{prefix}.vcf.gz \
+            wgs_raw.vcf.gz
+        bcftools index --tbi --force ~{prefix}.vcf.gz
+        echo "==========================================================="
+        echo "done sorting" && date
+        echo "==========================================================="
+    >>>
+    
+
+}
+
 task CollectDefinitions {
     meta {
         description: "Collect (union) various definitions in vcf files, adddressing a bcftols bug: https://github.com/samtools/bcftools/issues/1629"

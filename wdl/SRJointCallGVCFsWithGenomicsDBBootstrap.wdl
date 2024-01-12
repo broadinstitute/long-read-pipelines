@@ -132,12 +132,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     Array[File] filtered_vcfs = [t_007_HardFilterSnps.snp_filtered_vcf, t_008_HardFilterIndels.indel_filtered_vcf]
 
     # Merge Snp and Indel VCF files
-    call VARUTIL.MergeAndSortVCFs as t_009_MergeSnpsAndIndels {
+    call VARUTIL.MergeAndSortVCFsAllowOverlap as t_009_MergeSnpsAndIndels {
         input:
             vcfs = filtered_vcfs,
             ref_fasta_fai = ref_map["fai"],
-            prefix = prefix,
-            optional_flags = "--allow-overlaps"
+            prefix = prefix
     }
 
     # Annotation by region
