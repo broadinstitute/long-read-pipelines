@@ -67,8 +67,10 @@ workflow Work {
 
         methyl_tag_simple_stats:
         "Simple stats on the reads with & without SAM methylation tags (MM/ML)."
+        save_methyl_uncalled_reads:
+        "If to save the reads without MM/ML tags."
 
-        aBAM_metrics_files_out:
+        aBAM_metrics_files:
         "A map where keys are summary-names and values are paths to files generated from the various QC/metrics tasks"
     }
 
@@ -87,6 +89,7 @@ workflow Work {
         File? vbid2_config_json
         String? expected_sex_type
         String? methyl_tag_check_bam_descriptor
+        Boolean? save_methyl_uncalled_reads
 
         File ref_map_file
         String disk_type
@@ -97,7 +100,7 @@ workflow Work {
 
     output {
         Float wgs_cov                     = MosDepthWGS.wgs_cov
-        Map[String, Float] nanoplot_summ   = NanoPlotFromBam.stats_map
+        Map[String, Float] nanoplot_summ  = NanoPlotFromBam.stats_map
         Map[String, Float] sam_flag_stats = ParseFlagStatsJson.qc_pass_reads_SAM_flag_stats
 
         # fingerprint
@@ -113,7 +116,7 @@ workflow Work {
         Map[String, String]? methyl_tag_simple_stats = NoMissingBeans.methyl_tag_simple_stats
 
         # file-based outputs all packed into a finalization map
-        Map[String, String] aBAM_metrics_files_out = FF.result
+        Map[String, String] aBAM_metrics_files = FF.result
     }
 
     String workflow_name = "AlignedBamQCandMetrics"
@@ -226,7 +229,8 @@ workflow Work {
             bam=bam,
             bai=bai,
             bam_descriptor=select_first([methyl_tag_check_bam_descriptor]),
-            gcs_out_root_dir=metrics_output_dir,
+            gcs_out_root_dir= metrics_output_dir,
+            save_read_names_only = !select_first([save_methyl_uncalled_reads, true]),
             use_local_ssd=disk_type=='LOCAL'
         }
         Map[String, String] methyl_out = {"missing_methyl_tag_reads":
@@ -259,4 +263,5 @@ struct AlignedBamQCnMetricsConfig {
                                             # (e.g. 'rg_post_aln' for "readgroup post alignment", "sm_post_merge" for "sample post merging");
                                             # used for saving the reads that miss MM/ML tags;
                                             # doesn't need to be single-file specific
+    Boolean? save_methyl_uncalled_reads     # if true, will save the actual reads that miss the methylation SAM tags (otherwise we only save the read names)
 }
