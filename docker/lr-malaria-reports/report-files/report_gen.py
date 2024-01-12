@@ -474,8 +474,6 @@ def read_fastqc(directory):
             print(f"{directory} + {file}")
             with open(os.path.join(directory, file), "r", encoding="utf-8") as f:
                 html = f.read()
-                
-            html = html.replace("\"", "\\\"")
     else:
         html = None
     
