@@ -2210,8 +2210,8 @@ task ListFilesOfType {
 
     command <<<
         set -ex
-        gsutil ls ~{true='-r' false='' recurse} ~{in_dir} > temp.txt
-        grep -E '(~{sep="|" suffixes})$' temp.txt > files.txt || touch files.txt
+        gsutil ls ~{true='-r' false='' recurse} ~{in_dir} > tmp.txt
+        grep -E '(~{sep="|" suffixes})$' tmp.txt > files.txt || touch files.txt
         if [ ! -s files.txt ]; then echo "None found" && exit 1; fi
     >>>
 
