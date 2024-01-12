@@ -199,6 +199,7 @@ task MergeAndSortVCFsAllowOverlap {
 
     input {
         Array[File] vcfs
+        Array[File] vcf_indices 
         File ref_fasta_fai
 
         String prefix

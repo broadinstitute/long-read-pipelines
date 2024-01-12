@@ -130,11 +130,13 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     Array[File] filtered_vcfs = [t_007_HardFilterSnps.snp_filtered_vcf, t_008_HardFilterIndels.indel_filtered_vcf]
+    Array[File] filtered_vcf_indices = [t_007_HardFilterSnps.snp_filtered_vcf_index, t_008_HardFilterIndels.indel_filtered_vcf_index]
 
     # Merge Snp and Indel VCF files
     call VARUTIL.MergeAndSortVCFsAllowOverlap as t_009_MergeSnpsAndIndels {
         input:
             vcfs = filtered_vcfs,
+            vcf_indices = filtered_vcf_indices,
             ref_fasta_fai = ref_map["fai"],
             prefix = prefix
     }
