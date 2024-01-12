@@ -5,33 +5,23 @@ import "Structs.wdl"
 task RepeatMasker {
     input {
         File fasta
-        File famdb
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(fasta, "GB"))+90 # unzipped famdb is 67gb in current release (3.8)
-    String famdb_name = basename(famdb)
+    Int disk_size = 5*ceil(size(fasta, "GB"))+20
+
+    String prefix = basename(fasta)
 
     command <<<
         set -euxo pipefail
-
-        # unzip famdb if needed, and put in the right folder for RM to find
-        mv ~{famdb} RepeatMasker/Libraries/famdb/
-        cd RepeatMasker/Libraries/famdb/
-
-        if [[ ~{famdb_name} == *.gz ]]
-        then
-            gunzip ~{famdb_name}
-        fi
-
-        cd ../../../
-
-        ./RepeatMasker/RepeatMasker -e rmblast -pa 4 -s -species human ~{fasta} -rmblast_dir / -trf_prgm /trf
+  
+        RepeatMasker -e rmblast -pa 4 -s -species human ~{fasta}
+        mv ~{fasta}.out ./~{prefix}.out
      >>>
 
      output {
-         File RMout = '~{fasta}.out'
+         File RMout = '~{prefix}.out'
      }
 
     #########################
@@ -42,7 +32,7 @@ task RepeatMasker {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        0,
-        docker:             "quay.io/ymostovoy/lr-repeatmasker:latest"
+        docker:             "dfam/tetools:1.8"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

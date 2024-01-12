@@ -6,19 +6,15 @@ import "tasks/RepeatMasker.wdl" as RM
 workflow AnnotateVCFIns {
     parameter_meta {
         VCF: "VCF containing INS calls with sequences in the ALT field"
-        famdb: "h5 file from Dfam containing TE libraries, e.g. from https://www.dfam.org/releases/Dfam_3.8/families/FamDB/dfam38_full.0.h5.gz"
-        prefix: "prefix for output files"
     }
 
     input {
         File VCF
-        File famdb
-        String prefix
     }
 
-    call VCF_INS_to_fa { input: VCF = VCF, prefix = prefix }
+    call VCF_INS_to_fa { input: VCF = VCF }
 
-    call RM.RepeatMasker { input: fasta = VCF_INS_to_fa.INS_fa, famdb = famdb }
+    call RM.RepeatMasker { input: fasta = VCF_INS_to_fa.INS_fa }
 
     output {
         File RMout = RepeatMasker.RMout
@@ -28,18 +24,19 @@ workflow AnnotateVCFIns {
 task VCF_INS_to_fa {
     input {
         File VCF
-        String prefix
 
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 2*ceil(size(VCF, "GB"))+20
 
+    String prefix = basename(VCF, ".vcf.gz")
+
     command <<<
         set -euxo pipefail
-  
-        bcftools view -i 'INFO/SVLEN>50 && INFO/SVTYPE=="INS"' ~{VCF} | bcftools view -e 'ALT ~ "<"' > ~{prefix}.INS.nosymb.vcf
-        bcftools query -f '>%CHROM:%POS;%ID\n%ALT\n' ~{prefix}.INS.nosymb.vcf > ~{prefix}_INS.fa
+
+        bcftools view -i 'INFO/SVLEN>50 && INFO/SVTYPE=="INS"' ~{VCF} | bcftools view -e 'ALT ~ "<"' > ~{prefix}.INS.vcf
+        bcftools query -f '>%CHROM:%POS\n%ALT\n' ~{prefix}.INS.vcf > ~{prefix}_INS.fa
     >>>
 
     output {
