@@ -26,6 +26,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[String]? annotation_bed_file_annotation_names
 
         File? snpeff_db
+        String? genome_name 
 
         String prefix
 
@@ -163,7 +164,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             input:
                     vcf = recalibrated_vcf,
                     snpeff_db = select_first([snpeff_db]),
-                    genome_name = "idAnoDarlMG_H_01"
+                    genome_name = genome_name
         }
     }
 
