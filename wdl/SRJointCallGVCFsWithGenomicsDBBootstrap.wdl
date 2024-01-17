@@ -162,7 +162,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         call FUNK.FunctionallyAnnotateVariants as t_011_FunctionallyAnnotate {
             input:
                     vcf = recalibrated_vcf,
-                    snpeff_db = select_first([snpeff_db])
+                    snpeff_db = select_first([snpeff_db]),
+                    genome_name = "idAnoDarlMG_H_01"
         }
     }
 
