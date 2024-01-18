@@ -716,11 +716,16 @@ task GetDuplicateReadnamesInQnameSortedBam {
     }
     parameter_meta {
         qns_bam: {
+            desciption: "Query name sorted BAM to be de-duplicated",
             localization_optional: true
         }
+        trial_idx: "the n-th time this is being tried for (start from 1), if this value is >= trial_max, the BAM will be localized and the task will use a persistent SSD instead of persistent HDD."
+        trial_max: "the max number of attempt to perform the duty by streaming in the BAM; this design together with trial_idx is to prevent call-caching preventing retries."
     }
     input {
         File qns_bam
+        Int trial_idx = 1
+        Int trial_max = 3
     }
 
     output {
@@ -728,11 +733,10 @@ task GetDuplicateReadnamesInQnameSortedBam {
         Boolean result_may_be_corrupted = read_boolean("samtools.failed.txt")
     }
 
+    Boolean localize_bam = trial_idx >= trial_max
+
     command <<<
-        # the way this works is the following:
-        # 0) relying on the re-auth.sh script to export the credentials
-        # 1) perform the remote sam-view subsetting in the background
-        # 2) listen to the PID of the background process, while re-auth every 1200 seconds
+
         source /opt/re-auth.sh
         set -euxo pipefail
 
@@ -740,29 +744,48 @@ task GetDuplicateReadnamesInQnameSortedBam {
         sort_order=$(samtools view -H ~{qns_bam} | grep "^@HD" | tr '\t' '\n' | grep "^SO:" | awk -F ':' '{print $2}')
         if [[ "queryname" != "${sort_order}"  ]]; then echo -e "Sort order ${sort_oder} isn't the expected 'queryname'." && exit 1; fi
 
-        # remote grab read names
-        echo "false" > samtools.failed.txt
-        samtools view ~{qns_bam} \
-        | awk -F '\t' '{print $1}' \
-        | uniq -d  \
-        > "dup_read_names.txt" \
-        || { echo "true" > samtools.failed.txt; exit 77; } &
-        pid=$!
+        if ~{localize_bam}; then
+            time \
+            gcloud storage cp ~{qns_bam} name_does_not_matter.bam
 
-        set +e
-        count=1
-        while true; do
-            sleep 1200 && date && source /opt/re-auth.sh
-            if [[ ${count} -gt 2 ]]; then exit 0; fi
-            if ! pgrep -x -P $pid; then exit 0; fi
-            count=$(( count+1 ))
-        done
+            samtools view name_does_not_matter.bam \
+            | awk -F '\t' '{print $1}' \
+            | uniq -d  \
+            > "dup_read_names.txt"
+
+            echo "false" > samtools.failed.txt
+        else
+            # the way this works is the following:
+            # 0) relying on the re-auth.sh script to export the credentials
+            # 1) perform the remote sam-view operation in the background
+            # 2) listen to the PID of the background process, while re-auth every 1200 seconds
+
+            # remote grab read names
+            echo "false" > samtools.failed.txt
+            samtools view ~{qns_bam} \
+            | awk -F '\t' '{print $1}' \
+            | uniq -d  \
+            > "dup_read_names.txt" \
+            || { echo "true" > samtools.failed.txt; exit 77; } &
+            pid=$!
+
+            set +e
+            count=1
+            while true; do
+                sleep 1200 && date && source /opt/re-auth.sh
+                if [[ ${count} -gt 2 ]]; then exit 0; fi
+                if ! pgrep -x -P $pid; then exit 0; fi
+                count=$(( count+1 ))
+            done
+        fi
     >>>
 
+    Int disk_size = 5 + (if (localize_bam) then ceil(size(qns_bam, "Gib")) else 0)
+    String disk_type = if (localize_bam) then "SSD" else "HDD"
     runtime {
         cpu:            1
         memory:         "4 GiB"
-        disks:          "local-disk 10 HDD"
+        disks:          "local-disk ~{disk_size} ~{disk_type}"
         preemptible:    2
         maxRetries:     1
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
@@ -1736,31 +1759,38 @@ task SplitByRG {
     }
 
     parameter_meta {
-        bam: "BAM to be split"
+        bam: {
+            desciption: "BAM to be split",
+            localization_optional: true
+        }
         out_prefix: "prefix for output bam and bai file names"
+        retain_rgless_records: "flag to save the reads that have no RG tag"
         sort_and_index: "if the user wants to (pos-)sort and index the resulting BAMs; this indicates the input BAM is mapped"
 
         split_bam: "the resuling BAMs, each having reads only in a single read group"
         split_bai: "the accompanying BAIs, if possible and explicit requested"
     }
 
-    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 1+3*ceil(size([bam], "GB"))
-
     Array[String] extra_args = if (retain_rgless_records) then ["-u", "~{out_prefix}_noRG.bam"] else [""]
+
+    String local_bam = basename(bam)
     command <<<
         set -eux
+        time \
+        gcloud storage cp ~{bam} ~{local_bam}
 
-        samtools view -H ~{bam} | grep "^@RG" > "read_groups_header.txt"
+        samtools view -H ~{local_bam} | grep "^@RG" > "read_groups_header.txt"
         cat "read_groups_header.txt" | tr '\t' '\n' | grep "^ID:"  | awk -F ':' '{print $2}' > "RG_ids.txt"
 
         samtools split -@3 \
             -f "~{out_prefix}_%#.bam" \
             ~{sep=" " extra_args} \
-            ~{bam}
+            ~{local_bam}
+        rm ~{local_bam}
+
         if ~{sort_and_index} ;
         then
             # cleanup space for the sorting
-            rm ~{bam}
             for split_bam in "~{out_prefix}_"*.bam;
             do
                 mv "${split_bam}" temp.bam
@@ -1780,6 +1810,9 @@ task SplitByRG {
     }
 
     #########################
+    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 1+3*ceil(size([bam], "GB"))
+    String disk_type = if defined(num_ssds) then "LOCAL" else "SSD"  # IO-bound operation, no HDD please
+
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             16,
@@ -1792,7 +1825,7 @@ task SplitByRG {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
