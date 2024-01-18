@@ -235,8 +235,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
     # Make an alias for the functionally annotated data:
     if (defined(snpeff_db)) {
-        File annotated_vcf = t_018_FinalizeFilteredVCF.gcs_path
-        File annotated_vcf_tbi = t_019_FinalizeFilteredTBI.gcs_path
+        call FF.FinalizeToFile as t_026_FinalizeAnnotatedFilteredVCF { input: outdir = outdir, keyfile = keyfile, file = t_011_FunctionallyAnnotate.annotated_vcf }
+        call FF.FinalizeToFile as t_027_FinalizeAnnotatedFilteredTBI { input: outdir = outdir, keyfile = keyfile, file = t_011_FunctionallyAnnotate.annotated_vcf_index }
+
+        File annotated_vcf = t_026_FinalizeAnnotatedFilteredVCF.gcs_path
+        File annotated_vcf_tbi = t_027_FinalizeAnnotatedFilteredTBI.gcs_path
     }
 
     output {
