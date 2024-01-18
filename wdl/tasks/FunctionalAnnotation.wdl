@@ -11,7 +11,7 @@ task FunctionallyAnnotateVariants {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 5*ceil(size([vcf, snpeff_db], "GB"))
+    Int disk_size = 20 + 5*ceil(size([vcf, snpeff_db], "GB"))
     String prefix = basename(basename(vcf, ".gz"), ".vcf")
 
     command <<<
@@ -41,10 +41,10 @@ task FunctionallyAnnotateVariants {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             4,
+        cpu_cores:          4,
+        mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       20,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-functional-annotation:0.0.1"
