@@ -19,14 +19,15 @@ RUN apt-get -qqy update --fix-missing && \
                  make \
                  wget \
                  zlib1g-dev \
-                 pkg-config
+                 pkg-config \
+		 python3-pip
 
 # RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
 #     sh ./Miniconda3-latest-Linux-x86_64.sh -bufp /python3.10 && \
 #     export PATH=/python3.10/bin:$PATH && \
 #     python --version 
 
-ENV PYTHONPATH=/usr/lib/python3.9/
+ENV PYTHONPATH=/opt/conda/lib/python3.11
 
 RUN wget https://github.com/gmarcais/Jellyfish/releases/download/v2.3.0/jellyfish-2.3.0.tar.gz && \
     tar -xvf jellyfish-2.3.0.tar.gz && \
@@ -41,4 +42,10 @@ ENV PKG_CONFIG_PATH=/jellyfish-2.3.0/
 
 RUN cd /jellyfish-2.3.0/swig/python && \
     python setup.py build && \
-    python setup.py install 
+    python setup.py install
+
+RUN pip install numpy && \
+    pip install matplotlib && \
+    pip install argparse 
+
+COPY AGG.py /usr/local/bin/

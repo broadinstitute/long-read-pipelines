@@ -102,3 +102,6 @@ workflows:
 - name: BandagePlotGraph
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BandagePlotGraph.wdl
+- name: ConvertToHailMTT2T
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ConvertToHailMTT2T.wdl
