@@ -40,7 +40,7 @@ workflow ConvertToHailMTT2T {
             reference = "chm13v2.0",
             ref_fasta = referencefa,
             ref_fai = referencefai,
-            
+
     }
 
     ##########
@@ -60,7 +60,7 @@ task preprocess {
 command {
     bcftools view -Oz -o tmp.vcf.gz ~{bcf}
     bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
-    tabix -p vcf whole_genome_sorted.vcf.gz
+    bcftools index --tbi --force whole_genome_sorted.vcf.gz
 
 
     
