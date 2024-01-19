@@ -912,7 +912,10 @@ task Align {
     }
 
     parameter_meta {
-        bam: "Input BAM file."
+        bam: {
+            desciption: "Input BAM file.",
+            localization_optional: true
+        }
         ref_fasta: "Input reference FASTA file."
         sample_name: "we always rely explicitly on input SM name"
         library: "this will override the LB: entry on the @RG line"
@@ -932,6 +935,7 @@ task Align {
         Boolean drop_per_base_N_pulse_tags
 
         String prefix = "out"
+        String disk_type = "HDD"
         RuntimeAttr? runtime_attr_override
     }
 
@@ -940,20 +944,23 @@ task Align {
 
     Boolean fix_library_entry = if defined(library) then true else false
 
-    Int disk_size = 1 + 10*ceil(size(bam, "GB") + size(ref_fasta, "GB"))
-    Int cpus = 16
-    Int mem = 96
+    String local_ubam = basename(bam)
 
     command <<<
         set -euxo pipefail
+        time \
+        gcloud storage cp ~{bam} ~{local_ubam}
 
-        pbmm2 align ~{bam} ~{ref_fasta} ~{prefix}.pre.bam \
+        pbmm2 align ~{local_ubam} \
+            ~{ref_fasta} \
+            ~{prefix}.pre.bam \
             --preset ~{map_preset} \
             ~{median_filter} \
             --sample ~{sample_name} \
             ~{extra_options} \
             --sort \
             --unmapped
+        rm ~{local_ubam}
 
         if ~{fix_library_entry}; then
             mv ~{prefix}.pre.bam ~{prefix}.pre.tmp.bam
@@ -983,6 +990,11 @@ task Align {
     }
 
     #########################
+
+    Int disk_size = 1 + 4*ceil(size(bam, "GB") + size(ref_fasta, "GiB"))
+    Int cpus = 16
+    Int mem = 96
+
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             mem,
@@ -996,7 +1008,7 @@ task Align {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
