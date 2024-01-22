@@ -4,7 +4,7 @@ import "../../../tasks/Utility/VariantUtils.wdl" as VU
 
 workflow MergePhasedVCF{
     meta{
-        description: "a workflow that get a bam file from a list of base caller"
+        description: "a workflow that get a vcf file from a list of perchromosome level vcf"
     }
     input{
         String SampleFolder
