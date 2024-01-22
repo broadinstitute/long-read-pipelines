@@ -39,6 +39,8 @@ task GetLengthsFromBam {
         cpu: 2
         memory: "8 GiB"
         disks: "local-disk ~{disk_sz} HDD"
+        preemptible_tries:  3
+        max_retries:        2
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.1"
     }
 }
@@ -80,6 +82,8 @@ task GetLengthsFromFastq {
         cpu: 2
         memory: "8 GiB"
         disks: "local-disk ~{disk_size} HDD"
+        preemptible_tries:  3
+        max_retries:        2
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.1"
     }
 }
@@ -144,6 +148,8 @@ task Dyst {
         cpu: 4
         memory: "20 GiB"
         disks: "local-disk 100 HDD"
+        preemptible_tries:  3
+        max_retries:        2
         docker: "us.gcr.io/broad-dsp-lrma/lr-dyst-peaker:0.0.2"
     }
 }
@@ -173,6 +179,8 @@ task Peaker {
 
     runtime {
         disks: "local-disk 100 HDD"
+        preemptible_tries:  3
+        max_retries:        2
         docker: "us.gcr.io/broad-dsp-lrma/lr-dyst-peaker:0.0.1"
     }
 }
@@ -197,6 +205,8 @@ task ReverseYield {
 
     runtime {
         disks: "local-disk 10 HDD"
+        preemptible_tries:  3
+        max_retries:        2
         docker: "us.gcr.io/broad-dsp-lrma/lr-dyst-peaker:0.0.2"
     }
 }
@@ -221,6 +231,8 @@ task Skewness {
 
     runtime {
         disks: "local-disk 10 HDD"
+        preemptible_tries:  3
+        max_retries:        2
         docker: "us.gcr.io/broad-dsp-lrma/lr-dyst-peaker:0.0.2"
     }
 }
