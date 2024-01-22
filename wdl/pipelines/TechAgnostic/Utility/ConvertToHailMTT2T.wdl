@@ -25,19 +25,20 @@ workflow ConvertToHailMTT2T {
     call FindFiles{input: sampleFolder = SampleFolder}
     scatter (bcf_file in FindFiles.vcfFiles){
         call preprocess{input: bcf = bcf_file, prefix = basename(bcf_file, ".bcf")}
+        call Hail.ConvertToHailMT as RunConvertToHailMT {
+            input:
+                gvcf = preprocess.vcf,
+                tbi = preprocess.tbi,
+                prefix = basename(preprocess.vcf, ".vcf.gz"),
+                outdir = outdir,
+                reference = "chm13v2.0",
+                ref_fasta = referencefa,
+                ref_fai = referencefai
+
+        }
     }
     
-    call Hail.ConvertToHailMT as RunConvertToHailMT {
-        input:
-            gvcf = preprocess.whole_genome_vcf,
-            tbi = preprocess.whole_genome_vcf_tbi
-            prefix = prefix,
-            outdir = outdir,
-            reference = "chm13v2.0",
-            ref_fasta = referencefa,
-            ref_fai = referencefai,
-
-    }
+    
 
     ##########
     # store the results into designated bucket
