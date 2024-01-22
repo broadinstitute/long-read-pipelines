@@ -18,9 +18,6 @@ workflows:
 - name: PBCCS10x
   subclass: wdl
   primaryDescriptorPath: /wdl/deprecated/PBCCS10x.wdl
-- name: PBCCSDemultiplex
-  subclass: wdl
-  primaryDescriptorPath: /wdl/deprecated/PBCCSDemultiplex.wdl
 - name: PBCCSDemultiplexWholeGenome
   subclass: wdl
   primaryDescriptorPath: /wdl/deprecated/PBCCSDemultiplexWholeGenome.wdl
