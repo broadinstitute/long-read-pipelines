@@ -10,7 +10,6 @@ workflow ConvertToHailMTT2T {
     }
     parameter_meta {
         whole_genome_vcf:       "VCF file"
-        whole_genome_vcf_tbi:   ".tbi index for VCF file"
         prefix:           "prefix for output Hail MatrixTable"
         gcs_out_root_dir: "GCS bucket in which to store the Hail MatrixTable"
     }
@@ -33,7 +32,7 @@ workflow ConvertToHailMTT2T {
     call Hail.ConvertToHailMT as RunConvertToHailMT {
         input:
             gvcf = preprocess.whole_genome_vcf,
-            tbi = whole_genome_vcf_tbi,
+            tbi = preprocess.whole_genome_vcf_tbi
             prefix = prefix,
             outdir = outdir,
             reference = "chm13v2.0",
