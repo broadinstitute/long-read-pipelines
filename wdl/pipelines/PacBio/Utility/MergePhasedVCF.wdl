@@ -12,11 +12,16 @@ workflow MergePhasedVCF{
         File reference_fasta_fai
     }
     call FindFiles{input: sampleFolder = SampleFolder}
+    call VU.CollectDefinitions as CD {
+      input:
+      vcfs = FindFiles.vcfFiles
+    }
     call VU.MergeAndSortVCFs as Merge {
       input:
       vcfs = FindFiles.vcfFiles,
       ref_fasta_fai = reference_fasta_fai,
-      prefix = Samplename
+      prefix = Samplename,
+      header_definitions_file = CD.union_definitions
     }
     
     output{
