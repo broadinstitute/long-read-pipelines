@@ -12,13 +12,17 @@ workflow MergePhasedVCF{
         File reference_fasta_fai
     }
     call FindFiles{input: sampleFolder = SampleFolder}
+    scatter (bcf_file in FindFiles.vcfFiles){
+        call preprocess{input: bcf = bcf_file}
+    }
+    
     call VU.CollectDefinitions as CD {
       input:
-      vcfs = FindFiles.vcfFiles
+      vcfs = preprocess.vcf
     }
     call VU.MergeAndSortVCFs as Merge {
       input:
-      vcfs = FindFiles.vcfFiles,
+      vcfs = preprocess.vcf,
       ref_fasta_fai = reference_fasta_fai,
       prefix = Samplename,
       header_definitions_file = CD.union_definitions
@@ -53,6 +57,33 @@ command {
 
     runtime {
         docker: "broadinstitute/gatk:4.4.0.0"
+        disks: "local-disk 100 HDD"
+    }
+}
+
+task preprocess {
+  input {
+    File bcf
+  }
+
+command {
+    bcftools view -Oz -o tmp.vcf.gz ~{bcf}
+    # bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
+    # bcftools index --tbi --force tmp.vcf.gz
+
+
+    
+  }
+
+  output {
+    # Output the list of .bam files
+    File vcf = "tmp.vcf.gz"
+    # File whole_genome_vcf_tbi = "tmp.vcf.gz.tbi"
+
+  }
+
+    runtime {
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
         disks: "local-disk 100 HDD"
     }
 }

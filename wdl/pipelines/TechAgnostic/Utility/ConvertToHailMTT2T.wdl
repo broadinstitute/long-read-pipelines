@@ -56,8 +56,8 @@ task preprocess {
 
 command {
     bcftools view -Oz -o tmp.vcf.gz ~{bcf}
-    bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
-    bcftools index --tbi --force whole_genome_sorted.vcf.gz
+    # bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
+    bcftools index --tbi --force tmp.vcf.gz
 
 
     
@@ -65,8 +65,8 @@ command {
 
   output {
     # Output the list of .bam files
-    File whole_genome_vcf = "whole_genome_sorted.vcf.gz"
-    File whole_genome_vcf_tbi = "whole_genome_sorted.vcf.gz.tbi"
+    File whole_genome_vcf = "tmp.vcf.gz"
+    File whole_genome_vcf_tbi = "tmp.vcf.gz.tbi"
 
   }
 
