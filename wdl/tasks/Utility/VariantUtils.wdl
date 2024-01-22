@@ -234,7 +234,7 @@ task CollectDefinitions {
 
         cat tmp*txt > easy.txt && rm tmp*txt
 
-        touch tmp.alt.txt tmp.ft.txt tmp.info.txt tmp.format.txt
+        touch tmp.ft.txt tmp.info.txt tmp.format.txt
         for vcf in ~{sep=' ' vcfs}; do
             # zgrep -F '##ALT=' "${vcf}" >> tmp.alt.txt
             zgrep -F '##FILTER=' "${vcf}" >> tmp.ft.txt
@@ -244,7 +244,7 @@ task CollectDefinitions {
         for txt in tmp*txt; do
             sort "${txt}" | uniq > "${txt}.union"
         done
-        cat tmp.alt.txt.union tmp.ft.txt.union tmp.info.txt.union tmp.format.txt.union > hard.txt
+        cat tmp.ft.txt.union tmp.info.txt.union tmp.format.txt.union > hard.txt
         cat easy.txt hard.txt > definitions.union.txt
     >>>
 
