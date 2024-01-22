@@ -13,7 +13,7 @@ workflow MergePhasedVCF{
     }
     call FindFiles{input: sampleFolder = SampleFolder}
     scatter (bcf_file in FindFiles.vcfFiles){
-        call preprocess{input: bcf = bcf_file}
+        call preprocess{input: bcf = bcf_file, prefix = basename(bcf_file)}
     }
     
     call VU.CollectDefinitions as CD {
@@ -64,10 +64,11 @@ command {
 task preprocess {
   input {
     File bcf
+    String prefix
   }
 
 command {
-    bcftools view -Oz -o tmp.vcf.gz ~{bcf}
+    bcftools view -Oz -o ~{prefix}.tmp.vcf.gz ~{bcf}
     # bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
     # bcftools index --tbi --force tmp.vcf.gz
 
@@ -77,7 +78,7 @@ command {
 
   output {
     # Output the list of .bam files
-    File vcf = "tmp.vcf.gz"
+    File vcf = "~{prefix}.tmp.vcf.gz"
     # File whole_genome_vcf_tbi = "tmp.vcf.gz.tbi"
 
   }
