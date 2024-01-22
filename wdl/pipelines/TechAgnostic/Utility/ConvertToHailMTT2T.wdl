@@ -9,9 +9,6 @@ workflow ConvertToHailMTT2T {
         description: "Convert a VCF to a Hail MatrixTable"
     }
     parameter_meta {
-        whole_genome_vcf:       "VCF file"
-        prefix:           "prefix for output Hail MatrixTable"
-        gcs_out_root_dir: "GCS bucket in which to store the Hail MatrixTable"
     }
 
     input {
@@ -24,11 +21,12 @@ workflow ConvertToHailMTT2T {
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/Hail/~{prefix}"
-    call preprocess{
-        input:
-            bcf = bcf
+
+    call FindFiles{input: sampleFolder = SampleFolder}
+    scatter (bcf_file in FindFiles.vcfFiles){
+        call preprocess{input: bcf = bcf_file, prefix = basename(bcf_file, ".bcf")}
     }
-    # Gather across multiple input gVCFs
+    
     call Hail.ConvertToHailMT as RunConvertToHailMT {
         input:
             gvcf = preprocess.whole_genome_vcf,
@@ -50,6 +48,32 @@ workflow ConvertToHailMTT2T {
     }
 }
 
+task FindFiles {
+  input {
+    String sampleFolder
+  }
+
+command {
+    # Use GSUtil to list all files in the given directory
+    gsutil ls "${sampleFolder}" > vcf_files.txt
+    # Filter the lines with ".bam" extension and store the result in "bam_files.txt"   
+    grep -E "\.bcf$" vcf_files.txt > output.txt
+
+    cat output.txt
+  }
+
+  output {
+    # Output the list of .bam files
+    Array[String] vcfFiles = read_lines("output.txt")
+
+  }
+
+    runtime {
+        docker: "broadinstitute/gatk:4.4.0.0"
+        disks: "local-disk 100 HDD"
+    }
+}
+
 task preprocess {
   input {
     File bcf
@@ -57,9 +81,9 @@ task preprocess {
   }
 
 command {
-    bcftools view -Oz -o ~{prefix}.vcf.gz ~{bcf}
+    bcftools view -Oz -o ~{prefix}.tmp.vcf.gz ~{bcf}
     # bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
-    bcftools index --tbi --force ~{prefix}.vcf.gz
+    bcftools index --tbi --force ~{prefix}.tmp.vcf.gz
 
 
     
@@ -67,8 +91,8 @@ command {
 
   output {
     # Output the list of .bam files
-    File whole_genome_vcf = "~{prefix}.vcf.gz"
-    File whole_genome_vcf_tbi = "~{prefix}.vcf.gz.tbi"
+    File vcf = "~{prefix}.tmp.vcf.gz"
+    File tbi = "~{prefix}.tmp.vcf.gz.tbi"
 
   }
 
