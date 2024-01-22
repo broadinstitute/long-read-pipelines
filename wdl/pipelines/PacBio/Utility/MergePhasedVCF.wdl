@@ -1,5 +1,5 @@
 version 1.0
-
+import "../../../tasks/Utility/VariantUtils.wdl" as VU
 
 
 workflow MergePhasedVCF{
@@ -9,12 +9,19 @@ workflow MergePhasedVCF{
     input{
         String SampleFolder
         String Samplename
+        File reference_fasta_fai
     }
     call FindFiles{input: sampleFolder = SampleFolder}
-    call MergeVcf{input: vcf_files = FindFiles.vcfFiles}
+    call VU.MergeAndSortVCFs as Merge {
+      input:
+      vcfs = FindFiles.vcfFiles,
+      ref_fasta_fai = reference_fasta_fai,
+      prefix = Samplename
+    }
     
     output{
-        File wholegenomevcf = MergeVcf.whole_genome_vcf
+        File wholegenomevcf = Merge.vcf
+        File wholegenometbi = Merge.tbi
     }
 }
 

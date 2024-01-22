@@ -105,3 +105,6 @@ workflows:
 - name: ConvertToHailMTT2T
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ConvertToHailMTT2T.wdl
+- name: MergePhasedVCF
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/MergePhasedVCF.wdl

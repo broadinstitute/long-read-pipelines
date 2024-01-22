@@ -6,17 +6,18 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 workflow ConvertToHailMTT2T {
 
     meta {
-        description: "Convert a gVCF to a Hail MatrixTable"
+        description: "Convert a VCF to a Hail MatrixTable"
     }
     parameter_meta {
-        phased_vcf:       "joint-called gVCF file"
-        phased_gvcf_tbi:   ".tbi index for joint-called gVCF file"
+        whole_genome_vcf:       "VCF file"
+        whole_genome_vcf_tbi:   ".tbi index for VCF file"
         prefix:           "prefix for output Hail MatrixTable"
         gcs_out_root_dir: "GCS bucket in which to store the Hail MatrixTable"
     }
 
     input {
-        File bcf_file
+        File whole_genome_vcf
+        File whole_genome_vcf_tbi
         File referencefa
         File referencefai
         String prefix
@@ -27,14 +28,10 @@ workflow ConvertToHailMTT2T {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/Hail/~{prefix}"
 
     # Gather across multiple input gVCFs
-    call preprocess {
-        input:
-            bcf = bcf_file
-    }
     call Hail.ConvertToHailMT as RunConvertToHailMT {
         input:
-            gvcf = preprocess.whole_genome_vcf,
-            tbi = preprocess.whole_genome_vcf_tbi,
+            gvcf = whole_genome_vcf,
+            tbi = whole_genome_vcf_tbi,
             prefix = prefix,
             outdir = outdir,
             reference = "chm13v2.0",
