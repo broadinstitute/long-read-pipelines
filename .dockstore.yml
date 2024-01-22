@@ -150,3 +150,6 @@ workflows:
 - name: ExpandedDrugResistanceMarkerAggregation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExpandedDrugResistanceMarkerAggregation.wdl
+- name: PBCCSDemultiplex
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBCCSDemultiplex.wdl
