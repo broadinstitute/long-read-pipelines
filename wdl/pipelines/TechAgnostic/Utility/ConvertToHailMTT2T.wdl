@@ -37,12 +37,6 @@ workflow ConvertToHailMTT2T {
 
         }
     }
-    
-    
-
-    ##########
-    # store the results into designated bucket
-    ##########
 
     output {
         String joint_mt = RunConvertToHailMT.gcs_path
@@ -50,24 +44,24 @@ workflow ConvertToHailMTT2T {
 }
 
 task FindFiles {
-  input {
-    String sampleFolder
-  }
+    input {
+        String sampleFolder
+    }
 
-command {
+    command {
     # Use GSUtil to list all files in the given directory
-    gsutil ls "${sampleFolder}" > vcf_files.txt
+        gsutil ls "${sampleFolder}" > vcf_files.txt
     # Filter the lines with ".bam" extension and store the result in "bam_files.txt"   
-    grep -E "\.bcf$" vcf_files.txt > output.txt
+        grep -E "\.bcf$" vcf_files.txt > output.txt
 
-    cat output.txt
-  }
+        cat output.txt
+    }
 
-  output {
+    output {
     # Output the list of .bam files
-    Array[String] vcfFiles = read_lines("output.txt")
+        Array[String] vcfFiles = read_lines("output.txt")
 
-  }
+    }
 
     runtime {
         docker: "broadinstitute/gatk:4.4.0.0"
@@ -76,26 +70,26 @@ command {
 }
 
 task preprocess {
-  input {
+    input {
     File bcf
     String prefix
-  }
+    }
 
-command {
-    bcftools view -Oz -o ~{prefix}.tmp.vcf.gz ~{bcf}
-    # bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
-    bcftools index --tbi --force ~{prefix}.tmp.vcf.gz
+    command {
+        bcftools view -Oz -o ~{prefix}.tmp.vcf.gz ~{bcf}
+        # bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
+        bcftools index --tbi --force ~{prefix}.tmp.vcf.gz
 
 
-    
-  }
+        
+    }
 
-  output {
+    output {
     # Output the list of .bam files
     File vcf = "~{prefix}.tmp.vcf.gz"
     File tbi = "~{prefix}.tmp.vcf.gz.tbi"
 
-  }
+    }
 
     runtime {
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
