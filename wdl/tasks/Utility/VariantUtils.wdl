@@ -236,7 +236,7 @@ task CollectDefinitions {
 
         touch tmp.alt.txt tmp.ft.txt tmp.info.txt tmp.format.txt
         for vcf in ~{sep=' ' vcfs}; do
-            zgrep -F '##ALT=' "${vcf}" >> tmp.alt.txt
+            # zgrep -F '##ALT=' "${vcf}" >> tmp.alt.txt
             zgrep -F '##FILTER=' "${vcf}" >> tmp.ft.txt
             zgrep -F '##INFO=' "${vcf}" >> tmp.info.txt
             zgrep -F '##FORMAT=' "${vcf}" >> tmp.format.txt
