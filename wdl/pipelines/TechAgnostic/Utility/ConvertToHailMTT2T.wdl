@@ -16,8 +16,7 @@ workflow ConvertToHailMTT2T {
     }
 
     input {
-        File whole_genome_vcf
-        File whole_genome_vcf_tbi
+        File bcf
         File referencefa
         File referencefai
         String prefix
@@ -26,11 +25,14 @@ workflow ConvertToHailMTT2T {
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/Hail/~{prefix}"
-
+    call preprocess{
+        input:
+            bcf = bcf
+    }
     # Gather across multiple input gVCFs
     call Hail.ConvertToHailMT as RunConvertToHailMT {
         input:
-            gvcf = whole_genome_vcf,
+            gvcf = preprocess.whole_genome_vcf,
             tbi = whole_genome_vcf_tbi,
             prefix = prefix,
             outdir = outdir,
@@ -52,12 +54,13 @@ workflow ConvertToHailMTT2T {
 task preprocess {
   input {
     File bcf
+    String prefix
   }
 
 command {
-    bcftools view -Oz -o tmp.vcf.gz ~{bcf}
+    bcftools view -Oz -o ~{prefix}.vcf.gz ~{bcf}
     # bcftools sort -o whole_genome_sorted.vcf.gz tmp.vcf.gz
-    bcftools index --tbi --force tmp.vcf.gz
+    bcftools index --tbi --force ~{prefix}.vcf.gz
 
 
     
@@ -65,8 +68,8 @@ command {
 
   output {
     # Output the list of .bam files
-    File whole_genome_vcf = "tmp.vcf.gz"
-    File whole_genome_vcf_tbi = "tmp.vcf.gz.tbi"
+    File whole_genome_vcf = "~{prefix}.vcf.gz"
+    File whole_genome_vcf_tbi = "~{prefix}.vcf.gz.tbi"
 
   }
 
