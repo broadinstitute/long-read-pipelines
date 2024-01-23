@@ -1181,7 +1181,16 @@
         top: -18px;
         left: -18px;
         width: 100vw;
+        z-index: 2;
         overflow-y: hidden;
+    }
+
+    #fastqc_cover {
+        position: absolute;
+        top: -18px;
+        left: -18px;
+        width:100vw;
+        z-index: 99;
     }
 
     /* * * * * * * * * OTHER * * * * * * * * * */
@@ -1587,7 +1596,9 @@
                     <script>
                         fastqc_frame.contentDocument.querySelector("div.main").style.height = "100vh";
                     </script>
-                    <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc={{ fastQC.fastQC }}></iframe>
+                    <div id="fastqc_cover">
+                        <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc={{ fastQC.fastQC }}></iframe>
+                    </div>
                 </div>
             </div>
         </div> <!-- fastqc_root -->

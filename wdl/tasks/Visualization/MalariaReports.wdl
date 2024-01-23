@@ -114,10 +114,13 @@ task RunReportScript {
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
 
     # Compute path for BAM files (coverage_dir) using fastqc_path if given
-    if(fastqc_path) {
-        String results_dir = sub(fastqc_path, "results\/.*", "")
-        String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
-        String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
+    String results_dir;
+    String coverage_dir;
+    String coverage_regex;
+    if (fastqc_path) {
+        results_dir = sub(fastqc_path, "results\/.*", "")
+        coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
+        coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
     }
 
 
