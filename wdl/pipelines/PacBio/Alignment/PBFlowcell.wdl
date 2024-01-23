@@ -214,7 +214,7 @@ workflow PBFlowcell {
     call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = reads_fastq }
 
     # Merge the corrected per-shard BAM/report into one, corresponding to one raw input BAM
-    call Utils.MergeBams as MergeAlignedReads { input: bams = aligned_reads_bam, prefix = PU }
+    call Utils.MergeBams as MergeAlignedReads { input: bams = aligned_reads_bam, prefix = basename(bam, ".bam") }
     call PB.PBIndex as IndexAlignedReads { input: bam = MergeAlignedReads.merged_bam }
 
     call AM.AlignedMetrics as PerFlowcellMetrics {
