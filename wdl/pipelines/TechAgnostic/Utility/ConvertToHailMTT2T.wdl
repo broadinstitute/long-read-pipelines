@@ -28,7 +28,7 @@ workflow ConvertToHailMTT2T {
             tbi = whole_genome_vcf_tbi,
             prefix = prefix,
             outdir = outdir,
-            reference = "chm13v2.0",
+            reference = "chm13v2",
             ref_fasta = referencefa,
             ref_fai = referencefai
 
