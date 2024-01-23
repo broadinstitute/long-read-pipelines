@@ -14,8 +14,6 @@ workflow ConvertToHailMTT2T {
     input {
         File whole_genome_vcf
         File whole_genome_vcf_tbi
-        File referencefa
-        File referencefai
         String prefix
         String gcs_out_root_dir
     }
@@ -27,10 +25,7 @@ workflow ConvertToHailMTT2T {
             gvcf = whole_genome_vcf,
             tbi = whole_genome_vcf_tbi,
             prefix = prefix,
-            outdir = outdir,
-            reference = "chm13v2",
-            ref_fasta = referencefa,
-            ref_fai = referencefai
+            outdir = outdir
 
     }
     
