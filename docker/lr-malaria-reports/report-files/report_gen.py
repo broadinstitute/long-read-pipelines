@@ -25,7 +25,7 @@ import jinja2
 import io
 from io import StringIO
 import base64
-
+import urllib.parse
 
 # Argument Parsing
 import argparse
@@ -464,16 +464,19 @@ def create_qscore_plot():
 '''
 FastQC Report
 '''
-def read_fastqc(file):
+def read_fastqc(directory):
     '''
     Function to read HTML from FastQC report as string to pass to Jinja template IFrame
     '''
-    if(file):
-        with open(file, "r", encoding="utf-8") as f:
-            html = f.read()
+    if(os.path.exists(directory)):
+        # There should only be one file in the directory (report-files/data/fastqc)
+        for file in os.listdir(directory):
+            print(f"{directory} + {file}")
+            with open(os.path.join(directory, file), "r", encoding="utf-8") as f:
+                html = f.read()
     else:
         html = None
-
+    
     return html
 
 
@@ -695,7 +698,8 @@ if __name__ == '__main__':
     coverage_plot.savefig("coverage_plot.jpeg")
     
     # third : fastqc_page
-    fastqc_html = read_fastqc(fastqc_path)
+    fastqc_html = read_fastqc("/report-files/data/fastqc/")
+    print(fastqc_html[:200]) # debug
 
     # Create summary, analysis, and fastQC objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)

@@ -54,7 +54,7 @@ task RunReportScript {
 
         # Coverage Plot
         # coverage_dir: "directory of BAM files for coverage plot generation"
-        fastqc_file: "directory of fastqc_report used for finding BAM files"
+        fastqc_path: "directory of fastqc_report used for finding BAM files"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
     }
 
@@ -113,34 +113,31 @@ task RunReportScript {
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
 
-    # Compute path for BAM files (coverage_dir) using fastqc_path if given
-    String results_dir;
-    String coverage_dir;
-    String coverage_regex;
-    if (fastqc_path) {
-        results_dir = sub(fastqc_path, "results\/.*", "")
-        coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
-        coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
-    }
-
-
     # Wrap location in quotes in case it has spaces
     String wrap_location = "'~{location}'"
-    
 
+    String results_dir = if (defined(fastqc_path)) then sub(select_first([fastqc_path]), "results\/.*", "") else ""
+    String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
+    String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
+    
     command <<<
         set -euxo
         pwd
         ls
-        echo "BEGIN COMMAND"
 
+        echo "RETRIEVING BAM FILES..."
         echo ~{coverage_dir}
         mkdir -p /report-files/data/coverage
         gsutil ls ~{coverage_regex}  > filelist.txt
         echo "COPYING..."
         cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
+
+        echo "RETRIEVING FASTQC REPORT..."
+        mkdir -p /report-files/data/fastqc
+        echo ~{fastqc_path}
+        gsutil cp ~{fastqc_path} /report-files/data/fastqc
         
-        echo "CREATING REPORT..."
+        echo "CREATING SUMMARY REPORT..."
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
@@ -168,9 +165,8 @@ task RunReportScript {
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
-            --coverage_bin_size ~{coverage_bin_size} \
-            --fastqc_path ~{default="None" fastqc_path}
-        echo "REPORT GENERATED!"
+            --coverage_bin_size ~{coverage_bin_size}
+        echo "DONE!"
     >>>
 
     output {

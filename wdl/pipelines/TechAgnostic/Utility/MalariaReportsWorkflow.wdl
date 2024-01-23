@@ -107,8 +107,9 @@ workflow GenerateMalariaReports {
         # Coverage Plot -- incomplete  
         File? fastqc_path
         Int? coverage_bin_size  
-    }
 
+    }
+    
     call MRS.RunReportScript as RunReportScript { 
         input: 
             sample_name = sample_name,
@@ -139,7 +140,6 @@ workflow GenerateMalariaReports {
             average_identity = average_identity,
             fastqc_path = fastqc_path,
             coverage_bin_size = coverage_bin_size,
-            fastqc_file = fastqc_file
     }
 
     output {
