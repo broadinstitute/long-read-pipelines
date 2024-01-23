@@ -1007,11 +1007,14 @@ task Align {
 task PBIndex {
 
     meta {
-        description: "Index a BAM file."
+        description: "Index a PacBio long reads BAM file to create the pbi."
     }
 
     parameter_meta {
-        bam: "Input BAM file."
+        bam: {
+            desciption: "Input BAM file.",
+            localization_optional: true
+        }
         runtime_attr_override: "Override default runtime attributes."
     }
 
@@ -1021,35 +1024,39 @@ task PBIndex {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 2*ceil(size(bam, "GB"))
+    String base = basename(bam)
 
     command <<<
         set -euxo pipefail
 
-        mv ~{bam} ~{basename(bam)}
+        time \
+        gcloud storage cp ~{bam} ~{base}
 
-        pbindex ~{basename(bam)}
+        pbindex ~{base}
     >>>
 
     output {
-        File pbi = "~{basename(bam)}.pbi"
+        File pbi = "~{base}.pbi"
     }
 
     #########################
+
+    Int disk_size = 10 + ceil(size(bam, "GB"))
+
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
+        cpu_cores:          2,
         mem_gb:             4,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
+        preemptible_tries:  1,
+        max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
