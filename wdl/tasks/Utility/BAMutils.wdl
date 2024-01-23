@@ -282,7 +282,6 @@ task ValidateSamFile {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = ceil(size(bam, "GiB")) + 50
     String output_basename = basename(basename(bam, ".bam"), ".cram")
     String output_name = "${output_basename}_${validation_mode}.txt"
 
@@ -307,9 +306,12 @@ task ValidateSamFile {
     }
 
     #########################
+
+    Int disk_size = ceil(size(bam, "GiB")) + 10
+
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             8,
+        mem_gb:             4,
         disk_gb:            disk_size,
         preemptible_tries:  2,
         max_retries:        1,
@@ -1205,7 +1207,7 @@ task DeduplicateQuerynameSortedBam {
 task BamToFastq {
     meta {
         description : "Convert a long reads BAM file to a fastq file."
-        warn: "Please do not include 'RG' in tags_to_preserve, as that's automatically saved"
+        warn: "Does not work for pair-end reads. Please do not include 'RG' in tags_to_preserve, as that's automatically saved"
     }
 
     parameter_meta {
@@ -1262,17 +1264,10 @@ task BamToFastq {
         samtools fastq \
             -@1 \
             -t \
+            ~{true='-T ' false =' ' save_all_tags} ~{true="' '" false =' ' save_all_tags} \
+            ~{true='-T ' false =' ' custom_tags_to_preserve} ~{sep=',' tags_to_preserve} \
             -0 ~{prefix}.fq.gz \
             ~{local_bam}
-
-        # also using pigz to enable parallel compression
-        time \
-        samtools fastq \
-            ~{true='-T  ' false =' ' save_all_tags} \
-            ~{true='-T ' false =' ' custom_tags_to_preserve} ~{sep=',' tags_to_preserve} \
-            ~{local_bam} \
-        | pigz \
-        > ~{prefix}.fq.gz
     >>>
 
     #########################
@@ -1280,7 +1275,7 @@ task BamToFastq {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             8,
+        mem_gb:             4,
         disk_gb:            disk_size,
         preemptible_tries:  2,
         max_retries:        1,
@@ -1489,9 +1484,6 @@ task SamtoolsReset {
 
     String prefix = basename(bam, ".bam")
 
-    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 1+10*ceil(size([bam], "GB"))
-    String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
-
     String base = basename(bam, ".bam")
     String local_bam = "/cromwell_root/~{base}.bam"
 
@@ -1500,9 +1492,9 @@ task SamtoolsReset {
 
         time gcloud storage cp ~{bam} ~{local_bam}
 
-        samtools view -@1 ~{local_bam} | grep -v "^@" | awk -F '\t' '{print $2}' | sort | uniq -c > orignal.SAM-flag.stats.txt &
+        samtools view ~{local_bam} | grep -v "^@" | awk -F '\t' '{print $2}' | sort | uniq -c > orignal.SAM-flag.stats.txt &
 
-        samtools reset -@3 \
+        samtools reset -@4 \
             --remove-tag ~{sep=',' tags_to_drop} \
             -o ~{prefix}.unaligned.bam \
             ~{local_bam}
@@ -1510,9 +1502,11 @@ task SamtoolsReset {
     >>>
 
     #########################
+    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 10+4*ceil(size(bam, "GiB"))
+    String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             16,
+        cpu_cores:          6,
+        mem_gb:             10,
         disk_gb:            disk_size,
         preemptible_tries:  2,
         max_retries:        1,
