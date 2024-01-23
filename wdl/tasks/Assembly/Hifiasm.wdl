@@ -69,14 +69,16 @@ task AssembleForHaplotigs {
     }
 
     #########################
-    Int proposed_memory = 4 * ceil(size(reads, "GB"))
-    Int memory = if proposed_memory < 96 then 96 else proposed_memory  # this 96 magic number is purely empirical
+    Int min_memory = 128 # this min_memory magic number is purely empirical
+    Int proposed_memory = 2 * ceil(size(reads, "GiB"))
+    Int memory = if proposed_memory < min_memory then min_memory else if proposed_memory > 512 then 512 else proposed_memory
     Int n = memory / 4  # this might be an odd number
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
 
-    Int min_disk = 75
-    Int proposed_disk = 5 * ceil(size(reads, "GB"))
+    Int min_disk = 50
+    Int half_reads_sz = (1 + ceil(size(reads, "GiB")))/2
+    Int proposed_disk = 6 * half_reads_sz # a trick to do 3 times the reads file size, yet make sure it is even
     Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
     RuntimeAttr default_attr = object {
@@ -84,7 +86,7 @@ task AssembleForHaplotigs {
         mem_gb:             memory,
         disk_gb:            disk_size,
         preemptible_tries:  0,  # don't bother with premption on GCP with resource request + the expected long run, you'll end up waiting longer & paying more because GCP will prempt you anyway
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -156,14 +158,16 @@ task AssembleForAltContigs {
     }
 
     #########################
-    Int proposed_memory = 4 * ceil(size(reads, "GB"))
-    Int memory = if proposed_memory < 96 then 96 else if proposed_memory > 512 then 512 else proposed_memory # this 96 magic number is purely empirical
+    Int min_memory = 128 # this min_memory magic number is purely empirical
+    Int proposed_memory = 2 * ceil(size(reads, "GiB"))
+    Int memory = if proposed_memory < min_memory then min_memory else if proposed_memory > 512 then 512 else proposed_memory
     Int n = memory / 4  # this might be an odd number
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
 
-    Int min_disk = 75
-    Int proposed_disk = 5 * ceil(size(reads, "GB"))
+    Int min_disk = 50
+    Int half_reads_sz = (1 + ceil(size(reads, "GiB")))/2
+    Int proposed_disk = 6 * half_reads_sz # a trick to do 3 times the reads file size, yet make sure it is even
     Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
     RuntimeAttr default_attr = object {
@@ -171,7 +175,7 @@ task AssembleForAltContigs {
         mem_gb:             memory,
         disk_gb:            disk_size,
         preemptible_tries:  0, # don't bother with premption on GCP with resource request + the expected long run, you'll end up waiting longer & paying more because GCP will prempt you anyway
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
