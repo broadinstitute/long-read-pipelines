@@ -90,7 +90,7 @@ task FinalizeToDir {
 
     String gcs_output_dir = sub(outdir, "/+$", "")
 
-    Boolean fail = if(defined(file_names)) then length(select_first([file_names])) == length(files) else false
+    Boolean fail = if(defined(file_names)) then length(select_first([file_names])) != length(files) else false
     # this variable is defined because of meta-programing:
     # Cromwell generates the script to be executed at runtime (duing the run of the workflow),
     # but also at "compile time" when looked from the individual task perspective--the task is "compiled" right before it is run.
