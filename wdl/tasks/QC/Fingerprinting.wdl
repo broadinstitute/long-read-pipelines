@@ -243,9 +243,10 @@ task ExtractRelevantGenotypingReads {
     }
 
     ###################
+    Int mem = if (size(aligned_bam) > 80) then 16 else 8  # 80 is arbitrary
     RuntimeAttr default_attr = object {
         cpu_cores:             4,
-        mem_gb:                8,
+        mem_gb:                mem,
         disk_gb:               50,
         preemptible_tries:     1,
         max_retries:           1,
