@@ -631,7 +631,7 @@ task ReadMetrics {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GB")) + 20
 
     command <<<
         set -euxo pipefail
@@ -655,10 +655,10 @@ task ReadMetrics {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             50,
+        cpu_cores:          4,
+        mem_gb:             90,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
