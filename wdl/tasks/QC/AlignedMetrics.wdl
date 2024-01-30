@@ -24,9 +24,10 @@ workflow AlignedMetrics {
         File ref_dict
 
         String? gcs_output_dir
+        RuntimeAttr? runtime_attr_override
     }
 
-    call ReadMetrics as AlignedReadMetrics { input: bam = aligned_bam }
+    call ReadMetrics as AlignedReadMetrics { input: bam = aligned_bam, runtime_attr_override = runtime_attr_override}
 
     call MakeChrIntervalList { input: ref_dict = ref_dict }
 
