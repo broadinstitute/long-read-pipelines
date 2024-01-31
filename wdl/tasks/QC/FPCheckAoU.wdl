@@ -12,6 +12,7 @@ workflow FPCheckAoU {
     parameter_meta {
         aligned_bam:        "GCS path to aligned BAM file, supposed to be of the same sample as from the fingerprinting (FP) VCF"
         tech:               "The technology used to generate this BAM. Currently, the following values are accepted: [ONT, Sequel, Revio]."
+        force:              "If true, will force run the fingerprinting program, and the workflow may fail for various reasons; otherwise, if the BAM is too small, it will automatically fail this QC check."
 
         fp_vcf_store:       "Name of the bucket and prefix holding the fingerprint VCFs."
         fp_sample_id:       "UUID of the sample at the fingerprint store, used to fetch the fingerprinting VCF"
@@ -38,6 +39,8 @@ workflow FPCheckAoU {
 
         File ref_specific_haplotype_map
 
+        Boolean force = false
+
         Float lod_pass_threshold =  6.0
         Float lod_fail_threshold = -3.0
     }
@@ -51,13 +54,13 @@ workflow FPCheckAoU {
     }
 
     # 1X coverage ~= 1.5GiB (Revio); 2.3GiB (Sequel); 2.8GiB (ONT)
-    # below 0.5X, we define the bam as too small to draw a conclusion on
+    # below 0.5X, we define the bam as too small to draw a conclusion on, unless we're forced to run the program
     Map[String, Int] teeny_bam_def_sz = {"ONT":    1400,
                                          "Sequel": 1650,
                                          "Revio":   750}
 
     Int bam_sz_mb = ceil(size(aligned_bam, "MiB"))
-    if (bam_sz_mb >= teeny_bam_def_sz[tech]) {
+    if (bam_sz_mb >= teeny_bam_def_sz[tech] || force) {
         ##### Prep work
         call ResolveFPVCFPath {input: fp_vcf_store = fp_vcf_store, fp_sample_id = fp_sample_id}
         call ReheaderFullGRCh38VCFtoNoAlt {input: full_GRCh38_vcf = ResolveFPVCFPath.fp_vcf}

@@ -11,7 +11,9 @@ workflow VerifyBamFingerprint {
     }
 
     parameter_meta {
-        tech: "The technology used to generate this BAM. Currently, the following values are accepted: [ONT, Sequel, Revio]."
+        tech:  "The technology used to generate this BAM. Currently, the following values are accepted: [ONT, Sequel, Revio]."
+
+        force: "If true, will force run the fingerprinting program, and the workflow may fail for various reasons; otherwise, if the BAM is too small, it will automatically fail this QC check."
 
         fp_vcf_store: "GCS storage bucket and folder where the fingperprint VCF files are stored."
         fp_sample_id: "sample id of the data at the storage; CRITICAL: it's assumsed that the fingerprint VCF file follow the naming convention that start with this sample id."
@@ -31,6 +33,7 @@ workflow VerifyBamFingerprint {
 
         File ref_specific_haplotype_map
 
+        Boolean force = false
         Float lod_pass_threshold =  6.0
         Float lod_fail_threshold = -3.0
     }
@@ -44,9 +47,11 @@ workflow VerifyBamFingerprint {
         input:
             aligned_bam = aligned_bam,
             aligned_bai = aligned_bai,
+            tech = tech,
             fp_vcf_store = fp_vcf_store,
             fp_sample_id = fp_sample_id,
             ref_specific_haplotype_map = ref_specific_haplotype_map,
+            force = force,
             lod_pass_threshold = lod_pass_threshold,
             lod_fail_threshold = lod_fail_threshold
     }
