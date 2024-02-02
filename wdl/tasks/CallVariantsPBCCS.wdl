@@ -247,6 +247,9 @@ workflow CallVariants {
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
         }
+        File use_this_pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
+        File use_this_pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
+        Array[File?] use_this_pbsv_sig = select_first([RunPBSV.svsig, [PBSVslow.svsig]])
 
         call Sniffles2.SampleSV as Sniffles2SV {
             input:
@@ -264,12 +267,12 @@ workflow CallVariants {
     }
 
     output {
-        File? sniffles_vcf = select_first([ZipAndIndexSnifflesVCF.vcfgz])
-        File? sniffles_tbi = select_first([ZipAndIndexSnifflesVCF.tbi])
-        File? sniffles_snf = select_first([Sniffles2SV.snf])
-        File? pbsv_vcf = select_first([MergePBSVVCFs.vcf, ZipAndIndexPBSV.vcfgz])
-        File? pbsv_tbi = select_first([MergePBSVVCFs.tbi, ZipAndIndexPBSV.tbi])
-        Array[File?]? pbsv_sig = select_first([RunPBSV.svsig, [PBSVslow.svsig]])
+        File? sniffles_vcf = ZipAndIndexSnifflesVCF.vcfgz
+        File? sniffles_tbi = ZipAndIndexSnifflesVCF.tbi
+        File? sniffles_snf = Sniffles2SV.snf
+        File? pbsv_vcf = use_this_pbsv_vcf
+        File? pbsv_tbi = use_this_pbsv_tbi
+        Array[File?]? pbsv_sig = use_this_pbsv_sig
 
         File? clair3_vcf = MergeAndSortClairVCFs.vcf
         File? clair3_tbi = MergeAndSortClairVCFs.tbi
