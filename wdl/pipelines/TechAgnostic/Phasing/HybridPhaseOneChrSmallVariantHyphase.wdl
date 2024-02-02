@@ -33,6 +33,8 @@ workflow HybridPhase {
 
         File wholegenome_joint_vcf
         File wholegenome_joint_vcf_tbi
+        File wholegenome_joint_sv
+        File wholegenome_joint_sv_tbi
         File reference
         File reference_index
         File genetic_mapping_tsv_for_shapeit4
@@ -48,18 +50,25 @@ workflow HybridPhase {
     Int data_length = length(wholegenome_bams_from_all_samples)
     Array[Int] indexes= range(data_length)
 
-    call VU.SubsetVCF as SubsetSNPs { input:
+    call VU.SubsetVCF as SubsetSNPsJoint { input:
             vcf_gz = wholegenome_joint_vcf,
             vcf_tbi = wholegenome_joint_vcf_tbi,
             locus = chromosome
         }
+
+    call VU.SubsetVCF as SubsetSVsJoint { input:
+        vcf_gz = wholegenome_joint_sv,
+        vcf_tbi = wholegenome_joint_sv_tbi,
+        locus = chromosome
+    }
+
     scatter (idx in indexes)  {
         File all_chr_bam = wholegenome_bams_from_all_samples[idx]
         File all_chr_bai = wholegenome_bais_from_all_samples[idx]
         # File pbsv_vcf = wholegenome_sv_vcf[idx]
         # File pbsv_vcf_tbi = wholegenome_sv_vcf_tbi[idx]
 
-        ####### Subset Bam and SVs####
+        ####### Subset Bam####
         call U.SubsetBam as SubsetBam { input:
             bam = all_chr_bam,
             bai = all_chr_bai,
@@ -80,37 +89,44 @@ workflow HybridPhase {
         String sample_id = InferSampleName.sample_name
 
         call SplitJointCallbySample.SplitVCFbySample as SP { input:
-            joint_vcf = SubsetSNPs.subset_vcf,
+            joint_vcf = SubsetSNPsJoint.subset_vcf,
             region = chromosome,
             samplename = sample_id
         }
-        call Hiphase.HiphaseSNPs as HP{ input:
-            bam = SubsetBam.subset_bam,
-            bai = SubsetBam.subset_bai,
-            unphased_snp_vcf = SP.single_sample_vcf,
-            unphased_snp_tbi = SP.single_sample_vcf_tbi,            
-            ref_fasta = reference,
-            ref_fasta_fai = reference_index,
+
+        call SplitJointCallbySample.SplitVCFbySample as SV_split { input:
+            joint_vcf = SubsetSVsJoint.subset_vcf,
+            region = chromosome,
             samplename = sample_id
         }
-        # call Hiphase.HiphaseSVs as HP { input:
+
+        # call Hiphase.HiphaseSNPs as HP{ input:
         #     bam = SubsetBam.subset_bam,
         #     bai = SubsetBam.subset_bai,
         #     unphased_snp_vcf = SP.single_sample_vcf,
-        #     unphased_snp_tbi = SP.single_sample_vcf_tbi,
-        #     unphased_sv_vcf = SubsetSVs.subset_vcf,
-        #     unphased_sv_tbi = SubsetSVs.subset_tbi,
+        #     unphased_snp_tbi = SP.single_sample_vcf_tbi,            
         #     ref_fasta = reference,
         #     ref_fasta_fai = reference_index,
         #     samplename = sample_id
-
         # }
+        call Hiphase.HiphaseSVs as HP_SV { input:
+            bam = SubsetBam.subset_bam,
+            bai = SubsetBam.subset_bai,
+            unphased_snp_vcf = SP.single_sample_vcf,
+            unphased_snp_tbi = SP.single_sample_vcf_tbi,
+            unphased_sv_vcf = SV_split.single_sample_vcf,
+            unphased_sv_tbi = SV_split.single_sample_vcf_tbi,
+            ref_fasta = reference,
+            ref_fasta_fai = reference_index,
+            samplename = sample_id
+
+        }
     }
     
     ### phase small variants as scaffold  
     call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
-        vcf_input = HP.phased_vcf,
-        tbi_input = HP.phased_vcf_tbi,
+        vcf_input = HP_SV.phased_snp_vcf,
+        tbi_input = HP_SV.phased_snp_vcf_tbi,
         pref = prefix
     }
     
@@ -125,24 +141,26 @@ workflow HybridPhase {
         input: outdir = gcs_out_root_dir, file = Shapeit4scaffold.scaffold_vcf
     }
     ##### phase structural variants
-    # call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
-    #     vcf_input = HP.phased_sv_vcf,
-    #     tbi_input = HP.phased_sv_vcf_tbi,
-    #     pref = prefix
-    # }
-    # call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
-    #     vcf_input = MergeAcrossSamplesSVs.merged_vcf,
-    #     vcf_index = MergeAcrossSamplesSVs.merged_tbi,
-    #     scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
-    #     mappingfile = genetic_mapping_dict[chromosome],
-    #     region = chromosome,
-    #     num_threads = num_t
-    # }
-    # call FF.FinalizeToFile as FinalizeSVs {
-    #     input: outdir = gcs_out_root_dir, file = Shapeit4SVphase.final_phased_vcf
-    # }
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
+        vcf_input = HP_SV.phased_sv_vcf,
+        tbi_input = HP_SV.phased_sv_vcf_tbi,
+        pref = prefix
+    }
+    call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
+        vcf_input = MergeAcrossSamplesSVs.merged_vcf,
+        vcf_index = MergeAcrossSamplesSVs.merged_tbi,
+        scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
+        mappingfile = genetic_mapping_dict[chromosome],
+        region = chromosome,
+        num_threads = num_t
+    }
+    call FF.FinalizeToFile as FinalizeSVs {
+        input: outdir = gcs_out_root_dir, file = Shapeit4SVphase.final_phased_vcf
+    }
+
     output{
-        File shapeit4scaffold = Shapeit4scaffold.scaffold_vcf
+        File snp_shapeit4scaffold = Shapeit4scaffold.scaffold_vcf
+        File sv_shapeit4scaffold = Shapeit4SVphase.final_phased_vcf
         File resource = Shapeit4scaffold.resouce_monitor_log
         
 
