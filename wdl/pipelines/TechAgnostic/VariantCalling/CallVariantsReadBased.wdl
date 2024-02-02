@@ -28,24 +28,8 @@ workflow CallVariants {
         model_for_dv_andor_pepper: "model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
 
         ref_map_file: "table indicating reference sequence and auxillary file locations"
-        ref_scatter_interval_list_locator: "A file holding paths to interval_list files, used for custom sharding the of the input BAM; when not provided, will shard WG by contig (possibly slower)"
-        ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
-
-        phase_and_tag: "if turned on, small variants will be phased using both WhatsHap and Margin, then the BAM will be haplotagged with either the output of WhatsHap or Margin (depending on use_margin_for_tagging); then the haplotagged BAM will be used for calling phased-SV again with Sniffles2. Obviously, this prolongs the runtime significantly. Has no effect on ONT data on pores older than R10.4."
-
-        call_svs: "Call structural variants or not"
-        minsvlen: "Minimum SV length in bp; only affects Sniffles 2 calls."
-        pbsv_discover_per_chr: "Run the discover stage of PBSV per chromosome"
-
-        call_small_variants: "Call small variants or not"
-        run_clair3: "to turn on Clair3 analysis or not (non-trivial increase in cost and runtime)"
-        use_margin_for_tagging: "if false, will use margin-phased small-variant VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
-        haploid_contigs: "Optimization since DV 1.6 to improve calling on haploid contigs (e.g. human allosomes); see DV github page for more info."
-        par_regions_bed: "The pseudoautosomal (PAR) regions of the human allosomes in BED format."
-
-        dv_threads: "number of threads for DeepVariant"
-        dv_memory:  "memory for DeepVariant"
-        use_gpu: "to use GPU acceleration or not on DeepVariant"
+        small_variant_calling_options_json: "a json file holding config for small variant calling (see struct SmallVarJobConfig in CallSmallVariants.wdl for detail; when omitted, will skip small variant calling"
+        sv_calling_options_json: "a json file holding config for SV calling (see struct SVCallingConfig in CallStructuralVariants.wdl for detail; when omitted, will skip SV calling"
 
         # outputs
         haplotagged_bam: "BAM haplotagged using a small variant single-sample VCF."
@@ -88,32 +72,14 @@ workflow CallVariants {
 
         # reference-specific
         File ref_map_file
-        File? ref_scatter_interval_list_locator
-        File? ref_scatter_interval_list_ids
 
-        # sv-specific args
-        Boolean call_svs
-        Boolean pbsv_discover_per_chr
-        Int minsvlen = 20
+        File? small_variant_calling_options_json
+        File? sv_calling_options_json
 
-        # smallVar-specific args
-        Boolean call_small_variants
-        Boolean run_clair3
-        Boolean use_margin_for_tagging
-        String? haploid_contigs
-        File? par_regions_bed
-
-        # phasing and read-haplotaging desired or not
-        Boolean phase_and_tag
-
-        # optimization, balancing between throughput, wallclock time, and cost
-        Int dv_threads
-        Int dv_memory
-        Boolean use_gpu = false
         Array[String] gcp_zones = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
     }
 
-    if ((!call_svs) && (!call_small_variants)) {
+    if ((!defined(sv_calling_options_json)) && (!defined(small_variant_calling_options_json))) {
         call Utils.StopWorkflow { input: reason = "Why are you calling me if your want neither small variants nor SVs?"}
     }
 
@@ -131,7 +97,9 @@ workflow CallVariants {
     ######################################################################
     # Block for small variants handling
     ######################################################################
-    if (call_small_variants) {
+    if (defined(small_variant_calling_options_json)) {
+
+        SmallVarJobConfig snp_options = read_json(select_first([small_variant_calling_options_json]))
 
         call CallSmallVariants.Work as SmallVarJob {
             input:
@@ -145,22 +113,22 @@ workflow CallVariants {
                 is_r10_4_pore_or_later = is_r10_4_pore_or_later,
                 model_for_dv_andor_pepper = model_for_dv_andor_pepper,
 
-                ref_map = ref_map,
-                ref_scatter_interval_list_locator = ref_scatter_interval_list_locator,
-                ref_scatter_interval_list_ids = ref_scatter_interval_list_ids,
-
-                run_clair3 = run_clair3,
-
-                phase_and_tag = phase_and_tag,
-                use_margin_for_tagging = use_margin_for_tagging,
-
-                dv_threads = dv_threads,
-                dv_memory = dv_memory,
-                use_gpu = use_gpu,
-                zones = wdl_parsable_zones,
-
                 gcs_variants_out_dir = sub(gcs_out_dir, "/$", "") + "/variants/small",
-                gcs_tagged_bam_out_dir = sub(gcs_out_dir, "/$", "") + "/alignments"
+                gcs_tagged_bam_out_dir = sub(gcs_out_dir, "/$", "") + "/alignments",
+
+                ref_map_file = ref_map_file,
+
+                run_clair3 = snp_options.run_clair3,
+
+                phase_and_tag = snp_options.phase_and_tag,
+                use_margin_for_tagging = snp_options.use_margin_for_tagging,
+
+                haploid_contigs = snp_options.haploid_contigs,
+
+                dv_threads = snp_options.dv_threads,
+                dv_memory = snp_options.dv_memory,
+                use_gpu = snp_options.use_gpu,
+                zones = wdl_parsable_zones
         }
     }
 
@@ -168,7 +136,10 @@ workflow CallVariants {
     # Block for SV handling
     ######################################################################
     String sv_dir = sub(gcs_out_dir, "/$", "") + "/variants/sv"
-    if (call_svs) {
+    if (defined(sv_calling_options_json)) {
+
+        SVCallingConfig sv_options = read_json(select_first([sv_calling_options_json]))
+
         call CallStructuralVariants.Work as SVjob {
             input:
                 is_hifi = !is_ont,
@@ -180,34 +151,39 @@ workflow CallVariants {
 
                 per_chr_bam_bai_and_id = SplitBamByChr.id_bam_bai_of_shards,
 
-                ref_map = ref_map,
+                gcs_out_dir = sv_dir,
 
-                minsvlen = minsvlen,
+                ref_map_file = ref_map_file,
 
-                pbsv_discover_per_chr = pbsv_discover_per_chr,
+                minsvlen = sv_options.min_sv_len,
+                pbsv_discover_per_chr = sv_options.pbsv_discover_per_chr,
 
-                zones = wdl_parsable_zones,
-                gcs_out_dir = sv_dir
+                zones = wdl_parsable_zones
         }
     }
 
     ######################################################################
     # Experiment with Sniffles-2 phased SV calling
     ######################################################################
-    if (call_svs && call_small_variants && phase_and_tag) {  # but do so lazily
-        File m = select_first([SmallVarJob.haplotagged_bam])
-        File i = select_first([SmallVarJob.haplotagged_bai])
-        call Utils.InferSampleName { input: bam = m, bai = i }
-        call Sniffles2.SampleSV as SnifflesPhaseSV {
-            input:
-                bam = m, bai = i, sample_id = InferSampleName.sample_name,
-                prefix = prefix, tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-                minsvlen = minsvlen,
-                phase_sv = true
+    Boolean call_both = defined(sv_calling_options_json) && defined(small_variant_calling_options_json)
+    if (call_both) {  # but do so lazily
+        SmallVarJobConfig opt_a = read_json(select_first([small_variant_calling_options_json]))
+        SVCallingConfig opt_b = read_json(select_first([sv_calling_options_json]))
+        if (opt_a.phase_and_tag) {
+            File m = select_first([SmallVarJob.haplotagged_bam])
+            File i = select_first([SmallVarJob.haplotagged_bai])
+            call Utils.InferSampleName { input: bam = m, bai = i }
+            call Sniffles2.SampleSV as SnifflesPhaseSV {
+                input:
+                    bam = m, bai = i, sample_id = InferSampleName.sample_name,
+                    prefix = prefix, tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                    minsvlen = opt_b.min_sv_len,
+                    phase_sv = true
+            }
+            call FF.FinalizeToFile as FinalizePhasedSnifflesVcf { input: outdir = sv_dir, file = SnifflesPhaseSV.vcf }
+            call FF.FinalizeToFile as FinalizePhasedSnifflesTbi { input: outdir = sv_dir, file = SnifflesPhaseSV.tbi }
+            call FF.FinalizeToFile as FinalizePhasedSnifflesSnf { input: outdir = sv_dir, file = SnifflesPhaseSV.snf }
         }
-        call FF.FinalizeToFile as FinalizePhasedSnifflesVcf { input: outdir = sv_dir, file = SnifflesPhaseSV.vcf }
-        call FF.FinalizeToFile as FinalizePhasedSnifflesTbi { input: outdir = sv_dir, file = SnifflesPhaseSV.tbi }
-        call FF.FinalizeToFile as FinalizePhasedSnifflesSnf { input: outdir = sv_dir, file = SnifflesPhaseSV.snf }
     }
 
     output {

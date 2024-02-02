@@ -26,6 +26,10 @@ workflow PBCCSDemultiplexWholeGenome {
 
         Boolean drop_per_base_N_pulse_tags = true
 
+        # user choice
+        File? small_variant_calling_options_json
+        File? sv_calling_options_json
+
         String gcs_out_root_dir
     }
 
@@ -36,6 +40,9 @@ workflow PBCCSDemultiplexWholeGenome {
         participant_name: "name of the participant from whom these samples were obtained"
         barcode_file:     "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
         num_shards:       "[default-valued] number of sharded BAMs to create (tune for performance)"
+
+        small_variant_calling_options_json: "a json file holding config for small variant calling (see struct SmallVarJobConfig in CallSmallVariants.wdl for detail; when omitted, will skip small variant calling"
+        sv_calling_options_json: "a json file holding config for SV calling (see struct SVCallingConfig in CallStructuralVariants.wdl for detail; when omitted, will skip SV calling"
 
         gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
     }
@@ -132,10 +139,8 @@ workflow PBCCSDemultiplexWholeGenome {
                 model_for_dv_andor_pepper = 'PACBIO',
                 ref_map_file = ref_map_file,
 
-                call_svs = true,
-                pbsv_discover_per_chr = true,
-                call_small_variants = true,
-                run_clair3 = false
+                small_variant_calling_options_json = small_variant_calling_options_json,
+                sv_calling_options_json = sv_calling_options_json,
         }
 
         ##########
