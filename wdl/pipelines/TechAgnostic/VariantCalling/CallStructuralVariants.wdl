@@ -15,6 +15,7 @@ workflow Work {
         is_ont: "If the input data is ONT"
         per_chr_bam_bai_and_id: "Must be provided when pbsv_discover_per_chr is true."
         pbsv_discover_per_chr: "To run the discover stage of PBSV in per-chromosome style or not. If true, then the WGS bam must be sharded accordingly beforehand."
+        minsvlen: "Minimum SV length in bp; only affects Sniffles 2 calls."
     }
 
     input {
@@ -35,7 +36,7 @@ workflow Work {
         Map[String, String] ref_map
 
         # sv-specific args
-        Int minsvlen = 50
+        Int minsvlen = 20
 
         # optimization
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"

@@ -34,7 +34,7 @@ workflow CallVariants {
         phase_and_tag: "if turned on, small variants will be phased using both WhatsHap and Margin, then the BAM will be haplotagged with either the output of WhatsHap or Margin (depending on use_margin_for_tagging); then the haplotagged BAM will be used for calling phased-SV again with Sniffles2. Obviously, this prolongs the runtime significantly. Has no effect on ONT data on pores older than R10.4."
 
         call_svs: "Call structural variants or not"
-        minsvlen: "Minimum SV length in bp (default: 50)"
+        minsvlen: "Minimum SV length in bp; only affects Sniffles 2 calls."
         pbsv_discover_per_chr: "Run the discover stage of PBSV per chromosome"
 
         call_small_variants: "Call small variants or not"
@@ -92,7 +92,7 @@ workflow CallVariants {
         # sv-specific args
         Boolean call_svs
         Boolean pbsv_discover_per_chr
-        Int minsvlen = 50
+        Int minsvlen = 20
 
         # smallVar-specific args
         Boolean call_small_variants
