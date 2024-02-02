@@ -195,6 +195,7 @@ workflow ONTWholeGenome {
         File? dv_vcf_whatshap_phasing_stats_tsv = CallVariants.dv_vcf_whatshap_phasing_stats_tsv
         File? dv_vcf_whatshap_phasing_stats_gtf = CallVariants.dv_vcf_whatshap_phasing_stats_gtf
         String? dv_nongpu_resources_usage_visual = CallVariants.dv_nongpu_resources_usage_visual
+        String? dv_native_visual_report_html = CallVariants.dv_native_visual_report_html
 
         # available for ONT < R10.4 data, if small variants are requested
         File? legacy_g_vcf = CallVariants.legacy_g_vcf
