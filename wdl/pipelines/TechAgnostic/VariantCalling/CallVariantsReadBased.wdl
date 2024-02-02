@@ -40,6 +40,8 @@ workflow CallVariants {
         call_small_variants: "Call small variants or not"
         run_clair3: "to turn on Clair3 analysis or not (non-trivial increase in cost and runtime)"
         use_margin_for_tagging: "if false, will use margin-phased small-variant VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
+        haploid_contigs: "Optimization since DV 1.6 to improve calling on haploid contigs (e.g. human allosomes); see DV github page for more info."
+        par_regions_bed: "The pseudoautosomal (PAR) regions of the human allosomes in BED format."
 
         dv_threads: "number of threads for DeepVariant"
         dv_memory:  "memory for DeepVariant"
@@ -98,6 +100,8 @@ workflow CallVariants {
         Boolean call_small_variants
         Boolean run_clair3
         Boolean use_margin_for_tagging
+        String? haploid_contigs
+        File? par_regions_bed
 
         # phasing and read-haplotaging desired or not
         Boolean phase_and_tag
@@ -243,6 +247,7 @@ workflow CallVariants {
         File? dv_vcf_whatshap_phasing_stats_tsv = SmallVarJob.dv_vcf_whatshap_phasing_stats_tsv
         File? dv_vcf_whatshap_phasing_stats_gtf = SmallVarJob.dv_vcf_whatshap_phasing_stats_gtf
         String? dv_nongpu_resources_usage_visual = SmallVarJob.dv_nongpu_resources_usage_visual
+        String? dv_native_visual_report_html = SmallVarJob.dv_native_visual_report_html
 
         # available for ONT < R10.4 data, if small variants are requested
         File? legacy_g_vcf = SmallVarJob.legacy_g_vcf

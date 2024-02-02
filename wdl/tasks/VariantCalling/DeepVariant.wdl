@@ -13,12 +13,16 @@ workflow Run {
         how_to_shard_wg_for_calling: "An array of the BAM's shard; each element is assumed to be a tuple of (ID for the shard, (BAM of the shard, BAI of the shard))"
         model_for_dv_andor_pepper: "Model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
         prefix: "Prefix for output files"
+        haploid_contigs: "Optimization since DV 1.6 to improve calling on haploid contigs (e.g. human allosomes); see DV github page for more info."
+        par_regions_bed: "The pseudoautosomal (PAR) regions of the human allosomes in BED format."
     }
 
     input {
         Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling
         String prefix
         String model_for_dv_andor_pepper
+        String? haploid_contigs
+        File? par_regions_bed
 
         # reference info
         Map[String, String] ref_map
@@ -38,6 +42,8 @@ workflow Run {
 
         Array[File] nongpu_resource_usage_logs = nongpu_resource_usage_log
         Array[File] nongpu_resource_usage_visual = VisualizeDVRegularResoureUsage.plot_pdf
+
+        Array[File] native_visual_report_htmls = dv_self_visual_html
     }
 
     ####################################################################################################################################
@@ -58,6 +64,9 @@ workflow Run {
                     ref_fasta     = ref_map['fasta'],
                     ref_fasta_fai = ref_map['fai'],
 
+                    haploid_contigs = haploid_contigs,
+                    par_regions_bed = par_regions_bed,
+
                     model_type = model_for_dv_andor_pepper,
 
                     threads = select_first([dv_threads]),
@@ -74,6 +83,9 @@ workflow Run {
                     ref_fasta     = ref_map['fasta'],
                     ref_fasta_fai = ref_map['fai'],
 
+                    haploid_contigs = haploid_contigs,
+                    par_regions_bed = par_regions_bed,
+
                     model_type = model_for_dv_andor_pepper,
 
                     threads = select_first([dv_threads]),
@@ -85,6 +97,7 @@ workflow Run {
         File dv_vcf = select_first([DeepV.VCF, DeepV_G.VCF])
         File dv_gvcf = select_first([DeepV.gVCF, DeepV_G.gVCF])
         File nongpu_resource_usage_log = select_first([DeepV.resouce_monitor_log, DeepV_G.resouce_monitor_log])
+        File dv_self_visual_html = select_first([DeepV.visual_report_html, DeepV_G.visual_report_html])
 
         call VisualizeResourceUsage.SimpleRscript as VisualizeDVRegularResoureUsage {
             input:
@@ -126,6 +139,9 @@ task DV {
         File ref_fasta
         File ref_fasta_fai
 
+        String? haploid_contigs
+        File? par_regions_bed
+
         String model_type
 
         Int threads
@@ -137,12 +153,6 @@ task DV {
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
     String output_root = "/cromwell_root/dv_output"
-
-    Int bam_sz = ceil(size(bam, "GB"))
-    Boolean is_big_bam = bam_sz > 100
-    Int inflation_factor = if (is_big_bam) then 10 else 5
-    Int minimal_disk = 50
-	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
 
     command <<<
         set -euxo pipefail
@@ -158,6 +168,8 @@ task DV {
         /opt/deepvariant/bin/run_deepvariant \
             --model_type=~{model_type} \
             --ref=~{ref_fasta} \
+            ~{true='--haploid_contigs ' false='' defined(haploid_contigs)} ~{select_first([haploid_contigs, ""])} \
+            ~{true='--par_regions_bed ' false='' defined(par_regions_bed)} ~{select_first([par_regions_bed, ""])} \
             --reads=~{bam} \
             --output_vcf="~{output_root}/~{prefix}.vcf.gz" \
             --output_gvcf="~{output_root}/~{prefix}.g.vcf.gz" \
@@ -184,25 +196,31 @@ task DV {
     }
 
     #########################
+    Int bam_sz = ceil(size(bam, "GB"))
+    Boolean is_big_bam = bam_sz > 100
+    Int inflation_factor = if (is_big_bam) then 10 else 5
+    Int minimal_disk = 50
+	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
+
     RuntimeAttr default_attr = object {
         cpu_cores:          threads,
         mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-deepvariant:1.5.0"
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-deepvariant:1.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
-        zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        zones: zones
     }
 }
 
@@ -218,6 +236,9 @@ task DV_gpu {
         File ref_fasta
         File ref_fasta_fai
 
+        String? haploid_contigs
+        File? par_regions_bed
+
         String model_type
 
         Int threads
@@ -229,17 +250,6 @@ task DV_gpu {
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
     String output_root = "/cromwell_root/dv_output"
-
-    Int bam_sz = ceil(size(bam, "GB"))
-    Boolean is_big_bam = bam_sz > 100
-    Int inflation_factor = if (is_big_bam) then 10 else 5
-    Int minimal_disk = 100
-	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
-
-    Int max_cpu = 12
-    Int use_this_cpu = if threads > max_cpu then max_cpu else threads
-    Int max_memory = 64
-    Int use_this_memory = if memory > max_memory then max_memory else memory
 
     command <<<
         set -euxo pipefail
@@ -257,6 +267,8 @@ task DV_gpu {
         /opt/deepvariant/bin/run_deepvariant \
             --model_type=~{model_type} \
             --ref=~{ref_fasta} \
+            ~{true='--haploid_contigs ' false='' defined(haploid_contigs)} ~{select_first([haploid_contigs, ""])} \
+            ~{true='--par_regions_bed ' false='' defined(par_regions_bed)} ~{select_first([par_regions_bed, ""])} \
             --reads=~{bam} \
             --output_vcf="~{output_root}/~{prefix}.vcf.gz" \
             --output_gvcf="~{output_root}/~{prefix}.g.vcf.gz" \
@@ -284,26 +296,38 @@ task DV_gpu {
     }
 
     #########################
+
+    Int bam_sz = ceil(size(bam, "GB"))
+    Boolean is_big_bam = bam_sz > 100
+    Int inflation_factor = if (is_big_bam) then 10 else 5
+    Int minimal_disk = 100
+	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
+
+    Int max_cpu = 12
+    Int use_this_cpu = if threads > max_cpu then max_cpu else threads
+    Int max_memory = 64
+    Int use_this_memory = if memory > max_memory then max_memory else memory
+
     RuntimeAttr default_attr = object {
         cpu_cores:          use_this_cpu,
         mem_gb:             use_this_memory,
         disk_gb:            disk_size,
         boot_disk_gb:       30,
         preemptible_tries:  1,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-deepvariant:1.5.0-gpu"
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-deepvariant:1.6.0-gpu"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
-        zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
 
+        zones: zones
         gpuType: "nvidia-tesla-v100"
         gpuCount: 1
     }

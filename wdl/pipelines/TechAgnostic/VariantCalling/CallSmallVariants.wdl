@@ -25,6 +25,8 @@ workflow Work {
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files, used for custom sharding the of the input BAM; when not provided, will shard WG by contig (possibly slower)"
         ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
         phase_and_tag: "if turned on, small variants will be phased using both WhatsHap and Margin, then the BAM will be haplotagged with either the output of WhatsHap or Margin (depending on use_margin_for_tagging); then the haplotagged BAM will be used for calling phased-SV again with Sniffles2. Obviously, this prolongs the runtime significantly. Has no effect on ONT data on pores older than R10.4."
+        haploid_contigs: "Optimization since DV 1.6 to improve calling on haploid contigs (e.g. human allosomes); see DV github page for more info."
+        par_regions_bed: "The pseudoautosomal (PAR) regions of the human allosomes in BED format."
         use_gpu: "Use GPU acceleration for DV (or PEPPER) or not"
         use_margin_for_tagging: "if false, will use margin-phased VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
 
@@ -81,6 +83,8 @@ workflow Work {
         # smallVar-specific args
         Boolean run_clair3
         Boolean use_margin_for_tagging
+        String? haploid_contigs
+        File? par_regions_bed
 
         # optimization
         Int dv_threads
@@ -110,6 +114,7 @@ workflow Work {
         File? dv_g_vcf = FinalizeDVgVcf.gcs_path
         File? dv_g_tbi = FinalizeDVgTbi.gcs_path
 
+        String? dv_native_visual_report_html = FinalizeDVNativeVisualReportHTMLs.gcs_dir
         String? dv_nongpu_resources_usage_log = FinalizeDVResourceUsagesLogging.gcs_dir
         String? dv_nongpu_resources_usage_visual = FinalizeDVResourceUsagesVisual.gcs_dir
 
@@ -158,6 +163,9 @@ workflow Work {
 
                 ref_map = ref_map,
 
+                haploid_contigs = haploid_contigs,
+                par_regions_bed = par_regions_bed,
+
                 dv_threads = dv_threads,
                 dv_memory = dv_memory,
                 use_gpu = use_gpu,
@@ -165,6 +173,9 @@ workflow Work {
         }
         call FF.FinalizeToFile as FinalizeDVgVcf { input: outdir = gcs_variants_out_dir, file = DV.g_vcf }
         call FF.FinalizeToFile as FinalizeDVgTbi { input: outdir = gcs_variants_out_dir, file = DV.g_tbi }
+        call FF.FinalizeToDir as FinalizeDVNativeVisualReportHTMLs {
+            input: files = DV.native_visual_report_htmls, outdir = gcs_variants_out_dir + "/DV_monitoring"
+        }
         call FF.FinalizeToDir as FinalizeDVResourceUsagesLogging {
             input: files = DV.nongpu_resource_usage_logs, outdir = gcs_variants_out_dir + "/DV_monitoring"
         }
