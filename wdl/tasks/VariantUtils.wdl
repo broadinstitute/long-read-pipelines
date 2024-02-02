@@ -101,7 +101,7 @@ task MergeAndSortVCFs {
             --naive \
             --threads ~{cores-1} \
             -f all_raw_vcfs.txt \
-            --output-type v \
+            --output-type z \
             -o concatedated_raw.vcf.gz  # fast, at the expense of disk space
         for vcf in ~{sep=' ' vcfs}; do rm $vcf ; done
 
