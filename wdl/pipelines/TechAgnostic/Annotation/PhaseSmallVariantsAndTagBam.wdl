@@ -1,8 +1,10 @@
 version 1.0
 
-import "../Alignment/WhatsHap.wdl"
-import "MarginPhase.wdl" as Margin
-import "../Utility/VariantUtils.wdl"
+import "../../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/VariantUtils.wdl"
+
+import "../../../tasks/Alignment/WhatsHap.wdl"
+import "../../../tasks/VariantCalling/MarginPhase.wdl" as Margin
 
 workflow Run {
     meta {
@@ -26,22 +28,25 @@ workflow Run {
 
         Map[String, String] ref_map
 
+        String gcs_variants_out_dir
+        String gcs_tagged_bam_out_dir
+
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
 
     output {
-        File margin_phased_vcf = MarginPhase.phased_vcf
-        File margin_phased_tbi = MarginPhase.phased_tbi
-        File margin_phasing_stats_tsv = MPhaseStats.stats_tsv
-        File margin_phasing_stats_gtf = MPhaseStats.stats_gtf
+        File margin_phased_vcf = FinalizeDVMarginPhasedVcf.gcs_path
+        File margin_phased_tbi = FinalizeDVMarginPhasedTbi.gcs_path
+        File margin_phasing_stats_tsv = FinalizeDVMarginPhasedVcfStatusTSV.gcs_path
+        File margin_phasing_stats_gtf = FinalizeDVMarginPhasedVcfStatusGtf.gcs_path
 
-        File whatshap_phased_vcf = MergeWhatsHapPhasedPerChrVCFs.vcf
-        File whatshap_phased_tbi = MergeWhatsHapPhasedPerChrVCFs.tbi
-        File whatshap_phasing_stats_tsv = WHPhaseStats.stats_tsv
-        File whatshap_phasing_stats_gtf = WHPhaseStats.stats_gtf
+        File whatshap_phased_vcf = FinalizeDVWhatsHapPhasedVcf.gcs_path
+        File whatshap_phased_tbi = FinalizeDVWhatsHapPhasedTbi.gcs_path
+        File whatshap_phasing_stats_tsv = FinalizeDVWhatsHapPhasedVcfStatusTSV.gcs_path
+        File whatshap_phasing_stats_gtf = FinalizeDVWhatsHapPhasedVcfStatusGtf.gcs_path
 
-        File hap_tagged_bam = WhatsHapTag.tagged_bam
-        File hap_tagged_bai = WhatsHapTag.tagged_bai
+        File hap_tagged_bam = FinalizeHapTaggedBam.gcs_path
+        File hap_tagged_bai = FinalizeHapTaggedBai.gcs_path
         String haplotagged_bam_tagger = if use_margin_for_tagging then "MARGIN" else "WhatsHap"
     }
 
@@ -63,6 +68,11 @@ workflow Run {
             zones = zones
     }
     call WhatsHap.Stats as MPhaseStats  { input: phased_vcf=MarginPhase.phased_vcf, phased_tbi=MarginPhase.phased_tbi}
+
+    call FF.FinalizeToFile as FinalizeDVMarginPhasedVcf          { input: outdir = gcs_variants_out_dir, file = MarginPhase.phased_vcf }
+    call FF.FinalizeToFile as FinalizeDVMarginPhasedTbi          { input: outdir = gcs_variants_out_dir, file = MarginPhase.phased_tbi }
+    call FF.FinalizeToFile as FinalizeDVMarginPhasedVcfStatusTSV { input: outdir = gcs_variants_out_dir, file = MPhaseStats.stats_tsv }
+    call FF.FinalizeToFile as FinalizeDVMarginPhasedVcfStatusGtf { input: outdir = gcs_variants_out_dir, file = MPhaseStats.stats_gtf }
 
     #############
     # phase variant using whatshap phase; but because it is much slower than margin phase, we do scatter-gather
@@ -90,6 +100,11 @@ workflow Run {
     }
     call WhatsHap.Stats as WHPhaseStats { input: phased_vcf=MergeWhatsHapPhasedPerChrVCFs.vcf, phased_tbi=MergeWhatsHapPhasedPerChrVCFs.tbi}
 
+    call FF.FinalizeToFile as FinalizeDVWhatsHapPhasedVcf          { input: outdir = gcs_variants_out_dir, file = MergeWhatsHapPhasedPerChrVCFs.vcf }
+    call FF.FinalizeToFile as FinalizeDVWhatsHapPhasedTbi          { input: outdir = gcs_variants_out_dir, file = MergeWhatsHapPhasedPerChrVCFs.tbi }
+    call FF.FinalizeToFile as FinalizeDVWhatsHapPhasedVcfStatusTSV { input: outdir = gcs_variants_out_dir, file = WHPhaseStats.stats_tsv }
+    call FF.FinalizeToFile as FinalizeDVWhatsHapPhasedVcfStatusGtf { input: outdir = gcs_variants_out_dir, file = WHPhaseStats.stats_gtf }
+
     ####################################################################################################################################
     #############
     # !CHOICE! haplotag with WhatsHap, but using which phased VCF?!
@@ -106,4 +121,7 @@ workflow Run {
             phased_vcf = phased_snp_vcf,
             phased_tbi = phased_snp_tbi
     }
+
+    call FF.FinalizeToFile as FinalizeHapTaggedBam { input: outdir = gcs_tagged_bam_out_dir, file = WhatsHapTag.tagged_bam }
+    call FF.FinalizeToFile as FinalizeHapTaggedBai { input: outdir = gcs_tagged_bam_out_dir, file = WhatsHapTag.tagged_bai }
 }

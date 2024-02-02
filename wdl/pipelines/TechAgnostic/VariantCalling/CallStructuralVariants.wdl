@@ -1,9 +1,10 @@
 version 1.0
 
-import "../Utility/Utils.wdl"
+import "../../../tasks/Utility/Utils.wdl"
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
-import "PBSV.wdl"
-import "Sniffles2.wdl" as Sniffles2
+import "../../../tasks/VariantCalling/PBSV.wdl"
+import "../../../tasks/VariantCalling/Sniffles2.wdl" as Sniffles2
 
 workflow Work {
     meta {
@@ -17,6 +18,8 @@ workflow Work {
     }
 
     input {
+        String gcs_out_dir
+
         # sample info
         File bam
         File bai
@@ -39,12 +42,12 @@ workflow Work {
     }
 
     output {
-        File sniffles_vcf = Sniffles2SV.vcf
-        File sniffles_tbi = Sniffles2SV.tbi
-        File sniffles_snf = Sniffles2SV.snf
+        File sniffles_vcf = FinalizeSnifflesVcf.gcs_path
+        File sniffles_tbi = FinalizeSnifflesTbi.gcs_path
+        File sniffles_snf = FinalizeSnifflesSnf.gcs_path
 
-        File pbsv_vcf = select_first([pbsv_wg_call.vcf, PBSVslow.vcf])
-        File pbsv_tbi = select_first([pbsv_wg_call.tbi, PBSVslow.tbi])
+        File pbsv_vcf = FinalizePBSVvcf.gcs_path
+        File pbsv_tbi = FinalizePBSVtbi.gcs_path
     }
 
     if (pbsv_discover_per_chr) {
@@ -118,4 +121,16 @@ workflow Work {
                 zones = zones
         }
     }
+
+    ##########################################################
+    # Save files
+    ##########################################################
+    String svdir = sub(gcs_out_dir, "/$", "")
+
+    call FF.FinalizeToFile as FinalizePBSVvcf { input: outdir = svdir, file = select_first([pbsv_wg_call.vcf, PBSVslow.vcf]) }
+    call FF.FinalizeToFile as FinalizePBSVtbi { input: outdir = svdir, file = select_first([pbsv_wg_call.tbi, PBSVslow.tbi]) }
+
+    call FF.FinalizeToFile as FinalizeSnifflesVcf { input: outdir = svdir, file = Sniffles2SV.vcf }
+    call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = Sniffles2SV.tbi }
+    call FF.FinalizeToFile as FinalizeSnifflesSnf { input: outdir = svdir, file = Sniffles2SV.snf }
 }

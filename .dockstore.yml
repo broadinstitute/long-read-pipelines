@@ -99,6 +99,15 @@ workflows:
 - name: LRConvertBCF
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
+- name: CallStructuralVariantsFromLongreads
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallStructuralVariants.wdl
+- name: CallSmallVariantsFromLongReads
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallSmallVariants.wdl
+- name: PhaseSmallVariantsAndTagLongReadsBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Annotation/PhaseSmallVariantsAndTagBam.wdl
 
 ###################################################
 # TechAgnostic - *mics data QC & metrics

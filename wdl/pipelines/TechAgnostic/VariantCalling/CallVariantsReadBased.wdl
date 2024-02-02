@@ -6,8 +6,8 @@ import "../../../tasks/Utility/Utils.wdl"
 
 import "../Utility/ShardWholeGenome.wdl"
 
-import "../../../tasks/VariantCalling/CallStructuralVariants.wdl"
-import "../../../tasks/VariantCalling/CallSmallVariants.wdl"
+import "CallStructuralVariants.wdl"
+import "CallSmallVariants.wdl"
 
 import "../../../tasks/VariantCalling/Sniffles2.wdl"
 
@@ -30,6 +30,8 @@ workflow CallVariants {
         ref_map_file: "table indicating reference sequence and auxillary file locations"
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files, used for custom sharding the of the input BAM; when not provided, will shard WG by contig (possibly slower)"
         ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
+
+        phase_and_tag: "if turned on, small variants will be phased using both WhatsHap and Margin, then the BAM will be haplotagged with either the output of WhatsHap or Margin (depending on use_margin_for_tagging); then the haplotagged BAM will be used for calling phased-SV again with Sniffles2. Obviously, this prolongs the runtime significantly. Has no effect on ONT data on pores older than R10.4."
 
         call_svs: "Call structural variants or not"
         minsvlen: "Minimum SV length in bp (default: 50)"
@@ -97,6 +99,9 @@ workflow CallVariants {
         Boolean run_clair3
         Boolean use_margin_for_tagging
 
+        # phasing and read-haplotaging desired or not
+        Boolean phase_and_tag
+
         # optimization, balancing between throughput, wallclock time, and cost
         Int dv_threads
         Int dv_memory
@@ -123,6 +128,7 @@ workflow CallVariants {
     # Block for small variants handling
     ######################################################################
     if (call_small_variants) {
+
         call CallSmallVariants.Work as SmallVarJob {
             input:
                 bam = bam,
@@ -140,62 +146,24 @@ workflow CallVariants {
                 ref_scatter_interval_list_ids = ref_scatter_interval_list_ids,
 
                 run_clair3 = run_clair3,
+
+                phase_and_tag = phase_and_tag,
                 use_margin_for_tagging = use_margin_for_tagging,
 
                 dv_threads = dv_threads,
                 dv_memory = dv_memory,
                 use_gpu = use_gpu,
-                zones = wdl_parsable_zones
-        }
+                zones = wdl_parsable_zones,
 
-        #############################
-        # save data
-        String smalldir = sub(gcs_out_dir, "/$", "") + "/variants/small"
-        String haptagoutdir = sub(gcs_out_dir, "/$", "") + "/alignments"
-
-        call FF.FinalizeToFile as FinalizeHapTaggedBam { input: outdir = haptagoutdir, file = SmallVarJob.haplotagged_bam }
-        call FF.FinalizeToFile as FinalizeHapTaggedBai { input: outdir = haptagoutdir, file = SmallVarJob.haplotagged_bai }
-
-        Boolean is_legacy_ont = is_ont && (!is_r10_4_pore_or_later)
-        if (is_legacy_ont) {
-            call FF.FinalizeToFile as FinalizeLegacyGVcf            { input: outdir = smalldir, file = select_first([SmallVarJob.legacy_g_vcf])  }
-            call FF.FinalizeToFile as FinalizeLegacyGTbi            { input: outdir = smalldir, file = select_first([SmallVarJob.legacy_g_tbi])  }
-            call FF.FinalizeToFile as FinalizeLegacyPhasedVcf       { input: outdir = smalldir, file = select_first([SmallVarJob.legacy_phased_vcf])  }
-            call FF.FinalizeToFile as FinalizeLegacyPhasedTbi       { input: outdir = smalldir, file = select_first([SmallVarJob.legacy_phased_tbi])  }
-            call FF.FinalizeToFile as FinalizeLegacyPhaseStatsTSV   { input: outdir = smalldir, file = select_first([SmallVarJob.legacy_phasing_stats_tsv])  }
-            call FF.FinalizeToFile as FinalizeLegacyPhaseStatsGTF   { input: outdir = smalldir, file = select_first([SmallVarJob.legacy_phasing_stats_gtf])  }
-        }
-        if (!is_legacy_ont) {
-            call FF.FinalizeToFile as FinalizeDVgVcf { input: outdir = smalldir, file = select_first([SmallVarJob.dv_g_vcf]) }
-            call FF.FinalizeToFile as FinalizeDVgTbi { input: outdir = smalldir, file = select_first([SmallVarJob.dv_g_tbi]) }
-
-            call FF.FinalizeToFile as FinalizeDVMarginPhasedVcf          { input: outdir = smalldir, file = select_first([SmallVarJob.dv_margin_phased_vcf]) }
-            call FF.FinalizeToFile as FinalizeDVMarginPhasedTbi          { input: outdir = smalldir, file = select_first([SmallVarJob.dv_margin_phased_tbi]) }
-            call FF.FinalizeToFile as FinalizeDVMarginPhasedVcfStatusTSV { input: outdir = smalldir, file = select_first([SmallVarJob.dv_vcf_margin_phasing_stats_tsv]) }
-            call FF.FinalizeToFile as FinalizeDVMarginPhasedVcfStatusGtf { input: outdir = smalldir, file = select_first([SmallVarJob.dv_vcf_margin_phasing_stats_gtf]) }
-
-            call FF.FinalizeToFile as FinalizeDVWhatsHapPhasedVcf          { input: outdir = smalldir, file = select_first([SmallVarJob.dv_whatshap_phased_vcf]) }
-            call FF.FinalizeToFile as FinalizeDVWhatsHapPhasedTbi          { input: outdir = smalldir, file = select_first([SmallVarJob.dv_whatshap_phased_tbi]) }
-            call FF.FinalizeToFile as FinalizeDVWhatsHapPhasedVcfStatusTSV { input: outdir = smalldir, file = select_first([SmallVarJob.dv_vcf_whatshap_phasing_stats_tsv]) }
-            call FF.FinalizeToFile as FinalizeDVWhatsHapPhasedVcfStatusGtf { input: outdir = smalldir, file = select_first([SmallVarJob.dv_vcf_whatshap_phasing_stats_gtf]) }
-
-            call FF.FinalizeToDir as FinalizeDVResourceUsagesVisual {
-                input: files = select_first([SmallVarJob.dv_nongpu_resources_usage_visual]), outdir = smalldir + "/DV_monitoring"
-            }
-        }
-
-        if (run_clair3) {
-            call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = select_first([SmallVarJob.clair_vcf])}
-            call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = select_first([SmallVarJob.clair_tbi])}
-
-            call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = select_first([SmallVarJob.clair_gvcf])}
-            call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = select_first([SmallVarJob.clair_gtbi])}
+                gcs_variants_out_dir = sub(gcs_out_dir, "/$", "") + "/variants/small",
+                gcs_tagged_bam_out_dir = sub(gcs_out_dir, "/$", "") + "/alignments"
         }
     }
 
     ######################################################################
     # Block for SV handling
     ######################################################################
+    String sv_dir = sub(gcs_out_dir, "/$", "") + "/variants/sv"
     if (call_svs) {
         call CallStructuralVariants.Work as SVjob {
             input:
@@ -214,25 +182,15 @@ workflow CallVariants {
 
                 pbsv_discover_per_chr = pbsv_discover_per_chr,
 
-                zones = wdl_parsable_zones
+                zones = wdl_parsable_zones,
+                gcs_out_dir = sv_dir
         }
-
-        #############################
-        # save data
-        String svdir = sub(select_first([gcs_out_dir]), "/$", "") + "/variants/sv"
-
-        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = SVjob.pbsv_vcf }
-        call FF.FinalizeToFile as FinalizePBSVtbi { input: outdir = svdir, file = SVjob.pbsv_tbi }
-
-        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = SVjob.sniffles_vcf }
-        call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = SVjob.sniffles_tbi }
-        call FF.FinalizeToFile as FinalizeSnifflesSnf { input: outdir = svdir, file = SVjob.sniffles_snf }
     }
 
     ######################################################################
     # Experiment with Sniffles-2 phased SV calling
     ######################################################################
-    if (call_svs && call_small_variants) {
+    if (call_svs && call_small_variants && phase_and_tag) {  # but do so lazily
         File m = select_first([SmallVarJob.haplotagged_bam])
         File i = select_first([SmallVarJob.haplotagged_bai])
         call Utils.InferSampleName { input: bam = m, bai = i }
@@ -243,54 +201,55 @@ workflow CallVariants {
                 minsvlen = minsvlen,
                 phase_sv = true
         }
-        if (defined(gcs_out_dir)) {
-            String svdir_copy = sub(select_first([gcs_out_dir]), "/$", "") + "/variants/sv"
-            call FF.FinalizeToFile as FinalizePhasedSniffles { input: outdir = svdir_copy, file = SnifflesPhaseSV.vcf }
-            call FF.FinalizeToFile as FinalizePhasedSnifflesTbi { input: outdir = svdir_copy, file = SnifflesPhaseSV.tbi }
-            call FF.FinalizeToFile as FinalizePhasedSnifflesSnf { input: outdir = svdir_copy, file = SnifflesPhaseSV.snf }
-        }
+        call FF.FinalizeToFile as FinalizePhasedSnifflesVcf { input: outdir = sv_dir, file = SnifflesPhaseSV.vcf }
+        call FF.FinalizeToFile as FinalizePhasedSnifflesTbi { input: outdir = sv_dir, file = SnifflesPhaseSV.tbi }
+        call FF.FinalizeToFile as FinalizePhasedSnifflesSnf { input: outdir = sv_dir, file = SnifflesPhaseSV.snf }
     }
 
     output {
-        File? sniffles_vcf = FinalizeSniffles.gcs_path
-        File? sniffles_tbi = FinalizeSnifflesTbi.gcs_path
-        File? sniffles_snf = FinalizeSnifflesSnf.gcs_path
+        ####### SVs
+        File? pbsv_vcf = SVjob.pbsv_vcf
+        File? pbsv_tbi = SVjob.pbsv_tbi
 
-        File? sniffles_phased_vcf = FinalizePhasedSniffles.gcs_path
+        File? sniffles_vcf = SVjob.sniffles_vcf
+        File? sniffles_tbi = SVjob.sniffles_tbi
+        File? sniffles_snf = SVjob.sniffles_snf
+
+        File? sniffles_phased_vcf = FinalizePhasedSnifflesVcf.gcs_path
         File? sniffles_phased_tbi = FinalizePhasedSnifflesTbi.gcs_path
         File? sniffles_phased_snf = FinalizePhasedSnifflesSnf.gcs_path
 
-        File? pbsv_vcf = FinalizePBSV.gcs_path
-        File? pbsv_tbi = FinalizePBSVtbi.gcs_path
+        ####### small vars
+        # clair
+        File? clair_vcf = SmallVarJob.clair_vcf
+        File? clair_tbi = SmallVarJob.clair_tbi
+        File? clair_gvcf = SmallVarJob.clair_gvcf
+        File? clair_gtbi = SmallVarJob.clair_gtbi
 
-        File? clair_vcf = FinalizeClairVcf.gcs_path
-        File? clair_tbi = FinalizeClairTbi.gcs_path
-        File? clair_gvcf = FinalizeClairGVcf.gcs_path
-        File? clair_gtbi = FinalizeClairGTbi.gcs_path
-
-        File? haplotagged_bam = FinalizeHapTaggedBam.gcs_path
-        File? haplotagged_bai = FinalizeHapTaggedBai.gcs_path
+        # tagging
+        File? haplotagged_bam = SmallVarJob.haplotagged_bam
+        File? haplotagged_bai = SmallVarJob.haplotagged_bai
         String? haplotagged_bam_tagger = SmallVarJob.haplotagged_bam_tagger
 
         # available for CCS and ONT >= R10.4 data, if small variants are requested
-        File? dv_g_vcf = FinalizeDVgVcf.gcs_path
-        File? dv_g_tbi = FinalizeDVgTbi.gcs_path
-        File? dv_margin_phased_vcf = FinalizeDVMarginPhasedVcf.gcs_path
-        File? dv_margin_phased_tbi = FinalizeDVMarginPhasedTbi.gcs_path
-        File? dv_vcf_margin_phasing_stats_tsv = FinalizeDVMarginPhasedVcfStatusTSV.gcs_path
-        File? dv_vcf_margin_phasing_stats_gtf = FinalizeDVMarginPhasedVcfStatusGtf.gcs_path
-        File? dv_whatshap_phased_vcf = FinalizeDVWhatsHapPhasedVcf.gcs_path
-        File? dv_whatshap_phased_tbi = FinalizeDVWhatsHapPhasedTbi.gcs_path
-        File? dv_vcf_whatshap_phasing_stats_tsv = FinalizeDVWhatsHapPhasedVcfStatusTSV.gcs_path
-        File? dv_vcf_whatshap_phasing_stats_gtf = FinalizeDVWhatsHapPhasedVcfStatusGtf.gcs_path
-        String? dv_nongpu_resources_usage_visual = FinalizeDVResourceUsagesVisual.gcs_dir
+        File? dv_g_vcf = SmallVarJob.dv_g_vcf
+        File? dv_g_tbi = SmallVarJob.dv_g_tbi
+        File? dv_margin_phased_vcf = SmallVarJob.dv_margin_phased_vcf
+        File? dv_margin_phased_tbi = SmallVarJob.dv_margin_phased_tbi
+        File? dv_vcf_margin_phasing_stats_tsv = SmallVarJob.dv_vcf_margin_phasing_stats_tsv
+        File? dv_vcf_margin_phasing_stats_gtf = SmallVarJob.dv_vcf_margin_phasing_stats_gtf
+        File? dv_whatshap_phased_vcf = SmallVarJob.dv_whatshap_phased_vcf
+        File? dv_whatshap_phased_tbi = SmallVarJob.dv_whatshap_phased_tbi
+        File? dv_vcf_whatshap_phasing_stats_tsv = SmallVarJob.dv_vcf_whatshap_phasing_stats_tsv
+        File? dv_vcf_whatshap_phasing_stats_gtf = SmallVarJob.dv_vcf_whatshap_phasing_stats_gtf
+        String? dv_nongpu_resources_usage_visual = SmallVarJob.dv_nongpu_resources_usage_visual
 
         # available for ONT < R10.4 data, if small variants are requested
-        File? legacy_g_vcf = FinalizeLegacyGVcf.gcs_path
-        File? legacy_g_tbi = FinalizeLegacyGTbi.gcs_path
-        File? legacy_phased_vcf = FinalizeLegacyPhasedVcf.gcs_path
-        File? legacy_phased_tbi = FinalizeLegacyPhasedTbi.gcs_path
-        File? legacy_phasing_stats_tsv = FinalizeLegacyPhaseStatsTSV.gcs_path
-        File? legacy_phasing_stats_gtf = FinalizeLegacyPhaseStatsGTF.gcs_path
+        File? legacy_g_vcf = SmallVarJob.legacy_g_vcf
+        File? legacy_g_tbi = SmallVarJob.legacy_g_tbi
+        File? legacy_phased_vcf = SmallVarJob.legacy_phased_vcf
+        File? legacy_phased_tbi = SmallVarJob.legacy_phased_tbi
+        File? legacy_phasing_stats_tsv = SmallVarJob.legacy_phasing_stats_tsv
+        File? legacy_phasing_stats_gtf = SmallVarJob.legacy_phasing_stats_gtf
     }
 }
