@@ -11,6 +11,21 @@ import "../Annotation/PhaseSmallVariantsAndTagBam.wdl" as PhaseAndTag
 
 import "../../../deprecated/tasks/PEPPER-MARGIN-DeepVariant.wdl" as PMDV  # this isn't optimal; but sometimes we have legacy data to handle.
 
+struct SmallVarJobConfig {
+    String? haploid_contigs
+
+    # optimization
+    Int dv_threads
+    Int dv_memory
+    Boolean use_gpu
+
+    Boolean run_clair3
+    Boolean phase_and_tag
+    Boolean use_margin_for_tagging
+
+    String? gcp_zones
+}
+
 workflow Work {
     meta {
         description: "Call small variants using reads-based methods (i.e. not for assembly-contig-based methods)."
@@ -22,11 +37,8 @@ workflow Work {
         is_ont: "If the input data is ONT"
         is_r10_4_pore_or_later: "If the ONT input data is generated on R10.4 simples/duplex pores."
         model_for_dv_andor_pepper: "Model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
-        ref_scatter_interval_list_locator: "A file holding paths to interval_list files, used for custom sharding the of the input BAM; when not provided, will shard WG by contig (possibly slower)"
-        ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
         phase_and_tag: "if turned on, small variants will be phased using both WhatsHap and Margin, then the BAM will be haplotagged with either the output of WhatsHap or Margin (depending on use_margin_for_tagging); then the haplotagged BAM will be used for calling phased-SV again with Sniffles2. Obviously, this prolongs the runtime significantly. Has no effect on ONT data on pores older than R10.4."
         haploid_contigs: "Optimization since DV 1.6 to improve calling on haploid contigs (e.g. human allosomes); see DV github page for more info."
-        par_regions_bed: "The pseudoautosomal (PAR) regions of the human allosomes in BED format."
         use_gpu: "Use GPU acceleration for DV (or PEPPER) or not"
         use_margin_for_tagging: "if false, will use margin-phased VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
 
@@ -72,10 +84,7 @@ workflow Work {
         String model_for_dv_andor_pepper
 
         # reference info
-        Map[String, String] ref_map
-
-        File? ref_scatter_interval_list_locator
-        File? ref_scatter_interval_list_ids
+        File ref_map_file
 
         # phasing and read-haplotaging desired or not
         Boolean phase_and_tag
@@ -84,7 +93,6 @@ workflow Work {
         Boolean run_clair3
         Boolean use_margin_for_tagging
         String? haploid_contigs
-        File? par_regions_bed
 
         # optimization
         Int dv_threads
@@ -131,18 +139,20 @@ workflow Work {
         File? dv_vcf_whatshap_phasing_stats_gtf = PhaseThenTag.whatshap_phasing_stats_gtf
     }
 
+    Map[String, String] ref_map = read_map(ref_map_file)
+
     ####################################################################################################################################
     # custom-shard WG (for load-balancing)
     ####################################################################################################################################
     # but if custom sharding isn't requested, then per-chr sharding is already done, so no need to redo
-    if (defined(ref_scatter_interval_list_locator)) {
+    if (defined(ref_map['size_balanced_scatter_intervallists_locators'])) {
         call ShardWholeGenome.Split as CustomSplitBamForSmallVar {
             input:
-                ref_dict = ref_map['dict'],
                 bam = bam,
                 bai = bai,
-                ref_scatter_interval_list_locator = ref_scatter_interval_list_locator,
-                ref_scatter_interval_list_ids = ref_scatter_interval_list_ids
+                ref_dict = ref_map['dict'],
+                ref_scatter_interval_list_ids = ref_map['size_balanced_scatter_interval_ids'],
+                ref_scatter_interval_list_locator = ref_map['size_balanced_scatter_intervallists_locators']
         }
     }
     Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling = select_first([CustomSplitBamForSmallVar.id_bam_bai_of_shards,
@@ -158,13 +168,14 @@ workflow Work {
         call DeepVariant.Run as DV {
             input:
                 how_to_shard_wg_for_calling = how_to_shard_wg_for_calling,
+
                 prefix = prefix,
                 model_for_dv_andor_pepper = model_for_dv_andor_pepper,
 
                 ref_map = ref_map,
 
                 haploid_contigs = haploid_contigs,
-                par_regions_bed = par_regions_bed,
+                par_regions_bed = ref_map["PAR_bed"],
 
                 dv_threads = dv_threads,
                 dv_memory = dv_memory,

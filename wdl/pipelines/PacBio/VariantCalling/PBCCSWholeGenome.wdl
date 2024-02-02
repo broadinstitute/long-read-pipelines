@@ -18,20 +18,12 @@ workflow PBCCSWholeGenome {
         sample_name:        "sample name as encoded in the bams"
 
         ref_map_file: "table indicating reference sequence and auxillary file locations"
-        ref_scatter_interval_list_locator: "A file holding paths to interval_list files, used for custom sharding the of the input BAM; when not provided, will shard WG by contig (possibly slower)"
-        ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
 
         bed_to_compute_coverage: "BED file holding regions-of-interest for computing coverage over."
         bed_descriptor: "Description of the BED file, will be used in the file name so be careful naming things"
 
-        call_svs:               "whether to call SVs"
-        pbsv_discover_per_chr:  "Run the discover stage of PBSV per chromosome"
-
-        call_small_variants: "whether to call small variants"
-
-        run_clair3:  "to turn on Clair3 analysis or not (non-trivial increase in cost and runtime)"
-
-        use_margin_for_tagging: "if false, will use margin-phased small-variant VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
+        small_variant_calling_options_json: "a json file holding config for small variant calling (see struct SmallVarJobConfig in CallSmallVariants.wdl for detail; when omitted, will skip small variant calling"
+        sv_calling_options_json: "a json file holding config for SV calling (see struct SVCallingConfig in CallStructuralVariants.wdl for detail; when omitted, will skip SV calling"
 
         gcp_zones: "which Google Cloud Zone to use (this has implications on how many GPUs are available and egress costs, so configure carefully)"
 
@@ -64,22 +56,12 @@ workflow PBCCSWholeGenome {
 
         # reference-specific
         File ref_map_file
-        File? ref_scatter_interval_list_locator
-        File? ref_scatter_interval_list_ids
         File? bed_to_compute_coverage
         String? bed_descriptor
 
         # user choice
-        Boolean call_svs = true
-        Boolean pbsv_discover_per_chr = true
-        Int minsvlen = 50
-
-        Boolean call_small_variants = true
-        Boolean run_clair3 = false
-        Boolean use_margin_for_tagging = true
-        Int dv_threads = 16
-        Int dv_memory = 40
-        Boolean use_gpu = false
+        File? small_variant_calling_options_json
+        File? sv_calling_options_json
 
         Array[String] gcp_zones = ['us-central1-a', 'us-central1-b', 'us-central1-c', 'us-central1-f']
     }
@@ -104,7 +86,7 @@ workflow PBCCSWholeGenome {
     }
 
     ###########################################################
-    if (call_svs || call_small_variants) {
+    if (defined(sv_calling_options_json) || defined(small_variant_calling_options_json)) {
         call VAR.CallVariants {
             input:
                 gcs_out_dir = outdir,
@@ -117,19 +99,9 @@ workflow PBCCSWholeGenome {
                 model_for_dv_andor_pepper = 'PACBIO',
 
                 ref_map_file = ref_map_file,
-                ref_scatter_interval_list_locator = ref_scatter_interval_list_locator,
-                ref_scatter_interval_list_ids = ref_scatter_interval_list_ids,
 
-                call_svs = call_svs,
-                pbsv_discover_per_chr = pbsv_discover_per_chr,
-                minsvlen = minsvlen,
-
-                call_small_variants = call_small_variants,
-                run_clair3 = run_clair3,
-                use_margin_for_tagging = use_margin_for_tagging,
-                dv_threads = dv_threads,
-                dv_memory = dv_memory,
-                use_gpu = use_gpu,
+                small_variant_calling_options_json = small_variant_calling_options_json,
+                sv_calling_options_json = sv_calling_options_json,
 
                 gcp_zones = gcp_zones
         }

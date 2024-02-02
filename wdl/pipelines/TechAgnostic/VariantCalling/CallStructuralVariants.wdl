@@ -6,6 +6,13 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../tasks/VariantCalling/PBSV.wdl"
 import "../../../tasks/VariantCalling/Sniffles2.wdl" as Sniffles2
 
+struct SVCallingConfig {
+    Int min_sv_len
+    Boolean pbsv_discover_per_chr
+
+    String? gcp_zones
+}
+
 workflow Work {
     meta {
         description: "Call structual variants using reads-based methods (i.e. not for assembly-contig-based methods)."
@@ -33,7 +40,7 @@ workflow Work {
         Array[Pair[String, Pair[File, File]]]? per_chr_bam_bai_and_id
 
         # reference info
-        Map[String, String] ref_map
+        File ref_map_file
 
         # sv-specific args
         Int minsvlen = 20
@@ -56,6 +63,8 @@ workflow Work {
             call Utils.StopWorkflow { input: reason = "When calling PBSV to work on chromosomes separately, must also provide a list of BAMs sharded by chromosomes"}
         }
     }
+
+    Map[String, String] ref_map = read_map(ref_map_file)
 
     ##########################################################
     # Sniffles-2
