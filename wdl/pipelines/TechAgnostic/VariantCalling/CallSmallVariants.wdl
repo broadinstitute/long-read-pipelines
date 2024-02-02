@@ -1,12 +1,15 @@
 version 1.0
 
-import "../../pipelines/TechAgnostic/Utility/ShardWholeGenome.wdl"  # this isn't optimal; the choice was made assuming ShardWholeGenome could be useful for other users as well.
-import "../../deprecated/tasks/PEPPER-MARGIN-DeepVariant.wdl" as PMDV
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
-import "DeepVariant.wdl"
-import "Clair.wdl" as Clair3
+import "../Utility/ShardWholeGenome.wdl"
 
-import "PhaseSmallVariantsAndTagBam.wdl" as PhaseAndTag
+import "../../../tasks/VariantCalling/DeepVariant.wdl"
+import "../../../tasks/VariantCalling/Clair.wdl" as Clair3
+
+import "../Annotation/PhaseSmallVariantsAndTagBam.wdl" as PhaseAndTag
+
+import "../../../deprecated/tasks/PEPPER-MARGIN-DeepVariant.wdl" as PMDV  # this isn't optimal; but sometimes we have legacy data to handle.
 
 workflow Work {
     meta {
@@ -21,6 +24,7 @@ workflow Work {
         model_for_dv_andor_pepper: "Model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files, used for custom sharding the of the input BAM; when not provided, will shard WG by contig (possibly slower)"
         ref_scatter_interval_list_ids: "A file that gives short IDs to the interval_list files; when not provided, will shard WG by contig (possibly slower)"
+        phase_and_tag: "if turned on, small variants will be phased using both WhatsHap and Margin, then the BAM will be haplotagged with either the output of WhatsHap or Margin (depending on use_margin_for_tagging); then the haplotagged BAM will be used for calling phased-SV again with Sniffles2. Obviously, this prolongs the runtime significantly. Has no effect on ONT data on pores older than R10.4."
         use_gpu: "Use GPU acceleration for DV (or PEPPER) or not"
         use_margin_for_tagging: "if false, will use margin-phased VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
 
@@ -51,6 +55,9 @@ workflow Work {
         dv_nongpu_resources_usage_visual: "Resource usage monitoring log visualization for DV (per shard); available for CCS data and ONT data generated with pores >= R10.4."
     }
     input {
+        String gcs_variants_out_dir
+        String gcs_tagged_bam_out_dir
+
         # sample info
         File bam
         File bai
@@ -68,6 +75,9 @@ workflow Work {
         File? ref_scatter_interval_list_locator
         File? ref_scatter_interval_list_ids
 
+        # phasing and read-haplotaging desired or not
+        Boolean phase_and_tag
+
         # smallVar-specific args
         Boolean run_clair3
         Boolean use_margin_for_tagging
@@ -79,41 +89,41 @@ workflow Work {
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
     output {
-        File? clair_vcf = RunClair3.clair_vcf
-        File? clair_tbi = RunClair3.clair_tbi
-        File? clair_gvcf = RunClair3.clair_gvcf
-        File? clair_gtbi = RunClair3.clair_gtbi
+        File? clair_vcf  = FinalizeClairVcf.gcs_path
+        File? clair_tbi  = FinalizeClairTbi.gcs_path
+        File? clair_gvcf = FinalizeClairGVcf.gcs_path
+        File? clair_gtbi = FinalizeClairGTbi.gcs_path
 
-        File haplotagged_bam = use_this_haptag_bam
-        File haplotagged_bai = use_this_haptag_bai
-        String haplotagged_bam_tagger = use_this_haptagger
+        File? haplotagged_bam = use_this_haptag_bam
+        File? haplotagged_bai = use_this_haptag_bai
+        String? haplotagged_bam_tagger = use_this_haptagger
 
         # this block available only for legacy ONT data (those older than R10.4)
-        File? legacy_g_vcf              = WorkOnLegacyONTdata.legacy_ont_dvp_g_vcf
-        File? legacy_g_tbi              = WorkOnLegacyONTdata.legacy_ont_dvp_g_tbi
-        File? legacy_phased_vcf         = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf
-        File? legacy_phased_tbi         = WorkOnLegacyONTdata.legacy_ont_dvp_phased_tbi
-        File? legacy_phasing_stats_tsv  = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_tsv
-        File? legacy_phasing_stats_gtf  = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_gtf
+        File? legacy_g_vcf              = FinalizeLegacyGVcf.gcs_path
+        File? legacy_g_tbi              = FinalizeLegacyGTbi.gcs_path
+        File? legacy_phased_vcf         = FinalizeLegacyPhasedVcf.gcs_path
+        File? legacy_phased_tbi         = FinalizeLegacyPhasedTbi.gcs_path
+        File? legacy_phasing_stats_tsv  = FinalizeLegacyPhaseStatsTSV.gcs_path
+        File? legacy_phasing_stats_gtf  = FinalizeLegacyPhaseStatsGTF.gcs_path
 
         # this block available for CCS and modern ONT data
-        File? dv_g_vcf = DV.g_vcf
-        File? dv_g_tbi = DV.g_tbi
+        File? dv_g_vcf = FinalizeDVgVcf.gcs_path
+        File? dv_g_tbi = FinalizeDVgTbi.gcs_path
 
-        File? dv_margin_phased_vcf = PnT.margin_phased_vcf
-        File? dv_margin_phased_tbi = PnT.margin_phased_tbi
+        String? dv_nongpu_resources_usage_log = FinalizeDVResourceUsagesLogging.gcs_dir
+        String? dv_nongpu_resources_usage_visual = FinalizeDVResourceUsagesVisual.gcs_dir
 
-        File? dv_vcf_margin_phasing_stats_tsv = PnT.margin_phasing_stats_tsv
-        File? dv_vcf_margin_phasing_stats_gtf = PnT.margin_phasing_stats_gtf
+        File? dv_margin_phased_vcf = PhaseThenTag.margin_phased_vcf
+        File? dv_margin_phased_tbi = PhaseThenTag.margin_phased_tbi
 
-        File? dv_whatshap_phased_vcf = PnT.whatshap_phased_vcf
-        File? dv_whatshap_phased_tbi = PnT.whatshap_phased_tbi
+        File? dv_vcf_margin_phasing_stats_tsv = PhaseThenTag.margin_phasing_stats_tsv
+        File? dv_vcf_margin_phasing_stats_gtf = PhaseThenTag.margin_phasing_stats_gtf
 
-        File? dv_vcf_whatshap_phasing_stats_tsv = PnT.whatshap_phasing_stats_tsv
-        File? dv_vcf_whatshap_phasing_stats_gtf = PnT.whatshap_phasing_stats_gtf
+        File? dv_whatshap_phased_vcf = PhaseThenTag.whatshap_phased_vcf
+        File? dv_whatshap_phased_tbi = PhaseThenTag.whatshap_phased_tbi
 
-        Array[File]? dv_nongpu_resources_usage_log = DV.nongpu_resource_usage_logs
-        Array[File]? dv_nongpu_resources_usage_visual = DV.nongpu_resource_usage_visual
+        File? dv_vcf_whatshap_phasing_stats_tsv = PhaseThenTag.whatshap_phasing_stats_tsv
+        File? dv_vcf_whatshap_phasing_stats_gtf = PhaseThenTag.whatshap_phasing_stats_gtf
     }
 
     ####################################################################################################################################
@@ -136,7 +146,9 @@ workflow Work {
     ####################################################################################################################################
     # DV, major workhorse
     ####################################################################################################################################
-    if ((!is_ont) || is_r10_4_pore_or_later) { # pacbio or recent ONT data
+    Boolean is_legacy_ont = is_ont && (!is_r10_4_pore_or_later)
+
+    if (!is_legacy_ont) { # pacbio or recent ONT data
 
         call DeepVariant.Run as DV {
             input:
@@ -151,26 +163,38 @@ workflow Work {
                 use_gpu = use_gpu,
                 zones = zones
         }
+        call FF.FinalizeToFile as FinalizeDVgVcf { input: outdir = gcs_variants_out_dir, file = DV.g_vcf }
+        call FF.FinalizeToFile as FinalizeDVgTbi { input: outdir = gcs_variants_out_dir, file = DV.g_tbi }
+        call FF.FinalizeToDir as FinalizeDVResourceUsagesLogging {
+            input: files = DV.nongpu_resource_usage_logs, outdir = gcs_variants_out_dir + "/DV_monitoring"
+        }
+        call FF.FinalizeToDir as FinalizeDVResourceUsagesVisual {
+            input: files = DV.nongpu_resource_usage_visual, outdir = gcs_variants_out_dir + "/DV_monitoring"
+        }
 
-        call PhaseAndTag.Run as PnT {
-            input:
-                use_margin_for_tagging = use_margin_for_tagging,
+        if (phase_and_tag) {
+            call PhaseAndTag.Run as PhaseThenTag {
+                input:
+                    use_margin_for_tagging = use_margin_for_tagging,
 
-                bam = bam,
-                bai = bai,
-                per_chr_bam_bai_and_id = per_chr_bam_bai_and_id,
-                is_ont = is_ont,
+                    bam = bam,
+                    bai = bai,
+                    per_chr_bam_bai_and_id = per_chr_bam_bai_and_id,
+                    is_ont = is_ont,
 
-                unphased_vcf = DV.vcf,
-                unphased_tbi = DV.tbi,
+                    unphased_vcf = DV.vcf,
+                    unphased_tbi = DV.tbi,
 
-                ref_map = ref_map,
+                    ref_map = ref_map,
 
-                zones = zones
+                    zones = zones,
+                    gcs_variants_out_dir = gcs_variants_out_dir,
+                    gcs_tagged_bam_out_dir = gcs_tagged_bam_out_dir
+            }
         }
     }
 
-    if (is_ont && (!is_r10_4_pore_or_later)) { # legacy (<R10.4) ONT data
+    if (is_legacy_ont) { # legacy (<R10.4) ONT data
         call PMDV.Run as WorkOnLegacyONTdata {
             input:
                 how_to_shard_wg_for_calling = how_to_shard_wg_for_calling,
@@ -181,11 +205,24 @@ workflow Work {
                 dv_memory = dv_memory,
                 zones = zones
         }
+        call FF.FinalizeToFile as FinalizeLegacyGVcf { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_g_vcf }
+        call FF.FinalizeToFile as FinalizeLegacyGTbi { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_g_tbi }
+        if (phase_and_tag) {
+            call FF.FinalizeToFile as FinalizeLegacyPhasedVcf       { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf }
+            call FF.FinalizeToFile as FinalizeLegacyPhasedTbi       { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_phased_tbi }
+            call FF.FinalizeToFile as FinalizeLegacyPhaseStatsTSV   { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_tsv }
+            call FF.FinalizeToFile as FinalizeLegacyPhaseStatsGTF   { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_gtf }
+
+            call FF.FinalizeToFile as FinalizeLegacyHapTaggedBam { input: outdir = gcs_tagged_bam_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bam }
+            call FF.FinalizeToFile as FinalizeLegacyHapTaggedBai { input: outdir = gcs_tagged_bam_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bai }
+        }
     }
 
-    File use_this_haptag_bam = select_first([PnT.hap_tagged_bam, WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bam])
-    File use_this_haptag_bai = select_first([PnT.hap_tagged_bai, WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bai])
-    String use_this_haptagger = select_first([PnT.haplotagged_bam_tagger, "Legacy"])
+    if (phase_and_tag) {
+        File use_this_haptag_bam  = select_first([PhaseThenTag.hap_tagged_bam, FinalizeLegacyHapTaggedBam.gcs_path])
+        File use_this_haptag_bai  = select_first([PhaseThenTag.hap_tagged_bai, FinalizeLegacyHapTaggedBai.gcs_path])
+        String use_this_haptagger = select_first([PhaseThenTag.haplotagged_bam_tagger, "Legacy"])
+    }
 
     ####################################################################################################################################
     # run clair3, if so requested
@@ -197,5 +234,10 @@ workflow Work {
                 is_ont = is_ont, prefix = prefix,
                 ref_map = ref_map, zones = zones
         }
+
+        call FF.FinalizeToFile as FinalizeClairVcf  { input: outdir = gcs_variants_out_dir, file = RunClair3.clair_vcf }
+        call FF.FinalizeToFile as FinalizeClairTbi  { input: outdir = gcs_variants_out_dir, file = RunClair3.clair_tbi }
+        call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = gcs_variants_out_dir, file = RunClair3.clair_gvcf }
+        call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = gcs_variants_out_dir, file = RunClair3.clair_gtbi }
     }
 }
