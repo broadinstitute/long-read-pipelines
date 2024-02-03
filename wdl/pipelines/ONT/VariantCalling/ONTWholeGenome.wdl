@@ -21,7 +21,7 @@ workflow ONTWholeGenome {
         is_r10_4_pore_or_later: "tell us which pore version was used to generate the data. When true, will use the DV (>=1.5.0) toolchain."
         model_for_dv_andor_pepper: "model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
 
-        ref_map_file: "table indicating reference sequence and auxillary file locations"
+        ref_bundle_json_file: "a json file holding reference file location and auxillary file locations; see HumanReferenceBundle struct defined in ReferenceMetadata"
 
         bed_to_compute_coverage: "BED file holding regions-of-interest for computing coverage over."
         bed_descriptor: "Description of the BED file, will be used in the file name so be careful naming things"
@@ -69,7 +69,7 @@ workflow ONTWholeGenome {
         String model_for_dv_andor_pepper
 
         # reference-specific
-        File ref_map_file
+        File ref_bundle_json_file
         File? bed_to_compute_coverage
         String? bed_descriptor
 
@@ -113,7 +113,7 @@ workflow ONTWholeGenome {
                 is_r10_4_pore_or_later = is_r10_4_pore_or_later,
                 model_for_dv_andor_pepper = model_for_dv_andor_pepper,
 
-                ref_map_file = ref_map_file,
+                ref_bundle_json_file = ref_bundle_json_file,
 
                 small_variant_calling_options_json = small_variant_calling_options_json,
                 sv_calling_options_json = sv_calling_options_json,

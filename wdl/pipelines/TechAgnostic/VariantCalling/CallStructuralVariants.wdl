@@ -3,6 +3,8 @@ version 1.0
 import "../../../tasks/Utility/Utils.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
+import "../../../structs/ReferenceMetadata.wdl"
+
 import "../../../tasks/VariantCalling/PBSV.wdl"
 import "../../../tasks/VariantCalling/Sniffles2.wdl" as Sniffles2
 
@@ -40,7 +42,7 @@ workflow Work {
         Array[Pair[String, Pair[File, File]]]? per_chr_bam_bai_and_id
 
         # reference info
-        File ref_map_file
+        File ref_bundle_json_file
 
         # sv-specific args
         Int minsvlen = 20
@@ -64,7 +66,7 @@ workflow Work {
         }
     }
 
-    Map[String, String] ref_map = read_map(ref_map_file)
+    HumanReferenceBundle ref_bundle = read_json(ref_bundle_json_file)
 
     ##########################################################
     # Sniffles-2
@@ -77,7 +79,7 @@ workflow Work {
             minsvlen = minsvlen,
             sample_id = InferSampleName.sample_name,
             prefix = prefix,
-            tandem_repeat_bed = ref_map['tandem_repeat_bed']
+            tandem_repeat_bed = ref_bundle.tandem_repeat_bed
     }
 
     ##########################################################
@@ -98,9 +100,9 @@ workflow Work {
                     is_ont = is_ont,
                     chr = contig,
                     prefix = prefix,
-                    ref_fasta = ref_map['fasta'],
-                    ref_fasta_fai = ref_map['fai'],
-                    tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                    ref_fasta = ref_bundle.fasta,
+                    ref_fasta_fai = ref_bundle.fai,
+                    tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
                     zones = zones
             }
         }
@@ -108,8 +110,8 @@ workflow Work {
         call PBSV.Call as pbsv_wg_call {
             input:
                 svsigs = pbsv_discover_chr.svsig,
-                ref_fasta = ref_map['fasta'],
-                ref_fasta_fai = ref_map['fai'],
+                ref_fasta = ref_bundle.fasta,
+                ref_fasta_fai = ref_bundle.fai,
                 is_hifi = is_hifi,
                 is_ont = is_ont,
                 prefix = prefix,
@@ -125,9 +127,9 @@ workflow Work {
                 prefix = prefix,
                 is_hifi = is_hifi,
                 is_ont = is_ont,
-                ref_fasta = ref_map['fasta'],
-                ref_fasta_fai = ref_map['fai'],
-                tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                ref_fasta = ref_bundle.fasta,
+                ref_fasta_fai = ref_bundle.fai,
+                tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
                 zones = zones
         }
     }

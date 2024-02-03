@@ -17,7 +17,7 @@ workflow PBCCSWholeGenome {
         aligned_bais:       "GCS path to aligned BAM file indices"
         sample_name:        "sample name as encoded in the bams"
 
-        ref_map_file: "table indicating reference sequence and auxillary file locations"
+        ref_bundle_json_file: "a json file holding reference file location and auxillary file locations; see HumanReferenceBundle struct defined in ReferenceMetadata"
 
         bed_to_compute_coverage: "BED file holding regions-of-interest for computing coverage over."
         bed_descriptor: "Description of the BED file, will be used in the file name so be careful naming things"
@@ -55,7 +55,7 @@ workflow PBCCSWholeGenome {
         Array[File] aligned_bais
 
         # reference-specific
-        File ref_map_file
+        File ref_bundle_json_file
         File? bed_to_compute_coverage
         String? bed_descriptor
 
@@ -98,7 +98,7 @@ workflow PBCCSWholeGenome {
                 is_r10_4_pore_or_later = false,
                 model_for_dv_andor_pepper = 'PACBIO',
 
-                ref_map_file = ref_map_file,
+                ref_bundle_json_file = ref_bundle_json_file,
 
                 small_variant_calling_options_json = small_variant_calling_options_json,
                 sv_calling_options_json = sv_calling_options_json,

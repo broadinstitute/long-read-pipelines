@@ -13,12 +13,13 @@ import "../tasks/Utility/Utils.wdl" as Utils
 import "../tasks/Alignment/AlignReads.wdl" as AR
 import "../tasks/QC/AlignedMetrics.wdl" as AM
 import "../tasks/Utility/Finalize.wdl" as FF
+import "../structs/ReferenceMetadata.wdl"
 import "../pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl" as VAR
 
 workflow PBCCSDemultiplexWholeGenome {
     input {
         Array[File] bams
-        File ref_map_file
+        File ref_bundle_json_file
 
         String participant_name
         File barcode_file
@@ -35,7 +36,7 @@ workflow PBCCSDemultiplexWholeGenome {
 
     parameter_meta {
         bams:             "GCS path to raw subreads or CCS data"
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        ref_bundle_json_file: "a json file holding reference file location and auxillary file locations; see HumanReferenceBundle struct defined in ReferenceMetadata"
 
         participant_name: "name of the participant from whom these samples were obtained"
         barcode_file:     "GCS path to the fasta file that specifies the expected set of multiplexing barcodes"
@@ -47,7 +48,7 @@ workflow PBCCSDemultiplexWholeGenome {
         gcs_out_root_dir: "GCS bucket to store the corrected/uncorrected reads, variants, and metrics files"
     }
 
-    Map[String, String] ref_map = read_map(ref_map_file)
+    HumanReferenceBundle ref_bundle = read_json(ref_bundle_json_file)
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSDemultiplexWholeGenome/" + participant_name
 
@@ -109,7 +110,7 @@ workflow PBCCSDemultiplexWholeGenome {
         call PB.Align as AlignBarcode {
             input:
                 bam         = demux_bam,
-                ref_fasta   = ref_map['fasta'],
+                ref_fasta   = ref_bundle.fasta,
                 sample_name = participant_name,
                 map_preset  = "CCS",
                 drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags
@@ -120,8 +121,8 @@ workflow PBCCSDemultiplexWholeGenome {
             input:
                 aligned_bam    = AlignBarcode.aligned_bam,
                 aligned_bai    = AlignBarcode.aligned_bai,
-                ref_fasta      = ref_map['fasta'],
-                ref_dict       = ref_map['dict'],
+                ref_fasta      = ref_bundle.fasta,
+                ref_dict       = ref_bundle.dict,
                 gcs_output_dir = outdir + "/" + BC + "/metrics/per_barcode"
         }
 
@@ -137,7 +138,7 @@ workflow PBCCSDemultiplexWholeGenome {
                 is_ont = false,
                 is_r10_4_pore_or_later = false,
                 model_for_dv_andor_pepper = 'PACBIO',
-                ref_map_file = ref_map_file,
+                ref_bundle_json_file = ref_bundle_json_file,
 
                 small_variant_calling_options_json = small_variant_calling_options_json,
                 sv_calling_options_json = sv_calling_options_json,
