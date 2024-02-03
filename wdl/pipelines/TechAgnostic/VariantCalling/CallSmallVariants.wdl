@@ -1,6 +1,7 @@
 version 1.0
 
 import "../../../tasks/Utility/Finalize.wdl" as FF
+import "../../../structs/ReferenceMetadata.wdl"
 
 import "../Utility/ShardWholeGenome.wdl"
 
@@ -84,7 +85,7 @@ workflow Work {
         String model_for_dv_andor_pepper
 
         # reference info
-        File ref_map_file
+        File ref_bundle_json_file
 
         # phasing and read-haplotaging desired or not
         Boolean phase_and_tag
@@ -139,20 +140,20 @@ workflow Work {
         File? dv_vcf_whatshap_phasing_stats_gtf = PhaseThenTag.whatshap_phasing_stats_gtf
     }
 
-    Map[String, String] ref_map = read_map(ref_map_file)
-
+    HumanReferenceBundle ref_bundle = read_json(ref_bundle_json_file)
+    Map[String, String] ref_map = ref_bundle
     ####################################################################################################################################
     # custom-shard WG (for load-balancing)
     ####################################################################################################################################
     # but if custom sharding isn't requested, then per-chr sharding is already done, so no need to redo
-    if (defined(ref_map['size_balanced_scatter_intervallists_locators'])) {
+    if (defined(ref_bundle.size_balanced_scatter_intervallists_locators)) {
         call ShardWholeGenome.Split as CustomSplitBamForSmallVar {
             input:
                 bam = bam,
                 bai = bai,
-                ref_dict = ref_map['dict'],
-                ref_scatter_interval_list_ids = ref_map['size_balanced_scatter_interval_ids'],
-                ref_scatter_interval_list_locator = ref_map['size_balanced_scatter_intervallists_locators']
+                ref_dict = ref_bundle.dict,
+                ref_scatter_interval_list_ids = select_first([ref_bundle.size_balanced_scatter_interval_ids]),
+                ref_scatter_interval_list_locator = select_first([ref_bundle.size_balanced_scatter_intervallists_locators])
         }
     }
     Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling = select_first([CustomSplitBamForSmallVar.id_bam_bai_of_shards,
@@ -172,10 +173,10 @@ workflow Work {
                 prefix = prefix,
                 model_for_dv_andor_pepper = model_for_dv_andor_pepper,
 
-                ref_map = ref_map,
+                ref_bundle = ref_bundle,
 
                 haploid_contigs = haploid_contigs,
-                par_regions_bed = ref_map["PAR_bed"],
+                par_regions_bed = ref_bundle.PAR_bed,
 
                 dv_threads = dv_threads,
                 dv_memory = dv_memory,

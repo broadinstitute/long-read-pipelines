@@ -4,6 +4,8 @@ import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../tasks/Utility/Utils.wdl"
 
+import "../../../structs/ReferenceMetadata.wdl"
+
 import "../Utility/ShardWholeGenome.wdl"
 
 import "CallStructuralVariants.wdl"
@@ -27,7 +29,8 @@ workflow CallVariants {
         is_r10_4_pore_or_later: "tell us which pore version was used to generate the data. When true, will use the DV (>=1.5.0) toolchain."
         model_for_dv_andor_pepper: "model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
 
-        ref_map_file: "table indicating reference sequence and auxillary file locations"
+        ref_bundle_json_file: "a json file holding reference file location and auxillary file locations; see HumanReferenceBundle struct defined in ReferenceMetadata"
+
         small_variant_calling_options_json: "a json file holding config for small variant calling (see struct SmallVarJobConfig in CallSmallVariants.wdl for detail; when omitted, will skip small variant calling"
         sv_calling_options_json: "a json file holding config for SV calling (see struct SVCallingConfig in CallStructuralVariants.wdl for detail; when omitted, will skip SV calling"
 
@@ -71,7 +74,7 @@ workflow CallVariants {
         String model_for_dv_andor_pepper
 
         # reference-specific
-        File ref_map_file
+        File ref_bundle_json_file
 
         File? small_variant_calling_options_json
         File? sv_calling_options_json
@@ -86,13 +89,13 @@ workflow CallVariants {
     ######################################################################
     # Block for prepping inputs
     ######################################################################
-    Map[String, String] ref_map = read_map(ref_map_file)
+    HumanReferenceBundle ref_bundle = read_json(ref_bundle_json_file)
 
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
     String wdl_parsable_zones = get_zones.collapsed
 
     # needed for whatshap phasing anyway, so this can be used by SV calling
-    call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_map['dict'], bam = bam, bai = bai, }
+    call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_bundle.dict, bam = bam, bai = bai, }
 
     ######################################################################
     # Block for small variants handling
@@ -116,7 +119,7 @@ workflow CallVariants {
                 gcs_variants_out_dir = sub(gcs_out_dir, "/$", "") + "/variants/small",
                 gcs_tagged_bam_out_dir = sub(gcs_out_dir, "/$", "") + "/alignments",
 
-                ref_map_file = ref_map_file,
+                ref_bundle_json_file = ref_bundle_json_file,
 
                 run_clair3 = snp_options.run_clair3,
 
@@ -153,7 +156,7 @@ workflow CallVariants {
 
                 gcs_out_dir = sv_dir,
 
-                ref_map_file = ref_map_file,
+                ref_bundle_json_file = ref_bundle_json_file,
 
                 minsvlen = sv_options.min_sv_len,
                 pbsv_discover_per_chr = sv_options.pbsv_discover_per_chr,
@@ -176,7 +179,7 @@ workflow CallVariants {
             call Sniffles2.SampleSV as SnifflesPhaseSV {
                 input:
                     bam = m, bai = i, sample_id = InferSampleName.sample_name,
-                    prefix = prefix, tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                    prefix = prefix, tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
                     minsvlen = opt_b.min_sv_len,
                     phase_sv = true
             }

@@ -1,6 +1,7 @@
 version 1.0
 
 import "../../structs/Structs.wdl"
+import "../../structs/ReferenceMetadata.wdl"
 import "../Utility/VariantUtils.wdl"
 import "../Visualization/VisualizeResourceUsage.wdl"
 
@@ -25,7 +26,7 @@ workflow Run {
         File? par_regions_bed
 
         # reference info
-        Map[String, String] ref_map
+        HumanReferenceBundle ref_bundle
 
         # optimizations
         Int dv_threads
@@ -61,8 +62,8 @@ workflow Run {
                 input:
                     bam           = shard_bam,
                     bai           = shard_bai,
-                    ref_fasta     = ref_map['fasta'],
-                    ref_fasta_fai = ref_map['fai'],
+                    ref_fasta     = ref_bundle.fasta,
+                    ref_fasta_fai = ref_bundle.fai,
 
                     haploid_contigs = haploid_contigs,
                     par_regions_bed = par_regions_bed,
@@ -80,8 +81,8 @@ workflow Run {
                 input:
                     bam           = shard_bam,
                     bai           = shard_bai,
-                    ref_fasta     = ref_map['fasta'],
-                    ref_fasta_fai = ref_map['fai'],
+                    ref_fasta     = ref_bundle.fasta,
+                    ref_fasta_fai = ref_bundle.fai,
 
                     haploid_contigs = haploid_contigs,
                     par_regions_bed = par_regions_bed,
@@ -116,14 +117,14 @@ workflow Run {
         input:
             vcfs     = dv_gvcf,
             prefix   = dv_prefix + ".g",
-            ref_fasta_fai = ref_map['fai']
+            ref_fasta_fai = ref_bundle.fai
     }
 
     call VariantUtils.MergeAndSortVCFs as MergeDeepVariantVCFs {
         input:
             vcfs     = dv_vcf,
             prefix   = dv_prefix,
-            ref_fasta_fai = ref_map['fai']
+            ref_fasta_fai = ref_bundle.fai
     }
 }
 
