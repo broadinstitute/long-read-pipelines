@@ -41,10 +41,10 @@ workflow Run {
         File vcf = MergeDeepVariantVCFs.vcf
         File tbi = MergeDeepVariantVCFs.tbi
 
-        Array[File] nongpu_resource_usage_logs = nongpu_resource_usage_log
-        Array[File] nongpu_resource_usage_visual = VisualizeDVRegularResoureUsage.plot_pdf
+        Array[File] nongpu_resource_usage_logs = select_all(nongpu_resource_usage_log)
+        Array[File] nongpu_resource_usage_visual = select_all(VisualizeDVRegularResoureUsage.plot_pdf)
 
-        Array[File] native_visual_report_htmls = dv_self_visual_html
+        Array[File] native_visual_report_htmls = select_all(dv_self_visual_html)
     }
 
     ####################################################################################################################################
@@ -57,6 +57,7 @@ workflow Run {
         File shard_bam = triplet.right.left
         File shard_bai = triplet.right.right
 
+        if (shard_id != "alts") {
         if (!use_gpu) {
             call DV as DeepV {
                 input:
@@ -106,6 +107,7 @@ workflow Run {
             output_pdf_name = "~{prefix}.deepvariant.regular-resources-usage.~{triplet.left}.pdf",
             plot_title = "DeepVariant, on input ~{prefix}, at locus ~{triplet.left}"
         }
+        }
     }
 
     #############
@@ -115,14 +117,14 @@ workflow Run {
 
     call VariantUtils.MergeAndSortVCFs as MergeDeepVariantGVCFs {
         input:
-            vcfs     = dv_gvcf,
+            vcfs     = select_all(dv_gvcf),
             prefix   = dv_prefix + ".g",
             ref_fasta_fai = ref_bundle.fai
     }
 
     call VariantUtils.MergeAndSortVCFs as MergeDeepVariantVCFs {
         input:
-            vcfs     = dv_vcf,
+            vcfs     = select_all(dv_vcf),
             prefix   = dv_prefix,
             ref_fasta_fai = ref_bundle.fai
     }
