@@ -30,6 +30,7 @@ task AssembleForHaplotigs {
 
         # GFA graph to contigs, primary
         # outputs generated this way has "bp" in their names
+        time \
         awk '/^S/{print ">"$2; print $3}' \
             ~{prefix}.bp.p_ctg.gfa \
             > ~{prefix}.bp.p_ctg.fa
@@ -40,13 +41,15 @@ task AssembleForHaplotigs {
         for haplotype_gfa in ~{prefix}.bp.hap*.p_ctg.gfa; do
             filename=$(basename -- "${haplotype_gfa}")
             haplotype="${filename%.*}"
+            time \
             awk '/^S/{print ">"$2; print $3}' \
                 "${haplotype_gfa}" \
                 > "${haplotype}".fa
         done
 
         for ff in ./*.p_ctg.fa; do
-            bgzip -@2 -k --index "${ff}"
+            time \
+            bgzip -@2 --index "${ff}"
         done
     >>>
 
@@ -78,7 +81,7 @@ task AssembleForHaplotigs {
 
     Int min_disk = 50
     Int half_reads_sz = (1 + ceil(size(reads, "GiB")))/2
-    Int proposed_disk = 6 * half_reads_sz # a trick to do 3 times the reads file size, yet make sure it is even
+    Int proposed_disk = 10 + 6 * half_reads_sz # a trick to do 3 times the reads file size, yet make sure it is even
     Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
     RuntimeAttr default_attr = object {
