@@ -81,8 +81,6 @@ task SampleSV {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int cpus = 8
-    Int disk_size = 2*ceil(size([bam, bai], "GB"))
     String postfix = if phase_sv then "-phased" else ""
     String snf_output = "~{prefix}.sniffles~{postfix}.snf"
     String vcf_output = "~{prefix}.sniffles~{postfix}.vcf.gz"
@@ -114,9 +112,13 @@ task SampleSV {
     }
 
     #########################
+
+    Int cpus = 8
+    Int disk_size = 2*ceil(size([bam, bai], "GB"))
+
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
-        mem_gb:             46,
+        mem_gb:             cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,
@@ -162,9 +164,10 @@ task MergeCall {
         File vcf = "~{prefix}.vcf"
     }
 
+    #########################
     Int cpus = 8
     Int disk_size = 3*ceil(size(snfs, "GB"))
-                                                                                                                                                                                                                                                                                                                                                                                                                                   #########################
+
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
         mem_gb:             46,
