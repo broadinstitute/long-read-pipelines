@@ -90,15 +90,7 @@ task Discover {
         prefix:            "prefix for output"
     }
 
-    Int MINIMAL_DISK = 50
-    Boolean is_big_bam = size(bam, "GB") > 100
-    Int inflation_factor = if (is_big_bam) then 5 else 2
-    Int disk_size = inflation_factor * (ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
-    Int runtime_disk_size = if disk_size < MINIMAL_DISK then MINIMAL_DISK else disk_size
-
     String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
-
-    String disk_type = if is_ont then "SSD" else "HDD"
 
     command <<<
         set -euxo pipefail
@@ -152,9 +144,21 @@ task Discover {
     }
 
     #########################
+
+    Int MINIMAL_DISK = 20
+    Boolean is_big_bam = size(bam, "GB") > 100
+    Int inflation_factor = if (is_big_bam) then 3 else 2
+    Int disk_size = inflation_factor * (ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
+    Int runtime_disk_size = if disk_size < MINIMAL_DISK then MINIMAL_DISK else disk_size
+
+    String disk_type = if is_ont then "SSD" else "HDD"
+
+    Int num_cores = if(defined(chr)) then 4 else 32
+    Int memory = 2 * num_cores
+
     RuntimeAttr default_attr = object {
-        cpu_cores:          if(defined(chr)) then 8 else 32,
-        mem_gb:             if(defined(chr)) then 32 else 128,
+        cpu_cores:          num_cores,
+        mem_gb:             memory,
         disk_gb:            runtime_disk_size,
         preemptible_tries:  2,
         max_retries:        1,
@@ -193,7 +197,6 @@ task Call {
         prefix:            "prefix for output"
     }
 
-    Int disk_size = 2*ceil(size(svsigs, "GiB") + size([ref_fasta, ref_fasta_fai], "GiB"))
 
     command <<<
         set -euxo pipefail
@@ -220,12 +223,14 @@ task Call {
     }
 
     #########################
+    Int disk_size = 2*ceil(size(svsigs, "GiB") + size([ref_fasta, ref_fasta_fai], "GiB"))
+
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
-        mem_gb:             96,
+        mem_gb:             64,
         disk_gb:            disk_size,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
