@@ -1,6 +1,7 @@
 version 1.0
 
 import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow SRDownsampleBam {
 
