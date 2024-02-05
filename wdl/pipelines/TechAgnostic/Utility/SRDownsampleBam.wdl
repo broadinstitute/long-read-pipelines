@@ -25,7 +25,7 @@ workflow SRDownsampleBam {
     }
 
     call Utils.DownsampleSam { input: bam = bam, probability = probability }
-    Float downsampled_bam_size = size(DownsampleSam.output_bam, "GB")
+    Float ds_bam_size = size(DownsampleSam.output_bam, "GB")
 
     call FF.FinalizeToFile as FinalizeDownsampledBam { input: outdir = outdir, file = DownsampleSam.output_bam }
     call FF.FinalizeToFile as FinalizeDownsampledBamIndex { input: outdir = outdir, file = DownsampleSam.output_bam_index }
@@ -33,6 +33,6 @@ workflow SRDownsampleBam {
     output {
         File downsampled_bam = FinalizeDownsampledBam.gcs_path
         File downsampled_bai = FinalizeDownsampledBamIndex.gcs_path
-        Float downsampled_bam_size = downsampled_bam_size
+        Float downsampled_bam_size = ds_bam_size
     }
 }
