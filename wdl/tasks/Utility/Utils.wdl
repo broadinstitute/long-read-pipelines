@@ -1511,6 +1511,7 @@ task SubsetBam {
         bai:    "index for bam file"
         locus:  "genomic locus to select"
         prefix: "prefix for output bam and bai file names"
+        disk_offset: "if overriden from the default value (in GiB), the disk space will be this much larger than the BAM, instead of being 4 times larger (to save diskspace)"
         is_samtools_failed: "if true, the streaming of BAM from the bucket didn't succeed, so consider the result BAM corrupted."
     }
 
@@ -1520,10 +1521,10 @@ task SubsetBam {
         String locus
         String prefix = "subset"
 
+        Int disk_offset = 0
+
         RuntimeAttr? runtime_attr_override
     }
-
-    Int disk_size = 4*ceil(size([bam, bai], "GB"))
 
     command <<<
         set -euxo pipefail
@@ -1551,6 +1552,8 @@ task SubsetBam {
     }
 
     #########################
+    Int disk_size = if (0==disk_offset) then 4*ceil(size([bam, bai], "GB")) else disk_offset + ceil(size([bam, bai], "GB"))
+
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             10,
@@ -1723,8 +1726,6 @@ task ResilientSubsetBam {
 
     Array[String] intervals = read_lines(interval_list_file)
 
-    Int disk_size = 4*ceil(size([bam, bai], "GB"))
-
     String subset_prefix = prefix + "." + interval_id
 
     command <<<
@@ -1767,6 +1768,10 @@ task ResilientSubsetBam {
     }
 
     #########################
+    Int min_disk = 10
+    Int proposal_disk = ceil(0.2 * size([bam, bai], "GiB"))
+    Int disk_size = if (proposal_disk<min_disk) then min_disk else proposal_disk # here we make one assumption that we aren't getting more than 10% of the whole genome
+
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             10,

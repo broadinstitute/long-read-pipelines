@@ -1057,8 +1057,6 @@ task SubsetBamToLocusLocal {
 
     Array[String] intervals = read_lines(interval_list_file)
 
-    Int disk_size = 4*ceil(size([bam, bai], "GB"))
-
     String subset_prefix = prefix + "." + interval_id
 
     String local_bam = "/cromwell_root/~{basename(bam)}"
@@ -1086,6 +1084,8 @@ task SubsetBamToLocusLocal {
     }
 
     #########################
+    Int disk_size = if (size(bam, "GiB")>250) then 4*ceil(size([bam, bai], "GB")) else 375
+
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             16,

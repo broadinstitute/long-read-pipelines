@@ -43,7 +43,7 @@ workflow Split {
                     bai = bai,
                     interval_list_file = pair.right,
                     interval_id = pair.left,
-                    prefix = basename(bam, ".bam")
+                    prefix = basename(bam, ".bam"),
             }
             if (user_controled_split.is_samtools_failed) {
                 # attempt again, first retry streaming,
@@ -53,7 +53,7 @@ workflow Split {
                         bai = bai,
                         interval_list_file = pair.right,
                         interval_id = pair.left,
-                        prefix = basename(bam, ".bam")
+                        prefix = basename(bam, ".bam"),
                 }
                 # then localize if that still fails
                 if (retry_streaming.is_samtools_failed) {
@@ -85,7 +85,8 @@ workflow Split {
                 input:
                     bam = bam,
                     bai = bai,
-                    locus = contig
+                    locus = contig,
+                    disk_offset = 10 + ceil(0.1*size(bam, "GiB"))  # chr1 is ~10% of human genome, then top-off with an extra 10
             }
             if (default_split.is_samtools_failed) {
                 call Utils.StopWorkflow as StandardShardFailedStreaming { input: reason = "Streaming from BAM for subsetting into ~{contig} failed."}
