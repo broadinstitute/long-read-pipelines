@@ -14,14 +14,14 @@ workflow SRIndexBam {
         bam: "Bam file for which to create an index."
 
         dir_prefix: "Directory prefix to use for finalized location."
-        outdir: "GCS Bucket into which to finalize outputs."
+        gcs_out_root_dir: "GCS Bucket into which to finalize outputs."
     }
 
     input {
         File bam
 
         String dir_prefix
-        String outdir
+        String gcs_out_rootdir
     }
     
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{dir_prefix}"
