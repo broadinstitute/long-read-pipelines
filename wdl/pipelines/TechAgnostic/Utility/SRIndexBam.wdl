@@ -12,16 +12,21 @@ workflow SRIndexBam {
 
     parameter_meta {
         bam: "Bam file for which to create an index."
-        outdir:    "GCS Bucket into which to finalize outputs."
+
+        dir_prefix: "Directory prefix to use for finalized location."
+        outdir: "GCS Bucket into which to finalize outputs."
     }
 
     input {
         File bam
+
+        String dir_prefix
         String outdir
     }
+    
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{dir_prefix}"
 
     call Utils.Index { input: bam = bam }
-
     call FF.FinalizeToFile as FinalizeBamIndex { input: outdir = outdir, file = Index.bai }
 
     output {
