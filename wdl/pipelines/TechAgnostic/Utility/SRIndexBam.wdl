@@ -21,7 +21,7 @@ workflow SRIndexBam {
         File bam
 
         String dir_prefix
-        String gcs_out_rootdir
+        String gcs_out_root_dir
     }
     
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{dir_prefix}"
