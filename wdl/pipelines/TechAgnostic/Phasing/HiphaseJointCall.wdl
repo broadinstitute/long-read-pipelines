@@ -19,8 +19,8 @@ workflow HybridPhase {
         File wholegenome_bais
         File wholegenome_joint_vcf
         File wholegenome_joint_vcf_tbi
-        File wholegenome_joint_sv
-        File wholegenome_joint_sv_tbi
+        File one_chr_joint_sv
+        File one_chr_joint_sv_tbi
         File reference
         File reference_index
         String chromosome
@@ -35,11 +35,11 @@ workflow HybridPhase {
             locus = chromosome
         }
 
-    call VU.SubsetVCF as SubsetSVsJoint { input:
-        vcf_gz = wholegenome_joint_sv,
-        vcf_tbi = wholegenome_joint_sv_tbi,
-        locus = chromosome
-    }
+    # call VU.SubsetVCF as SubsetSVsJoint { input:
+    #     vcf_gz = wholegenome_joint_sv,
+    #     vcf_tbi = wholegenome_joint_sv_tbi,
+    #     locus = chromosome
+    # }
 
  
     ####### Subset Bam####
@@ -64,7 +64,7 @@ workflow HybridPhase {
     }
 
     call SplitJointCallbySample.SplitVCFbySample as SV_split { input:
-        joint_vcf = SubsetSVsJoint.subset_vcf,
+        joint_vcf = one_chr_joint_sv,
         region = chromosome,
         samplename = sample_id
     }
