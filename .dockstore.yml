@@ -129,3 +129,6 @@ workflows:
 - name: LongphaseSingleSample
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/LongphaseSingleSample.wdl
+- name: HiphaseJointCall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HiphaseJointCall.wdl

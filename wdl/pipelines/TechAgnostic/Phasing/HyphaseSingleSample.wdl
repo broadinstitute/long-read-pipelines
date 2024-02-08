@@ -44,6 +44,7 @@ workflow HybridPhase {
         locus = chromosome
     }
     
+
     call Hiphase.HiphaseSVs as hiphase { input:
             bam = SubsetBam.subset_bam,
             bai = SubsetBam.subset_bai,
