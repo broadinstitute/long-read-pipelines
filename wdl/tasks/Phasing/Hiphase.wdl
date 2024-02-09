@@ -137,7 +137,7 @@ task HiphaseSVs {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
-        mem_gb:             64,
+        mem_gb:             128,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  0,
