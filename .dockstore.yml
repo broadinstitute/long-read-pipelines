@@ -132,3 +132,6 @@ workflows:
 - name: HiphaseJointCall
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HiphaseJointCall.wdl
+- name: Flare
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/FlareLocalAncestryInference.wdl
