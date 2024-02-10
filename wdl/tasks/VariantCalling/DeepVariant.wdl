@@ -202,7 +202,7 @@ task DV {
     Int bam_sz = ceil(size(bam, "GB"))
     Boolean is_big_bam = bam_sz > 100
     Int inflation_factor = if (is_big_bam) then 10 else 5
-    Int minimal_disk = 50
+    Int minimal_disk = 20
 	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
 
     RuntimeAttr default_attr = object {
