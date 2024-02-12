@@ -12,15 +12,15 @@ task SplitVCFbySample {
 
         bcftools index ~{joint_vcf}
 
-        bcftools view -s ~{samplename} ~{joint_vcf} -r ~{region} -o ~{samplename}.subset.g.vcf.bgz
+        bcftools view -s ~{samplename} ~{joint_vcf} -r ~{region} -o ~{samplename}.subset.g.vcf.gz
 
-        tabix -p vcf ~{samplename}.subset.g.vcf.bgz
+        tabix -p vcf ~{samplename}.subset.g.vcf.gz
 
     >>>
     
     output {
-		File single_sample_vcf = "~{samplename}.subset.g.vcf.bgz"
-        File single_sample_vcf_tbi = "~{samplename}.subset.g.vcf.bgz.tbi"
+		File single_sample_vcf = "~{samplename}.subset.g.vcf.gz"
+        File single_sample_vcf_tbi = "~{samplename}.subset.g.vcf.gz.tbi"
     }
 
 

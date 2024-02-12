@@ -68,16 +68,16 @@ task TranslateBcftoVcf {
         set -x pipefail
 
         bcftools index ~{joint_vcf}
+        
+        bcftools view ~{joint_vcf} | bgzip -c > ~{prefix}.subset.g.vcf.gz
 
-        bcftools view ~{joint_vcf} -o ~{prefix}.subset.g.vcf.bgz
-
-        tabix -p vcf ~{prefix}.subset.g.vcf.bgz
+        tabix -p vcf ~{prefix}.subset.g.vcf.gz
 
     >>>
     
     output {
-		File translated_vcf = "~{prefix}.subset.g.vcf.bgz"
-        File translated_vcf_tbi = "~{prefix}.subset.g.vcf.bgz.tbi"
+		File translated_vcf = "~{prefix}.subset.g.vcf.gz"
+        File translated_vcf_tbi = "~{prefix}.subset.g.vcf.gz.tbi"
     }
 
 
