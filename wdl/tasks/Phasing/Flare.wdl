@@ -42,7 +42,7 @@ task Flare {
         disk_gb:            200,
         boot_disk_gb:       100,
         preemptible_tries:  0,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "hangsuunc/flare:v1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -55,5 +55,41 @@ task Flare {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task TranslateBcftoVcf {
+    input{       
+        File joint_vcf
+        String prefix
+    }
+    
+    command <<<
+        set -x pipefail
+
+        bcftools index ~{joint_vcf}
+
+        bcftools view ~{joint_vcf} -o ~{prefix}.subset.g.vcf.bgz
+
+        tabix -p vcf ~{prefix}.subset.g.vcf.bgz
+
+    >>>
+    
+    output {
+		File translated_vcf = "~{prefix}.subset.g.vcf.bgz"
+        File translated_vcf_tbi = "~{prefix}.subset.g.vcf.bgz.tbi"
+    }
+
+
+    Int disk_size = 1 + ceil(2 * (size(joint_vcf, "GiB")))
+
+    runtime {
+        cpu: 1
+        memory: "16 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 0
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }

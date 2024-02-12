@@ -20,14 +20,25 @@ workflow FlareLocalAncestryInference {
         String output_prefix
     }
 
-
+    call Flare.TranslateBcftoVcf as ref_trans {
+        input:
+            joint_vcf = ref_vcf,
+            prefix = "reference"
+    }
+    
+    call Flare.TranslateBcftoVcf as test_trans {
+        input:
+            joint_vcf = test_vcf,
+            prefix = "query"
+    }
+    
     call Flare.Flare as F{
         input:
-            ref_vcf = ref_vcf,
-            ref_vcf_index = ref_vcf_index,
+            ref_vcf = ref_trans.translated_vcf,
+            ref_vcf_index = ref_trans.translated_vcf_tbi,
             ref_panel = ref_panel,
-            test_vcf = test_vcf,
-            test_vcf_index = test_vcf_index,
+            test_vcf = test_trans.translated_vcf,
+            test_vcf_index = test_trans.translated_vcf_tbi,
             plink_map = plink_map,
             output_prefix = output_prefix
     }
