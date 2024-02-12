@@ -48,9 +48,9 @@ task AssembleForHaplotigs {
         done
 
         for ff in ./*.p_ctg.fa; do
-            time \
-            bgzip -@2 --index "${ff}"
+            bgzip -@4 --index "${ff}" &
         done
+        wait
     >>>
 
     output {
@@ -60,15 +60,24 @@ task AssembleForHaplotigs {
         File hap1_gfa = "~{prefix}.bp.hap1.p_ctg.gfa"
         File hap1_tigs = "~{prefix}.bp.hap1.p_ctg.fa.gz"
         File hap1_tig_gzi = "~{prefix}.bp.hap1.p_ctg.fa.gz.gzi"
+        File hap1_lowQ_bed = "~{prefix}.bp.hap1.p_ctg.lowQ.bed"
 
         File hap2_gfa = "~{prefix}.bp.hap2.p_ctg.gfa"
         File hap2_tigs = "~{prefix}.bp.hap2.p_ctg.fa.gz"
         File hap2_tig_gzi = "~{prefix}.bp.hap2.p_ctg.fa.gz.gzi"
+        File hap2_lowQ_bed = "~{prefix}.bp.hap2.p_ctg.lowQ.bed"
 
         # these are saved, but the one with alt contigs genearted will be preferred for now
         File primary_gfa = "~{prefix}.bp.p_ctg.gfa"
         File primary_fa = "~{prefix}.bp.p_ctg.fa.gz"
         File primary_fa_gzi = "~{prefix}.bp.p_ctg.fa.gz.gzi"
+
+        # raw unitig graph
+        File raw_unitig_graph = "~{prefix}.bp.r_utg.gfa"
+        File raw_unitig_lowQ_bed = "~{prefix}.bp.r_utg.lowQ.bed"
+        File ec_bin = "~{prefix}.ec.bin"
+        File ovlp_reverse_bin = "~{prefix}.ovlp.reverse.bin"
+        File ovlp_source_bin = "~{prefix}.ovlp.source.bin"
     }
 
     #########################
@@ -105,13 +114,24 @@ task AssembleForHaplotigs {
 }
 
 task AssembleForAltContigs {
+
+    parameter_meta {
+        bin_files:
+        "If provided, hifiasm will continue the assembly in the primary-vs-alt mode by reusing the bin files previously generated (likely in the hap mode)."
+    }
+
     input {
         File reads
         String prefix = "out"
         String zones
 
+        Array[File]? bin_files
+
         RuntimeAttr? runtime_attr_override
     }
+
+    Boolean mv_bin_files = defined(bin_files)
+    Array[File] local_bin_files = select_first([bin_files, [reads]])
 
     command <<<
         set -euxo pipefail
@@ -119,6 +139,8 @@ task AssembleForAltContigs {
         export MONITOR_MOUNT_POINT="/cromwell_root/"
         bash /opt/vm_local_monitoring_script.sh &> resources.log &
         job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
+
+        if ~{mv_bin_files} ; then mv ~{sep=" " local_bin_files} . ; ls; fi
 
         time \
         hifiasm \
@@ -131,20 +153,24 @@ task AssembleForAltContigs {
         if ps -p "${job_id}" > /dev/null; then kill "${job_id}"; fi
         tree -h .
 
+        date
         # tricky, outputs generated this way has no "bp" in their file names
         # GFA graph to contigs, primary
         awk '/^S/{print ">"$2; print $3}' \
             ~{prefix}.p_ctg.gfa \
-        > ~{prefix}.p_ctg.fa
+        > ~{prefix}.p_ctg.fa &
 
         # GFA graph to contigs, alternate
         awk '/^S/{print ">"$2; print $3}' \
             ~{prefix}.a_ctg.gfa \
-        > ~{prefix}.a_ctg.fa
+        > ~{prefix}.a_ctg.fa &
+        wait
+        date
 
         for ff in ./*_ctg.fa; do
-            bgzip -@2 -k --index "${ff}"
+            bgzip -@4 --index "${ff}" &
         done
+        wait
     >>>
 
     output {
@@ -154,10 +180,12 @@ task AssembleForAltContigs {
         File primary_gfa  = "~{prefix}.p_ctg.gfa"
         File primary_tigs = "~{prefix}.p_ctg.fa.gz"
         File primary_fa_gzi = "~{prefix}.p_ctg.fa.gz.gzi"
+        File primary_lowQ_bed = "~{prefix}.p_ctg.lowQ.bed"
 
         File alternate_gfa  = "~{prefix}.a_ctg.gfa"
         File alternate_tigs = "~{prefix}.a_ctg.fa.gz"
         File alternate_tigs_gzi = "~{prefix}.a_ctg.fa.gz.gzi"
+        File alternate_lowQ_bed = "~{prefix}.a_ctg.lowQ.bed"
     }
 
     #########################
@@ -170,7 +198,8 @@ task AssembleForAltContigs {
 
     Int min_disk = 50
     Int half_reads_sz = (1 + ceil(size(reads, "GiB")))/2
-    Int proposed_disk = 6 * half_reads_sz # a trick to do 3 times the reads file size, yet make sure it is even
+    Int inflation_factor = if defined(bin_files) then 14 else 6  # bin files sizes together are ~ 10 + size of raw reads
+    Int proposed_disk = inflation_factor * half_reads_sz
     Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
     RuntimeAttr default_attr = object {
