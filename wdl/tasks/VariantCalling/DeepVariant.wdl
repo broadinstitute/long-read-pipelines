@@ -59,6 +59,7 @@ workflow Run {
 
         if (shard_id != "alts") {
         if (!use_gpu) {
+            call ACheapFixForT2TChrXMemoryIssue { input: bam = shard_bam, proposed_memory = dv_memory }
             call DV as DeepV {
                 input:
                     bam           = shard_bam,
@@ -72,7 +73,7 @@ workflow Run {
                     model_type = model_for_dv_andor_pepper,
 
                     threads = select_first([dv_threads]),
-                    memory  = select_first([dv_memory]),
+                    memory  = ACheapFixForT2TChrXMemoryIssue.use_this_memory, # select_first([dv_memory]),
                     zones = zones
             }
         }
@@ -127,6 +128,30 @@ workflow Run {
             vcfs     = select_all(dv_vcf),
             prefix   = dv_prefix,
             ref_fasta_fai = ref_bundle.fai
+    }
+}
+
+task ACheapFixForT2TChrXMemoryIssue {
+    input {
+        String bam
+        Int proposed_memory
+    }
+    output {
+        Int use_this_memory = read_int("result.txt")
+    }
+    command <<<
+        set -eux
+
+        # GRCh38 (more than 100 contigs in ref) doesn't have this issue
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        contig_cnt=$(samtools view -H ~{bam} | grep -c "^@SQ" | awk '{print $1}')
+        if [[ ${contig_cnt} -gt 100 ]]; then echo ~{proposed_memory} > "result.txt"; exit 0; fi
+
+        echo ~{bam} > bam_path.txt
+        if grep -qE "_X.bam$" bam_path.txt ; then echo "48" > "result.txt" ; else echo ~{proposed_memory} > "result.txt"; fi
+    >>>
+    runtime {
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
 
