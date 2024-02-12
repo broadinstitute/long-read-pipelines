@@ -12,8 +12,10 @@ task Flare {
 
     input {
         File ref_vcf
+        File ref_vcf_index
         File ref_panel
         File test_vcf
+        File test_vcf_index
         File plink_map
         String output_prefix
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
