@@ -83,9 +83,9 @@ workflow Assemble {
         Map[String, File] asm_metrics_files = SaveMetricsFiles.result
     }
 
-    String outdir = gcs_out_root_dir
+    String outdir = sub(gcs_out_root_dir, "/$", "")
     String asm_dir = outdir + "/assembly"
-    String quast_dir = asm_dir + "/quast"
+    String metrics_dir = asm_dir + "/quast"
 
     #########################################################################################
     # HIFIASM
@@ -93,16 +93,17 @@ workflow Assemble {
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
     String wdl_parsable_zones = get_zones.collapsed
 
-    call Hifiasm.AssembleForAltContigs { input:
+    call Hifiasm.AssembleForHaplotigs { input:
         reads  = reads,
         prefix = prefix,
         zones  = wdl_parsable_zones
     }
 
-    call Hifiasm.AssembleForHaplotigs { input:
+    call Hifiasm.AssembleForAltContigs { input:
         reads  = reads,
         prefix = prefix,
-        zones  = wdl_parsable_zones
+        zones  = wdl_parsable_zones,
+        bin_files = [AssembleForHaplotigs.ec_bin, AssembleForHaplotigs.ovlp_reverse_bin, AssembleForHaplotigs.ovlp_source_bin]
     }
 
     # save primary/alt
@@ -121,6 +122,14 @@ workflow Assemble {
     call FF.FinalizeToFile as FinalizeHifiasmHapTwoGFA   { input: outdir = asm_dir, file = AssembleForHaplotigs.hap2_gfa }
     call FF.FinalizeToFile as FinalizeHifiasmHapTwoFASTA { input: outdir = asm_dir, file = AssembleForHaplotigs.hap2_tigs }
     call FF.FinalizeToFile as FinalizeHifiasmHapTwoFaGzi { input: outdir = asm_dir, file = AssembleForHaplotigs.hap2_tig_gzi }
+
+    # save more files for debugging
+    call FF.FinalizeToFile as FinalizeHifiasmHapOneLowQBed { input: outdir = asm_dir, file = AssembleForHaplotigs.hap1_lowQ_bed }
+    call FF.FinalizeToFile as FinalizeHifiasmHapTwoLowQBed { input: outdir = asm_dir, file = AssembleForHaplotigs.hap2_lowQ_bed }
+    call FF.FinalizeToFile as FinalizeHifiasmPrimaryLowQBed { input: outdir = asm_dir, file = AssembleForAltContigs.primary_lowQ_bed }
+    call FF.FinalizeToFile as FinalizeHifiasmAlternateLowQBed { input: outdir = asm_dir, file = AssembleForAltContigs.alternate_lowQ_bed }
+    call FF.FinalizeToFile as FinalizeHifiasmRawUtigGraph  { input: outdir = asm_dir, file = AssembleForHaplotigs.raw_unitig_graph }
+    call FF.FinalizeToFile as FinalizeHifiasmRawUtigGraphRawUtigGraph { input: outdir = asm_dir, file = AssembleForHaplotigs.raw_unitig_lowQ_bed }
 
     #########################################################################################
     # QUAST
@@ -149,13 +158,13 @@ workflow Assemble {
                                 {files_to_save: [primary_h0_h1_quast.report_html],
                                  file_names: ['~{prefix}.quast-report.html'],
                                  is_singleton_file: true,
-                                 destination: quast_dir,
+                                 destination: metrics_dir,
                                  output_attribute_name: "quast_html"}
     FinalizationManifestLine b = object
                                 {files_to_save: [primary_h0_h1_quast_summary.quast_metrics_together],
                                  file_names: ['~{prefix}.quast-summary.txt'],
                                  is_singleton_file: true,
-                                 destination: quast_dir,
+                                 destination: metrics_dir,
                                  output_attribute_name: "quast_summary"}
 
     FinalizationManifestLine c = object
@@ -165,7 +174,7 @@ workflow Assemble {
                                                          primary_h0_h1_quast_summary.quast_metrics
                                                         ]),
                                  is_singleton_file: false,
-                                 destination: quast_dir,
+                                 destination: metrics_dir,
                                  output_attribute_name: "quast_reports"}
 
     call VisualizeResourceUsage.SimpleRscript as VisualizeHapAsmResoureUsage { input:
@@ -184,6 +193,12 @@ workflow Assemble {
 
     call SAVE.SaveFilestoDestination as SaveMetricsFiles { input:
         instructions = [a, b, c, d],
+        already_finalized = [{"HapOneLowQBed": FinalizeHifiasmHapOneLowQBed.gcs_path,
+                              "HapTwoLowQBed": FinalizeHifiasmHapTwoLowQBed.gcs_path,
+                              "PrimaryLowQBed": FinalizeHifiasmPrimaryLowQBed.gcs_path,
+                              "AlternateLowQBed": FinalizeHifiasmAlternateLowQBed.gcs_path,
+                              "RawUtigGraph": FinalizeHifiasmRawUtigGraph.gcs_path,
+                              "RawUtigGraphRawUtigGraph": FinalizeHifiasmRawUtigGraphRawUtigGraph.gcs_path,}]
     }
     #########################################################################################
     call GU.GetTodayDate as today {}
