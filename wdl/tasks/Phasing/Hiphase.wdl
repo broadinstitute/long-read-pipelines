@@ -57,13 +57,13 @@ task HiphaseSNPs {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "hangsuunc/hiphase:0.7.2"
+        docker:             "hangsuunc/hiphase:1.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
         zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
@@ -106,6 +106,8 @@ task HiphaseSVs {
     command <<<
         set -euxo pipefail
 
+        touch ~{bai}
+
         hiphase \
         --threads 16 \
         --bam ~{bam} \
@@ -117,7 +119,8 @@ task HiphaseSVs {
         --output-vcf ~{samplename}_phased_sv.vcf.gz \
         --stats-file ~{samplename}.stats.csv \
         --blocks-file ~{samplename}.blocks.tsv \
-        --summary-file ~{samplename}.summary.tsv
+        --summary-file ~{samplename}.summary.tsv \
+        --verbose
 
         bcftools sort ~{samplename}_phased_snp.vcf.gz -O z -o ~{samplename}_phased_snp.sorted.vcf.gz
         tabix -p vcf ~{samplename}_phased_snp.sorted.vcf.gz
@@ -137,18 +140,18 @@ task HiphaseSVs {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
-        mem_gb:             256,
+        mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
         preemptible_tries:  0,
-        max_retries:        1,
-        docker:             "hangsuunc/hiphase:0.7.2"
+        max_retries:        0,
+        docker:             "hangsuunc/hiphase:1.3.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
         zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])

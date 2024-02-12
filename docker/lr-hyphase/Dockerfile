@@ -1,6 +1,6 @@
 FROM lifebitai/shapeit4:latest
 
-ARG VERSION="v0.7.2"
+ARG VERSION="v1.3.0"
 ARG SAMTOOLS_VERSION=1.13
 ARG BCFTOOLS_VERSION=1.13
 
@@ -39,7 +39,7 @@ RUN wget https://github.com/PacificBiosciences/HiPhase/releases/download/${VERSI
     # execute help instructions
     ./hiphase -h 
 
-ENV PATH="${PATH}:/data/hiphase-v0.7.2-x86_64-unknown-linux-gnu"
+ENV PATH="${PATH}:/data/hiphase-${VERSION}-x86_64-unknown-linux-gnu"
 COPY vm_local_monitoring_script.sh /opt/
 
 
