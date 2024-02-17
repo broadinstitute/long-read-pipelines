@@ -227,9 +227,9 @@ task Call {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
-        mem_gb:             64,
+        mem_gb:             96,
         disk_gb:            disk_size,
-        preemptible_tries:  2,
+        preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
     }
