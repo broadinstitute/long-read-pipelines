@@ -60,9 +60,11 @@ workflow Run {
         if (shard_id != "alts") {
         if (!use_gpu) {
             # call ACheapFixForRefSpecificShardSpecificMemoryIssue { input: bam = shard_bam, proposed_memory = dv_memory }
-            Boolean is_t2t_chrX = length(how_to_shard_wg_for_calling) < 30 && shard_id == "18_X"
-            Boolean is_38_chr1 = length(how_to_shard_wg_for_calling) > 100 && shard_id == "1-p"
-            Int use_this_memory = if ( is_t2t_chrX || is_38_chr1) then 48 else dv_memory
+            Boolean is_t2t_chrX = length(how_to_shard_wg_for_calling) < 20 && shard_id == "18_X"
+            Boolean is_38_chr1  = length(how_to_shard_wg_for_calling) > 20 && shard_id == "1-p"
+            Boolean pay_fee_and_go = is_t2t_chrX || is_38_chr1
+            Int use_this_memory = if ( pay_fee_and_go ) then 48 else dv_memory
+            RuntimeAttr preemption_override = {"preemptible_tries": if ( pay_fee_and_go ) then 0 else 1}
             call DV as DeepV {
                 input:
                     bam           = shard_bam,
@@ -77,7 +79,8 @@ workflow Run {
 
                     threads = select_first([dv_threads]),
                     memory  = use_this_memory, # select_first([dv_memory]),
-                    zones = zones
+                    zones = zones,
+                    runtime_attr_override = preemption_override
             }
         }
 
