@@ -117,6 +117,7 @@ task HiphaseSVs {
         --output-vcf ~{samplename}_phased_snp.vcf.gz \
         --vcf ~{unphased_sv_vcf} \
         --output-vcf ~{samplename}_phased_sv.vcf.gz \
+        --haplotag-file ~{samplename}_phased_sv_haplotag.tsv \
         --stats-file ~{samplename}.stats.csv \
         --blocks-file ~{samplename}.blocks.tsv \
         --summary-file ~{samplename}.summary.tsv \
@@ -135,6 +136,7 @@ task HiphaseSVs {
         File phased_snp_vcf_tbi = "~{samplename}_phased_snp.sorted.vcf.gz.tbi"
         File phased_sv_vcf   = "~{samplename}_phased_sv.sorted.vcf.gz"
         File phased_sv_vcf_tbi = "~{samplename}_phased_sv.sorted.vcf.gz.tbi"
+        File haplotag_file = "~{samplename}_phased_sv_haplotag.tsv"
     }
 
     #########################

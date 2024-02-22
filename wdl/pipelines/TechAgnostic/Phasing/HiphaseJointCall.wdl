@@ -95,6 +95,7 @@ workflow HybridPhase {
         File hiphase_snp_tbi = HP_SV.phased_snp_vcf_tbi
         File hiphase_sv = HP_SV.phased_sv_vcf
         File hiphase_sv_tbi = HP_SV.phased_sv_vcf_tbi
+        File hiphase_haplotag = HP_SV.haplotag_file
         
 
     }
