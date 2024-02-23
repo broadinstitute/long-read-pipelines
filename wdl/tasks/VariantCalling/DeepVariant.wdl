@@ -60,8 +60,11 @@ workflow Run {
         if (shard_id != "alts") {
         if (!use_gpu) {
             Boolean is_t2t_chrX = length(how_to_shard_wg_for_calling) < 20 && shard_id == "18_X"
+            Boolean is_t2t_shard8 = length(how_to_shard_wg_for_calling) < 20 && shard_id == "9_15"
             Boolean is_38_chr1  = length(how_to_shard_wg_for_calling) > 20 && shard_id == "1-p"
-            Boolean pay_fee_and_go = is_t2t_chrX || is_38_chr1
+            Boolean is_38_shard3  = length(how_to_shard_wg_for_calling) > 20 && shard_id == "11-q_17-q"
+
+            Boolean pay_fee_and_go = is_t2t_chrX || is_38_chr1 || is_t2t_shard8 || is_38_shard3
             Int use_this_memory = if ( pay_fee_and_go ) then 48 else dv_memory
             # RuntimeAttr preemption_override = {"preemptible_tries": if ( pay_fee_and_go ) then 0 else 1}
             call DV as DeepV {
