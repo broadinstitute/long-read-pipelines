@@ -14,6 +14,8 @@ struct VBID2_config {
 
     Boolean disable_baq
 
+    Int max_retries
+
     String? tech
 }
 
@@ -36,6 +38,8 @@ workflow LongReadsContaminationEstimation {
         Boolean disable_baq
 
         String disk_type
+
+        Int max_retries
     }
 
     parameter_meta {
@@ -46,6 +50,8 @@ workflow LongReadsContaminationEstimation {
         disable_baq:      "If turned on, BAQ computation will be disabled (faster operation)."
 
         tech: "technology used for generating the data; accepted value: [ONT, Sequel, Revio]"
+
+        max_retries: "Because of the strange samtools failures reading from NAS storage, we should make multiple attempts to get away from the trasient errors. If after the max retries, we still get those failures, this task will fail."
     }
 
     # if the coverage is too low, the tool errors out (and the data won't bring much value anyway)
@@ -69,7 +75,8 @@ workflow LongReadsContaminationEstimation {
                 bed = gt_sites_bed,
                 ref_fasta = ref_map['fasta'],
                 disable_baq = disable_baq,
-                disk_type = disk_type
+                disk_type = disk_type,
+                max_retries = max_retries
         }
 
         call Contamination.VerifyBamID {

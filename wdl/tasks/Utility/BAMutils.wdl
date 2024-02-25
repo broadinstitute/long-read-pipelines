@@ -1333,11 +1333,17 @@ task BamToRelevantPileup {
     meta {
         desciption:
         "Chop up a GRCh38 BAM by chromosome and further subset into requested genotyping sites; then convert to pileup format. See also task GetPileup."
+        note:
+        "This task may fail due to some strange samtools failures reading from NAS storage (including cloud PDs that aren't local SSDs). So we included inputs and outputs to guard against that."
     }
 
     parameter_meta {
         bam: {localization_optional: true}
         bed: "sites where pileup is needed"
+
+        max_retries: "Because of the strange samtools failures reading from NAS storage, we should make multiple attempts to get away from the trasient errors. If after the max retries, we still get those failures, this task will fail."
+
+        pileup_stderr: "stderr output from the samtools mpileup commands, they should ALL be 1-liners."
     }
     input {
         File bam
@@ -1347,9 +1353,11 @@ task BamToRelevantPileup {
         Boolean disable_baq
 
         String disk_type = "SSD"
+        Int max_retries = 1
     }
     output {
         File pileups = "pileup.mpileup"
+        Array[File] pileup_stderr = glob("*.mpileup.err")
     }
 
     String baq_option = if disable_baq then '-B' else '-E'
@@ -1381,23 +1389,24 @@ task BamToRelevantPileup {
 
             if [[ ! -s ${bed} ]] ; then rm "${bed}" && continue; fi
 
-            prefix=$(echo "${bed}" | awk -F '.' '{print $1}')
-            samtools view -h \
-                --region-file "${bed}" \
-                --write-index \
-                -o "${prefix}.bam##idx##${prefix}.bam.bai" \
-                ~{local_bam} && \
-            samtools mpileup \
-                ~{baq_option} \
-                -s \
-                -q 1 \
-                -f ~{ref_fasta} \
-                -o "${prefix}.mpileup" \
-                "${prefix}.bam" &
+            bash /opt/convert.2.pileup.sh \
+                ~{local_bam} ~{ref_fasta} ~{baq_option} \
+                ${bed} \
+                &
+
             cnt=$((cnt + 1))
-            if [[ $cnt -eq ~{cores} ]]; then wait; cnt=0; rm -f chr*bam chr*bai; fi
+            if [[ $cnt -eq ~{cores} ]]; then wait; cnt=0; fi
         done
         wait
+        ls -lh
+
+        # here we use a trick, that if any of the stderr file is large, the conversion must have failed
+        mpileup_stderr_sz=$(du -c *.mpileup.err | tail -n1 | awk '{print $1}')
+        if [[ "${mpileup_stderr_sz}" -gt 1024 ]]; then
+            du -c *.mpileup.err
+            echo "some chromosome failed to be converted to pileup"
+            exit 1
+        fi
 
         rm -f chr*bam chr*bai
         cat *.mpileup > pileup.mpileup
@@ -1406,7 +1415,7 @@ task BamToRelevantPileup {
     Int cores = 12
     Int memory = 4 + cores
     Int local_ssd_sz = if size(bam, "GiB") > 150 then 750 else 375
-    Int pd_sz = 10 + 2 * ceil(size(bam, "GiB"))
+    Int pd_sz = 20 + 2 * ceil(size(bam, "GiB"))
     Int disk_size = if "LOCAL" == disk_type then local_ssd_sz else pd_sz
 
     runtime {
@@ -1414,8 +1423,8 @@ task BamToRelevantPileup {
         memory:         "~{memory} GiB"
         disks:          "local-disk ~{disk_size} ~{disk_type}"
         preemptible:    1
-        maxRetries:     1
-        docker:         "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+        maxRetries:     max_retries
+        docker:         "us.gcr.io/broad-dsp-lrma/lr-bam-pileup:0.1.3"
     }
 }
 
