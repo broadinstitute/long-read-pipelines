@@ -207,6 +207,7 @@ workflow Work {
             is_hgdp_sites = vb_conf.is_hgdp_sites,
             is_100k_sites = vb_conf.is_100k_sites,
             disable_baq   = vb_conf.disable_baq,
+            max_retries = vb_conf.max_retries,
             disk_type = disk_type,
         }
         # no file to save from contam.est.
