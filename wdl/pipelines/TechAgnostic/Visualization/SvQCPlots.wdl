@@ -5,7 +5,7 @@ import "../../../structs/Structs.wdl"
 workflow PlotSVQCMetrics{
 
     meta{
-        description: "This workflow generates an SV stats summary for the provided callers and their generated VCFs. It then concatenates and plots the SV stats."
+        description: "This workflow generates—for one or more samples—summaries and stats on the provided SV callers and their corresponding VCFs."
     }
     parameter_meta{
         gcs_vcf_dir: "GCS path to directory containing VCFs. Files should be named <sample_name>.<caller>.vcf.gz"
