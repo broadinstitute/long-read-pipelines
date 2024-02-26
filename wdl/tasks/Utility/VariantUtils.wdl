@@ -91,17 +91,7 @@ task MergeAndSortVCFs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int sz = ceil(size(vcfs, 'GB'))
-    Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
-
     Boolean suspected_incomplete_definitions = defined(header_definitions_file)
-
-    Int cores = 8
-
-    # pending a bug fix (bcftools github issue 1576) in official bcftools release,
-    # bcftools sort can be more efficient in using memory
-    Int machine_memory = 48 # 96
-    Int work_memory = ceil(machine_memory * 0.8)
 
     command <<<
         set -euxo pipefail
@@ -183,6 +173,16 @@ task MergeAndSortVCFs {
     }
 
     #########################
+    Int sz = ceil(size(vcfs, 'GB'))
+    Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
+
+    Int cores = 2
+
+    # pending a bug fix (bcftools github issue 1576) in official bcftools release,
+    # bcftools sort can be more efficient in using memory
+    Int machine_memory = 8 # 96
+    Int work_memory = ceil(machine_memory * 0.8)
+
     RuntimeAttr default_attr = object {
         cpu_cores:          cores,
         mem_gb:             "~{machine_memory}",
@@ -196,13 +196,80 @@ task MergeAndSortVCFs {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task MergeHumanPrimaryChromosomesVCFs {
+    meta {
+        desciption:
+        "This is for when the inputs are on different human chromosomes, and their names include chromosome names."
+    }
+    parameter_meta {
+        out_prefix: "prefix for output before .vcf.gz"
+    }
+
+    input {
+        Array[File] vcfs
+        String out_prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    output {
+        File vcf = "~{out_prefix}.vcf.gz"
+        File tbi = "~{out_prefix}.vcf.gz.tbi"
+    }
+
+    command <<<
+    set -euxo pipefail
+
+        mv ~{write_lines(vcfs)} list.vcfs.txt
+
+        grep -vF 'chrM' list.vcfs.txt \
+            | sort -V \
+        > all.txt
+        grep -F 'chrM' list.vcfs.txt \
+        >> all.txt
+
+        time \
+        bcftools concat --threads 2 \
+            -o "~{out_prefix}.vcf.gz" \
+            -f all.txt
+
+        tabix -p vcf "~{out_prefix}.vcf.gz"
+    >>>
+
+    #########################
+    Int sz = ceil(size(vcfs, 'GiB'))
+    Int disk_sz = if sz > 100 then 5 * sz else 4 * sz
+
+    Int cores = 2
+    Int machine_memory = 8
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          cores,
+        mem_gb:             "~{machine_memory}",
+        disk_gb:            disk_sz,
+        preemptible_tries:  2,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 
 task CollectDefinitions {
 
@@ -334,6 +401,7 @@ task SubsetVCF {
         vcf_tbi: "Tabix index for the VCF file"
         locus: "Locus to be subsetted"
         prefix: "Prefix for the output file"
+        omit_cmd_in_header: "bcftools is used in this task, this flag turns on the '--no-version' flag in bcftools"
         runtime_attr_override: "Override default runtime attributes"
     }
 
@@ -342,6 +410,7 @@ task SubsetVCF {
         File vcf_tbi
         String locus
         String prefix = "subset"
+        Boolean omit_cmd_in_header = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -351,8 +420,12 @@ task SubsetVCF {
     command <<<
         set -euxo pipefail
 
-        bcftools view ~{vcf_gz} --regions ~{locus} | bgzip > ~{prefix}.vcf.gz
-        tabix -p vcf ~{prefix}.vcf.gz
+        bcftools view \
+            -o "~{prefix}.vcf.gz" \
+            ~{true='--no-version' false='' omit_cmd_in_header} \
+            ~{vcf_gz} \
+            --regions ~{locus}
+        tabix -p vcf "~{prefix}.vcf.gz"
     >>>
 
     output {
@@ -365,17 +438,15 @@ task SubsetVCF {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
@@ -678,5 +749,198 @@ task FixSnifflesVCF {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SmallVariantsBasicStats {
+    meta {
+        desciption:
+        "A simple task to gather basic statistics on a single-sample small variant VCF."
+    }
+
+    parameter_meta {
+        qual_threshold:
+        "The threshold on QUAL to use for excluding variants; variants with QUAL lower than this threshold will be ignored."
+
+        post_filter_vcf:
+        "VCF post the filter annotation"
+        small_variants_stats:
+        "Summary stats"
+        biallelic_snp_GQ_array:
+        "File holding GQ array from the bi-allelic SNPs."
+        indel_GQ_array:
+        "File holding GQ array from the short InDels."
+        st_matrix:
+        "substitution matrix as TSV."
+        indel_sizes:
+        "File holding sizes (+/-) of short InDels."
+    }
+
+    input {
+        File vcf
+        File tbi
+        Int qual_threshold
+    }
+
+    output {
+        File post_filter_vcf = "~{filtered_vcf}"
+        Map[String, Float] small_variants_stats = read_map("output_stats.tsv")
+        File biallelic_snp_GQ_array = "biallelic.snps.GQ.array.txt"
+        File indel_GQ_array = "indels.GQ.array.txt"
+
+        File st_matrix = "~{prefix}.substitution_matrix.tsv"
+        File indel_sizes = "~{prefix}.indel_size_distribution.tsv"
+    }
+
+    String prefix = basename(vcf, ".vcf.gz") + ".QUAL~{qual_threshold}-PASS"
+
+    String filtered_vcf = "~{prefix}.vcf.gz"
+
+    command <<<
+        set -euxo pipefail
+
+
+        # filter
+        bcftools view -f .,PASS "~{vcf}" \
+        | bcftools filter \
+            -i "QUAL>=~{qual_threshold}" \
+            -O z \
+        -o "~{filtered_vcf}"
+
+        # stats
+        stats_txt="~{prefix}.bcftools_stats.txt"
+        bcftools stats "~{filtered_vcf}" \
+        > "${stats_txt}"
+
+        # snp count
+        grep -v "^#" "${stats_txt}" \
+        | grep -F 'number of SNPs' \
+        | awk -F '\t' '{print $NF}' \
+        > cnt_snps.txt
+
+        # indel count
+        grep -v "^#" "${stats_txt}" \
+        | grep -F 'number of indels' \
+        | awk -F '\t' '{print $NF}' \
+        > cnt_indels.txt
+
+        # Ti/TV ratio
+        grep -v "^#" "${stats_txt}" \
+        | grep "^TSTV" | head -n1 | awk '{print $NF}' \
+        | awk -F '\t' '{print $NF}' \
+        > tstv.txt
+
+        # bi-allelic HET HOM ratio
+        bcftools view -m2 -M2 -v snps "~{filtered_vcf}" \
+        | grep -v "^#" \
+        | awk -F '\t' '{print $NF}' | awk -F ':' '{print $1}' \
+        | tr '|' '/' \
+        | sort | uniq -c \
+        | tee \
+        > "GT.summary.txt"
+        if grep -q "0/1$" "GT.summary.txt"; then
+            het_cnt_1=$(grep "0/1$" "GT.summary.txt" | head -n1 | awk '{print $1}')
+        else
+            het_cnt_1=0
+        fi
+        if grep -q "1/0$" "GT.summary.txt"; then
+            het_cnt_2=$(grep "1/0$" "GT.summary.txt" | head -n1 | awk '{print $1}')
+        else
+            het_cnt_2=0
+        fi
+        het_cnt=$((het_cnt_1 + het_cnt_2))
+        if grep "1/1$" "GT.summary.txt"; then
+            hom_cnt=$(grep "1/1$" "GT.summary.txt" | head -n1 | awk '{print $1}')
+        else
+            hom_cnt=0
+        fi
+
+        rm -f output_stats.tsv
+        echo -e "cnt_snps\t$(cat cnt_snps.txt)" >> output_stats.tsv
+        echo -e "cnt_indels\t$(cat cnt_indels.txt)" >> output_stats.tsv
+        echo -e "titv_ratio\t$(cat tstv.txt)" >> output_stats.tsv
+        echo -e "het_snp_cnt\t${het_cnt}" >> output_stats.tsv
+        echo -e "hom_snp_cnt\t${hom_cnt}" >> output_stats.tsv
+        cat output_stats.tsv
+
+        # GQ array
+        bcftools view \
+            -m2 -M2 -v snps \
+            "~{filtered_vcf}" \
+        | bcftools query -f'[%GQ]\n' \
+        > biallelic.snps.GQ.array.txt
+        touch biallelic.snps.GQ.array.txt
+        # indels of an individual might be triallelic site, more often than snp sites
+        bcftools view \
+            -m2 -M3 -v indels \
+            "~{filtered_vcf}" \
+        | bcftools query -f'[%GQ]\n'  \
+        > indels.GQ.array.txt
+        touch indels.GQ.array.txt  # this might be empty
+
+        wc -l ./*.GQ.array.txt
+
+        grep -A13 "^# ST, Substitution types:$" "${stats_txt}" \
+            | tail +3 | awk -F '\t' '{print $3"\t"$4}' \
+        > "~{prefix}.substitution_matrix.tsv"
+
+        sed -n '/^# IDD, InDel distribution:$/,/^# ST, Substitution types:$/p' "${stats_txt}" \
+            | tail +3 | head -n -1 | awk -F '\t' '{print $3"\t"$4}' \
+        > "~{prefix}.indel_size_distribution.tsv"
+    >>>
+
+    runtime {
+        disks: "local-disk 20 HDD"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+        preemptible: 1
+        maxRetries: 1
+    }
+}
+
+task PlotIndelSizeDist {
+    meta {
+        desciption:
+        "Basic plotting of short InDels size distribution of a single sample VCF"
+        note:
+        "Sizes are limited to range [-20, 20]"
+    }
+    input {
+        File indel_size_dist_tsv
+        String prefix
+    }
+    output {
+        File plot = "~{prefix}.InDel.sizes.pdf"
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        python << CODE
+        import pandas as pd
+        from matplotlib import pyplot as plt
+        import seaborn as sns
+        sns.set_style("white")
+
+        df = pd.read_csv("~{indel_size_dist_tsv}", header=None, sep='\t', names=['size', 'count'])
+
+        fig, axs = plt.subplots(figsize=(16,9), dpi=300)
+        _ = sns.scatterplot(data=df, x='size', y='count', s=50, ax = axs)
+
+        axs.set_xlim(-20, 20)
+        axs.set_ylim(100, 2_000_000)
+
+        axs.set_xlabel('InDel size', fontdict={'size':20, 'weight':'bold'})
+        axs.set_ylabel('Count', fontdict={'size':20, 'weight':'bold'})
+        axs.tick_params(axis='both', which='major', labelsize=18)
+        axs.set_yscale('log')
+
+        plt.savefig("~{prefix}.InDel.sizes.pdf", dpi=300)
+        CODE
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-papermill-base:2.3.4"
+        preemptible: 1
+        maxRetries: 1
     }
 }

@@ -54,6 +54,38 @@ task GetTodayDate {
     }
 }
 
+task GetBetterRange {
+    meta {
+        desciption:
+        "Given the start, step-size, and end value, return an array of numbers"
+        note:
+        "Basically I'm a linux `seq` command; I exist since WDL stdlib range function has limits."
+    }
+
+    input {
+        Int start
+        Int end
+        Int step
+    }
+
+    output {
+        Array[Int] your_range = read_lines("result.txt")
+    }
+    #############################################################
+    command <<<
+        set -euxo pipefail
+        seq ~{start} ~{step} ~{end} | tee > "result.txt"
+    >>>
+
+    #############################################################
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+        preemptible: 1
+        maxRetries: 1
+    }
+}
+
 task CollapseArrayOfStrings {
     meta {
         desciption: "For collapsing an array of strings using space."
