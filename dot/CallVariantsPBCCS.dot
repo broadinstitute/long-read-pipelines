@@ -65,11 +65,11 @@ digraph {
 	"call-CCSPepper" -> "call-MergeDeepVariantGVCFs"
 	"call-CCSPepper" -> "call-MergeDeepVariantVCFs"
 	"call-CCSPepper" -> "call-MergeBams"
-	"call-MergeDeepVariantVCFs" -> "call-MarginPhase"
 	"call-arbitrary" -> "call-MarginPhase"
+	"call-MergeDeepVariantVCFs" -> "call-MarginPhase"
 	"call-MakeChrIntervalList" -> "scatter-L206C13-c" [lhead="cluster-scatter-L206C13-c"]
-	"call-arbitrary" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-RunPBSV"
+	"call-arbitrary" -> "call-RunPBSV"
 	"call-RunPBSV" -> "call-MergePBSVVCFs"
 	"call-arbitrary" -> "call-PBSVslow"
 	"call-PBSVslow" -> "call-ZipAndIndexPBSV"
