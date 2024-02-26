@@ -141,6 +141,9 @@ workflows:
 - name: FilterAnnotateVCF
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Annotation/FilterAnnotateVCF.wdl
+- name: CountSingleSampleSVs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CountSingleSampleSVs.wdl
 
 ###################################################
 # TechAgnostic - utility
