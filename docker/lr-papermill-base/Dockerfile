@@ -5,6 +5,12 @@ ARG CONDA_ENV_NAME='lr-papermill-base'
 ARG INSTALL_CMD="${PKM} env create -n ${CONDA_ENV_NAME}"
 ARG CLEAN_CMD="${PKM} clean --all --yes"
 
+# conda-pack is needed to create a standalone conda environment that can be moved between systems.
+# It allows you to package all the dependencies of this project into a single tarball.
+# This tarball can then be unpacked on any system that has conda installed,
+# allowing you to quickly and easily recreate your environment without transfering over
+# the large conda cache, which can be several GB in size. This is especially useful for
+# saving space on a docker image.
 # Install conda-pack:
 RUN ${PKM} update -y -n base conda && \
     ${PKM} install -y -c conda-forge conda-pack libmamba && \
