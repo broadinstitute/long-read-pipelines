@@ -2,13 +2,10 @@ version 1.0
 
 import "../../structs/Structs.wdl"
 
-# we separate this out based on two concerns:
-#  1. we can test out using different k-value when collecting parental k-mer states
-#  2. we can collect parental k-mer stats once and classify all children reads (different sibblings, technologies) separately
 workflow AssignChildLongReadsGivenParentalKmerStats {
 
     meta {
-        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication 'De novo assembly of haplotype-resolved genomes with trio binning' https://www.nature.com/articles/nbt.4277 . This holds the sub-workflow for part two: given the k-mer stats database from part one, classify child long reads"
+        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication 'De novo assembly of haplotype-resolved genomes with trio binning' https://www.nature.com/articles/nbt.4277 . This holds the sub-workflow for part two: given the k-mer stats database from part one, classify child long reads.  We separate this out based on two concerns:  1. we can test out using different k-value when collecting parental k-mer states  2. we can collect parental k-mer stats once and classify all children reads (different sibblings, technologies) separately."
     }
 
     parameter_meta {
