@@ -57,10 +57,13 @@ task ConvertToHailMT {
         EOF
 
         gsutil -m rsync -Cr ~{prefix}.mt ~{outdir}/~{prefix}.mt
+
+        touch completion_key_file
     >>>
 
     output {
         String gcs_path = "~{outdir}/~{prefix}.mt"
+        File completion_file = "completion_key_file"
     }
 
     #########################

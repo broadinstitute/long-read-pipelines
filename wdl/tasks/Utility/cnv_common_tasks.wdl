@@ -1,9 +1,11 @@
 version 1.0
 
-# Reusing workflow from GATK Git Repository
-# https://github.com/broadinstitute/gatk/blob/master/scripts/cnv_wdl/cnv_common_tasks.wdl
-
 task PreprocessIntervals {
+
+    meta {
+        description: "Reusing workflow from GATK Git Repository: https://github.com/broadinstitute/gatk/blob/master/scripts/cnv_wdl/cnv_common_tasks.wdl"
+    }
+
     input {
       File? intervals
       File? blacklist_intervals

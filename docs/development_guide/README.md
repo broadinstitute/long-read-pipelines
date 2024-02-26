@@ -67,3 +67,26 @@ Please adhere to the following best practices if contributing to this repository
 6. **Submit a pull request**: Once you have made your changes and tested them, submit a pull request to the main repository. Make sure to include a clear description of the changes you made and why you made them. This makes it easier for others to review and merge your changes into the main repository.
 7. **Add reviewers**: Once you have submitted your pull request, add reviewers to the pull request. This will notify them that you have submitted a pull request and they should review it. It's important to add at least one reviewer to your pull request.
 8. **Merging pull requests**: Once your pull request has been reviewed and approved, it can be merged into the main repository. It's important to merge pull requests using the "Squash and merge" option. This will squash all commits in the pull request into a single commit, which makes it easier to track changes in the repository.
+
+### External Contributions
+
+External contributions are welcome. Please follow the guidelines and submit a pull request.
+
+#### Review Criteria
+
+To maintain quality and consistency, contributions are reviewed based on:
+
+- **Adherence to coding standards**: The code should follow the project's coding standards, such as naming conventions, indentation, and code style.
+- **Passing tests**: All existing tests should pass after the changes are applied. New tests should be added to cover the new functionality.
+- **Documentation updates**: If the contribution introduces new features or changes existing workflows, the documentation should be updated accordingly.
+- **Overall quality**: The contribution should be of overall high quality, with well-structured code, clear comments, and a minimal impact on other parts of the codebase.
+
+#### Review Process
+
+The review process is designed to ensure that contributions are of high quality and consistent with the rest of the codebase. The review process consists of the following steps:
+1. **Code Review**: Reviewers provide feedback for improvements or issue identification.
+2. **Testing**: Ensure code functions as intended without introducing bugs.
+3. **Merging**: Approved code becomes part of the main repository.
+4. **Release**: Automatic generation of releases upon merging to the main branch.
+
+

@@ -1,12 +1,8 @@
 version 1.0
 
-# todo: move all existing, simiar util tasks here
-# Hosting utils that just needs basic Linux shell programs
-
 task TarGZFiles {
     meta {
-        description:
-        "Zip up a list of files to a tar.gz file."
+        description: "Zip up a list of files to a tar.gz file."
     }
 
     parameter_meta {

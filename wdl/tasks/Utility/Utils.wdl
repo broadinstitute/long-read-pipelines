@@ -152,10 +152,21 @@ task MakeChrIntervalList {
             sed 's/[SL]N://g' | \
             grep -v -e '^@HD' ~{true='-e' false='' length(filter) > 0} ~{sep=" -e " filter} | \
             tee chrs.txt
+
+        cat chrs.txt | awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > intervalList.intervals
+
+        # Now make another output - a set of individual contig interval list files:
+        while read line ; do
+            contig=$(echo "${line}" | awk '{print $1}')
+            echo "${line}" | awk '{printf("%s:%d-%d\n", $1,$2,$3)}' > contig.${contig}.intervals
+        done < chrs.txt
     >>>
 
     output {
         Array[Array[String]] chrs = read_tsv("chrs.txt")
+        File interval_list = "intervalList.intervals"
+        Array[String] contig_interval_strings = read_lines("intervalList.intervals")
+        Array[File] contig_interval_list_files = glob("contig.*.intervals")
     }
 
     #########################
@@ -199,8 +210,6 @@ task CountBamRecords {
 
         RuntimeAttr? runtime_attr_override
     }
-
-
 
     Int disk_size = 100
 
@@ -1534,6 +1543,67 @@ task GetRawReadGroup {
     }
 }
 
+task GetReadsInBedFileRegions {
+    meta {
+        desciption: "Get the reads from the given bam path which overlap the regions in the given bed file."
+    }
+
+    input {
+        String gcs_bam_path
+        File regions_bed
+
+        String prefix = "reads"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        gcs_bam_path: "GCS URL to bam file from which to extract reads."
+        regions_bed: "Bed file containing regions for which to extract reads."
+        prefix:    "[default-valued] prefix for output BAM"
+        runtime_attr_override: "Runtime attributes override struct."
+    }
+
+    Int disk_size = 2 * ceil(size([gcs_bam_path, regions_bed], "GB"))
+
+    command <<<
+        set -x
+        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        samtools view -@${np} -b -h -L ~{regions_bed} ~{gcs_bam_path} | samtools sort - > ~{prefix}.bam
+        samtools index -@${np} ~{prefix}.bam
+    >>>
+
+    output {
+        File bam = "~{prefix}.bam"
+        File bai = "~{prefix}.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.30"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task MapToTsv {
 
     meta {
@@ -1561,5 +1631,114 @@ task MapToTsv {
     runtime {
         disks: "local-disk 100 HDD"
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+task CreateIGVSession {
+    meta {
+        description: "Create an IGV session given a list of IGV compatible file paths.  Adapted / borrowed from https://github.com/broadinstitute/palantir-workflows/blob/mg_benchmark_compare/BenchmarkVCFs ."
+    }
+    input {
+        Array[String] input_bams
+        Array[String] input_vcfs
+        String reference_short_name
+        String output_name
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Array[String] input_files = flatten([input_bams, input_vcfs])
+
+    command {
+        bash /usr/writeIGV.sh ~{reference_short_name} ~{sep=" " input_files} > "~{output_name}.xml"
+    }
+
+    output {
+        File igv_session = "${output_name}.xml"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            50,
+        boot_disk_gb:       10,
+        preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "quay.io/mduran/generate-igv-session_2:v1.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SplitContigToIntervals {
+    meta {
+        author: "Jonn Smith"
+        notes: "Splits the given contig into intervals of the given size."
+    }
+
+    input {
+        File ref_dict
+        String contig
+        Int size = 200000
+
+        File ref_fasta
+        File ref_fasta_fai
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 2
+
+    command <<<
+        set -euxo pipefail
+
+        cat ~{ref_dict} | awk '{print $2,$3}' | grep '^SN' | sed -e 's@SN:@@' -e 's@LN:@@' | tr ' ' '\t' > genome.txt
+        grep "~{contig}" genome.txt > genome.contig.txt
+
+        bedtools makewindows -g genome.contig.txt -w ~{size} > ~{contig}.~{size}bp_intervals.bed
+
+        # Make individual bed files from each line:
+        while read line ; do
+            start=$(echo "${line}" | cut -d $'\t' -f 2)
+            end=$(echo "${line}" | cut -d $'\t' -f 3)
+            echo "${line}" > ~{contig}.${start}-${end}.single_interval.bed
+        done < ~{contig}.~{size}bp_intervals.bed
+    >>>
+
+    output {
+        File full_bed_file = "~{contig}.~{size}bp_intervals.bed"
+        Array[File] individual_bed_files = glob("*.single_interval.bed")
+    }
+
+    #########################
+        RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  0,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
