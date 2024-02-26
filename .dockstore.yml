@@ -147,6 +147,9 @@ workflows:
 - name: CountSingleSampleSVs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CountSingleSampleSVs.wdl
+- name: SmallVariantsBasicMetrics
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SmallVariantsBasicMetrics.wdl
 
 ###################################################
 # TechAgnostic - utility
