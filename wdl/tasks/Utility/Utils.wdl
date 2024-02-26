@@ -2753,3 +2753,42 @@ task MapToTsv {
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }
+
+task GetMeanSDMedianMad {
+    meta {
+        desciption:
+        "Given a file containing only a column of numbers, return various basic summary statistics."
+    }
+
+    input {
+        File array_of_numbers
+    }
+
+    output {
+        Float mean = read_float("mean.txt")
+        Float stddev = read_float("stddev.txt")
+        Float median = read_float("median.txt")
+        Float mad = read_float("mad.txt")
+    }
+    command <<<
+    set -euxo pipefail
+
+        datamash -H \
+            mean 1 median 1 sstdev 1 mad 1 \
+        < ~{array_of_numbers} \
+        | datamash transpose \
+        > result.tsv
+
+        grep "^mean"   result.tsv | awk -F '\t' '{print $2}'> "mean.txt"
+        grep "^sstdev" result.tsv | awk -F '\t' '{print $2}'> "stddev.txt"
+        grep "^median" result.tsv | awk -F '\t' '{print $2}'> "median.txt"
+        grep "^mad"    result.tsv | awk -F '\t' '{print $2}'> "mad.txt"
+    >>>
+
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+        preemptible: 1
+        maxRetries: 1
+    }
+}
