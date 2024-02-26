@@ -9,8 +9,8 @@ workflow PlotSVQCMetrics{
     }
     parameter_meta{
         gcs_vcf_dir: "GCS path to directory containing VCFs. Files should be named <sample_name>.<caller>.vcf.gz"
-        samples: "List of sample names"
-        coverage_metrics: "List of coverage metrics for each sample"
+        samples: "List of sample names. Order must match the order of coverage_metrics."
+        coverage_metrics: "List of coverage metrics for each sample. Order must match the order of samples."
         callers: "List of SV callers"
         reference_name: "Reference genome name"
     }
@@ -34,13 +34,11 @@ workflow PlotSVQCMetrics{
         }
     }
     Array[File] all_SV_stats = flatten(bcfQuerySV.all_SV_stat_out)
-
     call concatSVstats{
         input:
             all_stats = all_SV_stats,
             callers = callers,
     }
-
     call compileSVstats{
         input:
             samples = samples,
@@ -54,7 +52,6 @@ workflow PlotSVQCMetrics{
             allStatsBySample = compileSVstats.allStatsBySample,
             callers = callers,
     }
-
     call plotSVQCMetrics{
         input:
             all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov,
@@ -63,20 +60,20 @@ workflow PlotSVQCMetrics{
             reference_name = reference_name,
     }
 
-
 output{
-        Array[File] all_stats_by_type = concatSVstats.all_stats_by_type
-        Array[File] all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov
-        Array[File] metric_plot_pdfs = plotSVQCMetrics.output_pdfs
-        File plot_notebook = plotSVQCMetrics.out_plot_single_sample_stats
+    Array[File] all_stats_by_type = concatSVstats.all_stats_by_type
+    Array[File] all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov
+    Array[File] metric_plot_pdfs = plotSVQCMetrics.output_pdfs
+    File plot_notebook = plotSVQCMetrics.out_plot_single_sample_stats
     }
-
-
 }
 
 
 task bcfQuerySV{
 
+    meta{
+        description: "This task queries the input VCF file for SVs and outputs a file containing the SV stats."
+    }
     parameter_meta{
         sample_name: "Sample name"
         input_vcf: "Input vcf file"
@@ -110,7 +107,6 @@ task bcfQuerySV{
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
@@ -129,7 +125,9 @@ task bcfQuerySV{
 }
 
 task concatSVstats{
-
+    meta{
+        description: "This task concatenates the SV stats for each sample and outputs a file containing the SV stats by type."
+    }
     parameter_meta{
         all_stats: "List of files containing SV stats for each sample"
         callers: "List of SV callers used to generate input vcf files"
@@ -196,6 +194,9 @@ task concatSVstats{
 
 task compileSVstats {
 
+    meta{
+        description: "This task compiles the SV stats for each sample and outputs a file containing the SV stats by sample."
+    }
     parameter_meta{
         samples: "List of sample names"
         all_stats: "List of files containing SV stats for each sample"
@@ -318,6 +319,9 @@ CODE
 
 task addCoverageToSVstats{
 
+    meta{
+        description: "This task adds coverage stats to the SV stats for each sample and outputs a file containing the SV stats with coverage."
+    }
     parameter_meta{
         coverage_stats: "List of coverage metrics for each sample"
         samples: "List of sample names"
@@ -385,6 +389,9 @@ task addCoverageToSVstats{
 
 task plotSVQCMetrics{
 
+    meta{
+        description: "This task generates plots for the SV stats for each sample."
+    }
     parameter_meta{
         all_stats_with_cov: "List of files containing SV summary stats with coverage"
         all_stats_by_type: "List of files containing SV stats by type"
@@ -433,7 +440,6 @@ task plotSVQCMetrics{
         cpu_cores:          4,
         mem_gb:             24,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-plot-sv-metrics:beta.0.0.5"
