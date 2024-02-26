@@ -13,6 +13,7 @@ workflow PlotSVQCMetrics{
         coverage_metrics: "List of coverage metrics for each sample. Order must match the order of samples."
         callers: "List of SV callers"
         reference_name: "Reference genome name"
+        output_plot_notebook_name: "Name of the output plot notebook"
     }
 
     input{
@@ -21,6 +22,7 @@ workflow PlotSVQCMetrics{
         Array[Float] coverage_metrics
         Array[String] callers
         String reference_name = "GRCh38"
+        String output_plot_notebook_name = "out_plot_single_sample_stats"
     }
 
     scatter(caller in callers){
@@ -57,6 +59,7 @@ workflow PlotSVQCMetrics{
             all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov,
             all_stats_by_type = concatSVstats.all_stats_by_type,
             callers = callers,
+            output_file_name = output_plot_notebook_name,
             reference_name = reference_name,
     }
 
@@ -404,9 +407,11 @@ task plotSVQCMetrics{
         Array[File] all_stats_by_type
         Array[String] callers
         String reference_name
+        String output_file_name = "out_plot_single_sample_stats"
         RuntimeAttr? runtime_attr_override
     }
     Array[File] input_files = flatten([all_stats_with_cov, all_stats_by_type])
+    String output_plot_notebook = output_file_name + ".ipynb"
 
     Int minimal_disk_size = (ceil(size(input_files, "GB")  ) + 100 ) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
@@ -427,18 +432,18 @@ task plotSVQCMetrics{
         ls ~{reference_name}
 
         echo "Running jupyter notebook"
-        papermill /plot_single_sample_stats.ipynb out_plot_single_sample_stats.ipynb \
+        papermill /plot_single_sample_stats.ipynb ~{output_plot_notebook} \
         -p reference_in ~{reference_name}  \
         -p callers_in "~{sep="," callers}"
     }
     output{
-        File out_plot_single_sample_stats = "out_plot_single_sample_stats.ipynb"
+        File out_plot_single_sample_stats = output_plot_notebook
         Array[File] output_pdfs = glob("*.pdf")
     }
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             24,
+        mem_gb:             10,
         disk_gb:            disk_size,
         preemptible_tries:  3,
         max_retries:        0,
