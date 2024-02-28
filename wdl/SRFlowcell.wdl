@@ -189,8 +189,8 @@ workflow SRFlowcell {
         # Recalibrate Base Scores:
         call SRUTIL.BaseRecalibrator as t_009_BaseRecalibrator {
             input:
-                input_bam = t_008_SortAlignedDuplicateMarkedBam.sorted_bam,
-                input_bam_index = t_008_SortAlignedDuplicateMarkedBam.sorted_bai,
+                input_bam = t_008_SortAlignedDuplicateMarkedBam.output_bam,
+                input_bam_index = t_008_SortAlignedDuplicateMarkedBam.output_bam_index,
 
                 ref_fasta = ref_map["fasta"],
                 ref_fasta_index = ref_map["fai"],
@@ -204,8 +204,8 @@ workflow SRFlowcell {
 
         call SRUTIL.ApplyBQSR as t_010_ApplyBQSR {
             input:
-                input_bam = t_008_SortAlignedDuplicateMarkedBam.sorted_bam,
-                input_bam_index = t_008_SortAlignedDuplicateMarkedBam.sorted_bai,
+                input_bam = t_008_SortAlignedDuplicateMarkedBam.output_bam,
+                input_bam_index = t_008_SortAlignedDuplicateMarkedBam.output_bam_index,
 
                 ref_fasta = ref_map["fasta"],
                 ref_fasta_index = ref_map["fai"],
@@ -217,8 +217,8 @@ workflow SRFlowcell {
         }
     }
 
-    File final_bam = select_first([t_010_ApplyBQSR.recalibrated_bam, t_008_SortAlignedDuplicateMarkedBam.sorted_bam])
-    File final_bai = select_first([t_010_ApplyBQSR.recalibrated_bai, t_008_SortAlignedDuplicateMarkedBam.sorted_bai])
+    File final_bam = select_first([t_010_ApplyBQSR.recalibrated_bam, t_008_SortAlignedDuplicateMarkedBam.output_bam])
+    File final_bai = select_first([t_010_ApplyBQSR.recalibrated_bai, t_008_SortAlignedDuplicateMarkedBam.output_bam_index])
 
     #############################################
     #      __  __      _        _
@@ -297,8 +297,8 @@ workflow SRFlowcell {
                 t_005_AlignReads.bam,
                 merged_bam,
                 t_007_MarkDuplicates.bam,
-                t_008_SortAlignedDuplicateMarkedBam.sorted_bam,
-                t_008_SortAlignedDuplicateMarkedBam.sorted_bai,
+                t_008_SortAlignedDuplicateMarkedBam.output_bam,
+                t_008_SortAlignedDuplicateMarkedBam.output_bam_index,
             ],
             keyfile = keyfile
     }
