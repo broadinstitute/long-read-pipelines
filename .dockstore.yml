@@ -99,6 +99,9 @@ workflows:
 - name: LRConvertBCF
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
+- name: RemoveRedundantReblocksInGVCF
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/RemoveRedundantReblocksInGVCF.wdl
 
 ###################################################
 # TechAgnostic - *mics data QC & metrics
