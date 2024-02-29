@@ -150,3 +150,6 @@ workflows:
 - name: ExpandedDrugResistanceMarkerAggregation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExpandedDrugResistanceMarkerAggregation.wdl
+- name: ONTWholeGenomePlasmid
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/VariantCalling/ONTWholeGenomePlasmid.wdl
