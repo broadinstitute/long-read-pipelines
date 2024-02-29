@@ -8,13 +8,13 @@ task VerifyBamID {
     input {
         File pileup
         File ref_fasta
-        Boolean is_hgdp_sites
-        Boolean is_100k_sites
+        #Boolean is_hgdp_sites
+        #Boolean is_100k_sites
     }
 
-    String a = if is_hgdp_sites then 'hgdp' else '1000g.phase3'
-    String b = if is_100k_sites then '100k' else  '10k'
-    String resource_prefix = '~{a}.~{b}.b38.vcf.gz.dat'
+    #String a = if is_hgdp_sites then 'hgdp' else '1000g.phase3'
+    #String b = if is_100k_sites then '100k' else  '10k'
+    #String resource_prefix = '~{a}.~{b}.b38.vcf.gz.dat'
 
     command <<<
         set -eux
@@ -23,7 +23,9 @@ task VerifyBamID {
 
         time \
         ${VERIFY_BAM_ID_HOME}/bin/VerifyBamID \
-            --SVDPrefix ${VERIFY_BAM_ID_HOME}/resource/~{resource_prefix} \
+            --UDPath /data/merged.vcf.gz.UD \
+            --BedPath /data/merged.vcf.gz.bed \
+            --MeanPath /data/merged.vcf.gz.mu \
             --Reference ~{ref_fasta} \
             --PileupFile ~{pileup} \
             --NumThread 4 \
