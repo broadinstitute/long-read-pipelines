@@ -39,8 +39,8 @@ workflow ONTWholeGenomePlasmid {
         input:
             bam           = aligned_bam,
             bai           = aligned_bai,
-            ref_fasta     = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
+            ref_fasta     = ref_map['fasta'],
+            ref_fasta_fai = ref_map['fai'],
             threads       = 8,
             memory        = 64
     }
