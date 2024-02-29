@@ -31,8 +31,6 @@ workflow ONTWholeGenomePlasmid {
         String gcs_out_root_dir
     }
 
-    Map[String, String] ref_map = read_map(ref_map_file)
-
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTWholeGenomePlasmid/~{participant_name}"
 
     String dir = outdir + "/alignments"
