@@ -45,7 +45,7 @@ workflow LongReadsContaminationEstimation {
     parameter_meta {
         # input:
         #gt_sites_bed:     "Bed file holding the genotyping sites."
-        is_hgdp_sites:    "Provided BED is HGDP genotyping sites."
+        #is_hgdp_sites:    "Provided BED is HGDP genotyping sites."
         #is_100k_sites:    "Provided BED is 100k genotyping sites, not 10k sites."
         disable_baq:      "If turned on, BAQ computation will be disabled (faster operation)."
 
