@@ -14,10 +14,11 @@ workflow ONTWholeGenomePlasmid {
     parameter_meta {
         aligned_bam:       "GCS path to aligned BAM files"
         aligned_bai:       "GCS path to aligned BAM file indices"
-        participant_name:   "name of the participant from whom these samples were obtained"
+        participant_name:  "name of the participant from whom these samples were obtained"
 
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+        ref_fasta:         "FASTA"
+        ref_fasta_fai:     "FASTA fai"
+        gcs_out_root_dir:  "GCS bucket to store the reads, variants, and metrics files"
     }
 
     input {
@@ -25,7 +26,8 @@ workflow ONTWholeGenomePlasmid {
         File aligned_bai
         String participant_name
 
-        File ref_map_file
+        File ref_fasta
+        File ref_fasta_fai
         String gcs_out_root_dir
     }
 
@@ -39,8 +41,8 @@ workflow ONTWholeGenomePlasmid {
         input:
             bam           = aligned_bam,
             bai           = aligned_bai,
-            ref_fasta     = ref_map['fasta'],
-            ref_fasta_fai = ref_map['fai'],
+            ref_fasta     = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
             threads       = 8,
             memory        = 64
     }
