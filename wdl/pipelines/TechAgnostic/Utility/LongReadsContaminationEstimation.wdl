@@ -9,8 +9,8 @@ import "../../../tasks/QC/Contamination.wdl"
 struct VBID2_config {
     File genotyping_sites
 
-    Boolean is_hgdp_sites
-    Boolean is_100k_sites
+    #Boolean is_hgdp_sites
+    #Boolean is_100k_sites
 
     Boolean disable_baq
 
@@ -31,9 +31,9 @@ workflow LongReadsContaminationEstimation {
         String tech
         File ref_map_file
 
-        File gt_sites_bed
-        Boolean is_hgdp_sites
-        Boolean is_100k_sites
+        #File gt_sites_bed
+        #Boolean is_hgdp_sites
+        #Boolean is_100k_sites
 
         Boolean disable_baq
 
@@ -44,9 +44,9 @@ workflow LongReadsContaminationEstimation {
 
     parameter_meta {
         # input:
-        gt_sites_bed:     "Bed file holding the genotyping sites."
+        #gt_sites_bed:     "Bed file holding the genotyping sites."
         is_hgdp_sites:    "Provided BED is HGDP genotyping sites."
-        is_100k_sites:    "Provided BED is 100k genotyping sites, not 10k sites."
+        #is_100k_sites:    "Provided BED is 100k genotyping sites, not 10k sites."
         disable_baq:      "If turned on, BAQ computation will be disabled (faster operation)."
 
         tech: "technology used for generating the data; accepted value: [ONT, Sequel, Revio]"
@@ -72,7 +72,7 @@ workflow LongReadsContaminationEstimation {
             input:
                 bam = bam,
                 bai = bai,
-                bed = gt_sites_bed,
+                #bed = gt_sites_bed,
                 ref_fasta = ref_map['fasta'],
                 disable_baq = disable_baq,
                 disk_type = disk_type,
@@ -80,7 +80,8 @@ workflow LongReadsContaminationEstimation {
         }
 
         call Contamination.VerifyBamID {
-            input: pileup = Pileup.pileups, ref_fasta = ref_map['fasta'], is_hgdp_sites = is_hgdp_sites, is_100k_sites = is_100k_sites
+            input: pileup = Pileup.pileups, ref_fasta = ref_map['fasta']
+            #, is_hgdp_sites = is_hgdp_sites, is_100k_sites = is_100k_sites removed from this call
         }
     }
 

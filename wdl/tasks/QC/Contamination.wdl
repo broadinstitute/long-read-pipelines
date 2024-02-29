@@ -45,6 +45,6 @@ task VerifyBamID {
         cpu: 4
         memory: "8 GiB"
         disks: "local-disk ~{disk_size} SSD"
-        docker: "us.gcr.io/broad-dsp-lrma/verifybamid2:v2.0.1"
+        docker: "us.gcr.io/broad-dsp-lrma/verify_bam_id2_resources:sz_v02272024"
     }
 }
