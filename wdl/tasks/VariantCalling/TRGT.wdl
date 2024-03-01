@@ -9,9 +9,9 @@ task processWithTRGT {
     String basename
     File ref_fasta
     File ref_fasta_index
-    File ref_dict
     String repeatCatalog
-    Int cpuCores = 4
+    String karyotype = "XX"
+    Int cpuCores = 16
 
     RuntimeAttr? runtime_attr_override
 
@@ -23,7 +23,7 @@ task processWithTRGT {
 
   command <<<
     set -euo pipefail
-    trgt --genome ~{ref_fasta} --repeats ~{repeatCatalog} --reads ~{input_bam} --threads ~{cpuCores} --output-prefix ~{basename}_trgt
+    trgt --genome ~{ref_fasta} --repeats ~{repeatCatalog} --reads ~{input_bam} --threads ~{cpuCores} --output-prefix ~{basename}_trgt --karyotype ~{karyotype}
 
   >>>
 
@@ -40,7 +40,7 @@ task processWithTRGT {
       boot_disk_gb:       10,
       preemptible_tries:  3,
       max_retries:        1,
-      docker:             "us.gcr.io/broad-dsp-lrma/lr-trgt:0.4.0"
+      docker:             "us.gcr.io/broad-dsp-lrma/lr-trgt:0.8.0"
   }
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
