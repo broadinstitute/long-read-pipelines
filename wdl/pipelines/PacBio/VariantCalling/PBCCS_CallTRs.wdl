@@ -16,7 +16,7 @@ workflow runTRGT {
     String output_gs_path
     File ref_fasta
     File ref_fasta_index
-    String repeatCatalog = "adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed"
+    String repeatCatalog = "GRCh38.adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed"
     String karyotype = "XX"
     Int cpuCores = 16
 
