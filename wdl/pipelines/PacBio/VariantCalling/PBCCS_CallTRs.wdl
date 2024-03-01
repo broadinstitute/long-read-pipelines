@@ -14,10 +14,11 @@ workflow runTRGT {
     File input_bam_bai
     String basename = basename(input_bam, ".bam")
     String output_gs_path
-    File ref_dict
     File ref_fasta
     File ref_fasta_index
-    String repeatCatalog = "adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0.bed"
+    String repeatCatalog = "adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed"
+    String karyotype = "XX"
+    Int cpuCores = 16
 
     #Optional runtime arguments
     RuntimeAttr? runtime_attr_override
@@ -30,8 +31,9 @@ workflow runTRGT {
       basename = basename,
       ref_fasta = ref_fasta,
       ref_fasta_index = ref_fasta_index,
-      ref_dict = ref_dict,
       repeatCatalog = repeatCatalog,
+      karyotype = karyotype,
+      cpuCores = cpuCores,
       runtime_attr_override = runtime_attr_override
   }
 
