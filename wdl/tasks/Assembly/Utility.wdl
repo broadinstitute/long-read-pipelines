@@ -1,29 +1,5 @@
 version 1.0
 
-workflow RealignHifiasmLocalAssembly{
-    input{
-        File wholegenomebam
-        File wholegenomebai
-        String asmregion
-        String prefix
-        Int nthreads
-    }
-    call extract_reads{input: bam_input=wholegenomebam, bam_index=wholegenomebai, region=asmregion, pref=prefix}
-    call hifiasm_asm{input: reads=extract_reads.local_fq, prefix=prefix}
-    call realign_reads{input: wholebam=wholegenomebam, wholebai=wholegenomebai ,assembly=hifiasm_asm.assembly_primary, num_threads=nthreads, pref=prefix}
-    call hifiasm_asm_reassemble{input: first_round_reads=extract_reads.local_fq, reads=realign_reads.realignedreadsfq, prefix=prefix}
-
-    meta{
-        Purpose:"Local assembly using hifiasm"
-    }
-    output{
-        File realignedfq=realign_reads.realignedreadsfq
-        File first_assembly_hap1=hifiasm_asm.assembly_hap1
-        File first_assembly_hap2=hifiasm_asm.assembly_hap2
-        File second_assembly_hap1=hifiasm_asm_reassemble.assembly_hap1
-        File second_assembly_hap2=hifiasm_asm_reassemble.assembly_hap2
-    }
-}
 task extract_reads{
     input{
         File bam_input
@@ -53,6 +29,37 @@ task extract_reads{
         maxRetries: 1
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
+}
+
+task mergefq{
+    input{
+        File first_round_reads
+        File reads
+        String prefix
+        Int num_cpus = 32
+    }
+
+    Int disk_size = 1 + ceil(2 * size(reads, "GiB"))
+
+    command <<<
+
+        set -euxo pipefail
+        cat ~{first_round_reads} ~{reads} > merge.fq
+        
+    >>>
+
+    output{
+        File merged_fq = "merge.fq"
+    }
+    runtime {
+        cpu: num_cpus
+        memory: "10 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 2
+        maxRetries: 1
+        docker: "hangsuunc/assembly:v1"
+    }    
 }
 
 task hifiasm_asm{
@@ -110,8 +117,6 @@ task realign_reads{
     output{
         File realignedreadsfq= "~{pref}_realign.fastq"
         File realignedbam="~{pref}_realign.sorted.bam"
-        #File alignmentbam="~{pref}.sorted.bam"
-        #File alignmentbai="~{pref}.sorted.bam.bai"
     }
     Int disk_size = 100 + ceil(2 * (size(wholebam, "GiB") + size(assembly, "GiB") ))
 
@@ -126,37 +131,96 @@ task realign_reads{
     }
 }
 
-task hifiasm_asm_reassemble{
+task ragtag_construct{
     input{
-        File first_round_reads
-        File reads
-        String prefix
-        Int num_cpus = 32
+        File asm
+        File ref
+        String outputfolder
     }
-
-    Int disk_size = 1 + ceil(2 * size(reads, "GiB"))
-
     command <<<
+    set -x pipefail
+    ragtag.py scaffold ~{ref} ~{asm} -o ~{outputfolder}
 
-        set -euxo pipefail
-        cat ~{first_round_reads} ~{reads} > merge.fq
-        hifiasm -o ~{prefix} -t ~{num_cpus} merge.fq
-        awk '/^S/{print ">"$2; print $3}' ~{prefix}.bp.p_ctg.gfa > ~{prefix}.bp.p_ctg.fa
-        awk '/^S/{print ">"$2;print $3}' ~{prefix}.bp.hap1.p_ctg.gfa > ~{prefix}.bp.hap1.p_ctg.fa
-        awk '/^S/{print ">"$2;print $3}' ~{prefix}.bp.hap2.p_ctg.gfa > ~{prefix}.bp.hap2.p_ctg.fa
     >>>
 
     output{
-        File assembly_hap1="~{prefix}.bp.hap1.p_ctg.fa"
-        File assembly_hap2="~{prefix}.bp.hap2.p_ctg.fa"
+        File scaffold="~{outputfolder}/ragtag.scaffold.fasta"
+        File stats = "~{outputfolder}/ragtag.scaffold.stats"
+        File paf = "~{outputfolder}/ragtag.scaffold.asm.paf"
+        File confidence = "~{outputfolder}/ragtag.scaffold.confidence.txt"
     }
+
+    Int disk_size = 10 
+
     runtime {
-        cpu: num_cpus
+        cpu: 2
+        memory: "4 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 2
+        maxRetries: 1
+        docker: "hangsuunc/ragtag:v1"
+    }
+}
+
+task extract_bam{
+    input{
+        File bam_input
+        File bam_index
+        String region
+        String pref
+    }
+    command <<<
+        samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
+        samtools fasta ~{pref}.bam > ~{pref}.fasta
+        #samtools index ~{pref}.~{region}.bam
+    >>>
+
+    output{
+        File local_fa="~{pref}.fasta"
+        #File local_bai="~{pref}.~{region}.bai"
+    }
+
+    Int disk_size = 10 + ceil(2 * size(bam_input, "GiB"))
+
+    runtime {
+        cpu: 1
         memory: "10 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 2
         maxRetries: 1
-        docker: "hangsuunc/assembly:v1"
-    }    
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+
+task tsggapcloser_gapfilling{
+    input{
+        File scaffold_input
+        File read_fq
+        String outputprefix
+    }
+    command <<<
+        set -x pipefail
+        tgsgapcloser --scaff ~{scaffold_input} --reads ~{read_fq} --output ~{outputprefix} --ne --tgstype pb >pipe.log 2>pipe.err
+
+    >>>
+
+    output{
+        File scaffold="~{outputprefix}.scaff_seqs"
+        #File stats = "~{outputprefix}.gap_fill_detail"
+    }
+
+    Int disk_size = 10 
+
+    runtime {
+        cpu: 2
+        memory: "4 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 2
+        maxRetries: 1
+        docker: "hangsuunc/tgsgapcloser:v3"
+    }
 }
