@@ -66,7 +66,7 @@ task hifiasm_asm{
     input{
         File reads
         String prefix
-        Int num_cpus = 32
+        Int num_cpus = 4
     }
 
     Int disk_size = 1 + ceil(2 * size(reads, "GiB"))
@@ -88,7 +88,7 @@ task hifiasm_asm{
     }
     runtime {
         cpu: num_cpus
-        memory: "10 GiB"
+        memory: "16 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 2
