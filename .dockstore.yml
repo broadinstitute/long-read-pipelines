@@ -141,3 +141,6 @@ workflows:
 - name: Spade_assembly
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/Spade_assembly.wdl
+- name: HifiasmFullLengthContig
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/HifiasmFullLengthContig.wdl
