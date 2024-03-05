@@ -81,7 +81,7 @@ workflow HiphaseJointCallTRGT {
     }
 
     call SplitJointCallbySample.SplitVCFbySample as Trgt_split { input:
-        joint_vcf = trgt_vcf,
+        joint_vcf = ID.sorted_vcf,
         region = chromosome,
         samplename = sample_id
     }
