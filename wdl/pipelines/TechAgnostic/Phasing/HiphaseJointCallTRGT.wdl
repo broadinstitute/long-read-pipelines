@@ -42,14 +42,14 @@ workflow HiphaseJointCallTRGT {
     #     locus = chromosome
     # }
 
-    call index as ID { input:
+    call sortandindex as ID { input:
         vcf = trgt_vcf,
         samplename = prefix
     }
 
     call VU.SubsetVCF as SubsetTrgtJoint { input:
-        vcf_gz = trgt_vcf,
-        vcf_tbi = ID.subset_tbi,
+        vcf_gz = ID.sorted_vcf,
+        vcf_tbi = ID.sorted_tbi,
         locus = chromosome
     }
 
@@ -176,7 +176,7 @@ task convert {
 
 }
 
-task index{
+task sortandindex{
 
     meta {
         description: ""
@@ -200,12 +200,20 @@ task index{
         mkdir -p ~{work_dir}
         cd ~{work_dir}
 
-        
-        tabix -p vcf ~{vcf}
+        bcftools \
+            sort \
+            --temp-dir tm_sort \
+            --output-type z \
+            -o ~{samplename}.vcf.gz \
+            ~{vcf}
+
+        bcftools index --tbi --force  ~{samplename}.vcf.gz
+
     >>>
 
     output {
-        File subset_tbi = "~{work_dir}/~{vcf}.tbi"
+        File sorted_vcf = "~{work_dir}/~{samplename}.vcf.gz"
+        File sorted_tbi = "~{work_dir}/~{samplename}.vcf.gz.tbi"
     }
     ###################
     runtime {
