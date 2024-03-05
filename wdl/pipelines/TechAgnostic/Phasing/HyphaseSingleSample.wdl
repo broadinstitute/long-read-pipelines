@@ -19,6 +19,8 @@ workflow HybridPhase {
         File deep_var_vcf_tbi
         File pbsv_vcf
         File pbsv_vcf_tbi
+        File trgt_vcf
+        File trgt_vcf_tbi
         File reference
         File reference_index
         String chromosome
