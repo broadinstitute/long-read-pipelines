@@ -1238,18 +1238,10 @@ task BamToFastq {
         time \
         samtools fastq \
             -@1 \
-            -t \
+            ~{true='-t ' false =' ' save_all_tags} \
+            ~{true='-T ' false =' ' custom_tags_to_preserve} ~{sep=',' tags_to_preserve} \
             -0 ~{prefix}.fq.gz \
             ~{local_bam}
-
-        # also using pigz to enable parallel compression
-        time \
-        samtools fastq \
-            ~{true='-T  ' false =' ' save_all_tags} \
-            ~{true='-T ' false =' ' custom_tags_to_preserve} ~{sep=',' tags_to_preserve} \
-            ~{local_bam} \
-        | pigz \
-        > ~{prefix}.fq.gz
     >>>
 
     #########################
@@ -1257,7 +1249,7 @@ task BamToFastq {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             8,
+        mem_gb:             4,
         disk_gb:            disk_size,
         preemptible_tries:  2,
         max_retries:        1,
