@@ -150,3 +150,6 @@ workflows:
 - name: ExpandedDrugResistanceMarkerAggregation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExpandedDrugResistanceMarkerAggregation.wdl
+- name: AnnotateVariantContext.wdl
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/AnnotateVariantContext.wdl
