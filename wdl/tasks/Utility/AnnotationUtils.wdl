@@ -10,19 +10,19 @@ task AnnotateVCF {
 
     parameter_meta {
         vcf_gz: "VCF to annotate"
-        vcf_gz_tbi: "VCF index"
+        vcf_tbi: "VCF index"
         ref_fasta: "Reference sequence FASTA"
     }
 
     input {
         File vcf_gz
-        File vcf_gz_tbi
+        File vcf_tbi
         File ref_fasta
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 2*ceil(size([vcf_gz, vcf_gz_tbi, ref_fasta], "GB"))
+    Int disk_size = 1 + 2*ceil(size([vcf_gz, vcf_tbi, ref_fasta], "GB"))
     String prefix = basename(vcf_gz, ".vcf.gz") + ".annotated"
 
     command <<<
@@ -37,7 +37,7 @@ task AnnotateVCF {
 
     output {
         File annotated_vcf_gz = "~{prefix}.annotated.vcf.gz"
-        File annotated_vcf_gz_tbi = "~{prefix}.annotated.vcf.gz.tbi"
+        File annotated_tbi = "~{prefix}.annotated.vcf.gz.tbi"
     }
 
     #########################
