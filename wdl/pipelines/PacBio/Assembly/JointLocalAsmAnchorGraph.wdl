@@ -1,5 +1,7 @@
 version 1.0
 
+import "../../../tasks/Utility/Utils.wdl" as U
+
 workflow JointLocalAsmAnchorGraph{
     meta{
         description: "a workflow that extract vcfs and bams in a genomic interval"
@@ -13,7 +15,12 @@ workflow JointLocalAsmAnchorGraph{
     scatter (bam_bai in zip(wholegenomebam, wholegenomebai)){
         File bam = bam_bai.left
         File bai = bam_bai.right
-        call extract_bam_addsample{input: bam_input=bam, bam_index=bai, region= genomeregion, pref=prefix}
+        call U.InferSampleName { input: 
+                    bam = bam, 
+                    bai = bai
+                }
+        String sample_id = InferSampleName.sample_name
+        call extract_bam_addsample{input: bam_input=bam, bam_index=bai, region= genomeregion, pref=sample_id}
     }
 
     call catfasta{input: fas= extract_bam_addsample.local_fa, pref=prefix}
