@@ -28,7 +28,7 @@ task AnnotateVCF {
     command <<<
         set -euxo pipefail
 
-        truvari anno -r ~{ref_fasta} ~{vcf_gz} | \
+        truvari anno gcpct -r ~{ref_fasta} ~{vcf_gz} | \
             truvari anno numneigh -r 1000 -s 50 | \
             bgzip > ~{prefix}.vcf.gz
 
@@ -46,8 +46,8 @@ task AnnotateVCF {
         mem_gb:             24,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
-        max_retries:        0,
+        preemptible_tries:  0,
+        max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
