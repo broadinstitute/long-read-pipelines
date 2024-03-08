@@ -29,7 +29,7 @@ task AnnotateVCF {
         set -euxo pipefail
 
         truvari anno -r ~{ref_fasta} ~{vcf_gz} | \
-            truvari numneigh -r 1000 -s 50 | \
+            truvari anno numneigh -r 1000 -s 50 | \
             bgzip > ~{prefix}.vcf.gz
 
         tabix -p vcf ~{prefix}.vcf.gz
