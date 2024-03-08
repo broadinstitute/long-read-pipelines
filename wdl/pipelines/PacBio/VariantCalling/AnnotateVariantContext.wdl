@@ -1,6 +1,7 @@
 version 1.0
 
 import "../../../tasks/Utility/AnnotationUtils.wdl" as AU
+import "../../../tasks/Utility/VariantUtils.wdl" as VU
 
 workflow AnnotateVariantContext {
 
@@ -27,8 +28,10 @@ workflow AnnotateVariantContext {
             ref_fasta = ref_fasta
     }
 
+    call VU.ZipAndIndexVCF { input: vcf = AnnotateVCF.annotated_vcf }
+
     output {
-        File annotated_vcf_gz = AnnotateVCF.annotated_vcf_gz 
-        File annotated_tbi = AnnotateVCF.annotated_tbi
+        File annotated_vcf_gz = ZipAndIndexVCF.vcfgz
+        File annotated_tbi = ZipAndIndexVCF.tbi
     }
 }

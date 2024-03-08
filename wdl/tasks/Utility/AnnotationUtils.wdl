@@ -28,16 +28,19 @@ task AnnotateVCF {
     command <<<
         set -euxo pipefail
 
+        truvari
+
+        truvari anno
+
         truvari anno gcpct -r ~{ref_fasta} ~{vcf_gz} > tmp.gcpct.vcf
         truvari anno numneigh -r 1000 -s 50 tmp.gcpct.vcf > tmp.numneigh.vcf
 
-        cat tmp.numneigh.vcf | bgzip > ~{prefix}.vcf.gz
-        tabix -p vcf ~{prefix}.vcf.gz
+        mv tmp.numneigh.vcf ~{prefix}.annotated.vcf
     >>>
 
     output {
-        File annotated_vcf_gz = "~{prefix}.annotated.vcf.gz"
-        File annotated_tbi = "~{prefix}.annotated.vcf.gz.tbi"
+        File annotated_vcf = "~{prefix}.annotated.vcf"
+        #File annotated_tbi = "~{prefix}.annotated.vcf.gz.tbi"
     }
 
     #########################
