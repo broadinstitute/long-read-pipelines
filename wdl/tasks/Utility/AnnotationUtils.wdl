@@ -28,10 +28,6 @@ task AnnotateVCF {
     command <<<
         set -euxo pipefail
 
-        truvari
-
-        truvari anno
-
         truvari anno gcpct -r ~{ref_fasta} ~{vcf_gz} > tmp.gcpct.vcf
         truvari anno numneigh -r 1000 -s 50 tmp.gcpct.vcf > tmp.numneigh.vcf
 
