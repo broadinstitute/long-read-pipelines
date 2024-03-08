@@ -28,10 +28,10 @@ task AnnotateVCF {
     command <<<
         set -euxo pipefail
 
-        truvari anno gcpct -r ~{ref_fasta} ~{vcf_gz} | \
-            truvari anno numneigh -r 1000 -s 50 | \
-            bgzip > ~{prefix}.vcf.gz
+        truvari anno gcpct -r ~{ref_fasta} ~{vcf_gz} > tmp.gcpct.vcf
+        truvari anno numneigh -r 1000 -s 50 tmp.gcpct.vcf > tmp.numneigh.vcf
 
+        cat tmp.numneigh.vcf | bgzip > ~{prefix}.vcf.gz
         tabix -p vcf ~{prefix}.vcf.gz
     >>>
 
