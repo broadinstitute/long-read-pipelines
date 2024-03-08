@@ -9,26 +9,26 @@ workflow AnnotateVariantContext {
     }
 
     parameter_meta {
-        vcf_gz:       "The VCF to annotate"
-        vcf_gz_tbi:   "The VCF tabix index"
-        ref_fa:       "Reference FASTA file"
+        vcf_gz:    "The VCF to annotate"
+        vcf_tbi:   "The VCF tabix index"
+        ref_fasta: "Reference FASTA file"
     }
 
     input {
         File vcf_gz
-        File vcf_gz_tbi
+        File vcf_tbi
         File ref_fasta
     }
 
     call AU.AnnotateVCF {
         input:
             vcf_gz = vcf_gz,
-            vcf_gz_tbi = vcf_gz_tbi,
+            vcf_tbi = vcf_tbi,
             ref_fasta = ref_fasta
     }
 
     output {
         File annotated_vcf_gz = AnnotateVCF.annotated_vcf_gz 
-        File annotated_vcf_gz_tbi = AnnotateVCF.annotated_vcf_gz_tbi
+        File annotated_tbi = AnnotateVCF.annotated_tbi
     }
 }
