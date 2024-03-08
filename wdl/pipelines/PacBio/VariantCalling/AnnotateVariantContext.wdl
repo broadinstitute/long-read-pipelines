@@ -11,22 +11,20 @@ workflow AnnotateVariantContext {
     parameter_meta {
         vcf_gz:       "The VCF to annotate"
         vcf_gz_tbi:   "The VCF tabix index"
-        ref_map_file: "table indicating reference sequence and auxillary file locations"
+        ref_fa:       "Reference FASTA file"
     }
 
     input {
         File vcf_gz
         File vcf_gz_tbi
-        File ref_map_file
+        File ref_fasta
     }
-
-    Map[String, String] ref_map = read_map(ref_map_file)
 
     call AU.AnnotateVCF {
         input:
             vcf_gz = vcf_gz,
             vcf_gz_tbi = vcf_gz_tbi,
-            ref_fasta = ref_map['fasta']
+            ref_fasta = ref_fasta
     }
 
     output {
