@@ -16,7 +16,7 @@ workflow AnnotateVariantContext {
 
     input {
         File vcf_gz
-        File vcf_tbi
+        File vcf_gz_tbi
         File ref_map_file
     }
 

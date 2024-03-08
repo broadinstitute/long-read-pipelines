@@ -16,7 +16,7 @@ task AnnotateVCF {
 
     input {
         File vcf_gz
-        File vcf_tbi
+        File vcf_gz_tbi
         File ref_fasta
 
         RuntimeAttr? runtime_attr_override
