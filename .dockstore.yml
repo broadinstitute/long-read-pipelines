@@ -144,3 +144,9 @@ workflows:
 - name: HifiasmFullLengthContig
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/HifiasmFullLengthContig.wdl
+- name: JointLocalAsmAnchorGraph
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/JointLocalAsmAnchorGraph.wdl
+- name: ImmunoAnnotate
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/ImmunoAnnotate.wdl
