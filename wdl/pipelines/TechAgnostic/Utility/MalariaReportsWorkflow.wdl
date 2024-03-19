@@ -1,6 +1,7 @@
 version 1.0
-# Import malaria reports/summary generation as MRS
 import "../../../tasks/Visualization/MalariaReports.wdl" as MRS
+import "../../../tasks/Visualization/MalariaReportsSnapshots.wdl" as Snapshot
+
 workflow GenerateMalariaReports {
 
     meta {
@@ -52,11 +53,15 @@ workflow GenerateMalariaReports {
         fraction_aligned_bases: "number of bases aligned out of all bases in the sequence"
         # average_identity:
 
-        # Coverage Plot -- incomplete
-        # coverage_dir: "directory of BAM files for coverage plot generation"
+        # Coverage Plot
         fastqc_path: "directory of fastqc_report used for finding BAM files"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
 
+        # ------ IGV Snapshots ------ #
+        regions_bed:        "GCS path to bed file containing drug resistance loci"
+        fasta_path:         "GCS path to fasta file"
+        fasta_index_path:   "GCS path to fasta.fai file"
+        gcs_out_root_dir:   "GCS bucket to store the results"
     }
 
     input {
@@ -108,6 +113,12 @@ workflow GenerateMalariaReports {
         File? fastqc_path
         Int? coverage_bin_size  
 
+        # ------ IGV Snapshots ------ #
+        String fasta_path
+        String fasta_index_path
+        String regions_bed
+
+        String gcs_out_root_dir
     }
     
     call MRS.RunReportScript as RunReportScript { 

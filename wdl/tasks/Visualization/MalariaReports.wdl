@@ -54,7 +54,7 @@ task RunReportScript {
 
         # Coverage Plot
         # coverage_dir: "directory of BAM files for coverage plot generation"
-        fastqc_path: "directory of fastqc_report used for finding BAM files"
+        fastqc_path: "directory of fastqc_report used for finding BED and BAM files"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
     }
 
@@ -125,7 +125,7 @@ task RunReportScript {
         pwd
         ls
 
-        echo "RETRIEVING BAM FILES..."
+        echo "RETRIEVING BED FILES..."
         echo ~{coverage_dir}
         mkdir -p /report-files/data/coverage
         gsutil ls ~{coverage_regex}  > filelist.txt
