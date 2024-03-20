@@ -36,6 +36,8 @@ task DrugResIGV {
 
     String results_dir = if (defined(fastqc_path)) then sub(select_first([fastqc_path]), "results\/.*", "") else ""
     String coverage_dir = "~{results_dir}results/SRWholeGenome/~{sample_name}/alignments/"
+
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/MalariaReports/~{sample_name}/snapshots"
     
     command <<<
         set -euxo
@@ -53,15 +55,14 @@ task DrugResIGV {
         gsutil ls ~{coverage_dir}  > filelist.txt
         cat filelist.txt | gsutil -m cp -I /data
 
-        echo "CREATING SNAPSHOTS..."
-        find /data -type f -name "*.bam" > bam_path.txt
+        echo "CREATING SNAPSHOTS..."        
+        bam_file=$(gsutil -m cp -I /data/*.bam -)
         
-
         python3 make_IGV_snapshots.py \
             -g ~{fasta_path} \
             /data/FP0008-C.bam \
             -r /data/FP0008-C_trim.bed \
-            -onlysnap -nf4
+            -onlysnap -nf4 -o ~{outdir}
         
     >>>
 

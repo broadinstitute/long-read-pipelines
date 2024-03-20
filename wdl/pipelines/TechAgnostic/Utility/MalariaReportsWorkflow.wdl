@@ -114,6 +114,7 @@ workflow GenerateMalariaReports {
         Int? coverage_bin_size  
 
         # ------ IGV Snapshots ------ #
+
         String fasta_path
         String fasta_index_path
         String regions_bed
@@ -121,6 +122,15 @@ workflow GenerateMalariaReports {
         String gcs_out_root_dir
     }
     
+    #call Snapshot.DrugResIGV as GenerateSnapshots {
+    #    input: 
+    #        fasta_path = fasta_path
+    #        fasta_index_path = fasta_index_path
+    #        regions_bed = regions_bed
+    #        fastqc_path = fastqc_path
+    #        gcs_out_root_dir = gcs_out_root_dir
+    #}
+
     call MRS.RunReportScript as RunReportScript { 
         input: 
             sample_name = sample_name,

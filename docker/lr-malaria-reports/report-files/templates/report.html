@@ -1594,13 +1594,20 @@
         <div id="fastqc_root">
             <div class="main_frame" style="outline: 0px;">
                     <script>
-                        fastqc_frame.contentDocument.querySelector("div.main").style.height = "100vh";
+                        // Disable links in FastQC iframe
+                        var fastqcFrame = document.getElementById("fastqc_frame");
+                        fastqcFrame.onload = function () {
+                            var fastqcDoc = fastqcFrame.contentDocument || fastqcFrame.contentWindow.document;
+                            var links = fastqcDoc.querySelectorAll("a");
+                    
+                            for (var i = 0; i < links.length; i++) {
+                                links[i].addEventListener("click", function(event) {
+                                    event.preventDefault();
+                                });
+                            }
+                        }
                     </script>
                     <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc="{{ fastQC.fastqc_html|e }}" />
-            
-                    <div id="fastqc_cover">
-                        <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc={{ fastQC.fastQC }}></iframe>
-                    </div>
                 </div>
             </div>
         </div> <!-- fastqc_root -->
