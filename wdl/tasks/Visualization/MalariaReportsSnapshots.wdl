@@ -16,15 +16,14 @@ task DrugResIGV {
         gcs_out_root_dir:   "GCS bucket to store the results"
         aligned_bam:        "GCS path to aligned bam"
         aligned_bai:        "GCS path to aligned bai"
-        fastqc_path:        "directory of fastqc_report used for finding BAM files"
         sample_name:        "name of the sample sequenced"
     }
 
     input {
         RuntimeAttr? runtime_attr_override
 
-        File aligned_bam
-        File aligned_bai
+        String aligned_bam
+        String aligned_bai
 
         String fasta_path
         String fasta_index_path
@@ -43,7 +42,6 @@ task DrugResIGV {
         pwd
         ls
 
-        mkdir -p data
         mkdir -p out
         echo "RETRIEVING BAM AND REF FILES..."
         gsutil cp ~{fasta_path}
