@@ -63,7 +63,7 @@ task DrugResIGV {
     Array[File] snapshots = glob("/out/*.png")
 
     output {
-        String gcs_dir = gcs_output_dir
+        String gcs_dir = gcs_out_dir
     }
     
 
