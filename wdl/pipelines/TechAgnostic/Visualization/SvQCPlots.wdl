@@ -440,9 +440,15 @@ task plotSVQCMetrics{
         papermill /plot_single_sample_stats.ipynb ~{output_plot_notebook} \
         -p reference_in ~{reference_name}  \
         -p callers_in "~{sep="," callers}"
+
+        jupyter nbconvert \
+            --to html \
+            ~{output_plot_notebook} \
+            ~{output_plot_notebook}.html
     }
     output{
         File out_plot_single_sample_stats = output_plot_notebook
+        File out_plot_single_sample_stats_html = output_plot_notebook + ".html"
         Array[File] output_pdfs = glob("*.pdf")
     }
     #########################
