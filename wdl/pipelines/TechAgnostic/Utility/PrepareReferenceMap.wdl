@@ -50,7 +50,7 @@ task GenerateReferenceFai {
     command <<<
         set -euxo pipefail
 
-        sed 's/ /-/g' "~{fasta}" > "~{basename}"
+        sed 's/DUP //g' "~{fasta}" | 's/ /-/g' > "~{basename}"
         samtools faidx "~{basename}"
     >>>
 
