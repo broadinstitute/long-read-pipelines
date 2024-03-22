@@ -99,17 +99,19 @@ task bcfQuerySV{
     Int minimal_disk_size = (ceil(size(input_vcf, "GB") + 100 )) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
-    command{
-        set -euo pipefail
-
-        cat ~{input_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{sample_stat_out}
-
-    }
+    command <<<
+    set -euo pipefail
+        bcftools query \
+            -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && (FILTER=="PASS" || FILTER==".")' \
+            --format "%SVTYPE\t%SVLEN\n" \
+            ~{input_vcf} \
+        > ~{sample_stat_out}
+    >>>
 
     output{
         File all_SV_stat_out = sample_stat_out
     }
-        #########################
+    #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             8,
