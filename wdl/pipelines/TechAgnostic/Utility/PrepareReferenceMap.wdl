@@ -55,7 +55,7 @@ task GenerateReferenceFaAndFai {
     >>>
 
     output {
-        File fasta = "~{basename}"
+        File fa = "~{basename}"
         File fai = "~{basename}.fai"
     }
 
