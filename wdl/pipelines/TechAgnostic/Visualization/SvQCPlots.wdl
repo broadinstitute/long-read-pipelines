@@ -2,6 +2,8 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 
+import "../../../tasks/Utility/Finalize.wdl" as FF
+
 workflow PlotSVQCMetrics{
 
     meta{
@@ -20,8 +22,12 @@ workflow PlotSVQCMetrics{
         Array[Float] coverage_metrics # = "this.sample-t2ts.coverage"
         Array[String] callers # = ["pav", "pbsv", "SNF"]
         Array[Array[File]] matching_vcfs # = ["this.sample-t2ts.pav_vcf", "this.sample-t2ts.pbsv_vcf", "this.sample-t2ts.sniffles_vcf"]
-        String reference_name = "GRCh38"
-        String output_plot_notebook_name = "out_plot_single_sample_stats"
+
+        String cohort_name
+        String reference_name
+        String output_plot_notebook_name
+
+        String gcs_out_root_dir
     }
 
     # gather VCFs for each sample and caller
@@ -67,11 +73,37 @@ workflow PlotSVQCMetrics{
             reference_name = reference_name,
     }
 
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/CohortMetrics/~{cohort_name}/SvQCPlots"
+    call FF.FinalizeToDir as SaveStatsBySVtype { input:
+        files = concatSVstats.all_stats_by_type,
+        outdir = outdir + "/StatsBySVtype"
+    }
+    call FF.FinalizeToDir as SaveStatsByCoverage { input:
+        files = addCoverageToSVstats.all_stats_with_cov,
+        outdir = outdir + "/StatsByCoverage"
+    }
+    call FF.FinalizeToDir as SavePlotPDFs { input:
+        files = plotSVQCMetrics.output_pdfs,
+        outdir = outdir + "/Plots"
+    }
+    call FF.FinalizeToFile as SaveNotebook { input:
+        file = plotSVQCMetrics.out_plot_single_samples_stats,
+        outdir = outdir,
+        name = output_plot_notebook_name
+    }
+    call FF.FinalizeToFile as SaveHTML { input:
+        file = plotSVQCMetrics.out_plot_single_samples_stats_html,
+        outdir = outdir
+    }
+
     output{
-        Array[File] all_stats_by_type = concatSVstats.all_stats_by_type
-        Array[File] all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov
-        Array[File] metric_plot_pdfs = plotSVQCMetrics.output_pdfs
-        File plot_notebook = plotSVQCMetrics.out_plot_single_sample_stats
+        Map[String, String] SvQCPlotsMisc = {
+            "StatsBySVtype"  : SaveStatsBySVtype.gcs_dir,
+            "StatsByCoverage": SaveStatsByCoverage.gcs_dir,
+            "Plots"          : SavePlotPDFs.gcs_dir,
+            "Notebook"       : SaveNotebook.gcs_path
+        }
+        File SvQCPlotsHTML = SaveHTML.gcs_path
     }
 }
 
@@ -412,17 +444,18 @@ task plotSVQCMetrics{
         Array[File] all_stats_by_type
         Array[String] callers
         String reference_name
-        String output_file_name = "out_plot_single_sample_stats"
+        String output_file_name = "out_plot_single_samples_stats"
         RuntimeAttr? runtime_attr_override
     }
     Array[File] input_files = flatten([all_stats_with_cov, all_stats_by_type])
-    String output_plot_notebook = output_file_name + ".ipynb"
+    String output_plot_notebook      = output_file_name + ".ipynb"
+    String output_plot_notebook_html = output_file_name + ".html"
 
     Int minimal_disk_size = (ceil(size(input_files, "GB")  ) + 100 ) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command{
-        set -euo pipefail
+    set -euxo pipefail
 
         echo "Making directory for input files"
         mkdir ~{reference_name}
@@ -437,18 +470,18 @@ task plotSVQCMetrics{
         ls ~{reference_name}
 
         echo "Running jupyter notebook"
-        papermill /plot_single_sample_stats.ipynb ~{output_plot_notebook} \
-        -p reference_in ~{reference_name}  \
-        -p callers_in "~{sep="," callers}"
+        papermill /plot_single_sample_stats.ipynb \
+            ~{output_plot_notebook} \
+            -p reference_in ~{reference_name}  \
+            -p callers_in "~{sep="," callers}"
 
         jupyter nbconvert \
             --to html \
-            ~{output_plot_notebook} \
-            ~{output_plot_notebook}.html
+            ~{output_plot_notebook}
     }
     output{
-        File out_plot_single_sample_stats = output_plot_notebook
-        File out_plot_single_sample_stats_html = output_plot_notebook + ".html"
+        File out_plot_single_samples_stats      = output_plot_notebook
+        File out_plot_single_samples_stats_html = output_plot_notebook_html
         Array[File] output_pdfs = glob("*.pdf")
     }
     #########################
