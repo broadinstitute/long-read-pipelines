@@ -147,6 +147,8 @@ task DV {
 
         String model_type
 
+        Array[String]? regions
+
         Int threads
         Int memory
         String zones
@@ -156,6 +158,9 @@ task DV {
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
     String output_root = "/cromwell_root/dv_output"
+
+    String regions_arg = if defined(regions) then "--regions " else " "
+    Array[String] definite_regions = select_first([regions, [" "]])
 
     command <<<
         set -euxo pipefail
@@ -174,6 +179,7 @@ task DV {
             ~{true='--haploid_contigs ' false='' defined(haploid_contigs)} ~{select_first([haploid_contigs, ""])} \
             ~{true='--par_regions_bed ' false='' defined(par_regions_bed)} ~{select_first([par_regions_bed, ""])} \
             --reads=~{bam} \
+            ~{regions_arg} ~{sep=" " definite_regions} \
             --output_vcf="~{output_root}/~{prefix}.vcf.gz" \
             --output_gvcf="~{output_root}/~{prefix}.g.vcf.gz" \
             --num_shards="${num_core}" || cat resources.log
