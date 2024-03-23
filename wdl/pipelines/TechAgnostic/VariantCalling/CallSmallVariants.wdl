@@ -33,6 +33,7 @@ workflow Work {
     }
     parameter_meta {
         # inputs
+        sex: "biological sex of the sample; accepted value are [F, M, NA]"
         prefix: "Prefix for output files"
         per_chr_bam_bai_and_id: "WGS bam sharded per chromosome/contig."
         is_ont: "If the input data is ONT"
@@ -76,6 +77,7 @@ workflow Work {
         # sample info
         File bam
         File bai
+        String sex
         String prefix
 
         Array[Pair[String, Pair[File, File]]] per_chr_bam_bai_and_id
@@ -100,6 +102,9 @@ workflow Work {
         Int dv_memory
         Boolean use_gpu = false
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
+
+        String? dummy_a
+        File? dummy_b
     }
     output {
         File? clair_vcf  = FinalizeClairVcf.gcs_path
@@ -165,7 +170,6 @@ workflow Work {
     Boolean is_legacy_ont = is_ont && (!is_r10_4_pore_or_later)
 
     if (!is_legacy_ont) { # pacbio or recent ONT data
-
         call DeepVariant.Run as DV {
             input:
                 how_to_shard_wg_for_calling = how_to_shard_wg_for_calling,
@@ -175,8 +179,8 @@ workflow Work {
 
                 ref_bundle = ref_bundle,
 
-                haploid_contigs = haploid_contigs,
-                par_regions_bed = ref_bundle.PAR_bed,
+                haploid_contigs = if (sex == "F") then haploid_contigs else dummy_a,
+                par_regions_bed = if (sex == "F") then ref_bundle.PAR_bed else dummy_b,
 
                 dv_threads = dv_threads,
                 dv_memory = dv_memory,

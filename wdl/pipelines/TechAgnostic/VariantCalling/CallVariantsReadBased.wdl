@@ -23,6 +23,7 @@ workflow CallVariants {
     parameter_meta {
         bam: "Aligned BAM file"
         bai: "Index for the aligned BAM file"
+        sex: "biological sex of the sample; accepted value are [F, M, NA]"
         prefix: "Prefix for output files"
 
         is_ont: "If the input data is generated on the ONT platform"
@@ -66,6 +67,7 @@ workflow CallVariants {
         # sample info
         File bam
         File bai
+        String sex
         String prefix
 
         # data type info
@@ -108,6 +110,7 @@ workflow CallVariants {
             input:
                 bam = bam,
                 bai = bai,
+                sex = sex,
                 prefix = prefix,
 
                 per_chr_bam_bai_and_id = SplitBamByChr.id_bam_bai_of_shards,
