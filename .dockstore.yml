@@ -108,6 +108,9 @@ workflows:
 - name: PhaseSmallVariantsAndTagLongReadsBam
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Annotation/PhaseSmallVariantsAndTagBam.wdl
+- name: FemaleXYDV
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/FemaleXYDV.wdl
 
 ###################################################
 # TechAgnostic - *mics data QC & metrics
