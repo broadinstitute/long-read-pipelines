@@ -80,11 +80,11 @@ task GetLengthsFromFastq {
 
     runtime {
         cpu: 2
-        memory: "8 GiB"
+        memory: "4 GiB"
         disks: "local-disk ~{disk_size} HDD"
         preemptible_tries:  3
         max_retries:        2
-        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.1"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
 
