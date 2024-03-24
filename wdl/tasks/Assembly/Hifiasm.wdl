@@ -64,7 +64,7 @@ task GenerateBinFiles {
         cpu_cores:          num_cpus,
         mem_gb:             select_first([memory_override, memory]),
         disk_gb:            disk_size,
-        preemptible_tries:  0,  # don't bother with premption on GCP with resource request + the expected long run, you'll end up waiting longer & paying more because GCP will prempt you anyway
+        preemptible_tries:  if (size(reads, "GiB") < 24) then 1 else 0,  # a herustic to use preemptible instances for assembling shallow genomes
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
     }
@@ -172,8 +172,8 @@ task AssembleForHaplotigs {
     }
 
     #########################
-    Int min_memory = 128 # this min_memory magic number is purely empirical
-    Int proposed_memory = 2 * ceil(size(reads, "GiB"))
+    Int min_memory = 96 # this min_memory magic number is purely empirical
+    Int proposed_memory = ceil(size(reads, "GiB"))
     Int memory = if proposed_memory < min_memory then min_memory else if proposed_memory > 512 then 512 else proposed_memory
     Int n = memory / 6  # this might be an odd number
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
@@ -181,7 +181,7 @@ task AssembleForHaplotigs {
 
     Int min_disk = 50
     Int half_reads_sz = (1 + ceil(size(reads, "GiB")))/2
-    Int inflation_factor = if defined(bin_files) then 14 else 6  # bin files sizes together are ~ 10 + size of raw reads
+    Int inflation_factor = if defined(bin_files) then 10 else 6  # bin files sizes together are ~ 10 + size of raw reads
     Int proposed_disk = inflation_factor * half_reads_sz
     Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
@@ -189,7 +189,7 @@ task AssembleForHaplotigs {
         cpu_cores:          num_cpus,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        preemptible_tries:  if defined(bin_files) then 1 else 0,
+        preemptible_tries:  if defined(bin_files) then 3 else 0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
     }
@@ -281,8 +281,8 @@ task AssembleForAltContigs {
     }
 
     #########################
-    Int min_memory = 128 # this min_memory magic number is purely empirical
-    Int proposed_memory = 2 * ceil(size(reads, "GiB"))
+    Int min_memory = 96 # this min_memory magic number is purely empirical
+    Int proposed_memory = ceil(size(reads, "GiB"))
     Int memory = if proposed_memory < min_memory then min_memory else if proposed_memory > 512 then 512 else proposed_memory
     Int n = memory / 6  # this might be an odd number
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
@@ -290,7 +290,7 @@ task AssembleForAltContigs {
 
     Int min_disk = 50
     Int half_reads_sz = (1 + ceil(size(reads, "GiB")))/2
-    Int inflation_factor = if defined(bin_files) then 14 else 6  # bin files sizes together are ~ 10 + size of raw reads
+    Int inflation_factor = if defined(bin_files) then 10 else 6  # bin files sizes together are ~ 10 + size of raw reads
     Int proposed_disk = inflation_factor * half_reads_sz
     Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
@@ -298,7 +298,7 @@ task AssembleForAltContigs {
         cpu_cores:          num_cpus,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        preemptible_tries:  if defined(bin_files) then 1 else 0,
+        preemptible_tries:  if defined(bin_files) then 3 else 0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
     }
