@@ -52,6 +52,7 @@ workflow Assemble {
 
         String gcs_out_root_dir
 
+        Int? memory_override
         Array[String] gcp_zones = ['us-central1-a', 'us-central1-b', 'us-central1-c', 'us-central1-f']
     }
 
@@ -93,17 +94,25 @@ workflow Assemble {
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
     String wdl_parsable_zones = get_zones.collapsed
 
+    call Hifiasm.GenerateBinFiles { input:
+        reads  = reads,
+        prefix = prefix,
+        zones = wdl_parsable_zones,
+        memory_override = memory_override
+    }
+
     call Hifiasm.AssembleForHaplotigs { input:
         reads  = reads,
         prefix = prefix,
-        zones  = wdl_parsable_zones
+        zones  = wdl_parsable_zones,
+        bin_files = [GenerateBinFiles.ec_bin, GenerateBinFiles.ovlp_reverse_bin, GenerateBinFiles.ovlp_source_bin]
     }
 
     call Hifiasm.AssembleForAltContigs { input:
         reads  = reads,
         prefix = prefix,
         zones  = wdl_parsable_zones,
-        bin_files = [AssembleForHaplotigs.ec_bin, AssembleForHaplotigs.ovlp_reverse_bin, AssembleForHaplotigs.ovlp_source_bin]
+        bin_files = [GenerateBinFiles.ec_bin, GenerateBinFiles.ovlp_reverse_bin, GenerateBinFiles.ovlp_source_bin]
     }
 
     # save primary/alt
@@ -177,16 +186,16 @@ workflow Assemble {
                                  destination: metrics_dir,
                                  output_attribute_name: "quast_reports"}
 
-    call VisualizeResourceUsage.SimpleRscript as VisualizeHapAsmResoureUsage { input:
-        resource_log = AssembleForHaplotigs.resouce_monitor_log,
-        output_pdf_name = "~{prefix}.hifiasm.resources-usage.hap-mode.pdf",
-        plot_title = "Hifiasm, on input ~{prefix}, in haplotype-resolve mode"
+    call VisualizeResourceUsage.SimpleRscript as VisualizeHifiasmBingenResoureUsage { input:
+        resource_log = GenerateBinFiles.resouce_monitor_log,
+        output_pdf_name = "~{prefix}.hifiasm.resources-usage.bin-only.pdf",
+        plot_title = "Hifiasm, on input ~{prefix}, --bin-only"
     }
     FinalizationManifestLine d = object
-                                {files_to_save: [AssembleForAltContigs.log, AssembleForHaplotigs.log,
-                                                 VisualizeHapAsmResoureUsage.plot_pdf],
-                                 file_names: ["~{prefix}.hifiasm-altmode.log", "~{prefix}.hifiasm-hapmode.log",
-                                              basename(VisualizeHapAsmResoureUsage.plot_pdf)],
+                                {files_to_save: [GenerateBinFiles.log, AssembleForAltContigs.log, AssembleForHaplotigs.log,
+                                                 VisualizeHifiasmBingenResoureUsage.plot_pdf],
+                                 file_names: ["~{prefix}.hifiasm-binonly.log", "~{prefix}.hifiasm-altmode.log", "~{prefix}.hifiasm-hapmode.log",
+                                              basename(VisualizeHifiasmBingenResoureUsage.plot_pdf)],
                                  is_singleton_file: false,
                                  destination: asm_dir,
                                  output_attribute_name: "hifiasm_misc_metrics_files"}
