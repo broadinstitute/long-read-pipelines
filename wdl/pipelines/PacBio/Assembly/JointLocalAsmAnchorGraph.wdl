@@ -20,7 +20,13 @@ workflow JointLocalAsmAnchorGraph{
                     bai = bai
                 }
         String sample_id = InferSampleName.sample_name
-        call extract_bam_addsample{input: bam_input=bam, bam_index=bai, region= genomeregion, pref=sample_id}
+        call U.SubsetBam as Sub {input:
+            bam = bam,
+            bai = bai,
+            locus = genomeregion,
+            prefix = sample_id
+        }
+        call extract_bam_addsample{input: bam_input=Sub.subset_bam, bam_index=Sub.subset_bai, region= genomeregion, pref=sample_id}
     }
 
     call catfasta{input: fas= extract_bam_addsample.local_fa, pref=prefix}
@@ -41,11 +47,11 @@ task extract_bam_addsample{
         String pref
     }
     command <<<
-        samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
-        #samtools fasta ~{pref}.bam > ~{pref}.fasta
-        bedtools bamtofastq -i ~{pref}.bam -fq ~{pref}.fastq
+        #samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
+        samtools fasta ~{pref}.bam > ~{pref}.fasta
+        #bedtools bamtofastq -i ~{pref}.bam -fq ~{pref}.fastq
 
-        sed -n '1~4s/^@/>/p;2~4p' ~{pref}.fastq > ~{pref}.fasta
+        #sed -n '1~4s/^@/>/p;2~4p' ~{pref}.fastq > ~{pref}.fasta
         sed '/^>/s/$/\|~{pref}/' < ~{pref}.fasta > ~{pref}_out.fasta # add sample information to each of the fasta file
         
     >>>
