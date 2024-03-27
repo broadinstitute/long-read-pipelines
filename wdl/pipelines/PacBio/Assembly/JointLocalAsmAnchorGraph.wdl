@@ -48,7 +48,7 @@ task extract_bam_addsample{
     }
     command <<<
         #samtools view --with-header ~{bam_input} -b ~{region} -o ~{pref}.bam
-        samtools fasta ~{pref}.bam > ~{pref}.fasta
+        samtools fasta ~{bam_input} > ~{pref}.fasta
         #bedtools bamtofastq -i ~{pref}.bam -fq ~{pref}.fastq
 
         #sed -n '1~4s/^@/>/p;2~4p' ~{pref}.fastq > ~{pref}.fasta
