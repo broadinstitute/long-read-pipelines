@@ -58,7 +58,7 @@ task extract_bam_addsample{
 
     output{
         File local_fa="~{pref}_out.fasta"
-        File local_bam = "~{pref}.bam"
+        # File local_bam = "~{pref}.bam"
         # File local_bai="~{pref}.~{region}.bai"
     }
 
