@@ -2,13 +2,14 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 
+import "../../../tasks/Utility/Finalize.wdl" as FF
+
 workflow PlotSVQCMetrics{
 
     meta{
         description: "This workflow generates—for one or more samples—summaries and stats on the provided SV callers and their corresponding VCFs."
     }
     parameter_meta{
-        gcs_vcf_dir: "GCS path to directory containing VCFs. Files should be named <sample_name>.<caller>.vcf.gz"
         samples: "List of sample names. Order must match the order of coverage_metrics."
         coverage_metrics: "List of coverage metrics for each sample. Order must match the order of samples."
         callers: "List of SV callers"
@@ -17,44 +18,53 @@ workflow PlotSVQCMetrics{
     }
 
     input{
-        String gcs_vcf_dir
-        Array[String] samples
-        Array[Float] coverage_metrics
-        Array[String] callers
-        String reference_name = "GRCh38"
-        String output_plot_notebook_name = "out_plot_single_sample_stats"
+        Array[String] samples # = "this.sample-t2ts.sample-t2t_id"
+        Array[Float] coverage_metrics # = "this.sample-t2ts.coverage"
+        Array[String] callers # = ["pav", "pbsv", "SNF"]
+        Array[Array[File]] matching_vcfs # = ["this.sample-t2ts.pav_vcf", "this.sample-t2ts.pbsv_vcf", "this.sample-t2ts.sniffles_vcf"]
+
+        String cohort_name
+        String reference_name
+        String output_plot_notebook_name
+
+        String gcs_out_root_dir
     }
 
-    scatter(caller in callers){
-        scatter(sample in samples){
-            call bcfQuerySV{
+    # gather VCFs for each sample and caller
+    scatter(i in range(length(callers))) {
+        String caller = callers[i]
+        scatter(j in range(length(samples))) {
+            String sample = samples[j]
+            File sv_vcf = matching_vcfs[i][j]
+            call bcfQuerySV {
                 input:
                     sample_name = sample,
-                    input_vcf = gcs_vcf_dir + "/" + sample + "." + caller + ".vcf.gz",
+                    input_vcf = sv_vcf,
                     caller = caller,
             }
         }
     }
+
     Array[File] all_SV_stats = flatten(bcfQuerySV.all_SV_stat_out)
-    call concatSVstats{
+    call concatSVstats {
         input:
             all_stats = all_SV_stats,
             callers = callers,
     }
-    call compileSVstats{
+    call compileSVstats {
         input:
             samples = samples,
             all_stats = all_SV_stats,
             callers = callers,
     }
-    call addCoverageToSVstats{
+    call addCoverageToSVstats {
         input:
             coverage_stats = coverage_metrics,
             samples = samples,
             allStatsBySample = compileSVstats.allStatsBySample,
             callers = callers,
     }
-    call plotSVQCMetrics{
+    call plotSVQCMetrics {
         input:
             all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov,
             all_stats_by_type = concatSVstats.all_stats_by_type,
@@ -63,11 +73,37 @@ workflow PlotSVQCMetrics{
             reference_name = reference_name,
     }
 
-output{
-    Array[File] all_stats_by_type = concatSVstats.all_stats_by_type
-    Array[File] all_stats_with_cov = addCoverageToSVstats.all_stats_with_cov
-    Array[File] metric_plot_pdfs = plotSVQCMetrics.output_pdfs
-    File plot_notebook = plotSVQCMetrics.out_plot_single_sample_stats
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/CohortMetrics/~{cohort_name}/SvQCPlots"
+    call FF.FinalizeToDir as SaveStatsBySVtype { input:
+        files = concatSVstats.all_stats_by_type,
+        outdir = outdir + "/StatsBySVtype"
+    }
+    call FF.FinalizeToDir as SaveStatsByCoverage { input:
+        files = addCoverageToSVstats.all_stats_with_cov,
+        outdir = outdir + "/StatsByCoverage"
+    }
+    call FF.FinalizeToDir as SavePlotPDFs { input:
+        files = plotSVQCMetrics.output_pdfs,
+        outdir = outdir + "/Plots"
+    }
+    call FF.FinalizeToFile as SaveNotebook { input:
+        file = plotSVQCMetrics.out_plot_single_samples_stats,
+        outdir = outdir,
+        name = output_plot_notebook_name
+    }
+    call FF.FinalizeToFile as SaveHTML { input:
+        file = plotSVQCMetrics.out_plot_single_samples_stats_html,
+        outdir = outdir
+    }
+
+    output{
+        Map[String, String] SvQCPlotsMisc = {
+            "StatsBySVtype"  : SaveStatsBySVtype.gcs_dir,
+            "StatsByCoverage": SaveStatsByCoverage.gcs_dir,
+            "Plots"          : SavePlotPDFs.gcs_dir,
+            "Notebook"       : SaveNotebook.gcs_path
+        }
+        File SvQCPlotsHTML = SaveHTML.gcs_path
     }
 }
 
@@ -95,17 +131,19 @@ task bcfQuerySV{
     Int minimal_disk_size = (ceil(size(input_vcf, "GB") + 100 )) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
-    command{
-        set -euo pipefail
-
-        cat ~{input_vcf} | bcftools query -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && FILTER=="PASS"' --format "%SVTYPE\t%SVLEN\n" > ~{sample_stat_out}
-
-    }
+    command <<<
+    set -euo pipefail
+        bcftools query \
+            -i '(INFO/SVLEN>49 || INFO/SVLEN<-49) && (FILTER=="PASS" || FILTER==".")' \
+            --format "%SVTYPE\t%SVLEN\n" \
+            ~{input_vcf} \
+        > ~{sample_stat_out}
+    >>>
 
     output{
         File all_SV_stat_out = sample_stat_out
     }
-        #########################
+    #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             8,
@@ -120,7 +158,6 @@ task bcfQuerySV{
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
@@ -407,17 +444,18 @@ task plotSVQCMetrics{
         Array[File] all_stats_by_type
         Array[String] callers
         String reference_name
-        String output_file_name = "out_plot_single_sample_stats"
+        String output_file_name = "out_plot_single_samples_stats"
         RuntimeAttr? runtime_attr_override
     }
     Array[File] input_files = flatten([all_stats_with_cov, all_stats_by_type])
-    String output_plot_notebook = output_file_name + ".ipynb"
+    String output_plot_notebook      = output_file_name + ".ipynb"
+    String output_plot_notebook_html = output_file_name + ".html"
 
     Int minimal_disk_size = (ceil(size(input_files, "GB")  ) + 100 ) # 100GB buffer
     Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command{
-        set -euo pipefail
+    set -euxo pipefail
 
         echo "Making directory for input files"
         mkdir ~{reference_name}
@@ -432,12 +470,18 @@ task plotSVQCMetrics{
         ls ~{reference_name}
 
         echo "Running jupyter notebook"
-        papermill /plot_single_sample_stats.ipynb ~{output_plot_notebook} \
-        -p reference_in ~{reference_name}  \
-        -p callers_in "~{sep="," callers}"
+        papermill /plot_single_sample_stats.ipynb \
+            ~{output_plot_notebook} \
+            -p reference_in ~{reference_name}  \
+            -p callers_in "~{sep="," callers}"
+
+        jupyter nbconvert \
+            --to html \
+            ~{output_plot_notebook}
     }
     output{
-        File out_plot_single_sample_stats = output_plot_notebook
+        File out_plot_single_samples_stats      = output_plot_notebook
+        File out_plot_single_samples_stats_html = output_plot_notebook_html
         Array[File] output_pdfs = glob("*.pdf")
     }
     #########################
@@ -445,6 +489,7 @@ task plotSVQCMetrics{
         cpu_cores:          4,
         mem_gb:             10,
         disk_gb:            disk_size,
+        boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-plot-sv-metrics:beta.0.0.5"
