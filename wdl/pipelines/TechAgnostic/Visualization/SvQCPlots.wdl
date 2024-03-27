@@ -413,7 +413,7 @@ task addCoverageToSVstats{
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+        docker:             "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
