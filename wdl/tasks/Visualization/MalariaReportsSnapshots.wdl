@@ -22,12 +22,12 @@ task DrugResIGV {
     input {
         RuntimeAttr? runtime_attr_override
 
-        String aligned_bam
-        String aligned_bai
+        File aligned_bam
+        File aligned_bai
 
-        String fasta_path
-        String fasta_index_path
-        String regions_bed
+        File fasta_path
+        File fasta_index_path
+        File regions_bed
 
         String sample_name
         String gcs_out_root_dir
@@ -38,15 +38,11 @@ task DrugResIGV {
     String gcs_out_dir = sub(gcs_out_root_dir, "/$", "") + "/MalariaReports/snapshots"
     
     command <<<
-        set -euxo
+        set -euxo pipefail
         pwd
         ls
 
         mkdir -p out
-        echo "RETRIEVING BAM AND REF FILES..."
-        gsutil cp ~{fasta_path}
-        gsutil cp ~{fasta_index_path}
-        gsutil cp ~{aligned_bam}
 
         echo "CREATING SNAPSHOTS..."        
         python3 make_IGV_snapshots.py \
@@ -56,14 +52,10 @@ task DrugResIGV {
             -onlysnap -nf4 -o out
         
         ls out > snapshots.txt
-
-        cat snapshots.txt | gsutil -m cp -I "~{gcs_out_dir}"
     >>>
 
-    Array[File] snapshots = glob("/out/*.png")
-
     output {
-        String gcs_dir = gcs_out_dir
+        Array[File] snapshots = glob("out/*.png")
     }
     
 

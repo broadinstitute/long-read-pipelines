@@ -109,6 +109,9 @@ task RunReportScript {
         # String? coverage_dir
         File? fastqc_path
         Int? coverage_bin_size
+
+        # Snapshots
+        Array[File] snapshots
     }
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
@@ -119,7 +122,8 @@ task RunReportScript {
     String results_dir = if (defined(fastqc_path)) then sub(select_first([fastqc_path]), "results\/.*", "") else ""
     String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
     String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
-    
+
+
     command <<<
         set -euxo
         pwd

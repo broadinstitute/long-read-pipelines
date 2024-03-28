@@ -138,6 +138,7 @@ workflow GenerateMalariaReports {
 
     call MRS.RunReportScript as RunReportScript { 
         input: 
+            snapshots = GenerateSnapshots.snapshots,
             sample_name = sample_name,
             upload_date = upload_date,
             species = species,

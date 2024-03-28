@@ -1795,21 +1795,22 @@
     <div id="fastqc_page" style="display: none;">
         <div id="fastqc_root">
             <div class="main_frame" style="outline: 0px;">
-                    <script>
-                        // Disable links in FastQC iframe
-                        var fastqcFrame = document.getElementById("fastqc_frame");
-                        fastqcFrame.onload = function () {
-                            var fastqcDoc = fastqcFrame.contentDocument || fastqcFrame.contentWindow.document;
-                            var links = fastqcDoc.querySelectorAll("a");
-                    
-                            for (var i = 0; i < links.length; i++) {
-                                links[i].addEventListener("click", function(event) {
-                                    event.preventDefault();
-                                });
-                            }
+                <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc="{{ fastQC.fastqc_html|e }}"></iframe>
+                <script>
+                    // Disable links in FastQC iframe
+                    var fastqcFrame = document.getElementById("fastqc_frame");
+                    fastqcFrame.onload = function () {
+                        var fastqcDoc = fastqcFrame.contentDocument || fastqcFrame.contentWindow.document;
+                        var links = fastqcDoc.querySelectorAll("a");
+                
+                        for (var i = 0; i < links.length; i++) {
+                            links[i].addEventListener("click", function(event) {
+                                event.preventDefault();
+                            });
                         }
-                    </script>
-                    <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc="{{ fastQC.fastqc_html|e }}" />
+                    }
+                </script>
+
                 </div>
             </div>
         </div> <!-- fastqc_root -->
