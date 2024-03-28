@@ -13,7 +13,6 @@ task DrugResIGV {
         regions_bed:        "GCS path to bed file containing drug resistance loci"
         fasta_path:         "GCS path to fasta file"
         fasta_index_path:   "GCS path to fasta.fai file"
-        gcs_out_root_dir:   "GCS bucket to store the results"
         aligned_bam:        "GCS path to aligned bam"
         aligned_bai:        "GCS path to aligned bai"
         sample_name:        "name of the sample sequenced"
