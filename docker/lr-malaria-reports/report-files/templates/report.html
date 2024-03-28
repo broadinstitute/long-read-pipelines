@@ -1112,6 +1112,127 @@
         overflow: visible;
     }
 
+    /* coverage gallery */
+    #cov_gallery {
+        position: absolute;
+        margin: 0 auto;
+        padding: 20px;
+        max-width: 1114px;
+        left: 18.0054px;
+        top: 1215px;
+        outline: solid 1px #dfe1e5;
+        outline-offset: -1px;
+        width: 1114px;
+        height: 660px;
+    }
+
+    .cov_line {
+        position: relative;
+        top: 60px;
+        height: 2px;
+        max-height: 100%;
+        overflow: visible;
+    }
+
+    /* coverage gallery title */
+    .cov_title {
+        color: #000;
+        font-size: 26px;
+        line-height: 20px;
+        font-weight: 500;
+        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+        'Liberation Sans', sans-serif;
+        position: absolute;
+        left: 20px;
+        top: 32px;
+        width: 519px;
+        height: 26.9455px;
+        justify-content: center;
+        flex-direction: column;
+    }
+    
+    .img_title {
+        color: #000;
+        font-size: 22px;
+        line-height: 20px;
+        font-weight: 500;
+        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+        'Liberation Sans', sans-serif;
+        position: absolute;
+        left: 550px;
+        top: 105px;
+        width: 519px;
+        height: 26.9455px;
+        justify-content: center;
+        flex-direction: column;   
+    }
+
+    #main_photo {
+        position: absolute;
+        display: block;
+        top: 135px;
+        left: 250px; /* change this with real photos (fixed size) */
+        height: 325px;
+    }
+
+    .cover {
+        position: absolute;
+        padding: 0px 30px;
+        top: 440px;
+        left: 15px;
+        width: 1075px;
+    }
+    
+    .left {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .right {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .thumbnail-row {
+        position: relative;
+        width: 100%;
+        padding: 40px 0px;
+        height: auto;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .thumbnail {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 200px;
+        height: 150px;
+        padding: 0px 15px;
+        margin: 1px 10px;
+        border: 1px solid #f1f1f1;
+        overflow: hidden;
+        -webkit-box-shadow: 0px 0px 15px 2px rgb(0 0 0 / 10%);;
+        box-shadow: 0px 0px 15px 2px rgb(0 0 0 / 10%);;
+        cursor: pointer;
+    }
+
+    .left, .right {
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        font-size: 25px;
+    }
+
     .sidebar {
         position: absolute;
         left: 0;
@@ -1576,13 +1697,94 @@
                     </div>
                     <div id="coverage_plot"><img src="data:image/jpeg;base64,{{ (analysis.coverage_plot).decode('utf-8') | safe }}" style="height: auto; width: 90%; position:absolute; left:50px; top:100px;"></div>
                 </div>
-                
+
+                <div id="cov_gallery">
+                    <div class="cov_title">IGV Snapshots</div>
+                    <div class="cov_line">
+                        <svg preserveAspectRatio="none" viewBox="0 0 1250 1" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0L510.372 0" stroke="#DFE1E5"></path></svg>
+                    </div>
+                    <div class="img_title"></div>
+                    <img id="main_photo" src={{ analysis.snapshots[0] }}>
+                    <div class="cover">
+                        <button class="left" onclick="leftScroll()">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                        <div class="thumbnail-row">
+                            {% for image in analysis.snapshots %}
+                                <div class="thumbnail">
+                                    <img src="data:image/jpeg;base64,{{ (image).decode('utf-8') | safe }}">
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button class="right" onclick="rightScroll()">
+                            <i class="fas fa-angle-double-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <script type="text/javascript">
+                    document.addEventListener("DOMContentLoaded", function () {
+                        const thumbnailRow = document.querySelector(".thumbnail-row");
+                        const scrollLength = thumbnailRow.scrollWidth - thumbnailRow.clientWidth;
+                        const leftButton = document.querySelector(".left");
+                        const rightButton = document.querySelector(".right");
+                        const mainPhoto = document.getElementById("main_photo");
+                        const thumbnails = document.querySelectorAll(".thumbnail img");
+    
+                        const updateMainImage = (newImageSrc) => {
+                            mainPhoto.src = newImageSrc;
+                        };
+    
+                        for(var i = 0; i < thumbnails.length; i++) {
+                            thumbnails[i].addEventListener("click", () => {
+                                const newImageSrc = event.target.src;
+                                updateMainImage(newImageSrc);
+                            });
+                        }
+    
+                        function checkScroll() {
+                          const currentScroll = thumbnailRow.scrollLeft; // distance from left edge
+            
+                          // arrow control
+                          if (currentScroll === 0) { // no left overflow
+                            leftButton.setAttribute("disabled", "true"); 
+                            rightButton.removeAttribute("disabled");
+                          } else if (currentScroll === scrollLength) { // no right overflow
+                            rightButton.setAttribute("disabled", "true");
+                            leftButton.removeAttribute("disabled");
+                          } else { // no overflow
+                            leftButton.removeAttribute("disabled");
+                            rightButton.removeAttribute("disabled");
+                          }
+                        }
+                        
+                        thumbnailRow.addEventListener("scroll", checkScroll);
+                        window.addEventListener("resize", checkScroll);
+                        checkScroll();
+                      
+                        // scroll by thumbnail width
+                        function leftScroll() {
+                          thumbnailRow.scrollBy({
+                            left: -150,
+                            behavior: "smooth"
+                          });
+                        }
+                      
+                        function rightScroll() {
+                          thumbnailRow.scrollBy({
+                            left: 150,
+                            behavior: "smooth"
+                          });
+                        }
+                      
+                        leftButton.addEventListener("click", leftScroll);
+                        rightButton.addEventListener("click", rightScroll);
+                      });
+                </script>                
                 <div class="active_channels_box"></div>
                 <div class="active_channels_value">{{ analysis.active_channels }}</div>
                 <div class="active_channels_label">Active Channels</div>
               </div>
             </div>
-
           </div> <!-- analysis_root -->
         </div> 
     </div> <!-- analysis_page -->
