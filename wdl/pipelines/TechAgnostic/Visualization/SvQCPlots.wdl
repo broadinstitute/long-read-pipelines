@@ -269,7 +269,7 @@ task compileSVstats {
         --base_dir ./stats_by_sample \
         --sample_file ~{sampleFile} \
         --callers ~{sep=" " callers}  \
-        --svtypes "ALL DEL DUP CNV INS INV OTH"
+        --svtypes ALL DEL DUP CNV INS INV OTH
 
   >>>
 
