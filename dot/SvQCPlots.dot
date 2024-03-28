@@ -1,0 +1,36 @@
+// PlotSVQCMetrics
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-scatter-L34C5-i" {
+		fontname=Roboto label="scatter(range(length(callers)))" rank=same
+		subgraph "cluster-scatter-L36C9-j" {
+			fontname=Roboto label="scatter(range(length(samples)))" rank=same
+			"call-bcfQuerySV" [label=bcfQuerySV shape=cds]
+			"scatter-L36C9-j" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"scatter-L34C5-i" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-all_SV_stats" [label=all_SV_stats shape=plaintext]
+	"call-concatSVstats" [label=concatSVstats shape=cds]
+	"call-compileSVstats" [label=compileSVstats shape=cds]
+	"call-addCoverageToSVstats" [label=addCoverageToSVstats shape=cds]
+	"call-plotSVQCMetrics" [label=plotSVQCMetrics shape=cds]
+	"call-SaveStatsBySVtype" [label=SaveStatsBySVtype shape=cds]
+	"call-SaveStatsByCoverage" [label=SaveStatsByCoverage shape=cds]
+	"call-SavePlotPDFs" [label=SavePlotPDFs shape=cds]
+	"call-SaveNotebook" [label=SaveNotebook shape=cds]
+	"call-SaveHTML" [label=SaveHTML shape=cds]
+	"call-bcfQuerySV" -> "decl-all_SV_stats"
+	"decl-all_SV_stats" -> "call-concatSVstats"
+	"decl-all_SV_stats" -> "call-compileSVstats"
+	"call-compileSVstats" -> "call-addCoverageToSVstats"
+	"call-addCoverageToSVstats" -> "call-plotSVQCMetrics"
+	"call-concatSVstats" -> "call-plotSVQCMetrics"
+	"call-concatSVstats" -> "call-SaveStatsBySVtype"
+	"call-addCoverageToSVstats" -> "call-SaveStatsByCoverage"
+	"call-plotSVQCMetrics" -> "call-SavePlotPDFs"
+	"call-plotSVQCMetrics" -> "call-SaveNotebook"
+	"call-plotSVQCMetrics" -> "call-SaveHTML"
+}

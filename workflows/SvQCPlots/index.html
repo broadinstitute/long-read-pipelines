@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>CCSPepper - Broad Institute Long Read Pipelines</title>
+    <title>SvQCPlots - Broad Institute Long Read Pipelines</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "CCSPepper";
-        var mkdocs_page_input_path = "workflows/CCSPepper.md";
+        var mkdocs_page_name = "SvQCPlots";
+        var mkdocs_page_input_path = "workflows/SvQCPlots.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -127,27 +127,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFs/">BenchmarkVCFs</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">CCSPepper</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#ccspepper_1">CCSPepper</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
-    </li>
-        </ul>
-    </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../CCSPepper/">CCSPepper</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../CallAssemblyVariants/">CallAssemblyVariants</a>
                   </li>
@@ -275,7 +255,25 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Sniffles2/">Sniffles2</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SvQCPlots/">SvQCPlots</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">SvQCPlots</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#plotsvqcmetrics">PlotSVQCMetrics</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../TrainCnnFilters/">TrainCnnFilters</a>
                   </li>
@@ -299,9 +297,9 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
           <li>Workflows &raquo;</li>
-      <li>CCSPepper</li>
+      <li>SvQCPlots</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/CCSPepper.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/SvQCPlots.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -309,50 +307,56 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="ccspepper">CCSPepper</h1>
-<h2 id="ccspepper_1">CCSPepper</h2>
+                <h1 id="svqcplots">SvQCPlots</h1>
+<h2 id="plotsvqcmetrics">PlotSVQCMetrics</h2>
 <dl>
 <dt>description</dt>
-<dd>Workflow for getting haplotagged BAM, VCF and gVCF from DV-pepper. Note VCF is un-phased.</dd>
+<dd>This workflow generates—for one or more samples—summaries and stats on the provided SV callers and their corresponding VCFs.</dd>
 </dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>bai</code> (File, <strong>required</strong>): Input BAM index file</li>
-<li><code>bam</code> (File, <strong>required</strong>): Input BAM file</li>
-<li><code>dv_memory</code> (Int, <strong>required</strong>): Memory for DeepVariant</li>
-<li><code>dv_threads</code> (Int, <strong>required</strong>): Number of threads for DeepVariant</li>
-<li><code>pepper_memory</code> (Int, <strong>required</strong>): Memory for Pepper</li>
-<li><code>pepper_threads</code> (Int, <strong>required</strong>): Number of threads for Pepper</li>
-<li><code>ref_fasta</code> (File, <strong>required</strong>): Reference fasta file</li>
-<li><code>ref_fasta_fai</code> (File, <strong>required</strong>): Reference fasta index file</li>
+<li><code>callers</code> (Array[String], <strong>required</strong>): List of SV callers</li>
+<li><code>cohort_name</code> (String, <strong>required</strong>)</li>
+<li><code>coverage_metrics</code> (Array[Float], <strong>required</strong>): List of coverage metrics for each sample. Order must match the order of samples.</li>
+<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>)</li>
+<li><code>matching_vcfs</code> (Array[Array[File]], <strong>required</strong>)</li>
+<li><code>output_plot_notebook_name</code> (String, <strong>required</strong>): Name of the output plot notebook</li>
+<li><code>reference_name</code> (String, <strong>required</strong>): Reference genome name</li>
+<li><code>samples</code> (Array[String], <strong>required</strong>): List of sample names. Order must match the order of coverage_metrics.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>deep_variant.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>get_hap_tagged_bam.runtime_attr_override</code> (RuntimeAttr?)</li>
-</ul>
-<h4 id="defaults">Defaults</h4>
-<ul>
-<li><code>zones</code> (String, default="us-central1-b us-central1-c"): select which zone (GCP) to run this task</li>
+<li><code>SaveHTML.keyfile</code> (File?)</li>
+<li><code>SaveHTML.name</code> (String?)</li>
+<li><code>SaveHTML.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SaveNotebook.keyfile</code> (File?)</li>
+<li><code>SaveNotebook.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SavePlotPDFs.keyfile</code> (File?)</li>
+<li><code>SavePlotPDFs.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SaveStatsByCoverage.keyfile</code> (File?)</li>
+<li><code>SaveStatsByCoverage.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>SaveStatsBySVtype.keyfile</code> (File?)</li>
+<li><code>SaveStatsBySVtype.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>addCoverageToSVstats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>bcfQuerySV.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>compileSVstats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>concatSVstats.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>plotSVQCMetrics.runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>VCF</code> (File)</li>
-<li><code>VCF_tbi</code> (File)</li>
-<li><code>gVCF</code> (File)</li>
-<li><code>gVCF_tbi</code> (File)</li>
-<li><code>hap_tagged_bam</code> (File)</li>
-<li><code>hap_tagged_bai</code> (File)</li>
+<li><code>SvQCPlotsMisc</code> (Map[String,String])</li>
+<li><code>SvQCPlotsHTML</code> (File)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
-<p><img alt="CCSPepper" src="../../dot/CCSPepper.dot.png" /></p>
+<p><img alt="SvQCPlots" src="../../dot/SvQCPlots.dot.png" /></p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../BenchmarkVCFs/" class="btn btn-neutral float-left" title="BenchmarkVCFs"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../CallAssemblyVariants/" class="btn btn-neutral float-right" title="CallAssemblyVariants">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../Sniffles2/" class="btn btn-neutral float-left" title="Sniffles2"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../TrainCnnFilters/" class="btn btn-neutral float-right" title="TrainCnnFilters">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -380,10 +384,10 @@
         </span>
     
     
-      <span><a href="../BenchmarkVCFs/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../Sniffles2/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../CallAssemblyVariants/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../TrainCnnFilters/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
