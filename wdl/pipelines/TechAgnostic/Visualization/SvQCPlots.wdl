@@ -265,7 +265,7 @@ task compileSVstats {
             mv $file ./stats_by_sample
         done
 
-        python3 compilesvstats.py \
+        python3 /compilesvstats.py \
         --base_dir ./stats_by_sample \
         --sample_file ~{sampleFile} \
         --callers ~{sep=" " callers}  \
