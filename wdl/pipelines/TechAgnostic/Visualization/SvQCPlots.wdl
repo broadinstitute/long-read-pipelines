@@ -265,69 +265,12 @@ task compileSVstats {
             mv $file ./stats_by_sample
         done
 
-        python3 <<CODE
-import os
-import subprocess
+        python3 compilesvstats.py \
+        --base_dir ./stats_by_sample \
+        --sample_file ~{sampleFile} \
+        --callers ~{sep=" " callers}  \
+        --svtypes "ALL DEL DUP CNV INS INV OTH"
 
-def main():
-    svtypes = ["ALL", "DEL", "DUP", "CNV", "INS", "INV", "OTH"]
-    basedir = os.getcwd() + "/stats_by_sample"
-    callers = ["~{sep='", "' callers}"]
-
-    samplefile = open('~{sampleFile}', 'r')
-    samples = []
-    for line in samplefile:
-        samples.append(line.strip())
-    samplefile.close()
-
-    for caller in callers:
-        outfile = open("%s/%s_all_sample_stats" % (os.getcwd(), caller), 'w')
-        outfile.write("sample\t%s\n" % '\t'.join(svtypes))
-
-        compile_stats(caller, svtypes, samples, basedir, outfile)
-
-        outfile.close()
-
-def pairwise(iterable):
-    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
-    a = iter(iterable)
-    return zip(a, a)
-
-def compile_stats(caller, svtypes, samples, basedir, outfile):
-    for sample_name in samples:
-        # Count lines in the file
-        sample_svlen_file = os.path.join(basedir, f"{sample_name}.{caller}.txt")
-        with open(sample_svlen_file, 'r') as file:
-            ALL = sum(1 for _ in file)
-
-        # Count SVs by type
-        cut_sort_uniq_command = "cut -f1 {} | sort | uniq -c".format(sample_svlen_file)
-        counts_by_sv = subprocess.check_output(cut_sort_uniq_command, shell=True)
-        counts_by_sv_clean = counts_by_sv.decode().split()
-
-        SVs = {}
-        for svtype in svtypes:
-            SVs[svtype] = 0
-        SVs['ALL'] = ALL
-
-        # Process counts_by_sv
-        for i in range(0, len(counts_by_sv_clean), 2):
-            num = int(counts_by_sv_clean[i])
-            SV = counts_by_sv_clean[i + 1].upper()
-            if SV in SVs:
-                SVs[SV] = num
-            else:
-                SVs['OTH'] += num
-
-        outfile.write("%s" % sample_name)
-
-        for svtype in svtypes:
-            outfile.write("\t%d" % SVs[svtype])
-        outfile.write("\n")
-
-if __name__ == "__main__":
-    main()
-CODE
   >>>
 
 
@@ -342,7 +285,7 @@ CODE
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:latest"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-compile-sv-stats:0.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
