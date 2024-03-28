@@ -30,12 +30,10 @@ task DrugResIGV {
         File regions_bed
 
         String sample_name
-        String gcs_out_root_dir
     }
 
     Int disk_size_gb = 20 + ceil(size(regions_bed, "GB"))
 
-    String gcs_out_dir = sub(gcs_out_root_dir, "/$", "") + "/MalariaReports/snapshots"
     
     command <<<
         set -euxo pipefail
@@ -50,8 +48,6 @@ task DrugResIGV {
             ~{aligned_bam} \
             -r ~{regions_bed} \
             -onlysnap -nf4 -o out
-        
-        ls out > snapshots.txt
     >>>
 
     output {

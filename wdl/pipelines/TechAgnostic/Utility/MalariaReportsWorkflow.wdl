@@ -59,8 +59,7 @@ workflow GenerateMalariaReports {
 
         # ------ IGV Snapshots ------ #
         regions_bed:        "GCS path to bed file containing drug resistance loci"
-        fasta_path:         "GCS path to fasta file"
-        fasta_index_path:   "GCS path to fasta.fai file"
+        ref_map:            "table indicating reference sequence and auxillary file locations"
         aligned_bam:        "GCS path to aligned bam"
         aligned_bai:        "GCS path to aligned bai"
         gcs_out_root_dir:   "GCS bucket to store the results"
@@ -116,13 +115,10 @@ workflow GenerateMalariaReports {
         Int? coverage_bin_size  
 
         # ------ IGV Snapshots ------ #
-        String aligned_bam
-        String aligned_bai
-        String fasta_path
-        String fasta_index_path
-        String regions_bed
-
-        String gcs_out_root_dir
+        File aligned_bam
+        File aligned_bai
+        File regions_bed
+        File ref_map
     }
     
     call Snapshot.DrugResIGV as GenerateSnapshots {
@@ -132,13 +128,11 @@ workflow GenerateMalariaReports {
             fasta_index_path = fasta_index_path,
             regions_bed = regions_bed,
             aligned_bam = aligned_bam,
-            aligned_bai = aligned_bai,
-            gcs_out_root_dir = gcs_out_root_dir
+            aligned_bai = aligned_bai
     }
 
     call MRS.RunReportScript as RunReportScript { 
         input: 
-            snapshots = GenerateSnapshots.snapshots,
             sample_name = sample_name,
             upload_date = upload_date,
             species = species,
@@ -167,6 +161,7 @@ workflow GenerateMalariaReports {
             average_identity = average_identity,
             fastqc_path = fastqc_path,
             coverage_bin_size = coverage_bin_size,
+            snapshots = GenerateSnapshots.snapshots
     }
 
     output {

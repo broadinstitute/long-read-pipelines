@@ -511,7 +511,7 @@ class Analysis:
     Additionally, it passes in variables needed for plot generation in Javascript.
     '''
     
-    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, active_channels, coverage_plot):
+    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, active_channels, coverage_plot, snapshots):
         '''This function defines the variables used and retrieves them from their respective functions.'''
         
         self.sequencing_summary = sequencing_summary
@@ -519,6 +519,7 @@ class Analysis:
         self.reads = qscore_reads
         self.active_channels = active_channels
         self.coverage_plot = coverage_plot
+        self.snapshots = snapshots
         # self.reference_info = reference_info
 
 class FastQC:
@@ -615,7 +616,14 @@ if __name__ == '__main__':
     #parser.add_argument("--coverage_dir", help="location of bed files used for coverage plot")
     parser.add_argument("--fastqc_path", help="location of fastqc_report file; used to locate BAM files for coverage report generation")
     parser.add_argument("--coverage_bin_size", help="number to use as size of bins for coverage plot generation; default is 1500", type=int)
-
+    
+    # Snapshots
+    parser.add_argument("refmap", help="refmap to get reference files (fasta and fai)", required=True)
+    parser.add_argument("--aligned_bam", help="aligned BAM file for IGV snapshots", required=True)
+    parser.add_argument("--aligned_bai", help="aligned BAM index file for IGV snapshots", required=True)
+    parser.add_argument("--regions_bed", help="BED regions for drug resistance loci of P. falciparum", required=True)
+    parser.add_argument("--snapshots", required=False)
+    
     # parse given arguments
     args = parser.parse_args()
     arg_dict = vars(args)
@@ -697,6 +705,11 @@ if __name__ == '__main__':
     # For debugging purposes, save plot:
     coverage_plot.savefig("coverage_plot.jpeg")
     
+    # IGV Snapshots
+    snapshots = str(arg_dict["snapshots"])
+    snapshots = (snapshots.strip("[]")).split(", ")
+    snapshots_b64 = [img_to_b64(image) for image in snapshots]
+    
     # third : fastqc_page
     fastqc_html = read_fastqc("/report-files/data/fastqc/")
     print(fastqc_html[:200]) # debug
@@ -704,7 +717,7 @@ if __name__ == '__main__':
     # Create summary, analysis, and fastQC objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
 
-    analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64)
+    analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64, snapshots_b64)
 
     fastQC = FastQC(fastqc_html)
 
