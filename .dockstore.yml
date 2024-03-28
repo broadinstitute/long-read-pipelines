@@ -150,3 +150,6 @@ workflows:
 - name: ExpandedDrugResistanceMarkerAggregation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExpandedDrugResistanceMarkerAggregation.wdl
+- name: SvQCPlots
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Visualization/SvQCPlots.wdl
