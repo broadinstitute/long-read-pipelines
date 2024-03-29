@@ -9,9 +9,18 @@ workflow JointLocalAsmAnchorGraph{
     input{
         Array[File] wholegenomebam
         Array[File] wholegenomebai
+        File reference
+        Int kmersize
         String genomeregion
         String prefix
     }
+
+    # Array[String] chrAndPositions = split(genomeregion, ":")
+    # Array[String] positions = split(chrAndPositions[1], "-")
+    # String startPosition = positions[0]
+    # String endPosition = positions[1]
+
+
     scatter (bam_bai in zip(wholegenomebam, wholegenomebai)){
         File bam = bam_bai.left
         File bai = bam_bai.right
@@ -30,10 +39,18 @@ workflow JointLocalAsmAnchorGraph{
     }
 
     call catfasta{input: fas= extract_bam_addsample.local_fa, pref=prefix}
+    call construct_graph{ input:
+        reference_fas = reference,
+        read_fasta = catfasta.fasta,
+        kmersize = kmersize,
+        locus = genomeregion,
+        threshold = 4,
+        pref = prefix
+    }
     
     output{
-        File merged_fa = catfasta.fasta
-        #File subset_bai = extract_bam.local_bai
+        # File merged_fa = catfasta.fasta
+        Array[File] graphs = construct_graph.gfas
     }
 }
 
@@ -98,5 +115,36 @@ task catfasta{
         preemptible: 2
         maxRetries: 1
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+task construct_graph{
+    input{
+        File reference_fas
+        File read_fasta
+        Int kmersize
+        String locus
+        Int threshold
+        String pref
+    }
+
+    command <<<
+        python /agg/construct_graph.py -i ~{read_fasta} -r ~{reference_fas} -o ~{pref} -k ~{kmersize} -g ~{locus} -t ~{threshold}
+    >>>
+
+    output{
+        Array[File] gfas = glob("/agg/*")
+    }
+
+    Int disk_size = 100
+
+    runtime {
+        cpu: 1
+        memory: "6 GiB"
+        disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 2
+        maxRetries: 1
+        docker: "hangsuunc/agg:v1"
     }
 }
