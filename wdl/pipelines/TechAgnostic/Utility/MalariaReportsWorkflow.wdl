@@ -59,7 +59,7 @@ workflow GenerateMalariaReports {
 
         # ------ IGV Snapshots ------ #
         regions_bed:        "GCS path to bed file containing drug resistance loci"
-        ref_map:            "table indicating reference sequence and auxillary file locations"
+        ref_map_file:            "table indicating reference sequence and auxillary file locations"
         aligned_bam:        "GCS path to aligned bam"
         aligned_bai:        "GCS path to aligned bai"
         gcs_out_root_dir:   "GCS bucket to store the results"
@@ -118,7 +118,7 @@ workflow GenerateMalariaReports {
         File aligned_bam
         File aligned_bai
         File regions_bed
-        File ref_map
+        File ref_map_file
     }
     
     Map[String, String] ref_map = read_map(ref_map_file)
