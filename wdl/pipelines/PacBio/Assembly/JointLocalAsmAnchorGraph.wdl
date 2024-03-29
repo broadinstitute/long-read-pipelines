@@ -138,7 +138,7 @@ task construct_graph{
     >>>
 
     output{
-        Array[File] gfas = glob("~{work_dir}/*")
+        Array[File] gfas = glob("*.gfa")
     }
 
     Int disk_size = 100
