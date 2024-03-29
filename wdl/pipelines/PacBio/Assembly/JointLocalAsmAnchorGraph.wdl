@@ -145,7 +145,7 @@ task construct_graph{
 
     runtime {
         cpu: 1
-        memory: "6 GiB"
+        memory: "16 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 2
