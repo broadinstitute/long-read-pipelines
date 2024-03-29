@@ -127,13 +127,18 @@ task construct_graph{
         Int threshold
         String pref
     }
+    String docker_dir = "/agg"
+    String work_dir = "/cromwell_root/agg"
 
     command <<<
-        python /agg/construct_graph.py -i ~{read_fasta} -r ~{reference_fas} -o ~{pref} -k ~{kmersize} -g ~{locus} -t ~{threshold}
+        set -euxo pipefail
+        mkdir -p ~{work_dir}
+        cd ~{work_dir}
+        python ~{docker_dir}/construct_graph.py -i ~{read_fasta} -r ~{reference_fas} -o ~{pref} -k ~{kmersize} -g ~{locus} -t ~{threshold}
     >>>
 
     output{
-        Array[File] gfas = glob("/agg/*")
+        Array[File] gfas = glob("~{work_dir}/*")
     }
 
     Int disk_size = 100
