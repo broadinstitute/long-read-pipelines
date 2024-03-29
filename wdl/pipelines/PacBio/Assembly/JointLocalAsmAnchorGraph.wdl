@@ -50,7 +50,7 @@ workflow JointLocalAsmAnchorGraph{
     
     output{
         # File merged_fa = catfasta.fasta
-        Array[File] graphs = construct_graph.gfas
+        Array[File] graphs = construct_graph.all_graphs
     }
 }
 
@@ -138,7 +138,10 @@ task construct_graph{
     >>>
 
     output{
-        Array[File] gfas = glob("*.gfa")
+        File rawgraph= "~{work_dir}/~{pref}.raw.gfa"
+        File trimmedgraph= "~{work_dir}/~{pref}.trimmed.gfa"
+        File seriesparallel= "~{work_dir}/~{pref}.sp.gfa"
+        Array[File] all_graphs= glob("~{work_dir}/*")
     }
 
     Int disk_size = 100
