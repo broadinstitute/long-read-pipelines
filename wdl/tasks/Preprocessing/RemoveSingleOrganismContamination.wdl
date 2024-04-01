@@ -21,6 +21,7 @@ workflow RemoveSingleOrganismContamination {
         String SM
         String LB
         String platform = "illumina"
+        String aligner = "bwa-mem2" #Valid options for aligner: "bwa-mem2" or "bowtie2"
 
         String contaminant_ref_name
         File contaminant_ref_map_file
@@ -95,31 +96,54 @@ workflow RemoveSingleOrganismContamination {
     String RG = select_first([t_006_GetRawReadGroup.rg, "@RG\tID:" + SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM])
 
     # Align data to contaminant reference:
-    call SRUTIL.BwaMem2 as t_007_AlignReads {
-        input:
-            fq_end1 = fq_e1,
-            fq_end2 = fq_e2,
+    if (aligner == 'bwa-mem2') {
+        call SRUTIL.BwaMem2 as t_007_AlignReads {
+            input:
+                fq_end1 = fq_e1,
+                fq_end2 = fq_e2,
 
-            ref_fasta = ref_map["fasta"],
-            ref_fasta_index = ref_map["fai"],
-            ref_dict = ref_map["dict"],
-            ref_0123 = ref_map["0123"],
-            ref_amb = ref_map["amb"],
-            ref_ann = ref_map["ann"],
-            ref_bwt = ref_map["bwt"],
-            ref_pac = ref_map["pac"],
+                ref_fasta = ref_map["fasta"],
+                ref_fasta_index = ref_map["fai"],
+                ref_dict = ref_map["dict"],
+                ref_0123 = ref_map["0123"],
+                ref_amb = ref_map["amb"],
+                ref_ann = ref_map["ann"],
+                ref_bwt = ref_map["bwt"],
+                ref_pac = ref_map["pac"],
 
-            mark_short_splits_as_secondary = true,
+                mark_short_splits_as_secondary = true,
 
-            read_group = RG,
-            prefix = SM + ".contaminant_aligned." + contaminant_ref_name,
+                read_group = RG,
+                prefix = SM + ".contaminant_aligned." + contaminant_ref_name,
 
-            runtime_attr_override = object {mem_gb: 64}  # Need a lot of ram to use BWA-MEM2
+                runtime_attr_override = object {mem_gb: 64}  # Need a lot of ram to use BWA-MEM2
+        }
+    }
+
+    if (aligner == 'bowtie2') {
+        call SRUTIL.Bowtie2 as t_007_AlignReadsWithBowtie {
+            input:
+                fq_end1 = fq_e1,
+                fq_end2 = fq_e2,
+
+                ref_basename = "",
+                ref_1_bt2 = ref_map["1_bt2"],
+                ref_2_bt2 = ref_map["2_bt2"],
+                ref_3_bt2 = ref_map["3_bt2"],
+                ref_4_bt2 = ref_map["4_bt2"],
+                ref_rev1_bt2 = ref_map["rev1_bt2"],
+                ref_rev2_bt2 = ref_map["rev2_bt2"],
+
+                read_group = RG,
+                prefix = SM + ".contaminant_aligned." + contaminant_ref_name,
+
+                runtime_attr_override = object {mem_gb: 64}
+        }
     }
 
     call ExtractReadsWithSamtools as t_008_ExtractDecontaminatedReads {
         input:
-            bam = t_007_AlignReads.bam,
+            bam = select_first[t_007_AlignReadsWithBowtie.bam, t_007_AlignReads.bam],
             sam_flags = "256",
             extra_args = " -f 12 ",
             prefix = SM + ".decontaminated"
