@@ -106,8 +106,8 @@ workflow SRFlowcell {
     # OK, this is inefficient, but let's NOW extract our contaminated reads if we have the info.
     # TODO: Move this into the sections above to make it more efficient.  Specifically where we convert bam -> fastq.
     # TODO: Re-enable this section after decontamination is fixed.  The alignment based method with BWA-MEM doesn't work.  Not clear why, but this does seem somewhat inadequate (simplistic alignment-based strategies).
-    if (false && defined(contaminant_ref_map_file)) {
-
+    # Update: Enabled bowtie2-based decontamination of reads
+    if (defined(contaminant_ref_map_file)) {
         # Call our sub-workflow for decontamination:
         # NOTE: We don't need to be too concerned with the finalization info.
         #       This will be partially filled in by the WDL itself, so we can pass the same inputs for
@@ -120,6 +120,7 @@ workflow SRFlowcell {
                 SM = SM,
                 LB = LB,
                 platform = platform,
+                aligner = "bowtie2",
 
                 contaminant_ref_name = select_first([contaminant_ref_name]),
                 contaminant_ref_map_file = select_first([contaminant_ref_map_file]),

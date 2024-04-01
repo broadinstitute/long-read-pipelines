@@ -126,7 +126,7 @@ workflow RemoveSingleOrganismContamination {
                 fq_end1 = fq_e1,
                 fq_end2 = fq_e2,
 
-                ref_basename = "",
+                ref_basename = contaminant_ref_name,
                 ref_1_bt2 = ref_map["1_bt2"],
                 ref_2_bt2 = ref_map["2_bt2"],
                 ref_3_bt2 = ref_map["3_bt2"],
