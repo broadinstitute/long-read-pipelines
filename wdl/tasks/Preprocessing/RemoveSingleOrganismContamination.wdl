@@ -143,7 +143,7 @@ workflow RemoveSingleOrganismContamination {
 
     call ExtractReadsWithSamtools as t_008_ExtractDecontaminatedReads {
         input:
-            bam = select_first[t_007_AlignReadsWithBowtie.bam, t_007_AlignReads.bam],
+            bam = select_first([t_007_AlignReadsWithBowtie.bam, t_007_AlignReads.bam]),
             sam_flags = "256",
             extra_args = " -f 12 ",
             prefix = SM + ".decontaminated"
