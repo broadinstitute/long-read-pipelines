@@ -867,7 +867,7 @@ task Bowtie2 {
             -x ~{ref_dir} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} | \
-        samtools view -bS -> ~{prefix}.bam
+        samtools view -1 - > ~{prefix}.bam
     >>>
 
     output {
