@@ -826,7 +826,7 @@ task Bowtie2 {
         File fq_end1
         File fq_end2
 
-        File ref_basename
+        String ref_basename
         File ref_1_bt2
         File ref_2_bt2
         File ref_3_bt2
