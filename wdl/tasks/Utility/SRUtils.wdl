@@ -826,7 +826,7 @@ task Bowtie2 {
         File fq_end1
         File fq_end2
 
-        String ref_basename
+        String ref_dir
         File ref_1_bt2
         File ref_2_bt2
         File ref_3_bt2
@@ -864,7 +864,7 @@ task Bowtie2 {
         bowtie2 \
             -p ${np} \
             ~{rg_arg}'~{default="" read_group}' \
-            -x ~{ref_basename} \
+            -x ~{ref_dir} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} | \
         samtools view -bS -> ~{prefix}.bam

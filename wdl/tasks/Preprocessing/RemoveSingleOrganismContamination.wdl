@@ -44,6 +44,7 @@ workflow RemoveSingleOrganismContamination {
         platform:                 "[default valued] the value to place in the BAM read group's PL (platform) field (default: illumina)"
 
         contaminant_ref_name:                 "Name of the contaminant genome to be used in output files."
+        contaminant_ref_dir:                    "Directory path where reference is stored"
         contaminant_ref_map_file:                 "Table indicating reference sequence and auxillary file locations."
 
         dir_prefix:         "directory prefix for output files"
@@ -126,13 +127,13 @@ workflow RemoveSingleOrganismContamination {
                 fq_end1 = fq_e1,
                 fq_end2 = fq_e2,
 
-                ref_basename = contaminant_ref_name,
                 ref_1_bt2 = ref_map["1_bt2"],
                 ref_2_bt2 = ref_map["2_bt2"],
                 ref_3_bt2 = ref_map["3_bt2"],
                 ref_4_bt2 = ref_map["4_bt2"],
                 ref_rev1_bt2 = ref_map["rev1_bt2"],
                 ref_rev2_bt2 = ref_map["rev2_bt2"],
+                ref_dir = ref_map["dir"],
 
                 read_group = RG,
                 prefix = SM + ".contaminant_aligned." + contaminant_ref_name,
