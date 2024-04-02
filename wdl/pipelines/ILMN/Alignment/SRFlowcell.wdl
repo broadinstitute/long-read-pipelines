@@ -136,7 +136,6 @@ workflow SRFlowcell {
     String RG = select_first([t_004_GetRawReadGroup.rg, "@RG\tID:" + SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM])
 
     # Align reads to reference with BWA-MEM2:
-    if(false) {}
     call SRUTIL.BwaMem2 as t_005_AlignReads {
         input:
             fq_end1 = fq_e1,
