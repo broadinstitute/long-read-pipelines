@@ -834,7 +834,7 @@ task Bowtie2 {
         File ref_rev1_bt2
         File ref_rev2_bt2
 
-        String? read_group
+        Map[String, String]? read_group_map
 
         String prefix = "out"
 
@@ -850,7 +850,13 @@ task Bowtie2 {
                       + 4*ceil(size(ref_rev1_bt2, "GB"))
                       + 4*ceil(size(ref_rev2_bt2, "GB"))
 
-    String rg_arg = if defined(read_group) then " --rg-id " else ""
+    String rg_id = read_group_map['ID']
+    String rg_pl = read_group_map['PL']
+    String rg_lb = read_group_map['LB']
+    String rg_sm = read_group_map['SM']
+
+    String rgid_cmd = if defined(read_group_map) then " --rg-id " else ""
+    String rg_cmd = if defined(read_group_map) then " --rg " else ""
 
     command <<<
         set -euxo pipefail
@@ -863,7 +869,10 @@ task Bowtie2 {
         
         bowtie2 \
             -p ${np} \
-            ~{rg_arg}'~{default="" read_group}' \
+            ~{rgid_cmd}'~{default="" rg_id}' \
+            ~{rg_cmd}'~{default="" rg_pl}' \
+            ~{rg_cmd}'~{default="" rg_lb}'\
+            ~{rg_cmd}'~{default="" rg_sm}' \
             -x ~{ref_dir} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} \
