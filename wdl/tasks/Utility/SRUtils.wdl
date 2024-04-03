@@ -850,13 +850,13 @@ task Bowtie2 {
                       + 4*ceil(size(ref_rev1_bt2, "GB"))
                       + 4*ceil(size(ref_rev2_bt2, "GB"))
 
-    String rg_id = read_group_map['ID']
-    String rg_pl = read_group_map['PL']
-    String rg_lb = read_group_map['LB']
-    String rg_sm = read_group_map['SM']
-
     String rgid_cmd = if defined(read_group_map) then " --rg-id " else ""
     String rg_cmd = if defined(read_group_map) then " --rg " else ""
+
+    String rg_id = if defined(read_group_map) then select_first([read_group_map])["ID"] else ""
+    String rg_pl = if defined(read_group_map) then select_first([read_group_map])["PL"] else ""
+    String rg_lb = if defined(read_group_map) then select_first([read_group_map])["LB"] else ""
+    String rg_sm = if defined(read_group_map) then select_first([read_group_map])["SM"] else ""
 
     command <<<
         set -euxo pipefail
