@@ -22,7 +22,7 @@ workflow SRFlowcell {
         fq_end2: "FASTQ file containing end 2 of the short read data to process.  `fq_end1` must be defined if this argument is.  This argument and `fq_end1` are mutually exclusive with `bam` and `bai`"
 
         SM: "Sample name for the given bam file."
-        LM: "Library name for the given bam file."
+        LB: "Library name for the given bam file."
 
         ref_map_file:  "Reference map file for the primary reference sequence and auxillary file locations."
         contaminant_ref_name:  "Name for the contaminant reference."
@@ -55,7 +55,7 @@ workflow SRFlowcell {
         String dir_prefix
 
         String gcs_out_root_dir
-
+        
         Boolean perform_BQSR = true
 
         Boolean DEBUG_MODE = false

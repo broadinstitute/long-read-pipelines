@@ -201,6 +201,7 @@ workflow RemoveSingleOrganismContamination {
     call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
     call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
     call FF.FinalizeToFile as t_016_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
+    call FF.FinalizeToFile as t_017_FinalizeAllReadsBam { input: outdir = outdir, file = select_first([t_007_AlignReads.bam, t_007_AlignReadsWithBowtie.bam]), keyfile = keyfile }
 
     ############################################
     #      ___        _               _
@@ -217,6 +218,7 @@ workflow RemoveSingleOrganismContamination {
         File decontaminated_fq1 = t_014_FinalizeDecontaminatedFq1.gcs_path
         File decontaminated_fq2 = t_015_FinalizeDecontaminatedFq2.gcs_path
         File decontaminated_unpaired = t_016_FinalizeDecontaminatedUnpaired.gcs_path
+        File all_reads_bam = t_017_FinalizeAllReadsBam.gcs_path
     }
 }
 
