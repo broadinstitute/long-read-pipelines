@@ -866,11 +866,13 @@ task Bowtie2 {
             ~{rg_arg}'~{default="" read_group}' \
             -x ~{ref_dir} \
             -1 ~{fq_end1} \
-            -2 ~{fq_end2} | \
-        samtools view -1 - > ~{prefix}.bam
+            -2 ~{fq_end2} \
+            -S ~{prefix}.sam 
+        samtools view -1 ~{prefix}.sam > ~{prefix}.bam
     >>>
 
     output {
+        File sam = "~{prefix}.sam"
         File bam = "~{prefix}.bam"
     }
 
