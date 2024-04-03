@@ -122,6 +122,8 @@ workflow RemoveSingleOrganismContamination {
     }
 
     if (aligner == 'bowtie2') {
+        #Redefine read group for bowtie2 --rg-id command
+        String RG_bowtie2 = SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM
         call SRUTIL.Bowtie2 as t_007_AlignReadsWithBowtie {
             input:
                 fq_end1 = fq_e1,
@@ -135,7 +137,7 @@ workflow RemoveSingleOrganismContamination {
                 ref_rev2_bt2 = ref_map["rev2_bt2"],
                 ref_dir = ref_map["dir"],
 
-                read_group = RG,
+                read_group = RG_bowtie2,
                 prefix = SM + ".contaminant_aligned." + contaminant_ref_name,
 
                 runtime_attr_override = object {mem_gb: 64}
