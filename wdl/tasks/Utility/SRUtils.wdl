@@ -880,7 +880,6 @@ task Bowtie2 {
     >>>
 
     output {
-        File sam = "~{prefix}.sam"
         File bam = "~{prefix}.bam"
     }
 
