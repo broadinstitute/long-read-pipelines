@@ -125,9 +125,9 @@ workflow RemoveSingleOrganismContamination {
         #Redefine read group for bowtie2 --rg-id/--rg commands
         Map[String, String] read_group_map = {
             "ID": SM + "_" + LB,
-            "PL": platform,
-            "LB": LB,
-            "SM": SM
+            "PL": "PL:" + platform,
+            "LB": "LB:" + LB,
+            "SM": "SM:" + SM
         }
         call SRUTIL.Bowtie2 as t_007_AlignReadsWithBowtie {
             input:
