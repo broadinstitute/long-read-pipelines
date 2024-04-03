@@ -155,4 +155,4 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SRDownsampleBam.wdl
 - name: SRFlowcellDecontaminate
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/pipelines/ILMN/Alignment/SRFlowcellDecontaminate.wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/Alignment/SRFlowcellDecontaminate.wdl
