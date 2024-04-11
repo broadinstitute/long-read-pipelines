@@ -43,7 +43,7 @@ task DrugResIGV {
         mkdir -p out
 
         echo "CREATING SNAPSHOTS..."        
-        python3 make_IGV_snapshots.py \
+        make_IGV_snapshots.py \
             -g ~{fasta_path} \
             ~{aligned_bam} \
             -r ~{regions_bed} \
