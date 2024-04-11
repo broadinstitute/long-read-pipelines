@@ -22,7 +22,7 @@ task FinalizeToFile {
         outdir: "directory to which files should be uploaded"
         name:   "name to set for uploaded file"
     }
-
+    # Remove trailing slashes from a directory path.
     String gcs_output_dir = sub(outdir, "/+$", "")
     String gcs_output_file = gcs_output_dir + "/" + select_first([name, basename(file)])
 
