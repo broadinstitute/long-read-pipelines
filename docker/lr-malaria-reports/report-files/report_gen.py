@@ -621,7 +621,7 @@ if __name__ == '__main__':
     parser.add_argument("--coverage_bin_size", help="number to use as size of bins for coverage plot generation; default is 1500", type=int)
     
     # Snapshots
-    parser.add_argument("--snapshots", required=False)
+    parser.add_argument("--snapshots", required=True)
     
     # parse given arguments
     args = parser.parse_args()
@@ -706,6 +706,8 @@ if __name__ == '__main__':
     
     # IGV Snapshots
     snapshots = str(arg_dict["snapshots"])
+    print(snapshots)
+    
     snapshots = (snapshots.strip("[]")).split(", ")
     snapshots_b64 = [img_to_b64(image) for image in snapshots]
     
