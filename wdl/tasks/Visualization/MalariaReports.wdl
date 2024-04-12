@@ -169,7 +169,8 @@ task RunReportScript {
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
-            --coverage_bin_size ~{coverage_bin_size}
+            --coverage_bin_size ~{coverage_bin_size} \
+            --snapshots ~{snapshots}
         echo "DONE!"
     >>>
 
