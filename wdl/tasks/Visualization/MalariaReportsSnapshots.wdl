@@ -46,7 +46,7 @@ task DrugResIGV {
             -g ~{fasta_path} \
             ~{aligned_bam} \
             -r ~{regions_bed} \
-            -onlysnap -nf4 -o out
+            -nf4 -o out
     >>>
 
     output {
