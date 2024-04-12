@@ -708,7 +708,7 @@ if __name__ == '__main__':
     snapshots = str(arg_dict["snapshots"])
     print(snapshots)
     
-    snapshots = (snapshots.strip("[]")).split(", ")
+    snapshots = snapshots.split(",")
     snapshots_b64 = [img_to_b64(image) for image in snapshots]
     
     # third : fastqc_page
