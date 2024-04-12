@@ -182,7 +182,7 @@ def plot_coverage(directory, sample_name, bin_width=500):
     return fig
 
 # Function to convert given plot to b64 using I/O buffer
-def img_to_b64(plot):
+def plot_to_b64(plot):
     
     # Create I/O buffer to save image in bytes
     stringIObytes = io.BytesIO()
@@ -194,7 +194,10 @@ def img_to_b64(plot):
     
     return plot_b64
 
-
+def img_to_b64(img):    
+    with open(img, "rb") as image_file:
+        return base64.b64encode(image_file.read())
+    
 '''
 Drug Resistance Table
 '''
@@ -696,7 +699,7 @@ if __name__ == '__main__':
     coverage_bin_size = arg_dict["coverage_bin_size"]
     # coverage_dir = arg_dict['coverage_dir']
     coverage_plot = plot_coverage("/report-files/data/coverage", sample_name, coverage_bin_size) # default bin size = 1500
-    coverage_b64 = img_to_b64(coverage_plot)
+    coverage_b64 = plot_to_b64(coverage_plot)
     
     # For debugging purposes, save plot:
     coverage_plot.savefig("coverage_plot.jpeg")
