@@ -4,7 +4,7 @@ import "../../../tasks/Utility/Utils.wdl" as U
 
 workflow JointLocalAsmAnchorGraph{
     meta{
-        description: "a workflow that extract vcfs and bams in a genomic interval"
+        description: "a workflow that extract multiple sample in a genomic interval and construct a graph"
     }
     input{
         Array[File] wholegenomebam
@@ -105,7 +105,7 @@ task catfasta{
         File fasta="~{pref}.aln.fa"
     }
 
-    Int disk_size = 100
+    Int disk_size = 200
 
     runtime {
         cpu: 1
@@ -144,7 +144,7 @@ task construct_graph{
         Array[File] all_graphs= glob("~{work_dir}/*")
     }
 
-    Int disk_size = 100
+    Int disk_size = 200
 
     runtime {
         cpu: 1
