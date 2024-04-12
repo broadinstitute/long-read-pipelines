@@ -618,10 +618,6 @@ if __name__ == '__main__':
     parser.add_argument("--coverage_bin_size", help="number to use as size of bins for coverage plot generation; default is 1500", type=int)
     
     # Snapshots
-    parser.add_argument("--refmap", help="refmap to get reference files (fasta and fai)", required=True)
-    parser.add_argument("--aligned_bam", help="aligned BAM file for IGV snapshots", required=True)
-    parser.add_argument("--aligned_bai", help="aligned BAM index file for IGV snapshots", required=True)
-    parser.add_argument("--regions_bed", help="BED regions for drug resistance loci of P. falciparum", required=True)
     parser.add_argument("--snapshots", required=False)
     
     # parse given arguments
