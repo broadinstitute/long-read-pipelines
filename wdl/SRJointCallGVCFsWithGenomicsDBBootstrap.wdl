@@ -25,6 +25,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[File]?   annotation_bed_file_indexes
         Array[String]? annotation_bed_file_annotation_names
 
+        Array[String]? contig_list
+        Array[File]? interval_files
+
         File? snpeff_db
         String? genome_name 
 
@@ -61,8 +64,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Shard by contig for speed:
     scatter (idx_1 in range(length(t_001_MakeChrIntervalList.contig_interval_list_files))) {
 
-        String contig = t_001_MakeChrIntervalList.chrs[idx_1][0]
-        File contig_interval_list = t_001_MakeChrIntervalList.contig_interval_list_files[idx_1]
+        String contig = select_first([contig_list[idx_1],t_001_MakeChrIntervalList.chrs[idx_1][0]])
+        File contig_interval_list = select_first([contig_interval_files[idx_1],t_001_MakeChrIntervalList.contig_interval_list_files[idx_1]])
 
         # Import our data into GenomicsDB:
         call SRJOINT.ImportGVCFs as t_003_ImportGVCFsIntoGenomicsDB {
