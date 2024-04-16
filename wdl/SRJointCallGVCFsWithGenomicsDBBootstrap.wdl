@@ -26,7 +26,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[String]? annotation_bed_file_annotation_names
 
         Array[String]? contig_list
-        Array[File]? interval_files
+        Array[File]? contig_interval_files
 
         File? snpeff_db
         String? genome_name 
