@@ -64,8 +64,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Shard by contig for speed:
     scatter (idx_1 in range(length(t_001_MakeChrIntervalList.contig_interval_list_files))) {
 
-        String contig = select_first([contig_list[idx_1],t_001_MakeChrIntervalList.chrs[idx_1][0]])
-        File contig_interval_list = select_first([contig_interval_files[idx_1],t_001_MakeChrIntervalList.contig_interval_list_files[idx_1]])
+        # Update based on defining contig_list/contig_interval_list
+        String contig = if defined(contig_list) then select_first([contig_list])[idx_1] else t_001_MakeChrIntervalList.chrs[idx_1][0]
+        File contig_interval_list = if defined(contig_interval_files) then select_first([contig_interval_files])[idx_1] else t_001_MakeChrIntervalList.contig_interval_list_files[idx_1]
 
         # Import our data into GenomicsDB:
         call SRJOINT.ImportGVCFs as t_003_ImportGVCFsIntoGenomicsDB {
