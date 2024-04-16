@@ -92,25 +92,22 @@ workflow CallVariantsWithHaplotypeCaller {
             bam = MergeVariantCalledBamOuts.output_bam
     }
 
-#    We're disabling ReblockGVCF for now.
-#    It's removing some annotations we may need later.
+    # Now reblock the GVCF to combine hom ref blocks and save $ / storage:
+    call ReblockGVCF as ReblockHcGVCF {
+        input:
+            gvcf = MergeGVCFs.output_vcf,
+            gvcf_index = MergeGVCFs.output_vcf_index,
+            ref_fasta = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            ref_dict = ref_dict,
+            prefix = prefix
+    }
 
-#    # Now reblock the GVCF to combine hom ref blocks and save $ / storage:
-#    call ReblockGVCF {
-#        input:
-#            gvcf = MergeGVCFs.output_vcf,
-#            gvcf_index = IndexGVCF.index,
-#            ref_fasta = ref_fasta,
-#            ref_fasta_fai = ref_fasta_fai,
-#            ref_dict = ref_dict,
-#            prefix = prefix
-#    }
-
-    # Collapse the GVCF into a regular VCF:
+    # Collapse the Reblocked GVCF into a regular VCF:
     call SRJOINT.GenotypeGVCFs as CollapseGVCFtoVCF {
         input:
-            input_gvcf_data = MergeGVCFs.output_vcf,
-            input_gvcf_index = MergeGVCFs.output_vcf_index,
+            input_gvcf_data = ReblockHcGVCF.output_gvcf,
+            input_gvcf_index = ReblockHcGVCF.output_gvcf_index,
             interval_list = SmallVariantsScatterPrep.interval_list,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
@@ -324,6 +321,9 @@ task ReblockGVCF {
         File ref_dict
 
         String prefix
+
+        Array[Int] gq_blocks = [20, 30, 40]
+
         Float? tree_score_cutoff
 
         Array[String]? annotations_to_keep
@@ -343,7 +343,10 @@ task ReblockGVCF {
                 -R ~{ref_fasta} \
                 -V ~{gvcf} \
                 -do-qual-approx \
-                --floor-blocks -GQB 20 -GQB 30 -GQB 40 \
+                -A AssemblyComplexity \
+                --annotate-with-num-discovered-alleles \
+                --floor-blocks \
+                -GQB ~{sep=" -GQB " gq_blocks} \
                 ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
                 ~{annotations_to_keep_arg} ~{sep=" --annotations-to-keep " annotations_to_keep} \
                 -O ~{prefix}.rb.g.vcf.gz
@@ -351,13 +354,13 @@ task ReblockGVCF {
 
     #########################
     RuntimeAttr default_attr = object {
-       cpu_cores:          1,
+       cpu_cores:          2,
        mem_gb:             4,
        disk_gb:            disk_size,
        boot_disk_gb:       15,
        preemptible_tries:  1,
        max_retries:        1,
-       docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+       docker:             "broadinstitute/gatk-nightly:2024-04-16-4.5.0.0-25-g986cb1549-NIGHTLY-SNAPSHOT"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
