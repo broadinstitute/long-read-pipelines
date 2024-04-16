@@ -80,7 +80,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                 batch_size      = 50,
                 # We need to override this because we're not actually sending the GVCF over (just a list)
                 # ALSO, we're currently tarring the genomicsDB, so we need at least double the space here, plus some slop:
-                runtime_attr_override = object {disk_gb: 10 + (3 * t_002_CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB"))), preemptible_tries: 0}
+                runtime_attr_override = object {disk_gb: 10 + (3 * t_002_CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB"))), preemptible_tries: 0, max_retries:0}
         }
 
         # Joint call
