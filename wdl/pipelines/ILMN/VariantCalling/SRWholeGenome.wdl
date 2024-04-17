@@ -385,15 +385,8 @@ workflow SRWholeGenome {
             }
         }
 
-        call VARUTIL.SelectVariants as RemoveFilteredVariants {
-            input:
-                vcf = ScoreIndelVariantAnnotations.scored_vcf,
-                vcf_index = ScoreIndelVariantAnnotations.scored_vcf_index,
-                prefix = participant_name + ".filtered"
-        }
-
         # Create a Keyfile for finalization:
-        File keyfile = RemoveFilteredVariants.vcf_out_index
+        File keyfile = select_first([FingerprintAndBarcodeVcf.barcode_file, ScoreIndelVariantAnnotations.scored_vcf_index])
 
         # Finalize the raw Joint Calls:
         call FF.FinalizeToFile as FinalizeHCVcf { input: outdir = smalldir, keyfile = keyfile, file = RenameRawHcVcf.new_sample_name_vcf }
@@ -406,8 +399,6 @@ workflow SRWholeGenome {
         # Finalize the reclibrated / filtered variants:
         call FF.FinalizeToFile as FinalizeHCRescoredVcf { input: outdir = smalldir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf }
         call FF.FinalizeToFile as FinalizeHCRescoredTbi { input: outdir = smalldir, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index }
-        call FF.FinalizeToFile as FinalizeHCRescoredFilteredVcf { input: outdir = smalldir, keyfile = keyfile, file = RemoveFilteredVariants.vcf_out }
-        call FF.FinalizeToFile as FinalizeHCRescoredFilteredTbi { input: outdir = smalldir, keyfile = keyfile, file = RemoveFilteredVariants.vcf_out_index }
 
         # Finalize other outputs:
         if (defined(fingerprint_haploytpe_db_file)) {
@@ -520,7 +511,5 @@ workflow SRWholeGenome {
         File? hc_raw_tbi  = FinalizeHCTbi.gcs_path
         File? hc_rescored_vcf = FinalizeHCRescoredVcf.gcs_path
         File? hc_rescored_tbi = FinalizeHCRescoredTbi.gcs_path
-        File? hc_rescored_filtered_vcf = FinalizeHCRescoredFilteredVcf.gcs_path
-        File? hc_rescored_filtered_tbi = FinalizeHCRescoredFilteredTbi.gcs_path
     }
 }

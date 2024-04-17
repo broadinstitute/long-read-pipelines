@@ -1597,6 +1597,7 @@ CODE
     output {
         File output_vcf = "~{prefix}.fingerprint.vcf"
         String barcode = read_string("~{prefix}.barcode.txt")
+        File barcode_file = "~{prefix}.barcode.txt"
     }
 
     #########################
