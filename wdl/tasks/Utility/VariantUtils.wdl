@@ -707,7 +707,7 @@ task HardFilterVcf {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -761,7 +761,7 @@ task MakeSitesOnlyVcf {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -857,7 +857,7 @@ task AnnotateVcfWithBedRegions {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -985,7 +985,7 @@ task IndelsVariantRecalibrator {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1112,7 +1112,7 @@ task SNPsVariantRecalibratorCreateModel {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1197,7 +1197,7 @@ task ApplyVqsr {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1252,7 +1252,7 @@ task SelectVariants {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1313,7 +1313,7 @@ task RenameSingleSampleVcf {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1380,7 +1380,7 @@ task GatherVcfs {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1440,7 +1440,7 @@ task ExtractFingerprint {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1723,7 +1723,7 @@ task ExtractVariantAnnotations {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1801,7 +1801,7 @@ task TrainVariantAnnotationsModel {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1936,7 +1936,7 @@ task ScoreVariantAnnotations {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
