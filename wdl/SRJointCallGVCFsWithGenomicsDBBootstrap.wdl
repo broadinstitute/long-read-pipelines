@@ -62,7 +62,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     # Shard by contig for speed, defining contig_list/contig_interval_list to use
-    Array[String] contig_list_to_use = if defined(contig_list) then select_first([contig_list]) else t_001_MakeChrIntervalList.chrs[idx_1][0]
+    Array[String] contig_list_to_use = if defined(contig_list) then select_first([contig_list]) else t_001_MakeChrIntervalList.chrs
     Array[File] contig_interval_list_to_use = if defined (contig_interval_files) then select_first([contig_interval_files]) else t_001_MakeChrIntervalList.contig_interval_list_files
 
     scatter (idx_1 in range(length(contig_interval_list_to_use))) {
