@@ -67,7 +67,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
     scatter (idx_1 in range(length(contig_interval_list_to_use))) {
 
-        String contig = contig_list_to_use[idx_1]
+        String contig = if defined(contig_list) then contig_list_to_use[idx_1] else contig_list_to_use[idx_1][0]
         File contig_interval_list = contig_interval_list_to_use[idx_1]
 
         # Import our data into GenomicsDB:
