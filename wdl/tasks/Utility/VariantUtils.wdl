@@ -944,3 +944,107 @@ task PlotIndelSizeDist {
         maxRetries: 1
     }
 }
+
+task GetSampleNamesInJointVCF {
+    meta {
+        description: "Get sample names in a joint VCF"
+    }
+    input {
+        File joint_vcf
+    }
+    output {
+        Array[String] sample_names = read_lines("sample_names.txt")
+    }
+    parameter_meta {
+        joint_vcf: {localization_optional: true}
+    }
+    command <<<
+    set -euxo pipefail
+        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+        bcftools query --list-samples -o sample_names.txt ~{joint_vcf}
+    >>>
+    runtime {
+        disks: "local-disk 20 HDD"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+        preemptible: 1
+        maxRetries: 1
+    }
+}
+
+task SplitJointCallVCFBySample {
+    meta {
+        description:
+        "Split a joint VCF by sample"
+        note:
+        "Here, we use a trick that needs cooperation to ensure call-caching while taking delocalization into our own hands."
+    }
+    parameter_meta {
+        hint_where_do_delocalize:
+        "If provided, a sub-directory named 'by_sample' will be created under this path, and the split VCFs will be delocalized there. Note that if this is provided, you'll need to use other tricks to ensure call-caching."
+    }
+    input {
+        File joint_vcf
+        File joint_vcf_tbi
+
+        Boolean filter_to_alt_only = true
+
+        String? hint_where_do_delocalize
+    }
+    output {
+        String local_output_dir = local_folder_name
+        Array[File]? vcfs = if(take_localization_into_own_hands) then glob("empty_dir/*.vcf.gz") else glob("~{local_folder_name}/*.vcf.gz")
+        Array[File]? tbis = if(take_localization_into_own_hands) then glob("empty_dir/*.vcf.gz.tbi") else glob("~{local_folder_name}/*.vcf.gz.tbi")
+    }
+
+    Boolean take_localization_into_own_hands = defined(hint_where_do_delocalize)
+    String delocalize_here = select_first([hint_where_do_delocalize, "."])
+    String local_folder_name = "by_sample"
+    command <<<
+    set -euxo pipefail
+        mkdir -p "~{local_folder_name}"
+        bcftools +split \
+            --threads 16 \
+            -Oz \
+            -o "~{local_folder_name}" \
+            "~{joint_vcf}"
+        if ~{filter_to_alt_only}; then
+            cd "~{local_folder_name}"
+            i=0
+            for vcf in *.vcf.gz; do
+                prefix=$(echo "${vcf}" | sed 's/\.vcf\.gz//')
+                bcftools view \
+                    -i 'GT[*]="alt"' \
+                    -Oz -o "${prefix}.nonref.vcf.gz" \
+                    "${vcf}" &
+                i=$(( i + 1 ))
+                if [[ $i == 14 ]]; then wait; i=0; fi
+            done
+            wait
+            rm *.tbi
+            ls *vcf.gz | grep -v nonref | xargs -I {} rm {}
+            rename 's/nonref.//' *.nonref.vcf.gz
+            i=0
+            for vcf in *.vcf.gz; do
+                tabix -p vcf "${vcf}"
+                i=$(( i + 1 ))
+                if [[ $i == 14 ]]; then wait; i=0; fi
+            done
+            wait
+            cd -
+        fi
+        if ~{take_localization_into_own_hands}; then
+            mkdir -p "empty_dir"
+            gcloud storage cp --recursive \
+                "~{local_folder_name}" \
+                ~{delocalize_here}
+        fi
+    >>>
+    runtime {
+        disks: "local-disk " + ceil(10 + 4*size(joint_vcf, "GiB"))+ " LOCAL"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.20"
+        preemptible: 1
+        maxRetries: 1
+        cpu: 16
+        memory: "64 GiB"
+    }
+}

@@ -150,6 +150,9 @@ workflows:
 - name: SmallVariantsBasicMetrics
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SmallVariantsBasicMetrics.wdl
+- name: JointVCFSmallVariantsBasicMetrics
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/JointVCFSmallVariantsBasicMetrics.wdl
 
 ###################################################
 # TechAgnostic - utility
