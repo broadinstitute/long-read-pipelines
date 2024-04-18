@@ -1722,7 +1722,7 @@
                         <svg preserveAspectRatio="none" viewBox="0 0 1250 1" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0L510.372 0" stroke="#DFE1E5"></path></svg>
                     </div>
                     <div class="img_title"></div>
-                    <img id="main_photo" src="data:image/jpeg;base64,{{ (snapshots.analysis[0]).decode('utf-8') | safe }}">
+                    <img id="main_photo" src="data:image/jpeg;base64,{{ (analysis.snapshots[0]).decode('utf-8') | safe }}">
                     <div class="cover">
                         <button class="left" style="color:rgb(53, 53, 53);" onclick="leftScroll()">
                             &#9668;
