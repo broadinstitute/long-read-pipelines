@@ -136,10 +136,13 @@ workflow HybridPhase {
         tbi_input = HP_SV.phased_snp_vcf_tbi,
         pref = prefix
     }
-    
+    call SplitMultiallelicCalls as Norm_SNPs { input:
+        bcftools_merged_vcf = MergeAcrossSamples.merged_vcf,
+        bcftools_merged_vcf_tbi = MergeAcrossSamples.merged_tbi
+    }
     call StatPhase.Shapeit4 as Shapeit4scaffold { input:
-        vcf_input = MergeAcrossSamples.merged_vcf,
-        vcf_index = MergeAcrossSamples.merged_tbi,
+        vcf_input = Norm_SNPs.normed_vcf,
+        vcf_index = Norm_SNPs.normed_vcf_tbi,
         mappingfile = genetic_mapping_dict[chromosome],
         region = chromosome,
         num_threads = num_t
@@ -175,15 +178,12 @@ workflow HybridPhase {
 }
 
 task convert {
-
     meta {
         description: ""
     }
-
     parameter_meta {
         vcf: "VCF file to be cleaned"
     }
-
     input {
         File vcf
         String samplename
@@ -217,6 +217,46 @@ task convert {
         preemptible_tries:     3
         max_retries:           2
         docker:"hangsuunc/cleanvcf:v1"
+    }
+
+}
+
+
+task SplitMultiallelicCalls {
+
+    meta {
+        description: "using bcftools to splic multiallelic calls"
+    }
+
+    parameter_meta {
+        bcftools_merged_vcf: "bcftools merged vcf files"
+    }
+
+    input {
+        File bcftools_merged_vcf
+        File bcftools_merged_vcf_tbi
+    }
+
+    command <<<
+        set -euxo pipefail
+        bcftools norm -m -any ~{bcftools_merged_vcf} | bgzip > ~{bcftools_merged_vcf}.normed.vcf.gz
+        tabix -p vcf ~{bcftools_merged_vcf}.normed.vcf.gz
+        
+    >>>
+
+    output {
+        File normed_vcf = "~{bcftools_merged_vcf}.normed.vcf.gz"
+        File normed_vcf_tbi = "~{bcftools_merged_vcf}.normed.vcf.gz.tbi"
+    }
+    ###################
+    runtime {
+        cpu: 1
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
     }
 
 }
