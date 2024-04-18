@@ -1706,8 +1706,8 @@
                     <div class="img_title"></div>
                     <img id="main_photo" src={{ analysis.snapshots[0] }}>
                     <div class="cover">
-                        <button class="left" onclick="leftScroll()">
-                            <i class="fas fa-angle-double-left"></i>
+                        <button class="left" style="color:rgb(53, 53, 53);" onclick="leftScroll()">
+                            &#9668;
                         </button>
                         <div class="thumbnail-row">
                             {% for image in analysis.snapshots %}
@@ -1717,69 +1717,10 @@
                             {% endfor %}
                         </div>
                         <button class="right" onclick="rightScroll()">
-                            <i class="fas fa-angle-double-right"></i>
+                            &#9654;
                         </button>
                     </div>
-                </div>
-                <script type="text/javascript">
-                    document.addEventListener("DOMContentLoaded", function () {
-                        const thumbnailRow = document.querySelector(".thumbnail-row");
-                        const scrollLength = thumbnailRow.scrollWidth - thumbnailRow.clientWidth;
-                        const leftButton = document.querySelector(".left");
-                        const rightButton = document.querySelector(".right");
-                        const mainPhoto = document.getElementById("main_photo");
-                        const thumbnails = document.querySelectorAll(".thumbnail img");
-    
-                        const updateMainImage = (newImageSrc) => {
-                            mainPhoto.src = newImageSrc;
-                        };
-    
-                        for(var i = 0; i < thumbnails.length; i++) {
-                            thumbnails[i].addEventListener("click", () => {
-                                const newImageSrc = event.target.src;
-                                updateMainImage(newImageSrc);
-                            });
-                        }
-    
-                        function checkScroll() {
-                          const currentScroll = thumbnailRow.scrollLeft; // distance from left edge
-            
-                          // arrow control
-                          if (currentScroll === 0) { // no left overflow
-                            leftButton.setAttribute("disabled", "true"); 
-                            rightButton.removeAttribute("disabled");
-                          } else if (currentScroll === scrollLength) { // no right overflow
-                            rightButton.setAttribute("disabled", "true");
-                            leftButton.removeAttribute("disabled");
-                          } else { // no overflow
-                            leftButton.removeAttribute("disabled");
-                            rightButton.removeAttribute("disabled");
-                          }
-                        }
-                        
-                        thumbnailRow.addEventListener("scroll", checkScroll);
-                        window.addEventListener("resize", checkScroll);
-                        checkScroll();
-                      
-                        // scroll by thumbnail width
-                        function leftScroll() {
-                          thumbnailRow.scrollBy({
-                            left: -150,
-                            behavior: "smooth"
-                          });
-                        }
-                      
-                        function rightScroll() {
-                          thumbnailRow.scrollBy({
-                            left: 150,
-                            behavior: "smooth"
-                          });
-                        }
-                      
-                        leftButton.addEventListener("click", leftScroll);
-                        rightButton.addEventListener("click", rightScroll);
-                      });
-                </script>                
+                </div>               
                 <div class="active_channels_box"></div>
                 <div class="active_channels_value">{{ analysis.active_channels }}</div>
                 <div class="active_channels_label">Active Channels</div>
@@ -1817,7 +1758,63 @@
     </div> <!-- fastqc_page -->
 
     {% endif %}
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            const thumbnailRow = document.querySelector(".thumbnail-row");
+            const scrollLength = thumbnailRow.scrollWidth - thumbnailRow.clientWidth;
+            const leftButton = document.querySelector(".left");
+            const rightButton = document.querySelector(".right");
+            const mainPhoto = document.getElementById("main_photo");
+            const thumbnails = document.querySelectorAll(".thumbnail img");
 
+            const updateMainImage = (newImageSrc) => {
+                mainPhoto.src = newImageSrc;
+            };
+
+            for(var i = 0; i < thumbnails.length; i++) {
+                thumbnails[i].addEventListener("click", () => {
+                    const newImageSrc = event.target.src;
+                    updateMainImage(newImageSrc);
+                });
+            }
+
+            function checkScroll() {
+              const currentScroll = thumbnailRow.scrollLeft;
+
+              if (currentScroll === 0) {
+                leftButton.setAttribute("disabled", "true"); 
+                rightButton.removeAttribute("disabled");
+              } else if (currentScroll === scrollLength) {
+                rightButton.setAttribute("disabled", "true");
+                leftButton.removeAttribute("disabled");
+              } else {
+                leftButton.removeAttribute("disabled");
+                rightButton.removeAttribute("disabled");
+              }
+            }
+            
+            thumbnailRow.addEventListener("scroll", checkScroll);
+            window.addEventListener("resize", checkScroll);
+            checkScroll();
+          
+            function leftScroll() {
+              thumbnailRow.scrollBy({
+                left: -150,
+                behavior: "smooth"
+              });
+            }
+          
+            function rightScroll() {
+              thumbnailRow.scrollBy({
+                left: 150,
+                behavior: "smooth"
+              });
+            }
+          
+            leftButton.addEventListener("click", leftScroll);
+            rightButton.addEventListener("click", rightScroll);
+          });
+    </script> 
 </body>
 
   
