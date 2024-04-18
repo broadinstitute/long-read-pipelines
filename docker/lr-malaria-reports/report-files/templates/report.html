@@ -669,18 +669,7 @@
         flex-direction: column;
     }
     
-    /* sidebar */
-    .sidebar {
-        position: absolute;
-        left: 0;
-        top: 90px;
-        width: 259px;
-        height: 1150px;
-        align-items: flex-start;
-        background-color: #dfe1e5;
-        overflow: hidden;
-        z-index: 99;
-    }
+
     
     
     
@@ -1168,11 +1157,13 @@
     }
 
     #main_photo {
+        cursor: pointer;
         position: absolute;
         display: block;
         top: 135px;
-        left: 250px; /* change this with real photos (fixed size) */
+        left: 270px; /* change this with real photos (fixed size) */
         height: 325px;
+        z-index: 100;
     }
 
     .cover {
@@ -1220,9 +1211,24 @@
         margin: 1px 10px;
         border: 1px solid #f1f1f1;
         overflow: hidden;
-        -webkit-box-shadow: 0px 0px 15px 2px rgb(0 0 0 / 10%);;
-        box-shadow: 0px 0px 15px 2px rgb(0 0 0 / 10%);;
+        -webkit-box-shadow: 0px 0px 15px 2px rgb(0 0 0 / 10%);
+        box-shadow: 0px 0px 15px 2px rgb(0 0 0 / 10%);
         cursor: pointer;
+    }
+
+    .enlarged {
+      transform: scale(2) translateY(-50px);
+      box-shadow: 5 5 5px #000;
+      transition: transform .6s, box-shadow 0.6s;
+      box-shadow: 0px 0px 50px #000;
+      z-index: 100;
+      cursor: default !important;
+    }
+
+    .normal {
+      transform: scale(1);
+      box-shadow: 0px 0px 0px;
+      transition: transform .6s, box-shadow .6s;
     }
 
     .left, .right {
@@ -1231,6 +1237,7 @@
         outline: none;
         cursor: pointer;
         font-size: 25px;
+        color: #000;
     }
 
     .sidebar {
@@ -1238,10 +1245,12 @@
         left: 0;
         top: 90px;
         width: 259px;
-        height: 1966px;
+        height: 1996px;
         align-items: flex-start;
         background-color: #dfe1e5;
         overflow: hidden;
+        position: absolute;
+        z-index: 3;
     }
 
     .sidebar_line {
@@ -1334,6 +1343,15 @@
         bottom:0px;
         left:0.5%;
     }
+
+    /* for coverage gallery */
+    .hidden {
+        display: none;
+    }
+
+    .disabled {
+        color: #8c8c8c;
+    }
 </style>
 
 <style> html, body,
@@ -1411,7 +1429,7 @@
     <div id="summary_page">
         <div class="summary_root">
           <div class="module_display">
-              <div class="main_frame">
+              <div class="main_frame" style="height:1100px;">
                 <div class="sample_name_value"><p style="font-size:26px;  font-weight:bold">Sample Name:
                 <span style="font-weight:500">{{ sample.sample_name }}</span></p>
               </div>
@@ -1576,7 +1594,7 @@
     <div id="analysis_page" style="display:none">
         <div id="analysis_root">
             <div class="module_display">
-              <div class="main_frame">
+              <div class="main_frame" style="height:1966px;">
                 <div class="sample_name_box">
                   <div class="sample_name_spacing">
                     <p style="font-size:26px;  font-weight:bold">Sample Name:
@@ -1704,7 +1722,7 @@
                         <svg preserveAspectRatio="none" viewBox="0 0 1250 1" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0L510.372 0" stroke="#DFE1E5"></path></svg>
                     </div>
                     <div class="img_title"></div>
-                    <img id="main_photo" src={{ analysis.snapshots[0] }}>
+                    <img id="main_photo" src="data:image/jpeg;base64,{{ (snapshots.analysis[0]).decode('utf-8') | safe }}">
                     <div class="cover">
                         <button class="left" style="color:rgb(53, 53, 53);" onclick="leftScroll()">
                             &#9668;
@@ -1766,6 +1784,18 @@
             const rightButton = document.querySelector(".right");
             const mainPhoto = document.getElementById("main_photo");
             const thumbnails = document.querySelectorAll(".thumbnail img");
+            
+            mainPhoto.addEventListener("click", function() {
+              this.classList.remove("normal");
+              this.classList.add("enlarged");
+            })
+
+            document.addEventListener("click", function(event) {
+              if (!event.target.matches("#main_photo") ) {
+                mainPhoto.classList.remove("enlarged");
+                mainPhoto.classList.add("normal");
+              }
+            })
 
             const updateMainImage = (newImageSrc) => {
                 mainPhoto.src = newImageSrc;
@@ -1782,14 +1812,14 @@
               const currentScroll = thumbnailRow.scrollLeft;
 
               if (currentScroll === 0) {
-                leftButton.setAttribute("disabled", "true"); 
-                rightButton.removeAttribute("disabled");
+                leftButton.classList.add("disabled")
+                rightButton.classList.remove("disabled");
               } else if (currentScroll === scrollLength) {
-                rightButton.setAttribute("disabled", "true");
-                leftButton.removeAttribute("disabled");
+                rightButton.classList.add("disabled", "true");
+                leftButton.classList.remove("disabled");
               } else {
-                leftButton.removeAttribute("disabled");
-                rightButton.removeAttribute("disabled");
+                leftButton.classList.remove("disabled");
+                rightButton.classList.remove("disabled");
               }
             }
             
