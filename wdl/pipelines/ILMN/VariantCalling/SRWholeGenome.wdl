@@ -138,38 +138,50 @@ workflow SRWholeGenome {
     File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
-    # Collect sample-level metrics:
-    call AM.SamStatsMap as SamStats { input: bam = bam }
-    call FastQC.FastQC as FastQC { input: bam = bam, bai = bai }
-    call Utils.ComputeGenomeLength as ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-    call SRUTIL.ComputeBamStats as ComputeBamStats { input: bam_file = bam }
+    # Only collect metrics if we have multiple input bam files
+    if (length(aligned_bams) > 1) {
+        # Collect sample-level metrics:
+        call AM.SamStatsMap as SamStats { input: bam = bam }
+        call FastQC.FastQC as FastQC { input: bam = bam, bai = bai }
+        call Utils.ComputeGenomeLength as ComputeGenomeLength { input: fasta = ref_map['fasta'] }
+        call SRUTIL.ComputeBamStats as ComputeBamStats { input: bam_file = bam }
 
-    if (defined(bed_to_compute_coverage)) {
-        call AM.MosDepthOverBed as MosDepth {
-            input:
-                bam = bam,
-                bai = bai,
-                bed = select_first([bed_to_compute_coverage])
+        if (defined(bed_to_compute_coverage)) {
+            call AM.MosDepthOverBed as MosDepth {
+                input:
+                    bam = bam,
+                    bai = bai,
+                    bed = select_first([bed_to_compute_coverage])
+            }
+
+            call COV.SummarizeDepthOverWholeBed as RegionalCoverage {
+                input:
+                    mosdepth_output = MosDepth.regions
+            }
         }
 
-        call COV.SummarizeDepthOverWholeBed as RegionalCoverage {
+        call FF.FinalizeToFile as FinalizeBam { input: outdir = bam_dir, file = bam, name = "~{participant_name}.bam" }
+        call FF.FinalizeToFile as FinalizeBai { input: outdir = bam_dir, file = bai, name = "~{participant_name}.bam.bai" }
+
+        if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = bam_dir, file = select_first([RegionalCoverage.cov_summary]) } }
+
+        call FF.FinalizeToFile as FinalizeFastQCReport {
             input:
-                mosdepth_output = MosDepth.regions
+                outdir = metrics_dir,
+                file = FastQC.report
         }
+
+        # Calculate some final metrics that we need temporary variables for:
+        Float tmp_average_identity = 100.0 - (100.0*SamStats.stats_map['mismatches']/SamStats.stats_map['bases_mapped'])
+        Float tmp_aligned_frac_bases = SamStats.stats_map['bases_mapped']/SamStats.stats_map['total_length']
+        Float tmp_aligned_est_fold_cov = SamStats.stats_map['bases_mapped']/ComputeGenomeLength.length
+        Float tmp_aligned_num_reads = FastQC.stats_map['number_of_reads']
+        Float tmp_aligned_num_bases = SamStats.stats_map['bases_mapped']
+        Float tmp_aligned_read_length_mean = FastQC.stats_map['read_length']
+        Float tmp_insert_size_average = SamStats.stats_map['insert_size_average']
+        Float tmp_insert_size_standard_deviation = SamStats.stats_map['insert_size_standard_deviation']
+        Float tmp_pct_properly_paired_reads = SamStats.stats_map['percentage_of_properly_paired_reads_%']
     }
-
-    call FF.FinalizeToFile as FinalizeBam { input: outdir = bam_dir, file = bam, name = "~{participant_name}.bam" }
-    call FF.FinalizeToFile as FinalizeBai { input: outdir = bam_dir, file = bai, name = "~{participant_name}.bam.bai" }
-
-    if (defined(bed_to_compute_coverage)) { call FF.FinalizeToFile as FinalizeRegionalCoverage { input: outdir = bam_dir, file = select_first([RegionalCoverage.cov_summary]) } }
-
-
-    call FF.FinalizeToFile as FinalizeFastQCReport {
-        input:
-            outdir = metrics_dir,
-            file = FastQC.report
-    }
-
 
     ####################################################################################################
 
@@ -469,30 +481,30 @@ workflow SRWholeGenome {
     }
 
     output {
-        File aligned_bam = FinalizeBam.gcs_path
-        File aligned_bai = FinalizeBai.gcs_path
+        File? aligned_bam = FinalizeBam.gcs_path
+        File? aligned_bai = FinalizeBai.gcs_path
 
-        Float aligned_num_reads = FastQC.stats_map['number_of_reads']
-        Float aligned_num_bases = SamStats.stats_map['bases_mapped']
-        Float aligned_frac_bases = SamStats.stats_map['bases_mapped']/SamStats.stats_map['total_length']
-        Float aligned_est_fold_cov = SamStats.stats_map['bases_mapped']/ComputeGenomeLength.length
+        Float? aligned_num_reads = tmp_aligned_num_reads
+        Float? aligned_num_bases = tmp_aligned_num_bases
+        Float? aligned_frac_bases = tmp_aligned_frac_bases
+        Float? aligned_est_fold_cov = tmp_aligned_est_fold_cov
 
-        Float aligned_read_length_mean = FastQC.stats_map['read_length']
+        Float? aligned_read_length_mean = tmp_aligned_read_length_mean
 
-        Float insert_size_average = SamStats.stats_map['insert_size_average']
-        Float insert_size_standard_deviation = SamStats.stats_map['insert_size_standard_deviation']
-        Float pct_properly_paired_reads = SamStats.stats_map['percentage_of_properly_paired_reads_%']
+        Float? insert_size_average = tmp_insert_size_average
+        Float? insert_size_standard_deviation = tmp_insert_size_standard_deviation
+        Float? pct_properly_paired_reads = tmp_pct_properly_paired_reads
 
-        Float average_identity = 100.0 - (100.0*SamStats.stats_map['mismatches']/SamStats.stats_map['bases_mapped'])
+        Float? average_identity = tmp_average_identity
 
-        File fastqc_report = FinalizeFastQCReport.gcs_path
-
-        Boolean successfully_processed = true
+        File? fastqc_report = FinalizeFastQCReport.gcs_path
 
         File? bed_cov_summary = FinalizeRegionalCoverage.gcs_path
 
         File? fingerprint_vcf = FinalizeFingerprintVcf.gcs_path
         String? barcode = FingerprintAndBarcodeVcf.barcode
+
+        Boolean successfully_processed = true
 
         ########################################
 
