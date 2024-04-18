@@ -2,11 +2,11 @@
 # then support both gsutil and gcloud CLIs
 
 ############### stage 0: build samtools and bcftools from source
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SAMTOOLS_VERSION=1.18
-ARG BCFTOOLS_VERSION=1.18
+ARG SAMTOOLS_VERSION=1.20
+ARG BCFTOOLS_VERSION=1.20
 RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
@@ -49,7 +49,7 @@ RUN apt-get -qqy update --fix-missing && \
     bcftools --help
 
 ############### stage 1: other commonly used bioinformatics utilities
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV HOME=/root
 
@@ -58,6 +58,7 @@ CMD ["bash"]
 
 # copy from previous stage the binaries from samtools build
 COPY --from=0 /usr/local/bin/* /usr/local/bin/
+COPY --from=0 /usr/local/libexec/bcftools /usr/local/libexec/bcftools
 
 #### Basic utilities
 ARG DEBIAN_FRONTEND=noninteractive
@@ -74,6 +75,7 @@ RUN apt-get -qqy update --fix-missing && \
                  datamash \
                  gawk \
                  less \
+                 rename \
                  pigz \
                  tabix \
                  tree \

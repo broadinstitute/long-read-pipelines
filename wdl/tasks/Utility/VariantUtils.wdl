@@ -1003,21 +1003,33 @@ task SplitJointCallVCFBySample {
     set -euxo pipefail
         mkdir -p "~{local_folder_name}"
         bcftools +split \
+            --threads 16 \
             -Oz \
             -o "~{local_folder_name}" \
             "~{joint_vcf}"
         if ~{filter_to_alt_only}; then
             cd "~{local_folder_name}"
+            i=0
             for vcf in *.vcf.gz; do
                 prefix=$(echo "${vcf}" | sed 's/\.vcf\.gz//')
                 bcftools view \
                     -i 'GT[*]="alt"' \
                     -Oz -o "${prefix}.nonref.vcf.gz" \
-                    "${vcf}"
-                mv "${prefix}.nonref.vcf.gz" "${vcf}"
-                rm -f "${vcf}.tbi"
-                tabix -p vcf "${vcf}"
+                    "${vcf}" &
+                i=$(( i + 1 ))
+                if [[ $i == 14 ]]; then wait; i=0; fi
             done
+            wait
+            rm *.tbi
+            ls *vcf.gz | grep -v nonref | xargs -I {} rm {}
+            rename 's/nonref.//' *.nonref.vcf.gz
+            i=0
+            for vcf in *.vcf.gz; do
+                tabix -p vcf "${vcf}"
+                i=$(( i + 1 ))
+                if [[ $i == 14 ]]; then wait; i=0; fi
+            done
+            wait
             cd -
         fi
         if ~{take_localization_into_own_hands}; then
@@ -1029,8 +1041,10 @@ task SplitJointCallVCFBySample {
     >>>
     runtime {
         disks: "local-disk " + ceil(10 + 4*size(joint_vcf, "GiB"))+ " LOCAL"
-        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.20"
         preemptible: 1
         maxRetries: 1
+        cpu: 16
+        memory: "64 GiB"
     }
 }
