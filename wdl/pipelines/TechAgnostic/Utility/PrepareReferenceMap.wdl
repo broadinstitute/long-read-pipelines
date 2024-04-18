@@ -13,7 +13,7 @@ workflow PrepareReferenceMap {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PrepareReferenceMap/"
 
     call GenerateReferenceFaAndFai { input: fasta = ref_fasta }
-    call GenerateSequenceDict { input: fasta = ref_fasta }
+    call GenerateSequenceDict { input: fasta = GenerateReferenceFaAndFai.fa }
 
     call FF.FinalizeToFile as FinalizeRefFasta { input: outdir = outdir, file = GenerateReferenceFaAndFai.fa }
     call FF.FinalizeToFile as FinalizeRefFai   { input: outdir = outdir, file = GenerateReferenceFaAndFai.fai }
