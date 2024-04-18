@@ -86,6 +86,7 @@ workflow Split {
                     bam = bam,
                     bai = bai,
                     locus = contig,
+                    prefix = basename(bam, ".bam") + "." + contig,
                     disk_offset = 10 + ceil(0.1*size(bam, "GiB"))  # chr1 is ~10% of human genome, then top-off with an extra 10
             }
             if (default_split.is_samtools_failed) {
