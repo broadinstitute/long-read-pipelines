@@ -24,7 +24,7 @@ workflow Work {
         is_ont: "If the input data is ONT"
         per_chr_bam_bai_and_id: "Must be provided when pbsv_discover_per_chr is true."
         pbsv_discover_per_chr: "To run the discover stage of PBSV in per-chromosome style or not. If true, then the WGS bam must be sharded accordingly beforehand."
-        minsvlen: "Minimum SV length in bp; only affects Sniffles 2 calls."
+        minsvlen: "Minimum SV length in bp."
     }
 
     input {
@@ -45,7 +45,7 @@ workflow Work {
         File ref_bundle_json_file
 
         # sv-specific args
-        Int minsvlen = 20
+        Int minsvlen = 10
 
         # optimization
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
@@ -114,6 +114,7 @@ workflow Work {
                 ref_fasta_fai = ref_bundle.fai,
                 is_hifi = is_hifi,
                 is_ont = is_ont,
+                minsvlen = minsvlen,
                 prefix = prefix,
                 zones = zones
         }
@@ -130,6 +131,7 @@ workflow Work {
                 ref_fasta = ref_bundle.fasta,
                 ref_fasta_fai = ref_bundle.fai,
                 tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
+                minsvlen = minsvlen,
                 zones = zones
         }
     }

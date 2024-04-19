@@ -27,7 +27,7 @@ workflow Sniffles2 {
         Array[File] sampleBAIs
         Array[String] sampleIDs
         String prefix
-        Int minsvlen = 50
+        Int minsvlen = 35
     }
 
     scatter (i in range(length(sampleBAMs))) {
@@ -63,7 +63,7 @@ task SampleSV {
     parameter_meta {
         bam:              { desciption: "input BAM from which to call SVs", localization_optional: true }
         bai:              "index accompanying the BAM"
-        minsvlen:         "minimum SV length in bp. Default 50"
+        minsvlen:         "minimum SV length in bp"
         sample_id:        "Sample ID"
         prefix:           "prefix for output"
         phase_sv:         "if you're sure the BAM is phased/haplotagged, turn this on to generate phased SV"
@@ -73,7 +73,7 @@ task SampleSV {
     input {
         File bam
         File bai
-        Int minsvlen = 50
+        Int minsvlen
         String sample_id
         String prefix
         File? tandem_repeat_bed

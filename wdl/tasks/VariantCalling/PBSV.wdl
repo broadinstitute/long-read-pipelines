@@ -12,6 +12,7 @@ workflow RunPBSV {
         bam:               "input BAM from which to call SVs"
         bai:               "index accompanying the BAM"
         is_hifi:           "if input BAM is HiFi reads"
+        minsvlen           "min SV length"
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         prefix:            "prefix for output"
@@ -23,6 +24,7 @@ workflow RunPBSV {
         File bam
         File bai
         Boolean is_hifi
+        Int minsvlen = 20
 
         File ref_fasta
         File ref_fasta_fai
@@ -53,6 +55,7 @@ workflow RunPBSV {
             ref_fasta     = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             is_hifi       = is_hifi,
+            minsvlen      = minsvlen,            
             prefix        = prefix,
             zones         = zones,
             is_ont        = is_ont
@@ -182,6 +185,7 @@ task Call {
         File ref_fasta
         File ref_fasta_fai
         Boolean is_hifi
+        Int minsvlen
         String prefix
         String zones
         Boolean DEBUG = false
@@ -194,6 +198,7 @@ task Call {
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         is_hifi:           "if input BAM is HiFi reads"
+        minsvlen:          "min SV length"
         prefix:            "prefix for output"
     }
 
@@ -206,6 +211,7 @@ task Call {
             --log-level ~{true='INFO' false='WARN' DEBUG} \
             --log-file pbsv.call.log \
             ~{true='--hifi' false='' is_hifi} \
+            --min-sv-length ~{minsvlen} \
             ~{ref_fasta} \
             ~{sep=' ' svsigs} \
             ~{prefix}.pbsv.pre.vcf
