@@ -36,6 +36,8 @@ workflow CallVariantsWithHaplotypeCaller {
 
         String mito_contig = "chrM"
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
+
+        RuntimeAttr? haplotype_caller_runtime_attr_override
     }
 
     # Scatter by chromosome:
@@ -67,7 +69,8 @@ workflow CallVariantsWithHaplotypeCaller {
                 heterozygosity = heterozygosity,
                 heterozygosity_stdev = heterozygosity_stdev,
                 indel_heterozygosity = indel_heterozygosity,
-                use_spanning_event_genotyping = true
+                use_spanning_event_genotyping = true,
+                runtime_attr_override = haplotype_caller_runtime_attr_override
         }
     }
 
