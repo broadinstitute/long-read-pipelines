@@ -680,3 +680,168 @@ task FixSnifflesVCF {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task SplitVCFByCanonicalChromosome {
+    input {
+        File vcf
+        File? tbi
+
+        Array[String] canonical_chromosomes
+
+        RuntimeAttr? runtime_attr_override
+    }
+    output {
+        Array[File] split_vcfs = glob("split_vcfs/*.vcf.gz")
+        Array[File] split_tbi  = glob("split_vcfs/*.vcf.gz.tbi")
+    }
+    String prefix = basename(vcf, ".vcf.gz")
+
+    command <<<
+    set -euxo pipefail
+        mkdir -p split_vcfs
+        cd split_vcfs
+
+        i=0
+        for chr in ~{sep=' ' canonical_chromosomes}; do
+            bcftools view \
+                -r $chr \
+                -O z -o "~{prefix}.${chr}.vcf.gz" \
+                ~{vcf} &
+            i=$((i+1))
+            if [[ ${i} -eq 4 ]]; then wait; i=0; fi
+        done
+        wait
+
+        i=0
+        for shard_vcf in *.vcf.gz; do
+            tabix -p vcf "${shard_vcf}" &
+            i=$((i+1))
+            if [[ ${i} -eq 4 ]]; then wait; i=0; fi
+        done
+        wait
+    >>>
+
+    #########################
+    Int proposed_disk = 3*ceil(size(vcf, "GiB")) + 1
+    Int disk_size = if (proposed_disk > 100) then proposed_disk else 100
+    RuntimeAttr default_attr = object {
+        cpu_cores:          6,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        preemptible_tries:  2,
+        max_retries:        2,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SplitJointCallVCFBySample {
+    meta {
+        description:
+        "Split a joint VCF by sample"
+        note:
+        "Here, we use a trick that needs cooperation to ensure call-caching while taking delocalization into our own hands."
+    }
+    parameter_meta {
+        hint_where_to_delocalize:
+        "If provided, a sub-directory named 'by_sample' will be created under this path, and the split VCFs will be delocalized there. Note that if this is provided, you'll need to use other tricks to ensure call-caching."
+    }
+    input {
+        File joint_vcf
+        File joint_vcf_tbi
+
+        Boolean filter_to_alt_only = false
+
+        String? hint_where_to_delocalize
+    }
+    output {
+        String local_output_dir = local_folder_name
+        Array[File]? vcfs = if(take_localization_into_own_hands) then glob("empty_dir/*.vcf.gz")     else glob("~{local_folder_name}/*.vcf.gz")
+        Array[File]? tbis = if(take_localization_into_own_hands) then glob("empty_dir/*.vcf.gz.tbi") else glob("~{local_folder_name}/*.vcf.gz.tbi")
+    }
+
+    Boolean take_localization_into_own_hands = defined(hint_where_to_delocalize)
+    String delocalize_here = select_first([hint_where_to_delocalize, "."])
+    String local_folder_name = "by_sample"
+    command <<<
+    set -euxo pipefail
+        mkdir -p "~{local_folder_name}"
+
+        # there seems to be a bug where a naive call to bcftools split leads to header-only VCFs when the number of samples is large,
+        # so here we employ a hack to only extract 100 samples a time
+        bcftools query -l "~{joint_vcf}" \
+        > all.samples.txt
+
+        split -l 100 -d all.samples.txt && ls x*
+
+        for ff in x*; do
+            time \
+            bcftools +split \
+                -Oz -o batch_"${ff}" \
+                -S "$ff" \
+                "~{joint_vcf}"
+            ls -l batch_"${ff}"
+            mv \
+                batch_"${ff}"/*.vcf.gz \
+                "~{local_folder_name}"/
+            rm -rf batch_"${ff}"
+        done
+
+        # filter to alt only
+        if ~{filter_to_alt_only}; then
+            cd "~{local_folder_name}"
+            i=0
+            for vcf in *.vcf.gz; do
+                prefix=$(echo "${vcf}" | sed 's/\.vcf\.gz//')
+                bcftools view \
+                    -i 'GT[*]="alt"' \
+                    --no-update \
+                    -Oz -o "${prefix}.nonref.vcf.gz" \
+                    "${vcf}" &
+                i=$(( i + 1 ))
+                if [[ $i == 14 ]]; then wait; i=0; fi
+            done
+            wait
+            rm -f *.tbi
+            ls *vcf.gz | grep -v nonref | xargs -I {} rm {}
+            rename 's/nonref.//' *.nonref.vcf.gz
+            cd -
+        fi
+
+        # index
+        cd "~{local_folder_name}"
+        i=0
+        for vcf in *.vcf.gz; do
+            tabix -p vcf "${vcf}" &
+            i=$(( i + 1 ))
+            if [[ $i == 14 ]]; then wait; i=0; fi
+        done
+        wait
+        cd -
+
+        if ~{take_localization_into_own_hands}; then
+            mkdir -p "empty_dir"
+            time \
+            gcloud storage cp --recursive \
+                "~{local_folder_name}" \
+                ~{delocalize_here}
+        fi
+    >>>
+    runtime {
+        disks: "local-disk " + ceil(10 + 4*size(joint_vcf, "GiB"))+ " LOCAL"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.20"
+        preemptible: 2
+        maxRetries: 1
+        cpu: 16
+        memory: "64 GiB"
+    }
+}
+

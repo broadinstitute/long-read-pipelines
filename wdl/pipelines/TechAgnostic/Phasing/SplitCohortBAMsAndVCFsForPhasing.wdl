@@ -31,7 +31,7 @@ workflow SplitCohortBAMsAndVCFsForPhasing {
     output {
         File sharded_bams_manifest = SaveBamManifest.gcs_path
         File sharded_bais_manifest = SaveBaiManifest.gcs_path
-        # File sharded_smallvar_vcf_manifest
+        # File sharded_smallvar_vcf_manifest # for some very nuanced technical reasons, we'll generate these two manifests by hand
         # File sharded_strucvar_vcf_manifest
     }
 
@@ -101,9 +101,41 @@ workflow SplitCohortBAMsAndVCFsForPhasing {
         file = AssembleBaiManifest.merged,
         outdir = bam_out_dir
     }
-    ############################################################################
-    # # split VCF by chromosome, then by sample
 
+    ############################################################################
+    # split small variant VCF by chromosome, then by sample
+    String small_var_shards_outdir = sub(gcs_out_root_dir, "/+$", "") + "/~{cohort_name}/sharded_small_variants"
+    call VU.SplitVCFByCanonicalChromosome as SplitSmallVarVCFByChr { input:
+        vcf = wholegenome_joint_vcf,
+        tbi = wholegenome_joint_vcf_tbi,
+        canonical_chromosomes = chromosomes,
+    }
+    scatter (smvcfpair in zip(SplitSmallVarVCFByChr.split_vcfs, SplitSmallVarVCFByChr.split_tbi)) {
+        call GuessChrName as GuessA { input: vcf_path = smvcfpair.left }
+        call VU.SplitJointCallVCFBySample as SplitSmallVarChrSpecificVCFBySample { input:
+            joint_vcf = smvcfpair.left,
+            joint_vcf_tbi = smvcfpair.right,
+            filter_to_alt_only = false,
+            hint_where_to_delocalize = small_var_shards_outdir + "/~{GuessA.chr_name}",
+        }
+    }
+    ############################################################################
+    # split small variant VCF by chromosome, then by sample
+    String struct_var_shards_outdir = sub(gcs_out_root_dir, "/+$", "") + "/~{cohort_name}/sharded_struct_variants"
+    call VU.SplitVCFByCanonicalChromosome as SplitStructVarVCFByChr { input:
+        vcf = wholegenome_joint_sv,
+        tbi = wholegenome_joint_sv_tbi,
+        canonical_chromosomes = chromosomes,
+    }
+    scatter (stvcfpair in zip(SplitStructVarVCFByChr.split_vcfs, SplitStructVarVCFByChr.split_tbi)) {
+        call GuessChrName as GuessB { input: vcf_path = stvcfpair.left }
+        call VU.SplitJointCallVCFBySample as SplitStructVarChrSpecificVCFBySample { input:
+            joint_vcf = stvcfpair.left,
+            joint_vcf_tbi = stvcfpair.right,
+            filter_to_alt_only = false,
+            hint_where_to_delocalize = struct_var_shards_outdir + "/~{GuessB.chr_name}",
+        }
+    }
 }
 
 task WriteOneLine {
@@ -122,6 +154,30 @@ task WriteOneLine {
         echo -e ~{sep = "\t" padded} > one_line.txt
     >>>
     runtime {
+        preemptible:    2
+        maxRetries:     1
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task GuessChrName {
+    input {
+        File vcf_path
+    }
+    parameter_meta {
+        vcf_path: {localization_optional:true}
+    }
+
+    output {
+        String chr_name = read_string(stdout())
+    }
+    command <<<
+    set -euxo pipefail
+        echo ~{vcf_path} | grep -Eo "chr[0-9XYM]+.vcf.gz" | awk -F '.' '{print $1}'
+    >>>
+    runtime {
+        preemptible:    2
+        maxRetries:     1
         docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
