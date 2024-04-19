@@ -12,7 +12,7 @@ workflow RunPBSV {
         bam:               "input BAM from which to call SVs"
         bai:               "index accompanying the BAM"
         is_hifi:           "if input BAM is HiFi reads"
-        minsvlen           "min SV length"
+        minsvlen:          "min SV length"
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         prefix:            "prefix for output"
