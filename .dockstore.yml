@@ -162,3 +162,6 @@ workflows:
 - name: SaveFilesToDestination
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SaveFilesToDestination.wdl
+- name: CallStructuralVariants
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallStructuralVariants.wdl
