@@ -25,16 +25,17 @@ workflow ReadManifestFilesHiphase {
     call ReadFile as bam_input { input: input_file = bam_manifest, chr = chromosome, prefix = "bam" }
     call ReadFile as bai_input { input: input_file = bai_manifest, chr = chromosome, prefix = "bai" }
 
-    call GU.CoerceMapToArrayOfPairs as make_pairs {input: input_map = snp_vcf_input.summary}
+    Int data_length = length(snp_vcf_input.sample)
+    Array[Int] indexes= range(data_length)
 
-    scatter (pairs in make_pairs.output_pairs) {
-        String sample = pairs.left
-        String snp_vcf = pairs.right
-        String snp_tbi = snp_tbi_input.summary[sample]
-        String sv_vcf = sv_vcf_input.summary[sample]
-        String sv_tbi = sv_tbi_input.summary[sample]
-        String bam = bam_input.summary[sample]
-        String bai = bai_input.summary[sample]
+    scatter (i in indexes) {
+        String sample = snp_vcf_input.sample[i]
+        String snp_vcf = snp_vcf_input.summary[i]
+        String snp_tbi = snp_tbi_input.summary[i]
+        String sv_vcf = sv_vcf_input.summary[i]
+        # String sv_tbi = sv_tbi_input.summary[i]
+        String bam = bam_input.summary[i]
+        String bai = bai_input.summary[i]
 
         call convert as cleanvcf{
             input:
@@ -82,7 +83,8 @@ task ReadFile {
     }
 
     output {
-        Map[String, String] summary = read_map("~{prefix}.result.tsv")
+        Array[String] summary = read_lines("~{prefix}.path.tsv")
+        Array[String] sample = read_lines("~{prefix}.sample.tsv")
     }
 
     command <<<
@@ -96,9 +98,14 @@ task ReadFile {
         dv = dv.to_dict()
 
 
-        with open("~{prefix}.result.tsv", 'w') as outf:
+        with open("~{prefix}.path.tsv", 'w') as outf:
             for sample, path in dv.items():
-                outf.write(f"{sample}\t{path}\n")
+                outf.write(f"{path}\n")
+
+        with open("~{prefix}.sample.tsv", 'w') as outf:
+            for sample, path in dv.items():
+                outf.write(f"{sample}\n")
+                #outf.write(f"{sample}\t{path}\n")
         CODE
     >>>
 
