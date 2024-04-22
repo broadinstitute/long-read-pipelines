@@ -159,3 +159,12 @@ workflows:
 - name: SvQCPlots
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Visualization/SvQCPlots.wdl
+- name: SRWholeGenomeBootstrap
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/VariantCalling/SRWholeGenomeBootstrap.wdl
+- name: SRJointCallGVCFsWithGenomicsDBBootstrap
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/SRJointCallGVCFsWithGenomicsDBBootstrap.wdl
+- name: SRReblockGVCFs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/VariantCalling/SRReblockGVCFs.wdl
