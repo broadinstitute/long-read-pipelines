@@ -36,6 +36,19 @@ workflow VerifyBamFingerprint {
         Boolean force = false
         Float lod_pass_threshold =  6.0
         Float lod_fail_threshold = -3.0
+
+        # Input args liftedoverVCFGATK generation:
+        File chain_file
+        File target_reference_sequence_fasta_file
+        File target_reference_sequence_fasta_file_index
+        File target_reference_sequence_fasta_file_dict
+        # Runtime args:
+        Int? mem
+        Int? preemptible_attempts
+        Int? disk_space_gb
+        Int? cpu
+        Int? boot_disk_size_gb 
+
     }
 
     output {
@@ -53,6 +66,15 @@ workflow VerifyBamFingerprint {
             ref_specific_haplotype_map = ref_specific_haplotype_map,
             force = force,
             lod_pass_threshold = lod_pass_threshold,
-            lod_fail_threshold = lod_fail_threshold
+            lod_fail_threshold = lod_fail_threshold,
+            chain_file  = chain_file,
+            target_reference_sequence_fasta_file = target_reference_sequence_fasta_file,
+            target_reference_sequence_fasta_file_index  = target_reference_sequence_fasta_file_index,
+            target_reference_sequence_fasta_file_dict   = target_reference_sequence_fasta_file_dict,
+            mem = mem,
+            preemptible_attempts = preemptible_attempts,
+            disk_space_gb = disk_space_gb,
+            cpu  = cpu,
+            boot_disk_size_gb = boot_disk_size_gb
     }
 }
