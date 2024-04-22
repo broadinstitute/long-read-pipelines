@@ -27,6 +27,16 @@ workflow FPCheckAoU {
         FP_status:           "A single word summary on the result of FP check; one of [PASS, FAIL, BORDERLINE]."
         fingerprint_summary: "A file holding the summaries of LOD (a bit more detail than pass/fail)."
         fingerprint_details: "A file holding the detailed LOD at each FP site."
+        chain_file: "Chain file for the GATK LiftoverVcf process, mapping between source and target genome builds."
+        target_reference_sequence_fasta_file: "Reference sequence fasta file for the target genome build used in the liftover."
+        target_reference_sequence_fasta_file_index: "Index file for the target reference sequence fasta, required for GATK processes."
+        target_reference_sequence_fasta_file_dict: "Sequence dictionary for the target reference fasta, required by GATK for reference sequence validation."
+
+        mem: "Memory allocated for the GATK LiftoverVcf process, specified in GB."
+        preemptible_attempts: "Number of preemptible attempts for the task. Preemptible instances are cheaper but may be terminated unexpectedly."
+        disk_space_gb: "Amount of disk space allocated for the task, specified in GB."
+        cpu: "Number of CPU cores allocated for the task."
+        boot_disk_size_gb: "Size of the boot disk for the virtual machine running the task, specified in GB."
     }
 
     input {
@@ -39,11 +49,26 @@ workflow FPCheckAoU {
 
         File ref_specific_haplotype_map
 
+        # Input args liftedoverVCFGATK generation:
+        File chain_file
+        File target_reference_sequence_fasta_file
+        File target_reference_sequence_fasta_file_index
+        File target_reference_sequence_fasta_file_dict
+        # Runtime args:
+        Int? mem
+        Int? preemptible_attempts
+        Int? disk_space_gb
+        Int? cpu
+        Int? boot_disk_size_gb 
+
         Boolean force = false
 
         Float lod_pass_threshold =  6.0
         Float lod_fail_threshold = -3.0
     }
+    # Generate output file names using fp_sample_id
+    String lifted_over_vcf = fp_sample_id + ".lifted_over.vcf"
+    String rejectedVcf = fp_sample_id + ".rejected.vcf"
 
     output {
         Float lod_expected_sample = fingerprint_check_LOD
@@ -51,6 +76,7 @@ workflow FPCheckAoU {
 
         File fingerprint_summary = select_first([CheckFingerprint.summary_metrics, "None"])
         File fingerprint_details = select_first([CheckFingerprint.detail_metrics, "None"])
+
     }
 
     # 1X coverage ~= 1.5GiB (Revio); 2.3GiB (Sequel); 2.8GiB (ONT)
@@ -64,14 +90,30 @@ workflow FPCheckAoU {
         ##### Prep work
         call ResolveFPVCFPath {input: fp_vcf_store = fp_vcf_store, fp_sample_id = fp_sample_id}
         call ReheaderFullGRCh38VCFtoNoAlt {input: full_GRCh38_vcf = ResolveFPVCFPath.fp_vcf}
-
+        # liftover the vcfs
+        call LiftoverVcfGATK {
+            input:
+                input_vcf_file                              = ReheaderFullGRCh38VCFtoNoAlt.reheadered_vcf,
+                chain_file                                  = chain_file,
+                target_reference_sequence_fasta_file        = target_reference_sequence_fasta_file,
+                target_reference_sequence_fasta_file_index  = target_reference_sequence_fasta_file_index,
+                target_reference_sequence_fasta_file_dict   = target_reference_sequence_fasta_file_dict,
+                lifted_over_vcf_name                        = lifted_over_vcf,
+                lifted_over_rejects_vcf_name                = rejectedVcf,
+                mem                                         = mem,
+                preemptible_attempts                        = preemptible_attempts,
+                disk_space_gb                               = disk_space_gb,
+                cpu                                         = cpu,
+                boot_disk_size_gb                           = boot_disk_size_gb
+        }
+    
         call VariantUtils.GetVCFSampleName {
             input:
-                fingerprint_vcf = ReheaderFullGRCh38VCFtoNoAlt.reheadered_vcf
+                fingerprint_vcf = LiftoverVcfGATK.lifted_over_vcf
         }
         call FPUtils.FilterGenotypesVCF {
             input:
-                fingerprint_vcf = ReheaderFullGRCh38VCFtoNoAlt.reheadered_vcf
+                fingerprint_vcf = LiftoverVcfGATK.lifted_over_vcf
         }
         call FPUtils.ExtractGenotypingSites {
             input:
@@ -187,3 +229,71 @@ task ReheaderFullGRCh38VCFtoNoAlt {
         docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
+task LiftoverVcfGATK {
+    meta {
+        description: "Use GATK's LiftoverVcf tool to lift over a VCF from one reference build to another."
+    }
+    input {
+        # Input args:
+        File input_vcf_file
+        File chain_file
+        File target_reference_sequence_fasta_file
+        File target_reference_sequence_fasta_file_index
+        File target_reference_sequence_fasta_file_dict
+    
+    # Output Names:
+    String lifted_over_vcf_name
+    String lifted_over_rejects_vcf_name
+
+    # Runtime args:
+    Int? mem
+    Int? preemptible_attempts
+    Int? disk_space_gb
+    Int? cpu
+    Int? boot_disk_size_gb 
+    
+    }
+    # Get machine settings:
+    #Boolean use_ssd = true
+    Int base_disk_space_gb = 100
+
+    Int base_boot_disk_size_gb = 15
+
+    # Timing output file
+    String timing_output_file = "liftover_timing.txt"
+
+    command <<<
+        set -euxo pipefail
+
+        startTime=`date +%s.%N`
+        echo "StartTime: $startTime" > ${timing_output_file}
+
+        gatk LiftoverVcf \
+            -I ~{input_vcf_file} \
+            -O ~{lifted_over_vcf_name} \
+            -CHAIN ~{chain_file} \
+            -REJECT ~{lifted_over_rejects_vcf_name} \
+            -R ~{target_reference_sequence_fasta_file}
+
+        endTime=`date +%s.%N`
+        echo "EndTime: $endTime" >> ${timing_output_file}
+        elapsedTime=`python -c "print( $endTime - $startTime )"`
+        echo "Elapsed Time: $elapsedTime" >> ${timing_output_file}        
+    >>>
+    runtime {
+        docker: "us.gcr.io/broad-gatk/gatk:4.4.0.0"
+        memory: select_first([mem, 8]) + " GB"
+        cpu: select_first([cpu, 1])
+        disks: "local-disk " + select_first([disk_space_gb, base_disk_space_gb]) + " SSD"
+        bootDiskSizeGb: select_first([boot_disk_size_gb, base_boot_disk_size_gb])
+        preemptible: select_first([preemptible_attempts, 3])
+    }
+    
+    # Outputs:
+    output {
+        File lifted_over_vcf         = "${lifted_over_vcf_name}"
+        File lifted_over_rejects_vcf = "${lifted_over_rejects_vcf_name}"
+        File timing_info             = timing_output_file
+    }
+}
+
