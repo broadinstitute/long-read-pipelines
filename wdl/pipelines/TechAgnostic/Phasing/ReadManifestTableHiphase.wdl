@@ -45,7 +45,8 @@ workflow ReadManifestFilesHiphase {
 
         call SplitMultiallelicCalls as Norm_SNPs { input:
             bcftools_merged_vcf = snp_vcf,
-            bcftools_merged_vcf_tbi = snp_tbi
+            bcftools_merged_vcf_tbi = snp_tbi,
+            prefix = sample
         }
 
         call Hiphase.HiphaseSVs as HP_SV { input:
@@ -60,6 +61,8 @@ workflow ReadManifestFilesHiphase {
             samplename = sample
 
         }
+
+
 
     }
 
@@ -172,18 +175,19 @@ task SplitMultiallelicCalls {
     input {
         File bcftools_merged_vcf
         File bcftools_merged_vcf_tbi
+        String prefix
     }
 
     command <<<
         set -euxo pipefail
-        bcftools norm -m -any ~{bcftools_merged_vcf} | bgzip > ~{bcftools_merged_vcf}.normed.vcf.gz
-        tabix -p vcf ~{bcftools_merged_vcf}.normed.vcf.gz
+        bcftools norm -m -any ~{bcftools_merged_vcf} | bgzip > "~{prefix}.normed.vcf.gz"
+        tabix -p vcf "~{prefix}.normed.vcf.gz"
         
     >>>
 
     output {
-        File normed_vcf = "~{bcftools_merged_vcf}.normed.vcf.gz"
-        File normed_vcf_tbi = "~{bcftools_merged_vcf}.normed.vcf.gz.tbi"
+        File normed_vcf = "~{prefix}.normed.vcf.gz"
+        File normed_vcf_tbi = "~{prefix}.normed.vcf.gz.tbi"
     }
     ###################
     runtime {
