@@ -156,3 +156,6 @@ workflows:
 - name: SRFlowcellDecontaminate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ILMN/Alignment/SRFlowcellDecontaminate.wdl
+- name: SvQCPlots
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Visualization/SvQCPlots.wdl
