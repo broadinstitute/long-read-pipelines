@@ -138,3 +138,6 @@ workflows:
 - name: HiphaseJointCallTRGT
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/HiphaseJointCallTRGT.wdl
+- name: ReadManifestTableHiphase
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/ReadManifestTableHiphase.wdl
