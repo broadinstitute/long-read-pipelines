@@ -4,6 +4,7 @@ version 1.0
 import "../../../tasks/Phasing/Hiphase.wdl"
 import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 import "../../../tasks/Utility/VariantUtils.wdl" as VU
+import "../../../tasks/Phasing/StatisticalPhasing.wdl" as StatPhase
 
 workflow ReadManifestFilesHiphase {
     input {
@@ -15,6 +16,7 @@ workflow ReadManifestFilesHiphase {
         File bai_manifest
         File reference_fasta
         File reference_index
+        File genetic_mapping_tsv_for_shapeit4
 
         String chromosome
         
@@ -27,6 +29,7 @@ workflow ReadManifestFilesHiphase {
     call ReadFile as bam_input { input: input_file = bam_manifest, chr = chromosome, prefix = "bam" }
     call ReadFile as bai_input { input: input_file = bai_manifest, chr = chromosome, prefix = "bai" }
 
+    Map[String, String] genetic_mapping_dict = read_map(genetic_mapping_tsv_for_shapeit4)
     #Int data_length = length(snp_vcf_input.sample)
     Array[Int] indexes= range(50)
 
@@ -67,6 +70,13 @@ workflow ReadManifestFilesHiphase {
         vcf_input = HP_SV.phased_snp_vcf,
         tbi_input = HP_SV.phased_snp_vcf_tbi,
         pref = chromosome
+    }
+
+    call StatPhase.Shapeit4 as Shapeit4scaffold { input:
+        vcf_input = MergeAcrossSamples.merged_vcf,
+        vcf_index = MergeAcrossSamples.merged_tbi,
+        mappingfile = genetic_mapping_dict[chromosome],
+        region = chromosome
     }
 
 

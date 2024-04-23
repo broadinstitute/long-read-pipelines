@@ -11,25 +11,25 @@ task Shapeit4 {
     command <<<
         # add AN AC tag
 
-        export MONITOR_MOUNT_POINT="/cromwell_root/"
-        bash /opt/vm_local_monitoring_script.sh &> resources.log &
-        job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
+        # export MONITOR_MOUNT_POINT="/cromwell_root/"
+        # bash /opt/vm_local_monitoring_script.sh &> resources.log &
+        # job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
 
         shapeit4 --input ~{vcf_input} --map ~{mappingfile} --region ~{region} --use-PS 0.0001 --sequencing --output ~{region}_scaffold.bcf --thread ~{num_threads} --log phased.log
         
-        if ps -p "${job_id}" > /dev/null; then kill "${job_id}"; fi
+        # if ps -p "${job_id}" > /dev/null; then kill "${job_id}"; fi
     >>>
 
     output{
-        File resouce_monitor_log = "resources.log"
+        # File resouce_monitor_log = "resources.log"
         File scaffold_vcf = "~{region}_scaffold.bcf"
     }
 
     #Int disk_size = 100 + ceil(2 * size(vcf_input, "GiB"))
 
     runtime {
-        cpu: 40
-        memory: "500 GiB"
+        cpu: num_threads
+        memory: "200 GiB"
         disks: "local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 0

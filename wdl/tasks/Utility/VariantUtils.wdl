@@ -102,7 +102,7 @@ task MergePerChrVcfWithBcftools {
             -O z \
             -o ~{pref}.AllSamples.vcf.gz
 
-        tabix --threads ~{threads_num} -p vcf ~{pref}.AllSamples.vcf.gz
+        tabix -@ ~{threads_num} -p vcf ~{pref}.AllSamples.vcf.gz
 
         # move result files to the correct location for cromwell to de-localize
         mv ~{pref}.AllSamples.vcf.gz ~{pref}.AllSamples.vcf.gz.tbi /cromwell_root/
@@ -115,11 +115,11 @@ task MergePerChrVcfWithBcftools {
 
     runtime {
         cpu: 16
-        memory: "64 GiB"
+        memory: "32 GiB"
         disks: "local-disk 375 LOCAL"
         preemptible: 1
         maxRetries: 0
-        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.20"
     }
 }
 
