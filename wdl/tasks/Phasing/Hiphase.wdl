@@ -94,14 +94,15 @@ task HiphaseSVs {
         File ref_fasta_fai
         String samplename
 
-        Int memory = 64
+        Int memory = 32
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int bam_sz = ceil(size(bam, "GB"))
-	Int disk_size = if bam_sz > 200 then 2*bam_sz else bam_sz + 200
+    # Int bam_sz = ceil(size(bam, "GB"))
+	Int disk_size = 30 # if bam_sz > 200 then 2*bam_sz else bam_sz + 200
+    Int thread_num = memory/2
 
     command <<<
         set -euxo pipefail
@@ -109,7 +110,7 @@ task HiphaseSVs {
         touch ~{bai}
 
         hiphase \
-        --threads 16 \
+        --threads ~{thread_num} \
         --bam ~{bam} \
         --reference ~{ref_fasta} \
         --global-realignment-cputime 300 \
@@ -141,11 +142,11 @@ task HiphaseSVs {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
+        cpu_cores:          thread_num,
         mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "hangsuunc/hiphase:1.3.0"
     }
@@ -191,8 +192,8 @@ task HiphaseSVTrgt {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int bam_sz = ceil(size(bam, "GB"))
-	Int disk_size = if bam_sz > 200 then 2*bam_sz else bam_sz + 200
+    # Int bam_sz = ceil(size(bam, "GB"))
+	Int disk_size = 30  #if bam_sz > 200 then 2*bam_sz else bam_sz + 200
 
     command <<<
         set -euxo pipefail

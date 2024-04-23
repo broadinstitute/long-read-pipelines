@@ -25,8 +25,8 @@ workflow ReadManifestFilesHiphase {
     call ReadFile as bam_input { input: input_file = bam_manifest, chr = chromosome, prefix = "bam" }
     call ReadFile as bai_input { input: input_file = bai_manifest, chr = chromosome, prefix = "bai" }
 
-    Int data_length = length(snp_vcf_input.sample)
-    Array[Int] indexes= range(data_length)
+    #Int data_length = length(snp_vcf_input.sample)
+    Array[Int] indexes= range(50)
 
     scatter (i in indexes) {
         String sample = snp_vcf_input.sample[i]
