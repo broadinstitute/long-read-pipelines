@@ -151,8 +151,8 @@ task convert {
     }
     ###################
     runtime {
-        cpu: 2
-        memory:  "32 GiB"
+        cpu: 1
+        memory:  "4 GiB"
         disks: "local-disk 50 HDD"
         bootDiskSizeGb: 10
         preemptible_tries:     3
