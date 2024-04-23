@@ -44,7 +44,7 @@ task Shapeit4 {
     RuntimeAttr default_attr = object {
         cpu_cores:          num_threads,
         mem_gb:             memory,
-        disk_gb:            100,
+        disk_gb:            500,
         boot_disk_gb:       100,
         preemptible_tries:  1,
         max_retries:        0,
@@ -54,7 +54,7 @@ task Shapeit4 {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
@@ -102,7 +102,7 @@ task Shapeit4_phaseSVs {
     RuntimeAttr default_attr = object {
         cpu_cores:          num_threads,
         mem_gb:             memory,
-        disk_gb:            100,
+        disk_gb:            500,
         boot_disk_gb:       100,
         preemptible_tries:  1,
         max_retries:        0,
@@ -112,7 +112,7 @@ task Shapeit4_phaseSVs {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
