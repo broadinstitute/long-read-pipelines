@@ -18,24 +18,23 @@ workflow ReblockGVCF {
         File gvcf
         File gvcf_index
 
+        File ref_map_file
         File? dbsnp_vcf
     
         String prefix
-
-        File ref_fasta
-        File ref_fasta_fai
-        File ref_dict
 
         String mito_contig = "chrM"
         Boolean call_vars_on_mitochondria = true
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
-
+    Map[String, String] ref_map = read_map(ref_map_file)
+    
     # Make sure interval list is concordant from HaplotypeCaller
     Array[String] use_filter = if (call_vars_on_mitochondria) then contigs_names_to_ignore else flatten([[mito_contig], contigs_names_to_ignore])
+    
     call Utils.MakeChrIntervalList as SmallVariantsScatterPrep {
         input:
-            ref_dict = ref_dict,
+            ref_dict = ref_map['dict'],
             filter = use_filter
     }
 
@@ -43,9 +42,9 @@ workflow ReblockGVCF {
         input:
             gvcf = gvcf,
             gvcf_index = gvcf_index,
-            ref_fasta = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            ref_dict = ref_dict,
+            ref_fasta = ref_map['fasta'],
+            ref_fasta_fai = ref_map['fai'],
+            ref_dict = ref_map['dict'],
             prefix = prefix
     }
 
@@ -55,9 +54,9 @@ workflow ReblockGVCF {
             input_gvcf_data = ReblockRawGVCF.output_gvcf,
             input_gvcf_index = ReblockRawGVCF.output_gvcf_index,
             interval_list = SmallVariantsScatterPrep.interval_list,
-            ref_fasta = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            ref_dict = ref_dict,
+            ref_fasta = ref_map['fasta'],
+            ref_fasta_fai = ref_map['fai'],
+            ref_dict = ref_map['dict'],
             dbsnp_vcf = dbsnp_vcf,
             prefix = prefix,
     }
