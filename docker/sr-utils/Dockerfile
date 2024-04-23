@@ -5,6 +5,11 @@ MAINTAINER Kiran V Garimella
 # copy other resources
 COPY ./environment.yml /
 
+# Set new conda solver so we don't have to wait forever:
+RUN conda update -n base conda
+RUN conda install -n base conda-libmamba-solver
+RUN conda config --set solver libmamba
+
 # install conda packages
 RUN conda env create -f /environment.yml && conda clean -a
 ENV PATH=/opt/conda/envs/sr-utils/bin/:/root/google-cloud-sdk/bin/:${PATH}
