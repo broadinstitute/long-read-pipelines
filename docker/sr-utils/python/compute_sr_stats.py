@@ -10,7 +10,7 @@ def n50(lengths):
     csum = np.cumsum(all_len)
     n2 = int(sum(lengths) / 2)
     csumn2 = min(csum[csum >= n2])
-    ind = np.where(csum == csumn2)
+    ind = np.where(csum == csumn2)[0]
 
     return all_len[int(ind[0])]
 
@@ -36,7 +36,10 @@ def get_bam_stats(bam_file_path, qual_thresh=None):
         for read in tqdm(bam_file, desc=f"Collecting Bam Stats" + (f" (rq >= {qual_thresh})" if qual_thresh else ""),
                          total=total_reads, unit=" read"):
             l = len(read.query_sequence)
-            q = np.mean(read.query_qualities)
+            if read.query_qualities is not None:
+                q = np.mean(read.query_qualities)
+            else:
+                q = 0
 
             if qual_thresh and q < qual_thresh:
                 continue

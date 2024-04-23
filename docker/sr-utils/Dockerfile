@@ -12,6 +12,7 @@ RUN conda config --set solver libmamba
 
 # install conda packages
 RUN conda env create -f /environment.yml && conda clean -a
+RUN echo "source activate sr-utils" > ~/.bashrc
 ENV PATH=/opt/conda/envs/sr-utils/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # Install BWA-MEM2:
