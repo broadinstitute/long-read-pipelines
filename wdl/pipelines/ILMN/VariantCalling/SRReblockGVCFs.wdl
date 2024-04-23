@@ -23,7 +23,6 @@ workflow ReblockGVCF {
         File? dbsnp_vcf
     
         String participant_name
-        String prefix
         String gcs_out_root_dir
 
         String mito_contig = "chrM"
@@ -50,7 +49,7 @@ workflow ReblockGVCF {
             ref_fasta = ref_map['fasta'],
             ref_fasta_fai = ref_map['fai'],
             ref_dict = ref_map['dict'],
-            prefix = prefix
+            prefix = participant_name + ".reblocked"
     }
 
     # Collapse the reblocked GVCF into a regular VCF
@@ -63,7 +62,7 @@ workflow ReblockGVCF {
             ref_fasta_fai = ref_map['fai'],
             ref_dict = ref_map['dict'],
             dbsnp_vcf = dbsnp_vcf,
-            prefix = prefix,
+            prefix = participant_name,
     }
 
     #Make sure our sample name is correct
