@@ -31,7 +31,7 @@ workflow ReblockGVCF {
     }
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/SRReblockGVCFs/~{prefix}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/SRReblockGVCFs/~{participant_name}"
     
     # Make sure interval list is concordant from HaplotypeCaller
     Array[String] use_filter = if (call_vars_on_mitochondria) then contigs_names_to_ignore else flatten([[mito_contig], contigs_names_to_ignore])
