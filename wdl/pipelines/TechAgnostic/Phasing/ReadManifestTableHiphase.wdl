@@ -3,6 +3,7 @@ version 1.0
 
 import "../../../tasks/Phasing/Hiphase.wdl"
 import "../../../tasks/Utility/GeneralUtils.wdl" as GU
+import "../../../tasks/Utility/VariantUtils.wdl" as VU
 
 workflow ReadManifestFilesHiphase {
     input {
@@ -16,6 +17,7 @@ workflow ReadManifestFilesHiphase {
         File reference_index
 
         String chromosome
+        
     }
 
     call ReadFile as snp_vcf_input { input: input_file = snp_vcf_manifest, chr = chromosome, prefix = "snp_vcf" }
@@ -59,12 +61,14 @@ workflow ReadManifestFilesHiphase {
             ref_fasta = reference_fasta,
             ref_fasta_fai = reference_index,
             samplename = sample
-
         }
-
-
-
     }
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
+        vcf_input = HP_SV.phased_snp_vcf,
+        tbi_input = HP_SV.phased_snp_vcf_tbi,
+        pref = chromosome
+    }
+
 
 }
 
