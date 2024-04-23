@@ -77,6 +77,7 @@ task MergePerChrVcfWithBcftools {
         Array[File] vcf_input
         Array[File] tbi_input
         String pref
+        Int threads_num
     }
 
     command <<<
@@ -93,12 +94,15 @@ task MergePerChrVcfWithBcftools {
         # then merge, and safely assume all ssp-VCFs are sorted in the same order, on one chr
         cd ssp_vcfs
         ls *.vcf.gz > my_vcfs.txt
+
         bcftools merge \
-            --merge all \
+            --threads ~{threads_num} \
+            --merge none \
             -l my_vcfs.txt \
             -O z \
             -o ~{pref}.AllSamples.vcf.gz
-        tabix -p vcf ~{pref}.AllSamples.vcf.gz
+
+        tabix --threads ~{threads_num} -p vcf ~{pref}.AllSamples.vcf.gz
 
         # move result files to the correct location for cromwell to de-localize
         mv ~{pref}.AllSamples.vcf.gz ~{pref}.AllSamples.vcf.gz.tbi /cromwell_root/
@@ -110,12 +114,12 @@ task MergePerChrVcfWithBcftools {
     }
 
     runtime {
-        cpu: 32
-        memory: "128 GiB"
-        disks: "local-disk 750 LOCAL"
-        preemptible: 0
-        maxRetries: 1
-        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
+        cpu: 16
+        memory: "64 GiB"
+        disks: "local-disk 375 LOCAL"
+        preemptible: 1
+        maxRetries: 0
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
 
