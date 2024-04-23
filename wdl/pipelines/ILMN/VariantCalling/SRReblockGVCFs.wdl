@@ -67,6 +67,7 @@ workflow ReblockGVCF {
         File output_gvcf_index = ReblockRawGVCF.output_gvcf_index
         File output_vcf = CollapseGVCFtoVCF.output_vcf
         File output_vcf_index = CollapseGVCFtoVCF.output_vcf_index
+        Float reblock_frac_mem = size(ReblockRawGVCF.output_gvcf) / size(gvcf)
     }
 
 }
