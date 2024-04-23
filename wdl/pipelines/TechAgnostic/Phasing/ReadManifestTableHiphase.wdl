@@ -30,8 +30,8 @@ workflow ReadManifestFilesHiphase {
     call ReadFile as bai_input { input: input_file = bai_manifest, chr = chromosome, prefix = "bai" }
 
     Map[String, String] genetic_mapping_dict = read_map(genetic_mapping_tsv_for_shapeit4)
-    #Int data_length = length(snp_vcf_input.sample)
-    Array[Int] indexes= range(50)
+    Int data_length = length(snp_vcf_input.sample)
+    Array[Int] indexes= range(data_length)
 
     scatter (i in indexes) {
         String sample = snp_vcf_input.sample[i]
@@ -72,25 +72,26 @@ workflow ReadManifestFilesHiphase {
         pref = chromosome
     }
 
-    call StatPhase.Shapeit4 as Shapeit4scaffold { input:
-        vcf_input = MergeAcrossSamples.merged_vcf,
-        vcf_index = MergeAcrossSamples.merged_tbi,
-        mappingfile = genetic_mapping_dict[chromosome],
-        region = chromosome
-    }
+    # call StatPhase.Shapeit4 as Shapeit4scaffold { input:
+    #     vcf_input = MergeAcrossSamples.merged_vcf,
+    #     vcf_index = MergeAcrossSamples.merged_tbi,
+    #     mappingfile = genetic_mapping_dict[chromosome],
+    #     region = chromosome
+    # }
 
     call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
         vcf_input = HP_SV.phased_sv_vcf,
         tbi_input = HP_SV.phased_sv_vcf_tbi,
         pref = chromosome
     }
-    call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
-        vcf_input = MergeAcrossSamplesSVs.merged_vcf,
-        vcf_index = MergeAcrossSamplesSVs.merged_tbi,
-        scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
-        mappingfile = genetic_mapping_dict[chromosome],
-        region = chromosome
-    }
+
+    # call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
+    #     vcf_input = MergeAcrossSamplesSVs.merged_vcf,
+    #     vcf_index = MergeAcrossSamplesSVs.merged_tbi,
+    #     scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
+    #     mappingfile = genetic_mapping_dict[chromosome],
+    #     region = chromosome
+    # }
 
 
 }
