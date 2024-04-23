@@ -365,6 +365,7 @@ task ReblockGVCF {
        max_retries:        1,
        docker:             "broadinstitute/gatk-nightly:2024-04-16-4.5.0.0-25-g986cb1549-NIGHTLY-SNAPSHOT"
     }
+    # TODO: Fix this docker image to a stable version after the next GATK release!
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
