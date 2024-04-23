@@ -51,6 +51,11 @@ def get_bam_stats(bam_file_path, qual_thresh=None):
     return n_reads, total_bases, np.mean(quals), np.median(quals), np.array(read_lengths)
 
 
+def nan_zero_wrap(float_val: float) -> float:
+    """Return 0 if the value is NaN, otherwise return the value."""
+    return float_val if not np.isnan(float_val) else 0
+
+
 def main():
     parser = argparse.ArgumentParser(description='Compute short read bam file stats', prog='compute_sr_stats')
     parser.add_argument('-q', '--qual-threshold', type=int, default=0, help="Phred-scale quality threshold")
@@ -59,10 +64,10 @@ def main():
 
     n_reads, n_bases, mean_qual, median_qual, read_lengths = get_bam_stats(args.bam_file_path, args.qual_threshold)
 
-    print(f"reads\t{n_reads}")
-    print(f"bases\t{n_bases}")
-    print(f"mean_qual\t{mean_qual}")
-    print(f"median_qual\t{median_qual}")
+    print(f"reads\t{nan_zero_wrap(n_reads)}")
+    print(f"bases\t{nan_zero_wrap(n_bases)}")
+    print(f"mean_qual\t{nan_zero_wrap(mean_qual)}")
+    print(f"median_qual\t{nan_zero_wrap(median_qual)}")
 
     print(f"read_mean\t{int(np.mean(read_lengths)) if len(read_lengths) > 0 else 0}")
     print(f"read_median\t{int(np.median(read_lengths)) if len(read_lengths) > 0 else 0}")
