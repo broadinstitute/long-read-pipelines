@@ -1,8 +1,8 @@
 version 1.0
 
-import "../../../structs/Structs.wdl"
+# import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Utils.wdl"
-import "../../../tasks/Utility/SRUtils.wdl" as SRUTIL
+# import "../../../tasks/Utility/SRUtils.wdl" as SRUTIL
 import "../../../tasks/VariantCalling/SRJointGenotyping.wdl" as SRJOINT
 import "../../../tasks/VariantCalling/HaplotypeCaller.wdl" as HC
 

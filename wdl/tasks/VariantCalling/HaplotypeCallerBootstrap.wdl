@@ -174,7 +174,7 @@ task HaplotypeCaller_GATK4_VCF {
     String bamout_arg = if make_bamout then "-bamout ~{prefix}.bamout.bam" else ""
 
     String interval_arg = if (defined(interval_list) || defined(single_interval)) then " -L " else ""
-    String interval_arg_value = if defined(interval_list) then interval_list else if defined(single_interval) then single_interval else ""
+    String interval_arg_value = if defined(interval_list) then select_first([interval_list]) else if defined(single_interval) then select_first([single_interval]) else ""
 
     parameter_meta {
         input_bam: { localization_optional: true }
@@ -198,7 +198,7 @@ task HaplotypeCaller_GATK4_VCF {
             HaplotypeCaller \
                 -R ~{ref_fasta} \
                 -I ~{input_bam} \
-                ~{interval_arg}~{default="" sep=" -L " interval_arg_value} \
+                ~{interval_arg}~{default="" interval_arg_value} \
                 -O ~{output_file_name} \
                 -contamination ~{default=0 contamination} \
                 --sample-ploidy ~{ploidy} \
