@@ -94,7 +94,7 @@ task HiphaseSVs {
         File ref_fasta_fai
         String samplename
 
-        Int memory = 200
+        Int memory = 64
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
 
         RuntimeAttr? runtime_attr_override
