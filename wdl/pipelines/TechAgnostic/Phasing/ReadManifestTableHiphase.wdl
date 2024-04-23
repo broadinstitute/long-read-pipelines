@@ -79,6 +79,19 @@ workflow ReadManifestFilesHiphase {
         region = chromosome
     }
 
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
+        vcf_input = HP_SV.phased_sv_vcf,
+        tbi_input = HP_SV.phased_sv_vcf_tbi,
+        pref = chromosome
+    }
+    call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
+        vcf_input = MergeAcrossSamplesSVs.merged_vcf,
+        vcf_index = MergeAcrossSamplesSVs.merged_tbi,
+        scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
+        mappingfile = genetic_mapping_dict[chromosome],
+        region = chromosome
+    }
+
 
 }
 
