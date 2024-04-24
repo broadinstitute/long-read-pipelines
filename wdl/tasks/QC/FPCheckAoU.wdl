@@ -241,16 +241,16 @@ task LiftoverVcfGATK {
         File target_reference_sequence_fasta_file_index
         File target_reference_sequence_fasta_file_dict
     
-    # Output Names:
-    String lifted_over_vcf_name
-    String lifted_over_rejects_vcf_name
+        # Output Names:
+        String lifted_over_vcf_name
+        String lifted_over_rejects_vcf_name
 
-    # Runtime args:
-    Int? mem
-    Int? preemptible_attempts
-    Int? disk_space_gb
-    Int? cpu
-    Int? boot_disk_size_gb 
+        # Runtime args:
+        Int? mem
+        Int? preemptible_attempts
+        Int? disk_space_gb
+        Int? cpu
+        Int? boot_disk_size_gb 
     
     }
     # Get machine settings:
@@ -260,14 +260,15 @@ task LiftoverVcfGATK {
     Int base_boot_disk_size_gb = 15
 
     # Timing output file
-    String timing_output_file = "liftover_timing.txt"
+    #String timing_output_file = "liftover_timing.txt"
 
     command <<<
         set -euxo pipefail
 
-        startTime=`date +%s.%N`
-        echo "StartTime: $startTime" > ${timing_output_file}
+        # startTime=`date +%s.%N`
+        # echo "StartTime: $startTime" > ${timing_output_file}
 
+        time \
         gatk LiftoverVcf \
             -I ~{input_vcf_file} \
             -O ~{lifted_over_vcf_name} \
@@ -275,10 +276,10 @@ task LiftoverVcfGATK {
             -REJECT ~{lifted_over_rejects_vcf_name} \
             -R ~{target_reference_sequence_fasta_file}
 
-        endTime=`date +%s.%N`
-        echo "EndTime: $endTime" >> ${timing_output_file}
-        elapsedTime=`python -c "print( $endTime - $startTime )"`
-        echo "Elapsed Time: $elapsedTime" >> ${timing_output_file}        
+        # endTime=`date +%s.%N`
+        # echo "EndTime: $endTime" >> ${timing_output_file}
+        # elapsedTime=`python -c "print( $endTime - $startTime )"`
+        # echo "Elapsed Time: $elapsedTime" >> ${timing_output_file}        
     >>>
     runtime {
         docker: "us.gcr.io/broad-gatk/gatk:4.4.0.0"
@@ -293,7 +294,7 @@ task LiftoverVcfGATK {
     output {
         File lifted_over_vcf         = "${lifted_over_vcf_name}"
         File lifted_over_rejects_vcf = "${lifted_over_rejects_vcf_name}"
-        File timing_info             = timing_output_file
+        # File timing_info             = timing_output_file
     }
 }
 
