@@ -72,12 +72,12 @@ workflow ReadManifestFilesHiphase {
         pref = chromosome
     }
 
-    # call StatPhase.Shapeit4 as Shapeit4scaffold { input:
-    #     vcf_input = MergeAcrossSamples.merged_vcf,
-    #     vcf_index = MergeAcrossSamples.merged_tbi,
-    #     mappingfile = genetic_mapping_dict[chromosome],
-    #     region = chromosome
-    # }
+    call StatPhase.Shapeit4 as Shapeit4scaffold { input:
+        vcf_input = MergeAcrossSamples.merged_vcf,
+        vcf_index = MergeAcrossSamples.merged_tbi,
+        mappingfile = genetic_mapping_dict[chromosome],
+        region = chromosome
+    }
 
     call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
         vcf_input = HP_SV.phased_sv_vcf,
@@ -85,13 +85,13 @@ workflow ReadManifestFilesHiphase {
         pref = chromosome
     }
 
-    # call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
-    #     vcf_input = MergeAcrossSamplesSVs.merged_vcf,
-    #     vcf_index = MergeAcrossSamplesSVs.merged_tbi,
-    #     scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
-    #     mappingfile = genetic_mapping_dict[chromosome],
-    #     region = chromosome
-    # }
+    call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
+        vcf_input = MergeAcrossSamplesSVs.merged_vcf,
+        vcf_index = MergeAcrossSamplesSVs.merged_tbi,
+        scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
+        mappingfile = genetic_mapping_dict[chromosome],
+        region = chromosome
+    }
 
 
 }
@@ -126,7 +126,7 @@ task ReadFile {
 
         df = pd.read_csv("~{input_file}", sep = "\t", index_col = 0)
         dv = df["~{chr}"]
-        dv = dv.to_dict()
+        # dv = dv.to_dict()
 
 
         with open("~{prefix}.path.tsv", 'w') as outf:
