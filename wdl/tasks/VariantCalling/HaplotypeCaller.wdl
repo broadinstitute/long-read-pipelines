@@ -36,6 +36,8 @@ workflow CallVariantsWithHaplotypeCaller {
 
         String mito_contig = "chrM"
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
+
+        RuntimeAttr? haplotype_caller_runtime_attr_override
     }
 
     # Scatter by chromosome:
@@ -67,7 +69,8 @@ workflow CallVariantsWithHaplotypeCaller {
                 heterozygosity = heterozygosity,
                 heterozygosity_stdev = heterozygosity_stdev,
                 indel_heterozygosity = indel_heterozygosity,
-                use_spanning_event_genotyping = true
+                use_spanning_event_genotyping = true,
+                runtime_attr_override = haplotype_caller_runtime_attr_override
         }
     }
 
@@ -92,25 +95,22 @@ workflow CallVariantsWithHaplotypeCaller {
             bam = MergeVariantCalledBamOuts.output_bam
     }
 
-#    We're disabling ReblockGVCF for now.
-#    It's removing some annotations we may need later.
+    # Now reblock the GVCF to combine hom ref blocks and save $ / storage:
+    call ReblockGVCF as ReblockHcGVCF {
+        input:
+            gvcf = MergeGVCFs.output_vcf,
+            gvcf_index = MergeGVCFs.output_vcf_index,
+            ref_fasta = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            ref_dict = ref_dict,
+            prefix = prefix
+    }
 
-#    # Now reblock the GVCF to combine hom ref blocks and save $ / storage:
-#    call ReblockGVCF {
-#        input:
-#            gvcf = MergeGVCFs.output_vcf,
-#            gvcf_index = IndexGVCF.index,
-#            ref_fasta = ref_fasta,
-#            ref_fasta_fai = ref_fasta_fai,
-#            ref_dict = ref_dict,
-#            prefix = prefix
-#    }
-
-    # Collapse the GVCF into a regular VCF:
+    # Collapse the Reblocked GVCF into a regular VCF:
     call SRJOINT.GenotypeGVCFs as CollapseGVCFtoVCF {
         input:
-            input_gvcf_data = MergeGVCFs.output_vcf,
-            input_gvcf_index = MergeGVCFs.output_vcf_index,
+            input_gvcf_data = ReblockHcGVCF.output_gvcf,
+            input_gvcf_index = ReblockHcGVCF.output_gvcf_index,
             interval_list = SmallVariantsScatterPrep.interval_list,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
@@ -237,14 +237,14 @@ task HaplotypeCaller_GATK4_VCF {
        boot_disk_gb:       15,
        preemptible_tries:  1,
        max_retries:        1,
-       docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+       docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -324,6 +324,9 @@ task ReblockGVCF {
         File ref_dict
 
         String prefix
+
+        Array[Int] gq_blocks = [20, 30, 40]
+
         Float? tree_score_cutoff
 
         Array[String]? annotations_to_keep
@@ -343,7 +346,10 @@ task ReblockGVCF {
                 -R ~{ref_fasta} \
                 -V ~{gvcf} \
                 -do-qual-approx \
-                --floor-blocks -GQB 20 -GQB 30 -GQB 40 \
+                -A AssemblyComplexity \
+                --annotate-with-num-discovered-alleles \
+                --floor-blocks \
+                -GQB ~{sep=" -GQB " gq_blocks} \
                 ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
                 ~{annotations_to_keep_arg} ~{sep=" --annotations-to-keep " annotations_to_keep} \
                 -O ~{prefix}.rb.g.vcf.gz
@@ -351,20 +357,21 @@ task ReblockGVCF {
 
     #########################
     RuntimeAttr default_attr = object {
-       cpu_cores:          1,
+       cpu_cores:          2,
        mem_gb:             4,
        disk_gb:            disk_size,
        boot_disk_gb:       15,
        preemptible_tries:  1,
        max_retries:        1,
-       docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+       docker:             "broadinstitute/gatk-nightly:2024-04-16-4.5.0.0-25-g986cb1549-NIGHTLY-SNAPSHOT"
     }
+    # TODO: Fix this docker image to a stable version after the next GATK release!
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SDD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])

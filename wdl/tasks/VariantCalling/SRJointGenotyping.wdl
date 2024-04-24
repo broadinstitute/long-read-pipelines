@@ -169,73 +169,7 @@ task ImportGVCFs {
         boot_disk_gb:       15,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task ReblockGVCF {
-
-    input {
-        File input_gvcf
-        File input_gvcf_index
-
-        File ref_fasta
-        File ref_fasta_fai
-        File ref_dict
-
-        String prefix
-
-        Array[Int] gq_blocks = [20, 30, 40]
-
-        String? annotations_to_keep_command
-        Float? tree_score_cutoff
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
-
-    Int disk_size = 1 + 4*ceil(size(input_gvcf, "GB")) + 4*ceil(size(input_gvcf_index, "GB")) + ref_size
-
-    command <<<
-        set -euxo pipefail
-
-        gatk --java-options "-Xms3000m -Xmx3000m" \
-          ReblockGVCF \
-          -R ~{ref_fasta} \
-          -V ~{input_gvcf} \
-          -do-qual-approx \
-          --floor-blocks \
-          -GQB ~{sep=" -GQB " gq_blocks} \
-          ~{annotations_to_keep_command} \
-          ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
-          -O ~{prefix}.reblocked.g.vcf.gz
-    >>>
-
-    output {
-        File output_gvcf = "~{prefix}.reblocked.g.vcf.gz"
-        File output_gvcf_index = "~{prefix}.reblocked.g.vcf.gz.tbi"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             4,
-        disk_gb:            disk_size,
-        boot_disk_gb:       15,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -332,7 +266,7 @@ task GenotypeGVCFs {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
