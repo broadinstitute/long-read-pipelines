@@ -141,3 +141,6 @@ workflows:
 - name: ReadManifestTableHiphase
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/ReadManifestTableHiphase.wdl
+- name: ReadManifestTableStatistical
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/ReadManifestTableStatistical.wdl
