@@ -32,7 +32,7 @@ task RunReportScript {
         location: "location where the sample was taken"
 
         # QC Status
-        qc_status: "status to determine whether or not the sequencing run passes quality control standards"
+        qc_pass: "status to determine whether or not the sequencing run passes quality control standards"
 
         # ------ Analysis Page ------ #
         # Active Channels
