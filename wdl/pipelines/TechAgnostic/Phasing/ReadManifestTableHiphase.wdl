@@ -208,7 +208,8 @@ task SplitMultiallelicCalls {
 
     command <<<
         set -euxo pipefail
-        bcftools norm -m -any ~{bcftools_merged_vcf} | bgzip > "~{prefix}.normed.vcf.gz"
+        bcftools view --no-update -f .,PASS ~{bcftools_merged_vcf} > filtered.vcf
+        bcftools norm -m -any filtered.vcf | bgzip > "~{prefix}.normed.vcf.gz"
         tabix -p vcf "~{prefix}.normed.vcf.gz"
         
     >>>

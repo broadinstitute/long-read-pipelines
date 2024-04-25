@@ -46,7 +46,7 @@ task Shapeit4 {
         mem_gb:             memory,
         disk_gb:            500,
         boot_disk_gb:       100,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        0,
         docker:             "hangsuunc/hiphase:1.3.0"
     }
@@ -104,7 +104,7 @@ task Shapeit4_phaseSVs {
         mem_gb:             memory,
         disk_gb:            500,
         boot_disk_gb:       100,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        0,
         docker:             "hangsuunc/hiphase:1.3.0"
     }
