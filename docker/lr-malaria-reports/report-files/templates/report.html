@@ -1785,7 +1785,7 @@
             const mainPhoto = document.getElementById("main_photo");
             const thumbnails = document.querySelectorAll(".thumbnail img");
             const imgTitle = document.getElementById("img_title");
-            var lociNames = "{{ analysis.res_loci_names|tojson|safe }}";
+            var lociNames = {{ analysis.res_loci_names|tojson|safe }};
             
             mainPhoto.addEventListener("click", function() {
               this.classList.remove("normal");
