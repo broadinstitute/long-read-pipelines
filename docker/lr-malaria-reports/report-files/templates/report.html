@@ -1104,6 +1104,7 @@
     /* coverage gallery */
     #cov_gallery {
         position: absolute;
+        align-items: center;
         margin: 0 auto;
         padding: 20px;
         max-width: 1114px;
@@ -1117,7 +1118,7 @@
 
     .cov_line {
         position: relative;
-        top: 60px;
+        top: -250px;
         height: 2px;
         max-height: 100%;
         overflow: visible;
@@ -1132,12 +1133,9 @@
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
         'Liberation Sans', sans-serif;
         position: absolute;
-        left: 20px;
         top: 32px;
         width: 519px;
         height: 26.9455px;
-        justify-content: center;
-        flex-direction: column;
     }
     
     #img_title {
@@ -1148,7 +1146,7 @@
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
         'Liberation Sans', sans-serif;
         position: absolute;
-        left: 550px;
+        left: 400px;
         top: 105px;
         width: 519px;
         height: 26.9455px;
@@ -1161,7 +1159,7 @@
         position: absolute;
         display: block;
         top: 135px;
-        left: 270px; /* change this with real photos (fixed size) */
+        left: 290px; /* change this with real photos (fixed size) */
         height: 325px;
         z-index: 100;
     }
@@ -1510,7 +1508,7 @@
                     </div>
                 
                     <div class="qc_status_spacing">
-                      <p class = "_QC_status_text"><span>{{ sample.qc_status }}</span><br><span style="font-weight:300; font-size:20px; color:#000">QC Status</span></p>
+                      <p class = "_QC_status_text"><span>{{ sample.qc_pass }}</span><br><span style="font-weight:300; font-size:20px; color:#000">QC Status</span></p>
                     </div>
                 
                 <div class="hrp_spacing">
@@ -1801,14 +1799,16 @@
 
             const updateMainImage = (newImageSrc, idx) => {
                 mainPhoto.src = newImageSrc;
-                imgTitle.textContent = lociNames[idx]
             };
 
-            for(var i = 0; i < thumbnails.length; i++) {
-                thumbnails[i].addEventListener("click", () => {
-                    const newImageSrc = event.target.src;
-                    updateMainImage(newImageSrc, i);
+            for (let i = 0; i < thumbnails.length; i++) {
+              (function(index) { // Create a closure around 'i'
+                thumbnails[i].addEventListener("click", (event) => {
+                  const newImageSrc = event.target.src;
+                  imgTitle.innerHTML = titles[index]; // Access titles using captured 'index'
+                  updateMainImage(newImageSrc);
                 });
+              })(i); // Call the inner function immediately, passing the current 'i'
             }
 
             function checkScroll() {

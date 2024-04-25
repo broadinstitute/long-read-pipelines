@@ -87,8 +87,8 @@ workflow GenerateMalariaReports {
         Float? latitude
         String? location
         
-        # QC Status
-        String qc_status
+        # QC Pass
+        String qc_pass
 
         # ------ Analysis Page ------ #
         
@@ -164,7 +164,8 @@ workflow GenerateMalariaReports {
             fastqc_path = fastqc_path,
             coverage_bin_size = coverage_bin_size,
             snapshots = GenerateSnapshots.snapshots,
-            regions_bed = regions_bed
+            regions_bed = regions_bed,
+            qc_pass = qc_pass
     }
 
     output {

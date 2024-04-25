@@ -503,7 +503,7 @@ class Sample:
     such as the sample name.
     '''
     
-    def __init__(self, sample_name, hrp2, hrp3, qc_status, drug_res, info, _map, location_info):
+    def __init__(self, sample_name, hrp2, hrp3, qc_status, drug_res, info, _map, location_info, qc_pass):
         '''This function defines the class variables and retrieves them from their respective functions.'''
         
         self.sample_name = sample_name
@@ -514,6 +514,7 @@ class Sample:
         self.info = info
         self.map = _map
         self.location_info = location_info
+        self.qc_pass = qc_pass
 
 class Analysis:
     '''
@@ -589,6 +590,7 @@ if __name__ == '__main__':
                         type=float) # check
     parser.add_argument("--aligned_read_length_median", help="median read length", required=True, type=float)
     parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float)
+    parser.add_argument("--qc_pass")
 
     # Drug Resistance
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", default=None)
@@ -651,6 +653,8 @@ if __name__ == '__main__':
     info = [upload_date, species, arg_dict['aligned_coverage'], arg_dict['aligned_read_length_n50'], 
             arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
 
+    qc_pass = arg_dict["qc_pass"]
+    
     # Check if drug resistance report is provided
     if not arg_dict['drug_resistance_text'] or arg_dict['drug_resistance_text'] == "None":
         resistances = create_drug_table(None)
@@ -728,7 +732,7 @@ if __name__ == '__main__':
     print(fastqc_html[:200]) # debug
 
     # Create summary, analysis, and fastQC objects to be passed 
-    summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
+    summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info, qc_pass)
 
     analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
 

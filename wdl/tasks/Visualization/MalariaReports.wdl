@@ -17,7 +17,7 @@ task RunReportScript {
         upload_date: "date sample was sequenced and uploaded"
         species: "species of sample"
         aligned_coverage: "number of reads uniquely mapped to a reference"
-        aligned_read_length_n50: "number at which 50%\ of the read lengths are longer than this value" # check
+        aligned_read_length_n50: "number at which 50% of the read lengths are longer than this value" # check
         aligned_read_length_median: "median read length"
         read_qual_median: "median measure of the uncertainty of base calls"
 
@@ -82,8 +82,8 @@ task RunReportScript {
         Float? latitude
         String? location
         
-        # QC Status
-        String qc_status
+        # QC Pass
+        String qc_pass
 
         # ------ Analysis Page ------ #
         
@@ -172,7 +172,8 @@ task RunReportScript {
             --average_identity ~{average_identity} \
             --coverage_bin_size ~{coverage_bin_size} \
             --snapshots ~{sep="," snapshots} \
-            --regions_bed ~{regions_bed}
+            --regions_bed ~{regions_bed} \
+            --qc_pass ~{default="N/A" qc_pass}
         echo "DONE!"
     >>>
 
