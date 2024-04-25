@@ -482,6 +482,14 @@ def read_fastqc(directory):
     
     return html
 
+''' 
+Snapshots
+'''
+def get_res_loci_names(bed):
+    column_names = ["chromosome", "start", "end", "name"]
+    bed = pd.DataFrame()
+    bed = pd.read_csv(bed_file, sep="\s+", header=None, names=column_names) 
+    return list(bed.name) 
 
 
 '''
@@ -514,7 +522,7 @@ class Analysis:
     Additionally, it passes in variables needed for plot generation in Javascript.
     '''
     
-    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, active_channels, coverage_plot, snapshots):
+    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, active_channels, coverage_plot, snapshots, res_loci_names):
         '''This function defines the variables used and retrieves them from their respective functions.'''
         
         self.sequencing_summary = sequencing_summary
@@ -523,6 +531,7 @@ class Analysis:
         self.active_channels = active_channels
         self.coverage_plot = coverage_plot
         self.snapshots = snapshots
+        self.res_loci_names = res_loci_names
         # self.reference_info = reference_info
 
 class FastQC:
@@ -622,6 +631,7 @@ if __name__ == '__main__':
     
     # Snapshots
     parser.add_argument("--snapshots", required=True)
+    parser.add_argument("--regions_bed")
     
     # parse given arguments
     args = parser.parse_args()
@@ -711,6 +721,8 @@ if __name__ == '__main__':
     snapshots = snapshots.split(",")
     snapshots_b64 = [img_to_b64(image) for image in snapshots]
     
+    bed_file = open(arg_dict["regions_bed"], "r")
+    
     # third : fastqc_page
     fastqc_html = read_fastqc("/report-files/data/fastqc/")
     print(fastqc_html[:200]) # debug
@@ -718,7 +730,7 @@ if __name__ == '__main__':
     # Create summary, analysis, and fastQC objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info)
 
-    analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64, snapshots_b64)
+    analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
 
     fastQC = FastQC(fastqc_html)
 

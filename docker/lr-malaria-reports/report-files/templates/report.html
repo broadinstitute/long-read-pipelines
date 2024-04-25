@@ -1140,7 +1140,7 @@
         flex-direction: column;
     }
     
-    .img_title {
+    #img_title {
         color: #000;
         font-size: 22px;
         line-height: 20px;
@@ -1721,7 +1721,7 @@
                     <div class="cov_line">
                         <svg preserveAspectRatio="none" viewBox="0 0 1250 1" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0L510.372 0" stroke="#DFE1E5"></path></svg>
                     </div>
-                    <div class="img_title"></div>
+                    <div id="img_title">{{ analysis.res_loci_names[0] }}</div>
                     <img id="main_photo" src="data:image/jpeg;base64,{{ (analysis.snapshots[0]).decode('utf-8') | safe }}">
                     <div class="cover">
                         <button class="left" style="color:rgb(53, 53, 53);" onclick="leftScroll()">
@@ -1784,6 +1784,8 @@
             const rightButton = document.querySelector(".right");
             const mainPhoto = document.getElementById("main_photo");
             const thumbnails = document.querySelectorAll(".thumbnail img");
+            const imgTitle = document.getElementById("img_title");
+            var lociNames = JSON.parse("{{ analysis.res_loci_names|tojson|safe }}");
             
             mainPhoto.addEventListener("click", function() {
               this.classList.remove("normal");
@@ -1797,14 +1799,15 @@
               }
             })
 
-            const updateMainImage = (newImageSrc) => {
+            const updateMainImage = (newImageSrc, idx) => {
                 mainPhoto.src = newImageSrc;
+                imgTitle.textContent = lociNames[idx]
             };
 
             for(var i = 0; i < thumbnails.length; i++) {
                 thumbnails[i].addEventListener("click", () => {
                     const newImageSrc = event.target.src;
-                    updateMainImage(newImageSrc);
+                    updateMainImage(newImageSrc, i);
                 });
             }
 

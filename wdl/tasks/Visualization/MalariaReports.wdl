@@ -111,6 +111,7 @@ task RunReportScript {
         Int? coverage_bin_size
 
         # Snapshots
+        File regions_bed
         Array[File] snapshots
     }
 
@@ -170,7 +171,8 @@ task RunReportScript {
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
             --coverage_bin_size ~{coverage_bin_size} \
-            --snapshots ~{sep="," snapshots}
+            --snapshots ~{sep="," snapshots} \
+            --regions_bed ~{regions_bed}
         echo "DONE!"
     >>>
 

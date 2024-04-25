@@ -163,7 +163,8 @@ workflow GenerateMalariaReports {
             average_identity = average_identity,
             fastqc_path = fastqc_path,
             coverage_bin_size = coverage_bin_size,
-            snapshots = GenerateSnapshots.snapshots
+            snapshots = GenerateSnapshots.snapshots,
+            regions_bed = regions_bed
     }
 
     output {
