@@ -79,7 +79,8 @@ workflow CallVariantsWithHaplotypeCaller {
         input:
             input_vcfs = CallVariantsWithHC.output_vcf,
             input_vcfs_indexes = CallVariantsWithHC.output_vcf_index,
-            prefix = prefix
+            prefix = prefix,
+            is_gvcf = true
     }
 
     # Merge the output BAMs:

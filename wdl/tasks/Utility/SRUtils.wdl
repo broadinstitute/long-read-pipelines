@@ -661,21 +661,25 @@ task MergeVCFs {
         Array[File] input_vcfs_indexes
         String prefix
 
+        Boolean is_gvcf = false
+
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = ceil(size(input_vcfs, "GiB") * 2.5) + 10
 
+    String gvcf_decorator = if is_gvcf then ".g" else ""
+
     command <<<
         java -Xms2000m -Xmx2500m -jar /usr/picard/picard.jar \
           MergeVcfs \
           INPUT=~{sep=' INPUT=' input_vcfs} \
-          OUTPUT=~{prefix}.vcf.gz
+          OUTPUT=~{prefix}~{gvcf_decorator}.vcf.gz
     >>>
 
     output {
-        File output_vcf = "~{prefix}.vcf.gz"
-        File output_vcf_index = "~{prefix}.vcf.gz.tbi"
+        File output_vcf = "~{prefix}~{gvcf_decorator}.vcf.gz"
+        File output_vcf_index = "~{prefix}~{gvcf_decorator}.vcf.gz.tbi"
     }
 
     #########################
