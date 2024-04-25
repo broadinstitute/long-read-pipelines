@@ -419,9 +419,7 @@ task BaseRecalibrator {
 
     command {
 
-        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
-            -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCDetails \
-            -Xloggc:gc_log.log -Xms5000m -Xmx5500m" \
+        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal -Xms5000m" \
             BaseRecalibrator \
             -R ~{ref_fasta} \
             -I ~{input_bam} \
@@ -492,8 +490,7 @@ task ApplyBQSR {
 
     command <<<
 
-        gatk --java-options "-XX:+PrintFlagsFinal -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps \
-            -XX:+PrintGCDetails -Xloggc:gc_log.log \
+        gatk --java-options "-XX:+PrintFlagsFinal \
             -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=~{compression_level} -Xms8192m -Xmx~{java_memory_size_mb}m" \
             ApplyBQSR \
             --create-output-bam-md5 \
