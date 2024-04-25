@@ -157,7 +157,6 @@ task RunReportScript {
             --longitude ~{default=0 longitude} \
             --latitude ~{default=0 latitude} \
             --location ~{default="Unknown" wrap_location} \
-            --qc_status ~{qc_status} \
             --active_channels ~{active_channels} \
             --num_reads_q5 ~{num_reads_q5} \
             --num_reads_q7 ~{num_reads_q7} \

@@ -148,7 +148,6 @@ workflow GenerateMalariaReports {
             longitude = longitude,
             latitude = latitude,
             location = location,
-            qc_status = qc_status,
             active_channels = active_channels,
             num_reads_q5 = num_reads_q5,
             num_reads_q7 = num_reads_q7,
