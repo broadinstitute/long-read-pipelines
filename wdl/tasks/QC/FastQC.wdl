@@ -35,6 +35,9 @@ task FastQC {
         echo -n "Should be: "
         sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | grep -v '^#' | grep -v '>>' | wc -l
 
+        # Need to unset `pipefail` for these commands:
+        set -euxo
+
         # Get the mean and median base quality scores:
         num_base_qualities=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
             grep -v '^#' | \
