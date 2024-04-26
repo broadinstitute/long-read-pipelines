@@ -347,6 +347,7 @@ task ReblockGVCF {
                 -R ~{ref_fasta} \
                 -V ~{gvcf} \
                 -do-qual-approx \
+                -G StandardAnnotation -G StandardHCAnnotation  \
                 -A AssemblyComplexity \
                 --annotate-with-num-discovered-alleles \
                 --floor-blocks \
