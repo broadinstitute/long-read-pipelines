@@ -1,8 +1,5 @@
 version 1.0
 
-import "../../../tasks/Phasing/Hiphase.wdl"
-import "../../../tasks/Utility/GeneralUtils.wdl" as GU
-import "../../../tasks/Utility/VariantUtils.wdl" as VU
 import "../../../tasks/Phasing/StatisticalPhasing.wdl" as StatPhase
 
 workflow ReadManifestFilesHiphase {

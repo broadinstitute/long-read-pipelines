@@ -2,9 +2,10 @@
 version 1.0
 
 import "../../../tasks/Phasing/Hiphase.wdl"
-import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 import "../../../tasks/Utility/VariantUtils.wdl" as VU
 import "../../../tasks/Phasing/StatisticalPhasing.wdl" as StatPhase
+import "../../../tasks/Phasing/WhatsHap.wdl" as WH
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ReadManifestFilesHiphase {
     input {
@@ -19,6 +20,7 @@ workflow ReadManifestFilesHiphase {
         File genetic_mapping_tsv_for_shapeit4
 
         String chromosome
+        String gcs_out_root_dir
         
     }
 
@@ -65,7 +67,29 @@ workflow ReadManifestFilesHiphase {
             ref_fasta_fai = reference_index,
             samplename = sample
         }
+
+        ############## statistics##############
+        call WH.Stats as snp_stats{ input:
+            phased_vcf = HP_SV.phased_snp_vcf,
+            phased_tbi = HP_SV.phased_snp_vcf_tbi
+        }
+        call FF.FinalizeToFile as Finalizes1 {
+            input: outdir = gcs_out_root_dir, file = snp_stats.stats_tsv
+        }
+
+        call WH.Stats as sv_stats{ input:
+            phased_vcf = HP_SV.phased_sv_vcf,
+            phased_tbi = HP_SV.phased_sv_vcf_tbi
+        }
+        call FF.FinalizeToFile as Finalizes2 {
+            input: outdir = gcs_out_root_dir, file = sv_stats.stats_tsv
+        }
+        #######################################
     }
+
+
+
+
     call VU.MergePerChrVcfWithBcftools as MergeAcrossSamples { input:
         vcf_input = HP_SV.phased_snp_vcf,
         tbi_input = HP_SV.phased_snp_vcf_tbi,
@@ -77,6 +101,10 @@ workflow ReadManifestFilesHiphase {
         vcf_index = MergeAcrossSamples.merged_tbi,
         mappingfile = genetic_mapping_dict[chromosome],
         region = chromosome
+    }
+
+    call FF.FinalizeToFile as Finalizescaffold {
+        input: outdir = gcs_out_root_dir, file = Shapeit4scaffold.scaffold_vcf
     }
 
     call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
@@ -91,6 +119,10 @@ workflow ReadManifestFilesHiphase {
         scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
         mappingfile = genetic_mapping_dict[chromosome],
         region = chromosome
+    }
+
+    call FF.FinalizeToFile as FinalizeSVs {
+        input: outdir = gcs_out_root_dir, file = Shapeit4SVphase.final_phased_vcf
     }
 
 
