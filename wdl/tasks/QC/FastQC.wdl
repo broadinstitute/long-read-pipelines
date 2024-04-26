@@ -31,11 +31,17 @@ task FastQC {
         echo $read_length | awk '{ print "read_length\t" $1 }' >> map.txt
         echo $number_of_reads $read_length | awk '{ print "number_of_bases\t" $1*$2 }' >> map.txt
 
+        echo "Calculating number of base qualities:"
+        echo -n "Should be: "
+        sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | grep -v '^#' | grep -v '>>' | wc -l
+
         # Get the mean and median base quality scores:
         num_base_qualities=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
             grep -v '^#' | \
             grep -v '>>' | \
             wc -l)
+
+        echo "Num Base Qualities: ${num_base_qualities}"
 
         if [[ ${num_base_qualities} -eq 0 ]]; then
             echo "WARNING: No base quality information found in FastQC report.  Setting mean_qual and median_qual to 0."
