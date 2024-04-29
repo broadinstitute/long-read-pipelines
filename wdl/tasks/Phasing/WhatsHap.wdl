@@ -64,7 +64,7 @@ task HaploTagBam {
         disk_gb:            disk_size,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -142,7 +142,7 @@ task Phase {
         disk_gb:            disk_size,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -207,7 +207,7 @@ task Stats {
         disk_gb:            disk_size,
         preemptible_tries:  3,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -266,7 +266,7 @@ task Compare {
         disk_gb:            disk_size,
         preemptible_tries:  3,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
