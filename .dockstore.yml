@@ -147,6 +147,9 @@ workflows:
 - name: JointLocalAsmAnchorGraph
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/JointLocalAsmAnchorGraph.wdl
+- name: JointLocalAsmAnchorGraph1
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/JointLocalAsmAnchorGraph1.wdl
 - name: ImmunoAnnotate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/ImmunoAnnotate.wdl
