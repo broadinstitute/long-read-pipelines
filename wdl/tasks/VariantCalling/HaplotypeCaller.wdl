@@ -121,8 +121,8 @@ workflow CallVariantsWithHaplotypeCaller {
     }
 
     output {
-        File output_gvcf = MergeGVCFs.output_vcf
-        File output_gvcf_index = MergeGVCFs.output_vcf_index
+        File output_gvcf = ReblockHcGVCF.output_gvcf
+        File output_gvcf_index = ReblockHcGVCF.output_gvcf_index
         File output_vcf = CollapseGVCFtoVCF.output_vcf
         File output_vcf_index = CollapseGVCFtoVCF.output_vcf_index
         File bamout = MergeVariantCalledBamOuts.output_bam
