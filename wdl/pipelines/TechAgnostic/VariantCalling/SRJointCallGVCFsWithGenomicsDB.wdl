@@ -78,6 +78,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[File]?   annotation_bed_files
         Array[File]?   annotation_bed_file_indexes
         Array[String]? annotation_bed_file_annotation_names
+        Int? specified_disk_size
 
         File? snpeff_db
 
@@ -121,7 +122,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                 batch_size      = 50,
                 # We need to override this because we're not actually sending the GVCF over (just a list)
                 # ALSO, we're currently tarring the genomicsDB, so we need at least double the space here, plus some slop:
-                runtime_attr_override = object {disk_gb: 10 + (3 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB"))), preemptible_tries: 0}
+                specified_disk_size = select_first([specified_disk_size, 10 + (3 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB")))]),
+                runtime_attr_override = object { preemptible_tries: 0 }
+                # runtime_attr_override = object {disk_gb: 10 + (3 * CreateSampleNameMap.total_gvcf_size_gb) + (2 * ceil(size(ref_map['fasta'], "GB"))), preemptible_tries: 0}
         }
 
         # Joint call
