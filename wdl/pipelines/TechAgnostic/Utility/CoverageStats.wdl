@@ -21,7 +21,7 @@ workflow MosdepthCoverageStats {
         Int bin_length = 1000
 
         # Runtime parameters
-        Int? preemptible_tries = 3
+        Int preemptible_tries = 3
     }
 
     call MosDepthOverBed {
@@ -44,7 +44,7 @@ workflow MosdepthCoverageStats {
 
     output {
         File cov_stat_summary_file      = CoverageStats.cov_stat_summary_file
-        Map[String, String] cov_stat_summary = CoverageStats.cov_stat_summary
+        Map[String, Float] cov_stat_summary = CoverageStats.cov_stat_summary
     }
 
 }
@@ -59,7 +59,11 @@ task MosDepthOverBed {
         bam: "Aligned BAM file."
         bai: "Aligned BAM index file."
         bed: "BED file containing regions of interest."
-        bin_length: "Length of bins to use for coverage calculation."
+        bin_length: "Length of bins to use for coverage calculation. default is 1000. If bed file is provided, this parameter is ignored."
+        chrom: "Chromosome to calculate coverage for."
+        no_per_base: "Do not calculate per-base coverage."
+        fast_mode: "Use fast mode."
+        mapq: "Minimum mapping quality to consider."
         preemptible_tries: "Number of times to retry a preempted task."
     }
 
@@ -67,10 +71,14 @@ task MosDepthOverBed {
         File bam
         File bai
         File? bed
-        Int bin_length
+        String? chrom
+        Int? bin_length
+        Boolean no_per_base = true
+        Boolean fast_mode = true
+        Int mapq = 1
 
         # Runtime parameters
-        Int? preemptible_tries = 3
+        Int preemptible_tries = 3
     }
 
     String mosdepth_by_region = select_first([bed, bin_length])
@@ -86,7 +94,14 @@ task MosDepthOverBed {
         ln -s ~{bam} ./~{basename}.bam
         ln -s ~{bai} ./~{basename}.bai
 
-        mosdepth -t 4 -b ~{mosdepth_by_region} -n -x -Q 1 ~{prefix} ./~{basename}.bam
+        mosdepth \
+        ~{true="-n" false="" no_per_base} \
+        ~{true="-x" false="" fast_mode} \
+        -t 4 \
+        ~{"-c " + chrom} \
+        ~{"-b " + mosdepth_by_region} \
+        ~{"-Q " + mapq} \
+        ~{prefix} ./~{basename}.bam
     }
 
     output {
@@ -99,7 +114,7 @@ task MosDepthOverBed {
     runtime {
         cpu:                    4
         memory:                 8 + " GiB"
-        disks: "local-disk " +  100 + " HDD"
+        disks: "local-disk " +  disk_size + " HDD"
         preemptible:            preemptible_tries
         maxRetries:             1
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:latest"
@@ -124,7 +139,7 @@ task CoverageStats {
         String? basename_input
 
         # Runtime parameters
-        Int? preemptible_tries = 3
+        Int preemptible_tries = 3
     }
     Int round = 2
     String header_suffix = "_coverage"
@@ -190,7 +205,7 @@ task CoverageStats {
     runtime {
         cpu:                    2
         memory:                 4 + " GiB"
-        disks: "local-disk " +  100 + " HDD"
+        disks: "local-disk " +  disk_size + " HDD"
         preemptible:            preemptible_tries
         maxRetries:             1
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
