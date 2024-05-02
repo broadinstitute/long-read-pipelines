@@ -118,13 +118,13 @@ task ImportGVCFs {
         String prefix
 
         Int batch_size = 50
-
+        Int? specified_disk_size 
         RuntimeAttr? runtime_attr_override
     }
 
     Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
-
-    Int disk_size = 1 + 4*ref_size
+    Int default_disk_size = 1 + 4 * ref_size
+    Int disk_size = select_first([specified_disk_size, default_disk_size]) 
 
     command <<<
         set -euxo pipefail
