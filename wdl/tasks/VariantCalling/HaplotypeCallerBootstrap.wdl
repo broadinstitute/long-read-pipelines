@@ -120,8 +120,8 @@ workflow CallVariantsWithHaplotypeCaller {
     }
 
     output {
-        File output_gvcf = MergeGVCFs.output_vcf
-        File output_gvcf_index = MergeGVCFs.output_vcf_index
+        File output_gvcf = ReblockHcGVCF.output_gvcf
+        File output_gvcf_index = ReblockHcGVCF.output_gvcf_index
         File output_vcf = CollapseGVCFtoVCF.output_vcf
         File output_vcf_index = CollapseGVCFtoVCF.output_vcf_index
         File bamout = MergeVariantCalledBamOuts.output_bam
@@ -237,7 +237,7 @@ task HaplotypeCaller_GATK4_VCF {
        boot_disk_gb:       23,
        preemptible_tries:  1,
        max_retries:        1,
-       docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+       docker:             "broadinstitute/gatk-nightly:2024-05-02-4.5.0.0-27-gec39c37d9-NIGHTLY-SNAPSHOT"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -363,7 +363,7 @@ task ReblockGVCF {
        boot_disk_gb:       15,
        preemptible_tries:  1,
        max_retries:        1,
-       docker:             "broadinstitute/gatk-nightly:2024-04-16-4.5.0.0-25-g986cb1549-NIGHTLY-SNAPSHOT"
+       docker:             "broadinstitute/gatk-nightly:2024-05-02-4.5.0.0-27-gec39c37d9-NIGHTLY-SNAPSHOT"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
