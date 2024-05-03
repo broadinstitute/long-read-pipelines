@@ -134,7 +134,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#reblockgvcf">ReblockGVCF</a>
+    <li class="toctree-l2"><a class="reference internal" href="#genotypegvcfs">GenotypeGVCFs</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
         <ul>
@@ -147,22 +147,6 @@
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_2">Outputs</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#genotypegvcfs">GenotypeGVCFs</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required_3">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs_3">Outputs</a>
     </li>
         </ul>
     </li>
@@ -397,35 +381,9 @@
 <ul>
 <li><code>output_genomicsdb</code> (File)</li>
 </ul>
-<h2 id="reblockgvcf">ReblockGVCF</h2>
+<h2 id="genotypegvcfs">GenotypeGVCFs</h2>
 <h3 id="inputs_2">Inputs</h3>
 <h4 id="required_2">Required</h4>
-<ul>
-<li><code>input_gvcf</code> (File, <strong>required</strong>)</li>
-<li><code>input_gvcf_index</code> (File, <strong>required</strong>)</li>
-<li><code>prefix</code> (String, <strong>required</strong>)</li>
-<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
-</ul>
-<h4 id="optional_2">Optional</h4>
-<ul>
-<li><code>annotations_to_keep_command</code> (String?)</li>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>tree_score_cutoff</code> (Float?)</li>
-</ul>
-<h4 id="defaults_1">Defaults</h4>
-<ul>
-<li><code>gq_blocks</code> (Array[Int], default=[20, 30, 40])</li>
-</ul>
-<h3 id="outputs_2">Outputs</h3>
-<ul>
-<li><code>output_gvcf</code> (File)</li>
-<li><code>output_gvcf_index</code> (File)</li>
-</ul>
-<h2 id="genotypegvcfs">GenotypeGVCFs</h2>
-<h3 id="inputs_3">Inputs</h3>
-<h4 id="required_3">Required</h4>
 <ul>
 <li><code>input_gvcf_data</code> (File, <strong>required</strong>): Either a single GVCF file or a GenomicsDB Tar file.</li>
 <li><code>interval_list</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
@@ -434,17 +392,17 @@
 <li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
 <li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_3">Optional</h4>
+<h4 id="optional_2">Optional</h4>
 <ul>
 <li><code>dbsnp_vcf</code> (String?)</li>
 <li><code>input_gvcf_index</code> (File?)</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_2">Defaults</h4>
+<h4 id="defaults_1">Defaults</h4>
 <ul>
 <li><code>keep_combined_raw_annotations</code> (Boolean, default=false)</li>
 </ul>
-<h3 id="outputs_3">Outputs</h3>
+<h3 id="outputs_2">Outputs</h3>
 <ul>
 <li><code>output_vcf</code> (File)</li>
 <li><code>output_vcf_index</code> (File)</li>

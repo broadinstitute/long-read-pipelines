@@ -340,6 +340,7 @@
 <ul>
 <li><code>bed_to_compute_coverage</code> (File?): Bed file to use as regions over which to measure coverage.</li>
 <li><code>fingerprint_haploytpe_db_file</code> (File?): Haplotype DB file from which to fingerprint the input data.</li>
+<li><code>CallVariantsWithHaplotypeCaller.haplotype_caller_runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ComputeBamStats.qual_threshold</code> (Int?)</li>
 <li><code>ComputeBamStats.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ComputeGenomeLength.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -375,10 +376,6 @@
 <li><code>FinalizeHCGTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeHCGVcf.name</code> (String?)</li>
 <li><code>FinalizeHCGVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCRescoredFilteredTbi.name</code> (String?)</li>
-<li><code>FinalizeHCRescoredFilteredTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCRescoredFilteredVcf.name</code> (String?)</li>
-<li><code>FinalizeHCRescoredFilteredVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeHCRescoredTbi.name</code> (String?)</li>
 <li><code>FinalizeHCRescoredTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeHCRescoredVcf.name</code> (String?)</li>
@@ -446,7 +443,6 @@
 <li><code>MergeAllReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MosDepth.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>RegionalCoverage.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>RemoveFilteredVariants.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>RenameRawHcGvcf.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>RenameRawHcVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>RevertBQSRQuals.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -459,11 +455,13 @@
 <li><code>TrainSnpVariantAnnotationsModel.unlabeled_annotation_hdf5</code> (File?)</li>
 <li><code>CallVariantsWithDeepVariant.SmallVariantsScatterPrepp.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.CallVariantsWithHC.interval_list</code> (File?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CallVariantsWithHC.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.IndexBamout.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.MergeGVCFs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.MergeVariantCalledBamOuts.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>CallVariantsWithHaplotypeCaller.ReblockHcGVCF.annotations_to_keep</code> (Array[String]?)</li>
+<li><code>CallVariantsWithHaplotypeCaller.ReblockHcGVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>CallVariantsWithHaplotypeCaller.ReblockHcGVCF.tree_score_cutoff</code> (Float?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.SmallVariantsScatterPrep.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithDeepVariant.DeepVariant.deep_variant.runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
@@ -493,25 +491,26 @@
 <li><code>TrainIndelVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
 <li><code>TrainSnpVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
 <li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.keep_combined_raw_annotations</code> (Boolean, default=false)</li>
+<li><code>CallVariantsWithHaplotypeCaller.ReblockHcGVCF.gq_blocks</code> (Array[Int], default=[20, 30, 40])</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>aligned_bam</code> (File)</li>
-<li><code>aligned_bai</code> (File)</li>
-<li><code>aligned_num_reads</code> (Float)</li>
-<li><code>aligned_num_bases</code> (Float)</li>
-<li><code>aligned_frac_bases</code> (Float)</li>
-<li><code>aligned_est_fold_cov</code> (Float)</li>
-<li><code>aligned_read_length_mean</code> (Float)</li>
-<li><code>insert_size_average</code> (Float)</li>
-<li><code>insert_size_standard_deviation</code> (Float)</li>
-<li><code>pct_properly_paired_reads</code> (Float)</li>
-<li><code>average_identity</code> (Float)</li>
-<li><code>fastqc_report</code> (File)</li>
-<li><code>successfully_processed</code> (Boolean)</li>
+<li><code>aligned_bam</code> (File?)</li>
+<li><code>aligned_bai</code> (File?)</li>
+<li><code>aligned_num_reads</code> (Float?)</li>
+<li><code>aligned_num_bases</code> (Float?)</li>
+<li><code>aligned_frac_bases</code> (Float?)</li>
+<li><code>aligned_est_fold_cov</code> (Float?)</li>
+<li><code>aligned_read_length_mean</code> (Float?)</li>
+<li><code>insert_size_average</code> (Float?)</li>
+<li><code>insert_size_standard_deviation</code> (Float?)</li>
+<li><code>pct_properly_paired_reads</code> (Float?)</li>
+<li><code>average_identity</code> (Float?)</li>
+<li><code>fastqc_report</code> (File?)</li>
 <li><code>bed_cov_summary</code> (File?)</li>
 <li><code>fingerprint_vcf</code> (File?)</li>
 <li><code>barcode</code> (String?)</li>
+<li><code>successfully_processed</code> (Boolean)</li>
 <li><code>dvp_vcf</code> (File?)</li>
 <li><code>dvp_tbi</code> (File?)</li>
 <li><code>dvp_g_vcf</code> (File?)</li>
@@ -524,8 +523,6 @@
 <li><code>hc_raw_tbi</code> (File?)</li>
 <li><code>hc_rescored_vcf</code> (File?)</li>
 <li><code>hc_rescored_tbi</code> (File?)</li>
-<li><code>hc_rescored_filtered_vcf</code> (File?)</li>
-<li><code>hc_rescored_filtered_tbi</code> (File?)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="SRWholeGenome" src="../../dot/SRWholeGenome.dot.png" /></p>

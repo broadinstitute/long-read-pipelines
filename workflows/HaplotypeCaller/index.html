@@ -331,12 +331,15 @@
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
+<li><code>haplotype_caller_runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHC.interval_list</code> (File?)</li>
-<li><code>CallVariantsWithHC.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CollapseGVCFtoVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>IndexBamout.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MergeGVCFs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MergeVariantCalledBamOuts.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ReblockHcGVCF.annotations_to_keep</code> (Array[String]?)</li>
+<li><code>ReblockHcGVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ReblockHcGVCF.tree_score_cutoff</code> (Float?)</li>
 <li><code>SmallVariantsScatterPrep.runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
@@ -350,6 +353,7 @@
 <li><code>mito_contig</code> (String, default="chrM")</li>
 <li><code>ploidy</code> (Int, default=2)</li>
 <li><code>CollapseGVCFtoVCF.keep_combined_raw_annotations</code> (Boolean, default=false)</li>
+<li><code>ReblockHcGVCF.gq_blocks</code> (Array[Int], default=[20, 30, 40])</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>

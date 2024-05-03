@@ -4,19 +4,21 @@ digraph {
 	node [fontname=Roboto]
 	edge [color="#00000080"]
 	"call-SmallVariantsScatterPrep" [label=SmallVariantsScatterPrep shape=cds]
-	subgraph "cluster-scatter-L50C5-c" {
+	subgraph "cluster-scatter-L52C5-c" {
 		fontname=Roboto label="scatter(SmallVariantsScatterPrep.chrs)" rank=same
 		"call-CallVariantsWithHC" [label=CallVariantsWithHC shape=cds]
-		"scatter-L50C5-c" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L52C5-c" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MergeGVCFs" [label=MergeGVCFs shape=cds]
 	"call-MergeVariantCalledBamOuts" [label=MergeVariantCalledBamOuts shape=cds]
 	"call-IndexBamout" [label=IndexBamout shape=cds]
+	"call-ReblockHcGVCF" [label=ReblockHcGVCF shape=cds]
 	"call-CollapseGVCFtoVCF" [label=CollapseGVCFtoVCF shape=cds]
-	"call-SmallVariantsScatterPrep" -> "scatter-L50C5-c" [lhead="cluster-scatter-L50C5-c"]
+	"call-SmallVariantsScatterPrep" -> "scatter-L52C5-c" [lhead="cluster-scatter-L52C5-c"]
 	"call-CallVariantsWithHC" -> "call-MergeGVCFs"
 	"call-CallVariantsWithHC" -> "call-MergeVariantCalledBamOuts"
 	"call-MergeVariantCalledBamOuts" -> "call-IndexBamout"
+	"call-MergeGVCFs" -> "call-ReblockHcGVCF"
 	"call-SmallVariantsScatterPrep" -> "call-CollapseGVCFtoVCF"
-	"call-MergeGVCFs" -> "call-CollapseGVCFtoVCF"
+	"call-ReblockHcGVCF" -> "call-CollapseGVCFtoVCF"
 }

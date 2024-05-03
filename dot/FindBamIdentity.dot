@@ -61,7 +61,7 @@ digraph {
 	"decl-non_clr_lod" -> "call-FindMaxLOD"
 	"decl-clr_lod" -> "call-FindMaxLOD"
 	"call-FindMaxLOD" -> "if-L113C5" [lhead="cluster-if-L113C5"]
-	"call-PickGenotypeVCF" -> "decl-matching_vcf"
 	"call-FindMaxLOD" -> "decl-matching_vcf"
+	"call-PickGenotypeVCF" -> "decl-matching_vcf"
 	"decl-matching_vcf" -> "call-GetAllIdentityInfo"
 }

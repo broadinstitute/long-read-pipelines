@@ -147,6 +147,8 @@
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
@@ -310,12 +312,18 @@
 <dl>
 <dt>description</dt>
 <dd>A workflow to clean up intermediate files from running workflows on Terra. Use at your own risk.</dd>
+<dt>warn</dt>
+<dd>This workflow will delete the whole 'folder's corresponding to each of the specified submissions. So make sure nothing in those are useful anymore.</dd>
 </dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
 <li><code>submissionIDs</code> (Array[String], <strong>required</strong>): List of submissions whose intermediate files are to be deleted</li>
 <li><code>workspace_bucket</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="defaults">Defaults</h4>
+<ul>
+<li><code>keep_logs</code> (Boolean, default=false): Whether to keep cromwell log files or not; if true, the process is significantly slower. Default is false.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <p><strong>None</strong></p>
