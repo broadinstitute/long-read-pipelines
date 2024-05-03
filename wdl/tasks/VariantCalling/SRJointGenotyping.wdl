@@ -195,6 +195,10 @@ task GenotypeGVCFs {
         File ref_fasta_fai
         File ref_dict
 
+        Float heterozygosity = 0.001
+        Float heterozygosity_stdev = 0.01
+        Float indel_heterozygosity = 0.000125
+
         String? dbsnp_vcf
 
         String prefix
@@ -237,7 +241,15 @@ task GenotypeGVCFs {
             INPUT_FILE=~{input_gvcf_data}
         fi
 
-        gatk --java-options "-Xms8000m -Xmx25000m" \
+        # Get memory limits based on resources on this machine:
+        mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
+        mem_start_mb=$( echo "scale=0;${mem_mb}/2" | bc )
+        mem_max_mb=$( echo "scale=0;${mem_mb}*0.9" | bc )
+
+        mem_start_mb=$(printf '%.0f' ${mem_start_mb})
+        mem_max_mb=$(printf '%.0f' ${mem_max_mb})
+
+        gatk --java-options "-Xms${mem_start_mb}m -Xmx${mem_max_mb}m" \
             GenotypeGVCFs \
                 -R ~{ref_fasta} \
                 -O ~{prefix}.vcf.gz \
@@ -246,11 +258,124 @@ task GenotypeGVCFs {
                 --only-output-calls-starting-in-intervals \
                 -V ${INPUT_FILE} \
                 -L ~{interval_list} \
+                --heterozygosity ~{heterozygosity} \
+                --heterozygosity-stdev ~{heterozygosity_stdev} \
+                --indel-heterozygosity ~{indel_heterozygosity} \
                 ~{true='--keep-combined-raw-annotations' false='' keep_combined_raw_annotations} \
                 --merge-input-intervals
 
         # Removed for now:
         # -G AS_StandardAnnotation
+    >>>
+
+    output {
+        File output_vcf = "~{prefix}.vcf.gz"
+        File output_vcf_index = "~{prefix}.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             26,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task GnarlyGenotypeGVCFs {
+
+    input {
+        File input_gvcf_data
+        File? input_gvcf_index  # Required if passing a VCF file.
+
+        File interval_list
+
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+
+        Float heterozygosity = 0.001
+        Float heterozygosity_stdev = 0.01
+        Float indel_heterozygosity = 0.000125
+
+        String? dbsnp_vcf
+
+        String prefix
+
+        Boolean keep_combined_raw_annotations = false
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
+    Int db_snp_size = ceil(size(dbsnp_vcf, "GB"))
+
+    Int disk_size = 1 + 4*ceil(size(input_gvcf_data, "GB")) + ref_size + db_snp_size
+
+    String dbsnp_vcf_arg = if defined(dbsnp_vcf) then "-D ~{dbsnp_vcf} " else ""
+
+    parameter_meta {
+        input_gvcf_data: { help: "Either a single GVCF file or a GenomicsDB Tar file." }
+        interval_list: {
+            localization_optional: true
+        }
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        # We must determine if our input variants are in a genomicsdb file or in a VCF.
+        # The easiest way is to see if the input is a .tar file:
+
+        is_genomics_db=true
+        filename=$(basename -- "~{input_gvcf_data}")
+        extension="${filename##*.}"
+        if [[ "${extension}" != "tar" ]] ; then
+            is_genomics_db=false
+        fi
+
+        if $is_genomics_db ; then
+            tar -xf ~{input_gvcf_data}
+            INPUT_FILE="gendb://$(basename ~{input_gvcf_data} .tar)"
+        else
+            INPUT_FILE=~{input_gvcf_data}
+        fi
+
+        # Get memory limits based on resources on this machine:
+        mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
+        mem_start_mb=$( echo "scale=0;${mem_mb}/2" | bc )
+        mem_max_mb=$( echo "scale=0;${mem_mb}*0.9" | bc )
+
+        mem_start_mb=$(printf '%.0f' ${mem_start_mb})
+        mem_max_mb=$(printf '%.0f' ${mem_max_mb})
+
+        gatk --java-options "-Xms${mem_start_mb}m -Xmx${mem_max_mb}m" \
+            GnarlyGenotyper \
+                -V ${INPUT_FILE} \
+                -R ~{ref_fasta} \
+                -O ~{prefix}.vcf.gz \
+                -L ~{interval_list} \
+                ~{dbsnp_vcf_arg} \
+                --merge-input-intervals \
+                --only-output-calls-starting-in-intervals \
+                --heterozygosity ~{heterozygosity} \
+                --heterozygosity-stdev ~{heterozygosity_stdev} \
+                --indel-heterozygosity ~{indel_heterozygosity} \
+                --annotate-with-num-discovered-alleles \
+                --genomicsdb-max-alternate-alleles 100 \
+                --max-alternate-alleles 50
     >>>
 
     output {
