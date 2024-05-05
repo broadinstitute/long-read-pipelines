@@ -275,7 +275,7 @@ task LiftoverVcfGATK {
             -CHAIN ~{chain_file} \
             -REJECT ~{lifted_over_rejects_vcf_name} \
             -R ~{target_reference_sequence_fasta_file} \
-            -recover_swapped true
+            --RECOVER_SWAPPED_REF_ALT true
         # endTime=`date +%s.%N`
         # echo "EndTime: $endTime" >> ${timing_output_file}
         # elapsedTime=`python -c "print( $endTime - $startTime )"`
