@@ -198,6 +198,8 @@ task Shapeit4_phaseSVs {
         --map ~{mappingfile} \
         --region ~{region} \
         --use-PS 0.0001 \
+        --sequencing \
+        --pbwt-depth 2 \
         --output ~{region}_finalsv_scaffold.bcf \
         --thread ~{num_threads} \
         --log phased.log
