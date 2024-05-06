@@ -69,21 +69,21 @@ workflow ReadManifestFilesHiphase {
         }
 
         ############## statistics##############
-        call WH.Stats as snp_stats{ input:
-            phased_vcf = HP_SV.phased_snp_vcf,
-            phased_tbi = HP_SV.phased_snp_vcf_tbi
-        }
-        call FF.FinalizeToFile as Finalizes1 {
-            input: outdir = gcs_out_root_dir, file = snp_stats.stats_tsv
-        }
+        # call WH.Stats as snp_stats{ input:
+        #     phased_vcf = HP_SV.phased_snp_vcf,
+        #     phased_tbi = HP_SV.phased_snp_vcf_tbi
+        # }
+        # call FF.FinalizeToFile as Finalizes1 {
+        #     input: outdir = gcs_out_root_dir, file = snp_stats.stats_tsv
+        # }
 
-        call WH.Stats as sv_stats{ input:
-            phased_vcf = HP_SV.phased_sv_vcf,
-            phased_tbi = HP_SV.phased_sv_vcf_tbi
-        }
-        call FF.FinalizeToFile as Finalizes2 {
-            input: outdir = gcs_out_root_dir, file = sv_stats.stats_tsv
-        }
+        # call WH.Stats as sv_stats{ input:
+        #     phased_vcf = HP_SV.phased_sv_vcf,
+        #     phased_tbi = HP_SV.phased_sv_vcf_tbi
+        # }
+        # call FF.FinalizeToFile as Finalizes2 {
+        #     input: outdir = gcs_out_root_dir, file = sv_stats.stats_tsv
+        # }
         #######################################
     }
 
