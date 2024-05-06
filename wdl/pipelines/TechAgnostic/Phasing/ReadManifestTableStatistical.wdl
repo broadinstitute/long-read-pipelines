@@ -194,11 +194,9 @@ task Shapeit4_phaseSVs {
 
         shapeit4 \
         --input ~{vcf_input} \
-        --scaffold ~{scaffold_vcf} \
         --map ~{mappingfile} \
         --region ~{region} \
         --use-PS 0.0001 \
-        --sequencing \
         --pbwt-depth 2 \
         --output ~{region}_finalsv_scaffold.bcf \
         --thread ~{num_threads} \
