@@ -1696,7 +1696,7 @@ task ExtractVariantAnnotations {
         let mem_start=${mem_available}-2
         let mem_max=${mem_available}-2
 
-        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g -DGATK_STACKTRACE_ON_USER_EXCEPTION=true" \
           ExtractVariantAnnotations \
             --verbosity DEBUG \
             -V ~{vcf} \
@@ -1774,7 +1774,7 @@ task TrainVariantAnnotationsModel {
         let mem_start=${mem_available}-2
         let mem_max=${mem_available}-2
 
-        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g -DGATK_STACKTRACE_ON_USER_EXCEPTION=true" \
             TrainVariantAnnotationsModel \
                 --verbosity DEBUG \
                 --annotations-hdf5 ~{annotation_hdf5} \
@@ -1907,7 +1907,7 @@ task ScoreVariantAnnotations {
         # Debugging:
         find .
 
-        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g -DGATK_STACKTRACE_ON_USER_EXCEPTION=true" \
             ScoreVariantAnnotations \
                 --verbosity DEBUG \
                 -V ~{vcf} \
