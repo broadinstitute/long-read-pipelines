@@ -44,7 +44,7 @@ task Shapeit4 {
     RuntimeAttr default_attr = object {
         cpu_cores:          num_threads,
         mem_gb:             memory,
-        disk_gb:            500,
+        disk_gb:            100,
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        0,
@@ -102,7 +102,7 @@ task Shapeit4_phaseSVs {
     RuntimeAttr default_attr = object {
         cpu_cores:          num_threads,
         mem_gb:             memory,
-        disk_gb:            500,
+        disk_gb:            100,
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        0,
