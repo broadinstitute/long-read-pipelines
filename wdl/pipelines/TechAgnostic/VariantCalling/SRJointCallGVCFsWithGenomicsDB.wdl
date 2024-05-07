@@ -67,7 +67,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         Float snp_calibration_sensitivity = 0.99
         Int snp_max_unlabeled_variants = 0
-        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        # TODO: Fix the annotations here to include the missing ones.  Must debug.
+#        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
 
         Array[File] snp_known_reference_variants
         Array[File] snp_known_reference_variants_index
@@ -77,7 +79,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         Float indel_calibration_sensitivity = 0.99
         Int indel_max_unlabeled_variants = 0
-        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        # TODO: Fix the annotations here to include the missing ones.  Must debug.
+#        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
 
         Array[File] indel_known_reference_variants
         Array[File] indel_known_reference_variants_index

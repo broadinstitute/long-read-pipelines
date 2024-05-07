@@ -28,14 +28,27 @@ task ConvertToZarrStore {
     command <<<
         set -x
 
+        # According to the sgkit documentation, running the conversion in parallel using Dask
+        # is significantly faster than running it serially.
+        # This can be easily done by importing the Dask library and setting the client info.
+        # For more info see: https://sgkit-dev.github.io/sgkit/latest/vcf.html#example-converting-1000-genomes-vcf-to-zarr
+
+        # Set up number of worker processes for Dask:
+        num_processors=$(lscpu | grep '^CPU(s):' | awk '{print $NF}')
+        num_workers=$((num_processors - 1))
+
         python3 <<EOF
 
+        import sys
         from sgkit.io.vcf import vcf_to_zarr
+        from dask.distributed import Client
+
+        client = Client(n_workers=${num_workers}, threads_per_worker=1)
 
         vcfs = ["~{vcf}"]
         target = "~{prefix}.zarr"
 
-        vcf_to_zarr(vcfs, target, tempdir="tmp")
+        vcf_to_zarr(vcfs, target, tempdir="tmp", log=sys.stdout)
 
         EOF
 
