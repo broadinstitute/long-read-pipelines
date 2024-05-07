@@ -15,6 +15,7 @@ workflow ReadManifestFilesHiphase {
         File genetic_mapping_tsv_for_shapeit4
 
         String chromosome
+        String gcs_out_root_dir
 
         RuntimeAttr? runtime_attr_override
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
