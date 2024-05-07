@@ -41,18 +41,15 @@ task ConvertToZarrStore {
 
         from sgkit.io.vcf import vcf_to_zarr
         from dask.distributed import Client, get_task_stream
-        from dask.diagnostics import ProgressBar
 
         client = Client(n_workers=${num_workers}, threads_per_worker=1)
 
         vcfs = ["~{vcf}"]
         target = "~{prefix}.zarr"
 
-        # Log to a progress bar:
-        with ProgressBar():
-            # Log our task stream to a file we can inspect later:
-            with get_task_stream(client=client, plot='save', filename="task-stream.html") as ts:
-                vcf_to_zarr(vcfs, target, tempdir="tmp")
+        # Log our task status to a file we can inspect later:
+        with get_task_stream(client=client, plot='save', filename="task-stream.html") as ts:
+            vcf_to_zarr(vcfs, target, tempdir="tmp")
 
         EOF
 
