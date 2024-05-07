@@ -40,16 +40,12 @@ task ConvertToZarrStore {
         python3 <<EOF
 
         from sgkit.io.vcf import vcf_to_zarr
-        from dask.distributed import Client, get_task_stream
-
-        client = Client(n_workers=${num_workers}, threads_per_worker=1)
 
         vcfs = ["~{vcf}"]
         target = "~{prefix}.zarr"
 
         # Log our task status to a file we can inspect later:
-        with get_task_stream(client=client, plot='save', filename="task-stream.html") as ts:
-            vcf_to_zarr(vcfs, target, tempdir="tmp")
+        vcf_to_zarr(vcfs, target, tempdir="tmp")
 
         EOF
 
@@ -58,7 +54,6 @@ task ConvertToZarrStore {
 
     output {
         String gcs_path = "~{outdir}/~{prefix}.zarr"
-        File task_stream = "task-stream.html"
     }
 
     #########################
