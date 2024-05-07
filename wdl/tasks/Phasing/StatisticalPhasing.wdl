@@ -88,6 +88,7 @@ task Shapeit4_phaseSVs {
         --region ~{region} \
         --use-PS 0.0001 \
         --sequencing \
+        --pbwt-mac 0 \
         --output ~{region}_finalsv_scaffold.bcf \
         --thread ~{num_threads} \
         --log phased.log

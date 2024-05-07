@@ -2,6 +2,7 @@ version 1.0
 
 #import "../../../tasks/Phasing/StatisticalPhasing.wdl" as StatPhase
 import "../../../structs/Structs.wdl"
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ReadManifestFilesHiphase {
     input {
@@ -36,7 +37,9 @@ workflow ReadManifestFilesHiphase {
         mappingfile = genetic_mapping_dict[chromosome],
         region = chromosome
     }
-
+    call FF.FinalizeToFile as FinalizeSVs {
+        input: outdir = gcs_out_root_dir, file = Shapeit4SVphase.final_phased_vcf
+    }
 
 }
 
