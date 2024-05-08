@@ -79,7 +79,8 @@ workflow CallVariantsWithHaplotypeCaller {
         input:
             input_vcfs = CallVariantsWithHC.output_vcf,
             input_vcfs_indexes = CallVariantsWithHC.output_vcf_index,
-            prefix = prefix
+            prefix = prefix,
+            is_gvcf = true
     }
 
     # Merge the output BAMs:
@@ -120,8 +121,8 @@ workflow CallVariantsWithHaplotypeCaller {
     }
 
     output {
-        File output_gvcf = MergeGVCFs.output_vcf
-        File output_gvcf_index = MergeGVCFs.output_vcf_index
+        File output_gvcf = ReblockHcGVCF.output_gvcf
+        File output_gvcf_index = ReblockHcGVCF.output_gvcf_index
         File output_vcf = CollapseGVCFtoVCF.output_vcf
         File output_vcf_index = CollapseGVCFtoVCF.output_vcf_index
         File bamout = MergeVariantCalledBamOuts.output_bam
@@ -346,6 +347,7 @@ task ReblockGVCF {
                 -R ~{ref_fasta} \
                 -V ~{gvcf} \
                 -do-qual-approx \
+                -G StandardAnnotation -G StandardHCAnnotation  \
                 -A AssemblyComplexity \
                 --annotate-with-num-discovered-alleles \
                 --floor-blocks \
@@ -371,7 +373,7 @@ task ReblockGVCF {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])

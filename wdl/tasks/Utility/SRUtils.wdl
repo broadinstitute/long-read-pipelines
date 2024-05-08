@@ -419,9 +419,7 @@ task BaseRecalibrator {
 
     command {
 
-        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
-            -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCDetails \
-            -Xloggc:gc_log.log -Xms5000m -Xmx5500m" \
+        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal -Xms5000m" \
             BaseRecalibrator \
             -R ~{ref_fasta} \
             -I ~{input_bam} \
@@ -492,8 +490,7 @@ task ApplyBQSR {
 
     command <<<
 
-        gatk --java-options "-XX:+PrintFlagsFinal -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps \
-            -XX:+PrintGCDetails -Xloggc:gc_log.log \
+        gatk --java-options "-XX:+PrintFlagsFinal \
             -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=~{compression_level} -Xms8192m -Xmx~{java_memory_size_mb}m" \
             ApplyBQSR \
             --create-output-bam-md5 \
@@ -661,21 +658,25 @@ task MergeVCFs {
         Array[File] input_vcfs_indexes
         String prefix
 
+        Boolean is_gvcf = false
+
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = ceil(size(input_vcfs, "GiB") * 2.5) + 10
 
+    String gvcf_decorator = if is_gvcf then ".g" else ""
+
     command <<<
         java -Xms2000m -Xmx2500m -jar /usr/picard/picard.jar \
           MergeVcfs \
           INPUT=~{sep=' INPUT=' input_vcfs} \
-          OUTPUT=~{prefix}.vcf.gz
+          OUTPUT=~{prefix}~{gvcf_decorator}.vcf.gz
     >>>
 
     output {
-        File output_vcf = "~{prefix}.vcf.gz"
-        File output_vcf_index = "~{prefix}.vcf.gz.tbi"
+        File output_vcf = "~{prefix}~{gvcf_decorator}.vcf.gz"
+        File output_vcf_index = "~{prefix}~{gvcf_decorator}.vcf.gz.tbi"
     }
 
     #########################

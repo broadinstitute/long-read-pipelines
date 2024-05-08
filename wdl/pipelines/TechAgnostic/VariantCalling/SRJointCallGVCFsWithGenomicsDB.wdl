@@ -19,6 +19,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         gvcf_indices:   "Array of gvcf index files for `gvcfs`.  Order should correspond to that in `gvcfs`."
         ref_map_file:  "Reference map file indicating reference sequence and auxillary file locations"
 
+        heterozygosity: "Joint Genotyping Parameter - Heterozygosity value used to compute prior likelihoods for any locus. See the GATKDocs for full details on the meaning of this population genetics concept"
+        heterozygosity_stdev: "Joint Genotyping Parameter - Standard deviation of heterozygosity for SNP and indel calling."
+        indel_heterozygosity: "Joint Genotyping Parameter - Heterozygosity for indel calling. See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept"
+
         snp_calibration_sensitivity:    "VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered."
         snp_max_unlabeled_variants: "VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites."
         snp_recalibration_annotation_values:    "VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants."
@@ -43,6 +47,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         annotation_bed_file_indexes:    "Array of bed indexes for `annotation_bed_files`.  Order should correspond to `annotation_bed_files`."
         annotation_bed_file_annotation_names:   "Array of names/FILTER column entries to use for each given file in `annotation_bed_files`.  Order should correspond to `annotation_bed_files`."
 
+        use_gnarly_genotyper: "If true, the `GnarlyGenotyper` will be used, greatly speeding up joint genotyping (at the cost of potentially lower accuracy).  Setting this to true is recommended for large callsets.  If false, `GenotypeGVCFs` will be used to generate the final VCF.  Default is false."
+
         prefix: "Prefix to use for output files."
         gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
     }
@@ -55,9 +61,15 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File interval_list
 
+        Float heterozygosity = 0.001
+        Float heterozygosity_stdev = 0.01
+        Float indel_heterozygosity = 0.000125
+
         Float snp_calibration_sensitivity = 0.99
         Int snp_max_unlabeled_variants = 0
-        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        # TODO: Fix the annotations here to include the missing ones.  Must debug.
+#        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
 
         Array[File] snp_known_reference_variants
         Array[File] snp_known_reference_variants_index
@@ -67,7 +79,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         Float indel_calibration_sensitivity = 0.99
         Int indel_max_unlabeled_variants = 0
-        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        # TODO: Fix the annotations here to include the missing ones.  Must debug.
+#        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
 
         Array[File] indel_known_reference_variants
         Array[File] indel_known_reference_variants_index
@@ -80,6 +94,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[String]? annotation_bed_file_annotation_names
 
         File? snpeff_db
+
+        Boolean use_gnarly_genotyper = false
 
         String prefix
 
@@ -125,23 +141,47 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         }
 
         # Joint call
-        call SRJOINT.GenotypeGVCFs as JointCallGVCFs {
-            input:
-                input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
-                interval_list   = contig_interval_list,
-                ref_fasta       = ref_map['fasta'],
-                ref_fasta_fai   = ref_map['fai'],
-                ref_dict        = ref_map['dict'],
-                dbsnp_vcf       = ref_map["known_sites_vcf"],
-                prefix          = prefix + "." + contig + ".raw",
-                runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+        if (use_gnarly_genotyper) {
+            call SRJOINT.GnarlyGenotypeGVCFs as GnarlyJointCallGVCFs {
+                input:
+                    input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
+                    interval_list   = contig_interval_list,
+                    ref_fasta       = ref_map['fasta'],
+                    ref_fasta_fai   = ref_map['fai'],
+                    ref_dict        = ref_map['dict'],
+                    dbsnp_vcf       = ref_map["known_sites_vcf"],
+                    prefix          = prefix + "." + contig + ".gnarly_genotyper.raw",
+                    heterozygosity = heterozygosity,
+                    heterozygosity_stdev = heterozygosity_stdev,
+                    indel_heterozygosity = indel_heterozygosity,
+                    runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+            }
         }
+        if (!use_gnarly_genotyper) {
+            call SRJOINT.GenotypeGVCFs as JointCallGVCFs {
+                input:
+                    input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
+                    interval_list   = contig_interval_list,
+                    ref_fasta       = ref_map['fasta'],
+                    ref_fasta_fai   = ref_map['fai'],
+                    ref_dict        = ref_map['dict'],
+                    dbsnp_vcf       = ref_map["known_sites_vcf"],
+                    prefix          = prefix + "." + contig + ".genotype_gvcfs.raw",
+                    heterozygosity = heterozygosity,
+                    heterozygosity_stdev = heterozygosity_stdev,
+                    indel_heterozygosity = indel_heterozygosity,
+                    runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+            }
+        }
+        # Select the VCF + index for the raw joint called file:
+        File joint_vcf = select_first([GnarlyJointCallGVCFs.output_vcf, JointCallGVCFs.output_vcf])
+        File joint_vcf_index = select_first([GnarlyJointCallGVCFs.output_vcf_index, JointCallGVCFs.output_vcf_index])
 
         # First make a sites-only VCF for recal (smaller file, easier to work with):
         call VARUTIL.MakeSitesOnlyVcf as MakeSitesOnlyVCF {
             input:
-                vcf = JointCallGVCFs.output_vcf,
-                vcf_index = JointCallGVCFs.output_vcf_index,
+                vcf = joint_vcf,
+                vcf_index = joint_vcf_index,
                 prefix = prefix + "." + contig + ".sites_only"
         }
     }
@@ -209,11 +249,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     # Shard by contig for speed:
-    scatter (idx_2 in range(length(JointCallGVCFs.output_vcf))) {
+    scatter (idx_2 in range(length(joint_vcf))) {
 
         String contig_2 = MakeChrIntervalList.chrs[idx_2][0]
-        File joint_called_vcf = JointCallGVCFs.output_vcf[idx_2]
-        File joint_called_vcf_index = JointCallGVCFs.output_vcf_index[idx_2]
+        File joint_called_vcf = joint_vcf[idx_2]
+        File joint_called_vcf_index = joint_vcf_index[idx_2]
 
         call VARUTIL.ScoreVariantAnnotations as ScoreSnpVariantAnnotations {
             input:
@@ -303,8 +343,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Consolidate files:
     call VARUTIL.GatherVcfs as GatherRawVcfs {
         input:
-            input_vcfs = JointCallGVCFs.output_vcf,
-            input_vcf_indices = JointCallGVCFs.output_vcf_index,
+            input_vcfs = joint_vcf,
+            input_vcf_indices = joint_vcf_index,
             prefix = prefix + ".raw.combined"
     }
 
