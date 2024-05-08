@@ -28,8 +28,8 @@ digraph {
 	}
 	"call-MakeChrIntervalList" -> "scatter-L33C5-chr_info" [lhead="cluster-scatter-L33C5-chr_info"]
 	"call-MosDepth" -> "call-SummarizeDepth"
-	"call-AlignedReadMetrics" -> "call-FFYieldAligned"
 	"call-AlignedFlagStats" -> "call-FFYieldAligned"
+	"call-AlignedReadMetrics" -> "call-FFYieldAligned"
 	"call-MosDepth" -> "call-FFCoverageFullDist"
 	"call-MosDepth" -> "call-FFCoverageGlobalDist"
 	"call-MosDepth" -> "call-FFCoverageRegionDist"

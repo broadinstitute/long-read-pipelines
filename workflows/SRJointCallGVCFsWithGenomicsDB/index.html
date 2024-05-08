@@ -417,6 +417,7 @@
 <li><code>FunctionallyAnnotate.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>GatherRawVcfs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>GatherRescoredVcfs.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>GnarlyJointCallGVCFs.input_gvcf_index</code> (File?)</li>
 <li><code>JointCallGVCFs.input_gvcf_index</code> (File?)</li>
 <li><code>MakeChrIntervalList.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MakeSitesOnlyVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -430,14 +431,19 @@
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
+<li><code>heterozygosity</code> (Float, default=0.001): Joint Genotyping Parameter - Heterozygosity value used to compute prior likelihoods for any locus. See the GATKDocs for full details on the meaning of this population genetics concept</li>
+<li><code>heterozygosity_stdev</code> (Float, default=0.01): Joint Genotyping Parameter - Standard deviation of heterozygosity for SNP and indel calling.</li>
 <li><code>indel_calibration_sensitivity</code> (Float, default=0.99): VETS (ScoreVariantAnnotations) parameter - score below which INDEL variants will be filtered.</li>
+<li><code>indel_heterozygosity</code> (Float, default=0.000125): Joint Genotyping Parameter - Heterozygosity for indel calling. See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept</li>
 <li><code>indel_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled INDEL variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
-<li><code>indel_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the INDEL variant scoring model and over which to score INDEL variants.</li>
+<li><code>indel_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the INDEL variant scoring model and over which to score INDEL variants.</li>
 <li><code>snp_calibration_sensitivity</code> (Float, default=0.99): VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered.</li>
 <li><code>snp_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
-<li><code>snp_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants.</li>
+<li><code>snp_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants.</li>
+<li><code>use_gnarly_genotyper</code> (Boolean, default=false): If true, the <code>GnarlyGenotyper</code> will be used, greatly speeding up joint genotyping (at the cost of potentially lower accuracy).  Setting this to true is recommended for large callsets.  If false, <code>GenotypeGVCFs</code> will be used to generate the final VCF.  Default is false.</li>
 <li><code>ConvertToZarr.num_cpus</code> (Int, default=4)</li>
 <li><code>ConvertToZarr.reference</code> (String, default="GRCh38")</li>
+<li><code>GnarlyJointCallGVCFs.keep_combined_raw_annotations</code> (Boolean, default=false)</li>
 <li><code>JointCallGVCFs.keep_combined_raw_annotations</code> (Boolean, default=false)</li>
 <li><code>MakeChrIntervalList.filter</code> (Array[String], default=['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV'])</li>
 <li><code>TrainIndelVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>

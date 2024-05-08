@@ -490,6 +490,9 @@
 <li><code>RenameRawHcVcf.is_gvcf</code> (Boolean, default=false)</li>
 <li><code>TrainIndelVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
 <li><code>TrainSnpVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
+<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.heterozygosity</code> (Float, default=0.001): HaplotypeCaller Parameter - Heterozygosity value used to compute prior likelihoods for any locus. See the GATKDocs for full details on the meaning of this population genetics concept</li>
+<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.heterozygosity_stdev</code> (Float, default=0.01): HaplotypeCaller Parameter - Standard deviation of heterozygosity for SNP and indel calling.</li>
+<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.indel_heterozygosity</code> (Float, default=0.000125): HaplotypeCaller Parameter - Heterozygosity for indel calling. See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept</li>
 <li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.keep_combined_raw_annotations</code> (Boolean, default=false)</li>
 <li><code>CallVariantsWithHaplotypeCaller.ReblockHcGVCF.gq_blocks</code> (Array[Int], default=[20, 30, 40])</li>
 </ul>

@@ -150,6 +150,22 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gnarlygenotypegvcfs">GnarlyGenotypeGVCFs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_3">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_3">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_3">Outputs</a>
+    </li>
+        </ul>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../SRUtils/">SRUtils</a>
@@ -400,9 +416,41 @@
 </ul>
 <h4 id="defaults_1">Defaults</h4>
 <ul>
+<li><code>heterozygosity</code> (Float, default=0.001)</li>
+<li><code>heterozygosity_stdev</code> (Float, default=0.01)</li>
+<li><code>indel_heterozygosity</code> (Float, default=0.000125)</li>
 <li><code>keep_combined_raw_annotations</code> (Boolean, default=false)</li>
 </ul>
 <h3 id="outputs_2">Outputs</h3>
+<ul>
+<li><code>output_vcf</code> (File)</li>
+<li><code>output_vcf_index</code> (File)</li>
+</ul>
+<h2 id="gnarlygenotypegvcfs">GnarlyGenotypeGVCFs</h2>
+<h3 id="inputs_3">Inputs</h3>
+<h4 id="required_3">Required</h4>
+<ul>
+<li><code>input_gvcf_data</code> (File, <strong>required</strong>): Either a single GVCF file or a GenomicsDB Tar file.</li>
+<li><code>interval_list</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_3">Optional</h4>
+<ul>
+<li><code>dbsnp_vcf</code> (String?)</li>
+<li><code>input_gvcf_index</code> (File?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_2">Defaults</h4>
+<ul>
+<li><code>heterozygosity</code> (Float, default=0.001)</li>
+<li><code>heterozygosity_stdev</code> (Float, default=0.01)</li>
+<li><code>indel_heterozygosity</code> (Float, default=0.000125)</li>
+<li><code>keep_combined_raw_annotations</code> (Boolean, default=false)</li>
+</ul>
+<h3 id="outputs_3">Outputs</h3>
 <ul>
 <li><code>output_vcf</code> (File)</li>
 <li><code>output_vcf_index</code> (File)</li>

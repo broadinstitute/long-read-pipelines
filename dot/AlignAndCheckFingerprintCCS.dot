@@ -37,10 +37,10 @@ digraph {
 	"call-arbitrary" -> "call-ShardLongReads"
 	"call-ShardLongReads" -> "scatter-L62C9-unaligned_bam" [lhead="cluster-scatter-L62C9-unaligned_bam"]
 	"call-AlignReads" -> "call-MergeAlignedReads"
-	"call-MergeAlignedReads" -> "decl-aBAM"
 	"call-AlignReadsTogether" -> "decl-aBAM"
-	"call-MergeAlignedReads" -> "decl-aBAI"
+	"call-MergeAlignedReads" -> "decl-aBAM"
 	"call-AlignReadsTogether" -> "decl-aBAI"
+	"call-MergeAlignedReads" -> "decl-aBAI"
 	"decl-aBAM" -> "call-IndexAlignedReads"
 	"call-IndexAlignedReads" -> "call-CollectPacBioAlignedMetrics"
 	"decl-aBAI" -> "call-CollectPacBioAlignedMetrics"

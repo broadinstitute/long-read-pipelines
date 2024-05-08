@@ -1,4 +1,4 @@
-// ExpandedDrugResistanceMarkerExtraction
+// ExpandedDrugResistanceMarkerAggregation
 digraph {
 	compound=true rankdir=LR
 	node [fontname=Roboto]
