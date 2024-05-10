@@ -198,7 +198,7 @@ task CoverageStats {
         # get list of coverages that are less than the mean coverage from the mosdepth output file
         D2=($(zcat ~{mosdepth_regions} | awk -v mean=$mean_coverage '{if ($~{cov_col} < mean) print $~{cov_col}}'))
         D2_count=${#D2[@]}
-        D2_sum=$(echo "$D2" | tr ' ' '\n' | awk '{sum+=$1};END{print sum}')
+        D2_sum=$(printf "%s\n" "${D2[@]}" | awk 'BEGIN {sum = 0} {sum += $1} END {print sum}')
 
         # print the values for debugging
         echo "mean_coverage: $mean_coverage"
@@ -208,7 +208,7 @@ task CoverageStats {
 
         if [ $mean_coverage -ne 0 ]; then
             # calculate the evenness score
-            evenness_score=$(1 - ((D2_count - D2_sum)/mean_coverage)/coverage_count)
+            evenness_score=$((1 - ((D2_count - D2_sum)/mean_coverage)/coverage_count))
 
             # Append the evenness score to the summary tsv file
             sed -i "1s/$/\tevenness_score~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
