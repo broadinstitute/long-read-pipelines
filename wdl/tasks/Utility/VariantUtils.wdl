@@ -742,15 +742,8 @@ task MakeSitesOnlyVcf {
     command <<<
         set -euo pipefail
 
-        # Get amount of memory to use:
-        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-1000
-        let mem_max=${mem_available}-750
-
-        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
-            MakeSitesOnlyVcf \
-            -I ~{vcf} \
-            -O ~{prefix}.sites_only.vcf.gz
+        bcftools view -G ~{vcf} | bgzip > ~{prefix}.sites_only.vcf.gz
+        bcftools index -t ~{prefix}.sites_only.vcf.gz
     >>>
 
     #########################
@@ -761,7 +754,7 @@ task MakeSitesOnlyVcf {
         boot_disk_gb:       15,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
