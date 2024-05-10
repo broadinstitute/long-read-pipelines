@@ -198,7 +198,7 @@ task CoverageStats {
         # get list of coverages that are less than the mean coverage from the mosdepth output file
         D2=($(zcat ~{mosdepth_regions} | awk -v mean=$mean_coverage '{if ($~{cov_col} < mean) print $~{cov_col}}'))
         D2_count=${#D2[@]}
-        D2_sum=$(echo "${D2[@]}" | tr ' ' '+' | bc)
+        D2_sum=$(echo "$D2" | tr ' ' '\n' | awk '{sum+=$1};END{print sum}')
 
         # print the values for debugging
         echo "mean_coverage: $mean_coverage"
