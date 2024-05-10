@@ -208,7 +208,7 @@ task CoverageStats {
 
         if [ $mean_coverage -ne 0 ]; then
             # calculate the evenness score
-            evenness_score=$((1 - ((D2_count - D2_sum)/mean_coverage)/coverage_count))
+            evenness_score=$(( 1 - (($D2_count - $D2_sum)/$mean_coverage)/$coverage_count ))
 
             # Append the evenness score to the summary tsv file
             sed -i "1s/$/\tevenness_score~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
