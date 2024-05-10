@@ -169,9 +169,12 @@ task CoverageStats {
         # Replace floating-point numbers suffix ing field names with '_coverage
         sed -i '1s/([0-9]*\.[0-9]*)/~{header_suffix}/g' ~{prefix}.cov_stat_summary.txt
 
-        ###
+        ############################################################
         # Calculate covrage percentage with greater than 4x coverage
-        ###
+        ############################################################
+
+        echo "Calculating coverage percentage with greater than 4x coverage"
+
         total_bases=$(zcat ~{mosdepth_regions} | wc -l)
         bases_above_4x=$(zcat ~{mosdepth_regions} | awk -v cov_col=~{cov_col} '$cov_col > 4' | wc -l)
         percent_above_4x=$(python3 -c "print(round($bases_above_4x/$total_bases, ~{round}))")
@@ -180,11 +183,13 @@ task CoverageStats {
         sed -i "1s/$/\tpercent_above_4x~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
         sed -i "2s/$/\t$percent_above_4x/" ~{prefix}.cov_stat_summary.txt
 
-        ###
+        ############################################################
         # Calculate Evenness Score
         # Konrad Oexle, Journal of Human Genetics 2016, Evaulation of the evenness score in NGS.
         # https://www.nature.com/articles/jhg201621
-        ###
+        ############################################################
+
+        echo "Calculating Evenness Score"
 
         # get mean from the summary file, under the column 'mean_coverage'
         mean_coverage=$(awk -F"\t" '{for(i=1; i<=NF; i++) if ($i == "mean_coverage") {getline; getline; printf "%.0f", $(i); exit}}' ~{prefix}.cov_stat_summary.txt)
@@ -193,7 +198,7 @@ task CoverageStats {
         # get list of coverages that are less than the mean coverage from the mosdepth output file
         D2=($(zcat ~{mosdepth_regions} | awk -v mean=$mean_coverage '{if ($~{cov_col} < mean) print $~{cov_col}}'))
         D2_count=${#D2[@]}
-        D2_sum=$(IFS=+; echo "$((${D2[*]}))")
+        D2_sum=$(echo "${D2[@]}" | tr ' ' '+' | bc)
 
         # print the values for debugging
         echo "mean_coverage: $mean_coverage"
@@ -201,16 +206,22 @@ task CoverageStats {
         echo "D2_count: $D2_count"
         echo "D2_sum: $D2_sum"
 
-        # calculate the evenness score
-        evenness_score=$(1 - ((D2_count - D2_sum)/mean_coverage)/coverage_count)
+        if [ $mean_coverage -ne 0 ]; then
+            # calculate the evenness score
+            evenness_score=$(1 - ((D2_count - D2_sum)/mean_coverage)/coverage_count)
 
-        # Append the evenness score to the summary tsv file
-        sed -i "1s/$/\tevenness_score~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
-        sed -i "2s/$/\t$evenness_score/" ~{prefix}.cov_stat_summary.txt
+            # Append the evenness score to the summary tsv file
+            sed -i "1s/$/\tevenness_score~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
+            sed -i "2s/$/\t$evenness_score/" ~{prefix}.cov_stat_summary.txt
+        else
+            echo "mean_coverage is 0, cannot calculate evenness score."
+        fi
 
-        ###
+        ############################################################
         # Convert the summary statistics to a JSON object
-        ###
+        ############################################################
+
+        echo "Converting summary statistics to JSON object"
 
         # Extract field names from the header
         header=$(head -n 1 ~{prefix}.cov_stat_summary.txt)
