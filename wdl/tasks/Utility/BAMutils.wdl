@@ -782,7 +782,7 @@ task GetDuplicateReadnamesInQnameSortedBam {
         fi
     >>>
 
-    Int disk_size = 5 + (if (localize_bam) then ceil(size(qns_bam, "Gib")) else 0)
+    Int disk_size = 5 + (if (localize_bam) then ceil(size(qns_bam, "GiB")) else 0)
     String disk_type = if (localize_bam) then "SSD" else "HDD"
     runtime {
         cpu:            1
