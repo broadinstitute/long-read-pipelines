@@ -349,7 +349,7 @@ task GetBasecallModel {
         while IFS= read -r line
         do
             echo "$line" | tr '\t' '\n' | grep "^DS:" | sed "s/^DS://" | tr ' ' '\n' > tmp.txt
-            runid=$(grep "^runid=" tmp.txt | awk -F '=' '{print $2}')
+            runid=$(grep -E "^run(-)?id=" tmp.txt | awk -F '=' '{print $2}')
             model=$(grep "^basecall_model=" tmp.txt | awk -F '=' '{print $2}')
             echo -e "${runid}\t${model}" >> results.tsv
         done < one_rg_per_line.txt
