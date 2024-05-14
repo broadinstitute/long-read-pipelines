@@ -382,14 +382,15 @@ workflow SRFlowcell {
         # Unaligned reads
         File fq1 = select_first([fq1_o, fq_e1])
         File fq2 = select_first([fq2_o, fq_e1])
-        File? fq_unpaired = select_first([fqboup])
+        File? fq_unpaired = fqboup
 
         # Unaligned BAM file
-        File? unaligned_bam = select_first([unaligned_bam_o])
-        File? unaligned_bai = select_first([unaligned_bai_o])
+        File? unaligned_bam = unaligned_bam_o
+        File? unaligned_bai = unaligned_bai_o
 
         # Contaminated BAM file:
-        File? contaminated_bam = select_first([DecontaminateSample.contaminated_bam])
+        # TODO: This will need to be fixed for optional finalization:
+        File? contaminated_bam = DecontaminateSample.contaminated_bam
 
         # Aligned BAM file
         File aligned_bam = select_first([t_023_FinalizeAlignedBam.gcs_path, final_bam])
