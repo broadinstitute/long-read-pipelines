@@ -2348,3 +2348,85 @@ task HardFilterVcfByGATKDefault_Indel {
         File indel_filtered_vcf_index = "~{prefix}.hard_filtered.indel.vcf.gz.tbi"
     }
 }
+
+task MergeSamplesVCFs {
+    meta {
+        description: "Merge VCFs with separate samples (i.e. by using bcftools merge)"
+    }
+
+    input {
+        Array[File] vcfs
+        Array[File] vcf_indices 
+        File ref_fasta_fai
+
+        String prefix
+        String? optional_flags
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        optional_flags: "Optional flags that can be given to bcftools concat."
+    }
+
+    Int sz = ceil(size(vcfs, 'GB'))
+    Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
+    
+    Int cores = 8
+
+    # pending a bug fix (bcftools github issue 1576) in official bcftools release,
+    # bcftools sort can be more efficient in using memory
+    Int machine_memory = 48 # 96
+    Int work_memory = ceil(machine_memory * 0.8)
+
+    command <<<
+        set -euxo pipefail
+
+        echo ~{sep=' ' vcfs} | sed 's/ /\n/g' > all_raw_vcfs.txt
+
+        echo "==========================================================="
+        echo "starting merge" && date
+        echo "==========================================================="
+
+        bcftools \
+            merge \
+            --threads ~{cores - 1} \
+            --file-list all_raw_vcfs.txt \
+            --output-type z \
+            -o ~{prefix}.merged.vcf.gz
+        for vcf in ~{sep=' ' vcfs}; do rm $vcf ; done
+
+        echo "==========================================================="
+        echo "done merging" && date
+        echo "==========================================================="
+        
+        bcftools index --tbi --force ~{prefix}.vcf.gz
+    >>>
+
+    output {
+        File vcf = "~{prefix}.vcf.gz"
+        File tbi = "~{prefix}.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          cores,
+        mem_gb:             "~{machine_memory}",
+        disk_gb:            disk_sz,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+}

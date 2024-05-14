@@ -378,7 +378,7 @@ workflow SRFlowcell {
     #                    |_|
     ############################################
     output {
-        # Unaligned reads
+        # Unaligned reads - If decontamination is ran, these also carry the decontaminated bams
         File fq1 = fq1_o
         File fq2 = fq2_o
         File? fq_unpaired = fqboup
