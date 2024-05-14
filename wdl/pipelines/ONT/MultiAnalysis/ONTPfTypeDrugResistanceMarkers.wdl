@@ -42,7 +42,7 @@ workflow ONTPfTypeDrugResistanceMarkers {
     }
 
     # Finalize data
-    if (!defined(gcs_out_root_dir)) {
+    if (defined(gcs_out_root_dir)) {
 
         String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
 
