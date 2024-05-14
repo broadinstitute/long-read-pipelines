@@ -717,3 +717,93 @@ task BamToBed {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task MosDepthWGSAtThreshold {
+    meta {
+        description: "Collects WGS coverage of the bam. Optionally, collects coverage number for each region in the provided BED (this avoids extra localizations)."
+    }
+    parameter_meta {
+        bam: {localization_optional: true}
+        bed_descriptor: "A short description on the BED file provided. It will be used in naming the regions output, so be careful what you provide here."
+        regions: "When bed is provided, this gets generated, which holds the coverage over the regions defined in the bed file."
+    }
+    input {
+        File bam
+        File bai
+        File? bed
+        Int cov_threshold
+        String bed_descriptor = "unknown"
+
+        String disk_type = "SSD"
+        RuntimeAttr? runtime_attr_override
+    }
+
+    output {
+        Float wgs_cov = read_float("wgs.cov.txt")
+        Float wgs_pct_at_threshold = read_float("wgs.threshold.txt")
+        File summary_txt = "~{prefix}.mosdepth.summary.txt"
+        File? regions = "~{prefix}.coverage_over_bed.~{bed_descriptor}.regions.bed.gz"
+    }
+
+    String basename = basename(bam, ".bam")
+    String prefix = "~{basename}.mosdepth_coverage"
+
+    Boolean collect_over_bed = defined(bed)
+
+    String local_bam = "/cromwell_root/~{basename}.bam"
+
+    command <<<
+        set -euxo pipefail
+
+        time gcloud storage cp ~{bam} ~{local_bam}
+        mv ~{bai} "~{local_bam}.bai"
+
+        mosdepth \
+            -t 2 \
+            -x -n -Q1 \
+            ~{prefix} \
+            ~{local_bam} &
+
+        if ~{collect_over_bed}; then
+            mosdepth \
+                -t 2 \
+                -b ~{bed} \
+                -x -n -Q 1 \
+                "~{prefix}.coverage_over_bed.~{bed_descriptor}" \
+                ~{local_bam} &
+        fi
+
+        wait && ls
+
+        # wg
+        tail -n1 ~{prefix}.mosdepth.summary.txt | \
+            awk -F '\t' '{print $4}' | \
+            xargs printf "%0.2f\n" > wgs.cov.txt
+        
+        # threshold_cov
+        awk -F '\t' -v cov_thresh=~{cov_threshold} '$1=="total" && $2==cov_thresh {print $3}' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
+    >>>
+
+    #########################
+    Int pd_disk_size = 10 + ceil(size(bam, "GiB"))
+    Int local_disk_size = if(size(bam, "GiB")>300) then 750 else 375
+    Int disk_size = if('LOCAL'==disk_type) then local_disk_size else pd_disk_size
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/mosdepth:0.3.4-gcloud"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

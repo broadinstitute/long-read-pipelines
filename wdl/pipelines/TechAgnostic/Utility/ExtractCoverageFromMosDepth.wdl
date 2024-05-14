@@ -1,29 +1,28 @@
 version 1.0
 
 import "../../../structs/Structs.wdl"
+import "../../../tasks/QC/AlignedMetrics.wdl" as AM
 
-workflow CoverageFromMosdepthFiles {
+workflow CoverageFromMosDepth {
 
     input {
-        File ref_fasta_fai
-        Array[File] contig_files
-        Array[String]? contigs
-        Int cov_threshold = 5
+        File bam
+        File bai
+        File? bed
+        Int cov_threshold
     }
 
-    call GetChrsFromFai { input: ref_fasta_fai = ref_fasta_fai }
-    Array[String] select_contigs = select_first([contigs, GetChrsFromFai.chrs])
-
-    call MosDepthGenomeCoverage {
+    call AM.MosDepthWGSAtThreshold as MosDepthWGS {
         input:
-            ref_fasta_fai = ref_fasta_fai,
-            contigs = select_contigs,
-            contig_files = contig_files,
+            bam = bam,
+            bai = bai,
+            bed = bed,
             cov_threshold = cov_threshold
     }
 
     output {
-        Float genome_cvg_at_thresh = MosDepthGenomeCoverage.genome_pct_cov_at_threshold
+        Float wgs_cov = MosDepthWGS.wgs_cov
+        Float wgs_pct_at_threshold = MosDepthWGS.wgs_pct_at_threshold
     }
 }
 
