@@ -2,13 +2,12 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 
-workflow CoverageFromMosdepthDir {
-    input {
-        String mosdepth_dir
-        File ref_fasta_fai
-        Array[String]? contigs
+workflow CoverageFromMosdepthFiles {
 
-        String? file_suffix
+    input {
+        File ref_fasta_fai
+        Array[File] contig_files
+        Array[String]? contigs
         Int cov_threshold = 5
     }
 
@@ -17,10 +16,9 @@ workflow CoverageFromMosdepthDir {
 
     call MosDepthGenomeCoverage {
         input:
-            mosdepth_dir = mosdepth_dir,
             ref_fasta_fai = ref_fasta_fai,
             contigs = select_contigs,
-            file_suffix = file_suffix,
+            contig_files = contig_files,
             cov_threshold = cov_threshold
     }
 
@@ -31,23 +29,20 @@ workflow CoverageFromMosdepthDir {
 
 task MosDepthGenomeCoverage {
     meta {
-        description: "Takes coverage information from a Mosdepth directory to give genome-wide coverage metrics"
+        description: "Takes coverage information from a list of Mosdepth files to give genome-wide coverage metrics"
     }
     
     parameter_meta {
-        mosdepth_dir: "Directory where information from MosDepth has been stored"
         ref_fasta_fai: "Index for reference genome"
         contigs: "The contigs you are interested in to calculate genome-wide coverage metrics"
-        file_suffix: "File suffix to identify the proper files to look at from the mosdepth directory"
+        contig_files: "Files to consider when calculating genome-wide coverage"
         cov_threshold: "Coverage threshold to report"
     }
 
     input {
-        String mosdepth_dir
         File ref_fasta_fai
         Array[String] contigs
-        
-        String? file_suffix
+        Array[File] contig_files
         Int cov_threshold = 5
 
         RuntimeAttr? runtime_attr_override
@@ -56,12 +51,13 @@ task MosDepthGenomeCoverage {
     command <<<
         set -euxo pipefail
         cut -f1,2 ~{ref_fasta_fai} > all_contigs_w_lens.txt
-
+        
         python3 <<CODE
         import numpy as np
         import os
 
         contigs_to_use = np.loadtxt("~{write_lines(contigs)}", dtype='str').tolist()
+        files_to_use = np.loadtxt("~{write_lines(contig_files)}", dtype='str').tolist()
         
         # Get lengths of every contig
         contig_lens = {}
@@ -77,8 +73,8 @@ task MosDepthGenomeCoverage {
 
         # Initialize contig_cov_files dictionary
         filepaths = []
-        for filepath in [os.path.join("~{mosdepth_dir}", fp) for fp in os.listdir("~{mosdepth_dir}")]:
-            if (any(c in filepath for c in contigs_to_use)) and (filepath.endswith("~{file_suffix}")):
+        for filepath in files_to_use:
+            if (any(c in filepath for c in contigs_to_use)):
                 for contig in contigs_to_use:
                     if contig in filepath:
                         contig_cov_files[contig] = filepath
@@ -86,7 +82,7 @@ task MosDepthGenomeCoverage {
         # Loop through all contigs
         for contig, contig_file in contig_cov_files.items():
             contig_cvg = -1.0
-            with open(contig_file) as f:
+            with open(os.path.basename(contig_file)) as f:
                 # The Mosdepth file should have a three-column tsv of the following order: contig_name, coverage, percent_at_coverage
                 for line in f:
                     if (contig in line) and ("\t~{cov_threshold}\t" in line):
@@ -112,7 +108,7 @@ task MosDepthGenomeCoverage {
         Float genome_pct_cov_at_threshold = read_float("genome_wide_coverage.txt")
     }
 
-    ########################
+    #######################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             10,
