@@ -82,7 +82,7 @@ task MosDepthGenomeCoverage {
         # Loop through all contigs
         for contig, contig_file in contig_cov_files.items():
             contig_cvg = -1.0
-            with open(os.path.basename(contig_file)) as f:
+            with open(contig_file) as f:
                 # The Mosdepth file should have a three-column tsv of the following order: contig_name, coverage, percent_at_coverage
                 for line in f:
                     if (contig in line) and ("\t~{cov_threshold}\t" in line):
