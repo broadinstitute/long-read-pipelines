@@ -353,15 +353,15 @@ workflow SRFlowcell {
                 outdir = metrics_dir,
                 file = t_012_FastQC.report
         }
-    }
 
-    # Prep a few files for output:
-    File fq1_o = unaligned_reads_dir + "/" + basename(fq_e1)
-    File fq2_o = unaligned_reads_dir + "/" + basename(fq_e2)
-    if (defined(bam)) {
-        File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
-        File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
-        File fqboup = unaligned_reads_dir + "/" + basename(select_first([DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
+        # Prep a few files for output:
+        File fq1_o = unaligned_reads_dir + "/" + basename(fq_e1)
+        File fq2_o = unaligned_reads_dir + "/" + basename(fq_e2)
+        if (defined(bam)) {
+            File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
+            File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
+            File fqboup = unaligned_reads_dir + "/" + basename(select_first([DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
+        }
     }
 
     # Prep some output values before the output block:
