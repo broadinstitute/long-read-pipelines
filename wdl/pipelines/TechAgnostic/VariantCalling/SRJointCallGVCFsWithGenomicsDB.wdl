@@ -490,7 +490,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     output {
-        String genomicsDB = select_first([FinalizeGenomicsDB.gcs_dir, ImportGVCFsIntoGenomicsDB.output_genomicsdb])
+        Array[String] genomicsDB = select_first([FinalizeGenomicsDB.gcs_dir, ImportGVCFsIntoGenomicsDB.output_genomicsdb])
 
         File raw_joint_vcf     = select_first([FinalizeRawVCF.gcs_path, GatherRawVcfs.output_vcf])
         File raw_joint_vcf_tbi = select_first([FinalizeRawTBI.gcs_path, GatherRawVcfs.output_vcf_index])
