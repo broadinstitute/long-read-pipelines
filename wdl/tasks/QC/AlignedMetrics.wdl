@@ -781,7 +781,7 @@ task MosDepthWGSAtThreshold {
             xargs printf "%0.2f\n" > wgs.cov.txt
         
         # threshold_cov
-        awk -F '\t' -v cov_thresh=~{cov_threshold} '$1=="total" && $2==cov_thresh {print $3}' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
+        awk -F '\t' -v cov_thresh=~{cov_threshold} '$1=="total" && $2==cov_thresh {print $3} END {if (!NR) print "0.0"}' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
     >>>
 
     #########################
