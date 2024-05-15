@@ -7,7 +7,6 @@ workflow CoverageStats {
     input {
         File bam
         File bai
-        File ref_map_file
         File? bed
         Int cov_threshold
     }
