@@ -829,12 +829,7 @@ task SamtoolsDepth {
     command <<<
         set -euxo pipefail
 
-        samtools depth
-            -a \
-            -J \
-            -Q 1 \
-            ~{"-b " + bed} \
-            ~{bam} > ~{basename}.sam_depth.txt
+        samtools depth -a -J -Q 1 ~{"-b " + bed} ~{bam} > ~{basename}.sam_depth.txt
 
         # Use samtools depth for mean coverage and % of genome at threshold
         # mean wgs cov
