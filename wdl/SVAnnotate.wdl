@@ -25,7 +25,9 @@ workflow SVAnnotate {
 
     output {
         File vcf_std = Standardize.vcf_std
+        File vcf_std_tbi = Standardize.vcf_std_tbi
         File vcf_anno = Standardize.vcf_anno
+        File vcf_anno_tbi = Standardize.vcf_anno_tbi
     }
 }
 
@@ -56,11 +58,14 @@ task Standardize {
 
         gatk SVAnnotate -V ~{prefix}.std.final.vcf.gz --protein-coding-gtf ~{gtf} -O ~{prefix}.anno.vcf
         bcftools view -Oz ~{prefix}.anno.vcf > ~{prefix}.anno.vcf.gz
+        tabix ~{prefix}.anno.vcf.gz
     >>>
 
     output {
         File vcf_std = "~{prefix}.std.final.vcf.gz"
+        File vcf_std_tbi = "~{prefix}.std.final.vcf.gz.tbi"
         File vcf_anno = "~{prefix}.anno.vcf.gz"
+        File vcf_anno_tbi = "~{prefix}.anno.vcf.gz.tbi"
     }
 
     #########################
