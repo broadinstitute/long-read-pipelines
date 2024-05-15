@@ -320,12 +320,12 @@
 <ul>
 <li><code>dir_prefix</code> (String, <strong>required</strong>): Prefix for output directory</li>
 <li><code>drug_resistance_list</code> (File, <strong>required</strong>): List of drug resistance markers for which to search</li>
-<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS output root directory</li>
 <li><code>snpeff_db</code> (File, <strong>required</strong>): SnpEff database for functional annotation</li>
 <li><code>vcf</code> (File, <strong>required</strong>): VCF file to process</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
+<li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
 <li><code>CallDrugResistanceMutations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeAnnotatedVCF.keyfile</code> (File?)</li>
 <li><code>FinalizeAnnotatedVCF.name</code> (String?)</li>

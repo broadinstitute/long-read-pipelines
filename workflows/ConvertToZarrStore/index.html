@@ -318,13 +318,16 @@
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS Bucket into which to finalize outputs.</li>
 <li><code>joint_vcf</code> (File, <strong>required</strong>)</li>
 <li><code>joint_vcf_tbi</code> (File, <strong>required</strong>): VCF Index for <code>vcf</code>.</li>
 <li><code>prefix</code> (String, <strong>required</strong>): prefix for output Zarr store</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
+<li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
+<li><code>FinalizeOutputs.keyfile</code> (File?)</li>
+<li><code>FinalizeOutputs.name</code> (String?)</li>
+<li><code>FinalizeOutputs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>PerformZarrStoreConversion.ref_fai</code> (String?)</li>
 <li><code>PerformZarrStoreConversion.ref_fasta</code> (String?)</li>
 <li><code>PerformZarrStoreConversion.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -336,7 +339,7 @@
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>joint_zarr</code> (String)</li>
+<li><code>joint_zarr</code> (File)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="ConvertToZarrStore" src="../../dot/ConvertToZarrStore.dot.png" /></p>

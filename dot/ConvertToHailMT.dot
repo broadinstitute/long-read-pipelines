@@ -4,4 +4,6 @@ digraph {
 	node [fontname=Roboto]
 	edge [color="#00000080"]
 	"call-RunConvertToHailMT" [label=RunConvertToHailMT shape=cds]
+	"call-FinalizeMT" [label=FinalizeMT shape=cds]
+	"call-RunConvertToHailMT" -> "call-FinalizeMT"
 }

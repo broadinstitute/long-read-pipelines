@@ -322,7 +322,6 @@
 <ul>
 <li><code>aligned_bais</code> (Array[File], <strong>required</strong>): Array of aligned bam indices to process.  Order must correspond to <code>aligned_bams</code>.</li>
 <li><code>aligned_bams</code> (Array[File], <strong>required</strong>): Array of aligned bam files to process.</li>
-<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS Bucket into which to finalize outputs.</li>
 <li><code>indel_is_calibration</code> (Array[Boolean], <strong>required</strong>): Array of booleans indicating which files in <code>indel_known_reference_variants</code> should be used as calibration sets.  True -&gt;calibration set.  False -&gt; NOT a calibration set.</li>
 <li><code>indel_is_training</code> (Array[Boolean], <strong>required</strong>): Array of booleans indicating which files in <code>indel_known_reference_variants</code> should be used as training sets.  True -&gt; training set.  False -&gt; NOT a training set.</li>
 <li><code>indel_known_reference_variants</code> (Array[File], <strong>required</strong>): Array of VCF files to use as input reference variants for INDELs.  Each can be designated as either calibration or training using <code>indel_is_training</code> and <code>indel_is_calibration</code>.</li>
@@ -340,6 +339,7 @@
 <ul>
 <li><code>bed_to_compute_coverage</code> (File?): Bed file to use as regions over which to measure coverage.</li>
 <li><code>fingerprint_haploytpe_db_file</code> (File?): Haplotype DB file from which to fingerprint the input data.</li>
+<li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
 <li><code>CallVariantsWithHaplotypeCaller.haplotype_caller_runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ComputeBamStats.qual_threshold</code> (Int?)</li>
 <li><code>ComputeBamStats.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -347,9 +347,7 @@
 <li><code>ExtractIndelVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ExtractSnpVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FastQC.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeBai.keyfile</code> (File?)</li>
 <li><code>FinalizeBai.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeBam.keyfile</code> (File?)</li>
 <li><code>FinalizeBam.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeDVPepperGTbi.keyfile</code> (File?)</li>
 <li><code>FinalizeDVPepperGTbi.name</code> (String?)</li>

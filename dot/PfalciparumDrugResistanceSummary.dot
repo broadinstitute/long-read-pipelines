@@ -4,6 +4,10 @@ digraph {
 	node [fontname=Roboto]
 	edge [color="#00000080"]
 	"call-CreateDrugResistanceSummary" [label=CreateDrugResistanceSummary shape=cds]
-	"call-FinalizeDrugResistanceSummary" [label=FinalizeDrugResistanceSummary shape=cds]
+	subgraph "cluster-if-L30C5" {
+		fontname=Roboto label="if(defined(gcs_out_root_dir))" rank=same
+		"call-FinalizeDrugResistanceSummary" [label=FinalizeDrugResistanceSummary shape=cds]
+		"if-L30C5" [label="" height=0 margin=0 style=invis width=0]
+	}
 	"call-CreateDrugResistanceSummary" -> "call-FinalizeDrugResistanceSummary"
 }

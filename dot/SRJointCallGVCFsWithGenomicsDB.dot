@@ -5,192 +5,201 @@ digraph {
 	edge [color="#00000080"]
 	"call-MakeChrIntervalList" [label=MakeChrIntervalList shape=cds]
 	"call-CreateSampleNameMap" [label=CreateSampleNameMap shape=cds]
-	subgraph "cluster-scatter-L123C5-idx_1" {
+	subgraph "cluster-scatter-L121C5-idx_1" {
 		fontname=Roboto label="scatter(range(length(MakeChrIntervalList.contig_interval_list_files)))" rank=same
 		"decl-contig" [label=contig shape=plaintext]
 		"decl-contig_interval_list" [label=contig_interval_list shape=plaintext]
 		"call-ImportGVCFsIntoGenomicsDB" [label=ImportGVCFsIntoGenomicsDB shape=cds]
-		subgraph "cluster-if-L144C9" {
+		subgraph "cluster-if-L142C9" {
 			fontname=Roboto label="if(use_gnarly_genotyper)" rank=same
 			"call-GnarlyJointCallGVCFs" [label=GnarlyJointCallGVCFs shape=cds]
-			"if-L144C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L142C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L160C9" {
+		subgraph "cluster-if-L158C9" {
 			fontname=Roboto label="if(!use_gnarly_genotyper)" rank=same
 			"call-JointCallGVCFs" [label=JointCallGVCFs shape=cds]
-			"if-L160C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L158C9" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"decl-joint_vcf" [label=joint_vcf shape=plaintext]
 		"decl-joint_vcf_index" [label=joint_vcf_index shape=plaintext]
 		"call-MakeSitesOnlyVCF" [label=MakeSitesOnlyVCF shape=cds]
-		"scatter-L123C5-idx_1" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L121C5-idx_1" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MergeSitesOnlyVCFs" [label=MergeSitesOnlyVCFs shape=cds]
 	"call-ExtractIndelVariantAnnotations" [label=ExtractIndelVariantAnnotations shape=cds]
 	"call-ExtractSnpVariantAnnotations" [label=ExtractSnpVariantAnnotations shape=cds]
 	"call-TrainIndelVariantAnnotationsModel" [label=TrainIndelVariantAnnotationsModel shape=cds]
 	"call-TrainSnpVariantAnnotationsModel" [label=TrainSnpVariantAnnotationsModel shape=cds]
-	subgraph "cluster-scatter-L252C5-idx_2" {
+	subgraph "cluster-scatter-L250C5-idx_2" {
 		fontname=Roboto label="scatter(range(length(joint_vcf)))" rank=same
 		"decl-contig_2" [label=contig_2 shape=plaintext]
 		"decl-joint_called_vcf" [label=joint_called_vcf shape=plaintext]
 		"decl-joint_called_vcf_index" [label=joint_called_vcf_index shape=plaintext]
 		"call-ScoreSnpVariantAnnotations" [label=ScoreSnpVariantAnnotations shape=cds]
 		"call-ScoreIndelVariantAnnotations" [label=ScoreIndelVariantAnnotations shape=cds]
-		subgraph "cluster-if-L315C9" {
+		subgraph "cluster-if-L313C9" {
 			fontname=Roboto label="if(defined(annotation_bed_files))" rank=same
 			"call-AnnotateVcfRegions" [label=AnnotateVcfRegions shape=cds]
-			"if-L315C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L313C9" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"decl-recalibrated_vcf" [label=recalibrated_vcf shape=plaintext]
 		"decl-recalibrated_vcf_index" [label=recalibrated_vcf_index shape=plaintext]
-		subgraph "cluster-if-L331C9" {
+		subgraph "cluster-if-L329C9" {
 			fontname=Roboto label="if(defined(snpeff_db))" rank=same
 			"call-FunctionallyAnnotate" [label=FunctionallyAnnotate shape=cds]
-			"if-L331C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L329C9" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"decl-vcf_for_merging" [label=vcf_for_merging shape=plaintext]
 		"decl-vcf_index_for_merging" [label=vcf_index_for_merging shape=plaintext]
-		"scatter-L252C5-idx_2" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L250C5-idx_2" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-GatherRawVcfs" [label=GatherRawVcfs shape=cds]
 	"call-GatherRescoredVcfs" [label=GatherRescoredVcfs shape=cds]
 	"call-ConvertToZarr" [label=ConvertToZarr shape=cds]
 	"call-CreateHailMatrixTable" [label=CreateHailMatrixTable shape=cds]
-	"decl-keyfile" [label=keyfile shape=plaintext]
-	"call-FinalizeGenomicsDB" [label=FinalizeGenomicsDB shape=cds]
-	"call-FinalizeRawVCF" [label=FinalizeRawVCF shape=cds]
-	"call-FinalizeRawTBI" [label=FinalizeRawTBI shape=cds]
-	"call-FinalizeVETSVCF" [label=FinalizeVETSVCF shape=cds]
-	"call-FinalizeVETSTBI" [label=FinalizeVETSTBI shape=cds]
-	subgraph "cluster-if-L398C5" {
-		fontname=Roboto label="if(defined(snpeff_db))" rank=same
-		"call-FinalizeSnpEffSummary" [label=FinalizeSnpEffSummary shape=cds]
-		"call-FinalizeSnpEffGenes" [label=FinalizeSnpEffGenes shape=cds]
-		"if-L398C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	"call-FinalizeSnpExtractedAnnotations" [label=FinalizeSnpExtractedAnnotations shape=cds]
-	"call-FinalizeSnpExtractedSitesOnlyVcf" [label=FinalizeSnpExtractedSitesOnlyVcf shape=cds]
-	"call-FinalizeSnpExtractedSitesOnlyVcfIndex" [label=FinalizeSnpExtractedSitesOnlyVcfIndex shape=cds]
-	subgraph "cluster-if-L411C5" {
-		fontname=Roboto label="if(defined(ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5))" rank=same
-		"call-FinalizeSnpExtractedUnlabeledAnnotations" [label=FinalizeSnpExtractedUnlabeledAnnotations shape=cds]
-		"if-L411C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	"call-FinalizeIndelExtractedAnnotations" [label=FinalizeIndelExtractedAnnotations shape=cds]
-	"call-FinalizeIndelExtractedSitesOnlyVcf" [label=FinalizeIndelExtractedSitesOnlyVcf shape=cds]
-	"call-FinalizeIndelExtractedSitesOnlyVcfIndex" [label=FinalizeIndelExtractedSitesOnlyVcfIndex shape=cds]
-	subgraph "cluster-if-L417C5" {
-		fontname=Roboto label="if(defined(ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5))" rank=same
-		"call-FinalizeIndelExtractedUnlabeledAnnotations" [label=FinalizeIndelExtractedUnlabeledAnnotations shape=cds]
-		"if-L417C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	"call-FinalizeSnpTrainVariantAnnotationsTrainingScores" [label=FinalizeSnpTrainVariantAnnotationsTrainingScores shape=cds]
-	"call-FinalizeSnpTrainVariantAnnotationsPositiveModelScorer" [label=FinalizeSnpTrainVariantAnnotationsPositiveModelScorer shape=cds]
-	subgraph "cluster-if-L424C5" {
-		fontname=Roboto label="if(defined(TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores))" rank=same
-		"call-FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores" [label=FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores shape=cds]
-		"if-L424C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	subgraph "cluster-if-L427C5" {
-		fontname=Roboto label="if(defined(TrainSnpVariantAnnotationsModel.calibration_set_scores))" rank=same
-		"call-FinalizeSnpTrainVariantAnnotationsCalibrationSetScores" [label=FinalizeSnpTrainVariantAnnotationsCalibrationSetScores shape=cds]
-		"if-L427C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	subgraph "cluster-if-L430C5" {
-		fontname=Roboto label="if(defined(TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle))" rank=same
-		"call-FinalizeSnpTrainVariantAnnotationsNegativeModelScorer" [label=FinalizeSnpTrainVariantAnnotationsNegativeModelScorer shape=cds]
-		"if-L430C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	"call-FinalizeIndelTrainVariantAnnotationsTrainingScores" [label=FinalizeIndelTrainVariantAnnotationsTrainingScores shape=cds]
-	"call-FinalizeIndelTrainVariantAnnotationsPositiveModelScorer" [label=FinalizeIndelTrainVariantAnnotationsPositiveModelScorer shape=cds]
-	subgraph "cluster-if-L436C5" {
-		fontname=Roboto label="if(defined(TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores))" rank=same
-		"call-FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores" [label=FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores shape=cds]
-		"if-L436C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	subgraph "cluster-if-L439C5" {
-		fontname=Roboto label="if(defined(TrainIndelVariantAnnotationsModel.calibration_set_scores))" rank=same
-		"call-FinalizeIndelTrainVariantAnnotationsCalibrationSetScores" [label=FinalizeIndelTrainVariantAnnotationsCalibrationSetScores shape=cds]
-		"if-L439C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	subgraph "cluster-if-L442C5" {
-		fontname=Roboto label="if(defined(TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle))" rank=same
-		"call-FinalizeIndelTrainVariantAnnotationsNegativeModelScorer" [label=FinalizeIndelTrainVariantAnnotationsNegativeModelScorer shape=cds]
-		"if-L442C5" [label="" height=0 margin=0 style=invis width=0]
-	}
-	subgraph "cluster-scatter-L448C5-idx_3" {
-		fontname=Roboto label="scatter(range(length(MakeChrIntervalList.contig_interval_list_files)))" rank=same
-		"decl-contig_3" [label=contig_3 shape=plaintext]
-		"call-FinalizeScoreSnpVariantAnnotationsScoredVcf" [label=FinalizeScoreSnpVariantAnnotationsScoredVcf shape=cds]
-		"call-FinalizeScoreSnpVariantAnnotationsScoredVcfIndex" [label=FinalizeScoreSnpVariantAnnotationsScoredVcfIndex shape=cds]
-		subgraph "cluster-if-L454C9" {
-			fontname=Roboto label="if(defined(ScoreSnpVariantAnnotations.annotations_hdf5))" rank=same
-			"call-FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5" [label=FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 shape=cds]
-			"if-L454C9" [label="" height=0 margin=0 style=invis width=0]
+	subgraph "cluster-if-L380C5" {
+		fontname=Roboto label="if(defined(gcs_out_root_dir))" rank=same
+		"decl-keyfile" [label=keyfile shape=plaintext]
+		"call-FinalizeGenomicsDB" [label=FinalizeGenomicsDB shape=cds]
+		"call-FinalizeRawVCF" [label=FinalizeRawVCF shape=cds]
+		"call-FinalizeRawTBI" [label=FinalizeRawTBI shape=cds]
+		"call-FinalizeVETSVCF" [label=FinalizeVETSVCF shape=cds]
+		"call-FinalizeVETSTBI" [label=FinalizeVETSTBI shape=cds]
+		subgraph "cluster-if-L400C9" {
+			fontname=Roboto label="if(defined(snpeff_db))" rank=same
+			"call-FinalizeSnpEffSummary" [label=FinalizeSnpEffSummary shape=cds]
+			"call-FinalizeSnpEffGenes" [label=FinalizeSnpEffGenes shape=cds]
+			"if-L400C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L457C9" {
-			fontname=Roboto label="if(defined(ScoreSnpVariantAnnotations.scores_hdf5))" rank=same
-			"call-FinalizeScoreSnpVariantAnnotationsScoresHdf5" [label=FinalizeScoreSnpVariantAnnotationsScoresHdf5 shape=cds]
-			"if-L457C9" [label="" height=0 margin=0 style=invis width=0]
+		"call-FinalizeSnpExtractedAnnotations" [label=FinalizeSnpExtractedAnnotations shape=cds]
+		"call-FinalizeSnpExtractedSitesOnlyVcf" [label=FinalizeSnpExtractedSitesOnlyVcf shape=cds]
+		"call-FinalizeSnpExtractedSitesOnlyVcfIndex" [label=FinalizeSnpExtractedSitesOnlyVcfIndex shape=cds]
+		subgraph "cluster-if-L413C9" {
+			fontname=Roboto label="if(defined(ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5))" rank=same
+			"call-FinalizeSnpExtractedUnlabeledAnnotations" [label=FinalizeSnpExtractedUnlabeledAnnotations shape=cds]
+			"if-L413C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"call-FinalizeScoreIndelVariantAnnotationsScoredVcf" [label=FinalizeScoreIndelVariantAnnotationsScoredVcf shape=cds]
-		"call-FinalizeScoreIndelVariantAnnotationsScoredVcfIndex" [label=FinalizeScoreIndelVariantAnnotationsScoredVcfIndex shape=cds]
-		subgraph "cluster-if-L463C9" {
-			fontname=Roboto label="if(defined(ScoreIndelVariantAnnotations.annotations_hdf5))" rank=same
-			"call-FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5" [label=FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 shape=cds]
-			"if-L463C9" [label="" height=0 margin=0 style=invis width=0]
+		"call-FinalizeIndelExtractedAnnotations" [label=FinalizeIndelExtractedAnnotations shape=cds]
+		"call-FinalizeIndelExtractedSitesOnlyVcf" [label=FinalizeIndelExtractedSitesOnlyVcf shape=cds]
+		"call-FinalizeIndelExtractedSitesOnlyVcfIndex" [label=FinalizeIndelExtractedSitesOnlyVcfIndex shape=cds]
+		subgraph "cluster-if-L419C9" {
+			fontname=Roboto label="if(defined(ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5))" rank=same
+			"call-FinalizeIndelExtractedUnlabeledAnnotations" [label=FinalizeIndelExtractedUnlabeledAnnotations shape=cds]
+			"if-L419C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L466C9" {
-			fontname=Roboto label="if(defined(ScoreIndelVariantAnnotations.scores_hdf5))" rank=same
-			"call-FinalizeScoreIndelVariantAnnotationsScoresHdf5" [label=FinalizeScoreIndelVariantAnnotationsScoresHdf5 shape=cds]
-			"if-L466C9" [label="" height=0 margin=0 style=invis width=0]
+		"call-FinalizeSnpTrainVariantAnnotationsTrainingScores" [label=FinalizeSnpTrainVariantAnnotationsTrainingScores shape=cds]
+		"call-FinalizeSnpTrainVariantAnnotationsPositiveModelScorer" [label=FinalizeSnpTrainVariantAnnotationsPositiveModelScorer shape=cds]
+		subgraph "cluster-if-L426C9" {
+			fontname=Roboto label="if(defined(TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores))" rank=same
+			"call-FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores" [label=FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores shape=cds]
+			"if-L426C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"scatter-L448C5-idx_3" [label="" height=0 margin=0 style=invis width=0]
+		subgraph "cluster-if-L429C9" {
+			fontname=Roboto label="if(defined(TrainSnpVariantAnnotationsModel.calibration_set_scores))" rank=same
+			"call-FinalizeSnpTrainVariantAnnotationsCalibrationSetScores" [label=FinalizeSnpTrainVariantAnnotationsCalibrationSetScores shape=cds]
+			"if-L429C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		subgraph "cluster-if-L432C9" {
+			fontname=Roboto label="if(defined(TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle))" rank=same
+			"call-FinalizeSnpTrainVariantAnnotationsNegativeModelScorer" [label=FinalizeSnpTrainVariantAnnotationsNegativeModelScorer shape=cds]
+			"if-L432C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"call-FinalizeIndelTrainVariantAnnotationsTrainingScores" [label=FinalizeIndelTrainVariantAnnotationsTrainingScores shape=cds]
+		"call-FinalizeIndelTrainVariantAnnotationsPositiveModelScorer" [label=FinalizeIndelTrainVariantAnnotationsPositiveModelScorer shape=cds]
+		subgraph "cluster-if-L438C9" {
+			fontname=Roboto label="if(defined(TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores))" rank=same
+			"call-FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores" [label=FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores shape=cds]
+			"if-L438C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		subgraph "cluster-if-L441C9" {
+			fontname=Roboto label="if(defined(TrainIndelVariantAnnotationsModel.calibration_set_scores))" rank=same
+			"call-FinalizeIndelTrainVariantAnnotationsCalibrationSetScores" [label=FinalizeIndelTrainVariantAnnotationsCalibrationSetScores shape=cds]
+			"if-L441C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		subgraph "cluster-if-L444C9" {
+			fontname=Roboto label="if(defined(TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle))" rank=same
+			"call-FinalizeIndelTrainVariantAnnotationsNegativeModelScorer" [label=FinalizeIndelTrainVariantAnnotationsNegativeModelScorer shape=cds]
+			"if-L444C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		subgraph "cluster-scatter-L450C9-idx_3" {
+			fontname=Roboto label="scatter(range(length(MakeChrIntervalList.contig_interval_list_files)))" rank=same
+			"decl-contig_3" [label=contig_3 shape=plaintext]
+			"call-FinalizeScoreSnpVariantAnnotationsScoredVcf" [label=FinalizeScoreSnpVariantAnnotationsScoredVcf shape=cds]
+			"call-FinalizeScoreSnpVariantAnnotationsScoredVcfIndex" [label=FinalizeScoreSnpVariantAnnotationsScoredVcfIndex shape=cds]
+			subgraph "cluster-if-L456C13" {
+				fontname=Roboto label="if(defined(ScoreSnpVariantAnnotations.annotations_hdf5))" rank=same
+				"call-FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5" [label=FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 shape=cds]
+				"if-L456C13" [label="" height=0 margin=0 style=invis width=0]
+			}
+			subgraph "cluster-if-L459C13" {
+				fontname=Roboto label="if(defined(ScoreSnpVariantAnnotations.scores_hdf5))" rank=same
+				"call-FinalizeScoreSnpVariantAnnotationsScoresHdf5" [label=FinalizeScoreSnpVariantAnnotationsScoresHdf5 shape=cds]
+				"if-L459C13" [label="" height=0 margin=0 style=invis width=0]
+			}
+			"call-FinalizeScoreIndelVariantAnnotationsScoredVcf" [label=FinalizeScoreIndelVariantAnnotationsScoredVcf shape=cds]
+			"call-FinalizeScoreIndelVariantAnnotationsScoredVcfIndex" [label=FinalizeScoreIndelVariantAnnotationsScoredVcfIndex shape=cds]
+			subgraph "cluster-if-L465C13" {
+				fontname=Roboto label="if(defined(ScoreIndelVariantAnnotations.annotations_hdf5))" rank=same
+				"call-FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5" [label=FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 shape=cds]
+				"if-L465C13" [label="" height=0 margin=0 style=invis width=0]
+			}
+			subgraph "cluster-if-L468C13" {
+				fontname=Roboto label="if(defined(ScoreIndelVariantAnnotations.scores_hdf5))" rank=same
+				"call-FinalizeScoreIndelVariantAnnotationsScoresHdf5" [label=FinalizeScoreIndelVariantAnnotationsScoresHdf5 shape=cds]
+				"if-L468C13" [label="" height=0 margin=0 style=invis width=0]
+			}
+			"scatter-L450C9-idx_3" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"call-FinalizeZarr" [label=FinalizeZarr shape=cds]
+		"call-FinalizeHailMatrixTable" [label=FinalizeHailMatrixTable shape=cds]
+		"decl-final_genomicsdb_location" [label=final_genomicsdb_location shape=plaintext]
+		"if-L380C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	subgraph "cluster-if-L472C5" {
+	subgraph "cluster-if-L487C5" {
 		fontname=Roboto label="if(defined(snpeff_db))" rank=same
 		"decl-annotated_vcf" [label=annotated_vcf shape=plaintext]
 		"decl-annotated_vcf_tbi" [label=annotated_vcf_tbi shape=plaintext]
-		"if-L472C5" [label="" height=0 margin=0 style=invis width=0]
+		"decl-final_snpeff_summary" [label=final_snpeff_summary shape=plaintext]
+		"decl-final_snpEff_genes" [label=final_snpEff_genes shape=plaintext]
+		"if-L487C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	"call-MakeChrIntervalList" -> "scatter-L123C5-idx_1" [lhead="cluster-scatter-L123C5-idx_1"]
+	"call-MakeChrIntervalList" -> "scatter-L121C5-idx_1" [lhead="cluster-scatter-L121C5-idx_1"]
 	"call-MakeChrIntervalList" -> "decl-contig"
 	"call-MakeChrIntervalList" -> "decl-contig_interval_list"
-	"call-CreateSampleNameMap" -> "call-ImportGVCFsIntoGenomicsDB"
 	"decl-contig_interval_list" -> "call-ImportGVCFsIntoGenomicsDB"
 	"decl-contig" -> "call-ImportGVCFsIntoGenomicsDB"
-	"call-ImportGVCFsIntoGenomicsDB" -> "call-GnarlyJointCallGVCFs"
+	"call-CreateSampleNameMap" -> "call-ImportGVCFsIntoGenomicsDB"
 	"decl-contig_interval_list" -> "call-GnarlyJointCallGVCFs"
+	"call-ImportGVCFsIntoGenomicsDB" -> "call-GnarlyJointCallGVCFs"
 	"decl-contig" -> "call-GnarlyJointCallGVCFs"
-	"call-ImportGVCFsIntoGenomicsDB" -> "call-JointCallGVCFs"
 	"decl-contig_interval_list" -> "call-JointCallGVCFs"
+	"call-ImportGVCFsIntoGenomicsDB" -> "call-JointCallGVCFs"
 	"decl-contig" -> "call-JointCallGVCFs"
 	"call-GnarlyJointCallGVCFs" -> "decl-joint_vcf"
 	"call-JointCallGVCFs" -> "decl-joint_vcf"
 	"call-GnarlyJointCallGVCFs" -> "decl-joint_vcf_index"
 	"call-JointCallGVCFs" -> "decl-joint_vcf_index"
-	"decl-contig" -> "call-MakeSitesOnlyVCF"
 	"decl-joint_vcf" -> "call-MakeSitesOnlyVCF"
+	"decl-contig" -> "call-MakeSitesOnlyVCF"
 	"decl-joint_vcf_index" -> "call-MakeSitesOnlyVCF"
 	"call-MakeSitesOnlyVCF" -> "call-MergeSitesOnlyVCFs"
 	"call-MergeSitesOnlyVCFs" -> "call-ExtractIndelVariantAnnotations"
 	"call-MergeSitesOnlyVCFs" -> "call-ExtractSnpVariantAnnotations"
 	"call-ExtractIndelVariantAnnotations" -> "call-TrainIndelVariantAnnotationsModel"
 	"call-ExtractSnpVariantAnnotations" -> "call-TrainSnpVariantAnnotationsModel"
-	"decl-joint_vcf" -> "scatter-L252C5-idx_2" [lhead="cluster-scatter-L252C5-idx_2"]
+	"decl-joint_vcf" -> "scatter-L250C5-idx_2" [lhead="cluster-scatter-L250C5-idx_2"]
 	"call-MakeChrIntervalList" -> "decl-contig_2"
 	"decl-joint_vcf" -> "decl-joint_called_vcf"
 	"decl-joint_vcf_index" -> "decl-joint_called_vcf_index"
-	"decl-joint_called_vcf" -> "call-ScoreSnpVariantAnnotations"
-	"decl-joint_called_vcf_index" -> "call-ScoreSnpVariantAnnotations"
-	"call-ExtractSnpVariantAnnotations" -> "call-ScoreSnpVariantAnnotations"
-	"call-TrainSnpVariantAnnotationsModel" -> "call-ScoreSnpVariantAnnotations"
 	"decl-contig_2" -> "call-ScoreSnpVariantAnnotations"
+	"decl-joint_called_vcf" -> "call-ScoreSnpVariantAnnotations"
+	"call-ExtractSnpVariantAnnotations" -> "call-ScoreSnpVariantAnnotations"
+	"decl-joint_called_vcf_index" -> "call-ScoreSnpVariantAnnotations"
+	"call-TrainSnpVariantAnnotationsModel" -> "call-ScoreSnpVariantAnnotations"
+	"call-ExtractIndelVariantAnnotations" -> "call-ScoreIndelVariantAnnotations"
 	"call-ScoreSnpVariantAnnotations" -> "call-ScoreIndelVariantAnnotations"
 	"call-TrainIndelVariantAnnotationsModel" -> "call-ScoreIndelVariantAnnotations"
 	"decl-contig_2" -> "call-ScoreIndelVariantAnnotations"
-	"call-ExtractIndelVariantAnnotations" -> "call-ScoreIndelVariantAnnotations"
 	"call-ScoreIndelVariantAnnotations" -> "call-AnnotateVcfRegions"
 	"call-ScoreIndelVariantAnnotations" -> "decl-recalibrated_vcf"
 	"call-AnnotateVcfRegions" -> "decl-recalibrated_vcf"
@@ -199,12 +208,12 @@ digraph {
 	"decl-recalibrated_vcf" -> "call-FunctionallyAnnotate"
 	"call-FunctionallyAnnotate" -> "decl-vcf_for_merging"
 	"decl-recalibrated_vcf" -> "decl-vcf_for_merging"
-	"call-FunctionallyAnnotate" -> "decl-vcf_index_for_merging"
 	"decl-recalibrated_vcf_index" -> "decl-vcf_index_for_merging"
+	"call-FunctionallyAnnotate" -> "decl-vcf_index_for_merging"
 	"decl-joint_vcf_index" -> "call-GatherRawVcfs"
 	"decl-joint_vcf" -> "call-GatherRawVcfs"
-	"decl-vcf_for_merging" -> "call-GatherRescoredVcfs"
 	"decl-vcf_index_for_merging" -> "call-GatherRescoredVcfs"
+	"decl-vcf_for_merging" -> "call-GatherRescoredVcfs"
 	"call-GatherRescoredVcfs" -> "call-ConvertToZarr"
 	"call-GatherRescoredVcfs" -> "call-CreateHailMatrixTable"
 	"call-CreateHailMatrixTable" -> "decl-keyfile"
@@ -214,21 +223,21 @@ digraph {
 	"decl-keyfile" -> "call-FinalizeRawVCF"
 	"call-GatherRawVcfs" -> "call-FinalizeRawTBI"
 	"decl-keyfile" -> "call-FinalizeRawTBI"
-	"call-GatherRescoredVcfs" -> "call-FinalizeVETSVCF"
 	"decl-keyfile" -> "call-FinalizeVETSVCF"
-	"call-GatherRescoredVcfs" -> "call-FinalizeVETSTBI"
+	"call-GatherRescoredVcfs" -> "call-FinalizeVETSVCF"
 	"decl-keyfile" -> "call-FinalizeVETSTBI"
-	"decl-keyfile" -> "call-FinalizeSnpEffSummary"
+	"call-GatherRescoredVcfs" -> "call-FinalizeVETSTBI"
 	"call-FunctionallyAnnotate" -> "call-FinalizeSnpEffSummary"
-	"decl-keyfile" -> "call-FinalizeSnpEffGenes"
+	"decl-keyfile" -> "call-FinalizeSnpEffSummary"
 	"call-FunctionallyAnnotate" -> "call-FinalizeSnpEffGenes"
+	"decl-keyfile" -> "call-FinalizeSnpEffGenes"
 	"call-ExtractSnpVariantAnnotations" -> "call-FinalizeSnpExtractedAnnotations"
 	"decl-keyfile" -> "call-FinalizeSnpExtractedAnnotations"
 	"call-ExtractSnpVariantAnnotations" -> "call-FinalizeSnpExtractedSitesOnlyVcf"
 	"decl-keyfile" -> "call-FinalizeSnpExtractedSitesOnlyVcf"
 	"call-ExtractSnpVariantAnnotations" -> "call-FinalizeSnpExtractedSitesOnlyVcfIndex"
 	"decl-keyfile" -> "call-FinalizeSnpExtractedSitesOnlyVcfIndex"
-	"call-ExtractSnpVariantAnnotations" -> "if-L411C5" [lhead="cluster-if-L411C5"]
+	"call-ExtractSnpVariantAnnotations" -> "if-L413C9" [lhead="cluster-if-L413C9"]
 	"call-ExtractSnpVariantAnnotations" -> "call-FinalizeSnpExtractedUnlabeledAnnotations"
 	"decl-keyfile" -> "call-FinalizeSnpExtractedUnlabeledAnnotations"
 	"call-ExtractIndelVariantAnnotations" -> "call-FinalizeIndelExtractedAnnotations"
@@ -237,65 +246,76 @@ digraph {
 	"decl-keyfile" -> "call-FinalizeIndelExtractedSitesOnlyVcf"
 	"call-ExtractIndelVariantAnnotations" -> "call-FinalizeIndelExtractedSitesOnlyVcfIndex"
 	"decl-keyfile" -> "call-FinalizeIndelExtractedSitesOnlyVcfIndex"
-	"call-ExtractIndelVariantAnnotations" -> "if-L417C5" [lhead="cluster-if-L417C5"]
+	"call-ExtractIndelVariantAnnotations" -> "if-L419C9" [lhead="cluster-if-L419C9"]
 	"call-ExtractIndelVariantAnnotations" -> "call-FinalizeIndelExtractedUnlabeledAnnotations"
 	"decl-keyfile" -> "call-FinalizeIndelExtractedUnlabeledAnnotations"
-	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsTrainingScores"
 	"decl-keyfile" -> "call-FinalizeSnpTrainVariantAnnotationsTrainingScores"
-	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsPositiveModelScorer"
+	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsTrainingScores"
 	"decl-keyfile" -> "call-FinalizeSnpTrainVariantAnnotationsPositiveModelScorer"
-	"call-TrainSnpVariantAnnotationsModel" -> "if-L424C5" [lhead="cluster-if-L424C5"]
-	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores"
+	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsPositiveModelScorer"
+	"call-TrainSnpVariantAnnotationsModel" -> "if-L426C9" [lhead="cluster-if-L426C9"]
 	"decl-keyfile" -> "call-FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores"
-	"call-TrainSnpVariantAnnotationsModel" -> "if-L427C5" [lhead="cluster-if-L427C5"]
-	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsCalibrationSetScores"
+	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores"
+	"call-TrainSnpVariantAnnotationsModel" -> "if-L429C9" [lhead="cluster-if-L429C9"]
 	"decl-keyfile" -> "call-FinalizeSnpTrainVariantAnnotationsCalibrationSetScores"
-	"call-TrainSnpVariantAnnotationsModel" -> "if-L430C5" [lhead="cluster-if-L430C5"]
-	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsNegativeModelScorer"
+	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsCalibrationSetScores"
+	"call-TrainSnpVariantAnnotationsModel" -> "if-L432C9" [lhead="cluster-if-L432C9"]
 	"decl-keyfile" -> "call-FinalizeSnpTrainVariantAnnotationsNegativeModelScorer"
+	"call-TrainSnpVariantAnnotationsModel" -> "call-FinalizeSnpTrainVariantAnnotationsNegativeModelScorer"
 	"call-TrainIndelVariantAnnotationsModel" -> "call-FinalizeIndelTrainVariantAnnotationsTrainingScores"
 	"decl-keyfile" -> "call-FinalizeIndelTrainVariantAnnotationsTrainingScores"
 	"call-TrainIndelVariantAnnotationsModel" -> "call-FinalizeIndelTrainVariantAnnotationsPositiveModelScorer"
 	"decl-keyfile" -> "call-FinalizeIndelTrainVariantAnnotationsPositiveModelScorer"
-	"call-TrainIndelVariantAnnotationsModel" -> "if-L436C5" [lhead="cluster-if-L436C5"]
+	"call-TrainIndelVariantAnnotationsModel" -> "if-L438C9" [lhead="cluster-if-L438C9"]
 	"call-TrainIndelVariantAnnotationsModel" -> "call-FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores"
 	"decl-keyfile" -> "call-FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores"
-	"call-TrainIndelVariantAnnotationsModel" -> "if-L439C5" [lhead="cluster-if-L439C5"]
+	"call-TrainIndelVariantAnnotationsModel" -> "if-L441C9" [lhead="cluster-if-L441C9"]
 	"call-TrainIndelVariantAnnotationsModel" -> "call-FinalizeIndelTrainVariantAnnotationsCalibrationSetScores"
 	"decl-keyfile" -> "call-FinalizeIndelTrainVariantAnnotationsCalibrationSetScores"
-	"call-TrainIndelVariantAnnotationsModel" -> "if-L442C5" [lhead="cluster-if-L442C5"]
+	"call-TrainIndelVariantAnnotationsModel" -> "if-L444C9" [lhead="cluster-if-L444C9"]
 	"call-TrainIndelVariantAnnotationsModel" -> "call-FinalizeIndelTrainVariantAnnotationsNegativeModelScorer"
 	"decl-keyfile" -> "call-FinalizeIndelTrainVariantAnnotationsNegativeModelScorer"
-	"call-MakeChrIntervalList" -> "scatter-L448C5-idx_3" [lhead="cluster-scatter-L448C5-idx_3"]
+	"call-MakeChrIntervalList" -> "scatter-L450C9-idx_3" [lhead="cluster-scatter-L450C9-idx_3"]
 	"call-MakeChrIntervalList" -> "decl-contig_3"
-	"decl-contig_3" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcf"
-	"decl-keyfile" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcf"
 	"call-ScoreSnpVariantAnnotations" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcf"
-	"decl-contig_3" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcfIndex"
-	"decl-keyfile" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcfIndex"
+	"decl-keyfile" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcf"
+	"decl-contig_3" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcf"
 	"call-ScoreSnpVariantAnnotations" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcfIndex"
-	"call-ScoreSnpVariantAnnotations" -> "if-L454C9" [lhead="cluster-if-L454C9"]
-	"decl-contig_3" -> "call-FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5"
-	"decl-keyfile" -> "call-FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5"
+	"decl-keyfile" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcfIndex"
+	"decl-contig_3" -> "call-FinalizeScoreSnpVariantAnnotationsScoredVcfIndex"
+	"call-ScoreSnpVariantAnnotations" -> "if-L456C13" [lhead="cluster-if-L456C13"]
 	"call-ScoreSnpVariantAnnotations" -> "call-FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5"
-	"call-ScoreSnpVariantAnnotations" -> "if-L457C9" [lhead="cluster-if-L457C9"]
-	"decl-contig_3" -> "call-FinalizeScoreSnpVariantAnnotationsScoresHdf5"
-	"decl-keyfile" -> "call-FinalizeScoreSnpVariantAnnotationsScoresHdf5"
+	"decl-keyfile" -> "call-FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5"
+	"decl-contig_3" -> "call-FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5"
+	"call-ScoreSnpVariantAnnotations" -> "if-L459C13" [lhead="cluster-if-L459C13"]
 	"call-ScoreSnpVariantAnnotations" -> "call-FinalizeScoreSnpVariantAnnotationsScoresHdf5"
+	"decl-keyfile" -> "call-FinalizeScoreSnpVariantAnnotationsScoresHdf5"
+	"decl-contig_3" -> "call-FinalizeScoreSnpVariantAnnotationsScoresHdf5"
 	"call-ScoreIndelVariantAnnotations" -> "call-FinalizeScoreIndelVariantAnnotationsScoredVcf"
-	"decl-contig_3" -> "call-FinalizeScoreIndelVariantAnnotationsScoredVcf"
 	"decl-keyfile" -> "call-FinalizeScoreIndelVariantAnnotationsScoredVcf"
+	"decl-contig_3" -> "call-FinalizeScoreIndelVariantAnnotationsScoredVcf"
 	"call-ScoreIndelVariantAnnotations" -> "call-FinalizeScoreIndelVariantAnnotationsScoredVcfIndex"
-	"decl-contig_3" -> "call-FinalizeScoreIndelVariantAnnotationsScoredVcfIndex"
 	"decl-keyfile" -> "call-FinalizeScoreIndelVariantAnnotationsScoredVcfIndex"
-	"call-ScoreIndelVariantAnnotations" -> "if-L463C9" [lhead="cluster-if-L463C9"]
+	"decl-contig_3" -> "call-FinalizeScoreIndelVariantAnnotationsScoredVcfIndex"
+	"call-ScoreIndelVariantAnnotations" -> "if-L465C13" [lhead="cluster-if-L465C13"]
 	"call-ScoreIndelVariantAnnotations" -> "call-FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5"
-	"decl-contig_3" -> "call-FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5"
 	"decl-keyfile" -> "call-FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5"
-	"call-ScoreIndelVariantAnnotations" -> "if-L466C9" [lhead="cluster-if-L466C9"]
+	"decl-contig_3" -> "call-FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5"
+	"call-ScoreIndelVariantAnnotations" -> "if-L468C13" [lhead="cluster-if-L468C13"]
 	"call-ScoreIndelVariantAnnotations" -> "call-FinalizeScoreIndelVariantAnnotationsScoresHdf5"
-	"decl-contig_3" -> "call-FinalizeScoreIndelVariantAnnotationsScoresHdf5"
 	"decl-keyfile" -> "call-FinalizeScoreIndelVariantAnnotationsScoresHdf5"
+	"decl-contig_3" -> "call-FinalizeScoreIndelVariantAnnotationsScoresHdf5"
+	"decl-keyfile" -> "call-FinalizeZarr"
+	"call-ConvertToZarr" -> "call-FinalizeZarr"
+	"decl-keyfile" -> "call-FinalizeHailMatrixTable"
+	"call-CreateHailMatrixTable" -> "call-FinalizeHailMatrixTable"
+	"call-FinalizeGenomicsDB" -> "decl-final_genomicsdb_location"
 	"call-FinalizeVETSVCF" -> "decl-annotated_vcf"
+	"call-GatherRescoredVcfs" -> "decl-annotated_vcf"
 	"call-FinalizeVETSTBI" -> "decl-annotated_vcf_tbi"
+	"call-GatherRescoredVcfs" -> "decl-annotated_vcf_tbi"
+	"call-FunctionallyAnnotate" -> "decl-final_snpeff_summary"
+	"call-FinalizeSnpEffSummary" -> "decl-final_snpeff_summary"
+	"call-FunctionallyAnnotate" -> "decl-final_snpEff_genes"
+	"call-FinalizeSnpEffGenes" -> "decl-final_snpEff_genes"
 }

@@ -323,7 +323,6 @@
 <li><code>LB</code> (String, <strong>required</strong>)</li>
 <li><code>SM</code> (String, <strong>required</strong>): Sample name for the given bam file.</li>
 <li><code>dir_prefix</code> (String, <strong>required</strong>): Directory prefix to use for finalized location.</li>
-<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS Bucket into which to finalize outputs.</li>
 <li><code>ref_map_file</code> (File, <strong>required</strong>): Reference map file for the primary reference sequence and auxillary file locations.</li>
 </ul>
 <h4 id="optional">Optional</h4>
@@ -334,6 +333,7 @@
 <li><code>contaminant_ref_name</code> (String?): Name for the contaminant reference.</li>
 <li><code>fq_end1</code> (File?): FASTQ file containing end 1 of the short read data to process.  <code>fq_end2</code> must be defined if this argument is.  This argument and <code>fq_end2</code> are mutually exclusive with <code>bam</code> and <code>bai</code></li>
 <li><code>fq_end2</code> (File?): FASTQ file containing end 2 of the short read data to process.  <code>fq_end1</code> must be defined if this argument is.  This argument and <code>fq_end1</code> are mutually exclusive with <code>bam</code> and <code>bai</code></li>
+<li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
 <li><code>DecontaminateSample.input_bai</code> (File?)</li>
 <li><code>DecontaminateSample.input_bam</code> (File?)</li>
 <li><code>t_002_RevertSam.runtime_attr_override</code> (RuntimeAttr?)</li>

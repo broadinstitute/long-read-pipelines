@@ -4,4 +4,10 @@ digraph {
 	node [fontname=Roboto]
 	edge [color="#00000080"]
 	"call-PerformZarrStoreConversion" [label=PerformZarrStoreConversion shape=cds]
+	subgraph "cluster-if-L35C5" {
+		fontname=Roboto label="if(defined(gcs_out_root_dir))" rank=same
+		"call-FinalizeOutputs" [label=FinalizeOutputs shape=cds]
+		"if-L35C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-PerformZarrStoreConversion" -> "call-FinalizeOutputs"
 }

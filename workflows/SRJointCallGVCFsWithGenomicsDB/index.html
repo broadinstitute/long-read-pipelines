@@ -320,7 +320,6 @@
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS Bucket into which to finalize outputs.</li>
 <li><code>gvcf_indices</code> (Array[File], <strong>required</strong>): Array of gvcf index files for <code>gvcfs</code>.  Order should correspond to that in <code>gvcfs</code>.</li>
 <li><code>gvcfs</code> (Array[File], <strong>required</strong>): Array of GVCF files to use as inputs for joint calling.</li>
 <li><code>indel_is_calibration</code> (Array[Boolean], <strong>required</strong>): Array of booleans indicating which files in <code>indel_known_reference_variants</code> should be used as calibration sets.  True -&gt;calibration set.  False -&gt; NOT a calibration set.</li>
@@ -342,6 +341,7 @@
 <li><code>annotation_bed_file_annotation_names</code> (Array[String]?): Array of names/FILTER column entries to use for each given file in <code>annotation_bed_files</code>.  Order should correspond to <code>annotation_bed_files</code>.</li>
 <li><code>annotation_bed_file_indexes</code> (Array[File]?): Array of bed indexes for <code>annotation_bed_files</code>.  Order should correspond to <code>annotation_bed_files</code>.</li>
 <li><code>annotation_bed_files</code> (Array[File]?): Array of bed files to use to FILTER/annotate variants in the output file.  Annotations will be placed in the FILTER column, effectively filtering variants that overlap these regions.</li>
+<li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
 <li><code>snpeff_db</code> (File?)</li>
 <li><code>AnnotateVcfRegions.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ConvertToZarr.ref_fai</code> (String?)</li>
@@ -352,6 +352,8 @@
 <li><code>ExtractIndelVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ExtractSnpVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeGenomicsDB.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeHailMatrixTable.name</code> (String?)</li>
+<li><code>FinalizeHailMatrixTable.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeIndelExtractedAnnotations.name</code> (String?)</li>
 <li><code>FinalizeIndelExtractedAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeIndelExtractedSitesOnlyVcf.name</code> (String?)</li>
@@ -414,6 +416,8 @@
 <li><code>FinalizeVETSTBI.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeVETSVCF.name</code> (String?)</li>
 <li><code>FinalizeVETSVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeZarr.name</code> (String?)</li>
+<li><code>FinalizeZarr.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FunctionallyAnnotate.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>GatherRawVcfs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>GatherRescoredVcfs.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -451,7 +455,7 @@
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>genomicsDB</code> (String)</li>
+<li><code>genomicsDB</code> (Array[String])</li>
 <li><code>raw_joint_vcf</code> (File)</li>
 <li><code>raw_joint_vcf_tbi</code> (File)</li>
 <li><code>joint_recalibrated_vcf</code> (File)</li>
@@ -460,8 +464,8 @@
 <li><code>joint_zarr</code> (File)</li>
 <li><code>annotated_joint_vcf</code> (File?)</li>
 <li><code>annotated_joint_vcf_tbi</code> (File?)</li>
-<li><code>snpEff_summary</code> (String?)</li>
-<li><code>snpEff_genes</code> (String?)</li>
+<li><code>snpEff_summary</code> (Array[String]?)</li>
+<li><code>snpEff_genes</code> (Array[String]?)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="SRJointCallGVCFsWithGenomicsDB" src="../../dot/SRJointCallGVCFsWithGenomicsDB.dot.png" /></p>

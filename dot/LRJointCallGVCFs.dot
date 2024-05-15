@@ -7,7 +7,9 @@ digraph {
 	"call-ConvertToHailMT" [label=ConvertToHailMT shape=cds]
 	"call-FinalizeGVCF" [label=FinalizeGVCF shape=cds]
 	"call-FinalizeTBI" [label=FinalizeTBI shape=cds]
+	"call-FinalizeMT" [label=FinalizeMT shape=cds]
 	"call-JointCall" -> "call-ConvertToHailMT"
 	"call-JointCall" -> "call-FinalizeGVCF"
 	"call-JointCall" -> "call-FinalizeTBI"
+	"call-ConvertToHailMT" -> "call-FinalizeMT"
 }
