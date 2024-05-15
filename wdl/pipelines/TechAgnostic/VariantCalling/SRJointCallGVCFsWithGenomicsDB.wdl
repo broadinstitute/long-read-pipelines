@@ -478,6 +478,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                 keyfile = keyfile,
                 file = CreateHailMatrixTable.mt_tar
         }
+
+        # Set up variable for outputs:
+        Array[String] final_genomicsdb_location = [FinalizeGenomicsDB.gcs_dir]
     }
 
     # Make an alias for the functionally annotated data:
@@ -490,7 +493,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     output {
-        Array[String] genomicsDB = select_first([FinalizeGenomicsDB.gcs_dir, ImportGVCFsIntoGenomicsDB.output_genomicsdb])
+        Array[String] genomicsDB = select_first([final_genomicsdb_location, ImportGVCFsIntoGenomicsDB.output_genomicsdb])
 
         File raw_joint_vcf     = select_first([FinalizeRawVCF.gcs_path, GatherRawVcfs.output_vcf])
         File raw_joint_vcf_tbi = select_first([FinalizeRawTBI.gcs_path, GatherRawVcfs.output_vcf_index])
