@@ -780,7 +780,11 @@ task MosDepthWGSAtThreshold {
             awk -F '\t' ' {printf "%.5f", $3/$2} ' > wgs.cov.txt
         
         # threshold_cov - Can only go up to 2 significant digits
-        awk -F '\t' -v cov_thresh=~{cov_threshold} '$1=="total" && $2==cov_thresh {print $3}' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
+        awk -F '\t' -v cov_thresh=5 
+        '
+            $1=="total" && $2==cov_thresh {print $3; found=1; exit} END 
+            {if (!found) print "0.0"}    
+        ' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
     >>>
 
     #########################
@@ -818,29 +822,23 @@ task SamtoolsDepth {
     }
 
     parameter_meta {
-        bam: {localization_optional:true}
+        bam: "Aligned BAM file"
         cov_threshold: "Integer threshold to determine percent of genome at this coverage"
         bed: "Optional BED file to calculate coverage over."
     }
 
     String basename = basename(bam, ".bam")
-    String prefix = "~{basename}.mosdepth_coverage"
-
-    String local_bam = "/cromwell_root/~{basename}.bam"
     Int disk_size = 2*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
-
-        time gcloud storage cp ~{bam} ~{local_bam}
-        mv ~{bai} "~{local_bam}.bai"
 
         samtools depth
             -a \
             -J \
             -Q 1 \
             ~{"-b " + bed} \
-            ~{local_bam} > ~{basename}.sam_depth.txt
+            ~{bam} > ~{basename}.sam_depth.txt
 
         # Use samtools depth for mean coverage and % of genome at threshold
         # mean wgs cov
