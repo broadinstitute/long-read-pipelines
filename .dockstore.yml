@@ -168,6 +168,6 @@ workflows:
 - name: SRReblockGVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ILMN/VariantCalling/SRReblockGVCFs.wdl
-- name: ExtractCoverageFromMosDepth
+- name: ExtractCoverageStats
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ExtractCoverageFromMosDepth.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ExtractCoverageStats.wdl

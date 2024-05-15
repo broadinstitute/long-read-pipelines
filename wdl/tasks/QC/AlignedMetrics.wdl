@@ -740,7 +740,7 @@ task MosDepthWGSAtThreshold {
 
     output {
         Float wgs_cov = read_float("wgs.cov.txt")
-        Float wgs_pct_at_threshold = read_float("wgs.threshold.txt")
+        Float wgs_frac_at_threshold = read_float("wgs.threshold.txt")
         File summary_txt = "~{prefix}.mosdepth.summary.txt"
         File? regions = "~{prefix}.coverage_over_bed.~{bed_descriptor}.regions.bed.gz"
     }
@@ -760,7 +760,7 @@ task MosDepthWGSAtThreshold {
 
         mosdepth \
             -t 2 \
-            -x -n -Q1 \
+            -x -n -Q 1 \
             ~{prefix} \
             ~{local_bam} &
 
@@ -777,11 +777,10 @@ task MosDepthWGSAtThreshold {
 
         # wg
         tail -n1 ~{prefix}.mosdepth.summary.txt | \
-            awk -F '\t' '{print $4}' | \
-            xargs printf "%0.2f\n" > wgs.cov.txt
+            awk -F '\t' ' {printf "%.5f", $3/$2} ' > wgs.cov.txt
         
-        # threshold_cov
-        awk -F '\t' -v cov_thresh=~{cov_threshold} '$1=="total" && $2==cov_thresh {print $3} END {if (!NR) print "0.0"}' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
+        # threshold_cov - Can only go up to 2 significant digits
+        awk -F '\t' -v cov_thresh=~{cov_threshold} '$1=="total" && $2==cov_thresh {print $3}' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
     >>>
 
     #########################
@@ -802,6 +801,78 @@ task MosDepthWGSAtThreshold {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SamtoolsDepth {
+    input {
+        File bam
+        File bai
+        Int cov_threshold
+        File? bed
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam: {localization_optional:true}
+        cov_threshold: "Integer threshold to determine percent of genome at this coverage"
+        bed: "Optional BED file to calculate coverage over."
+    }
+
+    String basename = basename(bam, ".bam")
+    String prefix = "~{basename}.mosdepth_coverage"
+
+    String local_bam = "/cromwell_root/~{basename}.bam"
+    Int disk_size = 2*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        time gcloud storage cp ~{bam} ~{local_bam}
+        mv ~{bai} "~{local_bam}.bai"
+
+        samtools depth
+            -a \
+            -J \
+            -Q 1 \
+            ~{"-b " + bed} \
+            ~{local_bam} > ~{basename}.sam_depth.txt
+
+        # Use samtools depth for mean coverage and % of genome at threshold
+        # mean wgs cov
+        cat ~{basename}.sam_depth.txt |
+            awk '{c++; if($3>0) total+=$3} END {printf "%0.5f", (total / c)}' > cov.wgs.txt
+
+        # frac genome at threshold - keep consistent with mosdepth reporting
+        cat ~{basename}.sam_depth.txt |
+            awk -v cov_thresh=~{cov_threshold} '{c++; if($3>=cov_thresh) total+=1} END {printf "%.5f", (total/c)}' > cov.threshold.txt
+    >>>
+
+    output {
+        Float mean_cov = read_float("cov.wgs.txt")
+        Float wgs_frac_at_threshold = read_float("cov.threshold.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])

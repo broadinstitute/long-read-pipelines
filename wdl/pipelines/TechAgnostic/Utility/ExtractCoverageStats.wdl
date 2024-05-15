@@ -3,15 +3,14 @@ version 1.0
 import "../../../structs/Structs.wdl"
 import "../../../tasks/QC/AlignedMetrics.wdl" as AM
 
-workflow CoverageFromMosDepth {
-
+workflow CoverageStats {
     input {
         File bam
         File bai
+        File ref_map_file
         File? bed
         Int cov_threshold
     }
-
     call AM.MosDepthWGSAtThreshold as MosDepthWGS {
         input:
             bam = bam,
@@ -20,9 +19,20 @@ workflow CoverageFromMosDepth {
             cov_threshold = cov_threshold
     }
 
+    call AM.SamtoolsDepth as SamtoolsDepthWGS {
+        input: 
+            bam = bam,
+            bai = bai,
+            cov_threshold = cov_threshold,
+            bed = bed
+    }
+
     output {
-        Float wgs_cov = MosDepthWGS.wgs_cov
-        Float wgs_pct_at_threshold = MosDepthWGS.wgs_pct_at_threshold
+        Float mosdepth_avg_cov = MosDepthWGS.wgs_cov
+        Float mosdepth_frac_at_thresh = MosDepthWGS.wgs_frac_at_threshold
+
+        Float samdepth_cov = SamtoolsDepthWGS.mean_cov
+        Float samdepth_frac_at_thresh = SamtoolsDepthWGS.wgs_frac_at_threshold
     }
 }
 
