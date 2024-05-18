@@ -54,7 +54,7 @@ workflow SRFlowcell {
 
         String dir_prefix
 
-        String gcs_out_root_dir
+        String? gcs_out_root_dir
         
         Boolean perform_BQSR = true
 
@@ -103,9 +103,6 @@ workflow SRFlowcell {
         call Utils.GetRawReadGroup as t_004_GetRawReadGroup { input: gcs_bam_path = select_first([bam]) }
     }
 
-    # OK, this is inefficient, but let's NOW extract our contaminated reads if we have the info.
-    # TODO: Move this into the sections above to make it more efficient.  Specifically where we convert bam -> fastq.
-    # TODO: Re-enable this section after decontamination is fixed.  The alignment based method with BWA-MEM doesn't work.  Not clear why, but this does seem somewhat inadequate (simplistic alignment-based strategies).
     # Update: Enabled bowtie2-based decontamination of reads
     if (defined(contaminant_ref_map_file)) {
         # Call our sub-workflow for decontamination:
@@ -368,7 +365,6 @@ workflow SRFlowcell {
         File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
         File fqboup = unaligned_reads_dir + "/" + basename(select_first([DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
     }
-    
     ############################################
     #      ___        _               _
     #     / _ \ _   _| |_ _ __  _   _| |_
@@ -388,7 +384,7 @@ workflow SRFlowcell {
         File? unaligned_bai = unaligned_bai_o
 
         # Contaminated BAM file and metrics
-        File? contaminated_bam = DecontaminateSample.contaminated_bam
+        File? contaminated_bam = select_first([DecontaminateSample.contaminated_bam]) #Correct for optional gcs_output_dir
         Float? num_contam_reads = select_first([t_020_ComputeContaminatedBamStats.results])['reads']
         Float? pct_contam_reads = select_first([t_020_ComputeContaminatedBamStats.results])['reads'] / select_first([t_021_ComputeUnalignedBamStats.results])['reads'] * 100.0
 

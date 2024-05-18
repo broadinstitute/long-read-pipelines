@@ -27,7 +27,7 @@ workflow RemoveSingleOrganismContamination {
         File contaminant_ref_map_file
 
         String dir_prefix
-        String gcs_out_root_dir
+        String? gcs_out_root_dir
 
         Boolean DEBUG_MODE = false
     }
@@ -218,7 +218,7 @@ workflow RemoveSingleOrganismContamination {
         File decontaminated_fq1 = t_014_FinalizeDecontaminatedFq1.gcs_path
         File decontaminated_fq2 = t_015_FinalizeDecontaminatedFq2.gcs_path
         File decontaminated_unpaired = t_016_FinalizeDecontaminatedUnpaired.gcs_path
-        File all_reads_bam = t_017_FinalizeAllReadsBam.gcs_path
+        File all_reads_bam = select_first([t_017_FinalizeAllReadsBam.gcs_path, t_007_AlignReads.bam, t_007_AlignReadsWithBowtie.bam])
     }
 }
 
