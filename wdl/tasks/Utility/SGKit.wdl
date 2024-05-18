@@ -18,15 +18,22 @@ task ConvertToZarrStore {
 
         Int num_cpus = 4
 
-        String outdir
-
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 3*ceil(size(vcf, "GB"))
+    Int disk_size = 1 + 6*ceil(size(vcf, "GB"))
 
     command <<<
         set -x
+
+        # According to the sgkit documentation, running the conversion in parallel using Dask
+        # is significantly faster than running it serially.
+        # This can be easily done by importing the Dask library and setting the client info.
+        # For more info see: https://sgkit-dev.github.io/sgkit/latest/vcf.html#example-converting-1000-genomes-vcf-to-zarr
+
+        # Set up number of worker processes for Dask:
+        num_processors=$(lscpu | grep '^CPU(s):' | awk '{print $NF}')
+        num_workers=$((num_processors - 1))
 
         python3 <<EOF
 
@@ -35,21 +42,25 @@ task ConvertToZarrStore {
         vcfs = ["~{vcf}"]
         target = "~{prefix}.zarr"
 
+        # Log our task status to a file we can inspect later:
         vcf_to_zarr(vcfs, target, tempdir="tmp")
 
         EOF
 
-        gsutil -m rsync -Cr ~{prefix}.zarr ~{outdir}/~{prefix}.zarr
+        echo "Done converting to zarr."
+
+        echo "Tarring output..."
+        tar -cf ~{prefix}.zarr.tar ~{prefix}.zarr
     >>>
 
     output {
-        String gcs_path = "~{outdir}/~{prefix}.zarr"
+        File zarr = "~{prefix}.zarr.tar"
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
-        mem_gb:             16,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,

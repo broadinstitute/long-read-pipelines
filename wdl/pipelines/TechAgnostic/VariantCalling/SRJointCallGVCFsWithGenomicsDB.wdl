@@ -19,6 +19,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         gvcf_indices:   "Array of gvcf index files for `gvcfs`.  Order should correspond to that in `gvcfs`."
         ref_map_file:  "Reference map file indicating reference sequence and auxillary file locations"
 
+        heterozygosity: "Joint Genotyping Parameter - Heterozygosity value used to compute prior likelihoods for any locus. See the GATKDocs for full details on the meaning of this population genetics concept"
+        heterozygosity_stdev: "Joint Genotyping Parameter - Standard deviation of heterozygosity for SNP and indel calling."
+        indel_heterozygosity: "Joint Genotyping Parameter - Heterozygosity for indel calling. See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept"
+
         snp_calibration_sensitivity:    "VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered."
         snp_max_unlabeled_variants: "VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites."
         snp_recalibration_annotation_values:    "VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants."
@@ -43,8 +47,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         annotation_bed_file_indexes:    "Array of bed indexes for `annotation_bed_files`.  Order should correspond to `annotation_bed_files`."
         annotation_bed_file_annotation_names:   "Array of names/FILTER column entries to use for each given file in `annotation_bed_files`.  Order should correspond to `annotation_bed_files`."
 
+        use_gnarly_genotyper: "If true, the `GnarlyGenotyper` will be used, greatly speeding up joint genotyping (at the cost of potentially lower accuracy).  Setting this to true is recommended for large callsets.  If false, `GenotypeGVCFs` will be used to generate the final VCF.  Default is false."
+
         prefix: "Prefix to use for output files."
-        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
     }
 
     input {
@@ -55,9 +61,15 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File interval_list
 
+        Float heterozygosity = 0.001
+        Float heterozygosity_stdev = 0.01
+        Float indel_heterozygosity = 0.000125
+
         Float snp_calibration_sensitivity = 0.99
         Int snp_max_unlabeled_variants = 0
-        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        # TODO: Fix the annotations here to include the missing ones.  Must debug.
+#        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        Array[String] snp_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
 
         Array[File] snp_known_reference_variants
         Array[File] snp_known_reference_variants_index
@@ -67,7 +79,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         Float indel_calibration_sensitivity = 0.99
         Int indel_max_unlabeled_variants = 0
-        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        # TODO: Fix the annotations here to include the missing ones.  Must debug.
+#        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
+        Array[String] indel_recalibration_annotation_values = [ "BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP" ]
 
         Array[File] indel_known_reference_variants
         Array[File] indel_known_reference_variants_index
@@ -81,12 +95,12 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File? snpeff_db
 
+        Boolean use_gnarly_genotyper = false
+
         String prefix
 
-        String gcs_out_root_dir
+        String? gcs_out_root_dir
     }
-
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/SRJointCallGVCFsWithGenomicsDB/~{prefix}"
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
@@ -125,23 +139,47 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         }
 
         # Joint call
-        call SRJOINT.GenotypeGVCFs as JointCallGVCFs {
-            input:
-                input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
-                interval_list   = contig_interval_list,
-                ref_fasta       = ref_map['fasta'],
-                ref_fasta_fai   = ref_map['fai'],
-                ref_dict        = ref_map['dict'],
-                dbsnp_vcf       = ref_map["known_sites_vcf"],
-                prefix          = prefix + "." + contig + ".raw",
-                runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+        if (use_gnarly_genotyper) {
+            call SRJOINT.GnarlyGenotypeGVCFs as GnarlyJointCallGVCFs {
+                input:
+                    input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
+                    interval_list   = contig_interval_list,
+                    ref_fasta       = ref_map['fasta'],
+                    ref_fasta_fai   = ref_map['fai'],
+                    ref_dict        = ref_map['dict'],
+                    dbsnp_vcf       = ref_map["known_sites_vcf"],
+                    prefix          = prefix + "." + contig + ".gnarly_genotyper.raw",
+                    heterozygosity = heterozygosity,
+                    heterozygosity_stdev = heterozygosity_stdev,
+                    indel_heterozygosity = indel_heterozygosity,
+                    runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+            }
         }
+        if (!use_gnarly_genotyper) {
+            call SRJOINT.GenotypeGVCFs as JointCallGVCFs {
+                input:
+                    input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
+                    interval_list   = contig_interval_list,
+                    ref_fasta       = ref_map['fasta'],
+                    ref_fasta_fai   = ref_map['fai'],
+                    ref_dict        = ref_map['dict'],
+                    dbsnp_vcf       = ref_map["known_sites_vcf"],
+                    prefix          = prefix + "." + contig + ".genotype_gvcfs.raw",
+                    heterozygosity = heterozygosity,
+                    heterozygosity_stdev = heterozygosity_stdev,
+                    indel_heterozygosity = indel_heterozygosity,
+                    runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+            }
+        }
+        # Select the VCF + index for the raw joint called file:
+        File joint_vcf = select_first([GnarlyJointCallGVCFs.output_vcf, JointCallGVCFs.output_vcf])
+        File joint_vcf_index = select_first([GnarlyJointCallGVCFs.output_vcf_index, JointCallGVCFs.output_vcf_index])
 
         # First make a sites-only VCF for recal (smaller file, easier to work with):
         call VARUTIL.MakeSitesOnlyVcf as MakeSitesOnlyVCF {
             input:
-                vcf = JointCallGVCFs.output_vcf,
-                vcf_index = JointCallGVCFs.output_vcf_index,
+                vcf = joint_vcf,
+                vcf_index = joint_vcf_index,
                 prefix = prefix + "." + contig + ".sites_only"
         }
     }
@@ -209,11 +247,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     # Shard by contig for speed:
-    scatter (idx_2 in range(length(JointCallGVCFs.output_vcf))) {
+    scatter (idx_2 in range(length(joint_vcf))) {
 
         String contig_2 = MakeChrIntervalList.chrs[idx_2][0]
-        File joint_called_vcf = JointCallGVCFs.output_vcf[idx_2]
-        File joint_called_vcf_index = JointCallGVCFs.output_vcf_index[idx_2]
+        File joint_called_vcf = joint_vcf[idx_2]
+        File joint_called_vcf_index = joint_vcf_index[idx_2]
 
         call VARUTIL.ScoreVariantAnnotations as ScoreSnpVariantAnnotations {
             input:
@@ -303,8 +341,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Consolidate files:
     call VARUTIL.GatherVcfs as GatherRawVcfs {
         input:
-            input_vcfs = JointCallGVCFs.output_vcf,
-            input_vcf_indices = JointCallGVCFs.output_vcf_index,
+            input_vcfs = joint_vcf,
+            input_vcf_indices = joint_vcf_index,
             prefix = prefix + ".raw.combined"
     }
 
@@ -321,8 +359,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         input:
             vcf = GatherRescoredVcfs.output_vcf,
             tbi = GatherRescoredVcfs.output_vcf_index,
-            prefix = prefix,
-            outdir = outdir
+            prefix = prefix
     }
 
     # Convert the output to a HAIL Matrix Table:
@@ -333,124 +370,145 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             reference = sub(sub(ref_map["fasta"], "^.*/", ""), "\.[fasta]*$", ""),
             ref_fasta = ref_map["fasta"],
             ref_fai = ref_map["fai"],
-            prefix = prefix,
-            outdir = outdir
+            prefix = prefix
     }
 
     ################################
     # Finalize the regular output files:
     ############
 
-    File keyfile = CreateHailMatrixTable.completion_file
-    String recalibration_dir = outdir + "/recalibration_files"
-    String recalibration_model_dir = outdir + "/recalibration_files/model"
-    String recalibration_results_dir = outdir + "/recalibration_files/results"
-    String snpeff_results_dir = outdir + "/snpEff_results"
+    if (defined(gcs_out_root_dir)) {
 
-    call FF.FinalizeToDir as FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
+        String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
+        String outdir = sub(concrete_gcs_out_root_dir, "/$", "") + "/SRJointCallGVCFsWithGenomicsDB/~{prefix}"
 
-    call FF.FinalizeToFile as FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf }
-    call FF.FinalizeToFile as FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf_index }
+        String recalibration_dir = outdir + "/recalibration_files"
+        String recalibration_model_dir = outdir + "/recalibration_files/model"
+        String recalibration_results_dir = outdir + "/recalibration_files/results"
+        String snpeff_results_dir = outdir + "/snpEff_results"
 
-    call FF.FinalizeToFile as FinalizeVETSVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf }
-    call FF.FinalizeToFile as FinalizeVETSTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf_index }
+        File keyfile = CreateHailMatrixTable.completion_file
 
-    if (defined(snpeff_db)) {
-        call FF.FinalizeToDir as FinalizeSnpEffSummary { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(FunctionallyAnnotate.snpEff_summary) }
-        call FF.FinalizeToDir as FinalizeSnpEffGenes { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(FunctionallyAnnotate.snpEff_genes) }
-    }
+        call FF.FinalizeToDir as FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
 
-    ################################
-    # Finalize the VETS files:
-    ############
+        call FF.FinalizeToFile as FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf }
+        call FF.FinalizeToFile as FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf_index }
 
-    # ExtractVariantAnnotations:
-    call FF.FinalizeToFile as FinalizeSnpExtractedAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.annotation_hdf5 }
-    call FF.FinalizeToFile as FinalizeSnpExtractedSitesOnlyVcf { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.sites_only_vcf }
-    call FF.FinalizeToFile as FinalizeSnpExtractedSitesOnlyVcfIndex { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.sites_only_vcf_index }
-    if (defined(ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5)) {
-        call FF.FinalizeToFile as FinalizeSnpExtractedUnlabeledAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5]) }
-    }
-    call FF.FinalizeToFile as FinalizeIndelExtractedAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.annotation_hdf5 }
-    call FF.FinalizeToFile as FinalizeIndelExtractedSitesOnlyVcf { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.sites_only_vcf }
-    call FF.FinalizeToFile as FinalizeIndelExtractedSitesOnlyVcfIndex { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.sites_only_vcf_index }
-    if (defined(ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5)) {
-        call FF.FinalizeToFile as FinalizeIndelExtractedUnlabeledAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5]) }
-    }
+        call FF.FinalizeToFile as FinalizeVETSVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf }
+        call FF.FinalizeToFile as FinalizeVETSTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf_index }
 
-    # TrainVariantAnnotationsModel
-    call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsTrainingScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainSnpVariantAnnotationsModel.training_scores }
-    call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsPositiveModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainSnpVariantAnnotationsModel.positive_model_scorer_pickle }
-    if (defined(TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores)) {
-        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores]) }
-    }
-    if (defined(TrainSnpVariantAnnotationsModel.calibration_set_scores)) {
-        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsCalibrationSetScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.calibration_set_scores]) }
-    }
-    if (defined(TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle)) {
-        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle]) }
-    }
-
-    call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsTrainingScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainIndelVariantAnnotationsModel.training_scores }
-    call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsPositiveModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainIndelVariantAnnotationsModel.positive_model_scorer_pickle }
-    if (defined(TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores)) {
-        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores]) }
-    }
-    if (defined(TrainIndelVariantAnnotationsModel.calibration_set_scores)) {
-        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsCalibrationSetScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.calibration_set_scores]) }
-    }
-    if (defined(TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle)) {
-        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle]) }
-    }
-
-    # ScoreVariantAnnotations
-    # This was done per-contig, so we need to finalize per-contig:
-    scatter (idx_3 in range(length(MakeChrIntervalList.contig_interval_list_files))) {
-
-        String contig_3 = MakeChrIntervalList.chrs[idx_3][0]
-
-        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf[idx_3] }
-        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf_index[idx_3] }
-        if (defined(ScoreSnpVariantAnnotations.annotations_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.annotations_hdf5[idx_3]]) }
-        }
-        if (defined(ScoreSnpVariantAnnotations.scores_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.scores_hdf5[idx_3]]) }
+        if (defined(snpeff_db)) {
+            call FF.FinalizeToDir as FinalizeSnpEffSummary { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(FunctionallyAnnotate.snpEff_summary) }
+            call FF.FinalizeToDir as FinalizeSnpEffGenes { input: outdir = snpeff_results_dir, keyfile = keyfile, files = select_all(FunctionallyAnnotate.snpEff_genes) }
         }
 
-        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf[idx_3] }
-        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index[idx_3] }
-        if (defined(ScoreIndelVariantAnnotations.annotations_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.annotations_hdf5[idx_3]]) }
+        ################################
+        # Finalize the VETS files:
+        ############
+
+        # ExtractVariantAnnotations:
+        call FF.FinalizeToFile as FinalizeSnpExtractedAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.annotation_hdf5 }
+        call FF.FinalizeToFile as FinalizeSnpExtractedSitesOnlyVcf { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.sites_only_vcf }
+        call FF.FinalizeToFile as FinalizeSnpExtractedSitesOnlyVcfIndex { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractSnpVariantAnnotations.sites_only_vcf_index }
+        if (defined(ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5)) {
+            call FF.FinalizeToFile as FinalizeSnpExtractedUnlabeledAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([ExtractSnpVariantAnnotations.unlabeled_annotation_hdf5]) }
         }
-        if (defined(ScoreIndelVariantAnnotations.scores_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.scores_hdf5[idx_3]]) }
+        call FF.FinalizeToFile as FinalizeIndelExtractedAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.annotation_hdf5 }
+        call FF.FinalizeToFile as FinalizeIndelExtractedSitesOnlyVcf { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.sites_only_vcf }
+        call FF.FinalizeToFile as FinalizeIndelExtractedSitesOnlyVcfIndex { input: outdir = recalibration_model_dir, keyfile = keyfile, file = ExtractIndelVariantAnnotations.sites_only_vcf_index }
+        if (defined(ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5)) {
+            call FF.FinalizeToFile as FinalizeIndelExtractedUnlabeledAnnotations { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([ExtractIndelVariantAnnotations.unlabeled_annotation_hdf5]) }
         }
+
+        # TrainVariantAnnotationsModel
+        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsTrainingScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainSnpVariantAnnotationsModel.training_scores }
+        call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsPositiveModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainSnpVariantAnnotationsModel.positive_model_scorer_pickle }
+        if (defined(TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores)) {
+            call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsUnlabeledPositiveModelScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.unlabeled_positive_model_scores]) }
+        }
+        if (defined(TrainSnpVariantAnnotationsModel.calibration_set_scores)) {
+            call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsCalibrationSetScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.calibration_set_scores]) }
+        }
+        if (defined(TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle)) {
+            call FF.FinalizeToFile as FinalizeSnpTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle]) }
+        }
+
+        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsTrainingScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainIndelVariantAnnotationsModel.training_scores }
+        call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsPositiveModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = TrainIndelVariantAnnotationsModel.positive_model_scorer_pickle }
+        if (defined(TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores)) {
+            call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsUnlabeledPositiveModelScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.unlabeled_positive_model_scores]) }
+        }
+        if (defined(TrainIndelVariantAnnotationsModel.calibration_set_scores)) {
+            call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsCalibrationSetScores { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.calibration_set_scores]) }
+        }
+        if (defined(TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle)) {
+            call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle]) }
+        }
+
+        # ScoreVariantAnnotations
+        # This was done per-contig, so we need to finalize per-contig:
+        scatter (idx_3 in range(length(MakeChrIntervalList.contig_interval_list_files))) {
+
+            String contig_3 = MakeChrIntervalList.chrs[idx_3][0]
+
+            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf[idx_3] }
+            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf_index[idx_3] }
+            if (defined(ScoreSnpVariantAnnotations.annotations_hdf5)) {
+                call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.annotations_hdf5[idx_3]]) }
+            }
+            if (defined(ScoreSnpVariantAnnotations.scores_hdf5)) {
+                call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.scores_hdf5[idx_3]]) }
+            }
+
+            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf[idx_3] }
+            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index[idx_3] }
+            if (defined(ScoreIndelVariantAnnotations.annotations_hdf5)) {
+                call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.annotations_hdf5[idx_3]]) }
+            }
+            if (defined(ScoreIndelVariantAnnotations.scores_hdf5)) {
+                call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.scores_hdf5[idx_3]]) }
+            }
+        }
+
+        call FF.FinalizeToFile as FinalizeZarr { input: outdir = outdir, keyfile = keyfile, file = ConvertToZarr.zarr }
+
+        call FF.FinalizeToFile as FinalizeHailMatrixTable {
+            input:
+                outdir = outdir,
+                keyfile = keyfile,
+                file = CreateHailMatrixTable.mt_tar
+        }
+
+        # Set up variable for outputs:
+        Array[String] final_genomicsdb_location = [FinalizeGenomicsDB.gcs_dir]
     }
 
     # Make an alias for the functionally annotated data:
     if (defined(snpeff_db)) {
-        File annotated_vcf = FinalizeVETSVCF.gcs_path
-        File annotated_vcf_tbi = FinalizeVETSTBI.gcs_path
+        File annotated_vcf = if defined(gcs_out_root_dir) then select_first([FinalizeVETSVCF.gcs_path]) else GatherRescoredVcfs.output_vcf
+        File annotated_vcf_tbi = if defined(gcs_out_root_dir) then select_first([FinalizeVETSTBI.gcs_path]) else GatherRescoredVcfs.output_vcf_index
+
+        Array[String] final_snpeff_summary = if defined(gcs_out_root_dir) then [select_first([FinalizeSnpEffSummary.gcs_dir])] else select_all(FunctionallyAnnotate.snpEff_summary)
+        Array[String] final_snpEff_genes = if defined(gcs_out_root_dir) then [select_first([FinalizeSnpEffGenes.gcs_dir])] else select_all(FunctionallyAnnotate.snpEff_genes)
     }
 
     output {
-        String genomicsDB = FinalizeGenomicsDB.gcs_dir
+        Array[String] genomicsDB = select_first([final_genomicsdb_location, ImportGVCFsIntoGenomicsDB.output_genomicsdb])
 
-        File raw_joint_vcf     = FinalizeRawVCF.gcs_path
-        File raw_joint_vcf_tbi = FinalizeRawTBI.gcs_path
+        File raw_joint_vcf     = select_first([FinalizeRawVCF.gcs_path, GatherRawVcfs.output_vcf])
+        File raw_joint_vcf_tbi = select_first([FinalizeRawTBI.gcs_path, GatherRawVcfs.output_vcf_index])
 
-        File joint_recalibrated_vcf     = FinalizeVETSVCF.gcs_path
-        File joint_recalibrated_vcf_tbi = FinalizeVETSTBI.gcs_path
+        File joint_recalibrated_vcf     = select_first([FinalizeVETSVCF.gcs_path, GatherRescoredVcfs.output_vcf])
+        File joint_recalibrated_vcf_tbi = select_first([FinalizeVETSTBI.gcs_path, GatherRescoredVcfs.output_vcf_index])
 
-        File joint_mt = CreateHailMatrixTable.gcs_path
-        File joint_zarr = ConvertToZarr.gcs_path
+        File joint_mt = select_first([FinalizeHailMatrixTable.gcs_path, CreateHailMatrixTable.mt_tar])
+        File joint_zarr = select_first([FinalizeZarr.gcs_path, ConvertToZarr.zarr])
 
         File? annotated_joint_vcf     = annotated_vcf
         File? annotated_joint_vcf_tbi = annotated_vcf_tbi
 
-        String? snpEff_summary = FinalizeSnpEffSummary.gcs_dir
-        String? snpEff_genes = FinalizeSnpEffGenes.gcs_dir
+        Array[String]? snpEff_summary = final_snpeff_summary
+        Array[String]? snpEff_genes = final_snpEff_genes
     }
 }
 

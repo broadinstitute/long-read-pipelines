@@ -31,22 +31,42 @@ task FastQC {
         echo $read_length | awk '{ print "read_length\t" $1 }' >> map.txt
         echo $number_of_reads $read_length | awk '{ print "number_of_bases\t" $1*$2 }' >> map.txt
 
-        mean_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
+        echo "Calculating number of base qualities:"
+        echo -n "Should be: "
+        sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | grep -v '^#' | grep -v '>>' | wc -l
+
+        # Need to unset `pipefail` for these commands:
+        set -euxo
+
+        # Get the mean and median base quality scores:
+        num_base_qualities=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
             grep -v '^#' | \
             grep -v '>>' | \
-            awk '{ print $2 }' | \
-            awk '{x+=$1; next} END{print x/NR}')
+            wc -l)
+
+        echo "Num Base Qualities: ${num_base_qualities}"
+
+        if [[ ${num_base_qualities} -eq 0 ]]; then
+            echo "WARNING: No base quality information found in FastQC report.  Setting mean_qual and median_qual to 0."
+            mean_qual=0
+            median_qual=0
+        else
+            mean_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
+                grep -v '^#' | \
+                grep -v '>>' | \
+                awk '{ print $2 }' | \
+                awk '{x+=$1; next} END{print x/NR}')
+
+            median_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
+                grep -v '^#' | \
+                grep -v '>>' | \
+                awk '{ print $2 }' | \
+                awk '{x+=$1; next} END{print x/NR}' | \
+                sort -n | \
+                awk '{ a[i++]=$1; } END { x=int((i+1)/2); if (x < (i+1)/2) print (a[x-1]+a[x])/2; else print a[x-1]; }')
+        fi
 
         echo $mean_qual | awk '{ print "mean_qual\t" $1 }' >> map.txt
-
-        median_qual=$(sed -n '/Per base sequence quality/,/END_MODULE/p' fastqc_data.txt | \
-            grep -v '^#' | \
-            grep -v '>>' | \
-            awk '{ print $2 }' | \
-            awk '{x+=$1; next} END{print x/NR}' | \
-            sort -n | \
-            awk '{ a[i++]=$1; } END { x=int((i+1)/2); if (x < (i+1)/2) print (a[x-1]+a[x])/2; else print a[x-1]; }')
-
         echo $median_qual | awk '{ print "median_qual\t" $1 }' >> map.txt
     >>>
 

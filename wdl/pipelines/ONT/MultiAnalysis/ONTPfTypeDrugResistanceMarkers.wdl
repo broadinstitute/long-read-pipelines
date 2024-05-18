@@ -15,7 +15,7 @@ workflow ONTPfTypeDrugResistanceMarkers {
         drug_resistance_list: "List of drug resistance markers for which to search"
 
         dir_prefix: "Prefix for output directory"
-        gcs_out_root_dir: "GCS output root directory"
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
 
         do_functional_annotation: "Whether to perform functional annotation"
     }
@@ -26,12 +26,10 @@ workflow ONTPfTypeDrugResistanceMarkers {
         File drug_resistance_list
 
         String dir_prefix
-        String gcs_out_root_dir
+        String? gcs_out_root_dir
 
         Boolean do_functional_annotation = true
     }
-
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTPfTypeDrugResistanceMarkers/~{dir_prefix}"
 
     if (do_functional_annotation) {
         call FUNK.FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db }
@@ -44,24 +42,35 @@ workflow ONTPfTypeDrugResistanceMarkers {
     }
 
     # Finalize data
-    String dir = outdir + "/reports"
+    if (defined(gcs_out_root_dir)) {
 
-    call FF.FinalizeToFile as FinalizeDRReport { input: outdir = dir, file = CallDrugResistanceMutations.report }
+        String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
 
-    if (do_functional_annotation) {
-        call FF.FinalizeToFile as FinalizeAnnotatedVCF { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.annotated_vcf]) }
-        call FF.FinalizeToFile as FinalizeAnnotatedVCFIndex { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.annotated_vcf_index]) }
-        call FF.FinalizeToFile as FinalizeSnpEffSummary { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.snpEff_summary]) }
-        call FF.FinalizeToFile as FinalizeSnpEffGenes { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.snpEff_genes]) }
+        String outdir = sub(concrete_gcs_out_root_dir, "/$", "") + "/ONTPfTypeDrugResistanceMarkers/~{dir_prefix}"
+        String dir = outdir + "/reports"
+
+        call FF.FinalizeToFile as FinalizeDRReport { input: outdir = dir, file = CallDrugResistanceMutations.report }
+
+        if (do_functional_annotation) {
+            call FF.FinalizeToFile as FinalizeAnnotatedVCF { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.annotated_vcf]) }
+            call FF.FinalizeToFile as FinalizeAnnotatedVCFIndex { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.annotated_vcf_index]) }
+            call FF.FinalizeToFile as FinalizeSnpEffSummary { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.snpEff_summary]) }
+            call FF.FinalizeToFile as FinalizeSnpEffGenes { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.snpEff_genes]) }
+        }
+
+        File final_annotated_vcf = select_first([FinalizeAnnotatedVCF.gcs_path, FunctionallyAnnotateVariants.annotated_vcf])
+        File final_annotated_vcf_index = select_first([FinalizeAnnotatedVCFIndex.gcs_path, FunctionallyAnnotateVariants.annotated_vcf_index])
+        File final_snpeff_summary = select_first([FinalizeSnpEffSummary.gcs_path, FunctionallyAnnotateVariants.snpEff_summary])
+        File final_snpeff_genes = select_first([FinalizeSnpEffGenes.gcs_path, FunctionallyAnnotateVariants.snpEff_genes])
     }
 
     output {
-        File drug_res_report = FinalizeDRReport.gcs_path
+        File drug_res_report = select_first([FinalizeDRReport.gcs_path, CallDrugResistanceMutations.report])
 
-        File? annotated_vcf = FinalizeAnnotatedVCF.gcs_path
-        File? annotated_vcf_index = FinalizeAnnotatedVCFIndex.gcs_path
-        File? snpEff_summary = FinalizeSnpEffSummary.gcs_path
-        File? snpEff_genes = FinalizeSnpEffGenes.gcs_path
+        File? annotated_vcf = final_annotated_vcf
+        File? annotated_vcf_index = final_annotated_vcf_index
+        File? snpEff_summary = final_snpeff_summary
+        File? snpEff_genes = final_snpeff_genes
     }
 }
 

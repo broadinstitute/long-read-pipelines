@@ -12,16 +12,14 @@ workflow PfalciparumDrugResistanceSummary {
 
         String participant_name
 
-        String gcs_out_root_dir
+        String? gcs_out_root_dir
     }
 
     parameter_meta {
         raw_drug_resistance_report: "File containing a raw drug resistance report to use to determine drug resistance."
         participant_name:    "Participant (or sample) name for the given bam file."
-        gcs_out_root_dir:    "Output folder into which to place the results of this workflow."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
     }
-
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/PfalciparumDrugResistanceSummary/~{participant_name}"
 
     call CreateDrugResistanceSummary as CreateDrugResistanceSummary {
         input:
@@ -29,10 +27,14 @@ workflow PfalciparumDrugResistanceSummary {
             prefix = participant_name
     }
 
-    call FF.FinalizeToFile as FinalizeDrugResistanceSummary { input: outdir = outdir, file = CreateDrugResistanceSummary.resistance_summary }
+    if (defined(gcs_out_root_dir)) {
+        String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
+        String outdir = sub(concrete_gcs_out_root_dir, "/$", "") + "/PfalciparumDrugResistanceSummary/~{participant_name}"
+        call FF.FinalizeToFile as FinalizeDrugResistanceSummary { input: outdir = outdir, file = CreateDrugResistanceSummary.resistance_summary }
+    }
 
     output {
-        File drug_resistance_summary = FinalizeDrugResistanceSummary.gcs_path
+        File drug_resistance_summary = select_first([FinalizeDrugResistanceSummary.gcs_path, CreateDrugResistanceSummary.resistance_summary])
     }
 }
 

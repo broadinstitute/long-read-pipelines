@@ -79,7 +79,8 @@ workflow CallVariantsWithHaplotypeCaller {
         input:
             input_vcfs = CallVariantsWithHC.output_vcf,
             input_vcfs_indexes = CallVariantsWithHC.output_vcf_index,
-            prefix = prefix
+            prefix = prefix,
+            is_gvcf = true
     }
 
     # Merge the output BAMs:
@@ -237,14 +238,14 @@ task HaplotypeCaller_GATK4_VCF {
        boot_disk_gb:       15,
        preemptible_tries:  1,
        max_retries:        1,
-       docker:             "broadinstitute/gatk-nightly:2024-05-02-4.5.0.0-27-gec39c37d9-NIGHTLY-SNAPSHOT"
+       docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -346,6 +347,7 @@ task ReblockGVCF {
                 -R ~{ref_fasta} \
                 -V ~{gvcf} \
                 -do-qual-approx \
+                -G StandardAnnotation -G StandardHCAnnotation  \
                 -A AssemblyComplexity \
                 --annotate-with-num-discovered-alleles \
                 --floor-blocks \
@@ -365,12 +367,13 @@ task ReblockGVCF {
        max_retries:        1,
        docker:             "broadinstitute/gatk-nightly:2024-05-02-4.5.0.0-27-gec39c37d9-NIGHTLY-SNAPSHOT"
     }
+    # TODO: Fix this docker image to a stable version after the next GATK release!
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])

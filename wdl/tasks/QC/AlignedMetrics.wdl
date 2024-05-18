@@ -13,7 +13,7 @@ workflow AlignedMetrics {
         aligned_bai: "Index for aligned BAM file"
         ref_fasta: "Reference FASTA file"
         ref_dict: "Reference dictionary file"
-        gcs_output_dir: "GCS output directory"
+        gcs_output_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
     }
 
     input {

@@ -1608,7 +1608,7 @@ CODE
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1696,7 +1696,7 @@ task ExtractVariantAnnotations {
         let mem_start=${mem_available}-2
         let mem_max=${mem_available}-2
 
-        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g -DGATK_STACKTRACE_ON_USER_EXCEPTION=true" \
           ExtractVariantAnnotations \
             --verbosity DEBUG \
             -V ~{vcf} \
@@ -1774,7 +1774,7 @@ task TrainVariantAnnotationsModel {
         let mem_start=${mem_available}-2
         let mem_max=${mem_available}-2
 
-        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g -DGATK_STACKTRACE_ON_USER_EXCEPTION=true" \
             TrainVariantAnnotationsModel \
                 --verbosity DEBUG \
                 --annotations-hdf5 ~{annotation_hdf5} \
@@ -1907,7 +1907,7 @@ task ScoreVariantAnnotations {
         # Debugging:
         find .
 
-        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
+        gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g -DGATK_STACKTRACE_ON_USER_EXCEPTION=true" \
             ScoreVariantAnnotations \
                 --verbosity DEBUG \
                 -V ~{vcf} \

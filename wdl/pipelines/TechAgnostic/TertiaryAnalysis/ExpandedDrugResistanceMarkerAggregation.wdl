@@ -3,7 +3,7 @@ version 1.0
 import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
-workflow ExpandedDrugResistanceMarkerExtraction {
+workflow ExpandedDrugResistanceMarkerAggregation {
 
     meta {
         author: "Jonn Smith"

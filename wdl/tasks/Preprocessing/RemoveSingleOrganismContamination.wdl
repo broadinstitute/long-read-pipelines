@@ -48,7 +48,7 @@ workflow RemoveSingleOrganismContamination {
         contaminant_ref_map_file:                 "Table indicating reference sequence and auxillary file locations."
 
         dir_prefix:         "directory prefix for output files"
-        gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
 
         DEBUG_MODE:         "[default valued] enables debugging tasks / subworkflows (default: false)"
     }
@@ -67,9 +67,6 @@ workflow RemoveSingleOrganismContamination {
             input: reason = "Too many inputs provided!  You must provide EITHER an input bam OR input fastq1/fastq2 files."
         }
     }
-
-    # Create an outdir:
-    String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}"
 
     # Get ref info:
     Map[String, String] ref_map = read_map(contaminant_ref_map_file)
@@ -194,14 +191,21 @@ workflow RemoveSingleOrganismContamination {
     #
     ############################################
 
-    # Chosen because it's a relatively small file.
-    File keyfile = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired
+    if (defined(gcs_out_root_dir)) {
+        # Chosen because it's a relatively small file.
+        File keyfile = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired
 
-    call FF.FinalizeToFile as t_013_FinalizeContaminatedBam { input: outdir = outdir, file = t_011_SortContaminatedReads.sorted_bam, keyfile = keyfile }
-    call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
-    call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
-    call FF.FinalizeToFile as t_016_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
-    call FF.FinalizeToFile as t_017_FinalizeAllReadsBam { input: outdir = outdir, file = select_first([t_007_AlignReads.bam, t_007_AlignReadsWithBowtie.bam]), keyfile = keyfile }
+        # Create an outdir:
+        String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
+        String outdir = if DEBUG_MODE then sub(concrete_gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(concrete_gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}"
+
+        call FF.FinalizeToFile as t_013_FinalizeContaminatedBam { input: outdir = outdir, file = t_011_SortContaminatedReads.sorted_bam, keyfile = keyfile }
+        call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
+        call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
+        call FF.FinalizeToFile as t_016_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
+        call FF.FinalizeToFile as t_017_FinalizeAllReadsBam { input: outdir = outdir, file = select_first([t_007_AlignReads.bam, t_007_AlignReadsWithBowtie.bam]), keyfile = keyfile }
+    }
+
 
     ############################################
     #      ___        _               _
@@ -213,11 +217,11 @@ workflow RemoveSingleOrganismContamination {
     ############################################
 
     output {
-        File contaminated_bam = t_013_FinalizeContaminatedBam.gcs_path
+        File contaminated_bam = select_first([t_013_FinalizeContaminatedBam.gcs_path, t_011_SortContaminatedReads.sorted_bam])
 
-        File decontaminated_fq1 = t_014_FinalizeDecontaminatedFq1.gcs_path
-        File decontaminated_fq2 = t_015_FinalizeDecontaminatedFq2.gcs_path
-        File decontaminated_unpaired = t_016_FinalizeDecontaminatedUnpaired.gcs_path
+        File decontaminated_fq1 = select_first([t_014_FinalizeDecontaminatedFq1.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end1])
+        File decontaminated_fq2 = select_first([t_015_FinalizeDecontaminatedFq2.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end2])
+        File decontaminated_unpaired = select_first([t_016_FinalizeDecontaminatedUnpaired.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_unpaired])
         File all_reads_bam = select_first([t_017_FinalizeAllReadsBam.gcs_path, t_007_AlignReads.bam, t_007_AlignReadsWithBowtie.bam])
     }
 }

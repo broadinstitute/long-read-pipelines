@@ -13,7 +13,7 @@ workflow ConvertToZarrStore {
         vcf: "Input joint called VCF file to convert to Zarr store format."
         joint_vcf_tbi: "VCF Index for `vcf`."
         prefix:           "prefix for output Zarr store"
-        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
     }
 
     input {
@@ -21,18 +21,24 @@ workflow ConvertToZarrStore {
         File joint_vcf_tbi
         String prefix
 
-        String gcs_out_root_dir
+        String? gcs_out_root_dir
     }
-
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"
 
     # Gather across multiple input gVCFs
     call SGKit.ConvertToZarrStore as PerformZarrStoreConversion {
         input:
             vcf = joint_vcf,
             tbi = joint_vcf_tbi,
-            prefix = prefix,
-            outdir = outdir
+            prefix = prefix
+    }
+
+    if (defined(gcs_out_root_dir)) {
+        String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
+        call FF.FinalizeToFile as FinalizeOutputs {
+            input:
+                file = PerformZarrStoreConversion.zarr,
+                outdir = concrete_gcs_out_root_dir
+        }
     }
 
     ##########
@@ -40,6 +46,6 @@ workflow ConvertToZarrStore {
     ##########
 
     output {
-        String joint_zarr = PerformZarrStoreConversion.gcs_path
+        File joint_zarr = select_first([FinalizeOutputs.gcs_path, PerformZarrStoreConversion.zarr])
     }
 }

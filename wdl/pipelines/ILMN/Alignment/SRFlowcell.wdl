@@ -29,7 +29,7 @@ workflow SRFlowcell {
         contaminant_ref_map_file:  "Reference map file for the contaminant reference sequence and auxillary file locations."
 
         dir_prefix: "Directory prefix to use for finalized location."
-        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs."
+        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
 
         perform_BQSR: "If true, will perform Base Quality Score Recalibration.  If false will not recalibrate base qualities."
 
@@ -77,13 +77,6 @@ workflow SRFlowcell {
 
     # Call our timestamp so we can store outputs without clobbering previous runs:
     call Utils.GetCurrentTimestampString as t_001_WdlExecutionStartTimestamp { input: }
-
-    # Create an outdir:
-    String outdir = if DEBUG_MODE then sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}"
-    String reads_dir = outdir + "/reads"
-    String unaligned_reads_dir = outdir + "/reads/unaligned"
-    String aligned_reads_dir = outdir + "/reads/aligned"
-    String metrics_dir = outdir + "/metrics"
 
     if (defined(bam)) {
         # Convert the given bam to a uBAM (needed for previous aligned data):
@@ -267,104 +260,121 @@ workflow SRFlowcell {
     #     |_|   |_|_| |_|\__,_|_|_/___\___|
     #
     ############################################
-    File keyfile = t_014_ComputeBamStats.results_file
 
-    # Finalize our unaligned reads first:
-    call FF.FinalizeToDir as t_022_FinalizeUnalignedFastqReads {
-        input:
-            outdir = unaligned_reads_dir,
-            files =
-            [
-                fq_e1,
-                fq_e2,
-            ],
-            keyfile = keyfile
-    }
-    if (defined(bam)) {
-        call FF.FinalizeToDir as t_023_FinalizeUnalignedReadsFromBam {
+    if (defined(gcs_out_root_dir)) {
+        # Create an outdir:
+        String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
+
+        String outdir = if DEBUG_MODE then sub(concrete_gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(concrete_gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}"
+        String reads_dir = outdir + "/reads"
+        String unaligned_reads_dir = outdir + "/reads/unaligned"
+        String aligned_reads_dir = outdir + "/reads/aligned"
+        String metrics_dir = outdir + "/metrics"
+
+        File keyfile = t_014_ComputeBamStats.results_file
+
+        # Finalize our unaligned reads first:
+        call FF.FinalizeToDir as t_022_FinalizeUnalignedFastqReads {
             input:
                 outdir = unaligned_reads_dir,
-                files = select_all(
+                files =
                 [
-                    bam,
-                    bai,
-                    t_003_Bam2Fastq.fq_unpaired,
-                ]),
+                    fq_e1,
+                    fq_e2,
+                ],
                 keyfile = keyfile
         }
-    }
+        if (defined(bam)) {
+            call FF.FinalizeToDir as t_023_FinalizeUnalignedReadsFromBam {
+                input:
+                    outdir = unaligned_reads_dir,
+                    files = select_all(
+                    [
+                        bam,
+                        bai,
+                        t_003_Bam2Fastq.fq_unpaired,
+                    ]),
+                    keyfile = keyfile
+            }
+        }
 
-    call FF.FinalizeToDir as t_024_FinalizeAlignedReads {
-        input:
-            outdir = aligned_reads_dir,
-            files =
-            [
-                t_005_AlignReads.bam,
-                merged_bam,
-                t_007_MarkDuplicates.bam,
-                t_008_SortAlignedDuplicateMarkedBam.output_bam,
-                t_008_SortAlignedDuplicateMarkedBam.output_bam_index,
-            ],
-            keyfile = keyfile
-    }
+        call FF.FinalizeToDir as t_024_FinalizeAlignedReads {
+            input:
+                outdir = aligned_reads_dir,
+                files =
+                [
+                    t_005_AlignReads.bam,
+                    merged_bam,
+                    t_007_MarkDuplicates.bam,
+                    t_008_SortAlignedDuplicateMarkedBam.output_bam,
+                    t_008_SortAlignedDuplicateMarkedBam.output_bam_index,
+                ],
+                keyfile = keyfile
+        }
 
-    call FF.FinalizeToFile as t_025_FinalizeAlignedBam {
-        input:
-            outdir = aligned_reads_dir,
-            file = final_bam,
-            keyfile = keyfile
-    }
+        call FF.FinalizeToFile as t_025_FinalizeAlignedBam {
+            input:
+                outdir = aligned_reads_dir,
+                file = final_bam,
+                keyfile = keyfile
+        }
 
-    call FF.FinalizeToFile as t_026_FinalizeAlignedBai {
-        input:
-            outdir = aligned_reads_dir,
-            file = final_bai,
-            keyfile = keyfile
-    }
+        call FF.FinalizeToFile as t_026_FinalizeAlignedBai {
+            input:
+                outdir = aligned_reads_dir,
+                file = final_bai,
+                keyfile = keyfile
+        }
 
-    # Finalize our metrics:
-    call FF.FinalizeToDir as t_027_FinalizeMetrics {
-        input:
-            outdir = metrics_dir,
-            files =
-            [
-                t_007_MarkDuplicates.metrics,
-                t_011_SamStats.sam_stats,
-                t_014_ComputeBamStats.results_file,
-                t_015_ComputeBamStatsQ5.results_file,
-                t_016_ComputeBamStatsQ7.results_file,
-                t_017_ComputeBamStatsQ10.results_file,
-                t_018_ComputeBamStatsQ12.results_file,
-                t_019_ComputeBamStatsQ15.results_file,
-            ],
-            keyfile = keyfile
-    }
-
-    # Finalize BQSR Metrics if it was run:
-    if (perform_BQSR) {
-        call FF.FinalizeToDir as t_028_FinalizeBQSRMetrics {
+        # Finalize our metrics:
+        call FF.FinalizeToDir as t_027_FinalizeMetrics {
             input:
                 outdir = metrics_dir,
-                files = select_all([t_009_BaseRecalibrator.recalibration_report]),
+                files =
+                [
+                    t_007_MarkDuplicates.metrics,
+                    t_011_SamStats.sam_stats,
+                    t_014_ComputeBamStats.results_file,
+                    t_015_ComputeBamStatsQ5.results_file,
+                    t_016_ComputeBamStatsQ7.results_file,
+                    t_017_ComputeBamStatsQ10.results_file,
+                    t_018_ComputeBamStatsQ12.results_file,
+                    t_019_ComputeBamStatsQ15.results_file,
+                ],
                 keyfile = keyfile
         }
 
+        # Finalize BQSR Metrics if it was run:
+        if (perform_BQSR) {
+            call FF.FinalizeToDir as t_028_FinalizeBQSRMetrics {
+                input:
+                    outdir = metrics_dir,
+                    files = select_all([t_009_BaseRecalibrator.recalibration_report]),
+                    keyfile = keyfile
+            }
+        }
+
+        call FF.FinalizeToFile as t_029_FinalizeFastQCReport {
+            input:
+                outdir = metrics_dir,
+                file = t_012_FastQC.report
+        }
+
+        # Prep a few files for output:
+        File fq1_o = unaligned_reads_dir + "/" + basename(fq_e1)
+        File fq2_o = unaligned_reads_dir + "/" + basename(fq_e2)
+        if (defined(bam)) {
+            File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
+            File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
+            File fqboup = unaligned_reads_dir + "/" + basename(select_first([DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
+        }
     }
 
-    call FF.FinalizeToFile as t_029_FinalizeFastQCReport {
-        input:
-            outdir = metrics_dir,
-            file = t_012_FastQC.report
-    }
-
-    # Prep a few files for output:
-    File fq1_o = unaligned_reads_dir + "/" + basename(fq_e1)
-    File fq2_o = unaligned_reads_dir + "/" + basename(fq_e2)
-    if (defined(bam)) {
-        File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
-        File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
-        File fqboup = unaligned_reads_dir + "/" + basename(select_first([DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
-    }
+    # Prep some output values before the output block:
+    Float raw_est_fold_cov_value = if t_013_ComputeGenomeLength.length != 0 then t_014_ComputeBamStats.results['bases']/t_013_ComputeGenomeLength.length else 0.0
+    Float aligned_frac_bases_value = if t_011_SamStats.stats_map['total_length'] != 0 then t_011_SamStats.stats_map['bases_mapped']/t_011_SamStats.stats_map['total_length'] else 0.0
+    Float aligned_est_fold_cov_value = if t_013_ComputeGenomeLength.length != 0 then t_011_SamStats.stats_map['bases_mapped']/t_013_ComputeGenomeLength.length else 0.0
+    Float average_identity_value = if t_011_SamStats.stats_map['bases_mapped'] != 0 then 100.0 - (100.0*t_011_SamStats.stats_map['mismatches']/t_011_SamStats.stats_map['bases_mapped']) else 0.0
     ############################################
     #      ___        _               _
     #     / _ \ _   _| |_ _ __  _   _| |_
@@ -375,8 +385,8 @@ workflow SRFlowcell {
     ############################################
     output {
         # Unaligned reads - If decontamination is ran, these also carry the decontaminated bams
-        File fq1 = fq1_o
-        File fq2 = fq2_o
+        File fq1 = select_first([fq1_o, fq_e1])
+        File fq2 = select_first([fq2_o, fq_e1])
         File? fq_unpaired = fqboup
 
         # Unaligned BAM file
@@ -389,13 +399,13 @@ workflow SRFlowcell {
         Float? pct_contam_reads = select_first([t_020_ComputeContaminatedBamStats.results])['reads'] / select_first([t_021_ComputeUnalignedBamStats.results])['reads'] * 100.0
 
         # Aligned BAM file
-        File aligned_bam = t_025_FinalizeAlignedBam.gcs_path
-        File aligned_bai = t_026_FinalizeAlignedBai.gcs_path
+        File aligned_bam = select_first([t_025_FinalizeAlignedBam.gcs_path, final_bam])
+        File aligned_bai = select_first([t_026_FinalizeAlignedBai.gcs_path, final_bai])
 
         # Unaligned read stats
         Float num_reads = t_014_ComputeBamStats.results['reads']
         Float num_bases = t_014_ComputeBamStats.results['bases']
-        Float raw_est_fold_cov = t_014_ComputeBamStats.results['bases']/t_013_ComputeGenomeLength.length
+        Float raw_est_fold_cov = raw_est_fold_cov_value
 
         Float read_length = t_014_ComputeBamStats.results['read_mean']
 
@@ -411,8 +421,8 @@ workflow SRFlowcell {
         # Aligned read stats
         Float aligned_num_reads = t_012_FastQC.stats_map['number_of_reads']
         Float aligned_num_bases = t_011_SamStats.stats_map['bases_mapped']
-        Float aligned_frac_bases = t_011_SamStats.stats_map['bases_mapped']/t_011_SamStats.stats_map['total_length']
-        Float aligned_est_fold_cov = t_011_SamStats.stats_map['bases_mapped']/t_013_ComputeGenomeLength.length
+        Float aligned_frac_bases = aligned_frac_bases_value
+        Float aligned_est_fold_cov = aligned_est_fold_cov_value
 
         Float aligned_read_length = t_012_FastQC.stats_map['read_length']
 
@@ -420,8 +430,8 @@ workflow SRFlowcell {
         Float insert_size_standard_deviation = t_011_SamStats.stats_map['insert_size_standard_deviation']
         Float pct_properly_paired_reads = t_011_SamStats.stats_map['percentage_of_properly_paired_reads_%']
 
-        Float average_identity = 100.0 - (100.0*t_011_SamStats.stats_map['mismatches']/t_011_SamStats.stats_map['bases_mapped'])
+        Float average_identity = average_identity_value
 
-        File fastqc_report = t_029_FinalizeFastQCReport.gcs_path
+        File fastqc_report = select_first([t_029_FinalizeFastQCReport.gcs_path, t_012_FastQC.report])
     }
 }
