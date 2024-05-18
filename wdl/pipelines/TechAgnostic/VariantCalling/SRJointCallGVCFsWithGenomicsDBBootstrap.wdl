@@ -21,6 +21,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File? interval_list
 
+        Float heterozygosity = 0.001
+        Float heterozygosity_stdev = 0.01
+        Float indel_heterozygosity = 0.000125
+
         Array[File]?   annotation_bed_files
         Array[File]?   annotation_bed_file_indexes
         Array[String]? annotation_bed_file_annotation_names
@@ -43,8 +47,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         prefix:           "prefix for output joint-called gVCF and tabix index"
         gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
-
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/SRJointCallGVCFsWithGenomicsDB/~{prefix}"
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
@@ -94,7 +96,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                 ref_dict        = ref_map['dict'],
                 # dbsnp_vcf       = ref_map["known_sites_vcf"], #Turn off dbsnp_vcf here
                 prefix          = prefix + "." + contig + ".raw",
-                runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+                heterozygosity  = heterozygosity, 
+                heterozygosity_stdev = heterozygosity_stdev,
+                indel_heterozygosity = indel_heterozygosity,
+                runtime_attr_override = object {preemptible_tries: 0} # Disable preemption for prototype.
         }
 
         # First make a sites-only VCF for recal (smaller file, easier to work with):
@@ -189,8 +194,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         input:
             vcf = finalized_vcf,
             tbi = finalized_vcf_index,
-            prefix = prefix,
-            outdir = outdir
+            prefix = prefix
     }
 
     # Convert filtered SNPs to the output to a HAIL Matrix Table:
@@ -201,75 +205,95 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             reference = sub(sub(ref_map["fasta"], "^.*/", ""), "\.[fasta]*$", ""),
             ref_fasta = ref_map["fasta"],
             ref_fai = ref_map["fai"],
-            prefix = prefix,
-            outdir = outdir
+            prefix = prefix
     }
 
     ################################
     # Finalize the regular output files:
-    ############
+    ################################
 
-    File keyfile = t_014_CreateHailMatrixTable.completion_file
-    String recalibration_dir = outdir + "/recalibration_files"
-    String recalibration_model_dir = outdir + "/recalibration_files/model"
-    String recalibration_results_dir = outdir + "/recalibration_files/results"
-    String snpeff_results_dir = outdir + "/snpEff_results"
+    if (defined(gcs_out_root_dir)) {
+        String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
+        String outdir = sub(concrete_gcs_out_root_dir, "/$", "") + "/SRJointCallGVCFsWithGenomicsDB/~{prefix}"
 
-    call FF.FinalizeToDir as t_015_FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = t_003_ImportGVCFsIntoGenomicsDB.output_genomicsdb }
+        String recalibration_dir = outdir + "/recalibration_files"
+        String recalibration_model_dir = outdir + "/recalibration_files/model"
+        String recalibration_results_dir = outdir + "/recalibration_files/results"
+        String snpeff_results_dir = outdir + "/snpEff_results"
 
-    call FF.FinalizeToFile as t_016_FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = t_012_GatherRawVcfs.output_vcf }
-    call FF.FinalizeToFile as t_017_FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = t_012_GatherRawVcfs.output_vcf_index }
+        File keyfile = t_014_CreateHailMatrixTable.completion_file
 
-    call FF.FinalizeToFile as t_018_FinalizeFilteredVCF { input: outdir = outdir, keyfile = keyfile, file = t_009_MergeSnpsAndIndels.vcf }
-    call FF.FinalizeToFile as t_019_FinalizeFilteredTBI { input: outdir = outdir, keyfile = keyfile, file = t_009_MergeSnpsAndIndels.tbi }
+        call FF.FinalizeToDir as t_015_FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = t_003_ImportGVCFsIntoGenomicsDB.output_genomicsdb }
 
-    if (defined(snpeff_db)) {
-        call FF.FinalizeToFile as t_020_FinalizeSnpEffSummary { input: outdir = snpeff_results_dir, keyfile = keyfile, file = select_first([t_011_FunctionallyAnnotate.snpEff_summary]) }
-        call FF.FinalizeToFile as t_021_FinalizeSnpEffGenes { input: outdir = snpeff_results_dir, keyfile = keyfile, file = select_first([t_011_FunctionallyAnnotate.snpEff_genes]) }
+        call FF.FinalizeToFile as t_016_FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = t_012_GatherRawVcfs.output_vcf }
+        call FF.FinalizeToFile as t_017_FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = t_012_GatherRawVcfs.output_vcf_index }
+
+        call FF.FinalizeToFile as t_018_FinalizeFilteredVCF { input: outdir = outdir, keyfile = keyfile, file = t_009_MergeSnpsAndIndels.vcf }
+        call FF.FinalizeToFile as t_019_FinalizeFilteredTBI { input: outdir = outdir, keyfile = keyfile, file = t_009_MergeSnpsAndIndels.tbi }
+
+        if (defined(snpeff_db)) {
+            call FF.FinalizeToFile as t_020_FinalizeSnpEffSummary { input: outdir = snpeff_results_dir, keyfile = keyfile, file = select_first([t_011_FunctionallyAnnotate.snpEff_summary]) }
+            call FF.FinalizeToFile as t_021_FinalizeSnpEffGenes { input: outdir = snpeff_results_dir, keyfile = keyfile, file = select_first([t_011_FunctionallyAnnotate.snpEff_genes]) }
+            
+            call FF.FinalizeToFile as t_022_FinalizeAnnotatedFilteredVCF { input: outdir = outdir, keyfile = keyfile, file = select_first([t_011_FunctionallyAnnotate.annotated_vcf]) }
+            call FF.FinalizeToFile as t_023_FinalizeAnnotatedFilteredTBI { input: outdir = outdir, keyfile = keyfile, file = select_first([t_011_FunctionallyAnnotate.annotated_vcf_index]) }
+        }
+
+        #####################################
+        # Finalize the hard filtered files:
+        #####################################
+        call FF.FinalizeToFile as t_024_FinalizeFilteredSnpsVCF { input: outdir = outdir, keyfile = keyfile, file = t_007_HardFilterSnps.snp_filtered_vcf }
+        call FF.FinalizeToFile as t_025_FinalizeFilteredSnpsTBI { input: outdir = outdir, keyfile = keyfile, file = t_007_HardFilterSnps.snp_filtered_vcf_index }
+
+        call FF.FinalizeToFile as t_026_FinalizeFilteredIndelsVCF { input: outdir = outdir, keyfile = keyfile, file = t_008_HardFilterIndels.indel_filtered_vcf }
+        call FF.FinalizeToFile as t_027_FinalizeFilteredIndelsTBI { input: outdir = outdir, keyfile = keyfile, file = t_008_HardFilterIndels.indel_filtered_vcf_index }
+
+        #####################################
+        # Finalize zarr/hail files:
+        #####################################
+        call FF.FinalizeToFile as t_028_FinalizeZarr { input: outdir = outdir, keyfile = keyfile, file = t_013_ConvertToZarr.zarr }
+        call FF.FinalizeToFile as t_029_FinalizeHailMatrixTable {
+            input:
+                outdir = outdir,
+                keyfile = keyfile,
+                file = t_014_CreateHailMatrixTable.mt_tar
+        }
+
+        # Set up variable for outputs:
+        Array[String] final_genomicsdb_location = [t_015_FinalizeGenomicsDB.gcs_dir]
     }
-
-    #####################################
-    # Finalize the hard filtered files:
-    #####################################
-    call FF.FinalizeToFile as t_022_FinalizeFilteredSnpsVCF { input: outdir = outdir, keyfile = keyfile, file = t_007_HardFilterSnps.snp_filtered_vcf }
-    call FF.FinalizeToFile as t_023_FinalizeFilteredSnpsTBI { input: outdir = outdir, keyfile = keyfile, file = t_007_HardFilterSnps.snp_filtered_vcf_index }
-
-    call FF.FinalizeToFile as t_024_FinalizeFilteredIndelsVCF { input: outdir = outdir, keyfile = keyfile, file = t_008_HardFilterIndels.indel_filtered_vcf }
-    call FF.FinalizeToFile as t_025_FinalizeFilteredIndelsTBI { input: outdir = outdir, keyfile = keyfile, file = t_008_HardFilterIndels.indel_filtered_vcf_index }
-
 
     # Make an alias for the functionally annotated data:
     if (defined(snpeff_db)) {
-        call FF.FinalizeToFile as t_026_FinalizeAnnotatedFilteredVCF { input: outdir = outdir, keyfile = keyfile, file = select_first([t_011_FunctionallyAnnotate.annotated_vcf]) }
-        call FF.FinalizeToFile as t_027_FinalizeAnnotatedFilteredTBI { input: outdir = outdir, keyfile = keyfile, file = select_first([t_011_FunctionallyAnnotate.annotated_vcf_index]) }
+        File? annotated_vcf = if defined(gcs_out_root_dir) then select_first([t_022_FinalizeAnnotatedFilteredVCF.gcs_path]) else t_011_FunctionallyAnnotate.annotated_vcf
+        File? annotated_vcf_tbi = if defined(gcs_out_root_dir) then select_first([t_023_FinalizeAnnotatedFilteredTBI.gcs_path]) else t_011_FunctionallyAnnotate.annotated_vcf_index
 
-        File annotated_vcf = t_026_FinalizeAnnotatedFilteredVCF.gcs_path
-        File annotated_vcf_tbi = t_027_FinalizeAnnotatedFilteredTBI.gcs_path
+        File final_snpeff_summary = select_first([t_020_FinalizeSnpEffSummary.gcs_path, t_011_FunctionallyAnnotate.snpEff_summary])
+        File final_snpeff_genes = select_first([t_021_FinalizeSnpEffGenes.gcs_path, t_011_FunctionallyAnnotate.snpEff_genes])
     }
 
     output {
-        String genomicsDB = t_015_FinalizeGenomicsDB.gcs_dir
+        Array[String] genomicsDB = select_first([final_genomicsdb_location, t_003_ImportGVCFsIntoGenomicsDB.output_genomicsdb])
 
-        File raw_joint_vcf     = t_016_FinalizeRawVCF.gcs_path
-        File raw_joint_vcf_tbi = t_017_FinalizeRawTBI.gcs_path
+        File raw_joint_vcf     = select_first([t_016_FinalizeRawVCF.gcs_path, t_012_GatherRawVcfs.output_vcf])
+        File raw_joint_vcf_tbi = select_first([t_017_FinalizeRawTBI.gcs_path, t_012_GatherRawVcfs.output_vcf_index])
 
-        File joint_filtered_vcf     = t_018_FinalizeFilteredVCF.gcs_path
-        File joint_filtered_vcf_tbi = t_019_FinalizeFilteredTBI.gcs_path
+        File joint_filtered_vcf     = select_first([t_018_FinalizeFilteredVCF.gcs_path, t_009_MergeSnpsAndIndels.vcf])
+        File joint_filtered_vcf_tbi = select_first([t_019_FinalizeFilteredTBI.gcs_path, t_009_MergeSnpsAndIndels.tbi])
 
-        File joint_mt = t_014_CreateHailMatrixTable.gcs_path
-        File joint_zarr = t_013_ConvertToZarr.gcs_path
+        File joint_zarr = select_first([t_028_FinalizeZarr.gcs_path, t_013_ConvertToZarr.zarr])
+        File joint_mt = select_first([t_029_FinalizeHailMatrixTable.gcs_path, t_014_CreateHailMatrixTable.mt_tar])
 
-        File joint_snps_filtered_vcf     = t_022_FinalizeFilteredSnpsVCF.gcs_path
-        File joint_snps_filtered_vcf_tbi = t_023_FinalizeFilteredSnpsTBI.gcs_path
-
-        File joint_indels_filtered_vcf     = t_024_FinalizeFilteredIndelsVCF.gcs_path
-        File joint_indels_filtered_vcf_tbi = t_025_FinalizeFilteredIndelsTBI.gcs_path
+        File joint_snps_filtered_vcf     = select_first([t_024_FinalizeFilteredSnpsVCF.gcs_path, t_007_HardFilterSnps.snp_filtered_vcf])
+        File joint_snps_filtered_vcf_tbi = select_first([t_025_FinalizeFilteredSnpsTBI.gcs_path, t_007_HardFilterSnps.snp_filtered_vcf_index ])
+        File joint_indels_filtered_vcf     = select_first([t_026_FinalizeFilteredIndelsVCF.gcs_path, t_008_HardFilterIndels.indel_filtered_vcf])
+        File joint_indels_filtered_vcf_tbi = select_first([t_027_FinalizeFilteredIndelsTBI.gcs_path, t_008_HardFilterIndels.indel_filtered_vcf_index])
 
         File? annotated_joint_vcf     = annotated_vcf
         File? annotated_joint_vcf_tbi = annotated_vcf_tbi
 
-        String? snpEff_summary = t_020_FinalizeSnpEffSummary.gcs_path
-        String? snpEff_genes = t_021_FinalizeSnpEffGenes.gcs_path
+        Array[File?] snpEff_summary = select_first([[final_snpeff_summary], []])
+        Array[File?] snpEff_genes = select_first([[final_snpeff_genes], []])
     }
 }
 

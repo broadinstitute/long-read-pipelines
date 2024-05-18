@@ -489,7 +489,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         File annotated_vcf_tbi = if defined(gcs_out_root_dir) then select_first([FinalizeVETSTBI.gcs_path]) else GatherRescoredVcfs.output_vcf_index
 
         Array[String] final_snpeff_summary = if defined(gcs_out_root_dir) then [select_first([FinalizeSnpEffSummary.gcs_dir])] else select_all(FunctionallyAnnotate.snpEff_summary)
-        Array[String] final_snpEff_genes = if defined(gcs_out_root_dir) then [select_first([FinalizeSnpEffGenes.gcs_dir])] else select_all(FunctionallyAnnotate.snpEff_genes)
+        Array[String] final_snpeff_genes = if defined(gcs_out_root_dir) then [select_first([FinalizeSnpEffGenes.gcs_dir])] else select_all(FunctionallyAnnotate.snpEff_genes)
     }
 
     output {
@@ -508,7 +508,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         File? annotated_joint_vcf_tbi = annotated_vcf_tbi
 
         Array[String]? snpEff_summary = final_snpeff_summary
-        Array[String]? snpEff_genes = final_snpEff_genes
+        Array[String]? snpEff_genes = final_snpeff_genes
     }
 }
 
