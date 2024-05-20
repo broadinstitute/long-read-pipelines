@@ -1681,7 +1681,7 @@
                                 }
                             
                                 var config = {
-                                displayModeBar: true // or 'true' for always visible
+                                displayModeBar: true
                                 };
                             
                                 var data = data; // string
@@ -1695,8 +1695,6 @@
                                 }], layout, config)
                                 
                             }
-                    
-                            //QSCORES.style.zIndex="100";
                             data = document.querySelector("meta[name='qscores_y']").content;
                             console.log(data);
                             createQScoresPlot(data);
@@ -1783,7 +1781,10 @@
             const mainPhoto = document.getElementById("main_photo");
             const thumbnails = document.querySelectorAll(".thumbnail img");
             const imgTitle = document.getElementById("img_title");
-            var lociNames = {{ analysis.res_loci_names|tojson|safe }};
+            const lociNames = document.querySelector("meta[name='loci_names']").content;
+            lociNames = lociNames.replace(/["']/g, "");
+            lociNames = JSON.parse(lociNames);
+            console.log(lociNames);
             
             mainPhoto.addEventListener("click", function() {
               this.classList.remove("normal");
@@ -1805,7 +1806,7 @@
               (function(index) { // Create a closure around 'i'
                 thumbnails[i].addEventListener("click", (event) => {
                   const newImageSrc = event.target.src;
-                  imgTitle.innerHTML = titles[index]; // Access titles using captured 'index'
+                  imgTitle.innerHTML = lociNames[index]; // Access titles using captured 'index'
                   updateMainImage(newImageSrc);
                 });
               })(i); // Call the inner function immediately, passing the current 'i'
