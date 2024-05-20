@@ -659,8 +659,6 @@ if __name__ == '__main__':
     else:
         resistances = create_drug_table(arg_dict['drug_resistance_text'])
 
-    qc_pass = arg_dict['qc_pass']
-
     # Check if location is given
     if not arg_dict['location']:
         location = "Unknown"
@@ -730,7 +728,7 @@ if __name__ == '__main__':
     print(fastqc_html[:200]) # debug
 
     # Create summary, analysis, and fastQC objects to be passed 
-    summary = Sample(sample_name, HRP2, HRP3, qc_pass, resistances, info, _map, location_info, qc_pass)
+    summary = Sample(sample_name, HRP2, HRP3, resistances, info, _map, location_info, qc_pass)
 
     analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
 
