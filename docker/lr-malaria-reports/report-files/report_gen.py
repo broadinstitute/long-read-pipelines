@@ -589,7 +589,6 @@ if __name__ == '__main__':
                         type=float) # check
     parser.add_argument("--aligned_read_length_median", help="median read length", required=True, type=float)
     parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float)
-    parser.add_argument("--qc_pass")
 
     # Drug Resistance
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", default=None)
