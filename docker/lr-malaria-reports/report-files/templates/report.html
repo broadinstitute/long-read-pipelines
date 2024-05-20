@@ -1782,7 +1782,7 @@
             const mainPhoto = document.getElementById("main_photo");
             const thumbnails = document.querySelectorAll(".thumbnail img");
             const imgTitle = document.getElementById("img_title");
-            const lociNames = document.querySelector("meta[name='loci_names']").content;
+            let lociNames = document.querySelector("meta[name='loci_names']").content;
             lociNames = lociNames.replace(/["']/g, "");
             lociNames = JSON.parse(lociNames);
             console.log(lociNames);
