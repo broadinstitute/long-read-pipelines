@@ -503,13 +503,13 @@ class Sample:
     such as the sample name.
     '''
     
-    def __init__(self, sample_name, hrp2, hrp3, qc_status, drug_res, info, _map, location_info, qc_pass):
+    def __init__(self, sample_name, hrp2, hrp3, qc_pass, drug_res, info, _map, location_info, qc_pass):
         '''This function defines the class variables and retrieves them from their respective functions.'''
         
         self.sample_name = sample_name
         self.hrp2 = hrp2
         self.hrp3 = hrp3
-        self.qc_status = qc_status
+        self.qc_pass = qc_pass
         self.drug_res = drug_res
         self.info = info
         self.map = _map
@@ -603,7 +603,7 @@ if __name__ == '__main__':
     parser.add_argument("--location", help="location where the sample was collected", default="Unknown")
     
     # QC Status
-    parser.add_argument("--qc_status", help="status to determine whether or not the sequencing run passes quality control standards", required=True)
+    parser.add_argument("--qc_pass", help="status to determine whether or not the sequencing run passes quality control standards", required=True)
 
     ''' Analysis Page '''
     # required inputs
@@ -661,7 +661,7 @@ if __name__ == '__main__':
     else:
         resistances = create_drug_table(arg_dict['drug_resistance_text'])
 
-    qc_status = arg_dict['qc_status']
+    qc_pass = arg_dict['qc_pass']
 
     # Check if location is given
     if not arg_dict['location']:
@@ -732,7 +732,7 @@ if __name__ == '__main__':
     print(fastqc_html[:200]) # debug
 
     # Create summary, analysis, and fastQC objects to be passed 
-    summary = Sample(sample_name, HRP2, HRP3, qc_status, resistances, info, _map, location_info, qc_pass)
+    summary = Sample(sample_name, HRP2, HRP3, qc_pass, resistances, info, _map, location_info, qc_pass)
 
     analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
 
