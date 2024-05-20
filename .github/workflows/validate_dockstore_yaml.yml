@@ -22,7 +22,7 @@ jobs:
             - name: Install dockstore cli
               run: |
                 mkdir -p ~/bin
-                curl -L -o ~/bin/dockstore https://github.com/dockstore/dockstore-cli/releases/download/1.14.0/dockstore
+                curl -L -o ~/bin/dockstore https://github.com/dockstore/dockstore-cli/releases/download/1.15.0/dockstore
                 chmod +x ~/bin/dockstore
                 export PATH=~/bin:$PATH
                 

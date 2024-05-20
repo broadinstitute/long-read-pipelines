@@ -13,7 +13,7 @@ workflow AlignedMetrics {
         aligned_bai: "Index for aligned BAM file"
         ref_fasta: "Reference FASTA file"
         ref_dict: "Reference dictionary file"
-        gcs_output_dir: "GCS output directory"
+        gcs_output_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
     }
 
     input {
@@ -326,6 +326,103 @@ task CoverageTrack {
     output {
         File coverage = "~{basename}.coverage.~{chr}_~{start}_~{end}.txt.gz"
         File coverage_tbi = "~{basename}.coverage.~{chr}_~{start}_~{end}.txt.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SamStats {
+    input {
+        File bam
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String basename = basename(bam, ".bam")
+    Int disk_size = 2*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        samtools stats -@${np} ~{bam} > ~{basename}.sam_stats.txt
+    >>>
+
+    output {
+        File sam_stats = "~{basename}.sam_stats.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SamStatsMap {
+    input {
+        File bam
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String basename = basename(bam, ".bam")
+    Int disk_size = 2*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        samtools stats -@${np} ~{bam} > ~{basename}.sam_stats.txt
+
+        grep '^SN' ~{basename}.sam_stats.txt | \
+            cut -f 2- | \
+            sed 's/://g' | \
+            sed 's/ /_/g' | \
+            sed 's/[\(\)]//g' | \
+            sed 's/[[:space:]]*#.*//' \
+            > map.txt
+    >>>
+
+    output {
+        File sam_stats = "~{basename}.sam_stats.txt"
+        Map[String, Float] stats_map = read_map("map.txt")
     }
 
     #########################
