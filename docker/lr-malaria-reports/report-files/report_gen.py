@@ -503,13 +503,12 @@ class Sample:
     such as the sample name.
     '''
     
-    def __init__(self, sample_name, hrp2, hrp3, qc_pass, drug_res, info, _map, location_info, qc_pass):
+    def __init__(self, sample_name, hrp2, hrp3, drug_res, info, _map, location_info, qc_pass):
         '''This function defines the class variables and retrieves them from their respective functions.'''
         
         self.sample_name = sample_name
         self.hrp2 = hrp2
         self.hrp3 = hrp3
-        self.qc_pass = qc_pass
         self.drug_res = drug_res
         self.info = info
         self.map = _map
