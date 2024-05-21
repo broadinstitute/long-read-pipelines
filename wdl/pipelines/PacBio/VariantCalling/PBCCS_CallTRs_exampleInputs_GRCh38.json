@@ -5,5 +5,5 @@
   "runTRGT.ref_fasta": "gs://fc-c1de2dd5-0f83-49c8-84ee-0f153c4d0a59/resources/GRCh38_full_analysis_set_plus_decoy_hla.fa",
   "runTRGT.ref_fasta_index": "gs://fc-c1de2dd5-0f83-49c8-84ee-0f153c4d0a59/resources/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai",
   "runTRGT.repeatCatalog": "GRCh38.adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed",
-  "runTRGT.karyotype": "XX"
+  "runTRGT.is_female": 1
 }
