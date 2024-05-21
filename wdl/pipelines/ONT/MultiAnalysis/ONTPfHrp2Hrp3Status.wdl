@@ -1,7 +1,6 @@
 version 1.0
 
 import "../../../structs/Structs.wdl"
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ONTPfHrp2Hrp3Status {
 

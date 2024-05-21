@@ -93,9 +93,9 @@ workflow PBAssembleWithHifiasm {
         input: outdir = dir, files = primary_h0_h1_quast.report_in_various_formats, prefix = prefix + ".quast_reports"
     }
     call FF.FinalizeToFile as FinalizeQuastSummaryAll {
-        input: outdir = dir, file = select_first([primary_h0_h1_quast_summary.quast_metrics_together])
+        input: outdir = dir, file = primary_h0_h1_quast_summary.quast_metrics_together
     }
-    scatter (report in select_first([primary_h0_h1_quast_summary.quast_metrics]) ) {
+    scatter (report in primary_h0_h1_quast_summary.quast_metrics ) {
         call FF.FinalizeToFile as FinalizeQuastIndividualSummary  { input: outdir = dir, file = report }
     }
 

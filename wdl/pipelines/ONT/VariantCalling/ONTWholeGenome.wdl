@@ -1,6 +1,5 @@
 version 1.0
 
-import "../../../tasks/Utility/ONTUtils.wdl" as ONT
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/VariantCalling/CallVariantsONT.wdl" as VAR
 import "../../../tasks/Utility/Finalize.wdl" as FF
