@@ -17,7 +17,7 @@ workflow runTRGT {
     File ref_fasta
     File ref_fasta_index
     String repeatCatalog = "GRCh38.adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed"
-    String karyotype = "XX"
+    Int is_female # 1=female; 0=male
     Int cpuCores = 16
 
     #Optional runtime arguments
@@ -32,7 +32,7 @@ workflow runTRGT {
       ref_fasta = ref_fasta,
       ref_fasta_index = ref_fasta_index,
       repeatCatalog = repeatCatalog,
-      karyotype = karyotype,
+      is_female = is_female,
       cpuCores = cpuCores,
       runtime_attr_override = runtime_attr_override
   }
