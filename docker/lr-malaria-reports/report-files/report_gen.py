@@ -652,6 +652,10 @@ if __name__ == '__main__':
             arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
 
     qc_pass = arg_dict["qc_pass"]
+    if (qc_pass == "true"):
+        qc_pass = "PASS"
+    elif (qc_pass == "false"):
+        qc_pass = "FAIL"
     
     # Check if drug resistance report is provided
     if not arg_dict['drug_resistance_text'] or arg_dict['drug_resistance_text'] == "None":
