@@ -72,6 +72,7 @@ task MosDepthOverBed {
         File bam
         File bai
         File? bed
+        Int? threads = 4
         String? chrom
         Int? bin_length
         String? thresholds
@@ -97,7 +98,7 @@ task MosDepthOverBed {
         mosdepth \
         ~{true="-n" false="" no_per_base} \
         ~{true="-x" false="" fast_mode} \
-        -t 4 \
+        -t ~{threads} \
         ~{"-c " + chrom} \
         ~{"-b " + select_first([bed, bin_length])} \
         ~{"-Q " + mapq} \
