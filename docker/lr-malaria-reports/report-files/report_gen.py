@@ -648,7 +648,7 @@ if __name__ == '__main__':
     upload_date = arg_dict['upload_date'][0]
     species = ' '.join(arg_dict['species'])
 
-    info = [upload_date, species, arg_dict['aligned_coverage'], arg_dict['aligned_read_length_n50'], 
+    info = [upload_date, species, round(arg_dict['aligned_coverage'], 2), arg_dict['aligned_read_length_n50'], 
             arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
 
     qc_pass = arg_dict["qc_pass"]
@@ -683,7 +683,7 @@ if __name__ == '__main__':
     #location_info = [latitude, longitude, location]
     #coordinates = [latitude, longitude]
 
-    location_info = [arg_dict['latitude'], arg_dict['longitude'], arg_dict['location']]
+    location_info = [round(arg_dict['latitude'], 2), round(arg_dict['longitude'], 2), arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
     _map = create_map(coordinates, sample_name)
 
@@ -696,7 +696,7 @@ if __name__ == '__main__':
         frac_bases = "N/A"
         
     sequencing_summary = [arg_dict['sample_prep'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
-                          frac_bases, arg_dict['average_identity']]
+                          frac_bases, round(arg_dict['average_identity'], 2)]
 
     active_channels = arg_dict['active_channels']
     if active_channels == 0:
