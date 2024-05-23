@@ -83,8 +83,6 @@ task MosDepthOverBed {
         Int preemptible_tries = 3
     }
 
-    String mosdepth_by_region = select_first([bed, bin_length])
-
     Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
     String basename = basename(bam, ".bam")
     String prefix = "~{basename}.coverage_over_bed"
@@ -101,7 +99,7 @@ task MosDepthOverBed {
         ~{true="-x" false="" fast_mode} \
         -t 4 \
         ~{"-c " + chrom} \
-        ~{"-b " + mosdepth_by_region} \
+        ~{"-b " + select_first([bed, bin_length])} \
         ~{"-Q " + mapq} \
         ~{"-T " + thresholds} \
         ~{prefix} ./~{basename}.bam
