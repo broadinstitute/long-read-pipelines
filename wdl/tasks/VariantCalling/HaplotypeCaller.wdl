@@ -162,6 +162,7 @@ task HaplotypeCaller_GATK4_VCF {
         Boolean use_spanning_event_genotyping = true
 
         Boolean enable_pileup_mode = false
+        Boolean enable_dangling_branch_recovery = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -191,7 +192,7 @@ task HaplotypeCaller_GATK4_VCF {
         #       which do not rely on the output format of the `free` command.
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        let java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
@@ -207,6 +208,7 @@ task HaplotypeCaller_GATK4_VCF {
                 --heterozygosity-stdev ~{heterozygosity_stdev} \
                 --indel-heterozygosity ~{indel_heterozygosity} \
                 --linked-de-bruijn-graph \
+                ~{true="--recover-all-dangling-branches" false="" enable_dangling_branch_recovery} \
                 ~{true="--pileup-detection --pileup-detection-enable-indel-pileup-calling" false="" enable_pileup_mode} \
                 --annotate-with-num-discovered-alleles \
                 -GQB 10 -GQB 20 -GQB 30 -GQB 40 -GQB 50 -GQB 60 -GQB 70 -GQB 80 -GQB 90 \
@@ -278,7 +280,7 @@ task MergeBamouts {
         # If the number of processors = 1, then `let` will return 1 here:
         # So we need to turn off `set -e` for this command:
         set +e
-        let mthreads=${np}-1
+        mthreads=$((np-1))
         set -e
 
         samtools merge -@${mthreads} ~{prefix}.bam ~{sep=" " bams}

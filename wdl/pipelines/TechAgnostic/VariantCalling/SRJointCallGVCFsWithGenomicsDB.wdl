@@ -362,14 +362,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     # Consolidate files:
-    call VARUTIL.GatherVcfs as GatherRawVcfs {
-        input:
-            input_vcfs = joint_vcf,
-            input_vcf_indices = joint_vcf_index,
-            prefix = prefix + ".raw.combined"
-    }
-
-    # Consolidate files:
     call VARUTIL.GatherVcfs as GatherRescoredVcfs {
         input:
             input_vcfs = vcf_for_merging,
@@ -413,9 +405,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         File keyfile = CreateHailMatrixTable.completion_file
 
         call FF.FinalizeToDir as FinalizeGenomicsDB { input: outdir = outdir + "/GenomicsDB", keyfile = keyfile, files = ImportGVCFsIntoGenomicsDB.output_genomicsdb }
-
-        call FF.FinalizeToFile as FinalizeRawVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf }
-        call FF.FinalizeToFile as FinalizeRawTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRawVcfs.output_vcf_index }
 
         call FF.FinalizeToFile as FinalizeVETSVCF { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf }
         call FF.FinalizeToFile as FinalizeVETSTBI { input: outdir = outdir, keyfile = keyfile, file = GatherRescoredVcfs.output_vcf_index }
@@ -516,19 +505,13 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     output {
-        Array[String] genomicsDB = select_first([final_genomicsdb_location, ImportGVCFsIntoGenomicsDB.output_genomicsdb])
-
-        File raw_joint_vcf     = select_first([FinalizeRawVCF.gcs_path, GatherRawVcfs.output_vcf])
-        File raw_joint_vcf_tbi = select_first([FinalizeRawTBI.gcs_path, GatherRawVcfs.output_vcf_index])
-
-        File joint_recalibrated_vcf     = select_first([FinalizeVETSVCF.gcs_path, GatherRescoredVcfs.output_vcf])
-        File joint_recalibrated_vcf_tbi = select_first([FinalizeVETSTBI.gcs_path, GatherRescoredVcfs.output_vcf_index])
+        File joint_vcf     = select_first([FinalizeVETSVCF.gcs_path, GatherRescoredVcfs.output_vcf])
+        File joint_vcf_tbi = select_first([FinalizeVETSTBI.gcs_path, GatherRescoredVcfs.output_vcf_index])
 
         File joint_mt = select_first([FinalizeHailMatrixTable.gcs_path, CreateHailMatrixTable.mt_tar])
         File joint_zarr = select_first([FinalizeZarr.gcs_path, ConvertToZarr.zarr])
 
-        File? annotated_joint_vcf     = annotated_vcf
-        File? annotated_joint_vcf_tbi = annotated_vcf_tbi
+        Array[String] genomicsDB = select_first([final_genomicsdb_location, ImportGVCFsIntoGenomicsDB.output_genomicsdb])
 
         Array[String]? snpEff_summary = final_snpeff_summary
         Array[String]? snpEff_genes = final_snpEff_genes

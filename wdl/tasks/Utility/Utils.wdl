@@ -552,7 +552,7 @@ task DownsampleSam {
     command <<<
 
         # Make sure we use all our proocesors:
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        np=$(grep ^processor /proc/cpuinfo | tail -n1 | awk '{print $NF+1}')
 
         gatk DownsampleSam --VALIDATION_STRINGENCY SILENT --RANDOM_SEED ~{random_seed} -I ~{bam} -O ~{prefix}.bam -S ~{strategy} -P ~{probability} ~{extra_args}
         samtools index -@$np ~{prefix}.bam
@@ -1839,7 +1839,7 @@ task GetReadsInBedFileRegions {
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
 
         # Make sure we use all our proocesors:
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        np=$(grep ^processor /proc/cpuinfo | tail -n1 | awk '{print $NF+1}')
 
         samtools view -@${np} -b -h -L ~{regions_bed} ~{gcs_bam_path} | samtools sort - > ~{prefix}.bam
         samtools index -@${np} ~{prefix}.bam

@@ -183,7 +183,7 @@ task BwaMem2 {
         # Make sure we use all our proocesors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
         if [[ ${np} -gt 2 ]] ; then
-            let np=${np}-1
+            np=$((np-1))
         fi
 
         # Breakdown of the arguments:
@@ -258,7 +258,7 @@ task MergeBamAlignment {
 
         # Make sure we use all our proocesors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-        let np=${np}-1
+        np=$((np-1))
 
         java -Dsamjdk.compression_level=2 -Xms8192m -Xmx30768m -jar /usr/picard/picard.jar \
             MergeBamAlignment \
@@ -341,7 +341,7 @@ task MarkDuplicates {
 
     command <<<
         tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
-        let java_memory_size_mb=${tot_mem_mb}-5120
+        java_memory_size_mb=$((tot_mem_mb-5120))
 
         java -Dsamjdk.compression_level=~{compression_level} -Xms${java_memory_size_mb}m -jar /usr/picard/picard.jar \
             MarkDuplicates \

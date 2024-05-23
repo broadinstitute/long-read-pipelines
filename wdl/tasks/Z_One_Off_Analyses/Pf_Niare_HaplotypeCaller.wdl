@@ -148,7 +148,7 @@ task HaplotypeCaller_NIARE_GATK4_VCF {
         #       which do not rely on the output format of the `free` command.
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
@@ -256,7 +256,7 @@ task MergeBamouts {
         # If the number of processors = 1, then `let` will return 1 here:
         # So we need to turn off `set -e` for this command:
         set +e
-        let mthreads=${np}-1
+        mthreads=$((np-1))
         set -e
 
         samtools merge -@${mthreads} ~{prefix}.bam ~{sep=" " bams}
@@ -327,7 +327,7 @@ task GenomicsDbImport {
         #       which do not rely on the output format of the `free` command.
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
@@ -429,7 +429,7 @@ task GenotypeGVCFs {
         fi
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
@@ -579,7 +579,7 @@ task VariantRecalibratorIndel {
         #       which do not rely on the output format of the `free` command.
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
@@ -663,7 +663,7 @@ task VariantRecalibratorSnp {
         #       which do not rely on the output format of the `free` command.
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
@@ -744,7 +744,7 @@ task ApplyVqsrIndel {
         #       which do not rely on the output format of the `free` command.
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
@@ -820,7 +820,7 @@ task ApplyVqsrSnp {
         #       which do not rely on the output format of the `free` command.
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
@@ -899,7 +899,7 @@ task MergeMultiAllelicSitesPostRecalibration {
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=available_memory_mb-1024
+        java_memory_size_mb=$((available_memory_mb-1024))
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
 
