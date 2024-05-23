@@ -72,7 +72,7 @@ task MosDepthOverBed {
         File bam
         File bai
         File? bed
-        Int? threads = 4
+        Int threads = 4
         String? chrom
         Int? bin_length
         String? thresholds
