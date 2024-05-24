@@ -522,13 +522,13 @@ class Analysis:
     Additionally, it passes in variables needed for plot generation in Javascript.
     '''
     
-    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, active_channels, coverage_plot, snapshots, res_loci_names):
+    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, barcode, coverage_plot, snapshots, res_loci_names):
         '''This function defines the variables used and retrieves them from their respective functions.'''
         
         self.sequencing_summary = sequencing_summary
         self.scores = qscore_scores
         self.reads = qscore_reads
-        self.active_channels = active_channels
+        self.barcode = barcode
         self.coverage_plot = coverage_plot
         self.snapshots = snapshots
         self.res_loci_names = res_loci_names
@@ -702,9 +702,7 @@ if __name__ == '__main__':
     sequencing_summary = [arg_dict['sample_prep'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
                           frac_bases, round(arg_dict['average_identity'], 2)]
 
-    active_channels = arg_dict['active_channels']
-    if active_channels == 0:
-        active_channels = "N/A"
+    barcode = arg_dict['barcode']
         
     qscorex = [5, 7, 10, 12, 15] # available q-score measures are predetermined
     qscorey = [arg_dict['num_reads_q5'], arg_dict['num_reads_q7'], arg_dict['num_reads_q10'], arg_dict['num_reads_q12'], arg_dict['num_reads_q15']]
@@ -734,7 +732,7 @@ if __name__ == '__main__':
     # Create summary, analysis, and fastQC objects to be passed 
     summary = Sample(sample_name, HRP2, HRP3, resistances, info, _map, location_info, qc_pass)
 
-    analysis = Analysis(sequencing_summary, qscorey, qscorex, active_channels, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
+    analysis = Analysis(sequencing_summary, qscorey, qscorex, barcode, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
 
     fastQC = FastQC(fastqc_html)
 

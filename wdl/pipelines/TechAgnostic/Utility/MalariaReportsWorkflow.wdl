@@ -35,8 +35,7 @@ workflow GenerateMalariaReports {
         qc_pass: "status to determine whether or not the sequencing run passes quality control standards"
 
         # ------ Analysis Page ------ #
-        # Active Channels
-        active_channels: "number of channels active in the sequencing device"
+        barcode: "the barcode of the sample"
 
         # Q-Scores Plot
         num_reads_q5: "the number of reads where the probability of a given base call being wrong is approximately 1 in 3"
@@ -92,8 +91,7 @@ workflow GenerateMalariaReports {
 
         # ------ Analysis Page ------ #
         
-        # Active Channels
-        Int active_channels
+        String barcode
         
         # Q-Scores Plot
         Int num_reads_q5
@@ -148,7 +146,7 @@ workflow GenerateMalariaReports {
             longitude = longitude,
             latitude = latitude,
             location = location,
-            active_channels = active_channels,
+            barcode = barcode,
             num_reads_q5 = num_reads_q5,
             num_reads_q7 = num_reads_q7,
             num_reads_q10 = num_reads_q10,

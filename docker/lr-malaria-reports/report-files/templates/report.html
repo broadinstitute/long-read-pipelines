@@ -989,7 +989,7 @@
         overflow: visible;
     }
 
-    .active_channels_box {
+    .barcode_box {
         position: absolute;
         left: 19px;
         top: 0;
@@ -999,7 +999,7 @@
         outline-offset: -1px;
         background-color: #fff;
     }
-    .active_channels_value {
+    .barcode_value {
         color: #2494c7;
         font-size: 30px;
         line-height: 20px;
@@ -1016,15 +1016,15 @@
         flex-direction: column;
     }
 
-    .active_channels_label {
+    .barcode_label {
         color: #000;
         font-size: 20px;
         line-height: 20px;
         font-weight: 300;
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
             'Liberation Sans', sans-serif;
-        position: absolute;
-        left: 202.9982px;
+        position: relative;
+        left: 248px;
         top: 74.5401px;
         width: 40;
         height: 19.1387px;
@@ -1589,7 +1589,7 @@
 
 
     <!-- ANALYSIS PAGE -->
-    <div id="analysis_page" style="display:none">
+    <div id="analysis_page" style="display: none;">
         <div id="analysis_root">
             <div class="module_display">
               <div class="main_frame" style="height:1966px;">
@@ -1735,9 +1735,9 @@
                         </button>
                     </div>
                 </div>               
-                <div class="active_channels_box"></div>
-                <div class="active_channels_value">{{ analysis.active_channels }}</div>
-                <div class="active_channels_label">Active Channels</div>
+                <div class="barcode_box"></div>
+                <div class="barcode_value">{{ analysis.barcode }}</div>
+                <div class="barcode_label">Barcode</div>
               </div>
             </div>
           </div> <!-- analysis_root -->

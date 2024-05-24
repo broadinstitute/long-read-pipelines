@@ -35,8 +35,8 @@ task RunReportScript {
         qc_pass: "status to determine whether or not the sequencing run passes quality control standards"
 
         # ------ Analysis Page ------ #
-        # Active Channels
-        active_channels: "number of channels active in the sequencing device"
+        # Main Box
+        barcode: "the barcode of the sample"
 
         # Q-Scores Plot
         num_reads_q5: "the number of reads where the probability of a given base call being wrong is approximately 1 in 3"
@@ -87,8 +87,8 @@ task RunReportScript {
 
         # ------ Analysis Page ------ #
         
-        # Active Channels
-        Int active_channels
+        # Barcode
+        String barcode
         
         # Q-Scores Plot
         Int num_reads_q5
@@ -157,7 +157,7 @@ task RunReportScript {
             --longitude ~{default=0 longitude} \
             --latitude ~{default=0 latitude} \
             --location ~{default="Unknown" wrap_location} \
-            --active_channels ~{active_channels} \
+            --barcode ~{barcode} \
             --num_reads_q5 ~{num_reads_q5} \
             --num_reads_q7 ~{num_reads_q7} \
             --num_reads_q10 ~{num_reads_q10} \
