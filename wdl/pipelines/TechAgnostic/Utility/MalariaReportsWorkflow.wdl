@@ -45,7 +45,7 @@ workflow GenerateMalariaReports {
         num_reads_q15: "the number of reads where the probability of a given base call being wrong is approximately 1 in 31"
 
         # Sequencing Summary
-        sample_prep: "type of preparation used for the sample"
+        sample_type: "type of sample"
         analysis_success: "whether the analysis process completed successfully"
         aligned_bases: "total number of bases aligned to the reference genome"
         aligned_reads: "total number of reads aligned to the reference genome"
@@ -101,7 +101,7 @@ workflow GenerateMalariaReports {
         Int num_reads_q15
 
         # Sequencing Summary
-        String? sample_prep
+        String? sample_type
         String analysis_success
         Float aligned_bases
         Int aligned_reads
@@ -152,7 +152,7 @@ workflow GenerateMalariaReports {
             num_reads_q10 = num_reads_q10,
             num_reads_q12 = num_reads_q12,
             num_reads_q15 = num_reads_q15,
-            sample_prep = sample_prep,
+            sample_type = sample_type,
             analysis_success = analysis_success,
             aligned_bases = aligned_bases,
             aligned_reads = aligned_reads,

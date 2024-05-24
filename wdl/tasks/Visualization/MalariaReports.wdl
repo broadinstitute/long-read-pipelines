@@ -45,7 +45,7 @@ task RunReportScript {
         num_reads_q12: "the number of reads where the probability of a given base call being wrong is approximately 1 in 16"
 
         # Sequencing Summary
-        sample_prep: "type of preparation used for the sample"
+        sample_type: "type of sample"
         analysis_success: "whether the analysis process completed successfully"
         aligned_bases: "total number of bases aligned to the reference genome"
         aligned_reads: "total number of reads aligned to the reference genome"
@@ -98,7 +98,7 @@ task RunReportScript {
         Int num_reads_q15
 
         # Sequencing Summary
-        String? sample_prep
+        String? sample_type
         String analysis_success
         Float aligned_bases
         Int aligned_reads
@@ -164,7 +164,7 @@ task RunReportScript {
             --num_reads_q12 ~{num_reads_q12} \
             --num_reads_q15 ~{num_reads_q15} \
             --aligned_bases ~{aligned_bases} \
-            --sample_prep ~{default="N/A" sample_prep} \
+            --sample_type ~{default="N/A" sample_type} \
             --analysis_success ~{analysis_success} \
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \

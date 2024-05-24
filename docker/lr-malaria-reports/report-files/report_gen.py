@@ -617,7 +617,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_reads_q15", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 32", required=True)
 
     # Sequencing Summary
-    parser.add_argument("--sample_prep", help="type of preparation used for the sample", default="N/A")
+    parser.add_argument("--sample_type", help="type of sample", default="N/A")
     parser.add_argument("--analysis_success", help="whether the analysis process completed successfully", required=True)
     parser.add_argument("--aligned_bases", help="total number of bases aligned to the reference genome", required=True)
     parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True)
@@ -699,7 +699,7 @@ if __name__ == '__main__':
     if frac_bases == 0:
         frac_bases = "N/A"
         
-    sequencing_summary = [arg_dict['sample_prep'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
+    sequencing_summary = [arg_dict['sample_type'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
                           frac_bases, round(arg_dict['average_identity'], 2)]
 
     barcode = arg_dict['barcode']
