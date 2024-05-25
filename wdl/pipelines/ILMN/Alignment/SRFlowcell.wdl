@@ -363,10 +363,21 @@ workflow SRFlowcell {
         # Prep a few files for output:
         File fq1_o = unaligned_reads_dir + "/" + basename(fq_e1)
         File fq2_o = unaligned_reads_dir + "/" + basename(fq_e2)
+
         if (defined(bam)) {
             File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
             File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
             File fqboup = unaligned_reads_dir + "/" + basename(select_first([DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
+        }
+
+        if (defined(contaminant_ref_map_file)) {
+            call FF.FinalizeToFile as t_030_FinalizeContaminatedBam {
+                input:
+                    outdir = reads_dir,
+                    file = select_first([DecontaminateSample.contaminated_bam])
+            }
+            Float num_contam_reads_o = select_first([t_020_ComputeContaminatedBamStats.results])['reads']
+            Float pct_contam_reads_o = select_first([t_020_ComputeContaminatedBamStats.results])['reads'] / select_first([t_021_ComputeUnalignedBamStats.results])['reads'] * 100.0
         }
     }
 
@@ -394,9 +405,9 @@ workflow SRFlowcell {
         File? unaligned_bai = unaligned_bai_o
 
         # Contaminated BAM file and metrics
-        File? contaminated_bam = select_first([DecontaminateSample.contaminated_bam]) #Correct for optional gcs_output_dir
-        Float? num_contam_reads = select_first([t_020_ComputeContaminatedBamStats.results])['reads']
-        Float? pct_contam_reads = select_first([t_020_ComputeContaminatedBamStats.results])['reads'] / select_first([t_021_ComputeUnalignedBamStats.results])['reads'] * 100.0
+        File? contaminated_bam = t_030_FinalizeContaminatedBam.gcs_path 
+        Float? num_contam_reads = num_contam_reads_o
+        Float? pct_contam_reads = pct_contam_reads_o
 
         # Aligned BAM file
         File aligned_bam = select_first([t_025_FinalizeAlignedBam.gcs_path, final_bam])
