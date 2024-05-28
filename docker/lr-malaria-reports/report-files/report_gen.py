@@ -585,9 +585,9 @@ if __name__ == '__main__':
     parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", nargs='+', required=True)
     parser.add_argument("--species", help="species of sample", nargs='+', default="P. falciparum")
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float) # check -- fold coverage
-    parser.add_argument("--aligned_read_length_n50", help="number at which 50% of the read lengths are longer than this value", required=True, 
+    parser.add_argument("--aligned_read_length", help="number at which 50% of the read lengths are longer than this value", required=True, 
                         type=float) # check
-    parser.add_argument("--aligned_read_length_median", help="median read length", required=True, type=float)
+    parser.add_argument("--pct_properly_paired_reads", help="median read length", required=True, type=float)
     parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float)
 
     # Drug Resistance
@@ -648,8 +648,8 @@ if __name__ == '__main__':
     upload_date = arg_dict['upload_date'][0]
     species = ' '.join(arg_dict['species'])
 
-    info = [upload_date, species, round(arg_dict['aligned_coverage'], 2), arg_dict['aligned_read_length_n50'], 
-            arg_dict['aligned_read_length_median'], arg_dict['read_qual_median']]
+    info = [upload_date, species, round(arg_dict['aligned_coverage'], 2), arg_dict['aligned_read_length'], 
+            arg_dict['pct_properly_paired_reads'], arg_dict['read_qual_median']]
 
     qc_pass = arg_dict["qc_pass"]
     if (qc_pass == "true"):
@@ -673,19 +673,6 @@ if __name__ == '__main__':
     make_default = True
     location = "Unknown"
     latitude, longitude = 0, 0
-        
-    # Check if values for map are provided
-    #if arg_dict['latitude'] is not None and arg_dict['longitude'] is not None and arg_dict['location'] is not None:
-    #    make_default = False
-    #    location = arg_dict['location']
-    #    latitude = arg_dict['latitude']
-    #    longitude = arg_dict['longitude']
-
-    #if arg_dict['location']: 
-    #    location = arg_dict['location']
-
-    #location_info = [latitude, longitude, location]
-    #coordinates = [latitude, longitude]
 
     location_info = [round(arg_dict['latitude'], 2), round(arg_dict['longitude'], 2), arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
