@@ -59,7 +59,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File ref_map_file
 
-        File interval_list
+        File? interval_list
 
         Float heterozygosity = 0.001
         Float heterozygosity_stdev = 0.01
@@ -93,6 +93,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[File]?   annotation_bed_file_indexes
         Array[String]? annotation_bed_file_annotation_names
 
+        # Parameters to specify the intervals to scatter over
+        Array[String]? contig_list           
+        Array[File]? contig_interval_files
+
         File? snpeff_db
 
         Boolean use_gnarly_genotyper = false
@@ -118,10 +122,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     # Shard by contig for speed:
+    Array[File] contig_interval_list_to_use = if defined(contig_interval_files) then select_first([contig_interval_files]) else MakeChrIntervalList.contig_interval_list_files
     scatter (idx_1 in range(length(MakeChrIntervalList.contig_interval_list_files))) {
 
-        String contig = MakeChrIntervalList.chrs[idx_1][0]
-        File contig_interval_list = MakeChrIntervalList.contig_interval_list_files[idx_1]
+        String contig = if defined(contig_list) then select_first([contig_list])[idx_1] else MakeChrIntervalList.chrs[idx_1][0]
+        File contig_interval_list = contig_interval_list_to_use[idx_1]
 
         # Import our data into GenomicsDB:
         call SRJOINT.ImportGVCFs as ImportGVCFsIntoGenomicsDB {
@@ -168,7 +173,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                     heterozygosity = heterozygosity,
                     heterozygosity_stdev = heterozygosity_stdev,
                     indel_heterozygosity = indel_heterozygosity,
-                    runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+                    runtime_attr_override = object {preemptible_tries: 0}  # Disable preemption for prototype.
             }
         }
         # Select the VCF + index for the raw joint called file:
