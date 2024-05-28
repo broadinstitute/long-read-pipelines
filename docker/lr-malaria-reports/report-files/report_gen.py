@@ -492,6 +492,16 @@ def get_res_loci_names(bed):
     return list(bed.name) 
 
 
+def format_dates(date_string):
+    '''
+    Input: A string of numbers in the form of YYYYMMDD, such as 20240528 (May 28th, 2024).
+    Output: A formatted version of the input string using slashes to separate year, month, and day or "N/A".
+    '''
+    if date_string in ["", None]:
+        return "N/A"
+    else:
+        return "/".join([date_string[:4], date_string[4:6], date_string[6:]])
+
 '''
 Report Generation & Templating
 '''
@@ -582,13 +592,16 @@ if __name__ == '__main__':
     
     # Sample Info
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
-    parser.add_argument("--upload_date", help="date sample was sequenced and uploaded", nargs='+', required=True)
+    parser.add_argument("--upload_date", help="date sample was uploaded", nargs='+', required=True)
+    parser.add_argument("--collection_date", help="date sample was collected", required=True)
+    parser.add_argument("--sequencing_date", help="date sample was sequenced", required=True)
     parser.add_argument("--species", help="species of sample", nargs='+', default="P. falciparum")
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float) # check -- fold coverage
     parser.add_argument("--aligned_read_length", help="number at which 50% of the read lengths are longer than this value", required=True, 
                         type=float) # check
     parser.add_argument("--pct_properly_paired_reads", help="median read length", required=True, type=float)
     parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float)
+    parser.add_argument("--read_qual_mean", help="mean measure of the uncertainty of base calls", required=True, type=float)
 
     # Drug Resistance
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", default=None)
@@ -646,10 +659,12 @@ if __name__ == '__main__':
     sample_name = arg_dict['sample_name']
 
     upload_date = arg_dict['upload_date'][0]
+    collection_date = arg_dict['collection_date']
+    sequencing_date = arg_dict['sequencing_date']
     species = ' '.join(arg_dict['species'])
 
-    info = [upload_date, species, round(arg_dict['aligned_coverage'], 2), arg_dict['aligned_read_length'], 
-            arg_dict['pct_properly_paired_reads'], arg_dict['read_qual_median']]
+    info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), arg_dict['aligned_read_length'], 
+            arg_dict['pct_properly_paired_reads'], arg_dict['read_qual_median'], arg_dict['read_qual_mean']]
 
     qc_pass = arg_dict["qc_pass"]
     if (qc_pass == "true"):

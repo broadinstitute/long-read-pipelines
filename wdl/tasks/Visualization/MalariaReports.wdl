@@ -14,12 +14,15 @@ task RunReportScript {
 
         # Sample Info
         sample_name: "name of sequenced sample"
-        upload_date: "date sample was sequenced and uploaded"
+        upload_date: "date sample was uploaded"
+        sequencing_date: "date sample was sequenced"
+        collection_date: "date sample was collected"
         species: "species of sample"
         aligned_coverage: "number of reads uniquely mapped to a reference"
         aligned_read_length: "number at which 50% of the read lengths are longer than this value" # check
         pct_properly_paired_reads: "median read length"
         read_qual_median: "median measure of the uncertainty of base calls"
+        read_qual_mean: "mean measure of the uncertainty of base calls"
 
         # Drug Resistance
         drug_resistance_text: "text file used for determining and displaying drug resistances"
@@ -66,11 +69,14 @@ task RunReportScript {
         # Sample Info
         String sample_name
         String upload_date
+        String collection_date
+        String sequencing_date
         String? species
         Float aligned_coverage
         Float aligned_read_length
         Float pct_properly_paired_reads
         Float read_qual_median
+        Float read_qual_mean
 
         # Drug Resistance
         File? drug_resistance_text
@@ -146,11 +152,14 @@ task RunReportScript {
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
+            --collection_date ~{collection_date} \
+            --sequencing_date ~{sequencing_date} \
             --species ~{default="Unknown" species} \
             --aligned_coverage ~{aligned_coverage} \
             --aligned_read_length ~{aligned_read_length} \
             --pct_properly_paired_reads ~{pct_properly_paired_reads} \
             --read_qual_median ~{read_qual_median} \
+            --read_qual_mean ~{read_qual_mean} \
             --drug_resistance_text ~{default="None" drug_resistance_text} \
             --HRP2 ~{default="N/A" HRP2} \
             --HRP3 ~{default="N/A" HRP3} \
