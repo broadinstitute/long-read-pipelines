@@ -594,7 +594,7 @@ if __name__ == '__main__':
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
     parser.add_argument("--upload_date", help="date sample was uploaded", nargs='+', required=True)
     parser.add_argument("--collection_date", help="date sample was collected", required=True, default="N/A", nargs="?")
-    parser.add_argument("--sequencing_date", help="date sample was sequenced", required=True)
+    parser.add_argument("--sequencing_date", help="date sample was sequenced", required=True, default="N/A", nargs="?")
     parser.add_argument("--species", help="species of sample", nargs='+', default="P. falciparum")
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float) # check -- fold coverage
     parser.add_argument("--aligned_read_length", help="number at which 50% of the read lengths are longer than this value", required=True, 
