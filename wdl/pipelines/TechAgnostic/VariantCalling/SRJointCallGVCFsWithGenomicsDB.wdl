@@ -254,7 +254,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     # Shard by contig for speed:
     scatter (idx_2 in range(length(joint_vcf))) {
 
-        String contig_2 = MakeChrIntervalList.chrs[idx_2][0]
+        String contig_2 = if defined(contig_list) then select_first([contig_list])[idx_2] else MakeChrIntervalList.chrs[idx_2][0]
         File joint_called_vcf = joint_vcf[idx_2]
         File joint_called_vcf_index = joint_vcf_index[idx_2]
 
