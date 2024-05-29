@@ -590,6 +590,8 @@ if __name__ == '__main__':
     ''' Summary Page '''
     # required inputs
     
+    parser.add_argument("--barcode", help="barcode of the sample", required=True)
+    
     # Sample Info
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
     parser.add_argument("--upload_date", help="date sample was uploaded", nargs='+', required=True)
