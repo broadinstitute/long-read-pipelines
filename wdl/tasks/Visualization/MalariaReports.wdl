@@ -152,8 +152,8 @@ task RunReportScript {
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
-            --collection_date ~{collection_date} \
-            --sequencing_date ~{sequencing_date} \
+            --collection_date ~{default="N/A" collection_date} \
+            --sequencing_date ~{default="N/A" sequencing_date} \
             --species ~{default="Unknown" species} \
             --aligned_coverage ~{aligned_coverage} \
             --aligned_read_length ~{aligned_read_length} \
