@@ -619,9 +619,6 @@ if __name__ == '__main__':
     ''' Analysis Page '''
     # required inputs
 
-    # Active Channels
-    parser.add_argument("--active_channels", help="number of channels active in the sequencing device", required=True)
-
     # Q-Scores Plot
     parser.add_argument("--num_reads_q5", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 3", required=True)
     parser.add_argument("--num_reads_q7", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 5", required=True)
