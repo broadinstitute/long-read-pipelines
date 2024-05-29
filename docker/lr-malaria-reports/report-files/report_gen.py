@@ -597,11 +597,11 @@ if __name__ == '__main__':
     parser.add_argument("--sequencing_date", help="date sample was sequenced", required=True, default="N/A", nargs="?")
     parser.add_argument("--species", help="species of sample", nargs='+', default="P. falciparum")
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float) # check -- fold coverage
-    parser.add_argument("--aligned_read_length", help="number at which 50% of the read lengths are longer than this value", required=True, 
+    parser.add_argument("--aligned_read_length", help="number at which 50%\ of the read lengths are longer than this value", required=True, 
                         type=float) # check
     parser.add_argument("--pct_properly_paired_reads", help="median read length", required=True, type=float)
-    parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float)
-    parser.add_argument("--read_qual_mean", help="mean measure of the uncertainty of base calls", required=True, type=float)
+    parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float, default="N/A", nargs="?")
+    parser.add_argument("--read_qual_mean", help="mean measure of the uncertainty of base calls", required=True, type=float, default="N/A", nargs="?")
 
     # Drug Resistance
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", default=None)
