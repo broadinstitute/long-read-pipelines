@@ -662,10 +662,11 @@ if __name__ == '__main__':
     collection_date = arg_dict['collection_date']
     sequencing_date = arg_dict['sequencing_date']
     species = ' '.join(arg_dict['species'])
-
+    
     info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), arg_dict['aligned_read_length'], 
             arg_dict['pct_properly_paired_reads'], arg_dict['read_qual_median'], arg_dict['read_qual_mean']]
-
+    processed_info = [item if item not in ["", None] else "N/A" for item in info]
+    
     qc_pass = arg_dict["qc_pass"]
     if (qc_pass == "true"):
         qc_pass = "PASS"
@@ -732,7 +733,7 @@ if __name__ == '__main__':
     print(fastqc_html[:200]) # debug
 
     # Create summary, analysis, and fastQC objects to be passed 
-    summary = Sample(sample_name, HRP2, HRP3, resistances, info, _map, location_info, qc_pass)
+    summary = Sample(sample_name, HRP2, HRP3, resistances, processed_info, _map, location_info, qc_pass)
 
     analysis = Analysis(sequencing_summary, qscorey, qscorex, barcode, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
 

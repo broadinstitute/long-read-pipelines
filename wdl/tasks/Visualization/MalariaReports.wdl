@@ -75,8 +75,8 @@ task RunReportScript {
         Float aligned_coverage
         Float aligned_read_length
         Float pct_properly_paired_reads
-        Float read_qual_median
-        Float read_qual_mean
+        Float? read_qual_median
+        Float? read_qual_mean
 
         # Drug Resistance
         File? drug_resistance_text
