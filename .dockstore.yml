@@ -171,3 +171,6 @@ workflows:
 - name: ExtractCoverageStats
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ExtractCoverageStats.wdl
+- name: DownloadFromFTP
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromFTP.wdl
