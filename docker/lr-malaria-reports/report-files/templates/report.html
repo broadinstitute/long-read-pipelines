@@ -1005,7 +1005,15 @@
       position: relative;
       top: 20px;
       height: 2px;
+      padding-bottom: 15px;
       overflow: visible;
+  }
+
+  #snapshot_title {
+    position: relative;
+    width: 1070px;
+    height: 30px;
+    display: block;
   }
 
   /* coverage gallery title */
@@ -1018,11 +1026,70 @@
       'Liberation Sans', sans-serif;
       position: relative;
       top: 15px;
-      width: 519px;
+      width: auto;
       height: 26.9455px;
   }
   
-  #img_title {
+  .tooltip {
+    cursor: default;
+    font-family: Rubik;
+    color: #fff;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: rgb(95, 193, 242); 
+    -moz-border-radius: 70px; 
+    -webkit-border-radius: 70px; 
+    border-radius: 70px;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 8px 8px;
+    border-radius: 6px;
+   
+    position: absolute;
+    z-index: 1;
+
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  #snapshot_tooltip_text {
+    top: -65px;
+  }
+  
+  /* Show the tooltip text when you mouse over the tooltip container */
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .tooltip .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    top: 100%; /* At the bottom of the tooltip */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+  }
+
+  #snapshot_tooltip {
+    position: relative;
+    float: right;
+    right: 10px;
+    top: -24px;
+  }
+
+  .loci_title, #img_title {
       color: #000;
       font-size: 22px;
       font-weight: 500;
@@ -1030,7 +1097,6 @@
       'Liberation Sans', sans-serif;
       position: relative;
       height: 24px;
-      top: 10px;
   }
 
   #main_photo_div {
@@ -1313,7 +1379,7 @@
     </div>
     
     <!--- SUMMARY PAGE -->
-    <div id="summary_page">
+    <div id="summary_page" style="display: none;">
         <div class="summary_root">
           <div class="module_display">
               <div class="main_frame" style="height:1200px;">
@@ -1497,7 +1563,7 @@
 
 
     <!-- ANALYSIS PAGE -->
-    <div id="analysis_page" style="display: none;">
+    <div id="analysis_page" >
         <div id="analysis_root">
             <div class="module_display">
               <div class="main_frame" style="height:1966px;">
@@ -1621,12 +1687,19 @@
                 </div>
 
                 <div id="cov_gallery">
+                  <div id="snapshot_title">
                     <div class="cov_title">IGV Snapshots</div>
+                    <div class="tooltip" id="snapshot_tooltip">
+                      <span style="font-weight: bold;">i</span>
+                      <span id="snapshot_tooltip_text" class="tooltiptext">Click on the main photo to enlarge it.</span>
+                    </div>
+                    
+                  </div>
                     <div class="cov_line">
                       <div class="divider_line" style="width:1070px"></div>
                   </div>
                   <div id="main_photo_div">
-                    <div id="img_title">{{ analysis.res_loci_names[0] }}</div>
+                    <div id="img_title"><b>Locus:</b>&nbsp;&nbsp;&nbsp;<div class="loci_title">{{ analysis.res_loci_names[0] }}</div></div>
                     <img id="main_photo" src="data:image/jpeg;base64,{{ (analysis.snapshots[0]).decode('utf-8') | safe }}">
                   </div>
                     <div class="cover">
@@ -1692,7 +1765,7 @@
             const rightButton = document.querySelector(".right");
             const mainPhoto = document.getElementById("main_photo");
             const thumbnails = document.querySelectorAll(".thumbnail img");
-            const imgTitle = document.getElementById("img_title");
+            const imgTitle = document.querySelector(".loci_title");
             let lociNames = document.querySelector("meta[name='loci_names']").content;
             lociNames = lociNames.slice(1, -1).split(",");
             lociNames = lociNames.map(str => str.replace(/'/g, ""));
