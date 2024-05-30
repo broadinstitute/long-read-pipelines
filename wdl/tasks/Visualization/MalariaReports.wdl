@@ -154,7 +154,7 @@ task RunReportScript {
             --upload_date ~{upload_date} \
             --collection_date ~{default="N/A" collection_date} \
             --sequencing_date ~{default="N/A" sequencing_date} \
-            --species ~{default="Unknown" species} \
+            --species ~{default="N/A" species} \
             --aligned_coverage ~{aligned_coverage} \
             --aligned_read_length ~{aligned_read_length} \
             --pct_properly_paired_reads ~{pct_properly_paired_reads} \
@@ -165,7 +165,7 @@ task RunReportScript {
             --HRP3 ~{default="N/A" HRP3} \
             --longitude ~{default=0 longitude} \
             --latitude ~{default=0 latitude} \
-            --location ~{default="Unknown" wrap_location} \
+            --location ~{default="N/A" wrap_location} \
             --barcode ~{barcode} \
             --num_reads_q5 ~{num_reads_q5} \
             --num_reads_q7 ~{num_reads_q7} \

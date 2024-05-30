@@ -613,7 +613,7 @@ if __name__ == '__main__':
     # Map
     parser.add_argument("--longitude", help="longitude value of where the sample was collected", type=float, default=0)
     parser.add_argument("--latitude", help="latitude value of where the sample collected", type=float, default=0)
-    parser.add_argument("--location", help="location where the sample was collected", default="Unknown")
+    parser.add_argument("--location", help="location where the sample was collected", default="N/A")
     
     # QC Status
     parser.add_argument("--qc_pass", help="status to determine whether or not the sequencing run passes quality control standards", required=True)
@@ -663,7 +663,7 @@ if __name__ == '__main__':
     species = ' '.join(arg_dict['species'])
     
     info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), arg_dict['aligned_read_length'], 
-            arg_dict['pct_properly_paired_reads'], arg_dict['read_qual_median'], arg_dict['read_qual_mean']]
+            arg_dict['pct_properly_paired_reads'], arg_dict['read_qual_median'], round(arg_dict['read_qual_mean'], 2)]
     processed_info = [item if item not in ["", None] else "N/A" for item in info]
     
     qc_pass = arg_dict["qc_pass"]
@@ -678,15 +678,8 @@ if __name__ == '__main__':
     else:
         resistances = create_drug_table(arg_dict['drug_resistance_text'])
 
-    # Check if location is given
-    if not arg_dict['location']:
-        location = "Unknown"
-    else:
-        location = arg_dict['location']
-
     # Set default values for map and location info
     make_default = True
-    location = "Unknown"
     latitude, longitude = 0, 0
 
     location_info = [round(arg_dict['latitude'], 2), round(arg_dict['longitude'], 2), arg_dict['location']]
