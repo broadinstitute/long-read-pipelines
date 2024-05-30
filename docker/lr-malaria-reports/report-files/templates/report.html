@@ -883,48 +883,39 @@
     }
 
     .barcode_box {
-        position: absolute;
-        left: 19px;
-        top: 0;
-        width: 553px;
-        height: 138px;
-        outline: solid 1px #dfe1e5;
-        outline-offset: -1px;
-        background-color: #fff;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      left: 19px;
+      top: 0;
+      width: 553px;
+      height: 138px;
+      outline: solid 1px #dfe1e5;
+      outline-offset: -1px;
+      background-color: #fff;
     }
+
     .barcode_value {
         color: #2494c7;
-        font-size: 30px;
-        line-height: 20px;
+        font-size: 26px;
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
             'Liberation Sans', sans-serif;
-        position: absolute;
-        left: 243px;
-        top: 44.3212px;
-        width: 75px;
-        height: 20.146px;
-        justify-content: center;
-        text-align: center;
-        align-items: center;
-        flex-direction: column;
+        position: relative;
+        top: -15px;
+        height: 10px;
     }
 
     .barcode_label {
         color: #000;
         font-size: 20px;
-        line-height: 20px;
         font-weight: 300;
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
             'Liberation Sans', sans-serif;
         position: relative;
-        left: 248px;
-        top: 74.5401px;
-        width: 40;
+        top: 10px;
         height: 19.1387px;
-        text-align: center;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
     }
 
     /* sequencing summary right side */
@@ -1317,7 +1308,7 @@
     </div>
     
     <!--- SUMMARY PAGE -->
-    <div id="summary_page">
+    <div id="summary_page" style="display: none;">
         <div class="summary_root">
           <div class="module_display">
               <div class="main_frame" style="height:1200px;">
@@ -1501,7 +1492,7 @@
 
 
     <!-- ANALYSIS PAGE -->
-    <div id="analysis_page" style="display: none;">
+    <div id="analysis_page" >
         <div id="analysis_root">
             <div class="module_display">
               <div class="main_frame" style="height:1966px;">
@@ -1647,9 +1638,10 @@
                         </button>
                     </div>
                 </div>               
-                <div class="barcode_box"></div>
-                <div class="barcode_value">{{ analysis.barcode }}</div>
-                <div class="barcode_label">Barcode</div>
+                <div class="barcode_box">
+                  <div class="barcode_value">{{ analysis.barcode }}</div>
+                  <div class="barcode_label">Barcode</div>
+                </div>
               </div>
             </div>
           </div> <!-- analysis_root -->
