@@ -448,7 +448,7 @@
     }
     
     /* sample info alignment */
-    .sample_info_lines {
+    .divider_lines {
         position: absolute;
         left: 17.0181px;
         top: 29px;
@@ -460,7 +460,7 @@
         overflow: hidden;
     }
     
-    .sample_info_line {
+    .divider_line {
       width: 1081px;
       max-width: 100%;
       height: 0;
@@ -987,66 +987,71 @@
 
     /* coverage gallery */
     #cov_gallery {
-        position: absolute;
-        align-items: center;
-        margin: 0 auto;
-        padding: 20px;
-        max-width: 1114px;
-        left: 18.0054px;
-        top: 1215px;
-        outline: solid 1px #dfe1e5;
-        outline-offset: -1px;
-        width: 1114px;
-        height: 660px;
-    }
+      position: absolute;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      max-width: 1114px;
+      left: 18.0054px;
+      top: 1215px;
+      outline: solid 1px #dfe1e5;
+      outline-offset: -1px;
+      width: 1114px;
+      height: 660px;
+  }
 
-    .cov_line {
-        position: relative;
-        top: -250px;
-        height: 2px;
-        max-height: 100%;
-        overflow: visible;
-    }
+  .cov_line {
+      position: relative;
+      top: 20px;
+      height: 2px;
+      overflow: visible;
+  }
 
-    /* coverage gallery title */
-    .cov_title {
-        color: #000;
-        font-size: 26px;
-        line-height: 20px;
-        font-weight: 500;
-        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-        'Liberation Sans', sans-serif;
-        position: absolute;
-        top: 32px;
-        width: 519px;
-        height: 26.9455px;
-    }
-    
-    #img_title {
-        color: #000;
-        font-size: 22px;
-        line-height: 20px;
-        font-weight: 500;
-        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-        'Liberation Sans', sans-serif;
-        position: absolute;
-        left: 485px;
-        top: 105px;
-        width: 519px;
-        height: 26.9455px;
-        justify-content: center;
-        flex-direction: column;   
-    }
+  /* coverage gallery title */
+  .cov_title {
+      color: #000;
+      font-size: 26px;
+      line-height: 20px;
+      font-weight: 500;
+      font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+      'Liberation Sans', sans-serif;
+      position: relative;
+      top: 15px;
+      width: 519px;
+      height: 26.9455px;
+  }
+  
+  #img_title {
+      color: #000;
+      font-size: 22px;
+      font-weight: 500;
+      font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+      'Liberation Sans', sans-serif;
+      position: relative;
+      height: 24px;
+      top: 10px;
+  }
 
-    #main_photo {
-        cursor: pointer;
-        position: absolute;
-        display: block;
-        top: 135px;
-        left: 300px; /* change this with real photos (fixed size) */
-        height: 325px;
-        z-index: 100;
-    }
+  #main_photo_div {
+      position: relative;
+      top: 25px;
+      flex-direction: column;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  }
+
+  #main_photo {
+      cursor: pointer;
+      position: relative;
+      top: 25px;
+      object-fit: scale-down;
+      min-height: 325px;
+      max-height: 325px;
+      max-width: 500px;
+      z-index: 100;
+  }
 
     .cover {
         position: absolute;
@@ -1415,26 +1420,26 @@
             
             <div class="sample_info_module">
               <div class="sample_info_outline"></div>
-              <div class="sample_info_lines">
-                <div class="sample_info_line"></div>
+              <div class="divider_lines">
+                <div class="divider_line"></div>
                 
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
     
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
                 
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
                 
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
                 
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
                 
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
 
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
 
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
 
-                <div class="sample_info_line"></div>
+                <div class="divider_line"></div>
 
               </div>
               
@@ -1618,10 +1623,12 @@
                 <div id="cov_gallery">
                     <div class="cov_title">IGV Snapshots</div>
                     <div class="cov_line">
-                        <svg preserveAspectRatio="none" viewBox="0 0 1250 1" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0L510.372 0" stroke="#DFE1E5"></path></svg>
-                    </div>
-                    <div id="img_title">pfcarl</div>
+                      <div class="divider_line" style="width:1070px"></div>
+                  </div>
+                  <div id="main_photo_div">
+                    <div id="img_title">{{ analysis.res_loci_names[0] }}</div>
                     <img id="main_photo" src="data:image/jpeg;base64,{{ (analysis.snapshots[0]).decode('utf-8') | safe }}">
+                  </div>
                     <div class="cover">
                         <button class="left" style="color:rgb(53, 53, 53);" onclick="leftScroll()">
                             &#9668;
