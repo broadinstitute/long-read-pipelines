@@ -51,6 +51,7 @@ task DrugResIGV {
 
     output {
         Array[File] snapshots = glob("out/*.png")
+        File batch_script = "out/IGV_snapshots.bat"
     }
     
 
