@@ -695,7 +695,7 @@ if __name__ == '__main__':
         frac_bases = "N/A"
         
     sequencing_summary = [arg_dict['sample_type'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
-                          frac_bases, round(arg_dict['average_identity'], 2)]
+                          round(frac_bases, 2), round(arg_dict['average_identity'], 2)]
 
     barcode = arg_dict['barcode']
         
