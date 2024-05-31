@@ -30,9 +30,9 @@ workflow AlignedMetrics {
     }
 
     call ReadMetrics as AlignedReadMetrics { input: bam = aligned_bam, runtime_attr_override = runtime_attr_override}
+    call MakeChrIntervalList { input: ref_dict = ref_dict }
 
     if (scatter_by_chr) {
-        call MakeChrIntervalList { input: ref_dict = ref_dict }
         
         scatter (chr_info in MakeChrIntervalList.chrs) {
             call MosDepth as MosDepthScatter {
@@ -140,7 +140,7 @@ workflow AlignedMetrics {
         File aligned_rl_nx = AlignedReadMetrics.rl_nx
         File aligned_rl_yield_hist = AlignedReadMetrics.rl_yield_hist
 
-        File? raw_chr_intervals = MakeChrIntervalList.raw_chrs
+        File raw_chr_intervals = MakeChrIntervalList.raw_chrs
     }
 }
 
