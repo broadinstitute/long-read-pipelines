@@ -36,6 +36,8 @@ workflow SRFlowcell {
         DEBUG_MODE: "If true, will add extra logging and extra debugging outputs."
 
         platform: "Platform on which the sample for the given bam file was sequenced."
+
+        per_chr_metrics: "Flag to scatter metrics by chromosome or to calculate them for the whole genome."
     }
 
     input {
@@ -61,6 +63,8 @@ workflow SRFlowcell {
         Boolean DEBUG_MODE = false
 
         String platform = "illumina"
+
+        Boolean per_chr_metrics = true
     }
 
     ####################################
@@ -241,7 +245,7 @@ workflow SRFlowcell {
             aligned_bai    = final_bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
-            scatter_by_chr = true,
+            scatter_by_chr = per_chr_metrics,
             gcs_output_dir = metrics_dir
     }
 
