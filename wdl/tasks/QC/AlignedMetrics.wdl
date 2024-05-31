@@ -23,23 +23,37 @@ workflow AlignedMetrics {
         File ref_fasta
         File ref_dict
 
+        Boolean scatter_by_chr = true
+
         String? gcs_output_dir
         RuntimeAttr? runtime_attr_override
     }
 
     call ReadMetrics as AlignedReadMetrics { input: bam = aligned_bam, runtime_attr_override = runtime_attr_override}
 
-    call MakeChrIntervalList { input: ref_dict = ref_dict }
+    if (scatter_by_chr) {
+        call MakeChrIntervalList { input: ref_dict = ref_dict }
+        
+        scatter (chr_info in MakeChrIntervalList.chrs) {
+            call MosDepth as MosDepthScatter {
+                input:
+                    bam = aligned_bam,
+                    bai = aligned_bai,
+                    chr = chr_info[0]
+            }
 
-    scatter (chr_info in MakeChrIntervalList.chrs) {
-        call MosDepth {
-            input:
-                bam = aligned_bam,
-                bai = aligned_bai,
-                chr = chr_info[0]
+            call SummarizeDepth as SummarizeDepthScatter { input: regions = MosDepthScatter.regions }
         }
 
-        call SummarizeDepth { input: regions = MosDepth.regions }
+    }
+    if (!scatter_by_chr) {
+        call MosDepth as MosDepthNoScatter {
+            input:
+                bam = aligned_bam,
+                bai = aligned_bai
+        }
+
+        call SummarizeDepth as SummarizeDepthNoScatter { input: regions = MosDepthNoScatter.regions}
     }
 
     call FlagStats as AlignedFlagStats { input: bam = aligned_bam }
@@ -66,29 +80,53 @@ workflow AlignedMetrics {
                 ]
         }
 
-        call FF.FinalizeToDir as FFCoverageFullDist { input: outdir = outdir + "/coverage/", files = MosDepth.full_dist }
-        call FF.FinalizeToDir as FFCoverageGlobalDist { input: outdir = outdir + "/coverage/", files = MosDepth.global_dist }
-        call FF.FinalizeToDir as FFCoverageRegionDist { input: outdir = outdir + "/coverage/", files = MosDepth.region_dist }
-        call FF.FinalizeToDir as FFCoverageRegions { input: outdir = outdir + "/coverage/", files = MosDepth.regions }
-        call FF.FinalizeToDir as FFCoverageRegionsCsi { input: outdir = outdir + "/coverage/", files = MosDepth.regions_csi }
-        call FF.FinalizeToDir as FFCoverageQuantizedDist { input: outdir = outdir + "/coverage/", files = MosDepth.quantized_dist }
-        call FF.FinalizeToDir as FFCoverageQuantized { input: outdir = outdir + "/coverage/", files = MosDepth.quantized }
-        call FF.FinalizeToDir as FFCoverageQuantizedCsi { input: outdir = outdir + "/coverage/", files = MosDepth.quantized_csi }
+        if (scatter_by_chr) {
+            call FF.FinalizeToDir as FFCoverageFullDistDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.full_dist]) }
+            call FF.FinalizeToDir as FFCoverageGlobalDistDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.global_dist]) }
+            call FF.FinalizeToDir as FFCoverageRegionDistDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.region_dist]) }
+            call FF.FinalizeToDir as FFCoverageRegionsDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.regions]) }
+            call FF.FinalizeToDir as FFCoverageRegionsCsiDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.regions_csi]) }
+            call FF.FinalizeToDir as FFCoverageQuantizedDistDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.quantized_dist]) }
+            call FF.FinalizeToDir as FFCoverageQuantizedDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.quantized]) }
+            call FF.FinalizeToDir as FFCoverageQuantizedCsiDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.quantized_csi]) }
 
-        call FF.FinalizeToDir as FFDepthSummaries { input: outdir = outdir + "/coverage_summaries/", files = SummarizeDepth.cov_summary }
+            call FF.FinalizeToDir as FFDepthSummariesDir { input: outdir = outdir + "/coverage_summaries/", files = select_first([SummarizeDepthScatter.cov_summary]) }
+        }
+        if (!scatter_by_chr) {
+            call FF.FinalizeToFile as FFCoverageFullDist { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.full_dist]) }
+            call FF.FinalizeToFile as FFCoverageGlobalDist { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.global_dist]) }
+            call FF.FinalizeToFile as FFCoverageRegionDist { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.region_dist]) }
+            call FF.FinalizeToFile as FFCoverageRegions { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.regions]) }
+            call FF.FinalizeToFile as FFCoverageRegionsCsi { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.regions_csi]) }
+            call FF.FinalizeToFile as FFCoverageQuantizedDist { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.quantized_dist]) }
+            call FF.FinalizeToFile as FFCoverageQuantized { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.quantized]) }
+            call FF.FinalizeToFile as FFCoverageQuantizedCsi { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.quantized_csi]) }
+
+            call FF.FinalizeToFile as FFDepthSummaries { input: outdir = outdir + "/coverage_summaries/", file = select_first([SummarizeDepthNoScatter.cov_summary]) }
+        }
     }
+    
+    # Prep files for output
+    Array[File] coverage_full_dist_o      = if scatter_by_chr then select_first([MosDepthScatter.full_dist]) else [select_first([MosDepthNoScatter.full_dist])]
+    Array[File] coverage_global_dist_o    = if scatter_by_chr then select_first([MosDepthScatter.global_dist]) else [select_first([MosDepthNoScatter.global_dist])]
+    Array[File] coverage_region_dist_o    = if scatter_by_chr then select_first([MosDepthScatter.region_dist]) else [select_first([MosDepthNoScatter.region_dist])]
+    Array[File] coverage_regions_o        = if scatter_by_chr then select_first([MosDepthScatter.regions]) else [select_first([MosDepthNoScatter.regions])]
+    Array[File] coverage_regions_csi_o    = if scatter_by_chr then select_first([MosDepthScatter.regions_csi]) else [select_first([MosDepthNoScatter.regions_csi])]
+    Array[File] coverage_quantized_dist_o = if scatter_by_chr then select_first([MosDepthScatter.quantized_dist]) else [select_first([MosDepthNoScatter.quantized_dist])]
+    Array[File] coverage_quantized_o      = if scatter_by_chr then select_first([MosDepthScatter.quantized]) else [select_first([MosDepthNoScatter.quantized])]
+    Array[File] coverage_quantized_csi_o  = if scatter_by_chr then select_first([MosDepthScatter.quantized_csi]) else [select_first([MosDepthNoScatter.quantized_csi])]
 
     output {
         File aligned_flag_stats = AlignedFlagStats.flag_stats
 
-        Array[File] coverage_full_dist      = MosDepth.full_dist
-        Array[File] coverage_global_dist    = MosDepth.global_dist
-        Array[File] coverage_region_dist    = MosDepth.region_dist
-        Array[File] coverage_regions        = MosDepth.regions
-        Array[File] coverage_regions_csi    = MosDepth.regions_csi
-        Array[File] coverage_quantized_dist = MosDepth.quantized_dist
-        Array[File] coverage_quantized      = MosDepth.quantized
-        Array[File] coverage_quantized_csi  = MosDepth.quantized_csi
+        Array[File] coverage_full_dist      = coverage_full_dist_o
+        Array[File] coverage_global_dist    = coverage_global_dist_o
+        Array[File] coverage_region_dist    = coverage_region_dist_o
+        Array[File] coverage_regions        = coverage_regions_o
+        Array[File] coverage_regions_csi    = coverage_regions_csi_o
+        Array[File] coverage_quantized_dist = coverage_quantized_dist_o
+        Array[File] coverage_quantized      = coverage_quantized_o
+        Array[File] coverage_quantized_csi  = coverage_quantized_csi_o
 
         File aligned_np_hist = AlignedReadMetrics.np_hist
         File aligned_range_gap_hist = AlignedReadMetrics.range_gap_hist
@@ -102,7 +140,7 @@ workflow AlignedMetrics {
         File aligned_rl_nx = AlignedReadMetrics.rl_nx
         File aligned_rl_yield_hist = AlignedReadMetrics.rl_yield_hist
 
-        File raw_chr_intervals = MakeChrIntervalList.raw_chrs
+        File? raw_chr_intervals = MakeChrIntervalList.raw_chrs
     }
 }
 
@@ -152,7 +190,7 @@ task MosDepth {
     input {
         File bam
         File bai
-        String chr
+        String? chr
         Int? window_size
 
         RuntimeAttr? runtime_attr_override
@@ -161,20 +199,20 @@ task MosDepth {
     Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
     Int ws = select_first([window_size, 500])
     String basename = basename(bam, ".bam")
-    String prefix = "~{basename}.coverage.~{chr}"
+    String prefix = if defined(chr) then "~{basename}.coverage.~{chr}" else "~{basename}.coverage.all"
 
     command <<<
         set -euxo pipefail
 
-        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 ~{prefix}.full ~{bam}
-        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 -b ~{ws} ~{prefix} ~{bam}
+        mosdepth -t 4 ~{"-c " + chr} -n -x -Q 1 ~{prefix}.full ~{bam}
+        mosdepth -t 4 ~{"-c " + chr} -n -x -Q 1 -b ~{ws} ~{prefix} ~{bam}
 
         export MOSDEPTH_Q0=NO_COVERAGE   # 0 -- defined by the arguments to --quantize
         export MOSDEPTH_Q1=LOW_COVERAGE  # 1..4
         export MOSDEPTH_Q2=CALLABLE      # 5..149
         export MOSDEPTH_Q3=HIGH_COVERAGE # 150 ...
 
-        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 --quantize 0:1:5:150: ~{prefix}.quantized ~{bam}
+        mosdepth -t 4 ~{"-c " + chr} -n -x -Q 1 --quantize 0:1:5:150: ~{prefix}.quantized ~{bam}
     >>>
 
     output {

@@ -241,6 +241,7 @@ workflow SRFlowcell {
             aligned_bai    = final_bai,
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
+            scatter_by_chr = true,
             gcs_output_dir = metrics_dir
     }
 
