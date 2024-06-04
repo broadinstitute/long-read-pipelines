@@ -1,5 +1,7 @@
 version 1.0
 
+
+
 workflow ConsensusAsm{
     meta{
         description: "a workflow that construct consensus assemblies from shapeit4 scaffold"
@@ -9,6 +11,7 @@ workflow ConsensusAsm{
         File final_sv_scaffold
         File final_snp_scaffold
         File reference_fasta
+        String output_directory
     }
 
     call merge_scaffold{ input:
@@ -29,8 +32,14 @@ workflow ConsensusAsm{
             samplename = sampleid
         }
     }
-
-
+    call FinalizeToDir as F1 { input:
+        files = ConstructConsensus.consensus_hap1,
+        outdir = output_directory
+    }
+    call FinalizeToDir as F2 { input:
+        files = ConstructConsensus.consensus_hap2,
+        outdir = output_directory
+    }
     output{
         Array[File] Haplotype1 = ConstructConsensus.consensus_hap1
         Array[File] Haplotype2 = ConstructConsensus.consensus_hap2
@@ -140,5 +149,51 @@ task ConstructConsensus {
         preemptible: 0
         maxRetries: 1
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+task FinalizeToDir {
+
+    meta {
+        description: "Copies the given file to the specified bucket."
+    }
+
+    parameter_meta {
+        files: {
+            description: "files to finalize",
+            localization_optional: true
+        }
+        keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
+        outdir: "directory to which files should be uploaded"
+    }
+
+    input {
+        Array[File] files
+        String outdir
+
+        File? keyfile
+    }
+
+    String gcs_output_dir = sub(outdir, "/+$", "")
+
+    command <<<
+        set -euxo pipefail
+
+        cat ~{write_lines(files)} | gsutil -m cp -I "~{gcs_output_dir}"
+    >>>
+
+    output {
+        String gcs_dir = gcs_output_dir
+    }
+
+    #########################
+    runtime {
+        cpu: 1
+        memory: "1 GiB"
+        disks: "local-disk " + 10 + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 0
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
     }
 }
