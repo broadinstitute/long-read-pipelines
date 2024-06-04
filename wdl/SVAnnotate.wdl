@@ -5,7 +5,8 @@ import "tasks/Structs.wdl"
 workflow SVAnnotate {
     input {
         File vcf
-        File gtf
+        File coding_gtf
+        File noncoding_bed
         File ploidy
         File ref_fai
         String caller
@@ -14,14 +15,14 @@ workflow SVAnnotate {
 
     parameter_meta {
         vcf: "VCF file to standardize"
-        gtf: "Protein-coding gtf"
+        coding_gtf: "Protein-coding coding_gtf"
         ploidy: "ploidy table for sample, where rows are sample, chrs... and each line has ploidy number for each chr"
         ref_fai: "fai file for reference"
         caller: "caller used to generate VCF, for long-reads must be one of: pbsv, sniffles, pav, hapdiff"
         prefix: "Output file prefix"
     }
 
-    call Standardize { input: vcf=vcf, ploidy=ploidy, prefix=prefix, ref_fai=ref_fai, caller=caller, gtf=gtf }
+    call Standardize { input: vcf=vcf, ploidy=ploidy, prefix=prefix, ref_fai=ref_fai, caller=caller, coding_gtf=coding_gtf, noncoding_bed=noncoding_bed }
 
     output {
         File vcf_std = Standardize.vcf_std
@@ -37,7 +38,8 @@ task Standardize {
         File ploidy
         String prefix
         File ref_fai
-        File gtf
+        File coding_gtf
+        File noncoding_bed
         String caller
 
         RuntimeAttr? runtime_attr_override
@@ -56,7 +58,7 @@ task Standardize {
         python /gatk/format_svtk_vcf_for_gatk.py --vcf ~{prefix}.std.vcf.gz --fix-end --out ~{prefix}.std.final.vcf.gz --ploidy-table ~{ploidy}
         tabix ~{prefix}.std.final.vcf.gz
 
-        gatk SVAnnotate -V ~{prefix}.std.final.vcf.gz --protein-coding-gtf ~{gtf} -O ~{prefix}.anno.vcf
+        gatk SVAnnotate -V ~{prefix}.std.final.vcf.gz --non-coding-bed ~{noncoding_bed} --protein-coding-gtf ~{coding_gtf} -O ~{prefix}.anno.vcf
         bcftools view -Oz ~{prefix}.anno.vcf > ~{prefix}.anno.vcf.gz
         tabix ~{prefix}.anno.vcf.gz
     >>>
