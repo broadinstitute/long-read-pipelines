@@ -139,7 +139,8 @@ workflow HybridPhase {
     }
     call SplitMultiallelicCalls as Norm_SNPs { input:
         bcftools_merged_vcf = MergeAcrossSamples.merged_vcf,
-        bcftools_merged_vcf_tbi = MergeAcrossSamples.merged_tbi
+        bcftools_merged_vcf_tbi = MergeAcrossSamples.merged_tbi,
+        prefix = prefix
     }
     call StatPhase.Shapeit4 as Shapeit4scaffold { input:
         vcf_input = Norm_SNPs.normed_vcf,
@@ -234,18 +235,19 @@ task SplitMultiallelicCalls {
     input {
         File bcftools_merged_vcf
         File bcftools_merged_vcf_tbi
+        String prefix
     }
 
     command <<<
         set -euxo pipefail
-        bcftools norm -m -any ~{bcftools_merged_vcf} | bgzip > ~{bcftools_merged_vcf}.normed.vcf.gz
-        tabix -p vcf ~{bcftools_merged_vcf}.normed.vcf.gz
+        bcftools norm -m -any ~{bcftools_merged_vcf} | bgzip > ~{prefix}.normed.vcf.gz
+        tabix -p vcf ~{prefix}.normed.vcf.gz
         
     >>>
 
     output {
-        File normed_vcf = "~{bcftools_merged_vcf}.normed.vcf.gz"
-        File normed_vcf_tbi = "~{bcftools_merged_vcf}.normed.vcf.gz.tbi"
+        File normed_vcf = " ~{prefix}.normed.vcf.gz"
+        File normed_vcf_tbi = "~{prefix}.normed.vcf.gz.tbi"
     }
     ###################
     runtime {
