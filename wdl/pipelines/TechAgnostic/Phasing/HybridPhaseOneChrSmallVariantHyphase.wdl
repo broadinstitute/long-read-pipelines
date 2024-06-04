@@ -171,9 +171,7 @@ workflow HybridPhase {
     output{
         File snp_shapeit4scaffold = Shapeit4scaffold.scaffold_vcf
         File sv_shapeit4scaffold = Shapeit4SVphase.final_phased_vcf
-        File resource = Shapeit4scaffold.resouce_monitor_log
         
-
     }
 }
 
