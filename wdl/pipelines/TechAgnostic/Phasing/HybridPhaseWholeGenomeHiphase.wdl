@@ -18,6 +18,7 @@ workflow HybridPhaseWholeGenome {
         File genetic_mapping_tsv
         Int num_t
     }
+
     # Map[String, String] genetic_mapping_dict = read_map(genetic_mapping_tsv)
 
     # double scatter: first by chr, then by sample
@@ -34,13 +35,14 @@ workflow HybridPhaseWholeGenome {
             chromosome = genome_region,
             prefix = genome_region,
             num_t = num_t
+
         }
 
     }   
 
     output{
-        Array[File] phased_scaffold = HybridPhase.shapeit4scaffold
-        Array[File] resource_log = HybridPhase.resource
+        Array[File] phased_snp_scaffold = HybridPhase.snp_shapeit4scaffold
+        Array[File] phased_sv_svaffold = HybridPhase.sv_shapeit4scaffold
     }
 
 

@@ -39,6 +39,7 @@ workflow HybridPhase {
         File reference_index
         File genetic_mapping_tsv_for_shapeit4
         String chromosome
+        String region
         String prefix
         String gcs_out_root_dir
         Int num_t
@@ -53,13 +54,13 @@ workflow HybridPhase {
     call VU.SubsetVCF as SubsetSNPsJoint { input:
             vcf_gz = wholegenome_joint_vcf,
             vcf_tbi = wholegenome_joint_vcf_tbi,
-            locus = chromosome
+            locus = region
         }
 
     call VU.SubsetVCF as SubsetSVsJoint { input:
         vcf_gz = wholegenome_joint_sv,
         vcf_tbi = wholegenome_joint_sv_tbi,
-        locus = chromosome
+        locus = region
     }
 
     scatter (idx in indexes)  {
@@ -72,7 +73,7 @@ workflow HybridPhase {
         call U.SubsetBam as SubsetBam { input:
             bam = all_chr_bam,
             bai = all_chr_bai,
-            locus = chromosome
+            locus = region
         }
         # call VU.SubsetVCF as SubsetSVs { input:
         #     vcf_gz = pbsv_vcf,
@@ -90,13 +91,13 @@ workflow HybridPhase {
 
         call SplitJointCallbySample.SplitVCFbySample as SP { input:
             joint_vcf = SubsetSNPsJoint.subset_vcf,
-            region = chromosome,
+            region = region,
             samplename = sample_id
         }
 
         call SplitJointCallbySample.SplitVCFbySample as SV_split { input:
             joint_vcf = SubsetSVsJoint.subset_vcf,
-            region = chromosome,
+            region = region,
             samplename = sample_id
         }
 
@@ -144,7 +145,7 @@ workflow HybridPhase {
         vcf_input = Norm_SNPs.normed_vcf,
         vcf_index = Norm_SNPs.normed_vcf_tbi,
         mappingfile = genetic_mapping_dict[chromosome],
-        region = chromosome,
+        region = region,
         num_threads = num_t
     }
     call FF.FinalizeToFile as Finalizescaffold {
@@ -161,7 +162,7 @@ workflow HybridPhase {
         vcf_index = MergeAcrossSamplesSVs.merged_tbi,
         scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
         mappingfile = genetic_mapping_dict[chromosome],
-        region = chromosome,
+        region = region,
         num_threads = num_t
     }
     call FF.FinalizeToFile as FinalizeSVs {
