@@ -26,11 +26,15 @@ task processWithTRGT {
     karyotype="XY"
     if [[ ~{is_female} -eq 1 ]]; then karyotype="XX"; fi 
     trgt genotype --genome ~{ref_fasta} --repeats ~{repeatCatalog} --reads ~{input_bam} --threads ~{cpuCores} --output-prefix ~{basename}_trgt --karyotype ${karyotype}
+    bcftools sort -Ob -o ~{basename}_trgt_sorted.vcf.gz ~{basename}_trgt.vcf.gz
+    mv ~{basename}_trgt_sorted.vcf.gz ~{basename}_trgt.vcf.gz
+    bcftools index -t ~{basename}_trgt.vcf.gz
 
   >>>
 
   output {
     File trgt_output_vcf = "~{basename}_trgt.vcf.gz"
+    File trgt_output_vcf_idx = "~{basename}_trgt.vcf.gz.tbi"
     File trgt_output_bam = "~{basename}_trgt.spanning.bam"
   }
   

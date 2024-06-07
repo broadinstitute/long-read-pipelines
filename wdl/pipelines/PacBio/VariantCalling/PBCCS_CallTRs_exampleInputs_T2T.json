@@ -4,6 +4,6 @@
   "runTRGT.output_gs_path": "gs://fc-c1de2dd5-0f83-49c8-84ee-0f153c4d0a59/TRGT/T2T/",
   "runTRGT.ref_fasta": "gs://fc-c1de2dd5-0f83-49c8-84ee-0f153c4d0a59/resources/chm13v2.0.ebv.fa",
   "runTRGT.ref_fasta_index": "gs://fc-c1de2dd5-0f83-49c8-84ee-0f153c4d0a59/resources/chm13v2.0.ebv.fa.fai",
-  "runTRGT.repeatCatalog": "CHM13.adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed",
+  "runTRGT.repeatCatalog": "/CHM13.adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed",
   "runTRGT.is_female": 1
 }

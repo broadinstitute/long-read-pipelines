@@ -16,7 +16,7 @@ workflow runTRGT {
     String output_gs_path
     File ref_fasta
     File ref_fasta_index
-    String repeatCatalog = "GRCh38.adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed"
+    String repeatCatalog
     Int is_female # 1=female; 0=male
     Int cpuCores = 16
 
@@ -39,6 +39,7 @@ workflow runTRGT {
 
   output {
     File trgt_output_vcf = processWithTRGT.trgt_output_vcf
+    File trgt_output_vcf_idx = processWithTRGT.trgt_output_vcf_idx
     File trgt_output_bam = processWithTRGT.trgt_output_bam
   }
 }
