@@ -154,7 +154,7 @@ task RunReportScript {
             --upload_date ~{upload_date} \
             --collection_date ~{default="N/A" collection_date} \
             --sequencing_date ~{default="N/A" sequencing_date} \
-            --species ~{default="N/A" species} \
+            --species ~{default="P. falciparum" species} \
             --aligned_coverage ~{aligned_coverage} \
             --aligned_read_length ~{aligned_read_length} \
             --pct_properly_paired_reads ~{pct_properly_paired_reads} \
