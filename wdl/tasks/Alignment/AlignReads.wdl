@@ -6,6 +6,7 @@ task Minimap2 {
     input {
         Array[File] reads
         Array[String] reads_file_basenames
+        Boolean longer_ont_read_hint = false
         File ref_fasta
 
         String map_preset
@@ -28,6 +29,7 @@ task Minimap2 {
             localization_optional: true
         }
         reads_file_basenames: "basenames of the BAM files, note this includes the extention (e.g. .bam, .fasta.gz, etc) of files"
+        longer_ont_read_hint: "hint that the input reads are longer (~>20kb N50) ONT reads; this is used to bump the memory to the task"
         ref_fasta:        "reference fasta"
         RG:               "read group information to be supplied to parameter '-R' (note that tabs should be input as '\t'); if the input uBAM files contain the RG information, this overrides that; we recommend providing this when input isn't a uBAM with RG information."
         map_preset:       "preset to be used for minimap2 parameter '-x'"
@@ -50,7 +52,7 @@ task Minimap2 {
     Int max_cpus = 96
     Int desired_cpus = (if('LOCAL'==disk_type) then 32 else 24) * length(reads)
     Int cpus = if max_cpus < desired_cpus then max_cpus else desired_cpus  # WDL 1.0 doesn't have a max(,)....
-    Int mem = cpus * (if('LOCAL'==disk_type) then 6 else 5)
+    Int mem = cpus * (if('LOCAL'==disk_type || longer_ont_read_hint) then 6 else 5)
 
     Int mm2_threads = cpus - 2
 

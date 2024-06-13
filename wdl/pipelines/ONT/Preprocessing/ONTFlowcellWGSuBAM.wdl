@@ -24,6 +24,9 @@ workflow ONTFlowcellWGSuBAM {
         bam_SM_ID: "sample name to use in the aligned BAM output."
         uBAM_tags_to_preserve: "SAM tags to transfer to the alignment bam, from the input BAM. Please be careful with this: methylation tags MM, ML are usually what you want to keep at minimum."
 
+        longer_ont_read_hint:
+        "hint that the input reads are longer (~>20kb N50) ONT reads; this is used to bump the memory to the alignment task"
+
         run_seqkit_stats:
         "if true, collect more metrics using seqkit; if alignning to multiple references, you just need to collect this once"
 
@@ -76,6 +79,7 @@ workflow ONTFlowcellWGSuBAM {
         File uBAM
         String flowcell
         String bam_SM_ID
+        Boolean longer_read_hint = false
         Array[String] uBAM_tags_to_preserve = ['MM', 'ML']
 
         # args for optional QC subworkflows
@@ -135,6 +139,7 @@ workflow ONTFlowcellWGSuBAM {
     call Alignment.AlignONTWGSuBAM as ALN {
         input:
             uBAM = uBAM,
+            longer_read_hint = longer_read_hint,
             uBAM_tags_to_preserve = uBAM_tags_to_preserve,
             bam_sample_name = bam_SM_ID,
             flowcell = flowcell,

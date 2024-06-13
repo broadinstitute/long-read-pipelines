@@ -16,11 +16,16 @@ workflow AlignONTWGSuBAM {
         uBAM_tags_to_preserve: "Please be careful with this: methylation tags MM, ML are usually what you want to keep at minimum"
         flowcell:              "Name of the flowcell."
 
+        longer_read_hint:
+        "hint that the input reads are longer (~>20kb N50) ONT reads; this is used to bump the memory to the alignment task"
+
         aln_disk_type: "An optimization specifying which type of disk to use for the minimap2 alignment step."
     }
 
     input {
         File uBAM
+        Boolean longer_read_hint = false
+
         Array[String] uBAM_tags_to_preserve # please be careful with this: methylation tags MM, ML are usually what you want to keep
         String bam_sample_name
         String flowcell
@@ -90,6 +95,7 @@ workflow AlignONTWGSuBAM {
                 input:
                     reads = [shard_ubam],
                     reads_file_basenames = [basename(shard_ubam)],
+                    longer_ont_read_hint = longer_read_hint,
                     ref_fasta = ref_map['fasta'],
                     map_preset = 'map-ont',
 
