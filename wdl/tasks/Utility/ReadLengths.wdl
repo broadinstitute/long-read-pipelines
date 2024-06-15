@@ -57,7 +57,7 @@ task GetLengthsFromFastq {
         File fastq
     }
 
-    Int disk_size = 10 + ceil(size(fastq, "GiB"))
+    Int disk_size = 20 + ceil(size(fastq, "GiB"))
 
     String base = basename(fastq)
     String local_fq = "/cromwell_root/~{base}"
@@ -80,10 +80,10 @@ task GetLengthsFromFastq {
 
     runtime {
         cpu: 2
-        memory: "4 GiB"
+        memory: "8 GiB"
         disks: "local-disk ~{disk_size} HDD"
         preemptible_tries:  3
-        max_retries:        2
+        max_retries:        0
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
