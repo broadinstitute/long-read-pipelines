@@ -14,7 +14,7 @@ task GetLengthsFromBam {
         File bam
     }
 
-    Int disk_sz = 10 + ceil(size(bam, "GiB"))
+    Int disk_sz = 20 + ceil(size(bam, "GiB"))
 
     String base = basename(bam)
     String local_bam = "/cromwell_root/~{base}"
@@ -40,8 +40,8 @@ task GetLengthsFromBam {
         memory: "8 GiB"
         disks: "local-disk ~{disk_sz} HDD"
         preemptible_tries:  3
-        max_retries:        2
-        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.1"
+        max_retries:        0
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
 
