@@ -228,7 +228,7 @@ task ExtractRelevantGenotypingReads {
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
 
-        samtools view -h -@ 1 \
+        samtools view -h -@ 2 \
             -X \
             --write-index \
             -o "relevant_reads.bam##idx##relevant_reads.bam.bai" \
@@ -243,10 +243,11 @@ task ExtractRelevantGenotypingReads {
     }
 
     ###################
+    Int m = ceil(10.0 * ceil(size(aligned_bam, "GiB") / 10.0))  # round up to the nearest 10
     RuntimeAttr default_attr = object {
         cpu_cores:             4,
         mem_gb:                8,
-        disk_gb:               50,
+        disk_gb:               m,
         preemptible_tries:     1,
         max_retries:           1,
         docker:                "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
