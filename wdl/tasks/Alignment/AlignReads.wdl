@@ -52,7 +52,7 @@ task Minimap2 {
     Int max_cpus = 96
     Int desired_cpus = (if('LOCAL'==disk_type) then 32 else 24) * length(reads)
     Int cpus = if max_cpus < desired_cpus then max_cpus else desired_cpus  # WDL 1.0 doesn't have a max(,)....
-    Int mem = cpus * (if('LOCAL'==disk_type || longer_ont_read_hint) then 6 else 5)
+    Int mem = 144 # cpus * (if('LOCAL'==disk_type || longer_ont_read_hint) then 6 else 5)
 
     Int mm2_threads = cpus - 2
 
