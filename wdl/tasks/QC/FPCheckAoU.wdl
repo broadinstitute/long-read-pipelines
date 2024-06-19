@@ -77,18 +77,30 @@ workflow FPCheckAoU {
             input:
                 fingerprint_vcf = FilterGenotypesVCF.ready_to_use_vcf
         }
-        call FPUtils.ExtractRelevantGenotypingReads {
-            input:
-                aligned_bam     = aligned_bam,
-                aligned_bai     = aligned_bai,
-                genotyping_sites_bed = ExtractGenotypingSites.sites,
+        if (ceil(size(aligned_bam, "GiB"))<=80) {
+            call FPUtils.ExtractRelevantGenotypingReads {
+                input:
+                    aligned_bam     = aligned_bam,
+                    aligned_bai     = aligned_bai,
+                    genotyping_sites_bed = ExtractGenotypingSites.sites,
+            }
         }
+        if (ceil(size(aligned_bam, "GiB"))>80) {
+            call FPUtils.ExtractRelevantGenotypingReadsLocal {
+                input:
+                    aligned_bam     = aligned_bam,
+                    aligned_bai     = aligned_bai,
+                    genotyping_sites_bed = ExtractGenotypingSites.sites,
+            }
+        }
+        File fingerprint_reads     = select_first([ExtractRelevantGenotypingReads.relevant_reads,     ExtractRelevantGenotypingReadsLocal.relevant_reads])
+        File fingerprint_reads_bai = select_first([ExtractRelevantGenotypingReads.relevant_reads_bai, ExtractRelevantGenotypingReadsLocal.relevant_reads_bai])
 
         ##### check
         call FPUtils.CheckFingerprint {
             input:
-                aligned_bam     = ExtractRelevantGenotypingReads.relevant_reads,
-                aligned_bai     = ExtractRelevantGenotypingReads.relevant_reads_bai,
+                aligned_bam     = fingerprint_reads,
+                aligned_bai     = fingerprint_reads_bai,
                 fingerprint_vcf = FilterGenotypesVCF.ready_to_use_vcf,
                 vcf_sample_name = GetVCFSampleName.sample_name,
                 haplotype_map   = ref_specific_haplotype_map
