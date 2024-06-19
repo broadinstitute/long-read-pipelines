@@ -331,7 +331,8 @@ workflow PBFlowcell {
     }
 
     # Get the correct PBI file on which to calculate stats:
-    File subreads_pbi_file = if (experiment_type == "MASSEQ") then select_first([IndexCCSUnalignedReads.pbi]) else pbi
+    # File subreads_pbi_file = if (experiment_type == "MASSEQ") then select_first([IndexCCSUnalignedReads.pbi]) else pbi
+    File subreads_pbi_file = pbi
     call PB.SummarizePBI as SummarizeSubreadsPBI   { input: pbi = subreads_pbi_file, runtime_attr_override = { 'mem_gb': 72 } }
 
     # Collect stats on aligned reads:
