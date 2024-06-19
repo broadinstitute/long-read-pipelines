@@ -232,18 +232,18 @@ workflow PBFlowcell {
     # Merge corrected, unaligned reads:
     String cdir = outdir + "/reads/ccs/unaligned"
     if (experiment_type != "CLR") {
-        call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = unaligned_reads_bam, prefix = "~{PU}.reads" }
-        call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
+        # call Utils.MergeBams as MergeCCSUnalignedReads { input: bams = unaligned_reads_bam, prefix = "~{PU}.reads" }
+        # call PB.PBIndex as IndexCCSUnalignedReads { input: bam = MergeCCSUnalignedReads.merged_bam }
 
-        call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam, keyfile = keyfile }
-        call FF.FinalizeToFile as FinalizeCCSUnalignedBai { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bai, keyfile = keyfile }
-        call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
-            input:
-                outdir = cdir,
-                file = IndexCCSUnalignedReads.pbi,
-                name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi",
-                keyfile = keyfile
-        }
+        # call FF.FinalizeToFile as FinalizeCCSUnalignedBam { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bam, keyfile = keyfile }
+        # call FF.FinalizeToFile as FinalizeCCSUnalignedBai { input: outdir = cdir, file = MergeCCSUnalignedReads.merged_bai, keyfile = keyfile }
+        # call FF.FinalizeToFile as FinalizeCCSUnalignedPbi {
+        #     input:
+        #         outdir = cdir,
+        #         file = IndexCCSUnalignedReads.pbi,
+        #         name = basename(MergeCCSUnalignedReads.merged_bam) + ".pbi",
+        #         keyfile = keyfile
+        # }
     }
 
     # Merge CCS Reports:
