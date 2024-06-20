@@ -125,7 +125,7 @@ def plot_coverage(directory, sample_name, bin_width=500):
     plt.title(f"Coverage Plot of Sample {sample_name}", pad=12, fontsize=12)
     plt.xlabel("Contig (bp)", labelpad=10, fontsize=12)
     plt.ylabel("Depth", labelpad=10, fontsize=12)
-    color = plt.cm.viridis(np.linspace(0, 1, dir_len))
+    color = "#2494C7"
     tick_positions = []
     contigs = []
     bin_max = 0
@@ -159,11 +159,11 @@ def plot_coverage(directory, sample_name, bin_width=500):
             # Append new data to DF
             #print("Plotting data...")
             if(idx == 0):
-                ax.plot(bins, values, ".", c=color[idx])
+                ax.plot(bins, values, ".", c=color)
                 tick_positions.append(math.floor(stop_max/2)+bin_max)
                 bin_max = max(bed_df["stop"])
             else:
-                ax.plot(bins+bin_max, values, ".", c=color[idx])
+                ax.plot(bins+bin_max, values, ".", c=color)
                 tick_positions.append(math.floor(stop_max/2)+bin_max)
                 bin_max = bin_max + max(bed_df["stop"])                      
                                
@@ -176,7 +176,7 @@ def plot_coverage(directory, sample_name, bin_width=500):
     # Setting xticks
     ax.set_xticks(ticks=tick_positions)
     ax.set_xticklabels(labels=contigs, rotation=90)
-    
+    ax.set_yscale("log")
     fix_plot_visuals(fig)
             
     return fig
@@ -489,6 +489,7 @@ def get_res_loci_names(bed):
     column_names = ["chromosome", "start", "end", "name"]
     bed = pd.DataFrame()
     bed = pd.read_csv(bed_file, sep="\s+", header=None, names=column_names) 
+    print(bed.name)
     return list(bed.name) 
 
 
