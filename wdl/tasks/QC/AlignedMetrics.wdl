@@ -41,7 +41,7 @@ workflow AlignedMetrics {
         call SummarizeDepth { input: regions = MosDepth.regions }
     }
 
-    call FlagStats as AlignedFlagStats { input: bam = aligned_bam }
+    # call FlagStats as AlignedFlagStats { input: bam = aligned_bam }
 
     if (defined(gcs_output_dir)) {
         String outdir = sub(gcs_output_dir + "", "/$", "")
@@ -50,7 +50,7 @@ workflow AlignedMetrics {
             input:
                 outdir = outdir + "/yield_aligned/",
                 files = [
-                    AlignedFlagStats.flag_stats,
+                    # AlignedFlagStats.flag_stats,
                     AlignedReadMetrics.np_hist,
                     AlignedReadMetrics.range_gap_hist,
                     AlignedReadMetrics.zmw_hist,
@@ -78,7 +78,7 @@ workflow AlignedMetrics {
     }
 
     output {
-        File aligned_flag_stats = AlignedFlagStats.flag_stats
+        # File aligned_flag_stats = AlignedFlagStats.flag_stats
 
         Array[File] coverage_full_dist      = MosDepth.full_dist
         Array[File] coverage_global_dist    = MosDepth.global_dist
@@ -358,7 +358,7 @@ task FlagStats {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 1 + 2*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -372,8 +372,8 @@ task FlagStats {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             4,
+        cpu_cores:          2,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
