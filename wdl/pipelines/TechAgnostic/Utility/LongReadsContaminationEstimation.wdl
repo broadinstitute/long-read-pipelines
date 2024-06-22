@@ -56,7 +56,7 @@ workflow LongReadsContaminationEstimation {
 
     # if the coverage is too low, the tool errors out (and the data won't bring much value anyway)
     # here we guard against it by using bam file size, with a emperically-determined threshold
-    Map[String, Int] bam_threshold_per_tech = {'ONT': 450, 'Revio': 150, 'Sequel': 250} # this value is technology dependent
+    Map[String, Int] bam_threshold_per_tech = {'ONT': 550, 'Revio': 150, 'Sequel': 250} # this value is technology dependent
     Int bam_file_threshold = bam_threshold_per_tech[tech]
 
     if (bam_file_threshold > ceil(size(bam, "MiB"))) {
