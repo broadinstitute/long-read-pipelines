@@ -1926,11 +1926,14 @@ task MergeBamsWithSamtools {
     parameter_meta {
         bams: {localization_optional: true}
         out_prefix: "result file will be named <out_prefix>.bam"
+        timeout_hours: "max time to wait for the merge to finish; this is put in based on observations that sometimes the task appears stuck for no apparent reason (no log after the localizing step)"
     }
 
     input {
         Array[File] bams
         String out_prefix = "out"
+
+        Int timeout_hours = 5
 
         String disk_type = "LOCAL"
 
@@ -1942,22 +1945,28 @@ task MergeBamsWithSamtools {
         File merged_bai = "~{out_prefix}.bam.bai"
     }
 
+    Int timeout_seconds = timeout_hours * 3600
+
     command <<<
         set -euxo pipefail
 
         mkdir -p bams_dir
-        time \
+        date
+        timeout ~{timeout_seconds} \
         gcloud storage cp ~{sep=' ' bams} /cromwell_root/bams_dir/
+        date
         ls bams_dir
 
         cd bams_dir && ls ./*.bam > bams.list
-        time \
+        date
+        timeout ~{timeout_seconds} \
         samtools merge \
             -p -c --no-PG \
             -@ 3 \
             --write-index \
             -o "~{out_prefix}.bam##idx##~{out_prefix}.bam.bai" \
             -b bams.list
+        date
         mv ~{out_prefix}.bam \
            ~{out_prefix}.bam.bai \
         /cromwell_root
@@ -1969,7 +1978,7 @@ task MergeBamsWithSamtools {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             8,
+        mem_gb:             if (10 < length(bams)) then 24 else 12, # more memory if too many bams to operate one, but it is for localization actually
         disk_gb:            disk_size,
         preemptible_tries:  if "LOCAL" == disk_type then 1 else 0,
         max_retries:        1,
