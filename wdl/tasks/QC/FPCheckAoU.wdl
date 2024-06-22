@@ -77,7 +77,7 @@ workflow FPCheckAoU {
             input:
                 fingerprint_vcf = FilterGenotypesVCF.ready_to_use_vcf
         }
-        if (ceil(size(aligned_bam, "GiB"))<=80) {
+        if (ceil(size(aligned_bam, "GiB"))<=30) {
             call FPUtils.ExtractRelevantGenotypingReads {
                 input:
                     aligned_bam     = aligned_bam,
@@ -85,7 +85,7 @@ workflow FPCheckAoU {
                     genotyping_sites_bed = ExtractGenotypingSites.sites,
             }
         }
-        if (ceil(size(aligned_bam, "GiB"))>80) {
+        if (ceil(size(aligned_bam, "GiB"))>30) {
             call FPUtils.ExtractRelevantGenotypingReadsLocal {
                 input:
                     aligned_bam     = aligned_bam,

@@ -1413,7 +1413,7 @@ task BamToRelevantPileup {
     runtime {
         cpu:            "~{cores}"
         memory:         "~{memory} GiB"
-        disks:          "local-disk ~{disk_size} ~{disk_type}"
+        disks:          "local-disk 375 LOCAL"
         preemptible:    1
         maxRetries:     max_retries
         docker:         "us.gcr.io/broad-dsp-lrma/lr-bam-pileup:0.1.3"
