@@ -204,6 +204,8 @@ task ReverseYield {
     }
 
     runtime {
+        cpu: 4
+        memory: "24 GiB"
         disks: "local-disk 10 HDD"
         preemptible_tries:  3
         max_retries:        2
@@ -230,6 +232,8 @@ task Skewness {
     }
 
     runtime {
+        cpu: 4
+        memory: "24 GiB"
         disks: "local-disk 10 HDD"
         preemptible_tries:  3
         max_retries:        2
