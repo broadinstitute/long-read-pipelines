@@ -5,7 +5,7 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 
 import "../../../structs/ReferenceMetadata.wdl"
 
-#import "../../../tasks/VariantCalling/PBSV.wdl"
+import "../../../tasks/VariantCalling/PBSV.wdl"
 import "../../../tasks/VariantCalling/Sniffles2.wdl" as Sniffles2
 
 struct SVCallingConfig {
@@ -85,7 +85,7 @@ workflow Work {
     ##########################################################
     # PBSV
     ##########################################################
-   if (pbsv_discover_per_chr) {
+    if (pbsv_discover_per_chr) {
 
        scatter (triplet in select_first([per_chr_bam_bai_and_id])) {
            String contig = triplet.left
