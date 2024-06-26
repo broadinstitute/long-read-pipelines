@@ -150,6 +150,27 @@ workflows:
 - name: ExpandedDrugResistanceMarkerAggregation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExpandedDrugResistanceMarkerAggregation.wdl
+- name: SRDownsampleBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SRDownsampleBam.wdl
+- name: SRFlowcellDecontaminate
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/Alignment/SRFlowcellDecontaminate.wdl
 - name: SvQCPlots
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Visualization/SvQCPlots.wdl
+- name: SRWholeGenomeBootstrap
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/VariantCalling/SRWholeGenomeBootstrap.wdl
+- name: SRJointCallGVCFsWithGenomicsDBBootstrap
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/SRJointCallGVCFsWithGenomicsDBBootstrap.wdl
+- name: SRReblockGVCFs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/VariantCalling/SRReblockGVCFs.wdl
+- name: ExtractCoverageStats
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ExtractCoverageStats.wdl
+- name: DownloadFromFTP
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/DownloadFromFTP.wdl

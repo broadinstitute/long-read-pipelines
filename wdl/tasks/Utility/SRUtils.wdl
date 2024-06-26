@@ -821,3 +821,87 @@ task RevertBaseQualities {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task Bowtie2 {
+    input {
+        File fq_end1
+        File fq_end2
+
+        String ref_dir
+        File ref_1_bt2
+        File ref_2_bt2
+        File ref_3_bt2
+        File ref_4_bt2
+        File ref_rev1_bt2
+        File ref_rev2_bt2
+
+        Map[String, String]? read_group_map
+
+        String prefix = "out"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 4*ceil(size(fq_end1, "GB"))
+                      + 4*ceil(size(fq_end2, "GB"))
+                      + 4*ceil(size(ref_1_bt2, "GB"))
+                      + 4*ceil(size(ref_2_bt2, "GB"))
+                      + 4*ceil(size(ref_3_bt2, "GB"))
+                      + 4*ceil(size(ref_4_bt2, "GB"))
+                      + 4*ceil(size(ref_rev1_bt2, "GB"))
+                      + 4*ceil(size(ref_rev2_bt2, "GB"))
+
+    String rgid_cmd = if defined(read_group_map) then " --rg-id " else ""
+    String rg_cmd = if defined(read_group_map) then " --rg " else ""
+
+    String rg_id = if defined(read_group_map) then select_first([read_group_map])["ID"] else ""
+    String rg_pl = if defined(read_group_map) then select_first([read_group_map])["PL"] else ""
+    String rg_lb = if defined(read_group_map) then select_first([read_group_map])["LB"] else ""
+    String rg_sm = if defined(read_group_map) then select_first([read_group_map])["SM"] else ""
+
+    command <<<
+        set -euxo pipefail
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            let np=${np}-1
+        fi
+        
+        bowtie2 \
+            -p ${np} \
+            ~{rgid_cmd}'~{default="" rg_id}' \
+            ~{rg_cmd}'~{default="" rg_pl}' \
+            ~{rg_cmd}'~{default="" rg_lb}'\
+            ~{rg_cmd}'~{default="" rg_sm}' \
+            -x ~{ref_dir} \
+            -1 ~{fq_end1} \
+            -2 ~{fq_end2} | \
+        samtools view -1 - > ~{prefix}.bam
+    >>>
+
+    output {
+        File bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "docker.io/brosular/pf-wgs:0.0.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

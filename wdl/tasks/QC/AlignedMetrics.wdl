@@ -23,22 +23,37 @@ workflow AlignedMetrics {
         File ref_fasta
         File ref_dict
 
+        Boolean scatter_by_chr = true
+
         String? gcs_output_dir
+        RuntimeAttr? runtime_attr_override
     }
 
-    call ReadMetrics as AlignedReadMetrics { input: bam = aligned_bam }
-
+    call ReadMetrics as AlignedReadMetrics { input: bam = aligned_bam, runtime_attr_override = runtime_attr_override}
     call MakeChrIntervalList { input: ref_dict = ref_dict }
 
-    scatter (chr_info in MakeChrIntervalList.chrs) {
-        call MosDepth {
-            input:
-                bam = aligned_bam,
-                bai = aligned_bai,
-                chr = chr_info[0]
+    if (scatter_by_chr) {
+        
+        scatter (chr_info in MakeChrIntervalList.chrs) {
+            call MosDepth as MosDepthScatter {
+                input:
+                    bam = aligned_bam,
+                    bai = aligned_bai,
+                    chr = chr_info[0]
+            }
+
+            call SummarizeDepth as SummarizeDepthScatter { input: regions = MosDepthScatter.regions }
         }
 
-        call SummarizeDepth { input: regions = MosDepth.regions }
+    }
+    if (!scatter_by_chr) {
+        call MosDepth as MosDepthNoScatter {
+            input:
+                bam = aligned_bam,
+                bai = aligned_bai
+        }
+
+        call SummarizeDepth as SummarizeDepthNoScatter { input: regions = MosDepthNoScatter.regions}
     }
 
     call FlagStats as AlignedFlagStats { input: bam = aligned_bam }
@@ -65,29 +80,53 @@ workflow AlignedMetrics {
                 ]
         }
 
-        call FF.FinalizeToDir as FFCoverageFullDist { input: outdir = outdir + "/coverage/", files = MosDepth.full_dist }
-        call FF.FinalizeToDir as FFCoverageGlobalDist { input: outdir = outdir + "/coverage/", files = MosDepth.global_dist }
-        call FF.FinalizeToDir as FFCoverageRegionDist { input: outdir = outdir + "/coverage/", files = MosDepth.region_dist }
-        call FF.FinalizeToDir as FFCoverageRegions { input: outdir = outdir + "/coverage/", files = MosDepth.regions }
-        call FF.FinalizeToDir as FFCoverageRegionsCsi { input: outdir = outdir + "/coverage/", files = MosDepth.regions_csi }
-        call FF.FinalizeToDir as FFCoverageQuantizedDist { input: outdir = outdir + "/coverage/", files = MosDepth.quantized_dist }
-        call FF.FinalizeToDir as FFCoverageQuantized { input: outdir = outdir + "/coverage/", files = MosDepth.quantized }
-        call FF.FinalizeToDir as FFCoverageQuantizedCsi { input: outdir = outdir + "/coverage/", files = MosDepth.quantized_csi }
+        if (scatter_by_chr) {
+            call FF.FinalizeToDir as FFCoverageFullDistDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.full_dist]) }
+            call FF.FinalizeToDir as FFCoverageGlobalDistDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.global_dist]) }
+            call FF.FinalizeToDir as FFCoverageRegionDistDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.region_dist]) }
+            call FF.FinalizeToDir as FFCoverageRegionsDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.regions]) }
+            call FF.FinalizeToDir as FFCoverageRegionsCsiDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.regions_csi]) }
+            call FF.FinalizeToDir as FFCoverageQuantizedDistDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.quantized_dist]) }
+            call FF.FinalizeToDir as FFCoverageQuantizedDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.quantized]) }
+            call FF.FinalizeToDir as FFCoverageQuantizedCsiDir { input: outdir = outdir + "/coverage/", files = select_first([MosDepthScatter.quantized_csi]) }
 
-        call FF.FinalizeToDir as FFDepthSummaries { input: outdir = outdir + "/coverage_summaries/", files = SummarizeDepth.cov_summary }
+            call FF.FinalizeToDir as FFDepthSummariesDir { input: outdir = outdir + "/coverage_summaries/", files = select_first([SummarizeDepthScatter.cov_summary]) }
+        }
+        if (!scatter_by_chr) {
+            call FF.FinalizeToFile as FFCoverageFullDist { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.full_dist]) }
+            call FF.FinalizeToFile as FFCoverageGlobalDist { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.global_dist]) }
+            call FF.FinalizeToFile as FFCoverageRegionDist { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.region_dist]) }
+            call FF.FinalizeToFile as FFCoverageRegions { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.regions]) }
+            call FF.FinalizeToFile as FFCoverageRegionsCsi { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.regions_csi]) }
+            call FF.FinalizeToFile as FFCoverageQuantizedDist { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.quantized_dist]) }
+            call FF.FinalizeToFile as FFCoverageQuantized { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.quantized]) }
+            call FF.FinalizeToFile as FFCoverageQuantizedCsi { input: outdir = outdir + "/coverage/", file = select_first([MosDepthNoScatter.quantized_csi]) }
+
+            call FF.FinalizeToFile as FFDepthSummaries { input: outdir = outdir + "/coverage_summaries/", file = select_first([SummarizeDepthNoScatter.cov_summary]) }
+        }
     }
+    
+    # Prep files for output
+    Array[File] coverage_full_dist_o      = if scatter_by_chr then select_first([MosDepthScatter.full_dist]) else [select_first([MosDepthNoScatter.full_dist])]
+    Array[File] coverage_global_dist_o    = if scatter_by_chr then select_first([MosDepthScatter.global_dist]) else [select_first([MosDepthNoScatter.global_dist])]
+    Array[File] coverage_region_dist_o    = if scatter_by_chr then select_first([MosDepthScatter.region_dist]) else [select_first([MosDepthNoScatter.region_dist])]
+    Array[File] coverage_regions_o        = if scatter_by_chr then select_first([MosDepthScatter.regions]) else [select_first([MosDepthNoScatter.regions])]
+    Array[File] coverage_regions_csi_o    = if scatter_by_chr then select_first([MosDepthScatter.regions_csi]) else [select_first([MosDepthNoScatter.regions_csi])]
+    Array[File] coverage_quantized_dist_o = if scatter_by_chr then select_first([MosDepthScatter.quantized_dist]) else [select_first([MosDepthNoScatter.quantized_dist])]
+    Array[File] coverage_quantized_o      = if scatter_by_chr then select_first([MosDepthScatter.quantized]) else [select_first([MosDepthNoScatter.quantized])]
+    Array[File] coverage_quantized_csi_o  = if scatter_by_chr then select_first([MosDepthScatter.quantized_csi]) else [select_first([MosDepthNoScatter.quantized_csi])]
 
     output {
         File aligned_flag_stats = AlignedFlagStats.flag_stats
 
-        Array[File] coverage_full_dist      = MosDepth.full_dist
-        Array[File] coverage_global_dist    = MosDepth.global_dist
-        Array[File] coverage_region_dist    = MosDepth.region_dist
-        Array[File] coverage_regions        = MosDepth.regions
-        Array[File] coverage_regions_csi    = MosDepth.regions_csi
-        Array[File] coverage_quantized_dist = MosDepth.quantized_dist
-        Array[File] coverage_quantized      = MosDepth.quantized
-        Array[File] coverage_quantized_csi  = MosDepth.quantized_csi
+        Array[File] coverage_full_dist      = coverage_full_dist_o
+        Array[File] coverage_global_dist    = coverage_global_dist_o
+        Array[File] coverage_region_dist    = coverage_region_dist_o
+        Array[File] coverage_regions        = coverage_regions_o
+        Array[File] coverage_regions_csi    = coverage_regions_csi_o
+        Array[File] coverage_quantized_dist = coverage_quantized_dist_o
+        Array[File] coverage_quantized      = coverage_quantized_o
+        Array[File] coverage_quantized_csi  = coverage_quantized_csi_o
 
         File aligned_np_hist = AlignedReadMetrics.np_hist
         File aligned_range_gap_hist = AlignedReadMetrics.range_gap_hist
@@ -151,7 +190,7 @@ task MosDepth {
     input {
         File bam
         File bai
-        String chr
+        String? chr
         Int? window_size
 
         RuntimeAttr? runtime_attr_override
@@ -160,20 +199,20 @@ task MosDepth {
     Int disk_size = 2*ceil(size(bam, "GB") + size(bai, "GB"))
     Int ws = select_first([window_size, 500])
     String basename = basename(bam, ".bam")
-    String prefix = "~{basename}.coverage.~{chr}"
+    String prefix = if defined(chr) then "~{basename}.coverage.~{chr}" else "~{basename}.coverage.all"
 
     command <<<
         set -euxo pipefail
 
-        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 ~{prefix}.full ~{bam}
-        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 -b ~{ws} ~{prefix} ~{bam}
+        mosdepth -t 4 ~{"-c " + chr} -n -x -Q 1 ~{prefix}.full ~{bam}
+        mosdepth -t 4 ~{"-c " + chr} -n -x -Q 1 -b ~{ws} ~{prefix} ~{bam}
 
         export MOSDEPTH_Q0=NO_COVERAGE   # 0 -- defined by the arguments to --quantize
         export MOSDEPTH_Q1=LOW_COVERAGE  # 1..4
         export MOSDEPTH_Q2=CALLABLE      # 5..149
         export MOSDEPTH_Q3=HIGH_COVERAGE # 150 ...
 
-        mosdepth -t 4 -c "~{chr}" -n -x -Q 1 --quantize 0:1:5:150: ~{prefix}.quantized ~{bam}
+        mosdepth -t 4 ~{"-c " + chr} -n -x -Q 1 --quantize 0:1:5:150: ~{prefix}.quantized ~{bam}
     >>>
 
     output {
@@ -630,7 +669,7 @@ task ReadMetrics {
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = 2*ceil(size(bam, "GB")) + 20
 
     command <<<
         set -euxo pipefail
@@ -654,10 +693,10 @@ task ReadMetrics {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             50,
+        cpu_cores:          4,
+        mem_gb:             90,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -699,6 +738,156 @@ task BamToBed {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MosDepthWGSAtThreshold {
+    meta {
+        description: "Collects WGS coverage of the bam. Optionally, collects coverage number for each region in the provided BED (this avoids extra localizations)."
+    }
+    parameter_meta {
+        bam: {localization_optional: true}
+        bed_descriptor: "A short description on the BED file provided. It will be used in naming the regions output, so be careful what you provide here."
+        regions: "When bed is provided, this gets generated, which holds the coverage over the regions defined in the bed file."
+    }
+    input {
+        File bam
+        File bai
+        File? bed
+        Int cov_threshold
+        String bed_descriptor = "unknown"
+
+        String disk_type = "SSD"
+        RuntimeAttr? runtime_attr_override
+    }
+
+    output {
+        Float wgs_cov = read_float("wgs.cov.txt")
+        Float wgs_frac_at_threshold = read_float("wgs.threshold.txt")
+        File summary_txt = "~{prefix}.mosdepth.summary.txt"
+        File? regions = "~{prefix}.coverage_over_bed.~{bed_descriptor}.regions.bed.gz"
+    }
+
+    String basename = basename(bam, ".bam")
+    String prefix = "~{basename}.mosdepth_coverage"
+
+    Boolean collect_over_bed = defined(bed)
+
+    String local_bam = "/cromwell_root/~{basename}.bam"
+
+    command <<<
+        set -euxo pipefail
+
+        time gcloud storage cp ~{bam} ~{local_bam}
+        mv ~{bai} "~{local_bam}.bai"
+
+        mosdepth \
+            -t 2 \
+            -x -n -Q 1 \
+            ~{prefix} \
+            ~{local_bam} &
+
+        if ~{collect_over_bed}; then
+            mosdepth \
+                -t 2 \
+                -b ~{bed} \
+                -x -n -Q 1 \
+                "~{prefix}.coverage_over_bed.~{bed_descriptor}" \
+                ~{local_bam} &
+        fi
+
+        wait && ls
+
+        # wg
+        tail -n1 ~{prefix}.mosdepth.summary.txt | \
+            awk -F '\t' ' {printf "%.5f", $3/$2} ' > wgs.cov.txt
+        
+        # threshold_cov - Can only go up to 2 significant digits
+        awk -F '\t' -v cov_thresh=~{cov_threshold} ' $1=="total" && $2==cov_thresh {print $3; found=1; exit} END {if (!found) print "0.0"} ' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
+    >>>
+
+    #########################
+    Int pd_disk_size = 10 + ceil(size(bam, "GiB"))
+    Int local_disk_size = if(size(bam, "GiB")>300) then 750 else 375
+    Int disk_size = if('LOCAL'==disk_type) then local_disk_size else pd_disk_size
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/mosdepth:0.3.4-gcloud"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " ~{disk_type}"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SamtoolsDepth {
+    input {
+        File bam
+        File bai
+        Int cov_threshold
+        File? bed
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        bam: "Aligned BAM file"
+        cov_threshold: "Integer threshold to determine percent of genome at this coverage"
+        bed: "Optional BED file to calculate coverage over."
+    }
+
+    String basename = basename(bam, ".bam")
+    Int disk_size = 2*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools depth -a -J -Q 1 ~{"-b " + bed} ~{bam} > ~{basename}.sam_depth.txt
+
+        # Use samtools depth for mean coverage and % of genome at threshold
+        # mean wgs cov
+        cat ~{basename}.sam_depth.txt |
+            awk '{c++; if($3>0) total+=$3} END {printf "%0.5f", (total / c)}' > cov.wgs.txt
+
+        # frac genome at threshold - keep consistent with mosdepth reporting
+        cat ~{basename}.sam_depth.txt |
+            awk -v cov_thresh=~{cov_threshold} '{c++; if($3>=cov_thresh) total+=1} END {printf "%.5f", (total/c)}' > cov.threshold.txt
+    >>>
+
+    output {
+        Float mean_cov = read_float("cov.wgs.txt")
+        Float wgs_frac_at_threshold = read_float("cov.threshold.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,

@@ -2050,3 +2050,383 @@ task ConcatBCFs {
     }
 }
 
+task MergeAndSortVCFsAllowOverlap {
+    meta {
+        description: "Merge and sort VCFs without using the --naive flag and while allowing for overlaps."
+    }
+
+    input {
+        Array[File] vcfs
+        Array[File] vcf_indices 
+        File ref_fasta_fai
+
+        String prefix
+        String? optional_flags
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        optional_flags: "Optional flags that can be given to bcftools concat."
+    }
+
+    Int sz = ceil(size(vcfs, 'GB'))
+    Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
+    
+    Int cores = 8
+
+    # pending a bug fix (bcftools github issue 1576) in official bcftools release,
+    # bcftools sort can be more efficient in using memory
+    Int machine_memory = 48 # 96
+    Int work_memory = ceil(machine_memory * 0.8)
+
+    command <<<
+        set -euxo pipefail
+
+        echo ~{sep=' ' vcfs} | sed 's/ /\n/g' > all_raw_vcfs.txt
+
+        echo "==========================================================="
+        echo "starting concatenation" && date
+        echo "==========================================================="
+        bcftools \
+            concat \
+            --allow-overlaps \
+            --threads ~{cores-1} \
+            -f all_raw_vcfs.txt \
+            --output-type v \
+            -o concatedated_raw.vcf.gz 
+        for vcf in ~{sep=' ' vcfs}; do rm $vcf ; done
+
+        echo "==========================================================="
+        echo "done concatenating" && date
+        echo "==========================================================="
+        
+        bcftools reheader \
+            --fai ~{ref_fasta_fai} \
+            -o wgs_raw.vcf.gz \
+            concatedated_raw.vcf.gz
+        rm concatedated_raw.vcf.gz
+
+        echo "==========================================================="
+        echo "starting sort" && date
+        echo "==========================================================="
+
+        bcftools \
+            sort \
+            --temp-dir tm_sort \
+            --output-type z \
+            -o ~{prefix}.vcf.gz \
+            wgs_raw.vcf.gz
+
+        bcftools index --tbi --force ~{prefix}.vcf.gz
+        echo "==========================================================="
+        echo "done sorting" && date
+        echo "==========================================================="
+    >>>
+
+    output {
+        File vcf = "~{prefix}.vcf.gz"
+        File tbi = "~{prefix}.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          cores,
+        mem_gb:             "~{machine_memory}",
+        disk_gb:            disk_sz,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task HardFilterVcfByGATKDefault_Snp {
+    input {
+        File vcf
+        File vcf_index
+
+        File? ref_fasta
+        File? ref_fasta_fai
+        File? ref_fasta_dict
+    
+        String prefix
+
+        ################################################################################################################################################
+        #   GATK Recommendations for Hard Filtering   
+        #              
+        #   SNPs - Fail if:                                                    
+        #       1. FS > 60
+        #       2. ReadPosRankSum < -8.0
+        #       3. QUAL < 30.0
+        #       4. SOR > 3.0
+        #       5. MQ < 40.0
+        #       6. MQRankSum < -12.5
+        #       7. QD < 2.0 
+        #   Indels - Fail if:
+        #       1. QD < 2.0
+        #       2. QUAL < 30.0
+        #       3. FS > 200.0
+        #       4. ReadPosRankSum < -20.0  
+        #   
+        #   Link: https://gatk.broadinstitute.org/hc/en-us/articles/360035531112--How-to-Filter-variants-either-with-VQSR-or-by-hard-filtering#2                                      
+        ################################################################################################################################################
+        
+        Float snp_fs_threshold = 60.0
+        Float snp_readposranksum_threshold = -8.0
+        Float snp_qual_threshold = 30.0
+        Float snp_sor_threshold = 3.0
+        Float snp_mq_threshold = 40.0
+        Float snp_mqranksum_threshold = -12.5
+        Float snp_qd_threshold = 2.0
+
+        RuntimeAttr? runtime_attr_override
+    }
+    Int disk_size = 1 + 4*ceil(size([vcf, vcf_index], "GB"))
+    String snp_only_vcf = basename(basename(vcf, ".vcf.gz"), ".vcf") + ".snp.vcf.gz"
+
+    command <<<
+        set -euo pipefail 
+        
+        # Get amount of memory to use:
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-1000
+        let mem_max=${mem_available}-750
+
+        # Get SNPs from vcf
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            SelectVariants \
+            ~{"-R " + ref_fasta} \
+            -V ~{vcf} \
+            -select-type SNP \
+            -O ~{snp_only_vcf} 
+        
+        echo "Finished selecting SNPs only. Now filtering..."
+
+        # Filter SNPs from vcf
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            VariantFiltration \
+            -V ~{snp_only_vcf} \
+            -filter "QD < ~{snp_qd_threshold}" --filter-name "QD~{snp_qd_threshold}" \
+            -filter "QUAL < ~{snp_qual_threshold}" --filter-name "QUAL~{snp_qual_threshold}" \
+            -filter "SOR > ~{snp_sor_threshold}" --filter-name "SOR~{snp_sor_threshold}" \
+            -filter "FS > ~{snp_fs_threshold}" --filter-name "FS~{snp_fs_threshold}" \
+            -filter "MQ < ~{snp_mq_threshold}" --filter-name "MQ~{snp_mq_threshold}" \
+            -filter "MQRankSum < ~{snp_mqranksum_threshold}" --filter-name "MQRankSum~{snp_mqranksum_threshold}" \
+            -filter "ReadPosRankSum < ~{snp_readposranksum_threshold}" --filter-name "ReadPosRankSum~{snp_readposranksum_threshold}" \
+            -O ~{prefix}.hard_filtered.snp.vcf.gz
+       
+    >>>
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+    
+    output {
+        File snp_filtered_vcf = "~{prefix}.hard_filtered.snp.vcf.gz"
+        File snp_filtered_vcf_index = "~{prefix}.hard_filtered.snp.vcf.gz.tbi"
+    }
+
+}
+
+task HardFilterVcfByGATKDefault_Indel {
+    input {
+        File vcf
+        File vcf_index
+
+        File? ref_fasta
+        File? ref_fasta_fai
+        File? ref_fasta_dict
+    
+        String prefix
+
+        ################################################################################################################################################
+        #   GATK Recommendations for Hard Filtering   
+        #              
+        #   SNPs - Fail if:                                                    
+        #       1. FS > 60
+        #       2. ReadPosRankSum < -8.0
+        #       3. QUAL < 30.0
+        #       4. SOR > 3.0
+        #       5. MQ < 40.0
+        #       6. MQRankSum < -12.5
+        #       7. QD < 2.0 
+        #   Indels - Fail if:
+        #       1. QD < 2.0
+        #       2. QUAL < 30.0
+        #       3. FS > 200.0
+        #       4. ReadPosRankSum < -20.0  
+        #   
+        #   Link: https://gatk.broadinstitute.org/hc/en-us/articles/360035531112--How-to-Filter-variants-either-with-VQSR-or-by-hard-filtering#2                                      
+        ################################################################################################################################################
+        Float indel_qd_threshold = 2.0
+        Float indel_qual_threshold = 30.0
+        Float indel_fs_threshold = 200.0
+        Float indel_readposranksum_threshold = -20.0
+
+        RuntimeAttr? runtime_attr_override
+    }
+    Int disk_size = 1 + 4*ceil(size([vcf, vcf_index], "GB"))
+    String indel_only_vcf = basename(basename(vcf, ".vcf.gz"), ".vcf") + ".indel.vcf.gz"
+
+    command <<<
+        set -euo pipefail 
+        
+        # Get amount of memory to use:
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
+        let mem_start=${mem_available}-1000
+        let mem_max=${mem_available}-750
+
+        # Filter indels
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            SelectVariants \
+            ~{"-R " + ref_fasta} \
+            -V ~{vcf} \
+            -select-type INDEL \
+            -O ~{indel_only_vcf}
+
+        echo "Finished selecting indels only. Now filtering..."
+
+        gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
+            VariantFiltration \
+            -V ~{indel_only_vcf} \
+            -filter "QD < ~{indel_qd_threshold}" --filter-name "QD~{indel_qd_threshold}" \
+            -filter "QUAL < ~{indel_qual_threshold}" --filter-name "QUAL~{indel_qual_threshold}" \
+            -filter "FS > ~{indel_fs_threshold}" --filter-name "FS~{indel_fs_threshold}" \
+            -filter "ReadPosRankSum < ~{indel_readposranksum_threshold}" --filter-name "ReadPosRankSum~{indel_readposranksum_threshold}" \
+            -O ~{prefix}.hard_filtered.indel.vcf.gz
+    >>>
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+    
+    output {
+        File indel_filtered_vcf = "~{prefix}.hard_filtered.indel.vcf.gz"
+        File indel_filtered_vcf_index = "~{prefix}.hard_filtered.indel.vcf.gz.tbi"
+    }
+}
+
+task MergeSamplesVCFs {
+    meta {
+        description: "Merge VCFs with separate samples (i.e. by using bcftools merge)"
+    }
+
+    input {
+        Array[File] vcfs
+        Array[File] vcf_indices 
+        File ref_fasta_fai
+
+        String prefix
+        String? optional_flags
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    parameter_meta {
+        optional_flags: "Optional flags that can be given to bcftools concat."
+    }
+
+    Int sz = ceil(size(vcfs, 'GB'))
+    Int disk_sz = if sz > 100 then 5 * sz else 375  # it's rare to see such large gVCFs, for now
+    
+    Int cores = 8
+
+    # pending a bug fix (bcftools github issue 1576) in official bcftools release,
+    # bcftools sort can be more efficient in using memory
+    Int machine_memory = 48 # 96
+    Int work_memory = ceil(machine_memory * 0.8)
+
+    command <<<
+        set -euxo pipefail
+
+        echo ~{sep=' ' vcfs} | sed 's/ /\n/g' > all_raw_vcfs.txt
+
+        echo "==========================================================="
+        echo "starting merge" && date
+        echo "==========================================================="
+
+        bcftools \
+            merge \
+            --threads ~{cores - 1} \
+            --file-list all_raw_vcfs.txt \
+            --output-type z \
+            -o ~{prefix}.merged.vcf.gz
+        for vcf in ~{sep=' ' vcfs}; do rm $vcf ; done
+
+        echo "==========================================================="
+        echo "done merging" && date
+        echo "==========================================================="
+        
+        bcftools index --tbi --force ~{prefix}.vcf.gz
+    >>>
+
+    output {
+        File vcf = "~{prefix}.vcf.gz"
+        File tbi = "~{prefix}.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          cores,
+        mem_gb:             "~{machine_memory}",
+        disk_gb:            disk_sz,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+}
