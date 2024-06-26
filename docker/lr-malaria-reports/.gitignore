@@ -4,6 +4,8 @@ data/
 /.vscode
 *_report.html
 *.jpeg
+*.json
+*.ipynb
 *.txt
 *.bed.gz
 test.html

@@ -118,7 +118,9 @@ def plot_coverage(directory, sample_name, bin_width=500):
     # Reading and sorting files
     file_list = os.listdir(directory)
     dir_len = len(file_list)
-    print(f"Files to be plotted: {file_list}")
+    
+    sorted_files = [item.split(".")[7].split("_")[1] for item in file_list if item.endswith(".bed.gz")]
+    print(f"Files to be plotted: {sorted_files}")
     
     # Plot setup
     fig, ax = plt.subplots(1,1, figsize=(15, 9))
@@ -131,7 +133,7 @@ def plot_coverage(directory, sample_name, bin_width=500):
     bin_max = 0
  
     # Iterate over each bed.gz in test_data folder
-    for idx, file in enumerate(file_list):
+    for idx, file in enumerate(sorted_file_list):
 
         if file.endswith(ext):
             # Reading current .bed.gz file
@@ -142,12 +144,10 @@ def plot_coverage(directory, sample_name, bin_width=500):
             bed_df = pd.read_csv(f, delimiter="\\t", names=["contig", "start", "stop", "depth"], engine="python")
             
             # Get bins
-            #print("Getting bins...")
             start_min = bed_df["start"].min()
             stop_max = bed_df["stop"].max()
             bins = np.arange(start_min, stop_max+1, bin_width)
             values = np.zeros(len(bins)) 
-            #print(f"Max Pos: {stop_max}")
 
             # Iterrate through each DataFrame and populate bins
             #print("Populating bins...")
@@ -168,7 +168,6 @@ def plot_coverage(directory, sample_name, bin_width=500):
                 bin_max = bin_max + max(bed_df["stop"])                      
                                
             # Saving xtick data
-            
             contigs.append(bed_df["contig"][0])
             
             print(f"{idx+1}/{dir_len} files completed!")
