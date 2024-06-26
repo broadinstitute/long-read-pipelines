@@ -119,8 +119,8 @@ def plot_coverage(directory, sample_name, bin_width=500):
     file_list = os.listdir(directory)
     dir_len = len(file_list)
     
-    sorted_files = [item.split(".")[7].split("_")[1] for item in file_list if item.endswith(".bed.gz")]
-    print(f"Files to be plotted: {sorted_files}")
+    sorted_file_list = sorted(file_list,  key=lambda item: item.split(".")[-4].split("_")[1] if item.endswith(".bed.gz") else "00")
+    print(f"Files to be plotted: {sorted_file_list}")
     
     # Plot setup
     fig, ax = plt.subplots(1,1, figsize=(15, 9))
