@@ -93,6 +93,9 @@ workflow ONTFlowcellWGSuBAM {
         File ref_map_file
         String gcs_out_root_dir
         String aln_disk_type = 'SSD'
+
+        File? cheat_manually_merged_bam
+        File? cheat_manually_merged_bam_index
     }
 
     output {
@@ -144,7 +147,9 @@ workflow ONTFlowcellWGSuBAM {
             bam_sample_name = bam_SM_ID,
             flowcell = flowcell,
             ref_map_file = ref_map_file,
-            aln_disk_type = aln_disk_type
+            aln_disk_type = aln_disk_type,
+            cheat_manually_merged_bam = cheat_manually_merged_bam,
+            cheat_manually_merged_bam_index = cheat_manually_merged_bam_index
     }
     call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = outdir_aln, file = ALN.aligned_bam }
     call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = outdir_aln, file = ALN.aligned_bai }

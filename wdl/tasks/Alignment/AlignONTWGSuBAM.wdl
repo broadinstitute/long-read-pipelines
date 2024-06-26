@@ -31,6 +31,8 @@ workflow AlignONTWGSuBAM {
         String flowcell
 
         String aln_disk_type = 'SSD'
+        File? cheat_manually_merged_bam
+        File? cheat_manually_merged_bam_index
 
         File ref_map_file
     }
@@ -107,11 +109,13 @@ workflow AlignONTWGSuBAM {
                     disk_type = aln_disk_type
             }
         }
-        call BU.MergeBamsWithSamtools as MergeBams { input:
-            bams = MapShard.aligned_bam,
-            out_prefix = output_prefix,
-            disk_type = if ('LOCAL' == aln_disk_type) then 'SSD' else 'LOCAL',
-            timeout_hours = if (100 < size(uBAM, "GiB")) then 10 else 5  # heuristic: longer wait for bigger BAMs
+        if (!defined(cheat_manually_merged_bam)) {
+            call BU.MergeBamsWithSamtools as MergeBams { input:
+                bams = MapShard.aligned_bam,
+                out_prefix = output_prefix,
+                disk_type = if ('LOCAL' == aln_disk_type) then 'SSD' else 'LOCAL',
+                timeout_hours = if (100 < size(uBAM, "GiB")) then 10 else 5  # heuristic: longer wait for bigger BAMs
+            }
         }
     }
     if (emperical_bam_sz_threshold >= ceil(size(uBAM, "GiB"))) {
@@ -130,8 +134,8 @@ workflow AlignONTWGSuBAM {
                 disk_type = aln_disk_type
         }
     }
-    File aBAM = select_first([Minimap2.aligned_bam, MergeBams.merged_bam])
-    File aBAI = select_first([Minimap2.aligned_bai, MergeBams.merged_bai])
+    File aBAM = select_first([cheat_manually_merged_bam,       Minimap2.aligned_bam, MergeBams.merged_bam])
+    File aBAI = select_first([cheat_manually_merged_bam_index, Minimap2.aligned_bai, MergeBams.merged_bai])
 }
 
 ###################################################################################
