@@ -48,7 +48,7 @@ task GenerateBinFiles {
     >>>
 
     #########################
-    Int min_memory = 128 # this min_memory magic number is purely empirical
+    Int min_memory = 192 # this min_memory magic number is purely empirical
     Int proposed_memory = 2 * ceil(size(reads, "GiB"))
     Int memory = if proposed_memory < min_memory then min_memory else if proposed_memory > 512 then 512 else proposed_memory
     Int n = memory / 4  # this might be an odd number
@@ -57,7 +57,7 @@ task GenerateBinFiles {
 
     Int min_disk = 50
     Int half_reads_sz = (1 + ceil(size(reads, "GiB")))/2
-    Int proposed_disk = 10 + 6 * half_reads_sz # a trick to do 3 times the reads file size, yet make sure it is even
+    Int proposed_disk = 10 + 8 * half_reads_sz # a trick to do 3 times the reads file size, yet make sure it is even
     Int disk_size = if proposed_disk < min_disk then min_disk else proposed_disk
 
     RuntimeAttr default_attr = object {
