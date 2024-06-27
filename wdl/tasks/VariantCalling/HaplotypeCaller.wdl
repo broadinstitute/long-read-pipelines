@@ -37,33 +37,58 @@ workflow CallVariantsWithHaplotypeCaller {
         String mito_contig = "chrM"
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
 
+        File? interval_list
+
         RuntimeAttr? haplotype_caller_runtime_attr_override
     }
 
-    # Scatter by chromosome:
-    Array[String] use_filter = if (call_vars_on_mitochondria) then contigs_names_to_ignore else flatten([[mito_contig], contigs_names_to_ignore])
-    call Utils.MakeChrIntervalList as SmallVariantsScatterPrep {
+    # Get our interval list either from the input or create it:
+    if (!defined(interval_list)) {
+        # If we have to, create interval list over which to shard the processing:
+
+        # Scatter by chromosome:
+        Array[String] use_filter = if (call_vars_on_mitochondria) then contigs_names_to_ignore else flatten([[mito_contig], contigs_names_to_ignore])
+        call Utils.MakeChrIntervalList as SmallVariantsScatterPrep {
+            input:
+                ref_dict = ref_dict,
+                filter = use_filter
+        }
+    }
+    File actual_interval_list = select_first([interval_list, SmallVariantsScatterPrep.interval_list])
+
+    # Get the interval name info for our files below:
+    call Utils.ExtractIntervalNamesFromIntervalOrBamFile as ExtractIntervalNamesFromIntervalOrBamFile {
         input:
-            ref_dict = ref_dict,
-            filter = use_filter
+            interval_file = actual_interval_list
     }
 
     # Call over the scattered intervals:
-    scatter (c in SmallVariantsScatterPrep.chrs) {
-        String contig_for_small_var = c[0]
+    # Shard by contig for speed:
+    scatter (idx_1 in range(length(ExtractIntervalNamesFromIntervalOrBamFile.interval_info))) {
+
+        String interval_name = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][0] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][1] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][2]
+
+        # To make sure the interval names and the files themselves correspond, we need to make the
+        # interval list file here:
+        call Utils.CreateIntervalListFileFromIntervalInfo as CreateIntervalListFileFromIntervalInfo {
+            input:
+                contig = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][0],
+                start = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][1],
+                end = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][2]
+        }
 
         call HaplotypeCaller_GATK4_VCF as CallVariantsWithHC {
             input:
                 input_bam = bam,
                 input_bam_index = bai,
-                prefix = prefix + "." + contig_for_small_var,
+                prefix = prefix + "." + interval_name,
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_fai,
                 ref_dict = ref_dict,
                 make_gvcf = true,
                 make_bamout = true,
                 enable_pileup_mode = enable_pileup_mode,
-                single_interval = contig_for_small_var,
+                interval_list   = CreateIntervalListFileFromIntervalInfo.interval_list,
                 contamination = 0,
                 ploidy = ploidy,
                 heterozygosity = heterozygosity,
@@ -112,7 +137,7 @@ workflow CallVariantsWithHaplotypeCaller {
         input:
             input_gvcf_data = ReblockHcGVCF.output_gvcf,
             input_gvcf_index = ReblockHcGVCF.output_gvcf_index,
-            interval_list = SmallVariantsScatterPrep.interval_list,
+            interval_list = actual_interval_list,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
             ref_dict = ref_dict,

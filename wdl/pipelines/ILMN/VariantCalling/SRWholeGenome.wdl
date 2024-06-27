@@ -99,6 +99,8 @@ workflow SRWholeGenome {
 
         File? fingerprint_haploytpe_db_file
 
+        File? interval_list
+
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
 
@@ -175,6 +177,8 @@ workflow SRWholeGenome {
 
             mito_contig = ref_map['mt_chr_name'],
             contigs_names_to_ignore = contigs_names_to_ignore,
+
+            interval_list = interval_list,
     }
 
     # Make sure our sample name is correct:
