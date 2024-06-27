@@ -172,7 +172,7 @@ task AssembleForHaplotigs {
     }
 
     #########################
-    Int min_memory = 96 # this min_memory magic number is purely empirical
+    Int min_memory = 192 # this min_memory magic number is purely empirical
     Int proposed_memory = ceil(size(reads, "GiB"))
     Int memory = if proposed_memory < min_memory then min_memory else if proposed_memory > 512 then 512 else proposed_memory
     Int n = memory / 6  # this might be an odd number
@@ -281,7 +281,7 @@ task AssembleForAltContigs {
     }
 
     #########################
-    Int min_memory = 96 # this min_memory magic number is purely empirical
+    Int min_memory = 192 # this min_memory magic number is purely empirical
     Int proposed_memory = ceil(size(reads, "GiB"))
     Int memory = if proposed_memory < min_memory then min_memory else if proposed_memory > 512 then 512 else proposed_memory
     Int n = memory / 6  # this might be an odd number
