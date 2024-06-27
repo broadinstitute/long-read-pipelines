@@ -49,6 +49,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         use_gnarly_genotyper: "If true, the `GnarlyGenotyper` will be used, greatly speeding up joint genotyping (at the cost of potentially lower accuracy).  Setting this to true is recommended for large callsets.  If false, `GenotypeGVCFs` will be used to generate the final VCF.  Default is false."
 
+        shard_max_interval_size_bp: "Maximum size of the interval on each shard.  This along with the given sequence dictionary determines how many shards there will be.  To shard by contig, set to a very high number.  Default is 999999999."
+
         prefix: "Prefix to use for output files."
         gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
     }
@@ -58,8 +60,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[File] gvcf_indices
 
         File ref_map_file
-
-        File interval_list
 
         Float heterozygosity = 0.001
         Float heterozygosity_stdev = 0.01
@@ -95,7 +95,11 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         File? snpeff_db
 
+        File? interval_list
+
         Boolean use_gnarly_genotyper = false
+
+        Int shard_max_interval_size_bp = 999999999
 
         String prefix
 
@@ -104,12 +108,6 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    # Create interval list over which to shard the processing:
-    call UTILS.MakeChrIntervalList as MakeChrIntervalList {
-        input:
-            ref_dict = ref_map['dict'],
-    }
-
     # Create sample-name map:
     call SRJOINT.CreateSampleNameMap as CreateSampleNameMap {
         input:
@@ -117,21 +115,46 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             prefix = prefix
     }
 
-    # Shard by contig for speed:
-    scatter (idx_1 in range(length(MakeChrIntervalList.contig_interval_list_files))) {
+    # Get our interval list:
+    if (!defined(interval_list)) {
+        # If we have to, create interval list over which to shard the processing:
+        call UTILS.MakeIntervalListFromSequenceDictionary as MakeIntervalListFromSequenceDictionary {
+            input:
+                ref_dict = ref_map['dict'],
+                max_interval_size = shard_max_interval_size_bp
+        }
+    }
+    File actual_interval_list = select_first([interval_list, MakeIntervalListFromSequenceDictionary.interval_list])
 
-        String contig = MakeChrIntervalList.chrs[idx_1][0]
-        File contig_interval_list = MakeChrIntervalList.contig_interval_list_files[idx_1]
+    # Get the interval name info for our files below:
+    call UTILS.ExtractIntervalNamesFromIntervalOrBamFile as ExtractIntervalNamesFromIntervalOrBamFile {
+        input:
+            interval_file = actual_interval_list
+    }
+
+    # Shard by contig for speed:
+    scatter (idx_1 in range(length(ExtractIntervalNamesFromIntervalOrBamFile.interval_info))) {
+
+        String interval_name = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][0] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][1] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][2]
+
+        # To make sure the interval names and the files themselves correspond, we need to make the
+        # interval list file here:
+        call UTILS.CreateIntervalListFileFromIntervalInfo as CreateIntervalListFileFromIntervalInfo {
+            input:
+                contig = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][0],
+                start = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][1],
+                end = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_1][2]
+        }
 
         # Import our data into GenomicsDB:
         call SRJOINT.ImportGVCFs as ImportGVCFsIntoGenomicsDB {
             input:
                 sample_name_map = CreateSampleNameMap.sample_name_map,
-                interval_list   = contig_interval_list,
+                interval_list   = CreateIntervalListFileFromIntervalInfo.interval_list,
                 ref_fasta       = ref_map['fasta'],
                 ref_fasta_fai   = ref_map['fai'],
                 ref_dict        = ref_map['dict'],
-                prefix          = prefix + "." + contig,
+                prefix          = prefix + "." + interval_name,
                 batch_size      = 50,
                 # We need to override this because we're not actually sending the GVCF over (just a list)
                 # ALSO, we're currently tarring the genomicsDB, so we need at least double the space here, plus some slop:
@@ -143,12 +166,12 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             call SRJOINT.GnarlyGenotypeGVCFs as GnarlyJointCallGVCFs {
                 input:
                     input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
-                    interval_list   = contig_interval_list,
+                    interval_list   = CreateIntervalListFileFromIntervalInfo.interval_list,
                     ref_fasta       = ref_map['fasta'],
                     ref_fasta_fai   = ref_map['fai'],
                     ref_dict        = ref_map['dict'],
                     dbsnp_vcf       = ref_map["known_sites_vcf"],
-                    prefix          = prefix + "." + contig + ".gnarly_genotyper.raw",
+                    prefix          = prefix + "." + interval_name + ".gnarly_genotyper.raw",
                     heterozygosity = heterozygosity,
                     heterozygosity_stdev = heterozygosity_stdev,
                     indel_heterozygosity = indel_heterozygosity,
@@ -159,12 +182,12 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             call SRJOINT.GenotypeGVCFs as JointCallGVCFs {
                 input:
                     input_gvcf_data = ImportGVCFsIntoGenomicsDB.output_genomicsdb,
-                    interval_list   = contig_interval_list,
+                    interval_list   = CreateIntervalListFileFromIntervalInfo.interval_list,
                     ref_fasta       = ref_map['fasta'],
                     ref_fasta_fai   = ref_map['fai'],
                     ref_dict        = ref_map['dict'],
                     dbsnp_vcf       = ref_map["known_sites_vcf"],
-                    prefix          = prefix + "." + contig + ".genotype_gvcfs.raw",
+                    prefix          = prefix + "." + interval_name + ".genotype_gvcfs.raw",
                     heterozygosity = heterozygosity,
                     heterozygosity_stdev = heterozygosity_stdev,
                     indel_heterozygosity = indel_heterozygosity,
@@ -180,7 +203,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             input:
                 vcf = joint_vcf,
                 vcf_index = joint_vcf_index,
-                prefix = prefix + "." + contig + ".sites_only"
+                prefix = prefix + "." + interval_name + ".sites_only"
         }
     }
 
@@ -247,9 +270,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     # Shard by contig for speed:
-    scatter (idx_2 in range(length(joint_vcf))) {
+    scatter (idx_2 in range(length(ExtractIntervalNamesFromIntervalOrBamFile.interval_info))) {
 
-        String contig_2 = MakeChrIntervalList.chrs[idx_2][0]
+        String interval_name2 = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_2][0] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_2][1] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_2][2]
         File joint_called_vcf = joint_vcf[idx_2]
         File joint_called_vcf_index = joint_vcf_index[idx_2]
 
@@ -267,7 +290,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                     TrainSnpVariantAnnotationsModel.calibration_set_scores,
                     TrainSnpVariantAnnotationsModel.negative_model_scorer_pickle
                 ])]),
-                prefix = prefix + "_SNP_" + contig_2,
+                prefix = prefix + "_SNP_" + interval_name2,
                 mode = "SNP",
 
                 calibration_sensitivity_threshold = snp_calibration_sensitivity,
@@ -295,7 +318,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                     TrainIndelVariantAnnotationsModel.calibration_set_scores,
                     TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle
                 ])]),
-                prefix = prefix + "_ALL_" + contig_2,
+                prefix = prefix + "_ALL_" + interval_name2,
                 mode = "INDEL",
 
                 calibration_sensitivity_threshold = indel_calibration_sensitivity,
@@ -445,30 +468,30 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle]) }
         }
 
-        # ScoreVariantAnnotations
-        # This was done per-contig, so we need to finalize per-contig:
-        scatter (idx_3 in range(length(MakeChrIntervalList.contig_interval_list_files))) {
+    # ScoreVariantAnnotations
+    # This was done per-contig, so we need to finalize per-contig:
+    scatter (idx_3 in range(length(ExtractIntervalNamesFromIntervalOrBamFile.interval_info))) {
 
-            String contig_3 = MakeChrIntervalList.chrs[idx_3][0]
+        String interval_name3 = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][0] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][1] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][2]
 
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf[idx_3] }
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf_index[idx_3] }
-            if (defined(ScoreSnpVariantAnnotations.annotations_hdf5)) {
-                call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.annotations_hdf5[idx_3]]) }
-            }
-            if (defined(ScoreSnpVariantAnnotations.scores_hdf5)) {
-                call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.scores_hdf5[idx_3]]) }
-            }
-
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf[idx_3] }
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index[idx_3] }
-            if (defined(ScoreIndelVariantAnnotations.annotations_hdf5)) {
-                call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.annotations_hdf5[idx_3]]) }
-            }
-            if (defined(ScoreIndelVariantAnnotations.scores_hdf5)) {
-                call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + contig_3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.scores_hdf5[idx_3]]) }
-            }
+        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf[idx_3] }
+        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf_index[idx_3] }
+        if (defined(ScoreSnpVariantAnnotations.annotations_hdf5)) {
+            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.annotations_hdf5[idx_3]]) }
         }
+        if (defined(ScoreSnpVariantAnnotations.scores_hdf5)) {
+            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.scores_hdf5[idx_3]]) }
+        }
+
+        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf[idx_3] }
+        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index[idx_3] }
+        if (defined(ScoreIndelVariantAnnotations.annotations_hdf5)) {
+            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.annotations_hdf5[idx_3]]) }
+        }
+        if (defined(ScoreIndelVariantAnnotations.scores_hdf5)) {
+            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.scores_hdf5[idx_3]]) }
+        }
+    }
 
         call FF.FinalizeToFile as FinalizeZarr { input: outdir = outdir, keyfile = keyfile, file = ConvertToZarr.zarr }
 

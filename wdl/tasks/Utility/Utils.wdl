@@ -191,6 +191,274 @@ task MakeChrIntervalList {
     }
 }
 
+task ExtractIntervalNamesFromIntervalOrBamFile {
+
+    meta {
+        description: "Pulls the contig names and regions out of an interval list or bed file."
+    }
+
+    parameter_meta {
+        interval_file: "Interval list or bed file from which to extract contig names and regions."
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
+    input {
+        File interval_file
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10
+
+    String interval_tsv_filename = "intervals.tsv"
+
+    command <<<
+        set -euxo pipefail
+
+        python3 <<CODE
+
+        import re
+        interval_re = re.compile('''(.*?):(\d+)-(\d+)''')
+
+        def parse_bed_or_interval_file_for_names(interval_file):
+
+            interval_names = []
+
+            with open(interval_file, 'r') as f:
+                if interval_file.endswith(".bed"):
+                    for line in f:
+                        fields = line.strip().split("\t")
+                        contig = fields[0]
+                        start = int(fields[1])
+                        end = int(fields[2])
+
+                        interval_names.append((contig, start, end))
+                else:
+                    for line in f:
+                        match = interval_re.match(line.strip())
+                        if not match:
+                            raise RuntimeError(f"BAD NEWS!  DIDN'T MATCH OUR REGEX FOR INTERVAL LISTS!  ARE YOUR FILE EXTENSIONS CORRECT?  Line: {line}")
+                        else:
+                            contig = match.group(1)
+                            start = int(match.group(2))
+                            end = int(match.group(3))
+
+                        interval_names.append((contig, start, end))
+            return interval_names
+
+        # Get our intervals:
+        intervals_names = parse_bed_or_interval_file_for_names("~{interval_file}")
+
+        # Print our interval names to stdout:
+        print("Interval info:")
+        for interval in intervals_names:
+            print(f"{interval[0]}:{interval[1]}-{interval[2]}")
+        print()
+
+        # Write out the master interval list and individual interval files:
+        with open("~{interval_tsv_filename}", 'w') as f:
+            for interval in intervals_names:
+                f.write(f"{interval[0]}\t{interval[1]}\t{interval[2]}\n")
+
+        print(f"Wrote all interval info to: ~{interval_tsv_filename}")
+
+        CODE
+    >>>
+
+    output {
+        Array[Array[String]] interval_info = read_tsv(interval_tsv_filename)
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task MakeIntervalListFromSequenceDictionary {
+
+    meta {
+        description: "Make a Picard-style list of intervals that covers the given reference genome dictionary, with intervals no larger than the given size limit."
+    }
+
+    parameter_meta {
+        ref_dict: "The reference dictionary"
+        ignore_contigs: "A list of strings to filter out of the reference dictionary"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
+    input {
+        File ref_dict
+        Int max_interval_size = 10000
+        Array[String] ignore_contigs = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10
+
+    String out_master_interval_filename = "intervalList.intervals"
+    String interval_tsv_filename = "intervals.tsv"
+
+    command <<<
+        set -euxo pipefail
+
+        python3 <<CODE
+
+        import re
+
+        def create_intervals(sequence_dictionary_file: str, max_interval_size_bp: int, ignore_contigs: list = []) -> list:
+
+            # First read in our sequence dictionary:
+            sq_re = re.compile("@SQ[\t ]+SN:(\w+)[\t ]+LN:(\d+)[\t ].*")
+            seq_dict = dict()
+            with open(sequence_dictionary_file, 'r') as f:
+                for line in f:
+                    m = sq_re.match(line)
+                    if m and m.group(1) not in ignore_contigs:
+                        seq_dict[m.group(1)] = int(m.group(2))
+
+            # Now create a list of intervals with size constraints:
+            intervals = list()
+            for contig, length in seq_dict.items():
+                if length <= max_interval_size_bp:
+                    intervals.append((contig, 1, length))
+                else:
+                    # We need to split the contig into parts:
+                    for i in range(1, length+1, max_interval_size_bp):
+                        if i+max_interval_size_bp-1 > length:
+                            intervals.append((contig, i, length))
+                        else:
+                            intervals.append((contig, i, i+max_interval_size_bp-1))
+
+                    if intervals[-1][-1] != length:
+                        intervals.append((contig, i+max_interval_size_bp, length))
+
+            return intervals
+
+        # Get our intervals:
+        intervals = create_intervals("~{ref_dict}", ~{max_interval_size}, ["~{sep='","' ignore_contigs}"])
+
+        # Print our intervals to stdout:
+        print(f"Generated {len(intervals)} intervals:")
+        for interval in intervals:
+            print(f"{interval[0]}:{interval[1]}-{interval[2]}")
+        print()
+
+        # Write out the master interval list and individual interval files:
+        with open("~{out_master_interval_filename}", 'w') as f:
+            with open("~{interval_tsv_filename}", 'w') as f2:
+                for interval in intervals:
+                    this_interval_filename = f"{interval[0]}.{interval[1]}_{interval[2]}.intervals"
+
+                    f.write(f"{interval[0]}:{interval[1]}-{interval[2]}\n")
+                    f2.write(f"{interval[0]}\t{interval[1]}\t{interval[2]}\n")
+
+        print(f"Wrote all intervals to: ~{out_master_interval_filename}")
+        print(f"Wrote individual intervals to separate named interval files.")
+
+        CODE
+    >>>
+
+    output {
+        File interval_list = out_master_interval_filename
+        Array[Array[String]] interval_info = read_tsv(interval_tsv_filename)
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CreateIntervalListFileFromIntervalInfo {
+
+    meta {
+        description: "Make a Picard-style interval list file from the given interval info."
+    }
+
+    parameter_meta {
+        contig: "Contig for the interval."
+        start: "Start position for the interval."
+        end: "End position for the interval."
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
+    input {
+        String contig
+        String start
+        String end
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10
+
+    String out_interval_list = "~{contig}.~{start}_~{end}.intervals"
+
+    command <<<
+        set -euxo pipefail
+
+        echo "~{contig}:~{start}-~{end}" > ~{out_interval_list}
+    >>>
+
+    output {
+        File interval_list = out_interval_list
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "ubuntu:22.04"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task CountBamRecords {
 
     meta {
