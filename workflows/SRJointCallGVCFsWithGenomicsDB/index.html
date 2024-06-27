@@ -327,7 +327,6 @@
 <li><code>indel_known_reference_variants</code> (Array[File], <strong>required</strong>): Array of VCF files to use as input reference variants for INDELs.  Each can be designated as either calibration or training using <code>indel_is_training</code> and <code>indel_is_calibration</code>.</li>
 <li><code>indel_known_reference_variants_identifier</code> (Array[File], <strong>required</strong>): Array of names to give to the VCF files given in <code>indel_known_reference_variants</code>.  Order should correspond to that in <code>indel_known_reference_variants</code>.</li>
 <li><code>indel_known_reference_variants_index</code> (Array[File], <strong>required</strong>): Array of VCF index files for <code>indel_known_reference_variants</code>.  Order should correspond to that in <code>indel_known_reference_variants</code>.</li>
-<li><code>interval_list</code> (File, <strong>required</strong>)</li>
 <li><code>prefix</code> (String, <strong>required</strong>): Prefix to use for output files.</li>
 <li><code>ref_map_file</code> (File, <strong>required</strong>): Reference map file indicating reference sequence and auxillary file locations</li>
 <li><code>snp_is_calibration</code> (Array[Boolean], <strong>required</strong>): Array of booleans indicating which files in <code>snp_known_reference_variants</code> should be used as calibration sets.  True -&gt;calibration set.  False -&gt; NOT a calibration set.</li>
@@ -342,14 +341,17 @@
 <li><code>annotation_bed_file_indexes</code> (Array[File]?): Array of bed indexes for <code>annotation_bed_files</code>.  Order should correspond to <code>annotation_bed_files</code>.</li>
 <li><code>annotation_bed_files</code> (Array[File]?): Array of bed files to use to FILTER/annotate variants in the output file.  Annotations will be placed in the FILTER column, effectively filtering variants that overlap these regions.</li>
 <li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
+<li><code>interval_list</code> (File?)</li>
 <li><code>snpeff_db</code> (File?)</li>
 <li><code>AnnotateVcfRegions.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ConvertToZarr.ref_fai</code> (String?)</li>
 <li><code>ConvertToZarr.ref_fasta</code> (String?)</li>
 <li><code>ConvertToZarr.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CreateHailMatrixTable.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>CreateIntervalListFileFromIntervalInfo.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CreateSampleNameMap.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ExtractIndelVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ExtractIntervalNamesFromIntervalOrBamFile.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ExtractSnpVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeGenomicsDB.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeHailMatrixTable.name</code> (String?)</li>
@@ -423,7 +425,7 @@
 <li><code>GatherRescoredVcfs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>GnarlyJointCallGVCFs.input_gvcf_index</code> (File?)</li>
 <li><code>JointCallGVCFs.input_gvcf_index</code> (File?)</li>
-<li><code>MakeChrIntervalList.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>MakeIntervalListFromSequenceDictionary.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MakeSitesOnlyVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MergeSitesOnlyVCFs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ScoreIndelVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -441,6 +443,7 @@
 <li><code>indel_heterozygosity</code> (Float, default=0.000125): Joint Genotyping Parameter - Heterozygosity for indel calling. See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept</li>
 <li><code>indel_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled INDEL variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
 <li><code>indel_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the INDEL variant scoring model and over which to score INDEL variants.</li>
+<li><code>shard_max_interval_size_bp</code> (Int, default=999999999): Maximum size of the interval on each shard.  This along with the given sequence dictionary determines how many shards there will be.  To shard by contig, set to a very high number.  Default is 999999999.</li>
 <li><code>snp_calibration_sensitivity</code> (Float, default=0.99): VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered.</li>
 <li><code>snp_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
 <li><code>snp_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants.</li>
@@ -449,7 +452,7 @@
 <li><code>ConvertToZarr.reference</code> (String, default="GRCh38")</li>
 <li><code>GnarlyJointCallGVCFs.keep_combined_raw_annotations</code> (Boolean, default=false)</li>
 <li><code>JointCallGVCFs.keep_combined_raw_annotations</code> (Boolean, default=false)</li>
-<li><code>MakeChrIntervalList.filter</code> (Array[String], default=['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV'])</li>
+<li><code>MakeIntervalListFromSequenceDictionary.ignore_contigs</code> (Array[String], default=['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV'])</li>
 <li><code>TrainIndelVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
 <li><code>TrainSnpVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
 </ul>

@@ -19,6 +19,6 @@ digraph {
 	"call-CallVariantsWithHC" -> "call-MergeVariantCalledBamOuts"
 	"call-MergeVariantCalledBamOuts" -> "call-IndexBamout"
 	"call-MergeGVCFs" -> "call-ReblockHcGVCF"
-	"call-SmallVariantsScatterPrep" -> "call-CollapseGVCFtoVCF"
 	"call-ReblockHcGVCF" -> "call-CollapseGVCFtoVCF"
+	"call-SmallVariantsScatterPrep" -> "call-CollapseGVCFtoVCF"
 }
