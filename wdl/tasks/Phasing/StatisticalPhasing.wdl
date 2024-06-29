@@ -21,7 +21,7 @@ task Shapeit4 {
         # bash /opt/vm_local_monitoring_script.sh &> resources.log &
         # job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
 
-        shapeit4 --input ~{vcf_input} \
+        shapeit4.2 --input ~{vcf_input} \
                 --map ~{mappingfile} \
                 --region ~{region} \
                 --use-PS 0.0001 \
@@ -48,7 +48,7 @@ task Shapeit4 {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "hangsuunc/hiphase:1.3.0"
+        docker:             "hangsuunc/shapeit4:v1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -81,7 +81,7 @@ task Shapeit4_phaseSVs {
         # add AN AC tag
         bcftools index ~{scaffold_vcf}
 
-        shapeit4 \
+        shapeit4.2 \
         --input ~{vcf_input} \
         --scaffold ~{scaffold_vcf} \
         --map ~{mappingfile} \
@@ -107,7 +107,7 @@ task Shapeit4_phaseSVs {
         boot_disk_gb:       100,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "hangsuunc/hiphase:1.3.0"
+        docker:             "hangsuunc/shapeit4:v1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
