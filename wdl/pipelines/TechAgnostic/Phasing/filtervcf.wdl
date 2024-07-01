@@ -325,13 +325,14 @@ task ConcatVCFs {
     command <<<
         set -euxo pipefail
         bcftools concat ~{bcftools_small_vcf} ~{bcftools_sv_vcf} -Oz -o ~{prefix}_integrated.vcf.gz
-        tabix -p vcf ~{prefix}_integrated.vcf.gz
+        bcftools sort ~{prefix}_integrated.vcf.gz -O z -o ~{prefix}_integrated_sorted.vcf.gz
+        tabix -p vcf ~{prefix}_integrated_sorted.vcf.gz
         
     >>>
 
     output {
-        File concat_vcf = "~{prefix}_integrated.vcf.gz"
-        File concat_vcf_tbi = "~{prefix}_integrated.vcf.gz.tbi"
+        File concat_vcf = "~{prefix}_integrated_sorted.vcf.gz"
+        File concat_vcf_tbi = "~{prefix}_integrated_sorted.vcf.gz.tbi"
     }
     ###################
     runtime {

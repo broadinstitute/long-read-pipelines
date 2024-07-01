@@ -324,7 +324,7 @@ task ConcatVCFs {
 
     command <<<
         set -euxo pipefail
-        bcftools concat bcftools_small_vcf bcftools_sv_vcf -Oz -o ~{prefix}_integrated.vcf.gz
+        bcftools concat ~{bcftools_small_vcf} ~{bcftools_sv_vcf} -Oz -o ~{prefix}_integrated.vcf.gz
         tabix -p vcf ~{prefix}_integrated.vcf.gz
         
     >>>
