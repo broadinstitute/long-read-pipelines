@@ -28,8 +28,6 @@ workflow HybridPhase {
     input {
         Array[File] wholegenome_bams_from_all_samples
         Array[File] wholegenome_bais_from_all_samples
-        # Array[File] wholegenome_sv_vcf
-        # Array[File] wholegenome_sv_vcf_tbi
 
         File wholegenome_joint_vcf
         File wholegenome_joint_vcf_tbi
@@ -66,8 +64,6 @@ workflow HybridPhase {
     scatter (idx in indexes)  {
         File all_chr_bam = wholegenome_bams_from_all_samples[idx]
         File all_chr_bai = wholegenome_bais_from_all_samples[idx]
-        # File pbsv_vcf = wholegenome_sv_vcf[idx]
-        # File pbsv_vcf_tbi = wholegenome_sv_vcf_tbi[idx]
 
         ####### Subset Bam####
         call U.SubsetBam as SubsetBam { input:
@@ -75,11 +71,7 @@ workflow HybridPhase {
             bai = all_chr_bai,
             locus = region
         }
-        # call VU.SubsetVCF as SubsetSVs { input:
-        #     vcf_gz = pbsv_vcf,
-        #     vcf_tbi = pbsv_vcf_tbi,
-        #     locus = chromosome
-        # }
+
         ####### DONE ######
 
 
@@ -101,15 +93,6 @@ workflow HybridPhase {
             samplename = sample_id
         }
 
-        # call Hiphase.HiphaseSNPs as HP{ input:
-        #     bam = SubsetBam.subset_bam,
-        #     bai = SubsetBam.subset_bai,
-        #     unphased_snp_vcf = SP.single_sample_vcf,
-        #     unphased_snp_tbi = SP.single_sample_vcf_tbi,            
-        #     ref_fasta = reference,
-        #     ref_fasta_fai = reference_index,
-        #     samplename = sample_id
-        # }
         call convert as cleanvcf{
             input:
                 vcf = SV_split.single_sample_vcf,
@@ -142,9 +125,32 @@ workflow HybridPhase {
         bcftools_merged_vcf_tbi = MergeAcrossSamples.merged_tbi,
         prefix = prefix
     }
+    ##### add filtering small variants step #######
+    call FilterSmallVariants as Filter_SNPs{ input:
+        bcftools_vcf = Norm_SNPs.normed_vcf,
+        bcftools_vcf_tbi = Norm_SNPs.normed_vcf_tbi,
+        prefix = prefix
+    }
+
+    ##### add merge small + sv vcf step #######
+    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
+        vcf_input = HP_SV.phased_sv_vcf,
+        tbi_input = HP_SV.phased_sv_vcf_tbi,
+        pref = prefix
+    }
+    call ConcatVCFs { input:
+        bcftools_small_vcf = Filter_SNPs.filtered_vcf,
+        bcftools_small_vcf_tbi = Filter_SNPs.filtered_vcf_tbi,
+        bcftools_sv_vcf = MergeAcrossSamplesSVs.merged_vcf,
+        bcftools_sv_vcf_tbi = MergeAcrossSamplesSVs.merged_tbi,
+        prefix = prefix
+    }
+
+
+    ################################
     call StatPhase.Shapeit4 as Shapeit4scaffold { input:
-        vcf_input = Norm_SNPs.normed_vcf,
-        vcf_index = Norm_SNPs.normed_vcf_tbi,
+        vcf_input = ConcatVCFs.concat_vcf,
+        vcf_index = ConcatVCFs.concat_vcf_tbi,
         mappingfile = genetic_mapping_dict[chromosome],
         region = region,
         num_threads = num_t
@@ -153,26 +159,22 @@ workflow HybridPhase {
         input: outdir = gcs_out_root_dir, file = Shapeit4scaffold.scaffold_vcf
     }
     ##### phase structural variants
-    call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
-        vcf_input = HP_SV.phased_sv_vcf,
-        tbi_input = HP_SV.phased_sv_vcf_tbi,
-        pref = prefix
-    }
-    call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
-        vcf_input = MergeAcrossSamplesSVs.merged_vcf,
-        vcf_index = MergeAcrossSamplesSVs.merged_tbi,
-        scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
-        mappingfile = genetic_mapping_dict[chromosome],
-        region = region,
-        num_threads = num_t
-    }
-    call FF.FinalizeToFile as FinalizeSVs {
-        input: outdir = gcs_out_root_dir, file = Shapeit4SVphase.final_phased_vcf
-    }
+
+    # call StatPhase.Shapeit4_phaseSVs as Shapeit4SVphase { input:
+    #     vcf_input = MergeAcrossSamplesSVs.merged_vcf,
+    #     vcf_index = MergeAcrossSamplesSVs.merged_tbi,
+    #     scaffold_vcf = Shapeit4scaffold.scaffold_vcf,
+    #     mappingfile = genetic_mapping_dict[chromosome],
+    #     region = region,
+    #     num_threads = num_t
+    # }
+    # call FF.FinalizeToFile as FinalizeSVs {
+    #     input: outdir = gcs_out_root_dir, file = Shapeit4SVphase.final_phased_vcf
+    # }
 
     output{
         File snp_shapeit4scaffold = Shapeit4scaffold.scaffold_vcf
-        File sv_shapeit4scaffold = Shapeit4SVphase.final_phased_vcf
+        # File sv_shapeit4scaffold = Shapeit4SVphase.final_phased_vcf
         
     }
 }
@@ -248,6 +250,88 @@ task SplitMultiallelicCalls {
     output {
         File normed_vcf = " ~{prefix}.normed.vcf.gz"
         File normed_vcf_tbi = "~{prefix}.normed.vcf.gz.tbi"
+    }
+    ###################
+    runtime {
+        cpu: 1
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
+    }
+
+}
+
+task FilterSmallVariants {
+
+    meta {
+        description: "using bcftools to filter small variants by F-missing and MAC"
+    }
+
+    parameter_meta {
+        bcftools_vcf: "bcftools merged vcf files"
+    }
+
+    input {
+        File bcftools_vcf
+        File bcftools_vcf_tbi
+        String prefix
+    }
+
+    command <<<
+        set -euxo pipefail
+        bcftools view -i 'F_MISSING < 0.05 & MAC>=2' ~{bcftools_vcf} | bgzip > ~{prefix}.filtered.vcf.gz
+        tabix -p vcf ~{prefix}.filtered.vcf.gz
+        
+    >>>
+
+    output {
+        File filtered_vcf = "~{prefix}.filtered.vcf.gz"
+        File filtered_vcf_tbi = "~{prefix}.filtered.vcf.gz.tbi"
+    }
+    ###################
+    runtime {
+        cpu: 1
+        memory:  "4 GiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 10
+        preemptible_tries:     3
+        max_retries:           2
+        docker:"us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.2"
+    }
+
+}
+
+task ConcatVCFs {
+
+    meta {
+        description: "using bcftools to concatenate small variants and SVs"
+    }
+
+    parameter_meta {
+        bcftools_small_vcf: "bcftools merged vcf files"
+    }
+
+    input {
+        File bcftools_small_vcf
+        File bcftools_small_vcf_tbi
+        File bcftools_sv_vcf
+        File bcftools_sv_vcf_tbi
+        String prefix
+    }
+
+    command <<<
+        set -euxo pipefail
+        bcftools concat bcftools_small_vcf bcftools_sv_vcf -Oz -o ~{prefix}_integrated.vcf.gz
+        tabix -p vcf ~{prefix}_integrated.vcf.gz
+        
+    >>>
+
+    output {
+        File concat_vcf = "~{prefix}_integrated.vcf.gz"
+        File concat_vcf_tbi = "~{prefix}_integrated.vcf.gz.tbi"
     }
     ###################
     runtime {
