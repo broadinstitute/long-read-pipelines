@@ -144,3 +144,6 @@ workflows:
 - name: ReadManifestTableStatistical
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/ReadManifestTableStatistical.wdl
+- name: FilterVcfHybridPhasing
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/filtervcf.wdl
