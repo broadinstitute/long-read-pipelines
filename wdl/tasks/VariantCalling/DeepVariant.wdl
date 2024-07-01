@@ -63,7 +63,7 @@ workflow Run {
             Boolean is_38_chr1  = length(how_to_shard_wg_for_calling) > 20 && shard_id == "1-p"
             Boolean pay_fee_and_go = is_t2t_chrX || is_38_chr1
             Int use_this_memory = if ( pay_fee_and_go ) then 48 else dv_memory
-            RuntimeAttr preemption_override = {"preemptible_tries": if ( pay_fee_and_go ) then 0 else 1}
+            # RuntimeAttr preemption_override = {"preemptible_tries": if ( pay_fee_and_go ) then 0 else 1}
             call DV as DeepV {
                 input:
                     bam           = shard_bam,
@@ -79,7 +79,7 @@ workflow Run {
                     threads = select_first([dv_threads]),
                     memory  = use_this_memory, # select_first([dv_memory]),
                     zones = zones,
-                    runtime_attr_override = preemption_override
+                    # runtime_attr_override = preemption_override
             }
         }
 
