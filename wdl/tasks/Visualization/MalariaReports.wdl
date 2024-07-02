@@ -94,7 +94,7 @@ task RunReportScript {
         # ------ Analysis Page ------ #
         
         # Barcode
-        String barcode
+        String barcode?
         
         # Q-Scores Plot
         Int num_reads_q5
@@ -166,7 +166,7 @@ task RunReportScript {
             --longitude ~{default=0 longitude} \
             --latitude ~{default=0 latitude} \
             --location ~{default="N/A" wrap_location} \
-            --barcode ~{barcode} \
+            --barcode ~{default="N/A" barcode} \
             --num_reads_q5 ~{num_reads_q5} \
             --num_reads_q7 ~{num_reads_q7} \
             --num_reads_q10 ~{num_reads_q10} \

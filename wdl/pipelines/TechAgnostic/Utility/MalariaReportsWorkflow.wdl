@@ -96,7 +96,7 @@ workflow GenerateMalariaReports {
 
         # ------ Analysis Page ------ #
         
-        String barcode
+        String barcode?
         
         # Q-Scores Plot
         Int num_reads_q5
