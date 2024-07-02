@@ -324,7 +324,7 @@ task ConcatVCFs {
 
     command <<<
         set -euxo pipefail
-        bcftools concat --ligate-warn ~{bcftools_small_vcf} ~{bcftools_sv_vcf} -Oz -o ~{prefix}_integrated.vcf.gz
+        bcftools concat --allow-overlaps ~{bcftools_small_vcf} ~{bcftools_sv_vcf} -Oz -o ~{prefix}_integrated.vcf.gz
         bcftools sort ~{prefix}_integrated.vcf.gz -O z -o ~{prefix}_integrated_sorted.vcf.gz
         tabix -p vcf ~{prefix}_integrated_sorted.vcf.gz
         
