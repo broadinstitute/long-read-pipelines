@@ -598,7 +598,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     ''' Summary Page '''
-    parser.add_argument("--barcode", help="barcode of the sample", required=True)
+    parser.add_argument("--barcode", help="barcode of the sample", required=True, default="N/A")
     
     # Sample Info
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
