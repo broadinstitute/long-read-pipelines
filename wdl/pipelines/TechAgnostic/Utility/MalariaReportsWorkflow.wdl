@@ -73,11 +73,11 @@ workflow GenerateMalariaReports {
         String sample_name
         String upload_date
         String collection_date
-        String sequencing_date
+        String? sequencing_date
         String? species
         Float aligned_coverage
-        Float aligned_read_length
-        Float pct_properly_paired_reads
+        Float? aligned_read_length
+        Float? pct_properly_paired_reads
         Float? read_qual_median
         Float? read_qual_mean
 
@@ -96,7 +96,7 @@ workflow GenerateMalariaReports {
 
         # ------ Analysis Page ------ #
         
-        String barcode?
+        String? barcode
         
         # Q-Scores Plot
         Int num_reads_q5

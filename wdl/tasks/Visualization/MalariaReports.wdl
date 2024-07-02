@@ -73,8 +73,8 @@ task RunReportScript {
         String sequencing_date
         String? species
         Float aligned_coverage
-        Float aligned_read_length
-        Float pct_properly_paired_reads
+        Float? aligned_read_length
+        Float? pct_properly_paired_reads
         Float? read_qual_median
         Float? read_qual_mean
 
@@ -94,7 +94,7 @@ task RunReportScript {
         # ------ Analysis Page ------ #
         
         # Barcode
-        String barcode?
+        String? barcode
         
         # Q-Scores Plot
         Int num_reads_q5
@@ -156,8 +156,8 @@ task RunReportScript {
             --sequencing_date ~{default="N/A" sequencing_date} \
             --species ~{default="P. falciparum" species} \
             --aligned_coverage ~{aligned_coverage} \
-            --aligned_read_length ~{aligned_read_length} \
-            --pct_properly_paired_reads ~{pct_properly_paired_reads} \
+            --aligned_read_length ~{default=0 aligned_read_length} \
+            --pct_properly_paired_reads ~{default=0 pct_properly_paired_reads} \
             --read_qual_median ~{read_qual_median} \
             --read_qual_mean ~{read_qual_mean} \
             --drug_resistance_text ~{default="None" drug_resistance_text} \
