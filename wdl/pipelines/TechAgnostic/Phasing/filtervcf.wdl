@@ -126,11 +126,11 @@ workflow HybridPhase {
         prefix = prefix
     }
     ##### add filtering small variants step #######
-    call FilterSmallVariants as Filter_SNPs{ input:
-        bcftools_vcf = Norm_SNPs.normed_vcf,
-        bcftools_vcf_tbi = Norm_SNPs.normed_vcf_tbi,
-        prefix = prefix
-    }
+    # call FilterSmallVariants as Filter_SNPs{ input:
+    #     bcftools_vcf = Norm_SNPs.normed_vcf,
+    #     bcftools_vcf_tbi = Norm_SNPs.normed_vcf_tbi,
+    #     prefix = prefix
+    # }
 
     ##### add merge small + sv vcf step #######
     # call VU.MergePerChrVcfWithBcftools as MergeAcrossSamplesSVs { input:
@@ -139,8 +139,8 @@ workflow HybridPhase {
     #     pref = prefix
     # }
     call ConcatVCFs { input:
-        bcftools_small_vcf = Filter_SNPs.filtered_vcf,
-        bcftools_small_vcf_tbi = Filter_SNPs.filtered_vcf_tbi,
+        bcftools_small_vcf = Norm_SNPs.normed_vcf,
+        bcftools_small_vcf_tbi = Norm_SNPs.normed_vcf_tbi,
         bcftools_sv_vcf = phased_joint_sv,
         bcftools_sv_vcf_tbi = phased_joint_sv_tbi,
         prefix = prefix
