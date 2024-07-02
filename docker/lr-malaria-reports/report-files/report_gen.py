@@ -524,7 +524,7 @@ def prepare_summary_data(arg_dict):
     elif (qc_pass == "false"):
         qc_pass = "FAIL"
 
-    resistances = create_drug_table(check_na(arg_dict['drug_resistance_text']))
+    resistances = create_drug_table(None if arg_dict["drug_resistance_text"] in [None, "None", ""] else arg_dict["drug_resistance_text"])
 
     location_info = [round(arg_dict['latitude'], 2), round(arg_dict['longitude'], 2), arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
