@@ -9,7 +9,6 @@ import re
 from enum import Enum
 import glob
 
-
 # Plotting
 import matplotlib.pyplot as plt
 import matplotlib
@@ -17,7 +16,6 @@ import plotly.express as px
 import folium
 import plotly.graph_objects as go
 import math
-
 
 # HTML
 from markupsafe import Markup
@@ -29,7 +27,6 @@ import urllib.parse
 
 # Argument Parsing
 import argparse
-
 
 ''' 
 matplotlib render settings
@@ -57,7 +54,6 @@ gTEXT_FONT_SIZE = 16
 
 # To track global figure number creation:
 gFIG_NUM = 0
-
 
 def fix_plot_visuals(fig,
                      titlesize=gTITLE_FONT_SIZE,
@@ -105,8 +101,6 @@ def fix_plot_visuals(fig,
 '''
 Coverage Plot
 '''
-# Function to go through each .bed.gz file, iterate through it and bin it, and plot it
-# to a larger table which is plotted later.
 def plot_coverage(directory, sample_name, bin_width=500):
     
     # only looking for .bed.gz files
@@ -179,23 +173,6 @@ def plot_coverage(directory, sample_name, bin_width=500):
     fix_plot_visuals(fig)
             
     return fig
-
-# Function to convert given plot to b64 using I/O buffer
-def plot_to_b64(plot):
-    
-    # Create I/O buffer to save image in bytes
-    stringIObytes = io.BytesIO()
-    plot.savefig(stringIObytes, format="jpeg")
-    
-    # Retrieve byte-string and encode it in base64
-    stringIObytes.seek(0)
-    plot_b64 = base64.b64encode(stringIObytes.read())
-    
-    return plot_b64
-
-def img_to_b64(img):    
-    with open(img, "rb") as image_file:
-        return base64.b64encode(image_file.read())
     
 '''
 Drug Resistance Table
@@ -280,7 +257,6 @@ def get_pyrimethamine_sensitivity(dr_report):
                     return DrugSensitivity.SENSITIVE
                 
     return DrugSensitivity.UNDETERMINED
-
 
 def get_sulfadoxine_sensitivity(dr_report):
 # Locus utilized: PF3D7_0810800 (dhps)
@@ -385,14 +361,6 @@ def get_piperaquine_sensitivity(dr_report):
     return DrugSensitivity.UNDETERMINED
 
 def get_drug_resistance(data, sample_id, sample_df, do_print=False):
-    # Get the GSURI to the drug resistance report:
-    #row = reportable_samples.loc[reportable_samples["entity:sample_id"] == sample_id]
-    #dr_report_gs_url = row.iloc[0]["drug_res_report"]
-
-    #blob = storage.Blob.from_string(dr_report_gs_url)
-    
-    # Download the file contents:
-    #dr_report_contents = blob.download_as_text(client=my_storage_client)
     
     chloroquine = get_chloroquine_sensitivity(data)
     pyrimethamine = get_pyrimethamine_sensitivity(data)
@@ -400,18 +368,8 @@ def get_drug_resistance(data, sample_id, sample_df, do_print=False):
     mefloquine = get_mefloquine_sensitivity(data)
     artemisinin = get_artemisinin_sensitivity(data)
     piperaquine = get_piperaquine_sensitivity(data)
-
-   # if do_print:
-   #     print("\t".join([
-   #         "Sample\t", "Chloroquine", "Pyrimethamine", "Sulfadoxine", "Mefloquine", "Artemisinin", "Piperaquine"
-   #     ]))
-   #     print(f"{sample_id}\t", end='')
-   #     for r in [chloroquine, pyrimethamine, sulfadoxine, mefloquine, artemisinin, piperaquine]:
-   #         print(f"{r.name}\t", end='')
-   #     print()
         
     return chloroquine, pyrimethamine, sulfadoxine, mefloquine, artemisinin, piperaquine
- 
  
 '''
 Map
@@ -430,34 +388,6 @@ def create_map(coordinates, sample_name):
     #    f.write(map_html)
     
     return map_html
-
-
-'''
-Q-Score Plot -- Not used
-'''
-def create_qscore_plot():
-    '''
-    Function to create a q-score index vs. reads plot
-    
-    Plot is returned as an HTML file. Currently, this plot is written
-    in Javascript. This function is unused in report generation.
-    '''
-    
-    x=[5, 7, 10, 12, 15] # index
-    y=[3413205, 3413204, 3413073, 3062945, 2120402] # q scores
-    
-    df = pd.DataFrame({
-        'Q Score': x,
-        'Number of Reads': y
-    })
-    
-    fig1 = px.line(df,x="Q Score",y="Number of Reads", width=450, height=400)
-    
-    outpath="github/lr-malaria-automation-report/report_files/templates/qscore_plot.html"
-    return fig1.write_html(outpath,
-                full_html=False,
-                include_plotlyjs=True)
-
 
 '''
 FastQC Report
@@ -481,12 +411,37 @@ def read_fastqc(directory):
 Snapshots
 '''
 def get_res_loci_names(bed):
+    '''
+    Input: Bed file containing drug resistance loci and their names.
+    Output: A list of the fourth column of the bed file containing the names of all the drug resistance regions.
+    '''
     column_names = ["chromosome", "start", "end", "name"]
     bed = pd.DataFrame()
     bed = pd.read_csv(bed_file, sep="\s+", header=None, names=column_names) 
     print(bed.name)
     return list(bed.name) 
 
+'''
+Utility
+'''
+def plot_to_b64(plot):
+    '''
+    Input: A matplotlib plot.
+    Output: The b64 string conversion of the input plot.
+    '''
+    # Create I/O buffer to save image in bytes
+    stringIObytes = io.BytesIO()
+    plot.savefig(stringIObytes, format="jpeg")
+    
+    # Retrieve byte-string and encode it in base64
+    stringIObytes.seek(0)
+    plot_b64 = base64.b64encode(stringIObytes.read())
+    
+    return plot_b64
+
+def img_to_b64(img):    
+    with open(img, "rb") as image_file:
+        return base64.b64encode(image_file.read())
 
 def format_dates(date_string):
     '''
@@ -531,8 +486,6 @@ class Sample:
 class Analysis:
     '''
     This class holds all variables used on the analysis page of the report.
-    
-    Additionally, it passes in variables needed for plot generation in Javascript.
     '''
     
     def __init__(self, sequencing_summary, qscore_reads, qscore_scores, barcode, coverage_plot, snapshots, res_loci_names):
@@ -545,11 +498,73 @@ class Analysis:
         self.coverage_plot = coverage_plot
         self.snapshots = snapshots
         self.res_loci_names = res_loci_names
-        # self.reference_info = reference_info
 
 class FastQC:
     def __init__(self, fastqc_html):
         self.fastqc_html = fastqc_html
+
+def prepare_summary_data(arg_dict):
+    '''
+    Gathers all data needed for summary page from inputs.
+    '''
+    
+    sample_name = arg_dict['sample_name']
+
+    upload_date = arg_dict['upload_date'][0]
+    collection_date = arg_dict['collection_date']
+    sequencing_date = arg_dict['sequencing_date']
+    species = ' '.join(arg_dict['species'])
+    
+    info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_na(arg_dict['aligned_read_length']), 
+            check_na(arg_dict['pct_properly_paired_reads']), arg_dict['read_qual_median'], round(arg_dict['read_qual_mean'], 2)]
+    processed_info = [item if item not in ["", None] else "N/A" for item in info]
+    
+    qc_pass = arg_dict["qc_pass"]
+    if (qc_pass == "true"):
+        qc_pass = "PASS"
+    elif (qc_pass == "false"):
+        qc_pass = "FAIL"
+
+    resistances = create_drug_table(check_na(arg_dict['drug_resistance_text']))
+
+    location_info = [round(arg_dict['latitude'], 2), round(arg_dict['longitude'], 2), arg_dict['location']]
+    coordinates = [arg_dict['latitude'], arg_dict['longitude']]
+    _map = create_map(coordinates, sample_name)
+
+    HRP2 = arg_dict['HRP2']
+    HRP3 = arg_dict['HRP3']
+
+    return Sample(sample_name, HRP2, HRP3, resistances, processed_info, _map, location_info, qc_pass)
+
+def prepare_analysis_data(arg_dict):
+    '''
+    Gathers all data needed for analysis page from inputs.
+    '''
+    
+    frac_bases = check_na(arg_dict["fraction_aligned_bases"])
+        
+    sequencing_summary = [arg_dict['sample_type'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
+                          round(frac_bases, 2), round(arg_dict['average_identity'], 2)]
+
+    barcode = arg_dict['barcode']
+        
+    qscorex = [5, 7, 10, 12, 15] # available q-score measures are predetermined
+    qscorey = [arg_dict['num_reads_q5'], arg_dict['num_reads_q7'], arg_dict['num_reads_q10'], arg_dict['num_reads_q12'], arg_dict['num_reads_q15']]
+
+    # Create coverage plot and convert it to base64
+    coverage_bin_size = arg_dict["coverage_bin_size"]
+    coverage_plot = plot_coverage("/report-files/data/coverage", sample_name, coverage_bin_size) # default bin size = 1500
+    coverage_b64 = plot_to_b64(coverage_plot)
+    
+    # IGV Snapshots
+    snapshots = str(arg_dict["snapshots"])
+    
+    snapshots = snapshots.split(",")
+    snapshots_b64 = [img_to_b64(image) for image in snapshots]
+    
+    bed_file = open(arg_dict["regions_bed"], "r")
+    
+    return Analysis(sequencing_summary, qscorey, qscorex, barcode, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
 
 def create_report(sample, analysis, fastQC):
     '''
@@ -559,6 +574,7 @@ def create_report(sample, analysis, fastQC):
     analysis and summary. These objects hold the variables and are passed to their respective
     page templates (analysis or summary).
     '''
+    
     print("path: "+os.path.dirname(os.path.realpath(__file__)))
     print("cwd: "+os.getcwd())
 
@@ -569,30 +585,19 @@ def create_report(sample, analysis, fastQC):
     template = templateEnv.get_template(TEMPLATE_FILE)
     output = template.render(sample=sample, analysis=analysis, fastQC = fastQC)
 
-    print(os.listdir())
     file_name = os.path.join(os.getcwd(),sample.sample_name+'_lrma_report.html')
     print(file_name)
 
     with open(file_name, 'w') as fh:
         fh.write(output)  
-
-    print(os.listdir())
         
     print('Report generated!')
 
 if __name__ == '__main__':
-    '''Reports will be generated in the current working directory.
-    
-    * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-    Set up argument parsing
-    '''
-    # define parser object
+
     parser = argparse.ArgumentParser()
 
-    # define accepted input arguments
     ''' Summary Page '''
-    # required inputs
-    
     parser.add_argument("--barcode", help="barcode of the sample", required=True)
     
     # Sample Info
@@ -622,8 +627,6 @@ if __name__ == '__main__':
     parser.add_argument("--qc_pass", help="status to determine whether or not the sequencing run passes quality control standards", required=True)
 
     ''' Analysis Page '''
-    # required inputs
-
     # Q-Scores Plot
     parser.add_argument("--num_reads_q5", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 3", required=True)
     parser.add_argument("--num_reads_q7", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 5", required=True)
@@ -639,8 +642,7 @@ if __name__ == '__main__':
     parser.add_argument("--fraction_aligned_bases", help="number of bases aligned out of all bases sequenced", required=True, type=float)
     parser.add_argument("--average_identity", help="", required=True, type=float) # check
     
-    # Coverage Plot -- in progress
-    #parser.add_argument("--coverage_dir", help="location of bed files used for coverage plot")
+    # Coverage Plot
     parser.add_argument("--fastqc_path", help="location of fastqc_report file; used to locate BAM files for coverage report generation")
     parser.add_argument("--coverage_bin_size", help="number to use as size of bins for coverage plot generation; default is 1500", type=int)
     
@@ -652,69 +654,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     arg_dict = vars(args)
 
-
-    '''* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-    Prepare arguments for report generation
-    '''
-    
-    # first : summary page
-    sample_name = arg_dict['sample_name']
-
-    upload_date = arg_dict['upload_date'][0]
-    collection_date = arg_dict['collection_date']
-    sequencing_date = arg_dict['sequencing_date']
-    species = ' '.join(arg_dict['species'])
-    
-    info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_na(arg_dict['aligned_read_length']), 
-            check_na(arg_dict['pct_properly_paired_reads']), arg_dict['read_qual_median'], round(arg_dict['read_qual_mean'], 2)]
-    processed_info = [item if item not in ["", None] else "N/A" for item in info]
-    
-    qc_pass = arg_dict["qc_pass"]
-    if (qc_pass == "true"):
-        qc_pass = "PASS"
-    elif (qc_pass == "false"):
-        qc_pass = "FAIL"
-
-    resistances = create_drug_table(check_na(arg_dict['drug_resistance_text']))
-
-    location_info = [round(arg_dict['latitude'], 2), round(arg_dict['longitude'], 2), arg_dict['location']]
-    coordinates = [arg_dict['latitude'], arg_dict['longitude']]
-    _map = create_map(coordinates, sample_name)
-
-    HRP2 = arg_dict['HRP2']
-    HRP3 = arg_dict['HRP3']
-
-    # second : analysis page
-    frac_bases = check_na(arg_dict["fraction_aligned_bases"])
-        
-    sequencing_summary = [arg_dict['sample_type'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
-                          round(frac_bases, 2), round(arg_dict['average_identity'], 2)]
-
-    barcode = arg_dict['barcode']
-        
-    qscorex = [5, 7, 10, 12, 15] # available q-score measures are predetermined
-    qscorey = [arg_dict['num_reads_q5'], arg_dict['num_reads_q7'], arg_dict['num_reads_q10'], arg_dict['num_reads_q12'], arg_dict['num_reads_q15']]
-
-    # Create coverage plot and convert it to base64
-    coverage_bin_size = arg_dict["coverage_bin_size"]
-    coverage_plot = plot_coverage("/report-files/data/coverage", sample_name, coverage_bin_size) # default bin size = 1500
-    coverage_b64 = plot_to_b64(coverage_plot)
-    
-    # IGV Snapshots
-    snapshots = str(arg_dict["snapshots"])
-    print(snapshots)
-    
-    snapshots = snapshots.split(",")
-    snapshots_b64 = [img_to_b64(image) for image in snapshots]
-    
-    bed_file = open(arg_dict["regions_bed"], "r")
-    
-    # third : fastqc_page
     fastqc_html = read_fastqc("/report-files/data/fastqc/")
-
-    # Assemble summary, analysis, and fastQC data for each page
-    summary = Sample(sample_name, HRP2, HRP3, resistances, processed_info, _map, location_info, qc_pass)
-    analysis = Analysis(sequencing_summary, qscorey, qscorex, barcode, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
+    
+    summary = prepare_summary_data(arg_dict)
+    analysis = prepare_analysis_data(arg_dict)
     fastQC = FastQC(fastqc_html)
 
     create_report(summary, analysis, fastQC)
