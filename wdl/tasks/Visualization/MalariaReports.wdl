@@ -70,7 +70,7 @@ task RunReportScript {
         String sample_name
         String upload_date
         String collection_date
-        String sequencing_date
+        String? sequencing_date
         String? species
         Float aligned_coverage
         Float? aligned_read_length
