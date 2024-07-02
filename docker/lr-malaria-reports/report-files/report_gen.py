@@ -419,10 +419,6 @@ Map
 def create_map(coordinates, sample_name):
     m = folium.Map(location=coordinates, zoom_start = 5)
 
-    # Check if make_default == True -- if so, do not make a marker
-    #if not make_default:
-    #    folium.Marker(location=coordinates, popup = ('Sample: '+sample_name), icon=folium.Icon(color='red',prefix='fa',icon='circle'), parse_html=True).add_to(m)
-
     if coordinates != [0,0]:
         folium.Marker(location=coordinates, popup = ('Sample: '+sample_name), icon=folium.Icon(color='red',prefix='fa',icon='circle'), parse_html=True).add_to(m)
 
@@ -501,6 +497,13 @@ def format_dates(date_string):
         return "N/A"
     else:
         return "/".join([date_string[:4], date_string[4:6], date_string[6:]])
+
+def check_na(data):
+    '''
+    Input: A variable of any type to check if it is valid for passing to the report.
+    Output: The variable or "N/A".
+    '''
+    return "N/A" if data in [None, "None", 0] else data
 
 '''
 Report Generation & Templating
@@ -662,8 +665,8 @@ if __name__ == '__main__':
     sequencing_date = arg_dict['sequencing_date']
     species = ' '.join(arg_dict['species'])
     
-    info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), arg_dict['aligned_read_length'], 
-            arg_dict['pct_properly_paired_reads'], arg_dict['read_qual_median'], round(arg_dict['read_qual_mean'], 2)]
+    info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_na(arg_dict['aligned_read_length']), 
+            check_na(arg_dict['pct_properly_paired_reads']), arg_dict['read_qual_median'], round(arg_dict['read_qual_mean'], 2)]
     processed_info = [item if item not in ["", None] else "N/A" for item in info]
     
     qc_pass = arg_dict["qc_pass"]
@@ -671,16 +674,8 @@ if __name__ == '__main__':
         qc_pass = "PASS"
     elif (qc_pass == "false"):
         qc_pass = "FAIL"
-    
-    # Check if drug resistance report is provided
-    if not arg_dict['drug_resistance_text'] or arg_dict['drug_resistance_text'] == "None":
-        resistances = create_drug_table(None)
-    else:
-        resistances = create_drug_table(arg_dict['drug_resistance_text'])
 
-    # Set default values for map and location info
-    make_default = True
-    latitude, longitude = 0, 0
+    resistances = create_drug_table(check_na(arg_dict['drug_resistance_text']))
 
     location_info = [round(arg_dict['latitude'], 2), round(arg_dict['longitude'], 2), arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
@@ -690,9 +685,7 @@ if __name__ == '__main__':
     HRP3 = arg_dict['HRP3']
 
     # second : analysis page
-    frac_bases = arg_dict["fraction_aligned_bases"]
-    if frac_bases == 0:
-        frac_bases = "N/A"
+    frac_bases = check_na(arg_dict["fraction_aligned_bases"])
         
     sequencing_summary = [arg_dict['sample_type'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
                           round(frac_bases, 2), round(arg_dict['average_identity'], 2)]
@@ -704,12 +697,8 @@ if __name__ == '__main__':
 
     # Create coverage plot and convert it to base64
     coverage_bin_size = arg_dict["coverage_bin_size"]
-    # coverage_dir = arg_dict['coverage_dir']
     coverage_plot = plot_coverage("/report-files/data/coverage", sample_name, coverage_bin_size) # default bin size = 1500
     coverage_b64 = plot_to_b64(coverage_plot)
-    
-    # For debugging purposes, save plot:
-    coverage_plot.savefig("coverage_plot.jpeg")
     
     # IGV Snapshots
     snapshots = str(arg_dict["snapshots"])
@@ -722,16 +711,12 @@ if __name__ == '__main__':
     
     # third : fastqc_page
     fastqc_html = read_fastqc("/report-files/data/fastqc/")
-    print(fastqc_html[:200]) # debug
 
-    # Create summary, analysis, and fastQC objects to be passed 
+    # Assemble summary, analysis, and fastQC data for each page
     summary = Sample(sample_name, HRP2, HRP3, resistances, processed_info, _map, location_info, qc_pass)
-
     analysis = Analysis(sequencing_summary, qscorey, qscorex, barcode, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
-
     fastQC = FastQC(fastqc_html)
 
-    # Finally, call function to populate and generate the report pages
     create_report(summary, analysis, fastQC)
 
 
