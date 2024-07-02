@@ -410,13 +410,12 @@ def read_fastqc(directory):
 ''' 
 Snapshots
 '''
-def get_res_loci_names(bed):
+def get_res_loci_names(bed_file):
     '''
     Input: Bed file containing drug resistance loci and their names.
     Output: A list of the fourth column of the bed file containing the names of all the drug resistance regions.
     '''
     column_names = ["chromosome", "start", "end", "name"]
-    bed = pd.DataFrame()
     bed = pd.read_csv(bed_file, sep="\s+", header=None, names=column_names) 
     print(bed.name)
     return list(bed.name) 
