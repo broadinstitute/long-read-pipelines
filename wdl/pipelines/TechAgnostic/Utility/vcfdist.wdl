@@ -88,6 +88,8 @@ task RunVcfdistTask {
         File precrec_tsv = "precision-recall.tsv"
         File query_tsv = "query.tsv"
         File truth_tsv = "truth.tsv"
+        File phasing_tsv = "phasing-summary.tsv"
+        File switch_flip_tsv = "switchflips.tsv"
     }
 }
 
