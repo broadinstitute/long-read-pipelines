@@ -146,11 +146,17 @@ workflow HybridPhase {
         prefix = prefix
     }
 
+    #### add filtering small variants step #######
+    call FilterSmallVariants as Filter_SNPSVs{ input:
+        bcftools_vcf = ConcatVCFs.concat_vcf,
+        bcftools_vcf_tbi = ConcatVCFs.concat_vcf_tbi,
+        prefix = prefix
+    }
 
     ################################
     call StatPhase.Shapeit4 as Shapeit4scaffold { input:
-        vcf_input = ConcatVCFs.concat_vcf,
-        vcf_index = ConcatVCFs.concat_vcf_tbi,
+        vcf_input = Filter_SNPSVs.filtered_vcf,
+        vcf_index = Filter_SNPSVs.filtered_vcf_tbi,
         mappingfile = genetic_mapping_dict[chromosome],
         region = region,
         num_threads = num_t
@@ -282,7 +288,7 @@ task FilterSmallVariants {
 
     command <<<
         set -euxo pipefail
-        bcftools view -i 'F_MISSING < 0.05 & MAC>=2' ~{bcftools_vcf} | bgzip > ~{prefix}.filtered.vcf.gz
+        bcftools view -i 'MAC>=2' ~{bcftools_vcf} | bgzip > ~{prefix}.filtered.vcf.gz # F_MISSING < 0.05 & 
         tabix -p vcf ~{prefix}.filtered.vcf.gz
         
     >>>
