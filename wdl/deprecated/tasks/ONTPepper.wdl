@@ -18,6 +18,7 @@ task Pepper {
         ref_fasta: "The reference fasta file."
         ref_fasta_fai: "The reference fasta index file."
         model: "Model to uses"
+        phase_and_tag: "having this turned off means phased VCF and haplotagged BAM will not be output."
         threads: "The number of threads to use."
         memory: "The amount of memory to use."
         # when running large scale workflows, we sometimes see errors like the following
@@ -35,6 +36,8 @@ task Pepper {
         File ref_fasta_fai
 
         String model
+        # read-haplotaging desired or not
+        Boolean phase_and_tag
 
         Int threads
         Int memory
@@ -76,8 +79,8 @@ task Pepper {
             -o "~{output_root}" \
             -p "~{prefix}" \
             --gvcf \
-            --phased_output \
-            ~{model}
+            ~{true="--phased_output" false=" " phase_and_tag} \
+            --"~{model}"
 
         df -h .
         find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
@@ -98,11 +101,11 @@ task Pepper {
         File gVCF       = "~{output_root}/~{prefix}.g.vcf.gz"
         File gVCF_tbi   = "~{output_root}/~{prefix}.g.vcf.gz.tbi"
 
-        File phasedVCF  = "~{output_root}/~{prefix}.phased.vcf.gz"
-        File phasedtbi  = "~{output_root}/~{prefix}.phased.vcf.gz.tbi"
+        File? phasedVCF  = "~{output_root}/~{prefix}.phased.vcf.gz"
+        File? phasedtbi  = "~{output_root}/~{prefix}.phased.vcf.gz.tbi"
 
-        File hap_tagged_bam = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam"
-        File hap_tagged_bai = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam.bai"
+        File? hap_tagged_bam = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam"
+        File? hap_tagged_bai = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam.bai"
 
         # maybe less useful
         File output_dir_structure = "~{output_root}/dir_structure.txt"

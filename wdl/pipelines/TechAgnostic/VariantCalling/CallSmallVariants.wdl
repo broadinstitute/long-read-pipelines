@@ -40,7 +40,7 @@ workflow Work {
         is_ont: "If the input data is ONT"
         is_r10_4_pore_or_later: "If the ONT input data is generated on R10.4 simples/duplex pores."
         model_for_dv_andor_pepper: "Model string to be used on DV or the PEPPER-Margin-DeepVariant toolchain. Please refer to their github pages for accepted values."
-        phase_and_tag: "if turned on, small variants will be phased using both WhatsHap and Margin, then the BAM will be haplotagged with either the output of WhatsHap or Margin (depending on use_margin_for_tagging); then the haplotagged BAM will be used for calling phased-SV again with Sniffles2. Obviously, this prolongs the runtime significantly. Has no effect on ONT data on pores older than R10.4."
+        phase_and_tag: "if turned on, small variants will be phased using both WhatsHap and Margin, then the BAM will be haplotagged with either the output of WhatsHap or Margin (depending on use_margin_for_tagging); then the haplotagged BAM will be used for calling phased-SV again with Sniffles2. Obviously, this prolongs the runtime significantly. For ONT data on pores older than R10.4, having this turned off means phased VCF and haplotagged BAM will not be output."
         haploid_contigs: "Optimization since DV 1.6 to improve calling on haploid contigs (e.g. human allosomes); see DV github page for more info."
         use_gpu: "Use GPU acceleration for DV (or PEPPER) or not"
         use_margin_for_tagging: "if false, will use margin-phased VCF for haplotagging the BAM; applicable only when input data isn't ONT data with pore older than R10.4"
@@ -237,18 +237,19 @@ workflow Work {
                 ref_map = ref_map,
                 dv_threads = dv_threads,
                 dv_memory = dv_memory,
+                phase_and_tag = phase_and_tag,
                 zones = zones
         }
         call FF.FinalizeToFile as FinalizeLegacyGVcf { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_g_vcf }
         call FF.FinalizeToFile as FinalizeLegacyGTbi { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_g_tbi }
         if (phase_and_tag) {
-            call FF.FinalizeToFile as FinalizeLegacyPhasedVcf       { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf }
-            call FF.FinalizeToFile as FinalizeLegacyPhasedTbi       { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_phased_tbi }
-            call FF.FinalizeToFile as FinalizeLegacyPhaseStatsTSV   { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_tsv }
-            call FF.FinalizeToFile as FinalizeLegacyPhaseStatsGTF   { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_gtf }
+            call FF.FinalizeToFile as FinalizeLegacyPhasedVcf       { input: outdir = gcs_variants_out_dir, file = select_first([WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf]) }
+            call FF.FinalizeToFile as FinalizeLegacyPhasedTbi       { input: outdir = gcs_variants_out_dir, file = select_first([WorkOnLegacyONTdata.legacy_ont_dvp_phased_tbi]) }
+            call FF.FinalizeToFile as FinalizeLegacyPhaseStatsTSV   { input: outdir = gcs_variants_out_dir, file = select_first([WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_tsv]) }
+            call FF.FinalizeToFile as FinalizeLegacyPhaseStatsGTF   { input: outdir = gcs_variants_out_dir, file = select_first([WorkOnLegacyONTdata.legacy_ont_dvp_phased_vcf_stats_gtf]) }
 
-            call FF.FinalizeToFile as FinalizeLegacyHapTaggedBam { input: outdir = gcs_tagged_bam_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bam }
-            call FF.FinalizeToFile as FinalizeLegacyHapTaggedBai { input: outdir = gcs_tagged_bam_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bai }
+            call FF.FinalizeToFile as FinalizeLegacyHapTaggedBam { input: outdir = gcs_tagged_bam_out_dir, file = select_first([WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bam]) }
+            call FF.FinalizeToFile as FinalizeLegacyHapTaggedBai { input: outdir = gcs_tagged_bam_out_dir, file = select_first([WorkOnLegacyONTdata.legacy_ont_dvp_haplotagged_bai]) }
         }
     }
 

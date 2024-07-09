@@ -12,6 +12,7 @@ workflow Run {
         "Runs Clair3 on the input (sharded) BAM."
     }
     parameter_meta {
+        phase_and_tag: "having this turned off means phased VCF and haplotagged BAM will not be output."
         how_to_shard_wg_for_calling: "An array of the BAM's shard; each element is assumed to be a tuple of (ID for the shard, (BAM of the shard, BAI of the shard))"
         prefix: "Prefix for output files"
         model_for_pepper_margin_dv: "refer to https://github.com/kishwarshafin/pepper for appropriate values"
@@ -24,6 +25,9 @@ workflow Run {
 
         Map[String, String] ref_map
 
+        # read-haplotaging desired or not
+        Boolean phase_and_tag
+
         # optimization
         Int dv_threads
         Int dv_memory
@@ -32,12 +36,12 @@ workflow Run {
     output {
         File legacy_ont_dvp_g_vcf = MergePEPPERGVCFs.vcf
         File legacy_ont_dvp_g_tbi = MergePEPPERGVCFs.tbi
-        File legacy_ont_dvp_phased_vcf = MergePEPPERPhasedVCFs.vcf
-        File legacy_ont_dvp_phased_tbi = MergePEPPERPhasedVCFs.tbi
-        File legacy_ont_dvp_haplotagged_bam = MergePEPPERHapTaggedBam.merged_bam
-        File legacy_ont_dvp_haplotagged_bai = MergePEPPERHapTaggedBam.merged_bai
-        File legacy_ont_dvp_phased_vcf_stats_tsv = ONTPhaseStatsLegacy.stats_tsv
-        File legacy_ont_dvp_phased_vcf_stats_gtf = ONTPhaseStatsLegacy.stats_gtf
+        File? legacy_ont_dvp_phased_vcf = MergePEPPERPhasedVCFs.vcf
+        File? legacy_ont_dvp_phased_tbi = MergePEPPERPhasedVCFs.tbi
+        File? legacy_ont_dvp_haplotagged_bam = MergePEPPERHapTaggedBam.merged_bam
+        File? legacy_ont_dvp_haplotagged_bai = MergePEPPERHapTaggedBam.merged_bai
+        File? legacy_ont_dvp_phased_vcf_stats_tsv = ONTPhaseStatsLegacy.stats_tsv
+        File? legacy_ont_dvp_phased_vcf_stats_gtf = ONTPhaseStatsLegacy.stats_gtf
     }
 
     scatter (triplet in how_to_shard_wg_for_calling) {
@@ -48,6 +52,7 @@ workflow Run {
                 ref_fasta     = ref_map['fasta'],
                 ref_fasta_fai = ref_map['fai'],
                 model         = model_for_pepper_margin_dv,
+                phase_and_tag  = phase_and_tag,
                 threads       = select_first([dv_threads]),
                 memory        = select_first([dv_memory]),
                 zones         = zones
@@ -56,28 +61,26 @@ workflow Run {
 
     String pepper_prefix = prefix + ".PEPPER-Margin-DeepVariant"
 
-    call VariantUtils.MergeAndSortVCFs as MergePEPPERGVCFs {
-        input:
-            vcfs     = Pepper.gVCF,
-            prefix   = pepper_prefix + ".g",
-            ref_fasta_fai = ref_map['fai']
+    call VariantUtils.MergeAndSortVCFs as MergePEPPERGVCFs { input:
+        vcfs     = Pepper.gVCF,
+        prefix   = pepper_prefix + ".g",
+        ref_fasta_fai = ref_map['fai']
     }
 
-    call VariantUtils.MergeAndSortVCFs as MergePEPPERPhasedVCFs {
-        input:
-            vcfs     = Pepper.phasedVCF,
+    if (phase_and_tag) {
+        call VariantUtils.MergeAndSortVCFs as MergePEPPERPhasedVCFs { input:
+            vcfs     = select_all(Pepper.phasedVCF),
             prefix   = pepper_prefix + ".phased",
             ref_fasta_fai = ref_map['fai']
-    }
+        }
 
-    call Utils.MergeBams as MergePEPPERHapTaggedBam {
-        input:
-            bams     = Pepper.hap_tagged_bam,
+        call Utils.MergeBams as MergePEPPERHapTaggedBam { input:
+            bams     = select_all(Pepper.hap_tagged_bam),
             prefix   = prefix +  ".MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged"
-    }
+        }
 
-    call WhatsHap.Stats as ONTPhaseStatsLegacy {
-        input:
-        phased_vcf=MergePEPPERPhasedVCFs.vcf, phased_tbi=MergePEPPERPhasedVCFs.tbi
+        call WhatsHap.Stats as ONTPhaseStatsLegacy { input:
+            phased_vcf=MergePEPPERPhasedVCFs.vcf, phased_tbi=MergePEPPERPhasedVCFs.tbi
+        }
     }
 }
