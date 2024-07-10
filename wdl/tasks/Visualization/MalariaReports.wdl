@@ -69,7 +69,7 @@ task RunReportScript {
         # Sample Info
         String sample_name
         String upload_date
-        String collection_date
+        String? collection_date
         String? sequencing_date
         String? species
         Float aligned_coverage
