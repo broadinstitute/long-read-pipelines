@@ -390,14 +390,14 @@ def create_map(coordinates, sample_name):
     return map_html
 
 '''
-FastQC Report
+Quality Report (FastQC or ONT QC)
 '''
-def read_fastqc(directory):
+def read_qc_report(directory):
     '''
-    Function to read HTML from FastQC report as string to pass to Jinja template IFrame
+    Function to read HTML from FastQC or ONT QC report as string to pass to Jinja template IFrame
     '''
     if(os.path.exists(directory)):
-        # There should only be one file in the directory (report-files/data/fastqc)
+        # There should only be one file in the directory (report-files/data/quality_report)
         for file in os.listdir(directory):
             print(f"{directory} + {file}")
             with open(os.path.join(directory, file), "r", encoding="utf-8") as f:
@@ -498,9 +498,9 @@ class Analysis:
         self.snapshots = snapshots
         self.res_loci_names = res_loci_names
 
-class FastQC:
-    def __init__(self, fastqc_html):
-        self.fastqc_html = fastqc_html
+class QCReport:
+    def __init__(self, qc_report_html):
+        self.qc_report_html = qc_report_html
 
 def prepare_summary_data(arg_dict):
     '''
@@ -565,7 +565,7 @@ def prepare_analysis_data(arg_dict):
     
     return Analysis(sequencing_summary, qscorey, qscorex, barcode, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
 
-def create_report(sample, analysis, fastQC):
+def create_report(sample, analysis, qc_report):
     '''
     This function handles the final steps of report generation.
     
@@ -582,7 +582,7 @@ def create_report(sample, analysis, fastQC):
     templateEnv = jinja2.Environment(loader=templateLoader)
     TEMPLATE_FILE = 'report.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
-    output = template.render(sample=sample, analysis=analysis, fastQC = fastQC)
+    output = template.render(sample=sample, analysis=analysis, qc_report = qc_report)
 
     file_name = os.path.join(os.getcwd(),sample.sample_name+'_lrma_report.html')
     print(file_name)
@@ -652,13 +652,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     arg_dict = vars(args)
 
-    fastqc_html = read_fastqc("/report-files/data/fastqc/")
+    qc_report_html = read_fastqc("/report-files/data/quality_report")
     
     summary = prepare_summary_data(arg_dict)
     analysis = prepare_analysis_data(arg_dict)
-    fastQC = FastQC(fastqc_html)
+    qc_report = QCReport(qc_report_html)
 
-    create_report(summary, analysis, fastQC)
+    create_report(summary, analysis, qc_report)
 
 
 

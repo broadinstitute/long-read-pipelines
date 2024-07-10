@@ -64,6 +64,8 @@ workflow GenerateMalariaReports {
         aligned_bam:        "GCS path to aligned bam"
         aligned_bai:        "GCS path to aligned bai"
         gcs_out_root_dir:   "GCS bucket to store the results"
+
+        ont_qc_report: "ONT QC report file"
     }
 
     input {
@@ -122,6 +124,8 @@ workflow GenerateMalariaReports {
         File aligned_bai
         File regions_bed
         File ref_map_file
+
+        File? ont_qc_report
     }
     
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -167,6 +171,7 @@ workflow GenerateMalariaReports {
             fraction_aligned_bases = fraction_aligned_bases,
             average_identity = average_identity,
             fastqc_path = fastqc_path,
+            ont_qc_report = ont_qc_report,
             coverage_bin_size = coverage_bin_size,
             snapshots = GenerateSnapshots.snapshots,
             regions_bed = regions_bed,

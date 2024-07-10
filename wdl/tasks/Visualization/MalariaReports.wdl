@@ -53,12 +53,13 @@ task RunReportScript {
         aligned_bases: "total number of bases aligned to the reference genome"
         aligned_reads: "total number of reads aligned to the reference genome"
         fraction_aligned_bases: "number of bases aligned out of all bases in the sequence"
-        # average_identity:
 
         # Coverage Plot
         # coverage_dir: "directory of BAM files for coverage plot generation"
         fastqc_path: "directory of fastqc_report used for finding BED and BAM files"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
+
+        ont_qc_report: "ONT QC report file"
     }
 
     input {
@@ -119,6 +120,9 @@ task RunReportScript {
         # Snapshots
         File regions_bed
         Array[File] snapshots
+
+        # ONT QC Report Page
+        File? ont_qc_report
     }
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
@@ -130,6 +134,7 @@ task RunReportScript {
     String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
     String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
 
+    String quality_report = select_first([fastqc_path, ont_qc_report], "")
 
     command <<<
         set -euxo
@@ -143,10 +148,16 @@ task RunReportScript {
         echo "COPYING..."
         cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
 
-        echo "RETRIEVING FASTQC REPORT..."
-        mkdir -p /report-files/data/fastqc
-        echo ~{fastqc_path}
-        gsutil cp ~{fastqc_path} /report-files/data/fastqc
+        if [ ~{quality_report} ]; then
+            echo "RETRIEVING SEQUENCING REPORTS..."
+            mkdir -p /report-files/data/quality_report
+            echo ~{quality_report}
+            gsutil cp ~{quality_report} /report-files/data/quality_report
+        fi
+        
+        #mkdir -p /report-files/data/quality_report
+        #echo ~{fastqc_path}
+        #gsutil cp ~{fastqc_path} /report-files/data/quality_report
         
         echo "CREATING SUMMARY REPORT..."
         python3 /report-files/report_gen.py \
