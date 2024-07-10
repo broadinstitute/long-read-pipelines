@@ -134,7 +134,7 @@ task RunReportScript {
     String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
     String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
 
-    String quality_report = select_first([fastqc_path, ont_qc_report])
+    String quality_report = select_first([fastqc_path, ont_qc_report, ""])
 
     command <<<
         set -euxo

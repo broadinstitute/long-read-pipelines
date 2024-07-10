@@ -652,7 +652,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     arg_dict = vars(args)
 
-    qc_report_html = read_fastqc("/report-files/data/quality_report")
+    qc_report_html = read_qc_report("/report-files/data/quality_report")
     
     summary = prepare_summary_data(arg_dict)
     analysis = prepare_analysis_data(arg_dict)
