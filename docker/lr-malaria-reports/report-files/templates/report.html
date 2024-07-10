@@ -620,7 +620,7 @@
         top: 70px;
     }
 
-    #fastqc_button {
+    #qc_report_button {
         font-size: 20px;
         position: absolute;
         top: 140px;
@@ -1257,9 +1257,9 @@
         justify-content: center;
         flex-direction: column;
     }
-    /* * * * * * * * FASTQC PAGE * * * * * * * */
+    /* * * * * * * * QC PAGE (FastQC or ONT QC) * * * * * * * */
 
-    #fastqc_frame {
+    #qc_report_frame {
         position: absolute;
         top: -18px;
         left: -18px;
@@ -1268,7 +1268,7 @@
         overflow-y: hidden;
     }
 
-    #fastqc_cover {
+    #qc_report_cover {
         position: absolute;
         top: -18px;
         left: -18px;
@@ -1329,7 +1329,7 @@
     }
 
 
-    #fastqc_root {
+    #qc_report_root {
         margin: 0;
         padding: 0;
         min-height: 100%;
@@ -1370,8 +1370,8 @@
 
             <button class="button" id="summary_button" onclick="show('summary_page', global_shown, 'summary_button');">Summary</button>
             <button class="button" id="analysis_button" onclick="show('analysis_page', global_shown, 'analysis_button');">Analysis</button>
-            {% if fastQC.fastqc_html is defined and fastQC.fastqc_html %}
-                <button class="button" id="fastqc_button" onclick="show('fastqc_page', global_shown, 'fastqc_button');">FastQC Report</button>
+            {% if qc_report.qc_report_html is defined and qc_report.qc_report_html %}
+                <button class="button" id="qc_report_button" onclick="show('qc_report_page', global_shown, 'qc_report_button');">QC Report</button>
             {% endif %}
 
         </div>
@@ -1728,19 +1728,19 @@
         </div> 
     </div> <!-- analysis_page -->
 
-    {% if fastQC.fastqc_html is defined and fastQC.fastqc_html %}
+    {% if qc_report.qc_report_html is defined and qc_report.qc_report_html %}
 
-    <!-- FASTQC_REPORT PAGE -->
-    <div id="fastqc_page" style="display: none;">
-        <div id="fastqc_root">
+    <!-- QC REPORT PAGE -->
+    <div id="qc_report_page" style="display: none;">
+        <div id="qc_report_root">
             <div class="main_frame" style="outline: 0px;">
-                <iframe id="fastqc_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc="{{ fastQC.fastqc_html|e }}"></iframe>
+                <iframe id="qc_report_frame" allowtransparency="true" style="background:#fff; height:100%;" srcdoc="{{ qc_report.qc_report_html|e }}"></iframe>
                 <script>
-                    // Disable links in FastQC iframe
-                    var fastqcFrame = document.getElementById("fastqc_frame");
-                    fastqcFrame.onload = function () {
-                        var fastqcDoc = fastqcFrame.contentDocument || fastqcFrame.contentWindow.document;
-                        var links = fastqcDoc.querySelectorAll("a");
+                    // Disable links in iframe
+                    var qc_reportFrame = document.getElementById("qc_report_frame");
+                    qc_reportFrame.onload = function () {
+                        var qc_reportDoc = qc_reportFrame.contentDocument || qc_reportFrame.contentWindow.document;
+                        var links = qc_reportDoc.querySelectorAll("a");
                 
                         for (var i = 0; i < links.length; i++) {
                             links[i].addEventListener("click", function(event) {
@@ -1752,8 +1752,8 @@
 
                 </div>
             </div>
-        </div> <!-- fastqc_root -->
-    </div> <!-- fastqc_page -->
+        </div> <!-- qc_report_root -->
+    </div> <!-- qc_report_page -->
 
     {% endif %}
     <meta name="loci_names" content="{{ analysis.res_loci_names }}">
