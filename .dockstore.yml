@@ -153,3 +153,6 @@ workflows:
 - name: ImmunoAnnotate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/ImmunoAnnotate.wdl
+- name: AsmEvaluationDipcall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/AsmEvaluationDipcall.wdl
