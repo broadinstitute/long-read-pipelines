@@ -163,7 +163,7 @@ task RunVcfdistTask {
         File bed_file
         File fasta_file
         Int verbosity
-        String sampleid
+        String sampleid = "syndip"
         
         String docker
         Int disk_size_gb = ceil(size(truth_vcf, "GiB") + 10)
