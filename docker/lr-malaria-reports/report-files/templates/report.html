@@ -702,8 +702,8 @@
     /* sequencing summary lines */
     .sequencing_summary_lines {
         position: absolute;
-        left: 19.0072px;
-        top: 184.7412px;
+        left: 6px;
+        top: 30px;
         width: 553.9928px;
         height: 300.1917px;
         flex-direction: column;
@@ -783,34 +783,10 @@
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
             'Liberation Sans', sans-serif;
         position: absolute;
-        left: 35px;
-        top: 171px;
+        left: 20px;
+        top: 17px;
         width: 529.507px;
         height: 37.4482px;
-        justify-content: center;
-        flex-direction: column;
-    }
-
-    /* sequencing summary right side */
-    ._sequencing_summary_right_side {
-        position: absolute;
-        left: 281.4775px;
-        top: 222px;
-        width: 267.4793px;
-        height: 218px;
-        flex-direction:column;
-        align-items:flex-end;
-        white-space:nowrap;
-    }
-
-
-    /* sequencing summary left side */
-    ._sequencing_summary_left_side {
-        position: absolute;
-        left: 35.0359px;
-        top: 275px;
-        width: 279.5009px;
-        height: 100px;
         justify-content: center;
         flex-direction: column;
     }
@@ -857,7 +833,7 @@
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
             'Liberation Sans', sans-serif;
         position: absolute;
-        left: 602.2239px;
+        left: 15px;
         top: 18.3724px;
         width: 513.3381px;
         height: 40.9719px;
@@ -874,7 +850,7 @@
 
     .qscores_line {
         position: absolute;
-        left: 603.0768px;
+        left: 15px;
         top: 67.7104px;
         max-width: 100%;
         height: 2px;
@@ -921,9 +897,9 @@
     /* sequencing summary right side */
     ._sequencing_summary_right_side {
         position: absolute;
-        left: 281.4775px;
-        top: 222px;
-        width: 267.4793px;
+        right: 20px;
+        top: 65px;
+        width: 267px;
         height: 218px;
         flex-direction:column;
         align-items:flex-end;
@@ -934,19 +910,18 @@
     /* sequencing summary left side */
     ._sequencing_summary_left_side {
         position: absolute;
-        left: 35.0359px;
-        top: 275px;
+        left: 20px;
+        top: 120px;
         width: 279.5009px;
         height: 100px;
         justify-content: center;
         flex-direction: column;
     }
 
-    /* coverage plot box */
     .coverage_plot_box {
-        position: absolute;
-        left: 18.0054px;
-        top: 456px;
+        position: relative;
+        left: 18px;
+        top: 5px;
         width: 1114px;
         height: 750px;
         outline: solid 1px #dfe1e5;
@@ -987,14 +962,14 @@
 
     /* coverage gallery */
     #cov_gallery {
-      position: absolute;
+      position: relative;
       text-align: center;
       display: flex;
       flex-direction: column;
       padding: 20px;
       max-width: 1114px;
       left: 18.0054px;
-      top: 1215px;
+      top: 8px;
       outline: solid 1px #dfe1e5;
       outline-offset: -1px;
       width: 1114px;
@@ -1574,15 +1549,19 @@
                   </div>
               </div>
               <div class="top_row_frame">
-                <div class="sequencing_summary_box"></div>
-                <div class="sequencing_summary_lines">
-                  <div class="sequencing_summary_line1"></div>
-                  <div class="sequencing_summary_line2"></div>
-                  <div class="sequencing_summary_line3"></div>
-                  <div class="sequencing_summary_line4"></div>
-                  <div class="sequencing_summary_line5"></div>
-                  <div class="sequencing_summary_line6"></div>
-                  <div class="sequencing_summary_line7"></div>
+                <div class="barcode_box">
+                    <div class="barcode_value">{{ analysis.barcode }}</div>
+                    <div class="barcode_label">Barcode</div>
+                </div>
+                <div class="sequencing_summary_box">
+                    <div class="sequencing_summary_lines">
+                    <div class="sequencing_summary_line1"></div>
+                    <div class="sequencing_summary_line2"></div>
+                    <div class="sequencing_summary_line3"></div>
+                    <div class="sequencing_summary_line4"></div>
+                    <div class="sequencing_summary_line5"></div>
+                    <div class="sequencing_summary_line6"></div>
+                    <div class="sequencing_summary_line7"></div>
                 </div>
                 <div class="sequencing_summary_title">Sequencing Summary</div>
                 <div class="_sequencing_summary_right_side">
@@ -1601,7 +1580,9 @@
                   <div class="_sequencing_summary_text">Fraction of Aligned Bases</div>
                   <div class="_sequencing_summary_text">Average Identity</div>
                 </div>
-                <div class="qscores_box"></div>
+            </div>
+
+            <div class="qscores_box">
                 <div class="qscores_title">Q Scores</div>
                 <div class="qscores_plot">
                     <meta name="qscores_y" content="{{ analysis.reads }}">
@@ -1678,6 +1659,10 @@
                 <div class="qscores_line">
                   <svg preserveAspectRatio="none" viewBox="0 0 255 1" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0L510.372 0" stroke="#DFE1E5"></path></svg>
                 </div>
+            </div>
+        </div> <!-- Top Row Frame (Barcode, Q-Scores Plot, Sequencing Summary)-->
+
+                {% if analysis.coverage_plot is defined and analysis.coverage_plot %}
                 <div class="coverage_plot_box">
                     <div class="coverage_plot_title">Coverage Plot</div>
                     <div class="coverage_plot_line">
@@ -1685,6 +1670,7 @@
                     </div>
                     <div id="coverage_plot"><img src="data:image/jpeg;base64,{{ (analysis.coverage_plot).decode('utf-8') | safe }}" style="height: auto; width: 90%; position:absolute; left:50px; top:100px;"></div>
                 </div>
+                {% endif %}
 
                 <div id="cov_gallery">
                   <div id="snapshot_title">
@@ -1717,11 +1703,8 @@
                             &#9654;
                         </button>
                     </div>
-                </div>               
-                <div class="barcode_box">
-                  <div class="barcode_value">{{ analysis.barcode }}</div>
-                  <div class="barcode_label">Barcode</div>
-                </div>
+                </div>     
+                          
               </div>
             </div>
           </div> <!-- analysis_root -->
