@@ -31,7 +31,7 @@ task DrugResIGV {
         String sample_name
     }
 
-    Int disk_size_gb = 20 + ceil(size(regions_bed, "GB"))
+    Int disk_size_gb = 20 + ceil(size(aligned_bam, "GB"))
 
     
     command <<<
