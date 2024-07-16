@@ -52,12 +52,14 @@ task SplitFileList {
     command <<<
         set -euxo pipefail
 
+        FILE_LIST=~{write_lines(files)}
+
         i=0
-        for file in ${write_lines(files)}; do
+        while read file; do
             sublist=$((i % ${num_sublists}))
             echo $file >> sublist_${sublist}.txt
             i=$((i + 1))
-        done
+        done < ${FILE_LIST}
     >>>
 
     output {
