@@ -18,8 +18,6 @@ workflow PBFindAndSummarizeBAMs {
 
     input {
         String gcs_input_dir
-        Int length_threshold = 10000
-
         String gcs_out_root_dir
     }
 
@@ -32,27 +30,111 @@ workflow PBFindAndSummarizeBAMs {
             recurse = true
     }
 
-    scatter (bam in ListFilesOfType.files) {
-        call PB.PBIndex { input: bam = bam }
-
-        call PB.SummarizePBI as SummarizeFullPBI { input: pbi = PBIndex.pbi, length_threshold = 0 }
-        call PB.SummarizePBI as SummarizeFilteredPBI { input: pbi = PBIndex.pbi, length_threshold = length_threshold }
-
-        call FF.FinalizeToFile as FinalizePBIFullSummary {
-            input:
-                outdir = outdir,
-                file = SummarizeFullPBI.results_file,
-                name = basename(SummarizeFullPBI.results_file, ".txt") + ".full.txt"
-        }
-
-        call FF.FinalizeToFile as FinalizePBIFilteredSummary {
-            input:
-                outdir = outdir,
-                file = SummarizeFilteredPBI.results_file,
-                name = basename(SummarizeFilteredPBI.results_file, ".txt") + ".filtered.txt"
-        }
+    call SplitFileList {
+        input:
+            files = ListFilesOfType.files,
+            num_sublists = 200
     }
 
+    scatter (filelist in SplitFileList.sublists) {
+        call IndexAll { input: filelist = filelist, outdir = outdir }
+    }
+}
+
+task SplitFileList {
+    input {
+        Array[String] files
+        Int num_sublists
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        i=0
+        for file in ${write_lines(files)}; do
+            sublist=$((i % ${num_sublists}))
+            echo $file >> sublist_${sublist}.txt
+            i=$((i + 1))
+        done
+    >>>
+
     output {
+        Array[File] sublists = glob("sublist_*.txt")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            1,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.40"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task IndexAll {
+    input {
+        File filelist
+        String outdir 
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        while read bam; do
+            gsutil cp ${bam} .
+
+            bam_basename=$(basename ${bam})
+            pbindex ${bam_basename}
+
+            python3 /usr/local/bin/compute_pbi_stats.py -q 0 -l 0 ${bam_basename}.pbi > ${bam_basename}.stats.full.txt
+            python3 /usr/local/bin/compute_pbi_stats.py -q 0 -l 10000 ${bam_basename}.pbi > ${bam_basename}.stats.filtered.txt
+
+            gsutil cp ${bam_basename}.stats.full.txt ${outdir}/
+            gsutil cp ${bam_basename}.stats.filtered.txt ${outdir}/
+
+            rm ${bam_basename}
+        done < ${filelist}
+    >>>
+
+    output {
+        Array[File] pbis = glob("*.pbi")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            20,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.40"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
