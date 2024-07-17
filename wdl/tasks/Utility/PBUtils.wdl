@@ -991,9 +991,9 @@ task Align {
 
     #########################
 
-    Int disk_size = 1 + 4*ceil(size(bam, "GiB") + size(ref_fasta, "GiB"))
+    Int disk_size = 1 + 3*ceil(size(bam, "GiB") + size(ref_fasta, "GiB"))
     Int cpus = 16
-    Int mem = 32
+    Int mem = 24
 
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
