@@ -141,7 +141,7 @@ task RunReportScript {
         pwd
         ls
 
-        if [[ "~{coverage_regex}"[:5] == "gs://" ]]; then
+        if [[ ~{coverage_regex} == "gs://"* ]]; then
             echo "Retrieving BED files..."
             echo ~{coverage_dir}
             mkdir -p /report-files/data/coverage
