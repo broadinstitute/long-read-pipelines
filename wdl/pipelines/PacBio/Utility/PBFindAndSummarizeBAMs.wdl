@@ -108,11 +108,11 @@ task IndexAll {
             python3 /usr/local/bin/compute_pbi_stats.py -q 0 -l 0 ${bam_basename}.pbi > ${bam_basename}.stats.full.txt
             python3 /usr/local/bin/compute_pbi_stats.py -q 0 -l 10000 ${bam_basename}.pbi > ${bam_basename}.stats.filtered.txt
 
-            gsutil cp ${bam_basename}.stats.full.txt ${outdir}/
-            gsutil cp ${bam_basename}.stats.filtered.txt ${outdir}/
+            gsutil cp ${bam_basename}.stats.full.txt ~{outdir}/
+            gsutil cp ${bam_basename}.stats.filtered.txt ~{outdir}/
 
             rm ${bam_basename}
-        done < ${filelist}
+        done < ~{write_lines(filelist)}
     >>>
 
     output {
