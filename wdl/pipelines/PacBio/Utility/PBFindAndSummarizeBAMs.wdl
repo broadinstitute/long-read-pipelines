@@ -112,7 +112,7 @@ task IndexAll {
             gsutil cp ${bam_basename}.stats.filtered.txt ~{outdir}/
 
             rm ${bam_basename}
-        done < ~{write_lines(filelist)}
+        done < ~{filelist}
     >>>
 
     output {
