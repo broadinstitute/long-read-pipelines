@@ -56,7 +56,7 @@ task SplitFileList {
 
         i=0
         while read file; do
-            sublist=$((i % ${num_sublists}))
+            sublist=$((i % ~{num_sublists}))
             echo $file >> sublist_${sublist}.txt
             i=$((i + 1))
         done < ${FILE_LIST}
