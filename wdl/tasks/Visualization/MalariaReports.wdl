@@ -141,18 +141,24 @@ task RunReportScript {
         pwd
         ls
 
-        echo "RETRIEVING BED FILES..."
-        echo ~{coverage_dir}
-        mkdir -p /report-files/data/coverage
-        gsutil ls ~{coverage_regex}  > filelist.txt
-        echo "COPYING..."
-        cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
+        if [[ "~{coverage_regex}"[:5] == "gs://" ]]; then
+            echo "Retrieving BED files..."
+            echo ~{coverage_dir}
+            mkdir -p /report-files/data/coverage
+            gsutil ls ~{coverage_regex}  > filelist.txt
+            echo "COPYING..."
+            cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
+        else
+            echo "No BED files found."
+        fi
 
-        if [ ~{quality_report} ]; then
-            echo "RETRIEVING SEQUENCING REPORTS..."
+        if [ ! -z ~{quality_report} ]; then
+            echo "Retrieving quality report..."
             mkdir -p /report-files/data/quality_report
             echo ~{quality_report}
             gsutil cp ~{quality_report} /report-files/data/quality_report
+        else
+            echo "No quality report found."
         fi
         
         #mkdir -p /report-files/data/quality_report
