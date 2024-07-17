@@ -642,7 +642,7 @@ if __name__ == '__main__':
     
     # Coverage Plot
     parser.add_argument("--fastqc_path", help="location of fastqc_report file; used to locate BAM files for coverage report generation")
-    parser.add_argument("--coverage_bin_size", help="number to use as size of bins for coverage plot generation; default is 1500", type=int)
+    parser.add_argument("--coverage_bin_size", help="number to use as size of bins for coverage plot generation; default is 1500", default=500, required=False, type=int)
     
     # Snapshots
     parser.add_argument("--snapshots", required=True)
