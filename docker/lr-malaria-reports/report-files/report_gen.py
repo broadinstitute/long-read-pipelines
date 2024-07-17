@@ -106,15 +106,17 @@ def plot_coverage(directory, sample_name, bin_width=500):
     # only looking for .bed.gz files
     ext = (".bed.gz")
 
-    # Set up DF to hold all data
+    # Set up data
     beds = pd.DataFrame(columns=["stop", "depth"])
-
-    # Reading and sorting files
-    file_list = os.listdir(directory)
-    dir_len = len(file_list)
+    sorted_file_list = list()
     
-    sorted_file_list = sorted(file_list,  key=lambda item: item.split(".")[-4].split("_")[1] if item.endswith(".bed.gz") else "00")
-    print(f"Files to be plotted: {sorted_file_list}")
+    # Reading and sorting files if coverage data is available
+    if os.path.exists(directory):
+        file_list = os.listdir(directory)
+        sorted_file_list = sorted(file_list,  key=lambda item: item.split(".")[-4].split("_")[1] if item.endswith(".bed.gz") else "00")
+        print(f"Files to be plotted: {sorted_file_list}")
+    else:
+        return None
     
     # Plot setup
     fig, ax = plt.subplots(1,1, figsize=(15, 9))
@@ -163,8 +165,6 @@ def plot_coverage(directory, sample_name, bin_width=500):
                                
             # Saving xtick data
             contigs.append(bed_df["contig"][0])
-            
-            print(f"{idx+1}/{dir_len} files completed!")
                 
     # Setting xticks
     ax.set_xticks(ticks=tick_positions)
