@@ -553,7 +553,7 @@ def prepare_analysis_data(arg_dict):
     # Create coverage plot and convert it to base64
     coverage_bin_size = arg_dict["coverage_bin_size"]
     coverage_plot = plot_coverage("/report-files/data/coverage", arg_dict["sample_name"], coverage_bin_size) # default bin size = 750
-    coverage_b64 = plot_to_b64(coverage_plot) if coverage_plot else None
+    coverage_b64 = plot_to_b64(coverage_plot) if coverage_plot not in ["", None] else None
     
     # IGV Snapshots
     snapshots = str(arg_dict["snapshots"])
