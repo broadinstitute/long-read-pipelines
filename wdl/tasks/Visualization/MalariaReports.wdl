@@ -195,7 +195,7 @@ task RunReportScript {
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
-            --coverage_bin_size ~{coverage_bin_size} \
+            --coverage_bin_size ~{default=750 coverage_bin_size} \
             --snapshots ~{sep="," snapshots} \
             --regions_bed ~{regions_bed} \
             --qc_pass ~{default="N/A" qc_pass}
