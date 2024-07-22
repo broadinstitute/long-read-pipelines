@@ -517,8 +517,8 @@ def prepare_summary_data(arg_dict):
     sequencing_date = arg_dict['sequencing_date']
     species = ' '.join(arg_dict['species'])
     
-    info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_na(arg_dict['aligned_read_length']), 
-            check_na(arg_dict['pct_properly_paired_reads']), 0, round(arg_dict['read_qual_mean'], 2)]
+    info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_unknown(arg_dict['aligned_read_length']), 
+            check_unknown(arg_dict['pct_properly_paired_reads']), 0, round(arg_dict['read_qual_mean'], 2)]
     processed_info = [item if item not in ["", None] else "N/A" for item in info]
     
     qc_pass = arg_dict["qc_pass"]
@@ -529,7 +529,7 @@ def prepare_summary_data(arg_dict):
 
     resistances = create_drug_table(None if arg_dict["drug_resistance_text"] in [None, "None", ""] else arg_dict["drug_resistance_text"])
 
-    location_info = [check_na(round(arg_dict['latitude'], 2)), check_na(round(arg_dict['longitude'], 2)), arg_dict['location']]
+    location_info = [check_unknown(round(arg_dict['latitude'], 2)), check_unknown(round(arg_dict['longitude'], 2)), arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
     _map = create_map(coordinates, sample_name)
 
@@ -543,7 +543,7 @@ def prepare_analysis_data(arg_dict):
     Gathers all data needed for analysis page from inputs.
     '''
     
-    frac_bases = check_na(arg_dict["fraction_aligned_bases"])
+    frac_bases = check_unknown(arg_dict["fraction_aligned_bases"])
         
     sequencing_summary = [0, 0, format_long_number(arg_dict['aligned_bases']), format_long_number(arg_dict['aligned_reads']), 
                           round(frac_bases, 4)*100, round(arg_dict['average_identity'], 2)]
