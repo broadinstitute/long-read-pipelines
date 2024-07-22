@@ -169,8 +169,8 @@ task RunReportScript {
         python3 /report-files/report_gen.py \
             --sample_name ~{sample_name} \
             --upload_date ~{upload_date} \
-            --collection_date ~{default="N/A" collection_date} \
-            --sequencing_date ~{default="N/A" sequencing_date} \
+            --collection_date ~{default="Unknown" collection_date} \
+            --sequencing_date ~{default="Unknown" sequencing_date} \
             --species ~{default="P. falciparum" species} \
             --aligned_coverage ~{aligned_coverage} \
             --aligned_read_length ~{default=0 aligned_read_length} \
@@ -178,12 +178,12 @@ task RunReportScript {
             --read_qual_median ~{read_qual_median} \
             --read_qual_mean ~{read_qual_mean} \
             --drug_resistance_text ~{default="None" drug_resistance_text} \
-            --HRP2 ~{default="N/A" HRP2} \
-            --HRP3 ~{default="N/A" HRP3} \
+            --HRP2 ~{default="Unknown" HRP2} \
+            --HRP3 ~{default="Unknown" HRP3} \
             --longitude ~{default=0 longitude} \
             --latitude ~{default=0 latitude} \
-            --location ~{default="N/A" wrap_location} \
-            --barcode ~{default="N/A" barcode} \
+            --location ~{default="Unknown" wrap_location} \
+            --barcode ~{default="Unknown" barcode} \
             --num_reads_q5 ~{num_reads_q5} \
             --num_reads_q7 ~{num_reads_q7} \
             --num_reads_q10 ~{num_reads_q10} \

@@ -452,12 +452,15 @@ def format_dates(date_string):
     else:
         return "/".join([date_string[:4], date_string[4:6], date_string[6:]])
 
-def check_na(data):
+def check_unknown(data):
     '''
     Input: A variable of any type to check if it is valid for passing to the report.
     Output: The variable or "N/A".
     '''
-    return "N/A" if data in [None, "None", 0] else data
+    return "Unknown" if data in [None, "None", "Unknown", "N/A", 0] else data
+
+def format_long_number(number):
+    return '{:,}'.format(number)
 
 '''
 Report Generation & Templating
@@ -526,7 +529,7 @@ def prepare_summary_data(arg_dict):
 
     resistances = create_drug_table(None if arg_dict["drug_resistance_text"] in [None, "None", ""] else arg_dict["drug_resistance_text"])
 
-    location_info = [round(arg_dict['latitude'], 2), round(arg_dict['longitude'], 2), arg_dict['location']]
+    location_info = [check_na(round(arg_dict['latitude'], 2)), check_na(round(arg_dict['longitude'], 2)), arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
     _map = create_map(coordinates, sample_name)
 
@@ -542,8 +545,8 @@ def prepare_analysis_data(arg_dict):
     
     frac_bases = check_na(arg_dict["fraction_aligned_bases"])
         
-    sequencing_summary = [arg_dict['sample_type'], arg_dict['analysis_success'], arg_dict['aligned_bases'], arg_dict['aligned_reads'], 
-                          round(frac_bases, 2), round(arg_dict['average_identity'], 2)]
+    sequencing_summary = [arg_dict['sample_type'], arg_dict['analysis_success'], format_long_number(arg_dict['aligned_bases']), format_long_number(arg_dict['aligned_reads']), 
+                          round(frac_bases, 4)*100, round(arg_dict['average_identity'], 2)]
 
     barcode = arg_dict['barcode']
         
@@ -597,29 +600,28 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     ''' Summary Page '''
-    parser.add_argument("--barcode", help="barcode of the sample", default="N/A")
+    parser.add_argument("--barcode", help="barcode of the sample", default="Unknown")
     
     # Sample Info
     parser.add_argument("--sample_name", help="name of sequenced sample", required=True)
     parser.add_argument("--upload_date", help="date sample was uploaded", nargs='+', required=True)
-    parser.add_argument("--collection_date", help="date sample was collected", required=True, default="N/A", nargs="?")
-    parser.add_argument("--sequencing_date", help="date sample was sequenced", default="N/A", nargs="?")
+    parser.add_argument("--collection_date", help="date sample was collected", required=True, default="Unknown", nargs="?")
+    parser.add_argument("--sequencing_date", help="date sample was sequenced", default="Unknown", nargs="?")
     parser.add_argument("--species", help="species of sample", nargs='+', default="P. falciparum")
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float)
     parser.add_argument("--aligned_read_length", help="number at which 50%\ of the read lengths are longer than this value", type=float)
     parser.add_argument("--pct_properly_paired_reads", help="median read length", type=float)
-    parser.add_argument("--read_qual_median", help="median measure of the uncertainty of base calls", required=True, type=float, default="N/A", nargs="?")
-    parser.add_argument("--read_qual_mean", help="mean measure of the uncertainty of base calls", required=True, type=float, default="N/A", nargs="?")
+    parser.add_argument("--read_qual_mean", help="mean measure of the uncertainty of base calls", required=True, type=float, default="Unknown", nargs="?")
 
     # Drug Resistance
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", default=None)
-    parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", default="N/A")
-    parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", default="N/A")
+    parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", default="Unknown")
+    parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", default="Unknown")
 
     # Map
     parser.add_argument("--longitude", help="longitude value of where the sample was collected", type=float, default=0)
     parser.add_argument("--latitude", help="latitude value of where the sample collected", type=float, default=0)
-    parser.add_argument("--location", help="location where the sample was collected", default="N/A")
+    parser.add_argument("--location", help="location where the sample was collected", default="Unknown")
     
     # QC Status
     parser.add_argument("--qc_pass", help="status to determine whether or not the sequencing run passes quality control standards", required=True)
