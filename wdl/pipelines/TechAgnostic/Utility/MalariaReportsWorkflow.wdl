@@ -21,7 +21,6 @@ workflow GenerateMalariaReports {
         aligned_coverage: "number of reads uniquely mapped to a reference"
         aligned_read_length: "number at which 50% of the read lengths are longer than this value" # check
         pct_properly_paired_reads: "percent of reads that are properly paired/aligned"
-        read_qual_median: "median measure of the uncertainty of base calls"
         read_qual_mean: "mean measure of the uncertainty of base calls"
 
         # Drug Resistance
@@ -48,8 +47,6 @@ workflow GenerateMalariaReports {
         num_reads_q15: "the number of reads where the probability of a given base call being wrong is approximately 1 in 31"
 
         # Sequencing Summary
-        sample_type: "type of sample"
-        analysis_success: "whether the analysis process completed successfully"
         aligned_bases: "total number of bases aligned to the reference genome"
         aligned_reads: "total number of reads aligned to the reference genome"
         fraction_aligned_bases: "number of bases aligned out of all bases in the sequence"
@@ -80,7 +77,6 @@ workflow GenerateMalariaReports {
         Float aligned_coverage
         Float? aligned_read_length
         Float? pct_properly_paired_reads
-        Float? read_qual_median
         Float? read_qual_mean
 
         # Drug Resistance
@@ -108,8 +104,6 @@ workflow GenerateMalariaReports {
         Int num_reads_q15
 
         # Sequencing Summary
-        String? sample_type
-        String analysis_success
         Float aligned_bases
         Int aligned_reads
         Float fraction_aligned_bases
