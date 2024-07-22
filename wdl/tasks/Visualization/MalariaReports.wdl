@@ -21,7 +21,6 @@ task RunReportScript {
         aligned_coverage: "number of reads uniquely mapped to a reference"
         aligned_read_length: "number at which 50% of the read lengths are longer than this value" # check
         pct_properly_paired_reads: "median read length"
-        read_qual_median: "median measure of the uncertainty of base calls"
         read_qual_mean: "mean measure of the uncertainty of base calls"
 
         # Drug Resistance
@@ -48,11 +47,9 @@ task RunReportScript {
         num_reads_q12: "the number of reads where the probability of a given base call being wrong is approximately 1 in 16"
 
         # Sequencing Summary
-        sample_type: "type of sample"
-        analysis_success: "whether the analysis process completed successfully"
         aligned_bases: "total number of bases aligned to the reference genome"
         aligned_reads: "total number of reads aligned to the reference genome"
-        fraction_aligned_bases: "number of bases aligned out of all bases in the sequence"
+        fraction_aligned_bases: "percentage of bases aligned out of all bases in the sequence"
 
         # Coverage Plot
         # coverage_dir: "directory of BAM files for coverage plot generation"
@@ -76,7 +73,6 @@ task RunReportScript {
         Float aligned_coverage
         Float? aligned_read_length
         Float? pct_properly_paired_reads
-        Float? read_qual_median
         Float? read_qual_mean
 
         # Drug Resistance
@@ -105,8 +101,6 @@ task RunReportScript {
         Int num_reads_q15
 
         # Sequencing Summary
-        String? sample_type
-        String analysis_success
         Float aligned_bases
         Int aligned_reads
         Float fraction_aligned_bases
@@ -175,7 +169,6 @@ task RunReportScript {
             --aligned_coverage ~{aligned_coverage} \
             --aligned_read_length ~{default=0 aligned_read_length} \
             --pct_properly_paired_reads ~{default=0 pct_properly_paired_reads} \
-            --read_qual_median ~{read_qual_median} \
             --read_qual_mean ~{read_qual_mean} \
             --drug_resistance_text ~{default="None" drug_resistance_text} \
             --HRP2 ~{default="Unknown" HRP2} \
@@ -190,8 +183,6 @@ task RunReportScript {
             --num_reads_q12 ~{num_reads_q12} \
             --num_reads_q15 ~{num_reads_q15} \
             --aligned_bases ~{aligned_bases} \
-            --sample_type ~{default="N/A" sample_type} \
-            --analysis_success ~{analysis_success} \
             --aligned_reads ~{aligned_reads} \
             --fraction_aligned_bases ~{fraction_aligned_bases} \
             --average_identity ~{average_identity} \
