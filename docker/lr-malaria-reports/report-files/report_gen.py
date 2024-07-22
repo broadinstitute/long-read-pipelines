@@ -518,7 +518,7 @@ def prepare_summary_data(arg_dict):
     species = ' '.join(arg_dict['species'])
     
     info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_na(arg_dict['aligned_read_length']), 
-            check_na(arg_dict['pct_properly_paired_reads']), arg_dict['read_qual_median'], round(arg_dict['read_qual_mean'], 2)]
+            check_na(arg_dict['pct_properly_paired_reads']), 0, round(arg_dict['read_qual_mean'], 2)]
     processed_info = [item if item not in ["", None] else "N/A" for item in info]
     
     qc_pass = arg_dict["qc_pass"]
@@ -545,7 +545,7 @@ def prepare_analysis_data(arg_dict):
     
     frac_bases = check_na(arg_dict["fraction_aligned_bases"])
         
-    sequencing_summary = [arg_dict['sample_type'], arg_dict['analysis_success'], format_long_number(arg_dict['aligned_bases']), format_long_number(arg_dict['aligned_reads']), 
+    sequencing_summary = [0, 0, format_long_number(arg_dict['aligned_bases']), format_long_number(arg_dict['aligned_reads']), 
                           round(frac_bases, 4)*100, round(arg_dict['average_identity'], 2)]
 
     barcode = arg_dict['barcode']
@@ -610,7 +610,7 @@ if __name__ == '__main__':
     parser.add_argument("--species", help="species of sample", nargs='+', default="P. falciparum")
     parser.add_argument("--aligned_coverage", help="number of times the bases in the sequenced reads cover the target genome", required=True, type=float)
     parser.add_argument("--aligned_read_length", help="number at which 50%\ of the read lengths are longer than this value", type=float)
-    parser.add_argument("--pct_properly_paired_reads", help="median read length", type=float)
+    parser.add_argument("--pct_properly_paired_reads", help="percent of reads that are properly paired", type=float)
     parser.add_argument("--read_qual_mean", help="mean measure of the uncertainty of base calls", required=True, type=float, default="Unknown", nargs="?")
 
     # Drug Resistance
@@ -635,8 +635,6 @@ if __name__ == '__main__':
     parser.add_argument("--num_reads_q15", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 32", required=True)
 
     # Sequencing Summary
-    parser.add_argument("--sample_type", help="type of sample", default="N/A", nargs="?")
-    parser.add_argument("--analysis_success", help="whether the analysis process completed successfully", required=True)
     parser.add_argument("--aligned_bases", help="total number of bases aligned to the reference genome", required=True)
     parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True)
     parser.add_argument("--fraction_aligned_bases", help="number of bases aligned out of all bases sequenced", required=True, type=float)
