@@ -165,6 +165,12 @@ task CoverageStats {
 
         cat ~{prefix}.cov_stat_summary.txt
 
+        wc_sum=$(wc -l ~{prefix}.cov_stat_summary.txt | awk '{print $1}')
+        if [ "$wc_sum" -lt 2 ]; then
+            echo "Error calculating summary statistics. datamash may not have enough data."
+            exit 1
+        fi
+
         # Replace floating-point numbers suffix ing field names with '_coverage
         sed -i '1s/([0-9]*\.[0-9]*)/~{header_suffix}/g' ~{prefix}.cov_stat_summary.txt
 
