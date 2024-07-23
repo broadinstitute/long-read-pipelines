@@ -635,8 +635,8 @@ if __name__ == '__main__':
     parser.add_argument("--num_reads_q15", help="the number of reads where the probability of a given base call being wrong is approximately 1 in 32", required=True)
 
     # Sequencing Summary
-    parser.add_argument("--aligned_bases", help="total number of bases aligned to the reference genome", required=True, type=float)
-    parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True, type=float)
+    parser.add_argument("--aligned_bases", help="total number of bases aligned to the reference genome", required=True, type=int)
+    parser.add_argument("--aligned_reads", help="total number of reads aligned to the reference genome", required=True, type=int)
     parser.add_argument("--fraction_aligned_bases", help="number of bases aligned out of all bases sequenced", required=True, type=float)
     parser.add_argument("--average_identity", help="", required=True, type=float) # check
     
