@@ -182,6 +182,8 @@ task CoverageStats {
         sed -i "1s/$/\tpercent_above_4x~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
         sed -i "2s/$/\t$percent_above_4x/" ~{prefix}.cov_stat_summary.txt
 
+        cat ~{prefix}.cov_stat_summary.txt
+
         ############################################################
         # Calculate Evenness Score
         # Konrad Oexle, Journal of Human Genetics 2016, Evaulation of the evenness score in NGS.
@@ -214,7 +216,12 @@ task CoverageStats {
             sed -i "2s/$/\t$evenness_score/" ~{prefix}.cov_stat_summary.txt
         else
             echo "mean_coverage is 0, cannot calculate evenness score."
+            # Set evenness score to None
+            sed -i "1s/$/\tevenness_score~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
+            sed -i "2s/$/\tNone/" ~{prefix}.cov_stat_summary.txt
         fi
+
+        cat ~{prefix}.cov_stat_summary.txt
 
         ############################################################
         # Convert the summary statistics to a JSON object
