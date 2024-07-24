@@ -1,6 +1,14 @@
 version 1.0
 
-import "../../../structs/Structs.wdl" as Structs
+struct RuntimeAttr {
+    Int cpu_cores
+    Int mem_gb
+    Int disk_gb
+    Int boot_disk_gb
+    Int preemptible_tries
+    Int max_retries
+    String docker
+}
 
 workflow BarcodeExtractor {
     meta {
@@ -25,7 +33,7 @@ workflow BarcodeExtractor {
 task ExtractBarcode {
     input {
         String input_bam_path
-        Structs.RuntimeAttr? runtime_attr_override
+        RuntimeAttr? runtime_attr_override
     }
 
     command <<<
@@ -52,7 +60,7 @@ CODE
         String barcode = read_string(stdout())
     }
 
-    Structs.RuntimeAttr default_attr = object {
+    RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            50,
@@ -61,7 +69,8 @@ CODE
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-compile-sv-stats:0.0.0"
     }
-    Structs.RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
