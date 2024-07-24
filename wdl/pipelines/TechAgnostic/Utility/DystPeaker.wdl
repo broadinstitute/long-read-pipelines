@@ -22,8 +22,8 @@ workflow DystPeaker {
         short_reads_threshold: "A threshold below which the reads will be classified as short"
 
         read_lengths_hist: "Read length histogram"
-        peaks: "Estimated peaks in the read length distritbution"
-        reverse_yield: "A lenth-9 array of lengths at which a certain fraction of reads are shorter than. The fraction bins are 10% to 90% with 10% increments."
+        peaks: "Estimated peaks in the read length distribution"
+        reverse_yield: "A length-9 array of lengths at which a certain fraction of reads are shorter than. The fraction bins are 10% to 90% with 10% increments."
         read_len_summaries: "A summary on some other metrics related to read length"
     }
 
@@ -45,19 +45,24 @@ workflow DystPeaker {
     call ReLU.ReverseYield { input: read_lengths_txt = rl_file }
     call ReLU.Skewness { input: read_lengths_txt = rl_file }
     call ReLU.GetNumReadsAndShorts { input: read_lengths_txt = rl_file, short_threshold = short_reads_threshold }
-    String raw_pct = round(100 * GetNumReadsAndShorts.num_shorts/GetNumReadsAndShorts.num_seqs)
+    String raw_pct = round(100 * GetNumReadsAndShorts.num_shorts / GetNumReadsAndShorts.num_seqs)
 
     call FF.FinalizeToFile as SaveRLArray { input: outdir = output_dir, file = GetNumReadsAndShorts.rl_bz2, name = id + ".readLen.txt.bz2" }
-    call FF.FinalizeToFile as SaveHist    { input: outdir = output_dir, file = Dyst.histogram, name = id + ".readLen.hist.txt" }
+    call FF.FinalizeToFile as SaveHist { input: outdir = output_dir, file = Dyst.histogram, name = id + ".readLen.hist.txt" }
 
     output {
         File read_len_hist = SaveHist.gcs_path
         Array[Int] read_len_peaks = Peaker.peaks
         Array[Int] read_len_deciles = ReverseYield.reverse_yield
 
-        Map[String, String] read_len_summaries = {'shortie_pct': raw_pct + "%",
-                                                  'shortie_threshold': short_reads_threshold,
-                                                  'skew': Skewness.skew,
-                                                  'raw_rl_file': SaveRLArray.gcs_path}
+        Map[String, String] read_len_summaries = {
+            'shortie_pct': raw_pct + "%",
+            'shortie_threshold': short_reads_threshold,
+            'skew': Skewness.skew,
+            'raw_rl_file': SaveRLArray.gcs_path
+        }
+
+        # Main output to be copied to the Terra data table
+        File saveLRArrayOutput = SaveRLArray.gcs_path
     }
 }
