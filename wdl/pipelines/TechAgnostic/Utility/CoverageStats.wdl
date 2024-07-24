@@ -150,115 +150,17 @@ task CoverageStats {
     String basename = select_first([basename_input, basename(mosdepth_regions)])
     String prefix = "~{basename}.coverage_over_bed"
 
-    command <<<
+    command {
         set -euxo pipefail
 
-        # Use Datamash to calculate summary statistics
-        zcat ~{mosdepth_regions} | datamash -H -R ~{round} \
-        mean ~{cov_col} \
-        q1 ~{cov_col} \
-        median ~{cov_col} \
-        q3 ~{cov_col} \
-        iqr ~{cov_col} \
-        sstdev ~{cov_col} \
-        mad ~{cov_col} > ~{prefix}.cov_stat_summary.txt
-
-        cat ~{prefix}.cov_stat_summary.txt
-
-        wc_sum=$(wc -l ~{prefix}.cov_stat_summary.txt | awk '{print $1}')
-        if [ "$wc_sum" -lt 2 ]; then
-            echo "Error calculating summary statistics. datamash may not have enough data."
-            exit 1
-        fi
-
-        # Replace floating-point numbers suffix ing field names with '_coverage
-        sed -i '1s/([0-9]*\.[0-9]*)/~{header_suffix}/g' ~{prefix}.cov_stat_summary.txt
-
-        ############################################################
-        # Calculate covrage percentage with greater than 4x coverage
-        ############################################################
-
-        echo "Calculating coverage percentage with greater than 4x coverage"
-
-        total_bases=$(zcat ~{mosdepth_regions} | wc -l)
-        bases_above_4x=$(zcat ~{mosdepth_regions} | awk -v cov_col=~{cov_col} '$cov_col > 4' | wc -l)
-        percent_above_4x=$(python3 -c "print(round($bases_above_4x/$total_bases, ~{round}))")
-
-        # Append the percentage to the summary tsv file
-        sed -i "1s/$/\tpercent_above_4x~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
-        sed -i "2s/$/\t$percent_above_4x/" ~{prefix}.cov_stat_summary.txt
-
-        cat ~{prefix}.cov_stat_summary.txt
-
-        ############################################################
-        # Calculate Evenness Score
-        # Konrad Oexle, Journal of Human Genetics 2016, Evaulation of the evenness score in NGS.
-        # https://www.nature.com/articles/jhg201621
-        ############################################################
-
-        echo "Calculating Evenness Score"
-
-        # get mean from the summary file, under the column 'mean_coverage'
-        mean_coverage=$(awk -F"\t" '{for(i=1; i<=NF; i++) if ($i == "mean_coverage") {getline; getline; printf "%.0f", $(i); exit}}' ~{prefix}.cov_stat_summary.txt)
-        coverage_count=$(zcat ~{mosdepth_regions} | wc -l)
-
-        # get list of coverages that are less than the mean coverage from the mosdepth output file
-        D2=($(zcat ~{mosdepth_regions} | awk -v mean=$mean_coverage '{if ($~{cov_col} <= mean) print $~{cov_col}}'))
-        D2_count=${#D2[@]}
-        D2_sum=$(printf "%s\n" "${D2[@]}" | awk 'BEGIN {sum = 0} {sum += $1} END {print sum}')
-
-        # print the values for debugging
-        echo "mean_coverage: $mean_coverage"
-        echo "coverage_count: $coverage_count"
-        echo "D2_count: $D2_count"
-        echo "D2_sum: $D2_sum"
-
-        if [ $mean_coverage -ne 0 ]; then
-            # calculate the evenness score
-            evenness_score=$(python3 -c "print(round(1 - ($D2_count - ($D2_sum/$mean_coverage))/$coverage_count, 2))")
-
-            # Append the evenness score to the summary tsv file
-            sed -i "1s/$/\tevenness_score~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
-            sed -i "2s/$/\t$evenness_score/" ~{prefix}.cov_stat_summary.txt
-        else
-            echo "mean_coverage is 0, cannot calculate evenness score."
-            # Set evenness score to None
-            sed -i "1s/$/\tevenness_score~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
-            sed -i "2s/$/\tnull/" ~{prefix}.cov_stat_summary.txt
-        fi
-
-        cat ~{prefix}.cov_stat_summary.txt
-
-        ############################################################
-        # Convert the summary statistics to a JSON object
-        ############################################################
-
-        echo "Converting summary statistics to JSON object"
-
-        # Extract field names from the header
-        header=$(head -n 1 ~{prefix}.cov_stat_summary.txt)
-        IFS=$'\t' read -ra field_names <<< "$header"
-
-        # Extract data values
-        data=$(tail -n 1 ~{prefix}.cov_stat_summary.txt)
-        data_values=($(echo "$data" | awk '{ for(i=1; i<=NF; i++) print $i }'))
-
-        # Create the JSON object
-        json="{"
-        for (( i=0; i<${#field_names[@]}; i++ )); do
-            json+="\"${field_names[i]}\":${data_values[i]}"
-            if [[ $i -lt $(( ${#field_names[@]} - 1 )) ]]; then
-                json+=", "
-            fi
-        done
-        json+="}"
-
-        # Write the JSON object to the output file
-        echo "$json" > ~{prefix}.cov_stat_summary.json
-    >>>
+        python3 coverage_stats.py \
+        --mosdepth_regions ~{mosdepth_regions} \
+        --cov_col ~{cov_col} \
+        --round ~{round} \
+        --prefix ~{prefix}
+    }
 
     output {
-        File cov_stat_summary_file      = "~{prefix}.cov_stat_summary.txt"
         Map[String, Float] cov_stat_summary = read_json("~{prefix}.cov_stat_summary.json")
     }
 
@@ -268,6 +170,6 @@ task CoverageStats {
         disks: "local-disk " +  disk_size + " HDD"
         preemptible:            preemptible_tries
         maxRetries:             1
-        docker:                 "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:latest"
     }
 }
