@@ -1,6 +1,6 @@
 version 1.0
-import "../../../structs/Structs.wdl"
 
+import "../../../structs/Structs.wdl" as Structs
 
 workflow BarcodeExtractor {
     meta {
@@ -13,7 +13,7 @@ workflow BarcodeExtractor {
     }
 
     call ExtractBarcode {
-        input: input_bam = input_file
+        input: input_bam_path = input_file
     }
 
     output {
@@ -24,21 +24,23 @@ workflow BarcodeExtractor {
 
 task ExtractBarcode {
     input {
-        File input_bam
-        RuntimeAttr? runtime_attr_override
+        String input_bam_path
+        Structs.RuntimeAttr? runtime_attr_override
     }
 
     command <<<
     python3 <<CODE
 import re
-import sys
+import os
 
 def extract_barcode(input_bam):
-    match = re.search(r'\\.hifi_reads\\.(bc\\d+)\\.bam', input_bam)
+    # Extract the filename if the input is a full path
+    filename = os.path.basename(input_bam)
+    match = re.search(r'\\.hifi_reads\\.(bc\\d+)\\.bam', filename)
     return match.group(1) if match else None
 
-input_bam = "${input_bam}"
-barcode = extract_barcode(input_bam)
+input_bam_path = "${input_bam_path}"
+barcode = extract_barcode(input_bam_path)
 if barcode:
     print(barcode)
 else:
@@ -50,8 +52,7 @@ CODE
         String barcode = read_string(stdout())
     }
 
-    #########################
-    RuntimeAttr default_attr = object {
+    Structs.RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            50,
@@ -60,7 +61,7 @@ CODE
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-compile-sv-stats:0.0.0"
     }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    Structs.RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
