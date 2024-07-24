@@ -224,7 +224,7 @@ task CoverageStats {
             echo "mean_coverage is 0, cannot calculate evenness score."
             # Set evenness score to None
             sed -i "1s/$/\tevenness_score~{header_suffix}/" ~{prefix}.cov_stat_summary.txt
-            sed -i "2s/$/\tNone/" ~{prefix}.cov_stat_summary.txt
+            sed -i "2s/$/\tnull/" ~{prefix}.cov_stat_summary.txt
         fi
 
         cat ~{prefix}.cov_stat_summary.txt
