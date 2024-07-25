@@ -410,15 +410,17 @@ def read_qc_report(directory):
 ''' 
 Snapshots
 '''
-def get_res_loci_names(bed_file):
+def get_bed_info(bed_file):
     '''
     Input: Bed file containing drug resistance loci and their names.
-    Output: A list of the fourth column of the bed file containing the names of all the drug resistance regions.
+    Output: A list of the fourth column of the bed file containing the names of all the drug resistance regions and a list of loci in the format of start-end.
     '''
     column_names = ["chromosome", "start", "end", "name"]
     bed = pd.read_csv(bed_file, sep="\s+", header=None, names=column_names) 
-    print(bed.name)
-    return list(bed.name) 
+    
+    bed["locus"] = bed["start"].apply(str) + "-" + bed["end"].apply(str)
+    
+    return list(bed.name), list(bed.locus)
 
 '''
 Utility
@@ -490,7 +492,7 @@ class Analysis:
     This class holds all variables used on the analysis page of the report.
     '''
     
-    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, barcode, coverage_plot, snapshots, res_loci_names):
+    def __init__(self, sequencing_summary, qscore_reads, qscore_scores, barcode, coverage_plot, snapshots, res_loci_names, res_loci):
         '''This function defines the variables used and retrieves them from their respective functions.'''
         
         self.sequencing_summary = sequencing_summary
@@ -500,6 +502,7 @@ class Analysis:
         self.coverage_plot = coverage_plot
         self.snapshots = snapshots
         self.res_loci_names = res_loci_names
+        self.res_loci = res_loci
 
 class QCReport:
     def __init__(self, qc_report_html):
@@ -565,8 +568,9 @@ def prepare_analysis_data(arg_dict):
     snapshots_b64 = [img_to_b64(image) for image in snapshots]
     
     bed_file = open(arg_dict["regions_bed"], "r")
+    loci_names, loci = get_bed_info(bed_file)
     
-    return Analysis(sequencing_summary, qscorey, qscorex, barcode, coverage_b64, snapshots_b64, get_res_loci_names(bed_file))
+    return Analysis(sequencing_summary, qscorey, qscorex, barcode, coverage_b64, snapshots_b64, loci_names, loci)
 
 def create_report(sample, analysis, qc_report):
     '''

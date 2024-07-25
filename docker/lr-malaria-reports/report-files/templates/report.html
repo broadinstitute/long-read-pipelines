@@ -1316,7 +1316,7 @@
     </div>
     
     <!--- SUMMARY PAGE -->
-    <div id="summary_page">
+    <div id="summary_page" style="display: none;">
         <div class="summary_root">
           <div class="module_display">
               <div class="main_frame" style="height:1135px;">
@@ -1501,7 +1501,7 @@
 
 
     <!-- ANALYSIS PAGE -->
-    <div id="analysis_page" style="display: none;">
+    <div id="analysis_page">
         <div id="analysis_root">
             <div class="module_display" style="height: 2160px;">
               <div class="main_frame" style="height:1966px;">
@@ -1642,7 +1642,7 @@
                       <div class="divider_line" style="width:1070px"></div>
                   </div>
                   <div id="main_photo_div">
-                    <div id="img_title"><b>Locus:</b>&nbsp;&nbsp;&nbsp;<div class="loci_title">{{ analysis.res_loci_names[0] }}</div></div>
+                    <div id="img_title"><b>Locus:</b>&nbsp;&nbsp;&nbsp;<div class="loci_title">{{ analysis.res_loci_names[0] }}<div class="loci">&nbsp;{{ analysis.res_loci[0] }}</div></div></div>
                     <img id="main_photo" src="data:image/jpeg;base64,{{ (analysis.snapshots[0]).decode('utf-8') | safe }}">
                   </div>
                     <div class="cover">
@@ -1699,12 +1699,22 @@
 
                 </div>
             </div>
+            
         </div> <!-- qc_report_root -->
     </div> <!-- qc_report_page -->
 
     {% endif %}
     <meta name="loci_names" content="{{ analysis.res_loci_names }}">
+    <meta name="loci" content="{{ analysis.res_loci }}">
     <script type="text/javascript">
+
+        function parseJinjaList(value) {
+            let parsed_list = value.slice(1, -1).split(",");
+            parsed_list = parsed_list.map(str => str.replace(/'/g, ""));
+
+            return parsed_list;
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             const thumbnailRow = document.querySelector(".thumbnail-row");
             const scrollLength = thumbnailRow.scrollWidth - thumbnailRow.clientWidth;
@@ -1713,9 +1723,11 @@
             const mainPhoto = document.getElementById("main_photo");
             const thumbnails = document.querySelectorAll(".thumbnail img");
             const imgTitle = document.querySelector(".loci_title");
+            const imgLocus = document.querySelector(".loci");
             let lociNames = document.querySelector("meta[name='loci_names']").content;
-            lociNames = lociNames.slice(1, -1).split(",");
-            lociNames = lociNames.map(str => str.replace(/'/g, ""));
+            lociNames = parseJinjaList(lociNames);
+            let loci = document.querySelector("meta[name='loci']").content;
+            loci = parseJinjaList(loci);
             
             mainPhoto.addEventListener("click", function() {
               this.classList.remove("normal");
@@ -1738,6 +1750,7 @@
                 thumbnails[i].addEventListener("click", (event) => {
                   const newImageSrc = event.target.src;
                   imgTitle.innerHTML = lociNames[index]; // Access titles using captured 'index'
+                  imgLocus.innerHTML = loci[index];
                   updateMainImage(newImageSrc);
                 });
               })(i); // Call the inner function immediately, passing the current 'i'
