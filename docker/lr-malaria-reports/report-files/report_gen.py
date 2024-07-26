@@ -413,10 +413,12 @@ Snapshots
 def get_bed_info(bed_file):
     '''
     Input: Bed file containing drug resistance loci and their names.
-    Output: A list of the fourth column of the bed file containing the names of all the drug resistance regions and a list of loci in the format of start-end.
+    Output: A list containing the names of all the drug resistance regions and a list of loci in the format of start-end.
     '''
     column_names = ["chromosome", "start", "end", "name"]
     bed = pd.read_csv(bed_file, sep="\s+", header=None, names=column_names) 
+    bed["start"] = pd.Series(map(format_long_number, bed["start"]))
+    bed["end"] = pd.Series(map(format_long_number, bed["end"]))
     
     bed["locus"] = bed["start"].apply(str) + "-" + bed["end"].apply(str)
     

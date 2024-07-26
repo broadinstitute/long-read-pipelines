@@ -1709,8 +1709,8 @@
     <script type="text/javascript">
 
         function parseJinjaList(value) {
-            let parsed_list = value.slice(1, -1).split(",");
-            parsed_list = parsed_list.map(str => str.replace(/'/g, ""));
+            let parsed_list = value.slice(1, -1).split(", ");
+            parsed_list = parsed_list.map(str => str.replace(/'/g, "").replace(/\.0/g, ""));
 
             return parsed_list;
         }
