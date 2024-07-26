@@ -153,6 +153,7 @@ def main():
     logging.info("Writing summary statistics to file: %s", summary_file)
     with open(summary_file, 'w') as f:
         json.dump(statistics, f)
+        f.write('\n')
 
 
 if __name__ == "__main__":
