@@ -59,9 +59,9 @@ workflow PBCCSDVOnInterval {
     call FF.FinalizeToFile as FinalizeDVGTbi { input: outdir = smalldir, file = DeepVariant.gVCF_tbi }
 
     output {
-        File dvp_vcf = FinalizeDVVcf.gcs_path
-        File dvp_tbi = FinalizeDVTbi.gcs_path
-        File dvp_g_vcf = FinalizeDVGVcf.gcs_path
-        File dvp_g_tbi = FinalizeDVGTbi.gcs_path
+        File dvp_interval_vcf = FinalizeDVVcf.gcs_path
+        File dvp_interval_tbi = FinalizeDVTbi.gcs_path
+        File dvp_interval_g_vcf = FinalizeDVGVcf.gcs_path
+        File dvp_interval_g_tbi = FinalizeDVGTbi.gcs_path
     }
 }
