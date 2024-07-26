@@ -16,8 +16,7 @@ workflow DeepVariant {
         File ref_fasta
         File ref_fasta_fai
 
-        Int pepper_threads
-        Int pepper_memory
+        String region
 
         Int dv_threads
         Int dv_memory
@@ -35,6 +34,7 @@ workflow DeepVariant {
             bai = bai,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
+            region = region,
             threads = dv_threads,
             memory = dv_memory,
             zones = zones
@@ -57,6 +57,8 @@ task DV {
 
         File ref_fasta
         File ref_fasta_fai
+
+        String region
 
         Int threads
         Int memory
@@ -85,6 +87,7 @@ task DV {
             --model_type=WGS \
             --ref=~{ref_fasta} \
             --reads=~{bam} \
+            --regions "~{region}" \
             --output_vcf="~{output_root}/~{prefix}.vcf.gz" \
             --output_gvcf="~{output_root}/~{prefix}.g.vcf.gz" \
             --num_shards="${num_core}"
