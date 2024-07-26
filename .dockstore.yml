@@ -153,3 +153,7 @@ workflows:
 - name: SvQCPlots
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Visualization/SvQCPlots.wdl
+- name: PBCCSDVOnInterval
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/VariantCalling/PBCCSDVOnInterval.wdl
+
