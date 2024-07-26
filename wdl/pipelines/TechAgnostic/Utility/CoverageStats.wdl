@@ -154,13 +154,14 @@ task CoverageStats {
         set -euxo pipefail
 
         python3 coverage_stats.py \
-        --mosdepth_regions ~{mosdepth_regions} \
         --cov_col ~{cov_col} \
         --round ~{round} \
-        --prefix ~{prefix}
+        --output_prefix ~{prefix} \
+        ~{mosdepth_regions}
     }
 
     output {
+        File cov_stat_summary_file = "~{prefix}.cov_stat_summary.json"
         Map[String, Float] cov_stat_summary = read_json("~{prefix}.cov_stat_summary.json")
     }
 
