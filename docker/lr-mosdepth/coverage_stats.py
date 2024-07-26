@@ -1,11 +1,10 @@
-import gzip
-
-import pandas
-import pandas as pd
-import numpy as np
-import json
 import argparse
+import gzip
+import json
 import logging
+
+import numpy as np
+import pandas as pd
 
 
 def parse_arguments():
@@ -21,7 +20,9 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def calculate_summary_statistics(df, cov_col, round_precision):
+def calculate_summary_statistics(
+        df: pd.DataFrame, cov_col: int, round_precision: int
+) -> dict:
     """
     Calculate summary statistics for the coverage values.
     @param df: Dataframe containing coverage values
@@ -30,7 +31,7 @@ def calculate_summary_statistics(df, cov_col, round_precision):
     @return:
     """
 
-    cov_data: pandas.Series = df.iloc[:, cov_col - 1]
+    cov_data: pd.Series = df.iloc[:, cov_col - 1]
     mean_val: float = cov_data.mean()
     mad_val: float = np.mean(np.abs(cov_data - mean_val))
 
@@ -39,15 +40,18 @@ def calculate_summary_statistics(df, cov_col, round_precision):
         'cov_q1': round(cov_data.quantile(0.25), round_precision),
         'cov_median': round(cov_data.median(), round_precision),
         'cov_q3': round(cov_data.quantile(0.75), round_precision),
-        'cov_iqr': round(cov_data.quantile(0.75) - cov_data.quantile(0.25),
-                     round_precision),
-        'cov_sstdev': round(cov_data.std(), round_precision),
-        'cov_mad': round(mad_val, round_precision)
+        'cov_iqr': round(cov_data.quantile(0.75) - cov_data.quantile(0.25), round_precision),
+        'cov_stdev': round(cov_data.std(), round_precision),
+        'cov_mad': round(mad_val, round_precision),
+        'cov_percent_above_4x': percentage_greater_than_4x(df, cov_col, round_precision),
+        'cov_evenness_score': calculate_evenness_score(df, cov_col, round_precision)
     }
     return statistics
 
 
-def percentage_greater_than_4x(df, cov_col, round_precision):
+def percentage_greater_than_4x(
+        df: pd.DataFrame, cov_col: int, round_precision: int
+) -> float:
     """
     Calculate the percentage of coverage values greater than 4x.
     @param df: Dataframe containing coverage values
@@ -60,10 +64,13 @@ def percentage_greater_than_4x(df, cov_col, round_precision):
     bases_above_4x = df[df.iloc[:, cov_col - 1] > 4].shape[0]
     percent_above_4x = round(bases_above_4x / total_bases, round_precision)
 
+    logging.info("Percentage of coverage values greater than 4x: %s", percent_above_4x)
+
     return percent_above_4x
 
 
-def calculate_evenness_score(df, cov_col, round_precision):
+def calculate_evenness_score(
+        df: pd.DataFrame, cov_col: int, round_precision: int) -> float:
     """
     Calculate the evenness score.
     @param df: Dataframe containing coverage values
@@ -93,10 +100,12 @@ def calculate_evenness_score(df, cov_col, round_precision):
         logging.warning("Mean coverage is zero. Evenness score will be set to null.")
         evenness_score = 'null'
 
+    logging.info("Evenness score: %s", evenness_score)
+
     return evenness_score
 
 
-def open_file(file_path):
+def open_file(file_path: str) -> pd.DataFrame:
     """
     Open a file and return a dataframe
     @param file_path: Path to the file
@@ -134,18 +143,6 @@ def main():
 
     statistics = calculate_summary_statistics(df, args.cov_col, args.round)
 
-    logging.debug("Summary statistics: %s", statistics)
-
-    percent_above_4x = percentage_greater_than_4x(df, args.cov_col, args.round)
-    statistics['cov_percent_above_4x'] = percent_above_4x
-
-    logging.info("Percentage of coverage values greater than 4x: %s", percent_above_4x)
-
-    evenness_score = calculate_evenness_score(df, args.cov_col, args.round)
-    statistics['cov_evenness_score'] = evenness_score
-
-    logging.info("Evenness score: %s", evenness_score)
-
     logging.info("Summary statistics: %s", statistics)
 
     summary_file = f"{prefix}.cov_stat_summary.json"
@@ -153,6 +150,7 @@ def main():
     logging.info("Writing summary statistics to file: %s", summary_file)
     with open(summary_file, 'w') as f:
         json.dump(statistics, f)
+        f.write('\n')
 
 
 if __name__ == "__main__":
