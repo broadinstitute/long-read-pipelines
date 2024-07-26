@@ -1,4 +1,6 @@
 import gzip
+
+import pandas
 import pandas as pd
 import numpy as np
 import json
@@ -28,19 +30,19 @@ def calculate_summary_statistics(df, cov_col, round_precision):
     @return:
     """
 
-    cov_data = df.iloc[:, cov_col - 1]
-    mean_val = cov_data.mean()
-    mad_val = np.mean(np.abs(cov_data - mean_val))
+    cov_data: pandas.Series = df.iloc[:, cov_col - 1]
+    mean_val: float = cov_data.mean()
+    mad_val: float = np.mean(np.abs(cov_data - mean_val))
 
     statistics = {
-        'mean': round(mean_val, round_precision),
-        'q1': round(cov_data.quantile(0.25), round_precision),
-        'median': round(cov_data.median(), round_precision),
-        'q3': round(cov_data.quantile(0.75), round_precision),
-        'iqr': round(cov_data.quantile(0.75) - cov_data.quantile(0.25),
+        'cov_mean': round(mean_val, round_precision),
+        'cov_q1': round(cov_data.quantile(0.25), round_precision),
+        'cov_median': round(cov_data.median(), round_precision),
+        'cov_q3': round(cov_data.quantile(0.75), round_precision),
+        'cov_iqr': round(cov_data.quantile(0.75) - cov_data.quantile(0.25),
                      round_precision),
-        'sstdev': round(cov_data.std(), round_precision),
-        'mad': round(mad_val, round_precision)
+        'cov_sstdev': round(cov_data.std(), round_precision),
+        'cov_mad': round(mad_val, round_precision)
     }
     return statistics
 
@@ -72,21 +74,21 @@ def calculate_evenness_score(df, cov_col, round_precision):
     logging.debug("Calculating evenness score")
     mean_coverage = df.iloc[:, cov_col - 1].mean()
     # Get the coverage values that are less than or equal to the mean coverage
-    D2 = df[df.iloc[:, cov_col - 1] <= mean_coverage].iloc[:, cov_col - 1].tolist()
+    d2 = df[df.iloc[:, cov_col - 1] <= mean_coverage].iloc[:, cov_col - 1].tolist()
     # count of coverage values that are less than or equal to the mean coverage
-    D2_count = len(D2)
+    d2_count = len(d2)
     # sum of coverage values that are less than or equal to the mean coverage
-    D2_sum = sum(D2)
-    # total number of coverage
+    d2_sum = sum(d2)
+    # total number of coverages
     coverage_count = len(df)
 
     logging.debug("Mean coverage: %s", mean_coverage)
-    logging.debug("D2 count: %s", D2_count)
-    logging.debug("D2 sum: %s", D2_sum)
+    logging.debug("D2 count: %s", d2_count)
+    logging.debug("D2 sum: %s", d2_sum)
     logging.debug("Coverage count: %s", coverage_count)
 
     if mean_coverage != 0:
-        evenness_score = round(1 - (D2_count - (D2_sum / mean_coverage)) / coverage_count, round_precision)
+        evenness_score = round(1 - (d2_count - (d2_sum / mean_coverage)) / coverage_count, round_precision)
     else:
         logging.warning("Mean coverage is zero. Evenness score will be set to null.")
         evenness_score = 'null'
@@ -135,12 +137,12 @@ def main():
     logging.debug("Summary statistics: %s", statistics)
 
     percent_above_4x = percentage_greater_than_4x(df, args.cov_col, args.round)
-    statistics['percent_above_4x'] = percent_above_4x
+    statistics['cov_percent_above_4x'] = percent_above_4x
 
     logging.info("Percentage of coverage values greater than 4x: %s", percent_above_4x)
 
     evenness_score = calculate_evenness_score(df, args.cov_col, args.round)
-    statistics['evenness_score'] = evenness_score
+    statistics['cov_evenness_score'] = evenness_score
 
     logging.info("Evenness score: %s", evenness_score)
 
