@@ -101,13 +101,24 @@
     /* vertical spacing */
     .drug_res_box {
         position: relative;
-        width: 1144px;
-        height: 191px;
+        left: 15px;
+        width: 1113px;
+        height: 460px;
         align-items: flex-start;
         overflow: hidden;
+        outline: solid 1px #dfe1e5;
+        outline-offset: -1px;
     }
-  
-  
+
+    .dr_bubbles {
+        position: relative;
+        top: 210px;
+        width: 98%;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
   
     /* DRM box */
     .drug_res_outline {
@@ -116,7 +127,6 @@
         top: 0;
         width: 1113px;
         height: 191px;
-        outline: solid 1px #dfe1e5;
         outline-offset: -1px;
     }
     
@@ -128,7 +138,7 @@
         font-weight: 500;
         font-family: Rubik;
         position: absolute;
-        left: 34px;
+        left: 15px;
         top: 30px;
         width: 519px;
         height: 26.9455px;
@@ -141,16 +151,13 @@
         position: absolute;
         left: 34px;
         top: 76px;
-        width: 1075px;
         height: 1px;
-        max-height: 100%;
-        overflow: visible;
     }
   
     /* DRM metric */
     .drug_res_spacing {
         position: absolute;
-        left: 34px;
+        left: 19px;
         top: 90px;
         width:130px;
     }
@@ -479,8 +486,8 @@
     
     .divider_line {
       width: 1081px;
-      max-width: 100%;
       height: 0;
+      margin: 0 auto;
       max-height: 100%;
       border-bottom: solid 1px #dfe1e5;
       margin-bottom: -1px;
@@ -1326,40 +1333,43 @@
                   </div>
                   <div class="drug_res_title">Drug Resistance Markers
                   </div>            
-                  <div class="drug_res_line">
-                    <svg preserveAspectRatio="none" viewBox="0 0 1075 1" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon"><path d="M0 0H1060" stroke="#DFE1E5"></path></svg>
-                  </div>
-                  <div class="drug_res_spacing">
-                    <span style="text-align:center; font-family:Rubik;">
-                      <table class="drug_res_table" style="table-layout: fixed; width: 1075px;">  
-                        <thead>
-                          <tr>
-                            <th class="th1">&nbsp;</th>      
-                            <th class="th1">Chloroquine</th>      
-                            <th class="th1">Pyrimethamine</th>      
-                            <th class="th1">Sulfadoxine</th>      
-                            <th class="th1">Mefloquine</th>      
-                            <th class="th1">Artemisinin</th>      
-                            <th class="th1">Piperaquine</th>    
-                          </tr>
-                        </thead>  
-                        <tbody>  
-                          <tr>
-                              <th>Sensitivity</th>
-                              {% for item in sample.drug_res %}
-                                {% if item == "RESISTANT" %}
-                                      <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #E28080;"> {{ item }} </td> 
-                                {% elif item == "SENSITIVE" %}
-                                      <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #8CE280"> {{ item }} </td> 
-                                {% else %}
-                                      <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #EBF0F1;"> {{ item }} </td> 
-                                {% endif %}
-                              {% endfor %}
+                  
+                    <div class="drug_res_spacing">
+                        <div class="divider_line" style="position: absolute;top:-25px;left:-2px;width:1080px; margin: 0 auto;"></div>
+                        <span style="text-align:center; font-family:Rubik;">
+                        <table class="drug_res_table" style="table-layout: fixed; width: 1075px;">  
+                            <thead>
+                            <tr>
+                                <th class="th1">&nbsp;</th>      
+                                <th class="th1">Chloroquine</th>      
+                                <th class="th1">Pyrimethamine</th>      
+                                <th class="th1">Sulfadoxine</th>      
+                                <th class="th1">Mefloquine</th>      
+                                <th class="th1">Artemisinin</th>      
+                                <th class="th1">Piperaquine</th>    
                             </tr>
-                        </tbody>
-                      </table>
-                    </span>
-                  </div>
+                            </thead>  
+                            <tbody>  
+                            <tr>
+                                <th>Sensitivity</th>
+                                {% for item in sample.drug_res %}
+                                    {% if item == "RESISTANT" %}
+                                        <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #E28080;"> {{ item }} </td> 
+                                    {% elif item == "SENSITIVE" %}
+                                        <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #8CE280"> {{ item }} </td> 
+                                    {% else %}
+                                        <td style="text-align:center; vertical-align:middle; padding: 8px; background-color: #EBF0F1;"> {{ item }} </td> 
+                                    {% endif %}
+                                {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                        </span>
+                        <div class="divider_line" style="position: absolute;top:110px;left:-2px;width:1080px; margin: 0 auto;"></div>
+                    </div>
+                    <div class="dr_bubbles">
+                        <img src="data:image/jpeg;base64,{{ (sample.dr_bubbles).decode('utf-8') | safe }}" style="height: auto; width: 90%; position:absolute; left:50px; top:100px;">
+                    </div>
                 </div>
     
                 <div class="row2_frames">

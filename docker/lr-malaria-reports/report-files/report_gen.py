@@ -16,6 +16,8 @@ import plotly.express as px
 import folium
 import plotly.graph_objects as go
 import math
+from collections import defaultdict
+from matplotlib.collections import PatchCollection
 
 # HTML
 from markupsafe import Markup
@@ -371,6 +373,131 @@ def get_drug_resistance(data, sample_id, sample_df, do_print=False):
         
     return chloroquine, pyrimethamine, sulfadoxine, mefloquine, artemisinin, piperaquine
  
+def plot_dr_bubbles(dr_report_file):
+    # Set up dataframes using a single report:
+    # Download the file contents:
+    with open(dr_report_file, 'r') as f:
+        dr_report_contents = f.read()
+
+    # Set up our data:
+    dataframe_dict = dict()
+    drug_resistance_df = pd.DataFrame(columns=["Sample", "Chloroquine", "Pyrimethamine", "Sulfadoxine", "Mefloquine", "Artemisinin", "Piperaquine"])  
+
+    # Get the raw info here:
+    last_gene = None
+    cur_df = None
+    for line in dr_report_contents.split("\n"):
+        if len(line) > 1:
+            gene, loc, variant, presence = line.split(" ")
+            if gene != last_gene:
+                # must make a new dataframe
+                if last_gene:
+                    dataframe_dict[last_gene] = cur_df
+                cur_df = pd.DataFrame({'Sample': pd.Series(dtype='str')})
+            cur_df[variant] = pd.Series(dtype='bool')
+            last_gene = gene
+    dataframe_dict[gene] = cur_df
+
+    # Get the raw info here:
+    sample_id = dr_report_file[dr_report_file.find("/SEN_")+1:dr_report_file.find("_ALL_scored")]
+
+    dr_info = defaultdict(list)
+    for line in dr_report_contents.split("\n"):
+        if len(line) > 1:
+            gene, loc, variant, presence = line.split(" ")
+            presence = presence == "present"
+
+            dr_info[gene].append([variant, presence])
+
+    # Now process it into dataframes:
+    for gene, variant_info in dr_info.items():
+
+        # set up place to put new markers:
+        gene_df = dataframe_dict[gene]
+        columns = list(gene_df.columns)
+
+        gene_df.loc[len(gene_df.index)] = [sample_id] + (len(columns)-1) * [None]
+
+        # Now add the markers:
+        for v, presence in variant_info:
+            gene_df.loc[len(gene_df.index)-1, v] = presence
+
+    # Set up logistics of our data:
+    nrows = len(next(iter(dataframe_dict.values())))
+    ncols = sum([len(d.columns) for d in dataframe_dict.values()])
+
+    aa_dict = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+        'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+        'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+        'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+    aa_dict_rev = {v:k for k, v in aa_dict.items()}
+
+    pchange_string_re = re.compile(r'P\.([A-Z]+)(\d+)([A-Z]+)')
+
+    xlabels = []
+    for df in dataframe_dict.values():
+        for variant in df.columns[1:]:
+            m = pchange_string_re.match(variant.upper())
+            xlabels.append(f"{aa_dict[m[1]]}{m[2]}{aa_dict[m[3]]}")
+
+    # Now set up the circles we will plot:
+    print("Computing plots")
+    radius = 0.4
+    circles = []
+    x_tick_pos = []
+    x_gene_offset = 0
+    for gene_index, (g, df) in enumerate(dataframe_dict.items()):
+        y = nrows-1
+        for row_index, row in df.iterrows():
+            x = 0 + x_gene_offset
+            for col_index, col in enumerate(row[1:]):
+                edgecolor = [0]*3
+                facecolor = [1,0,0] if col else [1]*3
+                c = plt.Circle((x+gene_index, y), facecolor=facecolor, edgecolor=edgecolor)
+                c.set(radius=radius)
+                circles.append(c)
+                x_tick_pos.append(x+gene_index)
+                x += 1
+            y -= 1
+        x_gene_offset += len(df.columns)-1
+                
+    x_tick_pos = sorted(list(set(x_tick_pos)))
+
+    ############################
+
+    print("Generating Plots")
+    fig, ax = plt.subplots()
+
+    col = PatchCollection(circles, match_original=True)
+    ax.add_collection(col)
+
+    # Now set the gene labels:
+    x_gene_offset = 0
+    for gene_index, (g, df) in enumerate(dataframe_dict.items()):
+        line_x = [x_gene_offset, x_gene_offset+len(df.columns)-2]
+        lbl_x = sum(line_x)/2
+        plt.text(lbl_x, nrows+2, g, ha="center", fontfamily="monospace", size="large")
+        plt.plot(line_x, [nrows+1]*2, '-k', linewidth=2)
+        x_gene_offset += len(df.columns)
+        
+    ax.set(xticks=x_tick_pos, 
+        yticks=[],
+        xticklabels=xlabels, 
+        yticklabels=[])
+
+
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90, ha='center')
+
+    ax.axis([-1, ncols-1, -1, nrows+3])
+    ax.set_aspect(aspect='equal')
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    
+    return fig
+ 
 '''
 Map
 '''
@@ -477,7 +604,7 @@ class Sample:
     such as the sample name.
     '''
     
-    def __init__(self, sample_name, hrp2, hrp3, drug_res, info, _map, location_info, qc_pass):
+    def __init__(self, sample_name, hrp2, hrp3, drug_res, info, _map, location_info, qc_pass, dr_bubbles):
         '''This function defines the class variables and retrieves them from their respective functions.'''
         
         self.sample_name = sample_name
@@ -488,6 +615,7 @@ class Sample:
         self.map = _map
         self.location_info = location_info
         self.qc_pass = qc_pass
+        self.dr_bubbles = dr_bubbles
 
 class Analysis:
     '''
@@ -533,6 +661,8 @@ def prepare_summary_data(arg_dict):
         qc_pass = "FAIL"
 
     resistances = create_drug_table(None if arg_dict["drug_resistance_text"] in [None, "None", ""] else arg_dict["drug_resistance_text"])
+    resistance_bubbles = plot_dr_bubbles(arg_dict["drug_resistance_text"])
+    resistance_bubbles_b64 = plot_to_b64(resistance_bubbles)
 
     location_info = [check_unknown(round(arg_dict['latitude'], 2)), check_unknown(round(arg_dict['longitude'], 2)), arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
@@ -541,7 +671,7 @@ def prepare_summary_data(arg_dict):
     HRP2 = arg_dict['HRP2']
     HRP3 = arg_dict['HRP3']
 
-    return Sample(sample_name, HRP2, HRP3, resistances, processed_info, _map, location_info, qc_pass)
+    return Sample(sample_name, HRP2, HRP3, resistances, processed_info, _map, location_info, qc_pass, resistance_bubbles_b64)
 
 def prepare_analysis_data(arg_dict):
     '''
@@ -597,7 +727,7 @@ def create_report(sample, analysis, qc_report):
     print(file_name)
 
     with open(file_name, 'w') as fh:
-        fh.write(output)  
+        fh.write(output)
         
     print('Report generated!')
 
