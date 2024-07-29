@@ -32,11 +32,10 @@ task ConvertToHailMT {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 3*ceil(size(gvcf, "GB"))
-
     command <<<
         set -x
 
+        date
         python3 <<EOF
 
         import hail as hl
@@ -55,8 +54,25 @@ task ConvertToHailMT {
         callset.write('~{prefix}.mt')
 
         EOF
+        date
 
-        gsutil -m rsync -Cr ~{prefix}.mt ~{outdir}/~{prefix}.mt
+        # gsutil -m rsync -Cr ~{prefix}.mt ~{outdir}/~{prefix}.mt
+        set +e
+        attempt=1
+        gcloud --verbosity='error' storage \
+            rsync \
+            -c -r \
+            ~{prefix}.mt \
+            ~{outdir}/~{prefix}.mt
+        retVal=$?
+        if [[ ${retVal} -ne 0  &&  ${attempt} -lt 5 ]]; then
+            attempt=$((attempt+1))
+            gcloud --verbosity='error' storage \
+                rsync \
+                -c -r \
+                ~{prefix}.mt \
+                ~{outdir}/~{prefix}.mt
+        fi
     >>>
 
     output {
@@ -64,14 +80,16 @@ task ConvertToHailMT {
     }
 
     #########################
+    Int disk_size = 1 + 3*ceil(size(gvcf, "GB"))
+
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
+        cpu_cores:          16,
         mem_gb:             64,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "hailgenetics/hail:0.2.105"
+        docker:             "us.gcr.io/broad-dsp-lrma/hail:0.2.130-gcloud"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

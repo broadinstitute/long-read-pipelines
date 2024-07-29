@@ -1,7 +1,6 @@
 version 1.0
 
 import "../Utility/Utils.wdl"
-import "../Utility/VariantUtils.wdl"
 
 workflow JointCall {
 
@@ -42,8 +41,6 @@ workflow JointCall {
         Int? num_cpus
         Int max_cpus = 64
         String prefix = "out"
-
-        RuntimeAttr? runtime_attr_override
     }
 
     Int cpus_exp = if defined(num_cpus) then select_first([num_cpus]) else 2*length(gvcfs)
@@ -124,7 +121,7 @@ task GetRanges {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
+        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -183,7 +180,7 @@ task ShardVCFByRanges {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
+        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -247,9 +244,9 @@ task Call {
         mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
-        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
+        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -299,7 +296,7 @@ task CompressAndIndex {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
+        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -321,7 +318,7 @@ task ConcatBCFs {
     input {
         Array[File] bcfs
 
-        Int num_cpus = 4
+        Int num_cpus = 10
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
@@ -332,7 +329,7 @@ task ConcatBCFs {
     command <<<
         set -euxo pipefail
 
-        bcftools concat -n ~{sep=' ' bcfs} | bcftools view | bgzip -@ ~{num_cpus} -c > ~{prefix}.g.vcf.bgz
+        bcftools concat --threads 4 -n ~{sep=' ' bcfs} | bcftools view | bgzip -@ 4 -c > ~{prefix}.g.vcf.bgz
         tabix -p vcf ~{prefix}.g.vcf.bgz
     >>>
 
@@ -344,12 +341,12 @@ task ConcatBCFs {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
-        mem_gb:             8,
+        mem_gb:             60,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
+        docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
