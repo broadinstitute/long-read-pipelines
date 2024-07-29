@@ -554,14 +554,14 @@ def get_bed_info(bed_file):
 '''
 Utility
 '''
-def plot_to_b64(plot):
+def plot_to_b64(plot, bbox_inches=None):
     '''
     Input: A matplotlib plot.
     Output: The b64 string conversion of the input plot.
     '''
     # Create I/O buffer to save image in bytes
     stringIObytes = io.BytesIO()
-    plot.savefig(stringIObytes, format="jpeg")
+    plot.savefig(stringIObytes, format="jpeg", bbox_inches = bbox_inches)
     
     # Retrieve byte-string and encode it in base64
     stringIObytes.seek(0)
@@ -662,7 +662,7 @@ def prepare_summary_data(arg_dict):
 
     resistances = create_drug_table(None if arg_dict["drug_resistance_text"] in [None, "None", ""] else arg_dict["drug_resistance_text"])
     resistance_bubbles = plot_dr_bubbles(arg_dict["drug_resistance_text"])
-    resistance_bubbles_b64 = plot_to_b64(resistance_bubbles)
+    resistance_bubbles_b64 = plot_to_b64(resistance_bubbles, "tight")
 
     location_info = [check_unknown(round(arg_dict['latitude'], 2)), check_unknown(round(arg_dict['longitude'], 2)), arg_dict['location']]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
