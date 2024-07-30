@@ -35,7 +35,7 @@ task VCF_INS_to_fa {
     command <<<
         set -euxo pipefail
 
-        bcftools view -i 'INFO/SVLEN>50 && INFO/SVTYPE=="INS"' ~{VCF} | bcftools view -e 'ALT ~ "<"' > ~{prefix}.INS.vcf
+        bcftools view -i 'INFO/SVLEN>=50 && INFO/SVTYPE=="INS"' ~{VCF} | bcftools view -e 'ALT ~ "<"' > ~{prefix}.INS.vcf
         bcftools query -f '>%CHROM:%POS\n%ALT\n' ~{prefix}.INS.vcf > ~{prefix}_INS.fa
     >>>
 
