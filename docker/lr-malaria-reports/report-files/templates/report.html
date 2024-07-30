@@ -662,11 +662,13 @@
         left: 277px;
         top: 18px;
         width: min-content;
-        height: 1300px;
+        height: auto;
+        display: flex;
         flex-direction: column;
         align-items: flex-start;
         gap: 9px;
         padding-top: 15px;
+        padding-bottom: 22px;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
     }
@@ -1084,7 +1086,7 @@
   #main_photo {
       cursor: pointer;
       position: relative;
-      top: 30px;
+      margin: 11px 0px 11px 0px;
       object-fit: scale-down;
       min-height: 0px;
       max-height: 315px;
@@ -1363,7 +1365,7 @@
     <div id="summary_page">
         <div class="summary_root">
           <div class="module_display">
-              <div class="main_frame" style="height:1370px;">
+              <div class="main_frame">
 
                 <div class="drug_res_box">  
                   <div class="drug_res_outline">
@@ -1559,7 +1561,7 @@
     <div id="analysis_page" style="display: none;">
         <div id="analysis_root">
             <div class="module_display" style="height: 2160px;">
-              <div class="main_frame" style="height:1966px;">
+              <div class="main_frame">
               <div class="top_row_frame">
                 <div class="barcode_box">
                     <div class="barcode_value">{{ analysis.barcode }}</div>
