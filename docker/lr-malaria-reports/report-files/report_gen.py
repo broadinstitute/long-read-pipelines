@@ -719,6 +719,10 @@ def create_report(sample, analysis, qc_report):
     # creating summary page
     templateLoader = jinja2.FileSystemLoader(searchpath='/report-files/templates/')
     templateEnv = jinja2.Environment(loader=templateLoader)
+    
+    # Add zip to Jinja2 namespace
+    templateEnv.globals.update(zip=zip)
+    
     TEMPLATE_FILE = 'report.html' # may need to change if file is moved
     template = templateEnv.get_template(TEMPLATE_FILE)
     output = template.render(sample=sample, analysis=analysis, qc_report = qc_report)
