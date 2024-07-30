@@ -1084,10 +1084,10 @@
   #main_photo {
       cursor: pointer;
       position: relative;
-      top: 25px;
+      top: 30px;
       object-fit: scale-down;
-      min-height: 325px;
-      max-height: 325px;
+      min-height: 0px;
+      max-height: 315px;
       max-width: 500px;
       z-index: 100;
   }
@@ -1117,7 +1117,7 @@
     .thumbnail-row {
         position: relative;
         width: 100%;
-        padding: 40px 0px;
+        padding: 8px 0px;
         height: auto;
         display: flex;
         flex-wrap: nowrap;
@@ -1140,6 +1140,19 @@
         -webkit-box-shadow: 0px 0px 15px 2px rgb(0 0 0 / 10%);
         box-shadow: 0px 0px 15px 2px rgb(0 0 0 / 10%);
         cursor: pointer;
+    }
+
+    .thumbnail_group {
+        flex-direction: column;
+        align-items: center;
+        color: #000;
+        position: relative;
+        top:12px;
+        font-size: 18px;
+        line-height: 35px;
+        font-weight: 300;
+        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+            'Liberation Sans', sans-serif;
     }
 
     .enlarged {
@@ -1350,7 +1363,7 @@
     <div id="summary_page">
         <div class="summary_root">
           <div class="module_display">
-              <div class="main_frame" style="height:1405px;">
+              <div class="main_frame" style="height:1370px;">
 
                 <div class="drug_res_box">  
                   <div class="drug_res_outline">
@@ -1685,17 +1698,21 @@
                   </div>
                   <div id="main_photo_div">
                     <div id="img_title"><b>Locus:</b>&nbsp;&nbsp;&nbsp;<div class="loci_title">{{ analysis.res_loci_names[0] }}</div>,&nbsp;&nbsp;<div class="loci">{{ analysis.res_loci[0] }}</div></div>
-                    <img id="main_photo" src="data:image/jpeg;base64,{{ (analysis.snapshots[0]).decode('utf-8') | safe }}">
+                    <img id="main_photo" src="../test_data/0414be174bc8755e5ded5460daf039e5.png">
+                    <!--<img id="main_photo" src="data:image/jpeg;base64,{{ (analysis.snapshots[0]).decode('utf-8') | safe }}">-->
                   </div>
                     <div class="cover">
                         <button class="left" style="color:rgb(53, 53, 53);" onclick="leftScroll()">
                             &#9668;
                         </button>
                         <div class="thumbnail-row">
-                            {% for image in analysis.snapshots %}
+                            {% for image, name in zip(analysis.snapshots, analysis.res_loci_names) %}
+                            <div class="thumbnail_group">
                                 <div class="thumbnail">
                                     <img src="data:image/jpeg;base64,{{ (image).decode('utf-8') | safe }}">
                                 </div>
+                                <div class="thumbnail_label">{{ name }}</div>
+                            </div>
                             {% endfor %}
                         </div>
                         <button class="right" onclick="rightScroll()">
