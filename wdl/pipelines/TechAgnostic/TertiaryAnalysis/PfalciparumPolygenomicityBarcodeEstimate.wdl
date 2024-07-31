@@ -60,8 +60,8 @@ workflow PfalciparumPolygenomicityBarcodeEstimate {
         # Primary outputs:
         String genomicity = t_002_EstimateGenomicityFromBarcode.genomicity
 
-        File? fingerprint_vcf = select_first([t_001_FingerprintAndBarcodeVcf.output_vcf])
-        String? barcode = select_first([t_001_FingerprintAndBarcodeVcf.barcode])
+        File? fingerprint_vcf = t_001_FingerprintAndBarcodeVcf.output_vcf
+        String? barcode = t_001_FingerprintAndBarcodeVcf.barcode
     }
 }
 
