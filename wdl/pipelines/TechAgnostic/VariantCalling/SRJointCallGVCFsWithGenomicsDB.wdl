@@ -505,8 +505,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     }
 
     output {
-        File joint_vcf     = select_first([FinalizeVETSVCF.gcs_path, GatherRescoredVcfs.output_vcf])
-        File joint_vcf_tbi = select_first([FinalizeVETSTBI.gcs_path, GatherRescoredVcfs.output_vcf_index])
+        File joint_vcf_out     = select_first([FinalizeVETSVCF.gcs_path, GatherRescoredVcfs.output_vcf])
+        File joint_vcf_out_tbi = select_first([FinalizeVETSTBI.gcs_path, GatherRescoredVcfs.output_vcf_index])
 
         File joint_mt = select_first([FinalizeHailMatrixTable.gcs_path, CreateHailMatrixTable.mt_tar])
         File joint_zarr = select_first([FinalizeZarr.gcs_path, ConvertToZarr.zarr])
