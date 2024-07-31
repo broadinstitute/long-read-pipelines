@@ -1581,8 +1581,8 @@
                     </div>
                     <div class="sequencing_summary_title">Sequencing Summary</div>
                     <div class="_sequencing_summary_right_side">
-                        <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[2]|int }} bp</div>
-                        <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[3]|int }} bp</div>
+                        <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[2]|string|replace(".0","") }} bp</div>
+                        <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[3]|string|replace(".0","") }} bp</div>
                         <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[4] }}%</div>
                         <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[5] }}%</div>
                     </div>
@@ -1702,7 +1702,7 @@
                       <div class="divider_line" style="width:1070px"></div>
                   </div>
                   <div id="main_photo_div">
-                    <div id="img_title"><b>Locus:</b>&nbsp;&nbsp;&nbsp;<div class="loci_title">{{ analysis.res_loci_names[0] }}</div>,&nbsp;&nbsp;<div class="loci">{{ analysis.res_loci[0]|int }}</div></div>
+                    <div id="img_title"><b>Locus:</b>&nbsp;&nbsp;&nbsp;<div class="loci_title">{{ analysis.res_loci_names[0] }}</div>,&nbsp;&nbsp;<div class="loci">{{ analysis.res_loci[0]|string|replace(".0","") }}</div></div>
                     <img id="main_photo" src="data:image/jpeg;base64,{{ (analysis.snapshots[0]).decode('utf-8') | safe }}">
                   </div>
                     <div class="cover">
