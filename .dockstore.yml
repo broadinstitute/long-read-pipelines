@@ -153,3 +153,6 @@ workflows:
 - name: SvQCPlots
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Visualization/SvQCPlots.wdl
+- name: PfalciparumPolygenomicityBarcodeEstimate
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumPolygenomicityBarcodeEstimate.wdl
