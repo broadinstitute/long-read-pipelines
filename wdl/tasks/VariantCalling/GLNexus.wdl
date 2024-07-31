@@ -54,9 +54,10 @@ workflow JointCall {
         call ShardVCFByRanges { input: gvcf = p.left, tbi = p.right, ranges = GetRanges.ranges }
     }
 
+    Array[Array[File]] per_range_per_sample_gvcfs = transpose(ShardVCFByRanges.sharded_gvcfs)
     # Joint-call in parallel over chromosomes
-    scatter (i in range(length(ShardVCFByRanges.sharded_gvcfs[0]))) {
-        Array[File] per_contig_gvcfs = transpose(ShardVCFByRanges.sharded_gvcfs)[i]
+    scatter (i in range(length(GetRanges.ranges))) {
+        Array[File] per_contig_gvcfs = per_range_per_sample_gvcfs[i]
 
         call Call {
             input:
