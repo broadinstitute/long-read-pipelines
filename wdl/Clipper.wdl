@@ -9,7 +9,8 @@ import "tasks/Structs.wdl"
 workflow RunClipper {
     input {
         File aligned_bam
-        String prefix
+        File ref_fai
+        String sample
         Int? min_dist
         Int? min_cluster_count
         Int? max_unique_breakends
@@ -18,19 +19,20 @@ workflow RunClipper {
 
     parameter_meta {
         aligned_bam:            "aligned bam"
-        prefix:                 "e.g. sample name"
+        sample:                 "sample name"
         min_dist:               "Minimum distance between where read splits align on the reference (bp) (default=1)"
         min_cluster_count:      "Minimum number of reads in a cluster (default=5)"
         max_unique_breakends:   "Maximum number of unique breakends for a cluster (default=10)"
         max_cluster_dist:       "Max distance between supplementary breakends to cluster them together (default=50)"
     }
 
-    call ClipperCluster { input: aligned_bam = aligned_bam, prefix=prefix }
+    call ClipperCluster { input: aligned_bam = aligned_bam, prefix=sample }
 
     call ClipperProcess {
       input:
         clusterfile = ClipperCluster.clusterfile,
-        prefix = prefix,
+        sample = sample,
+        ref_fai = ref_fai,
         min_dist = select_first([min_dist, 1]),
         min_cluster_count = select_first([min_cluster_count, 5]),
         max_unique_breakends = select_first([max_unique_breakends, 10]),
@@ -87,7 +89,8 @@ task ClipperCluster {
 task ClipperProcess {
     input {
         File clusterfile
-        String prefix
+        File ref_fai
+        String sample
         Int min_dist
         Int min_cluster_count
         Int max_unique_breakends
@@ -99,10 +102,12 @@ task ClipperProcess {
 
     command <<<
         bedtools cluster -d ~{max_cluster_dist} -s -i ~{clusterfile} | cut -f1,2,3,6,7,8,9,10,11 > ~{prefix}_clipped_reads_clustered.bed
-        python /split_reads_process_clusters.py ~{prefix}_clipped_reads_clustered.bed -d ~{min_dist} -c ~{min_cluster_count} -u ~{max_unique_breakends} -s ~{max_cluster_dist} > ~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf
+        python /split_reads_process_clusters.py ~{sample}_clipped_reads_clustered.bed ~{sample} -d ~{min_dist} -c ~{min_cluster_count} -u ~{max_unique_breakends} -s ~{max_cluster_dist} > tmp.vcf
+
+        bcftools reheader -f ~{ref_fai} tmp.vcf |bcftools sort -Oz > ~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf.gz
     >>>
 
-    output { File clustervcf = "~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf" }
+    output { File clustervcf = "~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf.gz" }
 
     #########################
     RuntimeAttr default_attr = object {
