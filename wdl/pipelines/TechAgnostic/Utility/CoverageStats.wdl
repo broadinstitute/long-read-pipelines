@@ -18,17 +18,37 @@ workflow MosdepthCoverageStats {
         File aligned_bai
         File? bed_file
 
-        Int bin_length = 1000
+        Int? bin_length
 
         # Runtime parameters
         Int preemptible_tries = 3
+    }
+
+    if (defined(bed_file) && defined(bin_length)) {
+        call BinBed  {
+            input:
+                bed_file = bed_file,
+                bin_length = bin_length
+        }
+    }
+
+    # if the line number in the bed file is less than 2 the run BinBed
+    if (defined(bed_file)){
+        Int file_lines = length(read_lines(select_first([bed_file])))
+        if (file_lines < 2) {
+            call BinBed as BinSingleBed {
+                input:
+                    bed_file = bed_file,
+                    bin_length = 1
+            }
+        }
     }
 
     call MosDepthOverBed {
         input:
             bam = aligned_bam,
             bai = aligned_bai,
-            bed = bed_file,
+            bed = select_first([BinBed.binned_bed, BinSingleBed.binned_bed, bed_file]),
             bin_length = bin_length,
             preemptible_tries = preemptible_tries,
     }
@@ -74,7 +94,7 @@ task MosDepthOverBed {
         File? bed
         Int threads = 4
         String? chrom
-        Int? bin_length
+        Int bin_length = 1000
         String? thresholds
         Boolean no_per_base = true
         Boolean fast_mode = true
@@ -108,9 +128,12 @@ task MosDepthOverBed {
 
     output {
         File global_dist      = "~{prefix}.mosdepth.global.dist.txt"
+        File summary          = "~{prefix}.mosdepth.summary.txt"
+        File? per_base        = "~{prefix}.per-base.bed.gz"
         File region_dist      = "~{prefix}.mosdepth.region.dist.txt"
         File regions          = "~{prefix}.regions.bed.gz"
         File regions_csi      = "~{prefix}.regions.bed.gz.csi"
+
     }
 
     runtime {
@@ -172,5 +195,31 @@ task CoverageStats {
         preemptible:            preemptible_tries
         maxRetries:             1
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:latest"
+    }
+}
+
+
+task BinBed {
+    input {
+        File? bed_file
+        Int? bin_length
+    }
+
+    command {
+        set -euxo pipefail
+
+        bedtools makewindows -b ~{bed_file} -w ~{bin_length} > binned.bed
+
+    }
+
+    output {
+        File binned_bed = "binned.bed"
+    }
+
+    runtime {
+        cpu: 1
+        memory: "1 GiB"
+        disks: "local-disk 10 HDD"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
     }
 }
