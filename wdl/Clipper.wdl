@@ -101,13 +101,13 @@ task ClipperProcess {
     Int disk_size = ceil(size(clusterfile, "GB"))+50
 
     command <<<
-        bedtools cluster -d ~{max_cluster_dist} -s -i ~{clusterfile} | cut -f1,2,3,6,7,8,9,10,11 > ~{prefix}_clipped_reads_clustered.bed
+        bedtools cluster -d ~{max_cluster_dist} -s -i ~{clusterfile} | cut -f1,2,3,6,7,8,9,10,11 > ~{sample}_clipped_reads_clustered.bed
         python /split_reads_process_clusters.py ~{sample}_clipped_reads_clustered.bed ~{sample} -d ~{min_dist} -c ~{min_cluster_count} -u ~{max_unique_breakends} -s ~{max_cluster_dist} > tmp.vcf
 
-        bcftools reheader -f ~{ref_fai} tmp.vcf |bcftools sort -Oz > ~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf.gz
+        bcftools reheader -f ~{ref_fai} tmp.vcf |bcftools sort -Oz > ~{sample}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf.gz
     >>>
 
-    output { File clustervcf = "~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf.gz" }
+    output { File clustervcf = "~{sample}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf.gz" }
 
     #########################
     RuntimeAttr default_attr = object {
