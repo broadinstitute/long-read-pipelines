@@ -99,11 +99,12 @@ task CallDrugResistanceMutations {
 
     Int disk_size = 1 + 2*ceil(size([vcf, drug_resistance_list], "GB"))
     String prefix = basename(basename(vcf, ".gz"), ".vcf")
+    String out_file_name = prefix + ".raw_drug_resistance_report.txt"
 
     command <<<
         set -x
 
-        while read LINE; do
+        while read -r LINE; do
             GENE_NAME=$(echo $LINE | awk '{print $1}')
             GENE_ID=$(echo $LINE | awk '{print $2}')
             MUTATION=$(echo $LINE | awk '{print $3}')
@@ -111,12 +112,12 @@ task CallDrugResistanceMutations {
             zcat ~{vcf} | grep $GENE_ID | grep $MUTATION | wc -l | \
                 awk -v gene_name=$GENE_NAME -v gene_id=$GENE_ID -v mutation=$MUTATION \
                     '{ print gene_name, gene_id, mutation, ($1 > 0) ? "present" : "absent" }' | \
-                tee -a ~{prefix}.drug_resistance_report.txt
+                tee -a ~{out_file_name}
         done < ~{drug_resistance_list}
     >>>
 
     output {
-        File report = "~{prefix}.raw_drug_resistance_report.txt"
+        File report = "~{out_file_name}"
     }
 
     #########################
