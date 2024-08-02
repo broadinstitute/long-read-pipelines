@@ -346,7 +346,7 @@ task CreateDrugResistanceSummary {
 
         # Write our resistance status for each drug:
         with open("chloroquine_status.txt", 'w') as f:
-            f.write(f"{chnoroquine.name}\n")
+            f.write(f"{chloroquine.name}\n")
         with open("pyrimethamine_status.txt", 'w') as f:
             f.write(f"{pyrimethamine.name}\n")
         with open("sulfadoxine_status.txt", 'w') as f:
