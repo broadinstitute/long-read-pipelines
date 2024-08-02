@@ -793,9 +793,10 @@ task AnnotateVcfWithBedRegions {
         set -euxo pipefail
 
         # Get amount of memory to use:
-        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-1000
-        let mem_max=${mem_available}-750
+        mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
+        mem_start=$((mem_available-1000))
+        mem_max=$((mem_available-750))
+
 
         # We need to generate argument strings from the input arrays.
         # First we check that the arrays are the same length:

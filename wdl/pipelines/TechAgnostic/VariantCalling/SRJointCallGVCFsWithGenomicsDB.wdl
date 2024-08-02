@@ -457,30 +457,30 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             call FF.FinalizeToFile as FinalizeIndelTrainVariantAnnotationsNegativeModelScorer { input: outdir = recalibration_model_dir, keyfile = keyfile, file = select_first([TrainIndelVariantAnnotationsModel.negative_model_scorer_pickle]) }
         }
 
-    # ScoreVariantAnnotations
-    # This was done per-contig, so we need to finalize per-contig:
-    scatter (idx_3 in range(length(ExtractIntervalNamesFromIntervalOrBamFile.interval_info))) {
+        # ScoreVariantAnnotations
+        # This was done per-contig, so we need to finalize per-contig:
+        scatter (idx_3 in range(length(ExtractIntervalNamesFromIntervalOrBamFile.interval_info))) {
 
-        String interval_name3 = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][0] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][1] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][2]
+            String interval_name3 = ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][0] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][1] + "_" + ExtractIntervalNamesFromIntervalOrBamFile.interval_info[idx_3][2]
 
-        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf[idx_3] }
-        call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf_index[idx_3] }
-        if (defined(ScoreSnpVariantAnnotations.annotations_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.annotations_hdf5[idx_3]]) }
-        }
-        if (defined(ScoreSnpVariantAnnotations.scores_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.scores_hdf5[idx_3]]) }
-        }
+            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf[idx_3] }
+            call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreSnpVariantAnnotations.scored_vcf_index[idx_3] }
+            if (defined(ScoreSnpVariantAnnotations.annotations_hdf5)) {
+                call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.annotations_hdf5[idx_3]]) }
+            }
+            if (defined(ScoreSnpVariantAnnotations.scores_hdf5)) {
+                call FF.FinalizeToFile as FinalizeScoreSnpVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreSnpVariantAnnotations.scores_hdf5[idx_3]]) }
+            }
 
-        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf[idx_3] }
-        call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index[idx_3] }
-        if (defined(ScoreIndelVariantAnnotations.annotations_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.annotations_hdf5[idx_3]]) }
+            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcf { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf[idx_3] }
+            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoredVcfIndex { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = ScoreIndelVariantAnnotations.scored_vcf_index[idx_3] }
+            if (defined(ScoreIndelVariantAnnotations.annotations_hdf5)) {
+                call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsAnnotationsHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.annotations_hdf5[idx_3]]) }
+            }
+            if (defined(ScoreIndelVariantAnnotations.scores_hdf5)) {
+                call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.scores_hdf5[idx_3]]) }
+            }
         }
-        if (defined(ScoreIndelVariantAnnotations.scores_hdf5)) {
-            call FF.FinalizeToFile as FinalizeScoreIndelVariantAnnotationsScoresHdf5 { input: outdir = recalibration_results_dir + "/" + interval_name3, keyfile = keyfile, file = select_first([ScoreIndelVariantAnnotations.scores_hdf5[idx_3]]) }
-        }
-    }
 
         call FF.FinalizeToFile as FinalizeZarr { input: outdir = outdir, keyfile = keyfile, file = ConvertToZarr.zarr }
 
