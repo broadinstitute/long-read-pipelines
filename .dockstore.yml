@@ -62,10 +62,10 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/ONT/Epigenomics/ONTMethylation.wdl
 - name: PfalciparumHrp2Hrp3Status
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/ONT/MultiAnalysis/PfalciparumHrp2Hrp3Status.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumHrp2Hrp3Status.wdl
 - name: PfalciparumTypeDrugResistanceMarkers
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/ONT/MultiAnalysis/PfalciparumTypeDrugResistanceMarkers.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumTypeDrugResistanceMarkers.wdl
 - name: PBMASIsoSeqQuantify
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqQuantify.wdl
