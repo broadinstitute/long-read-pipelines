@@ -156,3 +156,6 @@ workflows:
 - name: PfalciparumPolygenomicityBarcodeEstimate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumPolygenomicityBarcodeEstimate.wdl
+- name: BackupWorkspace
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BackupWorkspace.wdl
