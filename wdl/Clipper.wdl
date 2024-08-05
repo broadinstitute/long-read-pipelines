@@ -41,6 +41,7 @@ workflow RunClipper {
 
     output {
         File clipped_vcf = ClipperProcess.clustervcf
+        File clusterfile = ClipperCluster.clusterfile
     }
 }
 
