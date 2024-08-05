@@ -25,39 +25,43 @@ workflow MosdepthCoverageStats {
     }
 
     if (defined(bed_file) && defined(bin_length)) {
-        call BinBed  {
+        call BinBed {
             input:
                 bed_file = bed_file,
                 bin_length = bin_length
         }
     }
 
-    # if the line number in the bed file is less than 2 the run BinBed
-    if (defined(bed_file)){
-        Int file_lines = length(read_lines(select_first([bed_file])))
-        if (file_lines < 2) {
-            call BinBed as BinSingleBed {
-                input:
-                    bed_file = bed_file,
-                    bin_length = 1
-            }
+    # Runs in cases where bed file is provided or bed and bin_length are provided
+    if (defined(bed_file) || (defined(bin_length) && defined(BinBed.binned_bed))) {
+        call MosDepthOverBed {
+            input:
+                bam = aligned_bam,
+                bai = aligned_bai,
+                bed = select_first([BinBed.binned_bed, bed_file]),
+                bin_length = bin_length,
+                preemptible_tries = preemptible_tries,
         }
+        File cov_stat_input_bed = select_first([MosDepthOverBed.per_base, MosDepthOverBed.regions])
     }
 
-    call MosDepthOverBed {
-        input:
-            bam = aligned_bam,
-            bai = aligned_bai,
-            bed = select_first([BinBed.binned_bed, BinSingleBed.binned_bed, bed_file]),
-            bin_length = bin_length,
-            preemptible_tries = preemptible_tries,
+    # Runs in cases where no bed file is provided, will run regardless of bin_length
+    if (!defined(bed_file) ) {
+        call MosDepthOverBed as MosDepthNoBed {
+            input:
+                bam = aligned_bam,
+                bai = aligned_bai,
+                bin_length = bin_length,
+                preemptible_tries = preemptible_tries,
+        }
+        File cov_stat_input_no_bed = select_first([MosDepthNoBed.per_base, MosDepthNoBed.regions])
     }
 
     String basename = basename(aligned_bam, ".bam")
 
     call CoverageStats {
         input:
-            mosdepth_regions = MosDepthOverBed.regions,
+            mosdepth_regions = select_first([cov_stat_input_bed, cov_stat_input_no_bed]),
             basename_input = basename,
             preemptible_tries = preemptible_tries,
     }
@@ -96,8 +100,8 @@ task MosDepthOverBed {
         String? chrom
         Int bin_length = 1000
         String? thresholds
-        Boolean no_per_base = true
-        Boolean fast_mode = true
+        Boolean no_per_base = false
+        Boolean fast_mode = false
         Int mapq = 1
 
         # Runtime parameters
@@ -142,7 +146,7 @@ task MosDepthOverBed {
         disks: "local-disk " +  disk_size + " HDD"
         preemptible:            preemptible_tries
         maxRetries:             1
-        docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:latest"
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:bs-cov-sum-0.3.1"
     }
 }
 
@@ -194,7 +198,7 @@ task CoverageStats {
         disks: "local-disk " +  disk_size + " HDD"
         preemptible:            preemptible_tries
         maxRetries:             1
-        docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:latest"
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:bs-cov-sum-0.3.1"
     }
 }
 
@@ -223,3 +227,17 @@ task BinBed {
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
     }
 }
+
+
+
+#        # if the line number in the bed file is less than 2 the run BinBed
+#    if (defined(bed_file)){
+#        Int file_lines = length(read_lines(select_first([bed_file])))
+#        if (file_lines < 2) {
+#            call BinBed as BinSingleBed {
+#                input:
+#                    bed_file = bed_file,
+#                    bin_length = 1
+#            }
+#        }
+#    }
