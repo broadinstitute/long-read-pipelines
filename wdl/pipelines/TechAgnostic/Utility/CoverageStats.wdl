@@ -85,10 +85,6 @@ task MosDepthOverBed {
         bed: "BED file containing regions of interest."
         bin_length: "Length of bins to use for coverage calculation. default is 1000. If bed file is provided, this parameter is ignored."
         chrom: "Chromosome to calculate coverage for."
-        no_per_base: "Do not calculate per-base coverage."
-        fast_mode: "Use fast mode."
-        mapq: "Minimum mapping quality to consider."
-        thresholds: "Comma-separated list of thresholds to use for coverage calculation. (e.g. 1,10,20,30)."
         preemptible_tries: "Number of times to retry a preempted task."
     }
 
@@ -96,17 +92,18 @@ task MosDepthOverBed {
         File bam
         File bai
         File? bed
-        Int threads = 4
+
         String? chrom
         Int bin_length = 1000
-        String? thresholds
-        Boolean no_per_base = false
-        Boolean fast_mode = false
-        Int mapq = 1
 
         # Runtime parameters
         Int preemptible_tries = 3
     }
+
+    Int threads = 4
+    Boolean no_per_base = false
+    Boolean fast_mode = false
+    Int mapq = 1
 
     Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
     String basename = basename(bam, ".bam")
@@ -126,7 +123,6 @@ task MosDepthOverBed {
         ~{"-c " + chrom} \
         ~{"-b " + select_first([bed, bin_length])} \
         ~{"-Q " + mapq} \
-        ~{"-T " + thresholds} \
         ~{prefix} ./~{basename}.bam
     }
 
