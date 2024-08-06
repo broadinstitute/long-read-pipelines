@@ -17,7 +17,7 @@ task FastQC {
     command <<<
         set -euxo pipefail
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(awk '/^processor/{print $3}' /proc/cpuinfo | wc -l)
 
         fastqc -t $num_core --extract ~{bam}
 

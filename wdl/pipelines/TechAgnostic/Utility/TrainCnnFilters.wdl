@@ -342,7 +342,7 @@ task TrainCnn {
 
         # Get the max number of threads to use:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
-        let max_threads=${np}-1
+        max_threads=$((np-1))
         if [[ $max_threads -le 0 ]] ; then
             max_threads=1
         fi
@@ -366,7 +366,7 @@ task TrainCnn {
             tar --strip-components 1 -xf $f &
 
             # Update the number of active threads:
-            let num_active_threads=${num_active_threads}+1
+            num_active_threads=$((num_active_threads+1))
         done < ~{write_lines(tensor_tars)}
 
         # Wait for the rest of our background processes to finish:

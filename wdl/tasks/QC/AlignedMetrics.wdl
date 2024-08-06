@@ -363,7 +363,7 @@ task SamStats {
     command <<<
         set -euxo pipefail
 
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        np=$(grep ^processor /proc/cpuinfo | tail -n1 | awk '{print $NF+1}')
 
         samtools stats -@${np} ~{bam} > ~{basename}.sam_stats.txt
     >>>
@@ -407,7 +407,7 @@ task SamStatsMap {
     command <<<
         set -euxo pipefail
 
-        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        np=$(grep ^processor /proc/cpuinfo | tail -n1 | awk '{print $NF+1}')
 
         samtools stats -@${np} ~{bam} > ~{basename}.sam_stats.txt
 

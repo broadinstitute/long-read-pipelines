@@ -2,7 +2,7 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 
-workflow ONTPfHrp2Hrp3Status {
+workflow PfalciparumHrp2Hrp3Status {
 
     meta {
         description: "Determine if HRP2 and HRP3 are deleted in a sample"
@@ -66,8 +66,7 @@ task IsLocusDeleted {
 
         mosdepth -t 4 -b <(echo -e "~{chr}\t~{start}\t~{stop}") -x -Q 1 out chr.bam
 
-        cat out.mosdepth.summary.txt | \
-            grep total | \
+        grep total out.mosdepth.summary.txt | \
             paste - - | \
             awk '{ if ($10 > 0.05*$4) print "+"; else print "-" }' \
             > status.txt

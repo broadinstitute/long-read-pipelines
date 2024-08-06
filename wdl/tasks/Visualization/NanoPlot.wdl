@@ -24,7 +24,7 @@ task NanoPlotFromSummary {
     command <<<
         set -euxo pipefail
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(awk '/^processor/{print $3}' /proc/cpuinfo | wc -l)
 
         NanoPlot -t ${num_core} \
                  -c orangered \
@@ -120,7 +120,7 @@ task NanoPlotFromRichFastqs {
     command <<<
         set -euxo pipefail
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(awk '/^processor/{print $3}' /proc/cpuinfo | wc -l)
 
         NanoPlot -t ${num_core} \
                  -c orangered \
@@ -205,7 +205,7 @@ task NanoPlotFromBam {
 
         touch ~{bai} # avoid the warning bai is older than bam
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(awk '/^processor/{print $3}' /proc/cpuinfo | wc -l)
 
         NanoPlot -t ${num_core} \
                  -c orangered \

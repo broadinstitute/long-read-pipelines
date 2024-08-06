@@ -158,7 +158,7 @@ workflow SRFlowcell {
         }
     }
 
-    File merged_bam = select_first([t_005_AlignReads.bam, t_006_MergeBamAlignment.bam])
+    File merged_bam = select_first([t_006_MergeBamAlignment.bam, t_005_AlignReads.bam])
 
     # Mark Duplicates
     call SRUTIL.MarkDuplicates as t_007_MarkDuplicates {
@@ -388,13 +388,16 @@ workflow SRFlowcell {
         File? unaligned_bam = unaligned_bam_o
         File? unaligned_bai = unaligned_bai_o
 
+        # Aligned BAM file
+        File aligned_bam = select_first([t_023_FinalizeAlignedBam.gcs_path, final_bam])
+        File aligned_bai = select_first([t_024_FinalizeAlignedBai.gcs_path, final_bai])
+
         # Contaminated BAM file:
         # TODO: This will need to be fixed for optional finalization:
         File? contaminated_bam = DecontaminateSample.contaminated_bam
 
-        # Aligned BAM file
-        File aligned_bam = select_first([t_023_FinalizeAlignedBam.gcs_path, final_bam])
-        File aligned_bai = select_first([t_024_FinalizeAlignedBai.gcs_path, final_bai])
+        ##############################
+        # Statistics:
 
         # Unaligned read stats
         Float num_reads = t_014_ComputeBamStats.results['reads']

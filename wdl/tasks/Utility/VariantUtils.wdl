@@ -688,8 +688,8 @@ task HardFilterVcf {
 
         # Get amount of memory to use:
         mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-1000
-        let mem_max=${mem_available}-750
+        mem_start=$((mem_available-1000))
+        mem_max=$((mem_available-750))
 
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             VariantFiltration \
@@ -793,9 +793,10 @@ task AnnotateVcfWithBedRegions {
         set -euxo pipefail
 
         # Get amount of memory to use:
-        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-1000
-        let mem_max=${mem_available}-750
+        mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
+        mem_start=$((mem_available-1000))
+        mem_max=$((mem_available-750))
+
 
         # We need to generate argument strings from the input arrays.
         # First we check that the arrays are the same length:
@@ -945,8 +946,8 @@ task IndelsVariantRecalibrator {
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-2
-        let mem_max=${mem_available}-1
+        mem_start=$((mem_available-2))
+        mem_max=$((mem_available-1))
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
             VariantRecalibrator \
@@ -1071,8 +1072,8 @@ task SNPsVariantRecalibratorCreateModel {
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-2
-        let mem_max=${mem_available}-1
+        mem_start=$((mem_available-2))
+        mem_max=$((mem_available-1))
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g" \
             VariantRecalibrator \
@@ -1151,8 +1152,8 @@ task ApplyVqsr {
 
         # Get amount of memory to use:
         mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-2000
-        let mem_max=${mem_available}-500
+        mem_start=$((mem_available-2000))
+        mem_max=$((mem_available-500))
 
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             ApplyVQSR \
@@ -1222,8 +1223,8 @@ task SelectVariants {
 
         # Get amount of memory to use:
         mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-2000
-        let mem_max=${mem_available}-500
+        mem_start=$((mem_available-2000))
+        mem_max=$((mem_available-500))
 
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             SelectVariants \
@@ -1283,8 +1284,8 @@ task RenameSingleSampleVcf {
 
         # Get amount of memory to use:
         mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-1000
-        let mem_max=${mem_available}-750
+        mem_start=$((mem_available-1000))
+        mem_max=$((mem_available-750))
 
         gatk --java-options "-Xms${mem_start}m -Xmx${mem_max}m" \
             RenameSampleInVcf \
@@ -1686,8 +1687,8 @@ task ExtractVariantAnnotations {
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-2
-        let mem_max=${mem_available}-2
+        mem_start=$((mem_available-2))
+        mem_max=$((mem_available-2))
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g -DGATK_STACKTRACE_ON_USER_EXCEPTION=true" \
           ExtractVariantAnnotations \
@@ -1764,8 +1765,8 @@ task TrainVariantAnnotationsModel {
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-2
-        let mem_max=${mem_available}-2
+        mem_start=$((mem_available-2))
+        mem_max=$((mem_available-2))
 
         gatk --java-options "-Xms${mem_start}g -Xmx${mem_max}g -DGATK_STACKTRACE_ON_USER_EXCEPTION=true" \
             TrainVariantAnnotationsModel \
@@ -1888,10 +1889,10 @@ task ScoreVariantAnnotations {
 
         # Get amount of memory to use:
         mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
-        let mem_start=${mem_available}-2
-        let mem_max=${mem_available}-2
+        mem_start=$((mem_available-2))
+        mem_max=$((mem_available-2))
 
-        mode_lower=$(echo ~{mode} | tr 'A-Z' 'a-z')
+        mode_lower=$(echo ~{mode} | tr '[:upper:]' '[:lower:]')
 
         # Set up model files:
         mkdir model_files

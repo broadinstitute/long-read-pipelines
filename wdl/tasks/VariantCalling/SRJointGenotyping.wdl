@@ -46,7 +46,7 @@ task CreateSampleNameMap {
         # Create a temporary file to store file sizes in:
         size_file=$(mktemp)
 
-        let i=1
+        i=1
         while read file_path ; do
 
             # Get our sample list from our file:
@@ -64,7 +64,7 @@ task CreateSampleNameMap {
             # Add the file size to the size file:
             gsutil du -sac ${file_path} | tail -n1 | awk '{print $1}' >> ${size_file}
 
-            let i=$i+1
+            i=$((i+1))
             if [[ $i -gt ~{re_auth_interval} ]] ; then
                 # Periodically we should update the token so we don't have problems with long file lists:
                 export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
