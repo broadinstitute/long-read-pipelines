@@ -82,8 +82,8 @@ workflow MosdepthCoverageStats {
 
 
     output {
-        File cov_stat_summary_file      = MosDepthOverBed.cov_stat_summary_file
-        Map[String, Float] cov_stat_summary = MosDepthOverBed.cov_stat_summary
+        File cov_stat_summary_file      = select_first([MosDepthOverBed.cov_stat_summary_file, MosDepthNoBed.cov_stat_summary_file])
+        Map[String, Float] cov_stat_summary = select_first([MosDepthOverBed.cov_stat_summary, MosDepthNoBed.cov_stat_summary])
     }
 
 }
