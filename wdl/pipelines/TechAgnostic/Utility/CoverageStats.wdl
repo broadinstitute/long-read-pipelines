@@ -176,7 +176,7 @@ task CoverageStats {
     command {
         set -euxo pipefail
 
-        python3 coverage_stats.py \
+        python3 /coverage_stats.py \
         --cov_col ~{cov_col} \
         --round ~{round} \
         --output_prefix ~{prefix} \
