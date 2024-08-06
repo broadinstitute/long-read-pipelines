@@ -58,6 +58,7 @@ workflow MosdepthCoverageStats {
                     bed = write_lines([bed_line]),
                     preemptible_tries = preemptible_tries,
                     mem = mosdepth_mem,
+                    summarize_regions = true
             }
         }
         Array[File] cov_stat_summary_files  = MosDepthPerInterval.cov_stat_summary_file
@@ -84,6 +85,7 @@ workflow MosdepthCoverageStats {
                 bin_length = bin_length,
                 preemptible_tries = preemptible_tries,
                 mem = mosdepth_mem,
+                summarize_regions = true,
         }
     }
 
@@ -131,6 +133,7 @@ task MosDepthOverBed {
 
         String? chrom
         Int bin_length = 1000
+        boolean summarize_regions = false
 
         # Runtime parameters
         Int mem = 8
@@ -151,6 +154,8 @@ task MosDepthOverBed {
     Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
     String basename = basename(bam, ".bam")
     String prefix = "~{basename}.coverage_over_bed"
+
+    String cov_file_to_summarize = if summarize_regions then "~{prefix}.regions.bed.gz" else "~{prefix}.per-base.bed.gz"
 
     command {
         set -euxo pipefail
@@ -173,7 +178,7 @@ task MosDepthOverBed {
         --cov_col ~{cov_col} \
         --round ~{round} \
         --output_prefix ~{prefix} \
-        ~{prefix}.per-base.bed.gz
+        ~{cov_file_to_summarize}
     }
 
     output {
