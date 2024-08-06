@@ -3,22 +3,36 @@ digraph {
 	compound=true rankdir=LR
 	node [fontname=Roboto]
 	edge [color="#00000080"]
-	"call-SmallVariantsScatterPrep" [label=SmallVariantsScatterPrep shape=cds]
-	subgraph "cluster-scatter-L52C5-c" {
-		fontname=Roboto label="scatter(SmallVariantsScatterPrep.chrs)" rank=same
+	subgraph "cluster-if-L46C5" {
+		fontname=Roboto label="if(!defined(interval_list))" rank=same
+		"call-SmallVariantsScatterPrep" [label=SmallVariantsScatterPrep shape=cds]
+		"if-L46C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-actual_interval_list" [label=actual_interval_list shape=plaintext]
+	"call-ExtractIntervalNamesFromIntervalOrBamFile" [label=ExtractIntervalNamesFromIntervalOrBamFile shape=cds]
+	subgraph "cluster-scatter-L67C5-idx_1" {
+		fontname=Roboto label="scatter(range(length(ExtractIntervalNamesFromIntervalOrBamFile.interval_info)))" rank=same
+		"decl-interval_name" [label=interval_name shape=plaintext]
+		"call-CreateIntervalListFileFromIntervalInfo" [label=CreateIntervalListFileFromIntervalInfo shape=cds]
 		"call-CallVariantsWithHC" [label=CallVariantsWithHC shape=cds]
-		"scatter-L52C5-c" [label="" height=0 margin=0 style=invis width=0]
+		"scatter-L67C5-idx_1" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-MergeGVCFs" [label=MergeGVCFs shape=cds]
 	"call-MergeVariantCalledBamOuts" [label=MergeVariantCalledBamOuts shape=cds]
 	"call-IndexBamout" [label=IndexBamout shape=cds]
 	"call-ReblockHcGVCF" [label=ReblockHcGVCF shape=cds]
 	"call-CollapseGVCFtoVCF" [label=CollapseGVCFtoVCF shape=cds]
-	"call-SmallVariantsScatterPrep" -> "scatter-L52C5-c" [lhead="cluster-scatter-L52C5-c"]
+	"call-SmallVariantsScatterPrep" -> "decl-actual_interval_list"
+	"decl-actual_interval_list" -> "call-ExtractIntervalNamesFromIntervalOrBamFile"
+	"call-ExtractIntervalNamesFromIntervalOrBamFile" -> "scatter-L67C5-idx_1" [lhead="cluster-scatter-L67C5-idx_1"]
+	"call-ExtractIntervalNamesFromIntervalOrBamFile" -> "decl-interval_name"
+	"call-ExtractIntervalNamesFromIntervalOrBamFile" -> "call-CreateIntervalListFileFromIntervalInfo"
+	"decl-interval_name" -> "call-CallVariantsWithHC"
+	"call-CreateIntervalListFileFromIntervalInfo" -> "call-CallVariantsWithHC"
 	"call-CallVariantsWithHC" -> "call-MergeGVCFs"
 	"call-CallVariantsWithHC" -> "call-MergeVariantCalledBamOuts"
 	"call-MergeVariantCalledBamOuts" -> "call-IndexBamout"
 	"call-MergeGVCFs" -> "call-ReblockHcGVCF"
 	"call-ReblockHcGVCF" -> "call-CollapseGVCFtoVCF"
-	"call-SmallVariantsScatterPrep" -> "call-CollapseGVCFtoVCF"
+	"decl-actual_interval_list" -> "call-CollapseGVCFtoVCF"
 }

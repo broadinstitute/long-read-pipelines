@@ -125,6 +125,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../AssignChildLongReads/">AssignChildLongReads</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BackupWorkspace/">BackupWorkspace</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFs/">BenchmarkVCFs</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../CCSPepper/">CCSPepper</a>
@@ -201,10 +203,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ONTMethylation/">ONTMethylation</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfHrp2Hrp3Status/">ONTPfHrp2Hrp3Status</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfTypeDrugResistanceMarkers/">ONTPfTypeDrugResistanceMarkers</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ONTProcessBasecall/">ONTProcessBasecall</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ONTWholeGenome/">ONTWholeGenome</a>
@@ -228,6 +226,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../Pf_Niare_HaplotypeCaller/">Pf_Niare_HaplotypeCaller</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../PfalciparumDrugResistanceSummary/">PfalciparumDrugResistanceSummary</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PfalciparumHrp2Hrp3Status/">PfalciparumHrp2Hrp3Status</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PfalciparumPolygenomicityBarcodeEstimate/">PfalciparumPolygenomicityBarcodeEstimate</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PfalciparumTypeDrugResistanceMarkers/">PfalciparumTypeDrugResistanceMarkers</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ProcessMalariaBarcodesDemo/">ProcessMalariaBarcodesDemo</a>
                   </li>
@@ -340,6 +344,7 @@
 <li><code>bed_to_compute_coverage</code> (File?): Bed file to use as regions over which to measure coverage.</li>
 <li><code>fingerprint_haploytpe_db_file</code> (File?): Haplotype DB file from which to fingerprint the input data.</li>
 <li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
+<li><code>interval_list</code> (File?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.haplotype_caller_runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ComputeBamStats.qual_threshold</code> (Int?)</li>
 <li><code>ComputeBamStats.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -349,18 +354,6 @@
 <li><code>FastQC.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeBai.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeBam.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeDVPepperGTbi.keyfile</code> (File?)</li>
-<li><code>FinalizeDVPepperGTbi.name</code> (String?)</li>
-<li><code>FinalizeDVPepperGTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeDVPepperGVcf.keyfile</code> (File?)</li>
-<li><code>FinalizeDVPepperGVcf.name</code> (String?)</li>
-<li><code>FinalizeDVPepperGVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeDVPepperTbi.keyfile</code> (File?)</li>
-<li><code>FinalizeDVPepperTbi.name</code> (String?)</li>
-<li><code>FinalizeDVPepperTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeDVPepperVcf.keyfile</code> (File?)</li>
-<li><code>FinalizeDVPepperVcf.name</code> (String?)</li>
-<li><code>FinalizeDVPepperVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeFastQCReport.keyfile</code> (File?)</li>
 <li><code>FinalizeFastQCReport.name</code> (String?)</li>
 <li><code>FinalizeFastQCReport.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -378,10 +371,6 @@
 <li><code>FinalizeHCRescoredTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeHCRescoredVcf.name</code> (String?)</li>
 <li><code>FinalizeHCRescoredVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCTbi.name</code> (String?)</li>
-<li><code>FinalizeHCTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCVcf.name</code> (String?)</li>
-<li><code>FinalizeHCVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeIndelExtractedAnnotations.name</code> (String?)</li>
 <li><code>FinalizeIndelExtractedAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeIndelExtractedSitesOnlyVcf.name</code> (String?)</li>
@@ -443,7 +432,6 @@
 <li><code>RegionalCoverage.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>RenameRawHcGvcf.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>RenameRawHcVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>RevertBQSRQuals.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>SamStats.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ScoreIndelVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>ScoreSnpVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -451,9 +439,10 @@
 <li><code>TrainIndelVariantAnnotationsModel.unlabeled_annotation_hdf5</code> (File?)</li>
 <li><code>TrainSnpVariantAnnotationsModel.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>TrainSnpVariantAnnotationsModel.unlabeled_annotation_hdf5</code> (File?)</li>
-<li><code>CallVariantsWithDeepVariant.SmallVariantsScatterPrepp.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CallVariantsWithHC.interval_list</code> (File?)</li>
+<li><code>CallVariantsWithHaplotypeCaller.CallVariantsWithHC.single_interval</code> (String?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>CallVariantsWithHaplotypeCaller.CreateIntervalListFileFromIntervalInfo.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>CallVariantsWithHaplotypeCaller.ExtractIntervalNamesFromIntervalOrBamFile.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.IndexBamout.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.MergeGVCFs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.MergeVariantCalledBamOuts.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -461,14 +450,10 @@
 <li><code>CallVariantsWithHaplotypeCaller.ReblockHcGVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.ReblockHcGVCF.tree_score_cutoff</code> (Float?)</li>
 <li><code>CallVariantsWithHaplotypeCaller.SmallVariantsScatterPrep.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>CallVariantsWithDeepVariant.DeepVariant.deep_variant.runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>call_small_variants</code> (Boolean, default=true): If true, will call small variants with DeepVariant.</li>
 <li><code>contigs_names_to_ignore</code> (Array[String], default=["RANDOM_PLACEHOLDER_VALUE"]): Array of names of contigs to ignore for the purposes of reporting variants.</li>
-<li><code>dvp_memory</code> (Int, default=128): Amount of memory (Gb) to use for DeepVariant.</li>
-<li><code>dvp_threads</code> (Int, default=32): Number of threads to use for DeepVariant.</li>
 <li><code>enable_hc_pileup_mode</code> (Boolean, default=true): If true, will enable <code>pileup mode</code> in HaplotypeCaller.</li>
 <li><code>heterozygosity</code> (Float, default=0.001): HaplotypeCaller Parameter - Heterozygosity value used to compute prior likelihoods for any locus. See the GATKDocs for full details on the meaning of this population genetics concept</li>
 <li><code>heterozygosity_stdev</code> (Float, default=0.01): HaplotypeCaller Parameter - Standard deviation of heterozygosity for SNP and indel calling.</li>
@@ -477,17 +462,15 @@
 <li><code>indel_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled INDEL variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
 <li><code>indel_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the INDEL variant scoring model and over which to score INDEL variants.</li>
 <li><code>ploidy</code> (Int, default=2): Ploidy of the species being variant called.</li>
-<li><code>run_HC_analysis</code> (Boolean, default=true): If true, will run HaplotypeCaller to produce variant calls.  Either this or <code>run_dv_pepper_analysis</code> are required.</li>
-<li><code>run_dv_pepper_analysis</code> (Boolean, default=true): If true, will run DeepVariant to produce variant calls.  Either this or <code>run_HC_analysis</code> are required.</li>
 <li><code>snp_calibration_sensitivity</code> (Float, default=0.99): VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered.</li>
 <li><code>snp_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
 <li><code>snp_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants.</li>
-<li><code>CallVariantsWithDeepVariant.call_small_vars_on_mitochondria</code> (Boolean, default=true)</li>
 <li><code>CallVariantsWithHaplotypeCaller.call_vars_on_mitochondria</code> (Boolean, default=true)</li>
 <li><code>FastQC.num_cpus</code> (Int, default=4)</li>
 <li><code>RenameRawHcVcf.is_gvcf</code> (Boolean, default=false)</li>
 <li><code>TrainIndelVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
 <li><code>TrainSnpVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
+<li><code>CallVariantsWithHaplotypeCaller.CallVariantsWithHC.enable_dangling_branch_recovery</code> (Boolean, default=false)</li>
 <li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.heterozygosity</code> (Float, default=0.001): HaplotypeCaller Parameter - Heterozygosity value used to compute prior likelihoods for any locus. See the GATKDocs for full details on the meaning of this population genetics concept</li>
 <li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.heterozygosity_stdev</code> (Float, default=0.01): HaplotypeCaller Parameter - Standard deviation of heterozygosity for SNP and indel calling.</li>
 <li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.indel_heterozygosity</code> (Float, default=0.000125): HaplotypeCaller Parameter - Heterozygosity for indel calling. See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept</li>
@@ -496,8 +479,18 @@
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
+<li><code>vcf</code> (File)</li>
+<li><code>tbi</code> (File)</li>
+<li><code>g_vcf</code> (File)</li>
+<li><code>g_tbi</code> (File)</li>
+<li><code>bamout</code> (File)</li>
+<li><code>baiout</code> (File)</li>
+<li><code>fingerprint_vcf</code> (File?)</li>
+<li><code>barcode</code> (String?)</li>
+<li><code>successfully_processed</code> (Boolean)</li>
 <li><code>aligned_bam</code> (File?)</li>
 <li><code>aligned_bai</code> (File?)</li>
+<li><code>average_identity</code> (Float?)</li>
 <li><code>aligned_num_reads</code> (Float?)</li>
 <li><code>aligned_num_bases</code> (Float?)</li>
 <li><code>aligned_frac_bases</code> (Float?)</li>
@@ -506,24 +499,8 @@
 <li><code>insert_size_average</code> (Float?)</li>
 <li><code>insert_size_standard_deviation</code> (Float?)</li>
 <li><code>pct_properly_paired_reads</code> (Float?)</li>
-<li><code>average_identity</code> (Float?)</li>
 <li><code>fastqc_report</code> (File?)</li>
 <li><code>bed_cov_summary</code> (File?)</li>
-<li><code>fingerprint_vcf</code> (File?)</li>
-<li><code>barcode</code> (String?)</li>
-<li><code>successfully_processed</code> (Boolean)</li>
-<li><code>dvp_vcf</code> (File?)</li>
-<li><code>dvp_tbi</code> (File?)</li>
-<li><code>dvp_g_vcf</code> (File?)</li>
-<li><code>dvp_g_tbi</code> (File?)</li>
-<li><code>hc_g_vcf</code> (File?)</li>
-<li><code>hc_g_tbi</code> (File?)</li>
-<li><code>hc_bamout</code> (File?)</li>
-<li><code>hc_baiout</code> (File?)</li>
-<li><code>hc_raw_vcf</code> (File?)</li>
-<li><code>hc_raw_tbi</code> (File?)</li>
-<li><code>hc_rescored_vcf</code> (File?)</li>
-<li><code>hc_rescored_tbi</code> (File?)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="SRWholeGenome" src="../../dot/SRWholeGenome.dot.png" /></p>

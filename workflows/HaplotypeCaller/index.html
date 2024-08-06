@@ -125,6 +125,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../AssignChildLongReads/">AssignChildLongReads</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BackupWorkspace/">BackupWorkspace</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFs/">BenchmarkVCFs</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../CCSPepper/">CCSPepper</a>
@@ -221,10 +223,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ONTMethylation/">ONTMethylation</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfHrp2Hrp3Status/">ONTPfHrp2Hrp3Status</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ONTPfTypeDrugResistanceMarkers/">ONTPfTypeDrugResistanceMarkers</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ONTProcessBasecall/">ONTProcessBasecall</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ONTWholeGenome/">ONTWholeGenome</a>
@@ -248,6 +246,12 @@
                   <li class="toctree-l1"><a class="reference internal" href="../Pf_Niare_HaplotypeCaller/">Pf_Niare_HaplotypeCaller</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../PfalciparumDrugResistanceSummary/">PfalciparumDrugResistanceSummary</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PfalciparumHrp2Hrp3Status/">PfalciparumHrp2Hrp3Status</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PfalciparumPolygenomicityBarcodeEstimate/">PfalciparumPolygenomicityBarcodeEstimate</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../PfalciparumTypeDrugResistanceMarkers/">PfalciparumTypeDrugResistanceMarkers</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ProcessMalariaBarcodesDemo/">ProcessMalariaBarcodesDemo</a>
                   </li>
@@ -332,8 +336,11 @@
 <h4 id="optional">Optional</h4>
 <ul>
 <li><code>haplotype_caller_runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>CallVariantsWithHC.interval_list</code> (File?)</li>
+<li><code>interval_list</code> (File?)</li>
+<li><code>CallVariantsWithHC.single_interval</code> (String?)</li>
 <li><code>CollapseGVCFtoVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>CreateIntervalListFileFromIntervalInfo.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>ExtractIntervalNamesFromIntervalOrBamFile.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>IndexBamout.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MergeGVCFs.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>MergeVariantCalledBamOuts.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -352,6 +359,7 @@
 <li><code>indel_heterozygosity</code> (Float, default=0.000125)</li>
 <li><code>mito_contig</code> (String, default="chrM")</li>
 <li><code>ploidy</code> (Int, default=2)</li>
+<li><code>CallVariantsWithHC.enable_dangling_branch_recovery</code> (Boolean, default=false)</li>
 <li><code>CollapseGVCFtoVCF.heterozygosity</code> (Float, default=0.001)</li>
 <li><code>CollapseGVCFtoVCF.heterozygosity_stdev</code> (Float, default=0.01)</li>
 <li><code>CollapseGVCFtoVCF.indel_heterozygosity</code> (Float, default=0.000125)</li>

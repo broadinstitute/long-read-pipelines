@@ -1,0 +1,18 @@
+// PfalciparumPolygenomicityBarcodeEstimate
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L31C5" {
+		fontname=Roboto label="if(!defined(barcode_string) && !defined(fingerprint_haploytpe_db_file) && !defined(ref_map_file) && !defined(vcf) && !defined(vcf_index))" rank=same
+		"call-FailWithMessage" [label=FailWithMessage shape=cds]
+		"if-L31C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L38C5" {
+		fontname=Roboto label="if(!defined(barcode_string))" rank=same
+		"call-t_001_FingerprintAndBarcodeVcf" [label=t_001_FingerprintAndBarcodeVcf shape=cds]
+		"if-L38C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-t_002_EstimateGenomicityFromBarcode" [label=t_002_EstimateGenomicityFromBarcode shape=cds]
+	"call-t_001_FingerprintAndBarcodeVcf" -> "call-t_002_EstimateGenomicityFromBarcode"
+}
