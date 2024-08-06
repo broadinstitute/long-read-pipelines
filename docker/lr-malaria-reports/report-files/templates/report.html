@@ -1050,6 +1050,61 @@
     border-color: transparent transparent black transparent;
   }
   
+
+
+
+
+  .right_bottom_tooltip {
+    z-index: 100;
+    cursor: default;
+    font-family: Rubik;
+    font-size: 16px;
+    color: #fff;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: rgb(95, 193, 242); 
+    -moz-border-radius: 70px; 
+    -webkit-border-radius: 70px; 
+    border-radius: 70px;
+  }
+
+  .right_bottom_tooltip .right_bottom_tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 8px 8px;
+    border-radius: 6px;
+    font-size: 16px;
+   
+    position: absolute;
+    z-index: 1;
+
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .right_bottom_tooltip:hover .right_bottom_tooltiptext {
+    visibility: visible;
+    opacity: 1;
+    top: -65px;
+  }
+
+  .right_bottom_tooltip .right_bottom_tooltiptext::after {
+    content: " ";
+    position: absolute;
+    bottom: 100%;
+    left: 96%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent black transparent;
+  }  
+  
   #drug_res_tooltip {
     position: relative;
     float: right;
@@ -1060,6 +1115,7 @@
   #drug_res_tooltip_text {
     width: 500px;
     top: 35px;
+    right: -7px;
   }
 
   #rdt_tooltip {
@@ -1113,7 +1169,8 @@
 
   #map_tooltip_text {
     width: 315px;
-    top: -65px;
+    top: 35px;
+    right: 0px;
   }
 
   .loci_title, #img_title {
@@ -1238,7 +1295,7 @@
         left: 0;
         top: 90px;
         width: 259px;
-        height: 2000px;
+        height: 2060px;
         align-items: flex-start;
         background-color: #dfe1e5;
         overflow: hidden;
@@ -1277,9 +1334,8 @@
     .footer {
         position: absolute;
         bottom: 0px;
-        z-index: 100;
         margin-bottom: -50px;
-        padding-left: 400px;
+        padding-left: 515px;
         width: 2218px;
         height: 60px;
         box-shadow: 0 -1px 0 #dfe1e5;
@@ -1430,9 +1486,9 @@
                   <div class="drug_res_outline">
                   </div>
                   <div class="drug_res_title">Drug Resistance Markers
-                    <div class="bottom_tooltip" id="drug_res_tooltip">
+                    <div class="right_bottom_tooltip" id="drug_res_tooltip">
                         <span style="font-weight: bold; font-size:16px;">i</span>
-                        <span id="drug_res_tooltip_text" class="bottom_tooltiptext">
+                        <span id="drug_res_tooltip_text" class="right_bottom_tooltiptext">
                             Sensitivity and resistance to widely used anti-malarial drugs are shown in the table.
                             <br><br>
                             Presence of individual markers (i.e. variants / mutation events / protein changes) are shown in the plot.  Red markers indicate the presence of a potential drug-resistance-related mutation event in this sample.  White markers indicate the absence of such a marker.  Amino acid changes are indicated by vertical labels, grouped by gene (column group labels).
@@ -1561,9 +1617,9 @@
                   <svg preserveAspectRatio="none" viewBox="0 0 494 3" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon2"><path d="M0 3L494 1.73228e-07" stroke="#DFE1E5"></path></svg>
                 </div>
                 <div class="map_title">Map</div>
-                <div class="tooltip" id="map_tooltip">
+                <div class="right_bottom_tooltip" id="map_tooltip">
                     <span style="font-weight: bold;">i</span>
-                    <span id="map_tooltip_text" class="tooltiptext">
+                    <span id="map_tooltip_text" class="right_bottom_tooltiptext">
                         Interactive map showing where the sample was collected.
                     </span>
                 </div>
@@ -1575,9 +1631,9 @@
             
             <div class="sample_info_box">
                 <div class="sample_info_label">Sample Info
-                    <div class="tooltip" style="position: relative; left:910px; top:-9px;">
+                    <div class="right_bottom_tooltip" style="position: relative; left:910px; top:-9px;">
                         <span style="font-weight: bold;">i</span>
-                        <span class="tooltiptext" style="top:-65px; width: 275px;">
+                        <span class="right_bottom_tooltiptext" style="top:35px; right: 0px; width: 290px;">
                             High-level data and metadata about this sample.
                         </span>
                     </div>
@@ -1709,9 +1765,9 @@
 
             <div class="qscores_box">
                 <div class="qscores_title">Q Scores
-                    <div class="bottom_tooltip" style="top:-5px; left:370px; position:relative;">
+                    <div class="right_bottom_tooltip" style="top:-5px; left:370px; position:relative;">
                         <span style="font-weight: bold; font-size:16px;">i</span>
-                        <span style="position: absolute;top:35px; width:300px;" class="bottom_tooltiptext">
+                        <span style="position: absolute;top:35px; width:300px; right:1px;" class="right_bottom_tooltiptext">
                             Interactive histogram of phred-scaled read quality scores.
                             <br><br>
                             For more information, see:<br>
@@ -1804,9 +1860,9 @@
                 {% if analysis.coverage_plot is defined and analysis.coverage_plot %}
                 <div class="coverage_plot_box">
                     <div class="coverage_plot_title">Coverage Plot
-                        <div class="tooltip" id="coverage_tooltip">
+                        <div class="right_bottom_tooltip" id="coverage_tooltip">
                             <span style="font-weight: bold; font-size:16px;">i</span>
-                            <span id="coverage_tooltip_text" style="position: absolute;top:-85px; width:300px;" class="tooltiptext">Plot of read coverage over the genome for this sample as computed by <a href="https://github.com/brentp/mosdepth" style="color:#23BFDF">mosdepth</a>.</span>
+                            <span id="coverage_tooltip_text" style="position: absolute;top:35px; width:300px; right: 0px;" class="right_bottom_tooltiptext">Plot of read coverage over the genome for this sample as computed by <a href="https://github.com/brentp/mosdepth" style="color:#23BFDF">mosdepth</a>.</span>
                         </div>
                     </div>
                     
@@ -1820,9 +1876,9 @@
                 <div id="cov_gallery">
                   <div id="snapshot_title">
                     <div class="cov_title">IGV Snapshots</div>
-                    <div class="tooltip" id="snapshot_tooltip">
+                    <div class="right_bottom_tooltip" id="snapshot_tooltip">
                       <span style="font-weight: bold;">i</span>
-                      <span id="snapshot_tooltip_text" class="tooltiptext" style="width:300px; top:-160px; position:absolute;">
+                      <span id="snapshot_tooltip_text" class="right_bottom_tooltiptext" style="width:300px; top: 35px; right: 0px; position:absolute;">
                         Screenshots of IGV plots around genes of interest.<br><br> 
 
                         Click on the main image to enlarge it.  Click on other images to select them.  Click on arrows to view more regions to select.
