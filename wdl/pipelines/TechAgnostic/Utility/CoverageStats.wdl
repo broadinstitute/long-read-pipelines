@@ -114,6 +114,7 @@ task MosDepthOverBed {
         Int bin_length = 1000
 
         # Runtime parameters
+        Int mem = 8
         Int preemptible_tries = 3
     }
     # mosdepth parameters
@@ -127,7 +128,7 @@ task MosDepthOverBed {
     Int round = 2
     String header_suffix = "_coverage"
 
-
+    # Calculate disk size
     Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
     String basename = basename(bam, ".bam")
     String prefix = "~{basename}.coverage_over_bed"
@@ -172,7 +173,7 @@ task MosDepthOverBed {
 
     runtime {
         cpu:                    4
-        memory:                 8 + " GiB"
+        memory:                 mem + " GiB"
         disks: "local-disk " +  disk_size + " HDD"
         preemptible:            preemptible_tries
         maxRetries:             1
