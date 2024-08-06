@@ -8,10 +8,10 @@ workflow MosdepthCoverageStats {
     parameter_meta {
         aligned_bam: "Aligned BAM file."
         aligned_bai: "Aligned BAM index file."
-        bed_file: "BED file containing regions of interest."
+        bed_file: "BED file containing regions of interest. Workflow will fail if bed file is empty"
         bin_length: "Length of bins to use for coverage calculation."
         preemptible_tries: "Number of times to retry a preempted task."
-        stats_per_interval: "If true, calculate coverage statistics per interval. Must provide a bed file."
+        stats_per_interval: "If true, calculate coverage statistics per interval. Must provide a bed file. Workflow will fail if bed file contains more than 200 intervals to avoid accidently over spending."
     }
 
     input {
@@ -28,11 +28,28 @@ workflow MosdepthCoverageStats {
         Int mosdepth_mem = 8
     }
 
+    if (defined(bed_file)) {
+        if (length(read_lines(select_first([bed_file]))) == 0) {
+            call FailWorkflow as EmptyBedFile {
+                input:
+                    message = "stats_per_interval is set to true, but the provided bed file is empty."
+            }
+        }
+    }
+
     if (stats_per_interval ) {
         if (!defined(bed_file)) {
-            call FailWorkflow {
+            call FailWorkflow as NoBedFile {
                 input:
                     message = "stats_per_interval is set to true, but no bed file is provided."
+            }
+        }
+        if (defined(bed_file)) {
+            if (length(read_lines(select_first([bed_file]))) > 200) {
+                call FailWorkflow as TooManyIntervals {
+                    input:
+                        message = "stats_per_interval is set to true, but the provided bed file contains more than 200 intervals."
+                }
             }
         }
         scatter ( bed_line in read_lines(select_first([bed_file])) ) {
