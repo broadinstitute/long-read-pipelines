@@ -25,6 +25,7 @@ workflow MosdepthCoverageStats {
 
         # Runtime parameters
         Int preemptible_tries = 3
+        Int mosdepth_mem = 8
     }
 
     if (stats_per_interval ) {
@@ -41,6 +42,7 @@ workflow MosdepthCoverageStats {
                     bai = aligned_bai,
                     bed = write_lines([bed_line]),
                     preemptible_tries = preemptible_tries,
+                    mem = mosdepth_mem,
             }
         }
         Array[File] cov_stat_summary_files  = MosDepthPerInterval.cov_stat_summary_file
@@ -66,6 +68,7 @@ workflow MosdepthCoverageStats {
                 bed = select_first([BinBed.binned_bed, bed_file]),
                 bin_length = bin_length,
                 preemptible_tries = preemptible_tries,
+                mem = mosdepth_mem,
         }
     }
 
@@ -77,6 +80,7 @@ workflow MosdepthCoverageStats {
                 bai = aligned_bai,
                 bin_length = bin_length,
                 preemptible_tries = preemptible_tries,
+                mem = mosdepth_mem,
         }
     }
 
