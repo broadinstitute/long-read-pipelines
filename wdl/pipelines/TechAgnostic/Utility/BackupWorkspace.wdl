@@ -175,9 +175,9 @@ task RunBackupWithPython {
         START_TIME = time.time()
 
         # Get the workspace info:
-        namespace = os.environ['WORKSPACE_NAMESPACE']
-        workspace = os.environ['WORKSPACE_NAME']
-        default_bucket = os.environ['WORKSPACE_BUCKET']
+        namespace = ~{namespace}
+        workspace = ~{workspace}
+        default_bucket = ~{default_bucket}
 
         print(f"Namespace: {namespace}")
         print(f"Workspace: {workspace}")
