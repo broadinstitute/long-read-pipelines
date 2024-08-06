@@ -352,7 +352,6 @@
         align-items: flex-start;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
-        overflow: hidden;
     }
       
     ._map { 
@@ -393,12 +392,12 @@
     ._location_info_label {
         position: absolute;
         left: 20px;
-        top: 40px;
+        top: 35px;
         width: 1047.4021px;
         height: 26.9455px;
-        justify-content: center;
-        flex-direction: column;
-        font-size: 24px;
+        display: flex;
+        flex-direction: row;
+        font-size: 26px;
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
         'Liberation Sans', sans-serif;
         flex-shrink: 1;
@@ -809,8 +808,6 @@
     }
 
     .qscores_box {
-        box-sizing: border-box;
-
         position: absolute;
         width: 544px;
         height: 444px;
@@ -828,11 +825,10 @@
             'Liberation Sans', sans-serif;
         position: absolute;
         left: 15px;
-        top: 18.3724px;
+        top: 28px;
         width: 513.3381px;
         height: 40.9719px;
-        justify-content: center;
-        flex-direction: column;
+        flex-direction: row;
     }
     .qscores_plot {
         position: absolute;
@@ -873,7 +869,7 @@
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
             'Liberation Sans', sans-serif;
         position: relative;
-        top:19px;
+        top:30px;
         height: 10px;
     }
 
@@ -886,7 +882,7 @@
             'Liberation Sans', sans-serif;
         position: absolute;
         left: 15px;
-        top: 18.3724px;
+        top: 18px;
         width: 513.3381px;
         height: 40.9719px;
         justify-content: center;
@@ -1038,6 +1034,57 @@
     opacity: 0;
     transition: opacity 0.4s;
   }
+
+  .bottom_tooltip {
+    z-index: 100;
+    cursor: default;
+    font-family: Rubik;
+    font-size: 16px;
+    color: #fff;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: rgb(95, 193, 242); 
+    -moz-border-radius: 70px; 
+    -webkit-border-radius: 70px; 
+    border-radius: 70px;
+  }
+
+  .bottom_tooltip .bottom_tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 8px 8px;
+    border-radius: 6px;
+    font-size: 16px;
+   
+    position: absolute;
+    z-index: 1;
+
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .bottom_tooltip:hover .bottom_tooltiptext {
+    visibility: visible;
+    opacity: 1;
+    top: -65px;
+  }
+
+  .bottom_tooltip .bottom_tooltiptext::after {
+    content: " ";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent black transparent;
+  }
   
   #drug_res_tooltip {
     position: relative;
@@ -1046,11 +1093,21 @@
     top: -8px;
   }
 
+  #drug_res_tooltip_text {
+    width: 500px;
+    top: 35px;
+  }
+
   #rdt_tooltip {
     position: relative;
     float: right;
     top: -6px;
     left: 330px;
+  }
+
+  #rdt_tooltip_text {
+    width: 500px;
+    top: -100px;
   }
 
   #coverage_tooltip {
@@ -1082,6 +1139,17 @@
     float: right;
     right: 10px;
     top: -24px;
+  }
+
+  #map_tooltip {
+    left: 480px;
+    position: relative;
+    top: 24px;
+  }
+
+  #map_tooltip_text {
+    width: 315px;
+    top: -65px;
   }
 
   .loci_title, #img_title {
@@ -1388,7 +1456,7 @@
     </div>
     
     <!--- SUMMARY PAGE -->
-    <div id="summary_page" style="display: none;">
+    <div id="summary_page" style="display: block;">
         <div class="summary_root" style="height:2000px;">
           <div class="module_display" style="height:2000px;">
               <div class="main_frame">
@@ -1397,9 +1465,18 @@
                   <div class="drug_res_outline">
                   </div>
                   <div class="drug_res_title">Drug Resistance Markers
-                    <div class="tooltip" id="drug_res_tooltip">
+                    <div class="bottom_tooltip" id="drug_res_tooltip">
                         <span style="font-weight: bold; font-size:16px;">i</span>
-                        <span id="drug_res_tooltip_text" class="tooltiptext">Placeholder text.</span>
+                        <span id="drug_res_tooltip_text" class="bottom_tooltiptext">
+                            Sensitivity and resistance to widely used anti-malarial drugs are shown in the table.
+                            <br><br>
+                            Presence of individual markers (i.e. variants / mutation events / protein changes) are shown in the plot.  Red markers indicate the presence of a potential drug-resistance-related mutation event in this sample.  White markers indicate the absence of such a marker.  Amino acid changes are indicated by vertical labels, grouped by gene (column group labels).
+                            <br><br>
+                            The drug resistance markers shown below are defined in the methods the PF7 callset from the Sanger Institute.  Each listed drug has a rubric by which resistance or sensitivity is determined based on the presence or absence of specific genotypes at known protein change sites.  
+                            <br><br>
+                            For more information, see:
+                            <a href="https://www.malariagen.net/wp-content/uploads/2023/11/Pf7_resistance_classification.pdf" style="color:#23BFDF">Pf7 Resistance Classification</a>
+                        </span>
                     </div>
                   </div>            
                     <div class="drug_res_spacing">
@@ -1453,6 +1530,12 @@
                     <div class="location_info_box">
                       <div class="_location_info_label">
                         Location Info
+                        <div class="tooltip" id="rdt_tooltip" style="left:320px;">
+                            <span style="font-weight: bold;">i</span>
+                            <span id="rdt_tooltip_text" class="tooltiptext" style="top:-65px; width: 275px;">
+                                Information about where the sample was collected.
+                            </span>
+                        </div>
                       </div>
                       <div class="_location_info_lines_frame">
                         <div class="_location_info_line"></div>
@@ -1491,7 +1574,11 @@
                     <div class="HRP_title">RDT Regions
                         <div class="tooltip" id="rdt_tooltip">
                             <span style="font-weight: bold;">i</span>
-                            <span id="rdt_tooltip_text" class="tooltiptext">Placeholder text.</span>
+                            <span id="rdt_tooltip_text" class="tooltiptext" style="top: -225px;">
+                                The presence of the HRP-2 and HRP-3 regions is presented below.  "+" indicates the presence of either region ; "-" indicates the absence of the region.
+                                <br><br>
+                                Presence or absence is determined by examining the coverage for this sample.  If the coverage over a region is less than 5% of the coverage of the containing contig, that region is said to be deleted (for HRP-2: Pf3D7_08_V3:1373212-1376988; for HRP-3: Pf3D7_13_v3:2840236-2842840).  Otherwise the region is counted as present. 
+                            </span>
                         </div>
                     </div>
                     <div class="divider_line" style="position:absolute; top:70px; left:16px; width:515px;"></div>
@@ -1506,6 +1593,12 @@
                   <svg preserveAspectRatio="none" viewBox="0 0 494 3" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon2"><path d="M0 3L494 1.73228e-07" stroke="#DFE1E5"></path></svg>
                 </div>
                 <div class="map_title">Map</div>
+                <div class="tooltip" id="map_tooltip">
+                    <span style="font-weight: bold;">i</span>
+                    <span id="map_tooltip_text" class="tooltiptext">
+                        Interactive map showing where the sample was collected.
+                    </span>
+                </div>
                 <div class="_map">
                   {{ sample.map|safe }}
                 </div>
@@ -1513,7 +1606,14 @@
             </div>
             
             <div class="sample_info_box">
-                <div class="sample_info_label">Sample Info</div>
+                <div class="sample_info_label">Sample Info
+                    <div class="tooltip" style="position: relative; left:910px; top:-9px;">
+                        <span style="font-weight: bold;">i</span>
+                        <span class="tooltiptext" style="top:-65px; width: 275px;">
+                            High-level data and metadata about this sample.
+                        </span>
+                    </div>
+                </div>
                 <div class="sample_info_content">
 
                     <div class="divider_lines">
@@ -1587,14 +1687,23 @@
 
 
     <!-- ANALYSIS PAGE -->
-    <div id="analysis_page" >
+    <div id="analysis_page" style="display:none;">
         <div id="analysis_root">
             <div class="module_display" style="height: 2050px;">
               <div class="main_frame">
               <div class="top_row_frame">
                 <div class="barcode_box">
                     <div class="barcode_value">{{ analysis.barcode }}</div>
-                    <div class="divider_line" style="position:absolute; top:70px; left:16px; width:515px;"></div>
+                    <div class="bottom_tooltip" style="position: relative; left:238px; top:-64px;">
+                        <span style="font-weight: bold;">i</span>
+                        <span class="bottom_tooltiptext" style="top:35px; width: 600px;">
+                            Sequence representing the genotype of the current sample at 24 sites across the genome as extracted from the variants present in this sample.  <br><br>Sites with heterozygous genotypes are represented by <span style="font-weight:bold;">N</span> nucleotides.  This barcode can be used as a proxy for sample identity, as well as in studies, such as population genomics of <span style="font-style: italic;">P. falciparum.</span>
+                            <br><br>
+                            For more information, see:
+                            Daniels et al. 2008 (DOI: <a href="https://doi.org/10.1186/1475-2875-7-223" style="color:#23BFDF">10.1186/1475-2875-7-223</a>)
+                        </span>
+                    </div>
+                    <div class="divider_line" style="position:absolute; top:69px; left:16px; width:519px;"></div>
                     <div class="barcode_label">24 SNP Molecular Barcode</div>
                 </div>
                 <div class="sequencing_summary_box">
@@ -1606,9 +1715,19 @@
                         <div class="sequencing_summary_line7"></div>
                     </div>
                     <div class="sequencing_summary_title">Sequencing Summary</div>
+                        <div class="tooltip" style="top:25px; left:500px; position:relative;">
+                            <span style="font-weight: bold; font-size:16px;">i</span>
+                            <span id="coverage_tooltip_text" style="position: absolute;top:-275px; width:550px;" class="tooltiptext">
+                                High-level sequencing information about this sample.<br><br>
+
+                                <span style="font-weight:bold">Aligned Bases</span>: Total number of bases successfully aligned to the reference genome.<br><br>
+                                <span style="font-weight:bold">Aligned Reads</span>: Total number of reads aligned successfully to the reference genome.<br><br>
+                                <span style="font-weight:bold">Fraction of Aligned Bases</span>: Fraction of the total number of bases sequenced that were aligned successfully to the reference genome.<br><br>
+                                <span style="font-weight:bold">Average Identity</span>: Measure of nucleotide-level similarity between the sample and the reference genome.
+                        </div>
                     <div class="_sequencing_summary_right_side">
                         <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[2]|string|replace(".0","") }} bp</div>
-                        <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[3]|string|replace(".0","") }} bp</div>
+                        <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[3]|string|replace(".0","") }}</div>
                         <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[4] }}%</div>
                         <div class="_sequencing_summary_text">{{ analysis.sequencing_summary[5] }}%</div>
                     </div>
@@ -1621,7 +1740,16 @@
                 </div>
 
             <div class="qscores_box">
-                <div class="qscores_title">Q Scores</div>
+                <div class="qscores_title">Q Scores
+                    <div class="bottom_tooltip" style="top:-5px; left:370px; position:relative;">
+                        <span style="font-weight: bold; font-size:16px;">i</span>
+                        <span style="position: absolute;top:35px; width:300px;" class="bottom_tooltiptext">
+                            Interactive histogram of phred-scaled read quality scores.
+                            <br><br>
+                            For more information, see:<br>
+                            <a href="https://en.wikipedia.org/wiki/Phred_quality_score" style="color:#23BFDF">Phred Quality Score</a>
+                    </div>
+                </div>
                 <div class="qscores_plot">
                     <meta name="qscores_y" content="{{ analysis.reads }}">
                     <div id="qscores"></div>
@@ -1710,7 +1838,7 @@
                     <div class="coverage_plot_title">Coverage Plot
                         <div class="tooltip" id="coverage_tooltip">
                             <span style="font-weight: bold; font-size:16px;">i</span>
-                            <span id="coverage_tooltip_text" class="tooltiptext">Placeholder text.</span>
+                            <span id="coverage_tooltip_text" style="position: absolute;top:-85px; width:300px;" class="tooltiptext">Plot of read coverage over the genome for this sample as computed by <a href="https://github.com/brentp/mosdepth" style="color:#23BFDF">mosdepth</a>.</span>
                         </div>
                     </div>
                     
@@ -1726,7 +1854,11 @@
                     <div class="cov_title">IGV Snapshots</div>
                     <div class="tooltip" id="snapshot_tooltip">
                       <span style="font-weight: bold;">i</span>
-                      <span id="snapshot_tooltip_text" class="tooltiptext">Click on the main photo to enlarge it.</span>
+                      <span id="snapshot_tooltip_text" class="tooltiptext" style="width:300px; top:-160px; position:absolute;">
+                        Screenshots of IGV plots around genes of interest.<br><br> 
+
+                        Click on the main image to enlarge it.  Click on other images to select them.  Click on arrows to view more regions to select.
+                      </span>
                     </div>
                     
                   </div>
