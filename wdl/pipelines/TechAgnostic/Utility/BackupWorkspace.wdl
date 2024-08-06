@@ -14,26 +14,28 @@ workflow BackupWorkspace {
     }
 
     input {
+
+        String namespace
+        String workspace
+        String default_bucket
+
         String? additional_output_path
     }
 
-    # Get our workspace info:
-    call GetWorkspaceInfo as t001_GetWorkspaceInfo { input: }
-
-    # Backup our workspace:
-    call RunBackupWithPapermill as t002_RunBackupPapermill {
+    # Backup our workspace
+    call RunBackupWithPapermill as t001_RunBackupPapermill {
         input:
-            namespace = t001_GetWorkspaceInfo.namespace,
-            workspace = t001_GetWorkspaceInfo.workspace,
-            default_bucket = t001_GetWorkspaceInfo.default_bucket,
+            namespace = namespace,
+            workspace = workspace,
+            default_bucket = default_bucket,
     }
 
     # Backup our workspace:
-    call RunBackupWithPython as t003_RunBackupPython {
+    call RunBackupWithPython as t002_RunBackupPython {
         input:
-            namespace = t001_GetWorkspaceInfo.namespace,
-            workspace = t001_GetWorkspaceInfo.workspace,
-            default_bucket = t001_GetWorkspaceInfo.default_bucket,
+            namespace = namespace,
+            workspace = workspace,
+            default_bucket = default_bucket,
     }
 
     # Copy to another location as well if we have to:
@@ -41,65 +43,14 @@ workflow BackupWorkspace {
         call FF.FinalizeToDir as CopyNotebookBackupToAlternateLocation {
             input:
                 outdir = select_first([additional_output_path]),
-                files = [t002_RunBackupPapermill.backup_path]
+                files = [t001_RunBackupPapermill.backup_path]
         }
 
         call FF.FinalizeToDir as CopyPythonBackupToAlternateLocation {
             input:
                 outdir = select_first([additional_output_path]),
-                files = [t003_RunBackupPython.backup_path]
+                files = [t002_RunBackupPython.backup_path]
         }
-    }
-}
-
-task GetWorkspaceInfo {
-    meta {
-        description: "Get the baseline info for the current workspace.  Assumes that we're running in Terra."
-    }
-
-    input {
-        RuntimeAttr? runtime_attr_override
-    }
-
-    String namespace_file = "namespace.txt"
-    String workspace_file = "workspace.txt"
-    String default_bucket_file = "default_bucket.txt"
-
-    command <<<
-    echo $WORKSPACE_NAMESPACE > ~{namespace_file}
-    echo $WORKSPACE_NAME > ~{workspace_file}
-    echo $WORKSPACE_BUCKET > ~{default_bucket_file}
-
-    echo "Namespace: $WORKSPACE_NAMESPACE"
-    echo "Workspace: $WORKSPACE_NAME"
-    echo "Default Bucket: $WORKSPACE_BUCKET"
-    >>>
-
-    output {
-        String namespace = read_string(namespace_file)
-        String workspace = read_string(workspace_file)
-        String default_bucket = read_string(default_bucket_file)
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            1,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        0,
-        docker:             "ubuntu:20.04"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
 
