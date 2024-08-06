@@ -11,7 +11,7 @@ workflow MosdepthCoverageStats {
         bed_file: "BED file containing regions of interest."
         bin_length: "Length of bins to use for coverage calculation."
         preemptible_tries: "Number of times to retry a preempted task."
-#        stats_per_interval: "If true, calculate coverage statistics per interval."
+        stats_per_interval: "If true, calculate coverage statistics per interval. Must provide a bed file."
     }
 
     input {
@@ -20,32 +20,32 @@ workflow MosdepthCoverageStats {
         File? bed_file
 
         Int? bin_length
-#
-#        Boolean stats_per_interval = false
+
+        Boolean stats_per_interval = false
 
         # Runtime parameters
         Int preemptible_tries = 3
     }
 
-#    if (stats_per_interval) {
-#        scatter ( bed_line in read_lines(bed_file) ) {
-#            call MosDepthOverBed as MosDepthPerInterval {
-#                input:
-#                    bam = aligned_bam,
-#                    bai = aligned_bai,
-#                    bed = write_lines([bed_line]),
-#                    preemptible_tries = preemptible_tries,
-#            }
-#            File cov_stat_input_bed = select_first([MosDepthPerInterval.per_base, MosDepthPerInterval.regions])
-#            String basename = basename(aligned_bam, ".bam")
-#            call CoverageStats {
-#                input:
-#                    mosdepth_regions = cov_stat_input_bed,
-#                    basename_input = basename,
-#                    preemptible_tries = preemptible_tries,
-#            }
-#        }
-#    }
+    if (stats_per_interval ) {
+        if (!defined(bed_file)) {
+            call FailWorkflow {
+                input:
+                    message = "stats_per_interval is set to true, but no bed file is provided."
+            }
+        }
+        scatter ( bed_line in read_lines(select_first([bed_file])) ) {
+            call MosDepthOverBed as MosDepthPerInterval {
+                input:
+                    bam = aligned_bam,
+                    bai = aligned_bai,
+                    bed = write_lines([bed_line]),
+                    preemptible_tries = preemptible_tries,
+            }
+        }
+        Array[File] cov_stat_summary_files  = MosDepthPerInterval.cov_stat_summary_file
+        Array[Map[String, Float]] cov_stat_summaries = MosDepthPerInterval.cov_stat_summary
+    }
 
 
 
@@ -82,8 +82,10 @@ workflow MosdepthCoverageStats {
 
 
     output {
-        File? cov_stat_summary_file      = select_first([MosDepthOverBed.cov_stat_summary_file, MosDepthNoBed.cov_stat_summary_file])
-        Map[String, Float]? cov_stat_summary = select_first([MosDepthOverBed.cov_stat_summary, MosDepthNoBed.cov_stat_summary])
+        File cov_stat_summary_file      = select_first([MosDepthOverBed.cov_stat_summary_file, MosDepthNoBed.cov_stat_summary_file])
+        Map[String, Float] cov_stat_summary = select_first([MosDepthOverBed.cov_stat_summary, MosDepthNoBed.cov_stat_summary])
+        Array[File]? stats_per_interval_cov_stat_summary_files      = cov_stat_summary_files
+        Array[Map[String, Float]]? stats_per_interval_cov_stat_summaries = cov_stat_summaries
     }
 
 }
@@ -203,6 +205,23 @@ task BinBed {
         memory: "1 GiB"
         disks: "local-disk 10 HDD"
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+    }
+}
+
+task FailWorkflow {
+    input{
+        String message
+    }
+    command {
+        echo "Failing workflow"
+        echo ~{message}
+        exit 1
+    }
+    output {
+        String out_message = message
+    }
+    runtime {
+        docker: "marketplace.gcr.io/google/ubuntu2004"
     }
 }
 
