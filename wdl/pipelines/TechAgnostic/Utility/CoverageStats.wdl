@@ -44,12 +44,10 @@ workflow MosdepthCoverageStats {
                     message = "stats_per_interval is set to true, but no bed file is provided."
             }
         }
-        if (defined(bed_file)) {
-            if (length(read_lines(select_first([bed_file]))) > 200) {
-                call FailWorkflow as TooManyIntervals {
-                    input:
-                        message = "stats_per_interval is set to true, but the provided bed file contains more than 200 intervals."
-                }
+        if (length(read_lines(select_first([bed_file]))) > 200) {
+            call FailWorkflow as TooManyIntervals {
+                input:
+                    message = "stats_per_interval is set to true, but the provided bed file contains more than 200 intervals."
             }
         }
         scatter ( bed_line in read_lines(select_first([bed_file])) ) {
