@@ -49,5 +49,3 @@ RUN apt-get install -y git
 RUN python3 -m pip install --upgrade pip setuptools
 RUN python3 -m pip install --upgrade git+https://github.com/broadinstitute/lrma-cloud-utils.git@v0.0.5
 
-# Copy over the backup script.
-COPY 00_backup_workspace.ipynb /
