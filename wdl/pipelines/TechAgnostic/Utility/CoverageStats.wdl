@@ -11,6 +11,7 @@ workflow MosdepthCoverageStats {
         bed_file: "BED file containing regions of interest."
         bin_length: "Length of bins to use for coverage calculation."
         preemptible_tries: "Number of times to retry a preempted task."
+#        stats_per_interval: "If true, calculate coverage statistics per interval."
     }
 
     input {
@@ -19,10 +20,34 @@ workflow MosdepthCoverageStats {
         File? bed_file
 
         Int? bin_length
+#
+#        Boolean stats_per_interval = false
 
         # Runtime parameters
         Int preemptible_tries = 3
     }
+
+#    if (stats_per_interval) {
+#        scatter ( bed_line in read_lines(bed_file) ) {
+#            call MosDepthOverBed as MosDepthPerInterval {
+#                input:
+#                    bam = aligned_bam,
+#                    bai = aligned_bai,
+#                    bed = write_lines([bed_line]),
+#                    preemptible_tries = preemptible_tries,
+#            }
+#            File cov_stat_input_bed = select_first([MosDepthPerInterval.per_base, MosDepthPerInterval.regions])
+#            String basename = basename(aligned_bam, ".bam")
+#            call CoverageStats {
+#                input:
+#                    mosdepth_regions = cov_stat_input_bed,
+#                    basename_input = basename,
+#                    preemptible_tries = preemptible_tries,
+#            }
+#        }
+#    }
+
+
 
     if (defined(bed_file) && defined(bin_length)) {
         call BinBed {
@@ -42,7 +67,6 @@ workflow MosdepthCoverageStats {
                 bin_length = bin_length,
                 preemptible_tries = preemptible_tries,
         }
-        File cov_stat_input_bed = select_first([MosDepthOverBed.per_base, MosDepthOverBed.regions])
     }
 
     # Runs in cases where no bed file is provided, will run regardless of bin_length
@@ -54,21 +78,12 @@ workflow MosdepthCoverageStats {
                 bin_length = bin_length,
                 preemptible_tries = preemptible_tries,
         }
-        File cov_stat_input_no_bed = select_first([MosDepthNoBed.per_base, MosDepthNoBed.regions])
     }
 
-    String basename = basename(aligned_bam, ".bam")
-
-    call CoverageStats {
-        input:
-            mosdepth_regions = select_first([cov_stat_input_bed, cov_stat_input_no_bed]),
-            basename_input = basename,
-            preemptible_tries = preemptible_tries,
-    }
 
     output {
-        File cov_stat_summary_file      = CoverageStats.cov_stat_summary_file
-        Map[String, Float] cov_stat_summary = CoverageStats.cov_stat_summary
+        File cov_stat_summary_file      = MosDepthOverBed.cov_stat_summary_file
+        Map[String, Float] cov_stat_summary = MosDepthOverBed.cov_stat_summary
     }
 
 }
@@ -99,11 +114,17 @@ task MosDepthOverBed {
         # Runtime parameters
         Int preemptible_tries = 3
     }
-
+    # mosdepth parameters
     Int threads = 4
     Boolean no_per_base = false
     Boolean fast_mode = false
     Int mapq = 1
+
+    # coverage_stats.py parameters
+    Int cov_col = 4 # column holding the coverage values
+    Int round = 2
+    String header_suffix = "_coverage"
+
 
     Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
     String basename = basename(bam, ".bam")
@@ -124,15 +145,26 @@ task MosDepthOverBed {
         ~{"-b " + select_first([bed, bin_length])} \
         ~{"-Q " + mapq} \
         ~{prefix} ./~{basename}.bam
+
+        # Run coverage_stats.py
+        python3 /coverage_stats.py \
+        --cov_col ~{cov_col} \
+        --round ~{round} \
+        --output_prefix ~{prefix} \
+        ~{prefix}.per-base.bed.gz
     }
 
     output {
+        # mosdepth output
         File global_dist      = "~{prefix}.mosdepth.global.dist.txt"
         File summary          = "~{prefix}.mosdepth.summary.txt"
         File? per_base        = "~{prefix}.per-base.bed.gz"
         File region_dist      = "~{prefix}.mosdepth.region.dist.txt"
         File regions          = "~{prefix}.regions.bed.gz"
         File regions_csi      = "~{prefix}.regions.bed.gz.csi"
+        # coverage_stats.py output
+        File cov_stat_summary_file = "~{prefix}.cov_stat_summary.json"
+        Map[String, Float] cov_stat_summary = read_json("~{prefix}.cov_stat_summary.json")
 
     }
 
@@ -146,57 +178,7 @@ task MosDepthOverBed {
     }
 }
 
-task CoverageStats {
 
-    meta {
-        description: "Calculate coverage statistics from mosdepth output."
-    }
-    parameter_meta {
-        mosdepth_regions: "Mosdepth output file containing coverage values."
-        cov_col: "Column holding the coverage values."
-        basename_input: "Basename to use for output files."
-        preemptible_tries: "Number of times to retry a preempted task."
-    }
-
-    input {
-        File mosdepth_regions
-        Int cov_col = 4 # column holding the coverage values
-        String? basename_input
-
-        # Runtime parameters
-        Int preemptible_tries = 3
-    }
-    Int round = 2
-    String header_suffix = "_coverage"
-
-    Int disk_size = 2*ceil(size(mosdepth_regions, "GB"))
-    String basename = select_first([basename_input, basename(mosdepth_regions)])
-    String prefix = "~{basename}.coverage_over_bed"
-
-    command {
-        set -euxo pipefail
-
-        python3 /coverage_stats.py \
-        --cov_col ~{cov_col} \
-        --round ~{round} \
-        --output_prefix ~{prefix} \
-        ~{mosdepth_regions}
-    }
-
-    output {
-        File cov_stat_summary_file = "~{prefix}.cov_stat_summary.json"
-        Map[String, Float] cov_stat_summary = read_json("~{prefix}.cov_stat_summary.json")
-    }
-
-    runtime {
-        cpu:                    2
-        memory:                 4 + " GiB"
-        disks: "local-disk " +  disk_size + " HDD"
-        preemptible:            preemptible_tries
-        maxRetries:             1
-        docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:bs-cov-sum-0.3.1"
-    }
-}
 
 
 task BinBed {
@@ -224,16 +206,3 @@ task BinBed {
     }
 }
 
-
-
-#        # if the line number in the bed file is less than 2 the run BinBed
-#    if (defined(bed_file)){
-#        Int file_lines = length(read_lines(select_first([bed_file])))
-#        if (file_lines < 2) {
-#            call BinBed as BinSingleBed {
-#                input:
-#                    bed_file = bed_file,
-#                    bin_length = 1
-#            }
-#        }
-#    }
