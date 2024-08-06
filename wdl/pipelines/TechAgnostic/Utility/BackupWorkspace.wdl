@@ -22,16 +22,8 @@ workflow BackupWorkspace {
         String? additional_output_path
     }
 
-    # Backup our workspace
-    call RunBackupWithPapermill as t001_RunBackupPapermill {
-        input:
-            namespace = namespace,
-            workspace = workspace,
-            default_bucket = default_bucket,
-    }
-
     # Backup our workspace:
-    call RunBackupWithPython as t002_RunBackupPython {
+    call RunBackupWithPython as t001_RunBackupPython {
         input:
             namespace = namespace,
             workspace = workspace,
@@ -40,90 +32,13 @@ workflow BackupWorkspace {
 
     # Copy to another location as well if we have to:
     if (defined(additional_output_path)) {
-        call FF.FinalizeToDir as CopyNotebookBackupToAlternateLocation {
-            input:
-                outdir = select_first([additional_output_path]),
-                files = [t001_RunBackupPapermill.backup_path]
-        }
-
         call FF.FinalizeToDir as CopyPythonBackupToAlternateLocation {
             input:
                 outdir = select_first([additional_output_path]),
-                files = [t002_RunBackupPython.backup_path]
+                files = [t001_RunBackupPython.backup_path]
         }
     }
 }
-
-task RunBackupWithPapermill {
-
-    meta {
-        description: "Run the backup notebook on the workspace with the given info."
-    }
-    parameter_meta {
-        namespace: "Namespace to which the workspace belongs."
-        workspace: "Name of the workspace to backup."
-        default_bucket: "Default bucket of the workspace.  This will be used as an initial output folder."
-    }
-
-    input {
-        String namespace
-        String workspace
-        String default_bucket
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    String out_notebook_file_name = "out_notebook_filename.txt"
-    String out_notebook_html_file_name = "out_notebook_html_filename.txt"
-    String backup_path_file = "backup_path.txt"
-
-    command <<<
-        set -euxo pipefail
-
-        # Create output notebook name:
-        out_notebook_name=$(date +%Y%m%dT%H%M%S)_backup_executed_notebook.ipynb
-
-        # Save output notebook name so we can refer to it in our outputs:
-        echo ${out_notebook_name} > ~{out_notebook_file_name}
-        echo ${out_notebook_name} | sed 's@\.ipynb@.html@' > ~{out_notebook_html_file_name}
-
-        papermill /00_backup_workspace.ipynb ${out_notebook_name}
-
-        jupyter nbconvert --to html ${out_notebook_name}
-
-        # Get the backup path from the output:
-        grep 'Backup location:' $(echo ${out_notebook_name} | sed 's@\.ipynb@.html@') > ~{backup_path_file}
-    >>>
-
-    output {
-        File output_notebook = read_string(out_notebook_file_name)
-        File output_notebook_html = read_string(out_notebook_html_file_name)
-
-        String backup_path = read_string(backup_path_file)
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             10,
-        disk_gb:            20,
-        boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-backup-workspace:0.0.1"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
 
 task RunBackupWithPython {
 
@@ -182,6 +97,7 @@ task RunBackupWithPython {
         print(f"Namespace: {namespace}")
         print(f"Workspace: {workspace}")
         print(f"Default Bucket: {default_bucket}")
+        print("")
 
         ################################################################################
 
@@ -265,6 +181,7 @@ task RunBackupWithPython {
                 with blob.open('wb') as f:
                     f.write(gzip.compress(bytes(buf.getvalue(), 'utf-8')))
         print('Done.')
+        print("")
 
         ################################################################################
 
@@ -277,6 +194,7 @@ task RunBackupWithPython {
             notebook_name = f"{timestamp}_{namespace}_{workspace}_{original_name}"
             blob = bucket.copy_blob(notebook_blob, bucket, new_name=f"{backup_folder_path}/notebooks/{notebook_name}")
         print("Done.")
+        print("")
 
         ################################################################################
 
@@ -305,6 +223,7 @@ task RunBackupWithPython {
                                    f"workspace_metadata")
 
         print(f"Done.")
+        print("")
 
         ################################################################################
 
@@ -323,6 +242,7 @@ task RunBackupWithPython {
                                        f"workflows")
 
         print(f'Done.')
+        print("")
 
         ################################################################################
 
@@ -353,7 +273,8 @@ task RunBackupWithPython {
             _write_json_file_to_bucket(f"{backup_folder_path}/workflows", bucket, timestamp, namespace, workspace, outputs,
                                        f"{workflow_name}_workflow_outputs")
 
-        print(f"Done")
+        print(f"Done.")
+        print("")
 
         ################################################################################
 
@@ -370,6 +291,7 @@ task RunBackupWithPython {
         _write_json_file_to_bucket(backup_folder_path, bucket, timestamp, namespace, workspace, submissions_dict, "workspace_job_history")
 
         print(f"Done.")
+        print("")
 
         ################################################################################
 
@@ -387,10 +309,12 @@ task RunBackupWithPython {
         print(f"Backup location: gs://{workspace_bucket}/{backup_folder_path}")
 
         # Write backup dir to a file so we can refer to it in our outputs:
-        with open("~{backup_path_file}") as f:
+        with open("~{backup_path_file}", 'w') as f:
             f.write(f"gs://{workspace_bucket}/{backup_folder_path}")
 
+        print("")
         print(f"Elapsed time: {END_TIME-START_TIME:2.2f}s")
+        print("")
 
         ################################################################################
 
