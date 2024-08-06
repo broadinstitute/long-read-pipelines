@@ -133,7 +133,7 @@ task MosDepthOverBed {
 
         String? chrom
         Int bin_length = 1000
-        boolean summarize_regions = false
+        Boolean summarize_regions = false
 
         # Runtime parameters
         Int mem = 8
