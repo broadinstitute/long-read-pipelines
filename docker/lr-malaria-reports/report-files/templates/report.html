@@ -261,6 +261,7 @@
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
         display: flex;
+        flex-direction: column;
     }
 
     .HRP_title {
@@ -269,8 +270,8 @@
         line-height: 20px;
         font-weight: 500;
         font-family: Rubik;
-        position: absolute;
-        top: 30px;
+        position: relative;
+        top: 35px;
         left: 16px;
         width: 250px;
         height: 26px;
@@ -279,67 +280,30 @@
     }
 
     .HRP_col {
-        float: left;
         position: relative;
-        top: 50px;
-        width: 58%
-    }
-  
-    .HRP_2_status {
-        position: absolute;
-        width: 125px;
-        height: 23.47px;
-        left: 89px;
-        top: 39.25px;
+        width: 50%;
 
         font-family: Rubik;
         font-style: normal;
         font-weight: 400;
-        font-size: 30px;
+        font-size: 26px;
         line-height: 30px;
         /* or 67% */
 
+        justify-content: center;
         align-items: center;
         text-align: center;
 
         color: #2494C7;
     }
-  
-    .HRP_2_status {
-        float: left;
-        width: 130px;
-        top: 39.25px;
 
-        font-family: Rubik;
-        font-style: normal;
-        font-weight: 400;
-        font-size: 30px;
-        line-height: 30px;
-        /* or 67% */
-
-        align-items: center;
-        text-align: center;
-
-        color: #2494C7;
-    }
-  
-    .HRP_3_status {
-        float: left;
-        position: absolute;
-        width: 130px;
-        top: 39.25px;
-
-        font-family: Rubik;
-        font-style: normal;
-        font-weight: 400;
-        font-size: 30px;
-        line-height: 30px;
-        /* or 67% */
-
-        align-items: center;
-        text-align: center;
-
-        color: #2494C7;
+    .HRP_cols_row {
+        top: 65px;
+        position: relative;
+        flex-direction: row;
+        display: flex;
+        width: 99%;
+        margin: 0 auto;
     }
     
     /* map box */
@@ -1101,7 +1065,7 @@
   #rdt_tooltip {
     position: relative;
     float: right;
-    top: -6px;
+    top: -12px;
     left: 330px;
   }
 
@@ -1582,11 +1546,14 @@
                             </span>
                         </div>
                     </div>
-                    <div class="divider_line" style="position:absolute; top:70px; left:16px; width:515px;"></div>
-                    <div class="HRP_col">
-                        <p class = "HRP_2_status"><span>{{ sample.hrp2 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-2 Result</span></p></div>
-                    <div class="HRP_col">
-                        <p class = "HRP_3_status"><span>{{ sample.hrp3 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-3 Result</span></p></div>
+                    <div class="divider_line" style="position:relative; top:48px; width:515px;"></div>
+                    <div class="HRP_cols_row">
+                        <div class="HRP_col">
+                            <p><span>{{ sample.hrp2 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-2 Result</span></p></div>
+                        <div class="HRP_col">
+                            <p><span>{{ sample.hrp3 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-3 Result</span></p></div>
+                    </div>
+
                 </div>
               </div>
               <div class="map_module">
