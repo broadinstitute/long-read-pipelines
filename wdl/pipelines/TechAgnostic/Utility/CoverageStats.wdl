@@ -185,7 +185,7 @@ task MosDepthOverBed {
         File regions_csi      = "~{prefix}.regions.bed.gz.csi"
         # coverage_stats.py output
         File cov_stat_summary_file = "~{prefix}.cov_stat_summary.json"
-        Map[String, Float] cov_stat_summary = read_json("~{prefix}.cov_stat_summary.json")
+        Map[String, Object] cov_stat_summary = read_json("~{prefix}.cov_stat_summary.json")
 
     }
 
@@ -293,7 +293,7 @@ task MosDepthPerInterval {
     output {
         # coverage_stats.py output
         File cov_stat_summary_all_file = "~{prefix}.cov_stat_summary_all.json"
-        Array[Map[String, Float]] cov_stat_summary_all = read_json("~{prefix}.cov_stat_summary_all.json")
+        Array[Map[String, Object]] cov_stat_summary_all = read_json("~{prefix}.cov_stat_summary_all.json")
 
     }
 
