@@ -249,7 +249,7 @@ task MosDepthPerInterval {
 
         # Create file for coverage stats summary of all intervals
         touch ~{prefix}.cov_stat_summary_all.json
-        cat "[\n" > ~{prefix}.cov_stat_summary_all.json
+        echo "[" > ~{prefix}.cov_stat_summary_all.json
 
         # Create a temporary directory for intermediate files
         tmp_dir=$(mktemp -d)
