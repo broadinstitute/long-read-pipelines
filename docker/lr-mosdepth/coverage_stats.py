@@ -49,7 +49,7 @@ def calculate_summary_statistics(
 
     # Replace Nan values with null
     for key, value in statistics.items():
-        if np.isnan(value):
+        if pd.isna(value):
             statistics[key] = "null"
 
     return statistics
