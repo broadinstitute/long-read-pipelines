@@ -198,7 +198,6 @@ task MosDepthOverBed {
     }
 
     runtime {
-        cpu:                    4
         memory:                 mem + " GiB"
         disks: "local-disk " +  disk_size + " HDD"
         preemptible:            preemptible_tries
@@ -308,7 +307,6 @@ task MosDepthPerInterval {
     }
 
     runtime {
-        cpu:                    4
         memory:                 mem + " GiB"
         disks: "local-disk " +  disk_size + " HDD"
         preemptible:            preemptible_tries
