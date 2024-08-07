@@ -258,7 +258,7 @@ task MosDepthPerInterval {
 
         for line in "${lines[@]}"; do
             bed_file="$tmp_dir/bed_line.bed"
-            echo $line > $bed_file
+            echo $line | tr ' ' '\t' > $bed_file
 
             mosdepth \
             ~{true="-n" false="" no_per_base} \
