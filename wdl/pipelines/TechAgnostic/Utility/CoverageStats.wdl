@@ -249,6 +249,7 @@ task MosDepthPerInterval {
 
         # Create file for coverage stats summary of all intervals
         touch ~{prefix}.cov_stat_summary_all.json
+        cat "[\n" > ~{prefix}.cov_stat_summary_all.json
 
         # Create a temporary directory for intermediate files
         tmp_dir=$(mktemp -d)
@@ -276,9 +277,15 @@ task MosDepthPerInterval {
             ~{cov_file_to_summarize}
 
             # Append the coverage stats summary of the current interval to the file containing the summary of all intervals
-            cat ~{prefix}.cov_stat_summary.json >> ~{prefix}.cov_stat_summary_all.json
+            if [[ -s ~{prefix}.cov_stat_summary.json ]]; then
+                cat ~{prefix}.cov_stat_summary.json >> ~{prefix}.cov_stat_summary_all.json
+                echo "," >> ~{prefix}.cov_stat_summary_all.json
+            fi
 
         done
+        # remove the last comma and close the json array
+        sed -i '$ s/,$//' ~{prefix}.cov_stat_summary_all.json
+        echo "]" >> ~{prefix}.cov_stat_summary_all.json
 
 
     >>>
