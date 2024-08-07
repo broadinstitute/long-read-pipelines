@@ -37,7 +37,7 @@ workflow MosdepthCoverageStats {
         }
     }
 
-    if (stats_per_interval ) {
+    if (stats_per_interval) {
         if (!defined(bed_file)) {
             call FailWorkflow as NoBedFile {
                 input:
@@ -50,19 +50,14 @@ workflow MosdepthCoverageStats {
                     message = "stats_per_interval is set to true, but the provided bed file contains more than 200 intervals."
             }
         }
-        scatter ( bed_line in read_lines(select_first([bed_file])) ) {
-            call MosDepthOverBed as MosDepthPerInterval {
+            call MosDepthPerInterval {
                 input:
                     bam = aligned_bam,
                     bai = aligned_bai,
-                    bed = write_lines([bed_line]),
+                    bed = bed_file,
                     preemptible_tries = preemptible_tries,
                     mem = mosdepth_mem,
-                    summarize_regions = true
             }
-        }
-        Array[File] cov_stat_summary_files  = MosDepthPerInterval.cov_stat_summary_file
-        Array[Map[String, Float]] cov_stat_summaries = MosDepthPerInterval.cov_stat_summary
     }
 
 
@@ -105,8 +100,8 @@ workflow MosdepthCoverageStats {
     output {
         File cov_stat_summary_file      = select_first([MosDepthOverBed.cov_stat_summary_file, MosDepthNoBed.cov_stat_summary_file])
         Map[String, Float] cov_stat_summary = select_first([MosDepthOverBed.cov_stat_summary, MosDepthNoBed.cov_stat_summary])
-        Array[File]? stats_per_interval_cov_stat_summary_files      = cov_stat_summary_files
-        Array[Map[String, Float]]? stats_per_interval_cov_stat_summaries = cov_stat_summaries
+        File? stats_per_interval_cov_stat_summary_files      = MosDepthPerInterval.cov_stat_summary_all_file
+        Map[String, Float]? stats_per_interval_cov_stat_summaries = MosDepthPerInterval.cov_stat_summary_all
     }
 
 }
@@ -148,7 +143,6 @@ task MosDepthOverBed {
     # coverage_stats.py parameters
     Int cov_col = 4 # column holding the coverage values
     Int round = 2
-    String header_suffix = "_coverage"
 
     # Calculate disk size
     Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
@@ -205,7 +199,104 @@ task MosDepthOverBed {
     }
 }
 
+task MosDepthPerInterval {
 
+    meta {
+        description: "Calculate coverage using mosdepth for each interval in bed."
+    }
+    parameter_meta {
+        bam: "Aligned BAM file."
+        bai: "Aligned BAM index file."
+        bed: "BED file containing regions of interest."
+        bin_length: "Length of bins to use for coverage calculation. default is 1000. If bed file is provided, this parameter is ignored."
+        preemptible_tries: "Number of times to retry a preempted task."
+    }
+
+    input {
+        File bam
+        File bai
+        File? bed
+
+        Int bin_length = 1000
+
+        # Runtime parameters
+        Int mem = 8
+        Int preemptible_tries = 3
+    }
+    # mosdepth parameters
+    Int threads = 4
+    Boolean no_per_base = false
+    Boolean fast_mode = false
+    Int mapq = 1
+
+    # coverage_stats.py parameters
+    Int cov_col = 4 # column holding the coverage values
+    Int round = 2
+
+    # Calculate disk size
+    Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
+    String basename = basename(bam, ".bam")
+    String prefix = "~{basename}.coverage_over_bed"
+
+    String cov_file_to_summarize = "~{prefix}.regions.bed.gz"
+
+    command <<<
+        set -euxo pipefail
+
+        # Create symbolic links for bam and bai in the current working directory
+        ln -s ~{bam} ./~{basename}.bam
+        ln -s ~{bai} ./~{basename}.bai
+
+        # create file for coverage stats summary of all intervals
+        touch ~{prefix}.cov_stat_summary_all.json
+
+        # Create a temporary directory for intermediate files
+        tmp_dir=$(mktemp -d)
+        trap "rm -rf $tmp_dir" EXIT
+
+        for bed_line in $(cat ~{bed}); do
+            bed_file="$tmp_dir/bed_line.bed"
+            echo $bed_line > $bed_file
+
+            mosdepth \
+            ~{true="-n" false="" no_per_base} \
+            ~{true="-x" false="" fast_mode} \
+            -t ~{threads} \
+            -b $bed_file \
+            ~{"-Q " + mapq} \
+            ~{prefix} ./~{basename}.bam
+
+            # Run coverage_stats.py
+            python3 /coverage_stats.py \
+            --cov_col ~{cov_col} \
+            --round ~{round} \
+            --output_prefix ~{prefix} \
+            ~{cov_file_to_summarize}
+
+            # Append the coverage stats summary of the current interval to the file containing the summary of all intervals
+            cat ~{prefix}.cov_stat_summary.json >> ~{prefix}.cov_stat_summary_all.json
+
+        done
+
+
+    >>>
+
+    output {
+        # coverage_stats.py output
+        File cov_stat_summary_all_file = "~{prefix}.cov_stat_summary_all.json"
+        Map[String, Float] cov_stat_summary_all = read_json("~{prefix}.cov_stat_summary_all.json")
+
+    }
+
+    runtime {
+        cpu:                    4
+        memory:                 mem + " GiB"
+        disks: "local-disk " +  disk_size + " HDD"
+        preemptible:            preemptible_tries
+        maxRetries:             1
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-mosdepth:bs-cov-sum-0.3.1"
+    }
+}
 
 
 task BinBed {
@@ -238,6 +329,8 @@ task FailWorkflow {
         String message
     }
     command {
+        set -e
+
         echo "Failing workflow"
         echo ~{message}
         exit 1
