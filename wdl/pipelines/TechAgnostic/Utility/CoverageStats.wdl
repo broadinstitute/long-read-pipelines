@@ -254,7 +254,9 @@ task MosDepthPerInterval {
         tmp_dir=$(mktemp -d)
         trap "rm -rf $tmp_dir" EXIT
 
-        for bed_line in $(cat ~{bed}); do
+        mapfile -t lines < "~{bed}"
+
+        for line in "${lines[@]}"; do
             bed_file="$tmp_dir/bed_line.bed"
             echo $bed_line > $bed_file
 
