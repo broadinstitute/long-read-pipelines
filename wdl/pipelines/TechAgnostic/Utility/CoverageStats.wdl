@@ -12,6 +12,7 @@ workflow MosdepthCoverageStats {
         bin_length: "Length of bins to use for coverage calculation."
         preemptible_tries: "Number of times to retry a preempted task."
         stats_per_interval: "If true, calculate coverage statistics per interval. Must provide a bed file. Workflow will fail if bed file contains more than 200 intervals to avoid accidently over spending."
+        max_bed_intervals: "Maximum number of intervals allowed in the bed file for MosdpethPerInterval. Default is 200."
     }
 
     input {
@@ -22,6 +23,7 @@ workflow MosdepthCoverageStats {
         Int? bin_length
 
         Boolean stats_per_interval = false
+        Int max_bed_intervals = 200
 
         # Runtime parameters
         Int preemptible_tries = 3
@@ -44,7 +46,7 @@ workflow MosdepthCoverageStats {
                     message = "stats_per_interval is set to true, but no bed file is provided."
             }
         }
-        if (length(read_lines(select_first([bed_file]))) > 200) {
+        if (length(read_lines(select_first([bed_file]))) > max_bed_intervals) {
             call FailWorkflow as TooManyIntervals {
                 input:
                     message = "stats_per_interval is set to true, but the provided bed file contains more than 200 intervals."
