@@ -75,12 +75,12 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         File drug_resistance_summary = select_first([FinalizeDRSummary.gcs_path, CreateDrugResistanceSummary.resistance_summary])
         File raw_drug_res_report = select_first([FinalizeDRReport.gcs_path, CallDrugResistanceMutations.report])
 
-        String chloroquine_status   = CreateDrugResistanceSummary.chloroquine_status
-        String pyrimethamine_status = CreateDrugResistanceSummary.pyrimethamine_status
-        String sulfadoxine_status   = CreateDrugResistanceSummary.sulfadoxine_status
-        String mefloquine_status    = CreateDrugResistanceSummary.mefloquine_status
-        String artemisinin_status   = CreateDrugResistanceSummary.artemisinin_status
-        String piperaquine_status   = CreateDrugResistanceSummary.piperaquine_status
+        String drug_status_chloroquine   = CreateDrugResistanceSummary.chloroquine_status
+        String drug_status_pyrimethamine = CreateDrugResistanceSummary.pyrimethamine_status
+        String drug_status_sulfadoxine   = CreateDrugResistanceSummary.sulfadoxine_status
+        String drug_status_mefloquine    = CreateDrugResistanceSummary.mefloquine_status
+        String drug_status_artemisinin   = CreateDrugResistanceSummary.artemisinin_status
+        String drug_status_piperaquine   = CreateDrugResistanceSummary.piperaquine_status
 
         File? annotated_vcf = final_annotated_vcf
         File? annotated_vcf_index = final_annotated_vcf_index
