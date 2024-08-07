@@ -247,7 +247,7 @@ task MosDepthPerInterval {
         ln -s ~{bam} ./~{basename}.bam
         ln -s ~{bai} ./~{basename}.bai
 
-        # create file for coverage stats summary of all intervals
+        # Create file for coverage stats summary of all intervals
         touch ~{prefix}.cov_stat_summary_all.json
 
         # Create a temporary directory for intermediate files
@@ -258,7 +258,7 @@ task MosDepthPerInterval {
 
         for line in "${lines[@]}"; do
             bed_file="$tmp_dir/bed_line.bed"
-            echo $bed_line > $bed_file
+            echo $line > $bed_file
 
             mosdepth \
             ~{true="-n" false="" no_per_base} \
