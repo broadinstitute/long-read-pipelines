@@ -28,6 +28,7 @@ workflow MosdepthCoverageStats {
         # Runtime parameters
         Int preemptible_tries = 3
         Int mosdepth_mem = 8
+        Int mosdepth_extra_disk = 0
     }
 
     if (defined(bed_file)) {
@@ -59,6 +60,7 @@ workflow MosdepthCoverageStats {
                     bed = bed_file,
                     preemptible_tries = preemptible_tries,
                     mem = mosdepth_mem,
+                    extra_disk = mosdepth_extra_disk
             }
     }
 
@@ -82,6 +84,7 @@ workflow MosdepthCoverageStats {
                 bin_length = bin_length,
                 preemptible_tries = preemptible_tries,
                 mem = mosdepth_mem,
+                extra_disk = mosdepth_extra_disk,
                 summarize_regions = true,
         }
     }
@@ -95,6 +98,7 @@ workflow MosdepthCoverageStats {
                 bin_length = bin_length,
                 preemptible_tries = preemptible_tries,
                 mem = mosdepth_mem,
+                extra_disk = mosdepth_extra_disk,
         }
     }
 
@@ -121,6 +125,7 @@ task MosDepthOverBed {
         bin_length: "Length of bins to use for coverage calculation. default is 1000. If bed file is provided, this parameter is ignored."
         chrom: "Chromosome to calculate coverage for."
         preemptible_tries: "Number of times to retry a preempted task."
+        extra_disk: "Extra disk space to allocate for intermediate files."
     }
 
     input {
@@ -135,6 +140,7 @@ task MosDepthOverBed {
         # Runtime parameters
         Int mem = 8
         Int preemptible_tries = 3
+        Int extra_disk = 0
     }
     # mosdepth parameters
     Int threads = 4
@@ -147,7 +153,7 @@ task MosDepthOverBed {
     Int round = 2
 
     # Calculate disk size
-    Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
+    Int disk_size = (2 * ceil(size(bam, "GB") + size(bai, "GB"))) + 100 + extra_disk
     String basename = basename(bam, ".bam")
     String prefix = "~{basename}.coverage_over_bed"
 
@@ -212,6 +218,7 @@ task MosDepthPerInterval {
         bed: "BED file containing regions of interest."
         bin_length: "Length of bins to use for coverage calculation. default is 1000. If bed file is provided, this parameter is ignored."
         preemptible_tries: "Number of times to retry a preempted task."
+        extra_disk: "Extra disk space to allocate for intermediate files."
     }
 
     input {
@@ -224,6 +231,7 @@ task MosDepthPerInterval {
         # Runtime parameters
         Int mem = 8
         Int preemptible_tries = 3
+        Int extra_disk = 0
     }
     # mosdepth parameters
     Int threads = 4
@@ -236,7 +244,7 @@ task MosDepthPerInterval {
     Int round = 2
 
     # Calculate disk size
-    Int disk_size = 2 * ceil(size(bam, "GB") + size(bai, "GB"))
+    Int disk_size = (2 * ceil(size(bam, "GB") + size(bai, "GB"))) + 100 + extra_disk
     String basename = basename(bam, ".bam")
     String prefix = "~{basename}.coverage_over_bed"
 
