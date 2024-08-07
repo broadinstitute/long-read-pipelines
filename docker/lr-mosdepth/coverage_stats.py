@@ -46,6 +46,12 @@ def calculate_summary_statistics(
         'cov_percent_above_4x': percentage_greater_than_4x(df, cov_col, round_precision),
         'cov_evenness_score': calculate_evenness_score(df, cov_col, round_precision)
     }
+
+    # Replace Nan values with null
+    for key, value in statistics.items():
+        if np.isnan(value):
+            statistics[key] = "null"
+
     return statistics
 
 
