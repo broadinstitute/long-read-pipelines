@@ -44,6 +44,7 @@ task RunBackupWithPython {
 
     meta {
         description: "Backup the workspace with the given info."
+        volatile: true
     }
     parameter_meta {
         namespace: "Namespace to which the workspace belongs."
