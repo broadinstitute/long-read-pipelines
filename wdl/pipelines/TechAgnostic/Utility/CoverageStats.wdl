@@ -101,7 +101,7 @@ workflow MosdepthCoverageStats {
         File cov_stat_summary_file      = select_first([MosDepthOverBed.cov_stat_summary_file, MosDepthNoBed.cov_stat_summary_file])
         Map[String, Float] cov_stat_summary = select_first([MosDepthOverBed.cov_stat_summary, MosDepthNoBed.cov_stat_summary])
         File? stats_per_interval_cov_stat_summary_files      = MosDepthPerInterval.cov_stat_summary_all_file
-        Array[Map[String, Object]]? stats_per_interval_cov_stat_summaries = MosDepthPerInterval.cov_stat_summary_all
+#        Array[Map[String, Object]]? stats_per_interval_cov_stat_summaries = MosDepthPerInterval.cov_stat_summary_all
     }
 
 }
@@ -293,7 +293,7 @@ task MosDepthPerInterval {
     output {
         # coverage_stats.py output
         File cov_stat_summary_all_file = "~{prefix}.cov_stat_summary_all.json"
-        Array[Map[String, Object]] cov_stat_summary_all = read_json("~{prefix}.cov_stat_summary_all.json")
+#        Array[Map[String, Object]] cov_stat_summary_all = read_json("~{prefix}.cov_stat_summary_all.json")
 
     }
 
