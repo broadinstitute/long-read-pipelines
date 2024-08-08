@@ -66,7 +66,7 @@ task Minimap2 {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -125,7 +125,7 @@ task Minimap2_simple {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.27"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
