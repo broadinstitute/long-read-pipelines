@@ -55,7 +55,7 @@ task IsLocusDeleted {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + ceil(size(bam, "GB"))
+    Int disk_size = 1 + 2*ceil(size(bam, "GB"))  + 2*ceil(size(bai, "GB"))
 
     command <<<
         set -euxo pipefail
