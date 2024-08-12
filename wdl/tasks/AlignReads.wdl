@@ -106,8 +106,7 @@ task Minimap2_simple {
     command <<<
         set -euxo pipefail
 
-        minimap2 -ayYL --MD -x ~{map_preset} -t ~{cpus} ~{ref_fasta} ~{reads} > ~{prefix}.sam
-        samtools sort -@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam ~{prefix}.sam
+        minimap2 -ayYL --MD -x ~{map_preset} -t ~{cpus} ~{ref_fasta} ~{reads} | samtools sort -@~{cpus} -m~{mem}G --no-PG -o ~{prefix}.bam
         samtools index ~{prefix}.bam
     >>>
 
