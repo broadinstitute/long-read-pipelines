@@ -109,6 +109,7 @@
         align-items: flex-start;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
+        margin-bottom: 5px;
     }
 
     .dr_bubbles {
@@ -205,26 +206,15 @@
         height: 513px;
         align-items: flex-start;
     }
-    
-    /* row 2 third box */
-    .location_info_box {
-        position: absolute;
-        left: 0;
-        top: 304px;
-        width: 550px;
-        height: 209px;
-        padding: 32px 15px;
-        outline: solid 1px #dfe1e5;
-        outline-offset: -1px;
-    }
       
-  
     /* row 2 2nd box */
     .qc_status_spacing {
         position: absolute;
+        margin-top: 5px;
+        margin-bottom: 5px;
         left: 0;
         top: 185px;
-        width: 550px;
+        width: 558px;
         height: 110px;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
@@ -256,10 +246,11 @@
         position: absolute;
         left: 0;
         top: 0;
-        width: 550px;
+        width: 558px;
         height: 175px;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
+        margin-bottom: 8px;
         display: flex;
         flex-direction: column;
     }
@@ -309,20 +300,22 @@
     /* map box */
     .map_module {
         position: absolute;
-        left: 595px;
+        left: 590px;
         top: 0;
-        width: 533px;
-        height: 513px;
+        width: 538px;
+        height: 554px;
+        margin-top: px;
         align-items: flex-start;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
     }
       
-    ._map { 
+    ._map {
+        overflow: hidden;
         position: absolute;
-        width: 473px;
-        height: 397px;
-        left: 31px;
+        width: 491px;
+        height: 440px;
+        left: 23px;
         top: 95px;
     }
     
@@ -352,6 +345,21 @@
         justify-content: center;
         flex-direction: column;
     }
+
+    .location_info_box {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        left: 0;
+        top: 304px;
+        width: 558px;
+        height: 240px;
+        padding: 32px 15px;
+        outline: solid 1px #dfe1e5;
+        outline-offset: -1px;
+        margin-top: 10px;
+    }
   
     ._location_info_label {
         position: absolute;
@@ -366,21 +374,31 @@
         'Liberation Sans', sans-serif;
         flex-shrink: 1;
     }
+
+    ._location_info_lines_frame {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100px;
+        width: 514px;
+    }
   
     ._location_info_left_side {
         position: absolute;
         left: 20px;
-        top: 85px;
-        width: 589.2899px;
+        top: 108px;
+        width: 589px;
         height: 100px;
         justify-content: center;
         flex-direction: column;
+        display: flex;
     }
   
     .location_info_right_side {
         position: absolute;
         left: 460px;
-        top: 83px;
+        top: 88px;
         width: 72px;
         height: 100px;
         flex-direction:column;
@@ -451,6 +469,7 @@
         left:15px;
         width: 1113px;
         height: 380px;
+        margin-bottom: 10px;
     }
     
     .sample_info_content {
@@ -478,6 +497,7 @@
       border-bottom: solid 1px #dfe1e5;
       margin-bottom: -1px;
       transform: matrix(1, 0, 0, 1, 0, 0);
+      display: block;
     }
   
     /* sample info right-side text */
@@ -630,7 +650,7 @@
         align-items: flex-start;
         gap: 9px;
         padding-top: 15px;
-        padding-bottom: 22px;
+        padding-bottom: 55px;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
     }
@@ -1481,7 +1501,75 @@
         <div class="summary_root" style="height:2000px;">
           <div class="module_display" style="height:2000px;">
               <div class="main_frame">
-
+                <div class="sample_info_box">
+                    <div class="sample_info_label">Sample Info
+                        <div class="right_bottom_tooltip" style="position: relative; left:910px; top:-9px;">
+                            <span style="font-weight: bold;">i</span>
+                            <span class="right_bottom_tooltiptext" style="top:35px; right: 0px; width: 290px;">
+                                High-level data and metadata about this sample.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="sample_info_content">
+    
+                        <div class="divider_lines">
+                            <div class="divider_line"></div>
+                            
+                            <div class="divider_line"></div>
+                
+                            <div class="divider_line"></div>
+                            
+                            <div class="divider_line"></div>
+                            
+                            <div class="divider_line"></div>
+                            
+                            <div class="divider_line"></div>
+                            
+                            <div class="divider_line"></div>
+    
+                            <div class="divider_line"></div>
+    
+                            <div class="divider_line"></div>
+    
+                        </div>
+                        
+                        <div class="sample_info_right_text">
+                            <div>{{ sample.info[0] }}
+                            </div>
+                            
+                            <div>{{ sample.info[1] }}
+                            </div>
+                            
+                            <div>{{ sample.info[2] }}
+                            </div>
+                            
+                            <div>{{ sample.info[3] }}
+                            </div>
+                            
+                            <div>{{ sample.info[4] }}
+                            </div>
+                            
+                            <div>{{ sample.info[5]|int }}
+                            </div>
+    
+                            <div>{{ sample.info[6] }}%
+                            </div>
+    
+                            <div>{{ sample.info[8] }}
+                            </div>
+                        </div>
+                        <div class="sample_info_left_side">
+                            Year <br>
+                            Date of Collection <br>
+                            Date of Sequencing <br>
+                            Species <br>
+                            Aligned Fold Coverage <br>
+                            Aligned Read Length <br>
+                            Percent Properly Paired Reads <br>
+                            Read Quality Mean
+                        </div>
+                    </div>
+                </div>
                 <div class="drug_res_box">  
                   <div class="drug_res_outline">
                   </div>
@@ -1558,22 +1646,24 @@
                             </span>
                         </div>
                       </div>
-                      <div class="_location_info_lines_frame">
-                        <div class="_location_info_line"></div>
-                        <div class="_location_info_line2"></div>
-                        <div class="_location_info_line3"></div>
-                        <div class="_location_info_line4"></div>
+                      <div class="_location_info_lines_frame" style="top:50px;display:flex; flex-direction:column;align-items:center;overflow:hidden;height:350px;">
+                        <div class="divider_line" style="margin-bottom: 35px;"></div>
+                        <div class="divider_line" style="margin-bottom: 35px;"></div>
+                        <div class="divider_line" style="margin-bottom: 35px;"></div>
+                        <div class="divider_line" style="margin-bottom: 35px;"></div>
+                        <div class="divider_line" style="margin-bottom: 35px;"></div>
                       </div>
                       <div class="_location_info_left_side">
                         <div class="_location_info_text">Country
                         </div>
-          
                         
                         <div class="_location_info_text">Latitude
                         </div>
                         
                         <div class="_location_info_text">Longitude
                         </div>
+
+                        <div class="_location_info_text">Health Facility</div>
                       </div>
                       <div class="location_info_right_side">
                         <div class="_location_info_text">{{ sample.location_info[2] }}
@@ -1583,6 +1673,9 @@
                         </div>
                         
                         <div class="_location_info_text">{{ sample.location_info[1] }}
+                        </div>
+
+                        <div class="_location_info_text">Unknown
                         </div>
                       </div>
                     </div>
@@ -1629,75 +1722,7 @@
               </div>
             </div>
             
-            <div class="sample_info_box">
-                <div class="sample_info_label">Sample Info
-                    <div class="right_bottom_tooltip" style="position: relative; left:910px; top:-9px;">
-                        <span style="font-weight: bold;">i</span>
-                        <span class="right_bottom_tooltiptext" style="top:35px; right: 0px; width: 290px;">
-                            High-level data and metadata about this sample.
-                        </span>
-                    </div>
-                </div>
-                <div class="sample_info_content">
 
-                    <div class="divider_lines">
-                        <div class="divider_line"></div>
-                        
-                        <div class="divider_line"></div>
-            
-                        <div class="divider_line"></div>
-                        
-                        <div class="divider_line"></div>
-                        
-                        <div class="divider_line"></div>
-                        
-                        <div class="divider_line"></div>
-                        
-                        <div class="divider_line"></div>
-
-                        <div class="divider_line"></div>
-
-                        <div class="divider_line"></div>
-
-                    </div>
-                    
-                    <div class="sample_info_right_text">
-                        <div>{{ sample.info[0] }}
-                        </div>
-                        
-                        <div>{{ sample.info[1] }}
-                        </div>
-                        
-                        <div>{{ sample.info[2] }}
-                        </div>
-                        
-                        <div>{{ sample.info[3] }}
-                        </div>
-                        
-                        <div>{{ sample.info[4] }}
-                        </div>
-                        
-                        <div>{{ sample.info[5]|int }}
-                        </div>
-
-                        <div>{{ sample.info[6] }}%
-                        </div>
-
-                        <div>{{ sample.info[8] }}
-                        </div>
-                    </div>
-                    <div class="sample_info_left_side">
-                        Year <br>
-                        Date of Collection <br>
-                        Date of Sequencing <br>
-                        Species <br>
-                        Aligned Fold Coverage <br>
-                        Aligned Read Length <br>
-                        Percent Properly Paired Reads <br>
-                        Read Quality Mean
-                    </div>
-                </div>
-            </div>
             
           </div>
     

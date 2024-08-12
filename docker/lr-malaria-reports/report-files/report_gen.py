@@ -502,17 +502,14 @@ def plot_dr_bubbles(dr_report_file):
 Map
 '''
 def create_map(coordinates, sample_name):
-    m = folium.Map(location=coordinates, zoom_start = 5)
+    m = folium.Map(location=coordinates, zoom_start = 10)
 
     if coordinates != [0,0]:
         folium.Marker(location=coordinates, popup = ('Sample: '+sample_name), icon=folium.Icon(color='red',prefix='fa',icon='circle'), parse_html=True).add_to(m)
 
-    m.get_root().width = "473px"
-    m.get_root().height = "397px"
+    m.get_root().width = "491px"
+    m.get_root().height = "440px"
     map_html = m.get_root()._repr_html_()
-    
-    #with open('/templates/map.html', mode='w+') as f:
-    #    f.write(map_html)
     
     return map_html
 
