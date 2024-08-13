@@ -111,7 +111,6 @@ task Minimap2_simple {
     >>>
 
     output {
-        File tmp_sam = "~{prefix}.sam"
         File aligned_bam = "~{prefix}.bam"
         File aligned_bai = "~{prefix}.bam.bai"
     }
