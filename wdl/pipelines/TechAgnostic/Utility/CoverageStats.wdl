@@ -285,6 +285,10 @@ task MosDepthPerInterval {
             --output_prefix ~{prefix} \
             ~{cov_file_to_summarize}
 
+            # In the coverage stats summary replace the open bracket with 'interval' name and the line as the value
+            sed -i '' 's/{/\{"interval": "$line", /' ~{prefix}.cov_stat_summary.json
+
+
             # Append the coverage stats summary of the current interval to the file containing the summary of all intervals
             if [[ -s ~{prefix}.cov_stat_summary.json ]]; then
                 cat ~{prefix}.cov_stat_summary.json >> ~{prefix}.cov_stat_summary_all.json
