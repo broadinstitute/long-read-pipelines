@@ -199,7 +199,7 @@
     
     /* Row 2 horizontal spacing */
     .row2_spacing {
-        position: absolute;
+        position: relative;
         left: 15px;
         top: 0;
         width: 550px;
@@ -243,7 +243,7 @@
     
     /* row 2 1st box */
     .hrp_spacing {
-        position: absolute;
+        position: relative;
         left: 0;
         top: 0;
         width: 558px;
@@ -264,7 +264,7 @@
         position: relative;
         top: 35px;
         left: 16px;
-        width: 250px;
+        width: 480px;
         height: 26px;
         flex-direction: row;
         display: flex;
@@ -303,7 +303,7 @@
         left: 590px;
         top: 0;
         width: 538px;
-        height: 554px;
+        height: 534px;
         margin-top: px;
         align-items: flex-start;
         outline: solid 1px #dfe1e5;
@@ -314,7 +314,7 @@
         overflow: hidden;
         position: absolute;
         width: 491px;
-        height: 440px;
+        height: 420px;
         left: 23px;
         top: 95px;
     }
@@ -346,19 +346,28 @@
         flex-direction: column;
     }
 
+    .row2_col1 {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: auto;
+    }
+
     .location_info_box {
         position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
         left: 0;
-        top: 304px;
+        top: 0px;
         width: 558px;
-        height: 240px;
+        height: auto;
         padding: 32px 15px;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
-        margin-top: 10px;
+        margin-bottom: 14px;
     }
   
     ._location_info_label {
@@ -387,7 +396,7 @@
     ._location_info_left_side {
         position: absolute;
         left: 20px;
-        top: 108px;
+        top: 163px;
         width: 589px;
         height: 100px;
         justify-content: center;
@@ -458,24 +467,6 @@
         border-bottom: solid 1px #dfe1e5;
         transform: matrix(1, 0, 0, 1, 0, 0);
     }    
-      
-    /* sample info alignment */
-    .sample_info_box {
-        top:5px;
-        outline: solid 1px #dfe1e5;
-        outline-offset: -1px;
-        position: relative;
-        padding-top:20px;
-        left:15px;
-        width: 1113px;
-        height: 380px;
-        margin-bottom: 10px;
-    }
-    
-    .sample_info_content {
-        position:absolute;
-        top:6px;
-    }
 
     .divider_lines {
         position: absolute;
@@ -520,9 +511,9 @@
   
     /* sample info left-side text */
     .sample_info_left_side {
-        position: absolute;
-        top: 119px;
-        left:16px;
+        position: relative;
+        top: 49px;
+        left:-180px;
         width: 270px;
         height: 207px;
         justify-content: center;
@@ -546,7 +537,90 @@
         font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
         'Liberation Sans', sans-serif;
     }
+
+    /* sample info alignment */
+    .sample_info_box {
+        top:5px;
+        outline: solid 1px #dfe1e5;
+        outline-offset: -1px;
+        position: relative;
+        padding-top:20px;
+        left:15px;
+        width: 1113px;
+        height: 240px;
+        margin-bottom:11px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .sample_info_content {
+        position:absolute;
+        top:6px;
+    }    
+
+/* QC info */    
+    .QC_info_right_text {
+        position: relative;
+        top: 80px;
+        left: 897px;
+        width: 200px;
+        height: min-content;
+        text-align: end;
+        align-items: end;
+        flex-direction: column;
+        color: #000;
+        font-size: 18px;
+        line-height: 35px;
+        font-weight: 300;
+        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+            'Liberation Sans', sans-serif;
+    }
   
+    .QC_info_left_side {
+        position: absolute;
+        top: 49px;
+        left:16px;
+        width: 270px;
+        height: 207px;
+        justify-content: center;
+        flex-direction: column;
+        color: #000;
+        font-size: 18px;
+        line-height: 35px;
+        font-weight: 300;
+        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+            'Liberation Sans', sans-serif;
+    }
+  
+    .QC_info_label {
+        position: relative;
+        top: 20px;
+        left: 16px;
+        width: 200px;
+        height: 26px;
+        font-size: 24px;
+        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+        'Liberation Sans', sans-serif;
+    }
+
+    .QC_info_box {
+        top:5px;
+        outline: solid 1px #dfe1e5;
+        outline-offset: -1px;
+        position: relative;
+        padding-top:20px;
+        left:15px;
+        width: 1113px;
+        height: 240px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    
+    .QC_info_content {
+        position:absolute;
+        top:6px;
+    }    
+
     /* LRMA 
     .title {
         color: #000;
@@ -650,7 +724,7 @@
         align-items: flex-start;
         gap: 9px;
         padding-top: 15px;
-        padding-bottom: 55px;
+        padding-bottom: 25px;
         outline: solid 1px #dfe1e5;
         outline-offset: -1px;
     }
@@ -1128,7 +1202,7 @@
   #drug_res_tooltip {
     position: relative;
     float: right;
-    left: 750px;
+    left: 712px;
     top: -8px;
   }
 
@@ -1141,8 +1215,8 @@
   #rdt_tooltip {
     position: relative;
     float: right;
-    top: -12px;
-    left: 330px;
+    top: -10px;
+    left: 107px;
   }
 
   #rdt_tooltip_text {
@@ -1500,7 +1574,7 @@
     <div id="summary_page" style="display: block;">
         <div class="summary_root" style="height:2000px;">
           <div class="module_display" style="height:2000px;">
-              <div class="main_frame">
+              <div class="main_frame" style="padding-bottom:9px;">
                 <div class="sample_info_box">
                     <div class="sample_info_label">Sample Info
                         <div class="right_bottom_tooltip" style="position: relative; left:910px; top:-9px;">
@@ -1522,14 +1596,6 @@
                             <div class="divider_line"></div>
                             
                             <div class="divider_line"></div>
-                            
-                            <div class="divider_line"></div>
-                            
-                            <div class="divider_line"></div>
-    
-                            <div class="divider_line"></div>
-    
-                            <div class="divider_line"></div>
     
                         </div>
                         
@@ -1545,35 +1611,124 @@
                             
                             <div>{{ sample.info[3] }}
                             </div>
-                            
-                            <div>{{ sample.info[4] }}
-                            </div>
-                            
-                            <div>{{ sample.info[5]|int }}
-                            </div>
-    
-                            <div>{{ sample.info[6] }}%
-                            </div>
-    
-                            <div>{{ sample.info[8] }}
-                            </div>
                         </div>
                         <div class="sample_info_left_side">
                             Year <br>
                             Date of Collection <br>
                             Date of Sequencing <br>
-                            Species <br>
-                            Aligned Fold Coverage <br>
-                            Aligned Read Length <br>
-                            Percent Properly Paired Reads <br>
-                            Read Quality Mean
+                            Species
                         </div>
                     </div>
                 </div>
-                <div class="drug_res_box">  
+
+                <div class="row2_frames">
+                    <div class="row2_spacing">
+                      <div class="row2_col1">
+                          <div class="location_info_box">
+                              <div class="_location_info_label">
+                                Location Info
+                                <div class="tooltip" id="rdt_tooltip" style="top:-5px; left:327px;">
+                                    <span style="font-weight: bold;">i</span>
+                                    <span id="rdt_tooltip_text" class="tooltiptext" style="top:-65px; width: 275px;">
+                                        Information about where the sample was collected.
+                                    </span>
+                                </div>
+                              </div>
+                              <div class="_location_info_lines_frame" style="top:54px;display:flex; flex-direction:column;align-items:center;overflow:hidden;height:auto;">
+                                <div class="divider_line" style="margin-bottom: 34px;"></div>
+                                <div class="divider_line" style="margin-bottom: 34px;"></div>
+                                <div class="divider_line" style="margin-bottom: 34px;"></div>
+                                <div class="divider_line" style="margin-bottom: 34px;"></div>
+                                <div class="divider_line" style="margin-bottom: 34px;"></div>
+                                <div class="divider_line" style="margin-bottom: 34px;"></div>
+                                <div class="divider_line" style="margin-bottom: 34px;"></div>
+                                <div class="divider_line" style="margin-bottom: 35px;"></div>
+                              </div>
+                              <div class="_location_info_left_side">
+                                <div class="_location_info_text">Country
+                                </div>
+                                
+                                <div class="_location_info_text">Latitude
+                                </div>
+                                
+                                <div class="_location_info_text">Longitude
+                                </div>
+        
+                                <div class="_location_info_text">Health Facility</div>
+  
+                                <div class="_location_info_text">Region</div>
+  
+                                <div class="_location_info_text">District</div>
+  
+                                <div class="_location_info_text">Type</div>
+                              </div>
+                              <div class="location_info_right_side">
+                                <div class="_location_info_text">{{ sample.location_info[2] }}
+                                </div>
+                                
+                                <div class="_location_info_text">{{ sample.location_info[0] }}
+                                </div>
+                                
+                                <div class="_location_info_text">{{ sample.location_info[1] }}
+                                </div>
+        
+                                <div class="_location_info_text">{{ sample.location_info[3] }}
+                                </div>
+  
+                                <div class="_location_info_text">{{ sample.location_info[4] }}
+                              </div>
+  
+                              <div class="_location_info_text">{{ sample.location_info[5] }}
+                              </div>
+  
+                              <div class="_location_info_text">{{ sample.location_info[6] }}
+                              </div>
+                              </div>
+                            </div>
+                        <div class="hrp_spacing">
+                            <div class="HRP_title">Predicted RDT Region Presence
+                                <div class="tooltip" id="rdt_tooltip">
+                                    <span style="font-weight: bold;">i</span>
+                                    <span id="rdt_tooltip_text" class="tooltiptext" style="top: -225px;">
+                                        The presence of the HRP-2 and HRP-3 regions is presented below.  "+" indicates the presence of either region ; "-" indicates the absence of the region.
+                                        <br><br>
+                                        Presence or absence is determined by examining the coverage for this sample.  If the coverage over a region is less than 5% of the coverage of the containing contig, that region is said to be deleted (for HRP-2: Pf3D7_08_V3:1373212-1376988; for HRP-3: Pf3D7_13_v3:2840236-2842840).  Otherwise the region is counted as present. 
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="divider_line" style="position:relative; top:48px; width:515px;"></div>
+                            <div class="HRP_cols_row">
+                                <div class="HRP_col">
+                                    <p><span>{{ sample.hrp2 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-2 Result</span></p></div>
+                                <div class="HRP_col">
+                                    <p><span>{{ sample.hrp3 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-3 Result</span></p></div>
+                            </div>
+        
+                        </div>
+                      </div>
+  
+                </div>
+                <div class="map_module">
+                  <div class="map_line">
+                    <svg preserveAspectRatio="none" viewBox="0 0 494 3" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon2"><path d="M0 3L494 1.73228e-07" stroke="#DFE1E5"></path></svg>
+                  </div>
+                  <div class="map_title">Map</div>
+                  <div class="right_bottom_tooltip" id="map_tooltip">
+                      <span style="font-weight: bold;">i</span>
+                      <span id="map_tooltip_text" class="right_bottom_tooltiptext">
+                          Interactive map showing where the sample was collected.
+                      </span>
+                  </div>
+                  <div class="_map">
+                    {{ sample.map|safe }}
+                  </div>
+                </div>
+              </div>
+
+                <div class="drug_res_box" style="margin-top:26px;">  
                   <div class="drug_res_outline">
                   </div>
-                  <div class="drug_res_title">Drug Resistance Markers
+                  <div class="drug_res_title">Predicted Drug Sensitivites
                     <div class="right_bottom_tooltip" id="drug_res_tooltip">
                         <span style="font-weight: bold; font-size:16px;">i</span>
                         <span id="drug_res_tooltip_text" class="right_bottom_tooltiptext">
@@ -1633,94 +1788,58 @@
                         <img src="data:image/jpeg;base64,{{ (sample.dr_bubbles).decode('utf-8') | safe }}" style="height: auto; width: 85%; position:absolute; left:170px;">
                     </div>
                 </div>
+                <div class="QC_info_box">
+                    <div class="QC_info_label">QC Info
+                        <div class="right_bottom_tooltip" style="position: relative; left:959px; top:-9px;">
+                            <span style="font-weight: bold;">i</span>
+                            <span class="right_bottom_tooltiptext" style="top:35px; right: 0px; width: 290px;">
+                                Metrics about the quality of this sample.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="QC_info_content">
     
-                <div class="row2_frames">
-                  <div class="row2_spacing">
-                    <div class="location_info_box">
-                      <div class="_location_info_label">
-                        Location Info
-                        <div class="tooltip" id="rdt_tooltip" style="left:320px;">
-                            <span style="font-weight: bold;">i</span>
-                            <span id="rdt_tooltip_text" class="tooltiptext" style="top:-65px; width: 275px;">
-                                Information about where the sample was collected.
-                            </span>
-                        </div>
-                      </div>
-                      <div class="_location_info_lines_frame" style="top:50px;display:flex; flex-direction:column;align-items:center;overflow:hidden;height:350px;">
-                        <div class="divider_line" style="margin-bottom: 35px;"></div>
-                        <div class="divider_line" style="margin-bottom: 35px;"></div>
-                        <div class="divider_line" style="margin-bottom: 35px;"></div>
-                        <div class="divider_line" style="margin-bottom: 35px;"></div>
-                        <div class="divider_line" style="margin-bottom: 35px;"></div>
-                      </div>
-                      <div class="_location_info_left_side">
-                        <div class="_location_info_text">Country
+                        <div class="divider_lines">
+                            
+                            <div class="divider_line"></div>
+                            
+                            <div class="divider_line"></div>
+                            
+                            <div class="divider_line"></div>
+    
+                            <div class="divider_line"></div>
+    
+                            <div class="divider_line"></div>
+    
                         </div>
                         
-                        <div class="_location_info_text">Latitude
+                        <div class="QC_info_right_text">
+                            <div>{{ sample.info[4] }}
+                            </div>
+                            
+                            <div>{{ sample.info[5]|int }}
+                            </div>
+    
+                            <div>
+                                {% if sample.info[6] != "N/A" %}
+                                    {{ sample.info[6] }}%
+                                {% else %}
+                                    {{ sample.info[6] }}
+                                {% endif %}
+                            </div>
+    
+                            <div>{{ sample.info[8] }}
+                            </div>
                         </div>
-                        
-                        <div class="_location_info_text">Longitude
+                        <div class="QC_info_left_side">
+                            Aligned Fold Coverage <br>
+                            Aligned Read Length <br>
+                            Percent Properly Paired Reads <br>
+                            Read Quality Mean
                         </div>
+                    </div>
+                </div>
 
-                        <div class="_location_info_text">Health Facility</div>
-                      </div>
-                      <div class="location_info_right_side">
-                        <div class="_location_info_text">{{ sample.location_info[2] }}
-                        </div>
-                        
-                        <div class="_location_info_text">{{ sample.location_info[0] }}
-                        </div>
-                        
-                        <div class="_location_info_text">{{ sample.location_info[1] }}
-                        </div>
-
-                        <div class="_location_info_text">Unknown
-                        </div>
-                      </div>
-                    </div>
-                
-                    <div class="qc_status_spacing">
-                      <p class = "_QC_status_text"><span>{{ sample.qc_pass }}</span><br><span style="font-weight:300; font-size:20px; color:#000">QC Status</span></p>
-                    </div>
-                
-                <div class="hrp_spacing">
-                    <div class="HRP_title">RDT Regions
-                        <div class="tooltip" id="rdt_tooltip">
-                            <span style="font-weight: bold;">i</span>
-                            <span id="rdt_tooltip_text" class="tooltiptext" style="top: -225px;">
-                                The presence of the HRP-2 and HRP-3 regions is presented below.  "+" indicates the presence of either region ; "-" indicates the absence of the region.
-                                <br><br>
-                                Presence or absence is determined by examining the coverage for this sample.  If the coverage over a region is less than 5% of the coverage of the containing contig, that region is said to be deleted (for HRP-2: Pf3D7_08_V3:1373212-1376988; for HRP-3: Pf3D7_13_v3:2840236-2842840).  Otherwise the region is counted as present. 
-                            </span>
-                        </div>
-                    </div>
-                    <div class="divider_line" style="position:relative; top:48px; width:515px;"></div>
-                    <div class="HRP_cols_row">
-                        <div class="HRP_col">
-                            <p><span>{{ sample.hrp2 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-2 Result</span></p></div>
-                        <div class="HRP_col">
-                            <p><span>{{ sample.hrp3 }}</span><br><span style="font-weight:300; font-size:20px; color:#000">HRP-3 Result</span></p></div>
-                    </div>
-
-                </div>
-              </div>
-              <div class="map_module">
-                <div class="map_line">
-                  <svg preserveAspectRatio="none" viewBox="0 0 494 3" fill="none" xmlns="http://www.w3.org/2000/svg" class="_src_components_DesktopSummary_DesktopSummary_module__icon2"><path d="M0 3L494 1.73228e-07" stroke="#DFE1E5"></path></svg>
-                </div>
-                <div class="map_title">Map</div>
-                <div class="right_bottom_tooltip" id="map_tooltip">
-                    <span style="font-weight: bold;">i</span>
-                    <span id="map_tooltip_text" class="right_bottom_tooltiptext">
-                        Interactive map showing where the sample was collected.
-                    </span>
-                </div>
-                <div class="_map">
-                  {{ sample.map|safe }}
-                </div>
-              </div>
-            </div>
             
 
             

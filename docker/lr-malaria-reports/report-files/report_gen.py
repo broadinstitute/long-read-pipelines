@@ -508,10 +508,50 @@ def create_map(coordinates, sample_name):
         folium.Marker(location=coordinates, popup = ('Sample: '+sample_name), icon=folium.Icon(color='red',prefix='fa',icon='circle'), parse_html=True).add_to(m)
 
     m.get_root().width = "491px"
-    m.get_root().height = "440px"
+    m.get_root().height = "420px"
     map_html = m.get_root()._repr_html_()
     
     return map_html
+
+'''
+Location Info
+'''
+def capitalize_proper_nouns(text):
+    """Capitalizes the first letter of each word in a string, assuming all words are proper nouns."""
+    if type(text) == str:
+        words = re.split(r'(\s+|-|\')', text)
+        capitalized_words = []
+        for i, word in enumerate(words):
+            if i % 2 == 0:
+                capitalized_words.append(word.capitalize())
+            else:
+                capitalized_words.append(word.replace('-', '. ').capitalize())
+        return ''.join(capitalized_words)
+    else:
+        return text
+
+def parse_location_info(metadata_file):
+    """Parses location data by matching three letter code to region, district, site, and type, in order."""
+    metadata = pd.read_csv(metadata_file)
+    metadata = metadata.replace(np.nan, "Unspecified")
+    metadata.iloc[:, 1:4] = metadata.iloc[:, 1:4].applymap(capitalize_proper_nouns)
+    
+    # Make dictionary matching code to region, district, site, and type, in order
+    loc_dict = metadata.groupby("CODE")[list(metadata.columns[1:5])].agg(list).to_dict("index")
+    return loc_dict
+
+def extract_code(sample_name):
+    """Extracts the three-letter location code from this sample's name."""
+    code = (sample_name.split("_")[2]).split(".")[0]
+    return code
+
+def get_sample_loc_info(loc_dict, sample_name, code = None):
+    extracted_code = extract_code(sample_name)
+    entry = next((loc_dict[c] for c in (code, extracted_code) if c in loc_dict), None)
+    if entry:
+        return [entry["SITE"][0], entry["REGION"][0], entry["DISTRICT"][0], entry["TYPE"][0]]
+    else:
+        return ["Unspecified"] * 4
 
 '''
 Quality Report (FastQC or ONT QC)
@@ -646,6 +686,8 @@ def prepare_summary_data(arg_dict):
     collection_date = arg_dict['collection_date']
     sequencing_date = arg_dict['sequencing_date']
     species = ' '.join(arg_dict['species'])
+    location_table = arg_dict["location_table"]
+    sample_code = arg_dict["code"]
     
     info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_unknown(arg_dict['aligned_read_length']), 
             check_unknown(arg_dict['pct_properly_paired_reads']), 0, round(arg_dict['read_qual_mean'], 2)]
@@ -661,7 +703,10 @@ def prepare_summary_data(arg_dict):
     resistance_bubbles = plot_dr_bubbles(arg_dict["drug_resistance_text"])
     resistance_bubbles_b64 = plot_to_b64(resistance_bubbles, "tight")
 
-    location_info = [check_unknown(round(arg_dict['latitude'], 2)), check_unknown(round(arg_dict['longitude'], 2)), arg_dict['location']]
+    loc_dict = parse_location_info(location_table)
+
+    location_info = [check_unknown(round(arg_dict['latitude'], 2)), check_unknown(round(arg_dict['longitude'], 2)), arg_dict['location'], 
+                     *get_sample_loc_info(loc_dict, sample_name, sample_code)]
     coordinates = [arg_dict['latitude'], arg_dict['longitude']]
     _map = create_map(coordinates, sample_name)
 
@@ -759,6 +804,8 @@ if __name__ == '__main__':
     parser.add_argument("--longitude", help="longitude value of where the sample was collected", type=float, default=0)
     parser.add_argument("--latitude", help="latitude value of where the sample collected", type=float, default=0)
     parser.add_argument("--location", help="location where the sample was collected", default="Unknown")
+    parser.add_argument("--location_table", help="table with information about sample location related to its 3-letter code", required=True)
+    parser.add_argument("--code", help="three letter code corresponding to the site this sample was collected at")
     
     # QC Status
     parser.add_argument("--qc_pass", help="status to determine whether or not the sequencing run passes quality control standards", required=True)

@@ -32,6 +32,8 @@ workflow GenerateMalariaReports {
         longitude: "longitude value of where the sample was taken"
         latitude: "latitude value of where the sample was taken"
         location: "location where the sample was taken"
+        code: "the three letter code denoting the corresponding health facility/site"
+        location_table: "table containing the region, district, site, and facility type for this sample's location"
 
         # QC Status
         qc_pass: "status to determine whether or not the sequencing run passes quality control standards"
@@ -88,6 +90,8 @@ workflow GenerateMalariaReports {
         Float? longitude
         Float? latitude
         String? location
+        String? code
+        File location_table
         
         # QC Pass
         String qc_pass
@@ -166,7 +170,9 @@ workflow GenerateMalariaReports {
             coverage_bin_size = coverage_bin_size,
             snapshots = GenerateSnapshots.snapshots,
             regions_bed = regions_bed,
-            qc_pass = qc_pass
+            qc_pass = qc_pass,
+            code = code,
+            location_table = location_table
     }
 
     output {

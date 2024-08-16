@@ -32,6 +32,8 @@ task RunReportScript {
         longitude: "longitude value of where the sample was taken"
         latitude: "latitude value of where the sample was taken"
         location: "location where the sample was taken"
+        code: "the three letter code denoting the corresponding health facility/site"
+        location_table: "table containing the region, district, site, and facility type for this sample's location"
 
         # QC Status
         qc_pass: "status to determine whether or not the sequencing run passes quality control standards"
@@ -84,6 +86,8 @@ task RunReportScript {
         Float? longitude
         Float? latitude
         String? location
+        String? code
+        File location_table
         
         # QC Pass
         String qc_pass
@@ -189,7 +193,9 @@ task RunReportScript {
             --coverage_bin_size ~{default=750 coverage_bin_size} \
             --snapshots ~{sep="," snapshots} \
             --regions_bed ~{regions_bed} \
-            --qc_pass ~{default="N/A" qc_pass}
+            --qc_pass ~{default="N/A" qc_pass} \
+            --code ~{default="" code} \
+            --location_table ~{location_table}
         echo "DONE!"
     >>>
 
