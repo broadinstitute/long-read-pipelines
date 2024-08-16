@@ -1566,7 +1566,7 @@
     <!-- Header -->
     <div class="header">
     <!--<div class="title" style="top:2px">LRMA</div>-->
-    <div class="subtitle" style="z-index: 100;"><a class="tooltiplink" style="text-decoration:none;color:#2494c7" data-title="Link to the Terra workspace where this sample is stored." href="https://app.terra.bio/#workspaces/broad-firecloud-dsde-methods/sr-malaria/data">{{ sample.tech_flag }} WGS Report &mdash; Malaria</a></div>
+    <div class="subtitle" style="z-index: 100;"><a class="tooltiplink" style="text-decoration:none;color:#2494c7" data-title="Link to the Terra workspace where this sample is stored." href="{% if sample.tech_flag == 'SR' %}https://app.terra.bio/#workspaces/broad-firecloud-dsde-methods/sr-malaria/data{% elif sample.tech_flag == 'LR' %}https://app.terra.bio/#workspaces/broad-firecloud-dsde-methods/lr-malaria/data{% else %}http://example.com/default-link{% endif %}">{{ sample.tech_flag }} WGS Report &mdash; Malaria</a></div>
     <div class="sample_name_value"><p style="font-size:25px;  font-weight:bold">Sample Name:
         <span style="font-weight:500">{{ sample.sample_name }}</span></p>
     </div>
