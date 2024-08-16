@@ -108,13 +108,27 @@ task MergeAndSortVCFs {
         echo "==========================================================="
         echo "starting concatenation" && date
         echo "==========================================================="
+
+        # Try this first.  If it fails, do a regular compression.
+        set +e
         bcftools \
             concat \
             --naive \
             --threads ~{cores-1} \
             -f all_raw_vcfs.txt \
-            --output-type v \
             -o concatedated_raw.vcf.gz  # fast, at the expense of disk space
+        r=$?
+        if [[ $r -ne 0 ]] ; then
+            # Could not naively concatenate, so do a regular compression.
+            bcftools \
+                concat \
+                --threads ~{cores-1} \
+                -f all_raw_vcfs.txt \
+                --output-type z2 \
+                -o concatedated_raw.vcf.gz
+        fi
+        set -e
+
         for vcf in ~{sep=' ' vcfs}; do rm $vcf ; done
 
         # this is another bug in bcftools that's hot fixed but not in official release yet
@@ -153,6 +167,8 @@ task MergeAndSortVCFs {
         else
             mv concatedated_raw.vcf.gz tmp.wgs.vcf.gz
         fi
+
+        # Fix file header:
         bcftools reheader \
             --fai ~{ref_fasta_fai} \
             -o wgs_raw.vcf.gz \
@@ -168,7 +184,10 @@ task MergeAndSortVCFs {
             --output-type z \
             -o ~{prefix}.vcf.gz \
             wgs_raw.vcf.gz
+
+        # Index the output:
         bcftools index --tbi --force ~{prefix}.vcf.gz
+
         echo "==========================================================="
         echo "done sorting" && date
         echo "==========================================================="
@@ -187,7 +206,7 @@ task MergeAndSortVCFs {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

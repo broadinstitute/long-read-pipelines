@@ -20,7 +20,7 @@ workflow SRWholeGenome {
     parameter_meta {
         aligned_bams:   "Array of aligned bam files to process."
         aligned_bais:   "Array of aligned bam indices to process.  Order must correspond to `aligned_bams`."
-        ref_map_file:  "Reference map file indicating reference sequence and auxillary file locations"
+        ref_map_file:    "Table indicating reference sequence, auxillary file locations, and metadata."
         participant_name:    "The unique identifier of this sample being processed."
 
         enable_hc_pileup_mode:  "If true, will enable `pileup mode` in HaplotypeCaller."
@@ -104,6 +104,7 @@ workflow SRWholeGenome {
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
     }
 
+    # Read ref map into map data type so we can access its fields:
     Map[String, String] ref_map = read_map(ref_map_file)
 
     # gather across (potential multiple) input CCS BAMs
