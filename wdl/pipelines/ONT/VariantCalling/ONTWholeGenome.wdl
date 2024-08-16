@@ -121,9 +121,7 @@ workflow ONTWholeGenome {
                 bam               = usable_bam,
                 bai               = usable_bai,
                 sample_id         = participant_name,
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict'],
+                ref_map_file      = ref_map_file,
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
 
                 prefix = participant_name,
