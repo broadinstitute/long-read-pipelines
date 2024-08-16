@@ -16,7 +16,7 @@ workflow ONTWholeGenome {
         aligned_bais:       "GCS path to aligned BAM file indices"
         participant_name:   "name of the participant from whom these samples were obtained"
 
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        ref_map_file:       "Table indicating reference sequence, auxillary file locations, and metadata."
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
 
         call_svs:               "whether to call SVs"
@@ -60,6 +60,7 @@ workflow ONTWholeGenome {
         File? ref_scatter_interval_list_ids
     }
 
+    # Read ref map into map data type so we can access its fields:
     Map[String, String] ref_map = read_map(ref_map_file)
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTWholeGenome/~{participant_name}"
