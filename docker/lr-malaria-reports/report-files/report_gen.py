@@ -532,8 +532,11 @@ def capitalize_proper_nouns(text):
 
 def parse_location_info(metadata_file):
     """Parses location data by matching three letter code to region, district, site, and type, in order."""
+    facility_types = {"C": "Clinic", "SS": "Sentinel Site", "SI": "Special Interest",
+                      "PP": "PECADOM Plus", "C + PP": "Clinic, PECADOM Plus", "SS + PP": "Sentinel Site, PECADOM Plus"}
+    
     metadata = pd.read_csv(metadata_file)
-    metadata = metadata.replace(np.nan, "Unspecified")
+    metadata = metadata.replace(np.nan, "Unspecified").replace(facility_types)
     metadata.iloc[:, 1:4] = metadata.iloc[:, 1:4].applymap(capitalize_proper_nouns)
     
     # Make dictionary matching code to region, district, site, and type, in order
@@ -616,7 +619,7 @@ def format_dates(date_string):
     Output: A formatted version of the input string using slashes to separate year, month, and day or "N/A".
     '''
     if date_string in ["", None, "N/A"]:
-        return "N/A"
+        return "Unknown"
     else:
         return "/".join([date_string[:4], date_string[4:6], date_string[6:]])
 
