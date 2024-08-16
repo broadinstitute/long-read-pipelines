@@ -621,7 +621,9 @@ def format_dates(date_string):
     if date_string in ["", None, "N/A"]:
         return "Unknown"
     else:
-        return "/".join([date_string[:4], date_string[4:6], date_string[6:]])
+        date = datetime.date(int(date_string[:4]), int(date_string[4:6]), int(date_string[6:]))
+        month = date.strftime("%B")
+        return f"{month} {date_string[6:]}, {date_string[:4]}"
 
 def check_unknown(data):
     '''
