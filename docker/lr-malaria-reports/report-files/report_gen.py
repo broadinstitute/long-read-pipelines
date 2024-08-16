@@ -729,7 +729,7 @@ def prepare_analysis_data(arg_dict):
     frac_bases = check_unknown(arg_dict["fraction_aligned_bases"])
         
     sequencing_summary = [0, 0, format_long_number(arg_dict['aligned_bases']), format_long_number(arg_dict['aligned_reads']), 
-                          str(round(frac_bases, 4)*100)[:4], round(arg_dict['average_identity'], 2)]
+                          str(round(frac_bases, 4)*100)[:5], round(arg_dict['average_identity'], 2)]
 
     barcode = arg_dict['barcode']
         
