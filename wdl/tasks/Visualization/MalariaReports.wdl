@@ -59,6 +59,8 @@ task RunReportScript {
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
 
         ont_qc_report: "ONT QC report file"
+
+        tech_flag: "string denoting if the sample was sequenced using long read or short read techniques"
     }
 
     input {
@@ -121,6 +123,8 @@ task RunReportScript {
 
         # ONT QC Report Page
         File? ont_qc_report
+
+        String tech_flag
     }
 
     Int disk_size_gb = 20 + ceil(size(drug_resistance_text, "GB"))
@@ -195,7 +199,8 @@ task RunReportScript {
             --regions_bed ~{regions_bed} \
             --qc_pass ~{default="N/A" qc_pass} \
             --code ~{default="" code} \
-            --location_table ~{location_table}
+            --location_table ~{location_table} \
+            --tech_flag ~{tech_flag}
         echo "DONE!"
     >>>
 

@@ -647,7 +647,7 @@ class Sample:
     such as the sample name.
     '''
     
-    def __init__(self, sample_name, hrp2, hrp3, drug_res, info, _map, location_info, qc_pass, dr_bubbles):
+    def __init__(self, sample_name, hrp2, hrp3, drug_res, info, _map, location_info, qc_pass, dr_bubbles, tech_flag):
         '''This function defines the class variables and retrieves them from their respective functions.'''
         
         self.sample_name = sample_name
@@ -659,6 +659,7 @@ class Sample:
         self.location_info = location_info
         self.qc_pass = qc_pass
         self.dr_bubbles = dr_bubbles
+        self.tech_flag = tech_flag
 
 class Analysis:
     '''
@@ -694,6 +695,7 @@ def prepare_summary_data(arg_dict):
     species = ' '.join(arg_dict['species'])
     location_table = arg_dict["location_table"]
     sample_code = arg_dict["code"]
+    tech_flag = arg_dict["tech_flag"]
     
     info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_unknown(arg_dict['aligned_read_length']), 
             check_unknown(arg_dict['pct_properly_paired_reads']), 0, round(arg_dict['read_qual_mean'], 2)]
@@ -719,7 +721,7 @@ def prepare_summary_data(arg_dict):
     HRP2 = arg_dict['HRP2']
     HRP3 = arg_dict['HRP3']
 
-    return Sample(sample_name, HRP2, HRP3, resistances, processed_info, _map, location_info, qc_pass, resistance_bubbles_b64)
+    return Sample(sample_name, HRP2, HRP3, resistances, processed_info, _map, location_info, qc_pass, resistance_bubbles_b64, tech_flag)
 
 def prepare_analysis_data(arg_dict):
     '''
@@ -837,6 +839,8 @@ if __name__ == '__main__':
     # Snapshots
     parser.add_argument("--snapshots", required=True)
     parser.add_argument("--regions_bed")
+    
+    parser.add_argument("--tech_flag", help="string denoting if the sample was sequenced using long read or short read techniques")
     
     # parse given arguments
     args = parser.parse_args()

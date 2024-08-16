@@ -1267,6 +1267,28 @@
     right: 0px;
   }
 
+    a.tooltiplink {
+        position: relative;
+    }
+    
+    a.tooltiplink:hover::after {
+        content: attr(data-title);
+        background-color: #000;
+        color: #e6e8eb;
+        padding: 8px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: "Rubik";
+        line-height: 14px;
+        display: block;
+        position: absolute;
+        top: 110%;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        z-index: 1;
+    }   
+
   .loci_title, #img_title {
       color: #000;
       font-size: 22px;
@@ -1544,7 +1566,7 @@
     <!-- Header -->
     <div class="header">
     <!--<div class="title" style="top:2px">LRMA</div>-->
-    <div class="subtitle">Sequencing Report &mdash; Malaria</div>
+    <div class="subtitle" style="z-index: 100;"><a class="tooltiplink" style="text-decoration:none;color:#2494c7" data-title="Link to the Terra workspace where this sample is stored." href="https://app.terra.bio/#workspaces/broad-firecloud-dsde-methods/sr-malaria/data">{{ sample.tech_flag }} WGS Report &mdash; Malaria</a></div>
     <div class="sample_name_value"><p style="font-size:25px;  font-weight:bold">Sample Name:
         <span style="font-weight:500">{{ sample.sample_name }}</span></p>
     </div>

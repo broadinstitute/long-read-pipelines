@@ -65,6 +65,8 @@ workflow GenerateMalariaReports {
         gcs_out_root_dir:   "GCS bucket to store the results"
 
         ont_qc_report: "ONT QC report file"
+
+        tech_flag: "string denoting if the sample was sequenced using long read or short read techniques"
     }
 
     input {
@@ -124,6 +126,8 @@ workflow GenerateMalariaReports {
         File ref_map_file
 
         File? ont_qc_report
+
+        String tech_flag
     }
     
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -172,7 +176,8 @@ workflow GenerateMalariaReports {
             regions_bed = regions_bed,
             qc_pass = qc_pass,
             code = code,
-            location_table = location_table
+            location_table = location_table,
+            tech_flag = tech_flag
     }
 
     output {
