@@ -266,7 +266,7 @@ task MosDepthPerInterval {
 
         mapfile -t lines < "~{bed}"
 
-        for line in "${lines[@]}"; do
+        for line in "${lines[@]}"; then
             bed_file="$tmp_dir/bed_line.bed"
             echo $line | tr ' ' '\t' > $bed_file
 
@@ -278,24 +278,29 @@ task MosDepthPerInterval {
             ~{"-Q " + mapq} \
             ~{prefix} ./~{basename}.bam
 
-            # Run coverage_stats.py
-            python3 /coverage_stats.py \
-            --cov_col ~{cov_col} \
-            --round ~{round} \
-            --output_prefix ~{prefix} \
-            ~{cov_file_to_summarize}
+            # if mosdepth fails, skip the current interval
+            if [[ $? -ne 0 ]]; then
+                # Run coverage_stats.py
+                python3 /coverage_stats.py \
+                --cov_col ~{cov_col} \
+                --round ~{round} \
+                --output_prefix ~{prefix} \
+                ~{cov_file_to_summarize}
 
-            # In the coverage stats summary replace the open bracket with 'interval' name and the line as the value
-            sed -i "s/{/\{\"interval\": \"$line\", /" ~{prefix}.cov_stat_summary.json
+                # In the coverage stats summary replace the open bracket with 'interval' name and the line as the value
+                sed -i "s/{/\{\"interval\": \"$line\", /" ~{prefix}.cov_stat_summary.json
 
 
-            # Append the coverage stats summary of the current interval to the file containing the summary of all intervals
-            if [[ -s ~{prefix}.cov_stat_summary.json ]]; then
-                cat ~{prefix}.cov_stat_summary.json >> ~{prefix}.cov_stat_summary_all.json
-                echo "," >> ~{prefix}.cov_stat_summary_all.json
+                # Append the coverage stats summary of the current interval to the file containing the summary of all intervals
+                if [[ -s ~{prefix}.cov_stat_summary.json ]]; then
+                    cat ~{prefix}.cov_stat_summary.json >> ~{prefix}.cov_stat_summary_all.json
+                    echo "," >> ~{prefix}.cov_stat_summary_all.json
+                fi
+            else
+                echo "Mosdepth failed for interval: $line. Coverage stats script was not run."
             fi
-
         done
+
         # remove the last comma and close the json array
         sed -i '$ s/,$//' ~{prefix}.cov_stat_summary_all.json
         echo "]" >> ~{prefix}.cov_stat_summary_all.json
