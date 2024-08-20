@@ -132,6 +132,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             interval_file = actual_interval_list
     }
 
+    String gnarly_decorator = if use_gnarly_genotyper then ".gnarly_genotyper" else ".genotype_gvcfs"
+
     # Shard by contig for speed:
     scatter (idx_1 in range(length(ExtractIntervalNamesFromIntervalOrBamFile.interval_info))) {
 
@@ -203,7 +205,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             input:
                 vcf = joint_vcf,
                 vcf_index = joint_vcf_index,
-                prefix = prefix + "." + interval_name + ".sites_only"
+                prefix = prefix + "." + interval_name + gnarly_decorator + ".sites_only"
         }
     }
 
@@ -212,7 +214,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         input:
             input_vcfs = MakeSitesOnlyVCF.sites_only_vcf,
             input_vcf_indices = MakeSitesOnlyVCF.sites_only_vcf_index,
-            prefix = prefix + ".sites_only"
+            prefix = prefix + gnarly_decorator + ".sites_only"
     }
 
     ########################################################################
@@ -366,7 +368,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         input:
             input_vcfs = vcf_for_merging,
             input_vcf_indices = vcf_index_for_merging,
-            prefix = prefix + ".rescored.combined"
+            prefix = prefix + gnarly_decorator + ".rescored.combined"
     }
 
     # Convert to Zarr
