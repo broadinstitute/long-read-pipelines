@@ -11,6 +11,8 @@ workflow PfalciparumTypeDrugResistanceMarkers {
     }
     parameter_meta {
         vcf: "VCF file to process"
+        vcf_index: "Index of the VCF file to process"
+
         snpeff_db: "SnpEff database for functional annotation"
         drug_resistance_list: "List of drug resistance markers for which to search"
         ref_map_file:    "Table indicating reference sequence, auxillary file locations, and metadata."
@@ -23,6 +25,8 @@ workflow PfalciparumTypeDrugResistanceMarkers {
 
     input {
         File vcf
+        File vcf_index
+
         File snpeff_db
         File drug_resistance_list
         File ref_map_file
@@ -43,6 +47,7 @@ workflow PfalciparumTypeDrugResistanceMarkers {
     call CallDrugResistanceMutations {
         input:
             vcf = select_first([FunctionallyAnnotateVariants.annotated_vcf, vcf]),
+            vcf_index = select_first([FunctionallyAnnotateVariants.annotated_vcf_index, vcf_index]),
             drug_resistance_list = drug_resistance_list,
             genes_gff = ref_map["gff"]
     }
@@ -81,12 +86,12 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         File drug_resistance_summary = select_first([FinalizeDRSummary.gcs_path, CreateDrugResistanceSummary.resistance_summary])
         File raw_drug_res_report = select_first([FinalizeDRReport.gcs_path, CallDrugResistanceMutations.report])
 
-        String drug_status_chloroquine   = CreateDrugResistanceSummary.chloroquine_status
-        String drug_status_pyrimethamine = CreateDrugResistanceSummary.pyrimethamine_status
-        String drug_status_sulfadoxine   = CreateDrugResistanceSummary.sulfadoxine_status
-        String drug_status_mefloquine    = CreateDrugResistanceSummary.mefloquine_status
-        String drug_status_artemisinin   = CreateDrugResistanceSummary.artemisinin_status
-        String drug_status_piperaquine   = CreateDrugResistanceSummary.piperaquine_status
+        String predicted_drug_status_chloroquine   = CreateDrugResistanceSummary.predicted_chloroquine_status
+        String predicted_drug_status_pyrimethamine = CreateDrugResistanceSummary.predicted_pyrimethamine_status
+        String predicted_drug_status_sulfadoxine   = CreateDrugResistanceSummary.predicted_sulfadoxine_status
+        String predicted_drug_status_mefloquine    = CreateDrugResistanceSummary.predicted_mefloquine_status
+        String predicted_drug_status_artemisinin   = CreateDrugResistanceSummary.predicted_artemisinin_status
+        String predicted_drug_status_piperaquine   = CreateDrugResistanceSummary.predicted_piperaquine_status
 
         File? annotated_vcf = final_annotated_vcf
         File? annotated_vcf_index = final_annotated_vcf_index
@@ -98,6 +103,7 @@ workflow PfalciparumTypeDrugResistanceMarkers {
 task CallDrugResistanceMutations {
     input {
         File vcf
+        File vcf_index
         File drug_resistance_list
         File genes_gff
 
@@ -581,12 +587,12 @@ task CreateDrugResistanceSummary {
     output {
         File resistance_summary = "~{outfile_name}"
 
-        String chloroquine_status = read_string("chloroquine_status.txt")
-        String pyrimethamine_status = read_string("pyrimethamine_status.txt")
-        String sulfadoxine_status = read_string("sulfadoxine_status.txt")
-        String mefloquine_status = read_string("mefloquine_status.txt")
-        String artemisinin_status = read_string("artemisinin_status.txt")
-        String piperaquine_status = read_string("piperaquine_status.txt")
+        String predicted_chloroquine_status = read_string("chloroquine_status.txt")
+        String predicted_pyrimethamine_status = read_string("pyrimethamine_status.txt")
+        String predicted_sulfadoxine_status = read_string("sulfadoxine_status.txt")
+        String predicted_mefloquine_status = read_string("mefloquine_status.txt")
+        String predicted_artemisinin_status = read_string("artemisinin_status.txt")
+        String predicted_piperaquine_status = read_string("piperaquine_status.txt")
     }
 
     #########################
