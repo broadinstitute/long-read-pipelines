@@ -234,7 +234,7 @@ task MosDepthPerInterval {
     }
     # mosdepth parameters
     Int threads = 4
-    Boolean no_per_base = false
+    Boolean no_per_base = true
     Boolean fast_mode = false
     Int mapq = 1
 
