@@ -321,7 +321,7 @@
 <h4 id="required">Required</h4>
 <ul>
 <li><code>participant_name</code> (String, <strong>required</strong>): Participant (or sample) name for the given bam file.</li>
-<li><code>raw_drug_resistance_report</code> (File, <strong>required</strong>): File containing a raw drug resistance report to use to determine drug resistance.</li>
+<li><code>raw_drug_resistance_info</code> (File, <strong>required</strong>)</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
@@ -334,12 +334,12 @@
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>drug_resistance_summary</code> (File)</li>
-<li><code>drug_status_chloroquine</code> (String)</li>
-<li><code>drug_status_pyrimethamine</code> (String)</li>
-<li><code>drug_status_sulfadoxine</code> (String)</li>
-<li><code>drug_status_mefloquine</code> (String)</li>
-<li><code>drug_status_artemisinin</code> (String)</li>
-<li><code>drug_status_piperaquine</code> (String)</li>
+<li><code>predicted_chloroquine_status</code> (String)</li>
+<li><code>predicted_pyrimethamine_status</code> (String)</li>
+<li><code>predicted_sulfadoxine_status</code> (String)</li>
+<li><code>predicted_mefloquine_status</code> (String)</li>
+<li><code>predicted_artemisinin_status</code> (String)</li>
+<li><code>predicted_piperaquine_status</code> (String)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="PfalciparumDrugResistanceSummary" src="../../dot/PfalciparumDrugResistanceSummary.dot.png" /></p>

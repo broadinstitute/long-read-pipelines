@@ -324,8 +324,10 @@
 <ul>
 <li><code>dir_prefix</code> (String, <strong>required</strong>): Prefix for output directory</li>
 <li><code>drug_resistance_list</code> (File, <strong>required</strong>): List of drug resistance markers for which to search</li>
+<li><code>ref_map_file</code> (File, <strong>required</strong>): Table indicating reference sequence, auxillary file locations, and metadata.</li>
 <li><code>snpeff_db</code> (File, <strong>required</strong>): SnpEff database for functional annotation</li>
 <li><code>vcf</code> (File, <strong>required</strong>): VCF file to process</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>): Index of the VCF file to process</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
@@ -360,12 +362,12 @@
 <ul>
 <li><code>drug_resistance_summary</code> (File)</li>
 <li><code>raw_drug_res_report</code> (File)</li>
-<li><code>drug_status_chloroquine</code> (String)</li>
-<li><code>drug_status_pyrimethamine</code> (String)</li>
-<li><code>drug_status_sulfadoxine</code> (String)</li>
-<li><code>drug_status_mefloquine</code> (String)</li>
-<li><code>drug_status_artemisinin</code> (String)</li>
-<li><code>drug_status_piperaquine</code> (String)</li>
+<li><code>predicted_drug_status_chloroquine</code> (String)</li>
+<li><code>predicted_drug_status_pyrimethamine</code> (String)</li>
+<li><code>predicted_drug_status_sulfadoxine</code> (String)</li>
+<li><code>predicted_drug_status_mefloquine</code> (String)</li>
+<li><code>predicted_drug_status_artemisinin</code> (String)</li>
+<li><code>predicted_drug_status_piperaquine</code> (String)</li>
 <li><code>annotated_vcf</code> (File?)</li>
 <li><code>annotated_vcf_index</code> (File?)</li>
 <li><code>snpEff_summary</code> (File?)</li>
