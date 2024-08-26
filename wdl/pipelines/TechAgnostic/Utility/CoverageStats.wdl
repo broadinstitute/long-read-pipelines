@@ -272,6 +272,7 @@ task MosDepthPerInterval {
 
             # Use samtools to extract reads overlapping the interval
             samtools view -b -L $bed_file ~{basename}.bam > $tmp_dir/interval.bam
+            samtools index $tmp_dir/interval.bam
 
             mosdepth \
             ~{true="-n" false="" no_per_base} \
