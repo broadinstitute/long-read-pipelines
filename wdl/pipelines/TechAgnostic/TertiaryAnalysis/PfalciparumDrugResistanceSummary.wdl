@@ -37,11 +37,11 @@ workflow PfalciparumDrugResistanceSummary {
     output {
         File drug_resistance_summary = select_first([FinalizeDrugResistanceSummary.gcs_path, CreateDrugResistanceSummary.resistance_summary])
 
-        String drug_status_chloroquine   = CreateDrugResistanceSummary.chloroquine_status
-        String drug_status_pyrimethamine = CreateDrugResistanceSummary.pyrimethamine_status
-        String drug_status_sulfadoxine   = CreateDrugResistanceSummary.sulfadoxine_status
-        String drug_status_mefloquine    = CreateDrugResistanceSummary.mefloquine_status
-        String drug_status_artemisinin   = CreateDrugResistanceSummary.artemisinin_status
-        String drug_status_piperaquine   = CreateDrugResistanceSummary.piperaquine_status
+        String predicted_chloroquine_status   = CreateDrugResistanceSummary.predicted_chloroquine_status
+        String predicted_pyrimethamine_status = CreateDrugResistanceSummary.predicted_pyrimethamine_status
+        String predicted_sulfadoxine_status   = CreateDrugResistanceSummary.predicted_sulfadoxine_status
+        String predicted_mefloquine_status    = CreateDrugResistanceSummary.predicted_mefloquine_status
+        String predicted_artemisinin_status   = CreateDrugResistanceSummary.predicted_artemisinin_status
+        String predicted_piperaquine_status   = CreateDrugResistanceSummary.predicted_piperaquine_status
     }
 }
