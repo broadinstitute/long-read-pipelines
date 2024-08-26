@@ -234,7 +234,7 @@ task MosDepthPerInterval {
     }
     # mosdepth parameters
     Int threads = 4
-    Boolean no_per_base = true
+    Boolean no_per_base = false
     Boolean fast_mode = false
     Int mapq = 1
 
@@ -247,7 +247,7 @@ task MosDepthPerInterval {
     String basename = basename(bam, ".bam")
     String prefix = "~{basename}.coverage_over_bed"
 
-    String cov_file_to_summarize = "~{prefix}.regions.bed.gz"
+    String cov_file_to_summarize = "~{prefix}.per-base.bed.gz"
 
     command <<<
         set -euxo pipefail
@@ -270,13 +270,15 @@ task MosDepthPerInterval {
             bed_file="$tmp_dir/bed_line.bed"
             echo $line | tr ' ' '\t' > $bed_file
 
+            # Use samtools to extract reads overlapping the interval
+            samtools view -b -L $bed_file ~{basename}.bam > $tmp_dir/interval.bam
+
             mosdepth \
             ~{true="-n" false="" no_per_base} \
             ~{true="-x" false="" fast_mode} \
             -t ~{threads} \
-            -b $bed_file \
             ~{"-Q " + mapq} \
-            ~{prefix} ./~{basename}.bam
+            ~{prefix} $tmp_dir/interval.bam
 
             # if mosdepth fails, exit with failure
             if [[ $? -ne 0 ]]; then
@@ -286,6 +288,7 @@ task MosDepthPerInterval {
 
             # Run coverage_stats.py
             python3 /coverage_stats.py \
+            --debug \
             --cov_col ~{cov_col} \
             --round ~{round} \
             --output_prefix ~{prefix} \
