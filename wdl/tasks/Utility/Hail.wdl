@@ -4,13 +4,13 @@ import "../../structs/Structs.wdl"
 
 task ConvertToHailMT {
     meta {
-        description: "Convert a .vcf.bgz file to a Hail MatrixTable and copy it to a final gs:// URL."
+        description: "Convert a .vcf.bgz file to a Hail MatrixTable and write it to a final gs:// URL."
     }
 
     parameter_meta {
         gvcf: "The input .vcf.bgz file."
         tbi: "The input .vcf.bgz.tbi file."
-        reference: "The reference genome to use.  Currently only GRCh38 is supported."
+        reference: "The reference genome to use."
         ref_fasta: "The reference genome FASTA file.  If not specified, the reference genome will be downloaded from the Hail website."
         ref_fai: "The reference genome FASTA index file.  If not specified, the reference genome will be downloaded from the Hail website."
         prefix: "The prefix to use for the output MatrixTable."
@@ -32,8 +32,12 @@ task ConvertToHailMT {
         RuntimeAttr? runtime_attr_override
     }
 
+    output {
+        String mt_bucket_path = "~{outdir}/~{prefix}.mt"
+    }
+
     command <<<
-        set -x
+        set -eux
 
         date
         python3 <<EOF
@@ -51,33 +55,29 @@ task ConvertToHailMT {
             reference_genome='~{reference}'
         )
 
-        callset.write('~{prefix}.mt')
+        callset.write('~{outdir}/~{prefix}.mt')
 
         EOF
         date
 
         # gsutil -m rsync -Cr ~{prefix}.mt ~{outdir}/~{prefix}.mt
-        set +e
-        attempt=1
-        gcloud --verbosity='error' storage \
-            rsync \
-            -c -r \
-            ~{prefix}.mt \
-            ~{outdir}/~{prefix}.mt
-        retVal=$?
-        if [[ ${retVal} -ne 0  &&  ${attempt} -lt 5 ]]; then
-            attempt=$((attempt+1))
-            gcloud --verbosity='error' storage \
-                rsync \
-                -c -r \
-                ~{prefix}.mt \
-                ~{outdir}/~{prefix}.mt
-        fi
+        # set +e
+        # attempt=1
+        # gcloud --verbosity='error' storage \
+        #     rsync \
+        #     -c -r \
+        #     ~{prefix}.mt \
+        #     ~{outdir}/~{prefix}.mt
+        # retVal=$?
+        # if [[ ${retVal} -ne 0  &&  ${attempt} -lt 5 ]]; then
+        #     attempt=$((attempt+1))
+        #     gcloud --verbosity='error' storage \
+        #         rsync \
+        #         -c -r \
+        #         ~{prefix}.mt \
+        #         ~{outdir}/~{prefix}.mt
+        # fi
     >>>
-
-    output {
-        String gcs_path = "~{outdir}/~{prefix}.mt"
-    }
 
     #########################
     Int disk_size = 1 + 3*ceil(size(gvcf, "GB"))

@@ -30,7 +30,7 @@ workflow LRJointCallGVCFs {
     output {
         File joint_gvcf     = FinalizeGVCF.gcs_path
         File joint_gvcf_tbi = FinalizeTBI.gcs_path
-        String joint_mt     = ConvertToHailMT.gcs_path
+        String joint_mt     = ConvertToHailMT.mt_bucket_path
     }
 
     String workflow_name = "JointCallGVCFs"
