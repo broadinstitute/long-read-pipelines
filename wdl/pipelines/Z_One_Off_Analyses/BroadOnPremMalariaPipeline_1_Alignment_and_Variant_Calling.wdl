@@ -80,8 +80,8 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
     # 2a - Align reads to reference with BWA-MEM2:
     call SRUTIL.BwaMem2 as t_006_AlignReads {
         input:
-            fq_end1 = fq_e1,
-            fq_end2 = fq_e2,
+            fq_end1 = t_005_FilterOutHumanReads.fq1,
+            fq_end2 = t_005_FilterOutHumanReads.fq2,
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
             ref_dict = ref_map["dict"],
