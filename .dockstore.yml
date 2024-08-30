@@ -161,7 +161,7 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BackupWorkspace.wdl
 - name: BroadOnPremMalariaAlignmentAndVariantCalling
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling.wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling.wdl
 - name: BroadOnPremMalariaJointCalling
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/BroadOnPremMalariaPipeline_2_JointVariantCalling.wdl
