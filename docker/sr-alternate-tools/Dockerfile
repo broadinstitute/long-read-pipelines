@@ -4,7 +4,29 @@ MAINTAINER Jonn Smith
 
 # Install required packages:
 RUN apt-get update -y && apt-get upgrade -y
-RUN apt-get install -y wget make g++ gcc git vim unzip bzip2 curl gnupg2 git-lfs parallel libc-dev ncurses-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev gcc python3-dev python3-setuptools
+RUN apt-get install -y --no-install-recommends \
+	wget \
+	make \
+	g++ \
+	gcc \
+	git \
+	vim \
+	unzip \
+	bzip2 \
+	curl \
+	gnupg2 \
+	git-lfs \
+	parallel \
+	libc-dev \
+	ncurses-dev \
+	libcurl4-openssl-dev \
+	libssl-dev \
+	libbz2-dev \
+	liblzma-dev \
+	gcc \
+	python3-dev \
+	python3-setuptools \
+	python3-pip 
 
 # install gsutil
 RUN apt-get --allow-releaseinfo-change update
@@ -50,4 +72,18 @@ RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2
     make install && \
     cd .. && \
     rm -rf bedtools2 bedtools-2.31.1.tar.gz
+
+# Cleanup
+RUN rm -rf /tmp/* \
+           /var/tmp/* \
+           /var/cache/apt/* \
+           /var/lib/apt/lists/* \
+           /usr/share/man/?? \
+           /usr/share/man/??_* \
+           /root/.cache/pip \
+           /root/.cache/pip3 \
+           /var/lib/apt/lists/* && \
+	apt-get -qqy clean && \
+    apt-get -qqy autoclean && \
+    apt-get -qqy autoremove
 
