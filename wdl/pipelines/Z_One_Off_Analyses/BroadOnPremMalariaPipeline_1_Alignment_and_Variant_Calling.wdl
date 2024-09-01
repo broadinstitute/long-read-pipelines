@@ -71,7 +71,8 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             fq_end1 = fq_e1,
             fq_end2 = fq_e2,
             human_reference_fasta = contaminant_ref_map["fasta"],
-            human_reference_fai = contaminant_ref_map["fai"]
+            human_reference_fai = contaminant_ref_map["fai"],
+            human_reference_1_bt2 = contaminant_ref_map["1_bt2"]
     }
 
     # 2 - Align to Plasmodium reference:
@@ -209,10 +210,6 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
 
 task FilterOutHumanReads {
 
-    meta {
-        description: ""
-    }
-
     parameter_meta {
         prefix: "Prefix for output files."
 
@@ -232,12 +229,13 @@ task FilterOutHumanReads {
         File fq_end2
 
         File human_reference_fasta
+        File human_reference_1_bt2
         File human_reference_fai
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 + 10 * ceil(size([fq_end1, fq_end2, human_reference_fasta, human_reference_fai], "GB"))
+    Int disk_size = 10 + 10 * ceil(size([fq_end1, fq_end2, human_reference_fasta, human_reference_fai, human_reference_1_bt2], "GB"))
 
     command <<<
         set -euxo pipefail
@@ -249,7 +247,7 @@ task FilterOutHumanReads {
         fi
 
         echo "Aligning to human genome:"
-        bowtie2 -x ~{human_reference_fasta} \
+        bowtie2 -x ~{human_reference_1_bt2} \
             --threads ${np} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} | \
