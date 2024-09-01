@@ -72,7 +72,7 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             fq_end2 = fq_e2,
             human_reference_fasta = contaminant_ref_map["fasta"],
             human_reference_fai = contaminant_ref_map["fai"],
-            human_reference_1_bt2 = contaminant_ref_map["1_bt2"]
+            human_reference_1_bt2 = contaminant_ref_map["1.bt2"]
     }
 
     # 2 - Align to Plasmodium reference:
