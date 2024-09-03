@@ -134,7 +134,8 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
     call Utils.SortSam as t_010_ReorderSam {
         input:
             input_bam = t_009_MarkDuplicates.bam,
-            output_bam_basename = sample_name + ".aligned.sorted.marked_duplicates.reordered"
+            output_bam_basename = sample_name + ".aligned.sorted.marked_duplicates.reordered",
+            compression_level = 2
     }
 
     # 5 - Realign indels:
