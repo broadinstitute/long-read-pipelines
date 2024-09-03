@@ -120,21 +120,28 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             prefix = sample_name + ".aligned.sorted.marked_duplicates"
     }
 
-    # 4 - Reorder bam:
-    call ReorderSam as t_010_ReorderSam {
+#    # 4 - Reorder bam is BROKEN.
+#    # USING SORT SAM.
+#    call ReorderSam as t_010_ReorderSam {
+#        input:
+#            input_bam = t_009_MarkDuplicates.bam,
+#            reference_fasta = ref_map["fasta"],
+#            reference_fai = ref_map["fai"],
+#            reference_dict = ref_map["dict"],
+#            prefix = sample_name + ".aligned.sorted.marked_duplicates.reordered"
+#    }
+
+    call Utils.SortSam as t_010_ReorderSam {
         input:
             input_bam = t_009_MarkDuplicates.bam,
-            reference_fasta = ref_map["fasta"],
-            reference_fai = ref_map["fai"],
-            reference_dict = ref_map["dict"],
-            prefix = sample_name + ".aligned.sorted.marked_duplicates.reordered"
+            output_bam_basename = sample_name + ".aligned.sorted.marked_duplicates.reordered"
     }
 
     # 5 - Realign indels:
     call RealignIndels as t_011_RealignIndels {
         input:
-            input_bam = t_010_ReorderSam.bam,
-            input_bai = t_010_ReorderSam.bai,
+            input_bam = t_010_ReorderSam.output_bam,
+            input_bai = t_010_ReorderSam.output_bam_index,
             reference_fasta = ref_map["fasta"],
             reference_fai = ref_map["fai"],
             reference_dict = ref_map["dict"],
