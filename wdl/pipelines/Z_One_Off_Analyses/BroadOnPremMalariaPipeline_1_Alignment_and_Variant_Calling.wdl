@@ -149,11 +149,17 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             prefix = sample_name + ".aligned.sorted.marked_duplicates.reordered.indels_realigned"
     }
 
+    # 5a - Index Realign indels bam:
+    call Utils.Index as t_012_IndexRealignIndels {
+        input:
+            bam = t_011_RealignIndels.indel_realigned_bam
+    }
+
     # 6 - BQSR:
     call BQSR as t_012_BQSR {
         input:
             input_bam = t_011_RealignIndels.indel_realigned_bam,
-            input_bai = t_011_RealignIndels.indel_realigned_bai,
+            input_bai = t_012_IndexRealignIndels.bai,
             reference_fasta = ref_map["fasta"],
             reference_fai = ref_map["fai"],
             reference_dict = ref_map["dict"],
@@ -161,12 +167,18 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             prefix = sample_name + ".aligned.sorted.marked_duplicates.reordered.indels_realigned.bqsr"
     }
 
+    # 6a - Index bam:
+    call Utils.Index as t_013_IndexBQSR {
+        input:
+            bam = t_012_BQSR.bqsr_bam
+    }
+
     # 7 - call variants with haplotypecaller:
     # both VCF and GVCF mode:
     call HaplotypeCaller as t_013_HaplotypeCaller {
         input:
             input_bam = t_012_BQSR.bqsr_bam,
-            input_bai = t_012_BQSR.bqsr_bai,
+            input_bai = t_013_IndexBQSR.bai,
             reference_fasta = ref_map["fasta"],
             reference_fai = ref_map["fai"],
             reference_dict = ref_map["dict"],
@@ -175,7 +187,7 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
     call HaplotypeCaller as t_014_HaplotypeCallerGvcfMode {
         input:
             input_bam = t_012_BQSR.bqsr_bam,
-            input_bai = t_012_BQSR.bqsr_bai,
+            input_bai = t_013_IndexBQSR.bai,
             reference_fasta = ref_map["fasta"],
             reference_fai = ref_map["fai"],
             reference_dict = ref_map["dict"],
@@ -429,13 +441,10 @@ task RealignIndels {
                 -I ~{input_bam} \
                 -targetIntervals ~{prefix}.interval_list \
                 -o ~{prefix}.bam
-
-        samtools index -@${np} ~{prefix}.bam
     >>>
 
     output {
         File indel_realigned_bam = "~{prefix}.bam"
-        File indel_realigned_bai = "~{prefix}.bam.bai"
     }
 
     #########################
@@ -520,13 +529,10 @@ task BQSR {
                 -I ~{input_bam} \
                 -BQSR ~{prefix}_recal_report.grp \
                 -o ~{prefix}.bqsr.bam
-
-        samtools index -@${np} ~{prefix}.bqsr.bam
     >>>
 
     output {
         File bqsr_bam = "~{prefix}.bqsr.bam"
-        File bqsr_bai = "~{prefix}.bqsr.bam.bai"
     }
 
     #########################

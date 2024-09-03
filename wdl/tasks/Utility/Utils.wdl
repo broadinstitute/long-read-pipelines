@@ -1033,10 +1033,23 @@ task Index {
     String prefix = basename(bam)
 
     command <<<
+        ################################
+        # Standard Preamble
+
         set -euxo pipefail
 
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            let np=${np}-1
+        fi
+
+        tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
+
+        ################################
+
         mv ~{bam} ~{prefix}
-        samtools index ~{basename(prefix)}
+        samtools index -@$((np-1)) ~{basename(prefix)}
     >>>
 
     output {
