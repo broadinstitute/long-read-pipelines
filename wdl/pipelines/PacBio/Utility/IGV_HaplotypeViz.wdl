@@ -2,7 +2,7 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 
-workflow IGV_HaplotypeViz_Scatter {
+workflow IGV_HaplotypeViz {
   input {
     # BED files containing regions to screenshot; 4th column can optionally be SVID
     Array[File] beds
