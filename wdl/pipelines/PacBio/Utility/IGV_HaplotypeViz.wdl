@@ -102,6 +102,6 @@ task RunIGVHeadlessCombined {
     docker: "us.gcr.io/broad-dsp-lrma/igv_docker:v952024"
     memory: "~{memory}"
     cpu: "~{cpu}"
-    disks: "local-disk ~{disk_size}"
+    disks: "local-disk ~{disk_size} SSD"
   }
 }
