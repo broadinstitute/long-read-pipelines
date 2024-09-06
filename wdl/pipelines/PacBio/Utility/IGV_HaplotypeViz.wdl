@@ -37,11 +37,12 @@ workflow IGV_HaplotypeViz {
     String sample_w_hap1 = sample_id + "_hap1"
     String sample_w_hap2 = sample_id + "_hap2"
 
-    # Run IGV for BAM alignments Haplotype 1 (H1)
-    call RunIGVHeadless as IGV_Hap1 {
+    # Run IGV for both BAM and FASTA visualization for Haplotype 1 (H1)
+    call RunIGVHeadlessCombined as IGV_Hap1 {
       input:
         bam_or_cram=bam_hap1,
         bam_or_cram_index=bai_hap1,
+        fasta=haplotig_fasta_hap1,
         bed=beds[i],
         sample_id=sample_w_hap1,
         ref_fasta=ref_fasta,
@@ -49,35 +50,12 @@ workflow IGV_HaplotypeViz {
         igv_docker=igv_docker
     }
 
-    # Run IGV for BAM alignments Haplotype 2 (H2)
-    call RunIGVHeadless as IGV_Hap2 {
+    # Run IGV for both BAM and FASTA visualization for Haplotype 2 (H2)
+    call RunIGVHeadlessCombined as IGV_Hap2 {
       input:
         bam_or_cram=bam_hap2,
         bam_or_cram_index=bai_hap2,
-        bed=beds[i],
-        sample_id=sample_w_hap2,
-        ref_fasta=ref_fasta,
-        ref_fai=ref_fai,
-        igv_docker=igv_docker
-    }
-
-    # For sequence visualization, use FASTA for haplotigs Haplotype 1 (H1)
-    call RunIGVHeadless as IGV_Seq_Hap1 {
-      input:
-        bam_or_cram=haplotig_fasta_hap1,
-        bam_or_cram_index=bai_hap1,  # Index may not be necessary for FASTA
-        bed=beds[i],
-        sample_id=sample_w_hap1,
-        ref_fasta=ref_fasta,  # Reference may not be needed for FASTA visualization
-        ref_fai=ref_fai,
-        igv_docker=igv_docker
-    }
-
-    # For sequence visualization, use FASTA for haplotigs Haplotype 2 (H2)
-    call RunIGVHeadless as IGV_Seq_Hap2 {
-      input:
-        bam_or_cram=haplotig_fasta_hap2,
-        bam_or_cram_index=bai_hap2,
+        fasta=haplotig_fasta_hap2,
         bed=beds[i],
         sample_id=sample_w_hap2,
         ref_fasta=ref_fasta,
@@ -89,15 +67,14 @@ workflow IGV_HaplotypeViz {
   output {
     Array[File] igv_screenshots_hap1 = IGV_Hap1.igv_screenshot
     Array[File] igv_screenshots_hap2 = IGV_Hap2.igv_screenshot
-    Array[File] igv_screenshots_seq_hap1 = IGV_Seq_Hap1.igv_screenshot
-    Array[File] igv_screenshots_seq_hap2 = IGV_Seq_Hap2.igv_screenshot
   }
 }
 
-task RunIGVHeadless {
+task RunIGVHeadlessCombined {
   input {
-    File bam_or_cram       # BAM/CRAM or FASTA file for visualization
+    File bam_or_cram       # BAM/CRAM file for visualization
     File bam_or_cram_index # Index file for BAM/CRAM
+    File fasta             # FASTA file for haplotype visualization
     File bed               # BED file containing regions to visualize (3 or 4 columns allowed)
     String sample_id       # Sample ID for naming outputs
     File ref_fasta         # Reference genome used for alignment
@@ -107,12 +84,13 @@ task RunIGVHeadless {
   }
 
   command <<<
-    # Running IGV headless mode to take screenshots for each region in the BED file
+    # Running IGV headless mode to take screenshots for both BAM and FASTA files for each region in the BED file
     igv.sh \
     -b ~{bam_or_cram} \
     -i ~{bam_or_cram_index} \
-    -g ~{ref_fasta} \
+    -g ~{fasta} \
     -bed ~{bed} \
+    -name bam,fasta \
     -o ~{sample_id}.igv_screenshot.png
   >>>
 
