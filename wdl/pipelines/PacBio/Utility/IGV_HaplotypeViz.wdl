@@ -6,7 +6,7 @@ workflow IGV_HaplotypeViz {
   input {
     # BED files containing regions to screenshot; 4th column can optionally be SVID
     Array[File] beds
-    Array[String] run_names
+    Array[String]? run_names  
 
     # BAM and BAI files from align_asm workflow for alignment visualization
     File bam_hap1
@@ -28,69 +28,69 @@ workflow IGV_HaplotypeViz {
     # Number of records per shard for parallelization
     Int? records_per_shard
 
-    # Docker images for Linux and IGV headless tasks
-    String linux_docker
-    String igv_docker
+    # Configurable CPU, memory, and disk
+    Int? cpu           = 2    # Default is 2 CPUs
+    String? memory     = "8G" # Default memory is 8 GB
+    String? disk_size  = "10G" # Default disk size is 10 GB
   }
+  Array[String] default_run_names = range(length(beds))
+  Array[String] used_run_names = select_first([run_names, default_run_names])
 
   scatter (i in range(length(beds))) {
-    String sample_w_hap1 = sample_id + "_hap1"
-    String sample_w_hap2 = sample_id + "_hap2"
+    String run_name = used_run_names[i]
+    String sample_combined = sample_id + "_combined_" + run_name
 
-    # Run IGV for both BAM and FASTA visualization for Haplotype 1 (H1)
-    call RunIGVHeadlessCombined as IGV_Hap1 {
+    # Run IGV for both BAM and FASTA visualization for Haplotype 1 and 2 combined
+    call RunIGVHeadlessCombined {
       input:
-        bam_or_cram=bam_hap1,
-        bam_or_cram_index=bai_hap1,
-        fasta=haplotig_fasta_hap1,
+        bam_hap1=bam_hap1,
+        bai_hap1=bai_hap1,
+        bam_hap2=bam_hap2,
+        bai_hap2=bai_hap2,
+        fasta_hap1=haplotig_fasta_hap1,
+        fasta_hap2=haplotig_fasta_hap2,
         bed=beds[i],
-        sample_id=sample_w_hap1,
+        sample_id=sample_combined,
         ref_fasta=ref_fasta,
         ref_fai=ref_fai,
-        igv_docker=igv_docker
-    }
-
-    # Run IGV for both BAM and FASTA visualization for Haplotype 2 (H2)
-    call RunIGVHeadlessCombined as IGV_Hap2 {
-      input:
-        bam_or_cram=bam_hap2,
-        bam_or_cram_index=bai_hap2,
-        fasta=haplotig_fasta_hap2,
-        bed=beds[i],
-        sample_id=sample_w_hap2,
-        ref_fasta=ref_fasta,
-        ref_fai=ref_fai,
-        igv_docker=igv_docker
+        cpu=cpu,
+        memory=memory,
+        disk_size=disk_size
     }
   }
 
   output {
-    Array[File] igv_screenshots_hap1 = IGV_Hap1.igv_screenshot
-    Array[File] igv_screenshots_hap2 = IGV_Hap2.igv_screenshot
+    Array[File] igv_screenshots_combined = RunIGVHeadlessCombined.igv_screenshot
   }
 }
 
 task RunIGVHeadlessCombined {
   input {
-    File bam_or_cram       # BAM/CRAM file for visualization
-    File bam_or_cram_index # Index file for BAM/CRAM
-    File fasta             # FASTA file for haplotype visualization
-    File bed               # BED file containing regions to visualize (3 or 4 columns allowed)
-    String sample_id       # Sample ID for naming outputs
-    File ref_fasta         # Reference genome used for alignment
-    File ref_fai           # Index for the reference genome
-    String igv_docker      # Docker image for running IGV headless
-    Int? records_per_shard # Optional: Parallelization parameter for large datasets
+    File bam_hap1         # BAM file for Haplotype 1
+    File bai_hap1         # BAI file for Haplotype 1
+    File bam_hap2         # BAM file for Haplotype 2
+    File bai_hap2         # BAI file for Haplotype 2
+    File fasta_hap1       # FASTA file for Haplotype 1
+    File fasta_hap2       # FASTA file for Haplotype 2
+    File bed              # BED file containing regions to visualize (3 or 4 columns allowed)
+    String sample_id      # Sample ID for naming outputs
+    File ref_fasta        # Reference genome used for alignment
+    File ref_fai          # Index for the reference genome
+
+    # Configurable resources
+    Int? cpu           # CPUs to use
+    String? memory     # Memory to allocate
+    String? disk_size  # Disk size
   }
 
   command <<<
-    # Running IGV headless mode to take screenshots for both BAM and FASTA files for each region in the BED file
+    # Running IGV headless mode to take screenshots for both BAM and FASTA files for both haplotypes
     igv.sh \
-    -b ~{bam_or_cram} \
-    -i ~{bam_or_cram_index} \
-    -g ~{fasta} \
+    -b ~{bam_hap1},~{bam_hap2} \
+    -i ~{bai_hap1},~{bai_hap2} \
+    -g ~{fasta_hap1},~{fasta_hap2} \
     -bed ~{bed} \
-    -name bam,fasta \
+    -name hap1_bam,hap2_bam,hap1_fasta,hap2_fasta \
     -o ~{sample_id}.igv_screenshot.png
   >>>
 
@@ -99,9 +99,9 @@ task RunIGVHeadlessCombined {
   }
 
   runtime {
-    docker: "~{igv_docker}"
-    memory: "8G"
-    cpu: "2"
-    disks: "local-disk 10 HDD"
+    docker: "us.gcr.io/broad-dsp-lrma/igv_docker:v952024"
+    memory: "~{memory}"
+    cpu: "~{cpu}"
+    disks: "local-disk ~{disk_size} HDD"
   }
 }
