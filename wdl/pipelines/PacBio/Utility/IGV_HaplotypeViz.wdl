@@ -4,25 +4,23 @@ workflow igv_screenshot_automation {
 
   input {
     File asm_hap1_bam   # BAM file for asm haplotype 1
-    File asm_hap1_bai   # BAI index file for asm haplotype 1
     File asm_hap2_bam   # BAM file for asm haplotype 2
-    File asm_hap2_bai   # BAI index file for asm haplotype 2
     File bam            # A single BAM file for the sample
-    File bam_bai        # BAI index file for the single BAM file
     File reference_fasta  # Reference FASTA file
     File regions_bed      # Path to the BED file with regions of interest
     String genome         # Reference genome version (e.g., "hg38")
     Int image_height = 500  # Height for the IGV tracks
   }
 
+  # Directly use .bam.bai files co-located with the BAM files
   call IGVScreenshotTask {
     input:
       asm_hap1_bam = asm_hap1_bam,
-      asm_hap1_bai = asm_hap1_bai,
+      asm_hap1_bai = asm_hap1_bam + ".bai",
       asm_hap2_bam = asm_hap2_bam,
-      asm_hap2_bai = asm_hap2_bai,
+      asm_hap2_bai = asm_hap2_bam + ".bai",
       bam = bam,
-      bam_bai = bam_bai,
+      bam_bai = bam + ".bai",
       reference_fasta = reference_fasta,
       regions_bed = regions_bed,
       genome = genome,
