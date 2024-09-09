@@ -3,10 +3,9 @@ version 1.0
 workflow igv_screenshot_automation {
 
   input {
-    File asm_hap1_bam   # BAM file for asm haplotype 1
-    File asm_hap2_bam   # BAM file for asm haplotype 2
-    File hap1_bam       # BAM file for haplotype 1
-    File hap2_bam       # BAM file for haplotype 2
+    File asm_hap1_bam   # BAM file for assembly haplotype 1
+    File asm_hap2_bam   # BAM file for assembly haplotype 2
+    File bam            # A single BAM file for the sample
     File reference_fasta  # Reference FASTA file
     File regions_bed      # Path to the BED file with regions of interest
     String genome         # Reference genome version (e.g., "hg38")
@@ -17,8 +16,7 @@ workflow igv_screenshot_automation {
     input:
       asm_hap1_bam = asm_hap1_bam,
       asm_hap2_bam = asm_hap2_bam,
-      hap1_bam = hap1_bam,
-      hap2_bam = hap2_bam,
+      bam = bam,
       reference_fasta = reference_fasta,
       regions_bed = regions_bed,
       genome = genome,
@@ -34,8 +32,7 @@ task IGVScreenshotTask {
   input {
     File asm_hap1_bam
     File asm_hap2_bam
-    File hap1_bam
-    File hap2_bam
+    File bam
     File reference_fasta
     File regions_bed
     String genome
@@ -43,9 +40,9 @@ task IGVScreenshotTask {
   }
 
   command {
-    # Run the Python script with inputs for hap1 and hap2 BAM files
+    # Run the Python script with inputs for asm_hap1, asm_hap2, and bam
     python3 /opt/make_igv_screenshot.py \
-            ${asm_hap1_bam} ${asm_hap2_bam} ${hap1_bam} ${hap2_bam} \
+            ${asm_hap1_bam} ${asm_hap2_bam} ${bam} \
             -r ${regions_bed} -g ${genome} -ht ${image_height} \
             -ref_fasta ${reference_fasta}
   }
@@ -59,6 +56,6 @@ task IGVScreenshotTask {
     docker: "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:v982024"
     memory: "8G"
     cpu: 2
-    disks: "local-disk 100 HDD" 
+    disks: "local-disk 100 HDD"  # Adjust this based on file size needs
   }
 }
