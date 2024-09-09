@@ -4,8 +4,11 @@ workflow igv_screenshot_automation {
 
   input {
     File asm_hap1_bam   # BAM file for asm haplotype 1
+    File asm_hap1_bai   # BAI index file for asm haplotype 1
     File asm_hap2_bam   # BAM file for asm haplotype 2
+    File asm_hap2_bai   # BAI index file for asm haplotype 2
     File bam            # A single BAM file for the sample
+    File bam_bai        # BAI index file for the single BAM file
     File reference_fasta  # Reference FASTA file
     File regions_bed      # Path to the BED file with regions of interest
     String genome         # Reference genome version (e.g., "hg38")
@@ -15,8 +18,11 @@ workflow igv_screenshot_automation {
   call IGVScreenshotTask {
     input:
       asm_hap1_bam = asm_hap1_bam,
+      asm_hap1_bai = asm_hap1_bai,
       asm_hap2_bam = asm_hap2_bam,
+      asm_hap2_bai = asm_hap2_bai,
       bam = bam,
+      bam_bai = bam_bai,
       reference_fasta = reference_fasta,
       regions_bed = regions_bed,
       genome = genome,
@@ -31,8 +37,11 @@ workflow igv_screenshot_automation {
 task IGVScreenshotTask {
   input {
     File asm_hap1_bam
+    File asm_hap1_bai
     File asm_hap2_bam
+    File asm_hap2_bai
     File bam
+    File bam_bai
     File reference_fasta
     File regions_bed
     String genome
@@ -40,12 +49,20 @@ task IGVScreenshotTask {
   }
 
   command {
+    # Localize the BAM and BAI files to ensure IGV can use them
+    ln -s ${asm_hap1_bam} .
+    ln -s ${asm_hap1_bai} .
+    ln -s ${asm_hap2_bam} .
+    ln -s ${asm_hap2_bai} .
+    ln -s ${bam} .
+    ln -s ${bam_bai} .
+
     # Run the Python script with inputs for asm_hap1, asm_hap2, and bam
     python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
             ${asm_hap1_bam} ${asm_hap2_bam} ${bam} \
             -r ${regions_bed} -g ${genome} -ht ${image_height} \
             -ref_fasta ${reference_fasta} \
-            -bin /opt/IGV_Linux_2.18.2/igv.sh  # Explicitly passing the igv.sh path
+            -bin /opt/IGV_Linux_2.18.2/igv.sh
   }
 
   output {
