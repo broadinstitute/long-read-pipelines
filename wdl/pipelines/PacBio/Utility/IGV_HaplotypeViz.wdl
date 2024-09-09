@@ -44,7 +44,8 @@ task IGVScreenshotTask {
     python3 /opt/make_igv_screenshot.py \
             ${asm_hap1_bam} ${asm_hap2_bam} ${bam} \
             -r ${regions_bed} -g ${genome} -ht ${image_height} \
-            -ref_fasta ${reference_fasta}
+            -ref_fasta ${reference_fasta} \
+            -bin /opt/IGV_Linux_2.18.2/igv.sh  # Explicitly passing the igv.sh path
   }
 
   output {
