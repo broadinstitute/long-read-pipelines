@@ -41,7 +41,7 @@ task IGVScreenshotTask {
 
   command {
     # Run the Python script with inputs for asm_hap1, asm_hap2, and bam
-    python3 /opt/make_igv_screenshot.py \
+    python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
             ${asm_hap1_bam} ${asm_hap2_bam} ${bam} \
             -r ${regions_bed} -g ${genome} -ht ${image_height} \
             -ref_fasta ${reference_fasta} \
