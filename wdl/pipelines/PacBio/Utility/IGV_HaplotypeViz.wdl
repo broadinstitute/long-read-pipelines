@@ -4,8 +4,11 @@ workflow IGVScreenshotWorkflow {
 
     input {
         File aligned_bam_hap1       # BAM file for haplotype 1
+        File aligned_bam_hap1_bai   # BAM index for haplotype 1
         File aligned_bam_hap2       # BAM file for haplotype 2
+        File aligned_bam_hap2_bai   # BAM index for haplotype 2
         File alignments             # BAM file for total alignments
+        File alignments_bai         # BAM index for total alignments
         File bed_file               # BED file with regions
         File fasta_file             # Reference FASTA file
         String sample_name          # Sample name to use in filenames
@@ -18,8 +21,11 @@ workflow IGVScreenshotWorkflow {
     call RunIGVScreenshot {
         input:
             aligned_bam_hap1 = aligned_bam_hap1,
+            aligned_bam_hap1_bai = aligned_bam_hap1_bai,
             aligned_bam_hap2 = aligned_bam_hap2,
+            aligned_bam_hap2_bai = aligned_bam_hap2_bai,
             alignments = alignments,
+            alignments_bai = alignments_bai,
             bed_file = bed_file,
             fasta_file = fasta_file,
             sample_name = sample_name,
@@ -37,8 +43,11 @@ workflow IGVScreenshotWorkflow {
 task RunIGVScreenshot {
     input {
         File aligned_bam_hap1
+        File aligned_bam_hap1_bai
         File aligned_bam_hap2
+        File aligned_bam_hap2_bai
         File alignments
+        File alignments_bai
         File bed_file
         File fasta_file
         String sample_name
@@ -56,6 +65,7 @@ task RunIGVScreenshot {
         # Run the IGV screenshot script with the provided inputs
         python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
           ~{aligned_bam_hap1} ~{aligned_bam_hap2} ~{alignments} \
+          ~{aligned_bam_hap1_bai} ~{aligned_bam_hap2_bai} ~{alignments_bai} \
           -r ~{bed_file} \
           -ht ~{image_height} \
           -bin /opt/IGV_Linux_2.18.2/igv.sh \
