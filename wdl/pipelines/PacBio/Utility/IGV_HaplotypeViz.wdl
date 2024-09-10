@@ -13,6 +13,7 @@ workflow IGVScreenshotWorkflow {
         Int image_height = 500
         Int memory_mb = 4000
         Int disk_gb = 100           # Disk size in GB, default to 100 GB
+        String gs_bucket_path       # Google Storage bucket path
         String docker_image = "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:v982024"  # The Docker image to use
     }
 
@@ -31,6 +32,7 @@ workflow IGVScreenshotWorkflow {
             image_height = image_height,
             memory_mb = memory_mb,
             disk_gb = disk_gb,
+            gs_bucket_path = gs_bucket_path,
             docker_image = docker_image
     }
 
@@ -54,12 +56,13 @@ task RunIGVScreenshot {
         Int image_height
         Int memory_mb
         Int disk_gb
+        String gs_bucket_path
         String docker_image
     }
 
     command {
-        # Ensure the snapshots directory exists
-        mkdir -p /output/IGV_Snapshots && chmod 777 /output/IGV_Snapshots
+        # Ensure the snapshots directory exists under the current working directory
+        mkdir -p IGV_Snapshots && chmod 777 IGV_Snapshots
 
         # Start a virtual frame buffer to allow IGV to render
         Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
@@ -75,6 +78,12 @@ task RunIGVScreenshot {
           -mem ~{memory_mb} \
           --fasta_file ~{fasta_file} \
           --sample_name ~{sample_name}
+
+        # Move the generated snapshots to the output directory
+        mv *.png IGV_Snapshots/
+
+        # Copy the results to the Google Storage bucket
+        gsutil -m cp IGV_Snapshots/*.png ~{gs_bucket_path}
     }
 
     runtime {
@@ -85,6 +94,6 @@ task RunIGVScreenshot {
     }
 
     output {
-        Array[File] snapshots = glob("/output/IGV_Snapshots/*.png")
+        Array[File] snapshots = glob("IGV_Snapshots/*.png")
     }
 }
