@@ -62,8 +62,8 @@ task RunIGVScreenshot {
     }
 
     command <<<
-        # Ensure the snapshots directory exists
-        mkdir -p /output/IGV_Snapshots && chmod 777 /output/IGV_Snapshots
+        # Ensure the snapshots directory exists under the mounted disk path
+        mkdir -p /cromwell_root/IGV_Snapshots && chmod 777 /cromwell_root/IGV_Snapshots
 
         # Start a virtual frame buffer to allow IGV to render
         Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
@@ -88,6 +88,6 @@ task RunIGVScreenshot {
     }
 
     output {
-        Array[File] snapshots = glob("/output/IGV_Snapshots/*.png")
+        Array[File] snapshots = glob("/cromwell_root/IGV_Snapshots/*.png")
     }
 }
