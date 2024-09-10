@@ -1,113 +1,87 @@
 version 1.0
 
-workflow IGV_HaplotypeViz {
-  input {
-    File aligned_bam_hap1
-    File aligned_bam_hap2
-    File alignments_bam
-    File ref_fasta
-    File targeted_bed_file
-    String sample_name
-    String disk_type = "SSD"
-    String output_dir
-  }
+workflow IGVScreenshotWorkflow {
 
-  call GenerateIgvScreenshots {
-    input:
-      aligned_bam_hap1 = aligned_bam_hap1,
-      aligned_bam_hap2 = aligned_bam_hap2,
-      alignments_bam = alignments_bam,
-      ref_fasta = ref_fasta,
-      targeted_bed_file = targeted_bed_file,
-      sample_name = sample_name,
-      disk_type = disk_type
-  }
+    input {
+        File aligned_bam_hap1       # BAM file for haplotype 1
+        File aligned_bam_hap1_bai   # BAM index for haplotype 1
+        File aligned_bam_hap2       # BAM file for haplotype 2
+        File aligned_bam_hap2_bai   # BAM index for haplotype 2
+        File alignments             # BAM file for total alignments
+        File alignments_bai         # BAM index for total alignments
+        File bed_file               # BED file with regions
+        File fasta_file             # Reference FASTA file
+        String sample_name          # Sample name to use in filenames
+        Int image_height = 500
+        Int memory_mb = 4000
+        Int disk_gb = 100           # Disk size in GB, default to 100 GB
+        String docker_image = "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:v982024"  # The Docker image to use
+    }
 
-  call FinalizeToGCS {
-    input:
-      screenshots = GenerateIgvScreenshots.screenshots,
-      output_dir = output_dir
-  }
+    call RunIGVScreenshot {
+        input:
+            aligned_bam_hap1 = aligned_bam_hap1,
+            aligned_bam_hap1_bai = aligned_bam_hap1_bai,
+            aligned_bam_hap2 = aligned_bam_hap2,
+            aligned_bam_hap2_bai = aligned_bam_hap2_bai,
+            alignments = alignments,
+            alignments_bai = alignments_bai,
+            bed_file = bed_file,
+            fasta_file = fasta_file,
+            sample_name = sample_name,
+            image_height = image_height,
+            memory_mb = memory_mb,
+            disk_gb = disk_gb,
+            docker_image = docker_image
+    }
 
-  output {
-    Array[File] final_screenshots = FinalizeToGCS.uploaded_files
-  }
+    output {
+        Array[File] snapshots = RunIGVScreenshot.snapshots
+    }
 }
 
-task GenerateIgvScreenshots {
-  input {
-    File aligned_bam_hap1
-    File aligned_bam_hap2
-    File alignments_bam
-    File ref_fasta
-    File targeted_bed_file
-    String sample_name
-    String disk_type
-  }
+task RunIGVScreenshot {
+    input {
+        File aligned_bam_hap1
+        File aligned_bam_hap1_bai
+        File aligned_bam_hap2
+        File aligned_bam_hap2_bai
+        File alignments
+        File alignments_bai
+        File bed_file
+        File fasta_file
+        String sample_name
+        Int image_height
+        Int memory_mb
+        Int disk_gb
+        String docker_image
+    }
 
-  command <<<
-    # Ensure the snapshots directory exists and set permissions
-    mkdir -p /cromwell_root/output/IGV_Snapshots && chmod 777 /cromwell_root/output/IGV_Snapshots
+    command {
+        mkdir -p IGV_Snapshots
+        Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
+        export DISPLAY=:1
 
-    # Start a virtual frame buffer to allow IGV to render
-    Xvfb :1 -screen 0 1024x768x16 & export DISPLAY=:1
+        # Run the IGV screenshot script with the provided inputs
+        python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
+          ~{aligned_bam_hap1} ~{aligned_bam_hap2} ~{alignments} \
+          ~{aligned_bam_hap1_bai} ~{aligned_bam_hap2_bai} ~{alignments_bai} \
+          -r ~{bed_file} \
+          -ht ~{image_height} \
+          -bin /opt/IGV_Linux_2.18.2/igv.sh \
+          -mem ~{memory_mb} \
+          --fasta_file ~{fasta_file} \
+          --sample_name ~{sample_name}
+    }
 
-    # Run the Python script to generate IGV snapshots
-    python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
-      ~{aligned_bam_hap1} ~{aligned_bam_hap2} ~{alignments_bam} \
-      --fasta_file ~{ref_fasta} \
-      --sample_name ~{sample_name} \
-      -r ~{targeted_bed_file} \
-      -ht 500 \
-      -bin /opt/IGV_Linux_2.18.2/igv.sh \
-      -mem 4000
+    runtime {
+        docker: docker_image
+        memory: "~{memory_mb} MB"
+        cpu: 2
+        disks: "local-disk ~{disk_gb} HDD"
+    }
 
-  >>>
-
-  output {
-    Array[File] screenshots = glob("/cromwell_root/output/IGV_Snapshots/*.png")
-  }
-
-  Int disk_size = ceil(size(aligned_bam_hap1, "GiB")) + ceil(size(aligned_bam_hap2, "GiB")) + ceil(size(alignments_bam, "GiB")) + 10
-
-  runtime {
-    cpu:        4
-    memory:     "8 GiB"
-    disks:      "local-disk " + disk_size + " " + disk_type
-    preemptible: 2
-    maxRetries: 1
-    docker:     "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:v982024"
-  }
-}
-
-task FinalizeToGCS {
-  input {
-    Array[File] screenshots
-    String output_dir
-  }
-
-  command <<<
-    set -euxo pipefail
-
-    # Ensure the output directory exists and is properly formatted
-    gcs_output_dir=$(echo ~{output_dir} | sed 's:/*$::')
-
-    # Copy all screenshots to Google Cloud Storage
-    for file in ~{sep=' ' screenshots}; do
-      gsutil cp $file $gcs_output_dir/
-    done
-  >>>
-
-  output {
-    Array[File] uploaded_files = glob("~{output_dir}/*.png")
-  }
-
-  runtime {
-    cpu:        1
-    memory:     "4 GiB"
-    disks:      "local-disk 10 SSD"
-    preemptible: 1
-    maxRetries: 2
-    docker:     "google/cloud-sdk:slim"
-  }
+    output {
+        Array[File] snapshots = glob("IGV_Snapshots/*.png")
+    }
 }
