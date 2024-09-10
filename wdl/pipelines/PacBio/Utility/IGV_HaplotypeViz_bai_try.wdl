@@ -1,15 +1,15 @@
 version 1.0
 
-workflow igv_screenshot_workflow {
+workflow IGV_HaplotypeViz {
   input {
-    File aligned_bam_hap1          # BAM file for haplotype 1
-    File aligned_bam_hap2          # BAM file for haplotype 2
-    File alignments_bam            # Total alignments BAM file
-    File ref_fasta                 # Reference FASTA file
-    File targeted_bed_file         # BED file with regions of interest
-    String sample_name             # Name for the sample (used in output naming)
-    String disk_type = "SSD"       # Default disk type
-    String gcs_output_dir          # GCS directory to copy outputs
+    File aligned_bam_hap1
+    File aligned_bam_hap2
+    File alignments_bam
+    File ref_fasta
+    File targeted_bed_file
+    String sample_name
+    String disk_type = "SSD"
+    String output_dir
   }
 
   call GenerateIgvScreenshots {
@@ -26,11 +26,11 @@ workflow igv_screenshot_workflow {
   call FinalizeToGCS {
     input:
       screenshots = GenerateIgvScreenshots.screenshots,
-      output_dir = gcs_output_dir
+      output_dir = output_dir
   }
 
   output {
-    Array[File] screenshot_files = GenerateIgvScreenshots.screenshots
+    Array[File] final_screenshots = FinalizeToGCS.uploaded_files
   }
 }
 
@@ -47,7 +47,7 @@ task GenerateIgvScreenshots {
 
   command <<<
     # Ensure the snapshots directory exists and set permissions
-    mkdir -p /output/IGV_Snapshots && chmod 777 /output/IGV_Snapshots
+    mkdir -p /cromwell_root/output/IGV_Snapshots && chmod 777 /cromwell_root/output/IGV_Snapshots
 
     # Start a virtual frame buffer to allow IGV to render
     Xvfb :1 -screen 0 1024x768x16 & export DISPLAY=:1
@@ -65,10 +65,9 @@ task GenerateIgvScreenshots {
   >>>
 
   output {
-    Array[File] screenshots = glob("/output/IGV_Snapshots/*.png")
+    Array[File] screenshots = glob("/cromwell_root/output/IGV_Snapshots/*.png")
   }
 
-  # Calculate dynamic disk size based on the size of BAM files
   Int disk_size = ceil(size(aligned_bam_hap1, "GiB")) + ceil(size(aligned_bam_hap2, "GiB")) + ceil(size(alignments_bam, "GiB")) + 10
 
   runtime {
@@ -88,22 +87,27 @@ task FinalizeToGCS {
   }
 
   command <<<
-    # Copy the output PNG files to Google Cloud Storage
+    set -euxo pipefail
+
+    # Ensure the output directory exists and is properly formatted
+    gcs_output_dir=$(echo ~{output_dir} | sed 's:/*$::')
+
+    # Copy all screenshots to Google Cloud Storage
     for file in ~{sep=' ' screenshots}; do
-      gsutil cp "$file" "~{output_dir}/"
+      gsutil cp $file $gcs_output_dir/
     done
   >>>
 
   output {
-    Array[File] uploaded_files = screenshots
+    Array[File] uploaded_files = glob("~{output_dir}/*.png")
   }
 
   runtime {
     cpu:        1
-    memory:     "2 GiB"
-    disks:      "local-disk 10 HDD"
-    preemptible: 2
-    maxRetries: 1
-    docker:     "gcr.io/google-containers/toolbox:latest"
+    memory:     "4 GiB"
+    disks:      "local-disk 10 SSD"
+    preemptible: 1
+    maxRetries: 2
+    docker:     "google/cloud-sdk:slim"
   }
 }
