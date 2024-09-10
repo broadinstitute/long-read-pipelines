@@ -8,6 +8,7 @@ workflow IGVScreenshotWorkflow {
         File alignments             # BAM file for total alignments
         File bed_file               # BED file with regions
         File fasta_file             # Reference FASTA file
+        File fasta_fai              # FASTA index (.fai) file
         String sample_name          # Sample name to use in filenames
         Int image_height = 500
         Int memory_mb = 4000
@@ -25,6 +26,7 @@ workflow IGVScreenshotWorkflow {
             alignments_bai = alignments + ".bai",  # Automatically infer BAI location
             bed_file = bed_file,
             fasta_file = fasta_file,
+            fasta_fai = fasta_fai,
             sample_name = sample_name,
             image_height = image_height,
             memory_mb = memory_mb,
@@ -47,6 +49,7 @@ task RunIGVScreenshot {
         File alignments_bai
         File bed_file
         File fasta_file
+        File fasta_fai
         String sample_name
         Int image_height
         Int memory_mb
@@ -68,6 +71,7 @@ task RunIGVScreenshot {
           -bin /opt/IGV_Linux_2.18.2/igv.sh \
           -mem ~{memory_mb} \
           --fasta_file ~{fasta_file} \
+          --fasta_fai ~{fasta_fai} \
           --sample_name ~{sample_name}
     }
 
