@@ -58,7 +58,10 @@ task RunIGVScreenshot {
     }
 
     command {
-        mkdir -p IGV_Snapshots
+        # Ensure the snapshots directory exists
+        mkdir -p /output/IGV_Snapshots && chmod 777 /output/IGV_Snapshots
+
+        # Start a virtual frame buffer to allow IGV to render
         Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
         export DISPLAY=:1
 
@@ -71,7 +74,6 @@ task RunIGVScreenshot {
           -bin /opt/IGV_Linux_2.18.2/igv.sh \
           -mem ~{memory_mb} \
           --fasta_file ~{fasta_file} \
-          --fasta_fai ~{fasta_fai} \
           --sample_name ~{sample_name}
     }
 
@@ -83,6 +85,6 @@ task RunIGVScreenshot {
     }
 
     output {
-        Array[File] snapshots = glob("IGV_Snapshots/*.png")
+        Array[File] snapshots = glob("/output/IGV_Snapshots/*.png")
     }
 }
