@@ -62,8 +62,10 @@ task RunIGVScreenshot {
     }
 
     command <<<
-        # Ensure the snapshots directory exists under the mounted disk path
-        mkdir -p /output/IGV_Snapshots
+        set -euo pipefail
+
+        # Ensure the snapshots directory exists under the local disk path
+        mkdir -p /mnt/local-disk/IGV_Snapshots
 
         # Start a virtual frame buffer to allow IGV to render
         Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
@@ -78,7 +80,7 @@ task RunIGVScreenshot {
           -mem ~{memory_mb} \
           --fasta_file ~{fasta_file} \
           --sample_name ~{sample_name} \
-          --snapshot-dir "/output/IGV_Snapshots"
+          --snapshot-dir "/mnt/local-disk/IGV_Snapshots"
     >>>
 
     runtime {
@@ -89,6 +91,6 @@ task RunIGVScreenshot {
     }
 
     output {
-        Array[File] snapshots = glob("/output/IGV_Snapshots/*.png")
+        Array[File] snapshots = glob("/mnt/local-disk/IGV_Snapshots/*.png")
     }
 }
