@@ -82,7 +82,7 @@ task RunIGVScreenshot {
           --sample_name ~{sample_name}
 
         # Move the screenshots to the IGV_Snapshots directory
-        mv *.png 'output/IGV_Snapshots/'
+        mv -- *.png 'output/IGV_Snapshots/'
     >>>
 
     runtime {
