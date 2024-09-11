@@ -71,7 +71,7 @@ task RunIGVScreenshot {
         Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
         export DISPLAY=:1
 
-        # Run the IGV screenshot script with the provided inputs
+        # Run the IGV screenshot script with the provided inputs, no --snapshot-dir
         python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
           ~{aligned_bam_hap1} ~{aligned_bam_hap2} ~{alignments} \
           -r ~{bed_file} \
@@ -79,8 +79,10 @@ task RunIGVScreenshot {
           -bin /opt/IGV_Linux_2.18.2/igv.sh \
           -mem ~{memory_mb} \
           --fasta_file ~{fasta_file} \
-          --sample_name ~{sample_name} \
-          --snapshot-dir "/cromwell_root/IGV_Snapshots"
+          --sample_name ~{sample_name}
+
+        # Move the screenshots to the output directory
+        mv *.png /cromwell_root/IGV_Snapshots/
     >>>
 
     runtime {
