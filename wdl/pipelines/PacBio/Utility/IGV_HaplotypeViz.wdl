@@ -82,7 +82,7 @@ task RunIGVScreenshot {
           --sample_name ~{sample_name}
 
         # Move the screenshots to the IGV_Snapshots directory
-        mv -- *.png 'output/IGV_Snapshots/'
+        #mv -- *.png 'output/IGV_Snapshots/'
     >>>
 
     runtime {
@@ -93,6 +93,6 @@ task RunIGVScreenshot {
     }
 
     output {
-        Array[File] snapshots = glob("IGV_Snapshots/*.png")
+        Array[File] snapshots = glob("output/IGV_Snapshots/*.png")
     }
 }
