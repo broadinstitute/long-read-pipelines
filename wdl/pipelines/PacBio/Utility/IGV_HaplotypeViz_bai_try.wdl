@@ -1,7 +1,7 @@
 version 1.0
 
 workflow IGVScreenshotWorkflow {
-    
+
     input {
         File aligned_bam_hap1
         File aligned_bam_hap1_bai
@@ -11,7 +11,7 @@ workflow IGVScreenshotWorkflow {
         File alignments_bai
         File bed_file
         File fasta_file
-        File fasta_file_fai   # Include the .fai file
+        File fasta_file_fai   # Include the .fai file for localization
         String sample_name
         Int image_height = 500
         Int memory_mb = 4000
@@ -43,7 +43,7 @@ workflow IGVScreenshotWorkflow {
 }
 
 task RunIGVScreenshot {
-    
+
     input {
         File aligned_bam_hap1
         File aligned_bam_hap1_bai
@@ -64,15 +64,11 @@ task RunIGVScreenshot {
     command <<<
         set -euo pipefail
 
-        # Ensure the snapshots directory exists under the mounted disk path
-        mkdir -p /output/IGV_Snapshots
-        #mkdir snap_out
-
         # Start a virtual frame buffer to allow IGV to render
         Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
         export DISPLAY=:1
 
-        # Run the IGV screenshot script with the provided inputs, no --snapshot-dir
+        # Run the IGV screenshot script with the provided inputs
         python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
           ~{aligned_bam_hap1} ~{aligned_bam_hap2} ~{alignments} \
           -r ~{bed_file} \
@@ -82,6 +78,7 @@ task RunIGVScreenshot {
           --fasta_file ~{fasta_file} \
           --sample_name ~{sample_name}
 
+        # No need to create the snapshot directory, it's handled in the Python script
     >>>
 
     runtime {
@@ -92,6 +89,7 @@ task RunIGVScreenshot {
     }
 
     output {
+        # Collect the output from the Python script's default snapshot directory
         Array[File] snapshots = glob("/output/IGV_Snapshots/*.png")
     }
 }
