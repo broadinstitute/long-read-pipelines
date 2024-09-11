@@ -65,7 +65,7 @@ task RunIGVScreenshot {
         set -euo pipefail
 
         # Ensure the snapshots directory exists
-        mkdir -p IGV_Snapshots
+        mkdir -p 'output/IGV_Snapshots'
 
         # Start a virtual frame buffer to allow IGV to render
         Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
@@ -82,14 +82,14 @@ task RunIGVScreenshot {
           --sample_name ~{sample_name}
 
         # Move the screenshots to the IGV_Snapshots directory
-        mv *.png IGV_Snapshots/
+        mv *.png 'output/IGV_Snapshots/'
     >>>
 
     runtime {
         docker: docker_image
         memory: "~{memory_mb} MB"
         cpu: 2
-        disks: "local-disk ~{disk_gb} HDD"
+        disks: "local-disk ~{disk_gb} SSD"
     }
 
     output {
