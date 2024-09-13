@@ -812,7 +812,7 @@ task AnnotateVcfWithBedRegions {
         set -euxo pipefail
 
         # Get amount of memory to use:
-        mem_available=$(free -g | grep '^Mem' | awk '{print $2}')
+        mem_available=$(free -m | grep '^Mem' | awk '{print $2}')
         mem_start=$((mem_available-1000))
         mem_max=$((mem_available-750))
 
