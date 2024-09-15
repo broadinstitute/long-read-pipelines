@@ -4,9 +4,10 @@ workflow NormalizeVCF {
   input {
     File input_vcf
     File reference_fa
-    Int disk_size_gb = 20  # Default disk size in GB
-    Int memory_gb = 4      # Default memory size in GB
-    Int cpu_cores = 1      # Default number of CPU cores
+    String sample_name  # New input for sample name
+    Int disk_size_gb = 20
+    Int memory_gb = 4
+    Int cpu_cores = 1
   }
 
   call RemoveHAPCOMP {
@@ -29,6 +30,7 @@ workflow NormalizeVCF {
     input:
       input_vcf = RemoveHAPDOM.output_vcf,
       reference_fa = reference_fa,
+      sample_name = sample_name,
       disk_size_gb = disk_size_gb,
       memory_gb = memory_gb,
       cpu_cores = cpu_cores
@@ -83,7 +85,7 @@ task RemoveHAPDOM {
     docker: "us.gcr.io/broad-dsp-lrma/bcftools_htslib:v9152024"
     memory: "~{memory_gb}G"
     cpu: "~{cpu_cores}"
-    disks: "local-disk ~{disk_size_gb} SSD"
+    disks: "local-disk ~{disk_size_gb} HDD"
   }
 }
 
@@ -91,23 +93,24 @@ task NormalizeVCFFile {
   input {
     File input_vcf
     File reference_fa
+    String sample_name  # Input for the sample name
     Int disk_size_gb
     Int memory_gb
     Int cpu_cores
   }
 
   command {
-    bcftools norm -m -any --atom-overlaps . -f ~{reference_fa} ~{input_vcf} | bgzip -c > output.norm.vcf.gz
+    bcftools norm -m -any --atom-overlaps . -f ~{reference_fa} ~{input_vcf} | bgzip -c > ~{sample_name}.norm.vcf.gz
   }
 
   output {
-    File output_vcf = "output.norm.vcf.gz"
+    File output_vcf = "~{sample_name}.norm.vcf.gz"
   }
 
   runtime {
     docker: "us.gcr.io/broad-dsp-lrma/bcftools_htslib:v9152024"
     memory: "~{memory_gb}G"
     cpu: "~{cpu_cores}"
-    disks: "local-disk ~{disk_size_gb} HDD"
+    disks: "local-disk ~{disk_size_gb} SSD"
   }
 }
