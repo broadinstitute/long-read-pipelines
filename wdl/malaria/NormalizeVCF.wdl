@@ -1,32 +1,39 @@
 version 1.0
 
 workflow NormalizeVCF {
-  # Define inputs in an input block
   input {
     File input_vcf
     File reference_fa
+    Int disk_size_gb = 20  # Default disk size in GB
+    Int memory_gb = 4      # Default memory size in GB
+    Int cpu_cores = 1      # Default number of CPU cores
   }
 
-  # Step 1: Remove HAPCOMP field
   call RemoveHAPCOMP {
     input:
-      input_vcf = input_vcf
+      input_vcf = input_vcf,
+      disk_size_gb = disk_size_gb,
+      memory_gb = memory_gb,
+      cpu_cores = cpu_cores
   }
 
-  # Step 2: Remove HAPDOM field
   call RemoveHAPDOM {
     input:
-      input_vcf = RemoveHAPCOMP.output_vcf
+      input_vcf = RemoveHAPCOMP.output_vcf,
+      disk_size_gb = disk_size_gb,
+      memory_gb = memory_gb,
+      cpu_cores = cpu_cores
   }
 
-  # Step 3: Normalize VCF
   call NormalizeVCFFile {
     input:
       input_vcf = RemoveHAPDOM.output_vcf,
-      reference_fa = reference_fa
+      reference_fa = reference_fa,
+      disk_size_gb = disk_size_gb,
+      memory_gb = memory_gb,
+      cpu_cores = cpu_cores
   }
 
-  # Output
   output {
     File normalized_vcf = NormalizeVCFFile.output_vcf
   }
@@ -35,6 +42,9 @@ workflow NormalizeVCF {
 task RemoveHAPCOMP {
   input {
     File input_vcf
+    Int disk_size_gb
+    Int memory_gb
+    Int cpu_cores
   }
 
   command {
@@ -47,14 +57,18 @@ task RemoveHAPCOMP {
 
   runtime {
     docker: "us.gcr.io/broad-dsp-lrma/bcftools_htslib:v9152024"
-    memory: "4G"
-    cpu: 1
+    memory: "~{memory_gb}G"
+    cpu: "~{cpu_cores}"
+    disks: "local-disk ~{disk_size_gb} HDD"
   }
 }
 
 task RemoveHAPDOM {
   input {
     File input_vcf
+    Int disk_size_gb
+    Int memory_gb
+    Int cpu_cores
   }
 
   command {
@@ -67,8 +81,9 @@ task RemoveHAPDOM {
 
   runtime {
     docker: "us.gcr.io/broad-dsp-lrma/bcftools_htslib:v9152024"
-    memory: "4G"
-    cpu: 1
+    memory: "~{memory_gb}G"
+    cpu: "~{cpu_cores}"
+    disks: "local-disk ~{disk_size_gb} SSD"
   }
 }
 
@@ -76,6 +91,9 @@ task NormalizeVCFFile {
   input {
     File input_vcf
     File reference_fa
+    Int disk_size_gb
+    Int memory_gb
+    Int cpu_cores
   }
 
   command {
@@ -88,7 +106,8 @@ task NormalizeVCFFile {
 
   runtime {
     docker: "us.gcr.io/broad-dsp-lrma/bcftools_htslib:v9152024"
-    memory: "4G"
-    cpu: 1
+    memory: "~{memory_gb}G"
+    cpu: "~{cpu_cores}"
+    disks: "local-disk ~{disk_size_gb} HDD"
   }
 }
