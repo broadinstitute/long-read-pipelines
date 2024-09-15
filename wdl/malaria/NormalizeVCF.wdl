@@ -4,10 +4,10 @@ workflow NormalizeVCF {
   input {
     File input_vcf
     File reference_fa
-    String sample_name
-    Int disk_size_gb = 30
-    Int memory_gb = 8
-    Int cpu_cores = 4
+    String sample_name  # New input for sample name
+    Int disk_size_gb = 50
+    Int memory_gb = 16
+    Int cpu_cores = 8
   }
 
   call RemoveHAPCOMP {
@@ -104,13 +104,13 @@ task NormalizeVCFFile {
     # Normalize the VCF
     bcftools norm -m -any --atom-overlaps . -f ~{reference_fa} ~{input_vcf} | bgzip -c > ~{sample_name}.norm.vcf.gz
 
-    # Index the normalized VCF
-    bcftools index ~{sample_name}.norm.vcf.gz
+    # Index the normalized VCF with tabix (.tbi)
+    tabix -p vcf ~{sample_name}.norm.vcf.gz
   }
 
   output {
     File output_vcf = "~{sample_name}.norm.vcf.gz"
-    File output_vcf_index = "~{sample_name}.norm.vcf.gz.csi"
+    File output_vcf_index = "~{sample_name}.norm.vcf.gz.tbi"
   }
 
   runtime {
