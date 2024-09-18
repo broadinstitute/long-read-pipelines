@@ -229,7 +229,7 @@ task ExtractIntervalNamesFromIntervalOrBamFile {
                     for line in f:
                         fields = line.strip().split("\t")
                         contig = fields[0]
-                        start = int(fields[1])
+                        start = int(fields[1]) + 1  # Add 1 here so that the results will be valid *intervals* (bed files start from 0).
                         end = int(fields[2])
 
                         interval_names.append((contig, start, end))
