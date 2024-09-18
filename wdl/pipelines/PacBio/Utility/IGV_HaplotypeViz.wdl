@@ -1,71 +1,83 @@
 version 1.0
 
 workflow IGVScreenshotWorkflow {
-    
+
     input {
-        File aligned_bam_hap1
-        File aligned_bam_hap1_bai
-        File aligned_bam_hap2
-        File aligned_bam_hap2_bai
-        File alignments
-        File alignments_bai
-        File bed_file
-        File fasta_file
-        File fasta_file_fai
+        File bam_file
+        File bam_file_bai
+        File regions_bed
+        File reference_fasta
+        File reference_fasta_fai
         String sample_name
-        Int image_height = 500
+        Int image_height = 1000
         Int memory_mb = 4000
-        Int disk_gb = 100           # Disk size in GB, default to 100 GB
-        String docker_image = "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:v982024"  # The Docker image to use
+        Int disk_gb = 100
+        String docker_image = "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:v9172024"
+        File? truth_haplotype_1
+        File? truth_haplotype_1_bai
+        File? truth_haplotype_2
+        File? truth_haplotype_2_bai
+        File? targeted_vcf
+        File? targeted_vcf_tbi
+        File? second_alignment_reads
+        File? second_alignment_reads_bai
     }
 
     call RunIGVScreenshot {
         input:
-            aligned_bam_hap1 = aligned_bam_hap1,
-            aligned_bam_hap1_bai = aligned_bam_hap1_bai,
-            aligned_bam_hap2 = aligned_bam_hap2,
-            aligned_bam_hap2_bai = aligned_bam_hap2_bai,
-            alignments = alignments,
-            alignments_bai = alignments_bai,
-            bed_file = bed_file,
-            fasta_file = fasta_file,
-            fasta_file_fai = fasta_file_fai,
-            sample_name = sample_name,
-            image_height = image_height,
-            memory_mb = memory_mb,
-            disk_gb = disk_gb,
-            docker_image = docker_image
+            bam_file=bam_file,
+            bam_file_bai=bam_file_bai,
+            regions_bed=regions_bed,
+            reference_fasta=reference_fasta,
+            reference_fasta_fai=reference_fasta_fai,
+            sample_name=sample_name,
+            image_height=image_height,
+            memory_mb=memory_mb,
+            disk_gb=disk_gb,
+            docker_image=docker_image,
+            truth_haplotype_1=truth_haplotype_1,
+            truth_haplotype_1_bai=truth_haplotype_1_bai,
+            truth_haplotype_2=truth_haplotype_2,
+            truth_haplotype_2_bai=truth_haplotype_2_bai,
+            targeted_vcf=targeted_vcf,
+            targeted_vcf_tbi=targeted_vcf_tbi,
+            second_alignment_reads=second_alignment_reads,
+            second_alignment_reads_bai=second_alignment_reads_bai
     }
 
     output {
-        Array[File] snapshots = RunIGVScreenshot.snapshots
+        File igv_output_zip = RunIGVScreenshot.igv_output_zip
     }
 }
 
 task RunIGVScreenshot {
     
     input {
-        File aligned_bam_hap1
-        File aligned_bam_hap1_bai
-        File aligned_bam_hap2
-        File aligned_bam_hap2_bai
-        File alignments
-        File alignments_bai
-        File bed_file
-        File fasta_file
-        File fasta_file_fai
+        File bam_file
+        File bam_file_bai
+        File regions_bed
+        File reference_fasta
+        File reference_fasta_fai
         String sample_name
         Int image_height
         Int memory_mb
         Int disk_gb
         String docker_image
+        File? truth_haplotype_1
+        File? truth_haplotype_1_bai
+        File? truth_haplotype_2
+        File? truth_haplotype_2_bai
+        File? targeted_vcf
+        File? targeted_vcf_tbi
+        File? second_alignment_reads
+        File? second_alignment_reads_bai
     }
 
     command <<<
         set -euo pipefail
 
-        # Ensure the snapshots directory exists
-        mkdir -p 'output/IGV_Snapshots'
+        # Ensure the output directory exists
+        mkdir -p igv_output
 
         # Start a virtual frame buffer to allow IGV to render
         Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
@@ -73,26 +85,30 @@ task RunIGVScreenshot {
 
         # Run the IGV screenshot script with the provided inputs
         python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
-          ~{aligned_bam_hap1} ~{aligned_bam_hap2} ~{alignments} \
-          -r ~{bed_file} \
-          -ht ~{image_height} \
-          -bin /opt/IGV_Linux_2.18.2/igv.sh \
-          -mem ~{memory_mb} \
-          --fasta_file ~{fasta_file} \
-          --sample_name ~{sample_name}
-
-        # Move the screenshots to the IGV_Snapshots directory
-        #mv -- *.png 'output/IGV_Snapshots/'
+            ${bam_file} \
+            -r ${regions_bed} \
+            -f ${reference_fasta} \
+            --sample_name ${sample_name} \
+            --snapshot_format png \
+            --output_dir igv_output \
+            -ht ${image_height} \
+            ~{if defined(truth_haplotype_1) then "--truth_haplotype_1 " + truth_haplotype_1 else ""} \
+            ~{if defined(truth_haplotype_2) then "--truth_haplotype_2 " + truth_haplotype_2 else ""} \
+            ~{if defined(targeted_vcf) then "--targeted_vcf " + targeted_vcf else ""} \
+            ~{if defined(second_alignment_reads) then "--second_alignment_reads " + second_alignment_reads else ""}
+        
+        # Zip the output directory
+        zip -r igv_output.zip igv_output/
     >>>
 
     runtime {
         docker: docker_image
-        memory: "~{memory_mb} MB"
+        memory: "${memory_mb} MB"
         cpu: 2
-        disks: "local-disk ~{disk_gb} SSD"
+        disks: "local-disk ${disk_gb} HDD"
     }
 
     output {
-        Array[File] snapshots = glob("output/IGV_Snapshots/*.png")
+        File igv_output_zip = "igv_output.zip"
     }
 }
