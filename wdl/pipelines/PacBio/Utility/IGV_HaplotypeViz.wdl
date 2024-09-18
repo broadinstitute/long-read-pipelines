@@ -3,74 +3,86 @@ version 1.0
 workflow IGVScreenshotWorkflow {
 
     input {
-        File bam_file
-        File bam_file_bai
+        File aligned_bam1
+        File aligned_bam1_bai
+        File aligned_bam2
+        File aligned_bam2_bai
         File regions_bed
         File reference_fasta
         File reference_fasta_fai
+        File? truth_haplotype_1
+        File? truth_haplotype_1_bai
+        File? truth_haplotype_2
+        File? truth_haplotype_2_bai
+        File? haplotype_8x_hap1
+        File? haplotype_8x_hap1_bai
+        File? haplotype_8x_hap2
+        File? haplotype_8x_hap2_bai
+        File? TRGT_VCF
+        File? TRGT_VCF_tbi
         String sample_name
         Int image_height = 1000
         Int memory_mb = 4000
         Int disk_gb = 100
         String docker_image = "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:v9172024"
-        File? truth_haplotype_1
-        File? truth_haplotype_1_bai
-        File? truth_haplotype_2
-        File? truth_haplotype_2_bai
-        File? targeted_vcf
-        File? targeted_vcf_tbi
-        File? second_alignment_reads
-        File? second_alignment_reads_bai
     }
 
     call RunIGVScreenshot {
         input:
-            bam_file=bam_file,
-            bam_file_bai=bam_file_bai,
-            regions_bed=regions_bed,
-            reference_fasta=reference_fasta,
-            reference_fasta_fai=reference_fasta_fai,
-            sample_name=sample_name,
-            image_height=image_height,
-            memory_mb=memory_mb,
-            disk_gb=disk_gb,
-            docker_image=docker_image,
-            truth_haplotype_1=truth_haplotype_1,
-            truth_haplotype_1_bai=truth_haplotype_1_bai,
-            truth_haplotype_2=truth_haplotype_2,
-            truth_haplotype_2_bai=truth_haplotype_2_bai,
-            targeted_vcf=targeted_vcf,
-            targeted_vcf_tbi=targeted_vcf_tbi,
-            second_alignment_reads=second_alignment_reads,
-            second_alignment_reads_bai=second_alignment_reads_bai
+            aligned_bam1 = aligned_bam1,
+            aligned_bam1_bai = aligned_bam1_bai,
+            aligned_bam2 = aligned_bam2,
+            aligned_bam2_bai = aligned_bam2_bai,
+            regions_bed = regions_bed,
+            reference_fasta = reference_fasta,
+            reference_fasta_fai = reference_fasta_fai,
+            truth_haplotype_1 = truth_haplotype_1,
+            truth_haplotype_1_bai = truth_haplotype_1_bai,
+            truth_haplotype_2 = truth_haplotype_2,
+            truth_haplotype_2_bai = truth_haplotype_2_bai,
+            haplotype_8x_hap1 = haplotype_8x_hap1,
+            haplotype_8x_hap1_bai = haplotype_8x_hap1_bai,
+            haplotype_8x_hap2 = haplotype_8x_hap2,
+            haplotype_8x_hap2_bai = haplotype_8x_hap2_bai,
+            TRGT_VCF = TRGT_VCF,
+            TRGT_VCF_tbi = TRGT_VCF_tbi,
+            sample_name = sample_name,
+            image_height = image_height,
+            memory_mb = memory_mb,
+            disk_gb = disk_gb,
+            docker_image = docker_image
     }
 
     output {
-        File igv_output_zip = RunIGVScreenshot.igv_output_zip
+        Array[File] screenshots = RunIGVScreenshot.screenshots
     }
 }
 
 task RunIGVScreenshot {
-    
+
     input {
-        File bam_file
-        File bam_file_bai
+        File aligned_bam1
+        File aligned_bam1_bai
+        File aligned_bam2
+        File aligned_bam2_bai
         File regions_bed
         File reference_fasta
         File reference_fasta_fai
+        File? truth_haplotype_1
+        File? truth_haplotype_1_bai
+        File? truth_haplotype_2
+        File? truth_haplotype_2_bai
+        File? haplotype_8x_hap1
+        File? haplotype_8x_hap1_bai
+        File? haplotype_8x_hap2
+        File? haplotype_8x_hap2_bai
+        File? TRGT_VCF
+        File? TRGT_VCF_tbi
         String sample_name
         Int image_height
         Int memory_mb
         Int disk_gb
         String docker_image
-        File? truth_haplotype_1
-        File? truth_haplotype_1_bai
-        File? truth_haplotype_2
-        File? truth_haplotype_2_bai
-        File? targeted_vcf
-        File? targeted_vcf_tbi
-        File? second_alignment_reads
-        File? second_alignment_reads_bai
     }
 
     command <<<
@@ -85,20 +97,19 @@ task RunIGVScreenshot {
 
         # Run the IGV screenshot script with the provided inputs
         python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
-            ${bam_file} \
+            ${aligned_bam1} \
+            --second_alignment_reads ${aligned_bam2} \
+            ~{if defined(truth_haplotype_1) then "--truth_haplotype_1 " + truth_haplotype_1 else ""} \
+            ~{if defined(truth_haplotype_2) then "--truth_haplotype_2 " + truth_haplotype_2 else ""} \
+            ~{if defined(TRGT_VCF) then "--targeted_vcf " + TRGT_VCF else ""} \
+            ~{if defined(haplotype_8x_hap1) then "--second_alignment_reads " + haplotype_8x_hap1 else ""} \
+            ~{if defined(haplotype_8x_hap2) then "--second_alignment_reads " + haplotype_8x_hap2 else ""} \
             -r ${regions_bed} \
             -f ${reference_fasta} \
             --sample_name ${sample_name} \
             --snapshot_format png \
             --output_dir igv_output \
-            -ht ${image_height} \
-            ~{if defined(truth_haplotype_1) then "--truth_haplotype_1 " + truth_haplotype_1 else ""} \
-            ~{if defined(truth_haplotype_2) then "--truth_haplotype_2 " + truth_haplotype_2 else ""} \
-            ~{if defined(targeted_vcf) then "--targeted_vcf " + targeted_vcf else ""} \
-            ~{if defined(second_alignment_reads) then "--second_alignment_reads " + second_alignment_reads else ""}
-        
-        # Zip the output directory
-        zip -r igv_output.zip igv_output/
+            -ht ${image_height}
     >>>
 
     runtime {
@@ -109,6 +120,6 @@ task RunIGVScreenshot {
     }
 
     output {
-        File igv_output_zip = "igv_output.zip"
+        Array[File] screenshots = glob("igv_output/*.png")
     }
 }
