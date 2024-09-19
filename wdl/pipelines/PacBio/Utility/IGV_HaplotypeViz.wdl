@@ -116,7 +116,7 @@ task RunIGVScreenshot {
         docker: docker_image
         memory: "${memory_mb} MB"
         cpu: 2
-        disks: "local-disk ${disk_gb} HDD"
+        disks: "local-disk ${disk_gb} SSD"
     }
 
     output {
