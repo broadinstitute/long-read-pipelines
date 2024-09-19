@@ -5,8 +5,8 @@ workflow IGVScreenshotWorkflow {
     input {
         File aligned_bam1
         File aligned_bam1_bai
-        File aligned_bam2
-        File aligned_bam2_bai
+        File? aligned_bam2
+        File? aligned_bam2_bai
         File regions_bed
         File reference_fasta
         File reference_fasta_fai
@@ -63,8 +63,8 @@ task RunIGVScreenshot {
     input {
         File aligned_bam1
         File aligned_bam1_bai
-        File aligned_bam2
-        File aligned_bam2_bai
+        File? aligned_bam2
+        File? aligned_bam2_bai
         File regions_bed
         File reference_fasta
         File reference_fasta_fai
@@ -98,7 +98,7 @@ task RunIGVScreenshot {
         # Run the IGV screenshot script with the provided inputs
         python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
             ${aligned_bam1} \
-            --second_alignment_reads ${aligned_bam2} \
+            ~{if defined(aligned_bam2) then "--second_alignment_reads " + aligned_bam2 else ""} \
             ~{if defined(truth_haplotype_1) then "--truth_haplotype_1 " + truth_haplotype_1 else ""} \
             ~{if defined(truth_haplotype_2) then "--truth_haplotype_2 " + truth_haplotype_2 else ""} \
             ~{if defined(TRGT_VCF) then "--targeted_vcf " + TRGT_VCF else ""} \
