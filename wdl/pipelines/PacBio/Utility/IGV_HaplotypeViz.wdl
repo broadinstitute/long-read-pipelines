@@ -9,6 +9,12 @@ workflow IGVScreenshotWorkflow {
         File aligned_bam_hap2_bai
         File alignments
         File alignments_bai
+
+        Array[File]? orthogonal_alignments
+        Array[File]? orthogonal_alignments_bai
+        File? vcf
+        File? vcf_tbi
+
         File bed_file
         File fasta_file
         File fasta_file_fai
@@ -27,6 +33,10 @@ workflow IGVScreenshotWorkflow {
             aligned_bam_hap2_bai = aligned_bam_hap2_bai,
             alignments = alignments,
             alignments_bai = alignments_bai,
+            orthogonal_alignments = orthogonal_alignments,
+            orthogonal_alignments_bai = orthogonal_alignments_bai,
+            vcf = vcf,
+            vcf_tbi = vcf_tbi,
             bed_file = bed_file,
             fasta_file = fasta_file,
             fasta_file_fai = fasta_file_fai,
@@ -51,6 +61,12 @@ task RunIGVScreenshot {
         File aligned_bam_hap2_bai
         File alignments
         File alignments_bai
+
+        Array[File]? orthogonal_alignments
+        Array[File]? orthogonal_alignments_bai
+        File? vcf
+        File? vcf_tbi
+
         File bed_file
         File fasta_file
         File fasta_file_fai
@@ -61,8 +77,28 @@ task RunIGVScreenshot {
         String docker_image_tag
     }
 
+    Boolean fail_early_a = (defined(vcf) != defined(vcf_tbi))
+    Boolean fail_early_b = (defined(orthogonal_alignments) != defined(orthogonal_alignments_bai))
+    Boolean fail_early_c = if defined(orthogonal_alignments) then (length(select_first([orthogonal_alignments])) != length(select_first([orthogonal_alignments_bai]))) else false
+    Boolean fail_early = (fail_early_a || fail_early_b || fail_early_c)
+
+    # this is when you get to hate WDL
+    Array[File] all_alignments = if defined(orthogonal_alignments) then flatten([[aligned_bam_hap1, aligned_bam_hap2, alignments],
+                                                                                 select_first([orthogonal_alignments])])
+                                                                   else [aligned_bam_hap1, aligned_bam_hap2, alignments]
+
+    Array[File] all_tracks = if defined(vcf) then flatten([select_all([vcf]), all_alignments])
+                                             else all_alignments
+
+    Int scaled_image_height = image_height + 100*(length(all_tracks) - 3)
+
     command <<<
         set -euo pipefail
+
+        if ~{fail_early} ; then
+            echo "ERROR: VCF and VCF index must be provided together. Same for orthogonal alignments and their indexes, plus they must of the same length."
+            exit 1
+        fi
 
         # Ensure the snapshots directory exists
         mkdir -p 'output/IGV_Snapshots'
@@ -73,16 +109,16 @@ task RunIGVScreenshot {
 
         # Run the IGV screenshot script with the provided inputs
         python3 /opt/IGV_Linux_2.18.2/make_igv_screenshot.py \
-          ~{aligned_bam_hap1} ~{aligned_bam_hap2} ~{alignments} \
+          ~{sep=' ' all_tracks} \
           -r ~{bed_file} \
-          -ht ~{image_height} \
+          -ht ~{scaled_image_height} \
           -bin /opt/IGV_Linux_2.18.2/igv.sh \
           -mem ~{memory_mb} \
           --fasta_file ~{fasta_file} \
           --sample_name ~{sample_name}
 
         # Move the screenshots to the IGV_Snapshots directory
-        #mv -- *.png 'output/IGV_Snapshots/'
+        # mv -- *.png 'output/IGV_Snapshots/'
     >>>
 
     runtime {
