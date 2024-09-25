@@ -1,7 +1,7 @@
 version 1.0
 
 workflow IGVScreenshotWorkflow {
-    
+
     input {
         File aligned_bam_hap1
         File aligned_bam_hap1_bai
@@ -16,7 +16,7 @@ workflow IGVScreenshotWorkflow {
         Int image_height = 500
         Int memory_mb = 4000
         Int disk_gb = 100           # Disk size in GB, default to 100 GB
-        String docker_image = "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:v982024"  # The Docker image to use
+        String docker_image_tag = "v982024"  # The Docker image to use
     }
 
     call RunIGVScreenshot {
@@ -34,7 +34,7 @@ workflow IGVScreenshotWorkflow {
             image_height = image_height,
             memory_mb = memory_mb,
             disk_gb = disk_gb,
-            docker_image = docker_image
+            docker_image_tag = docker_image_tag
     }
 
     output {
@@ -43,7 +43,7 @@ workflow IGVScreenshotWorkflow {
 }
 
 task RunIGVScreenshot {
-    
+
     input {
         File aligned_bam_hap1
         File aligned_bam_hap1_bai
@@ -58,7 +58,7 @@ task RunIGVScreenshot {
         Int image_height
         Int memory_mb
         Int disk_gb
-        String docker_image
+        String docker_image_tag
     }
 
     command <<<
@@ -87,7 +87,7 @@ task RunIGVScreenshot {
     >>>
 
     runtime {
-        docker: docker_image
+        docker: "us.gcr.io/broad-dsp-lrma/igv_screenshot_docker:~{docker_image_tag}"
         memory: "~{memory_mb} MB"
         cpu: 2
         disks: "local-disk ~{disk_gb} SSD"
