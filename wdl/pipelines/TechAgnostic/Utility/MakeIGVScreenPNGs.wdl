@@ -1,6 +1,6 @@
 version 1.0
 
-workflow IGVScreenshotWorkflow {
+workflow MakeIGVScreenPNGs {
 
     input {
         File aligned_bam_hap1
@@ -126,6 +126,7 @@ task RunIGVScreenshot {
         memory: "~{memory_mb} MB"
         cpu: 2
         disks: "local-disk ~{disk_gb} SSD"
+        preemptible: 3
     }
 
     output {

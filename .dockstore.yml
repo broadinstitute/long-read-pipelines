@@ -159,3 +159,6 @@ workflows:
 - name: BackupWorkspace
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BackupWorkspace.wdl
+- name: MakeIGVScreenPNGs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/MakeIGVScreenPNGs.wdl
