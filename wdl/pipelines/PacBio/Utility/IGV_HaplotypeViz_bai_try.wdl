@@ -104,7 +104,7 @@ task RunIGVScreenshot {
         mkdir -p 'output/IGV_Snapshots/'
 
         # Start a virtual frame buffer to allow IGV to render
-        Xvfb :1 -screen 0 1024x768x16 &> xvfb.log &
+        Xvfb :1 -screen 0 1920x1080x16 &> xvfb.log &
         export DISPLAY=:1
 
         # Run the IGV screenshot script with the provided inputs, no --snapshot-dir
