@@ -65,21 +65,22 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
     File fq_e2 = select_first([fq_end2, t_003_Bam2Fastq.fq_end2])
 
     # 1 - Filter out human reads:
-    call FilterOutHumanReads as t_005_FilterOutHumanReads {
+    call FilterOutTargetOrganismReads as t_005_FilterOutHumanReads {
         input:
             prefix = sample_name,
             fq_end1 = fq_e1,
             fq_end2 = fq_e2,
-            human_reference_fasta = contaminant_ref_map["fasta"],
-            human_reference_fai = contaminant_ref_map["fai"],
-            human_reference_bowtie_indices = [
+            contaminant_reference_fasta = contaminant_ref_map["fasta"],
+            contaminant_reference_fai = contaminant_ref_map["fai"],
+            contaminant_reference_bowtie_indices = [
                 contaminant_ref_map["1.bt2"],
                 contaminant_ref_map["2.bt2"],
                 contaminant_ref_map["3.bt2"],
                 contaminant_ref_map["4.bt2"],
                 contaminant_ref_map["rev.1.bt2"],
                 contaminant_ref_map["rev.2.bt2"]
-                                             ]
+            ],
+            contaminant_organism_label = "human"
     }
 
     # 2 - Align to Plasmodium reference:
@@ -235,7 +236,7 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
     }
 }
 
-task FilterOutHumanReads {
+task FilterOutTargetOrganismReads {
 
     parameter_meta {
         prefix: "Prefix for output files."
@@ -243,8 +244,11 @@ task FilterOutHumanReads {
         fq_end1: "FASTQ file containing end 1 of reads."
         fq_end2: "FASTQ file containing end 2 of reads."
 
-        human_reference_fasta: "Reference FASTA file for human genome."
-        human_reference_fai: "Reference FASTA index file for human genome."
+        contaminant_reference_fasta: "Reference FASTA file for the genome of the organism to remove."
+        contaminant_reference_fai: "Reference FASTA index file for the genome of the organism to remove."
+        contaminant_reference_bowtie_indices: "Bowtie2 indices for the given target genome."
+
+        contaminant_organism_label: "Label for the name of the target organism."
 
         runtime_attr_override: "Optional override for runtime attributes."
     }
@@ -255,15 +259,19 @@ task FilterOutHumanReads {
         File fq_end1
         File fq_end2
 
-        File human_reference_fasta
-        File human_reference_fai
-        Array[File] human_reference_bowtie_indices
+        File contaminant_reference_fasta
+        File contaminant_reference_fai
+        Array[File] contaminant_reference_bowtie_indices
+
+        String contaminant_organism_label = "contaminant_organism"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int bowtie_index_size = ceil(size(human_reference_bowtie_indices, "GB"))
-    Int disk_size = 10 + 10 * (bowtie_index_size + ceil(size([fq_end1, fq_end2, human_reference_fasta, human_reference_fai], "GB")))
+    Int bowtie_index_size = ceil(size(contaminant_reference_bowtie_indices, "GB"))
+    Int disk_size = 10 + 10 * (bowtie_index_size + ceil(size([fq_end1, fq_end2, contaminant_reference_fasta, contaminant_reference_fai], "GB")))
+
+    String contaminant_organism = sub(contaminant_organism_label, " ", "_")
 
     command <<<
         set -euxo pipefail
@@ -274,28 +282,28 @@ task FilterOutHumanReads {
             let np=${np}-1
         fi
 
-        echo "Aligning to human genome:"
-        bowtie2 -x ~{human_reference_fasta} \
+        echo "Aligning to contaminant genome:"
+        bowtie2 -x ~{contaminant_reference_fasta} \
             --threads ${np} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} | \
-        samtools view -@$((np-1)) -bS - > ~{prefix}.mapAndUnmapped.human.bam
+        samtools view -@$((np-1)) -bS - > ~{prefix}.mapAndUnmapped.~{contaminant_organism}.bam
 
-        echo "Filtering out human reads:"
-        samtools view -@$((np-1)) -b -f 12 -F 256 ~{prefix}.mapAndUnmapped.human.bam > ~{prefix}.unmapped.bam
+        echo "Filtering out ~{contaminant_organism} reads:"
+        samtools view -@$((np-1)) -b -f 12 -F 256 ~{prefix}.mapAndUnmapped.~{contaminant_organism}.bam > ~{prefix}.unmapped.bam
 
         echo "Sorting unmapped reads:"
         samtools sort -@$((np-1)) -n ~{prefix}.unmapped.bam -o ~{prefix}.unmapped.sorted.bam
 
         echo "Converting back to FASTQ:"
-        bedtools bamtofastq -i ~{prefix}.unmapped.sorted.bam \
-            -fq ~{prefix}.hostRemoved.1.fq \
-            -fq2 ~{prefix}.hostRemoved.2.fq
+        samtools fastq -@$((np-1)) -n ~{prefix}.unmapped.sorted.bam \
+            -1 ~{prefix}.contaminationRemoved.1.fq \
+            -2 ~{prefix}.contaminationRemoved.2.fq
     >>>
 
     output {
-        File fq1 = "~{prefix}.hostRemoved.1.fq"
-        File fq2 = "~{prefix}.hostRemoved.2.fq"
+        File fq1 = "~{prefix}.contaminationRemoved.1.fq"
+        File fq2 = "~{prefix}.contaminationRemoved.2.fq"
     }
 
     #########################
@@ -319,6 +327,7 @@ task FilterOutHumanReads {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
 
 task ReorderSam {
     input {

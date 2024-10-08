@@ -88,30 +88,28 @@ workflow RemoveSingleOrganismContamination {
 
     File fq_e1 = select_first([fq_end1, t_005_Bam2Fastq.fq_end1])
     File fq_e2 = select_first([fq_end2, t_005_Bam2Fastq.fq_end2])
-
-    String RG = select_first([t_006_GetRawReadGroup.rg, "@RG\tID:" + SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM])
-
+    
     # Align data to contaminant reference:
-    call SRUTIL.BwaMem2 as t_007_AlignReads {
+    call SRUTIL.Bowtie2 as t_007_AlignReads {
         input:
             fq_end1 = fq_e1,
             fq_end2 = fq_e2,
 
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
-            ref_dict = ref_map["dict"],
-            ref_0123 = ref_map["0123"],
-            ref_amb = ref_map["amb"],
-            ref_ann = ref_map["ann"],
-            ref_bwt = ref_map["bwt"],
-            ref_pac = ref_map["pac"],
-
-            mark_short_splits_as_secondary = true,
-
-            read_group = RG,
+            ref_bowtie_indices = [
+                ref_map["1.bt2"],
+                ref_map["2.bt2"],
+                ref_map["3.bt2"],
+                ref_map["4.bt2"],
+                ref_map["rev.1.bt2"],
+                ref_map["rev.2.bt2"]
+            ],
             prefix = SM + ".contaminant_aligned." + contaminant_ref_name,
-
-            runtime_attr_override = object {mem_gb: 64}  # Need a lot of ram to use BWA-MEM2
+            rg_id = SM + "_" + LB,
+            rg_pl = platform,
+            rg_lb = LB,
+            rg_sm = SM
     }
 
     call ExtractReadsWithSamtools as t_008_ExtractDecontaminatedReads {
