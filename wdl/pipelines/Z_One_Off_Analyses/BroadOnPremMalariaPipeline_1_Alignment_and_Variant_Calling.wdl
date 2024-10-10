@@ -510,7 +510,8 @@ task BQSR {
 
     Int compression_level = 2
 
-    Int disk_size = 1 + 4*ceil(size([input_bam, reference_fasta], "GB"))
+    Int known_sites_size = ceil(size(known_sites, "GB")) + ceil(size(known_sites_indices, "GB"))
+    Int disk_size = 1 + known_sites_size + 4*ceil(size([input_bam, input_bai, reference_fasta, reference_fai, reference_dict], "GB"))
 
     # Task is assuming query-sorted input so that the Secondary and Supplementary reads get marked correctly
     # This works because the output of BWA is query-grouped and therefore, so is the output of MergeBamAlignment.
@@ -531,6 +532,11 @@ task BQSR {
         tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
 
         ################################
+
+        # Must copy the input bam index to the same directory as the input bam.
+        # We have to do this because the GATK will look for the index in the same directory as the input bam
+        # and it may not be there due to us indexing it in a separate task.
+        cp ~{input_bai} $(dirname ~{input_bam})/
 
         java_memory_size_mb=$((tot_mem_mb-5120))
 
