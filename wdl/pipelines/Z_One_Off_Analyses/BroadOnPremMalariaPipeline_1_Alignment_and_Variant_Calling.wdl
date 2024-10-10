@@ -511,7 +511,7 @@ task BQSR {
     Int compression_level = 2
 
     Int known_sites_size = ceil(size(known_sites, "GB")) + ceil(size(known_sites_indices, "GB"))
-    Int disk_size = 1 + known_sites_size + 4*ceil(size([input_bam, input_bai, reference_fasta, reference_fai, reference_dict], "GB"))
+    Int disk_size = 10 + known_sites_size + 20*ceil(size([input_bam, input_bai, reference_fasta, reference_fai, reference_dict], "GB"))
 
     # Task is assuming query-sorted input so that the Secondary and Supplementary reads get marked correctly
     # This works because the output of BWA is query-grouped and therefore, so is the output of MergeBamAlignment.
