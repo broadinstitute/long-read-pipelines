@@ -536,7 +536,7 @@ task BQSR {
         # Must copy the input bam index to the same directory as the input bam.
         # We have to do this because the GATK will look for the index in the same directory as the input bam
         # and it may not be there due to us indexing it in a separate task.
-        cp ~{input_bai} $(dirname ~{input_bam})/
+        mv ~{input_bai} $(dirname ~{input_bam})/
 
         java_memory_size_mb=$((tot_mem_mb-5120))
 
@@ -560,7 +560,7 @@ task BQSR {
     >>>
 
     output {
-        File bqsr_bam = "~{prefix}.bqsr.bam"
+        File bqsr_bam = "~{prefix}.bam"
     }
 
     #########################
