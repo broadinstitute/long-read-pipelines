@@ -169,10 +169,12 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             reference_dict = ref_map["dict"],
             known_sites = [
                           resource_vcf_7g8_gb4,
-                          resource_vcf_7g8_gb4_index,
                           resource_vcf_hb3_dd2,
+                          resource_vcf_3d7_hb3
+                ],
+            known_sites_indices = [
+                          resource_vcf_7g8_gb4_index,
                           resource_vcf_hb3_dd2_index,
-                          resource_vcf_3d7_hb3,
                           resource_vcf_3d7_hb3_index
             ],
             prefix = sample_name + ".aligned.sorted.marked_duplicates.reordered.indels_realigned.bqsr"
@@ -501,6 +503,7 @@ task BQSR {
         File reference_dict
 
         Array[File] known_sites
+        Array[File] known_sites_indices
 
         RuntimeAttr? runtime_attr_override
     }
