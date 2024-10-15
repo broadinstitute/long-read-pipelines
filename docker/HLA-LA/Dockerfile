@@ -24,13 +24,45 @@ RUN apt-get -qqy update --fix-missing \
         liblzma-dev \
         libopenblas-dev \
         apt-transport-https \
-        gawk
-     
+        gawk \
+        make \
+        gcc \
+        cpanminus \
+        libexpat1-dev
+
+RUN git clone https://github.com/lh3/bwa.git \
+    && cd bwa \
+    && make \
+    && cp ./bwa /usr/bin
+
+# Install htslib
+RUN wget https://github.com/samtools/htslib/releases/download/1.13/htslib-1.13.tar.bz2 \
+    && tar -xjf htslib-1.13.tar.bz2 \
+    && cd htslib-1.13 \
+    && ./configure \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -rf htslib-1.13 htslib-1.13.tar.bz2
+# Set environment variables for Bio::DB::HTS installation
+ENV HTSLIB_DIR=/usr/local/lib
+ENV HTSLIB_INC=/usr/local/include
+
+
+RUN cpanm --notest Text::LevenshteinXS List::MoreUtils
+
+RUN cpanm --notest IPC::Run XML::LibXML XML::Parser::PerlSAX XML::DOM XML::Twig
+RUN cpanm --notest Bio::SeqFeature::Lite
+
+# Install Bio::DB::HTS
+RUN cpanm --force Bio::DB::HTS
+
 
 RUN conda config --add channels bioconda \
     && conda config --add channels conda-forge \
     && conda config --set channel_priority strict \
     && conda install hla-la --yes
+
 
 # # SAMTOOLS
 # RUN wget https://github.com/samtools/samtools/releases/download/${samtools_version}/samtools-${samtools_version}.tar.bz2 \
