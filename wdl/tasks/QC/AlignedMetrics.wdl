@@ -818,7 +818,11 @@ task MosDepthWGSAtThreshold {
             awk -F '\t' ' {printf "%.5f", $3/$2} ' > wgs.cov.txt
         
         # threshold_cov - Can only go up to 2 significant digits
-        awk -F '\t' -v cov_thresh=~{cov_threshold} ' $1=="total" && $2==cov_thresh {print $3; found=1; exit} END {if (!found) print "0.0"} ' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
+        if ~{collect_over_bed}; then
+            awk -F '\t' -v cov_thresh=~{cov_threshold} ' $1=="total" && $2==cov_thresh {print $3; found=1; exit} END {if (!found) print "0.0"} ' ~{prefix}.coverage_over_bed.~{bed_descriptor}.mosdepth.global.dist.txt > wgs.threshold.txt
+        else
+            awk -F '\t' -v cov_thresh=~{cov_threshold} ' $1=="total" && $2==cov_thresh {print $3; found=1; exit} END {if (!found) print "0.0"} ' ~{prefix}.mosdepth.global.dist.txt > wgs.threshold.txt
+        fi
     >>>
 
     #########################
