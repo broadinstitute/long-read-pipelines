@@ -814,8 +814,13 @@ task MosDepthWGSAtThreshold {
         wait && ls
 
         # wg
-        tail -n1 ~{prefix}.mosdepth.summary.txt | \
-            awk -F '\t' ' {printf "%.5f", $3/$2} ' > wgs.cov.txt
+        if ~{collect_over_bed}; then
+            tail -n1 ~{prefix}.coverage_over_bed.~{bed_descriptor}.mosdepth.summary.txt | \
+                awk -F '\t' ' {printf "%.5f", $3/$2} ' > wgs.cov.txt
+        else
+            tail -n1 ~{prefix}.mosdepth.summary.txt | \
+                awk -F '\t' ' {printf "%.5f", $3/$2} ' > wgs.cov.txt
+        fi
         
         # threshold_cov - Can only go up to 2 significant digits
         if ~{collect_over_bed}; then
