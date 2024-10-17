@@ -31,22 +31,15 @@ task Minimap2 {
 
         MAP_PARAMS="-ayYL --MD -x ~{map_preset} -t $cpus ~{ref_fasta}"
         SORT_PARAMS="-@ $cpus -m ${mem}G --no-PG -o ~{prefix}.bam"
-        FILE="~{reads}"
 
-        if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
-            find . \( -name '*.fastq' -or -name '*.fq' \) -exec cat {} \; | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
-        elif [[ "$FILE" =~ \.fastq.gz$ ]] || [[ "$FILE" =~ \.fq.gz$ ]]; then
-            find . \( -name '*.fastq.gz' -or -name '*.fq.gz' \) -exec zcat {} \; | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
-        elif [[ "$FILE" =~ \.fasta$ ]] || [[ "$FILE" =~ \.fa$ ]]; then
-            find . \( -name '*.fasta' -or -name '*.fa' \) -and -path -not '*~{ref_fasta}' -exec cat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
-        elif [[ "$FILE" =~ \.fasta.gz$ ]] || [[ "$FILE" =~ \.fa.gz$ ]]; then
-            find . \( -name '*.fasta.gz' -or -name '*.fa.gz' \) -and -path -not '*~{ref_fasta}' -exec zcat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
-        elif [[ "$FILE" =~ \.bam$ ]]; then
-            samtools fastq $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+        if [[ "~{reads}" =~ \.bam$ ]]; then
+            samtools fastq ~{reads} > reads.fq
+            FILE="reads.fq"
         else
-            echo "Did not understand file format for '$FILE'"
-            exit 1
+            FILE="~{reads}"
         fi
+
+        minimap2 $MAP_PARAMS ~{reads} | samtools sort $SORT_PARAMS
 
         samtools index ~{prefix}.bam
     >>>
