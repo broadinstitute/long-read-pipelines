@@ -8,7 +8,6 @@ task Minimap2 {
         Array[File] reads
         File ref_fasta
 
-        String RG
         String map_preset
 
         String prefix = "out"
@@ -18,7 +17,6 @@ task Minimap2 {
     parameter_meta {
         reads:      "query sequences to be mapped and aligned"
         ref_fasta:  "reference fasta"
-        RG:         "read group information to be supplied to parameter '-R' (note that tabs should be input as '\t')"
         map_preset: "preset to be used for minimap2 parameter '-x'"
         prefix:     "[default-valued] prefix for output BAM"
     }
@@ -31,7 +29,7 @@ task Minimap2 {
         mem=$(grep '^MemTotal' /proc/meminfo | awk '{ print int($2/1000000) }')
         cpus=$(grep -c '^processor' /proc/cpuinfo | awk '{ print $1 }')
 
-        MAP_PARAMS="-ayYL --MD -x ~{map_preset} -R ~{RG} -t $cpus ~{ref_fasta}"
+        MAP_PARAMS="-ayYL --MD -x ~{map_preset} -t $cpus ~{ref_fasta}"
         SORT_PARAMS="-@ $cpus -m ${mem}G --no-PG -o ~{prefix}.bam"
         FILE="~{reads[0]}"
 
