@@ -5,7 +5,7 @@ import "Structs.wdl"
 # A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference
 task Minimap2 {
     input {
-        Array[File] reads
+        File reads
         File ref_fasta
 
         String map_preset
@@ -31,7 +31,7 @@ task Minimap2 {
 
         MAP_PARAMS="-ayYL --MD -x ~{map_preset} -t $cpus ~{ref_fasta}"
         SORT_PARAMS="-@ $cpus -m ${mem}G --no-PG -o ~{prefix}.bam"
-        FILE="~{reads[0]}"
+        FILE="~{reads}"
 
         if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
             find . \( -name '*.fastq' -or -name '*.fq' \) -exec cat {} \; | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
