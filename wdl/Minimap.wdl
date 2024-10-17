@@ -16,7 +16,7 @@ workflow CallMinimap {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call AR.Minimap2_simple as Align {
+    call AR.Minimap2 as Align {
         input:
             reads = reads,
             ref_fasta = ref_map['fasta'],
