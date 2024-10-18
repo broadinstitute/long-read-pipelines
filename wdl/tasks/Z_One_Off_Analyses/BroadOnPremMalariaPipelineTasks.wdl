@@ -16,6 +16,10 @@ task VariantRecalibrator {
         File resource_vcf_hb3_dd2
         File resource_vcf_3d7_hb3
 
+        File resource_vcf_3d7_hb3_index
+        File resource_vcf_hb3_dd2_index
+        File resource_vcf_7g8_gb4_index
+
         RuntimeAttr? runtime_attr_override
     }
 

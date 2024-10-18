@@ -218,6 +218,9 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             resource_vcf_7g8_gb4 = resource_vcf_7g8_gb4,
             resource_vcf_hb3_dd2 = resource_vcf_hb3_dd2,
             resource_vcf_3d7_hb3 = resource_vcf_3d7_hb3,
+            resource_vcf_3d7_hb3_index = resource_vcf_3d7_hb3_index,
+            resource_vcf_hb3_dd2_index = resource_vcf_hb3_dd2_index,
+            resource_vcf_7g8_gb4_index = resource_vcf_7g8_gb4_index,
             prefix = sample_name
     }
 
