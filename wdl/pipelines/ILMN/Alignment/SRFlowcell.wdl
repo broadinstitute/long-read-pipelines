@@ -103,7 +103,7 @@ workflow SRFlowcell {
         # NOTE: We don't need to be too concerned with the finalization info.
         #       This will be partially filled in by the WDL itself, so we can pass the same inputs for
         #       these things here (e.g. `dir_prefix`):
-        call DECONTAMINATE.RemoveSingleOrganismContamination as DecontaminateSample {
+        call DECONTAMINATE.RemoveSingleOrganismContamination as t_005_DecontaminateSample {
             input:
                 fq_end1 = select_first([fq_end1, t_003_Bam2Fastq.fq_end1]),
                 fq_end2 = select_first([fq_end2, t_003_Bam2Fastq.fq_end2]),
@@ -120,13 +120,13 @@ workflow SRFlowcell {
         }
     }
 
-    File fq_e1 = select_first([DecontaminateSample.decontaminated_fq1, fq_end1, t_003_Bam2Fastq.fq_end1])
-    File fq_e2 = select_first([DecontaminateSample.decontaminated_fq2, fq_end2, t_003_Bam2Fastq.fq_end2])
+    File fq_e1 = select_first([t_005_DecontaminateSample.decontaminated_fq1, fq_end1, t_003_Bam2Fastq.fq_end1])
+    File fq_e2 = select_first([t_005_DecontaminateSample.decontaminated_fq2, fq_end2, t_003_Bam2Fastq.fq_end2])
 
     String RG = select_first([t_004_GetRawReadGroup.rg, "@RG\tID:" + SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM])
 
     # Align reads to reference with BWA-MEM2:
-    call SRUTIL.BwaMem2 as t_005_AlignReads {
+    call SRUTIL.BwaMem2 as t_006_AlignReads {
         input:
             fq_end1 = fq_e1,
             fq_end2 = fq_e2,
@@ -145,9 +145,9 @@ workflow SRFlowcell {
 
     if (defined(bam)) {
         # Merge aligned reads and unaligned reads:
-        call SRUTIL.MergeBamAlignment as t_006_MergeBamAlignment {
+        call SRUTIL.MergeBamAlignment as t_007_MergeBamAlignment {
             input:
-                aligned_bam = t_005_AlignReads.bam,
+                aligned_bam = t_006_AlignReads.bam,
                 unaligned_bam = select_first([t_002_RevertSam.bam]),
                 ref_fasta = ref_map["fasta"],
                 ref_fasta_index = ref_map["fai"],
@@ -156,19 +156,19 @@ workflow SRFlowcell {
         }
     }
 
-    File merged_bam = select_first([t_006_MergeBamAlignment.bam, t_005_AlignReads.bam])
+    File merged_bam = select_first([t_007_MergeBamAlignment.bam, t_006_AlignReads.bam])
 
     # Mark Duplicates
-    call SRUTIL.MarkDuplicates as t_007_MarkDuplicates {
+    call SRUTIL.MarkDuplicates as t_008_MarkDuplicates {
         input:
             input_bam = merged_bam,
             prefix = SM + ".aligned.merged.markDuplicates"
     }
 
     # Sort Duplicate Marked Bam:
-    call Utils.SortSam as t_008_SortAlignedDuplicateMarkedBam {
+    call Utils.SortSam as t_009_SortAlignedDuplicateMarkedBam {
         input:
-            input_bam = t_007_MarkDuplicates.bam,
+            input_bam = t_008_MarkDuplicates.bam,
             output_bam_basename = SM + ".aligned.merged.markDuplicates.sorted",
             compression_level = 2
     }
@@ -177,10 +177,10 @@ workflow SRFlowcell {
 
     if (perform_BQSR) {
         # Recalibrate Base Scores:
-        call SRUTIL.BaseRecalibrator as t_009_BaseRecalibrator {
+        call SRUTIL.BaseRecalibrator as t_010_BaseRecalibrator {
             input:
-                input_bam = t_008_SortAlignedDuplicateMarkedBam.output_bam,
-                input_bam_index = t_008_SortAlignedDuplicateMarkedBam.output_bam_index,
+                input_bam = t_009_SortAlignedDuplicateMarkedBam.output_bam,
+                input_bam_index = t_009_SortAlignedDuplicateMarkedBam.output_bam_index,
 
                 ref_fasta = ref_map["fasta"],
                 ref_fasta_index = ref_map["fai"],
@@ -192,23 +192,23 @@ workflow SRFlowcell {
                 prefix = SM + ".baseRecalibratorReport"
         }
 
-        call SRUTIL.ApplyBQSR as t_010_ApplyBQSR {
+        call SRUTIL.ApplyBQSR as t_011_ApplyBQSR {
             input:
-                input_bam = t_008_SortAlignedDuplicateMarkedBam.output_bam,
-                input_bam_index = t_008_SortAlignedDuplicateMarkedBam.output_bam,
+                input_bam = t_009_SortAlignedDuplicateMarkedBam.output_bam,
+                input_bam_index = t_009_SortAlignedDuplicateMarkedBam.output_bam,
 
                 ref_fasta = ref_map["fasta"],
                 ref_fasta_index = ref_map["fai"],
                 ref_dict = ref_map["dict"],
 
-                recalibration_report = t_009_BaseRecalibrator.recalibration_report,
+                recalibration_report = t_010_BaseRecalibrator.recalibration_report,
 
                 prefix = SM + ".aligned.merged.markDuplicates.sorted.BQSR"
         }
     }
 
-    File final_bam = select_first([t_010_ApplyBQSR.recalibrated_bam, t_008_SortAlignedDuplicateMarkedBam.output_bam])
-    File final_bai = select_first([t_010_ApplyBQSR.recalibrated_bai, t_008_SortAlignedDuplicateMarkedBam.output_bam_index])
+    File final_bam = select_first([t_011_ApplyBQSR.recalibrated_bam, t_009_SortAlignedDuplicateMarkedBam.output_bam])
+    File final_bai = select_first([t_011_ApplyBQSR.recalibrated_bai, t_009_SortAlignedDuplicateMarkedBam.output_bam_index])
 
     #############################################
     #      __  __      _        _
@@ -219,23 +219,23 @@ workflow SRFlowcell {
     #
     #############################################
 
-    call AM.SamStatsMap as t_011_SamStats {
+    call AM.SamStatsMap as t_012_SamStats {
         input:
             bam = final_bam
     }
 
-    call FastQC.FastQC as t_012_FastQC { input: bam = final_bam, bai = final_bai }
-    call Utils.ComputeGenomeLength as t_013_ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-    call SRUTIL.ComputeBamStats as t_014_ComputeBamStats { input: bam_file = final_bam }
+    call FastQC.FastQC as t_013_FastQC { input: bam = final_bam, bai = final_bai }
+    call Utils.ComputeGenomeLength as t_014_ComputeGenomeLength { input: fasta = ref_map['fasta'] }
+    call SRUTIL.ComputeBamStats as t_015_ComputeBamStats { input: bam_file = final_bam }
 
     # Collect stats on aligned reads:
-    call SRUTIL.ComputeBamStats as t_015_ComputeBamStatsQ5 { input: bam_file  = final_bam, qual_threshold = 5 }
-    call SRUTIL.ComputeBamStats as t_016_ComputeBamStatsQ7 { input: bam_file  = final_bam, qual_threshold = 7 }
-    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ10 { input: bam_file = final_bam, qual_threshold = 10 }
-    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ12 { input: bam_file = final_bam, qual_threshold = 12 }
-    call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ15 { input: bam_file = final_bam, qual_threshold = 15 }
+    call SRUTIL.ComputeBamStats as t_016_ComputeBamStatsQ5 { input: bam_file  = final_bam, qual_threshold = 5 }
+    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ7 { input: bam_file  = final_bam, qual_threshold = 7 }
+    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ10 { input: bam_file = final_bam, qual_threshold = 10 }
+    call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ12 { input: bam_file = final_bam, qual_threshold = 12 }
+    call SRUTIL.ComputeBamStats as t_020_ComputeBamStatsQ15 { input: bam_file = final_bam, qual_threshold = 15 }
 
-    call AM.AlignedMetrics as PerFlowcellMetrics {
+    call AM.AlignedMetrics as t_021_PerFlowcellMetrics {
         input:
             aligned_bam    = final_bam,
             aligned_bai    = final_bai,
@@ -263,10 +263,10 @@ workflow SRFlowcell {
         String aligned_reads_dir = outdir + "/reads/aligned"
         String metrics_dir = outdir + "/metrics"
 
-        File keyfile = t_014_ComputeBamStats.results_file
+        File keyfile = t_015_ComputeBamStats.results_file
 
         # Finalize our unaligned reads first:
-        call FF.FinalizeToDir as t_020_FinalizeUnalignedFastqReads {
+        call FF.FinalizeToDir as t_022_FinalizeUnalignedFastqReads {
             input:
                 outdir = unaligned_reads_dir,
                 files =
@@ -277,7 +277,7 @@ workflow SRFlowcell {
                 keyfile = keyfile
         }
         if (defined(bam)) {
-            call FF.FinalizeToDir as t_021_FinalizeUnalignedReadsFromBam {
+            call FF.FinalizeToDir as t_023_FinalizeUnalignedReadsFromBam {
                 input:
                     outdir = unaligned_reads_dir,
                     files = select_all(
@@ -290,28 +290,28 @@ workflow SRFlowcell {
             }
         }
 
-        call FF.FinalizeToDir as t_022_FinalizeAlignedReads {
+        call FF.FinalizeToDir as t_024_FinalizeAlignedReads {
             input:
                 outdir = aligned_reads_dir,
                 files =
                 [
-                    t_005_AlignReads.bam,
+                    t_006_AlignReads.bam,
                     merged_bam,
-                    t_007_MarkDuplicates.bam,
-                    t_008_SortAlignedDuplicateMarkedBam.output_bam,
-                    t_008_SortAlignedDuplicateMarkedBam.output_bam_index,
+                    t_008_MarkDuplicates.bam,
+                    t_009_SortAlignedDuplicateMarkedBam.output_bam,
+                    t_009_SortAlignedDuplicateMarkedBam.output_bam_index,
                 ],
                 keyfile = keyfile
         }
 
-        call FF.FinalizeToFile as t_023_FinalizeAlignedBam {
+        call FF.FinalizeToFile as t_025_FinalizeAlignedBam {
             input:
                 outdir = aligned_reads_dir,
                 file = final_bam,
                 keyfile = keyfile
         }
 
-        call FF.FinalizeToFile as t_024_FinalizeAlignedBai {
+        call FF.FinalizeToFile as t_026_FinalizeAlignedBai {
             input:
                 outdir = aligned_reads_dir,
                 file = final_bai,
@@ -319,37 +319,37 @@ workflow SRFlowcell {
         }
 
         # Finalize our metrics:
-        call FF.FinalizeToDir as t_025_FinalizeMetrics {
+        call FF.FinalizeToDir as t_027_FinalizeMetrics {
             input:
                 outdir = metrics_dir,
                 files =
                 [
-                    t_007_MarkDuplicates.metrics,
-                    t_011_SamStats.sam_stats,
-                    t_014_ComputeBamStats.results_file,
-                    t_015_ComputeBamStatsQ5.results_file,
-                    t_016_ComputeBamStatsQ7.results_file,
-                    t_017_ComputeBamStatsQ10.results_file,
-                    t_018_ComputeBamStatsQ12.results_file,
-                    t_019_ComputeBamStatsQ15.results_file,
+                    t_008_MarkDuplicates.metrics,
+                    t_012_SamStats.sam_stats,
+                    t_015_ComputeBamStats.results_file,
+                    t_016_ComputeBamStatsQ5.results_file,
+                    t_017_ComputeBamStatsQ7.results_file,
+                    t_018_ComputeBamStatsQ10.results_file,
+                    t_019_ComputeBamStatsQ12.results_file,
+                    t_020_ComputeBamStatsQ15.results_file,
                 ],
                 keyfile = keyfile
         }
 
         # Finalize BQSR Metrics if it was run:
         if (perform_BQSR) {
-            call FF.FinalizeToDir as t_026_FinalizeBQSRMetrics {
+            call FF.FinalizeToDir as t_028_FinalizeBQSRMetrics {
                 input:
                     outdir = metrics_dir,
-                    files = select_all([t_009_BaseRecalibrator.recalibration_report]),
+                    files = select_all([t_010_BaseRecalibrator.recalibration_report]),
                     keyfile = keyfile
             }
         }
 
-        call FF.FinalizeToFile as t_027_FinalizeFastQCReport {
+        call FF.FinalizeToFile as t_029_FinalizeFastQCReport {
             input:
                 outdir = metrics_dir,
-                file = t_012_FastQC.report
+                file = t_013_FastQC.report
         }
 
         # Prep a few files for output:
@@ -358,15 +358,15 @@ workflow SRFlowcell {
         if (defined(bam)) {
             File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
             File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
-            File fqboup = unaligned_reads_dir + "/" + basename(select_first([DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
+            File fqboup = unaligned_reads_dir + "/" + basename(select_first([t_005_DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
         }
     }
 
     # Prep some output values before the output block:
-    Float raw_est_fold_cov_value = if t_013_ComputeGenomeLength.length != 0 then t_014_ComputeBamStats.results['bases']/t_013_ComputeGenomeLength.length else 0.0
-    Float aligned_frac_bases_value = if t_011_SamStats.stats_map['total_length'] != 0 then t_011_SamStats.stats_map['bases_mapped']/t_011_SamStats.stats_map['total_length'] else 0.0
-    Float aligned_est_fold_cov_value = if t_013_ComputeGenomeLength.length != 0 then t_011_SamStats.stats_map['bases_mapped']/t_013_ComputeGenomeLength.length else 0.0
-    Float average_identity_value = if t_011_SamStats.stats_map['bases_mapped'] != 0 then 100.0 - (100.0*t_011_SamStats.stats_map['mismatches']/t_011_SamStats.stats_map['bases_mapped']) else 0.0
+    Float raw_est_fold_cov_value = if t_014_ComputeGenomeLength.length != 0 then t_015_ComputeBamStats.results['bases']/t_014_ComputeGenomeLength.length else 0.0
+    Float aligned_frac_bases_value = if t_012_SamStats.stats_map['total_length'] != 0 then t_012_SamStats.stats_map['bases_mapped']/t_012_SamStats.stats_map['total_length'] else 0.0
+    Float aligned_est_fold_cov_value = if t_014_ComputeGenomeLength.length != 0 then t_012_SamStats.stats_map['bases_mapped']/t_014_ComputeGenomeLength.length else 0.0
+    Float average_identity_value = if t_012_SamStats.stats_map['bases_mapped'] != 0 then 100.0 - (100.0*t_012_SamStats.stats_map['mismatches']/t_012_SamStats.stats_map['bases_mapped']) else 0.0
 
     ############################################
     #      ___        _               _
@@ -387,46 +387,46 @@ workflow SRFlowcell {
         File? unaligned_bai = unaligned_bai_o
 
         # Aligned BAM file
-        File aligned_bam = select_first([t_023_FinalizeAlignedBam.gcs_path, final_bam])
-        File aligned_bai = select_first([t_024_FinalizeAlignedBai.gcs_path, final_bai])
+        File aligned_bam = select_first([t_025_FinalizeAlignedBam.gcs_path, final_bam])
+        File aligned_bai = select_first([t_026_FinalizeAlignedBai.gcs_path, final_bai])
 
         # Contaminated BAM file:
         # TODO: This will need to be fixed for optional finalization:
-        File? contaminated_bam = DecontaminateSample.contaminated_bam
+        File? contaminated_bam = t_005_DecontaminateSample.contaminated_bam
 
         ##############################
         # Statistics:
 
         # Unaligned read stats
-        Float num_reads = t_014_ComputeBamStats.results['reads']
-        Float num_bases = t_014_ComputeBamStats.results['bases']
+        Float num_reads = t_015_ComputeBamStats.results['reads']
+        Float num_bases = t_015_ComputeBamStats.results['bases']
         Float raw_est_fold_cov = raw_est_fold_cov_value
 
-        Float read_length = t_014_ComputeBamStats.results['read_mean']
+        Float read_length = t_015_ComputeBamStats.results['read_mean']
 
-        Float read_qual_mean = t_014_ComputeBamStats.results['mean_qual']
-        Float read_qual_median = t_014_ComputeBamStats.results['median_qual']
+        Float read_qual_mean = t_015_ComputeBamStats.results['mean_qual']
+        Float read_qual_median = t_015_ComputeBamStats.results['median_qual']
 
-        Float num_reads_Q5 = t_015_ComputeBamStatsQ5.results['reads']
-        Float num_reads_Q7 = t_016_ComputeBamStatsQ7.results['reads']
-        Float num_reads_Q10 = t_017_ComputeBamStatsQ10.results['reads']
-        Float num_reads_Q12 = t_018_ComputeBamStatsQ12.results['reads']
-        Float num_reads_Q15 = t_019_ComputeBamStatsQ15.results['reads']
+        Float num_reads_Q5 = t_016_ComputeBamStatsQ5.results['reads']
+        Float num_reads_Q7 = t_017_ComputeBamStatsQ7.results['reads']
+        Float num_reads_Q10 = t_018_ComputeBamStatsQ10.results['reads']
+        Float num_reads_Q12 = t_019_ComputeBamStatsQ12.results['reads']
+        Float num_reads_Q15 = t_020_ComputeBamStatsQ15.results['reads']
 
         # Aligned read stats
-        Float aligned_num_reads = t_012_FastQC.stats_map['number_of_reads']
-        Float aligned_num_bases = t_011_SamStats.stats_map['bases_mapped']
+        Float aligned_num_reads = t_013_FastQC.stats_map['number_of_reads']
+        Float aligned_num_bases = t_012_SamStats.stats_map['bases_mapped']
         Float aligned_frac_bases = aligned_frac_bases_value
         Float aligned_est_fold_cov = aligned_est_fold_cov_value
 
-        Float aligned_read_length = t_012_FastQC.stats_map['read_length']
+        Float aligned_read_length = t_013_FastQC.stats_map['read_length']
 
-        Float insert_size_average = t_011_SamStats.stats_map['insert_size_average']
-        Float insert_size_standard_deviation = t_011_SamStats.stats_map['insert_size_standard_deviation']
-        Float pct_properly_paired_reads = t_011_SamStats.stats_map['percentage_of_properly_paired_reads_%']
+        Float insert_size_average = t_012_SamStats.stats_map['insert_size_average']
+        Float insert_size_standard_deviation = t_012_SamStats.stats_map['insert_size_standard_deviation']
+        Float pct_properly_paired_reads = t_012_SamStats.stats_map['percentage_of_properly_paired_reads_%']
 
         Float average_identity = average_identity_value
 
-        File fastqc_report = select_first([t_027_FinalizeFastQCReport.gcs_path, t_012_FastQC.report])
+        File fastqc_report = select_first([t_029_FinalizeFastQCReport.gcs_path, t_013_FastQC.report])
     }
 }
