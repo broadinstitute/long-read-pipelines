@@ -288,16 +288,28 @@ task Bowtie2 {
             np=$((np-1))
         fi
 
+        # Move the bowtie2 index files to the same directory as the reference fasta file:
+        ref_dir=$(dirname ~{ref_fasta})
+        for f in ~{sep=" " ref_bowtie_indices} ; do
+            indx_dirname=$( dirname ${f} )
+            if [[ "${indx_dirname}" != "${ref_dir}" ]] ; then
+                mv ${f} ${ref_dir}
+            fi
+        done
+
+        # Get the basename of the bowtie2 index file so we can reference it in the bowtie2 command:
+        bowtie2_index_basename=$(echo "~{ref_bowtie_indices[0]}" | grep bwt | head -n1 | sed 's@\.[a-zA-Z0-9]*\.bwt@@')
+
         echo "Aligning to genome:"
-        bowtie2 -x ~{ref_fasta} \
+        bowtie2 -x ${bowtie2_index_basename} \
             --threads ${np} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} | \
             ~{rgid_cmd} ~{rg_id_val} \
             ~{rg_cmd} ~{rg_pl_val} \
             ~{rg_cmd} ~{rg_lb_val} \
-            ~{rg_cmd} ~{rg_sm_val} \
-        samtools view -@$((np-1)) -bh --no-PG - > tmp.bam
+            ~{rg_cmd} ~{rg_sm_val} | \ 
+        samtools view -bh --no-PG - > tmp.bam
 
         # Now sort the output:
         if ~{skip_sort} ; then
@@ -305,10 +317,13 @@ task Bowtie2 {
         else
             samtools sort -@$((np-1)) tmp.bam > ~{prefix}.bam
         fi
+
+        samtools index ~{prefix}.bam
     >>>
 
     output {
         File bam = "~{prefix}.bam"
+        File bai = "~{prefix}.bai"
     }
 
     #########################
