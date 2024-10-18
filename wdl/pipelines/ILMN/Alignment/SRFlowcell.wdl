@@ -96,10 +96,8 @@ workflow SRFlowcell {
         call Utils.GetRawReadGroup as t_004_GetRawReadGroup { input: gcs_bam_path = select_first([bam]) }
     }
 
-    # OK, this is inefficient, but let's NOW extract our contaminated reads if we have the info.
-    # TODO: Move this into the sections above to make it more efficient.  Specifically where we convert bam -> fastq.
-    # TODO: Re-enable this section after decontamination is fixed.  The alignment based method with BWA-MEM doesn't work.  Not clear why, but this does seem somewhat inadequate (simplistic alignment-based strategies).
-    if (false && defined(contaminant_ref_map_file)) {
+    # Perform decontamination if we have the contaminant reference:
+    if (defined(contaminant_ref_map_file)) {
 
         # Call our sub-workflow for decontamination:
         # NOTE: We don't need to be too concerned with the finalization info.
