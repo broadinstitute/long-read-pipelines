@@ -305,10 +305,10 @@ task Bowtie2 {
             --threads ${np} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} \
-            ~{rgid_cmd} ~{rg_id_val} \
-            ~{rg_cmd} ~{rg_pl_val} \
-            ~{rg_cmd} ~{rg_lb_val} \
-            ~{rg_cmd} ~{rg_sm_val} | \ 
+            ~{rgid_cmd} "~{rg_id_val}" \
+            ~{rg_cmd} "~{rg_pl_val}" \
+            ~{rg_cmd} "~{rg_lb_val}" \
+            ~{rg_cmd} "~{rg_sm_val}" | \ 
         samtools view -bh --no-PG - > tmp.bam
 
         # Now sort the output:
