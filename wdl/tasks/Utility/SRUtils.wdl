@@ -290,15 +290,15 @@ task Bowtie2 {
 
         # Move the bowtie2 index files to the same directory as the reference fasta file:
         ref_dir=$(dirname ~{ref_fasta})
-        for f in ~{sep=" " ref_bowtie_indices} ; do
+        while read f ; do 
             indx_dirname=$( dirname ${f} )
             if [[ "${indx_dirname}" != "${ref_dir}" ]] ; then
                 mv ${f} ${ref_dir}
             fi
-        done
+        done < ~{write_lines(ref_bowtie_indices)}
 
         # Get the basename of the bowtie2 index file so we can reference it in the bowtie2 command:
-        bowtie2_index_basename=$(echo "~{ref_bowtie_indices[0]}" | grep bwt | head -n1 | sed 's@\.[a-zA-Z0-9]*\.bwt@@')
+        bowtie2_index_basename=$(echo "~{ref_bowtie_indices[0]}" | grep bt2 | head -n1 | sed 's@\.[a-zA-Z0-9]*\.bt2@@')
 
         echo "Aligning to genome:"
         bowtie2 -x ${bowtie2_index_basename} \
