@@ -304,7 +304,7 @@ task Bowtie2 {
         bowtie2 -x ${bowtie2_index_basename} \
             --threads ${np} \
             -1 ~{fq_end1} \
-            -2 ~{fq_end2} | \
+            -2 ~{fq_end2} \
             ~{rgid_cmd} ~{rg_id_val} \
             ~{rg_cmd} ~{rg_pl_val} \
             ~{rg_cmd} ~{rg_lb_val} \
