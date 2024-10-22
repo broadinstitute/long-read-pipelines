@@ -318,12 +318,12 @@ task Bowtie2 {
             samtools sort -@$((np-1)) tmp.bam > ~{prefix}.bam
         fi
 
-        samtools index ~{prefix}.bam
+        samtools index -@$((np-1)) ~{prefix}.bam
     >>>
 
     output {
         File bam = "~{prefix}.bam"
-        File bai = "~{prefix}.bai"
+        File bai = "~{prefix}.bam.bai"
     }
 
     #########################
