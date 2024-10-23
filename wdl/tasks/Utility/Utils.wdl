@@ -66,14 +66,14 @@ task SortSam {
     parameter_meta {
         input_bam: "The BAM file to sort"
         output_bam_basename: "The basename for the output BAM file"
-        compression_level: "The compression level for the output BAM file"
+        compression_level: "The compression level for the output BAM file (default: 2)"
         runtime_attr_override: "Override the default runtime attributes"
     }
 
     input {
         File input_bam
         String output_bam_basename
-        Int compression_level
+        Int compression_level = 2
 
         RuntimeAttr? runtime_attr_override
     }

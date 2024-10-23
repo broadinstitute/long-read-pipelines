@@ -134,11 +134,10 @@ workflow RemoveSingleOrganismContamination {
             prefix = SM + ".decontaminated.sorted"
     }
 
-    call SortBamWithoutIndexing as t_011_SortContaminatedReads {
+    call Utils.SortSam as t_011_SortContaminatedReads {
         input:
             input_bam = t_009_ExtractContaminatedReads.output_bam,
-            extra_args = " -n ",
-            prefix = SM + ".contaminated_" + contaminant_ref_name + "_reads.sorted"
+            output_bam_basename = SM + ".contaminated_" + contaminant_ref_name + "_reads.sorted"
     }
 
     # Convert input SAM/BAM to FASTQ:
@@ -165,7 +164,8 @@ workflow RemoveSingleOrganismContamination {
         String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
         String outdir = if DEBUG_MODE then sub(concrete_gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(concrete_gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}"
 
-        call FF.FinalizeToFile as t_013_FinalizeContaminatedBam { input: outdir = outdir, file = t_011_SortContaminatedReads.sorted_bam, keyfile = keyfile }
+        call FF.FinalizeToFile as t_013_FinalizeContaminatedBam { input: outdir = outdir, file = t_011_SortContaminatedReads.output_bam, keyfile = keyfile }
+        call FF.FinalizeToFile as t_013_FinalizeContaminatedBamIndex { input: outdir = outdir, file = t_011_SortContaminatedReads.output_bam_index, keyfile = keyfile }
         call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
         call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
         call FF.FinalizeToFile as t_016_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
@@ -182,7 +182,8 @@ workflow RemoveSingleOrganismContamination {
     ############################################
 
     output {
-        File contaminated_bam = select_first([t_013_FinalizeContaminatedBam.gcs_path, t_011_SortContaminatedReads.sorted_bam])
+        File contaminated_bam = select_first([t_013_FinalizeContaminatedBam.gcs_path, t_011_SortContaminatedReads.output_bam])
+        File contaminated_bam_index = select_first([t_013_FinalizeContaminatedBamIndex.gcs_path, t_011_SortContaminatedReads.output_bam_index])
 
         File decontaminated_fq1 = select_first([t_014_FinalizeDecontaminatedFq1.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end1])
         File decontaminated_fq2 = select_first([t_015_FinalizeDecontaminatedFq2.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end2])
