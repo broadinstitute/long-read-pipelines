@@ -393,6 +393,7 @@ workflow SRFlowcell {
         # Contaminated BAM file:
         # TODO: This will need to be fixed for optional finalization:
         File? contaminated_bam = t_005_DecontaminateSample.contaminated_bam
+        File? contaminated_bam_index = t_005_DecontaminateSample.contaminated_bam_index
 
         ##############################
         # Statistics:
