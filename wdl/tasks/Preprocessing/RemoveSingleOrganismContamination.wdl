@@ -137,7 +137,7 @@ workflow RemoveSingleOrganismContamination {
     call Utils.SortSam as t_011_SortContaminatedReads {
         input:
             input_bam = t_009_ExtractContaminatedReads.output_bam,
-            output_bam_basename = SM + ".contaminated_" + contaminant_ref_name + "_reads.sorted"
+            prefix = SM + ".contaminated_" + contaminant_ref_name + "_reads.sorted"
     }
 
     # Convert input SAM/BAM to FASTQ:

@@ -53,63 +53,53 @@ task ChunkManifest {
     }
 }
 
-# TODO: investigate if samtools is better for this task
-# Sort BAM file by coordinate order
-# copied from "dsde_pipelines_tasks/BamProcessing.wdl", with
-# customization on the runtime block, and "preemptible_tries" taken out
 task SortSam {
-
-    meta {
+     meta {
         description: "Sort a BAM file by coordinate order"
     }
 
     parameter_meta {
         input_bam: "The BAM file to sort"
-        output_bam_basename: "The basename for the output BAM file"
-        compression_level: "The compression level for the output BAM file (default: 2)"
+        prefix: "The basename for the output BAM file"
         runtime_attr_override: "Override the default runtime attributes"
     }
 
     input {
         File input_bam
-        String output_bam_basename
-        Int compression_level = 2
+        String prefix
 
         RuntimeAttr? runtime_attr_override
     }
 
-    # SortSam spills to disk a lot more because we are only store 300000 records in RAM now because its faster for our data so it needs
-    # more disk space.  Also it spills to disk in an uncompressed format so we need to account for that with a larger multiplier
-    Float sort_sam_disk_multiplier = 3.25
-    Int disk_size = ceil(sort_sam_disk_multiplier * size(input_bam, "GiB")) + 20
+    Int disk_size = 1 + 10*ceil(size(input_bam, "GB"))
 
-    command {
-        java -Dsamjdk.compression_level=~{compression_level} -Xms4000m -jar /usr/gitc/picard.jar \
-            SortSam \
-            INPUT=~{input_bam} \
-            OUTPUT=~{output_bam_basename}.bam \
-            SORT_ORDER="coordinate" \
-            CREATE_INDEX=true \
-            CREATE_MD5_FILE=true \
-            MAX_RECORDS_IN_RAM=300000 \
-            VALIDATION_STRINGENCY=SILENT
-    }
+    command <<<
+        set -euxo pipefail
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            np=$((np-1))
+        fi
+
+        samtools sort -n -@ ${np} ~{input_bam} -o ~{prefix}.bam
+        samtools index -@ ${np} ~{prefix}.bam
+    >>>
 
     output {
-        File output_bam = "~{output_bam_basename}.bam"
-        File output_bam_index = "~{output_bam_basename}.bai"
-        File output_bam_md5 = "~{output_bam_basename}.bam.md5"
+        File output_bam = "~{prefix}.bam"
+        File output_bam_index = "~{prefix}.bam.bai"
     }
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             5,
+        cpu_cores:          4,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
+        preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gotc-prod/genomes-in-the-cloud:2.4.1-1540490856"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

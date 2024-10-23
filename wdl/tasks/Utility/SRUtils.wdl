@@ -455,6 +455,8 @@ task MarkDuplicates {
     # While query-grouped isn't actually query-sorted, it's good enough for MarkDuplicates with ASSUME_SORT_ORDER="queryname"
 
     command <<<
+        set -euxo pipefail
+
         tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
         java_memory_size_mb=$((tot_mem_mb-5120))
 
@@ -534,6 +536,8 @@ task BaseRecalibrator {
 
     command {
 
+        set -euxo pipefail
+
         gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal -Xms5000m" \
             BaseRecalibrator \
             -R ~{ref_fasta} \
@@ -604,6 +608,7 @@ task ApplyBQSR {
                       + 2*ceil(size(recalibration_report, "GB"))
 
     command <<<
+        set -euxo pipefail
 
         gatk --java-options "-XX:+PrintFlagsFinal \
             -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=~{compression_level} -Xms8192m -Xmx~{java_memory_size_mb}m" \
@@ -668,21 +673,23 @@ task RevertSam {
     # https://gatk.broadinstitute.org/hc/en-us/articles/4403687183515--How-to-Generate-an-unmapped-BAM-from-FASTQ-or-aligned-BAM
     command {
 
+        set -euxo pipefail
+
         java -Dsamjdk.compression_level=~{compression_level} -Xms~{java_memory_size_mb}m -jar /usr/picard/picard.jar \
-        RevertSam \
-        INPUT=~{input_bam} \
-        OUTPUT=~{prefix}.bam \
-        SANITIZE=true \
-        MAX_DISCARD_FRACTION=0.005 \
-        ATTRIBUTE_TO_CLEAR=XT \
-        ATTRIBUTE_TO_CLEAR=XN \
-        ATTRIBUTE_TO_CLEAR=AS \
-        ATTRIBUTE_TO_CLEAR=OC \
-        ATTRIBUTE_TO_CLEAR=OP \
-        SORT_ORDER=queryname \
-        RESTORE_ORIGINAL_QUALITIES=true \
-        REMOVE_DUPLICATE_INFORMATION=true \
-        REMOVE_ALIGNMENT_INFORMATION=true
+            RevertSam \
+            INPUT=~{input_bam} \
+            OUTPUT=~{prefix}.bam \
+            SANITIZE=true \
+            MAX_DISCARD_FRACTION=0.005 \
+            ATTRIBUTE_TO_CLEAR=XT \
+            ATTRIBUTE_TO_CLEAR=XN \
+            ATTRIBUTE_TO_CLEAR=AS \
+            ATTRIBUTE_TO_CLEAR=OC \
+            ATTRIBUTE_TO_CLEAR=OP \
+            SORT_ORDER=queryname \
+            RESTORE_ORIGINAL_QUALITIES=true \
+            REMOVE_DUPLICATE_INFORMATION=true \
+            REMOVE_ALIGNMENT_INFORMATION=true
     }
 
     output {
@@ -783,6 +790,8 @@ task MergeVCFs {
     String gvcf_decorator = if is_gvcf then ".g" else ""
 
     command <<<
+        set -euxo pipefail
+
         java -Xms2000m -Xmx2500m -jar /usr/picard/picard.jar \
           MergeVcfs \
           INPUT=~{sep=' INPUT=' input_vcfs} \
@@ -833,6 +842,8 @@ task IndexFeatureFile {
     String fname = basename(feature_file)
 
     command <<<
+        set -euxo pipefail
+
         mv ~{feature_file} ~{fname}
         gatk --java-options "-Xmx1500m" \
             IndexFeatureFile \
@@ -883,7 +894,6 @@ task RevertBaseQualities {
     Int disk_size = ceil(size(bam, "GiB") * 4) + 10
 
     command <<<
-        set -euxo pipefail
 
         # Check if the input bam has been run through `ApplyBQSR`.
         # If not, we can just return the input bam.
@@ -895,6 +905,9 @@ task RevertBaseQualities {
         if [[ $rv -eq 0 ]] && grep -q '\-\-emit-original-quals' applybqsr.pg.txt ; then
             # OK - our data has had it's base quality scores recalibrated.
             # We must revert them:
+
+            set -euxo pipefail
+
             gatk \
                 RevertBaseQualityScores \
                     -I ~{bam} \
