@@ -82,7 +82,7 @@ task SortSam {
             np=$((np-1))
         fi
 
-        samtools sort -n -@ ${np} ~{input_bam} -o ~{prefix}.bam
+        samtools sort -@ ${np} ~{input_bam} -o ~{prefix}.bam
         samtools index -@ ${np} ~{prefix}.bam
     >>>
 
