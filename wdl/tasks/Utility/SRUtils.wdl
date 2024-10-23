@@ -260,10 +260,10 @@ task Bowtie2 {
 
         Boolean skip_sort = false
 
-        String rg_id
-        String rg_pl
-        String rg_lb
-        String rg_sm
+        String? rg_id
+        String? rg_pl
+        String? rg_lb
+        String? rg_sm
 
         RuntimeAttr? runtime_attr_override
     }
