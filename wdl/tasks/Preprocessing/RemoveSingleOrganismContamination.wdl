@@ -88,30 +88,28 @@ workflow RemoveSingleOrganismContamination {
 
     File fq_e1 = select_first([fq_end1, t_005_Bam2Fastq.fq_end1])
     File fq_e2 = select_first([fq_end2, t_005_Bam2Fastq.fq_end2])
-
-    String RG = select_first([t_006_GetRawReadGroup.rg, "@RG\tID:" + SM + "_" + LB + "\tPL:" + platform + "\tLB:" + LB + "\tSM:" + SM])
-
+    
     # Align data to contaminant reference:
-    call SRUTIL.BwaMem2 as t_007_AlignReads {
+    call SRUTIL.Bowtie2 as t_007_AlignReads {
         input:
             fq_end1 = fq_e1,
             fq_end2 = fq_e2,
 
             ref_fasta = ref_map["fasta"],
             ref_fasta_index = ref_map["fai"],
-            ref_dict = ref_map["dict"],
-            ref_0123 = ref_map["0123"],
-            ref_amb = ref_map["amb"],
-            ref_ann = ref_map["ann"],
-            ref_bwt = ref_map["bwt"],
-            ref_pac = ref_map["pac"],
-
-            mark_short_splits_as_secondary = true,
-
-            read_group = RG,
+            ref_bowtie_indices = [
+                ref_map["1.bt2"],
+                ref_map["2.bt2"],
+                ref_map["3.bt2"],
+                ref_map["4.bt2"],
+                ref_map["rev.1.bt2"],
+                ref_map["rev.2.bt2"]
+            ],
             prefix = SM + ".contaminant_aligned." + contaminant_ref_name,
-
-            runtime_attr_override = object {mem_gb: 64}  # Need a lot of ram to use BWA-MEM2
+            rg_id = SM + "_" + LB,
+            rg_pl = platform,
+            rg_lb = LB,
+            rg_sm = SM
     }
 
     call ExtractReadsWithSamtools as t_008_ExtractDecontaminatedReads {
@@ -136,10 +134,9 @@ workflow RemoveSingleOrganismContamination {
             prefix = SM + ".decontaminated.sorted"
     }
 
-    call SortBamWithoutIndexing as t_011_SortContaminatedReads {
+    call Utils.SortSam as t_011_SortContaminatedReads {
         input:
             input_bam = t_009_ExtractContaminatedReads.output_bam,
-            extra_args = " -n ",
             prefix = SM + ".contaminated_" + contaminant_ref_name + "_reads.sorted"
     }
 
@@ -167,13 +164,14 @@ workflow RemoveSingleOrganismContamination {
         String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
         String outdir = if DEBUG_MODE then sub(concrete_gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(concrete_gcs_out_root_dir, "/$", "") + "/RemoveSingleOrganismContamination/~{dir_prefix}"
 
-        call FF.FinalizeToFile as t_013_FinalizeContaminatedBam { input: outdir = outdir, file = t_011_SortContaminatedReads.sorted_bam, keyfile = keyfile }
-        call FF.FinalizeToFile as t_014_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
-        call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
-        call FF.FinalizeToFile as t_016_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
+        call FF.FinalizeToFile as t_013_FinalizeContaminatedBam { input: outdir = outdir, file = t_011_SortContaminatedReads.output_bam, keyfile = keyfile }
+        call FF.FinalizeToFile as t_014_FinalizeContaminatedBamIndex { input: outdir = outdir, file = t_011_SortContaminatedReads.output_bam_index, keyfile = keyfile }
+        call FF.FinalizeToFile as t_015_FinalizeDecontaminatedFq1 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end1, keyfile = keyfile }
+        call FF.FinalizeToFile as t_016_FinalizeDecontaminatedFq2 { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_end2, keyfile = keyfile }
+        call FF.FinalizeToFile as t_017_FinalizeDecontaminatedUnpaired { input: outdir = outdir, file = t_012_CreateFastqFromDecontaminatedReads.fq_unpaired, keyfile = keyfile }
     }
 
-
+ 
     ############################################
     #      ___        _               _
     #     / _ \ _   _| |_ _ __  _   _| |_
@@ -184,11 +182,12 @@ workflow RemoveSingleOrganismContamination {
     ############################################
 
     output {
-        File contaminated_bam = select_first([t_013_FinalizeContaminatedBam.gcs_path, t_011_SortContaminatedReads.sorted_bam])
+        File contaminated_bam = select_first([t_013_FinalizeContaminatedBam.gcs_path, t_011_SortContaminatedReads.output_bam])
+        File contaminated_bam_index = select_first([t_014_FinalizeContaminatedBamIndex.gcs_path, t_011_SortContaminatedReads.output_bam_index])
 
-        File decontaminated_fq1 = select_first([t_014_FinalizeDecontaminatedFq1.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end1])
-        File decontaminated_fq2 = select_first([t_015_FinalizeDecontaminatedFq2.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end2])
-        File decontaminated_unpaired = select_first([t_016_FinalizeDecontaminatedUnpaired.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_unpaired])
+        File decontaminated_fq1 = select_first([t_015_FinalizeDecontaminatedFq1.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end1])
+        File decontaminated_fq2 = select_first([t_016_FinalizeDecontaminatedFq2.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end2])
+        File decontaminated_unpaired = select_first([t_017_FinalizeDecontaminatedUnpaired.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_unpaired])
     }
 }
 

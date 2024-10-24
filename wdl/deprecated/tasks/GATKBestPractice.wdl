@@ -126,8 +126,7 @@ workflow GATKBestPraciceForLR {
             call Utils.SortSam as SortBamout {
                 input:
                     input_bam = HaplotypeCallerGATK4.bamout,
-                    output_bam_basename = output_prefix,
-                    compression_level = 2
+                    prefix = output_prefix,
             }
         }
 
