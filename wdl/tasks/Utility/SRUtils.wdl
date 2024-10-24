@@ -543,7 +543,6 @@ task BaseRecalibrator {
             -R ~{ref_fasta} \
             -I ~{input_bam} \
             --use-original-qualities \
-            --allow-missing-read-group true \
             -O ~{prefix}.txt \
             --known-sites ~{known_sites_vcf}
 
@@ -556,9 +555,7 @@ task BaseRecalibrator {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        # docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
-        # Temporary snapshot build for testing the fix for BQSR issue https://github.com/broadinstitute/gatk/issues/6242
-        docker:             "us.gcr.io/broad-dsde-methods/broad-gatk-snapshots/gatk-remote-builds:jonn-4dd794b3f4e4e4e6a86f309a5ea1b580bf774b7c-4.5.0.0-48-g4dd794b3f" 
+        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -627,6 +624,7 @@ task ApplyBQSR {
             ~{true='--static-quantized-quals 10' false='' bin_base_qualities} \
             ~{true='--static-quantized-quals 20' false='' bin_base_qualities} \
             ~{true='--static-quantized-quals 30' false='' bin_base_qualities} \
+            --allow-missing-read-group true \
 
         # Make sure we use all our proocesors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
@@ -641,7 +639,9 @@ task ApplyBQSR {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        # docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        # Temporary snapshot build for testing the fix for BQSR issue https://github.com/broadinstitute/gatk/issues/6242
+        docker:             "us.gcr.io/broad-dsde-methods/broad-gatk-snapshots/gatk-remote-builds:jonn-4dd794b3f4e4e4e6a86f309a5ea1b580bf774b7c-4.5.0.0-48-g4dd794b3f" 
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
