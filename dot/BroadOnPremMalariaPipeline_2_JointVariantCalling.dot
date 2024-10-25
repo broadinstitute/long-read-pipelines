@@ -1,0 +1,11 @@
+// BroadOnPremMalariaPipeline_2_JointVariantCalling
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-t_001_GenotypeGVCFs" [label=t_001_GenotypeGVCFs shape=cds]
+	"call-t_002_VariantRecalibrator" [label=t_002_VariantRecalibrator shape=cds]
+	"call-t_003_SortCompressIndexVcf" [label=t_003_SortCompressIndexVcf shape=cds]
+	"call-t_001_GenotypeGVCFs" -> "call-t_002_VariantRecalibrator"
+	"call-t_002_VariantRecalibrator" -> "call-t_003_SortCompressIndexVcf"
+}

@@ -1,0 +1,58 @@
+// BroadOnPremMalariaPipeline_1_Alignment
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L35C5" {
+		fontname=Roboto label="if(!defined(bam) && !defined(bai) && !defined(fq_end1) && !defined(fq_end2))" rank=same
+		"call-UserErrorMissingInputFiles" [label=UserErrorMissingInputFiles shape=cds]
+		"if-L35C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-t_001_WdlExecutionStartTimestamp" [label=t_001_WdlExecutionStartTimestamp shape=cds]
+	subgraph "cluster-if-L49C5" {
+		fontname=Roboto label="if(defined(bam))" rank=same
+		"call-t_002_RevertSam" [label=t_002_RevertSam shape=cds]
+		"call-t_003_Bam2Fastq" [label=t_003_Bam2Fastq shape=cds]
+		"call-t_004_GetRawReadGroup" [label=t_004_GetRawReadGroup shape=cds]
+		"if-L49C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-fq_e1" [label=fq_e1 shape=plaintext]
+	"decl-fq_e2" [label=fq_e2 shape=plaintext]
+	"call-t_005_FilterOutHumanReads" [label=t_005_FilterOutHumanReads shape=cds]
+	"call-t_006_AlignReads" [label=t_006_AlignReads shape=cds]
+	"call-t_008_SortAlignedBam" [label=t_008_SortAlignedBam shape=cds]
+	"call-t_009_MarkDuplicates" [label=t_009_MarkDuplicates shape=cds]
+	"call-t_010_ReorderSam" [label=t_010_ReorderSam shape=cds]
+	"call-t_011_RealignIndels" [label=t_011_RealignIndels shape=cds]
+	"call-t_012_IndexRealignIndels" [label=t_012_IndexRealignIndels shape=cds]
+	"call-t_012_BQSR" [label=t_012_BQSR shape=cds]
+	"call-t_013_IndexBQSR" [label=t_013_IndexBQSR shape=cds]
+	"call-t_013_HaplotypeCaller" [label=t_013_HaplotypeCaller shape=cds]
+	"call-t_014_HaplotypeCallerGvcfMode" [label=t_014_HaplotypeCallerGvcfMode shape=cds]
+	"call-t_015_VariantRecalibrator" [label=t_015_VariantRecalibrator shape=cds]
+	"call-t_016_SortCompressIndexRawVCF" [label=t_016_SortCompressIndexRawVCF shape=cds]
+	"call-t_017_SortCompressIndexVCF" [label=t_017_SortCompressIndexVCF shape=cds]
+	"call-t_018_SortCompressIndexGVCF" [label=t_018_SortCompressIndexGVCF shape=cds]
+	"call-t_002_RevertSam" -> "call-t_003_Bam2Fastq"
+	"call-t_003_Bam2Fastq" -> "decl-fq_e1"
+	"call-t_003_Bam2Fastq" -> "decl-fq_e2"
+	"decl-fq_e1" -> "call-t_005_FilterOutHumanReads"
+	"decl-fq_e2" -> "call-t_005_FilterOutHumanReads"
+	"call-t_005_FilterOutHumanReads" -> "call-t_006_AlignReads"
+	"call-t_006_AlignReads" -> "call-t_008_SortAlignedBam"
+	"call-t_008_SortAlignedBam" -> "call-t_009_MarkDuplicates"
+	"call-t_009_MarkDuplicates" -> "call-t_010_ReorderSam"
+	"call-t_010_ReorderSam" -> "call-t_011_RealignIndels"
+	"call-t_011_RealignIndels" -> "call-t_012_IndexRealignIndels"
+	"call-t_012_IndexRealignIndels" -> "call-t_012_BQSR"
+	"call-t_011_RealignIndels" -> "call-t_012_BQSR"
+	"call-t_012_BQSR" -> "call-t_013_IndexBQSR"
+	"call-t_013_IndexBQSR" -> "call-t_013_HaplotypeCaller"
+	"call-t_012_BQSR" -> "call-t_013_HaplotypeCaller"
+	"call-t_013_IndexBQSR" -> "call-t_014_HaplotypeCallerGvcfMode"
+	"call-t_012_BQSR" -> "call-t_014_HaplotypeCallerGvcfMode"
+	"call-t_013_HaplotypeCaller" -> "call-t_015_VariantRecalibrator"
+	"call-t_013_HaplotypeCaller" -> "call-t_016_SortCompressIndexRawVCF"
+	"call-t_015_VariantRecalibrator" -> "call-t_017_SortCompressIndexVCF"
+	"call-t_014_HaplotypeCallerGvcfMode" -> "call-t_018_SortCompressIndexGVCF"
+}

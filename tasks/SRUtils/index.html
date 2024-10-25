@@ -68,6 +68,8 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BroadOnPremMalariaPipelineTasks/">BroadOnPremMalariaPipelineTasks</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../FastQC/">FastQC</a>
@@ -170,7 +172,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mergebamalignment">MergeBamAlignment</a>
+    <li class="toctree-l2"><a class="reference internal" href="#bowtie2">Bowtie2</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_4">Inputs</a>
         <ul>
@@ -186,7 +188,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#markduplicates">MarkDuplicates</a>
+    <li class="toctree-l2"><a class="reference internal" href="#mergebamalignment">MergeBamAlignment</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_5">Inputs</a>
         <ul>
@@ -194,13 +196,15 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_5">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_5">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_5">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#baserecalibrator">BaseRecalibrator</a>
+    <li class="toctree-l2"><a class="reference internal" href="#markduplicates">MarkDuplicates</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_6">Inputs</a>
         <ul>
@@ -214,7 +218,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#applybqsr">ApplyBQSR</a>
+    <li class="toctree-l2"><a class="reference internal" href="#baserecalibrator">BaseRecalibrator</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
         <ul>
@@ -222,15 +226,13 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_7">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_5">Defaults</a>
-    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_7">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#revertsam">RevertSam</a>
+    <li class="toctree-l2"><a class="reference internal" href="#applybqsr">ApplyBQSR</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
         <ul>
@@ -238,13 +240,15 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_8">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_6">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_8">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#computebamstats">ComputeBamStats</a>
+    <li class="toctree-l2"><a class="reference internal" href="#revertsam">RevertSam</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
         <ul>
@@ -258,7 +262,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mergevcfs">MergeVCFs</a>
+    <li class="toctree-l2"><a class="reference internal" href="#computebamstats">ComputeBamStats</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
         <ul>
@@ -266,15 +270,13 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_10">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_6">Defaults</a>
-    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_10">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#indexfeaturefile">IndexFeatureFile</a>
+    <li class="toctree-l2"><a class="reference internal" href="#mergevcfs">MergeVCFs</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_11">Inputs</a>
         <ul>
@@ -282,13 +284,15 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_11">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_7">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_11">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#revertbasequalities">RevertBaseQualities</a>
+    <li class="toctree-l2"><a class="reference internal" href="#indexfeaturefile">IndexFeatureFile</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_12">Inputs</a>
         <ul>
@@ -299,6 +303,20 @@
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_12">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#revertbasequalities">RevertBaseQualities</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_13">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_13">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_13">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_13">Outputs</a>
     </li>
         </ul>
     </li>
@@ -326,6 +344,10 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/BackupWorkspace/">BackupWorkspace</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/BenchmarkVCFs/">BenchmarkVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling/">BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BroadOnPremMalariaPipeline_2_JointVariantCalling/">BroadOnPremMalariaPipeline_2_JointVariantCalling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CCSPepper/">CCSPepper</a>
                   </li>
@@ -577,9 +599,37 @@
 <ul>
 <li><code>bam</code> (File)</li>
 </ul>
-<h2 id="mergebamalignment">MergeBamAlignment</h2>
+<h2 id="bowtie2">Bowtie2</h2>
 <h3 id="inputs_4">Inputs</h3>
 <h4 id="required_4">Required</h4>
+<ul>
+<li><code>fq_end1</code> (File, <strong>required</strong>): FASTQ file containing end 1 of reads.</li>
+<li><code>fq_end2</code> (File, <strong>required</strong>): FASTQ file containing end 2 of reads.</li>
+<li><code>prefix</code> (String, <strong>required</strong>): Prefix for output files.</li>
+<li><code>ref_bowtie_indices</code> (Array[File], <strong>required</strong>): Bowtie2 indices for the given genome.</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>): Reference FASTA file for the genome of the organism to which to align reads.</li>
+<li><code>ref_fasta_index</code> (File, <strong>required</strong>): Reference FASTA index file for the genome of the organism to which to align reads.</li>
+</ul>
+<h4 id="optional_4">Optional</h4>
+<ul>
+<li><code>rg_id</code> (String?)</li>
+<li><code>rg_lb</code> (String?)</li>
+<li><code>rg_pl</code> (String?)</li>
+<li><code>rg_sm</code> (String?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Optional override for runtime attributes.</li>
+</ul>
+<h4 id="defaults_4">Defaults</h4>
+<ul>
+<li><code>skip_sort</code> (Boolean, default=false)</li>
+</ul>
+<h3 id="outputs_4">Outputs</h3>
+<ul>
+<li><code>bam</code> (File)</li>
+<li><code>bai</code> (File)</li>
+</ul>
+<h2 id="mergebamalignment">MergeBamAlignment</h2>
+<h3 id="inputs_5">Inputs</h3>
+<h4 id="required_5">Required</h4>
 <ul>
 <li><code>aligned_bam</code> (File, <strong>required</strong>)</li>
 <li><code>ref_dict</code> (File, <strong>required</strong>)</li>
@@ -587,39 +637,39 @@
 <li><code>ref_fasta_index</code> (File, <strong>required</strong>)</li>
 <li><code>unaligned_bam</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_4">Optional</h4>
+<h4 id="optional_5">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_4">Defaults</h4>
+<h4 id="defaults_5">Defaults</h4>
 <ul>
 <li><code>prefix</code> (String, default="out")</li>
 </ul>
-<h3 id="outputs_4">Outputs</h3>
+<h3 id="outputs_5">Outputs</h3>
 <ul>
 <li><code>bam</code> (File)</li>
 </ul>
 <h2 id="markduplicates">MarkDuplicates</h2>
-<h3 id="inputs_5">Inputs</h3>
-<h4 id="required_5">Required</h4>
+<h3 id="inputs_6">Inputs</h3>
+<h4 id="required_6">Required</h4>
 <ul>
 <li><code>input_bam</code> (File, <strong>required</strong>)</li>
 <li><code>prefix</code> (String, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_5">Optional</h4>
+<h4 id="optional_6">Optional</h4>
 <ul>
 <li><code>read_name_regex</code> (String?)</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>sorting_collection_size_ratio</code> (Float?)</li>
 </ul>
-<h3 id="outputs_5">Outputs</h3>
+<h3 id="outputs_6">Outputs</h3>
 <ul>
 <li><code>bam</code> (File)</li>
 <li><code>metrics</code> (File)</li>
 </ul>
 <h2 id="baserecalibrator">BaseRecalibrator</h2>
-<h3 id="inputs_6">Inputs</h3>
-<h4 id="required_6">Required</h4>
+<h3 id="inputs_7">Inputs</h3>
+<h4 id="required_7">Required</h4>
 <ul>
 <li><code>input_bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
 <li><code>input_bam_index</code> (File, <strong>required</strong>)</li>
@@ -630,17 +680,17 @@
 <li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
 <li><code>ref_fasta_index</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_6">Optional</h4>
+<h4 id="optional_7">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_6">Outputs</h3>
+<h3 id="outputs_7">Outputs</h3>
 <ul>
 <li><code>recalibration_report</code> (File)</li>
 </ul>
 <h2 id="applybqsr">ApplyBQSR</h2>
-<h3 id="inputs_7">Inputs</h3>
-<h4 id="required_7">Required</h4>
+<h3 id="inputs_8">Inputs</h3>
+<h4 id="required_8">Required</h4>
 <ul>
 <li><code>input_bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
 <li><code>input_bam_index</code> (File, <strong>required</strong>)</li>
@@ -650,47 +700,47 @@
 <li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
 <li><code>ref_fasta_index</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_7">Optional</h4>
+<h4 id="optional_8">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_5">Defaults</h4>
+<h4 id="defaults_6">Defaults</h4>
 <ul>
 <li><code>bin_base_qualities</code> (Boolean, default=true)</li>
 <li><code>emit_original_quals</code> (Boolean, default=true)</li>
 </ul>
-<h3 id="outputs_7">Outputs</h3>
+<h3 id="outputs_8">Outputs</h3>
 <ul>
 <li><code>recalibrated_bam</code> (File)</li>
 <li><code>recalibrated_bai</code> (File)</li>
 </ul>
 <h2 id="revertsam">RevertSam</h2>
-<h3 id="inputs_8">Inputs</h3>
-<h4 id="required_8">Required</h4>
+<h3 id="inputs_9">Inputs</h3>
+<h4 id="required_9">Required</h4>
 <ul>
 <li><code>input_bam</code> (File, <strong>required</strong>)</li>
 <li><code>prefix</code> (String, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_8">Optional</h4>
+<h4 id="optional_9">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_8">Outputs</h3>
+<h3 id="outputs_9">Outputs</h3>
 <ul>
 <li><code>bam</code> (File)</li>
 </ul>
 <h2 id="computebamstats">ComputeBamStats</h2>
-<h3 id="inputs_9">Inputs</h3>
-<h4 id="required_9">Required</h4>
+<h3 id="inputs_10">Inputs</h3>
+<h4 id="required_10">Required</h4>
 <ul>
 <li><code>bam_file</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_9">Optional</h4>
+<h4 id="optional_10">Optional</h4>
 <ul>
 <li><code>qual_threshold</code> (Int?)</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_9">Outputs</h3>
+<h3 id="outputs_10">Outputs</h3>
 <ul>
 <li><code>results</code> (Map[String,Float])</li>
 <li><code>results_file</code> (File)</li>
@@ -700,22 +750,22 @@
 <dt>description</dt>
 <dd>Combine multiple VCFs or GVCFs from scattered HaplotypeCaller runs</dd>
 </dl>
-<h3 id="inputs_10">Inputs</h3>
-<h4 id="required_10">Required</h4>
+<h3 id="inputs_11">Inputs</h3>
+<h4 id="required_11">Required</h4>
 <ul>
 <li><code>input_vcfs</code> (Array[File], <strong>required</strong>)</li>
 <li><code>input_vcfs_indexes</code> (Array[File], <strong>required</strong>)</li>
 <li><code>prefix</code> (String, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_10">Optional</h4>
+<h4 id="optional_11">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_6">Defaults</h4>
+<h4 id="defaults_7">Defaults</h4>
 <ul>
 <li><code>is_gvcf</code> (Boolean, default=false)</li>
 </ul>
-<h3 id="outputs_10">Outputs</h3>
+<h3 id="outputs_11">Outputs</h3>
 <ul>
 <li><code>output_vcf</code> (File)</li>
 <li><code>output_vcf_index</code> (File)</li>
@@ -725,16 +775,16 @@
 <dt>description</dt>
 <dd>Create a Tribble index for a feature file using GATK.  Feature files are defined inside GATK and include VCF, BED, GTF, and other files.</dd>
 </dl>
-<h3 id="inputs_11">Inputs</h3>
-<h4 id="required_11">Required</h4>
+<h3 id="inputs_12">Inputs</h3>
+<h4 id="required_12">Required</h4>
 <ul>
 <li><code>feature_file</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_11">Optional</h4>
+<h4 id="optional_12">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_11">Outputs</h3>
+<h3 id="outputs_12">Outputs</h3>
 <ul>
 <li><code>index</code> (File)</li>
 </ul>
@@ -743,18 +793,18 @@
 <dt>description</dt>
 <dd>Replace base qualities in the bam file with those located in the <code>OQ</code> tag.  If  <code>ApplyBQSR</code> has not been run on the given bam file, no changes are made and the original file is returned.</dd>
 </dl>
-<h3 id="inputs_12">Inputs</h3>
-<h4 id="required_12">Required</h4>
+<h3 id="inputs_13">Inputs</h3>
+<h4 id="required_13">Required</h4>
 <ul>
 <li><code>bam</code> (File, <strong>required</strong>)</li>
 <li><code>prefix</code> (String, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_12">Optional</h4>
+<h4 id="optional_13">Optional</h4>
 <ul>
 <li><code>bai</code> (File?)</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_12">Outputs</h3>
+<h3 id="outputs_13">Outputs</h3>
 <ul>
 <li><code>bam_out</code> (File)</li>
 <li><code>bai_out</code> (File)</li>

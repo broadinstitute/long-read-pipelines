@@ -68,6 +68,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/AlignReads/">AlignReads</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/BroadOnPremMalariaPipelineTasks/">BroadOnPremMalariaPipelineTasks</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Clair/">Clair</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/FastQC/">FastQC</a>
@@ -128,6 +130,10 @@
                   <li class="toctree-l1"><a class="reference internal" href="../BackupWorkspace/">BackupWorkspace</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFs/">BenchmarkVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling/">BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BroadOnPremMalariaPipeline_2_JointVariantCalling/">BroadOnPremMalariaPipeline_2_JointVariantCalling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../CCSPepper/">CCSPepper</a>
                   </li>
@@ -340,6 +346,7 @@
 <li><code>t_004_RevertSam.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_Bam2Fastq.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_006_GetRawReadGroup.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_007_AlignReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_008_ExtractDecontaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_009_ExtractContaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_010_SortDecontaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -347,23 +354,27 @@
 <li><code>t_012_CreateFastqFromDecontaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_013_FinalizeContaminatedBam.name</code> (String?)</li>
 <li><code>t_013_FinalizeContaminatedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_014_FinalizeDecontaminatedFq1.name</code> (String?)</li>
-<li><code>t_014_FinalizeDecontaminatedFq1.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_015_FinalizeDecontaminatedFq2.name</code> (String?)</li>
-<li><code>t_015_FinalizeDecontaminatedFq2.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_016_FinalizeDecontaminatedUnpaired.name</code> (String?)</li>
-<li><code>t_016_FinalizeDecontaminatedUnpaired.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_014_FinalizeContaminatedBamIndex.name</code> (String?)</li>
+<li><code>t_014_FinalizeContaminatedBamIndex.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_015_FinalizeDecontaminatedFq1.name</code> (String?)</li>
+<li><code>t_015_FinalizeDecontaminatedFq1.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_016_FinalizeDecontaminatedFq2.name</code> (String?)</li>
+<li><code>t_016_FinalizeDecontaminatedFq2.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_017_FinalizeDecontaminatedUnpaired.name</code> (String?)</li>
+<li><code>t_017_FinalizeDecontaminatedUnpaired.runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
 <li><code>DEBUG_MODE</code> (Boolean, default=false): [default valued] enables debugging tasks / subworkflows (default: false)</li>
 <li><code>platform</code> (String, default="illumina"): [default valued] the value to place in the BAM read group's PL (platform) field (default: illumina)</li>
 <li><code>t_001_WdlExecutionStartTimestamp.date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
+<li><code>t_007_AlignReads.skip_sort</code> (Boolean, default=false)</li>
 <li><code>t_009_ExtractContaminatedReads.extra_args</code> (String, default="")</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>contaminated_bam</code> (File)</li>
+<li><code>contaminated_bam_index</code> (File)</li>
 <li><code>decontaminated_fq1</code> (File)</li>
 <li><code>decontaminated_fq2</code> (File)</li>
 <li><code>decontaminated_unpaired</code> (File)</li>

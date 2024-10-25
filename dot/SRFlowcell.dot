@@ -11,42 +11,42 @@ digraph {
 		"call-t_004_GetRawReadGroup" [label=t_004_GetRawReadGroup shape=cds]
 		"if-L81C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	subgraph "cluster-if-L102C5" {
-		fontname=Roboto label="if(false && defined(contaminant_ref_map_file))" rank=same
-		"call-DecontaminateSample" [label=DecontaminateSample shape=cds]
-		"if-L102C5" [label="" height=0 margin=0 style=invis width=0]
+	subgraph "cluster-if-L100C5" {
+		fontname=Roboto label="if(defined(contaminant_ref_map_file))" rank=same
+		"call-t_005_DecontaminateSample" [label=t_005_DecontaminateSample shape=cds]
+		"if-L100C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-fq_e1" [label=fq_e1 shape=plaintext]
 	"decl-fq_e2" [label=fq_e2 shape=plaintext]
 	"decl-RG" [label=RG shape=plaintext]
-	"call-t_005_AlignReads" [label=t_005_AlignReads shape=cds]
-	subgraph "cluster-if-L148C5" {
+	"call-t_006_AlignReads" [label=t_006_AlignReads shape=cds]
+	subgraph "cluster-if-L146C5" {
 		fontname=Roboto label="if(defined(bam))" rank=same
-		"call-t_006_MergeBamAlignment" [label=t_006_MergeBamAlignment shape=cds]
-		"if-L148C5" [label="" height=0 margin=0 style=invis width=0]
+		"call-t_007_MergeBamAlignment" [label=t_007_MergeBamAlignment shape=cds]
+		"if-L146C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-merged_bam" [label=merged_bam shape=plaintext]
-	"call-t_007_MarkDuplicates" [label=t_007_MarkDuplicates shape=cds]
-	"call-t_008_SortAlignedDuplicateMarkedBam" [label=t_008_SortAlignedDuplicateMarkedBam shape=cds]
-	subgraph "cluster-if-L180C5" {
+	"call-t_008_MarkDuplicates" [label=t_008_MarkDuplicates shape=cds]
+	"call-t_009_SortAlignedDuplicateMarkedBam" [label=t_009_SortAlignedDuplicateMarkedBam shape=cds]
+	subgraph "cluster-if-L177C5" {
 		fontname=Roboto label="if(perform_BQSR)" rank=same
-		"call-t_009_BaseRecalibrator" [label=t_009_BaseRecalibrator shape=cds]
-		"call-t_010_ApplyBQSR" [label=t_010_ApplyBQSR shape=cds]
-		"if-L180C5" [label="" height=0 margin=0 style=invis width=0]
+		"call-t_010_BaseRecalibrator" [label=t_010_BaseRecalibrator shape=cds]
+		"call-t_011_ApplyBQSR" [label=t_011_ApplyBQSR shape=cds]
+		"if-L177C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-final_bam" [label=final_bam shape=plaintext]
 	"decl-final_bai" [label=final_bai shape=plaintext]
-	"call-t_011_SamStats" [label=t_011_SamStats shape=cds]
-	"call-t_012_FastQC" [label=t_012_FastQC shape=cds]
-	"call-t_013_ComputeGenomeLength" [label=t_013_ComputeGenomeLength shape=cds]
-	"call-t_014_ComputeBamStats" [label=t_014_ComputeBamStats shape=cds]
-	"call-t_015_ComputeBamStatsQ5" [label=t_015_ComputeBamStatsQ5 shape=cds]
-	"call-t_016_ComputeBamStatsQ7" [label=t_016_ComputeBamStatsQ7 shape=cds]
-	"call-t_017_ComputeBamStatsQ10" [label=t_017_ComputeBamStatsQ10 shape=cds]
-	"call-t_018_ComputeBamStatsQ12" [label=t_018_ComputeBamStatsQ12 shape=cds]
-	"call-t_019_ComputeBamStatsQ15" [label=t_019_ComputeBamStatsQ15 shape=cds]
-	"call-PerFlowcellMetrics" [label=PerFlowcellMetrics shape=cds]
-	subgraph "cluster-if-L258C5" {
+	"call-t_012_SamStats" [label=t_012_SamStats shape=cds]
+	"call-t_013_FastQC" [label=t_013_FastQC shape=cds]
+	"call-t_014_ComputeGenomeLength" [label=t_014_ComputeGenomeLength shape=cds]
+	"call-t_015_ComputeBamStats" [label=t_015_ComputeBamStats shape=cds]
+	"call-t_016_ComputeBamStatsQ5" [label=t_016_ComputeBamStatsQ5 shape=cds]
+	"call-t_017_ComputeBamStatsQ7" [label=t_017_ComputeBamStatsQ7 shape=cds]
+	"call-t_018_ComputeBamStatsQ10" [label=t_018_ComputeBamStatsQ10 shape=cds]
+	"call-t_019_ComputeBamStatsQ12" [label=t_019_ComputeBamStatsQ12 shape=cds]
+	"call-t_020_ComputeBamStatsQ15" [label=t_020_ComputeBamStatsQ15 shape=cds]
+	"call-t_021_PerFlowcellMetrics" [label=t_021_PerFlowcellMetrics shape=cds]
+	subgraph "cluster-if-L255C5" {
 		fontname=Roboto label="if(defined(gcs_out_root_dir))" rank=same
 		"decl-outdir" [label=outdir shape=plaintext]
 		"decl-reads_dir" [label=reads_dir shape=plaintext]
@@ -54,125 +54,125 @@ digraph {
 		"decl-aligned_reads_dir" [label=aligned_reads_dir shape=plaintext]
 		"decl-metrics_dir" [label=metrics_dir shape=plaintext]
 		"decl-keyfile" [label=keyfile shape=plaintext]
-		"call-t_020_FinalizeUnalignedFastqReads" [label=t_020_FinalizeUnalignedFastqReads shape=cds]
-		subgraph "cluster-if-L281C9" {
+		"call-t_022_FinalizeUnalignedFastqReads" [label=t_022_FinalizeUnalignedFastqReads shape=cds]
+		subgraph "cluster-if-L278C9" {
 			fontname=Roboto label="if(defined(bam))" rank=same
-			"call-t_021_FinalizeUnalignedReadsFromBam" [label=t_021_FinalizeUnalignedReadsFromBam shape=cds]
-			"if-L281C9" [label="" height=0 margin=0 style=invis width=0]
+			"call-t_023_FinalizeUnalignedReadsFromBam" [label=t_023_FinalizeUnalignedReadsFromBam shape=cds]
+			"if-L278C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"call-t_022_FinalizeAlignedReads" [label=t_022_FinalizeAlignedReads shape=cds]
-		"call-t_023_FinalizeAlignedBam" [label=t_023_FinalizeAlignedBam shape=cds]
-		"call-t_024_FinalizeAlignedBai" [label=t_024_FinalizeAlignedBai shape=cds]
-		"call-t_025_FinalizeMetrics" [label=t_025_FinalizeMetrics shape=cds]
-		subgraph "cluster-if-L342C9" {
+		"call-t_024_FinalizeAlignedReads" [label=t_024_FinalizeAlignedReads shape=cds]
+		"call-t_025_FinalizeAlignedBam" [label=t_025_FinalizeAlignedBam shape=cds]
+		"call-t_026_FinalizeAlignedBai" [label=t_026_FinalizeAlignedBai shape=cds]
+		"call-t_027_FinalizeMetrics" [label=t_027_FinalizeMetrics shape=cds]
+		subgraph "cluster-if-L339C9" {
 			fontname=Roboto label="if(perform_BQSR)" rank=same
-			"call-t_026_FinalizeBQSRMetrics" [label=t_026_FinalizeBQSRMetrics shape=cds]
-			"if-L342C9" [label="" height=0 margin=0 style=invis width=0]
+			"call-t_028_FinalizeBQSRMetrics" [label=t_028_FinalizeBQSRMetrics shape=cds]
+			"if-L339C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"call-t_027_FinalizeFastQCReport" [label=t_027_FinalizeFastQCReport shape=cds]
+		"call-t_029_FinalizeFastQCReport" [label=t_029_FinalizeFastQCReport shape=cds]
 		"decl-fq1_o" [label=fq1_o shape=plaintext]
 		"decl-fq2_o" [label=fq2_o shape=plaintext]
-		subgraph "cluster-if-L360C9" {
+		subgraph "cluster-if-L357C9" {
 			fontname=Roboto label="if(defined(bam))" rank=same
 			"decl-unaligned_bam_o" [label=unaligned_bam_o shape=plaintext]
 			"decl-unaligned_bai_o" [label=unaligned_bai_o shape=plaintext]
 			"decl-fqboup" [label=fqboup shape=plaintext]
-			"if-L360C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L357C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		"if-L258C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L255C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-raw_est_fold_cov_value" [label=raw_est_fold_cov_value shape=plaintext]
 	"decl-aligned_frac_bases_value" [label=aligned_frac_bases_value shape=plaintext]
 	"decl-aligned_est_fold_cov_value" [label=aligned_est_fold_cov_value shape=plaintext]
 	"decl-average_identity_value" [label=average_identity_value shape=plaintext]
 	"call-t_002_RevertSam" -> "call-t_003_Bam2Fastq"
-	"call-t_003_Bam2Fastq" -> "call-DecontaminateSample"
+	"call-t_003_Bam2Fastq" -> "call-t_005_DecontaminateSample"
 	"call-t_003_Bam2Fastq" -> "decl-fq_e1"
-	"call-DecontaminateSample" -> "decl-fq_e1"
+	"call-t_005_DecontaminateSample" -> "decl-fq_e1"
 	"call-t_003_Bam2Fastq" -> "decl-fq_e2"
-	"call-DecontaminateSample" -> "decl-fq_e2"
+	"call-t_005_DecontaminateSample" -> "decl-fq_e2"
 	"call-t_004_GetRawReadGroup" -> "decl-RG"
-	"decl-fq_e1" -> "call-t_005_AlignReads"
-	"decl-fq_e2" -> "call-t_005_AlignReads"
-	"decl-RG" -> "call-t_005_AlignReads"
-	"call-t_005_AlignReads" -> "call-t_006_MergeBamAlignment"
-	"call-t_002_RevertSam" -> "call-t_006_MergeBamAlignment"
-	"call-t_005_AlignReads" -> "decl-merged_bam"
-	"call-t_006_MergeBamAlignment" -> "decl-merged_bam"
-	"decl-merged_bam" -> "call-t_007_MarkDuplicates"
-	"call-t_007_MarkDuplicates" -> "call-t_008_SortAlignedDuplicateMarkedBam"
-	"call-t_008_SortAlignedDuplicateMarkedBam" -> "call-t_009_BaseRecalibrator"
-	"call-t_008_SortAlignedDuplicateMarkedBam" -> "call-t_010_ApplyBQSR"
-	"call-t_009_BaseRecalibrator" -> "call-t_010_ApplyBQSR"
-	"call-t_010_ApplyBQSR" -> "decl-final_bam"
-	"call-t_008_SortAlignedDuplicateMarkedBam" -> "decl-final_bam"
-	"call-t_010_ApplyBQSR" -> "decl-final_bai"
-	"call-t_008_SortAlignedDuplicateMarkedBam" -> "decl-final_bai"
-	"decl-final_bam" -> "call-t_011_SamStats"
-	"decl-final_bam" -> "call-t_012_FastQC"
-	"decl-final_bai" -> "call-t_012_FastQC"
-	"decl-final_bam" -> "call-t_014_ComputeBamStats"
-	"decl-final_bam" -> "call-t_015_ComputeBamStatsQ5"
-	"decl-final_bam" -> "call-t_016_ComputeBamStatsQ7"
-	"decl-final_bam" -> "call-t_017_ComputeBamStatsQ10"
-	"decl-final_bam" -> "call-t_018_ComputeBamStatsQ12"
-	"decl-final_bam" -> "call-t_019_ComputeBamStatsQ15"
-	"decl-final_bam" -> "call-PerFlowcellMetrics"
-	"decl-final_bai" -> "call-PerFlowcellMetrics"
-	"decl-metrics_dir" -> "call-PerFlowcellMetrics"
+	"decl-fq_e2" -> "call-t_006_AlignReads"
+	"decl-RG" -> "call-t_006_AlignReads"
+	"decl-fq_e1" -> "call-t_006_AlignReads"
+	"call-t_002_RevertSam" -> "call-t_007_MergeBamAlignment"
+	"call-t_006_AlignReads" -> "call-t_007_MergeBamAlignment"
+	"call-t_007_MergeBamAlignment" -> "decl-merged_bam"
+	"call-t_006_AlignReads" -> "decl-merged_bam"
+	"decl-merged_bam" -> "call-t_008_MarkDuplicates"
+	"call-t_008_MarkDuplicates" -> "call-t_009_SortAlignedDuplicateMarkedBam"
+	"call-t_009_SortAlignedDuplicateMarkedBam" -> "call-t_010_BaseRecalibrator"
+	"call-t_010_BaseRecalibrator" -> "call-t_011_ApplyBQSR"
+	"call-t_009_SortAlignedDuplicateMarkedBam" -> "call-t_011_ApplyBQSR"
+	"call-t_009_SortAlignedDuplicateMarkedBam" -> "decl-final_bam"
+	"call-t_011_ApplyBQSR" -> "decl-final_bam"
+	"call-t_009_SortAlignedDuplicateMarkedBam" -> "decl-final_bai"
+	"call-t_011_ApplyBQSR" -> "decl-final_bai"
+	"decl-final_bam" -> "call-t_012_SamStats"
+	"decl-final_bam" -> "call-t_013_FastQC"
+	"decl-final_bai" -> "call-t_013_FastQC"
+	"decl-final_bam" -> "call-t_015_ComputeBamStats"
+	"decl-final_bam" -> "call-t_016_ComputeBamStatsQ5"
+	"decl-final_bam" -> "call-t_017_ComputeBamStatsQ7"
+	"decl-final_bam" -> "call-t_018_ComputeBamStatsQ10"
+	"decl-final_bam" -> "call-t_019_ComputeBamStatsQ12"
+	"decl-final_bam" -> "call-t_020_ComputeBamStatsQ15"
+	"decl-final_bam" -> "call-t_021_PerFlowcellMetrics"
+	"decl-final_bai" -> "call-t_021_PerFlowcellMetrics"
+	"decl-metrics_dir" -> "call-t_021_PerFlowcellMetrics"
 	"call-t_001_WdlExecutionStartTimestamp" -> "decl-outdir"
 	"decl-outdir" -> "decl-reads_dir"
 	"decl-outdir" -> "decl-unaligned_reads_dir"
 	"decl-outdir" -> "decl-aligned_reads_dir"
 	"decl-outdir" -> "decl-metrics_dir"
-	"call-t_014_ComputeBamStats" -> "decl-keyfile"
-	"decl-keyfile" -> "call-t_020_FinalizeUnalignedFastqReads"
-	"decl-unaligned_reads_dir" -> "call-t_020_FinalizeUnalignedFastqReads"
-	"decl-fq_e1" -> "call-t_020_FinalizeUnalignedFastqReads"
-	"decl-fq_e2" -> "call-t_020_FinalizeUnalignedFastqReads"
-	"decl-unaligned_reads_dir" -> "call-t_021_FinalizeUnalignedReadsFromBam"
-	"decl-keyfile" -> "call-t_021_FinalizeUnalignedReadsFromBam"
-	"call-t_003_Bam2Fastq" -> "call-t_021_FinalizeUnalignedReadsFromBam"
-	"decl-keyfile" -> "call-t_022_FinalizeAlignedReads"
-	"decl-merged_bam" -> "call-t_022_FinalizeAlignedReads"
-	"call-t_007_MarkDuplicates" -> "call-t_022_FinalizeAlignedReads"
-	"call-t_008_SortAlignedDuplicateMarkedBam" -> "call-t_022_FinalizeAlignedReads"
-	"call-t_005_AlignReads" -> "call-t_022_FinalizeAlignedReads"
-	"decl-aligned_reads_dir" -> "call-t_022_FinalizeAlignedReads"
-	"decl-final_bam" -> "call-t_023_FinalizeAlignedBam"
-	"decl-keyfile" -> "call-t_023_FinalizeAlignedBam"
-	"decl-aligned_reads_dir" -> "call-t_023_FinalizeAlignedBam"
-	"decl-keyfile" -> "call-t_024_FinalizeAlignedBai"
-	"decl-final_bai" -> "call-t_024_FinalizeAlignedBai"
-	"decl-aligned_reads_dir" -> "call-t_024_FinalizeAlignedBai"
-	"call-t_017_ComputeBamStatsQ10" -> "call-t_025_FinalizeMetrics"
-	"call-t_015_ComputeBamStatsQ5" -> "call-t_025_FinalizeMetrics"
-	"call-t_016_ComputeBamStatsQ7" -> "call-t_025_FinalizeMetrics"
-	"call-t_019_ComputeBamStatsQ15" -> "call-t_025_FinalizeMetrics"
-	"call-t_011_SamStats" -> "call-t_025_FinalizeMetrics"
-	"decl-keyfile" -> "call-t_025_FinalizeMetrics"
-	"call-t_018_ComputeBamStatsQ12" -> "call-t_025_FinalizeMetrics"
-	"call-t_007_MarkDuplicates" -> "call-t_025_FinalizeMetrics"
-	"decl-metrics_dir" -> "call-t_025_FinalizeMetrics"
-	"call-t_014_ComputeBamStats" -> "call-t_025_FinalizeMetrics"
-	"decl-metrics_dir" -> "call-t_026_FinalizeBQSRMetrics"
-	"decl-keyfile" -> "call-t_026_FinalizeBQSRMetrics"
-	"call-t_009_BaseRecalibrator" -> "call-t_026_FinalizeBQSRMetrics"
-	"call-t_012_FastQC" -> "call-t_027_FinalizeFastQCReport"
-	"decl-metrics_dir" -> "call-t_027_FinalizeFastQCReport"
+	"call-t_015_ComputeBamStats" -> "decl-keyfile"
+	"decl-unaligned_reads_dir" -> "call-t_022_FinalizeUnalignedFastqReads"
+	"decl-keyfile" -> "call-t_022_FinalizeUnalignedFastqReads"
+	"decl-fq_e1" -> "call-t_022_FinalizeUnalignedFastqReads"
+	"decl-fq_e2" -> "call-t_022_FinalizeUnalignedFastqReads"
+	"decl-keyfile" -> "call-t_023_FinalizeUnalignedReadsFromBam"
+	"decl-unaligned_reads_dir" -> "call-t_023_FinalizeUnalignedReadsFromBam"
+	"call-t_003_Bam2Fastq" -> "call-t_023_FinalizeUnalignedReadsFromBam"
+	"decl-keyfile" -> "call-t_024_FinalizeAlignedReads"
+	"decl-merged_bam" -> "call-t_024_FinalizeAlignedReads"
+	"call-t_008_MarkDuplicates" -> "call-t_024_FinalizeAlignedReads"
+	"decl-aligned_reads_dir" -> "call-t_024_FinalizeAlignedReads"
+	"call-t_009_SortAlignedDuplicateMarkedBam" -> "call-t_024_FinalizeAlignedReads"
+	"call-t_006_AlignReads" -> "call-t_024_FinalizeAlignedReads"
+	"decl-aligned_reads_dir" -> "call-t_025_FinalizeAlignedBam"
+	"decl-keyfile" -> "call-t_025_FinalizeAlignedBam"
+	"decl-final_bam" -> "call-t_025_FinalizeAlignedBam"
+	"decl-aligned_reads_dir" -> "call-t_026_FinalizeAlignedBai"
+	"decl-final_bai" -> "call-t_026_FinalizeAlignedBai"
+	"decl-keyfile" -> "call-t_026_FinalizeAlignedBai"
+	"call-t_015_ComputeBamStats" -> "call-t_027_FinalizeMetrics"
+	"decl-keyfile" -> "call-t_027_FinalizeMetrics"
+	"decl-metrics_dir" -> "call-t_027_FinalizeMetrics"
+	"call-t_018_ComputeBamStatsQ10" -> "call-t_027_FinalizeMetrics"
+	"call-t_019_ComputeBamStatsQ12" -> "call-t_027_FinalizeMetrics"
+	"call-t_020_ComputeBamStatsQ15" -> "call-t_027_FinalizeMetrics"
+	"call-t_017_ComputeBamStatsQ7" -> "call-t_027_FinalizeMetrics"
+	"call-t_012_SamStats" -> "call-t_027_FinalizeMetrics"
+	"call-t_008_MarkDuplicates" -> "call-t_027_FinalizeMetrics"
+	"call-t_016_ComputeBamStatsQ5" -> "call-t_027_FinalizeMetrics"
+	"call-t_010_BaseRecalibrator" -> "call-t_028_FinalizeBQSRMetrics"
+	"decl-keyfile" -> "call-t_028_FinalizeBQSRMetrics"
+	"decl-metrics_dir" -> "call-t_028_FinalizeBQSRMetrics"
+	"call-t_013_FastQC" -> "call-t_029_FinalizeFastQCReport"
+	"decl-metrics_dir" -> "call-t_029_FinalizeFastQCReport"
 	"decl-unaligned_reads_dir" -> "decl-fq1_o"
 	"decl-fq_e1" -> "decl-fq1_o"
 	"decl-unaligned_reads_dir" -> "decl-fq2_o"
 	"decl-fq_e2" -> "decl-fq2_o"
 	"decl-unaligned_reads_dir" -> "decl-unaligned_bam_o"
 	"decl-unaligned_reads_dir" -> "decl-unaligned_bai_o"
-	"call-t_003_Bam2Fastq" -> "decl-fqboup"
 	"decl-unaligned_reads_dir" -> "decl-fqboup"
-	"call-DecontaminateSample" -> "decl-fqboup"
-	"call-t_013_ComputeGenomeLength" -> "decl-raw_est_fold_cov_value"
-	"call-t_014_ComputeBamStats" -> "decl-raw_est_fold_cov_value"
-	"call-t_011_SamStats" -> "decl-aligned_frac_bases_value"
-	"call-t_013_ComputeGenomeLength" -> "decl-aligned_est_fold_cov_value"
-	"call-t_011_SamStats" -> "decl-aligned_est_fold_cov_value"
-	"call-t_011_SamStats" -> "decl-average_identity_value"
+	"call-t_003_Bam2Fastq" -> "decl-fqboup"
+	"call-t_005_DecontaminateSample" -> "decl-fqboup"
+	"call-t_015_ComputeBamStats" -> "decl-raw_est_fold_cov_value"
+	"call-t_014_ComputeGenomeLength" -> "decl-raw_est_fold_cov_value"
+	"call-t_012_SamStats" -> "decl-aligned_frac_bases_value"
+	"call-t_014_ComputeGenomeLength" -> "decl-aligned_est_fold_cov_value"
+	"call-t_012_SamStats" -> "decl-aligned_est_fold_cov_value"
+	"call-t_012_SamStats" -> "decl-average_identity_value"
 }

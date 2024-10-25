@@ -68,6 +68,8 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../AlignReads/">AlignReads</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BroadOnPremMalariaPipelineTasks/">BroadOnPremMalariaPipelineTasks</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Clair/">Clair</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../FastQC/">FastQC</a>
@@ -631,6 +633,10 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/BenchmarkVCFs/">BenchmarkVCFs</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling/">BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BroadOnPremMalariaPipeline_2_JointVariantCalling/">BroadOnPremMalariaPipeline_2_JointVariantCalling</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CCSPepper/">CCSPepper</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallAssemblyVariants/">CallAssemblyVariants</a>
@@ -823,9 +829,8 @@
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
-<li><code>compression_level</code> (Int, <strong>required</strong>): The compression level for the output BAM file</li>
 <li><code>input_bam</code> (File, <strong>required</strong>): The BAM file to sort</li>
-<li><code>output_bam_basename</code> (String, <strong>required</strong>): The basename for the output BAM file</li>
+<li><code>prefix</code> (String, <strong>required</strong>): The basename for the output BAM file</li>
 </ul>
 <h4 id="optional_1">Optional</h4>
 <ul>
@@ -835,7 +840,6 @@
 <ul>
 <li><code>output_bam</code> (File)</li>
 <li><code>output_bam_index</code> (File)</li>
-<li><code>output_bam_md5</code> (File)</li>
 </ul>
 <h2 id="makechrintervallist">MakeChrIntervalList</h2>
 <dl>

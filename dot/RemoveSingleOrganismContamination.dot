@@ -23,30 +23,28 @@ digraph {
 	}
 	"decl-fq_e1" [label=fq_e1 shape=plaintext]
 	"decl-fq_e2" [label=fq_e2 shape=plaintext]
-	"decl-RG" [label=RG shape=plaintext]
 	"call-t_007_AlignReads" [label=t_007_AlignReads shape=cds]
 	"call-t_008_ExtractDecontaminatedReads" [label=t_008_ExtractDecontaminatedReads shape=cds]
 	"call-t_009_ExtractContaminatedReads" [label=t_009_ExtractContaminatedReads shape=cds]
 	"call-t_010_SortDecontaminatedReads" [label=t_010_SortDecontaminatedReads shape=cds]
 	"call-t_011_SortContaminatedReads" [label=t_011_SortContaminatedReads shape=cds]
 	"call-t_012_CreateFastqFromDecontaminatedReads" [label=t_012_CreateFastqFromDecontaminatedReads shape=cds]
-	subgraph "cluster-if-L162C5" {
+	subgraph "cluster-if-L159C5" {
 		fontname=Roboto label="if(defined(gcs_out_root_dir))" rank=same
 		"decl-keyfile" [label=keyfile shape=plaintext]
 		"decl-outdir" [label=outdir shape=plaintext]
 		"call-t_013_FinalizeContaminatedBam" [label=t_013_FinalizeContaminatedBam shape=cds]
-		"call-t_014_FinalizeDecontaminatedFq1" [label=t_014_FinalizeDecontaminatedFq1 shape=cds]
-		"call-t_015_FinalizeDecontaminatedFq2" [label=t_015_FinalizeDecontaminatedFq2 shape=cds]
-		"call-t_016_FinalizeDecontaminatedUnpaired" [label=t_016_FinalizeDecontaminatedUnpaired shape=cds]
-		"if-L162C5" [label="" height=0 margin=0 style=invis width=0]
+		"call-t_014_FinalizeContaminatedBamIndex" [label=t_014_FinalizeContaminatedBamIndex shape=cds]
+		"call-t_015_FinalizeDecontaminatedFq1" [label=t_015_FinalizeDecontaminatedFq1 shape=cds]
+		"call-t_016_FinalizeDecontaminatedFq2" [label=t_016_FinalizeDecontaminatedFq2 shape=cds]
+		"call-t_017_FinalizeDecontaminatedUnpaired" [label=t_017_FinalizeDecontaminatedUnpaired shape=cds]
+		"if-L159C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-t_004_RevertSam" -> "call-t_005_Bam2Fastq"
 	"call-t_005_Bam2Fastq" -> "decl-fq_e1"
 	"call-t_005_Bam2Fastq" -> "decl-fq_e2"
-	"call-t_006_GetRawReadGroup" -> "decl-RG"
-	"decl-fq_e1" -> "call-t_007_AlignReads"
 	"decl-fq_e2" -> "call-t_007_AlignReads"
-	"decl-RG" -> "call-t_007_AlignReads"
+	"decl-fq_e1" -> "call-t_007_AlignReads"
 	"call-t_007_AlignReads" -> "call-t_008_ExtractDecontaminatedReads"
 	"call-t_007_AlignReads" -> "call-t_009_ExtractContaminatedReads"
 	"call-t_008_ExtractDecontaminatedReads" -> "call-t_010_SortDecontaminatedReads"
@@ -54,16 +52,19 @@ digraph {
 	"call-t_010_SortDecontaminatedReads" -> "call-t_012_CreateFastqFromDecontaminatedReads"
 	"call-t_012_CreateFastqFromDecontaminatedReads" -> "decl-keyfile"
 	"call-t_001_WdlExecutionStartTimestamp" -> "decl-outdir"
-	"call-t_011_SortContaminatedReads" -> "call-t_013_FinalizeContaminatedBam"
 	"decl-keyfile" -> "call-t_013_FinalizeContaminatedBam"
+	"call-t_011_SortContaminatedReads" -> "call-t_013_FinalizeContaminatedBam"
 	"decl-outdir" -> "call-t_013_FinalizeContaminatedBam"
-	"call-t_012_CreateFastqFromDecontaminatedReads" -> "call-t_014_FinalizeDecontaminatedFq1"
-	"decl-keyfile" -> "call-t_014_FinalizeDecontaminatedFq1"
-	"decl-outdir" -> "call-t_014_FinalizeDecontaminatedFq1"
-	"call-t_012_CreateFastqFromDecontaminatedReads" -> "call-t_015_FinalizeDecontaminatedFq2"
-	"decl-keyfile" -> "call-t_015_FinalizeDecontaminatedFq2"
-	"decl-outdir" -> "call-t_015_FinalizeDecontaminatedFq2"
-	"call-t_012_CreateFastqFromDecontaminatedReads" -> "call-t_016_FinalizeDecontaminatedUnpaired"
-	"decl-keyfile" -> "call-t_016_FinalizeDecontaminatedUnpaired"
-	"decl-outdir" -> "call-t_016_FinalizeDecontaminatedUnpaired"
+	"decl-keyfile" -> "call-t_014_FinalizeContaminatedBamIndex"
+	"call-t_011_SortContaminatedReads" -> "call-t_014_FinalizeContaminatedBamIndex"
+	"decl-outdir" -> "call-t_014_FinalizeContaminatedBamIndex"
+	"decl-keyfile" -> "call-t_015_FinalizeDecontaminatedFq1"
+	"decl-outdir" -> "call-t_015_FinalizeDecontaminatedFq1"
+	"call-t_012_CreateFastqFromDecontaminatedReads" -> "call-t_015_FinalizeDecontaminatedFq1"
+	"decl-keyfile" -> "call-t_016_FinalizeDecontaminatedFq2"
+	"decl-outdir" -> "call-t_016_FinalizeDecontaminatedFq2"
+	"call-t_012_CreateFastqFromDecontaminatedReads" -> "call-t_016_FinalizeDecontaminatedFq2"
+	"decl-keyfile" -> "call-t_017_FinalizeDecontaminatedUnpaired"
+	"decl-outdir" -> "call-t_017_FinalizeDecontaminatedUnpaired"
+	"call-t_012_CreateFastqFromDecontaminatedReads" -> "call-t_017_FinalizeDecontaminatedUnpaired"
 }
