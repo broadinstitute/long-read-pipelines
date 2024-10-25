@@ -233,6 +233,121 @@ task BwaMem2 {
     }
 }
 
+task Bowtie2 {
+
+    parameter_meta {
+        prefix: "Prefix for output files."
+
+        fq_end1: "FASTQ file containing end 1 of reads."
+        fq_end2: "FASTQ file containing end 2 of reads."
+
+        ref_fasta: "Reference FASTA file for the genome of the organism to which to align reads."
+        ref_fasta_index: "Reference FASTA index file for the genome of the organism to which to align reads."
+        ref_bowtie_indices: "Bowtie2 indices for the given genome."
+
+        runtime_attr_override: "Optional override for runtime attributes."
+    }
+
+    input {
+        String prefix
+
+        File fq_end1
+        File fq_end2
+
+        File ref_fasta
+        File ref_fasta_index
+        Array[File] ref_bowtie_indices
+
+        Boolean skip_sort = false
+
+        String? rg_id
+        String? rg_pl
+        String? rg_lb
+        String? rg_sm
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int bowtie_index_size = ceil(size(ref_bowtie_indices, "GB"))
+    Int disk_size = 10 + 10 * (bowtie_index_size + ceil(size([fq_end1, fq_end2, ref_fasta, ref_fasta_index], "GB")))
+
+    String rgid_cmd = if defined(rg_id) then " --rg-id " else ""
+    String rg_cmd = if (defined(rg_pl) || defined(rg_lb) || defined(rg_sm)) then " --rg " else ""
+
+    String rg_id_val = if defined(rg_id) then select_first([rg_id]) else ""
+    String rg_pl_val = if defined(rg_pl) then "PL:" + select_first([rg_pl]) else ""
+    String rg_lb_val = if defined(rg_lb) then "LB:" + select_first([rg_lb]) else ""
+    String rg_sm_val = if defined(rg_sm) then "SM:" + select_first([rg_sm]) else ""
+
+    command <<<
+        set -euxo pipefail
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            np=$((np-1))
+        fi
+
+        # Move the bowtie2 index files to the same directory as the reference fasta file:
+        ref_dir=$(dirname ~{ref_fasta})
+        while read f ; do 
+            indx_dirname=$( dirname ${f} )
+            if [[ "${indx_dirname}" != "${ref_dir}" ]] ; then
+                mv ${f} ${ref_dir}
+            fi
+        done < ~{write_lines(ref_bowtie_indices)}
+
+        # Get the basename of the bowtie2 index file so we can reference it in the bowtie2 command:
+        bowtie2_index_basename=$(echo "~{ref_bowtie_indices[0]}" | grep bt2 | head -n1 | sed 's@\.[a-zA-Z0-9]*\.bt2@@')
+
+        echo "Aligning to genome:"
+        bowtie2 -x ${bowtie2_index_basename} \
+            --threads ${np} \
+            -1 ~{fq_end1} \
+            -2 ~{fq_end2} \
+            ~{rgid_cmd} "~{rg_id_val}" \
+            ~{rg_cmd} "~{rg_pl_val}" \
+            ~{rg_cmd} "~{rg_lb_val}" \
+            ~{rg_cmd} "~{rg_sm_val}" | \
+        samtools view -bh --no-PG - > tmp.bam
+
+        # Now sort the output:
+        if ~{skip_sort} ; then
+            mv tmp.bam ~{prefix}.bam
+        else
+            samtools sort -@$((np-1)) tmp.bam > ~{prefix}.bam
+        fi
+
+        samtools index -@$((np-1)) ~{prefix}.bam
+    >>>
+
+    output {
+        File bam = "~{prefix}.bam"
+        File bai = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/sr-alternate-tools:0.0.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task MergeBamAlignment {
     input {
         File aligned_bam
@@ -340,6 +455,8 @@ task MarkDuplicates {
     # While query-grouped isn't actually query-sorted, it's good enough for MarkDuplicates with ASSUME_SORT_ORDER="queryname"
 
     command <<<
+        set -euxo pipefail
+
         tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
         java_memory_size_mb=$((tot_mem_mb-5120))
 
@@ -419,6 +536,8 @@ task BaseRecalibrator {
 
     command {
 
+        set -euxo pipefail
+
         gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal -Xms5000m" \
             BaseRecalibrator \
             -R ~{ref_fasta} \
@@ -489,6 +608,7 @@ task ApplyBQSR {
                       + 2*ceil(size(recalibration_report, "GB"))
 
     command <<<
+        set -euxo pipefail
 
         gatk --java-options "-XX:+PrintFlagsFinal \
             -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=~{compression_level} -Xms8192m -Xmx~{java_memory_size_mb}m" \
@@ -504,6 +624,7 @@ task ApplyBQSR {
             ~{true='--static-quantized-quals 10' false='' bin_base_qualities} \
             ~{true='--static-quantized-quals 20' false='' bin_base_qualities} \
             ~{true='--static-quantized-quals 30' false='' bin_base_qualities} \
+            --allow-missing-read-group true \
 
         # Make sure we use all our proocesors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
@@ -518,7 +639,9 @@ task ApplyBQSR {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        # docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        # Temporary snapshot build for testing the fix for BQSR issue https://github.com/broadinstitute/gatk/issues/6242
+        docker:             "us.gcr.io/broad-dsde-methods/broad-gatk-snapshots/gatk-remote-builds:jonn-4dd794b3f4e4e4e6a86f309a5ea1b580bf774b7c-4.5.0.0-48-g4dd794b3f" 
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -553,21 +676,23 @@ task RevertSam {
     # https://gatk.broadinstitute.org/hc/en-us/articles/4403687183515--How-to-Generate-an-unmapped-BAM-from-FASTQ-or-aligned-BAM
     command {
 
+        set -euxo pipefail
+
         java -Dsamjdk.compression_level=~{compression_level} -Xms~{java_memory_size_mb}m -jar /usr/picard/picard.jar \
-        RevertSam \
-        INPUT=~{input_bam} \
-        OUTPUT=~{prefix}.bam \
-        SANITIZE=true \
-        MAX_DISCARD_FRACTION=0.005 \
-        ATTRIBUTE_TO_CLEAR=XT \
-        ATTRIBUTE_TO_CLEAR=XN \
-        ATTRIBUTE_TO_CLEAR=AS \
-        ATTRIBUTE_TO_CLEAR=OC \
-        ATTRIBUTE_TO_CLEAR=OP \
-        SORT_ORDER=queryname \
-        RESTORE_ORIGINAL_QUALITIES=true \
-        REMOVE_DUPLICATE_INFORMATION=true \
-        REMOVE_ALIGNMENT_INFORMATION=true
+            RevertSam \
+            INPUT=~{input_bam} \
+            OUTPUT=~{prefix}.bam \
+            SANITIZE=true \
+            MAX_DISCARD_FRACTION=0.005 \
+            ATTRIBUTE_TO_CLEAR=XT \
+            ATTRIBUTE_TO_CLEAR=XN \
+            ATTRIBUTE_TO_CLEAR=AS \
+            ATTRIBUTE_TO_CLEAR=OC \
+            ATTRIBUTE_TO_CLEAR=OP \
+            SORT_ORDER=queryname \
+            RESTORE_ORIGINAL_QUALITIES=true \
+            REMOVE_DUPLICATE_INFORMATION=true \
+            REMOVE_ALIGNMENT_INFORMATION=true
     }
 
     output {
@@ -668,6 +793,8 @@ task MergeVCFs {
     String gvcf_decorator = if is_gvcf then ".g" else ""
 
     command <<<
+        set -euxo pipefail
+
         java -Xms2000m -Xmx2500m -jar /usr/picard/picard.jar \
           MergeVcfs \
           INPUT=~{sep=' INPUT=' input_vcfs} \
@@ -718,6 +845,8 @@ task IndexFeatureFile {
     String fname = basename(feature_file)
 
     command <<<
+        set -euxo pipefail
+
         mv ~{feature_file} ~{fname}
         gatk --java-options "-Xmx1500m" \
             IndexFeatureFile \
@@ -768,7 +897,6 @@ task RevertBaseQualities {
     Int disk_size = ceil(size(bam, "GiB") * 4) + 10
 
     command <<<
-        set -euxo pipefail
 
         # Check if the input bam has been run through `ApplyBQSR`.
         # If not, we can just return the input bam.
@@ -780,6 +908,9 @@ task RevertBaseQualities {
         if [[ $rv -eq 0 ]] && grep -q '\-\-emit-original-quals' applybqsr.pg.txt ; then
             # OK - our data has had it's base quality scores recalibrated.
             # We must revert them:
+
+            set -euxo pipefail
+
             gatk \
                 RevertBaseQualityScores \
                     -I ~{bam} \
