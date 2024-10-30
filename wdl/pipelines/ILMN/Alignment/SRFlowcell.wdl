@@ -229,10 +229,10 @@ workflow SRFlowcell {
 
     # Collect stats on aligned reads:
     call SRUTIL.ComputeBamStats as t_016_ComputeBamStatsQ5 { input: bam_file  = final_bam, qual_threshold = 5 }
-    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ7 { input: bam_file  = final_bam, qual_threshold = 7 }
-    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ10 { input: bam_file = final_bam, qual_threshold = 10 }
-    call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ12 { input: bam_file = final_bam, qual_threshold = 12 }
-    call SRUTIL.ComputeBamStats as t_020_ComputeBamStatsQ15 { input: bam_file = final_bam, qual_threshold = 15 }
+    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ10 { input: bam_file = final_bam, qual_threshold = 10 }
+    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ20 { input: bam_file = final_bam, qual_threshold = 20 }
+    call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ30 { input: bam_file = final_bam, qual_threshold = 30 }
+    call SRUTIL.ComputeBamStats as t_020_ComputeBamStatsQ40 { input: bam_file = final_bam, qual_threshold = 40 }
 
     call AM.AlignedMetrics as t_021_PerFlowcellMetrics {
         input:
@@ -327,10 +327,10 @@ workflow SRFlowcell {
                     t_012_SamStats.sam_stats,
                     t_015_ComputeBamStats.results_file,
                     t_016_ComputeBamStatsQ5.results_file,
-                    t_017_ComputeBamStatsQ7.results_file,
-                    t_018_ComputeBamStatsQ10.results_file,
-                    t_019_ComputeBamStatsQ12.results_file,
-                    t_020_ComputeBamStatsQ15.results_file,
+                    t_017_ComputeBamStatsQ10.results_file,
+                    t_018_ComputeBamStatsQ20.results_file,
+                    t_019_ComputeBamStatsQ30.results_file,
+                    t_020_ComputeBamStatsQ40.results_file,
                 ],
                 keyfile = keyfile
         }
@@ -408,10 +408,10 @@ workflow SRFlowcell {
         Float read_qual_median = t_015_ComputeBamStats.results['median_qual']
 
         Float num_reads_Q5 = t_016_ComputeBamStatsQ5.results['reads']
-        Float num_reads_Q7 = t_017_ComputeBamStatsQ7.results['reads']
-        Float num_reads_Q10 = t_018_ComputeBamStatsQ10.results['reads']
-        Float num_reads_Q12 = t_019_ComputeBamStatsQ12.results['reads']
-        Float num_reads_Q15 = t_020_ComputeBamStatsQ15.results['reads']
+        Float num_reads_Q10 = t_017_ComputeBamStatsQ10.results['reads']
+        Float num_reads_Q20 = t_018_ComputeBamStatsQ20.results['reads']
+        Float num_reads_Q30 = t_019_ComputeBamStatsQ30.results['reads']
+        Float num_reads_Q40 = t_020_ComputeBamStatsQ40.results['reads']
 
         # Aligned read stats
         Float aligned_num_reads = t_013_FastQC.stats_map['number_of_reads']
