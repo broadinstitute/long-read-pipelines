@@ -1,14 +1,11 @@
 version 1.0
 
 # Given a PED file and a set of methylation bed files from pb-cpg-tools, 
-# find differentially methylated regions for each affected sample vs. the pool of unaffected samples
-# Filter cpg sites for promoter and enhancer regions
-# and shard by chromosome
+# find differentially methylated regions for each affected sample vs. the pool of unrelated samples
 
 workflow DifferentialMethylation {
     input {
         File pedFile
-        File? regions_filter
         Array[File] methylationBedFiles
         Array[String] contigs
         String inputType = "PB" # "PB" or "ONT"
@@ -21,18 +18,10 @@ workflow DifferentialMethylation {
                 contig = contig
         }
 
-        if (defined(regions_filter)) {
-            call FilterBed {
-                input:
-                    bedFile_tarball = ShardByChromosome.MethylationBedsByChr,
-                    regions_filter = select_first([regions_filter])
-            }
-        }
-
         call DMR {
             input:
                 pedFile = pedFile,
-                methylationBedFiles = select_first([FilterBed.filtered_beds, ShardByChromosome.MethylationBedsByChr]),
+                methylationBedFiles = ShardByChromosome.MethylationBedsByChr,
                 inputType = inputType
         }
     }
@@ -261,57 +250,6 @@ task DMR {
         File dmr_tsv = "~{contig}_dmrs.tsv"
         File dmr_pdfs = "~{contig}_dmr_pdfs.tar.gz"
         File smoothed_rds = "~{contig}_smoothed.rds"
-    }
-}
-
-task FilterBed {
-    input {
-        File bedFile_tarball
-        File regions_filter
-    
-        RuntimeAttr? runtime_attr_override
-    }
-
-    RuntimeAttr runtime_default = object {
-        mem_gb: 2,
-        disk_gb: ceil(size(bedFile_tarball, "GB"))*10 + ceil(size(regions_filter, "GB")) + 20,
-        cpu_cores: 1,
-        preemptible_tries: 1,
-        max_retries: 1,
-        boot_disk_gb: 10,
-        docker: "quay.io/ymostovoy/lr-utils-basic"
-    }
-
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, runtime_default])
-
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         runtime_default.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            runtime_default.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           runtime_default.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      runtime_default.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       runtime_default.max_retries])
-        docker:                 select_first([runtime_attr.docker,            runtime_default.docker])
-    }
-
-    String base = basename(bedFile_tarball, ".tar.gz")
-
-    command <<<
-        set -euxo pipefail
-        tar zxvf ~{bedFile_tarball}
-
-        # filter the bed files
-        for bedFile in *.bed; do
-            name=$(basename ${bedFile} .bed)
-            bedtools intersect -u -a $bedFile -b ~{regions_filter} > ${name}.filtered.bed
-        done
-
-        tar czvf ~{base}.filtered.tar.gz *.filtered.bed
-
-    >>>
-
-    output {
-        File filtered_beds = "~{base}.filtered.tar.gz"
     }
 }
 
