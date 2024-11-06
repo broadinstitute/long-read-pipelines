@@ -1,12 +1,12 @@
 ############### stage 0: build samtools and bcftools from source
-FROM ubuntu:20.04
+FROM docker.io/library/ubuntu:24.04
 
-ARG SAMTOOLS_VERSION=1.17
-ARG BCFTOOLS_VERSION=1.17
+ARG SAMTOOLS_VERSION=1.21
+ARG BCFTOOLS_VERSION=1.21
 
 ARG YAK_VERSION=0.1
-ARG SEQTK_VERSION=1.3
-ARG HIFIASM_VERSION=0.19.5
+ARG SEQTK_VERSION=1.4
+ARG HIFIASM_VERSION=0.20.0
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qqy update --fix-missing && \
@@ -15,6 +15,7 @@ RUN apt-get -qqy update --fix-missing && \
                  ca-certificates \
                  libbz2-dev \
                  libcurl4-openssl-dev \
+                 libdeflate-dev \
                  liblzma-dev \
                  libncurses5-dev \
                  autoconf \
@@ -63,7 +64,7 @@ RUN apt-get -qqy purge autoconf automake bzip2 gcc g++ make wget && \
 
 
 ############### stage 1: copy over bin, and build necessary lib
-FROM ubuntu:20.04
+FROM docker.io/library/ubuntu:24.04
 
 ENV HOME=/root
 
@@ -82,6 +83,7 @@ RUN apt-get -qqy update --fix-missing && \
                  ca-certificates \
                  curl \
                  gnupg \
+                 libdeflate-dev \
                  pigz \
                  pv \
                  tree \

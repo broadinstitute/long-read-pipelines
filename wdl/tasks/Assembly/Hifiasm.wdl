@@ -66,7 +66,7 @@ task GenerateBinFiles {
         disk_gb:            disk_size,
         preemptible_tries:  if (size(reads, "GiB") < 24) then 1 else 0,  # a herustic to use preemptible instances for assembling shallow genomes
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.20.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -191,7 +191,7 @@ task AssembleForHaplotigs {
         disk_gb:            disk_size,
         preemptible_tries:  if defined(bin_files) then 3 else 0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.20.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -300,7 +300,7 @@ task AssembleForAltContigs {
         disk_gb:            disk_size,
         preemptible_tries:  if defined(bin_files) then 3 else 0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.20.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
