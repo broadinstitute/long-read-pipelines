@@ -13,12 +13,18 @@ task CreateSampleNameMap {
         Array[File] gvcfs
         String prefix
 
+        Array[File] background_sample_gvcfs = []
+
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
         gvcfs: {
             help: "Array of single-sample GVCF files.",
+            localization_optional: true
+        }
+        background_sample_gvcfs: {
+            help: "Array of single-sample GVCF files to use as background samples for joint calling.",
             localization_optional: true
         }
     }
@@ -30,6 +36,8 @@ task CreateSampleNameMap {
 
     # Every so often we should reauthorize so `bcftools` can continue to access our data:
     Int re_auth_interval = 50
+
+    String has_background_samples = if length(background_sample_gvcfs) > 0 then "true" else "false"
 
     command <<<
         set -euxo pipefail
@@ -71,6 +79,43 @@ task CreateSampleNameMap {
                 i=0
             fi
         done < ${gvcf_file_list}
+
+        if [[ ~{has_background_samples} == "true" ]] ; then
+
+            echo "Adding background samples to the sample name map..."
+
+            # Add the background sample gvcfs to the sample name map:
+            background_gvcf_file_list=~{write_lines(background_sample_gvcfs)}
+
+            # Reset our access token:
+            export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+
+            i=1 
+            while read file_path ; do
+
+                # Get our sample list from our file:
+                bcftools query -l ${file_path} > sample_names.txt
+
+                # Make sure we only have one sample name:
+                [[ $(wc -l sample_names.txt | awk '{print $1}') -ne 1 ]] && echo "Incorrect number of sample names found in GVCF (there can be only one!): ${file_path}" && exit 1
+
+                # Make sure the samplename has an actual name:
+                [ $(grep -iq "unnamedsample" sample_names.txt) ] && echo "Sample name found to be unnamedsample in GVCF: ${file_path}" && exit 1
+
+                # Add the sample name and GVCF path to the sample name file:
+                echo -e "$(cat sample_names.txt)\t${file_path}" >> ~{outfile_name}
+
+                # Add the file size to the size file:
+                gsutil du -sac ${file_path} | tail -n1 | awk '{print $1}' >> ${size_file}
+
+                i=$((i+1))
+                if [[ $i -gt ~{re_auth_interval} ]] ; then
+                    # Periodically we should update the token so we don't have problems with long file lists:
+                    export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+                    i=0
+                fi
+            done < ${background_gvcf_file_list}
+        fi
 
         # Now calculate the final file size in GB:
         # We include an additional GB in case we have a very small dataset:

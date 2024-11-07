@@ -52,6 +52,10 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         shard_max_interval_size_bp: "Maximum size of the interval on each shard.  This along with the given sequence dictionary determines how many shards there will be.  To shard by contig, set to a very high number.  Default is 999999999."
 
         prefix: "Prefix to use for output files."
+
+        background_sample_gvcfs: "Array of GVCFs to use as background samples for joint calling."
+        background_sample_gvcf_indices: "Array of GVCF index files for `background_sample_gvcfs`.  Order should correspond to that in `background_sample_gvcfs`."
+
         gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
     }
 
@@ -103,6 +107,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
         String prefix
 
+        Array[Array[File]]? background_sample_gvcfs
+        Array[Array[File]]? background_sample_gvcf_indices
+
         String? gcs_out_root_dir
     }
 
@@ -112,6 +119,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     call SRJOINT.CreateSampleNameMap as CreateSampleNameMap {
         input:
             gvcfs = gvcfs,
+            background_sample_gvcfs = if defined(background_sample_gvcfs) then flatten(select_first([background_sample_gvcfs])) else [],
             prefix = prefix
     }
 
