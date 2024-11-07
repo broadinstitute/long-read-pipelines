@@ -386,6 +386,7 @@
 <li><code>snp_calibration_sensitivity</code> (Float, default=0.99): VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered.</li>
 <li><code>snp_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
 <li><code>snp_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants.</li>
+<li><code>CreateSampleNameMap.background_sample_gvcfs</code> (Array[File], default=[])</li>
 <li><code>GenomicsDbImport.batch_size</code> (Int, default=100)</li>
 <li><code>GenotypeGVCFs.batch_size</code> (Int, default=100)</li>
 <li><code>MakeChrIntervalList.filter</code> (Array[String], default=['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV'])</li>

@@ -114,6 +114,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
@@ -128,7 +130,7 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_1">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
     </li>
         </ul>
     </li>
@@ -144,7 +146,7 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_2">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
     </li>
         </ul>
     </li>
@@ -160,7 +162,7 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_3">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_2">Defaults</a>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_3">Defaults</a>
     </li>
         </ul>
     </li>
@@ -379,6 +381,10 @@
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
+<h4 id="defaults">Defaults</h4>
+<ul>
+<li><code>background_sample_gvcfs</code> (Array[File], default=[]): Array of single-sample GVCF files to use as background samples for joint calling.; <strong>localization_optional</strong>: true</li>
+</ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>sample_name_map</code> (File)</li>
@@ -399,7 +405,7 @@
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults">Defaults</h4>
+<h4 id="defaults_1">Defaults</h4>
 <ul>
 <li><code>batch_size</code> (Int, default=50)</li>
 </ul>
@@ -424,7 +430,7 @@
 <li><code>input_gvcf_index</code> (File?)</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_1">Defaults</h4>
+<h4 id="defaults_2">Defaults</h4>
 <ul>
 <li><code>heterozygosity</code> (Float, default=0.001)</li>
 <li><code>heterozygosity_stdev</code> (Float, default=0.01)</li>
@@ -453,7 +459,7 @@
 <li><code>input_gvcf_index</code> (File?)</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_2">Defaults</h4>
+<h4 id="defaults_3">Defaults</h4>
 <ul>
 <li><code>heterozygosity</code> (Float, default=0.001)</li>
 <li><code>heterozygosity_stdev</code> (Float, default=0.01)</li>

@@ -350,6 +350,8 @@
 <li><code>annotation_bed_file_annotation_names</code> (Array[String]?): Array of names/FILTER column entries to use for each given file in <code>annotation_bed_files</code>.  Order should correspond to <code>annotation_bed_files</code>.</li>
 <li><code>annotation_bed_file_indexes</code> (Array[File]?): Array of bed indexes for <code>annotation_bed_files</code>.  Order should correspond to <code>annotation_bed_files</code>.</li>
 <li><code>annotation_bed_files</code> (Array[File]?): Array of bed files to use to FILTER/annotate variants in the output file.  Annotations will be placed in the FILTER column, effectively filtering variants that overlap these regions.</li>
+<li><code>background_sample_gvcf_indices</code> (Array[Array[File]]?): Array of GVCF index files for <code>background_sample_gvcfs</code>.  Order should correspond to that in <code>background_sample_gvcfs</code>.</li>
+<li><code>background_sample_gvcfs</code> (Array[Array[File]]?): Array of GVCFs to use as background samples for joint calling.</li>
 <li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
 <li><code>interval_list</code> (File?)</li>
 <li><code>snpeff_db</code> (File?)</li>
