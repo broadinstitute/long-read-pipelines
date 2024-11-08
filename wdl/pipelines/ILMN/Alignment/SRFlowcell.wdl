@@ -252,6 +252,7 @@ workflow SRFlowcell {
             bam_file = final_bam,
             bam_index = final_bai,
             ref_fasta = ref_map['fasta'],
+            ref_fasta_index = ref_map['fai'],
             ref_dict = ref_map['dict'],
             min_depth = 5,
             prefix = SM
