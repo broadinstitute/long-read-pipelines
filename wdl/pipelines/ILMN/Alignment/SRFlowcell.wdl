@@ -6,7 +6,7 @@ import "../../../tasks/QC/AlignedMetrics.wdl" as AM
 import "../../../tasks/QC/FastQC.wdl" as FastQC
 import "../../../tasks/Preprocessing/RemoveSingleOrganismContamination.wdl" as DECONTAMINATE
 import "../../../tasks/Utility/Finalize.wdl" as FF
-
+import "../../../tasks/QC/QCAssessment.wdl" as QCAssessment
 workflow SRFlowcell {
 
     meta {
@@ -30,6 +30,8 @@ workflow SRFlowcell {
 
         dir_prefix: "Directory prefix to use for finalized location."
         gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
+
+        coverage_bed_file: "BED file containing regions to calculate coverage metrics for."
 
         perform_BQSR: "If true, will perform Base Quality Score Recalibration.  If false will not recalibrate base qualities."
 
@@ -55,6 +57,8 @@ workflow SRFlowcell {
         String dir_prefix
 
         String? gcs_out_root_dir
+
+        File? coverage_bed_file
 
         Boolean perform_BQSR = true
 
@@ -243,6 +247,41 @@ workflow SRFlowcell {
             gcs_output_dir = metrics_dir
     }
 
+    call AM.CallableLoci as t_022_CallableLoci {
+        input:
+            bam_file = final_bam,
+            bam_index = final_bai,
+            ref_fasta = ref_map['fasta'],
+            ref_dict = ref_map['dict'],
+            min_depth = 5,
+            prefix = SM
+    }
+
+    #############################################
+    #       ___   ____   ____                    __  _____     _ _ 
+    #     / _ \ / ___| |  _ \ __ _ ___ ___     / / |  ___|_ _(_) |
+    #    | | | | |     | |_) / _` / __/ __|   / /  | |_ / _` | | |
+    #    | |_| | |___  |  __/ (_| \__ \__ \  / /   |  _| (_| | | |
+    #     \__\_\\____| |_|   \__,_|___/___/ /_/    |_|  \__,_|_|_|
+    #    
+    #############################################             
+    # Only create QC pass/fail metrics if we have a coverage bed file:
+    if (defined(coverage_bed_file)) {
+        call AM.MosDepthOverBed as t_023_MosDepthOverBed {
+            input:
+                bam = final_bam,
+                bai = final_bai,
+                bed = select_first([coverage_bed_file])
+        }
+
+        call QCAssessment.AssessQualityMetrics as t_024_AssessQualityMetrics {
+            input:
+                callable_loci_summary = t_022_CallableLoci.callable_loci_summary,
+                mosdepth_region_bed = t_023_MosDepthOverBed.regions,
+                prefix = SM
+        }
+    }
+
     ############################################
     #      _____ _             _ _
     #     |  ___(_)_ __   __ _| (_)_______
@@ -262,7 +301,7 @@ workflow SRFlowcell {
         String aligned_reads_dir = outdir + "/reads/aligned"
         String metrics_dir = outdir + "/metrics"
 
-        File keyfile = t_015_ComputeBamStats.results_file
+        File keyfile = t_022_CallableLoci.callable_loci_summary
 
         # Finalize our unaligned reads first:
         call FF.FinalizeToDir as t_022_FinalizeUnalignedFastqReads {
@@ -359,6 +398,20 @@ workflow SRFlowcell {
             File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
             File fqboup = unaligned_reads_dir + "/" + basename(select_first([t_005_DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
         }
+
+        call FF.FinalizeToFile as t_030_FinalizeCallableLociSummary {
+            input:
+                outdir = metrics_dir,
+                file = t_022_CallableLoci.callable_loci_summary,
+                keyfile = keyfile
+        }
+
+        call FF.FinalizeToFile as t_031_FinalizeCallableLociBed {
+            input:
+                outdir = metrics_dir,
+                file = t_022_CallableLoci.callable_loci_bed,
+                keyfile = keyfile
+        }
     }
 
     # Prep some output values before the output block:
@@ -428,5 +481,11 @@ workflow SRFlowcell {
         Float average_identity = average_identity_value
 
         File fastqc_report = select_first([t_029_FinalizeFastQCReport.gcs_path, t_013_FastQC.report])
+
+        File callable_loci_summary = select_first([t_030_FinalizeCallableLociSummary.gcs_path, t_022_CallableLoci.callable_loci_summary])
+        File callable_loci_bed = select_first([t_031_FinalizeCallableLociBed.gcs_path, t_022_CallableLoci.callable_loci_bed])
+
+        String? qc_status = t_024_AssessQualityMetrics.qc_status
+        String? qc_message = t_024_AssessQualityMetrics.qc_message
     }
 }

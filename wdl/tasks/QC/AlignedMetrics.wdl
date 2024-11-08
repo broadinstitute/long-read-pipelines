@@ -716,3 +716,80 @@ task BamToBed {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task CallableLoci {
+    meta {
+        description: "Determine callable regions using GATK CallableLoci"
+    }
+
+    parameter_meta {
+        bam_file: "Input BAM file to analyze"
+        bam_index: "Index file for input BAM" 
+        ref_fasta: "Reference FASTA file"
+        ref_fasta_index: "Index file for reference FASTA"
+        ref_dict: "Dictionary file for reference FASTA"
+        prefix: "Prefix for output files"
+        min_depth: "Minimum depth for a locus to be considered callable"
+        min_base_quality: "Minimum base quality for a base to be considered"
+        min_mapping_quality: "Minimum mapping quality for a read to be considered"
+        runtime_attr_override: "Runtime attributes override struct"
+    }
+
+    input {
+        File bam_file
+        File bam_index
+        File ref_fasta
+        File ref_fasta_index
+        File ref_dict
+        
+        String prefix
+
+        Int min_depth = 5
+        Int min_base_quality = 20
+        Int min_mapping_quality = 10
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil(size(bam_file, "GiB") + size(ref_fasta, "GiB") + 20)
+
+    command <<<
+        set -euxo pipefail
+
+        gatk CallableLoci \
+            -R ~{ref_fasta} \
+            -I ~{bam_file} \
+            -O ~{prefix}.callable_status.bed \
+            --summary ~{prefix}.callable_status.summary.txt \
+            --min-depth ~{min_depth} \
+            --min-base-quality ~{min_base_quality} \
+            --min-mapping-quality ~{min_mapping_quality}
+    >>>
+
+    output {
+        File callable_loci_bed = "~{prefix}.callable_status.bed"
+        File callable_loci_summary = "~{prefix}.callable_status.summary.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:         1,
+        mem_gb:            4,
+        disk_gb:           disk_size,
+        boot_disk_gb:      10,
+        preemptible_tries: 3,
+        max_retries:       1,
+        docker:            "us.gcr.io/broad-dsde-methods/broad-gatk-snapshots/gatk-remote-builds:jonn-fa5c895f58b729f00589f5deb23d56efb929aa1d-4.6.1.0-5-gfa5c895f5"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
