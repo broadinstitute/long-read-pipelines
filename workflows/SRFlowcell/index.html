@@ -100,6 +100,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Preprocessing_Tasks/">Preprocessing_Tasks</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/QCAssessment/">QCAssessment</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Quast/">Quast</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/SGKit/">SGKit</a>
@@ -341,6 +343,7 @@
 <li><code>bam</code> (File?): Bam file containing reads to align and process.  <code>bai</code> must be defined if this argument is.  This argument and <code>bai</code> are mutually exclusive with <code>fq_end1</code> and <code>fq_end2</code></li>
 <li><code>contaminant_ref_map_file</code> (File?): Reference map file for the contaminant reference sequence and auxillary file locations.</li>
 <li><code>contaminant_ref_name</code> (String?): Name for the contaminant reference.</li>
+<li><code>coverage_bed_file</code> (File?): BED file containing regions to calculate coverage metrics for.</li>
 <li><code>fq_end1</code> (File?): FASTQ file containing end 1 of the short read data to process.  <code>fq_end2</code> must be defined if this argument is.  This argument and <code>fq_end2</code> are mutually exclusive with <code>bam</code> and <code>bai</code></li>
 <li><code>fq_end2</code> (File?): FASTQ file containing end 2 of the short read data to process.  <code>fq_end1</code> must be defined if this argument is.  This argument and <code>fq_end1</code> are mutually exclusive with <code>bam</code> and <code>bai</code></li>
 <li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
@@ -363,12 +366,15 @@
 <li><code>t_015_ComputeBamStats.qual_threshold</code> (Int?)</li>
 <li><code>t_015_ComputeBamStats.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_016_ComputeBamStatsQ5.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_017_ComputeBamStatsQ7.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_018_ComputeBamStatsQ10.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_019_ComputeBamStatsQ12.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_020_ComputeBamStatsQ15.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_017_ComputeBamStatsQ10.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_018_ComputeBamStatsQ20.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_019_ComputeBamStatsQ30.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_020_ComputeBamStatsQ40.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_022_CallableLoci.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_022_FinalizeUnalignedFastqReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_023_FinalizeUnalignedReadsFromBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_023_MosDepthOverBed.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_024_AssessQualityMetrics.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_024_FinalizeAlignedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_025_FinalizeAlignedBam.name</code> (String?)</li>
 <li><code>t_025_FinalizeAlignedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -379,6 +385,10 @@
 <li><code>t_029_FinalizeFastQCReport.keyfile</code> (File?)</li>
 <li><code>t_029_FinalizeFastQCReport.name</code> (String?)</li>
 <li><code>t_029_FinalizeFastQCReport.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_030_FinalizeCallableLociSummary.name</code> (String?)</li>
+<li><code>t_030_FinalizeCallableLociSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_031_FinalizeCallableLociBed.name</code> (String?)</li>
+<li><code>t_031_FinalizeCallableLociBed.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_004_RevertSam.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_005_Bam2Fastq.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_006_GetRawReadGroup.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -435,6 +445,11 @@
 <li><code>t_011_ApplyBQSR.bin_base_qualities</code> (Boolean, default=true)</li>
 <li><code>t_011_ApplyBQSR.emit_original_quals</code> (Boolean, default=true)</li>
 <li><code>t_013_FastQC.num_cpus</code> (Int, default=4)</li>
+<li><code>t_022_CallableLoci.min_base_quality</code> (Int, default=20)</li>
+<li><code>t_022_CallableLoci.min_mapping_quality</code> (Int, default=10)</li>
+<li><code>t_024_AssessQualityMetrics.min_callable_fraction</code> (Float, default=0.5)</li>
+<li><code>t_024_AssessQualityMetrics.min_coverage</code> (Float, default=5)</li>
+<li><code>t_024_AssessQualityMetrics.min_coverage_threshold_regions</code> (Float, default=0.2)</li>
 <li><code>t_005_DecontaminateSample.t_001_WdlExecutionStartTimestamp.date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
 <li><code>t_005_DecontaminateSample.t_007_AlignReads.skip_sort</code> (Boolean, default=false)</li>
 <li><code>t_005_DecontaminateSample.t_009_ExtractContaminatedReads.extra_args</code> (String, default="")</li>
@@ -457,10 +472,10 @@
 <li><code>read_qual_mean</code> (Float)</li>
 <li><code>read_qual_median</code> (Float)</li>
 <li><code>num_reads_Q5</code> (Float)</li>
-<li><code>num_reads_Q7</code> (Float)</li>
 <li><code>num_reads_Q10</code> (Float)</li>
-<li><code>num_reads_Q12</code> (Float)</li>
-<li><code>num_reads_Q15</code> (Float)</li>
+<li><code>num_reads_Q20</code> (Float)</li>
+<li><code>num_reads_Q30</code> (Float)</li>
+<li><code>num_reads_Q40</code> (Float)</li>
 <li><code>aligned_num_reads</code> (Float)</li>
 <li><code>aligned_num_bases</code> (Float)</li>
 <li><code>aligned_frac_bases</code> (Float)</li>
@@ -471,6 +486,10 @@
 <li><code>pct_properly_paired_reads</code> (Float)</li>
 <li><code>average_identity</code> (Float)</li>
 <li><code>fastqc_report</code> (File)</li>
+<li><code>callable_loci_summary</code> (File)</li>
+<li><code>callable_loci_bed</code> (File)</li>
+<li><code>qc_status</code> (String?)</li>
+<li><code>qc_message</code> (String?)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="SRFlowcell" src="../../dot/SRFlowcell.dot.png" /></p>
