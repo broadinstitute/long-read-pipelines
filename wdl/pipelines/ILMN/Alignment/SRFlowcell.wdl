@@ -6,7 +6,7 @@ import "../../../tasks/QC/AlignedMetrics.wdl" as AM
 import "../../../tasks/QC/FastQC.wdl" as FastQC
 import "../../../tasks/Preprocessing/RemoveSingleOrganismContamination.wdl" as DECONTAMINATE
 import "../../../tasks/Utility/Finalize.wdl" as FF
-
+import "../../../tasks/QC/QCAssessment.wdl" as QCAssessment
 workflow SRFlowcell {
 
     meta {
@@ -30,6 +30,8 @@ workflow SRFlowcell {
 
         dir_prefix: "Directory prefix to use for finalized location."
         gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
+
+        coverage_bed_file: "BED file containing regions to calculate coverage metrics for."
 
         perform_BQSR: "If true, will perform Base Quality Score Recalibration.  If false will not recalibrate base qualities."
 
@@ -55,6 +57,8 @@ workflow SRFlowcell {
         String dir_prefix
 
         String? gcs_out_root_dir
+
+        File? coverage_bed_file
 
         Boolean perform_BQSR = true
 
@@ -229,10 +233,10 @@ workflow SRFlowcell {
 
     # Collect stats on aligned reads:
     call SRUTIL.ComputeBamStats as t_016_ComputeBamStatsQ5 { input: bam_file  = final_bam, qual_threshold = 5 }
-    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ7 { input: bam_file  = final_bam, qual_threshold = 7 }
-    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ10 { input: bam_file = final_bam, qual_threshold = 10 }
-    call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ12 { input: bam_file = final_bam, qual_threshold = 12 }
-    call SRUTIL.ComputeBamStats as t_020_ComputeBamStatsQ15 { input: bam_file = final_bam, qual_threshold = 15 }
+    call SRUTIL.ComputeBamStats as t_017_ComputeBamStatsQ10 { input: bam_file = final_bam, qual_threshold = 10 }
+    call SRUTIL.ComputeBamStats as t_018_ComputeBamStatsQ20 { input: bam_file = final_bam, qual_threshold = 20 }
+    call SRUTIL.ComputeBamStats as t_019_ComputeBamStatsQ30 { input: bam_file = final_bam, qual_threshold = 30 }
+    call SRUTIL.ComputeBamStats as t_020_ComputeBamStatsQ40 { input: bam_file = final_bam, qual_threshold = 40 }
 
     call AM.AlignedMetrics as t_021_PerFlowcellMetrics {
         input:
@@ -241,6 +245,42 @@ workflow SRFlowcell {
             ref_fasta      = ref_map['fasta'],
             ref_dict       = ref_map['dict'],
             gcs_output_dir = metrics_dir
+    }
+
+    call AM.CallableLoci as t_022_CallableLoci {
+        input:
+            bam_file = final_bam,
+            bam_index = final_bai,
+            ref_fasta = ref_map['fasta'],
+            ref_fasta_index = ref_map['fai'],
+            ref_dict = ref_map['dict'],
+            min_depth = 5,
+            prefix = SM
+    }
+
+    #############################################
+    #       ___   ____   ____                    __  _____     _ _ 
+    #     / _ \ / ___| |  _ \ __ _ ___ ___     / / |  ___|_ _(_) |
+    #    | | | | |     | |_) / _` / __/ __|   / /  | |_ / _` | | |
+    #    | |_| | |___  |  __/ (_| \__ \__ \  / /   |  _| (_| | | |
+    #     \__\_\\____| |_|   \__,_|___/___/ /_/    |_|  \__,_|_|_|
+    #    
+    #############################################             
+    # Only create QC pass/fail metrics if we have a coverage bed file:
+    if (defined(coverage_bed_file)) {
+        call AM.MosDepthOverBed as t_023_MosDepthOverBed {
+            input:
+                bam = final_bam,
+                bai = final_bai,
+                bed = select_first([coverage_bed_file])
+        }
+
+        call QCAssessment.AssessQualityMetrics as t_024_AssessQualityMetrics {
+            input:
+                callable_loci_summary = t_022_CallableLoci.callable_loci_summary,
+                mosdepth_region_bed = t_023_MosDepthOverBed.regions,
+                prefix = SM
+        }
     }
 
     ############################################
@@ -262,7 +302,7 @@ workflow SRFlowcell {
         String aligned_reads_dir = outdir + "/reads/aligned"
         String metrics_dir = outdir + "/metrics"
 
-        File keyfile = t_015_ComputeBamStats.results_file
+        File keyfile = t_022_CallableLoci.callable_loci_summary
 
         # Finalize our unaligned reads first:
         call FF.FinalizeToDir as t_022_FinalizeUnalignedFastqReads {
@@ -327,10 +367,10 @@ workflow SRFlowcell {
                     t_012_SamStats.sam_stats,
                     t_015_ComputeBamStats.results_file,
                     t_016_ComputeBamStatsQ5.results_file,
-                    t_017_ComputeBamStatsQ7.results_file,
-                    t_018_ComputeBamStatsQ10.results_file,
-                    t_019_ComputeBamStatsQ12.results_file,
-                    t_020_ComputeBamStatsQ15.results_file,
+                    t_017_ComputeBamStatsQ10.results_file,
+                    t_018_ComputeBamStatsQ20.results_file,
+                    t_019_ComputeBamStatsQ30.results_file,
+                    t_020_ComputeBamStatsQ40.results_file,
                 ],
                 keyfile = keyfile
         }
@@ -358,6 +398,20 @@ workflow SRFlowcell {
             File unaligned_bam_o = unaligned_reads_dir + "/" + basename(select_first([bam]))
             File unaligned_bai_o = unaligned_reads_dir + "/" + basename(select_first([bai]))
             File fqboup = unaligned_reads_dir + "/" + basename(select_first([t_005_DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
+        }
+
+        call FF.FinalizeToFile as t_030_FinalizeCallableLociSummary {
+            input:
+                outdir = metrics_dir,
+                file = t_022_CallableLoci.callable_loci_summary,
+                keyfile = keyfile
+        }
+
+        call FF.FinalizeToFile as t_031_FinalizeCallableLociBed {
+            input:
+                outdir = metrics_dir,
+                file = t_022_CallableLoci.callable_loci_bed,
+                keyfile = keyfile
         }
     }
 
@@ -408,10 +462,10 @@ workflow SRFlowcell {
         Float read_qual_median = t_015_ComputeBamStats.results['median_qual']
 
         Float num_reads_Q5 = t_016_ComputeBamStatsQ5.results['reads']
-        Float num_reads_Q7 = t_017_ComputeBamStatsQ7.results['reads']
-        Float num_reads_Q10 = t_018_ComputeBamStatsQ10.results['reads']
-        Float num_reads_Q12 = t_019_ComputeBamStatsQ12.results['reads']
-        Float num_reads_Q15 = t_020_ComputeBamStatsQ15.results['reads']
+        Float num_reads_Q10 = t_017_ComputeBamStatsQ10.results['reads']
+        Float num_reads_Q20 = t_018_ComputeBamStatsQ20.results['reads']
+        Float num_reads_Q30 = t_019_ComputeBamStatsQ30.results['reads']
+        Float num_reads_Q40 = t_020_ComputeBamStatsQ40.results['reads']
 
         # Aligned read stats
         Float aligned_num_reads = t_013_FastQC.stats_map['number_of_reads']
@@ -428,5 +482,11 @@ workflow SRFlowcell {
         Float average_identity = average_identity_value
 
         File fastqc_report = select_first([t_029_FinalizeFastQCReport.gcs_path, t_013_FastQC.report])
+
+        File callable_loci_summary = select_first([t_030_FinalizeCallableLociSummary.gcs_path, t_022_CallableLoci.callable_loci_summary])
+        File callable_loci_bed = select_first([t_031_FinalizeCallableLociBed.gcs_path, t_022_CallableLoci.callable_loci_bed])
+
+        String? qc_status = t_024_AssessQualityMetrics.qc_status
+        String? qc_message = t_024_AssessQualityMetrics.qc_message
     }
 }
