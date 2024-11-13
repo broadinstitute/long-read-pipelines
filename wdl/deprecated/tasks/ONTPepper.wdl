@@ -84,7 +84,7 @@ task Pepper {
 
         df -h .
         find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
-            > "~{output_root}/dir_structure.txt"
+        > "~{output_root}/dir_structure.txt"
 
         if [[ -f "~{output_root}/intermediate_files/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam" ]]; then
             mv "~{output_root}/intermediate_files/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam" \
@@ -106,10 +106,10 @@ task Pepper {
 
         File? hap_tagged_bam = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam"
         File? hap_tagged_bai = "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam.bai"
+        File? phaseset_bed = "~{output_root}/~{prefix}.phaseset.bed"
 
         # maybe less useful
         File output_dir_structure = "~{output_root}/dir_structure.txt"
-        File phaseset_bed = "~{output_root}/~{prefix}.phaseset.bed"
         File visual_report_html = "~{output_root}/~{prefix}.visual_report.html"
     }
 
