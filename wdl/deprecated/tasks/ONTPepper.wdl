@@ -80,7 +80,7 @@ task Pepper {
             -p "~{prefix}" \
             --gvcf \
             ~{true="--phased_output" false=" " phase_and_tag} \
-            --"~{model}"
+            --"~{model}" || (echo "PEPPER failed" > 'pepper_failed.txt')
 
         df -h .
         find "~{output_root}/" -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' \
@@ -91,6 +91,9 @@ task Pepper {
                "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam"
             mv "~{output_root}/intermediate_files/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam.bai" \
                "~{output_root}/MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged.bam.bai"
+        fi
+        if [[ -f pepper_failed.txt ]]; then
+            exit 1
         fi
     >>>
 
