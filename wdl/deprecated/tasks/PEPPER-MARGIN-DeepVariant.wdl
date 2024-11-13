@@ -45,24 +45,26 @@ workflow Run {
     }
 
     scatter (triplet in how_to_shard_wg_for_calling) {
-        call ONTPepper.Pepper {
-            input:
-                bam           = triplet.right.left,
-                bai           = triplet.right.right,
-                ref_fasta     = ref_map['fasta'],
-                ref_fasta_fai = ref_map['fai'],
-                model         = model_for_pepper_margin_dv,
-                phase_and_tag  = phase_and_tag,
-                threads       = select_first([dv_threads]),
-                memory        = select_first([dv_memory]),
-                zones         = zones
+        if (triplet.left != "alts") {
+            call ONTPepper.Pepper {
+                input:
+                    bam           = triplet.right.left,
+                    bai           = triplet.right.right,
+                    ref_fasta     = ref_map['fasta'],
+                    ref_fasta_fai = ref_map['fai'],
+                    model         = model_for_pepper_margin_dv,
+                    phase_and_tag  = phase_and_tag,
+                    threads       = select_first([dv_threads]),
+                    memory        = select_first([dv_memory]),
+                    zones         = zones
+            }
         }
     }
 
     String pepper_prefix = prefix + ".PEPPER-Margin-DeepVariant"
 
     call VariantUtils.MergeAndSortVCFs as MergePEPPERGVCFs { input:
-        vcfs     = Pepper.gVCF,
+        vcfs     = select_all(Pepper.gVCF),
         prefix   = pepper_prefix + ".g",
         ref_fasta_fai = ref_map['fai']
     }
