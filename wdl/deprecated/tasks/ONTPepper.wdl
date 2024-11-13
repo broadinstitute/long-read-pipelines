@@ -51,7 +51,7 @@ task Pepper {
     Int bam_sz = ceil(size(bam, "GB"))
     Boolean is_big_bam = bam_sz > 100
     Int inflation_factor = if (is_big_bam) then 10 else 5
-    Int minimal_disk = 1000
+    Int minimal_disk = 100
 	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
 
     String output_root = "/cromwell_root/pepper_output"
@@ -120,7 +120,7 @@ task Pepper {
         disk_gb:            disk_size,
         boot_disk_gb:       50,
         preemptible_tries:  1,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "kishwars/pepper_deepvariant:r0.8" + if use_gpu then "-gpu" else ""
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
