@@ -95,12 +95,16 @@ task Pepper {
     >>>
 
     output {
+        # helpful for debugging
+        File output_dir_structure = "~{output_root}/dir_structure.txt"
+
         File VCF        = "~{output_root}/~{prefix}.vcf.gz"
         File VCF_tbi    = "~{output_root}/~{prefix}.vcf.gz.tbi"
 
         File gVCF       = "~{output_root}/~{prefix}.g.vcf.gz"
         File gVCF_tbi   = "~{output_root}/~{prefix}.g.vcf.gz.tbi"
 
+        # available only when phasing is requested
         File? phasedVCF  = "~{output_root}/~{prefix}.phased.vcf.gz"
         File? phasedtbi  = "~{output_root}/~{prefix}.phased.vcf.gz.tbi"
 
@@ -109,7 +113,6 @@ task Pepper {
         File? phaseset_bed = "~{output_root}/~{prefix}.phaseset.bed"
 
         # maybe less useful
-        File output_dir_structure = "~{output_root}/dir_structure.txt"
         File visual_report_html = "~{output_root}/~{prefix}.visual_report.html"
     }
 
