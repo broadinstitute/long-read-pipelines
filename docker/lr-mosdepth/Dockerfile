@@ -18,3 +18,6 @@ RUN curl https://sdk.cloud.google.com | bash
 
 # activate conda environment
 RUN echo "source activate lr-mosdepth" > ~/.bashrc
+
+# copy the script
+COPY coverage_stats.py /
