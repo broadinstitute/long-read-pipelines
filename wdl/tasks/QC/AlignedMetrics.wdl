@@ -24,6 +24,10 @@ workflow AlignedMetrics {
         File ref_dict
 
         String? gcs_output_dir
+        
+        Int? mem_gb_input_ReadMetrics  # Optional input for memory in GiB
+        Int? disk_gb_input_ReadMetrics  # Optional input for disk size in GiB
+
     }
 
     call ReadMetrics as AlignedReadMetrics { input: bam = aligned_bam }
@@ -625,12 +629,14 @@ task ComputeBedCoverage {
 task ReadMetrics {
     input {
         File bam
-
+        Int? mem_gb_input_ReadMetrics  # Optional input for memory in GiB
+        Int? disk_gb_input_ReadMetrics  # Optional input for disk size in GiB
         RuntimeAttr? runtime_attr_override
     }
 
     String basename = basename(bam, ".bam")
-    Int disk_size = 2*ceil(size(bam, "GB"))
+    Int calculated_disk_size = 2*ceil(size(bam, "GB"))
+    Int disk_size = select_first([disk_gb_input_ReadMetrics, calculated_disk_size])  # Use disk_gb_input if provided, otherwise use calculated_disk_size
 
     command <<<
         set -euxo pipefail
@@ -655,8 +661,8 @@ task ReadMetrics {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             50,
-        disk_gb:            disk_size,
+        mem_gb:             select_first([mem_gb_input_ReadMetrics, 50]),  # Use mem_gb_input if provided, otherwise default to 50
+        disk_gb:            disk_size, # Use disk_gb_input if provided, otherwise use calculated_disk_size
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
