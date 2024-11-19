@@ -1540,7 +1540,9 @@ task StopWorkflow {
     command <<<
         echo -e "Workflow explicitly stopped because \n  ~{reason}." && exit 1
     >>>
-    runtime {docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"}
+    runtime {
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
 }
 
 task InferSampleName {
