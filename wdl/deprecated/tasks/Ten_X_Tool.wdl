@@ -203,7 +203,7 @@ task AnnotateBarcodesAndUMIs {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.14"
@@ -315,7 +315,7 @@ task CorrectBarcodesWithStarcodeSeedCounts {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.16"
@@ -407,7 +407,7 @@ task ExtractIlmnBarcodeConfScores {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.14"

@@ -70,7 +70,7 @@ task ConvertToHailMT {
         cpu_cores:          4,
         mem_gb:             64,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "hailgenetics/hail:0.2.105"

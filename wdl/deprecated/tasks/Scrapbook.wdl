@@ -33,7 +33,7 @@ task CoverageTrack {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -77,7 +77,7 @@ task FilterMQ0Reads {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -124,7 +124,7 @@ task ComputeBedCoverage {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -167,7 +167,7 @@ task BamToBed {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -253,7 +253,7 @@ task NanoPlotFromUBam {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
@@ -325,7 +325,7 @@ task SAMtoPAF {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            "~{disk_size}",
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -432,7 +432,7 @@ task CompressAndIndex {
         cpu_cores:          num_cpus,
         mem_gb:             4*num_cpus,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
@@ -540,7 +540,7 @@ task Run_Group {
         cpu_cores:          4,
         mem_gb:             64,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -598,7 +598,7 @@ task SplitBamBySampleAndCellBarcodeTask {
         docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 16 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
-        boot_disk_gb: 10
+        boot_disk_gb: 25
         preemptible: 0
         cpu: 8
     }
@@ -641,7 +641,7 @@ task DownsampleToIsoSeqEquivalent {
         docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 32 + " GiB"  # Need a lot of ram here because we keep a set of ZMWs in memory
         disks: "local-disk " + disk_size + " HDD"
-        boot_disk_gb: 10
+        boot_disk_gb: 25
         preemptible: 0
         cpu: 2
     }
@@ -730,7 +730,7 @@ task MergeDemuxMasSeqByIndexLogs {
         docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 4 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
-        boot_disk_gb: 10
+        boot_disk_gb: 25
         preemptible: 0
         cpu: 2
     }
@@ -777,7 +777,7 @@ task SplitBamByContig {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -887,7 +887,7 @@ CODE
         cpu_cores:          1,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.27"
@@ -944,7 +944,7 @@ task MergeBarcodeCounts {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -1030,7 +1030,7 @@ task CreateCountMatrixAnndataFromTsv {
         cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -1084,7 +1084,7 @@ task SubsetCountsMatrixByGenes {
         docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 16 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
-        boot_disk_gb: 10
+        boot_disk_gb: 25
         preemptible: 0
         cpu: 8
     }
@@ -1122,7 +1122,7 @@ task GetDefaultDir {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1169,7 +1169,7 @@ task PrepareManifest {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1218,7 +1218,7 @@ task EchoManifest {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1273,7 +1273,7 @@ task SortBam {
         cpu_cores:          2,
         mem_gb:             4,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1325,7 +1325,7 @@ task FilterListOfStrings {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "ubuntu:hirsute-20210825"
@@ -1388,7 +1388,7 @@ task FilterReadsBySamFlags {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.26"
@@ -1449,7 +1449,7 @@ task GrepCountUniqueBamRecords {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -1512,7 +1512,7 @@ task FilterReadsWithTagValues {
         cpu_cores:          2,
         mem_gb:             20,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "broadinstitute/picard:2.23.7"
@@ -1573,7 +1573,7 @@ task ExcludeRegionsFromBam {
         cpu_cores:          2,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
@@ -1634,7 +1634,7 @@ task SelectFirstNReads {
         cpu_cores:          1,
         mem_gb:             10,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
@@ -1694,7 +1694,7 @@ task SplitBam {
         cpu_cores:          8,
         mem_gb:             10,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1752,7 +1752,7 @@ task FilterBamOnTag {
         cpu_cores:          2,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
@@ -1803,7 +1803,7 @@ task ListBamContigs {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1873,7 +1873,7 @@ task ShardReads {
         cpu_cores:          2,
         mem_gb:             20,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9.gamma"
@@ -1915,7 +1915,7 @@ task FailWithWarning {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
@@ -1998,7 +1998,7 @@ task IndexVCF {
         cpu_cores:          1,
         mem_gb:             3,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
@@ -2070,7 +2070,7 @@ task FindSequencingSummaryFiles {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -2334,7 +2334,7 @@ task MASIsoSeqReport {
         cpu_cores:          2,
         mem_gb:             64,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-jupyter_interactive:0.0.1"
@@ -2385,7 +2385,7 @@ task FindBams {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -2441,7 +2441,7 @@ task ExtractUncorrectedReads {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -2499,7 +2499,7 @@ task PolishTranscripts {
         cpu_cores:          24,
         mem_gb:             64,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -2552,7 +2552,7 @@ task SummarizeXMLMetadata {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -2620,7 +2620,7 @@ task SplitSoftClippedReads {
         cpu:                    8
         memory:                 "32 GiB"
         disks:                  "local-disk " +  disk_size + " HDD"
-        bootDiskSizeGb:         10
+        bootDiskSizeGb:         25
         preemptible:            0
         maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-softclipper:0.5.0"
@@ -2690,7 +2690,7 @@ task SplitSoftClippedReadsAssisted {
         cpu:                    8
         memory:                 "60 GiB"
         disks:                  "local-disk " +  disk_size + " HDD"
-        bootDiskSizeGb:         10
+        bootDiskSizeGb:         25
         preemptible:            0
         maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-softclipper:0.5.0"
@@ -2731,7 +2731,7 @@ task WriteNamedFile {
         cpu:                    1
         memory:                 1 + " GiB"
         disks: "local-disk " +  10 + " HDD"
-        bootDiskSizeGb:         10
+        bootDiskSizeGb:         25
         preemptible:            2
         maxRetries:             2
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"

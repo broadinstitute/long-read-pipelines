@@ -26,7 +26,7 @@ task Busco {
         cpu_cores:      8,
         mem_gb:         32,
         disk_gb:        50,
-        boot_disk_gb:   10,
+        boot_disk_gb:   25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "ezlabgva/busco:v4.1.1_cv1"

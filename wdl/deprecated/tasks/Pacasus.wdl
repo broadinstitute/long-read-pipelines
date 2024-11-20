@@ -68,7 +68,7 @@ task SplitReadsByLength {
         cpu:                    4
         memory:                 "8 GiB"
         disks:                  "local-disk " +  disk_size + " HDD"
-        bootDiskSizeGb:         10
+        bootDiskSizeGb:         25
         preemptible:            2
         maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
@@ -100,7 +100,7 @@ task SplitReads {
         cpu:                    4
         memory:                 mem_size + " GiB"
         disks:                  "local-disk " +  disk_size + " HDD"
-        bootDiskSizeGb:         10
+        bootDiskSizeGb:         25
         preemptible:            0
         maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
@@ -130,7 +130,7 @@ task RemovePalindromes {
         cpu_cores:          1,
         mem_gb:             6,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0
     }
@@ -171,7 +171,7 @@ task MergeFasta {
         cpu:                    4
         memory:                 "8 GiB"
         disks:                  "local-disk " +  disk_size + " HDD"
-        bootDiskSizeGb:         10
+        bootDiskSizeGb:         25
         preemptible:            2
         maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"

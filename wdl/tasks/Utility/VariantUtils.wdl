@@ -51,7 +51,7 @@ task MergePerChrCalls {
         cpu_cores:          4,
         mem_gb:             24,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
@@ -203,7 +203,7 @@ task MergeAndSortVCFs {
         cpu_cores:          cores,
         mem_gb:             "~{machine_memory}",
         disk_gb:            disk_sz,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.2"
@@ -268,7 +268,7 @@ task CollectDefinitions {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_sz,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
@@ -325,7 +325,7 @@ task GetVCFSampleName {
         cpu: 2
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible:     3
         maxRetries:      2
         docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -374,7 +374,7 @@ task SubsetVCF {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longshot:0.1.2"
@@ -428,7 +428,7 @@ task ZipAndIndexVCF {
         cpu_cores:          1,
         mem_gb:             3,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
@@ -475,7 +475,7 @@ task IndexVCF {
         cpu_cores:          1,
         mem_gb:             3,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
@@ -663,7 +663,7 @@ task FixSnifflesVCF {
         cpu_cores:          1,
         mem_gb:             3,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
@@ -723,7 +723,7 @@ task HardFilterVcf {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -770,7 +770,7 @@ task MakeSitesOnlyVcf {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
@@ -867,7 +867,7 @@ task AnnotateVcfWithBedRegions {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -995,7 +995,7 @@ task IndelsVariantRecalibrator {
         cpu_cores:          2,
         mem_gb:             26,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1122,7 +1122,7 @@ task SNPsVariantRecalibratorCreateModel {
         cpu_cores:          2,
         mem_gb:             64,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1207,7 +1207,7 @@ task ApplyVqsr {
         cpu_cores:          1,
         mem_gb:             7,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1262,7 +1262,7 @@ task SelectVariants {
         cpu_cores:          1,
         mem_gb:             7,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1323,7 +1323,7 @@ task RenameSingleSampleVcf {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1390,7 +1390,7 @@ task GatherVcfs {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1450,7 +1450,7 @@ task ExtractFingerprint {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1618,7 +1618,7 @@ CODE
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.2"
@@ -1733,7 +1733,7 @@ task ExtractVariantAnnotations {
         cpu_cores:          2,
         mem_gb:             26,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1811,7 +1811,7 @@ task TrainVariantAnnotationsModel {
         cpu_cores:          2,
         mem_gb:             26,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1946,7 +1946,7 @@ task ScoreVariantAnnotations {
         cpu_cores:          2,
         mem_gb:             26,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -1996,7 +1996,7 @@ task CompressAndIndex {
         cpu_cores:          num_cpus,
         mem_gb:             4*num_cpus,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
@@ -2046,7 +2046,7 @@ task ConcatBCFs {
         cpu_cores:          num_cpus,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"

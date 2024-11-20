@@ -82,7 +82,7 @@ task FastQC {
         cpu_cores:          2,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "staphb/fastqc:0.12.1"

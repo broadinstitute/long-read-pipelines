@@ -34,7 +34,7 @@ task GetRunInfo {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -89,7 +89,7 @@ task ListFiles {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -140,7 +140,7 @@ task PartitionManifest {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"

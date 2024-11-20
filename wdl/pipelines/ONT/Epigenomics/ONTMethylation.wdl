@@ -307,7 +307,7 @@ task Megalodon {
         cpu_cores:          8,
         mem_gb:             50,
         disk_gb:            disk_size,
-        boot_disk_gb:       30,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
@@ -355,7 +355,7 @@ task MergeVariantDBs {
         cpu_cores:          2,
         mem_gb:             48,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
@@ -398,7 +398,7 @@ task MergeModifiedBaseCallDBs {
         cpu_cores:          2,
         mem_gb:             48,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
@@ -448,7 +448,7 @@ task WhatsHapFilter {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
@@ -493,7 +493,7 @@ task IndexVariants {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:1.1"
@@ -553,7 +553,7 @@ task PhaseVariants {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:0.13"
@@ -602,7 +602,7 @@ task Haplotag {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-whatshap:1.1"
@@ -658,7 +658,7 @@ task ExtractHaplotypeReads {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"
@@ -716,7 +716,7 @@ task CallHaploidVariants {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-megalodon:2.3.1"

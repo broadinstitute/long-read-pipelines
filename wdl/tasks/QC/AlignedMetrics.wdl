@@ -130,7 +130,7 @@ task MakeChrIntervalList {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -192,7 +192,7 @@ task MosDepth {
         cpu_cores:          4,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-mosdepth:0.3.1"
@@ -241,7 +241,7 @@ task MosDepthOverBed {
         cpu_cores:          4,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "quay.io/biocontainers/mosdepth:0.2.4--he527e40_0"
@@ -285,7 +285,7 @@ task SummarizeDepth {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -333,7 +333,7 @@ task CoverageTrack {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -377,7 +377,7 @@ task SamStats {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -430,7 +430,7 @@ task SamStatsMap {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -472,7 +472,7 @@ task FlagStats {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -514,7 +514,7 @@ task ReadNamesAndLengths {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -558,7 +558,7 @@ task FilterMQ0Reads {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -605,7 +605,7 @@ task ComputeBedCoverage {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -657,7 +657,7 @@ task ReadMetrics {
         cpu_cores:          2,
         mem_gb:             50,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -700,7 +700,7 @@ task BamToBed {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -776,7 +776,7 @@ task CallableLoci {
         cpu_cores:         1,
         mem_gb:            4,
         disk_gb:           disk_size,
-        boot_disk_gb:      10,
+        boot_disk_gb:      25,
         preemptible_tries: 3,
         max_retries:       1,
         docker:            "us.gcr.io/broad-dsde-methods/broad-gatk-snapshots/gatk-remote-builds:jonn-fa5c895f58b729f00589f5deb23d56efb929aa1d-4.6.1.0-5-gfa5c895f5"

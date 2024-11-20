@@ -36,7 +36,7 @@ task ChunkManifest {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -96,7 +96,7 @@ task SortSam {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -164,7 +164,7 @@ task MakeChrIntervalList {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -264,7 +264,7 @@ task ExtractIntervalNamesFromIntervalOrBamFile {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -376,7 +376,7 @@ task MakeIntervalListFromSequenceDictionary {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -432,7 +432,7 @@ task CreateIntervalListFileFromIntervalInfo {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "ubuntu:22.04"
@@ -490,7 +490,7 @@ task CountBamRecords {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
@@ -558,7 +558,7 @@ task DownsampleSam {
         cpu_cores:          1,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.2.0.0"
@@ -607,7 +607,7 @@ task Sum {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -657,7 +657,7 @@ task Uniq {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -704,7 +704,7 @@ task Timestamp {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -768,7 +768,7 @@ task ConvertReads {
         cpu:                    4
         memory:                 "8 GiB"
         disks:                  "local-disk " +  disk_size + " HDD"
-        bootDiskSizeGb:         10
+        bootDiskSizeGb:         25
         preemptible:            2
         maxRetries:             0
         docker:                 "quay.io/broad-long-read-pipelines/lr-pacasus:0.3.0"
@@ -810,7 +810,7 @@ task BamToBed {
         cpu_cores:          1,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -863,7 +863,7 @@ task BamToFastq {
         cpu_cores:          2,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -924,7 +924,7 @@ task MergeFastqs {
         cpu_cores:          2,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -984,7 +984,7 @@ task MergeBams {
         cpu_cores:          4,
         mem_gb:             20,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
@@ -1051,7 +1051,7 @@ task Index {
         cpu_cores:          2,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
@@ -1118,7 +1118,7 @@ task SubsetBam {
         cpu_cores:          1,
         mem_gb:             10,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
@@ -1208,7 +1208,7 @@ task ResilientSubsetBam {
         cpu_cores:          2,
         mem_gb:             10,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
@@ -1262,7 +1262,7 @@ task Bamtools {
         cpu_cores:          2,
         mem_gb:             2,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9.beta"
@@ -1336,7 +1336,7 @@ task DeduplicateBam {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.10"
@@ -1396,7 +1396,7 @@ task Cat {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
@@ -1450,7 +1450,7 @@ task ComputeGenomeLength {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1507,7 +1507,7 @@ task ListFilesOfType {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1582,7 +1582,7 @@ task InferSampleName {
         cpu:            1
         memory:         "4 GiB"
         disks:          "local-disk 100 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible:    2
         maxRetries:     1
         docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
@@ -1613,7 +1613,7 @@ task CheckOnSamplenames {
         cpu:            1
         memory:         "4 GiB"
         disks:          "local-disk 100 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible:    2
         maxRetries:     1
         docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -1660,7 +1660,7 @@ task ComputeAllowedLocalSSD {
         cpu:            1
         memory:         "4 GiB"
         disks:          "local-disk 100 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible:    2
         maxRetries:     1
         docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -1699,7 +1699,7 @@ task RandomZoneSpewer {
         cpu:            1
         memory:         "4 GiB"
         disks:          "local-disk 100 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible:    2
         maxRetries:     1
         docker:         "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -1797,7 +1797,7 @@ task GetRawReadGroup {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            50,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.30"
@@ -1858,7 +1858,7 @@ task GetReadsInBedFileRegions {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.30"
@@ -1933,7 +1933,7 @@ task CreateIGVSession {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            50,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "quay.io/mduran/generate-igv-session_2:v1.0"
@@ -1997,7 +1997,7 @@ task SplitContigToIntervals {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       15,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"

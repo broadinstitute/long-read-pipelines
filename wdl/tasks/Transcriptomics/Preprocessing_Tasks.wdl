@@ -39,7 +39,7 @@ task DemuxMasSeqDataByIndex {
         docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
         memory: 4 + " GiB"
         disks: "local-disk " + disk_size + " HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible: 0
         cpu: 2
     }
@@ -79,7 +79,7 @@ task ConvertSplicedBamToGff {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-splicedbam2gff:0.0.1"
@@ -162,7 +162,7 @@ task GffCompare {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -220,7 +220,7 @@ task RestoreOriginalReadNames {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -287,7 +287,7 @@ task CorrectUmisWithSetCover {
         cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"

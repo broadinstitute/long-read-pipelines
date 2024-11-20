@@ -81,7 +81,7 @@ task NanoPlotFromSummary {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
@@ -162,7 +162,7 @@ task NanoPlotFromRichFastqs {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
@@ -271,7 +271,7 @@ task NanoPlotFromBam {
         cpu_cores:          8,
         mem_gb:             24,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-nanoplot:1.40.0-1"

@@ -116,7 +116,7 @@ task AssembleForHaplotigs {
         cpu_cores:          num_cpus,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.16.1"
@@ -189,7 +189,7 @@ task AssembleForAltContigs {
         cpu_cores:          num_cpus,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.16.1"

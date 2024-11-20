@@ -52,7 +52,7 @@ task CreateCountMatrixFromAnnotatedBam {
         cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -151,7 +151,7 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
         cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -246,7 +246,7 @@ task QuantifyGffComparison {
         cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -320,7 +320,7 @@ task CombineEqClassFiles {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -405,7 +405,7 @@ CODE
         cpu_cores:          1,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
