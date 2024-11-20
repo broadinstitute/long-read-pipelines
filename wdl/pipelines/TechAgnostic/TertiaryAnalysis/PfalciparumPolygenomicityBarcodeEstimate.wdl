@@ -97,7 +97,7 @@ task EstimateGenomicityFromBarcode {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "python:3.9.19-slim-bullseye"
@@ -132,7 +132,7 @@ task FailWithMessage {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "alpine:3.20.2"

@@ -331,7 +331,7 @@ task RunBackupWithPython {
         cpu_cores:          4,
         mem_gb:             10,
         disk_gb:            20,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-backup-workspace:0.0.1"

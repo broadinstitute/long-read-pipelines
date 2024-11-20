@@ -44,7 +44,7 @@ task AnnotateAdapters {
         cpu_cores:          cpus,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.9"

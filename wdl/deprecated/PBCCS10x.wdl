@@ -215,7 +215,7 @@ task GrepCountBamRecords {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -266,7 +266,7 @@ task BamToTable {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"

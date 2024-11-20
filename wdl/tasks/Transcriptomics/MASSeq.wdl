@@ -39,7 +39,7 @@ task RemoveMasSeqTruncatedReads {
         cpu_cores:          2,
         mem_gb:             2,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -133,7 +133,7 @@ task AdjustUmiSequenceWithAdapterAlignment {
         cpu_cores:          2,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.18"
@@ -211,7 +211,7 @@ task FilterMasSeqReads {
         cpu_cores:          2,
         mem_gb:             2,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "broadinstitute/gatk:4.2.6.1"
@@ -270,7 +270,7 @@ task RenameSingleCellBamTagsForMasIsoSeqV0 {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -329,7 +329,7 @@ task RestoreSingleCellBamTagsForMasIsoSeqV0 {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"

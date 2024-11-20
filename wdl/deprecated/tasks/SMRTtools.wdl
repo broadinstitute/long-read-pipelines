@@ -44,7 +44,7 @@ task RunQCreports {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            200,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:11.0.0.146107"
@@ -111,7 +111,7 @@ task BarcodeReport {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            500,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:11.0.0.146107"

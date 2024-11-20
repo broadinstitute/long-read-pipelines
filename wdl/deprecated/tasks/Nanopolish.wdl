@@ -115,7 +115,7 @@ task NanopolishIndex {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-nanopolish:0.3.0"
@@ -183,7 +183,7 @@ task NanopolishVariants {
         cpu_cores:          4,
         mem_gb:             20,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         # We should try to find a way to support this to reduce costs.
         # Right now, it is almost always preempted with the amount of
         # time it takes to localize the fast5 files
@@ -233,7 +233,7 @@ task MergeVcfs {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-nanopolish:0.3.0"

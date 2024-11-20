@@ -173,7 +173,7 @@ task Create1DReferenceTensors {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
@@ -284,7 +284,7 @@ CODE
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.3.0.0"
@@ -401,7 +401,7 @@ task TrainCnn {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "broadinstitute/gatk-nightly:2023-08-18-4.4.0.0-57-g98f63667a-NIGHTLY-SNAPSHOT"

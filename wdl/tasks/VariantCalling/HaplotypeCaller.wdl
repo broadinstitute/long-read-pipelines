@@ -262,7 +262,7 @@ task HaplotypeCaller_GATK4_VCF {
        cpu_cores:          2,
        mem_gb:             16,
        disk_gb:            disk_size,
-       boot_disk_gb:       15,
+       boot_disk_gb:       25,
        preemptible_tries:  1,
        max_retries:        1,
        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -318,7 +318,7 @@ task MergeBamouts {
        cpu_cores:          1,
        mem_gb:             4,
        disk_gb:            disk_size,
-       boot_disk_gb:       10,
+       boot_disk_gb:       25,
        preemptible_tries:  1,
        max_retries:        1,
        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
@@ -389,7 +389,7 @@ task ReblockGVCF {
        cpu_cores:          2,
        mem_gb:             4,
        disk_gb:            disk_size,
-       boot_disk_gb:       15,
+       boot_disk_gb:       25,
        preemptible_tries:  1,
        max_retries:        1,
        docker:             "broadinstitute/gatk-nightly:2024-04-16-4.5.0.0-25-g986cb1549-NIGHTLY-SNAPSHOT"

@@ -32,7 +32,7 @@ task ListGenotypedVCFs {
         cpu: 2
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         docker:"us.gcr.io/broad-dsp-lrma/lr-basic:latest"
     }
 }
@@ -73,7 +73,7 @@ task PickGenotypeVCF {
         cpu: 2
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
@@ -118,7 +118,7 @@ task FilterGenotypesVCF {
         cpu: 2
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible:     3
         maxRetries:      2
         docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -161,7 +161,7 @@ task ExtractGenotypingSites {
         cpu: 2
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible:     3
         maxRetries:      2
         docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -196,7 +196,7 @@ task MergeGenotypingSites {
         cpu: 2
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
-        bootDiskSizeGb: 10
+        bootDiskSizeGb: 25
         preemptible:     3
         maxRetries:      2
         docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -247,7 +247,7 @@ task ExtractRelevantGenotypingReads {
         cpu_cores:             4,
         mem_gb:                8,
         disk_gb:               disk_size,
-        boot_disk_gb:          10,
+        boot_disk_gb:          25,
         preemptible_tries:     0,
         max_retries:           1,
         docker:                "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
@@ -308,7 +308,7 @@ task ResetCLRBaseQual {
         cpu_cores:             2,
         mem_gb:                8,
         disk_gb:               disk_size,
-        boot_disk_gb:          10,
+        boot_disk_gb:          25,
         preemptible_tries:     3,
         max_retries:           2,
         docker:                "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.34"
@@ -405,7 +405,7 @@ task CheckFingerprint {
         cpu_cores:             2,
         mem_gb:                4,
         disk_gb:               disk_size,
-        boot_disk_gb:          10,
+        boot_disk_gb:          25,
         preemptible_tries:     3,
         max_retries:           2,
         docker:                "us.gcr.io/broad-gatk/gatk:4.2.0.0"
@@ -498,7 +498,7 @@ task CheckCLRFingerprint {
         cpu_cores:             2,
         mem_gb:                4,
         disk_gb:               disk_size,
-        boot_disk_gb:          10,
+        boot_disk_gb:          25,
         preemptible_tries:     3,
         max_retries:           2,
         docker:                "us.gcr.io/broad-dsp-lrma/picard:lrfp-clr"

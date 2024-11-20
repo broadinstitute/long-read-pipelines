@@ -46,7 +46,7 @@ task GetRunInfo {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -128,7 +128,7 @@ task ShardLongReads {
         cpu_cores:          num_threads,
         mem_gb:             mem,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -211,7 +211,7 @@ task CCS {
         cpu_cores:          4,
         mem_gb:             12,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -295,7 +295,7 @@ task ExtractHifiReads {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -348,7 +348,7 @@ task MergeCCSReports {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -439,7 +439,7 @@ task Demultiplex {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -492,7 +492,7 @@ task MakeDetailedDemultiplexingReport {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -543,7 +543,7 @@ task MakeSummarizedDemultiplexingReport {
         cpu_cores:          1,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -600,7 +600,7 @@ task RefineTranscriptReads {
         cpu_cores:          8,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -665,7 +665,7 @@ task ClusterTranscripts {
         cpu_cores:          64,
         mem_gb:             70,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -764,7 +764,7 @@ task Align {
         cpu_cores:          cpus,
         mem_gb:             mem,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -817,7 +817,7 @@ task PBIndex {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -872,7 +872,7 @@ task CollapseTranscripts {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -935,7 +935,7 @@ task SummarizeCCSReport {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -988,7 +988,7 @@ task SummarizePBI {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"

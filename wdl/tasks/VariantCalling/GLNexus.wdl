@@ -121,7 +121,7 @@ task GetRanges {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
@@ -180,7 +180,7 @@ task ShardVCFByRanges {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"
@@ -246,7 +246,7 @@ task Call {
         cpu_cores:          num_cpus,
         mem_gb:             mem,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.1"

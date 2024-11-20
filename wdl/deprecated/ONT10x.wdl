@@ -307,7 +307,7 @@ task AnnotateAdapters {
         cpu_cores:          cpus,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.9"
@@ -349,7 +349,7 @@ task CountNumPasses {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -399,7 +399,7 @@ task FastaToSam {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -455,7 +455,7 @@ task CountFastqRecords {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -506,7 +506,7 @@ task CountFastaRecords {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"

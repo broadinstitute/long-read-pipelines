@@ -210,7 +210,7 @@ task ParentalReadsRepartitionAndMerylConfigure {
         cpu_cores:          4,
         mem_gb:             8,
         disk_gb:            600,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0, # explicitly turn this off as we don't save that much for the disk, and pre-emption kills us
         max_retries:        0,
         docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
@@ -347,7 +347,7 @@ task MerylCount {
         cpu_cores:          emperical_thread_cout,
         mem_gb:             memory_to_use,
         disk_gb:            disk_space_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
@@ -475,7 +475,7 @@ task MerylMergeAndSubtract {
         cpu_cores:          2 * meryl_operations_threads_est + 6, # a bit more threads, a bit more concurrency for decompression at the beginning
         mem_gb:             3 * meryl_memory_in_GB + 6, # choosing this specification so that two parallel jobs can be executed at the same time
         disk_gb:            3000, # we strongly recommend you NOT change this number: 1) we've seen close to full disk peak usage, and 2) local SSD's increase by unit of 375GB, this is the maximum
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0, # explicitly turn off as this takes a long time
         max_retries:        0,
         docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"

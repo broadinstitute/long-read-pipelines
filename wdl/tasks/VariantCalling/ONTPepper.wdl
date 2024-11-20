@@ -104,7 +104,7 @@ task Pepper {
         cpu_cores:          threads,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       100,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "kishwars/pepper_deepvariant:r0.4.1"

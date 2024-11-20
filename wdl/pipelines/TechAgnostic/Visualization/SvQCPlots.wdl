@@ -215,7 +215,7 @@ task concatSVstats{
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
@@ -282,7 +282,7 @@ task compileSVstats {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-compile-sv-stats:0.0.0"
@@ -353,7 +353,7 @@ task addCoverageToSVstats{
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
@@ -432,7 +432,7 @@ task plotSVQCMetrics{
         cpu_cores:          4,
         mem_gb:             10,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-plot-sv-metrics:beta.0.0.5"

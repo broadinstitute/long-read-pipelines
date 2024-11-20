@@ -323,7 +323,7 @@ task FilterOutTargetOrganismReads {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/sr-alternate-tools:0.0.1"
@@ -388,7 +388,7 @@ task ReorderSam {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
@@ -473,7 +473,7 @@ task RealignIndels {
         cpu_cores:          8,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "broadinstitute/gatk3:3.5-0"
@@ -568,7 +568,7 @@ task BQSR {
         cpu_cores:          8,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "broadinstitute/gatk3:3.5-0"
@@ -654,7 +654,7 @@ task HaplotypeCaller {
         cpu_cores:          8,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "broadinstitute/gatk3:3.5-0"

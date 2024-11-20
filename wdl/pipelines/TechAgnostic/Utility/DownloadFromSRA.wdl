@@ -93,7 +93,7 @@ task DownloadFiles {
         cpu_cores:          num_cpus,
         mem_gb:             4,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  5,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.5"

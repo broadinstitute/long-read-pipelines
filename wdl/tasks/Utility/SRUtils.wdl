@@ -34,7 +34,7 @@ task BamToFq {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -76,7 +76,7 @@ task FixMate {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -123,7 +123,7 @@ task Bam2FqPicard {
         cpu_cores:          16,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
@@ -216,7 +216,7 @@ task BwaMem2 {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.2"
@@ -331,7 +331,7 @@ task Bowtie2 {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/sr-alternate-tools:0.0.1"
@@ -413,7 +413,7 @@ task MergeBamAlignment {
         cpu_cores:          16,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
@@ -484,7 +484,7 @@ task MarkDuplicates {
         cpu_cores:          16,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
@@ -552,7 +552,7 @@ task BaseRecalibrator {
         cpu_cores:          16,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -636,7 +636,7 @@ task ApplyBQSR {
         cpu_cores:          16,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         # docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -704,7 +704,7 @@ task RevertSam {
         cpu_cores:          16,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
@@ -756,7 +756,7 @@ task ComputeBamStats {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/sr-utils:0.2.2"
@@ -811,7 +811,7 @@ task MergeVCFs {
         cpu_cores:          1,
         mem_gb:             3,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
@@ -862,7 +862,7 @@ task IndexFeatureFile {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
@@ -936,7 +936,7 @@ task RevertBaseQualities {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"

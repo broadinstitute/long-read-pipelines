@@ -110,7 +110,7 @@ task DV {
         cpu_cores:          threads,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       100,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "google/deepvariant:1.4.0"

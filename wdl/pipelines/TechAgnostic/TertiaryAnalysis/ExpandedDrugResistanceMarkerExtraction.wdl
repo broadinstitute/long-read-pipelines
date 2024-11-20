@@ -233,7 +233,7 @@ task CallDrugResistanceMutations {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "quay.io/biocontainers/snpeff:5.1d--hdfd78af_0"

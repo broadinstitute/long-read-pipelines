@@ -203,7 +203,7 @@ task AssignChildLongReads {
         cpu_cores:          child_read_assign_threads_est,
         mem_gb:             child_read_assign_memoryG_est,
         disk_gb:            500,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"
