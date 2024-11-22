@@ -10,15 +10,18 @@ workflow Shapeit5_switch{
         File truthvcf_index
         File testvcf
         File testvcf_index
-        String? extra_args # input of regions
+        Array[String] region_list
+        String? extra_args
         String output_prefix
         Int nthreads
     }
     
-    call switch{input: truth_bcf=truthvcf, truth_bcf_index=truthvcf_index, test_bcf= testvcf, test_bcf_index = testvcf_index, extra_args=extra_args, outputprefix = output_prefix, num_threads=nthreads}
+    scatter (region in region_list){
+        call switch{input: truth_bcf=truthvcf, truth_bcf_index=truthvcf_index, test_bcf= testvcf, test_bcf_index = testvcf_index, region = region, extra_args=extra_args, outputprefix = output_prefix, num_threads=nthreads}
+    }
     
     output{
-        Array[File] output_file = switch.output_files
+        Array[Array[File]] output_file = switch.output_files
     }
 }
 
@@ -28,6 +31,7 @@ task switch{
         File truth_bcf_index
         File test_bcf
         File test_bcf_index
+        String region
         String outputprefix
         Int num_threads
         String? extra_args
@@ -36,6 +40,7 @@ task switch{
         switch_static \
         --validation ~{truth_bcf} \
         --estimation ~{test_bcf} \
+        --region ~{region} \
         --output ~{outputprefix} \
         --thread ~{num_threads} \
         ~{extra_args}
