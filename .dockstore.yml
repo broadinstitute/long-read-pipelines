@@ -147,3 +147,6 @@ workflows:
 - name: FilterVcfHybridPhasing
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/filtervcf.wdl
+- name: Shapeit5Switch
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/Shapeit5_switch.wdl
