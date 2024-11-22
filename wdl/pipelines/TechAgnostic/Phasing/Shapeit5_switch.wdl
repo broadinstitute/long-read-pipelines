@@ -17,7 +17,7 @@ workflow Shapeit5_switch{
     }
     
     scatter (region in region_list){
-        call switch{input: truth_bcf=truthvcf, truth_bcf_index=truthvcf_index, test_bcf= testvcf, test_bcf_index = testvcf_index, region = region, extra_args=extra_args, outputprefix = output_prefix, num_threads=nthreads}
+        call switch{input: truth_bcf=truthvcf, truth_bcf_index=truthvcf_index, test_bcf= testvcf, test_bcf_index = testvcf_index, region = region, extra_args=extra_args, outputprefix = output_prefix + "." + region, num_threads=nthreads}
     }
     
     output{
