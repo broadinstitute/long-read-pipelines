@@ -3,6 +3,7 @@ FROM continuumio/miniconda3
 # --------------------------------- Versions -----------------------------------
 ARG samtools_version=1.18
 ARG bcftools_version=1.18
+ARG gcloud_version=429.0.0
 # ------------------------------------------------------------------------------
 
 
@@ -28,7 +29,11 @@ RUN apt-get -qqy update --fix-missing \
         make \
         gcc \
         cpanminus \
-        libexpat1-dev
+        libexpat1-dev \
+        google-cloud-sdk \
+        python3-pip
+
+
 
 RUN git clone https://github.com/lh3/bwa.git \
     && cd bwa \
