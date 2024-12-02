@@ -156,3 +156,6 @@ workflows:
 - name: AsmEvaluationDipcall
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/AsmEvaluationDipcall.wdl
+- name: PbCpG
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Epigenomics/PbCpG.wdl
