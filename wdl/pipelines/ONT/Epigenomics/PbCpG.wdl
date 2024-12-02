@@ -29,7 +29,7 @@ task AlignedBamToCpGScores{
     String model_dir = "/pb-CpG-tools-v2.3.2-x86_64-unknown-linux-gnu/models/pileup_calling_model.v1.tflite"
 
     command <<<
-        aligned_bam_to_cpg_scores \
+        /pb-CpG-tools-v2.3.2-x86_64-unknown-linux-gnu/bin/aligned_bam_to_cpg_scores \
             --bam ~{bam} \
             --output-prefix ~{outputprefix} \
             --model ~{model_dir} \
