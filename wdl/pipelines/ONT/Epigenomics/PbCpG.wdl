@@ -7,10 +7,11 @@ workflow pbCpG{
 
     input{
         File bam
+        File bai
         String output_prefix
         Int nthreads
     }
-    call AlignedBamToCpGScores{input: bam=bam, outputprefix = output_prefix, num_threads = nthreads}
+    call AlignedBamToCpGScores{input: bam=bam, bai=bai, outputprefix = output_prefix, num_threads = nthreads}
     
     output{
         Array[File] output_file = AlignedBamToCpGScores.output_files
@@ -20,6 +21,7 @@ workflow pbCpG{
 task AlignedBamToCpGScores{
     input{
         File bam
+        File bai
         String outputprefix
         Int num_threads
     }
