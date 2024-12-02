@@ -43,12 +43,12 @@ task AlignedBamToCpGScores{
     Int disk_size = 100 + ceil(2 * (size(bam, "GiB")))
 
     runtime {
-        cpu: 64
-        memory: "416 GiB"
+        cpu: 4
+        memory: "16 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 2
         maxRetries: 1
-        docker: "us.gcr.io/broad-dsp-lrma/pb-cpg:v1"
+        docker: "hangsuunc/pb-cpg:v1"
     }
 }
