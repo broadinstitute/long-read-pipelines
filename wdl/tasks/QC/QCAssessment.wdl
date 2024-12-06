@@ -69,10 +69,12 @@ task AssessQualityMetrics {
         callable_frac=$(awk "BEGIN {printf(\"%.8f\", ${callable_bases}/${total_bases})}")
         callable_status=$(awk "BEGIN { if (${callable_frac} > ~{min_callable_fraction}) { print \"true\" } else { print \"false\" }}")
 
+        # Set blank default message:
+        message=""
+
         # Determine pass/fail status
         if $mosdepth_qc_status && $callable_status; then
             qc_status="Pass"
-            message=""
         else
             qc_status="Fail"
             # Now make a message so the user knows why QC failed:
