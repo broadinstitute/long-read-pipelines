@@ -36,7 +36,10 @@ task VCF_INS_to_fa {
         set -euxo pipefail
 
         bcftools view -i 'INFO/SVLEN>=50 && INFO/SVTYPE=="INS"' ~{VCF} | bcftools view -e 'ALT ~ "<"' > ~{prefix}.INS.vcf
-        bcftools query -f '>%CHROM:%POS;%REF\n%ALT\n' ~{prefix}.INS.vcf > ~{prefix}_INS.fa
+        bcftools query -f '>%CHROM:%POS;%REF\n%ALT\n' ~{prefix}.INS.vcf > ~{prefix}_INS.tmp.fa
+        
+        #rename duplicate fasta IDs
+        seqkit rename -N1 ~{prefix}_INS.tmp.fa > ~{prefix}_INS.fa
     >>>
 
     output {
@@ -51,7 +54,7 @@ task VCF_INS_to_fa {
          boot_disk_gb:       10,
          preemptible_tries:  3,
          max_retries:        0,
-         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+         docker:             "quay.io/ymostovoy/lr-utils-basic:latest"
      }
 
      RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
