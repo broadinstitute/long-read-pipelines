@@ -68,8 +68,8 @@ digraph {
 	"call-Pepper" -> "call-MergeDeepVariantVCFs"
 	"call-Pepper" -> "call-MergeBams"
 	"call-MakeChrIntervalList" -> "scatter-L198C13-c" [lhead="cluster-scatter-L198C13-c"]
-	"call-arbitrary" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-RunPBSV"
+	"call-arbitrary" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-InferSampleName"
 	"call-RunPBSV" -> "call-MergePBSVVCFs"
 	"call-arbitrary" -> "call-PBSVslow"
