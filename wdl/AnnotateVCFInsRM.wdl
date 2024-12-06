@@ -18,6 +18,7 @@ workflow AnnotateVCFIns {
 
     output {
         File RMout = RepeatMasker.RMout
+        File INSfa = VCF_INS_to_fa.INS_fa
     }
 }
 
