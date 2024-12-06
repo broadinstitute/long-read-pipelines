@@ -261,18 +261,28 @@ task RunBackupWithPython {
             # Write the workflow metadata:
             _write_json_file_to_bucket(f"{backup_folder_path}/workflows", bucket, timestamp, namespace, workspace, metadata,
                                        f"{workflow_name}_workflow_metadata")
-
-            inputs = metadata['inputs']
-            outputs = metadata['outputs']
-            del metadata['inputs']
-            del metadata['outputs']
-
+            
             # Write the workflow inputs:
-            _write_json_file_to_bucket(f"{backup_folder_path}/workflows", bucket, timestamp, namespace, workspace, inputs,
-                                       f"{workflow_name}_workflow_inputs")
-            # Write the workflow outputs:
-            _write_json_file_to_bucket(f"{backup_folder_path}/workflows", bucket, timestamp, namespace, workspace, outputs,
-                                       f"{workflow_name}_workflow_outputs")
+            try:
+                inputs = metadata['inputs']
+                del metadata['inputs']
+                
+                _write_json_file_to_bucket(f"{backup_folder_path}/workflows", bucket, timestamp, namespace, workspace, inputs,
+                                        f"{workflow_name}_workflow_inputs")
+            except KeyError:
+                # Workflow has no inputs.  We can skip it.
+                pass
+            
+            try:
+                outputs = metadata['outputs']
+                del metadata['outputs']
+
+                # Write the workflow outputs:
+                _write_json_file_to_bucket(f"{backup_folder_path}/workflows", bucket, timestamp, namespace, workspace, outputs,
+                                        f"{workflow_name}_workflow_outputs")
+            except KeyError:
+                # Workflow has no outputs.  We can skip it.
+                pass
 
         print(f"Done.")
         print("")
