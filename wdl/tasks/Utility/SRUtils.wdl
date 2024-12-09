@@ -6,19 +6,27 @@ task BamToFq {
     input {
         File bam
         File? bam_index
+        
+        File? reference_fasta
+        File? reference_fasta_index
+        File? reference_dict
+
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
     }
+
+    String ref_arg = if defined(reference_fasta) then " --reference " + select_first([reference_fasta]) else ""
 
     Int disk_size = 1 + 4*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        samtools sort -n ~{bam} | samtools bam2fq \
+        samtools sort -n ~{bam} | samtools -@2 bam2fq \
             -n \
             -s /dev/null \
+            ~{ref_arg}'~{reference_fasta}' \
             -1 ~{prefix}.end1.fq.gz \
             -2 ~{prefix}.end2.fq.gz \
             -0 ~{prefix}.unpaired.fq.gz

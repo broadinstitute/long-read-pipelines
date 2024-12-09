@@ -7,12 +7,25 @@ workflow SRBamToFq {
     input {
         File bam
         File? bam_index
+
+        File? reference_fasta
+        File? reference_fasta_index
+        File? reference_dict
+
         String participant_name
 
         String? gcs_out_root_dir
     }
 
-    call SRUtils.BamToFq { input: bam = bam, bam_index = bam_index, prefix = participant_name }
+    call SRUtils.BamToFq { 
+        input: 
+            bam = bam, 
+            bam_index = bam_index, 
+            reference_fasta = reference_fasta, 
+            reference_fasta_index = reference_fasta_index, 
+            reference_dict = reference_dict, 
+            prefix = participant_name 
+    }
 
     if (defined(gcs_out_root_dir)) {
         String outdir = sub(select_first([gcs_out_root_dir]), "/$", "") + "/SRBamToFq/~{participant_name}"
