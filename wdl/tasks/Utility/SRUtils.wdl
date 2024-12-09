@@ -5,6 +5,7 @@ import "../../structs/Structs.wdl"
 task BamToFq {
     input {
         File bam
+        File? bam_index
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override

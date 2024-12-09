@@ -6,12 +6,13 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 workflow SRBamToFq {
     input {
         File bam
+        File? bam_index
         String participant_name
 
         String? gcs_out_root_dir
     }
 
-    call SRUtils.BamToFq { input: bam = bam, prefix = participant_name }
+    call SRUtils.BamToFq { input: bam = bam, bam_index = bam_index, prefix = participant_name }
 
     if (defined(gcs_out_root_dir)) {
         String outdir = sub(select_first([gcs_out_root_dir]), "/$", "") + "/SRBamToFq/~{participant_name}"
