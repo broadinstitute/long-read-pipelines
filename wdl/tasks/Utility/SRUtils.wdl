@@ -23,7 +23,7 @@ task BamToFq {
     command <<<
         set -euxo pipefail
 
-        samtools sort -n ~{bam} | samtools -@2 bam2fq \
+        samtools sort -n ~{bam} | samtools bam2fq -@2 \
             -n \
             -s /dev/null \
             ~{ref_arg}'~{reference_fasta}' \
