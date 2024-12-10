@@ -26,7 +26,7 @@ task BamToFq {
         samtools sort -n ~{ref_arg} ~{bam} | samtools bam2fq -@2 \
             -n \
             -s /dev/null \
-            ~{ref_arg}'~{reference_fasta}' \
+            ~{ref_arg} \
             -1 ~{prefix}.end1.fq.gz \
             -2 ~{prefix}.end2.fq.gz \
             -0 ~{prefix}.unpaired.fq.gz
