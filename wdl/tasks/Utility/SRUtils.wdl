@@ -16,17 +16,17 @@ task BamToFq {
         RuntimeAttr? runtime_attr_override
     }
 
-    String ref_arg = if defined(reference_fasta) then " --reference ~{reference_fasta}" else ""
+    String ref_arg = if defined(reference_fasta) then " --reference " else ""
 
     Int disk_size = 1 + 4*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        samtools sort -n ~{ref_arg} ~{bam} | samtools bam2fq -@2 \
+        samtools sort -n ~{ref_arg} ~{reference_fasta} ~{bam} | samtools bam2fq -@2 \
             -n \
             -s /dev/null \
-            ~{ref_arg} \
+            ~{ref_arg} ~{reference_fasta} \
             -1 ~{prefix}.end1.fq.gz \
             -2 ~{prefix}.end2.fq.gz \
             -0 ~{prefix}.unpaired.fq.gz
