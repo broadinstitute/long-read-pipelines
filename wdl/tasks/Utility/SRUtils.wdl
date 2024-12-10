@@ -16,7 +16,7 @@ task BamToFq {
         RuntimeAttr? runtime_attr_override
     }
 
-    String ref_arg = if defined(reference_fasta) then " --reference " + select_first([reference_fasta]) else ""
+    String ref_arg = if defined(reference_fasta) then " --reference ~{reference_fasta}" else ""
 
     Int disk_size = 1 + 4*ceil(size(bam, "GB"))
 
