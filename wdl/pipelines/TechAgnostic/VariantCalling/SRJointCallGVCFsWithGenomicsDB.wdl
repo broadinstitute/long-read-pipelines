@@ -115,6 +115,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
+    # Resolve the db_snp_vcf file, with preference to the db_snp_vcf file if it exists:
+    File db_snp_vcf = select_first([ref_map["db_snp_vcf"], ref_map["known_sites_vcf"]])
+
     # Create sample-name map:
     call SRJOINT.CreateSampleNameMap as CreateSampleNameMap {
         input:
@@ -178,7 +181,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                     ref_fasta       = ref_map['fasta'],
                     ref_fasta_fai   = ref_map['fai'],
                     ref_dict        = ref_map['dict'],
-                    dbsnp_vcf       = ref_map["known_sites_vcf"],
+                    dbsnp_vcf       = db_snp_vcf,
                     prefix          = prefix + "." + interval_name + ".gnarly_genotyper.raw",
                     heterozygosity = heterozygosity,
                     heterozygosity_stdev = heterozygosity_stdev,
@@ -194,7 +197,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
                     ref_fasta       = ref_map['fasta'],
                     ref_fasta_fai   = ref_map['fai'],
                     ref_dict        = ref_map['dict'],
-                    dbsnp_vcf       = ref_map["known_sites_vcf"],
+                    dbsnp_vcf       = db_snp_vcf,
                     prefix          = prefix + "." + interval_name + ".genotype_gvcfs.raw",
                     heterozygosity = heterozygosity,
                     heterozygosity_stdev = heterozygosity_stdev,
