@@ -325,11 +325,15 @@
 <h4 id="required">Required</h4>
 <ul>
 <li><code>bam</code> (File, <strong>required</strong>)</li>
-<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>)</li>
 <li><code>participant_name</code> (String, <strong>required</strong>)</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
+<li><code>bam_index</code> (File?)</li>
+<li><code>gcs_out_root_dir</code> (String?)</li>
+<li><code>reference_dict</code> (File?)</li>
+<li><code>reference_fasta</code> (File?)</li>
+<li><code>reference_fasta_index</code> (File?)</li>
 <li><code>BamToFq.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeFqEnd1.keyfile</code> (File?)</li>
 <li><code>FinalizeFqEnd1.name</code> (String?)</li>

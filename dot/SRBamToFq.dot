@@ -4,9 +4,13 @@ digraph {
 	node [fontname=Roboto]
 	edge [color="#00000080"]
 	"call-BamToFq" [label=BamToFq shape=cds]
-	"call-FinalizeFqEnd1" [label=FinalizeFqEnd1 shape=cds]
-	"call-FinalizeFqEnd2" [label=FinalizeFqEnd2 shape=cds]
-	"call-FinalizeFqUnpaired" [label=FinalizeFqUnpaired shape=cds]
+	subgraph "cluster-if-L30C5" {
+		fontname=Roboto label="if(defined(gcs_out_root_dir))" rank=same
+		"call-FinalizeFqEnd1" [label=FinalizeFqEnd1 shape=cds]
+		"call-FinalizeFqEnd2" [label=FinalizeFqEnd2 shape=cds]
+		"call-FinalizeFqUnpaired" [label=FinalizeFqUnpaired shape=cds]
+		"if-L30C5" [label="" height=0 margin=0 style=invis width=0]
+	}
 	"call-BamToFq" -> "call-FinalizeFqEnd1"
 	"call-BamToFq" -> "call-FinalizeFqEnd2"
 	"call-BamToFq" -> "call-FinalizeFqUnpaired"

@@ -348,6 +348,10 @@
 <li><code>fq_end2</code> (File?): FASTQ file containing end 2 of the short read data to process.  <code>fq_end1</code> must be defined if this argument is.  This argument and <code>fq_end1</code> are mutually exclusive with <code>bam</code> and <code>bai</code></li>
 <li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
 <li><code>t_002_RevertSam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_003_Bam2Fastq.bam_index</code> (File?)</li>
+<li><code>t_003_Bam2Fastq.reference_dict</code> (File?)</li>
+<li><code>t_003_Bam2Fastq.reference_fasta</code> (File?)</li>
+<li><code>t_003_Bam2Fastq.reference_fasta_index</code> (File?)</li>
 <li><code>t_003_Bam2Fastq.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_004_GetRawReadGroup.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.input_bai</code> (File?)</li>
@@ -390,6 +394,10 @@
 <li><code>t_031_FinalizeCallableLociBed.name</code> (String?)</li>
 <li><code>t_031_FinalizeCallableLociBed.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_004_RevertSam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_005_DecontaminateSample.t_005_Bam2Fastq.bam_index</code> (File?)</li>
+<li><code>t_005_DecontaminateSample.t_005_Bam2Fastq.reference_dict</code> (File?)</li>
+<li><code>t_005_DecontaminateSample.t_005_Bam2Fastq.reference_fasta</code> (File?)</li>
+<li><code>t_005_DecontaminateSample.t_005_Bam2Fastq.reference_fasta_index</code> (File?)</li>
 <li><code>t_005_DecontaminateSample.t_005_Bam2Fastq.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_006_GetRawReadGroup.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_007_AlignReads.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -397,6 +405,10 @@
 <li><code>t_005_DecontaminateSample.t_009_ExtractContaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_010_SortDecontaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_011_SortContaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_005_DecontaminateSample.t_012_CreateFastqFromDecontaminatedReads.bam_index</code> (File?)</li>
+<li><code>t_005_DecontaminateSample.t_012_CreateFastqFromDecontaminatedReads.reference_dict</code> (File?)</li>
+<li><code>t_005_DecontaminateSample.t_012_CreateFastqFromDecontaminatedReads.reference_fasta</code> (File?)</li>
+<li><code>t_005_DecontaminateSample.t_012_CreateFastqFromDecontaminatedReads.reference_fasta_index</code> (File?)</li>
 <li><code>t_005_DecontaminateSample.t_012_CreateFastqFromDecontaminatedReads.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_013_FinalizeContaminatedBam.name</code> (String?)</li>
 <li><code>t_005_DecontaminateSample.t_013_FinalizeContaminatedBam.runtime_attr_override</code> (RuntimeAttr?)</li>

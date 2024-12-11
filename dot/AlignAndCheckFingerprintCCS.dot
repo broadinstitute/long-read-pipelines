@@ -33,8 +33,8 @@ digraph {
 		"call-saveFPRes" [label=saveFPRes shape=cds]
 		"if-L112C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	"call-Guess" -> "call-ShardLongReads"
 	"call-arbitrary" -> "call-ShardLongReads"
+	"call-Guess" -> "call-ShardLongReads"
 	"call-ShardLongReads" -> "scatter-L62C9-unaligned_bam" [lhead="cluster-scatter-L62C9-unaligned_bam"]
 	"call-AlignReads" -> "call-MergeAlignedReads"
 	"call-MergeAlignedReads" -> "decl-aBAM"
@@ -43,8 +43,8 @@ digraph {
 	"call-AlignReadsTogether" -> "decl-aBAI"
 	"decl-aBAM" -> "call-IndexAlignedReads"
 	"decl-aBAM" -> "call-CollectPacBioAlignedMetrics"
-	"call-IndexAlignedReads" -> "call-CollectPacBioAlignedMetrics"
 	"decl-aBAI" -> "call-CollectPacBioAlignedMetrics"
+	"call-IndexAlignedReads" -> "call-CollectPacBioAlignedMetrics"
 	"call-CollectPacBioAlignedMetrics" -> "call-saveAlnMetrics"
 	"decl-aBAM" -> "call-FPCheckAoU"
 	"decl-aBAI" -> "call-FPCheckAoU"
