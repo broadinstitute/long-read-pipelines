@@ -189,7 +189,24 @@ task ImportGVCFs {
         # a significant amount of non-heap memory for native libraries.
         # Also, testing has shown that the multithreaded reader initialization
         # does not scale well beyond 5 threads, so don't increase beyond that.
-        gatk --java-options "-Xms8000m -Xmx25000m" \
+
+        min_off_heap_memory_mb=7168
+        available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
+
+        calculated_min_off_heap_memory_mb=$(echo "scale=0;${available_memory_mb} * 0.2" | bc | sed 's@\..*@@')
+        if [[ ${calculated_min_off_heap_memory_mb} -lt ${min_off_heap_memory_mb} ]] ; then
+            off_heap_memory_mb=${min_off_heap_memory_mb}
+        else
+            off_heap_memory_mb=${calculated_min_off_heap_memory_mb}
+        fi
+        
+        let java_memory_size_mb=$((available_memory_mb-off_heap_memory_mb))
+
+        echo Total available memory: ${available_memory_mb} MB >&2
+        echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
+        echo Memory reserved for non-Java processes: ${off_heap_memory_mb} MB >&2
+
+        gatk --java-options "-Xms8192m -Xmx${java_memory_size_mb}m" \
             GenomicsDBImport \
                 --genomicsdb-workspace-path ~{prefix}.genomicsDB \
                 --batch-size ~{batch_size} \

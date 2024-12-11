@@ -217,10 +217,10 @@ task HaplotypeCaller_GATK4_VCF {
         # Note: In the future this should be done using Cromwell's ${MEM_SIZE} and ${MEM_UNIT} environment variables,
         #       which do not rely on the output format of the `free` command.
 
-        min_off_heap_memory_mb=1024
+        min_off_heap_memory_mb=4096
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
 
-        calculated_min_off_heap_memory_mb=$(echo "scale=0;${available_memory_mb} * 0.1" | bc | sed 's@\..*@@')
+        calculated_min_off_heap_memory_mb=$(echo "scale=0;${available_memory_mb} * 0.2" | bc | sed 's@\..*@@')
         if [[ ${calculated_min_off_heap_memory_mb} -lt ${min_off_heap_memory_mb} ]] ; then
             off_heap_memory_mb=${min_off_heap_memory_mb}
         else
@@ -231,7 +231,8 @@ task HaplotypeCaller_GATK4_VCF {
 
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
-
+        echo Memory reserved for non-Java processes: ${off_heap_memory_mb} MB >&2
+        
         gatk --java-options "-Xmx${java_memory_size_mb}m -Xms${java_memory_size_mb}m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
             HaplotypeCaller \
                 -R ~{ref_fasta} \
