@@ -211,11 +211,13 @@ task HaplotypeCaller_GATK4_VCF {
         set -euxo pipefail
 
         # We need to reserve some memory for use outside the JVM in order to execute native code, thus, limit
-        # Java's memory by the total memory minus 10% of total memory or 1 GB (whichever is greater).  
+        # Java's memory by the total memory minus 20% of total memory or 4 GB (whichever is greater).  
         # We need to compute the total memory as it might differ from
         # memory_size_gb because of Cromwell's retry with more memory feature.
         # Note: In the future this should be done using Cromwell's ${MEM_SIZE} and ${MEM_UNIT} environment variables,
         #       which do not rely on the output format of the `free` command.
+        # Also note: the min_off_heap_memory_mb is based off the memory given to the VM hosting this docker container and
+        #            is specific to this task.
 
         min_off_heap_memory_mb=4096
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
