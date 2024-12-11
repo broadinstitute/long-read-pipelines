@@ -5,22 +5,46 @@ import "../../structs/Structs.wdl"
 task BamToFq {
     input {
         File bam
+        File? bam_index
+        
+        File? reference_fasta
+        File? reference_fasta_index
+        File? reference_dict
+
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 4*ceil(size(bam, "GB"))
+    String ref_arg = if defined(reference_fasta) then " --reference " else ""
+
+    Int disk_size = 10 + 20*ceil(size(bam, "GB"))
 
     command <<<
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            np=$((np-1))
+        fi
+
         set -euxo pipefail
 
-        samtools sort -n ~{bam} | samtools bam2fq \
+        # Have samtools sort use all but one of our processors:
+        # NOTE: the `@` options is for ADDITIONAL threads, not the total number of threads.
+        samtools sort -@$((np-1)) -n ~{ref_arg} ~{reference_fasta} ~{bam} -O bam -o tmp.bam
+        
+        # Have samtools bam2fq use all but one of our processors:
+        # NOTE: the `@` options is for ADDITIONAL threads, not the total number of threads.
+        samtools bam2fq -@$((np-1)) \
             -n \
             -s /dev/null \
+            -c 2 \
+            ~{ref_arg} ~{reference_fasta} \
             -1 ~{prefix}.end1.fq.gz \
             -2 ~{prefix}.end2.fq.gz \
-            -0 ~{prefix}.unpaired.fq.gz
+            -0 ~{prefix}.unpaired.fq.gz \
+            tmp.bam
     >>>
 
     output {
@@ -31,8 +55,8 @@ task BamToFq {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             32,
+        cpu_cores:          8,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       25,
         preemptible_tries:  1,
