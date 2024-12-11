@@ -116,7 +116,12 @@ workflow SRJointCallGVCFsWithGenomicsDB {
     Map[String, String] ref_map = read_map(ref_map_file)
 
     # Resolve the db_snp_vcf file, with preference to the db_snp_vcf file if it exists:
-    File db_snp_vcf = select_first([ref_map["db_snp_vcf"], ref_map["known_sites_vcf"]])
+    call UTILS.ResolveMapKeysInPriorityOrder as ResolveMapKeysInPriorityOrder {
+        input:
+            map = ref_map,
+            keys = ["test_bad_key_should_not_be_found", "dbsnp_vcf", "known_sites_vcf"]
+    }
+    File db_snp_vcf = ref_map[ResolveMapKeysInPriorityOrder.key]
 
     # Create sample-name map:
     call SRJOINT.CreateSampleNameMap as CreateSampleNameMap {
