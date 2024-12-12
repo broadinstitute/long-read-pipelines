@@ -614,6 +614,18 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#resolvemapkeysinpriorityorder">ResolveMapKeysInPriorityOrder</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_35">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_34">Required</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_35">Outputs</a>
+    </li>
+        </ul>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../VariantUtils/">VariantUtils</a>
@@ -1505,6 +1517,21 @@
 <ul>
 <li><code>full_bed_file</code> (File)</li>
 <li><code>individual_bed_files</code> (Array[File])</li>
+</ul>
+<h2 id="resolvemapkeysinpriorityorder">ResolveMapKeysInPriorityOrder</h2>
+<dl>
+<dt>description</dt>
+<dd>Gets the first key in the map that exists.  If no keys exist, returns an empty string.</dd>
+</dl>
+<h3 id="inputs_35">Inputs</h3>
+<h4 id="required_34">Required</h4>
+<ul>
+<li><code>keys</code> (Array[String], <strong>required</strong>): Array[String] of keys to check in order of priority</li>
+<li><code>map</code> (Map[String,String], <strong>required</strong>): Map[String, String] to resolve.</li>
+</ul>
+<h3 id="outputs_35">Outputs</h3>
+<ul>
+<li><code>key</code> (String)</li>
 </ul>
               
             </div>
