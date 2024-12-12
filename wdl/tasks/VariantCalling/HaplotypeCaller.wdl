@@ -210,17 +210,31 @@ task HaplotypeCaller_GATK4_VCF {
     command <<<
         set -euxo pipefail
 
-        # We need at least 1 GB of available memory outside of the Java heap in order to execute native code, thus, limit
-        # Java's memory by the total memory minus 1 GB. We need to compute the total memory as it might differ from
+        # We need to reserve some memory for use outside the JVM in order to execute native code, thus, limit
+        # Java's memory by the total memory minus 20% of total memory or 4 GB (whichever is greater).  
+        # We need to compute the total memory as it might differ from
         # memory_size_gb because of Cromwell's retry with more memory feature.
         # Note: In the future this should be done using Cromwell's ${MEM_SIZE} and ${MEM_UNIT} environment variables,
         #       which do not rely on the output format of the `free` command.
+        # Also note: the min_off_heap_memory_mb is based off the memory given to the VM hosting this docker container and
+        #            is specific to this task.
 
+        min_off_heap_memory_mb=4096
         available_memory_mb=$(free -m | awk '/^Mem/ {print $2}')
-        let java_memory_size_mb=$((available_memory_mb-1024))
+
+        calculated_min_off_heap_memory_mb=$(echo "scale=0;${available_memory_mb} * 0.2" | bc | sed 's@\..*@@')
+        if [[ ${calculated_min_off_heap_memory_mb} -lt ${min_off_heap_memory_mb} ]] ; then
+            off_heap_memory_mb=${min_off_heap_memory_mb}
+        else
+            off_heap_memory_mb=${calculated_min_off_heap_memory_mb}
+        fi
+        
+        let java_memory_size_mb=$((available_memory_mb-off_heap_memory_mb))
+
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
-
+        echo Memory reserved for non-Java processes: ${off_heap_memory_mb} MB >&2
+        
         gatk --java-options "-Xmx${java_memory_size_mb}m -Xms${java_memory_size_mb}m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
             HaplotypeCaller \
                 -R ~{ref_fasta} \
