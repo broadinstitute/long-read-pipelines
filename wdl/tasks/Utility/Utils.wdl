@@ -2013,3 +2013,50 @@ task SplitContigToIntervals {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task ResolveMapKeysInPriorityOrder {
+    meta {
+        description: "Gets the first key in the map that exists.  If no keys exist, returns an empty string."
+    }
+
+    parameter_meta {
+        map: "Map[String, String] to resolve." 
+        keys: "Array[String] of keys to check in order of priority"
+    }
+
+    input {
+        Map[String, String] map
+        Array[String] keys
+    }
+
+    String out_file = "key.txt"
+
+    command <<<
+        touch ~{out_file}
+
+        f=~{write_map(map)}
+        awk '{print $1}' < ${f} > keys_in_map.txt
+        while read key ; do 
+            grep -q "^${key}$" keys_in_map.txt
+            if [[ $? -eq 0 ]] ; then
+                echo "${key}" > ~{out_file}
+                exit 0
+            fi
+        done < ~{write_lines(keys)}
+    >>>
+
+    output {
+        String key = read_string(out_file)
+    }
+
+    ###################
+    runtime {
+        cpu: 1
+        memory:  "512 MiB"
+        disks: "local-disk 50 HDD"
+        bootDiskSizeGb: 25
+        preemptible:     3
+        maxRetries:      2
+        docker:"gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
