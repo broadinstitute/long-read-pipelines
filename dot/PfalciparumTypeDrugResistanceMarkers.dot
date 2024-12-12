@@ -42,6 +42,6 @@ digraph {
 	"call-FinalizeAnnotatedVCFIndex" -> "decl-final_annotated_vcf_index"
 	"call-FunctionallyAnnotateVariants" -> "decl-final_snpeff_summary"
 	"call-FinalizeSnpEffSummary" -> "decl-final_snpeff_summary"
-	"call-FunctionallyAnnotateVariants" -> "decl-final_snpeff_genes"
 	"call-FinalizeSnpEffGenes" -> "decl-final_snpeff_genes"
+	"call-FunctionallyAnnotateVariants" -> "decl-final_snpeff_genes"
 }
