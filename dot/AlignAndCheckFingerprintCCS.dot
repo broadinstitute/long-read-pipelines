@@ -43,10 +43,10 @@ digraph {
 	"call-MergeAlignedReads" -> "decl-aBAI"
 	"decl-aBAM" -> "call-IndexAlignedReads"
 	"decl-aBAM" -> "call-CollectPacBioAlignedMetrics"
-	"decl-aBAI" -> "call-CollectPacBioAlignedMetrics"
 	"call-IndexAlignedReads" -> "call-CollectPacBioAlignedMetrics"
+	"decl-aBAI" -> "call-CollectPacBioAlignedMetrics"
 	"call-CollectPacBioAlignedMetrics" -> "call-saveAlnMetrics"
-	"decl-aBAM" -> "call-FPCheckAoU"
 	"decl-aBAI" -> "call-FPCheckAoU"
+	"decl-aBAM" -> "call-FPCheckAoU"
 	"call-FPCheckAoU" -> "call-saveFPRes"
 }
