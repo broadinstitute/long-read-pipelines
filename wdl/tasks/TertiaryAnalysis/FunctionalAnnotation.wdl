@@ -7,6 +7,8 @@ task FunctionallyAnnotateVariants {
         File vcf
         File snpeff_db
 
+        String snpeff_db_identifier
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -21,7 +23,7 @@ task FunctionallyAnnotateVariants {
         /snpEff/scripts/snpEff ann -v \
             -c $PWD/snpeff_db/snpEff.config \
             -dataDir $PWD/snpeff_db/data \
-            PlasmoDB-61_Pfalciparum3D7_Genome \
+            ~{snpeff_db_identifier} \
             ~{vcf} | bgzip > ~{prefix}.annotated.vcf.gz
 
         mv snpEff_summary.html ~{prefix}.snpEff_summary.html
