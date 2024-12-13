@@ -37,7 +37,8 @@ task VCF_INS_to_fa {
         set -euxo pipefail
 
         bcftools view -i 'INFO/SVLEN>=50 && INFO/SVTYPE=="INS"' ~{VCF} | bcftools view -e 'ALT ~ "<"' > ~{prefix}.INS.vcf
-        bcftools query -f '>%CHROM:%POS;%REF\n%ALT\n' ~{prefix}.INS.vcf > ~{prefix}_INS.tmp.fa
+        # the next line filters out "INS" calls in the integrated callset that are actually INV
+        bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' ~{prefix}.INS.vcf |awk 'length($3)==1 {print ">"$1":"$2";"$3"\n"$4}'> ~{prefix}_INS.tmp.fa
         
         #rename duplicate fasta IDs
         seqkit rename -N1 ~{prefix}_INS.tmp.fa > ~{prefix}_INS.fa
