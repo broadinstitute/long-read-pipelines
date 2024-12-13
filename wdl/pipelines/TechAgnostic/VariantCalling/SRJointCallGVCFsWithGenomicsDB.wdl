@@ -98,6 +98,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[String]? annotation_bed_file_annotation_names
 
         File? snpeff_db
+        String? snpeff_db_identifier
 
         File? interval_list
 
@@ -369,7 +370,8 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             call FUNK.FunctionallyAnnotateVariants as FunctionallyAnnotate {
                 input:
                     vcf = recalibrated_vcf,
-                    snpeff_db = select_first([snpeff_db])
+                    snpeff_db = select_first([snpeff_db]),
+                    snpeff_db_identifier = select_first([snpeff_db_identifier])
             }
         }
 
