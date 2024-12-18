@@ -527,17 +527,23 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         Array[String] final_snpEff_genes = if defined(gcs_out_root_dir) then [select_first([FinalizeSnpEffGenes.gcs_dir])] else select_all(FunctionallyAnnotate.snpEff_genes)
     }
 
+    # Resolve the final joint Zarr file if we have created one:
+    if (do_zarr_conversion) {
+        File final_joint_zarr = select_first([FinalizeZarr.gcs_path, ConvertToZarr.zarr])
+    }
+
     output {
         File joint_vcf_out     = select_first([FinalizeVETSVCF.gcs_path, GatherRescoredVcfs.output_vcf])
         File joint_vcf_out_tbi = select_first([FinalizeVETSTBI.gcs_path, GatherRescoredVcfs.output_vcf_index])
 
         File joint_mt = select_first([FinalizeHailMatrixTable.gcs_path, CreateHailMatrixTable.mt_tar])
-        File joint_zarr = select_first([FinalizeZarr.gcs_path, ConvertToZarr.zarr])
 
         Array[String] genomicsDB = select_first([final_genomicsdb_location, ImportGVCFsIntoGenomicsDB.output_genomicsdb])
 
+        File? joint_zarr = final_joint_zarr
         Array[String]? snpEff_summary = final_snpeff_summary
         Array[String]? snpEff_genes = final_snpEff_genes
+
     }
 }
 
