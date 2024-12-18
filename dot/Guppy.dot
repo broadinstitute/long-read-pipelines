@@ -30,8 +30,8 @@ digraph {
 	"call-Basecall" -> "call-MakeFinalSummary"
 	"call-TimestampStopped" -> "call-MakeFinalSummary"
 	"call-Basecall" -> "call-UniqueBarcodes"
-	"call-MakeSequencingSummary" -> "call-FinalizeBasecalls"
-	"call-MakeFinalSummary" -> "call-FinalizeBasecalls"
 	"call-UniqueBarcodes" -> "call-FinalizeBasecalls"
+	"call-MakeFinalSummary" -> "call-FinalizeBasecalls"
 	"call-Basecall" -> "call-FinalizeBasecalls"
+	"call-MakeSequencingSummary" -> "call-FinalizeBasecalls"
 }
