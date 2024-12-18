@@ -103,6 +103,7 @@ workflow SRJointCallGVCFsWithGenomicsDB {
         File? interval_list
 
         Boolean use_gnarly_genotyper = false
+        Boolean do_zarr_conversion = false
 
         Int shard_max_interval_size_bp = 999999999
 
@@ -387,12 +388,14 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             prefix = prefix + ".rescored.combined"
     }
 
-    # Convert to Zarr
-    call SGKit.ConvertToZarrStore as ConvertToZarr {
-        input:
-            vcf = GatherRescoredVcfs.output_vcf,
-            tbi = GatherRescoredVcfs.output_vcf_index,
-            prefix = prefix
+    if (do_zarr_conversion) {
+        # Convert to Zarr
+        call SGKit.ConvertToZarrStore as ConvertToZarr {
+            input:
+                vcf = GatherRescoredVcfs.output_vcf,
+                tbi = GatherRescoredVcfs.output_vcf_index,
+                prefix = prefix
+        }
     }
 
     # Convert the output to a HAIL Matrix Table:
@@ -500,7 +503,9 @@ workflow SRJointCallGVCFsWithGenomicsDB {
             }
         }
 
-        call FF.FinalizeToFile as FinalizeZarr { input: outdir = outdir, keyfile = keyfile, file = ConvertToZarr.zarr }
+        if (do_zarr_conversion) {
+            call FF.FinalizeToFile as FinalizeZarr { input: outdir = outdir, keyfile = keyfile, file = select_first([ConvertToZarr.zarr]) }
+        }
 
         call FF.FinalizeToFile as FinalizeHailMatrixTable {
             input:
