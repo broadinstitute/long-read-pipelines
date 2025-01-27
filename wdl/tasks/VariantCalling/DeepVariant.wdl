@@ -127,3 +127,111 @@ task DV {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+
+task DeepTrio {
+
+    input {
+        File parent1_bam
+        File parent1_bai
+        String parent1_sample_id
+
+        File parent2_bam
+        File parent2_bai
+        String parent2_sample_id
+
+        File proband_bam
+        File proband_bai
+        String proband_sample_id
+
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_fasta_dict
+
+        String model_type = "WGS"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String output_root = "/cromwell_root/dv_output"
+
+    # Calculate a bunch of space:
+	Int disk_size = 10 + ceil(1.5 * ceil(size(parent1_bam, "GB")) + ceil(size(parent2_bam, "GB")) + ceil(size(proband_bam, "GB")) + ceil(size(ref_fasta, "GB")))
+
+    command <<<
+        set -euxo pipefail
+
+        num_core=$(awk '/^processor/{print $3}' /proc/cpuinfo | wc -l)
+
+        mkdir -p "~{output_root}/logging"
+
+        /opt/deepvariant/bin/deeptrio/run_deeptrio \
+            --model_type=~{model_type} \
+            --num_shards "${num_core}"  \
+            --logging_dir ~{output_root}/logging \
+            --intermediate_results_dir ~{output_root}/intermediate_results_dir \
+            \
+            --ref=~{ref_fasta} \
+            \
+            --reads_child=~{proband_bam} \
+            --reads_parent1=~{parent1_bam} \
+            --reads_parent2=~{parent2_bam} \
+            \
+            --sample_name_child "~{proband_sample_id}" \
+            --output_vcf_child ~{output_root}/~{proband_sample_id}.output.vcf.gz \
+            --output_gvcf_child ~{output_root}/~{proband_sample_id}.g.vcf.gz \
+            \
+            --sample_name_parent1 "~{parent1_sample_id}" \
+            --output_vcf_parent1 ~{output_root}/~{parent1_sample_id}.output.vcf.gz \
+            --output_gvcf_parent1 ~{output_root}/~{parent1_sample_id}.g.vcf.gz \
+            \
+            --sample_name_parent2 "~{parent2_sample_id}" \
+            --output_vcf_parent2 ~{output_root}/~{parent2_sample_id}.output.vcf.gz \
+            --output_gvcf_parent2 ~{output_root}/~{parent2_sample_id}.g.vcf.gz \
+            \
+            --dry_run=false \
+
+        cd ~{output_root}
+        tar -zcf logging.tar.gz logging
+    >>>
+
+    output {
+        File parent1_vcf        = "~{output_root}/~{parent1_sample_id}.output.vcf.gz"
+        File parent1_vcf_index  = "~{output_root}/~{parent1_sample_id}.output.vcf.gz.tbi"
+        File parent1_gvcf       = "~{output_root}/~{parent1_sample_id}.output.g.vcf.gz"
+        File parent1_gvcf_index = "~{output_root}/~{parent1_sample_id}.output.g.vcf.gz.tbi"
+
+        File parent2_vcf        = "~{output_root}/~{parent2_sample_id}.output.vcf.gz"
+        File parent2_vcf_index  = "~{output_root}/~{parent2_sample_id}.output.vcf.gz.tbi"
+        File parent2_gvcf       = "~{output_root}/~{parent2_sample_id}.output.g.vcf.gz"
+        File parent2_gvcf_index = "~{output_root}/~{parent2_sample_id}.output.g.vcf.gz.tbi"
+
+        File proband_vcf        = "~{output_root}/~{proband_sample_id}.output.vcf.gz"
+        File proband_vcf_index  = "~{output_root}/~{proband_sample_id}.output.vcf.gz.tbi"
+        File proband_gvcf       = "~{output_root}/~{proband_sample_id}.output.g.vcf.gz"
+        File proband_gvcf_index = "~{output_root}/~{proband_sample_id}.output.g.vcf.gz.tbi"
+
+        File logs = "~{output_root}/logging.tar.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          8,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "google/deepvariant:deeptrio-1.8.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
