@@ -30,6 +30,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt install libbz2-dev
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         $CONDA/bin/conda install -y -c bioconda womtool 
