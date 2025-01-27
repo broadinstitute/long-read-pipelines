@@ -29,18 +29,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install system dependencies
-      uses: actions/apt@v2
-      with:
-        packages: libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev
-
-    - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        auto-update-conda: true
-        python-version: ${{ matrix.python-version }}
-        channels: conda-forge, bioconda
-        activate-environment: myenv
-        environment-file: environment.yml
+      run: |
+        sudo apt install libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev
 
     - name: Cache pip
       uses: actions/cache@v3
