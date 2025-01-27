@@ -35,6 +35,8 @@ workflow SRFlowcell {
 
         perform_BQSR: "If true, will perform Base Quality Score Recalibration.  If false will not recalibrate base qualities."
 
+        perform_mark_duplicates: "If true, will run MarkDuplicates on the raw reads from the sequencer."
+
         DEBUG_MODE: "If true, will add extra logging and extra debugging outputs."
 
         platform: "Platform on which the sample for the given bam file was sequenced."
@@ -61,6 +63,8 @@ workflow SRFlowcell {
         File? coverage_bed_file
 
         Boolean perform_BQSR = true
+
+        Boolean perform_mark_duplicates = true
 
         Boolean DEBUG_MODE = false
 
@@ -162,18 +166,21 @@ workflow SRFlowcell {
 
     File merged_bam = select_first([t_007_MergeBamAlignment.bam, t_006_AlignReads.bam])
 
-    # Mark Duplicates
-    call SRUTIL.MarkDuplicates as t_008_MarkDuplicates {
-        input:
-            input_bam = merged_bam,
-            prefix = SM + ".aligned.merged.markDuplicates"
+    if (perform_mark_duplicates) {
+        # Mark Duplicates
+        call SRUTIL.MarkDuplicates as t_008_MarkDuplicates {
+            input:
+                input_bam = merged_bam,
+                prefix = SM + ".aligned.merged.markDuplicates"
+        }
     }
+    File pre_bqsr_bam = select_first([t_008_MarkDuplicates.bam, merged_bam])
 
     # Sort Duplicate Marked Bam:
-    call Utils.SortSam as t_009_SortAlignedDuplicateMarkedBam {
+    call Utils.SortSam as t_009_SortBam {
         input:
-            input_bam = t_008_MarkDuplicates.bam,
-            prefix = SM + ".aligned.merged.markDuplicates.sorted"
+            input_bam = pre_bqsr_bam,
+            prefix = basename(pre_bqsr_bam, ".bam") + ".sorted"
     }
 
 #    TODO: Add Fingerprinting?
@@ -182,8 +189,8 @@ workflow SRFlowcell {
         # Recalibrate Base Scores:
         call SRUTIL.BaseRecalibrator as t_010_BaseRecalibrator {
             input:
-                input_bam = t_009_SortAlignedDuplicateMarkedBam.output_bam,
-                input_bam_index = t_009_SortAlignedDuplicateMarkedBam.output_bam_index,
+                input_bam = t_009_SortBam.output_bam,
+                input_bam_index = t_009_SortBam.output_bam_index,
 
                 ref_fasta = ref_map["fasta"],
                 ref_fasta_index = ref_map["fai"],
@@ -197,8 +204,8 @@ workflow SRFlowcell {
 
         call SRUTIL.ApplyBQSR as t_011_ApplyBQSR {
             input:
-                input_bam = t_009_SortAlignedDuplicateMarkedBam.output_bam,
-                input_bam_index = t_009_SortAlignedDuplicateMarkedBam.output_bam,
+                input_bam = t_009_SortBam.output_bam,
+                input_bam_index = t_009_SortBam.output_bam,
 
                 ref_fasta = ref_map["fasta"],
                 ref_fasta_index = ref_map["fai"],
@@ -210,8 +217,8 @@ workflow SRFlowcell {
         }
     }
 
-    File final_bam = select_first([t_011_ApplyBQSR.recalibrated_bam, t_009_SortAlignedDuplicateMarkedBam.output_bam])
-    File final_bai = select_first([t_011_ApplyBQSR.recalibrated_bai, t_009_SortAlignedDuplicateMarkedBam.output_bam_index])
+    File final_bam = select_first([t_011_ApplyBQSR.recalibrated_bam, t_009_SortBam.output_bam])
+    File final_bai = select_first([t_011_ApplyBQSR.recalibrated_bai, t_009_SortBam.output_bam_index])
 
     #############################################
     #      __  __      _        _
@@ -336,9 +343,9 @@ workflow SRFlowcell {
                 [
                     t_006_AlignReads.bam,
                     merged_bam,
-                    t_008_MarkDuplicates.bam,
-                    t_009_SortAlignedDuplicateMarkedBam.output_bam,
-                    t_009_SortAlignedDuplicateMarkedBam.output_bam_index,
+                    pre_bqsr_bam,
+                    t_009_SortBam.output_bam,
+                    t_009_SortBam.output_bam_index,
                 ],
                 keyfile = keyfile
         }
@@ -363,7 +370,6 @@ workflow SRFlowcell {
                 outdir = metrics_dir,
                 files =
                 [
-                    t_008_MarkDuplicates.metrics,
                     t_012_SamStats.sam_stats,
                     t_015_ComputeBamStats.results_file,
                     t_016_ComputeBamStatsQ5.results_file,
@@ -376,8 +382,18 @@ workflow SRFlowcell {
         }
 
         # Finalize BQSR Metrics if it was run:
+        if (perform_mark_duplicates) {
+            call FF.FinalizeToDir as t_028_FinalizeMarkDuplicatesMetrics {
+                input:
+                    outdir = metrics_dir,
+                    files = select_all([t_008_MarkDuplicates.metrics]),
+                    keyfile = keyfile
+            }
+        }
+
+        # Finalize BQSR Metrics if it was run:
         if (perform_BQSR) {
-            call FF.FinalizeToDir as t_028_FinalizeBQSRMetrics {
+            call FF.FinalizeToDir as t_029_FinalizeBQSRMetrics {
                 input:
                     outdir = metrics_dir,
                     files = select_all([t_010_BaseRecalibrator.recalibration_report]),
@@ -385,7 +401,7 @@ workflow SRFlowcell {
             }
         }
 
-        call FF.FinalizeToFile as t_029_FinalizeFastQCReport {
+        call FF.FinalizeToFile as t_030_FinalizeFastQCReport {
             input:
                 outdir = metrics_dir,
                 file = t_013_FastQC.report
@@ -400,14 +416,14 @@ workflow SRFlowcell {
             File fqboup = unaligned_reads_dir + "/" + basename(select_first([t_005_DecontaminateSample.decontaminated_unpaired, t_003_Bam2Fastq.fq_unpaired]))
         }
 
-        call FF.FinalizeToFile as t_030_FinalizeCallableLociSummary {
+        call FF.FinalizeToFile as t_031_FinalizeCallableLociSummary {
             input:
                 outdir = metrics_dir,
                 file = t_022_CallableLoci.callable_loci_summary,
                 keyfile = keyfile
         }
 
-        call FF.FinalizeToFile as t_031_FinalizeCallableLociBed {
+        call FF.FinalizeToFile as t_032_FinalizeCallableLociBed {
             input:
                 outdir = metrics_dir,
                 file = t_022_CallableLoci.callable_loci_bed,
@@ -481,10 +497,10 @@ workflow SRFlowcell {
 
         Float average_identity = average_identity_value
 
-        File fastqc_report = select_first([t_029_FinalizeFastQCReport.gcs_path, t_013_FastQC.report])
+        File fastqc_report = select_first([t_030_FinalizeFastQCReport.gcs_path, t_013_FastQC.report])
 
-        File callable_loci_summary = select_first([t_030_FinalizeCallableLociSummary.gcs_path, t_022_CallableLoci.callable_loci_summary])
-        File callable_loci_bed = select_first([t_031_FinalizeCallableLociBed.gcs_path, t_022_CallableLoci.callable_loci_bed])
+        File callable_loci_summary = select_first([t_031_FinalizeCallableLociSummary.gcs_path, t_022_CallableLoci.callable_loci_summary])
+        File callable_loci_bed = select_first([t_032_FinalizeCallableLociBed.gcs_path, t_022_CallableLoci.callable_loci_bed])
 
         String? qc_status = t_024_AssessQualityMetrics.qc_status
         String? qc_message = t_024_AssessQualityMetrics.qc_message
