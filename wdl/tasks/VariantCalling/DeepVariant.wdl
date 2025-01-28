@@ -156,7 +156,7 @@ task DeepTrio {
     String output_root = "/cromwell_root/dv_output"
 
     # Calculate a bunch of space:
-	Int disk_size = 10 + ceil(1.5 * ceil(size(parent1_bam, "GB")) + ceil(size(parent2_bam, "GB")) + ceil(size(proband_bam, "GB")) + ceil(size(ref_fasta, "GB")))
+	Int disk_size = 10 + (5 * ceil(ceil(size(parent1_bam, "GB")) + ceil(size(parent2_bam, "GB")) + ceil(size(proband_bam, "GB")) + ceil(size(ref_fasta, "GB"))))
 
     command <<<
         set -euxo pipefail
