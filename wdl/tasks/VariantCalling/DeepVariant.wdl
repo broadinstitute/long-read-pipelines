@@ -178,15 +178,15 @@ task DeepTrio {
             --reads_parent2=~{parent2_bam} \
             \
             --sample_name_child "~{proband_sample_id}" \
-            --output_vcf_child ~{output_root}/~{proband_sample_id}.output.vcf.gz \
+            --output_vcf_child ~{output_root}/~{proband_sample_id}.vcf.gz \
             --output_gvcf_child ~{output_root}/~{proband_sample_id}.g.vcf.gz \
             \
             --sample_name_parent1 "~{parent1_sample_id}" \
-            --output_vcf_parent1 ~{output_root}/~{parent1_sample_id}.output.vcf.gz \
+            --output_vcf_parent1 ~{output_root}/~{parent1_sample_id}.vcf.gz \
             --output_gvcf_parent1 ~{output_root}/~{parent1_sample_id}.g.vcf.gz \
             \
             --sample_name_parent2 "~{parent2_sample_id}" \
-            --output_vcf_parent2 ~{output_root}/~{parent2_sample_id}.output.vcf.gz \
+            --output_vcf_parent2 ~{output_root}/~{parent2_sample_id}.vcf.gz \
             --output_gvcf_parent2 ~{output_root}/~{parent2_sample_id}.g.vcf.gz \
             \
             --dry_run=false \
@@ -196,20 +196,20 @@ task DeepTrio {
     >>>
 
     output {
-        File parent1_vcf        = "~{output_root}/~{parent1_sample_id}.output.vcf.gz"
-        File parent1_vcf_index  = "~{output_root}/~{parent1_sample_id}.output.vcf.gz.tbi"
-        File parent1_gvcf       = "~{output_root}/~{parent1_sample_id}.output.g.vcf.gz"
-        File parent1_gvcf_index = "~{output_root}/~{parent1_sample_id}.output.g.vcf.gz.tbi"
+        File parent1_vcf        = "~{output_root}/~{parent1_sample_id}.vcf.gz"
+        File parent1_vcf_index  = "~{output_root}/~{parent1_sample_id}.vcf.gz.tbi"
+        File parent1_gvcf       = "~{output_root}/~{parent1_sample_id}.g.vcf.gz"
+        File parent1_gvcf_index = "~{output_root}/~{parent1_sample_id}.g.vcf.gz.tbi"
 
-        File parent2_vcf        = "~{output_root}/~{parent2_sample_id}.output.vcf.gz"
-        File parent2_vcf_index  = "~{output_root}/~{parent2_sample_id}.output.vcf.gz.tbi"
-        File parent2_gvcf       = "~{output_root}/~{parent2_sample_id}.output.g.vcf.gz"
-        File parent2_gvcf_index = "~{output_root}/~{parent2_sample_id}.output.g.vcf.gz.tbi"
+        File parent2_vcf        = "~{output_root}/~{parent2_sample_id}.vcf.gz"
+        File parent2_vcf_index  = "~{output_root}/~{parent2_sample_id}.vcf.gz.tbi"
+        File parent2_gvcf       = "~{output_root}/~{parent2_sample_id}.g.vcf.gz"
+        File parent2_gvcf_index = "~{output_root}/~{parent2_sample_id}.g.vcf.gz.tbi"
 
-        File proband_vcf        = "~{output_root}/~{proband_sample_id}.output.vcf.gz"
-        File proband_vcf_index  = "~{output_root}/~{proband_sample_id}.output.vcf.gz.tbi"
-        File proband_gvcf       = "~{output_root}/~{proband_sample_id}.output.g.vcf.gz"
-        File proband_gvcf_index = "~{output_root}/~{proband_sample_id}.output.g.vcf.gz.tbi"
+        File proband_vcf        = "~{output_root}/~{proband_sample_id}.vcf.gz"
+        File proband_vcf_index  = "~{output_root}/~{proband_sample_id}.vcf.gz.tbi"
+        File proband_gvcf       = "~{output_root}/~{proband_sample_id}.g.vcf.gz"
+        File proband_gvcf_index = "~{output_root}/~{proband_sample_id}.g.vcf.gz.tbi"
 
         File logs = "~{output_root}/logging.tar.gz"
     }
