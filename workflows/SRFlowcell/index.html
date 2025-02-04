@@ -361,7 +361,7 @@
 <li><code>t_008_MarkDuplicates.read_name_regex</code> (String?)</li>
 <li><code>t_008_MarkDuplicates.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_008_MarkDuplicates.sorting_collection_size_ratio</code> (Float?)</li>
-<li><code>t_009_SortAlignedDuplicateMarkedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_009_SortBam.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_010_BaseRecalibrator.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_011_ApplyBQSR.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_012_SamStats.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -385,14 +385,15 @@
 <li><code>t_026_FinalizeAlignedBai.name</code> (String?)</li>
 <li><code>t_026_FinalizeAlignedBai.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_027_FinalizeMetrics.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_028_FinalizeBQSRMetrics.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_029_FinalizeFastQCReport.keyfile</code> (File?)</li>
-<li><code>t_029_FinalizeFastQCReport.name</code> (String?)</li>
-<li><code>t_029_FinalizeFastQCReport.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_030_FinalizeCallableLociSummary.name</code> (String?)</li>
-<li><code>t_030_FinalizeCallableLociSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_031_FinalizeCallableLociBed.name</code> (String?)</li>
-<li><code>t_031_FinalizeCallableLociBed.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_028_FinalizeMarkDuplicatesMetrics.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_029_FinalizeBQSRMetrics.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_030_FinalizeFastQCReport.keyfile</code> (File?)</li>
+<li><code>t_030_FinalizeFastQCReport.name</code> (String?)</li>
+<li><code>t_030_FinalizeFastQCReport.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_031_FinalizeCallableLociSummary.name</code> (String?)</li>
+<li><code>t_031_FinalizeCallableLociSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_032_FinalizeCallableLociBed.name</code> (String?)</li>
+<li><code>t_032_FinalizeCallableLociBed.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_004_RevertSam.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>t_005_DecontaminateSample.t_005_Bam2Fastq.bam_index</code> (File?)</li>
 <li><code>t_005_DecontaminateSample.t_005_Bam2Fastq.reference_dict</code> (File?)</li>
@@ -451,6 +452,7 @@
 <ul>
 <li><code>DEBUG_MODE</code> (Boolean, default=false): If true, will add extra logging and extra debugging outputs.</li>
 <li><code>perform_BQSR</code> (Boolean, default=true): If true, will perform Base Quality Score Recalibration.  If false will not recalibrate base qualities.</li>
+<li><code>perform_mark_duplicates</code> (Boolean, default=true): If true, will run MarkDuplicates on the raw reads from the sequencer.</li>
 <li><code>platform</code> (String, default="illumina"): Platform on which the sample for the given bam file was sequenced.</li>
 <li><code>t_001_WdlExecutionStartTimestamp.date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
 <li><code>t_005_DecontaminateSample.DEBUG_MODE</code> (Boolean, default=false): If true, will add extra logging and extra debugging outputs.</li>

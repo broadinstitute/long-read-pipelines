@@ -121,34 +121,34 @@ digraph {
 	"call-CreateIntervalList" -> "call-ConfidenceConvertIntervals"
 	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsEval"
 	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsTruth"
-	"call-CheckForVariantsTruth" -> "if-L248C9" [lhead="cluster-if-L248C9"]
 	"call-CheckForVariantsEval" -> "if-L248C9" [lhead="cluster-if-L248C9"]
-	"call-ConfidenceConvertIntervals" -> "call-StandardVcfEval"
+	"call-CheckForVariantsTruth" -> "if-L248C9" [lhead="cluster-if-L248C9"]
 	"decl-outputPrefix" -> "call-StandardVcfEval"
+	"call-ConfidenceConvertIntervals" -> "call-StandardVcfEval"
 	"decl-outputPrefix" -> "call-VcfEvalWriteXMLfile"
-	"call-ConfidenceConvertIntervals" -> "call-VcfEvalWriteXMLfile"
 	"call-StandardVcfEval" -> "call-VcfEvalWriteXMLfile"
+	"call-ConfidenceConvertIntervals" -> "call-VcfEvalWriteXMLfile"
 	"call-StandardVcfEval" -> "call-CountUNKVcfEval"
-	"call-CheckForVariantsTruth" -> "decl-areVariants"
 	"call-CheckForVariantsEval" -> "decl-areVariants"
+	"call-CheckForVariantsTruth" -> "decl-areVariants"
 	"call-VcfEvalWriteXMLfile" -> "call-SummariseVcfEval"
-	"call-StandardVcfEval" -> "call-SummariseVcfEval"
 	"call-CountUNKVcfEval" -> "call-SummariseVcfEval"
 	"decl-areVariants" -> "call-SummariseVcfEval"
-	"call-ConfidenceConvertIntervals" -> "decl-annotatedVcfsList"
+	"call-StandardVcfEval" -> "call-SummariseVcfEval"
 	"call-StandardVcfEval" -> "decl-annotatedVcfsList"
+	"call-ConfidenceConvertIntervals" -> "decl-annotatedVcfsList"
 	"decl-outputPrefix" -> "decl-annotatedVcfsList"
 	"decl-annotatedVcfsList" -> "scatter-L315C5-indelCombo" [lhead="cluster-scatter-L315C5-indelCombo"]
 	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalIndelWriteXMLfile"
-	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalSummariseForIndelSelection"
 	"call-VcfEvalIndelWriteXMLfile" -> "call-VcfEvalSummariseForIndelSelection"
+	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalSummariseForIndelSelection"
 	"decl-actualVariantSelectors" -> "scatter-L383C5-selectorCombo" [lhead="cluster-scatter-L383C5-selectorCombo"]
 	"decl-annotatedVcfsList" -> "scatter-L383C5-selectorCombo" [lhead="cluster-scatter-L383C5-selectorCombo"]
 	"call-EvalSelectorVcfEval" -> "call-VcfEvalSelectorWriteXMLfile"
-	"call-VcfEvalSelectorWriteXMLfile" -> "call-VcfEvalSummariseForVariantSelection"
 	"call-EvalSelectorVcfEval" -> "call-VcfEvalSummariseForVariantSelection"
+	"call-VcfEvalSelectorWriteXMLfile" -> "call-VcfEvalSummariseForVariantSelection"
 	"call-VcfEvalSummariseForVariantSelection" -> "decl-summaries"
-	"call-SummariseVcfEval" -> "decl-summaries"
 	"call-VcfEvalSummariseForIndelSelection" -> "decl-summaries"
+	"call-SummariseVcfEval" -> "decl-summaries"
 	"decl-summaries" -> "call-CombineSummaries"
 }
