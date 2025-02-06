@@ -69,7 +69,7 @@ task DownloadFiles {
         RET=0
 
         awk 'NR % ~{num_jobs} == ~{nth} { print $0 }' ~{manifest} | while read line; do
-            name=$(echo $line | xargs -n 1 basename)
+            name=$(echo $line | xargs -n 1 basename | sed 's/\?.*$//')
             dir=$(echo $line | perl -pe 's|(^.*://.*?/)||' | xargs -n 1 dirname)
             gcsdir="~{gcs_out_root_dir}~{true="/$dir" false="" prepend_dir_name}"
 
