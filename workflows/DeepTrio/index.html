@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>ProcessMalariaBarcodesDemo - Broad Institute Long Read Pipelines</title>
+    <title>DeepTrio - Broad Institute Long Read Pipelines</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "ProcessMalariaBarcodesDemo";
-        var mkdocs_page_input_path = "workflows/ProcessMalariaBarcodesDemo.md";
+        var mkdocs_page_name = "DeepTrio";
+        var mkdocs_page_input_path = "workflows/DeepTrio.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -163,7 +163,27 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ConvertToZarrStore/">ConvertToZarrStore</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../DeepTrio/">DeepTrio</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">DeepTrio</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#deeptrio_1">DeepTrio</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../DeepVariant/">DeepVariant</a>
                   </li>
@@ -243,33 +263,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../PfalciparumTypeDrugResistanceMarkers/">PfalciparumTypeDrugResistanceMarkers</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">ProcessMalariaBarcodesDemo</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#_1"></a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#_2"></a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#_3"></a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#processmalariabarcodesdemo_1">ProcessMalariaBarcodesDemo</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
-    </li>
-        </ul>
-    </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ProcessMalariaBarcodesDemo/">ProcessMalariaBarcodesDemo</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../RemoveSingleOrganismContamination/">RemoveSingleOrganismContamination</a>
                   </li>
@@ -319,9 +313,9 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
           <li>Workflows &raquo;</li>
-      <li>ProcessMalariaBarcodesDemo</li>
+      <li>DeepTrio</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/ProcessMalariaBarcodesDemo.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/DeepTrio.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -329,86 +323,56 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="processmalariabarcodesdemo">ProcessMalariaBarcodesDemo</h1>
-<h6 id="_1"></h6>
-<h6 id="_2"></h6>
-<h6 id="_3"></h6>
-<h2 id="processmalariabarcodesdemo_1">ProcessMalariaBarcodesDemo</h2>
-<dl>
-<dt>author</dt>
-<dd>Jonn Smith</dd>
-<dt>description</dt>
-<dd>A workflow that processes P. falciparum SNP panels (read: barcodes) and calculates several metrics that are relevant to studying the epidemiology of the disease.  This WDL calls a script written by Wes Wong and based on the following paper: https://doi.org/10.1093/pnasnexus/pgac187</dd>
-</dl>
+                <h1 id="deeptrio">DeepTrio</h1>
+<h2 id="deeptrio_1">DeepTrio</h2>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>A1</code> (Array[String], <strong>required</strong>): Nucleotide at the A1 barcode position.</li>
-<li><code>A10</code> (Array[String], <strong>required</strong>): Nucleotide at the A10 barcode position.</li>
-<li><code>A11</code> (Array[String], <strong>required</strong>): Nucleotide at the A11 barcode position.</li>
-<li><code>A12</code> (Array[String], <strong>required</strong>): Nucleotide at the A12 barcode position.</li>
-<li><code>A2</code> (Array[String], <strong>required</strong>): Nucleotide at the A2 barcode position.</li>
-<li><code>A3</code> (Array[String], <strong>required</strong>): Nucleotide at the A3 barcode position.</li>
-<li><code>A4</code> (Array[String], <strong>required</strong>): Nucleotide at the A4 barcode position.</li>
-<li><code>A5</code> (Array[String], <strong>required</strong>): Nucleotide at the A5 barcode position.</li>
-<li><code>A6</code> (Array[String], <strong>required</strong>): Nucleotide at the A6 barcode position.</li>
-<li><code>A7</code> (Array[String], <strong>required</strong>): Nucleotide at the A7 barcode position.</li>
-<li><code>A8</code> (Array[String], <strong>required</strong>): Nucleotide at the A8 barcode position.</li>
-<li><code>A9</code> (Array[String], <strong>required</strong>): Nucleotide at the A9 barcode position.</li>
-<li><code>Adjusted_Het</code> (Array[String], <strong>required</strong>)</li>
-<li><code>B1</code> (Array[String], <strong>required</strong>): Nucleotide at the B1 barcode position.</li>
-<li><code>B10</code> (Array[String], <strong>required</strong>): Nucleotide at the B10 barcode position.</li>
-<li><code>B11</code> (Array[String], <strong>required</strong>): Nucleotide at the B11 barcode position.</li>
-<li><code>B12</code> (Array[String], <strong>required</strong>): Nucleotide at the B12 barcode position.</li>
-<li><code>B2</code> (Array[String], <strong>required</strong>): Nucleotide at the B2 barcode position.</li>
-<li><code>B3</code> (Array[String], <strong>required</strong>): Nucleotide at the B3 barcode position.</li>
-<li><code>B4</code> (Array[String], <strong>required</strong>): Nucleotide at the B4 barcode position.</li>
-<li><code>B5</code> (Array[String], <strong>required</strong>): Nucleotide at the B5 barcode position.</li>
-<li><code>B6</code> (Array[String], <strong>required</strong>): Nucleotide at the B6 barcode position.</li>
-<li><code>B7</code> (Array[String], <strong>required</strong>): Nucleotide at the B7 barcode position.</li>
-<li><code>B8</code> (Array[String], <strong>required</strong>): Nucleotide at the B8 barcode position.</li>
-<li><code>B9</code> (Array[String], <strong>required</strong>): Nucleotide at the B9 barcode position.</li>
-<li><code>Barcode_String</code> (Array[String], <strong>required</strong>): Nucleotide sequence of all barcode SNPs in genomic order.</li>
-<li><code>Delta_CT_Threshold</code> (Array[String], <strong>required</strong>)</li>
-<li><code>ISO3</code> (Array[String], <strong>required</strong>): ISO3 formatted location code.</li>
-<li><code>M_P</code> (Array[String], <strong>required</strong>): Mono- / Poly-clonal indicator.</li>
-<li><code>N</code> (Array[String], <strong>required</strong>)</li>
-<li><code>Number_Text</code> (Array[String], <strong>required</strong>)</li>
-<li><code>Raw_Name</code> (Array[String], <strong>required</strong>)</li>
-<li><code>Sample_Name</code> (Array[String], <strong>required</strong>)</li>
-<li><code>X</code> (Array[String], <strong>required</strong>)</li>
-<li><code>Year</code> (Array[String], <strong>required</strong>): Year this dataset was collected.</li>
-<li><code>barcode_def_tsv</code> (File, <strong>required</strong>): TSV file containing the definition of the SNP barcode sites with the columns: Name, Contig, Position</li>
-<li><code>cc</code> (Array[String], <strong>required</strong>): Country Code</li>
-<li><code>location_code</code> (String, <strong>required</strong>): Location code of the sample.  Should correspond to the ISO3 value.</li>
-<li><code>mccoil_median</code> (Array[String], <strong>required</strong>)</li>
+<li><code>parent1_bai</code> (File, <strong>required</strong>)</li>
+<li><code>parent1_bam</code> (File, <strong>required</strong>)</li>
+<li><code>parent1_sample_id</code> (String, <strong>required</strong>)</li>
+<li><code>parent2_bai</code> (File, <strong>required</strong>)</li>
+<li><code>parent2_bam</code> (File, <strong>required</strong>)</li>
+<li><code>parent2_sample_id</code> (String, <strong>required</strong>)</li>
+<li><code>proband_bai</code> (File, <strong>required</strong>)</li>
+<li><code>proband_bam</code> (File, <strong>required</strong>)</li>
+<li><code>proband_sample_id</code> (String, <strong>required</strong>)</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta_dict</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta_fai</code> (File, <strong>required</strong>)</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>t_002_ProcessBarcodeSpreadsheet.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>t_001_DeepTrio.runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>DEBUG_MODE</code> (Boolean, default=false)</li>
-<li><code>t_001_WdlExecutionStartTimestamp.date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
+<li><code>model_type</code> (String, default="WGS")</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>summary_figure_svg</code> (File)</li>
-<li><code>summary_figure_png</code> (File)</li>
-<li><code>summary_stats</code> (File)</li>
-<li><code>mono_barcode_stats</code> (File)</li>
-<li><code>poly_barcode_stats</code> (File)</li>
-<li><code>input_tsv</code> (File)</li>
+<li><code>parent1_vcf</code> (File)</li>
+<li><code>parent1_vcf_index</code> (File)</li>
+<li><code>parent1_gvcf</code> (File)</li>
+<li><code>parent1_gvcf_index</code> (File)</li>
+<li><code>parent2_vcf</code> (File)</li>
+<li><code>parent2_vcf_index</code> (File)</li>
+<li><code>parent2_gvcf</code> (File)</li>
+<li><code>parent2_gvcf_index</code> (File)</li>
+<li><code>proband_vcf</code> (File)</li>
+<li><code>proband_vcf_index</code> (File)</li>
+<li><code>proband_gvcf</code> (File)</li>
+<li><code>proband_gvcf_index</code> (File)</li>
+<li><code>logs</code> (File)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
-<p><img alt="ProcessMalariaBarcodesDemo" src="../../dot/ProcessMalariaBarcodesDemo.dot.png" /></p>
+<p><img alt="DeepTrio" src="../../dot/DeepTrio.dot.png" /></p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../PfalciparumTypeDrugResistanceMarkers/" class="btn btn-neutral float-left" title="PfalciparumTypeDrugResistanceMarkers"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../RemoveSingleOrganismContamination/" class="btn btn-neutral float-right" title="RemoveSingleOrganismContamination">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../ConvertToZarrStore/" class="btn btn-neutral float-left" title="ConvertToZarrStore"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../DeepVariant/" class="btn btn-neutral float-right" title="DeepVariant">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -436,10 +400,10 @@
         </span>
     
     
-      <span><a href="../PfalciparumTypeDrugResistanceMarkers/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../ConvertToZarrStore/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../RemoveSingleOrganismContamination/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../DeepVariant/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

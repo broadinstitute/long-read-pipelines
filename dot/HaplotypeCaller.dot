@@ -27,12 +27,12 @@ digraph {
 	"call-ExtractIntervalNamesFromIntervalOrBamFile" -> "scatter-L67C5-idx_1" [lhead="cluster-scatter-L67C5-idx_1"]
 	"call-ExtractIntervalNamesFromIntervalOrBamFile" -> "decl-interval_name"
 	"call-ExtractIntervalNamesFromIntervalOrBamFile" -> "call-CreateIntervalListFileFromIntervalInfo"
-	"decl-interval_name" -> "call-CallVariantsWithHC"
 	"call-CreateIntervalListFileFromIntervalInfo" -> "call-CallVariantsWithHC"
+	"decl-interval_name" -> "call-CallVariantsWithHC"
 	"call-CallVariantsWithHC" -> "call-MergeGVCFs"
 	"call-CallVariantsWithHC" -> "call-MergeVariantCalledBamOuts"
 	"call-MergeVariantCalledBamOuts" -> "call-IndexBamout"
 	"call-MergeGVCFs" -> "call-ReblockHcGVCF"
-	"decl-actual_interval_list" -> "call-CollapseGVCFtoVCF"
 	"call-ReblockHcGVCF" -> "call-CollapseGVCFtoVCF"
+	"decl-actual_interval_list" -> "call-CollapseGVCFtoVCF"
 }
