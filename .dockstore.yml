@@ -165,3 +165,6 @@ workflows:
 - name: BroadOnPremMalariaJointCalling
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/BroadOnPremMalariaPipeline_2_JointVariantCalling.wdl
+- name: DeepTrio
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/DeepTrio.wdl
