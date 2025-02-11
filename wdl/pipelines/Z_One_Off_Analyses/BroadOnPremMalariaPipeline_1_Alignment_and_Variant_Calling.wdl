@@ -83,11 +83,11 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
                 contaminant_ref_map["rev.1.bt2"],
                 contaminant_ref_map["rev.2.bt2"]
             ],
-            contaminant_organism_label = "human"
+            contaminant_organism_label = contaminant_ref_name
     }
 
     # 2 - Align to Plasmodium reference:
-    String RG = "@RG\tID:FLOWCELL_~{sample_name}\tSM:~{sample_name}\tPL:ILLUMINA\tLB:LIB_~{sample_name}"
+    String RG = select_first([t_004_GetRawReadGroup.rg, "@RG\tID:FLOWCELL_" + sample_name + "\tSM:" + sample_name + "\tPL:ILLUMINA\tLB:LIB_" + sample_name ])
 
     # 2a - Align reads to reference with BWA-MEM2:
     call SRUTIL.BwaMem2 as t_006_AlignReads {
@@ -103,14 +103,24 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             ref_bwt = ref_map["bwt"],
             ref_pac = ref_map["pac"],
             mark_short_splits_as_secondary = true,
-            read_group = RG,
+            prefix = sample_name + ".aligned.tmp"
+    }
+
+    # 2a.1 - Change read group:
+    call Utils.ChangeReadGroup as t_007_ChangeReadGroup {
+        input:
+            input_bam = t_006_AlignReads.bam,
+            ID = sample_name,
+            SM = sample_name,
+            PL = "ILLUMINA",
+            LB = "LIB_" + sample_name,
             prefix = sample_name + ".aligned"
     }
 
     # 2b - Sort Bam:
     call Utils.SortSam as t_008_SortAlignedBam {
         input:
-            input_bam = t_006_AlignReads.bam,
+            input_bam = t_007_ChangeReadGroup.output_bam,
             prefix = sample_name + ".aligned.sorted"
     }
 
@@ -294,8 +304,20 @@ task FilterOutTargetOrganismReads {
             let np=${np}-1
         fi
 
+        # Move the bowtie2 index files to the same directory as the reference fasta file:
+        ref_dir=$(dirname ~{contaminant_reference_fasta})
+        while read f ; do 
+            indx_dirname=$( dirname ${f} )
+            if [[ "${indx_dirname}" != "${ref_dir}" ]] ; then
+                mv ${f} ${ref_dir}
+            fi
+        done < ~{write_lines(contaminant_reference_bowtie_indices)}
+
+        # Get the basename of the bowtie2 index file so we can reference it in the bowtie2 command:
+        bowtie2_index_basename=$(echo "~{contaminant_reference_bowtie_indices[0]}" | grep bt2 | head -n1 | sed 's@\.[a-zA-Z0-9]*\.bt2@@')
+
         echo "Aligning to contaminant genome:"
-        bowtie2 -x ~{contaminant_reference_fasta} \
+        bowtie2 -x ${bowtie2_index_basename} \
             --threads ${np} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} | \
@@ -607,7 +629,7 @@ task HaplotypeCaller {
     Int disk_size = 1 + 4*ceil(size([input_bam, reference_fasta], "GB"))
 
     String gvcf_arg = if (gvcf_mode) then "-ERC GVCF" else ""
-    String out_suffix = if (gvcf_mode) then ".g.vcf" else ".vcf"
+    String out_suffix = if (gvcf_mode) then "g.vcf" else "vcf"
 
     command <<<
         ################################
