@@ -57,8 +57,8 @@ digraph {
 		"if-L189C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-SmallVariantsScatterPrepp" -> "scatter-L86C9-c" [lhead="cluster-scatter-L86C9-c"]
-	"call-SmallVariantsScatter" -> "call-Clair"
 	"call-arbitrary" -> "call-Clair"
+	"call-SmallVariantsScatter" -> "call-Clair"
 	"call-Clair" -> "call-MergeAndSortClairVCFs"
 	"call-Clair" -> "call-MergeAndSortClair_gVCFs"
 	"call-size_balanced_scatter" -> "call-Pepper"
@@ -68,8 +68,8 @@ digraph {
 	"call-Pepper" -> "call-MergeDeepVariantVCFs"
 	"call-Pepper" -> "call-MergeBams"
 	"call-MakeChrIntervalList" -> "scatter-L198C13-c" [lhead="cluster-scatter-L198C13-c"]
-	"call-SubsetBam" -> "call-RunPBSV"
 	"call-arbitrary" -> "call-RunPBSV"
+	"call-SubsetBam" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-InferSampleName"
 	"call-RunPBSV" -> "call-MergePBSVVCFs"
 	"call-arbitrary" -> "call-PBSVslow"

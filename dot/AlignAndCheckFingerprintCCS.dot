@@ -46,7 +46,7 @@ digraph {
 	"decl-aBAM" -> "call-CollectPacBioAlignedMetrics"
 	"call-IndexAlignedReads" -> "call-CollectPacBioAlignedMetrics"
 	"call-CollectPacBioAlignedMetrics" -> "call-saveAlnMetrics"
-	"decl-aBAI" -> "call-FPCheckAoU"
 	"decl-aBAM" -> "call-FPCheckAoU"
+	"decl-aBAI" -> "call-FPCheckAoU"
 	"call-FPCheckAoU" -> "call-saveFPRes"
 }
