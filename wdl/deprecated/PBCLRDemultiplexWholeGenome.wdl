@@ -6,6 +6,7 @@ version 1.0
 ## produced along the way.
 ##########################################################################################
 
+import "tasks/Utility/PBUtils.wdl" as DeprecatedPB
 import "../tasks/Utility/PBUtils.wdl" as PB
 import "../tasks/Utility/Utils.wdl" as Utils
 import "../tasks/Alignment/AlignReads.wdl" as AR
@@ -67,8 +68,8 @@ workflow PBCLRDemultiplexWholeGenome {
     call PB.MakeSummarizedDemultiplexingReport as SummarizedDemuxReportPNG { input: report = Demultiplex.report }
     call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
     call PB.MakeDetailedDemultiplexingReport as DetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
-    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
-    call PB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
+    call DeprecatedPB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPNG { input: report = Demultiplex.report, type="png" }
+    call DeprecatedPB.MakePerBarcodeDemultiplexingReports as PerBarcodeDetailedDemuxReportPDF { input: report = Demultiplex.report, type="pdf" }
 
     # scatter on each demultiplexed BAM file
     scatter (demux_bam in Demultiplex.demux_bams) {

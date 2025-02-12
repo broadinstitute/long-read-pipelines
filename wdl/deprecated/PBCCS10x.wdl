@@ -115,14 +115,14 @@ workflow PBCCS10x {
     File annotated_bam = select_first([ MergeAllAnnotated.merged_bam, MergeAnnotated.merged_bam[0] ])
     File annotated_bai = select_first([ MergeAllAnnotated.merged_bai, MergeAnnotated.merged_bai[0] ])
 
-    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
+    call GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
         input:
             bam = annotated_bam,
             prefix = "num_annotated_with_cbc",
             regex = "CB:Z:[ACGT]"
     }
 
-    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBCAndUniqueAlignment {
+    call GrepCountBamRecords as GrepAnnotatedReadsWithCBCAndUniqueAlignment {
         input:
             bam = annotated_bam,
             samfilter = "-F 0x100",
@@ -130,7 +130,7 @@ workflow PBCCS10x {
             regex = "CB:Z:[ACGT]"
     }
 
-    call Utils.BamToTable { input: bam = annotated_bam, prefix = "reads_aligned_annotated.table" }
+    call BamToTable { input: bam = annotated_bam, prefix = "reads_aligned_annotated.table" }
 
     # compute alignment metrics
     call AM.AlignedMetrics as PerSampleMetrics {
@@ -169,5 +169,116 @@ workflow PBCCS10x {
         input:
             files = [ annotated_bam, annotated_bai ],
             outdir = outdir + "/alignments"
+    }
+}
+
+task GrepCountBamRecords {
+
+    meta {
+        description : "Count the number of records in a bam file that match a given regex."
+    }
+
+    parameter_meta {
+        bam: "BAM file to be filtered."
+        samfilter: "[Optional] Extra arguments to pass into samtools view."
+        regex: "Regex to match against the bam file."
+        invert: "[Optional] Invert the regex match."
+        prefix: "[Optional] Prefix string to name the output file (Default: sum)."
+    }
+
+    input {
+        File bam
+        String samfilter = ""
+        String regex
+        Boolean invert = false
+        String prefix = "sum"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + ceil(2 * size(bam, "GiB"))
+    String arg = if invert then "-vc" else "-c"
+
+    command <<<
+        set -euxo pipefail
+
+        samtools view ~{samfilter} ~{bam} | grep ~{arg} ~{regex} > ~{prefix}.txt
+    >>>
+
+    output {
+        Int num_records = read_int("~{prefix}.txt")
+        File num_records_file = "~{prefix}.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task BamToTable {
+
+    meta {
+        description : "Convert a BAM file to a table txt file."
+    }
+
+    parameter_meta {
+        bam: "BAM file to be converted."
+        prefix: "Prefix for the output table."
+        runtime_attr_override: "Override the default runtime attributes."
+    }
+
+    input {
+        File bam
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 2*ceil(size(bam, "GB"))
+
+    command <<<
+        samtools view ~{bam} | perl -n -e '($nm) = $_ =~ /NM:i:(\d+)/; ($as) = $_ =~ /AS:i:(\d+)/; ($za) = $_ =~ /ZA:Z:(\w+|\.)/; ($zu) = $_ =~ /ZU:Z:(\w+|\.)/; ($cr) = $_ =~ /CR:Z:(\w+|\.)/; ($cb) = $_ =~ /CB:Z:(\w+|\.)/; @a = split(/\s+/); print join("\t", $a[0], $a[1], $a[2], $a[3], $a[4], length($a[9]), $nm, $as, $za, $zu, $cr, $cb, $a[1], ($a[1] & 0x1 ? "paired" : "unpaired"), ($a[1] & 0x4 ? "unmapped" : "mapped"), ($a[1] & 0x10 ? "rev" : "fwd"), ($a[1] & 0x100 ? "secondary" : "primary"), ($a[1] & 0x800 ? "supplementary" : "non_supplementary")) . "\n"' | gzip > ~{prefix}.txt.gz
+    >>>
+
+    output {
+        File table = "~{prefix}.txt.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }

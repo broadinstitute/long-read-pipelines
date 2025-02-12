@@ -1,9 +1,11 @@
 version 1.0
 
-# Reusing workflow from GATK Git Repository
-# https://github.com/broadinstitute/gatk/blob/master/scripts/cnv_wdl/cnv_common_tasks.wdl
-
 task PreprocessIntervals {
+
+    meta {
+        description: "Reusing workflow from GATK Git Repository: https://github.com/broadinstitute/gatk/blob/master/scripts/cnv_wdl/cnv_common_tasks.wdl"
+    }
+
     input {
       File? intervals
       File? blacklist_intervals
@@ -220,10 +222,6 @@ task CollectCounts {
         if format_ == "HDF5" then "counts.hdf5" else
         (if format_ == "TSV" then "counts.tsv" else
         (if format_ == "TSV_GZ" then "counts.tsv.gz" else "null"))
-    String counts_index_filename_extension =
-        if format_ == "HDF5" then "null" else
-        (if format_ == "TSV" then "counts.tsv.idx" else
-        (if format_ == "TSV_GZ" then "counts.tsv.gz.tbi" else "null"))
     Boolean do_block_compression =
         if format_ == "HDF5" then false else
         (if format_ == "TSV" then false else

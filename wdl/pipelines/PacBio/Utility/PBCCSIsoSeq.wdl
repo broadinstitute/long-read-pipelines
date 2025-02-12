@@ -2,7 +2,6 @@ version 1.0
 
 import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Utility/Utils.wdl" as Utils
-import "../../../tasks/Alignment/AlignReads.wdl" as AR
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBCCSIsoSeq {

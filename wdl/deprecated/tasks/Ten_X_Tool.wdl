@@ -157,12 +157,12 @@ task AnnotateBarcodesAndUMIs {
             --read-end-length=~{read_end_length} \
             --record-umis \
             ~{do_raw_arg} \
-            ~{whitelist_10x_arg}~{default="" sep=" --whitelist-10x " whitelist_10x} \
-            ~{whitelist_ilmn_arg}~{default="" sep=" --whitelist-illumina " whitelist_illumina} \
-            ~{illumina_barcoded_bam_arg}~{default="" sep=" --illumina-bam " illumina_barcoded_bam} \
-            ~{poly_t_len_arg}~{default="" sep=" --poly-t-length " poly_t_length} \
-            ~{barcode_len_arg}~{default="" sep=" --barcode-length " barcode_length} \
-            ~{umi_len_arg}~{default="" sep=" --umi-length " umi_length}
+            ~{whitelist_10x_arg}~{default="" whitelist_10x} \
+            ~{whitelist_ilmn_arg}~{default=""  whitelist_illumina} \
+            ~{illumina_barcoded_bam_arg}~{default=""  illumina_barcoded_bam} \
+            ~{poly_t_len_arg}~{default=""  poly_t_length} \
+            ~{barcode_len_arg}~{default=""  barcode_length} \
+            ~{umi_len_arg}~{default="" umi_length}
 
         endTime=`date +%s.%N`
         echo "EndTime: $endTime" >> ~{timing_output_file}
@@ -203,7 +203,7 @@ task AnnotateBarcodesAndUMIs {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.14"
@@ -281,7 +281,7 @@ task CorrectBarcodesWithStarcodeSeedCounts {
             --counts=~{starcode_seeds_tsv} \
             --name=~{prefix} \
             ~{extra_params_arg} \
-            ~{whitelist_10x_arg}~{default="" sep=" --whitelist-10x " whitelist_10x}
+            ~{whitelist_10x_arg}~{default=""  whitelist_10x}
 
 
         endTime=`date +%s.%N`
@@ -315,7 +315,7 @@ task CorrectBarcodesWithStarcodeSeedCounts {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.16"
@@ -407,7 +407,7 @@ task ExtractIlmnBarcodeConfScores {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.14"
@@ -456,7 +456,7 @@ task ExtractCbcAndUmiFromAnnotatedReadForUmiTools {
     Int default_boot_disk_size_gb = 10
 
     # Mem is in units of GB but our command and memory runtime values are in MB
-    Int machine_mem = if defined(mem_gb) then mem_gb * 1024 else default_ram_mb
+    Int machine_mem = if defined(mem_gb) then select_first([mem_gb]) * 1024 else default_ram_mb
 
     String timing_output_file = "timingInformation.txt"
 
@@ -529,7 +529,7 @@ task RestoreAnnotationstoAlignedBam {
     Int default_boot_disk_size_gb = 100
 
     # Mem is in units of GB but our command and memory runtime values are in MB
-    Int machine_mem = if defined(mem_gb) then mem_gb * 1024 else default_ram_mb
+    Int machine_mem = if defined(mem_gb) then select_first([mem_gb]) * 1024 else default_ram_mb
 
     String timing_output_file = "timingInformation.txt"
 
@@ -638,7 +638,7 @@ task CopyContigNameToReadTag {
     Int default_boot_disk_size_gb = 10
 
     # Mem is in units of GB but our command and memory runtime values are in MB
-    Int machine_mem = if defined(mem_gb) then mem_gb * 1024 else default_ram_mb
+    Int machine_mem = if defined(mem_gb) then select_first([mem_gb]) * 1024 else default_ram_mb
 
     String timing_output_file = "timingInformation.txt"
 
@@ -721,7 +721,7 @@ task TagSirvUmiPositionsFromLongbowAnnotatedArrayElement {
     Int default_boot_disk_size_gb = 10
 
     # Mem is in units of GB but our command and memory runtime values are in MB
-    Int machine_mem = if defined(mem_gb) then mem_gb * 1024 else default_ram_mb
+    Int machine_mem = if defined(mem_gb) then select_first([mem_gb]) * 1024 else default_ram_mb
 
     String timing_output_file = "timingInformation.txt"
 

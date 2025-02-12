@@ -24,7 +24,7 @@ task NanoPlotFromSummary {
     command <<<
         set -euxo pipefail
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(awk '/^processor/{print $3}' /proc/cpuinfo | wc -l)
 
         NanoPlot -t ${num_core} \
                  -c orangered \
@@ -81,7 +81,7 @@ task NanoPlotFromSummary {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
@@ -120,7 +120,7 @@ task NanoPlotFromRichFastqs {
     command <<<
         set -euxo pipefail
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(awk '/^processor/{print $3}' /proc/cpuinfo | wc -l)
 
         NanoPlot -t ${num_core} \
                  -c orangered \
@@ -162,7 +162,7 @@ task NanoPlotFromRichFastqs {
         cpu_cores:          4,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
@@ -198,14 +198,14 @@ task NanoPlotFromBam {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(bam, "GB")) + 10
+    Int disk_size = 10 + 2*ceil(size(bam, "GB")) + 2*ceil(size(bai, "GB"))
 
     command <<<
         set -euxo pipefail
 
         touch ~{bai} # avoid the warning bai is older than bam
 
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+        num_core=$(awk '/^processor/{print $3}' /proc/cpuinfo | wc -l)
 
         NanoPlot -t ${num_core} \
                  -c orangered \
@@ -271,7 +271,7 @@ task NanoPlotFromBam {
         cpu_cores:          8,
         mem_gb:             24,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-nanoplot:1.40.0-1"
@@ -280,93 +280,7 @@ task NanoPlotFromBam {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task NanoPlotFromUBam {
-
-    meta {
-        description: "NanoPlot from an unaligned BAM"
-    }
-
-    parameter_meta {
-        bam: "BAM file"
-        runtime_attr_override: "Runtime attributes to override"
-    }
-
-    input {
-        File bam
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 2*ceil(size(bam, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-
-        NanoPlot -t ${num_core} \
-            -c orangered \
-            --N50 \
-            --tsv_stats \
-            --ubam "~{bam}"
-
-        cat NanoStats.txt | \
-            grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
-            sed 's/ >/_/' | \
-            sed 's/://' | \
-            awk '{ print $1 "\t" $2 }' | \
-            tee map.txt
-    >>>
-
-    #number_of_reads 991
-    #number_of_bases 12949457.0
-    #median_read_length      13705.0
-    #mean_read_length        13067.1
-    #read_length_stdev       9581.3
-    #n50     18618.0
-    #mean_qual       0.0
-    #median_qual     0.0
-    #Reads_Q5        0
-    #Reads_Q7        0
-    #Reads_Q10       0
-    #Reads_Q12       0
-    #Reads_Q15       0
-
-    output {
-        File stats = "NanoStats.txt"
-        Map[String, Float] stats_map = read_map("map.txt")
-
-        Array[File] plots = glob("*.png")
-        File Non_weightedHistogramReadlength = "Non_weightedHistogramReadlength.png"
-        File Non_weightedLogTransformed_HistogramReadlength = "Non_weightedLogTransformed_HistogramReadlength.png"
-        File WeightedHistogramReadlength = "WeightedHistogramReadlength.png"
-        File WeightedLogTransformed_HistogramReadlength = "WeightedLogTransformed_HistogramReadlength.png"
-        File Yield_By_Length = "Yield_By_Length.png"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          4,
-        mem_gb:             32,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "quay.io/biocontainers/nanoplot:1.35.5--pyhdfd78af_0"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])

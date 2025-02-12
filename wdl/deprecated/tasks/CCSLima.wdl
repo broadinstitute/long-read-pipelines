@@ -106,7 +106,7 @@ task CCSLima {
         cpu_cores:          16,
         mem_gb:             64,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.36"
@@ -283,7 +283,7 @@ task MakeSummarizedCustomDemultiplexingReport {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
@@ -328,7 +328,7 @@ task MakeDetailedCustomDemultiplexingReport {
         cpu_cores:          8,
         mem_gb:             32,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"
@@ -381,7 +381,7 @@ task MakePerBarcodeCustomDemultiplexingReports {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.10"

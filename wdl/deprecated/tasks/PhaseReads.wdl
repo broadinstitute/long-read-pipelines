@@ -46,7 +46,7 @@ task ConvertToFastq {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -94,7 +94,7 @@ task Minimap2PAF {
         cpu_cores:          cpus,
         mem_gb:             20,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"

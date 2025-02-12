@@ -127,81 +127,9 @@ task Minimap2 {
         cpu_cores:          cpus,
         mem_gb:             mem,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task SAMtoPAF {
-    input {
-        File sam_formatted_file
-        File? index
-
-        RuntimeAttr? runtime_attr_override
-    }
-    meta {
-        description: "Convert SAM-formatted alignment to PAF format using minimap2's paftools.js"
-    }
-    parameter_meta {
-        sam_formatted_file: "SAM-formated input file to be converted to PAF (note currently we only support SAM or BAM, not CRAM)"
-        index:              "[optional] index for sam_formatted_file"
-    }
-
-    String prefix = basename(basename(sam_formatted_file, ".bam"), ".sam") # we have hack like this because WDL stdlib doesn't provide endsWith stuff
-
-    Int disk_size = 2*ceil(size(sam_formatted_file, "GB"))
-
-    command <<<
-        set -eu
-
-        MM2_VERSION="2.24"
-
-        filename=$(basename -- ~{sam_formatted_file})
-        extension="${filename##*.}"
-        if [[ "$extension" == "sam" ]]; then
-            /minimap2-${MM2_VERSION}_x64-linux/k8 \
-                /minimap2-${MM2_VERSION}_x64-linux/paftools.js \
-                sam2paf \
-                -L \
-                ~{sam_formatted_file} \
-                > ~{prefix}".paf"
-        elif [[ "$extension" == "bam" ]]; then
-            samtools view -h ~{sam_formatted_file} | \
-                /minimap2-${MM2_VERSION}_x64-linux/k8 \
-                /minimap2-${MM2_VERSION}_x64-linux/paftools.js \
-                sam2paf \
-                -L \
-                - \
-                > ~{prefix}".paf"
-        else
-            echo "Currently we only support SAM or BAM (not CRAM)." && exit 1;
-        fi
-    >>>
-
-    output {
-        File pat_formatted_file = "~{prefix}.paf"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             4,
-        disk_gb:            "~{disk_size}",
-        boot_disk_gb:       10,
-        preemptible_tries:  1,
-        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

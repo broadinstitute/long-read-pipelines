@@ -1,21 +1,3 @@
-# Workflow for creating a GATK GermlineCNVCaller denoising model and generating calls given a list of normal samples. Supports both WGS and WES.
-#
-# Notes:
-#
-# - The intervals argument is required for both WGS and WES workflows and accepts formats compatible with the
-#   GATK -L argument (see https://gatkforums.broadinstitute.org/gatk/discussion/11009/intervals-and-interval-lists).
-#   These intervals will be padded on both sides by the amount specified by padding (default 250)
-#   and split into bins of length specified by bin_length (default 1000; specify 0 to skip binning,
-#   e.g., for WES).  For WGS, the intervals should simply cover the chromosomes of interest.
-#
-# - Intervals can be blacklisted from coverage collection and all downstream steps by using the blacklist_intervals
-#   argument, which accepts formats compatible with the GATK -XL argument
-#   (see https://gatkforums.broadinstitute.org/gatk/discussion/11009/intervals-and-interval-lists).
-#   This may be useful for excluding centromeric regions, etc. from analysis.  Alternatively, these regions may
-#   be manually filtered from the final callset.
-#
-#############
-
 version 1.0
 
 import "../../../tasks/Utility/cnv_common_tasks.wdl" as CNVTasks
@@ -23,7 +5,7 @@ import "../../../tasks/Utility/cnv_common_tasks.wdl" as CNVTasks
 workflow LRCNVs {
 
     meta {
-        description: "Workflow for creating a GATK GermlineCNVCaller denoising model and generating calls given a list of normal samples. Supports both WGS and WES."
+        description: "Workflow for creating a GATK GermlineCNVCaller denoising model and generating calls given a list of normal samples. Supports both WGS and WES.  The intervals argument is required for both WGS and WES workflows and accepts formats compatible with the GATK -L argument (see https://gatkforums.broadinstitute.org/gatk/discussion/11009/intervals-and-interval-lists). These intervals will be padded on both sides by the amount specified by padding (default 250) and split into bins of length specified by bin_length (default 1000; specify 0 to skip binning, e.g., for WES).  For WGS, the intervals should simply cover the chromosomes of interest."
         notes: "<br /> - The intervals argument is required for both WGS and WES workflows and accepts formats compatible with the GATK -L argument (see https://gatkforums.broadinstitute.org/gatk/discussion/11009/intervals-and-interval-lists). These intervals will be padded on both sides by the amount specified by padding (default 250) and split into bins of length specified by bin_length (default 1000; specify 0 to skip binning, e.g., for WES).  For WGS, the intervals should simply cover the chromosomes of interest. <br />  - Intervals can be blacklisted from coverage collection and all downstream steps by using the blacklist_intervals argument, which accepts formats compatible with the GATK -XL argument (see https://gatkforums.broadinstitute.org/gatk/discussion/11009/intervals-and-interval-lists). This may be useful for excluding centromeric regions, etc. from analysis.  Alternatively, these regions may be manually filtered from the final callset."
     }
     parameter_meta {
@@ -596,7 +578,7 @@ task GermlineCNVCallerCohortMode {
         while [ $CURRENT_SAMPLE -lt $NUM_SAMPLES ]; do
             CURRENT_SAMPLE_WITH_LEADING_ZEROS=$(printf "%0${NUM_DIGITS}d" $CURRENT_SAMPLE)
             tar czf ~{cohort_entity_id}-gcnv-calls-shard-~{scatter_index}-sample-$CURRENT_SAMPLE_WITH_LEADING_ZEROS.tar.gz -C ~{output_dir_}/~{cohort_entity_id}-calls/SAMPLE_$CURRENT_SAMPLE .
-            let CURRENT_SAMPLE=CURRENT_SAMPLE+1
+            CURRENT_SAMPLE=$((CURRENT_SAMPLE+1))
         done
 
         rm -rf contig-ploidy-calls

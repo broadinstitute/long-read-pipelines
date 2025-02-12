@@ -1,9 +1,8 @@
 version 1.0
 
 import "../../../structs/Structs.wdl"
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
-workflow ONTPfHrp2Hrp3Status {
+workflow PfalciparumHrp2Hrp3Status {
 
     meta {
         description: "Determine if HRP2 and HRP3 are deleted in a sample"
@@ -56,7 +55,7 @@ task IsLocusDeleted {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + ceil(size(bam, "GB"))
+    Int disk_size = 1 + 2*ceil(size(bam, "GB"))  + 2*ceil(size(bai, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -67,8 +66,7 @@ task IsLocusDeleted {
 
         mosdepth -t 4 -b <(echo -e "~{chr}\t~{start}\t~{stop}") -x -Q 1 out chr.bam
 
-        cat out.mosdepth.summary.txt | \
-            grep total | \
+        grep total out.mosdepth.summary.txt | \
             paste - - | \
             awk '{ if ($10 > 0.05*$4) print "+"; else print "-" }' \
             > status.txt
@@ -83,7 +81,7 @@ task IsLocusDeleted {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-mosdepth:0.3.1"

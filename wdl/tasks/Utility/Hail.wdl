@@ -14,7 +14,6 @@ task ConvertToHailMT {
         ref_fasta: "The reference genome FASTA file.  If not specified, the reference genome will be downloaded from the Hail website."
         ref_fai: "The reference genome FASTA index file.  If not specified, the reference genome will be downloaded from the Hail website."
         prefix: "The prefix to use for the output MatrixTable."
-        outdir: "The output directory to copy the MatrixTable to."
         runtime_attr_override: "Override the default runtime attributes for this task."
     }
 
@@ -27,12 +26,10 @@ task ConvertToHailMT {
         String? ref_fai
         String prefix = "out"
 
-        String outdir
-
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 3*ceil(size(gvcf, "GB"))
+    Int disk_size = 1 + 6*ceil(size(gvcf, "GB"))
 
     command <<<
         set -x
@@ -56,11 +53,16 @@ task ConvertToHailMT {
 
         EOF
 
-        gsutil -m rsync -Cr ~{prefix}.mt ~{outdir}/~{prefix}.mt
+        echo "Created matrix table."
+        echo "Tarring file now."
+        tar -cf ~{prefix}.mt.tar ~{prefix}.mt
+
+        touch completion_key_file
     >>>
 
     output {
-        String gcs_path = "~{outdir}/~{prefix}.mt"
+        File mt_tar = "~{prefix}.mt.tar"
+        File completion_file = "completion_key_file"
     }
 
     #########################
@@ -68,7 +70,7 @@ task ConvertToHailMT {
         cpu_cores:          4,
         mem_gb:             64,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "hailgenetics/hail:0.2.105"

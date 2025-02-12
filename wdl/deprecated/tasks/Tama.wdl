@@ -40,7 +40,7 @@ task CollapseIsoforms {
         cpu_cores:          1,
         mem_gb:             64,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-tama:0.1.1"

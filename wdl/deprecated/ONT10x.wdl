@@ -69,7 +69,7 @@ workflow ONT10x {
                 Int splint_num = a.left
                 File fq = a.right
 
-#                call Utils.FastaToSam as FastaToSam { input: fasta = C3POa.consensus }
+#                call FastaToSam { input: fasta = C3POa.consensus }
 #                call AnnotateAdapters { input: bam = FastaToSam.output_bam }
 
                 String rg_consensus = "@RG\\tID:~{SID}.consensus~{splint_num}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
@@ -82,7 +82,7 @@ workflow ONT10x {
                         map_preset = "splice"
                 }
 
-                #call Utils.CountFastaRecords as CountConsensusReadsInPartition { input: fasta = fq }
+                #call CountFastaRecords as CountConsensusReadsInPartition { input: fasta = fq }
             }
 
 #            File align_subreads_bam = AlignSubreads.aligned_bam
@@ -97,17 +97,17 @@ workflow ONT10x {
             call CountNumPasses as CountNumPasses3 { input: fastq = C3POa.subreads3 }
             call CountNumPasses as CountNumPasses4 { input: fastq = C3POa.subreads4 }
 
-            call Utils.CountFastqRecords as CountSubreadsInPartition1 { input: fastq = C3POa.subreads1 }
-            call Utils.CountFastqRecords as CountSubreadsInPartition2 { input: fastq = C3POa.subreads2 }
-            call Utils.CountFastqRecords as CountSubreadsInPartition3 { input: fastq = C3POa.subreads3 }
-            call Utils.CountFastqRecords as CountSubreadsInPartition4 { input: fastq = C3POa.subreads4 }
+            call CountFastqRecords as CountSubreadsInPartition1 { input: fastq = C3POa.subreads1 }
+            call CountFastqRecords as CountSubreadsInPartition2 { input: fastq = C3POa.subreads2 }
+            call CountFastqRecords as CountSubreadsInPartition3 { input: fastq = C3POa.subreads3 }
+            call CountFastqRecords as CountSubreadsInPartition4 { input: fastq = C3POa.subreads4 }
 
-#            call Utils.CountFastqRecords as CountAnnotatedReadsInPartition { input: fastq = AnnotateAdapters.annotated_fq }
+#            call CountFastqRecords as CountAnnotatedReadsInPartition { input: fastq = AnnotateAdapters.annotated_fq }
 
-            call Utils.CountFastaRecords as CountConsensusReadsInPartition1 { input: fasta = C3POa.consensus1 }
-            call Utils.CountFastaRecords as CountConsensusReadsInPartition2 { input: fasta = C3POa.consensus2 }
-            call Utils.CountFastaRecords as CountConsensusReadsInPartition3 { input: fasta = C3POa.consensus3 }
-            call Utils.CountFastaRecords as CountConsensusReadsInPartition4 { input: fasta = C3POa.consensus4 }
+            call CountFastaRecords as CountConsensusReadsInPartition1 { input: fasta = C3POa.consensus1 }
+            call CountFastaRecords as CountConsensusReadsInPartition2 { input: fasta = C3POa.consensus2 }
+            call CountFastaRecords as CountConsensusReadsInPartition3 { input: fasta = C3POa.consensus3 }
+            call CountFastaRecords as CountConsensusReadsInPartition4 { input: fasta = C3POa.consensus4 }
         }
 
         call Utils.Sum as CountNoSplintReadsInRun  { input: ints = C3POa.no_splint_reads }
@@ -307,7 +307,7 @@ task AnnotateAdapters {
         cpu_cores:          cpus,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-10x:0.1.9"
@@ -349,8 +349,165 @@ task CountNumPasses {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task FastaToSam {
+
+    meta {
+        description: "Convert a fasta file to a sam file"
+    }
+
+    parameter_meta {
+        fasta: "The fasta file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
+    input {
+        File fasta
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float fasta_sam_disk_multiplier = 3.25
+    Int disk_size = ceil(fasta_sam_disk_multiplier * size(fasta, "GiB")) + 20
+
+    command <<<
+        python /usr/local/bin/prepare_run.py ~{fasta}
+    >>>
+
+    output {
+        File output_bam = "unmapped.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CountFastqRecords {
+
+    meta {
+        description: "Count the number of records in a fastq file"
+    }
+
+    parameter_meta {
+        fastq: "The fastq file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
+    input {
+        File fastq
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + ceil(2 * size(fastq, "GiB"))
+
+    command <<<
+        set -euxo pipefail
+
+        FILE="~{fastq}"
+        if [[ "$FILE" =~ \.fastq$ ]] || [[ "$FILE" =~ \.fq$ ]]; then
+            cat ~{fastq} | awk '{s++}END{print s/4}'
+        elif [[ "$FILE" =~ \.fastq.gz$ ]] || [[ "$FILE" =~ \.fq.gz$ ]]; then
+            zcat ~{fastq} | awk '{s++}END{print s/4}'
+        fi
+    >>>
+
+    output {
+        Int num_records = read_int(stdout())
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task CountFastaRecords {
+
+    meta {
+        description: "Count the number of records in a fasta file"
+    }
+
+    parameter_meta {
+        fasta: "The fasta file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
+    input {
+        File fasta
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 2*ceil(size(fasta, "GiB"))
+
+    command <<<
+        grep -c '>' ~{fasta}
+
+        exit 0
+    >>>
+
+    output {
+        Int num_records = read_int(stdout())
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             1,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
     }

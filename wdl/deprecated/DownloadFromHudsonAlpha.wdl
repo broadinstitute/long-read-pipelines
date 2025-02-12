@@ -71,7 +71,7 @@ task GetFileSize {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"
@@ -115,7 +115,7 @@ task DownloadFile {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"
@@ -170,7 +170,7 @@ task VerifyAndExtractTarball {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"
@@ -224,7 +224,7 @@ task ExtractFiles {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.3"

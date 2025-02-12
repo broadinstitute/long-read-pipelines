@@ -1,17 +1,8 @@
 version 1.0
 
-##########################################################################################
-# A workflow that runs the Guppy basecaller on ONT FAST5 files.
-# - The docker tag number will match the version of Guppy that is being run. You can change
-#   this value to run a different version of Guppy. Currently supports... [3.5.2, 3.6.0, 4.0.14]
-# - All fast5 files within the given GCS dir, gcs_fast5_dir, will be processed
-# - Takes a few hours to process 130GB. Best guess is that the processing time scales
-#   linearly but untested.
-##########################################################################################
-
+import "../../structs/Structs.wdl"
 import "../Utility/Utils.wdl" as Utils
 import "../Utility/ONTUtils.wdl" as ONT
-import "../../structs/Structs.wdl"
 
 workflow Guppy {
 
@@ -118,7 +109,7 @@ task ListFast5s {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -213,7 +204,7 @@ task Basecall {
         cpu_cores:          4,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       30,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-guppy:6.4.6"
@@ -263,7 +254,7 @@ task MakeSequencingSummary {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -317,7 +308,7 @@ task MakeFinalSummary {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -381,7 +372,7 @@ task FinalizeBasecalls {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"

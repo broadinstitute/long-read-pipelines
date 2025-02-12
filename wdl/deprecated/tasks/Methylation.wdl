@@ -94,7 +94,7 @@ task CombineFastqs {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-align:0.1.28"
@@ -175,7 +175,7 @@ task CallMethylation {
         cpu_cores:          8,
         mem_gb:             64,
         disk_gb:            disk_size,
-        boot_disk_gb:       100,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-methylation:0.1.2"
@@ -227,7 +227,7 @@ task FreqMerge {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-methylation:0.1.0"

@@ -7,14 +7,14 @@ jobs:
             - name: Checkout branch
               uses: actions/checkout@v3
 
-            - name: Setup Java 11
+            - name: Setup Java 17
               uses: actions/setup-java@v2
               with:
                 distribution: 'temurin'
-                java-version: '11'
+                java-version: '17'
 
             - name: Cache node_modules
-              uses: actions/cache@v2
+              uses: actions/cache@v4
               with:
                 path: "**/node_modules"
                 key: ${{ runner.os }}-modules-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
@@ -22,7 +22,7 @@ jobs:
             - name: Install dockstore cli
               run: |
                 mkdir -p ~/bin
-                curl -L -o ~/bin/dockstore https://github.com/dockstore/dockstore-cli/releases/download/1.13.1/dockstore
+                curl -L -o ~/bin/dockstore https://github.com/dockstore/dockstore-cli/releases/download/1.15.0/dockstore
                 chmod +x ~/bin/dockstore
                 export PATH=~/bin:$PATH
                 
@@ -34,5 +34,11 @@ jobs:
             - name: Validate dockstore.yml
               run: |
                 export PATH=~/bin:$PATH
-                dockstore yaml validate --path . 2>&1 | tee dockstore_result.txt
-                if grep -q "error" dockstore_result.txt ; then exit 1 ; fi
+
+                validation_output=$(dockstore yaml validate --path .)
+                echo "$validation_output"
+                                
+                if [[ $validation_output == *"Your .dockstore.yml has the following errors"* || $validation_output == *"Your .dockstore.yml is invalid"* ]]; then
+                  echo "Dockstore validation failed."
+                  exit 1
+                fi

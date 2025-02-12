@@ -1,6 +1,5 @@
 version 1.0
 
-import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
 import "../../../tasks/Utility/Hail.wdl" as Hail
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
@@ -31,15 +30,21 @@ workflow ConvertToHailMT {
         input:
             gvcf = joint_gvcf,
             tbi = joint_gvcf_tbi,
-            prefix = prefix,
+            prefix = prefix
+    }
+
+    call FF.FinalizeToFile as FinalizeMT {
+        input:
+            file = RunConvertToHailMT.mt_tar,
             outdir = outdir
     }
+
 
     ##########
     # store the results into designated bucket
     ##########
 
     output {
-        String joint_mt = RunConvertToHailMT.gcs_path
+        String joint_mt = FinalizeMT.gcs_path
     }
 }

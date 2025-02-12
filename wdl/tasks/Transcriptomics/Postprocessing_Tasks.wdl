@@ -52,261 +52,7 @@ task CreateCountMatrixFromAnnotatedBam {
         cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task AggregateUmiAdjustmentStats {
-
-    meta {
-        description : "Aggregates the UMI adjustment stats from the given longbow UMI adjustment log files."
-    }
-
-    parameter_meta {
-        longbow_umi_adjustment_log_files: "The longbow UMI adjustment log files to aggregate."
-        out_name: "The name of the output file."
-    }
-
-    # TODO: FINISHME
-    input {
-        Array[File] longbow_umi_adjustment_log_files
-
-        String out_name = "longbow_umi_adjustment_stats.txt"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 2*ceil(size(longbow_umi_adjustment_log_files, "GB"))
-
-    # YES, this SHOULD be a proper tool, but right now it isn't.
-    command <<<
-
-        f=~{write_lines(longbow_umi_adjustment_log_files)}
-
-        mv $f THE_UMI_FILE_LIST.txt
-
-python << CODE
-import os
-
-stats_dict = dict()
-line_key = "STATS: "
-
-with open("THE_UMI_FILE_LIST.txt", 'r') as umi_file_list_file:
-    for line in umi_file_list_file:
-        stats_file = line.strip()
-        with open(stats_file, 'r') as f:
-            for line in f:
-                if line_key in line:
-                    line = line.strip()
-                    s = line[line.find(line_key) + len(line_key):]
-                    key, remainder = [t.strip() for t in s.split(":")]
-                    if "/" in remainder:
-                        count = int(remainder[:remainder.find("/")])
-                        tot = int(remainder[remainder.find("/")+1:remainder.find(" ")])
-                    else:
-                        count = int(remainder)
-                        tot = None
-
-                    try:
-                        c, t = stats_dict[key]
-                        if tot is not None:
-                            tot += t
-                        stats_dict[key] = (count + c, tot)
-                    except KeyError:
-                        stats_dict[key] = (count, tot)
-
-k_len = 0
-for k in stats_dict.keys():
-    if len(k) > k_len:
-        k_len = len(k)
-
-k_prefix = list(stats_dict.keys())[0]
-k_prefix = k_prefix[:k_prefix.find(" ")]
-with open("~{out_name}", 'w') as f:
-    for k, v in stats_dict.items():
-
-        if not k.startswith(k_prefix):
-            f.write("\n")
-            k_prefix = k[:k.find(" ")]
-
-        k_spacing = k_len - len(k)
-
-        count, tot = v
-        if tot is None:
-            f.write(f"{k}:{' '*k_spacing} {count}\n")
-        else:
-            f.write(f"{k}:{' '*k_spacing} {count}/{tot} ({100.0*count/tot:2.4f}%)\n")
-
-CODE
-    >>>
-
-    output {
-        File stats = out_name
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
-        mem_gb:             2,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  0,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.27"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task MergeBarcodeCounts {
-    meta {
-        description : "Merge all counts for each unique barcode in the given TSV file.  Assumes file is unheadered and have two columns: BARCODE COUNT.  Merging performed by adding all COUNTs for each BARCODE."
-        author : "Jonn Smith"
-        email : "jonn@broadinstitute.org"
-    }
-
-    parameter_meta {
-        barcode_count_tsv: "The TSV file containing the barcode counts to merge."
-        prefix: "The prefix to use for the output file."
-    }
-
-    input {
-        File barcode_count_tsv
-        String prefix = "merged_counts"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    # 20 gb - baseline storage for safety
-    # 1x for the file itself
-    # 2x for the results and some wiggle room.
-    Int disk_size_gb = 20 + (3 * ceil(size(barcode_count_tsv, "GB")))
-
-    command {
-        /python_scripts/merge_barcode_counts.py ~{barcode_count_tsv}
-        if [[ "~{prefix}.tsv" != "merged_counts.tsv" ]] ; then
-            mv merged_counts.tsv "~{prefix}.tsv"
-        fi
-    }
-
-    output {
-        File merged_counts = "~{prefix}.tsv"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             16,
-        disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-
-task CreateCountMatrixAnndataFromTsv {
-
-    meta {
-        description : "Creates a python anndata object from the given countmatrix tsv.  Expects the input to have been generated by CreateCountMatrixFromAnnotatedBam.  The resulting anndata object can be directly read into scanpy for single-cell analysis."
-        author : "Jonn Smith"
-        email : "jonn@broadinstitute.org"
-    }
-
-    parameter_meta {
-        count_matrix_tsv: "The TSV file containing the count matrix to convert to anndata."
-        genome_annotation_gtf_file: "The GTF file containing the genome annotation."
-        force_anndata_gencode_overwrite: "Forces the values in `gene_names` and `gene_ids` to overwrite `gencode_overlap_gene_names` and `gencode_overlap_gene_ids` respectively."
-        prefix: "The prefix to use for the output file."
-        equivalence_class_definitions: "The equivalence class definitions file to use for the anndata object."
-        overlap_intervals: "The overlap intervals file to use for the anndata object."
-        overlap_interval_label: "The overlap interval label to use for the anndata object."
-        gencode_reference_gtf_file: "The gencode reference GTF file to use for the anndata object."
-    }
-
-    input {
-        File count_matrix_tsv
-        File genome_annotation_gtf_file
-
-        Boolean force_anndata_gencode_overwrite = false
-
-        String prefix = "umi_tools_group"
-
-        File? equivalence_class_definitions
-
-        File? overlap_intervals
-        String? overlap_interval_label
-        File? gencode_reference_gtf_file
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size_gb = 20 + 4*ceil(size(count_matrix_tsv, "GB")) + 4*ceil(size(genome_annotation_gtf_file, "GB")) + 2*ceil(size(equivalence_class_definitions, "GB"))
-
-    String overlap_intervals_arg = if defined(overlap_intervals)  then " --overlap-intervals " else ""
-    String overlap_interval_label_arg = if defined(overlap_interval_label) then " --overlap-interval-label " else ""
-    String gencode_reference_gtf_file_arg = if defined(gencode_reference_gtf_file) then " --gencode-reference-gtf " else ""
-
-    String force_gencode_overwrite_flag = if force_anndata_gencode_overwrite then " --force-overwrite-gencode-overlaps " else ""
-
-    String eq_class_arg = if defined(equivalence_class_definitions)  then " --eq-class-defs-tsv " else ""
-
-    command <<<
-        set -euxo pipefail
-        /python_scripts/create_count_matrix_anndata_from_tsv.py \
-            -t ~{count_matrix_tsv} \
-            -g ~{genome_annotation_gtf_file} \
-            ~{overlap_intervals_arg}~{default="" overlap_intervals} \
-            ~{overlap_interval_label_arg}~{default="" overlap_interval_label} \
-            ~{gencode_reference_gtf_file_arg}~{default="" gencode_reference_gtf_file} \
-            ~{eq_class_arg} ~{default="" equivalence_class_definitions} \
-            ~{force_gencode_overwrite_flag} \
-            -o ~{prefix}
-    >>>
-
-    output {
-        File transcript_gene_count_anndata_h5ad = "~{prefix}_tx_gene_counts_adata.h5ad"
-        Array[File] pickles = glob("*.pickle")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          2,
-        mem_gb:             32,
-        disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -405,7 +151,7 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
         cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -421,50 +167,6 @@ task CreateCountMatrixAnndataFromEquivalenceClasses {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
-
-task SubsetCountsMatrixByGenes {
-
-    meta {
-        description : "Subsets a count matrix TSV file to contain only the transcripts from the given list of genes.  Assumes the count matrix was produced by comparison with Gencode (due to data formatting) and that the table is a TSV with samples as rows and transcripts as columns."
-        author : "Jonn Smith"
-        email : "jonn@broadinstitute.org"
-    }
-
-    parameter_meta {
-        count_matrix_tsv : "TSV file containing the counts of each transcript expressed in a sample.  (Transcripts in columns.  Samples in rows.  One header row.)"
-        gene_names : "Array of gene names for which to keep data from the given count matrix TSV."
-    }
-
-    input {
-        File count_matrix_tsv
-        Array[String] gene_names
-    }
-
-
-    # We're subsetting the file, so we should be able to get away with very little space here.
-    # 1x for the file itself
-    # 2x for the results and some wiggle room.
-    Int disk_size = 3 * ceil(size(count_matrix_tsv, "GB"))
-
-    command {
-        /python_scripts/subset_count_matrix_by_gene.py ~{count_matrix_tsv} ~{sep=' ' gene_names}
-    }
-
-    output {
-        File subset_count_matrix_tsv = "count_matrix_subset_by_gene.tsv"
-        File subset_count_matrix_h5ad = "count_matrix_subset_by_gene.h5ad"
-    }
-
-    runtime {
-        docker: "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
-        memory: 16 + " GiB"
-        disks: "local-disk " + disk_size + " HDD"
-        boot_disk_gb: 10
-        preemptible: 0
-        cpu: 8
-    }
-}
-
 
 task QuantifyGffComparison {
     meta {
@@ -544,7 +246,7 @@ task QuantifyGffComparison {
         cpu_cores:          2,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -618,7 +320,7 @@ task CombineEqClassFiles {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"
@@ -703,7 +405,7 @@ CODE
         cpu_cores:          1,
         mem_gb:             32,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-transcript_utils:0.0.14"

@@ -1,7 +1,6 @@
 version 1.0
 
 import "../../structs/Structs.wdl"
-import "../Utility/Utils.wdl"
 import "../Transcriptomics/MASSeq.wdl" as MAS
 
 struct LongbowModelParams {
@@ -169,7 +168,7 @@ task Peek {
         cpu_cores:          4,
         mem_gb:             64,  # TODO: Identify and fix `corrupted double-linked list` issue.  Lots of memory is a bad bandaid.
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -214,7 +213,7 @@ task Annotate {
         cpu_cores:          num_cpus,
         mem_gb:             2*num_cpus,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -271,7 +270,7 @@ task Filter {
         cpu_cores:          num_cpus,
         mem_gb:             2*num_cpus,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -318,7 +317,7 @@ task Segment {
         cpu_cores:          num_cpus,
         mem_gb:             2*num_cpus,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -385,7 +384,7 @@ task Extract {
         cpu_cores:          num_cpus,
         mem_gb:             2*num_cpus,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -443,7 +442,7 @@ task PadUMI
         cpu_cores:          4,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -503,7 +502,7 @@ task PadCBC
         cpu_cores:          4,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -553,7 +552,7 @@ task TagFix
         cpu_cores:          4,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -669,7 +668,7 @@ task Correct {
         cpu_cores:          1,
         mem_gb:             machine_memory[model],  # MUST be this big because of the symspell barcode index.
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -714,7 +713,7 @@ task Stats {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -760,7 +759,7 @@ task Demultiplex {
         cpu_cores:          4,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"
@@ -854,7 +853,7 @@ CODE
         cpu_cores:          1,             # Decent amount of CPU and Memory because network transfer speed is proportional to VM "power"
         mem_gb:             2,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,             # This shouldn't take very long, but it's nice to have things done quickly, so no preemption here.
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-longbow:0.5.40"

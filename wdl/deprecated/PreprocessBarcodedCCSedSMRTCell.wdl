@@ -2,6 +2,7 @@ version 1.0
 
 import "tasks/CCSLima.wdl"
 import "tasks/SMRTtools.wdl"
+import "tasks/Utility/Utils.wdl" as DeprecatedUtils
 import "../tasks/QC/CollectSMRTCellUnalignedMetrics.wdl" as uBAMCustomMetrics
 import "../tasks/Utility//PBUtils.wdl" as PB
 import "../tasks/Utility//Finalize.wdl" as FF
@@ -52,24 +53,21 @@ workflow PreprocessBarcodedCCSedSMRTCell {
         all_lima_metris_tar_gz: "tar.gz file of metric files produced by lima itself, and custom reports from parsing lima.report."
     }
 
+    call DistinguishFiles as prep { input: smrtcell_data_dir = smrtcell_data_dir }
+    String movie = basename(basename(prep.bam_path, ".reads.bam"), ".hifi_reads.bam")
     String workflow_name = "PreprocessBarcodedCCSedSMRTCell"
-
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/" + workflow_name + "/" + movie
     String outdir_metrics = outdir + "/metrics"
 
-    call Utils.SplitDelimitedString as get_barcodes {input: s = barcode_names, separate = ','}
-    call Utils.SplitDelimitedString as get_sample_ids {input: s = downstream_sample_ids, separate = ','}
+    call DeprecatedUtils.SplitDelimitedString as get_barcodes {input: s = barcode_names, separate = ','}
+    call DeprecatedUtils.SplitDelimitedString as get_sample_ids {input: s = downstream_sample_ids, separate = ','}
     if (length(get_barcodes.arr) != length(get_sample_ids.arr)) {
         call Utils.StopWorkflow as unmatched_barcodes_and_samples {
             input: reason = "Length of barcode names array and sample ids array don't match."
         }
     }
-    call Utils.ConstructMap {input: keys = get_barcodes.arr, values = get_sample_ids.arr}
+    call ConstructMap {input: keys = get_barcodes.arr, values = get_sample_ids.arr}
     Map[String, String] barcode_2_sample = ConstructMap.converted
-
-    call DistinguishFiles as prep { input: smrtcell_data_dir = smrtcell_data_dir }
-
-    String movie = basename(basename(prep.bam_path, ".reads.bam"), ".hifi_reads.bam")
 
     ###################################################################################
     call PB.SummarizeCCSReport { input: report = prep.ccs_report_txt_path }
@@ -141,7 +139,7 @@ workflow PreprocessBarcodedCCSedSMRTCell {
         String bc = Lima.barcodes_list[idx]
         call AutodetectedBarcodeIsInExpected as check_bc { input: autodetected_barcode = bc, expected_barcode_names = get_barcodes.arr }
         if (check_bc.is_in) {  # lima autodetected barcodes is assumed to be a superset of actually used barcodes for samples on this Cell
-            call Utils.FixSampleName {
+            call FixSampleName {
                 input:
                     bam = Lima.demux_bams[idx],
                     sample_name = barcode_2_sample[bc]
@@ -338,6 +336,113 @@ task SelectExpectedBarcodesOnly {
 
     output {
         File barcode_2_dir = "selected_barcode_2_folder.tsv"
+    }
+
+    runtime {
+        disks: "local-disk 100 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task FixSampleName {
+
+    meta {
+        desciption:
+        "This fixes the sample name of a demultiplexed BAM"
+    }
+
+    parameter_meta {
+        bam: {
+            localization_optional: true,
+            description: "BAM file"
+        }
+        sample_name: "sample name"
+    }
+
+    input {
+        File bam
+        String sample_name
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String prefix = basename(bam, ".bam")
+    Int disk_size = 3*ceil(size(bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools view --no-PG -H ~{bam} > header.txt
+        awk '$1 ~ /^@RG/' header.txt > rg_line.txt
+        if ! grep -qF "SM:" rg_line.txt; then
+            sed -i "s/$/SM:tbd/" rg_line.txt
+        fi
+        awk -v lib="~{sample_name}" -F '\t' 'BEGIN {OFS="\t"} { for (i=1; i<=NF; ++i) { if ($i ~ "SM:") $i="SM:"lib } print}' \
+            rg_line.txt \
+            > fixed_rg_line.txt
+
+        sed -n '/@RG/q;p' header.txt > first_half.txt
+        sed -n '/@RG/,$p' header.txt | sed '1d' > second_half.txt
+
+        cat first_half.txt fixed_rg_line.txt second_half.txt > fixed_header.txt
+        cat fixed_header.txt
+
+        mv ~{bam} old.bam
+        date
+        samtools reheader fixed_header.txt old.bam > ~{prefix}.bam
+        date
+    >>>
+
+    output {
+        File reheadered_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ConstructMap {
+
+    meta {
+        desciption:
+        "Use only when the keys are guaranteed to be unique and the two arrays are of the same length."
+    }
+
+    parameter_meta {
+        keys: "The keys of the map"
+        values: "The values of the map"
+    }
+
+    input {
+        Array[String] keys
+        Array[String] values
+    }
+    command <<<
+        set -eux
+        paste ~{write_lines(keys)} ~{write_lines(values)} > converted.tsv
+        cat converted.tsv
+    >>>
+
+    output {
+        Map[String, String] converted = read_map("converted.tsv")
     }
 
     runtime {

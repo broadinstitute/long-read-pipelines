@@ -1,9 +1,5 @@
 version 1.0
 
-#######################################################
-# This pipeline calls small variants using DeepVariant.
-#######################################################
-
 import "../../structs/Structs.wdl"
 
 
@@ -22,9 +18,6 @@ workflow CCSPepper {
         pepper_memory: "Memory for Pepper"
         dv_threads: "Number of threads for DeepVariant"
         dv_memory: "Memory for DeepVariant"
-        # when running large scale workflows, we sometimes see errors like the following
-        #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
-        #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
         zones: "select which zone (GCP) to run this task"
     }
 
@@ -93,8 +86,7 @@ task Pepper {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int bam_sz = ceil(size(bam, "GB"))
-	Int disk_size = if bam_sz > 200 then 2*bam_sz else bam_sz + 200
+	Int disk_size = 100 + 2*ceil(size(bam, "GB")) + 2*ceil(size(bai, "GB")) + 2*ceil(size(ref_fasta, "GB")) + 2*ceil(size(ref_fasta_fai, "GB"))
 
     String output_root = "/cromwell_root/pepper_output"
 
@@ -148,7 +140,7 @@ task Pepper {
         cpu_cores:          threads,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       100,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "kishwars/pepper_deepvariant:r0.4.1"
@@ -157,7 +149,7 @@ task Pepper {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
         zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
@@ -236,7 +228,7 @@ task DV {
         cpu_cores:          threads,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       100,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-deepvariant:1.3.0"
@@ -321,7 +313,7 @@ task MarginPhase {
         cpu_cores:          cores,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        boot_disk_gb:       100,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        0,
         docker:             "kishwars/pepper_deepvariant:r0.4.1"

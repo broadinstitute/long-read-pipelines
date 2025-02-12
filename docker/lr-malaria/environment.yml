@@ -1,0 +1,22 @@
+name: lr-malaria
+channels:
+  - default
+  - bioconda
+  - anaconda
+dependencies:
+  - python=3.6
+  - cython
+  - pip
+  - pip:
+    - numpy
+    - scipy
+    - pandas
+    - seaborn
+    - statsmodels
+    - networkx
+    - matplotlib
+    - patsy
+    - openpyxl
+    - scikit-learn
+    - numpyencoder
+    - tqdm

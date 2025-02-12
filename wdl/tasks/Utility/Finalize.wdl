@@ -48,7 +48,7 @@ task FinalizeToFile {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
@@ -106,7 +106,7 @@ task FinalizeToDir {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
@@ -166,7 +166,7 @@ task FinalizeTarGzContents {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            10,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
@@ -216,48 +216,7 @@ task WriteCompletionFile {
         cpu:                    1
         memory:                 1 + " GiB"
         disks: "local-disk " +  10 + " HDD"
-        bootDiskSizeGb:         10
-        preemptible:            2
-        maxRetries:             2
-        docker:                 "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
-    }
-}
-
-task WriteNamedFile {
-
-    meta {
-        description : "Write a file to the given directory with the given name."
-        author : "Jonn Smith"
-        email : "jonn@broadinstitute.org"
-    }
-
-    parameter_meta {
-        name : "Name of the file to write."
-        outdir : "Google cloud path to the destination folder."
-        keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
-    }
-
-    input {
-        String name
-        String outdir
-        File? keyfile
-    }
-
-    command <<<
-        set -euxo pipefail
-
-        touch "~{name}"
-
-        gsutil cp "~{name}" ~{outdir}
-    >>>
-
-    #########################
-
-    runtime {
-        cpu:                    1
-        memory:                 1 + " GiB"
-        disks: "local-disk " +  10 + " HDD"
-        bootDiskSizeGb:         10
+        bootDiskSizeGb:         25
         preemptible:            2
         maxRetries:             2
         docker:                 "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
@@ -308,7 +267,7 @@ task CompressAndFinalize {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
@@ -371,7 +330,7 @@ task FinalizeAndCompress {
         cpu_cores:          2,
         mem_gb:             7,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
@@ -385,5 +344,46 @@ task FinalizeAndCompress {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task WriteNamedFile {
+
+    meta {
+        description : "Write a file to the given directory with the given name."
+        author : "Jonn Smith"
+        email : "jonn@broadinstitute.org"
+    }
+
+    input {
+        String name
+        String outdir
+        File? keyfile
+    }
+
+    parameter_meta {
+        name : "Name of the file to write."
+        outdir : "Google cloud path to the destination folder."
+        keyfile : "[optional] File used to key this finaliation.  Finalization will not take place until the KeyFile exists.  This can be used to force the finaliation to wait until a certain point in a workflow.  NOTE: The latest WDL development spec includes the `after` keyword which will obviate this."
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        touch "~{name}"
+
+        gsutil cp "~{name}" ~{outdir}
+    >>>
+
+    #########################
+
+    runtime {
+        cpu:                    1
+        memory:                 1 + " GiB"
+        disks: "local-disk " +  10 + " HDD"
+        bootDiskSizeGb:         25
+        preemptible:            2
+        maxRetries:             2
+        docker:                 "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
     }
 }

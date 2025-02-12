@@ -126,8 +126,7 @@ workflow GATKBestPraciceForLR {
             call Utils.SortSam as SortBamout {
                 input:
                     input_bam = HaplotypeCallerGATK4.bamout,
-                    output_bam_basename = output_prefix,
-                    compression_level = 2
+                    prefix = output_prefix,
             }
         }
 
@@ -282,7 +281,7 @@ task MergeBamouts {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsde-methods/samtools-cloud:v1.clean"
@@ -354,7 +353,7 @@ task GenotypeGVCFs {
         cpu_cores:          2,
         mem_gb:             7,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-gatk/gatk:latest"
@@ -406,7 +405,7 @@ task PostProcess {
         cpu_cores:          2,
         mem_gb:             7,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-gatk:0.1.1"

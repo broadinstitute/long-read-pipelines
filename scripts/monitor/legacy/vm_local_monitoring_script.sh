@@ -22,7 +22,7 @@
 # cloud storage folder.
 set -Eeuo pipefail
 
-MONITOR_MOUNT_POINT=${MONITOR_MOUNT_POINT:-"/"}
+MONITOR_MOUNT_POINT=${MONITOR_MOUNT_POINT:-"/cromwell_root"}
 SLEEP_TIME=${SLEEP_TIME:-"10"}
 
 function getCpuUsage() {

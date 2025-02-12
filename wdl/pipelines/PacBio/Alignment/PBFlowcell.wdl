@@ -10,8 +10,6 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 
 import "../../../tasks/Transcriptomics/MASSeq.wdl" as MAS
 
-import "../../../tasks/Utility/JupyterNotebooks.wdl" as JUPYTER
-
 workflow PBFlowcell {
 
     meta {
@@ -362,7 +360,7 @@ workflow PBFlowcell {
     }
 
     # Set our library type for our outputs:
-    String lib_type = if (experiment_type == "MASSEQ") then select_first([chosen_mas_seq_model]) else experiment_type
+    String lib_type = if (experiment_type == "MASSEQ") then chosen_mas_seq_model else experiment_type
 
     ##############################################################################################################
     # Write out completion file so in the future we can be 100% sure that this run was good:

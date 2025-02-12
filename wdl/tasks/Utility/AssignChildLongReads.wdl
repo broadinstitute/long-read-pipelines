@@ -2,13 +2,10 @@ version 1.0
 
 import "../../structs/Structs.wdl"
 
-# we separate this out based on two concerns:
-#  1. we can test out using different k-value when collecting parental k-mer states
-#  2. we can collect parental k-mer stats once and classify all children reads (different sibblings, technologies) separately
 workflow AssignChildLongReadsGivenParentalKmerStats {
 
     meta {
-        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication 'De novo assembly of haplotype-resolved genomes with trio binning' https://www.nature.com/articles/nbt.4277 . This holds the sub-workflow for part two: given the k-mer stats database from part one, classify child long reads"
+        description: "A workflow that performs trio-binning of child long reads given parental (short) reads. Based on the trio-canu publication 'De novo assembly of haplotype-resolved genomes with trio binning' https://www.nature.com/articles/nbt.4277 . This holds the sub-workflow for part two: given the k-mer stats database from part one, classify child long reads.  We separate this out based on two concerns:  1. we can test out using different k-value when collecting parental k-mer states  2. we can collect parental k-mer stats once and classify all children reads (different sibblings, technologies) separately."
     }
 
     parameter_meta {
@@ -206,7 +203,7 @@ task AssignChildLongReads {
         cpu_cores:          child_read_assign_threads_est,
         mem_gb:             child_read_assign_memoryG_est,
         disk_gb:            500,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "quay.io/broad-long-read-pipelines/canu:v1.9_wdl_patch_varibale_k"

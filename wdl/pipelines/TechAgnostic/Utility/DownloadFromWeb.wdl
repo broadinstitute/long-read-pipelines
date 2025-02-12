@@ -1,21 +1,11 @@
 version 1.0
 
-##########################################################################################
-# This WDL pipeline downloads directories from HTTP/FTP/SFTP servers in parallel and
-# stores the results in the specified GCS dir.  This pipeline is essentially a Cromwell/GCP
-# reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl).
-##########################################################################################
-
 import "../../../tasks/Utility/Utils.wdl" as Utils
 
 workflow DownloadFromWeb {
-    input {
-        File manifest
 
-        Int num_simultaneous_downloads = 10
-        Boolean prepend_dir_name = true
-
-        String gcs_out_root_dir
+    meta {
+        description: "This WDL pipeline downloads directories from HTTP/FTP/SFTP servers in parallel and stores the results in the specified GCS dir.  This pipeline is essentially a Cromwell/GCP reimagining of the Nextflow/AWS downloading pipeline from @alaincoletta (see: http://broad.io/aws_dl)."
     }
 
     parameter_meta {
@@ -23,6 +13,15 @@ workflow DownloadFromWeb {
         num_simultaneous_downloads: "[default-valued] The number of files to fetch simultaneously."
         prepend_dir_name:           "If true, place the files in a subdirectory based on the basename of the FTP dir."
         gcs_out_root_dir:           "GCS bucket to store the reads, variants, and metrics files"
+    }
+
+    input {
+        File manifest
+
+        Int num_simultaneous_downloads = 10
+        Boolean prepend_dir_name = true
+
+        String gcs_out_root_dir
     }
 
     String outdir = sub(gcs_out_root_dir, "/$", "")
@@ -45,10 +44,12 @@ workflow DownloadFromWeb {
     }
 }
 
-# This task checks to see if a to-be-downloaded file exists at the specified GCS filepath, and if not, initiates a
-# parallel download process.  The downloaded file is then immediately uploaded to the specified GCS filepath.  It
-# is then deleted from local storage here by Cromwell, preventing redundant storage of the data.
 task DownloadFiles {
+
+    meta {
+        description: "This task checks to see if a to-be-downloaded file exists at the specified GCS filepath, and if not, initiates a parallel download process.  The downloaded file is then immediately uploaded to the specified GCS filepath.  It is then deleted from local storage here by Cromwell, preventing redundant storage of the data."
+    }
+
     input {
         File manifest
         Int nth
@@ -93,7 +94,7 @@ task DownloadFiles {
         cpu_cores:          1,
         mem_gb:             2,
         disk_gb:            disk_size_gb,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        3,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-cloud-downloader:0.2.5"

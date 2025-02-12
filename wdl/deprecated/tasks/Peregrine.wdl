@@ -85,7 +85,7 @@ task Assemble {
         cpu_cores:          48,
         mem_gb:             384,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-peregrine:0.1.6"
@@ -128,7 +128,7 @@ task AlignAsPAF {
         cpu_cores:          "~{num_cpus}",
         mem_gb:             20,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        3,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-peregrine:0.1.6"
@@ -171,7 +171,7 @@ task CallWithPaftools {
         cpu_cores:          "~{num_cpus}",
         mem_gb:             20,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        3,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-peregrine:0.1.6"

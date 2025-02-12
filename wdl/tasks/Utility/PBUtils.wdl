@@ -2,57 +2,6 @@ version 1.0
 
 import "../../structs/Structs.wdl"
 
-task FindBams {
-
-    meta {
-        description: "Find all subreads.bam files in a GCS directory."
-    }
-
-    parameter_meta {
-        gcs_input_dir: "GCS directory containing subreads.bam files."
-        runtime_attr_override: "Override default runtime attributes."
-    }
-
-    input {
-        String gcs_input_dir
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    String indir = sub(gcs_input_dir, "/$", "")
-
-    command <<<
-        set -euxo pipefail
-
-        gsutil ls "~{indir}/**subreads.bam" > subread_bams.txt
-    >>>
-
-    output {
-        Array[String] subread_bams = read_lines("subread_bams.txt")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            1,
-        boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
 task GetRunInfo {
 
     meta {
@@ -97,7 +46,7 @@ task GetRunInfo {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            1,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -130,6 +79,7 @@ task ShardLongReads {
         # when running large scale workflows, we sometimes see errors like the following
         #   A resource limit has delayed the operation: generic::resource_exhausted: allocating: selecting resources: selecting region and zone:
         #   no available zones: 2763 LOCAL_SSD_TOTAL_GB (738/30000 available) usage too high
+        # NOTE: Changed disk type to SSD to prevent the above issue -JTS
         zones: "select which zone (GCP) to run this task"
         num_ssds: "number of SSDs to use"
         runtime_attr_override: "Override default runtime attributes."
@@ -178,7 +128,7 @@ task ShardLongReads {
         cpu_cores:          num_threads,
         mem_gb:             mem,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -187,7 +137,7 @@ task ShardLongReads {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"  # If SSD is too slow, revert to LOCAL
         zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
@@ -261,7 +211,7 @@ task CCS {
         cpu_cores:          4,
         mem_gb:             12,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -345,7 +295,7 @@ task ExtractHifiReads {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
@@ -354,7 +304,7 @@ task ExtractHifiReads {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"  # If SSD is too slow, revert to LOCAL
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -398,66 +348,10 @@ task MergeCCSReports {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.38"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task ExtractUncorrectedReads {
-
-    meta {
-        description: "Extract uncorrected reads from subreads and consensus."
-    }
-
-    parameter_meta {
-        subreads: "Input subreads BAM."
-        consensus: "Input consensus BAM."
-        prefix: "Prefix for output files."
-        runtime_attr_override: "Override default runtime attributes."
-    }
-
-    input {
-        File subreads
-        File consensus
-
-        String prefix = "out"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 1 + 2*ceil(size(subreads, "GB") + size(consensus, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        python3 /usr/local/bin/extract_uncorrected_reads.py -o ~{prefix}.bam ~{subreads} ~{consensus}
-    >>>
-
-    output {
-        File uncorrected = "~{prefix}.bam"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             2,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -545,7 +439,7 @@ task Demultiplex {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -598,7 +492,7 @@ task MakeDetailedDemultiplexingReport {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
@@ -649,68 +543,9 @@ task MakeSummarizedDemultiplexingReport {
         cpu_cores:          1,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task MakePerBarcodeDemultiplexingReports {
-
-    meta {
-        description: "Make per-barcode demultiplexing reports."
-    }
-
-    parameter_meta {
-        report: "Input report."
-        type: "Output file type (pdf or png)."
-        runtime_attr_override: "Override default runtime attributes."
-    }
-
-    input {
-        File report
-        String type = "png"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 1 + 2*ceil(size(report, "GB"))
-
-    command <<<
-        set -x
-
-        grep '>' /Sequel_96_barcodes_v2.fasta | sed 's/>//' | while read -r line ; do
-            Rscript /lima_report_detail.R ~{report} ~{type} $line
-
-            if [ -f "detail_hq_length_hist_barcoded_or_not.~{type}" ]; then
-                for f in detail_*; do mv $f $line.$f; done
-            fi
-        done
-    >>>
-
-    output {
-        Array[File] report_files = glob("*.~{type}")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             4,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-metrics:0.1.11"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -765,7 +600,7 @@ task RefineTranscriptReads {
         cpu_cores:          8,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -830,65 +665,7 @@ task ClusterTranscripts {
         cpu_cores:          64,
         mem_gb:             70,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  0,
-        max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task PolishTranscripts {
-
-    meta {
-        description: "Polish transcripts."
-    }
-
-    parameter_meta {
-        bam: "Input BAM file."
-        subreads_bam: "Input subreads BAM file."
-        subreads_pbi: "Input subreads PBI file."
-        prefix: "Prefix for output BAM file."
-        runtime_attr_override: "Override default runtime attributes."
-    }
-
-    input {
-        File bam
-        File subreads_bam
-        File subreads_pbi
-        String prefix = "polished"
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 1 + 2*ceil(size([bam, subreads_bam], "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        isoseq3 polish ~{bam} ~{subreads_bam} ~{prefix}.bam
-    >>>
-
-    output {
-        File polished_bam = "~{prefix}.bam"
-        File polished_fastq = "~{prefix}.hq.fastq.gz"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          24,
-        mem_gb:             64,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -987,7 +764,7 @@ task Align {
         cpu_cores:          cpus,
         mem_gb:             mem,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -1040,7 +817,7 @@ task PBIndex {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -1095,7 +872,7 @@ task CollapseTranscripts {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
@@ -1158,60 +935,7 @@ task SummarizeCCSReport {
         cpu_cores:          1,
         mem_gb:             1,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-    }
-}
-
-task SummarizeXMLMetadata {
-
-    meta {
-        description: "Summarize XML metadata."
-    }
-
-    parameter_meta {
-        xml: "Input XML metadata."
-        runtime_attr_override: "Override default runtime attributes."
-    }
-
-    input {
-        File xml
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = 1 + 2*ceil(size(xml, "GB"))
-
-    command <<<
-        set -euxo pipefail
-
-        cat ~{xml} | grep '<pbds:TotalLength>' | sed 's/<pbds:TotalLength>//g' | sed 's/<\/pbds:TotalLength>//' | sed 's/\s*//g' > xml_total_length.txt
-        cat ~{xml} | grep '<pbds:NumRecords>' | sed 's/<pbds:NumRecords>//g' | sed 's/<\/pbds:NumRecords>//' | sed 's/\s*//g' > xml_num_records.txt
-    >>>
-
-    output {
-        Float xml_total_length = read_float("xml_total_length.txt")
-        Float xml_num_records = read_float("xml_num_records.txt")
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             1,
-        disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
@@ -1264,7 +988,7 @@ task SummarizePBI {
         cpu_cores:          1,
         mem_gb:             16,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"

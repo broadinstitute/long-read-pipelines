@@ -60,24 +60,42 @@ workflows:
 - name: ONTMethylation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Epigenomics/ONTMethylation.wdl
-- name: ONTPfHrp2Hrp3Status
+- name: PfalciparumHrp2Hrp3Status
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/ONT/MultiAnalysis/ONTPfHrp2Hrp3Status.wdl
-- name: ONTPfTypeDrugResistanceMarkers
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumHrp2Hrp3Status.wdl
+- name: PfalciparumTypeDrugResistanceMarkers
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/ONT/MultiAnalysis/ONTPfTypeDrugResistanceMarkers.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumTypeDrugResistanceMarkers.wdl
 - name: PBMASIsoSeqQuantify
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqQuantify.wdl
 - name: PBMASIsoSeqDemultiplex
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/PBMASIsoSeqDemultiplex.wdl
+- name: SRBamToFq
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SRBamToFq.wdl
+- name: SRIndexBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SRIndexBam.wdl
+- name: SRWholeGenome
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/VariantCalling/SRWholeGenome.wdl
+- name: SRFlowcell
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/Alignment/SRFlowcell.wdl
+- name: SRJointCallGVCFsWithGenomicsDB
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/SRJointCallGVCFsWithGenomicsDB.wdl
 - name: LRJointCallGVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRJointCallGVCFs.wdl
 - name: ConvertToHailMT
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ConvertToHailMT.wdl
+- name: ConvertToZarrStore
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ConvertToZarrStore.wdl
 - name: LRConvertBCF
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/LRConvertBCF.wdl
@@ -96,6 +114,60 @@ workflows:
 - name: CleanupIntermediate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
+- name: BenchmarkVCFs
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BenchmarkVCFs.wdl
+- name: CompareVcfBenchmarks
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CompareVcfBenchmarks.wdl
+- name: PanelProcessMalariaBarcodesForRh
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PanelProcessMalariaBarcodesForRh.wdl
+- name: ProcessMalariaBarcodesDemo
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ProcessMalariaBarcodesDemo.wdl
+- name: ExtractRegionsFromBam
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ExtractRegionsFromBam.wdl
+- name: PfalciparumDrugResistanceSummary
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumDrugResistanceSummary.wdl
+- name: SRWholeGenome_Pf_Niare_VQSR
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/SRWholeGenome_Pf_Niare_VQSR.wdl
+- name: SRWholeGenome_Pf_Niare_VETS
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/SRWholeGenome_Pf_Niare_VETS.wdl
+- name: SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR.wdl
+- name: SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS.wdl
+- name: ExpandedDrugResistanceMarkerExtraction
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExpandedDrugResistanceMarkerExtraction.wdl
+- name: ExpandedDrugResistanceMarkerAggregation
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExpandedDrugResistanceMarkerAggregation.wdl
+- name: SvQCPlots
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Visualization/SvQCPlots.wdl
+- name: PfalciparumPolygenomicityBarcodeEstimate
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumPolygenomicityBarcodeEstimate.wdl
+- name: BackupWorkspace
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BackupWorkspace.wdl
+- name: BroadOnPremMalariaAlignmentAndVariantCalling
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling.wdl
+- name: BroadOnPremMalariaJointCalling
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/BroadOnPremMalariaPipeline_2_JointVariantCalling.wdl
+- name: DeepTrio
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/DeepTrio.wdl
 - name: GenerateMalariaReport
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/MalariaReportsWorkflow.wdl

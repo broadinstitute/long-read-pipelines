@@ -19,16 +19,18 @@ workflow CallVariants {
         minsvlen: "Minimum SV length in bp (default: 50)"
         prefix: "Prefix for output files"
         sample_id: "Sample ID"
-        ref_fasta: "Reference FASTA file"
-        ref_fasta_fai: "Reference FASTA index file"
-        ref_dict: "Reference FASTA dictionary file"
+
+        ref_map_file:       "Table indicating reference sequence, auxillary file locations, and metadata."
+
         call_svs: "Call structural variants"
         fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
         tandem_repeat_bed: "BED file containing TRF finder for better PBSV calls (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
+
         call_small_variants: "Call small variants"
         call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria"
         sites_vcf: "for use with Clair"
         sites_vcf_tbi: "for use with Clair"
+
         run_dv_pepper_analysis: "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
         dvp_threads: "number of threads for DV-Pepper"
         dvp_memory: "memory for DV-Pepper"
@@ -43,9 +45,7 @@ workflow CallVariants {
         String prefix
         String sample_id
 
-        File ref_fasta
-        File ref_fasta_fai
-        File ref_dict
+        File ref_map_file
 
         Boolean call_svs
         Boolean fast_less_sensitive_sv
@@ -63,6 +63,9 @@ workflow CallVariants {
         File? ref_scatter_interval_list_ids
     }
 
+    # Read ref map into map data type so we can access its fields:
+    Map[String, String] ref_map = read_map(ref_map_file)
+
     ######################################################################
     # Block for small variants handling
     ######################################################################
@@ -73,10 +76,10 @@ workflow CallVariants {
     if (call_small_variants) {
         # Scatter by chromosome
         Array[String] default_filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
-        Array[String] use_filter = if (call_small_vars_on_mitochondria) then default_filter else flatten([['chrM'],default_filter])
+        Array[String] use_filter = if (call_small_vars_on_mitochondria) then default_filter else flatten([['chrM', ref_map["mt_chr_name"]], default_filter])
         call Utils.MakeChrIntervalList as SmallVariantsScatterPrepp {
             input:
-                ref_dict = ref_dict,
+                ref_dict = ref_map["dict"],
                 filter = use_filter
         }
 
@@ -95,8 +98,8 @@ workflow CallVariants {
                     bam = SmallVariantsScatter.subset_bam,
                     bai = SmallVariantsScatter.subset_bai,
 
-                    ref_fasta     = ref_fasta,
-                    ref_fasta_fai = ref_fasta_fai,
+                    ref_fasta     = ref_map["fasta"],
+                    ref_fasta_fai = ref_map["fai"],
 
                     sites_vcf = sites_vcf,
                     sites_vcf_tbi = sites_vcf_tbi,
@@ -109,14 +112,14 @@ workflow CallVariants {
         call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
             input:
                 vcfs = Clair.vcf,
-                ref_fasta_fai = ref_fasta_fai,
+                ref_fasta_fai = ref_map["fai"],
                 prefix = prefix + ".clair"
         }
 
         call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
             input:
                 vcfs = Clair.gvcf,
-                ref_fasta_fai = ref_fasta_fai,
+                ref_fasta_fai = ref_map["fai"],
                 prefix = prefix + ".clair.g"
         }
 
@@ -142,8 +145,8 @@ workflow CallVariants {
                     input:
                         bam           = size_balanced_scatter.subset_bam,
                         bai           = size_balanced_scatter.subset_bai,
-                        ref_fasta     = ref_fasta,
-                        ref_fasta_fai = ref_fasta_fai,
+                        ref_fasta     = ref_map["fasta"],
+                        ref_fasta_fai = ref_map["fai"],
                         threads       = select_first([dvp_threads]),
                         memory        = select_first([dvp_memory]),
                         zones = arbitrary.zones
@@ -156,21 +159,21 @@ workflow CallVariants {
                 input:
                     vcfs     = Pepper.gVCF,
                     prefix   = dvp_prefix + ".g",
-                    ref_fasta_fai = ref_fasta_fai
+                    ref_fasta_fai = ref_map["fai"]
             }
 
             call VariantUtils.MergeAndSortVCFs as MergeDeepVariantPhasedVCFs {
                 input:
                     vcfs     = Pepper.phasedVCF,
                     prefix   = dvp_prefix + ".phased",
-                    ref_fasta_fai = ref_fasta_fai
+                    ref_fasta_fai = ref_map["fai"]
             }
 
             call VariantUtils.MergeAndSortVCFs as MergeDeepVariantVCFs {
                 input:
                     vcfs     = Pepper.VCF,
                     prefix   = dvp_prefix,
-                    ref_fasta_fai = ref_fasta_fai
+                    ref_fasta_fai = ref_map["fai"]
             }
 
             call Utils.MergeBams {
@@ -188,7 +191,7 @@ workflow CallVariants {
 
             call Utils.MakeChrIntervalList {
             input:
-                ref_dict = ref_dict,
+                ref_dict = ref_map["dict"],
                 filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
             }
 
@@ -206,8 +209,8 @@ workflow CallVariants {
                     input:
                         bam = SubsetBam.subset_bam,
                         bai = SubsetBam.subset_bai,
-                        ref_fasta = ref_fasta,
-                        ref_fasta_fai = ref_fasta_fai,
+                        ref_fasta = ref_map["fasta"],
+                        ref_fasta_fai = ref_map["fai"],
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
                         is_ccs = false,
@@ -225,7 +228,7 @@ workflow CallVariants {
             call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
                 input:
                     vcfs     = RunPBSV.vcf,
-                    ref_dict = ref_dict,
+                    ref_dict = ref_map["dict"],
                     prefix   = prefix + ".pbsv"
             }
 
@@ -236,8 +239,8 @@ workflow CallVariants {
                 input:
                     bam = bam,
                     bai = bai,
-                    ref_fasta = ref_fasta,
-                    ref_fasta_fai = ref_fasta_fai,
+                    ref_fasta = ref_map["fasta"],
+                    ref_fasta_fai = ref_map["fai"],
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
                     is_ccs = false,

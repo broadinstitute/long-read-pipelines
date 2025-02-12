@@ -11,4 +11,4 @@ venv/
 test/test_output/
 __pycache__
 *.zip
-docker/lr-malaria-reports/report-files/Senegal_Terra_Metadata.csv
+.ipynb_checkpoints/

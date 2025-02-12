@@ -1,9 +1,5 @@
 version 1.0
 
-#######################################################
-# This pipeline calls small variants using DeepVariant.
-#######################################################
-
 import "../../structs/Structs.wdl"
 
 task Clair {
@@ -93,7 +89,7 @@ task Clair {
         cpu_cores:          36,
         mem_gb:             72,
         disk_gb:            disk_size,
-        boot_disk_gb:       100,
+        boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
         docker:             "hkubal/clair3:v0.1-r6"

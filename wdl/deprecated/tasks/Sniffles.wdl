@@ -64,7 +64,7 @@ task Sniffles {
         cpu_cores:          cpus,
         mem_gb:             46,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"

@@ -1,6 +1,5 @@
 version 1.0
 
-import "../../../tasks/Utility/ONTUtils.wdl" as ONT
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/VariantCalling/CallVariantsONT.wdl" as VAR
 import "../../../tasks/Utility/Finalize.wdl" as FF
@@ -17,7 +16,7 @@ workflow ONTWholeGenome {
         aligned_bais:       "GCS path to aligned BAM file indices"
         participant_name:   "name of the participant from whom these samples were obtained"
 
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
+        ref_map_file:       "Table indicating reference sequence, auxillary file locations, and metadata."
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
 
         call_svs:               "whether to call SVs"
@@ -61,6 +60,7 @@ workflow ONTWholeGenome {
         File? ref_scatter_interval_list_ids
     }
 
+    # Read ref map into map data type so we can access its fields:
     Map[String, String] ref_map = read_map(ref_map_file)
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/ONTWholeGenome/~{participant_name}"
@@ -121,9 +121,7 @@ workflow ONTWholeGenome {
                 bam               = usable_bam,
                 bai               = usable_bai,
                 sample_id         = participant_name,
-                ref_fasta         = ref_map['fasta'],
-                ref_fasta_fai     = ref_map['fai'],
-                ref_dict          = ref_map['dict'],
+                ref_map_file      = ref_map_file,
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
 
                 prefix = participant_name,

@@ -111,7 +111,7 @@ task HaplotypeCaller_GATK4_VCF {
 
   String bamout_arg = if make_bamout then "-bamout ~{vcf_basename}.bamout.bam" else ""
 
-  Boolean sample_is_female = if defined(sample_gender_known_as_female) && sample_gender_known_as_female then true else false # defaults to not "female sample" if sex info not provided
+  Boolean sample_is_female = select_first([sample_gender_known_as_female, false]) # defaults to not "female sample" if sex info not provided
 
   String extra_args_pcr = if defined(pcr_indel_model_override) then "--pcr-indel-model=~{pcr_indel_model_override} " else " "
   String extra_args_mqft = if defined(mapq_filter_threshold) then "--read-filter MappingQualityReadFilter --minimum-mapping-quality ~{mapq_filter_threshold} " else " "

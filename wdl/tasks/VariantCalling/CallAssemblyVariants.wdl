@@ -1,7 +1,6 @@
 version 1.0
 
 import "../../structs/Structs.wdl"
-import "../Utility/Utils.wdl" as Utils
 
 workflow CallAssemblyVariants {
 
@@ -73,7 +72,7 @@ task AlignAsPAF {
         cpu_cores:          num_cpus,
         mem_gb:             40,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-asm:0.1.13"
@@ -119,7 +118,7 @@ task Paftools {
         cpu_cores:          num_cpus,
         mem_gb:             20,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       25,
         preemptible_tries:  3,
         max_retries:        2,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-asm:0.1.13"
