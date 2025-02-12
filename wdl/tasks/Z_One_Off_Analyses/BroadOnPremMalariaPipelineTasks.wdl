@@ -59,7 +59,7 @@ task VariantRecalibrator {
                 -an SOR \
                 -an DP \
                 -an MQ \
-                --maxGaussians 6 \
+                --maxGaussians 4 \
                 --MQCapForLogitJitterTransform 70
 
         java -Xmx${java_memory_size_mb}M -jar /usr/GenomeAnalysisTK.jar \
@@ -86,7 +86,7 @@ task VariantRecalibrator {
                 -an QD \
                 -an FS \
                 -an MQ \
-                --maxGaussians 4 \
+                --maxGaussians 3 \
                 --MQCapForLogitJitterTransform 70
 
         java -Xmx${java_memory_size_mb}M -jar /usr/GenomeAnalysisTK.jar \
