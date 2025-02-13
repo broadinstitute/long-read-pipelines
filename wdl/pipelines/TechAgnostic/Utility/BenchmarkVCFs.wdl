@@ -1017,7 +1017,7 @@ task EvalForVariantSelection {
 
         VCF=~{vcf}
         if [[ ! -z "~{gatkJarForAnnotation}" ]]; then
-            java -jar ~{gatkJarForAnnotation} VariantAnnotator -V ~{vcf} -O annotated.vcf.gz ~{true="-A" false="" length(annotationNames)>0} ~{sep=" -A " annotationNames} -R ~{reference}
+            java -jar ~{gatkJarForAnnotation} VariantAnnotator -V ~{vcf} -O annotated.vcf.gz ~{true="-A" false="" length(select_first([annotationNames, []])) > 0} ~{sep=" -A " annotationNames} -R ~{reference}
             VCF = annotated.vcf.gz
         else
             touch annotated.vcf.gz
