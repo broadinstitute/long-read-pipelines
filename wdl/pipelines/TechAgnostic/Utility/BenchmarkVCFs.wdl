@@ -217,7 +217,7 @@ workflow Benchmark {
         # Required because of `miniwdl check`
         String tmp_strat_interval_list = select_first([stratifier.intervalList])
 
-        if (stratifier.label != "" && tmp_strat_interval_list != "") {
+        if (defined(stratifier.label) && defined(tmp_strat_interval_list)) {
             String stratLabel = select_first([stratifier.label,""])
             File stratIL = select_first([stratifier.intervalList,""])
             File stratBed = select_first([stratifier.bed,""])

@@ -109,7 +109,7 @@ workflow VerifyFingerprint {
             input:
                 aligned_bam     = ResetCLRBaseQual.barbequed_bam,
                 aligned_bai     = ResetCLRBaseQual.barbequed_bai,
-                min_base_q      = artificial_baseQ_for_CLR,
+                min_base_q      = select_first([artificial_baseQ_for_CLR]),
                 fingerprint_vcf = FilterGenotypesVCF.ready_to_use_vcf,
                 vcf_sample_name = GetVCFSampleName.sample_name,
                 haplotype_map   = ref_map['haplotype_map']
