@@ -102,7 +102,7 @@ task ParentalReadsRepartitionAndMerylConfigure {
 
         Int meryl_operations_threads_est
 
-        Boolean run_with_debug = false
+        Boolean? run_with_debug = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -377,7 +377,7 @@ task MerylMergeAndSubtract {
         Int meryl_operations_threads_est
         Int meryl_memory_in_GB
 
-        Boolean run_with_debug = false
+        Boolean? run_with_debug = false
 
         RuntimeAttr? runtime_attr_override
     }

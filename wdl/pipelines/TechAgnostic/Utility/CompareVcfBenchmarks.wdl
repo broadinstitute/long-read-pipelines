@@ -79,8 +79,8 @@ task CreateGCPlotsTask {
         Array[String]? order_of_samples
         Array[String]? order_of_configurations
 
-        Int mem_gb = 4
-        Int preemptible = 0
+        Int? mem_gb = 4
+        Int? preemptible = 0
     }
 
     String order_of_samples_arg = if !defined(order_of_samples) then "" else "--order-of-samples"
@@ -236,8 +236,8 @@ task CompareBenchmarksTask {
         Array[String]? order_of_configurations
         Array[Int]? deltas
 
-        Int mem_gb = 4
-        Int preemptible = 0
+        Int? mem_gb = 4
+        Int? preemptible = 0
     }
 
     String stratifiers_arg = if !defined(stratifiers) then "" else "--stratifiers"
