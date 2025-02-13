@@ -994,7 +994,7 @@ task EvalForVariantSelection {
         String sampleBase
         String gatkTag
 
-        Array[String] annotationNames=[]
+        Array[String]? annotationNames=[]
         File? gatkJarForAnnotation
         File reference
         File refDict

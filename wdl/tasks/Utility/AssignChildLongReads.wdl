@@ -97,12 +97,12 @@ task AssignChildLongReads {
 
         File vm_local_monitoring_script
 
-        Boolean run_with_debug = false
+        Boolean? run_with_debug = false
 
         RuntimeAttr? runtime_attr_override
     }
 
-    String extra_args = if (run_with_debug) then "-debug" else " "
+    String extra_args = if (defined(run_with_debug) && run_with_debug) then "-debug" else " "
     String resource_script_name = basename(vm_local_monitoring_script)
 
     command <<<
