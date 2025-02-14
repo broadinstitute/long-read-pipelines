@@ -59,7 +59,7 @@ task VariantRecalibrator {
                 -an SOR \
                 -an DP \
                 -an MQ \
-                --maxGaussians 4 \
+                --maxGaussians 8 \
                 --MQCapForLogitJitterTransform 70
 
         java -Xmx${java_memory_size_mb}M -jar /usr/GenomeAnalysisTK.jar \
@@ -86,7 +86,7 @@ task VariantRecalibrator {
                 -an QD \
                 -an FS \
                 -an MQ \
-                --maxGaussians 3 \
+                --maxGaussians 4 \
                 --MQCapForLogitJitterTransform 70
 
         java -Xmx${java_memory_size_mb}M -jar /usr/GenomeAnalysisTK.jar \
@@ -105,11 +105,12 @@ task VariantRecalibrator {
                 -V ~{prefix}.snp.indel.recalibrated.vcf \
                 --filterExpression "VQSLOD <= 0.0"\
                 --filterName "my_variant_filter" \
-                -o ~{prefix}.snp.indel.recalibrated.filtered.vcf
+                -o ~{prefix}.snp.indel.recalibrated.filtered.vcf.gz
     >>>
 
     output {
-        File vcf = "~{prefix}.snp.indel.recalibrated.filtered.vcf"
+        File vcf = "~{prefix}.snp.indel.recalibrated.filtered.vcf.gz"
+        File vcf_index = "~{prefix}.snp.indel.recalibrated.filtered.vcf.gz.tbi"
     }
 
     #########################
