@@ -131,12 +131,14 @@ workflow GenerateMalariaReports {
     }
     
     Map[String, String] ref_map = read_map(ref_map_file)
+    String fasta = ref_map["fasta"]
+    String fai = ref_map["fai"]
 
     call Snapshot.DrugResIGV as GenerateSnapshots {
         input:
             sample_name = sample_name,
-            fasta_path = ref_map["fasta"],
-            fasta_index_path = ref_map["fai"],
+            fasta_path = fasta,
+            fasta_index_path = fai,
             regions_bed = regions_bed,
             aligned_bam = aligned_bam,
             aligned_bai = aligned_bai
