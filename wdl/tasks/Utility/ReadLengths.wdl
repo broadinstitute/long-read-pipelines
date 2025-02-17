@@ -204,9 +204,11 @@ task ReverseYield {
     }
 
     runtime {
-        disks: "local-disk 10 HDD"
-        preemptible_tries:  3
-        max_retries:        2
+        cpu: 4
+        memory: "20 GiB"
+        disks: "local-disk 100 HDD"
+        preemptible_tries:  0
+        max_retries:        0
         docker: "us.gcr.io/broad-dsp-lrma/lr-dyst-peaker:0.0.2"
     }
 }
@@ -230,9 +232,11 @@ task Skewness {
     }
 
     runtime {
-        disks: "local-disk 10 HDD"
-        preemptible_tries:  3
-        max_retries:        2
+        cpu: 4
+        memory: "20 GiB"
+        disks: "local-disk 100 HDD"
+        preemptible_tries:  0
+        max_retries:        0
         docker: "us.gcr.io/broad-dsp-lrma/lr-dyst-peaker:0.0.2"
     }
 }
