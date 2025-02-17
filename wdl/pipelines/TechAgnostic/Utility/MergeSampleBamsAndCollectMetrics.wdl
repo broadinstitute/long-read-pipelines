@@ -54,8 +54,8 @@ workflow Work {
         coverage:
         "whole genome mean coverage"
 
-        nanoplot_summ:
-        "Summary on alignment metrics provided by Nanoplot (todo: study the value of this output)"
+        # nanoplot_summ:
+        # "Summary on alignment metrics provided by Nanoplot (todo: study the value of this output)"
 
         seqkit_stats:
         "A few metrics output by seqkit stats"
@@ -117,7 +117,7 @@ workflow Work {
 
         # metrics block (caveat: always has to keep an eye on the QC subworkflow about outputs)
         Float coverage                               = QCandMetrics.wgs_cov
-        Map[String, Float] nanoplot_summ             = QCandMetrics.nanoplot_summ
+        # Map[String, Float] nanoplot_summ             = QCandMetrics.nanoplot_summ
         Map[String, Float] sam_flag_stats            = QCandMetrics.sam_flag_stats
 
         # metrics for ONT (for Hifi, this should be collected via the assembly route)
