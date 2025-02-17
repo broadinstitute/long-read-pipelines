@@ -53,8 +53,8 @@ workflow Work {
         wgs_cov:
         "whole genome mean coverage"
 
-        nanoplot_summ:
-        "Summary on alignment metrics provided by Nanoplot (todo: study the value of this output)"
+        # nanoplot_summ:
+        # "Summary on alignment metrics provided by Nanoplot (todo: study the value of this output)"
 
         sam_flag_stats:
         "SAM flag stats"
@@ -100,7 +100,7 @@ workflow Work {
 
     output {
         Float wgs_cov                     = MosDepthWGS.wgs_cov
-        Map[String, Float] nanoplot_summ  = NanoPlotFromBam.stats_map
+        # Map[String, Float] nanoplot_summ  = NanoPlotFromBam.stats_map
         Map[String, Float] sam_flag_stats = ParseFlagStatsJson.qc_pass_reads_SAM_flag_stats
 
         # fingerprint
@@ -160,12 +160,12 @@ workflow Work {
 
     ################################
     # nanoplot
-    call NP.NanoPlotFromBam { input: bam = bam, bai = bai, disk_type = disk_type }
-    FinalizationManifestLine b = object
-                                 {files_to_save: flatten([[NanoPlotFromBam.stats], NanoPlotFromBam.plots]),
-                                  is_singleton_file: false,
-                                  destination: metrics_output_dir + "/nanoplot",
-                                  output_attribute_name: "nanoplot"}
+    # call NP.NanoPlotFromBam { input: bam = bam, bai = bai, disk_type = disk_type }
+    # FinalizationManifestLine b = object
+    #                              {files_to_save: flatten([[NanoPlotFromBam.stats], NanoPlotFromBam.plots]),
+    #                               is_singleton_file: false,
+    #                               destination: metrics_output_dir + "/nanoplot",
+    #                               output_attribute_name: "nanoplot"}
 
     ###################################################################################
     # OPTIONAL QC/METRICS
@@ -242,10 +242,11 @@ workflow Work {
     # save results
     ###################################################################################
     call SAVE.SaveFilestoDestination as FF { input:
-        instructions = select_all([a, b, c]),
+        # instructions = select_all([a, b, c]),
+        instructions = select_all([a, c]),
         already_finalized = select_all([methyl_out]),
         key_file = select_first(select_all([MosDepthWGS.summary_txt,
-                                            NanoPlotFromBam.stats,
+                                            # NanoPlotFromBam.stats,
                                             fingerprint.fingerprint_summary,]))
     }
 }

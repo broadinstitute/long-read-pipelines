@@ -43,8 +43,8 @@ workflow ONTFlowcellWGSuBAM {
         wgs_cov:
         "whole genome mean coverage"
 
-        nanoplot_summ:
-        "Summary on alignment metrics provided by Nanoplot (todo: study the value of this output)"
+        # nanoplot_summ:
+        # "Summary on alignment metrics provided by Nanoplot (todo: study the value of this output)"
 
         seqkit_stats:
         "A few metrics output by seqkit stats"
@@ -102,7 +102,7 @@ workflow ONTFlowcellWGSuBAM {
         File aligned_bai = FinalizeAlignedBai.gcs_path
 
         Float wgs_cov                                   = QCandMetrics.wgs_cov
-        Map[String, Float] nanoplot_summ                = QCandMetrics.nanoplot_summ
+        # Map[String, Float] nanoplot_summ                = QCandMetrics.nanoplot_summ
         Map[String, Float] sam_flag_stats               = QCandMetrics.sam_flag_stats
 
         Map[String, Float]? seqkit_stats = FASTQstats.stats
