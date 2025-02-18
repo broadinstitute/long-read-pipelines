@@ -110,7 +110,6 @@ task VariantRecalibrator {
 
     output {
         File vcf = "~{prefix}.snp.indel.recalibrated.filtered.vcf"
-        File vcf_index = "~{prefix}.snp.indel.recalibrated.filtered.vcf.gz"
     }
 
     #########################
