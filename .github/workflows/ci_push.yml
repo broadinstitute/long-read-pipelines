@@ -46,7 +46,7 @@ jobs:
         pip install -r requirements.txt
         $CONDA/bin/conda install -y -c bioconda womtool 
         $CONDA/bin/conda config --add channels conda-forge
-        $CONDA/bin/conda install -y -c conda-forge miniwdl shellcheck
+        $CONDA/bin/conda install -y -c conda-forge "miniwdl>=1.12.1" shellcheck
         echo "$CONDA/bin" >> $GITHUB_PATH
 
     - name: Test with tox
