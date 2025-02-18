@@ -105,12 +105,12 @@ task VariantRecalibrator {
                 -V ~{prefix}.snp.indel.recalibrated.vcf \
                 --filterExpression "VQSLOD <= 0.0"\
                 --filterName "my_variant_filter" \
-                -o ~{prefix}.snp.indel.recalibrated.filtered.vcf.gz
+                -o ~{prefix}.snp.indel.recalibrated.filtered.vcf
     >>>
 
     output {
-        File vcf = "~{prefix}.snp.indel.recalibrated.filtered.vcf.gz"
-        File vcf_index = "~{prefix}.snp.indel.recalibrated.filtered.vcf.gz.tbi"
+        File vcf = "~{prefix}.snp.indel.recalibrated.filtered.vcf"
+        File vcf_index = "~{prefix}.snp.indel.recalibrated.filtered.vcf.gz"
     }
 
     #########################
