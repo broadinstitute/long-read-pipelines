@@ -629,7 +629,7 @@ task HaplotypeCaller {
     Int disk_size = 1 + 4*ceil(size([input_bam, reference_fasta], "GB"))
 
     String gvcf_arg = if (gvcf_mode) then "-ERC GVCF" else ""
-    String out_suffix = if (gvcf_mode) then ".g.vcf" else ".vcf"
+    String out_suffix = if (gvcf_mode) then "g.vcf" else "vcf"
 
     command <<<
         ################################
