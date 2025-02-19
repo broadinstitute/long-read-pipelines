@@ -160,13 +160,17 @@ task SortCompressIndexVcf {
 
         ################################
 
-        bcftools sort -m$((tot_mem_mb-2048))M -Oz2 -o ~{input_vcf}.gz ~{input_vcf}
-        bcftools index --threads ${np} --tbi  ~{input_vcf}.gz
+        # Define output filenames explicitly in the execution root
+        bcftools sort -m$((tot_mem_mb-2048))M -Oz -o "~{basename(input_vcf)}.gz" "~{input_vcf}"
+        bcftools index --threads ${np} --tbi "~{basename(input_vcf)}.gz"
+
+        # List output files for debugging
+        ls -lah "~{basename(input_vcf)}.gz" "~{basename(input_vcf)}.gz.tbi"
     >>>
 
     output {
-        File vcf = "~{input_vcf}.gz"
-        File vcf_index = "~{input_vcf}.gz.tbi"
+        File sorted_vcf = "~{basename(input_vcf)}.gz"
+        File sorted_vcf_index = "~{basename(input_vcf)}.gz.tbi"
     }
 
     #########################
