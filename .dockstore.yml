@@ -168,3 +168,6 @@ workflows:
 - name: DeepTrio
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/DeepTrio.wdl
+- name: GenerateMalariaReport
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/MalariaReportsWorkflow.wdl
