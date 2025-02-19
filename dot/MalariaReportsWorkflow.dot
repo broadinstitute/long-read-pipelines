@@ -1,0 +1,9 @@
+// GenerateMalariaReports
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-GenerateSnapshots" [label=GenerateSnapshots shape=cds]
+	"call-RunReportScript" [label=RunReportScript shape=cds]
+	"call-GenerateSnapshots" -> "call-RunReportScript"
+}
