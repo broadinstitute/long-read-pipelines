@@ -159,14 +159,24 @@ task SortCompressIndexVcf {
         tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
 
         ################################
-        bcftools sort -m$((tot_mem_mb-2048))M -Oz2 -o ./$(basename ~{input_vcf}).gz ~{input_vcf}
-        bcftools index --threads ${np} --tbi  ~$(basename ~{input_vcf}).gz
+
+        # Define output file names in the root execution directory
+        output_vcf="./$(basename ~{input_vcf}).gz"
+        output_index="${output_vcf}.tbi"
+
+        # Run bcftools sort and index, ensuring output is in the execution root
+        bcftools sort -m$((tot_mem_mb-2048))M -Oz -o "${output_vcf}" ~{input_vcf}
+        bcftools index --threads ${np} --tbi "${output_vcf}"
+
+        # Verify files exist
+        ls -lah "${output_vcf}" "${output_index}"
     >>>
 
     output {
-        File vcf = "$(basename ~{input_vcf}).gz"
-        File vcf_index = "$(basename ~{input_vcf}).gz.tbi"
+        File sorted_vcf = "$(basename input_vcf).gz"
+        File sorted_vcf_index = "$(basename input_vcf).gz.tbi"
     }
+
 
     #########################
     RuntimeAttr default_attr = object {
