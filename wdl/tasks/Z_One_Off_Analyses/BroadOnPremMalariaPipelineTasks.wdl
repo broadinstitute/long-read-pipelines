@@ -143,6 +143,7 @@ task SortCompressIndexVcf {
     }
 
     Int disk_size = 10 + 10*ceil(size(input_vcf, "GB"))
+    String base = basename(input_vcf)
 
     command <<<
         ################################
@@ -160,13 +161,13 @@ task SortCompressIndexVcf {
 
         ################################
 
-        bcftools sort -m$((tot_mem_mb-2048))M -Oz2 -o ~{input_vcf}.gz ~{input_vcf}
-        bcftools index --threads ${np} --tbi  ~{input_vcf}.gz
+        bcftools sort -m$((tot_mem_mb-2048))M -Oz2 -o ~{base}.gz ~{input_vcf}
+        bcftools index --threads ${np} --tbi  ~{base}.gz
     >>>
 
     output {
-        File vcf = "~{input_vcf}.gz"
-        File vcf_index = "~{input_vcf}.gz.tbi"
+        File vcf = "~{base}.gz"
+        File vcf_index = "~{base}.gz.tbi"
     }
 
     #########################
