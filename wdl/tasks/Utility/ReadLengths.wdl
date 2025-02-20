@@ -119,7 +119,7 @@ task GetNumReadsAndShorts {
         Float num_shorts = read_float("shorts.txt")
         File rl_bz2 = "~{prefix}.txt.bz2"
     }
-    runtime {cpu: 1 memory: "4 GiB" disks: "local-disk 100 HDD" docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"}
+    runtime {cpu: 1 memory: "4 GiB" disks: "local-disk 100 HDD" preemptible_tries: 1 docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"}
 }
 
 task Dyst {

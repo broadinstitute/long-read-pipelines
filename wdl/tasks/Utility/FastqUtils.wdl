@@ -48,7 +48,7 @@ task Stats {
         mem_gb:                16,
         disk_gb:               disk_size,
         boot_disk_gb:          10,
-        preemptible_tries:     0,
+        preemptible_tries:     1,
         max_retries:           0,
         docker:                "us.gcr.io/broad-dsp-lrma/lr-seqkit:2.4.0"
     }
