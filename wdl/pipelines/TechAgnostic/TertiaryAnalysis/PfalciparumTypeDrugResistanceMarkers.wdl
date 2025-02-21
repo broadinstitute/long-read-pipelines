@@ -97,6 +97,9 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         File? annotated_vcf_index = final_annotated_vcf_index
         File? snpEff_summary = final_snpeff_summary
         File? snpEff_genes = final_snpeff_genes
+
+        # Pull out the drug resistance markers from the raw drug resistance report:
+        File? drug_resistance_markers = select_first([FinalizeDRReport.gcs_path, CallDrugResistanceMutations.report])
     }
 }
 
@@ -315,11 +318,151 @@ task CallDrugResistanceMutations {
             for summary_info in tqdm(drug_res_summary_info, desc="Writing drug resistance summary file"):
                 f.write("\t".join(summary_info))
                 f.write("\n")
+
+        # Now write out the drug resistance markers to their own files:
+        for gene, gene_id, aa_change, status in tqdm(drug_res_summary_info, desc="Writing drug resistance markers"):
+            print(f"Writing stats file: {gene}.{gene_id}.{aa_change}.txt -> {status}")
+            with open(f"{gene}.{gene_id}.{aa_change}.txt", 'w') as f:
+                f.write(f"{status}")
         CODE
+
+        # Now we need to make sure all our output files exist so that they can be read from,
+        # irrespective of whether the associated markers are present in the input file.
+        touch PfFd.PF3D7_1318100.p.Asp193Tyr.txt
+        touch Pfaat1.PF3D7_0629500.p.Gln454Glu.txt
+        touch Pfaat1.PF3D7_0629500.p.Lys541Asn.txt
+        touch Pfaat1.PF3D7_0629500.p.Phe313Ser.txt
+        touch Pfaat1.PF3D7_0629500.p.Ser258Leu.txt
+        touch Pfap2-mu.PF3D7_1218300.p.Ile592Thr.txt
+        touch Pfarps10.PF3D7_1460900.p.Val127Met.txt
+        touch Pfatg18.PF3D7_1012900.p.Thr38Ile.txt
+        touch Pfcarl.PF3D7_0321900.p.Ile1139Lys.txt
+        touch Pfcarl.PF3D7_0321900.p.Leu830Val.txt
+        touch Pfcarl.PF3D7_0321900.p.Ser1076Asn.txt
+        touch Pfcarl.PF3D7_0321900.p.Ser1076Ile.txt
+        touch Pfcarl.PF3D7_0321900.p.Val1103Leu.txt
+        touch Pfcoronin.PF3D7_1251200.p.Arg100Lys.txt
+        touch Pfcoronin.PF3D7_1251200.p.Glu107Val.txt
+        touch Pfcoronin.PF3D7_1251200.p.Gly50Glu.txt
+        touch Pfcoronin.PF3D7_1251200.p.Pro76Ser.txt
+        touch Pfcrt.PF3D7_0709000.p.Asn75Glu.txt
+        touch Pfcrt.PF3D7_0709000.p.Cys101Phe.txt
+        touch Pfcrt.PF3D7_0709000.p.Cys72Ser.txt
+        touch Pfcrt.PF3D7_0709000.p.Gly353Val.txt
+        touch Pfcrt.PF3D7_0709000.p.His97Tyr.txt
+        touch Pfcrt.PF3D7_0709000.p.Lys76Thr.txt
+        touch Pfcrt.PF3D7_0709000.p.Met343Leu.txt
+        touch Pfcrt.PF3D7_0709000.p.Met74Ile.txt
+        touch Pfcrt.PF3D7_0709000.p.Phe145Ile.txt
+        touch Pfcrt.PF3D7_0709000.p.Ser350Arg.txt
+        touch Pfdhfr.PF3D7_0417200.p.Asn51Ile.txt
+        touch Pfdhfr.PF3D7_0417200.p.Cys50Arg.txt
+        touch Pfdhfr.PF3D7_0417200.p.Cys59Arg.txt
+        touch Pfdhfr.PF3D7_0417200.p.Ile164Lys.txt
+        touch Pfdhfr.PF3D7_0417200.p.Ser108Asn.txt
+        touch Pfdhps.PF3D7_0810800.p.Ala581Gly.txt
+        touch Pfdhps.PF3D7_0810800.p.Ala613Ser.txt
+        touch Pfdhps.PF3D7_0810800.p.Ala613Thr.txt
+        touch Pfdhps.PF3D7_0810800.p.Lys437Gly.txt
+        touch Pfdhps.PF3D7_0810800.p.Lys540Glu.txt
+        touch Pfdhps.PF3D7_0810800.p.Ser436Ala.txt
+        touch Pfexo.PF3D7_1362500.p.Glu415Gly.txt
+        touch Pfkelch13.PF3D7_1343700.p.Ala675Val.txt
+        touch Pfkelch13.PF3D7_1343700.p.Arg539Thr.txt
+        touch Pfkelch13.PF3D7_1343700.p.Arg561His.txt
+        touch Pfkelch13.PF3D7_1343700.p.Arg633Ile.txt
+        touch Pfkelch13.PF3D7_1343700.p.Asn458Tyr.txt
+        touch Pfkelch13.PF3D7_1343700.p.Cys580Tyr.txt
+        touch Pfkelch13.PF3D7_1343700.p.Ile543Thr.txt
+        touch Pfkelch13.PF3D7_1343700.p.Met476Ile.txt
+        touch Pfkelch13.PF3D7_1343700.p.Met579Ile.txt
+        touch Pfkelch13.PF3D7_1343700.p.Phe446Ile.txt
+        touch Pfkelch13.PF3D7_1343700.p.Phe553Leu.txt
+        touch Pfkelch13.PF3D7_1343700.p.Phe574Leu.txt
+        touch Pfkelch13.PF3D7_1343700.p.Phe673Ile.txt
+        touch Pfkelch13.PF3D7_1343700.p.Pro441Ile.txt
+        touch Pfkelch13.PF3D7_1343700.p.Pro553Leu.txt
+        touch Pfkelch13.PF3D7_1343700.p.Pro574Leu.txt
+        touch Pfkelch13.PF3D7_1343700.p.Tyr493His.txt
+        touch Pfkelch13.PF3D7_1343700.p.Val568Gly.txt
+        touch Pfmdr1.PF3D7_0523000.p.Asn1024Asp.txt
+        touch Pfmdr1.PF3D7_0523000.p.Asn86Tyr.txt
+        touch Pfmdr1.PF3D7_0523000.p.Asp1246Tyr.txt
+        touch Pfmdr1.PF3D7_0523000.p.Ser1034Cys.txt
+        touch Pfmdr1.PF3D7_0523000.p.Tyr184Phe.txt
+        touch Pfmdr2.PF3D7_1447900.p.Thr484Ile.txt
+        touch Pfubp1.PF3D7_0104300.p.Val3275Phe.txt
     >>>
 
     output {
         File report = "~{out_file_name}"
+
+        # Pull out the drug resistance markers from the raw drug resistance report:
+        # Note: We have to list them individually here because Terra can't handle programmatic output naming.
+        String? pfFd_Asp_193_Tyr = read_string("PfFd.PF3D7_1318100.p.Asp193Tyr.txt")
+        String? pfaat1_Gln_454_Glu = read_string("Pfaat1.PF3D7_0629500.p.Gln454Glu.txt")
+        String? pfaat1_Lys_541_Asn = read_string("Pfaat1.PF3D7_0629500.p.Lys541Asn.txt")
+        String? pfaat1_Phe_313_Ser = read_string("Pfaat1.PF3D7_0629500.p.Phe313Ser.txt")
+        String? pfaat1_Ser_258_Leu = read_string("Pfaat1.PF3D7_0629500.p.Ser258Leu.txt")
+        String? pfap2_mu_Ile_592_Thr = read_string("Pfap2-mu.PF3D7_1218300.p.Ile592Thr.txt")
+        String? pfarps10_Val_127_Met = read_string("Pfarps10.PF3D7_1460900.p.Val127Met.txt")
+        String? pfatg18_Thr_38_Ile = read_string("Pfatg18.PF3D7_1012900.p.Thr38Ile.txt")
+        String? pfcarl_Ile_1139_Lys = read_string("Pfcarl.PF3D7_0321900.p.Ile1139Lys.txt")
+        String? pfcarl_Leu_830_Val = read_string("Pfcarl.PF3D7_0321900.p.Leu830Val.txt")
+        String? pfcarl_Ser_1076_Asn = read_string("Pfcarl.PF3D7_0321900.p.Ser1076Asn.txt")
+        String? pfcarl_Ser_1076_Ile = read_string("Pfcarl.PF3D7_0321900.p.Ser1076Ile.txt")
+        String? pfcarl_Val_1103_Leu = read_string("Pfcarl.PF3D7_0321900.p.Val1103Leu.txt")
+        String? pfcoronin_Arg_100_Lys = read_string("Pfcoronin.PF3D7_1251200.p.Arg100Lys.txt")
+        String? pfcoronin_Glu_107_Val = read_string("Pfcoronin.PF3D7_1251200.p.Glu107Val.txt")
+        String? pfcoronin_Gly_50_Glu = read_string("Pfcoronin.PF3D7_1251200.p.Gly50Glu.txt")
+        String? pfcoronin_Pro_76_Ser = read_string("Pfcoronin.PF3D7_1251200.p.Pro76Ser.txt")
+        String? pfcrt_Asn_75_Glu = read_string("Pfcrt.PF3D7_0709000.p.Asn75Glu.txt")
+        String? pfcrt_Cys_101_Phe = read_string("Pfcrt.PF3D7_0709000.p.Cys101Phe.txt")
+        String? pfcrt_Cys_72_Ser = read_string("Pfcrt.PF3D7_0709000.p.Cys72Ser.txt")
+        String? pfcrt_Gly_353_Val = read_string("Pfcrt.PF3D7_0709000.p.Gly353Val.txt")
+        String? pfcrt_His_97_Tyr = read_string("Pfcrt.PF3D7_0709000.p.His97Tyr.txt")
+        String? pfcrt_Lys_76_Thr = read_string("Pfcrt.PF3D7_0709000.p.Lys76Thr.txt")
+        String? pfcrt_Met_343_Leu = read_string("Pfcrt.PF3D7_0709000.p.Met343Leu.txt")
+        String? pfcrt_Met_74_Ile = read_string("Pfcrt.PF3D7_0709000.p.Met74Ile.txt")
+        String? pfcrt_Phe_145_Ile = read_string("Pfcrt.PF3D7_0709000.p.Phe145Ile.txt")
+        String? pfcrt_Ser_350_Arg = read_string("Pfcrt.PF3D7_0709000.p.Ser350Arg.txt")
+        String? pfdhfr_Asn_51_Ile = read_string("Pfdhfr.PF3D7_0417200.p.Asn51Ile.txt")
+        String? pfdhfr_Cys_50_Arg = read_string("Pfdhfr.PF3D7_0417200.p.Cys50Arg.txt")
+        String? pfdhfr_Cys_59_Arg = read_string("Pfdhfr.PF3D7_0417200.p.Cys59Arg.txt")
+        String? pfdhfr_Ile_164_Lys = read_string("Pfdhfr.PF3D7_0417200.p.Ile164Lys.txt")
+        String? pfdhfr_Ser_108_Asn = read_string("Pfdhfr.PF3D7_0417200.p.Ser108Asn.txt")
+        String? pfdhps_Ala_581_Gly = read_string("Pfdhps.PF3D7_0810800.p.Ala581Gly.txt")
+        String? pfdhps_Ala_613_Ser = read_string("Pfdhps.PF3D7_0810800.p.Ala613Ser.txt")
+        String? pfdhps_Ala_613_Thr = read_string("Pfdhps.PF3D7_0810800.p.Ala613Thr.txt")
+        String? pfdhps_Lys_437_Gly = read_string("Pfdhps.PF3D7_0810800.p.Lys437Gly.txt")
+        String? pfdhps_Lys_540_Glu = read_string("Pfdhps.PF3D7_0810800.p.Lys540Glu.txt")
+        String? pfdhps_Ser_436_Ala = read_string("Pfdhps.PF3D7_0810800.p.Ser436Ala.txt")
+        String? pfexo_Glu_415_Gly = read_string("Pfexo.PF3D7_1362500.p.Glu415Gly.txt")
+        String? pfkelch13_Ala_675_Val = read_string("Pfkelch13.PF3D7_1343700.p.Ala675Val.txt")
+        String? pfkelch13_Arg_539_Thr = read_string("Pfkelch13.PF3D7_1343700.p.Arg539Thr.txt")
+        String? pfkelch13_Arg_561_His = read_string("Pfkelch13.PF3D7_1343700.p.Arg561His.txt")
+        String? pfkelch13_Arg_633_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Arg633Ile.txt")
+        String? pfkelch13_Asn_458_Tyr = read_string("Pfkelch13.PF3D7_1343700.p.Asn458Tyr.txt")
+        String? pfkelch13_Cys_580_Tyr = read_string("Pfkelch13.PF3D7_1343700.p.Cys580Tyr.txt")
+        String? pfkelch13_Ile_543_Thr = read_string("Pfkelch13.PF3D7_1343700.p.Ile543Thr.txt")
+        String? pfkelch13_Met_476_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Met476Ile.txt")
+        String? pfkelch13_Met_579_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Met579Ile.txt")
+        String? pfkelch13_Phe_446_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Phe446Ile.txt")
+        String? pfkelch13_Phe_553_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Phe553Leu.txt")
+        String? pfkelch13_Phe_574_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Phe574Leu.txt")
+        String? pfkelch13_Phe_673_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Phe673Ile.txt")
+        String? pfkelch13_Pro_441_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Pro441Ile.txt")
+        String? pfkelch13_Pro_553_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Pro553Leu.txt")
+        String? pfkelch13_Pro_574_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Pro574Leu.txt")
+        String? pfkelch13_Tyr_493_His = read_string("Pfkelch13.PF3D7_1343700.p.Tyr493His.txt")
+        String? pfkelch13_Val_568_Gly = read_string("Pfkelch13.PF3D7_1343700.p.Val568Gly.txt")
+        String? pfmdr1_Asn_1024_Asp = read_string("Pfmdr1.PF3D7_0523000.p.Asn1024Asp.txt")
+        String? pfmdr1_Asn_86_Tyr = read_string("Pfmdr1.PF3D7_0523000.p.Asn86Tyr.txt")
+        String? pfmdr1_Asp_1246_Tyr = read_string("Pfmdr1.PF3D7_0523000.p.Asp1246Tyr.txt")
+        String? pfmdr1_Ser_1034_Cys = read_string("Pfmdr1.PF3D7_0523000.p.Ser1034Cys.txt")
+        String? pfmdr1_Tyr_184_Phe = read_string("Pfmdr1.PF3D7_0523000.p.Tyr184Phe.txt")
+        String? pfmdr2_Thr_484_Ile = read_string("Pfmdr2.PF3D7_1447900.p.Thr484Ile.txt")
+        String? pfubp1_Val_3275_Phe = read_string("Pfubp1.PF3D7_0104300.p.Val3275Phe.txt")
     }
 
     #########################
