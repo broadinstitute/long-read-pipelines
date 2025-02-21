@@ -405,7 +405,7 @@ def plot_dr_bubbles(dr_report_file):
     dr_info = defaultdict(list)
     for line in dr_report_contents.split("\n"):
         if len(line) > 1:
-            gene, loc, variant, presence = line.split(" ")
+            gene, loc, variant, presence = line.split("\t")
             presence = presence == "present"
 
             dr_info[gene].append([variant, presence])
