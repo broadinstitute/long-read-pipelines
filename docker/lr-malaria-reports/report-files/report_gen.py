@@ -389,7 +389,7 @@ def plot_dr_bubbles(dr_report_file):
     cur_df = None
     for line in dr_report_contents.split("\n"):
         if len(line) > 1:
-            gene, loc, variant, presence = line.split(" ")
+            gene, loc, variant, presence = line.split("\t")
             if gene != last_gene:
                 # must make a new dataframe
                 if last_gene:
