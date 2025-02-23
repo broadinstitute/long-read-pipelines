@@ -2,7 +2,6 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 import "../../../tasks/TertiaryAnalysis/FunctionalAnnotation.wdl" as FUNK
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PfalciparumTypeDrugResistanceMarkers {
 
@@ -14,11 +13,9 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         vcf_index: "Index of the VCF file to process"
 
         snpeff_db: "SnpEff database for functional annotation"
+        snpeff_db_identifier: "Identifier for the SnpEff database to use"
         drug_resistance_list: "List of drug resistance markers for which to search"
         ref_map_file:    "Table indicating reference sequence, auxillary file locations, and metadata."
-
-        dir_prefix: "Prefix for output directory"
-        gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
 
         do_functional_annotation: "Whether to perform functional annotation"
     }
@@ -28,11 +25,9 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         File vcf_index
 
         File snpeff_db
+        String snpeff_db_identifier
         File drug_resistance_list
         File ref_map_file
-
-        String dir_prefix
-        String? gcs_out_root_dir
 
         Boolean do_functional_annotation = true
     }
@@ -41,7 +36,7 @@ workflow PfalciparumTypeDrugResistanceMarkers {
     Map[String, String] ref_map = read_map(ref_map_file)
 
     if (do_functional_annotation) {
-        call FUNK.FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db }
+        call FUNK.FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db, snpeff_db_identifier = snpeff_db_identifier }
     }
 
     call CallDrugResistanceMutations {
@@ -58,33 +53,9 @@ workflow PfalciparumTypeDrugResistanceMarkers {
             prefix = basename(basename(vcf, ".gz"), ".vcf")
     }
 
-    # Finalize data
-    if (defined(gcs_out_root_dir)) {
-
-        String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
-
-        String outdir = sub(concrete_gcs_out_root_dir, "/$", "") + "/PfalciparumTypeDrugResistanceMarkers/~{dir_prefix}"
-        String dir = outdir + "/reports"
-
-        call FF.FinalizeToFile as FinalizeDRReport { input: outdir = dir, file = CallDrugResistanceMutations.report }
-        call FF.FinalizeToFile as FinalizeDRSummary { input: outdir = dir, file = CreateDrugResistanceSummary.resistance_summary }
-
-        if (do_functional_annotation) {
-            call FF.FinalizeToFile as FinalizeAnnotatedVCF { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.annotated_vcf]) }
-            call FF.FinalizeToFile as FinalizeAnnotatedVCFIndex { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.annotated_vcf_index]) }
-            call FF.FinalizeToFile as FinalizeSnpEffSummary { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.snpEff_summary]) }
-            call FF.FinalizeToFile as FinalizeSnpEffGenes { input: outdir = dir, file = select_first([FunctionallyAnnotateVariants.snpEff_genes]) }
-        }
-
-        File final_annotated_vcf = select_first([FinalizeAnnotatedVCF.gcs_path, FunctionallyAnnotateVariants.annotated_vcf])
-        File final_annotated_vcf_index = select_first([FinalizeAnnotatedVCFIndex.gcs_path, FunctionallyAnnotateVariants.annotated_vcf_index])
-        File final_snpeff_summary = select_first([FinalizeSnpEffSummary.gcs_path, FunctionallyAnnotateVariants.snpEff_summary])
-        File final_snpeff_genes = select_first([FinalizeSnpEffGenes.gcs_path, FunctionallyAnnotateVariants.snpEff_genes])
-    }
-
     output {
-        File drug_resistance_summary = select_first([FinalizeDRSummary.gcs_path, CreateDrugResistanceSummary.resistance_summary])
-        File raw_drug_res_report = select_first([FinalizeDRReport.gcs_path, CallDrugResistanceMutations.report])
+        File drug_resistance_summary = CreateDrugResistanceSummary.resistance_summary
+        File raw_drug_res_report = CallDrugResistanceMutations.report
 
         String predicted_drug_status_chloroquine   = CreateDrugResistanceSummary.predicted_chloroquine_status
         String predicted_drug_status_pyrimethamine = CreateDrugResistanceSummary.predicted_pyrimethamine_status
@@ -93,13 +64,14 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         String predicted_drug_status_artemisinin   = CreateDrugResistanceSummary.predicted_artemisinin_status
         String predicted_drug_status_piperaquine   = CreateDrugResistanceSummary.predicted_piperaquine_status
 
-        File? annotated_vcf = final_annotated_vcf
-        File? annotated_vcf_index = final_annotated_vcf_index
-        File? snpEff_summary = final_snpeff_summary
-        File? snpEff_genes = final_snpeff_genes
+        File annotated_vcf = select_first([FunctionallyAnnotateVariants.annotated_vcf, vcf])
+        File annotated_vcf_index = select_first([FunctionallyAnnotateVariants.annotated_vcf_index, vcf_index])
+
+        File? snpEff_summary = FunctionallyAnnotateVariants.snpEff_summary
+        File? snpEff_genes = FunctionallyAnnotateVariants.snpEff_genes
 
         # Pull out the drug resistance markers from the raw drug resistance report:
-        File? drug_resistance_markers = select_first([FinalizeDRReport.gcs_path, CallDrugResistanceMutations.report])
+        File drug_resistance_markers = CallDrugResistanceMutations.report
     }
 }
 
@@ -399,70 +371,70 @@ task CallDrugResistanceMutations {
 
         # Pull out the drug resistance markers from the raw drug resistance report:
         # Note: We have to list them individually here because Terra can't handle programmatic output naming.
-        String? pfFd_Asp_193_Tyr = read_string("PfFd.PF3D7_1318100.p.Asp193Tyr.txt")
-        String? pfaat1_Gln_454_Glu = read_string("Pfaat1.PF3D7_0629500.p.Gln454Glu.txt")
-        String? pfaat1_Lys_541_Asn = read_string("Pfaat1.PF3D7_0629500.p.Lys541Asn.txt")
-        String? pfaat1_Phe_313_Ser = read_string("Pfaat1.PF3D7_0629500.p.Phe313Ser.txt")
-        String? pfaat1_Ser_258_Leu = read_string("Pfaat1.PF3D7_0629500.p.Ser258Leu.txt")
-        String? pfap2_mu_Ile_592_Thr = read_string("Pfap2-mu.PF3D7_1218300.p.Ile592Thr.txt")
-        String? pfarps10_Val_127_Met = read_string("Pfarps10.PF3D7_1460900.p.Val127Met.txt")
-        String? pfatg18_Thr_38_Ile = read_string("Pfatg18.PF3D7_1012900.p.Thr38Ile.txt")
-        String? pfcarl_Ile_1139_Lys = read_string("Pfcarl.PF3D7_0321900.p.Ile1139Lys.txt")
-        String? pfcarl_Leu_830_Val = read_string("Pfcarl.PF3D7_0321900.p.Leu830Val.txt")
-        String? pfcarl_Ser_1076_Asn = read_string("Pfcarl.PF3D7_0321900.p.Ser1076Asn.txt")
-        String? pfcarl_Ser_1076_Ile = read_string("Pfcarl.PF3D7_0321900.p.Ser1076Ile.txt")
-        String? pfcarl_Val_1103_Leu = read_string("Pfcarl.PF3D7_0321900.p.Val1103Leu.txt")
-        String? pfcoronin_Arg_100_Lys = read_string("Pfcoronin.PF3D7_1251200.p.Arg100Lys.txt")
-        String? pfcoronin_Glu_107_Val = read_string("Pfcoronin.PF3D7_1251200.p.Glu107Val.txt")
-        String? pfcoronin_Gly_50_Glu = read_string("Pfcoronin.PF3D7_1251200.p.Gly50Glu.txt")
-        String? pfcoronin_Pro_76_Ser = read_string("Pfcoronin.PF3D7_1251200.p.Pro76Ser.txt")
-        String? pfcrt_Asn_75_Glu = read_string("Pfcrt.PF3D7_0709000.p.Asn75Glu.txt")
-        String? pfcrt_Cys_101_Phe = read_string("Pfcrt.PF3D7_0709000.p.Cys101Phe.txt")
-        String? pfcrt_Cys_72_Ser = read_string("Pfcrt.PF3D7_0709000.p.Cys72Ser.txt")
-        String? pfcrt_Gly_353_Val = read_string("Pfcrt.PF3D7_0709000.p.Gly353Val.txt")
-        String? pfcrt_His_97_Tyr = read_string("Pfcrt.PF3D7_0709000.p.His97Tyr.txt")
-        String? pfcrt_Lys_76_Thr = read_string("Pfcrt.PF3D7_0709000.p.Lys76Thr.txt")
-        String? pfcrt_Met_343_Leu = read_string("Pfcrt.PF3D7_0709000.p.Met343Leu.txt")
-        String? pfcrt_Met_74_Ile = read_string("Pfcrt.PF3D7_0709000.p.Met74Ile.txt")
-        String? pfcrt_Phe_145_Ile = read_string("Pfcrt.PF3D7_0709000.p.Phe145Ile.txt")
-        String? pfcrt_Ser_350_Arg = read_string("Pfcrt.PF3D7_0709000.p.Ser350Arg.txt")
-        String? pfdhfr_Asn_51_Ile = read_string("Pfdhfr.PF3D7_0417200.p.Asn51Ile.txt")
-        String? pfdhfr_Cys_50_Arg = read_string("Pfdhfr.PF3D7_0417200.p.Cys50Arg.txt")
-        String? pfdhfr_Cys_59_Arg = read_string("Pfdhfr.PF3D7_0417200.p.Cys59Arg.txt")
-        String? pfdhfr_Ile_164_Lys = read_string("Pfdhfr.PF3D7_0417200.p.Ile164Lys.txt")
-        String? pfdhfr_Ser_108_Asn = read_string("Pfdhfr.PF3D7_0417200.p.Ser108Asn.txt")
-        String? pfdhps_Ala_581_Gly = read_string("Pfdhps.PF3D7_0810800.p.Ala581Gly.txt")
-        String? pfdhps_Ala_613_Ser = read_string("Pfdhps.PF3D7_0810800.p.Ala613Ser.txt")
-        String? pfdhps_Ala_613_Thr = read_string("Pfdhps.PF3D7_0810800.p.Ala613Thr.txt")
-        String? pfdhps_Lys_437_Gly = read_string("Pfdhps.PF3D7_0810800.p.Lys437Gly.txt")
-        String? pfdhps_Lys_540_Glu = read_string("Pfdhps.PF3D7_0810800.p.Lys540Glu.txt")
-        String? pfdhps_Ser_436_Ala = read_string("Pfdhps.PF3D7_0810800.p.Ser436Ala.txt")
-        String? pfexo_Glu_415_Gly = read_string("Pfexo.PF3D7_1362500.p.Glu415Gly.txt")
-        String? pfkelch13_Ala_675_Val = read_string("Pfkelch13.PF3D7_1343700.p.Ala675Val.txt")
-        String? pfkelch13_Arg_539_Thr = read_string("Pfkelch13.PF3D7_1343700.p.Arg539Thr.txt")
-        String? pfkelch13_Arg_561_His = read_string("Pfkelch13.PF3D7_1343700.p.Arg561His.txt")
-        String? pfkelch13_Arg_633_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Arg633Ile.txt")
-        String? pfkelch13_Asn_458_Tyr = read_string("Pfkelch13.PF3D7_1343700.p.Asn458Tyr.txt")
-        String? pfkelch13_Cys_580_Tyr = read_string("Pfkelch13.PF3D7_1343700.p.Cys580Tyr.txt")
-        String? pfkelch13_Ile_543_Thr = read_string("Pfkelch13.PF3D7_1343700.p.Ile543Thr.txt")
-        String? pfkelch13_Met_476_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Met476Ile.txt")
-        String? pfkelch13_Met_579_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Met579Ile.txt")
-        String? pfkelch13_Phe_446_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Phe446Ile.txt")
-        String? pfkelch13_Phe_553_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Phe553Leu.txt")
-        String? pfkelch13_Phe_574_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Phe574Leu.txt")
-        String? pfkelch13_Phe_673_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Phe673Ile.txt")
-        String? pfkelch13_Pro_441_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Pro441Ile.txt")
-        String? pfkelch13_Pro_553_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Pro553Leu.txt")
-        String? pfkelch13_Pro_574_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Pro574Leu.txt")
-        String? pfkelch13_Tyr_493_His = read_string("Pfkelch13.PF3D7_1343700.p.Tyr493His.txt")
-        String? pfkelch13_Val_568_Gly = read_string("Pfkelch13.PF3D7_1343700.p.Val568Gly.txt")
-        String? pfmdr1_Asn_1024_Asp = read_string("Pfmdr1.PF3D7_0523000.p.Asn1024Asp.txt")
-        String? pfmdr1_Asn_86_Tyr = read_string("Pfmdr1.PF3D7_0523000.p.Asn86Tyr.txt")
-        String? pfmdr1_Asp_1246_Tyr = read_string("Pfmdr1.PF3D7_0523000.p.Asp1246Tyr.txt")
-        String? pfmdr1_Ser_1034_Cys = read_string("Pfmdr1.PF3D7_0523000.p.Ser1034Cys.txt")
-        String? pfmdr1_Tyr_184_Phe = read_string("Pfmdr1.PF3D7_0523000.p.Tyr184Phe.txt")
-        String? pfmdr2_Thr_484_Ile = read_string("Pfmdr2.PF3D7_1447900.p.Thr484Ile.txt")
-        String? pfubp1_Val_3275_Phe = read_string("Pfubp1.PF3D7_0104300.p.Val3275Phe.txt")
+        String pfFd_Asp_193_Tyr = read_string("PfFd.PF3D7_1318100.p.Asp193Tyr.txt")
+        String pfaat1_Gln_454_Glu = read_string("Pfaat1.PF3D7_0629500.p.Gln454Glu.txt")
+        String pfaat1_Lys_541_Asn = read_string("Pfaat1.PF3D7_0629500.p.Lys541Asn.txt")
+        String pfaat1_Phe_313_Ser = read_string("Pfaat1.PF3D7_0629500.p.Phe313Ser.txt")
+        String pfaat1_Ser_258_Leu = read_string("Pfaat1.PF3D7_0629500.p.Ser258Leu.txt")
+        String pfap2_mu_Ile_592_Thr = read_string("Pfap2-mu.PF3D7_1218300.p.Ile592Thr.txt")
+        String pfarps10_Val_127_Met = read_string("Pfarps10.PF3D7_1460900.p.Val127Met.txt")
+        String pfatg18_Thr_38_Ile = read_string("Pfatg18.PF3D7_1012900.p.Thr38Ile.txt")
+        String pfcarl_Ile_1139_Lys = read_string("Pfcarl.PF3D7_0321900.p.Ile1139Lys.txt")
+        String pfcarl_Leu_830_Val = read_string("Pfcarl.PF3D7_0321900.p.Leu830Val.txt")
+        String pfcarl_Ser_1076_Asn = read_string("Pfcarl.PF3D7_0321900.p.Ser1076Asn.txt")
+        String pfcarl_Ser_1076_Ile = read_string("Pfcarl.PF3D7_0321900.p.Ser1076Ile.txt")
+        String pfcarl_Val_1103_Leu = read_string("Pfcarl.PF3D7_0321900.p.Val1103Leu.txt")
+        String pfcoronin_Arg_100_Lys = read_string("Pfcoronin.PF3D7_1251200.p.Arg100Lys.txt")
+        String pfcoronin_Glu_107_Val = read_string("Pfcoronin.PF3D7_1251200.p.Glu107Val.txt")
+        String pfcoronin_Gly_50_Glu = read_string("Pfcoronin.PF3D7_1251200.p.Gly50Glu.txt")
+        String pfcoronin_Pro_76_Ser = read_string("Pfcoronin.PF3D7_1251200.p.Pro76Ser.txt")
+        String pfcrt_Asn_75_Glu = read_string("Pfcrt.PF3D7_0709000.p.Asn75Glu.txt")
+        String pfcrt_Cys_101_Phe = read_string("Pfcrt.PF3D7_0709000.p.Cys101Phe.txt")
+        String pfcrt_Cys_72_Ser = read_string("Pfcrt.PF3D7_0709000.p.Cys72Ser.txt")
+        String pfcrt_Gly_353_Val = read_string("Pfcrt.PF3D7_0709000.p.Gly353Val.txt")
+        String pfcrt_His_97_Tyr = read_string("Pfcrt.PF3D7_0709000.p.His97Tyr.txt")
+        String pfcrt_Lys_76_Thr = read_string("Pfcrt.PF3D7_0709000.p.Lys76Thr.txt")
+        String pfcrt_Met_343_Leu = read_string("Pfcrt.PF3D7_0709000.p.Met343Leu.txt")
+        String pfcrt_Met_74_Ile = read_string("Pfcrt.PF3D7_0709000.p.Met74Ile.txt")
+        String pfcrt_Phe_145_Ile = read_string("Pfcrt.PF3D7_0709000.p.Phe145Ile.txt")
+        String pfcrt_Ser_350_Arg = read_string("Pfcrt.PF3D7_0709000.p.Ser350Arg.txt")
+        String pfdhfr_Asn_51_Ile = read_string("Pfdhfr.PF3D7_0417200.p.Asn51Ile.txt")
+        String pfdhfr_Cys_50_Arg = read_string("Pfdhfr.PF3D7_0417200.p.Cys50Arg.txt")
+        String pfdhfr_Cys_59_Arg = read_string("Pfdhfr.PF3D7_0417200.p.Cys59Arg.txt")
+        String pfdhfr_Ile_164_Lys = read_string("Pfdhfr.PF3D7_0417200.p.Ile164Lys.txt")
+        String pfdhfr_Ser_108_Asn = read_string("Pfdhfr.PF3D7_0417200.p.Ser108Asn.txt")
+        String pfdhps_Ala_581_Gly = read_string("Pfdhps.PF3D7_0810800.p.Ala581Gly.txt")
+        String pfdhps_Ala_613_Ser = read_string("Pfdhps.PF3D7_0810800.p.Ala613Ser.txt")
+        String pfdhps_Ala_613_Thr = read_string("Pfdhps.PF3D7_0810800.p.Ala613Thr.txt")
+        String pfdhps_Lys_437_Gly = read_string("Pfdhps.PF3D7_0810800.p.Lys437Gly.txt")
+        String pfdhps_Lys_540_Glu = read_string("Pfdhps.PF3D7_0810800.p.Lys540Glu.txt")
+        String pfdhps_Ser_436_Ala = read_string("Pfdhps.PF3D7_0810800.p.Ser436Ala.txt")
+        String pfexo_Glu_415_Gly = read_string("Pfexo.PF3D7_1362500.p.Glu415Gly.txt")
+        String pfkelch13_Ala_675_Val = read_string("Pfkelch13.PF3D7_1343700.p.Ala675Val.txt")
+        String pfkelch13_Arg_539_Thr = read_string("Pfkelch13.PF3D7_1343700.p.Arg539Thr.txt")
+        String pfkelch13_Arg_561_His = read_string("Pfkelch13.PF3D7_1343700.p.Arg561His.txt")
+        String pfkelch13_Arg_633_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Arg633Ile.txt")
+        String pfkelch13_Asn_458_Tyr = read_string("Pfkelch13.PF3D7_1343700.p.Asn458Tyr.txt")
+        String pfkelch13_Cys_580_Tyr = read_string("Pfkelch13.PF3D7_1343700.p.Cys580Tyr.txt")
+        String pfkelch13_Ile_543_Thr = read_string("Pfkelch13.PF3D7_1343700.p.Ile543Thr.txt")
+        String pfkelch13_Met_476_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Met476Ile.txt")
+        String pfkelch13_Met_579_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Met579Ile.txt")
+        String pfkelch13_Phe_446_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Phe446Ile.txt")
+        String pfkelch13_Phe_553_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Phe553Leu.txt")
+        String pfkelch13_Phe_574_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Phe574Leu.txt")
+        String pfkelch13_Phe_673_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Phe673Ile.txt")
+        String pfkelch13_Pro_441_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Pro441Ile.txt")
+        String pfkelch13_Pro_553_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Pro553Leu.txt")
+        String pfkelch13_Pro_574_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Pro574Leu.txt")
+        String pfkelch13_Tyr_493_His = read_string("Pfkelch13.PF3D7_1343700.p.Tyr493His.txt")
+        String pfkelch13_Val_568_Gly = read_string("Pfkelch13.PF3D7_1343700.p.Val568Gly.txt")
+        String pfmdr1_Asn_1024_Asp = read_string("Pfmdr1.PF3D7_0523000.p.Asn1024Asp.txt")
+        String pfmdr1_Asn_86_Tyr = read_string("Pfmdr1.PF3D7_0523000.p.Asn86Tyr.txt")
+        String pfmdr1_Asp_1246_Tyr = read_string("Pfmdr1.PF3D7_0523000.p.Asp1246Tyr.txt")
+        String pfmdr1_Ser_1034_Cys = read_string("Pfmdr1.PF3D7_0523000.p.Ser1034Cys.txt")
+        String pfmdr1_Tyr_184_Phe = read_string("Pfmdr1.PF3D7_0523000.p.Tyr184Phe.txt")
+        String pfmdr2_Thr_484_Ile = read_string("Pfmdr2.PF3D7_1447900.p.Thr484Ile.txt")
+        String pfubp1_Val_3275_Phe = read_string("Pfubp1.PF3D7_0104300.p.Val3275Phe.txt")
     }
 
     #########################
