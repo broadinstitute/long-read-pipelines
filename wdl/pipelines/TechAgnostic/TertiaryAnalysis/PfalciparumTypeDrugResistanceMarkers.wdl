@@ -12,6 +12,9 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         vcf: "VCF file to process"
         vcf_index: "Index of the VCF file to process"
 
+        gvcf: "GVCF file to process to use for coverage analysis of drug resistance markers"
+        gvcf_index: "Index of the GVCF file to process"
+
         snpeff_db: "SnpEff database for functional annotation"
         snpeff_db_identifier: "Identifier for the SnpEff database to use"
         drug_resistance_list: "List of drug resistance markers for which to search"
@@ -23,6 +26,9 @@ workflow PfalciparumTypeDrugResistanceMarkers {
     input {
         File vcf
         File vcf_index
+
+        File gvcf
+        File gvcf_index
 
         File snpeff_db
         String snpeff_db_identifier
@@ -43,6 +49,8 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         input:
             vcf = select_first([FunctionallyAnnotateVariants.annotated_vcf, vcf]),
             vcf_index = select_first([FunctionallyAnnotateVariants.annotated_vcf_index, vcf_index]),
+            gvcf = gvcf,
+            gvcf_index = gvcf_index,
             drug_resistance_list = drug_resistance_list,
             genes_gff = ref_map["gff"]
     }
@@ -55,7 +63,7 @@ workflow PfalciparumTypeDrugResistanceMarkers {
 
     output {
         File drug_resistance_summary = CreateDrugResistanceSummary.resistance_summary
-        File raw_drug_res_report = CallDrugResistanceMutations.report
+        File drug_resistance_markers = CallDrugResistanceMutations.report
 
         String predicted_drug_status_chloroquine   = CreateDrugResistanceSummary.predicted_chloroquine_status
         String predicted_drug_status_pyrimethamine = CreateDrugResistanceSummary.predicted_pyrimethamine_status
@@ -71,7 +79,7 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         File? snpEff_genes = FunctionallyAnnotateVariants.snpEff_genes
 
         # Pull out the drug resistance markers from the raw drug resistance report:
-        File drug_resistance_markers = CallDrugResistanceMutations.report
+        
     }
 }
 
@@ -79,13 +87,17 @@ task CallDrugResistanceMutations {
     input {
         File vcf
         File vcf_index
+
+        File gvcf
+        File gvcf_index
+
         File drug_resistance_list
         File genes_gff
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 2*ceil(size([vcf, drug_resistance_list], "GB"))
+    Int disk_size = 1 + 2*ceil(size([vcf, gvcf, drug_resistance_list], "GB"))
     String prefix = basename(basename(vcf, ".gz"), ".vcf")
     String out_file_name = prefix + ".raw_drug_resistance_info.txt"
 
@@ -191,11 +203,210 @@ task CallDrugResistanceMutations {
                 # Make sure we sort by both contig and the positions of the genes:
                 return {k:sorted(v, key=lambda x: (x[1], x[2])) for k, v in gff_gene_dict.items()}
 
+        def get_full_gene_info_from_gff_file(gff_file):
+            # TSV Fields:
+            # seqname - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix. Important note: the seqname must be one used within Ensembl, i.e. a standard chromosome name or an Ensembl identifier such as a scaffold ID, without any additional content such as species or assembly. See the example GFF output below.
+            # source - name of the program that generated this feature, or the data source (database or project name)
+            # feature - feature type name, e.g. Gene, Variation, Similarity
+            # start - Start position* of the feature, with sequence numbering starting at 1.
+            # end - End position* of the feature, with sequence numbering starting at 1.
+            # score - A floating point value.
+            # strand - defined as + (forward) or - (reverse).
+            # frame - One of '0', '1' or '2'. '0' indicates that the first base of the feature is the first base of a codon, '1' that the second base is the first base of a codon, and so on..
+            # attribute - A semicolon-separated list of tag-value pairs, providing additional information about each feature.
+            # *- Both, the start and end position are included. For example, setting start-end to 1-2 describes two bases, the first and second base in the sequence.
+
+            gene_cds_transcript_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+
+            num_lines = get_num_lines(gff_file)
+            with Open(gff_file, 'r') as gff:
+
+                for line in tqdm(gff, desc="Loading Gene CDS from GFF", total=num_lines):
+                    # Skip headers:
+                    if line.strip().startswith("#"):
+                        continue
+
+                    gff_fields = line.strip().split("\t")
+                    contig = gff_fields[0]
+                    ftype = gff_fields[2]
+                    start = int(gff_fields[3])
+                    end = int(gff_fields[4])
+
+                    # Do our best to find genes.
+                    # This is hard because the spec allows anything...
+                    if "CDS" == ftype:
+                        # We have the contig, start, and end.
+                        # If this gene has a name, we should get it.
+                        # otherwise, we'll use the ID:
+                        annotations = {raw.split("=")[0].lower():raw.split("=")[1] for raw in gff_fields[8].split(";")}
+                        gene_id = annotations["gene_id"]
+                        transcript_id = annotations['parent']
+                        
+                        gene_cds_transcript_dict[contig][gene_id][transcript_id].append((start, end))
+
+            # Make sure we sort by both contig and the positions of the genes:
+            sorted_gene_cds_transcript_dict = defaultdict(dict)
+            for contig in sorted(gene_cds_transcript_dict.keys()):
+                gene_dict = gene_cds_transcript_dict[contig]
+                for gene in gene_dict.keys():
+                    transcript_dict = gene_dict[gene]
+                    sorted_gene_cds_transcript_dict[contig][gene] = {k:sorted(v, key=lambda x: x[0]) for k, v in transcript_dict.items()}
+                
+            return sorted_gene_cds_transcript_dict
+
+
+        def convert_protein_change_strings_to_genomic_positions(drug_res_info_by_gene_id, gene_cds_transcript_dict, pos_gene_dict, gene_id_pos_dict):
+
+            p_change_regex = re.compile('p\.([A-z]+)([0-9]+)([A-z]+)')
+
+            # drug_res_info_by_gene_id: gene_id -> set(protein_change_strings)
+            # gene_cds_transcript_dict: contig -> {gene_id -> list(tuple(cds_start, cds_end))}
+            # pos_gene_dict: contig -> list(tuple(gene_name, gene_start, gene_end, gene_id, direction (+/-) ))
+            # gene_id_pos_dict: gene_id -> tuple(contig, gene_start, gene_end, direction (+/-) )
+
+            # Now get genomic positions for each protein change we're looking for.
+            # We need these positions so we can check for coverage.
+            drug_res_info_by_gene_id_with_genome_pos = defaultdict(lambda: defaultdict(tuple))
+            for gene_id, protein_changes in drug_res_info_by_gene_id.items():
+
+                # Get the contig and direction for this gene:
+                contig, _, _, direction = gene_id_pos_dict[gene_id]
+
+                # Get the transcripts for this gene:
+                transcript_dict = gene_cds_transcript_dict[contig][gene_id]
+
+                for p in protein_changes:
+                    ref_aa, aa_pos, alt_aa = p_change_regex.match(p).groups()
+                    aa_pos = int(aa_pos)
+
+                    # Check all transcripts in this gene for this protein change:
+                    for transcript, cds_regions in transcript_dict.items():
+
+                        # Get the total number of base pairs in the coding sequence:
+                        total_cds_length_bp = sum([cds[1] - cds[0] + 1 for cds in cds_regions])
+
+                        # For each CDS region, compute the protein coordinates:
+                        # Note: We know this is divisible by 3, so we can convert to int without worrying.
+                        total_num_aas_in_transcript = int(total_cds_length_bp/3)
+
+                        if aa_pos > total_num_aas_in_transcript:
+                            # This transcript doesn't work for this protein position,
+                            # so we need to go to the next one:
+                            continue
+
+                        # We could be clever and do some math, or we could special case the reverse strand.
+                        # We do the latter because it's easier to implement:
+                        if direction == "+":
+
+                            # Get the start pos of the transcript on the genome:
+                            transcript_start = cds_regions[0][0]
+
+                            # Get the end position of the transcript on the genome:
+                            transcript_end = cds_regions[-1][1]
+
+                            # Get the length of hte transcript in base pairs:
+                            transcript_length_bp = sum([e - s for (s,e) in cds_regions])
+
+                            last_cds_end_pos_bp = 0
+                            for i, (cds_start, cds_end) in enumerate(cds_regions):
+                                cds_bp_start = last_cds_end_pos_bp + 1
+                                cds_bp_end = cds_end - cds_start + last_cds_end_pos_bp
+
+                                cds_aa_start = cds_bp_start / 3
+                                cds_aa_end = cds_bp_end / 3
+
+                                if cds_aa_start <= aa_pos <= cds_aa_end:
+
+                                    # now convert the AA Pos into a genomic position
+                                    # based on the start / end position of this CDS:
+                                    aa_genomic_pos = int(cds_start + (aa_pos - cds_aa_start) * 3)
+
+                                    # Add the genomic interval of the amino acid to the new dictionary:
+                                    # Add only 2 because of inclusive positions:
+                                    drug_res_info_by_gene_id_with_genome_pos[gene_id][p] = (contig, aa_genomic_pos, aa_genomic_pos+2)
+
+                                    # We're done, let's go to the next protein change:
+                                    break
+
+                                last_cds_end_pos_bp = cds_bp_end
+                        else:                    
+                            # Get the start pos of the transcript on the genome:
+                            transcript_start = cds_regions[-1][1]
+
+                            # Get the end position of the transcript on the genome:
+                            transcript_end = cds_regions[0][0]
+
+                            # Get the length of hte transcript in base pairs:
+                            transcript_length_bp = sum([e - s for (s,e) in cds_regions])
+                            
+                            # Add one here to account for the -1 below:
+                            last_cds_start_pos = 0
+                            for i, (cds_start, cds_end) in enumerate(cds_regions[::-1]):
+                                cds_bp_end = last_cds_start_pos + 1
+                                cds_bp_start = cds_bp_end + (cds_end-cds_start) - 1
+
+                                cds_aa_start = (cds_bp_start) / 3
+                                cds_aa_end = (cds_bp_end) / 3
+                                
+                                # Because end is before start, we have to check the opposite
+                                # of the relationship than we normally would:
+                                if cds_aa_end <= aa_pos <= cds_aa_start:
+                                    
+                                    # now convert the AA Pos into a genomic position
+                                    # based on the start / end position of this CDS:
+                                    aa_genomic_pos = int(cds_end - (cds_aa_end - aa_pos) * 3)
+
+                                    # Add the genomic interval of the amino acid to the new dictionary:
+                                    # Add only 2 because of inclusive positions:
+                                    drug_res_info_by_gene_id_with_genome_pos[gene_id][p] = (contig, aa_genomic_pos-2, aa_genomic_pos)
+
+                                    break
+                                
+                                last_cds_start_pos = cds_bp_start
+
+
+            return drug_res_info_by_gene_id_with_genome_pos
+
+
+        def check_coverage_of_ref_protein_changes(protein_change_info_dict, gvcf_file, min_GQ=20):
+            
+            gene_protein_change_presence_dict = defaultdict(lambda: defaultdict(str))
+            
+            for gene_id, prot_changes in protein_change_info_dict.items():
+                for prot_change, (contig, start, end) in prot_changes.items():
+                    with pysam.VariantFile(gvcf_file, 'r') as vcf:
+                        sample = next(iter(vcf.header.samples))
+                        gqs = []
+                        for v in vcf.fetch(contig, start, end):
+                            # Get the GQ and add it to our list of GQs for the regions:
+                            # Note: We do not have to check for "<NON_REF>" alleles here.
+                            #       We are simply interested in whether we saw any data over
+                            #       this locus.
+                            gqs.append(v.samples[sample]['GQ'])
+                            
+                        # Aggregate genotype qualities.
+                        # A simple average is probably sufficient.
+                        if len(gqs) > 1:
+                            final_GQ = sum(gqs)/len(gqs)
+                        elif len(gqs) == 1:
+                            final_GQ = gqs[0]
+                            
+                        # Does our final GQ meet or exceed the threshold for "good" data?
+                        if final_GQ >= min_GQ:
+                            pchange_status = "LOCUS_COVERED"
+                        else:
+                            pchange_status = "MISSING"
+                            
+                    gene_protein_change_presence_dict[gene_id][prot_change] = pchange_status
+                
+            return gene_protein_change_presence_dict
+
         ################################################################################
         # Define some helpers here:
         ################################################################################
 
         single_sample_VCF = f"~{vcf}"
+        single_sample_GVCF = f"~{gvcf}"
         drug_res_info_out_file = f"~{out_file_name}"
 
         gff_file = f"~{genes_gff}"
@@ -254,10 +465,13 @@ task CallDrugResistanceMutations {
         # If the marker is absent, since this is a single-sample VCF, mark it as absent
         #   Strictly speaking this could be because we had no coverage at this site, but
         #   for single-sample VCFs it doesn't matter.
+        
+        AMBIGUOUS_DATA_LABEL = "absent"
+
         drug_res_summary_info = []
         num_found = 0
         for gene, gene_id, aa_change in tqdm(drug_res_info, desc="Checking variants for drug res markers"):
-            status = "absent"
+            status = AMBIGUOUS_DATA_LABEL
             for v in variants_of_interest:
                 for ann in v.info['ANN']:
                     g_id = ann.split("|")[3]
@@ -282,88 +496,115 @@ task CallDrugResistanceMutations {
             drug_res_summary_info.append((gene, gene_id, aa_change, status))
         print(f"Num drug resistance markers found: {num_found}")
         print("")
+
+        print("Checking for missing or hom_ref protein changes...")
+
+        # Get the genomic coordinates of every protein change:
+        drug_res_info_by_gene_id_with_genome_pos = convert_protein_change_strings_to_genomic_positions(drug_res_info_by_gene_id, gene_cds_transcript_dict, pos_gene_dict, gene_id_pos_dict)
+
+        # Get the presence of each protein change using the GVCF for genotype quality measurements:
+        gene_id_prot_change_presence_dict = check_coverage_of_ref_protein_changes(drug_res_info_by_gene_id_with_genome_pos, single_sample_GVCF, min_GQ=20)
+
+        # Now we can review our drug_res_summary_info table and resolve anything we see as absent:
+        final_drug_res_summary_info = []
+        for gene, gene_id, aa_change, status in drug_res_summary_info:
+            if status == AMBIGUOUS_DATA_LABEL:
+                if gene_id_prot_change_presence_dict[gene_id][aa_change] == "LOCUS_COVERED":
+                    # We have coverage.
+                    # This is a hom_ref variant:
+                    status = "hom_ref"
+                elif gene_id_prot_change_presence_dict[gene_id][aa_change] == "MISSING":
+                    # We have no coverage!
+                    # This variant is missing!
+                    status = "missing"
+                else:
+                    raise RuntimeError(f"Unknown coverage status ({gene_id_prot_change_presence_dict[gene_id][aa_change]})!  This should never happen!")
+                    
+            final_drug_res_summary_info.append((gene, gene_id, aa_change, status))
+
         print("Drug resistance marker table:")
-        for summary_info in drug_res_summary_info:
+        for summary_info in final_drug_res_summary_info:
             print("\t".join(summary_info))
 
         with open(drug_res_info_out_file, 'w') as f:
-            for summary_info in tqdm(drug_res_summary_info, desc="Writing drug resistance summary file"):
+            for summary_info in tqdm(final_drug_res_summary_info, desc="Writing drug resistance summary file"):
                 f.write("\t".join(summary_info))
                 f.write("\n")
 
         # Now write out the drug resistance markers to their own files:
-        for gene, gene_id, aa_change, status in tqdm(drug_res_summary_info, desc="Writing drug resistance markers"):
-            print(f"Writing stats file: {gene}.{gene_id}.{aa_change}.txt -> {status}")
-            with open(f"{gene}.{gene_id}.{aa_change}.txt", 'w') as f:
+        for gene, gene_id, aa_change, status in tqdm(final_drug_res_summary_info, desc="Writing drug resistance markers"):
+            marker_file_name = f"{gene.lower()}.{gene_id}.{aa_change}.txt"
+            print(f"Writing marker file: {marker_file_name} -> {status}")
+            with open(f"{marker_file_name}", 'w') as f:
                 f.write(f"{status}")
         CODE
 
         # Now we need to make sure all our output files exist so that they can be read from,
         # irrespective of whether the associated markers are present in the input file.
-        touch PfFd.PF3D7_1318100.p.Asp193Tyr.txt
-        touch Pfaat1.PF3D7_0629500.p.Gln454Glu.txt
-        touch Pfaat1.PF3D7_0629500.p.Lys541Asn.txt
-        touch Pfaat1.PF3D7_0629500.p.Phe313Ser.txt
-        touch Pfaat1.PF3D7_0629500.p.Ser258Leu.txt
-        touch Pfap2-mu.PF3D7_1218300.p.Ile592Thr.txt
-        touch Pfarps10.PF3D7_1460900.p.Val127Met.txt
-        touch Pfatg18.PF3D7_1012900.p.Thr38Ile.txt
-        touch Pfcarl.PF3D7_0321900.p.Ile1139Lys.txt
-        touch Pfcarl.PF3D7_0321900.p.Leu830Val.txt
-        touch Pfcarl.PF3D7_0321900.p.Ser1076Asn.txt
-        touch Pfcarl.PF3D7_0321900.p.Ser1076Ile.txt
-        touch Pfcarl.PF3D7_0321900.p.Val1103Leu.txt
-        touch Pfcoronin.PF3D7_1251200.p.Arg100Lys.txt
-        touch Pfcoronin.PF3D7_1251200.p.Glu107Val.txt
-        touch Pfcoronin.PF3D7_1251200.p.Gly50Glu.txt
-        touch Pfcoronin.PF3D7_1251200.p.Pro76Ser.txt
-        touch Pfcrt.PF3D7_0709000.p.Asn75Glu.txt
-        touch Pfcrt.PF3D7_0709000.p.Cys101Phe.txt
-        touch Pfcrt.PF3D7_0709000.p.Cys72Ser.txt
-        touch Pfcrt.PF3D7_0709000.p.Gly353Val.txt
-        touch Pfcrt.PF3D7_0709000.p.His97Tyr.txt
-        touch Pfcrt.PF3D7_0709000.p.Lys76Thr.txt
-        touch Pfcrt.PF3D7_0709000.p.Met343Leu.txt
-        touch Pfcrt.PF3D7_0709000.p.Met74Ile.txt
-        touch Pfcrt.PF3D7_0709000.p.Phe145Ile.txt
-        touch Pfcrt.PF3D7_0709000.p.Ser350Arg.txt
-        touch Pfdhfr.PF3D7_0417200.p.Asn51Ile.txt
-        touch Pfdhfr.PF3D7_0417200.p.Cys50Arg.txt
-        touch Pfdhfr.PF3D7_0417200.p.Cys59Arg.txt
-        touch Pfdhfr.PF3D7_0417200.p.Ile164Lys.txt
-        touch Pfdhfr.PF3D7_0417200.p.Ser108Asn.txt
-        touch Pfdhps.PF3D7_0810800.p.Ala581Gly.txt
-        touch Pfdhps.PF3D7_0810800.p.Ala613Ser.txt
-        touch Pfdhps.PF3D7_0810800.p.Ala613Thr.txt
-        touch Pfdhps.PF3D7_0810800.p.Lys437Gly.txt
-        touch Pfdhps.PF3D7_0810800.p.Lys540Glu.txt
-        touch Pfdhps.PF3D7_0810800.p.Ser436Ala.txt
-        touch Pfexo.PF3D7_1362500.p.Glu415Gly.txt
-        touch Pfkelch13.PF3D7_1343700.p.Ala675Val.txt
-        touch Pfkelch13.PF3D7_1343700.p.Arg539Thr.txt
-        touch Pfkelch13.PF3D7_1343700.p.Arg561His.txt
-        touch Pfkelch13.PF3D7_1343700.p.Arg633Ile.txt
-        touch Pfkelch13.PF3D7_1343700.p.Asn458Tyr.txt
-        touch Pfkelch13.PF3D7_1343700.p.Cys580Tyr.txt
-        touch Pfkelch13.PF3D7_1343700.p.Ile543Thr.txt
-        touch Pfkelch13.PF3D7_1343700.p.Met476Ile.txt
-        touch Pfkelch13.PF3D7_1343700.p.Met579Ile.txt
-        touch Pfkelch13.PF3D7_1343700.p.Phe446Ile.txt
-        touch Pfkelch13.PF3D7_1343700.p.Phe553Leu.txt
-        touch Pfkelch13.PF3D7_1343700.p.Phe574Leu.txt
-        touch Pfkelch13.PF3D7_1343700.p.Phe673Ile.txt
-        touch Pfkelch13.PF3D7_1343700.p.Pro441Ile.txt
-        touch Pfkelch13.PF3D7_1343700.p.Pro553Leu.txt
-        touch Pfkelch13.PF3D7_1343700.p.Pro574Leu.txt
-        touch Pfkelch13.PF3D7_1343700.p.Tyr493His.txt
-        touch Pfkelch13.PF3D7_1343700.p.Val568Gly.txt
-        touch Pfmdr1.PF3D7_0523000.p.Asn1024Asp.txt
-        touch Pfmdr1.PF3D7_0523000.p.Asn86Tyr.txt
-        touch Pfmdr1.PF3D7_0523000.p.Asp1246Tyr.txt
-        touch Pfmdr1.PF3D7_0523000.p.Ser1034Cys.txt
-        touch Pfmdr1.PF3D7_0523000.p.Tyr184Phe.txt
-        touch Pfmdr2.PF3D7_1447900.p.Thr484Ile.txt
-        touch Pfubp1.PF3D7_0104300.p.Val3275Phe.txt
+        touch pfFd.PF3D7_1318100.p.Asp193Tyr.txt
+        touch pfaat1.PF3D7_0629500.p.Gln454Glu.txt
+        touch pfaat1.PF3D7_0629500.p.Lys541Asn.txt
+        touch pfaat1.PF3D7_0629500.p.Phe313Ser.txt
+        touch pfaat1.PF3D7_0629500.p.Ser258Leu.txt
+        touch pfap2-mu.PF3D7_1218300.p.Ile592Thr.txt
+        touch pfarps10.PF3D7_1460900.p.Val127Met.txt
+        touch pfatg18.PF3D7_1012900.p.Thr38Ile.txt
+        touch pfcarl.PF3D7_0321900.p.Ile1139Lys.txt
+        touch pfcarl.PF3D7_0321900.p.Leu830Val.txt
+        touch pfcarl.PF3D7_0321900.p.Ser1076Asn.txt
+        touch pfcarl.PF3D7_0321900.p.Ser1076Ile.txt
+        touch pfcarl.PF3D7_0321900.p.Val1103Leu.txt
+        touch pfcoronin.PF3D7_1251200.p.Arg100Lys.txt
+        touch pfcoronin.PF3D7_1251200.p.Glu107Val.txt
+        touch pfcoronin.PF3D7_1251200.p.Gly50Glu.txt
+        touch pfcoronin.PF3D7_1251200.p.Pro76Ser.txt
+        touch pfcrt.PF3D7_0709000.p.Asn75Glu.txt
+        touch pfcrt.PF3D7_0709000.p.Cys101Phe.txt
+        touch pfcrt.PF3D7_0709000.p.Cys72Ser.txt
+        touch pfcrt.PF3D7_0709000.p.Gly353Val.txt
+        touch pfcrt.PF3D7_0709000.p.His97Tyr.txt
+        touch pfcrt.PF3D7_0709000.p.Lys76Thr.txt
+        touch pfcrt.PF3D7_0709000.p.Met343Leu.txt
+        touch pfcrt.PF3D7_0709000.p.Met74Ile.txt
+        touch pfcrt.PF3D7_0709000.p.Phe145Ile.txt
+        touch pfcrt.PF3D7_0709000.p.Ser350Arg.txt
+        touch pfdhfr.PF3D7_0417200.p.Asn51Ile.txt
+        touch pfdhfr.PF3D7_0417200.p.Cys50Arg.txt
+        touch pfdhfr.PF3D7_0417200.p.Cys59Arg.txt
+        touch pfdhfr.PF3D7_0417200.p.Ile164Lys.txt
+        touch pfdhfr.PF3D7_0417200.p.Ser108Asn.txt
+        touch pfdhps.PF3D7_0810800.p.Ala581Gly.txt
+        touch pfdhps.PF3D7_0810800.p.Ala613Ser.txt
+        touch pfdhps.PF3D7_0810800.p.Ala613Thr.txt
+        touch pfdhps.PF3D7_0810800.p.Lys437Gly.txt
+        touch pfdhps.PF3D7_0810800.p.Lys540Glu.txt
+        touch pfdhps.PF3D7_0810800.p.Ser436Ala.txt
+        touch pfexo.PF3D7_1362500.p.Glu415Gly.txt
+        touch pfkelch13.PF3D7_1343700.p.Ala675Val.txt
+        touch pfkelch13.PF3D7_1343700.p.Arg539Thr.txt
+        touch pfkelch13.PF3D7_1343700.p.Arg561His.txt
+        touch pfkelch13.PF3D7_1343700.p.Arg633Ile.txt
+        touch pfkelch13.PF3D7_1343700.p.Asn458Tyr.txt
+        touch pfkelch13.PF3D7_1343700.p.Cys580Tyr.txt
+        touch pfkelch13.PF3D7_1343700.p.Ile543Thr.txt
+        touch pfkelch13.PF3D7_1343700.p.Met476Ile.txt
+        touch pfkelch13.PF3D7_1343700.p.Met579Ile.txt
+        touch pfkelch13.PF3D7_1343700.p.Phe446Ile.txt
+        touch pfkelch13.PF3D7_1343700.p.Phe553Leu.txt
+        touch pfkelch13.PF3D7_1343700.p.Phe574Leu.txt
+        touch pfkelch13.PF3D7_1343700.p.Phe673Ile.txt
+        touch pfkelch13.PF3D7_1343700.p.Pro441Ile.txt
+        touch pfkelch13.PF3D7_1343700.p.Pro553Leu.txt
+        touch pfkelch13.PF3D7_1343700.p.Pro574Leu.txt
+        touch pfkelch13.PF3D7_1343700.p.Tyr493His.txt
+        touch pfkelch13.PF3D7_1343700.p.Val568Gly.txt
+        touch pfmdr1.PF3D7_0523000.p.Asn1024Asp.txt
+        touch pfmdr1.PF3D7_0523000.p.Asn86Tyr.txt
+        touch pfmdr1.PF3D7_0523000.p.Asp1246Tyr.txt
+        touch pfmdr1.PF3D7_0523000.p.Ser1034Cys.txt
+        touch pfmdr1.PF3D7_0523000.p.Tyr184Phe.txt
+        touch pfmdr2.PF3D7_1447900.p.Thr484Ile.txt
+        touch pfubp1.PF3D7_0104300.p.Val3275Phe.txt
     >>>
 
     output {
@@ -371,70 +612,70 @@ task CallDrugResistanceMutations {
 
         # Pull out the drug resistance markers from the raw drug resistance report:
         # Note: We have to list them individually here because Terra can't handle programmatic output naming.
-        String pfFd_Asp_193_Tyr = read_string("PfFd.PF3D7_1318100.p.Asp193Tyr.txt")
-        String pfaat1_Gln_454_Glu = read_string("Pfaat1.PF3D7_0629500.p.Gln454Glu.txt")
-        String pfaat1_Lys_541_Asn = read_string("Pfaat1.PF3D7_0629500.p.Lys541Asn.txt")
-        String pfaat1_Phe_313_Ser = read_string("Pfaat1.PF3D7_0629500.p.Phe313Ser.txt")
-        String pfaat1_Ser_258_Leu = read_string("Pfaat1.PF3D7_0629500.p.Ser258Leu.txt")
-        String pfap2_mu_Ile_592_Thr = read_string("Pfap2-mu.PF3D7_1218300.p.Ile592Thr.txt")
-        String pfarps10_Val_127_Met = read_string("Pfarps10.PF3D7_1460900.p.Val127Met.txt")
-        String pfatg18_Thr_38_Ile = read_string("Pfatg18.PF3D7_1012900.p.Thr38Ile.txt")
-        String pfcarl_Ile_1139_Lys = read_string("Pfcarl.PF3D7_0321900.p.Ile1139Lys.txt")
-        String pfcarl_Leu_830_Val = read_string("Pfcarl.PF3D7_0321900.p.Leu830Val.txt")
-        String pfcarl_Ser_1076_Asn = read_string("Pfcarl.PF3D7_0321900.p.Ser1076Asn.txt")
-        String pfcarl_Ser_1076_Ile = read_string("Pfcarl.PF3D7_0321900.p.Ser1076Ile.txt")
-        String pfcarl_Val_1103_Leu = read_string("Pfcarl.PF3D7_0321900.p.Val1103Leu.txt")
-        String pfcoronin_Arg_100_Lys = read_string("Pfcoronin.PF3D7_1251200.p.Arg100Lys.txt")
-        String pfcoronin_Glu_107_Val = read_string("Pfcoronin.PF3D7_1251200.p.Glu107Val.txt")
-        String pfcoronin_Gly_50_Glu = read_string("Pfcoronin.PF3D7_1251200.p.Gly50Glu.txt")
-        String pfcoronin_Pro_76_Ser = read_string("Pfcoronin.PF3D7_1251200.p.Pro76Ser.txt")
-        String pfcrt_Asn_75_Glu = read_string("Pfcrt.PF3D7_0709000.p.Asn75Glu.txt")
-        String pfcrt_Cys_101_Phe = read_string("Pfcrt.PF3D7_0709000.p.Cys101Phe.txt")
-        String pfcrt_Cys_72_Ser = read_string("Pfcrt.PF3D7_0709000.p.Cys72Ser.txt")
-        String pfcrt_Gly_353_Val = read_string("Pfcrt.PF3D7_0709000.p.Gly353Val.txt")
-        String pfcrt_His_97_Tyr = read_string("Pfcrt.PF3D7_0709000.p.His97Tyr.txt")
-        String pfcrt_Lys_76_Thr = read_string("Pfcrt.PF3D7_0709000.p.Lys76Thr.txt")
-        String pfcrt_Met_343_Leu = read_string("Pfcrt.PF3D7_0709000.p.Met343Leu.txt")
-        String pfcrt_Met_74_Ile = read_string("Pfcrt.PF3D7_0709000.p.Met74Ile.txt")
-        String pfcrt_Phe_145_Ile = read_string("Pfcrt.PF3D7_0709000.p.Phe145Ile.txt")
-        String pfcrt_Ser_350_Arg = read_string("Pfcrt.PF3D7_0709000.p.Ser350Arg.txt")
-        String pfdhfr_Asn_51_Ile = read_string("Pfdhfr.PF3D7_0417200.p.Asn51Ile.txt")
-        String pfdhfr_Cys_50_Arg = read_string("Pfdhfr.PF3D7_0417200.p.Cys50Arg.txt")
-        String pfdhfr_Cys_59_Arg = read_string("Pfdhfr.PF3D7_0417200.p.Cys59Arg.txt")
-        String pfdhfr_Ile_164_Lys = read_string("Pfdhfr.PF3D7_0417200.p.Ile164Lys.txt")
-        String pfdhfr_Ser_108_Asn = read_string("Pfdhfr.PF3D7_0417200.p.Ser108Asn.txt")
-        String pfdhps_Ala_581_Gly = read_string("Pfdhps.PF3D7_0810800.p.Ala581Gly.txt")
-        String pfdhps_Ala_613_Ser = read_string("Pfdhps.PF3D7_0810800.p.Ala613Ser.txt")
-        String pfdhps_Ala_613_Thr = read_string("Pfdhps.PF3D7_0810800.p.Ala613Thr.txt")
-        String pfdhps_Lys_437_Gly = read_string("Pfdhps.PF3D7_0810800.p.Lys437Gly.txt")
-        String pfdhps_Lys_540_Glu = read_string("Pfdhps.PF3D7_0810800.p.Lys540Glu.txt")
-        String pfdhps_Ser_436_Ala = read_string("Pfdhps.PF3D7_0810800.p.Ser436Ala.txt")
-        String pfexo_Glu_415_Gly = read_string("Pfexo.PF3D7_1362500.p.Glu415Gly.txt")
-        String pfkelch13_Ala_675_Val = read_string("Pfkelch13.PF3D7_1343700.p.Ala675Val.txt")
-        String pfkelch13_Arg_539_Thr = read_string("Pfkelch13.PF3D7_1343700.p.Arg539Thr.txt")
-        String pfkelch13_Arg_561_His = read_string("Pfkelch13.PF3D7_1343700.p.Arg561His.txt")
-        String pfkelch13_Arg_633_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Arg633Ile.txt")
-        String pfkelch13_Asn_458_Tyr = read_string("Pfkelch13.PF3D7_1343700.p.Asn458Tyr.txt")
-        String pfkelch13_Cys_580_Tyr = read_string("Pfkelch13.PF3D7_1343700.p.Cys580Tyr.txt")
-        String pfkelch13_Ile_543_Thr = read_string("Pfkelch13.PF3D7_1343700.p.Ile543Thr.txt")
-        String pfkelch13_Met_476_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Met476Ile.txt")
-        String pfkelch13_Met_579_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Met579Ile.txt")
-        String pfkelch13_Phe_446_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Phe446Ile.txt")
-        String pfkelch13_Phe_553_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Phe553Leu.txt")
-        String pfkelch13_Phe_574_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Phe574Leu.txt")
-        String pfkelch13_Phe_673_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Phe673Ile.txt")
-        String pfkelch13_Pro_441_Ile = read_string("Pfkelch13.PF3D7_1343700.p.Pro441Ile.txt")
-        String pfkelch13_Pro_553_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Pro553Leu.txt")
-        String pfkelch13_Pro_574_Leu = read_string("Pfkelch13.PF3D7_1343700.p.Pro574Leu.txt")
-        String pfkelch13_Tyr_493_His = read_string("Pfkelch13.PF3D7_1343700.p.Tyr493His.txt")
-        String pfkelch13_Val_568_Gly = read_string("Pfkelch13.PF3D7_1343700.p.Val568Gly.txt")
-        String pfmdr1_Asn_1024_Asp = read_string("Pfmdr1.PF3D7_0523000.p.Asn1024Asp.txt")
-        String pfmdr1_Asn_86_Tyr = read_string("Pfmdr1.PF3D7_0523000.p.Asn86Tyr.txt")
-        String pfmdr1_Asp_1246_Tyr = read_string("Pfmdr1.PF3D7_0523000.p.Asp1246Tyr.txt")
-        String pfmdr1_Ser_1034_Cys = read_string("Pfmdr1.PF3D7_0523000.p.Ser1034Cys.txt")
-        String pfmdr1_Tyr_184_Phe = read_string("Pfmdr1.PF3D7_0523000.p.Tyr184Phe.txt")
-        String pfmdr2_Thr_484_Ile = read_string("Pfmdr2.PF3D7_1447900.p.Thr484Ile.txt")
-        String pfubp1_Val_3275_Phe = read_string("Pfubp1.PF3D7_0104300.p.Val3275Phe.txt")
+        String pfFd_Asp_193_Tyr =      read_string("pfFd.PF3D7_1318100.p.Asp193Tyr.txt")
+        String pfaat1_Gln_454_Glu =    read_string("pfaat1.PF3D7_0629500.p.Gln454Glu.txt")
+        String pfaat1_Lys_541_Asn =    read_string("pfaat1.PF3D7_0629500.p.Lys541Asn.txt")
+        String pfaat1_Phe_313_Ser =    read_string("pfaat1.PF3D7_0629500.p.Phe313Ser.txt")
+        String pfaat1_Ser_258_Leu =    read_string("pfaat1.PF3D7_0629500.p.Ser258Leu.txt")
+        String pfap2_mu_Ile_592_Thr =  read_string("pfap2-mu.PF3D7_1218300.p.Ile592Thr.txt")
+        String pfarps10_Val_127_Met =  read_string("pfarps10.PF3D7_1460900.p.Val127Met.txt")
+        String pfatg18_Thr_38_Ile =    read_string("pfatg18.PF3D7_1012900.p.Thr38Ile.txt")
+        String pfcarl_Ile_1139_Lys =   read_string("pfcarl.PF3D7_0321900.p.Ile1139Lys.txt")
+        String pfcarl_Leu_830_Val =    read_string("pfcarl.PF3D7_0321900.p.Leu830Val.txt")
+        String pfcarl_Ser_1076_Asn =   read_string("pfcarl.PF3D7_0321900.p.Ser1076Asn.txt")
+        String pfcarl_Ser_1076_Ile =   read_string("pfcarl.PF3D7_0321900.p.Ser1076Ile.txt")
+        String pfcarl_Val_1103_Leu =   read_string("pfcarl.PF3D7_0321900.p.Val1103Leu.txt")
+        String pfcoronin_Arg_100_Lys = read_string("pfcoronin.PF3D7_1251200.p.Arg100Lys.txt")
+        String pfcoronin_Glu_107_Val = read_string("pfcoronin.PF3D7_1251200.p.Glu107Val.txt")
+        String pfcoronin_Gly_50_Glu =  read_string("pfcoronin.PF3D7_1251200.p.Gly50Glu.txt")
+        String pfcoronin_Pro_76_Ser =  read_string("pfcoronin.PF3D7_1251200.p.Pro76Ser.txt")
+        String pfcrt_Asn_75_Glu =      read_string("pfcrt.PF3D7_0709000.p.Asn75Glu.txt")
+        String pfcrt_Cys_101_Phe =     read_string("pfcrt.PF3D7_0709000.p.Cys101Phe.txt")
+        String pfcrt_Cys_72_Ser =      read_string("pfcrt.PF3D7_0709000.p.Cys72Ser.txt")
+        String pfcrt_Gly_353_Val =     read_string("pfcrt.PF3D7_0709000.p.Gly353Val.txt")
+        String pfcrt_His_97_Tyr =      read_string("pfcrt.PF3D7_0709000.p.His97Tyr.txt")
+        String pfcrt_Lys_76_Thr =      read_string("pfcrt.PF3D7_0709000.p.Lys76Thr.txt")
+        String pfcrt_Met_343_Leu =     read_string("pfcrt.PF3D7_0709000.p.Met343Leu.txt")
+        String pfcrt_Met_74_Ile =      read_string("pfcrt.PF3D7_0709000.p.Met74Ile.txt")
+        String pfcrt_Phe_145_Ile =     read_string("pfcrt.PF3D7_0709000.p.Phe145Ile.txt")
+        String pfcrt_Ser_350_Arg =     read_string("pfcrt.PF3D7_0709000.p.Ser350Arg.txt")
+        String pfdhfr_Asn_51_Ile =     read_string("pfdhfr.PF3D7_0417200.p.Asn51Ile.txt")
+        String pfdhfr_Cys_50_Arg =     read_string("pfdhfr.PF3D7_0417200.p.Cys50Arg.txt")
+        String pfdhfr_Cys_59_Arg =     read_string("pfdhfr.PF3D7_0417200.p.Cys59Arg.txt")
+        String pfdhfr_Ile_164_Lys =    read_string("pfdhfr.PF3D7_0417200.p.Ile164Lys.txt")
+        String pfdhfr_Ser_108_Asn =    read_string("pfdhfr.PF3D7_0417200.p.Ser108Asn.txt")
+        String pfdhps_Ala_581_Gly =    read_string("pfdhps.PF3D7_0810800.p.Ala581Gly.txt")
+        String pfdhps_Ala_613_Ser =    read_string("pfdhps.PF3D7_0810800.p.Ala613Ser.txt")
+        String pfdhps_Ala_613_Thr =    read_string("pfdhps.PF3D7_0810800.p.Ala613Thr.txt")
+        String pfdhps_Lys_437_Gly =    read_string("pfdhps.PF3D7_0810800.p.Lys437Gly.txt")
+        String pfdhps_Lys_540_Glu =    read_string("pfdhps.PF3D7_0810800.p.Lys540Glu.txt")
+        String pfdhps_Ser_436_Ala =    read_string("pfdhps.PF3D7_0810800.p.Ser436Ala.txt")
+        String pfexo_Glu_415_Gly =     read_string("pfexo.PF3D7_1362500.p.Glu415Gly.txt")
+        String pfkelch13_Ala_675_Val = read_string("pfkelch13.PF3D7_1343700.p.Ala675Val.txt")
+        String pfkelch13_Arg_539_Thr = read_string("pfkelch13.PF3D7_1343700.p.Arg539Thr.txt")
+        String pfkelch13_Arg_561_His = read_string("pfkelch13.PF3D7_1343700.p.Arg561His.txt")
+        String pfkelch13_Arg_633_Ile = read_string("pfkelch13.PF3D7_1343700.p.Arg633Ile.txt")
+        String pfkelch13_Asn_458_Tyr = read_string("pfkelch13.PF3D7_1343700.p.Asn458Tyr.txt")
+        String pfkelch13_Cys_580_Tyr = read_string("pfkelch13.PF3D7_1343700.p.Cys580Tyr.txt")
+        String pfkelch13_Ile_543_Thr = read_string("pfkelch13.PF3D7_1343700.p.Ile543Thr.txt")
+        String pfkelch13_Met_476_Ile = read_string("pfkelch13.PF3D7_1343700.p.Met476Ile.txt")
+        String pfkelch13_Met_579_Ile = read_string("pfkelch13.PF3D7_1343700.p.Met579Ile.txt")
+        String pfkelch13_Phe_446_Ile = read_string("pfkelch13.PF3D7_1343700.p.Phe446Ile.txt")
+        String pfkelch13_Phe_553_Leu = read_string("pfkelch13.PF3D7_1343700.p.Phe553Leu.txt")
+        String pfkelch13_Phe_574_Leu = read_string("pfkelch13.PF3D7_1343700.p.Phe574Leu.txt")
+        String pfkelch13_Phe_673_Ile = read_string("pfkelch13.PF3D7_1343700.p.Phe673Ile.txt")
+        String pfkelch13_Pro_441_Ile = read_string("pfkelch13.PF3D7_1343700.p.Pro441Ile.txt")
+        String pfkelch13_Pro_553_Leu = read_string("pfkelch13.PF3D7_1343700.p.Pro553Leu.txt")
+        String pfkelch13_Pro_574_Leu = read_string("pfkelch13.PF3D7_1343700.p.Pro574Leu.txt")
+        String pfkelch13_Tyr_493_His = read_string("pfkelch13.PF3D7_1343700.p.Tyr493His.txt")
+        String pfkelch13_Val_568_Gly = read_string("pfkelch13.PF3D7_1343700.p.Val568Gly.txt")
+        String pfmdr1_Asn_1024_Asp =   read_string("pfmdr1.PF3D7_0523000.p.Asn1024Asp.txt")
+        String pfmdr1_Asn_86_Tyr =     read_string("pfmdr1.PF3D7_0523000.p.Asn86Tyr.txt")
+        String pfmdr1_Asp_1246_Tyr =   read_string("pfmdr1.PF3D7_0523000.p.Asp1246Tyr.txt")
+        String pfmdr1_Ser_1034_Cys =   read_string("pfmdr1.PF3D7_0523000.p.Ser1034Cys.txt")
+        String pfmdr1_Tyr_184_Phe =    read_string("pfmdr1.PF3D7_0523000.p.Tyr184Phe.txt")
+        String pfmdr2_Thr_484_Ile =    read_string("pfmdr2.PF3D7_1447900.p.Thr484Ile.txt")
+        String pfubp1_Val_3275_Phe =   read_string("pfubp1.PF3D7_0104300.p.Val3275Phe.txt")
     }
 
     #########################
@@ -494,7 +735,7 @@ task CreateDrugResistanceSummary {
             return AA_3_2[old.upper()], int(pos), AA_3_2[new.upper()]
 
         def line_is_drug_locus(line, gene_name, gene_id):
-            line_re = re.compile(f"^{gene_name}\s+{gene_id}")
+            line_re = re.compile(f"^{gene_name}\s+{gene_id}", re.IGNORECASE)
             return line_re.match(line) is not None
 
         def get_chloroquine_sensitivity(dr_info_file):
