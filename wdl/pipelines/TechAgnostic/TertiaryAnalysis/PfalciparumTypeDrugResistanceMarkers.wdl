@@ -79,7 +79,70 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         File? snpEff_genes = FunctionallyAnnotateVariants.snpEff_genes
 
         # Pull out the drug resistance markers from the raw drug resistance report:
-        
+        String pfFd_Asp_193_Tyr = CallDrugResistanceMutations.pfFd_Asp_193_Tyr
+        String pfaat1_Gln_454_Glu = CallDrugResistanceMutations.pfaat1_Gln_454_Glu
+        String pfaat1_Lys_541_Asn = CallDrugResistanceMutations.pfaat1_Lys_541_Asn
+        String pfaat1_Phe_313_Ser = CallDrugResistanceMutations.pfaat1_Phe_313_Ser
+        String pfaat1_Ser_258_Leu = CallDrugResistanceMutations.pfaat1_Ser_258_Leu
+        String pfap2_mu_Ile_592_Thr = CallDrugResistanceMutations.pfap2_mu_Ile_592_Thr
+        String pfarps10_Val_127_Met = CallDrugResistanceMutations.pfarps10_Val_127_Met
+        String pfatg18_Thr_38_Ile = CallDrugResistanceMutations.pfatg18_Thr_38_Ile
+        String pfcarl_Ile_1139_Lys = CallDrugResistanceMutations.pfcarl_Ile_1139_Lys
+        String pfcarl_Leu_830_Val = CallDrugResistanceMutations.pfcarl_Leu_830_Val
+        String pfcarl_Ser_1076_Asn = CallDrugResistanceMutations.pfcarl_Ser_1076_Asn
+        String pfcarl_Ser_1076_Ile = CallDrugResistanceMutations.pfcarl_Ser_1076_Ile
+        String pfcarl_Val_1103_Leu = CallDrugResistanceMutations.pfcarl_Val_1103_Leu
+        String pfcoronin_Arg_100_Lys = CallDrugResistanceMutations.pfcoronin_Arg_100_Lys
+        String pfcoronin_Glu_107_Val = CallDrugResistanceMutations.pfcoronin_Glu_107_Val
+        String pfcoronin_Gly_50_Glu = CallDrugResistanceMutations.pfcoronin_Gly_50_Glu
+        String pfcoronin_Pro_76_Ser = CallDrugResistanceMutations.pfcoronin_Pro_76_Ser
+        String pfcrt_Asn_75_Glu = CallDrugResistanceMutations.pfcrt_Asn_75_Glu
+        String pfcrt_Cys_101_Phe = CallDrugResistanceMutations.pfcrt_Cys_101_Phe
+        String pfcrt_Cys_72_Ser = CallDrugResistanceMutations.pfcrt_Cys_72_Ser
+        String pfcrt_Gly_353_Val = CallDrugResistanceMutations.pfcrt_Gly_353_Val
+        String pfcrt_His_97_Tyr = CallDrugResistanceMutations.pfcrt_His_97_Tyr
+        String pfcrt_Lys_76_Thr = CallDrugResistanceMutations.pfcrt_Lys_76_Thr
+        String pfcrt_Met_343_Leu = CallDrugResistanceMutations.pfcrt_Met_343_Leu
+        String pfcrt_Met_74_Ile = CallDrugResistanceMutations.pfcrt_Met_74_Ile
+        String pfcrt_Phe_145_Ile = CallDrugResistanceMutations.pfcrt_Phe_145_Ile
+        String pfcrt_Ser_350_Arg = CallDrugResistanceMutations.pfcrt_Ser_350_Arg
+        String pfdhfr_Asn_51_Ile = CallDrugResistanceMutations.pfdhfr_Asn_51_Ile
+        String pfdhfr_Cys_50_Arg = CallDrugResistanceMutations.pfdhfr_Cys_50_Arg
+        String pfdhfr_Cys_59_Arg = CallDrugResistanceMutations.pfdhfr_Cys_59_Arg
+        String pfdhfr_Ile_164_Lys = CallDrugResistanceMutations.pfdhfr_Ile_164_Lys
+        String pfdhfr_Ser_108_Asn = CallDrugResistanceMutations.pfdhfr_Ser_108_Asn
+        String pfdhps_Ala_581_Gly = CallDrugResistanceMutations.pfdhps_Ala_581_Gly
+        String pfdhps_Ala_613_Ser = CallDrugResistanceMutations.pfdhps_Ala_613_Ser
+        String pfdhps_Ala_613_Thr = CallDrugResistanceMutations.pfdhps_Ala_613_Thr
+        String pfdhps_Lys_437_Gly = CallDrugResistanceMutations.pfdhps_Lys_437_Gly
+        String pfdhps_Lys_540_Glu = CallDrugResistanceMutations.pfdhps_Lys_540_Glu
+        String pfdhps_Ser_436_Ala = CallDrugResistanceMutations.pfdhps_Ser_436_Ala
+        String pfexo_Glu_415_Gly = CallDrugResistanceMutations.pfexo_Glu_415_Gly
+        String pfkelch13_Ala_675_Val = CallDrugResistanceMutations.pfkelch13_Ala_675_Val
+        String pfkelch13_Arg_539_Thr = CallDrugResistanceMutations.pfkelch13_Arg_539_Thr
+        String pfkelch13_Arg_561_His = CallDrugResistanceMutations.pfkelch13_Arg_561_His
+        String pfkelch13_Arg_633_Ile = CallDrugResistanceMutations.pfkelch13_Arg_633_Ile
+        String pfkelch13_Asn_458_Tyr = CallDrugResistanceMutations.pfkelch13_Asn_458_Tyr
+        String pfkelch13_Cys_580_Tyr = CallDrugResistanceMutations.pfkelch13_Cys_580_Tyr
+        String pfkelch13_Ile_543_Thr = CallDrugResistanceMutations.pfkelch13_Ile_543_Thr
+        String pfkelch13_Met_476_Ile = CallDrugResistanceMutations.pfkelch13_Met_476_Ile
+        String pfkelch13_Met_579_Ile = CallDrugResistanceMutations.pfkelch13_Met_579_Ile
+        String pfkelch13_Phe_446_Ile = CallDrugResistanceMutations.pfkelch13_Phe_446_Ile
+        String pfkelch13_Phe_553_Leu = CallDrugResistanceMutations.pfkelch13_Phe_553_Leu
+        String pfkelch13_Phe_574_Leu = CallDrugResistanceMutations.pfkelch13_Phe_574_Leu
+        String pfkelch13_Phe_673_Ile = CallDrugResistanceMutations.pfkelch13_Phe_673_Ile
+        String pfkelch13_Pro_441_Ile = CallDrugResistanceMutations.pfkelch13_Pro_441_Ile
+        String pfkelch13_Pro_553_Leu = CallDrugResistanceMutations.pfkelch13_Pro_553_Leu    
+        String pfkelch13_Pro_574_Leu = CallDrugResistanceMutations.pfkelch13_Pro_574_Leu
+        String pfkelch13_Tyr_493_His = CallDrugResistanceMutations.pfkelch13_Tyr_493_His
+        String pfkelch13_Val_568_Gly = CallDrugResistanceMutations.pfkelch13_Val_568_Gly
+        String pfmdr1_Asn_1024_Asp = CallDrugResistanceMutations.pfmdr1_Asn_1024_Asp
+        String pfmdr1_Asn_86_Tyr = CallDrugResistanceMutations.pfmdr1_Asn_86_Tyr
+        String pfmdr1_Asp_1246_Tyr = CallDrugResistanceMutations.pfmdr1_Asp_1246_Tyr
+        String pfmdr1_Ser_1034_Cys = CallDrugResistanceMutations.pfmdr1_Ser_1034_Cys
+        String pfmdr1_Tyr_184_Phe = CallDrugResistanceMutations.pfmdr1_Tyr_184_Phe
+        String pfmdr2_Thr_484_Ile = CallDrugResistanceMutations.pfmdr2_Thr_484_Ile
+        String pfubp1_Val_3275_Phe = CallDrugResistanceMutations.pfubp1_Val_3275_Phe
     }
 }
 
