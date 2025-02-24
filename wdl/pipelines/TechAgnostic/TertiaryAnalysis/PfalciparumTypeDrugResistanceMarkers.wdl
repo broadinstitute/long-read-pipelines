@@ -766,7 +766,7 @@ task CreateDrugResistanceSummary {
                         gene, locus, pchange, marker = re.split("\s", line.strip())
                         old, pos, new = parse_pchange(pchange)
                         if pos == 76:
-                            if (old == "L") and (new == "T") and (marker == "absent"):
+                            if (old == "L") and (new == "T") and (marker == "hom_ref"):
                                 return DrugSensitivity.SENSITIVE
                             elif (new == "T") and ((marker == "present") or (marker == "hom_var")):
                                 return DrugSensitivity.RESISTANT
@@ -791,11 +791,11 @@ task CreateDrugResistanceSummary {
                         gene, locus, pchange, marker = re.split("\s", line.strip())
                         old, pos, new = parse_pchange(pchange)
                         if pos == 108:
-                            if (old == "S") and (new == "N") and (marker == "absent"):
+                            if (old == "S") and (new == "N") and (marker == "hom_ref"):
                                 return DrugSensitivity.SENSITIVE
-                            elif (old == "S") and (new == "N") and ((marker == "present") or (marker == "hom_var")):
+                            elif (old == "S") and (new == "N") and (marker == "hom_var"):
                                 return DrugSensitivity.RESISTANT
-                            elif (new == "N") and ((marker == "present") or (marker == "hom_var")):
+                            elif (new == "N") and (marker == "hom_var"):
                                 return DrugSensitivity.RESISTANT
                             elif marker == "absent":
                                 return DrugSensitivity.SENSITIVE
@@ -821,13 +821,13 @@ task CreateDrugResistanceSummary {
                         gene, locus, pchange, marker = re.split("\s", line.strip())
                         old, pos, new = parse_pchange(pchange)
                         if pos == 437:
-                            if (old == "A") and (new == "G") and (marker == "absent"):
+                            if (old == "A") and (new == "G") and (marker == "hom_ref"):
                                 return DrugSensitivity.SENSITIVE
-                            elif (old == "A") and (new == "G") and ((marker == "present") or (marker == "hom_var")):
+                            elif (old == "A") and (new == "G") and (marker == "hom_var"):
                                 return DrugSensitivity.RESISTANT
-                            elif (new == "G") and ((marker == "present") or (marker == "hom_var")):
+                            elif (new == "G") and (marker == "hom_var"):
                                 return DrugSensitivity.RESISTANT
-                            elif marker == "absent":
+                            elif marker == "hom_ref":
                                 return DrugSensitivity.SENSITIVE
 
             return DrugSensitivity.UNDETERMINED
@@ -867,6 +867,7 @@ task CreateDrugResistanceSummary {
 
             has_variants = False
             has_non_ref = False
+            has_missing = False
             with open(dr_info_file, 'r') as f:
                 for line in f:
                     # We only care about this locus for this drug:
@@ -874,13 +875,21 @@ task CreateDrugResistanceSummary {
                         gene, locus, pchange, marker = re.split("\s", line.strip())
                         old, pos, new = parse_pchange(pchange)
                         if 349 <= pos <= 726:
-                            if (old != new) and ((marker == "present") or (marker == "hom_var")):
+                            if (old != new) and (marker == "hom_var"):
                                 return DrugSensitivity.RESISTANT
-                            elif (new == "S") and ((marker == "present") or (marker == "hom_var")):
+                            elif (old != new) and (marker == "het"):
+                                return DrugSensitivity.UNDETERMINED
+                            elif (pos == 578) and (new == "S") and (marker == "hom_var"):
                                 return DrugSensitivity.SENSITIVE
-                            elif marker == "present":
+                            elif marker == "hom_var":
                                 has_non_ref = True
+                            elif marker == "missing":
+                                has_missing = True
+                            
                             has_variants = True
+
+            if has_missing:
+                return DrugSensitivity.UNDETERMINED
 
             if (has_variants) and (not has_non_ref):
                 return DrugSensitivity.SENSITIVE
