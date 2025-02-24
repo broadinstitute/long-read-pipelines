@@ -414,6 +414,7 @@ task CallDrugResistanceMutations {
 
         # Read in GFF file:
         pos_gene_dict = get_genes_from_gff_file(gff_file)
+        gene_cds_transcript_dict = get_full_gene_info_from_gff_file(gff_file)
         gene_id_pos_dict = dict()
         for contig, gene_list in pos_gene_dict.items():
             for gene_name, start, end, gene_id in gene_list:
