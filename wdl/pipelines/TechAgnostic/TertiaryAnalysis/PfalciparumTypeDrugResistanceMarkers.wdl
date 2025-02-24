@@ -109,8 +109,9 @@ task CallDrugResistanceMutations {
         import gzip
         import os
         import multiprocessing
+        import re
         import pysam
-
+        
         from collections import defaultdict
         from tqdm import tqdm
 
