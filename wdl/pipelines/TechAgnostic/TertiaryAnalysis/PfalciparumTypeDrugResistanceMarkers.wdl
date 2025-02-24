@@ -111,7 +111,7 @@ task CallDrugResistanceMutations {
         import multiprocessing
         import re
         import pysam
-        
+
         from collections import defaultdict
         from tqdm import tqdm
 
@@ -185,6 +185,7 @@ task CallDrugResistanceMutations {
                     ftype = gff_fields[2]
                     start = int(gff_fields[3])
                     end = int(gff_fields[4])
+                    direction = gff_fields[6]
 
                     # Do our best to find genes.
                     # This is hard because teh spec allows anything...
@@ -199,7 +200,7 @@ task CallDrugResistanceMutations {
                         else:
                             gene_name = gene_id
 
-                        gff_gene_dict[seq_name].append((gene_name, start, end, gene_id))
+                        gff_gene_dict[seq_name].append((gene_name, start, end, gene_id, direction))
 
                 # Make sure we sort by both contig and the positions of the genes:
                 return {k:sorted(v, key=lambda x: (x[1], x[2])) for k, v in gff_gene_dict.items()}
@@ -242,7 +243,7 @@ task CallDrugResistanceMutations {
                         annotations = {raw.split("=")[0].lower():raw.split("=")[1] for raw in gff_fields[8].split(";")}
                         gene_id = annotations["gene_id"]
                         transcript_id = annotations['parent']
-                        
+
                         gene_cds_transcript_dict[contig][gene_id][transcript_id].append((start, end))
 
             # Make sure we sort by both contig and the positions of the genes:
@@ -252,7 +253,7 @@ task CallDrugResistanceMutations {
                 for gene in gene_dict.keys():
                     transcript_dict = gene_dict[gene]
                     sorted_gene_cds_transcript_dict[contig][gene] = {k:sorted(v, key=lambda x: x[0]) for k, v in transcript_dict.items()}
-                
+                    
             return sorted_gene_cds_transcript_dict
 
 
@@ -339,7 +340,7 @@ task CallDrugResistanceMutations {
 
                             # Get the length of hte transcript in base pairs:
                             transcript_length_bp = sum([e - s for (s,e) in cds_regions])
-                            
+
                             # Add one here to account for the -1 below:
                             last_cds_start_pos = 0
                             for i, (cds_start, cds_end) in enumerate(cds_regions[::-1]):
@@ -348,11 +349,11 @@ task CallDrugResistanceMutations {
 
                                 cds_aa_start = (cds_bp_start) / 3
                                 cds_aa_end = (cds_bp_end) / 3
-                                
+
                                 # Because end is before start, we have to check the opposite
                                 # of the relationship than we normally would:
                                 if cds_aa_end <= aa_pos <= cds_aa_start:
-                                    
+
                                     # now convert the AA Pos into a genomic position
                                     # based on the start / end position of this CDS:
                                     aa_genomic_pos = int(cds_end - (cds_aa_end - aa_pos) * 3)
@@ -362,7 +363,7 @@ task CallDrugResistanceMutations {
                                     drug_res_info_by_gene_id_with_genome_pos[gene_id][p] = (contig, aa_genomic_pos-2, aa_genomic_pos)
 
                                     break
-                                
+
                                 last_cds_start_pos = cds_bp_start
 
 
@@ -370,9 +371,9 @@ task CallDrugResistanceMutations {
 
 
         def check_coverage_of_ref_protein_changes(protein_change_info_dict, gvcf_file, min_GQ=20):
-            
+
             gene_protein_change_presence_dict = defaultdict(lambda: defaultdict(str))
-            
+
             for gene_id, prot_changes in protein_change_info_dict.items():
                 for prot_change, (contig, start, end) in prot_changes.items():
                     with pysam.VariantFile(gvcf_file, 'r') as vcf:
@@ -384,22 +385,22 @@ task CallDrugResistanceMutations {
                             #       We are simply interested in whether we saw any data over
                             #       this locus.
                             gqs.append(v.samples[sample]['GQ'])
-                            
+
                         # Aggregate genotype qualities.
                         # A simple average is probably sufficient.
                         if len(gqs) > 1:
                             final_GQ = sum(gqs)/len(gqs)
                         elif len(gqs) == 1:
                             final_GQ = gqs[0]
-                            
+
                         # Does our final GQ meet or exceed the threshold for "good" data?
                         if final_GQ >= min_GQ:
                             pchange_status = "LOCUS_COVERED"
                         else:
                             pchange_status = "MISSING"
-                            
+
                     gene_protein_change_presence_dict[gene_id][prot_change] = pchange_status
-                
+
             return gene_protein_change_presence_dict
 
         ################################################################################
@@ -413,16 +414,24 @@ task CallDrugResistanceMutations {
         gff_file = f"~{genes_gff}"
         drug_resistance_list = f"~{drug_resistance_list}"
 
+        # single_sample_VCF = f"SEN_2019_DBL.CXX_0027_ALL_scored.annotated.vcf.gz"
+        # single_sample_GVCF = f"SEN_2019_DBL.CXX_0027.haplotype_caller.renamed.g.vcf.gz"
+        # drug_res_info_out_file = f"tmp.drugres.txt"
+
+        # gff_file = f"PlasmoDB-61_Pfalciparum3D7.gff"
+        # drug_resistance_list = f"drug_resistance_list.v2.20231211.txt"
+        # drug_resistance_list = f"drug_resistance_list.v1.txt"
+
         # Read in GFF file:
         pos_gene_dict = get_genes_from_gff_file(gff_file)
         gene_cds_transcript_dict = get_full_gene_info_from_gff_file(gff_file)
         gene_id_pos_dict = dict()
         for contig, gene_list in pos_gene_dict.items():
-            for gene_name, start, end, gene_id in gene_list:
+            for gene_name, start, end, gene_id, direction in gene_list:
                 if gene_id in gene_id_pos_dict:
                     raise RuntimeError(f"Duplicate Gene ID: {gene_id}")
                 else:
-                    gene_id_pos_dict[gene_id] = (contig, start, end)
+                    gene_id_pos_dict[gene_id] = (contig, start, end, direction)
 
         # Read in drug resistance list:
         drug_res_info = []
@@ -442,7 +451,7 @@ task CallDrugResistanceMutations {
 
         raw_variants_of_interest = []
         with pysam.VariantFile(single_sample_VCF, 'r') as vcf:
-            for contig, start, end in tqdm(regions,desc="Extracting variants from drug res loci"):
+            for contig, start, end, direction in tqdm(regions,desc="Extracting variants from drug res loci"):
                 for v in vcf.fetch(contig, start, end):
                     raw_variants_of_interest.append(v)
 
@@ -455,7 +464,7 @@ task CallDrugResistanceMutations {
                 # We know they are always fields 3 and 10, respectively:
                 g_id = ann.split("|")[3]
                 p_change = ann.split("|")[10]
-                if p_change in drug_res_info_by_gene_id[g_id]:
+                if g_id in drug_res_info_by_gene_id and p_change in drug_res_info_by_gene_id[g_id]:
                     variants_of_interest.append(v)
                     break
 
@@ -467,7 +476,7 @@ task CallDrugResistanceMutations {
         # If the marker is absent, since this is a single-sample VCF, mark it as absent
         #   Strictly speaking this could be because we had no coverage at this site, but
         #   for single-sample VCFs it doesn't matter.
-        
+
         AMBIGUOUS_DATA_LABEL = "absent"
 
         drug_res_summary_info = []
@@ -521,7 +530,7 @@ task CallDrugResistanceMutations {
                     status = "missing"
                 else:
                     raise RuntimeError(f"Unknown coverage status ({gene_id_prot_change_presence_dict[gene_id][aa_change]})!  This should never happen!")
-                    
+
             final_drug_res_summary_info.append((gene, gene_id, aa_change, status))
 
         print("Drug resistance marker table:")
