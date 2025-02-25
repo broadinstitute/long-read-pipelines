@@ -391,9 +391,6 @@ def plot_dr_bubbles(dr_report_file, sample_id):
     with open(dr_report_file, 'r') as f:
         dr_report_contents = f.read()
 
-    # Set up our data:
-    drug_resistance_df = pd.DataFrame(columns=["Sample", "Chloroquine", "Pyrimethamine", "Sulfadoxine", "Mefloquine", "Artemisinin", "Piperaquine"])  
-
     # Get the raw info here:
     dataframe_dict = {}
     last_gene = None
@@ -401,7 +398,7 @@ def plot_dr_bubbles(dr_report_file, sample_id):
 
     for line in dr_report_contents.split("\n"):
         if len(line) > 1:
-            parts = re.split(r"\s+", line)
+            parts = re.split(r"\s", line)
 
             gene, loc, variant, presence = parts
 
@@ -443,12 +440,11 @@ def plot_dr_bubbles(dr_report_file, sample_id):
 
     # Now process it into dataframes:
     for gene, variant_info in dr_info.items():
-        print(f"Gene: {gene}, Variant: {variant_info}")
         # set up place to put new markers:
         gene_df = dataframe_dict[gene]
         columns = list(gene_df.columns)
 
-        gene_df.loc[len(gene_df.index)] = [sample_id] + (len(columns)-1) * [None]
+        gene_df.loc[len(gene_df.index)] = [""] + (len(columns)-1) * [None]
 
         # Now add the markers:
         for v, presence in variant_info:
@@ -541,9 +537,9 @@ def plot_dr_bubbles(dr_report_file, sample_id):
         x_gene_offset += len(df.columns) + 1
 
     ax.set(xticks=x_tick_pos, 
-           yticks=np.arange(nrows),
+           yticks=[],
            xticklabels=xlabels, 
-           yticklabels=ylabels[::-1])
+           yticklabels=[])
 
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90, ha='center')
 
@@ -555,6 +551,16 @@ def plot_dr_bubbles(dr_report_file, sample_id):
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
+
+    # Create the axes
+    legend_x_offset = 0 
+    leg_aa = ax.legend(
+        [h_aa_filled, (h_aa_half_right, h_aa_half_left), h_aa_empty, h_aa_missing], 
+        ["Hom Amino Acid Change Present", "Het Amino Acid Change Present", "Amino Acid Change Not Present", "Site Missing from Sample"], 
+        title="Mutations",
+        bbox_to_anchor=[-0.45, 0.85],  # Move the legend to the left outside the plot area
+        loc='upper left'  # Optional: set the anchor point inside the legend box
+    )
 
     fix_plot_visuals(fig)
 
