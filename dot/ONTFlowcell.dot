@@ -46,8 +46,8 @@ digraph {
 	"call-NanoPlotFromSummary" -> "decl-nanoplot_map"
 	"call-ListFastqs" -> "decl-manifest"
 	"call-ListFilesOfType" -> "decl-manifest"
-	"decl-PU" -> "decl-RG"
 	"decl-DT" -> "decl-RG"
+	"decl-PU" -> "decl-RG"
 	"decl-manifest" -> "call-PartitionFastqManifest"
 	"call-PartitionFastqManifest" -> "scatter-L95C5-manifest_chunk" [lhead="cluster-scatter-L95C5-manifest_chunk"]
 	"decl-RG" -> "call-AlignReads"

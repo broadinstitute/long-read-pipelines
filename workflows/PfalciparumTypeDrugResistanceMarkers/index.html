@@ -338,37 +338,19 @@
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>dir_prefix</code> (String, <strong>required</strong>): Prefix for output directory</li>
 <li><code>drug_resistance_list</code> (File, <strong>required</strong>): List of drug resistance markers for which to search</li>
+<li><code>gvcf</code> (File, <strong>required</strong>): GVCF file to process to use for coverage analysis of drug resistance markers</li>
+<li><code>gvcf_index</code> (File, <strong>required</strong>): Index of the GVCF file to process</li>
 <li><code>ref_map_file</code> (File, <strong>required</strong>): Table indicating reference sequence, auxillary file locations, and metadata.</li>
 <li><code>snpeff_db</code> (File, <strong>required</strong>): SnpEff database for functional annotation</li>
+<li><code>snpeff_db_identifier</code> (String, <strong>required</strong>): Identifier for the SnpEff database to use</li>
 <li><code>vcf</code> (File, <strong>required</strong>): VCF file to process</li>
 <li><code>vcf_index</code> (File, <strong>required</strong>): Index of the VCF file to process</li>
-<li><code>FunctionallyAnnotateVariants.snpeff_db_identifier</code> (String, <strong>required</strong>)</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>gcs_out_root_dir</code> (String?): GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location.</li>
 <li><code>CallDrugResistanceMutations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CreateDrugResistanceSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeAnnotatedVCF.keyfile</code> (File?)</li>
-<li><code>FinalizeAnnotatedVCF.name</code> (String?)</li>
-<li><code>FinalizeAnnotatedVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeAnnotatedVCFIndex.keyfile</code> (File?)</li>
-<li><code>FinalizeAnnotatedVCFIndex.name</code> (String?)</li>
-<li><code>FinalizeAnnotatedVCFIndex.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeDRReport.keyfile</code> (File?)</li>
-<li><code>FinalizeDRReport.name</code> (String?)</li>
-<li><code>FinalizeDRReport.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeDRSummary.keyfile</code> (File?)</li>
-<li><code>FinalizeDRSummary.name</code> (String?)</li>
-<li><code>FinalizeDRSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeSnpEffGenes.keyfile</code> (File?)</li>
-<li><code>FinalizeSnpEffGenes.name</code> (String?)</li>
-<li><code>FinalizeSnpEffGenes.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeSnpEffSummary.keyfile</code> (File?)</li>
-<li><code>FinalizeSnpEffSummary.name</code> (String?)</li>
-<li><code>FinalizeSnpEffSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FunctionallyAnnotateVariants.runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
@@ -378,17 +360,81 @@
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>drug_resistance_summary</code> (File)</li>
-<li><code>raw_drug_res_report</code> (File)</li>
+<li><code>drug_resistance_markers</code> (File)</li>
 <li><code>predicted_drug_status_chloroquine</code> (String)</li>
 <li><code>predicted_drug_status_pyrimethamine</code> (String)</li>
 <li><code>predicted_drug_status_sulfadoxine</code> (String)</li>
 <li><code>predicted_drug_status_mefloquine</code> (String)</li>
 <li><code>predicted_drug_status_artemisinin</code> (String)</li>
 <li><code>predicted_drug_status_piperaquine</code> (String)</li>
-<li><code>annotated_vcf</code> (File?)</li>
-<li><code>annotated_vcf_index</code> (File?)</li>
+<li><code>annotated_vcf</code> (File)</li>
+<li><code>annotated_vcf_index</code> (File)</li>
 <li><code>snpEff_summary</code> (File?)</li>
 <li><code>snpEff_genes</code> (File?)</li>
+<li><code>pfFd_Asp_193_Tyr</code> (String)</li>
+<li><code>pfaat1_Gln_454_Glu</code> (String)</li>
+<li><code>pfaat1_Lys_541_Asn</code> (String)</li>
+<li><code>pfaat1_Phe_313_Ser</code> (String)</li>
+<li><code>pfaat1_Ser_258_Leu</code> (String)</li>
+<li><code>pfap2_mu_Ile_592_Thr</code> (String)</li>
+<li><code>pfarps10_Val_127_Met</code> (String)</li>
+<li><code>pfatg18_Thr_38_Ile</code> (String)</li>
+<li><code>pfcarl_Ile_1139_Lys</code> (String)</li>
+<li><code>pfcarl_Leu_830_Val</code> (String)</li>
+<li><code>pfcarl_Ser_1076_Asn</code> (String)</li>
+<li><code>pfcarl_Ser_1076_Ile</code> (String)</li>
+<li><code>pfcarl_Val_1103_Leu</code> (String)</li>
+<li><code>pfcoronin_Arg_100_Lys</code> (String)</li>
+<li><code>pfcoronin_Glu_107_Val</code> (String)</li>
+<li><code>pfcoronin_Gly_50_Glu</code> (String)</li>
+<li><code>pfcoronin_Pro_76_Ser</code> (String)</li>
+<li><code>pfcrt_Asn_75_Glu</code> (String)</li>
+<li><code>pfcrt_Cys_101_Phe</code> (String)</li>
+<li><code>pfcrt_Cys_72_Ser</code> (String)</li>
+<li><code>pfcrt_Gly_353_Val</code> (String)</li>
+<li><code>pfcrt_His_97_Tyr</code> (String)</li>
+<li><code>pfcrt_Lys_76_Thr</code> (String)</li>
+<li><code>pfcrt_Met_343_Leu</code> (String)</li>
+<li><code>pfcrt_Met_74_Ile</code> (String)</li>
+<li><code>pfcrt_Phe_145_Ile</code> (String)</li>
+<li><code>pfcrt_Ser_350_Arg</code> (String)</li>
+<li><code>pfdhfr_Asn_51_Ile</code> (String)</li>
+<li><code>pfdhfr_Cys_50_Arg</code> (String)</li>
+<li><code>pfdhfr_Cys_59_Arg</code> (String)</li>
+<li><code>pfdhfr_Ile_164_Lys</code> (String)</li>
+<li><code>pfdhfr_Ser_108_Asn</code> (String)</li>
+<li><code>pfdhps_Ala_581_Gly</code> (String)</li>
+<li><code>pfdhps_Ala_613_Ser</code> (String)</li>
+<li><code>pfdhps_Ala_613_Thr</code> (String)</li>
+<li><code>pfdhps_Lys_437_Gly</code> (String)</li>
+<li><code>pfdhps_Lys_540_Glu</code> (String)</li>
+<li><code>pfdhps_Ser_436_Ala</code> (String)</li>
+<li><code>pfexo_Glu_415_Gly</code> (String)</li>
+<li><code>pfkelch13_Ala_675_Val</code> (String)</li>
+<li><code>pfkelch13_Arg_539_Thr</code> (String)</li>
+<li><code>pfkelch13_Arg_561_His</code> (String)</li>
+<li><code>pfkelch13_Arg_633_Ile</code> (String)</li>
+<li><code>pfkelch13_Asn_458_Tyr</code> (String)</li>
+<li><code>pfkelch13_Cys_580_Tyr</code> (String)</li>
+<li><code>pfkelch13_Ile_543_Thr</code> (String)</li>
+<li><code>pfkelch13_Met_476_Ile</code> (String)</li>
+<li><code>pfkelch13_Met_579_Ile</code> (String)</li>
+<li><code>pfkelch13_Phe_446_Ile</code> (String)</li>
+<li><code>pfkelch13_Phe_553_Leu</code> (String)</li>
+<li><code>pfkelch13_Phe_574_Leu</code> (String)</li>
+<li><code>pfkelch13_Phe_673_Ile</code> (String)</li>
+<li><code>pfkelch13_Pro_441_Ile</code> (String)</li>
+<li><code>pfkelch13_Pro_553_Leu</code> (String)</li>
+<li><code>pfkelch13_Pro_574_Leu</code> (String)</li>
+<li><code>pfkelch13_Tyr_493_His</code> (String)</li>
+<li><code>pfkelch13_Val_568_Gly</code> (String)</li>
+<li><code>pfmdr1_Asn_1024_Asp</code> (String)</li>
+<li><code>pfmdr1_Asn_86_Tyr</code> (String)</li>
+<li><code>pfmdr1_Asp_1246_Tyr</code> (String)</li>
+<li><code>pfmdr1_Ser_1034_Cys</code> (String)</li>
+<li><code>pfmdr1_Tyr_184_Phe</code> (String)</li>
+<li><code>pfmdr2_Thr_484_Ile</code> (String)</li>
+<li><code>pfubp1_Val_3275_Phe</code> (String)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="PfalciparumTypeDrugResistanceMarkers" src="../../dot/PfalciparumTypeDrugResistanceMarkers.dot.png" /></p>

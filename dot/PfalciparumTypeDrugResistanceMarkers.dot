@@ -3,45 +3,13 @@ digraph {
 	compound=true rankdir=LR
 	node [fontname=Roboto]
 	edge [color="#00000080"]
-	subgraph "cluster-if-L43C5" {
+	subgraph "cluster-if-L44C5" {
 		fontname=Roboto label="if(do_functional_annotation)" rank=same
 		"call-FunctionallyAnnotateVariants" [label=FunctionallyAnnotateVariants shape=cds]
-		"if-L43C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L44C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-CallDrugResistanceMutations" [label=CallDrugResistanceMutations shape=cds]
 	"call-CreateDrugResistanceSummary" [label=CreateDrugResistanceSummary shape=cds]
-	subgraph "cluster-if-L62C5" {
-		fontname=Roboto label="if(defined(gcs_out_root_dir))" rank=same
-		"call-FinalizeDRReport" [label=FinalizeDRReport shape=cds]
-		"call-FinalizeDRSummary" [label=FinalizeDRSummary shape=cds]
-		subgraph "cluster-if-L72C9" {
-			fontname=Roboto label="if(do_functional_annotation)" rank=same
-			"call-FinalizeAnnotatedVCF" [label=FinalizeAnnotatedVCF shape=cds]
-			"call-FinalizeAnnotatedVCFIndex" [label=FinalizeAnnotatedVCFIndex shape=cds]
-			"call-FinalizeSnpEffSummary" [label=FinalizeSnpEffSummary shape=cds]
-			"call-FinalizeSnpEffGenes" [label=FinalizeSnpEffGenes shape=cds]
-			"if-L72C9" [label="" height=0 margin=0 style=invis width=0]
-		}
-		"decl-final_annotated_vcf" [label=final_annotated_vcf shape=plaintext]
-		"decl-final_annotated_vcf_index" [label=final_annotated_vcf_index shape=plaintext]
-		"decl-final_snpeff_summary" [label=final_snpeff_summary shape=plaintext]
-		"decl-final_snpeff_genes" [label=final_snpeff_genes shape=plaintext]
-		"if-L62C5" [label="" height=0 margin=0 style=invis width=0]
-	}
 	"call-FunctionallyAnnotateVariants" -> "call-CallDrugResistanceMutations"
 	"call-CallDrugResistanceMutations" -> "call-CreateDrugResistanceSummary"
-	"call-CallDrugResistanceMutations" -> "call-FinalizeDRReport"
-	"call-CreateDrugResistanceSummary" -> "call-FinalizeDRSummary"
-	"call-FunctionallyAnnotateVariants" -> "call-FinalizeAnnotatedVCF"
-	"call-FunctionallyAnnotateVariants" -> "call-FinalizeAnnotatedVCFIndex"
-	"call-FunctionallyAnnotateVariants" -> "call-FinalizeSnpEffSummary"
-	"call-FunctionallyAnnotateVariants" -> "call-FinalizeSnpEffGenes"
-	"call-FinalizeAnnotatedVCF" -> "decl-final_annotated_vcf"
-	"call-FunctionallyAnnotateVariants" -> "decl-final_annotated_vcf"
-	"call-FinalizeAnnotatedVCFIndex" -> "decl-final_annotated_vcf_index"
-	"call-FunctionallyAnnotateVariants" -> "decl-final_annotated_vcf_index"
-	"call-FunctionallyAnnotateVariants" -> "decl-final_snpeff_summary"
-	"call-FinalizeSnpEffSummary" -> "decl-final_snpeff_summary"
-	"call-FinalizeSnpEffGenes" -> "decl-final_snpeff_genes"
-	"call-FunctionallyAnnotateVariants" -> "decl-final_snpeff_genes"
 }
