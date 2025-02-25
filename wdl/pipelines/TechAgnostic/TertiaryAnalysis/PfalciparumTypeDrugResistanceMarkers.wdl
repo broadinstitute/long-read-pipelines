@@ -615,7 +615,7 @@ task CallDrugResistanceMutations {
 
         # Now we need to make sure all our output files exist so that they can be read from,
         # irrespective of whether the associated markers are present in the input file.
-        touch pfFd.PF3D7_1318100.p.Asp193Tyr.txt
+        touch pffd.PF3D7_1318100.p.Asp193Tyr.txt
         touch pfaat1.PF3D7_0629500.p.Gln454Glu.txt
         touch pfaat1.PF3D7_0629500.p.Lys541Asn.txt
         touch pfaat1.PF3D7_0629500.p.Phe313Ser.txt
@@ -686,7 +686,7 @@ task CallDrugResistanceMutations {
 
         # Pull out the drug resistance markers from the raw drug resistance report:
         # Note: We have to list them individually here because Terra can't handle programmatic output naming.
-        String pfFd_Asp_193_Tyr =      read_string("pfFd.PF3D7_1318100.p.Asp193Tyr.txt")
+        String pfFd_Asp_193_Tyr =      read_string("pffd.PF3D7_1318100.p.Asp193Tyr.txt")
         String pfaat1_Gln_454_Glu =    read_string("pfaat1.PF3D7_0629500.p.Gln454Glu.txt")
         String pfaat1_Lys_541_Asn =    read_string("pfaat1.PF3D7_0629500.p.Lys541Asn.txt")
         String pfaat1_Phe_313_Ser =    read_string("pfaat1.PF3D7_0629500.p.Phe313Ser.txt")
