@@ -115,35 +115,18 @@
     .dr_bubbles {
         position: relative;
         top: 210px;
-        width: 98%;
+        width: 100%;
         margin: 0 auto;
         /*display: flex;
         justify-content: center;
         align-items: center;*/
     }
 
-    .dr_legend {
-        display: flex;
-        justify-content: left;
-        flex-direction: column;
-        width: 150px;
-    }
-
-    .dr_legend_circle {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 1.9px solid black;
-    }
-
-    .dr_legend_label {
-        color: #000;
-        font-size: 18px;
-        padding-left: 5px;
-        line-height: 21px;
-        font-weight: 300;
-        font-family: Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-            'Liberation Sans', sans-serif;
+    .dr_bubbles img {
+        width: 98%;
+        margin: auto;
+        vertical-align: center;
+        margin-top: 1.5%;
     }
   
     /* DRM box */
@@ -1799,15 +1782,9 @@
                         <div class="divider_line" style="position: absolute;top:110px;left:-2px;width:1080px; margin: 0 auto;"></div>
                     </div>
                     <div class="dr_bubbles">
-                        <div class="dr_legend" style="position: relative; top:57px; left:9px;">
-                            <div class="marker_absent" style="margin-bottom: 30px;">
-                                <div class="dr_legend_circle" style="background-color:white;"></div><div class="dr_legend_label" style="margin-right:35px;">Marker Absent</div>
-                            </div>
-                            <div class="marker_present">
-                                <div class="dr_legend_circle" style="background-color:red;"></div><div class="dr_legend_label">Marker Present</div>
-                            </div>
-                        </div>
-                        <img src="data:image/jpeg;base64,{{ (sample.dr_bubbles).decode('utf-8') | safe }}" style="height: auto; width: 85%; position:absolute; left:170px;">
+                        
+                        <!--<img src="data:image/jpeg;base64,{{ (sample.dr_bubbles).decode('utf-8') | safe }}" style="height: auto; width: 85%; position:absolute; left:170px;">-->
+                        <img src="../test_data/example_drug_res.png">
                     </div>
                 </div>
                 <div class="QC_info_box">
