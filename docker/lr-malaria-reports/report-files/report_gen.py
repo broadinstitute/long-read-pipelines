@@ -100,6 +100,17 @@ def fix_plot_visuals(fig,
     # Make it so we can actually see what's happening on the plots with "dark mode":
     fig.patch.set_facecolor("white")
 
+# Target markers to filter drug resistance text results
+target_markers = ['Pfdhfr-p.Cys50Arg', 'Pfdhfr-p.Asn51Ile', 'Pfdhfr-p.Cys59Arg', 'Pfdhfr-p.Ser108Asn', 'Pfdhfr-p.Ile164Lys', 
+                  'Pfmdr1-p.Asn86Tyr', 'Pfmdr1-p.Tyr184Phe', 'Pfmdr1-p.Ser1034Cys', 'Pfmdr1-p.Asn1024Asp', 'Pfmdr1-p.Asp1246Tyr', 
+                  'Pfcrt-p.Lys76Thr', 'Pfcrt-p.Met74Ile', 'Pfcrt-p.Asn75Glu', 'Pfcrt-p.Cys72Ser', 'Pfcrt-p.His97Tyr', 
+                  'Pfcrt-p.Cys101Phe', 'Pfcrt-p.Phe145Ile', 'Pfcrt-p.Met343Leu', 'Pfcrt-p.Ser350Arg', 'Pfcrt-p.Gly353Val', 
+                  'Pfdhps-p.Ser436Ala', 'Pfdhps-p.Lys437Gly', 'Pfdhps-p.Lys540Glu', 'Pfdhps-p.Ala581Gly', 'Pfdhps-p.Ala613Thr', 
+                  'Pfdhps-p.Ala613Ser', 'Pfkelch13-p.Tyr493His', 'Pfkelch13-p.Arg539Thr', 'Pfkelch13-p.Ile543Thr', 
+                  'Pfkelch13-p.Arg561His', 'Pfkelch13-p.Cys580Tyr', 'Pfkelch13-p.Ala675Val', 'Pfkelch13-p.Phe446Ile', 
+                  'Pfkelch13-p.Met476Ile', 'Pfkelch13-p.Asn458Tyr', 'Pfkelch13-p.Phe553Leu', 'Pfkelch13-p.Phe574Leu',
+                  'Pfkelch13-p.Arg633Ile']
+
 
 '''
 Coverage Plot
