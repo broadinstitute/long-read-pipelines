@@ -558,8 +558,8 @@ def plot_dr_bubbles(dr_report_file, sample_id):
         [h_aa_filled, (h_aa_half_right, h_aa_half_left), h_aa_empty, h_aa_missing], 
         ["Hom Amino Acid Change Present", "Het Amino Acid Change Present", "Amino Acid Change Not Present", "Site Missing from Sample"], 
         title="Mutations",
-        bbox_to_anchor=[-0.45, 0.85],  # Move the legend to the left outside the plot area
-        loc='upper left'  # Optional: set the anchor point inside the legend box
+        bbox_to_anchor=[-0.45, 0.85],
+        loc='upper left' 
     )
 
     fix_plot_visuals(fig)
