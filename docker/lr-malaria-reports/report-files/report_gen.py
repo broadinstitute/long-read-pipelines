@@ -188,22 +188,6 @@ def plot_coverage(directory, sample_name, bin_width=500):
     fix_plot_visuals(fig)
             
     return fig
-    
-'''
-Drug Resistance Table
-'''
-def create_drug_table(file):
-    if not file:
-        resistances = ["UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED"]
-    else:
-        data = open(file, 'r').read()
-        resistances = list(get_drug_resistance(data, None, None, do_print=True))
-    
-    resistances_tbl = pd.DataFrame(columns = ["Chloroquine", "Pyrimethamine", "Sulfadoxine", "Mefloquine", "Artemisinin", "Piperaquine"])
-    resistances = map(str, resistances)
-    resistances = [s.replace('DrugSensitivity.','') for s in list(resistances)]
-    
-    return resistances
 
 # Set up some functions to determine drug sensitivity:
 # vars for markers in drug_resistance_report.txt
@@ -219,173 +203,6 @@ def parse_pchange(pchange):
     old, pos, new = pchange_regex.match(pchange).groups()
     return AA_3_2[old.upper()], int(pos), AA_3_2[new.upper()]
 
-def get_chloroquine_sensitivity(dr_report):
-# Locus utilized: PF3D7_0709000 (crt)
-# Codon: 76
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 76 K/T heterozygote Heterozygous mutant Undetermined
-# 2 76 missing Missing Undetermined
-# 3 K76 Wild type Sensitive
-# 4 76T Mutant Resistant
-# 5 otherwise Unknown mutant Undetermined
-
-    for line in StringIO(dr_report):
-        line = ' '.join(line.split())
-        # We only care about this locus for this drug:
-        if line.startswith("pfcrt PF3D7_0709000"):
-            gene, locus, pchange, marker = line.strip().split(" ")
-            old, pos, new = parse_pchange(pchange)
-            if pos == 76:
-                if (old == "L") and (new == "T") and (marker == absent):
-                    return DrugSensitivity.SENSITIVE
-                elif (new == "T") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                
-    return DrugSensitivity.UNDETERMINED
-                
-def get_pyrimethamine_sensitivity(dr_report):
-# Locus utilized: PF3D7_0417200 (dhfr)
-# Codon: 108
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 108 S/N heterozygote Heterozygous mutant Undetermined
-# 2 108 missing Missing Undetermined
-# 3 S108 Wild type Sensitive
-# 4 108N Mutant Resistant
-# 5 otherwise Unknown mutant Undetermined
-
-    for line in StringIO(dr_report):
-        line = ' '.join(line.split())
-        # We only care about this locus for this drug:
-        if line.startswith("pfdhfr PF3D7_0417200"):
-            gene, locus, pchange, marker = line.strip().split(" ")
-            old, pos, new = parse_pchange(pchange)
-            if pos == 108:
-                if (old == "S") and (new == "N") and (marker == absent):
-                    return DrugSensitivity.SENSITIVE
-                elif (old == "S") and (new == "N") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif (new == "N") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif marker == absent:
-                    return DrugSensitivity.SENSITIVE
-                
-    return DrugSensitivity.UNDETERMINED
-
-def get_sulfadoxine_sensitivity(dr_report):
-# Locus utilized: PF3D7_0810800 (dhps)
-# Codon: 437
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 437 A/G heterozygote Heterozygous mutant Undetermined
-# 2 437 missing Missing Undetermined
-# 3 A437 Wild type Sensitive
-# 4 437G Mutant Resistant
-# 5 otherwise Unknown mutant Undetermined
-
-    for line in StringIO(dr_report):
-        line = ' '.join(line.split())
-
-        # We only care about this locus for this drug:
-        if line.startswith("pfdhps PF3D7_0810800"):
-            gene, locus, pchange, marker = line.strip().split(" ")
-            old, pos, new = parse_pchange(pchange)
-            if pos == 437:
-                if (old == "A") and (new == "G") and (marker == absent):
-                    return DrugSensitivity.SENSITIVE
-                elif (old == "A") and (new == "G") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif (new == "G") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif marker == absent:
-                    return DrugSensitivity.SENSITIVE
-                
-    return DrugSensitivity.UNDETERMINED
-
-def get_mefloquine_sensitivity(dr_report):
-# Locus utilized: PF3D7_0523000 (mdr1)
-# Codons: Amplification status of whole gene
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 Missing Missing Undetermined
-# 2 Heterozygous duplication Heterozygous mutant Undetermined
-# 3 Single copy Wild type Sensitive
-# 4 Multiple copies Mutant Resistant
-
-    # Currently we can't determine this.
-    # We need to get CNV calling working first.
-                
-    return DrugSensitivity.UNDETERMINED
-
-def get_artemisinin_sensitivity(dr_report):
-# Locus utilized: PF3D7_1343700 (kelch13)
-# Codons: 349-726 (BTB/POZ and propeller domains)
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 Homozygous non-synonymous mutations in the kelch13 BTB/POZ and propeller
-# domain classified by the World Health Organisation as associated with delayed
-# parasite clearance 
-# Mutant – associated with delayed clearance Resistant
-# 2 Heterozygous non-synonymous mutations in the kelch13 BTB/POZ and
-# propeller domain classified by the World Health Organisation as associated
-# with delayed parasite clearance
-# Mutant - heterozygous Undetermined
-# 3 578S as homozygous Mutant - not associated Sensitive
-# 4 Any missing call in amino acids 349-726 Missing Undetermined
-# 5 No non-reference calls in amino acids 349-726 Wild-type Sensitive
-# 6 otherwise Mutant - not in WHO list Undetermined
-
-    has_variants = False
-
-    for line in StringIO(dr_report):
-        line = ' '.join(line.split())
-        # We only care about this locus for this drug:
-        if line.startswith("pfkelch13 PF3D7_1343700"):
-            gene, locus, pchange, marker = line.strip().split(" ")
-            old, pos, new = parse_pchange(pchange)
-            
-            has_non_ref = False
-            has_variants = False
-            if 349 <= pos <= 726:
-                if (old != new) and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif (new == "S") and (marker == present):
-                    return DrugSensitivity.SENSITIVE
-                elif marker == present:
-                    has_non_ref = True
-                has_variants = True
-    if (has_variants) and (not has_non_ref):
-        return DrugSensitivity.SENSITIVE
-    
-    return DrugSensitivity.UNDETERMINED
-
-def get_piperaquine_sensitivity(dr_report):
-# Loci utilized: PF3D7_1408000 (plasmepsin 2) and PF3D7_1408100 (plasmepsin 3)
-# Codons: Amplification status of both genes
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 Missing Missing Undetermined
-# 2 Heterozygous duplication Heterozygous mutant Undetermined
-# 3 Single copy Wild type Sensitive
-# 4 Multiple copies Mutant Resistant
-
-    # Currently we can't determine this.
-    # We need to get CNV calling working first.
-                
-    return DrugSensitivity.UNDETERMINED
-
-def get_drug_resistance(data, sample_id, sample_df, do_print=False):
-    
-    chloroquine = get_chloroquine_sensitivity(data)
-    pyrimethamine = get_pyrimethamine_sensitivity(data)
-    sulfadoxine = get_sulfadoxine_sensitivity(data)
-    mefloquine = get_mefloquine_sensitivity(data)
-    artemisinin = get_artemisinin_sensitivity(data)
-    piperaquine = get_piperaquine_sensitivity(data)
-        
-    return chloroquine, pyrimethamine, sulfadoxine, mefloquine, artemisinin, piperaquine
- 
 def plot_dr_bubbles(dr_report_file, sample_id):
 
     # Download the file contents:
@@ -765,6 +582,8 @@ def prepare_summary_data(arg_dict):
     location_table = arg_dict["location_table"]
     sample_code = arg_dict["code"]
     tech_flag = arg_dict["tech_flag"]
+    resistances = [arg_dict["chloroquine_status"], arg_dict["pyrimethamine_status"], arg_dict["sulfadoxine_status"],
+                        arg_dict["mefloquine_status"], arg_dict["artemisinin_status"], arg_dict["piperaquine_status"]]
     
     info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_unknown(arg_dict['aligned_read_length']), 
             check_unknown(arg_dict['pct_properly_paired_reads']), 0, round(arg_dict['read_qual_mean'], 2)]
@@ -776,7 +595,6 @@ def prepare_summary_data(arg_dict):
     elif (qc_pass == "false"):
         qc_pass = "FAIL"
 
-    resistances = create_drug_table(None if arg_dict["drug_resistance_text"] in [None, "None", ""] else arg_dict["drug_resistance_text"])
     resistance_bubbles = plot_dr_bubbles(arg_dict["drug_resistance_text"], sample_name)
     resistance_bubbles_b64 = plot_to_b64(resistance_bubbles, "tight")
 
@@ -876,6 +694,12 @@ if __name__ == '__main__':
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", default=None)
     parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", default="Unknown")
     parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", default="Unknown")
+    parser.add_argument("--chloroquine_status", help="value denoting the sensitivity of this sample to chloroquine")
+    parser.add_argument("--sulfadoxine_status", help="value denoting the sensitivity of this sample to sulfadoxine")
+    parser.add_argument("--pyrimethamine_status", help="value denoting the sensitivity of this sample to pyrimethamine")
+    parser.add_argument("--piperaquine_status", help="value denoting the sensitivity of this sample to piperaquine")
+    parser.add_argument("--mefloquine_status", help="value denoting the sensitivity of this sample to mefloquine")
+    parser.add_argument("--artemisinin_status", help="value denoting the sensitivity of this sample to artemisinin")
 
     # Map
     parser.add_argument("--longitude", help="longitude value of where the sample was collected", type=float, default=0)

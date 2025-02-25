@@ -27,6 +27,12 @@ task RunReportScript {
         drug_resistance_text: "text file used for determining and displaying drug resistances"
         HRP2: "value denoting whether the HRP2 marker is present or not -- true or false"
         HRP3: "value denoting whether the HRP3 marker is present or not -- true or false"
+        predicted_drug_status_chloroquine: "value denoting the sensitivity of this sample to chloroquine"
+        predicted_drug_status_pyrimethamine: "value denoting the sensitivity of this sample to pyrimethamine"
+        predicted_drug_status_sulfadoxine: "value denoting the sensitivity of this sample to sulfadoxine"
+        predicted_drug_status_mefloquine: "value denoting the sensitivity of this sample to mefloquine"
+        predicted_drug_status_artemisinin: "value denoting the sensitivity of this sample to artemisinin"
+        predicted_drug_status_piperaquine: "value denoting the sensitivity of this sample to piperaquine"
 
         # Map
         longitude: "longitude value of where the sample was taken"
@@ -83,6 +89,12 @@ task RunReportScript {
         File? drug_resistance_text
         String? HRP2
         String? HRP3
+        String? predicted_drug_status_chloroquine
+        String? predicted_drug_status_pyrimethamine
+        String? predicted_drug_status_sulfadoxine
+        String? predicted_drug_status_mefloquine
+        String? predicted_drug_status_artemisinin
+        String? predicted_drug_status_piperaquine
 
         # Map
         Float? longitude
@@ -181,6 +193,12 @@ task RunReportScript {
             --drug_resistance_text ~{default="None" drug_resistance_text} \
             --HRP2 ~{default="Unknown" HRP2} \
             --HRP3 ~{default="Unknown" HRP3} \
+            --pyrimethamine_status ~{default="UNDETERMINED" predicted_drug_status_pyrimethamine} \
+            --chloroquine_status ~{default="UNDETERMINED" predicted_drug_status_chloroquine} \
+            --artemisinin_status ~{default="UNDETERMINED" predicted_drug_status_artemisinin} \
+            --piperaquine_status ~{default="UNDETERMINED" predicted_drug_status_piperaquine} \
+            --mefloquine_status ~{default="UNDETERMINED" predicted_drug_status_mefloquine} \
+            --sulfadoxine_status ~{default="UNDETERMINED" predicted_drug_status_sulfadoxine} \
             --longitude ~{default=0 longitude} \
             --latitude ~{default=0 latitude} \
             --location ~{default="Unknown" wrap_location} \
