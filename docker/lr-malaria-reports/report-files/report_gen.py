@@ -19,6 +19,7 @@ import plotly.graph_objects as go
 import math
 from collections import defaultdict
 from matplotlib.collections import PatchCollection
+from matplotlib.markers import MarkerStyle
 
 # HTML
 from markupsafe import Markup
