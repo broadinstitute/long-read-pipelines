@@ -19,6 +19,7 @@ import plotly.graph_objects as go
 import math
 from collections import defaultdict
 from matplotlib.collections import PatchCollection
+from matplotlib.markers import MarkerStyle
 
 # HTML
 from markupsafe import Markup
@@ -100,6 +101,17 @@ def fix_plot_visuals(fig,
     # Make it so we can actually see what's happening on the plots with "dark mode":
     fig.patch.set_facecolor("white")
 
+# Target markers to filter drug resistance text results
+target_markers = ['Pfdhfr-p.Cys50Arg', 'Pfdhfr-p.Asn51Ile', 'Pfdhfr-p.Cys59Arg', 'Pfdhfr-p.Ser108Asn', 'Pfdhfr-p.Ile164Lys', 
+                  'Pfmdr1-p.Asn86Tyr', 'Pfmdr1-p.Tyr184Phe', 'Pfmdr1-p.Ser1034Cys', 'Pfmdr1-p.Asn1024Asp', 'Pfmdr1-p.Asp1246Tyr', 
+                  'Pfcrt-p.Lys76Thr', 'Pfcrt-p.Met74Ile', 'Pfcrt-p.Asn75Glu', 'Pfcrt-p.Cys72Ser', 'Pfcrt-p.His97Tyr', 
+                  'Pfcrt-p.Cys101Phe', 'Pfcrt-p.Phe145Ile', 'Pfcrt-p.Met343Leu', 'Pfcrt-p.Ser350Arg', 'Pfcrt-p.Gly353Val', 
+                  'Pfdhps-p.Ser436Ala', 'Pfdhps-p.Lys437Gly', 'Pfdhps-p.Lys540Glu', 'Pfdhps-p.Ala581Gly', 'Pfdhps-p.Ala613Thr', 
+                  'Pfdhps-p.Ala613Ser', 'Pfkelch13-p.Tyr493His', 'Pfkelch13-p.Arg539Thr', 'Pfkelch13-p.Ile543Thr', 
+                  'Pfkelch13-p.Arg561His', 'Pfkelch13-p.Cys580Tyr', 'Pfkelch13-p.Ala675Val', 'Pfkelch13-p.Phe446Ile', 
+                  'Pfkelch13-p.Met476Ile', 'Pfkelch13-p.Asn458Tyr', 'Pfkelch13-p.Phe553Leu', 'Pfkelch13-p.Phe574Leu',
+                  'Pfkelch13-p.Arg633Ile']
+
 
 '''
 Coverage Plot
@@ -176,22 +188,6 @@ def plot_coverage(directory, sample_name, bin_width=500):
     fix_plot_visuals(fig)
             
     return fig
-    
-'''
-Drug Resistance Table
-'''
-def create_drug_table(file):
-    if not file:
-        resistances = ["UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED","UNDETERMINED"]
-    else:
-        data = open(file, 'r').read()
-        resistances = list(get_drug_resistance(data, None, None, do_print=True))
-    
-    resistances_tbl = pd.DataFrame(columns = ["Chloroquine", "Pyrimethamine", "Sulfadoxine", "Mefloquine", "Artemisinin", "Piperaquine"])
-    resistances = map(str, resistances)
-    resistances = [s.replace('DrugSensitivity.','') for s in list(resistances)]
-    
-    return resistances
 
 # Set up some functions to determine drug sensitivity:
 # vars for markers in drug_resistance_report.txt
@@ -207,217 +203,66 @@ def parse_pchange(pchange):
     old, pos, new = pchange_regex.match(pchange).groups()
     return AA_3_2[old.upper()], int(pos), AA_3_2[new.upper()]
 
-def get_chloroquine_sensitivity(dr_report):
-# Locus utilized: PF3D7_0709000 (crt)
-# Codon: 76
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 76 K/T heterozygote Heterozygous mutant Undetermined
-# 2 76 missing Missing Undetermined
-# 3 K76 Wild type Sensitive
-# 4 76T Mutant Resistant
-# 5 otherwise Unknown mutant Undetermined
+def plot_dr_bubbles(dr_report_file, sample_id):
 
-    for line in StringIO(dr_report):
-        line = ' '.join(line.split())
-        # We only care about this locus for this drug:
-        if line.startswith("pfcrt PF3D7_0709000"):
-            gene, locus, pchange, marker = line.strip().split(" ")
-            old, pos, new = parse_pchange(pchange)
-            if pos == 76:
-                if (old == "L") and (new == "T") and (marker == absent):
-                    return DrugSensitivity.SENSITIVE
-                elif (new == "T") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                
-    return DrugSensitivity.UNDETERMINED
-                
-def get_pyrimethamine_sensitivity(dr_report):
-# Locus utilized: PF3D7_0417200 (dhfr)
-# Codon: 108
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 108 S/N heterozygote Heterozygous mutant Undetermined
-# 2 108 missing Missing Undetermined
-# 3 S108 Wild type Sensitive
-# 4 108N Mutant Resistant
-# 5 otherwise Unknown mutant Undetermined
-
-    for line in StringIO(dr_report):
-        line = ' '.join(line.split())
-        # We only care about this locus for this drug:
-        if line.startswith("pfdhfr PF3D7_0417200"):
-            gene, locus, pchange, marker = line.strip().split(" ")
-            old, pos, new = parse_pchange(pchange)
-            if pos == 108:
-                if (old == "S") and (new == "N") and (marker == absent):
-                    return DrugSensitivity.SENSITIVE
-                elif (old == "S") and (new == "N") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif (new == "N") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif marker == absent:
-                    return DrugSensitivity.SENSITIVE
-                
-    return DrugSensitivity.UNDETERMINED
-
-def get_sulfadoxine_sensitivity(dr_report):
-# Locus utilized: PF3D7_0810800 (dhps)
-# Codon: 437
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 437 A/G heterozygote Heterozygous mutant Undetermined
-# 2 437 missing Missing Undetermined
-# 3 A437 Wild type Sensitive
-# 4 437G Mutant Resistant
-# 5 otherwise Unknown mutant Undetermined
-
-    for line in StringIO(dr_report):
-        line = ' '.join(line.split())
-
-        # We only care about this locus for this drug:
-        if line.startswith("pfdhps PF3D7_0810800"):
-            gene, locus, pchange, marker = line.strip().split(" ")
-            old, pos, new = parse_pchange(pchange)
-            if pos == 437:
-                if (old == "A") and (new == "G") and (marker == absent):
-                    return DrugSensitivity.SENSITIVE
-                elif (old == "A") and (new == "G") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif (new == "G") and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif marker == absent:
-                    return DrugSensitivity.SENSITIVE
-                
-    return DrugSensitivity.UNDETERMINED
-
-def get_mefloquine_sensitivity(dr_report):
-# Locus utilized: PF3D7_0523000 (mdr1)
-# Codons: Amplification status of whole gene
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 Missing Missing Undetermined
-# 2 Heterozygous duplication Heterozygous mutant Undetermined
-# 3 Single copy Wild type Sensitive
-# 4 Multiple copies Mutant Resistant
-
-    # Currently we can't determine this.
-    # We need to get CNV calling working first.
-                
-    return DrugSensitivity.UNDETERMINED
-
-def get_artemisinin_sensitivity(dr_report):
-# Locus utilized: PF3D7_1343700 (kelch13)
-# Codons: 349-726 (BTB/POZ and propeller domains)
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 Homozygous non-synonymous mutations in the kelch13 BTB/POZ and propeller
-# domain classified by the World Health Organisation as associated with delayed
-# parasite clearance 
-# Mutant – associated with delayed clearance Resistant
-# 2 Heterozygous non-synonymous mutations in the kelch13 BTB/POZ and
-# propeller domain classified by the World Health Organisation as associated
-# with delayed parasite clearance
-# Mutant - heterozygous Undetermined
-# 3 578S as homozygous Mutant - not associated Sensitive
-# 4 Any missing call in amino acids 349-726 Missing Undetermined
-# 5 No non-reference calls in amino acids 349-726 Wild-type Sensitive
-# 6 otherwise Mutant - not in WHO list Undetermined
-
-    has_variants = False
-
-    for line in StringIO(dr_report):
-        line = ' '.join(line.split())
-        # We only care about this locus for this drug:
-        if line.startswith("pfkelch13 PF3D7_1343700"):
-            gene, locus, pchange, marker = line.strip().split(" ")
-            old, pos, new = parse_pchange(pchange)
-            
-            has_non_ref = False
-            has_variants = False
-            if 349 <= pos <= 726:
-                if (old != new) and (marker == present):
-                    return DrugSensitivity.RESISTANT
-                elif (new == "S") and (marker == present):
-                    return DrugSensitivity.SENSITIVE
-                elif marker == present:
-                    has_non_ref = True
-                has_variants = True
-    if (has_variants) and (not has_non_ref):
-        return DrugSensitivity.SENSITIVE
-    
-    return DrugSensitivity.UNDETERMINED
-
-def get_piperaquine_sensitivity(dr_report):
-# Loci utilized: PF3D7_1408000 (plasmepsin 2) and PF3D7_1408100 (plasmepsin 3)
-# Codons: Amplification status of both genes
-# Workflow:
-# Step Genetic change Interpretation Classification
-# 1 Missing Missing Undetermined
-# 2 Heterozygous duplication Heterozygous mutant Undetermined
-# 3 Single copy Wild type Sensitive
-# 4 Multiple copies Mutant Resistant
-
-    # Currently we can't determine this.
-    # We need to get CNV calling working first.
-                
-    return DrugSensitivity.UNDETERMINED
-
-def get_drug_resistance(data, sample_id, sample_df, do_print=False):
-    
-    chloroquine = get_chloroquine_sensitivity(data)
-    pyrimethamine = get_pyrimethamine_sensitivity(data)
-    sulfadoxine = get_sulfadoxine_sensitivity(data)
-    mefloquine = get_mefloquine_sensitivity(data)
-    artemisinin = get_artemisinin_sensitivity(data)
-    piperaquine = get_piperaquine_sensitivity(data)
-        
-    return chloroquine, pyrimethamine, sulfadoxine, mefloquine, artemisinin, piperaquine
- 
-def plot_dr_bubbles(dr_report_file):
-    # Set up dataframes using a single report:
     # Download the file contents:
     with open(dr_report_file, 'r') as f:
         dr_report_contents = f.read()
 
-    # Set up our data:
-    dataframe_dict = dict()
-    drug_resistance_df = pd.DataFrame(columns=["Sample", "Chloroquine", "Pyrimethamine", "Sulfadoxine", "Mefloquine", "Artemisinin", "Piperaquine"])  
-
     # Get the raw info here:
+    dataframe_dict = {}
     last_gene = None
     cur_df = None
+
     for line in dr_report_contents.split("\n"):
         if len(line) > 1:
-            gene, loc, variant, presence = line.split(" ")
+            parts = re.split(r"\s", line)
+
+            gene, loc, variant, presence = parts
+
+            # Check if marker is in target list (case-insensitive)
+            marker = f"{gene.lower()}-{variant.lower()}"
+            if marker not in [m.lower() for m in target_markers]:
+                continue
+
+            # If we've moved to a new gene
             if gene != last_gene:
-                # must make a new dataframe
-                if last_gene:
+                # Save previous dataframe if it exists
+                if last_gene and cur_df is not None:
                     dataframe_dict[last_gene] = cur_df
+
+                # Create new dataframe for new gene
                 cur_df = pd.DataFrame({'Sample': pd.Series(dtype='str')})
+
+            # Add column for this variant
             cur_df[variant] = pd.Series(dtype='bool')
             last_gene = gene
-    dataframe_dict[gene] = cur_df
+
+    if last_gene and cur_df is not None:
+        dataframe_dict[last_gene] = cur_df
+
+    print("Collecting Raw Drug Resistances")
 
     # Get the raw info here:
-    sample_id = dr_report_file[dr_report_file.find("/SEN_")+1:dr_report_file.find("_ALL_scored")]
-
     dr_info = defaultdict(list)
     for line in dr_report_contents.split("\n"):
         if len(line) > 1:
-            gene, loc, variant, presence = line.split(" ")
-            presence = presence == "present"
+            gene, loc, variant, presence = re.split("\s", line)
 
-            dr_info[gene].append([variant, presence])
+            # Check if marker is in target list (case-insensitive)
+            marker = f"{gene.lower()}-{variant.lower()}"
+            if marker not in [m.lower() for m in target_markers]:
+                continue
+
+            dr_info[gene].append([variant, presence])      
 
     # Now process it into dataframes:
     for gene, variant_info in dr_info.items():
-
         # set up place to put new markers:
         gene_df = dataframe_dict[gene]
         columns = list(gene_df.columns)
 
-        gene_df.loc[len(gene_df.index)] = [sample_id] + (len(columns)-1) * [None]
+        gene_df.loc[len(gene_df.index)] = [""] + (len(columns)-1) * [None]
 
         # Now add the markers:
         for v, presence in variant_info:
@@ -428,9 +273,9 @@ def plot_dr_bubbles(dr_report_file):
     ncols = sum([len(d.columns) for d in dataframe_dict.values()])
 
     aa_dict = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-        'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
-        'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
-        'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+         'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+         'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
     aa_dict_rev = {v:k for k, v in aa_dict.items()}
 
     pchange_string_re = re.compile(r'P\.([A-Z]+)(\d+)([A-Z]+)')
@@ -440,37 +285,65 @@ def plot_dr_bubbles(dr_report_file):
         for variant in df.columns[1:]:
             m = pchange_string_re.match(variant.upper())
             xlabels.append(f"{aa_dict[m[1]]}{m[2]}{aa_dict[m[3]]}")
+    ylabels = next(iter(dataframe_dict.values()))["Sample"].values
 
     # Now set up the circles we will plot:
     print("Computing plots")
-    radius = 0.4
-    circles = []
+
+    # We need to plot 3 kinds of circles for each:
     x_tick_pos = []
     x_gene_offset = 0
+
+    aa_filled_coords_x = []
+    aa_filled_coords_y = []
+    aa_half_coords_x = []
+    aa_half_coords_y = []
+    aa_empty_coords_x = []
+    aa_empty_coords_y = []
+    aa_missing_coords_x = []
+    aa_missing_coords_y = []
+
     for gene_index, (g, df) in enumerate(dataframe_dict.items()):
         y = nrows-1
         for row_index, row in df.iterrows():
             x = 0 + x_gene_offset
             for col_index, col in enumerate(row[1:]):
-                edgecolor = [0]*3
-                facecolor = [1,0,0] if col else [1]*3
-                c = plt.Circle((x+gene_index, y), facecolor=facecolor, edgecolor=edgecolor)
-                c.set(radius=radius)
-                circles.append(c)
+
+                if col == "present" or col == "hom_var":
+                    aa_filled_coords_x.append(x+gene_index)
+                    aa_filled_coords_y.append(y)
+                elif col == "absent" or col == "hom_ref":
+                    aa_empty_coords_x.append(x+gene_index)
+                    aa_empty_coords_y.append(y)
+                elif col == "het":
+                    aa_half_coords_x.append(x+gene_index)
+                    aa_half_coords_y.append(y)
+                elif col == "missing":
+                    aa_missing_coords_x.append(x+gene_index)
+                    aa_missing_coords_y.append(y)
+
                 x_tick_pos.append(x+gene_index)
                 x += 1
             y -= 1
-        x_gene_offset += len(df.columns)-1
-                
+        x_gene_offset += len(df.columns)
+
     x_tick_pos = sorted(list(set(x_tick_pos)))
 
     ############################
 
     print("Generating Plots")
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(14,8))
 
-    col = PatchCollection(circles, match_original=True)
-    ax.add_collection(col)
+    dot_size = 150
+
+    # Amino Acid Markers:
+    h_aa_filled = ax.scatter(aa_filled_coords_x, aa_filled_coords_y, s=dot_size, color=[1,0,0], edgecolor="black", marker="o")
+
+    h_aa_half_right = ax.scatter(aa_half_coords_x, aa_half_coords_y, s=dot_size, color=[1,1,1], edgecolor="black", marker=MarkerStyle("o", fillstyle="right"))
+    h_aa_half_left = ax.scatter(aa_half_coords_x, aa_half_coords_y, s=dot_size, color=[1,0,0], edgecolor="black", marker=MarkerStyle("o", fillstyle="left"))
+
+    h_aa_empty = ax.scatter(aa_empty_coords_x, aa_empty_coords_y, s=dot_size, color=[1,1,1], edgecolor="black", marker="o")
+    h_aa_missing = ax.scatter(aa_missing_coords_x, aa_missing_coords_y, s=dot_size, color=[0.5]*3, edgecolor="black", marker="o")
 
     # Now set the gene labels:
     x_gene_offset = 0
@@ -479,24 +352,37 @@ def plot_dr_bubbles(dr_report_file):
         lbl_x = sum(line_x)/2
         plt.text(lbl_x, nrows+2, g, ha="center", fontfamily="monospace", size="large")
         plt.plot(line_x, [nrows+1]*2, '-k', linewidth=2)
-        x_gene_offset += len(df.columns)
-        
-    ax.set(xticks=x_tick_pos, 
-        yticks=[],
-        xticklabels=xlabels, 
-        yticklabels=[])
+        x_gene_offset += len(df.columns) + 1
 
+    ax.set(xticks=x_tick_pos, 
+           yticks=[],
+           xticklabels=xlabels, 
+           yticklabels=[])
 
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90, ha='center')
 
-    ax.axis([-1, ncols-1, -1, nrows+3])
+    max_x = max(x_tick_pos) + 1
+    ax.axis([-1, max_x, -1, nrows+3])
     ax.set_aspect(aspect='equal')
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    
+
+    # Create the axes
+    legend_x_offset = 0 
+    leg_aa = ax.legend(
+        [h_aa_filled, (h_aa_half_right, h_aa_half_left), h_aa_empty, h_aa_missing], 
+        ["Hom Amino Acid Change Present", "Het Amino Acid Change Present", "Amino Acid Change Not Present", "Site Missing from Sample"], 
+        title="Mutations",
+        bbox_to_anchor=[-0.45, 0.85],
+        loc='upper left' 
+    )
+
+    fix_plot_visuals(fig)
+
+    plt.tight_layout()
     return fig
  
 '''
@@ -696,6 +582,8 @@ def prepare_summary_data(arg_dict):
     location_table = arg_dict["location_table"]
     sample_code = arg_dict["code"]
     tech_flag = arg_dict["tech_flag"]
+    resistances = [arg_dict["chloroquine_status"], arg_dict["pyrimethamine_status"], arg_dict["sulfadoxine_status"],
+                        arg_dict["mefloquine_status"], arg_dict["artemisinin_status"], arg_dict["piperaquine_status"]]
     
     info = [upload_date, format_dates(collection_date), format_dates(sequencing_date), species, round(arg_dict['aligned_coverage'], 2), check_unknown(arg_dict['aligned_read_length']), 
             check_unknown(arg_dict['pct_properly_paired_reads']), 0, round(arg_dict['read_qual_mean'], 2)]
@@ -707,8 +595,7 @@ def prepare_summary_data(arg_dict):
     elif (qc_pass == "false"):
         qc_pass = "FAIL"
 
-    resistances = create_drug_table(None if arg_dict["drug_resistance_text"] in [None, "None", ""] else arg_dict["drug_resistance_text"])
-    resistance_bubbles = plot_dr_bubbles(arg_dict["drug_resistance_text"])
+    resistance_bubbles = plot_dr_bubbles(arg_dict["drug_resistance_text"], sample_name)
     resistance_bubbles_b64 = plot_to_b64(resistance_bubbles, "tight")
 
     loc_dict = parse_location_info(location_table)
@@ -807,6 +694,12 @@ if __name__ == '__main__':
     parser.add_argument("--drug_resistance_text", help="path of text file used for determining and displaying drug resistances", default=None)
     parser.add_argument("--HRP2", help="value denoting whether the HRP2 marker is present or not -- true or false", default="Unknown")
     parser.add_argument("--HRP3", help="value denoting whether the HRP3 marker is present or not -- true or false", default="Unknown")
+    parser.add_argument("--chloroquine_status", help="value denoting the sensitivity of this sample to chloroquine")
+    parser.add_argument("--sulfadoxine_status", help="value denoting the sensitivity of this sample to sulfadoxine")
+    parser.add_argument("--pyrimethamine_status", help="value denoting the sensitivity of this sample to pyrimethamine")
+    parser.add_argument("--piperaquine_status", help="value denoting the sensitivity of this sample to piperaquine")
+    parser.add_argument("--mefloquine_status", help="value denoting the sensitivity of this sample to mefloquine")
+    parser.add_argument("--artemisinin_status", help="value denoting the sensitivity of this sample to artemisinin")
 
     # Map
     parser.add_argument("--longitude", help="longitude value of where the sample was collected", type=float, default=0)

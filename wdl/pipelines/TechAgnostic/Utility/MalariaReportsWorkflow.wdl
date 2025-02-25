@@ -27,6 +27,12 @@ workflow GenerateMalariaReports {
         drug_resistance_text: "text file used for determining and displaying drug resistances"
         HRP2: "value denoting whether the HRP2 marker is present or not -- true or false"
         HRP3: "value denoting whether the HRP3 marker is present or not -- true or false"
+        predicted_drug_status_chloroquine: "value denoting the sensitivity of this sample to chloroquine"
+        predicted_drug_status_pyrimethamine: "value denoting the sensitivity of this sample to pyrimethamine"
+        predicted_drug_status_sulfadoxine: "value denoting the sensitivity of this sample to sulfadoxine"
+        predicted_drug_status_mefloquine: "value denoting the sensitivity of this sample to mefloquine"
+        predicted_drug_status_artemisinin: "value denoting the sensitivity of this sample to artemisinin"
+        predicted_drug_status_piperaquine: "value denoting the sensitivity of this sample to piperaquine"
 
         # Map
         longitude: "longitude value of where the sample was taken"
@@ -87,6 +93,12 @@ workflow GenerateMalariaReports {
         File? drug_resistance_text
         String? HRP2
         String? HRP3
+        String? predicted_drug_status_chloroquine
+        String? predicted_drug_status_pyrimethamine
+        String? predicted_drug_status_sulfadoxine
+        String? predicted_drug_status_mefloquine
+        String? predicted_drug_status_artemisinin
+        String? predicted_drug_status_piperaquine
 
         # Map
         Float? longitude
@@ -158,6 +170,12 @@ workflow GenerateMalariaReports {
             drug_resistance_text = drug_resistance_text,
             HRP2 = HRP2,
             HRP3 = HRP3,
+            predicted_drug_status_chloroquine=predicted_drug_status_chloroquine,
+            predicted_drug_status_pyrimethamine=predicted_drug_status_pyrimethamine,
+            predicted_drug_status_sulfadoxine=predicted_drug_status_sulfadoxine,
+            predicted_drug_status_mefloquine=predicted_drug_status_mefloquine,
+            predicted_drug_status_artemisinin=predicted_drug_status_artemisinin,
+            predicted_drug_status_piperaquine=predicted_drug_status_piperaquine,
             longitude = longitude,
             latitude = latitude,
             location = location,

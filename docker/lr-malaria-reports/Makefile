@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-malaria-reports
-VERSION = 0.0.2
+VERSION = 1.0.0
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
