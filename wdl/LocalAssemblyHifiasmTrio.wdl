@@ -1,6 +1,7 @@
 version 1.0
 
 import "tasks/Utils.wdl" as Utils
+import "tasks/Hifiasm.wdl" as Hifiasm
 import "tasks/CallAssemblyVariants.wdl" as Align
 
 workflow LocalAssembly {
@@ -71,14 +72,14 @@ workflow LocalAssembly {
     # convert parental bam subsets to fastq
     call Utils.BamToFastq as PaternalFastq {
         input:
-            bam = subset_bam,
-            prefix = prefix
+            bam = paternal_subset_bam,
+            prefix = "paternal"
     }
 
-    call Utils.BamToFastq MaternalFastq{
+    call Utils.BamToFastq as MaternalFastq {
         input:
-            bam = subset_bam,
-            prefix = prefix
+            bam = maternal_subset_bam,
+            prefix = "maternal"
     }
 
     # count kmers from parents
