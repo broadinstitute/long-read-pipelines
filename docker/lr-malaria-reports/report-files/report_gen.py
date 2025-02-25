@@ -374,45 +374,65 @@ def get_drug_resistance(data, sample_id, sample_df, do_print=False):
         
     return chloroquine, pyrimethamine, sulfadoxine, mefloquine, artemisinin, piperaquine
  
-def plot_dr_bubbles(dr_report_file):
-    # Set up dataframes using a single report:
+def plot_dr_bubbles(dr_report_file, sample_id):
+
     # Download the file contents:
     with open(dr_report_file, 'r') as f:
         dr_report_contents = f.read()
 
     # Set up our data:
-    dataframe_dict = dict()
     drug_resistance_df = pd.DataFrame(columns=["Sample", "Chloroquine", "Pyrimethamine", "Sulfadoxine", "Mefloquine", "Artemisinin", "Piperaquine"])  
 
     # Get the raw info here:
+    dataframe_dict = {}
     last_gene = None
     cur_df = None
+
     for line in dr_report_contents.split("\n"):
         if len(line) > 1:
-            gene, loc, variant, presence = line.split("\t")
+            parts = re.split(r"\s+", line)
+
+            gene, loc, variant, presence = parts
+
+            # Check if marker is in target list (case-insensitive)
+            marker = f"{gene.lower()}-{variant.lower()}"
+            if marker not in [m.lower() for m in target_markers]:
+                continue
+
+            # If we've moved to a new gene
             if gene != last_gene:
-                # must make a new dataframe
-                if last_gene:
+                # Save previous dataframe if it exists
+                if last_gene and cur_df is not None:
                     dataframe_dict[last_gene] = cur_df
+
+                # Create new dataframe for new gene
                 cur_df = pd.DataFrame({'Sample': pd.Series(dtype='str')})
+
+            # Add column for this variant
             cur_df[variant] = pd.Series(dtype='bool')
             last_gene = gene
-    dataframe_dict[gene] = cur_df
+
+    if last_gene and cur_df is not None:
+        dataframe_dict[last_gene] = cur_df
+
+    print("Collecting Raw Drug Resistances")
 
     # Get the raw info here:
-    sample_id = dr_report_file[dr_report_file.find("/SEN_")+1:dr_report_file.find("_ALL_scored")]
-
     dr_info = defaultdict(list)
     for line in dr_report_contents.split("\n"):
         if len(line) > 1:
-            gene, loc, variant, presence = line.split("\t")
-            presence = presence == "present"
+            gene, loc, variant, presence = re.split("\s", line)
 
-            dr_info[gene].append([variant, presence])
+            # Check if marker is in target list (case-insensitive)
+            marker = f"{gene.lower()}-{variant.lower()}"
+            if marker not in [m.lower() for m in target_markers]:
+                continue
+
+            dr_info[gene].append([variant, presence])      
 
     # Now process it into dataframes:
     for gene, variant_info in dr_info.items():
-
+        print(f"Gene: {gene}, Variant: {variant_info}")
         # set up place to put new markers:
         gene_df = dataframe_dict[gene]
         columns = list(gene_df.columns)
@@ -428,9 +448,9 @@ def plot_dr_bubbles(dr_report_file):
     ncols = sum([len(d.columns) for d in dataframe_dict.values()])
 
     aa_dict = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-        'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
-        'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
-        'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+         'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+         'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
     aa_dict_rev = {v:k for k, v in aa_dict.items()}
 
     pchange_string_re = re.compile(r'P\.([A-Z]+)(\d+)([A-Z]+)')
@@ -440,37 +460,65 @@ def plot_dr_bubbles(dr_report_file):
         for variant in df.columns[1:]:
             m = pchange_string_re.match(variant.upper())
             xlabels.append(f"{aa_dict[m[1]]}{m[2]}{aa_dict[m[3]]}")
+    ylabels = next(iter(dataframe_dict.values()))["Sample"].values
 
     # Now set up the circles we will plot:
     print("Computing plots")
-    radius = 0.4
-    circles = []
+
+    # We need to plot 3 kinds of circles for each:
     x_tick_pos = []
     x_gene_offset = 0
+
+    aa_filled_coords_x = []
+    aa_filled_coords_y = []
+    aa_half_coords_x = []
+    aa_half_coords_y = []
+    aa_empty_coords_x = []
+    aa_empty_coords_y = []
+    aa_missing_coords_x = []
+    aa_missing_coords_y = []
+
     for gene_index, (g, df) in enumerate(dataframe_dict.items()):
         y = nrows-1
         for row_index, row in df.iterrows():
             x = 0 + x_gene_offset
             for col_index, col in enumerate(row[1:]):
-                edgecolor = [0]*3
-                facecolor = [1,0,0] if col else [1]*3
-                c = plt.Circle((x+gene_index, y), facecolor=facecolor, edgecolor=edgecolor)
-                c.set(radius=radius)
-                circles.append(c)
+
+                if col == "present" or col == "hom_var":
+                    aa_filled_coords_x.append(x+gene_index)
+                    aa_filled_coords_y.append(y)
+                elif col == "absent" or col == "hom_ref":
+                    aa_empty_coords_x.append(x+gene_index)
+                    aa_empty_coords_y.append(y)
+                elif col == "het":
+                    aa_half_coords_x.append(x+gene_index)
+                    aa_half_coords_y.append(y)
+                elif col == "missing":
+                    aa_missing_coords_x.append(x+gene_index)
+                    aa_missing_coords_y.append(y)
+
                 x_tick_pos.append(x+gene_index)
                 x += 1
             y -= 1
-        x_gene_offset += len(df.columns)-1
-                
+        x_gene_offset += len(df.columns)
+
     x_tick_pos = sorted(list(set(x_tick_pos)))
 
     ############################
 
     print("Generating Plots")
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(14,8))
 
-    col = PatchCollection(circles, match_original=True)
-    ax.add_collection(col)
+    dot_size = 150
+
+    # Amino Acid Markers:
+    h_aa_filled = ax.scatter(aa_filled_coords_x, aa_filled_coords_y, s=dot_size, color=[1,0,0], edgecolor="black", marker="o")
+
+    h_aa_half_right = ax.scatter(aa_half_coords_x, aa_half_coords_y, s=dot_size, color=[1,1,1], edgecolor="black", marker=MarkerStyle("o", fillstyle="right"))
+    h_aa_half_left = ax.scatter(aa_half_coords_x, aa_half_coords_y, s=dot_size, color=[1,0,0], edgecolor="black", marker=MarkerStyle("o", fillstyle="left"))
+
+    h_aa_empty = ax.scatter(aa_empty_coords_x, aa_empty_coords_y, s=dot_size, color=[1,1,1], edgecolor="black", marker="o")
+    h_aa_missing = ax.scatter(aa_missing_coords_x, aa_missing_coords_y, s=dot_size, color=[0.5]*3, edgecolor="black", marker="o")
 
     # Now set the gene labels:
     x_gene_offset = 0
@@ -479,24 +527,27 @@ def plot_dr_bubbles(dr_report_file):
         lbl_x = sum(line_x)/2
         plt.text(lbl_x, nrows+2, g, ha="center", fontfamily="monospace", size="large")
         plt.plot(line_x, [nrows+1]*2, '-k', linewidth=2)
-        x_gene_offset += len(df.columns)
-        
-    ax.set(xticks=x_tick_pos, 
-        yticks=[],
-        xticklabels=xlabels, 
-        yticklabels=[])
+        x_gene_offset += len(df.columns) + 1
 
+    ax.set(xticks=x_tick_pos, 
+           yticks=np.arange(nrows),
+           xticklabels=xlabels, 
+           yticklabels=ylabels[::-1])
 
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90, ha='center')
 
-    ax.axis([-1, ncols-1, -1, nrows+3])
+    max_x = max(x_tick_pos) + 1
+    ax.axis([-1, max_x, -1, nrows+3])
     ax.set_aspect(aspect='equal')
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    
+
+    fix_plot_visuals(fig)
+
+    plt.tight_layout()
     return fig
  
 '''
@@ -708,7 +759,7 @@ def prepare_summary_data(arg_dict):
         qc_pass = "FAIL"
 
     resistances = create_drug_table(None if arg_dict["drug_resistance_text"] in [None, "None", ""] else arg_dict["drug_resistance_text"])
-    resistance_bubbles = plot_dr_bubbles(arg_dict["drug_resistance_text"])
+    resistance_bubbles = plot_dr_bubbles(arg_dict["drug_resistance_text"], sample_name)
     resistance_bubbles_b64 = plot_to_b64(resistance_bubbles, "tight")
 
     loc_dict = parse_location_info(location_table)
