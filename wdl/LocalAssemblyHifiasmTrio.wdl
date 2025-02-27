@@ -217,6 +217,7 @@ task Assemble_trio {
         set -euxo pipefail
 
         hifiasm -o ~{prefix} -t~{num_cpus} -1 ~{pat_yak} -2 ~{mat_yak} ~{reads}
+        ls
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.hap1.p_ctg.gfa > ~{prefix}.hap1.p_ctg.fa
         awk '/^S/{print ">"$2; print $3}' ~{prefix}.hap2.p_ctg.gfa > ~{prefix}.hap2.p_ctg.fa
     >>>
