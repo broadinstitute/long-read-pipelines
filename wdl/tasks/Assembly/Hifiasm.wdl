@@ -189,7 +189,7 @@ task AssembleForHaplotigs {
         cpu_cores:          num_cpus,
         mem_gb:             memory,
         disk_gb:            disk_size,
-        preemptible_tries:  if defined(bin_files) then 3 else 0,
+        preemptible_tries:  if defined(bin_files) then 1 else 0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.19.5"
     }
