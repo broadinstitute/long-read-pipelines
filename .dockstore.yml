@@ -171,3 +171,6 @@ workflows:
 - name: GenerateMalariaReport
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/MalariaReportsWorkflow.wdl
+- name: ExtractSnpBarcodeFromVcfFile
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExtractSnpBarcodeFromVcfFile.wdl
