@@ -56,12 +56,12 @@ digraph {
 		"if-L197C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-SmallVariantsScatterPrepp" -> "scatter-L83C9-c" [lhead="cluster-scatter-L83C9-c"]
-	"call-SmallVariantsScatter" -> "call-Clair"
 	"call-arbitrary" -> "call-Clair"
+	"call-SmallVariantsScatter" -> "call-Clair"
 	"call-Clair" -> "call-MergeAndSortClairVCFs"
 	"call-Clair" -> "call-MergeAndSortClair_gVCFs"
-	"call-arbitrary" -> "call-CCSPepper"
 	"call-size_balanced_scatter" -> "call-CCSPepper"
+	"call-arbitrary" -> "call-CCSPepper"
 	"call-CCSPepper" -> "call-MergeDeepVariantGVCFs"
 	"call-CCSPepper" -> "call-MergeDeepVariantVCFs"
 	"call-CCSPepper" -> "call-MergeBams"

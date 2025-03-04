@@ -52,16 +52,16 @@ digraph {
 	"call-MergeGenotypingSites" -> "call-ExtractRelevantGenotypingReads"
 	"call-ExtractRelevantGenotypingReads" -> "call-ResetCLRBaseQual"
 	"call-FilterGenotypesVCF" -> "scatter-L75C5-vcf" [lhead="cluster-scatter-L75C5-vcf"]
-	"call-GetVCFSampleName" -> "call-CheckFingerprint"
 	"call-ExtractRelevantGenotypingReads" -> "call-CheckFingerprint"
+	"call-GetVCFSampleName" -> "call-CheckFingerprint"
 	"call-CheckFingerprint" -> "decl-non_clr_lod"
-	"call-ResetCLRBaseQual" -> "call-CheckCLRFingerprint"
 	"call-GetVCFSampleName" -> "call-CheckCLRFingerprint"
+	"call-ResetCLRBaseQual" -> "call-CheckCLRFingerprint"
 	"call-CheckCLRFingerprint" -> "decl-clr_lod"
 	"decl-non_clr_lod" -> "call-FindMaxLOD"
 	"decl-clr_lod" -> "call-FindMaxLOD"
 	"call-FindMaxLOD" -> "if-L113C5" [lhead="cluster-if-L113C5"]
-	"call-PickGenotypeVCF" -> "decl-matching_vcf"
 	"call-FindMaxLOD" -> "decl-matching_vcf"
+	"call-PickGenotypeVCF" -> "decl-matching_vcf"
 	"decl-matching_vcf" -> "call-GetAllIdentityInfo"
 }
