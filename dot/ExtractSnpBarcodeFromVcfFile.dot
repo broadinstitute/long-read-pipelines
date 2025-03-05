@@ -1,0 +1,7 @@
+// ExtractSnpBarcodeFromVcfFile
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-t01_ExtractFingerprintAndBarcode" [label=t01_ExtractFingerprintAndBarcode shape=cds]
+}

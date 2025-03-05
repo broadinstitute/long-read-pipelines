@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling - Broad Institute Long Read Pipelines</title>
+    <title>ExtractSnpBarcodeFromVcfFile - Broad Institute Long Read Pipelines</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling";
-        var mkdocs_page_input_path = "workflows/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling.md";
+        var mkdocs_page_name = "ExtractSnpBarcodeFromVcfFile";
+        var mkdocs_page_input_path = "workflows/ExtractSnpBarcodeFromVcfFile.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -137,27 +137,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFs/">BenchmarkVCFs</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#broadonpremmalariapipeline_1_alignment">BroadOnPremMalariaPipeline_1_Alignment</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
-    </li>
-        </ul>
-    </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling/">BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BroadOnPremMalariaPipeline_2_JointVariantCalling/">BroadOnPremMalariaPipeline_2_JointVariantCalling</a>
                   </li>
@@ -203,7 +183,27 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../ExtractRegionsFromBam/">ExtractRegionsFromBam</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../ExtractSnpBarcodeFromVcfFile/">ExtractSnpBarcodeFromVcfFile</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">ExtractSnpBarcodeFromVcfFile</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#extractsnpbarcodefromvcffile_1">ExtractSnpBarcodeFromVcfFile</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dot-diagram">Dot Diagram</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../FPCheckAoU/">FPCheckAoU</a>
                   </li>
@@ -321,9 +321,9 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
           <li>Workflows &raquo;</li>
-      <li>BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</li>
+      <li>ExtractSnpBarcodeFromVcfFile</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/ExtractSnpBarcodeFromVcfFile.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -331,79 +331,46 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="broadonpremmalariapipeline_1_alignment_and_variant_calling">BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</h1>
-<h2 id="broadonpremmalariapipeline_1_alignment">BroadOnPremMalariaPipeline_1_Alignment</h2>
+                <h1 id="extractsnpbarcodefromvcffile">ExtractSnpBarcodeFromVcfFile</h1>
+<h2 id="extractsnpbarcodefromvcffile_1">ExtractSnpBarcodeFromVcfFile</h2>
 <dl>
-<dt>desciption</dt>
-<dd>Recreation of the first and second steps of the Broad OnPrem Malaria Pipeline.  Aligns reads and filters out human contamination, then calls variants and creates both a GVCF file and a recalibrated variants file.</dd>
+<dt>author</dt>
+<dd>Jonn Smith</dd>
+<dt>description</dt>
+<dd>A workflow that extracts a barcode from a VCF file using a haplotype database file.</dd>
 </dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>contaminant_ref_map_file</code> (File, <strong>required</strong>)</li>
-<li><code>contaminant_ref_name</code> (String, <strong>required</strong>)</li>
-<li><code>ref_map_file</code> (File, <strong>required</strong>)</li>
-<li><code>resource_vcf_3d7_hb3</code> (File, <strong>required</strong>)</li>
-<li><code>resource_vcf_3d7_hb3_index</code> (File, <strong>required</strong>)</li>
-<li><code>resource_vcf_7g8_gb4</code> (File, <strong>required</strong>)</li>
-<li><code>resource_vcf_7g8_gb4_index</code> (File, <strong>required</strong>)</li>
-<li><code>resource_vcf_hb3_dd2</code> (File, <strong>required</strong>)</li>
-<li><code>resource_vcf_hb3_dd2_index</code> (File, <strong>required</strong>)</li>
-<li><code>sample_name</code> (String, <strong>required</strong>)</li>
+<li><code>haplotype_database_file</code> (File, <strong>required</strong>): The haplotype database file.</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>): The dictionary file for the reference fasta file.</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>): The reference fasta file.</li>
+<li><code>ref_fasta_fai</code> (File, <strong>required</strong>): The index file for the reference fasta file.</li>
+<li><code>vcf</code> (File, <strong>required</strong>): The VCF file to extract the barcode from.</li>
+<li><code>vcf_index</code> (File, <strong>required</strong>): The index file for the VCF file.</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>bai</code> (File?)</li>
-<li><code>bam</code> (File?)</li>
-<li><code>fq_end1</code> (File?)</li>
-<li><code>fq_end2</code> (File?)</li>
-<li><code>t_002_RevertSam.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_003_Bam2Fastq.bam_index</code> (File?)</li>
-<li><code>t_003_Bam2Fastq.reference_dict</code> (File?)</li>
-<li><code>t_003_Bam2Fastq.reference_fasta</code> (File?)</li>
-<li><code>t_003_Bam2Fastq.reference_fasta_index</code> (File?)</li>
-<li><code>t_003_Bam2Fastq.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_004_GetRawReadGroup.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_005_FilterOutHumanReads.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_006_AlignReads.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_008_SortAlignedBam.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_009_MarkDuplicates.read_name_regex</code> (String?)</li>
-<li><code>t_009_MarkDuplicates.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_009_MarkDuplicates.sorting_collection_size_ratio</code> (Float?)</li>
-<li><code>t_010_ReorderSam.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_011_RealignIndels.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_012_BQSR.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_012_IndexRealignIndels.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_013_HaplotypeCaller.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_013_IndexBQSR.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_014_HaplotypeCallerGvcfMode.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_015_VariantRecalibrator.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_016_SortCompressIndexRawVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_017_SortCompressIndexVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>t_018_SortCompressIndexGVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): The runtime attributes to override.</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>t_001_WdlExecutionStartTimestamp.date_format</code> (String, default="%Y%m%d_%H%M%S_%N")</li>
-<li><code>t_013_HaplotypeCaller.gvcf_mode</code> (Boolean, default=false)</li>
+<li><code>prefix</code> (String, default="barcode"): The prefix for the output files.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>raw_vcf</code> (File)</li>
-<li><code>raw_vcf_index</code> (File)</li>
-<li><code>recalibrated_vcf</code> (File)</li>
-<li><code>recalibrated_vcf_index</code> (File)</li>
-<li><code>gvcf</code> (File)</li>
-<li><code>gvcf_index</code> (File)</li>
+<li><code>output_vcf</code> (File)</li>
+<li><code>barcode</code> (String)</li>
+<li><code>barcode_file</code> (File)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
-<p><img alt="BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling" src="../../dot/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling.dot.png" /></p>
+<p><img alt="ExtractSnpBarcodeFromVcfFile" src="../../dot/ExtractSnpBarcodeFromVcfFile.dot.png" /></p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../BenchmarkVCFs/" class="btn btn-neutral float-left" title="BenchmarkVCFs"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../BroadOnPremMalariaPipeline_2_JointVariantCalling/" class="btn btn-neutral float-right" title="BroadOnPremMalariaPipeline_2_JointVariantCalling">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../ExtractRegionsFromBam/" class="btn btn-neutral float-left" title="ExtractRegionsFromBam"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../FPCheckAoU/" class="btn btn-neutral float-right" title="FPCheckAoU">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -431,10 +398,10 @@
         </span>
     
     
-      <span><a href="../BenchmarkVCFs/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../ExtractRegionsFromBam/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../BroadOnPremMalariaPipeline_2_JointVariantCalling/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../FPCheckAoU/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
