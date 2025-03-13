@@ -1,0 +1,36 @@
+# Runs workflow tests from the branch when commits have been pushed to a PR
+# the workflows to be tested are specified by the "test_names"
+# parameter as string seperated by space.
+
+name: carrot-test-on-push
+on: [push, workflow_dispatch]
+jobs:
+    publish-test:
+        runs-on: ubuntu-latest
+        steps:
+
+        # https://github.com/google-github-actions/setup-gcloud#service-account-key-json
+        - id: auth
+          uses: google-github-actions/auth@v0
+          with:
+            credentials_json: ${{ secrets.CARROT_SA_KEY }}
+
+        - name: Set up Cloud SDK
+          uses: google-github-actions/setup-gcloud@v0
+
+        # https://cloud.google.com/pubsub/docs/publisher#publish_messages
+        - name: Use gcloud CLI
+          run: >
+            gcloud pubsub topics publish ${{ secrets.CARROT_TOPIC_NAME }}
+            --message='{"source":"github",
+            "author":"${{ github.triggering_actor }}",
+            "owner":"${{ github.repository_owner }}",
+            "wdl_tests_dir":"wdl_test",
+            "repo_url":"${{ github.repositoryUrl }}",
+            "branch_name":"${{ github.ref_name }}",
+            "commit":"${{ github.sha }}",
+            "repo":"${{ github.repository }}",
+            "test_names": "PBCCSWholeGenome",
+            "issue_number":"",
+            "software_name":""
+            }'
