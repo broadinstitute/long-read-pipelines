@@ -142,6 +142,7 @@ workflow SRFlowcellDecontaminate {
         File fq_o2 = t_009_FinalizeFq2.gcs_path
         File contaminated_bamout = t_010_FinalizeContaminatedBam.gcs_path
 
+        Float num_total_reads = t_007_ComputeUnalignedBamStats.results['reads']
         Float num_contam_reads = t_006_ComputeContaminatedBamStats.results['reads']
         Float pct_contam_reads = t_006_ComputeContaminatedBamStats.results['reads'] / t_007_ComputeUnalignedBamStats.results['reads'] * 100.0
     }
