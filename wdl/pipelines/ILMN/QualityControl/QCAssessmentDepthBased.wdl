@@ -4,7 +4,7 @@ import "../../../tasks/QC/QCAssessment.wdl" as QCAssessmentTasks
 import "../../../tasks/QC/FastQC.wdl" as FastQC
 import "../../../tasks/QC/AlignedMetrics.wdl" as AM
 
-workflow QCAssessment {
+workflow QCAssessmentDepthBased {
     meta {
         description: "Assess quality metrics from mosdepth coverage and callable loci data to determine pass/fail status.  To pass, the fraction of callable bases must be greater than min_callable_fraction and at least min_coverage_threshold_regions fraction of the genome must have a coverage depth greater than min_coverage."
     }
