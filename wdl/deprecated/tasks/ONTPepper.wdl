@@ -51,7 +51,7 @@ task Pepper {
     Int bam_sz = ceil(size(bam, "GB"))
     Boolean is_big_bam = bam_sz > 100
     Int inflation_factor = if (is_big_bam) then 10 else 5
-    Int minimal_disk = 200
+    Int minimal_disk = 100
 	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
 
     String output_root = "/cromwell_root/pepper_output"
@@ -133,7 +133,7 @@ task Pepper {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        disks: "local-disk 200 HDD" # +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
         zones: zones
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
