@@ -81,6 +81,8 @@ workflow CallVariants {
         File? small_variant_calling_options_json
         File? sv_calling_options_json
 
+        Boolean force_per_chr_sharding_scheme = false
+
         Array[String] gcp_zones = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
     }
 
@@ -114,6 +116,7 @@ workflow CallVariants {
                 prefix = prefix,
 
                 per_chr_bam_bai_and_id = SplitBamByChr.id_bam_bai_of_shards,
+                force_per_chr_sharding_scheme = force_per_chr_sharding_scheme,
 
                 is_ont = is_ont,
                 is_r10_4_pore_or_later = is_r10_4_pore_or_later,

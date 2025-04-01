@@ -82,6 +82,7 @@ workflow Work {
         String prefix
 
         Array[Pair[String, Pair[File, File]]] per_chr_bam_bai_and_id
+        Boolean force_per_chr_sharding_scheme = false
 
         Boolean is_ont
         Boolean is_r10_4_pore_or_later
@@ -158,7 +159,7 @@ workflow Work {
     # custom-shard WG (for load-balancing)
     ####################################################################################################################################
     # but if custom sharding isn't requested, then per-chr sharding is already done, so no need to redo
-    if (defined(ref_bundle.size_balanced_scatter_intervallists_locators)) {
+    if (defined(ref_bundle.size_balanced_scatter_intervallists_locators) && (!force_per_chr_sharding_scheme)) {
         call ShardWholeGenome.Split as CustomSplitBamForSmallVar {
             input:
                 bam = bam,
@@ -168,8 +169,9 @@ workflow Work {
                 ref_scatter_interval_list_locator = select_first([ref_bundle.size_balanced_scatter_intervallists_locators])
         }
     }
-    Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling = select_first([CustomSplitBamForSmallVar.id_bam_bai_of_shards,
-                                                                                      per_chr_bam_bai_and_id])
+    Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling = if (force_per_chr_sharding_scheme)
+                                                                        then per_chr_bam_bai_and_id
+                                                                        else select_first([CustomSplitBamForSmallVar.id_bam_bai_of_shards, per_chr_bam_bai_and_id])
 
     ####################################################################################################################################
     # DV, major workhorse
