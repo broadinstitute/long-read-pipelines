@@ -45,7 +45,7 @@ workflow Run {
     }
 
     scatter (triplet in how_to_shard_wg_for_calling) {
-        if (triplet.left != "alts") {
+        if (triplet.left != "alts" && triplet.left != "chrM") {
             call ONTPepper.Pepper {
                 input:
                     bam           = triplet.right.left,
