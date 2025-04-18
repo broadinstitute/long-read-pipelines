@@ -174,3 +174,6 @@ workflows:
 - name: ExtractSnpBarcodeFromVcfFile
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/ExtractSnpBarcodeFromVcfFile.wdl
+- name: QCAssessmentDepthBased
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/QualityControl/QCAssessmentDepthBased.wdl
