@@ -51,8 +51,8 @@ digraph {
 	"decl-dummy" -> "if-L73C5" [lhead="cluster-if-L73C5"]
 	"decl-dummy_b" -> "if-L73C5" [lhead="cluster-if-L73C5"]
 	"decl-ccs_fq" -> "call-CompressAndFinalizeMergedFQ"
-	"call-CompressAndFinalizeMergedFQ" -> "decl-finalized_merged_fq_path"
 	"call-FinalizeMergedFQ" -> "decl-finalized_merged_fq_path"
+	"call-CompressAndFinalizeMergedFQ" -> "decl-finalized_merged_fq_path"
 	"call-Hifiasm" -> "call-FinalizeHifiasmPrimaryGFA"
 	"call-Hifiasm" -> "call-FinalizeHifiasmPrimaryFA"
 	"call-Hifiasm" -> "call-FinalizeHifiasmAlternateGFA"

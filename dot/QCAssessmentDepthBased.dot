@@ -1,0 +1,12 @@
+// QCAssessmentDepthBased
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-t_001_CallableLoci" [label=t_001_CallableLoci shape=cds]
+	"call-t_001_MosDepthOverBed" [label=t_001_MosDepthOverBed shape=cds]
+	"call-t_002_AssessQualityMetrics" [label=t_002_AssessQualityMetrics shape=cds]
+	"call-t_003_FastQC" [label=t_003_FastQC shape=cds]
+	"call-t_001_MosDepthOverBed" -> "call-t_002_AssessQualityMetrics"
+	"call-t_001_CallableLoci" -> "call-t_002_AssessQualityMetrics"
+}
