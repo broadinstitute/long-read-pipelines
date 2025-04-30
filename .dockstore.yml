@@ -159,3 +159,6 @@ workflows:
 - name: PbCpG
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Epigenomics/PbCpG.wdl
+- name: MethylArtist
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Epigenomics/Methylartist.wdl

@@ -31,7 +31,7 @@ workflow HPRCDownloadandCovert {
 task HPRCDownloadandConvert {
     input {
         String sample_id
-        File address
+        String address
 
     }
     parameter_meta {
@@ -39,44 +39,45 @@ task HPRCDownloadandConvert {
     
     Int disk_size_gb = 2048
     Int mem_gb = 128
-
     
     command <<<
         set -euxo pipefail
         
         GSUTIL_UPLOAD_THRESHOLD="-o GSUtil:parallel_composite_upload_threshold=150M"
         GSUTIL_DELAY_S="600"
-
-
-      
-        N_THREADS=$(( 2 * ${N_SOCKETS} * ${N_CORES_PER_SOCKET} ))
+        
         BILLING_PROJECT="broad-firecloud-dsde-methods"
         df -h
 
         # 1. Downloading the files
-        if [[ ${ADDRESS} == gs://* ]]; then
-            SUCCESS=$(gsutil -u ${BILLING_PROJECT} cp ${ADDRESS} . && echo 1 || echo 0)
+        if [[ ~{address} == gs://* ]]; then
+            SUCCESS=$(gsutil -u ${BILLING_PROJECT} cp ~{address} . && echo 1 || echo 0)
         else
-            SUCCESS=$(wget ${ADDRESS} && echo 1 || echo 0)
+            SUCCESS=$(wget ~{address} && echo 1 || echo 0)
         fi
+
         if [[ ${SUCCESS} -ne 1 ]]; then
             echo "Download failed. Exiting."
-            exit 1
+            touch $(basename ~{address})
         fi
+
         # 2. Converting the files to fastq format
-        FILE_NAME=$(basename ${ADDRESS})
+        FILE_NAME=$(basename ~{address})
         if [[ ${FILE_NAME} == *.bam ]]; then
-            ${TIME_COMMAND} samtools fastq -@ ${N_THREADS} -n ${FILE_NAME} >> ~{sample_id}.fastq 
+            samtools fastq -@ 8 -n ${FILE_NAME} >> ~{sample_id}.fastq 
         elif [[ ${FILE_NAME} == *.fastq.gz ]]; then
             gunzip -c ${FILE_NAME} >> ~{sample_id}.fastq 
         elif [[ ${FILE_NAME} == *.fastq ]]; then
             cat ${FILE_NAME} >> ~{sample_id}.fastq 
+        else
+            touch ~{sample_id}.fastq
+            echo "File format not recognized. Exiting."
         fi
         
     >>>
     
     output {
-        fastq_file = "~{sample_id}.fastq"
+        File fastq_file = "~{sample_id}.fastq"
     }
 
     runtime {
@@ -94,7 +95,8 @@ task MergeFastqFile{
     }
     parameter_meta {
     }
-    
+    Int disk_size_gb = 2048
+    Int mem_gb = 128
     command <<<
         set -euxo pipefail
         cat ~{sep=" " fastq_files} > merged.fastq
@@ -102,7 +104,7 @@ task MergeFastqFile{
     >>>
     
     output {
-        fastq_file = "merged.fastq.gz"
+        File fastq_file = "merged.fastq.gz"
     }
 
     runtime {
