@@ -156,8 +156,12 @@ workflow GenerateMalariaReports {
             aligned_bai = aligned_bai
     }
 
+    # Get the base google bucket from the aligned bam file
+    String base_google_bucket = sub(sub(aligned_bam, "gs://", ""), "/.*", "")
+
     call MRS.RunReportScript as RunReportScript { 
         input: 
+            base_bucket = base_google_bucket,
             sample_name = sample_name,
             upload_date = upload_date,
             collection_date = collection_date,
