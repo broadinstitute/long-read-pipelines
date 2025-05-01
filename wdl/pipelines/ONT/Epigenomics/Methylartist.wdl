@@ -162,8 +162,8 @@ task Methylartist{
     Int disk_size = 100 + ceil(2 * (size(bams, "GiB")))
 
     runtime {
-        cpu: 1
-        memory: "4 GiB"
+        cpu: 4
+        memory: "16 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         bootDiskSizeGb: 10
         preemptible: 2
