@@ -15,7 +15,8 @@ workflow methylartist{
     }
     Int data_length = length(bams)
     Array[Int] indexes= range(data_length)
-    call Bed_reader{
+
+    call Bed_reader {
         input: bed_file = bed_file
     }
 
@@ -138,6 +139,18 @@ task Bed_reader{
     output{
         Array[String] region_list = read_lines("regions.txt")
     }
+
+    # Int disk_size = 100 + ceil(2 * (size(bed_file, "GiB")))
+
+    runtime {
+        cpu: 1
+        memory: "4 GiB"
+        disks: "local-disk 100 HDD" # "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 2
+        maxRetries: 1
+        docker: "hangsuunc/methylartist:v1"
+    }
 }
 
 
@@ -187,5 +200,17 @@ task Compress_file{
     >>>
     output{
         File compressed_file = "methylartist.tar.gz"
+    }
+    
+    # Int disk_size = 100 + ceil(2 * (size(png_files, "GiB")))
+
+    runtime {
+        cpu: 1
+        memory: "4 GiB"
+        disks: "local-disk 100 HDD" # "local-disk " + disk_size + " HDD" #
+        bootDiskSizeGb: 10
+        preemptible: 2
+        maxRetries: 1
+        docker: "hangsuunc/methylartist:v1"
     }
 }
