@@ -77,5 +77,4 @@ task DrugResIGV {
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
-
 }

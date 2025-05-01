@@ -12,6 +12,9 @@ task RunReportScript {
 
         # ------ Summary Page ------ #
 
+        # Terra / bucket info:
+        base_bucket: "Base google bucket for the sample data.  Used for retrieving BED files."
+
         # Sample Info
         sample_name: "name of sequenced sample"
         upload_date: "date sample was uploaded"
@@ -60,7 +63,6 @@ task RunReportScript {
         fraction_aligned_bases: "percentage of bases aligned out of all bases in the sequence"
 
         # Coverage Plot
-        # coverage_dir: "directory of BAM files for coverage plot generation"
         fastqc_path: "directory of fastqc_report used for finding BED and BAM files"
         coverage_bin_size: "number to use as size of bins for coverage plot generation; default is 1500"
 
@@ -73,6 +75,9 @@ task RunReportScript {
         RuntimeAttr? runtime_attr_override
 
         # ------ Summary Page ------ #
+
+        # Terra / bucket info:
+        String base_bucket
 
         # Sample Info
         String sample_name
@@ -125,7 +130,6 @@ task RunReportScript {
         Float average_identity
 
         # Coverage Plot -- incomplete 
-        # String? coverage_dir
         File? fastqc_path
         Int? coverage_bin_size
 
@@ -144,9 +148,8 @@ task RunReportScript {
     # Wrap location in quotes in case it has spaces
     String wrap_location = "'~{location}'"
 
-    String results_dir = if (defined(fastqc_path)) then sub(select_first([fastqc_path]), "results\/.*", "") else ""
-    String coverage_dir = "~{results_dir}results/SRFlowcell/~{sample_name}/metrics/coverage/"
-    String coverage_regex = "~{coverage_dir}*?[0-9]_v3.regions.bed.gz"
+    String coverage_dir = "~{base_bucket}/results/SRFlowcell/~{sample_name}/metrics/coverage"
+    String coverage_regex = "~{coverage_dir}/*?[0-9]_v3.regions.bed.gz"
 
     String quality_report = select_first([fastqc_path, ont_qc_report, ""])
 
@@ -161,12 +164,13 @@ task RunReportScript {
             mkdir -p /report-files/data/coverage
             gsutil ls ~{coverage_regex}  > filelist.txt
             echo "COPYING..."
-            cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
+            # cat filelist.txt | gsutil -m cp -I /report-files/data/coverage
+            gsutil -m cp -I /report-files/data/coverage < filelist.txt
         else
             echo "No BED files found."
         fi
 
-        if [ ! -z ~{quality_report} ]; then
+        if [ -n ~{quality_report} ]; then
             echo "Retrieving quality report..."
             mkdir -p /report-files/data/quality_report
             echo ~{quality_report}
