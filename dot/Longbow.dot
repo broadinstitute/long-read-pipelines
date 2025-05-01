@@ -33,15 +33,15 @@ digraph {
 	"call-t_02_Annotate" -> "call-t_03_Filter"
 	"call-t_03_Filter" -> "call-t_04_Segment"
 	"call-t_04_Segment" -> "call-t_05_RemoveMasSeqTruncatedReads"
-	"call-t_05_RemoveMasSeqTruncatedReads" -> "call-t_07_PadUMI"
 	"decl-lbmodel" -> "call-t_07_PadUMI"
+	"call-t_05_RemoveMasSeqTruncatedReads" -> "call-t_07_PadUMI"
 	"decl-lbmodel" -> "if-L83C5" [lhead="cluster-if-L83C5"]
 	"call-t_07_PadUMI" -> "call-t_08_PadCBC"
 	"decl-lbmodel" -> "call-t_08_PadCBC"
-	"decl-lbmodel" -> "call-t_09_Correct"
 	"call-t_08_PadCBC" -> "call-t_09_Correct"
-	"call-t_07_PadUMI" -> "decl-bam_for_umi_adjustment"
+	"decl-lbmodel" -> "call-t_09_Correct"
 	"call-t_09_Correct" -> "decl-bam_for_umi_adjustment"
+	"call-t_07_PadUMI" -> "decl-bam_for_umi_adjustment"
 	"decl-bam_for_umi_adjustment" -> "call-t_10_AdjustUmiSequenceWithAdapterAlignment"
 	"decl-lbmodel" -> "call-t_10_AdjustUmiSequenceWithAdapterAlignment"
 	"decl-lbmodel" -> "if-L115C5" [lhead="cluster-if-L115C5"]
