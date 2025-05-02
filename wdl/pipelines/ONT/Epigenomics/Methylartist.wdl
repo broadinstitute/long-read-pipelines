@@ -8,6 +8,7 @@ workflow methylartist{
     input{
         Array[File] bams
         Array[File] bais
+        Array[String] sample_ids
         File bed_file
         File reference
         String motif
@@ -28,7 +29,7 @@ workflow methylartist{
                 input: bam = bams[idx],
                     bai = bais[idx],
                     locus = region,
-                    prefix = "subset" + idx
+                    prefix = sample_ids[idx] + "_" + region,
             }
         }
         call Methylartist{input: bams=SubsetBam.subset_bam, bais=SubsetBam.subset_bai, reference = reference, region = region, motif = motif, extra_args = extra_args}
