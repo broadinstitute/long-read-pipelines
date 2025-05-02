@@ -29,7 +29,7 @@ workflow methylartist{
                 input: bam = bams[idx],
                     bai = bais[idx],
                     locus = region,
-                    prefix = sample_ids[idx] + "_" + region,
+                    prefix = sample_ids[idx],
             }
         }
         call Methylartist{input: bams=SubsetBam.subset_bam, bais=SubsetBam.subset_bai, reference = reference, region = region, motif = motif, extra_args = extra_args}
@@ -81,7 +81,7 @@ task SubsetBam {
         File bam
         File bai
         String locus
-        String prefix = "subset"
+        String prefix
 
         RuntimeAttr? runtime_attr_override
     }
@@ -177,6 +177,7 @@ task Methylartist{
             cp $bai .
         done
         ls *.bam | paste -sd "," - > bam_list.txt
+        cat bam_list.txt
 
         methylartist locus -b $(cat bam_list.txt) -i ~{region} --ref ~{reference} --motif ~{motif} ~{extra_args}
     >>>
