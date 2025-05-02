@@ -164,9 +164,32 @@ task Methylartist{
         String motif = "CG"
         String extra_args = ""
     }
+    parameter_meta {
+        bams: {
+            description: "bam to plot",
+            localization_optional: true
+        }
+        bais:    "index for bam file"
+        reference:  "reference fasta file"
+        region: "genomic locus to select"
+        motif:  "motif to plot"
+        extra_args: "extra arguments for methylartist"
+    }
 
     command <<<
-        methylartist locus -b ~{sep="," bams} -i ~{region} --ref ~{reference} --motif ~{motif} ~{extra_args}
+
+        # download bam files
+        set -euxo pipefail
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        # download bam files    
+        gcloud storage cp ~{sep=" " bams} ./
+        gcloud storage cp ~{sep=" " bais} ./    
+        # write bam files to a file
+        ls *.bam | paste -sd "," - > bam_list.txt
+        # read bam files to an array
+        cat bam_list.txt
+        
+        methylartist locus -b $(cat bam_list.txt) -i ~{region} --ref ~{reference} --motif ~{motif} ~{extra_args}
     >>>
 
     output{
