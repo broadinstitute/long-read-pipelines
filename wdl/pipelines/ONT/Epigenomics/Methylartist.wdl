@@ -176,8 +176,8 @@ task Methylartist{
         for bai in ~{sep=" " bais}; do
             cp $bai .
         done
-        ls *.bam > bam_list.txt
-        
+        ls *.bam | paste -sd "," - > bam_list.txt
+
         methylartist locus -b $(cat bam_list.txt) -i ~{region} --ref ~{reference} --motif ~{motif} ~{extra_args}
     >>>
 
