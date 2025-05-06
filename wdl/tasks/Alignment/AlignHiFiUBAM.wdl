@@ -54,7 +54,7 @@ workflow AlignHiFiUBAM {
     String movie_name = RG.read_group_info['PU']
 
     ###################################################################################
-    Int shard_threshold = 50
+    Int shard_threshold = 200
 
     if (ceil(size(uBAM, "GiB")) > shard_threshold) {# shard & align
 
