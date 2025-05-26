@@ -1,9 +1,9 @@
 version 1.0
 
-import "../../structs/Structs.wdl" as Structs
-import "../Utility/SRUtils.wdl" as SRUTIL
-import "../Utility/Utils.wdl" as Utils
-import "../Utility/Finalize.wdl" as FF
+import "../../../structs/Structs.wdl" as Structs
+import "../../../tasks/Utility/SRUtils.wdl" as SRUTIL
+import "../../../tasks/Utility/Utils.wdl" as Utils
+import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow RemoveSingleOrganismContamination {
     meta {
