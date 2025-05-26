@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.12]
+        python-version: [3.13]
 
     steps:
     - name: Checkout github repo (+ download lfs dependencies)
@@ -44,10 +44,21 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        $CONDA/bin/conda install -y -c bioconda womtool 
-        $CONDA/bin/conda config --add channels conda-forge
-        $CONDA/bin/conda install -y -c conda-forge "miniwdl==1.13.0" shellcheck
-        echo "$CONDA/bin" >> $GITHUB_PATH
+        
+        # Create a new conda environment named 'lr_env' with Python 3.12
+        conda create -n lr_env python=3.12 -y
+
+        # Activate the environment for the subsequent commands in this script block
+        eval "$(conda shell.bash hook)"
+        conda activate lr_env
+
+        # Installs conda packages into the activated 'lr_env'
+        conda install -y -c bioconda womtool
+        conda install -y -c conda-forge "miniwdl==1.13.0" shellcheck
+
+        # Add the new Conda environment's bin directory to GITHUB_PATH
+        # so that womtool, miniwdl, shellcheck are found in later steps (e.g., tox)
+        echo "$(conda info --base)/envs/lr_env/bin" >> $GITHUB_PATH
 
     - name: Test with tox
       run: tox
