@@ -177,6 +177,3 @@ workflows:
 - name: QCAssessmentDepthBased
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ILMN/QualityControl/QCAssessmentDepthBased.wdl
-- name: TestBatchAttributes
-  subclass: wdl
-  primaryDescriptorPath: /wdl/tasks/Z_One_Off_Analyses/TestBatchAttributes.wdl
