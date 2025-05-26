@@ -81,7 +81,7 @@ task SortSamSpark {
   runtime {
     docker: gatk_docker
     disks: "local-disk " + disk_size + " HDD"
-    bootDiskSizeGb: "15"
+    bootDiskSizeGb: 15
     cpu: "16"
     memory: "102 GiB"
     preemptible: preemptible_tries
@@ -192,7 +192,7 @@ task MarkDuplicatesSpark {
   runtime {
     docker: "jamesemery/gatknightly:gatkMasterSnapshot44ca2e9e84a"
     disks: "/mnt/tmp " + ceil(2.1 * total_input_size) + " LOCAL, local-disk " + disk_size + " HDD"
-    bootDiskSizeGb: "50"
+    bootDiskSizeGb: 50
     cpu: cpu_size
     memory: "~{memory_size} GiB"
     preemptible: preemptible_tries
