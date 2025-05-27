@@ -685,7 +685,7 @@ task Error {
         docker: "ubuntu:22.04"
         memory: "512 MB"
         disks: "local-disk 10 HDD"
-        bootDiskSizeGb: "10"
+        bootDiskSizeGb: 10
         preemptible: 1
         cpu: 1
     }
