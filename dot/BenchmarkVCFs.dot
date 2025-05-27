@@ -121,23 +121,23 @@ digraph {
 	"call-CreateIntervalList" -> "call-ConfidenceConvertIntervals"
 	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsEval"
 	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsTruth"
-	"call-CheckForVariantsEval" -> "if-L248C9" [lhead="cluster-if-L248C9"]
 	"call-CheckForVariantsTruth" -> "if-L248C9" [lhead="cluster-if-L248C9"]
-	"call-ConfidenceConvertIntervals" -> "call-StandardVcfEval"
+	"call-CheckForVariantsEval" -> "if-L248C9" [lhead="cluster-if-L248C9"]
 	"decl-outputPrefix" -> "call-StandardVcfEval"
-	"call-ConfidenceConvertIntervals" -> "call-VcfEvalWriteXMLfile"
-	"decl-outputPrefix" -> "call-VcfEvalWriteXMLfile"
+	"call-ConfidenceConvertIntervals" -> "call-StandardVcfEval"
 	"call-StandardVcfEval" -> "call-VcfEvalWriteXMLfile"
+	"decl-outputPrefix" -> "call-VcfEvalWriteXMLfile"
+	"call-ConfidenceConvertIntervals" -> "call-VcfEvalWriteXMLfile"
 	"call-StandardVcfEval" -> "call-CountUNKVcfEval"
-	"call-CheckForVariantsEval" -> "decl-areVariants"
 	"call-CheckForVariantsTruth" -> "decl-areVariants"
+	"call-CheckForVariantsEval" -> "decl-areVariants"
 	"call-StandardVcfEval" -> "call-SummariseVcfEval"
 	"call-CountUNKVcfEval" -> "call-SummariseVcfEval"
 	"decl-areVariants" -> "call-SummariseVcfEval"
 	"call-VcfEvalWriteXMLfile" -> "call-SummariseVcfEval"
-	"call-ConfidenceConvertIntervals" -> "decl-annotatedVcfsList"
 	"call-StandardVcfEval" -> "decl-annotatedVcfsList"
 	"decl-outputPrefix" -> "decl-annotatedVcfsList"
+	"call-ConfidenceConvertIntervals" -> "decl-annotatedVcfsList"
 	"decl-annotatedVcfsList" -> "scatter-L315C5-indelCombo" [lhead="cluster-scatter-L315C5-indelCombo"]
 	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalIndelWriteXMLfile"
 	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalSummariseForIndelSelection"
@@ -148,7 +148,7 @@ digraph {
 	"call-VcfEvalSelectorWriteXMLfile" -> "call-VcfEvalSummariseForVariantSelection"
 	"call-EvalSelectorVcfEval" -> "call-VcfEvalSummariseForVariantSelection"
 	"call-VcfEvalSummariseForIndelSelection" -> "decl-summaries"
-	"call-VcfEvalSummariseForVariantSelection" -> "decl-summaries"
 	"call-SummariseVcfEval" -> "decl-summaries"
+	"call-VcfEvalSummariseForVariantSelection" -> "decl-summaries"
 	"decl-summaries" -> "call-CombineSummaries"
 }

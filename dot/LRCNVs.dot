@@ -39,17 +39,17 @@ digraph {
 	"call-CollectCounts" -> "call-DetermineGermlineContigPloidyCohortMode"
 	"call-FilterIntervals" -> "call-ScatterIntervals"
 	"call-ScatterIntervals" -> "scatter-L261C5-scatter_index" [lhead="cluster-scatter-L261C5-scatter_index"]
-	"call-CollectCounts" -> "call-GermlineCNVCallerCohortMode"
 	"call-ScatterIntervals" -> "call-GermlineCNVCallerCohortMode"
+	"call-CollectCounts" -> "call-GermlineCNVCallerCohortMode"
 	"call-AnnotateIntervals" -> "call-GermlineCNVCallerCohortMode"
 	"call-DetermineGermlineContigPloidyCohortMode" -> "call-GermlineCNVCallerCohortMode"
 	"call-GermlineCNVCallerCohortMode" -> "decl-call_tars_sample_by_shard"
 	"call-CollectCounts" -> "scatter-L317C5-sample_index" [lhead="cluster-scatter-L317C5-sample_index"]
-	"decl-call_tars_sample_by_shard" -> "call-PostprocessGermlineCNVCalls"
-	"call-CollectCounts" -> "call-PostprocessGermlineCNVCalls"
 	"call-GermlineCNVCallerCohortMode" -> "call-PostprocessGermlineCNVCalls"
+	"call-CollectCounts" -> "call-PostprocessGermlineCNVCalls"
+	"decl-call_tars_sample_by_shard" -> "call-PostprocessGermlineCNVCalls"
 	"call-DetermineGermlineContigPloidyCohortMode" -> "call-PostprocessGermlineCNVCalls"
-	"call-PostprocessGermlineCNVCalls" -> "call-CollectSampleQualityMetrics"
 	"call-CollectCounts" -> "call-CollectSampleQualityMetrics"
+	"call-PostprocessGermlineCNVCalls" -> "call-CollectSampleQualityMetrics"
 	"call-GermlineCNVCallerCohortMode" -> "call-CollectModelQualityMetrics"
 }
