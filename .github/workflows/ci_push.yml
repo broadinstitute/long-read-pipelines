@@ -15,39 +15,16 @@ jobs:
         python-version: [3.13]
 
     steps:
-    - name: Checkout github repo (+ download lfs dependencies)
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
         lfs: true
 
-    - name: Checkout LFS objects
-      run: git lfs checkout
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Setup Environment
+      uses: ./.github/actions/setup-environment # Path to your composite action
       with:
         python-version: ${{ matrix.python-version }}
-
-    - name: Install system dependencies
-      run: |
-        sudo apt install libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev
-
-    - name: Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        $CONDA/bin/conda install -y -c bioconda womtool 
-        $CONDA/bin/conda config --add channels conda-forge
-        $CONDA/bin/conda install -y -c conda-forge "miniwdl>=1.12.1" shellcheck
-        echo "$CONDA/bin" >> $GITHUB_PATH
+        conda-python-version: '3.12' # Keep this specific if miniwdl needs 3.12
 
     - name: Test with tox
       run: tox
