@@ -121,20 +121,20 @@ digraph {
 	"call-CreateIntervalList" -> "call-ConfidenceConvertIntervals"
 	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsEval"
 	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsTruth"
-	"call-CheckForVariantsEval" -> "if-L248C9" [lhead="cluster-if-L248C9"]
 	"call-CheckForVariantsTruth" -> "if-L248C9" [lhead="cluster-if-L248C9"]
+	"call-CheckForVariantsEval" -> "if-L248C9" [lhead="cluster-if-L248C9"]
 	"call-ConfidenceConvertIntervals" -> "call-StandardVcfEval"
 	"decl-outputPrefix" -> "call-StandardVcfEval"
-	"call-StandardVcfEval" -> "call-VcfEvalWriteXMLfile"
 	"call-ConfidenceConvertIntervals" -> "call-VcfEvalWriteXMLfile"
+	"call-StandardVcfEval" -> "call-VcfEvalWriteXMLfile"
 	"decl-outputPrefix" -> "call-VcfEvalWriteXMLfile"
 	"call-StandardVcfEval" -> "call-CountUNKVcfEval"
-	"call-CheckForVariantsEval" -> "decl-areVariants"
 	"call-CheckForVariantsTruth" -> "decl-areVariants"
-	"call-CountUNKVcfEval" -> "call-SummariseVcfEval"
-	"call-StandardVcfEval" -> "call-SummariseVcfEval"
+	"call-CheckForVariantsEval" -> "decl-areVariants"
 	"decl-areVariants" -> "call-SummariseVcfEval"
 	"call-VcfEvalWriteXMLfile" -> "call-SummariseVcfEval"
+	"call-StandardVcfEval" -> "call-SummariseVcfEval"
+	"call-CountUNKVcfEval" -> "call-SummariseVcfEval"
 	"call-ConfidenceConvertIntervals" -> "decl-annotatedVcfsList"
 	"call-StandardVcfEval" -> "decl-annotatedVcfsList"
 	"decl-outputPrefix" -> "decl-annotatedVcfsList"
@@ -142,8 +142,8 @@ digraph {
 	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalIndelWriteXMLfile"
 	"call-VcfEvalIndelWriteXMLfile" -> "call-VcfEvalSummariseForIndelSelection"
 	"call-EvalIndelLengthVcfEval" -> "call-VcfEvalSummariseForIndelSelection"
-	"decl-annotatedVcfsList" -> "scatter-L383C5-selectorCombo" [lhead="cluster-scatter-L383C5-selectorCombo"]
 	"decl-actualVariantSelectors" -> "scatter-L383C5-selectorCombo" [lhead="cluster-scatter-L383C5-selectorCombo"]
+	"decl-annotatedVcfsList" -> "scatter-L383C5-selectorCombo" [lhead="cluster-scatter-L383C5-selectorCombo"]
 	"call-EvalSelectorVcfEval" -> "call-VcfEvalSelectorWriteXMLfile"
 	"call-VcfEvalSelectorWriteXMLfile" -> "call-VcfEvalSummariseForVariantSelection"
 	"call-EvalSelectorVcfEval" -> "call-VcfEvalSummariseForVariantSelection"

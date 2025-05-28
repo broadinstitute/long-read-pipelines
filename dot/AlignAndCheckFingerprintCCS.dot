@@ -33,20 +33,20 @@ digraph {
 		"call-saveFPRes" [label=saveFPRes shape=cds]
 		"if-L112C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	"call-Guess" -> "call-ShardLongReads"
 	"call-arbitrary" -> "call-ShardLongReads"
+	"call-Guess" -> "call-ShardLongReads"
 	"call-ShardLongReads" -> "scatter-L62C9-unaligned_bam" [lhead="cluster-scatter-L62C9-unaligned_bam"]
 	"call-AlignReads" -> "call-MergeAlignedReads"
-	"call-MergeAlignedReads" -> "decl-aBAM"
 	"call-AlignReadsTogether" -> "decl-aBAM"
-	"call-MergeAlignedReads" -> "decl-aBAI"
+	"call-MergeAlignedReads" -> "decl-aBAM"
 	"call-AlignReadsTogether" -> "decl-aBAI"
+	"call-MergeAlignedReads" -> "decl-aBAI"
 	"decl-aBAM" -> "call-IndexAlignedReads"
+	"decl-aBAM" -> "call-CollectPacBioAlignedMetrics"
 	"decl-aBAI" -> "call-CollectPacBioAlignedMetrics"
 	"call-IndexAlignedReads" -> "call-CollectPacBioAlignedMetrics"
-	"decl-aBAM" -> "call-CollectPacBioAlignedMetrics"
 	"call-CollectPacBioAlignedMetrics" -> "call-saveAlnMetrics"
-	"decl-aBAI" -> "call-FPCheckAoU"
 	"decl-aBAM" -> "call-FPCheckAoU"
+	"decl-aBAI" -> "call-FPCheckAoU"
 	"call-FPCheckAoU" -> "call-saveFPRes"
 }

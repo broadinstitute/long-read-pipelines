@@ -28,10 +28,10 @@ digraph {
 	"call-today" [label=today shape=cds]
 	"call-MergeAllReads" -> "decl-bam"
 	"call-MergeAllReads" -> "decl-bai"
-	"decl-bam" -> "call-RemoveDuplicates"
 	"decl-bai" -> "call-RemoveDuplicates"
-	"decl-bam" -> "decl-usable_bam"
+	"decl-bam" -> "call-RemoveDuplicates"
 	"call-RemoveDuplicates" -> "decl-usable_bam"
+	"decl-bam" -> "decl-usable_bam"
 	"call-RemoveDuplicates" -> "decl-usable_bai"
 	"decl-bai" -> "decl-usable_bai"
 	"decl-usable_bai" -> "call-coverage"
