@@ -45,7 +45,7 @@ workflow PfalciparumHrp2Hrp3Status {
 
 task IsLocusDeleted {
     input {
-        String bam
+        File bam
         File bai
 
         String chr
@@ -60,7 +60,6 @@ task IsLocusDeleted {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         samtools view -bhX ~{bam} ~{bai} ~{chr} > chr.bam
         samtools index chr.bam
 
