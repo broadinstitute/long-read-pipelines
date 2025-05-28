@@ -50,6 +50,10 @@ task IsLocusDeleted {
             localization_optional: true,
             description: "BAM file"
         }
+        bai: {
+            localization_optional: true,
+            description: "BAM file index"
+        }
     }
 
     input {
