@@ -44,8 +44,16 @@ workflow PfalciparumHrp2Hrp3Status {
 }
 
 task IsLocusDeleted {
+
+    parameter_meta {
+        bam: {
+            localization_optional: true,
+            description: "BAM file"
+        }
+    }
+
     input {
-        String bam
+        File bam
         File bai
 
         String chr
