@@ -72,7 +72,7 @@ task IsLocusDeleted {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        # export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         samtools view -bhX ~{bam} ~{bai} ~{chr} > chr.bam
         samtools index chr.bam
 
