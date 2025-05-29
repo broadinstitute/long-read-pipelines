@@ -19,19 +19,19 @@ digraph {
 	"call-UniqueBarcodes" [label=UniqueBarcodes shape=cds]
 	"call-FinalizeBasecalls" [label=FinalizeBasecalls shape=cds]
 	"call-ListFast5s" -> "decl-ns"
-	"decl-ns" -> "call-PartitionFast5Manifest"
 	"call-ListFast5s" -> "call-PartitionFast5Manifest"
+	"decl-ns" -> "call-PartitionFast5Manifest"
 	"call-PartitionFast5Manifest" -> "scatter-L44C5-chunk_index" [lhead="cluster-scatter-L44C5-chunk_index"]
 	"call-PartitionFast5Manifest" -> "call-Basecall"
 	"call-Basecall" -> "call-TimestampStopped"
 	"call-Basecall" -> "call-SumPassingFastqs"
 	"call-Basecall" -> "call-SumFailingFastqs"
 	"call-Basecall" -> "call-MakeSequencingSummary"
-	"call-TimestampStopped" -> "call-MakeFinalSummary"
 	"call-Basecall" -> "call-MakeFinalSummary"
+	"call-TimestampStopped" -> "call-MakeFinalSummary"
 	"call-Basecall" -> "call-UniqueBarcodes"
-	"call-Basecall" -> "call-FinalizeBasecalls"
 	"call-MakeFinalSummary" -> "call-FinalizeBasecalls"
 	"call-MakeSequencingSummary" -> "call-FinalizeBasecalls"
+	"call-Basecall" -> "call-FinalizeBasecalls"
 	"call-UniqueBarcodes" -> "call-FinalizeBasecalls"
 }

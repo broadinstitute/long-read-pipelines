@@ -13,9 +13,9 @@ digraph {
 	"call-MerylMergeAndSubtract" [label=MerylMergeAndSubtract shape=cds]
 	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-PrintMerylMemory"
 	"call-ParentalReadsRepartitionAndMerylConfigure" -> "scatter-L56C5-pair" [lhead="cluster-scatter-L56C5-pair"]
-	"call-PrintMerylMemory" -> "call-MerylCount"
 	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylCount"
+	"call-PrintMerylMemory" -> "call-MerylCount"
+	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylMergeAndSubtract"
 	"call-PrintMerylMemory" -> "call-MerylMergeAndSubtract"
 	"call-MerylCount" -> "call-MerylMergeAndSubtract"
-	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylMergeAndSubtract"
 }
