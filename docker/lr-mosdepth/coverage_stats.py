@@ -79,7 +79,7 @@ def calculate_evenness_score(
         df: pd.DataFrame, cov_col: int, round_precision: int) -> float:
     """
     Calculate the evenness score.
-    Konrad Oexle, Journal of Human Genetics 2016, Evaulation of the evenness score in NGS.
+    Konrad Oexle, Journal of Human Genetics 2016, Evaluation of the evenness score in NGS.
     https://www.nature.com/articles/jhg201621
 
     @param df: Dataframe containing coverage values
