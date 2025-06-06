@@ -114,6 +114,9 @@ workflows:
 - name: CleanupIntermediate
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CleanupIntermediate.wdl
+- name: CoverageStats
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CoverageStats.wdl
 - name: BenchmarkVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BenchmarkVCFs.wdl
