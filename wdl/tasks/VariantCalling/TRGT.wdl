@@ -72,9 +72,9 @@ task processWithTRGT {
         cpu_cores:          8,
         mem_gb:             12,
         disk_gb:            disk_sz,
-        preemptible_tries:  3,
+        preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-trgt:1.0.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-trgt:3.0.0"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
