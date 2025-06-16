@@ -78,6 +78,9 @@ workflow CallVariants {
         # reference-specific
         File ref_bundle_json_file
 
+        File? ref_scatter_interval_list_locator
+        File? ref_scatter_interval_list_ids
+
         File? small_variant_calling_options_json
         File? sv_calling_options_json
 
@@ -97,7 +100,7 @@ workflow CallVariants {
     String wdl_parsable_zones = get_zones.collapsed
 
     # needed for whatshap phasing anyway, so this can be used by SV calling
-    call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_bundle.dict, bam = bam, bai = bai, }
+    call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_bundle.dict, bam = bam, bai = bai, ref_scatter_interval_list_locator = ref_scatter_interval_list_locator, ref_scatter_interval_list_ids = ref_scatter_interval_list_ids }
 
     ######################################################################
     # Block for small variants handling
