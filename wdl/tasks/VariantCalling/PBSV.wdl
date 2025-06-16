@@ -157,8 +157,8 @@ task Discover {
     Int memory = 2 * num_cores
 
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
-        mem_gb:             128,
+        cpu_cores:          8,
+        mem_gb:             256,
         disk_gb:            runtime_disk_size,
         preemptible_tries:  2,
         max_retries:        1,
