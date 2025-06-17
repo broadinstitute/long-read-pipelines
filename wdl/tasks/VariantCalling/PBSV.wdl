@@ -227,7 +227,7 @@ task Call {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
-        mem_gb:             96,
+        mem_gb:             128,
         disk_gb:            disk_size,
         preemptible_tries:  0,
         max_retries:        0,
