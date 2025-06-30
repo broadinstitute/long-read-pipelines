@@ -2605,14 +2605,14 @@ task GetCurrentTimestampString {
 
     # ------------------------------------------------
     # Runtime settings:
-     runtime {
-         docker: "ubuntu:19.10"
-         memory: "512 MB"
-         disks: "local-disk 10 HDD"
-         bootDiskSizeGb: "15"
-         preemptible: 0
-         cpu: 1
-     }
+    runtime {
+        docker: "ubuntu:19.10"
+        memory: "512 MB"
+        disks: "local-disk 10 HDD"
+        bootDiskSizeGb: 15
+        preemptible: 0
+        cpu: 1
+    }
 
     output {
         String timestamp_string   = read_string(date_file)
