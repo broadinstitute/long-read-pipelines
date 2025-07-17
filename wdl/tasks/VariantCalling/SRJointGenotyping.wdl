@@ -165,6 +165,7 @@ task ImportGVCFs {
         Int batch_size = 50
 
         RuntimeAttr? runtime_attr_override
+        Int extra_mem_gb = 0
     }
 
     Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
@@ -226,12 +227,12 @@ task ImportGVCFs {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             32,
+        mem_gb:             32 + extra_mem_gb,
         disk_gb:            disk_size,
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -343,7 +344,7 @@ task GenotypeGVCFs {
         boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -453,7 +454,7 @@ task GnarlyGenotypeGVCFs {
         boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        docker:             "us.gcr.io/broad-gatk/gatk:4.6.1.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
