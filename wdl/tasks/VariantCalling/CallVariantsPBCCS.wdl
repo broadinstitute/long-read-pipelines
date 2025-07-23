@@ -67,7 +67,7 @@ workflow CallVariants {
     # Block for small variants handling
     ######################################################################
 
-    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 1}
 
     # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {
