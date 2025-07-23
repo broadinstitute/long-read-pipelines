@@ -111,7 +111,7 @@ task Discover {
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-sv:0.1.8"
+        docker:             "quay.io/pacbio/pbsv:2.9.0_1.14_build1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
