@@ -36,6 +36,7 @@ workflow PBCCSWholeGenome {
     input {
         Array[File] aligned_bams
         Array[File] aligned_bais
+        Array[File] aligned_pbis
 
         File? bed_to_compute_coverage
 
@@ -64,21 +65,9 @@ workflow PBCCSWholeGenome {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBCCSWholeGenome/~{participant_name}"
 
-    # gather across (potential multiple) input CCS BAMs
-    if (length(aligned_bams) > 1) {
-        scatter (pair in zip(aligned_bams, aligned_bais)) {
-            call Utils.InferSampleName {input: bam = pair.left, bai = pair.right}
-        }
-        call Utils.CheckOnSamplenames {input: sample_names = InferSampleName.sample_name}
-
-        call Utils.MergeBams as MergeAllReads { input: bams = aligned_bams, prefix = participant_name }
-    }
-
-    File bam = select_first([MergeAllReads.merged_bam, aligned_bams[0]])
-    File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
-
-    call PB.PBIndex as IndexCCSUnalignedReads { input: bam = bam }
-    File pbi = IndexCCSUnalignedReads.pbi
+    File bam = aligned_bams[0]
+    File bai = aligned_bais[0]
+    File pbi = aligned_pbis[0]
 
     call COV.SampleLevelAlignedMetrics as coverage {
         input:
