@@ -34,7 +34,7 @@ workflow CCSPepper {
         Int dv_threads
         Int dv_memory
 
-        String zones = "us-central1-b us-central1-c"
+        String zones = "us-central1-a"
     }
 
     call Pepper as get_hap_tagged_bam {
