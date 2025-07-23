@@ -1,7 +1,0 @@
-poa	/C3POa/bio-pipeline/poaV2/poa
-racon	/C3POa/racon/build/bin/racon
-gonk	/C3POa/gonk/gonk
-minimap2	/C3POa/minimap2/minimap2
-consensus	/C3POa/consensus.py
-racon	/C3POa/racon/build/bin/racon
-blat	/opt/conda/envs/lr-c3poa/bin/blat

@@ -1,5 +1,0 @@
-{
-  "GetApproxRawSubreadArrayLengthsAndStats.subreads": "gs://broad-gp-pacbio/r64020_20201212_014737/4_D01/m64020_201215_154210.subreads.bam",
-  "GetApproxRawSubreadArrayLengthsAndStats.segments_fasta": "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/cDNA_array_15x.unique_seqs_for_cartographer.fasta",
-  "GetApproxRawSubreadArrayLengthsAndStats.sample_name": "SM-KM1PP"
-}

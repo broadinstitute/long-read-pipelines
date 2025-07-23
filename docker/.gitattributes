@@ -1,2 +1,0 @@
-lr-10x filter=lfs diff=lfs merge=lfs -text
-lr-seanken filter=lfs diff=lfs merge=lfs -text

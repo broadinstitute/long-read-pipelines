@@ -1,9 +1,0 @@
-constant_region_5_rc
-BARCODE
-constant_region_4_linker_3_rc
-UNKNOWN
-constant_region_3_linker_2_rc
-UNKNOWN
-constant_region_2_linker_1_rc
-UNKNOWN
-constant_region_1_rc

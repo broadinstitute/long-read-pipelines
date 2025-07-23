@@ -1,8 +1,0 @@
-name: lr-stringtie2
-channels:
-  - bioconda
-  - conda-forge
-  - defaults
-dependencies:
-  - samtools=1.9=h10a08f8_12
-prefix: /opt/conda/envs/lr-stringtie2

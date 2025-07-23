@@ -1,9 +1,0 @@
-{
-  "Cartographer.reads_fasta": "gs://broad-dsde-methods-long-reads/cart/ccs_i1.fasta",
-  "Cartographer.segments_fasta": "gs://broad-dsde-methods-long-reads/cart/KNOWN_SEQUENCES.fasta",
-  "Cartographer.layout_order": "gs://broad-dsde-methods-long-reads/cart/layout_order.txt",
-  "Cartographer.use_mosaic_aligner": true,
-  "Cartographer.barcode_length": 18,
-  "Cartographer.barcode_file": "gs://broad-dsde-methods-long-reads/cart/BarcodeLookupTable.csv"
-}
-

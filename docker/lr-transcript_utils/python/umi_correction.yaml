@@ -1,7 +1,0 @@
-edit_distance: {"CCS": 2, "CLR": 3}
-len_diff: {"CCS": 50, "CLR": 150}
-gc_diff: {"CCS": 0.05, "CLR": 0.15}
-op: "AND"
-max_umi_delta: {"CCS": 3, "CLR": 4}
-max_umi_delta_filter: {"CCS": 3, "CLR": 3}
-min_back_aln_score: 10

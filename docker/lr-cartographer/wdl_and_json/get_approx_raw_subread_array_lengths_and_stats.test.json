@@ -1,5 +1,0 @@
-{
-  "GetApproxRawSubreadArrayLengthsAndStats.subreads": "gs://broad-dsde-methods-jonn/tmp/tmp.bam",
-  "GetApproxRawSubreadArrayLengthsAndStats.segments_fasta": "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.2/cDNA_array_15x.unique_seqs_for_cartographer.fasta",
-  "GetApproxRawSubreadArrayLengthsAndStats.sample_name": "TEST_BAM"
-}

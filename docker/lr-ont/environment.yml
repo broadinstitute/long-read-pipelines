@@ -1,8 +1,0 @@
-name: lr-ont
-channels:
-  - defaults
-  - conda-forge
-  - bioconda
-dependencies:
-  - ont-tombo
-  - ont-fast5-api

@@ -1,5 +1,0 @@
-*.jar filter=lfs diff=lfs merge=lfs -text
-docker/lr-align/gatk.jar filter=lfs diff=lfs merge=lfs -text
-docker/lr-utils/gatk.jar filter=lfs diff=lfs merge=lfs -text
-test/test_data/for_scripts/consensus.bam filter=lfs diff=lfs merge=lfs -text
-test/test_data/for_scripts/subreads.bam filter=lfs diff=lfs merge=lfs -text

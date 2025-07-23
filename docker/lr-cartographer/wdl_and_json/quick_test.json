@@ -1,5 +1,0 @@
-{
-  "Cartographer.reads_fasta": "gs://broad-dsde-methods-long-reads/cart/cartographer_test_data/test_read.fasta",
-  "Cartographer.segments_fasta": "gs://broad-dsde-methods-long-reads/cart/cartographer_test_data/KNOWN_SEQUENCES.fasta",
-  "Cartographer.layout_order": "gs://broad-dsde-methods-long-reads/cart/cartographer_test_data/layout_order.txt"
-}

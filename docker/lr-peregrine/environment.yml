@@ -1,8 +1,0 @@
-name: lr-peregrine
-channels:
-  - defaults
-  - conda-forge
-  - bioconda
-dependencies:
-  - samtools
-  - minimap2

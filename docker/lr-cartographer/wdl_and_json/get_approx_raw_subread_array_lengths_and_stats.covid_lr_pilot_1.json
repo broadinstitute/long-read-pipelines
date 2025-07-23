@@ -1,5 +1,0 @@
-{
-  "GetApproxRawSubreadArrayLengthsAndStats.subreads": "gs://broad-gp-pacbio/r64020_20200501_003443/1_A01/m64020_200501_004434.subreads.bam",
-  "GetApproxRawSubreadArrayLengthsAndStats.segments_fasta": "gs://broad-dsde-methods-long-reads/resources/MASseq_0.0.1/cDNA_array_8x.unique_seqs_for_cartographer.fasta",
-  "GetApproxRawSubreadArrayLengthsAndStats.sample_name": "covid_lr_pilot_1"
-}

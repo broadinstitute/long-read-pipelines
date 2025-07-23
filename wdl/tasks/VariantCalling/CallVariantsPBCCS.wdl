@@ -46,6 +46,7 @@ workflow CallVariants {
         File ref_fasta
         File ref_fasta_fai
         File ref_dict
+        Int number_of_zones = 1
 
         Boolean call_svs
         Boolean fast_less_sensitive_sv
@@ -67,7 +68,7 @@ workflow CallVariants {
     # Block for small variants handling
     ######################################################################
 
-    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = number_of_zones}
 
     # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {

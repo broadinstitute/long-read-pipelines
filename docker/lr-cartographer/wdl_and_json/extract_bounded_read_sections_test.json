@@ -1,7 +1,0 @@
-{
-  "ExtractBoundedReadSections.reads_file": "gs://broad-dsde-methods-long-reads/covid-19-aziz/m64020_200501_004434.subreads.20000.ccs_unmapped.bam",
-  "ExtractBoundedReadSections.segments_fasta": "gs://broad-dsde-methods-long-reads/covid-19-aziz/cDNA_array_8x.unique_seqs_for_cartographer.fasta",
-  "ExtractBoundedReadSections.boundaries_file": "gs://broad-dsde-methods-long-reads/covid-19-aziz/bounds_file_for_extraction.txt",
-  "ExtractBoundedReadSections.use_mosaic_aligner": true
-}
-
