@@ -175,7 +175,7 @@ task DV {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    String output_root = "/mnt/disks/cromwell_root/dv_output"
 
     Int bam_sz = ceil(size(bam, "GB"))
     Boolean is_big_bam = bam_sz > 100
