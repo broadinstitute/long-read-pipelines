@@ -88,7 +88,7 @@ task Pepper {
 
 	Int disk_size = 100 + 2*ceil(size(bam, "GB")) + 2*ceil(size(bai, "GB")) + 2*ceil(size(ref_fasta, "GB")) + 2*ceil(size(ref_fasta_fai, "GB"))
 
-    String output_root = "/cromwell_root/pepper_output"
+    String output_root = "/mnt/disks/cromwell_root/pepper_output"
 
     String prefix = basename(bam, ".bam") + ".pepper"
 
