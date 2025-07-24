@@ -275,7 +275,7 @@ task MarginPhase {
     Int cores = 64
 
     String prefix = basename(bam, ".bam") + ".pepper"
-    String output_root = "/cromwell_root/margin_output"
+    String output_root = "/mnt/disks/cromwell_root/margin_output"
 
     command <<<
         set -euxo pipefail
