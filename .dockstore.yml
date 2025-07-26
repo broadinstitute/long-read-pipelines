@@ -87,6 +87,9 @@ workflows:
 - name: ProcessOnInstrumentDemuxedChunk
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/ProcessOnInstrumentDemuxedChunk.wdl
+- name: ProcessOnDownsampledMultiReadgroupUBAM
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Utility/ProcessOnDownsampledMultiReadgroupUBAM.wdl
 
 ###################################################
 # TechAgnostic - *mics data processing
