@@ -86,7 +86,7 @@ workflow ProcessOnDownsampledMultiReadgroupUBAM {
 
                 uBAM = pair.right,
 
-                readgroup_id = pair.left,
+                readgroup_id = sub(pair.left, "/", "__"),
                 bam_SM_field = bam_SM_field,
 
                 platform = 'Revio',  # non-critical lie, this parameter was used for setting bam size lower bound threshold for failing QC
