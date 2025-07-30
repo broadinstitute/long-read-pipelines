@@ -91,7 +91,8 @@ workflow SaveFilestoDestination {
 
     call GU.CoerceArrayOfPairsToMap as collect { input: keys = attr, values = final_path }
 
-    if (defined(already_finalized)) {
+    Boolean concatenate = (defined(already_finalized)) && (length(select_first([already_finalized])) > 0)
+    if (concatenate) {
         scatter(mm in select_first([already_finalized])) {
             call GU.MapToTsv { input: m = mm}
         }
