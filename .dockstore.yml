@@ -84,6 +84,9 @@ workflows:
 
 ###################################################
 # TechAgnostic - *mics data processing
+- name: GLnexus
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/GLnexus.wdl
 - name: CallVariantsReadBased
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/CallVariantsReadBased.wdl

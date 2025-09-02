@@ -1,6 +1,6 @@
 version 1.0
 
-import "../Utility/Utils.wdl"
+import "../../../tasks/Utility/Utils.wdl"
 
 workflow JointCall {
 

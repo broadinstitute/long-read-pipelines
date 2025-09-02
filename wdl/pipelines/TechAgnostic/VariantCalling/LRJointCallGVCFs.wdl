@@ -1,13 +1,13 @@
 version 1.0
 
-import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
+import "GLnexus.wdl" as GLnexus
 import "../../../tasks/Utility/Hail.wdl" as Hail
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow LRJointCallGVCFs {
 
     meta {
-        description: "A workflow that performs joint calling on gVCFs (usually from DeepVariant) using GLNexus."
+        description: "A workflow that performs joint calling on gVCFs (usually from DeepVariant) using GLnexus."
     }
     parameter_meta {
         gvcfs:            "GCS paths to gVCF files"
@@ -39,7 +39,7 @@ workflow LRJointCallGVCFs {
     Map[String, String] ref_map = read_map(ref_map_file)
 
     # Gather across multiple input gVCFs
-    call GLNexus.JointCall { input:
+    call GLnexus.JointCall { input:
         gvcfs = gvcfs,
         tbis = tbis,
         dict = ref_map['dict'],

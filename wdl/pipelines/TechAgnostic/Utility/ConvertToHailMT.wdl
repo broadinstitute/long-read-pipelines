@@ -1,8 +1,6 @@
 version 1.0
 
-import "../../../tasks/VariantCalling/GLNexus.wdl" as GLNexus
 import "../../../tasks/Utility/Hail.wdl" as Hail
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow ConvertToHailMT {
 
@@ -40,6 +38,6 @@ workflow ConvertToHailMT {
     ##########
 
     output {
-        String joint_mt = RunConvertToHailMT.gcs_path
+        String joint_mt = RunConvertToHailMT.mt_bucket_path
     }
 }
