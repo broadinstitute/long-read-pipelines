@@ -243,6 +243,12 @@ task Call {
         description: "Joint-call gVCFs with GLNexus."
     }
 
+    parameter_meta {
+        gvcfs: {
+            localization_optional: true
+        }
+    }
+
     input {
         Array[File] gvcfs
 
@@ -257,11 +263,22 @@ task Call {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 5*ceil(size(gvcfs, "GB"))
-    Int mem = 4*num_cpus
+    # this will break call-caching
+    Array[String] a = gvcfs
+    File gs_manifest = write_lines(a)
+    File local_manifest = write_lines(gvcfs)
 
     command <<<
         set -x
+
+        head ~{gs_manifest}
+        head ~{local_manifest}
+
+        time \
+        cat ~{gs_manifest} \
+        | gcloud storage cp \
+            -I \
+            .
 
         # For guidance on performance settings, see https://github.com/dnanexus-rnd/GLnexus/wiki/Performance
         ulimit -Sn 65536
@@ -274,7 +291,7 @@ task Call {
             ~{if more_PL then "--more-PL" else ""} \
             ~{if squeeze then "--squeeze" else ""} \
             ~{if trim_uncalled_alleles then "--trim-uncalled-alleles" else ""} \
-            --list ~{write_lines(gvcfs)} \
+            --list ~{local_manifest} \
             > ~{prefix}.bcf
     >>>
 
@@ -283,11 +300,15 @@ task Call {
     }
 
     #########################
+    Int disk_size = 1 + 5*ceil(size(gvcfs, "GiB"))
+    Int mem = 4*num_cpus
+    String prefix_padded_disk_type = if (10000<length(gvcfs)) then " LOCAL" else " SSD"
+
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
         mem_gb:             mem,
         disk_gb:            disk_size,
-        boot_disk_gb:       10,
+        boot_disk_gb:       20,
         preemptible_tries:  1,
         max_retries:        0,
         docker:             "ghcr.io/dnanexus-rnd/glnexus:v1.4.3"
@@ -296,7 +317,7 @@ task Call {
     runtime {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + prefix_padded_disk_type
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
