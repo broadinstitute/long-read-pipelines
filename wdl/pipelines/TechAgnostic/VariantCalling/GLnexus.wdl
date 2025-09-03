@@ -11,6 +11,7 @@ workflow JointCall {
     parameter_meta {
         gvcfs:    "gVCF files to perform joint calling upon"
         tbis:     "gVCF index files"
+        gvcf_and_tbi_manifest: "manifest file containing gVCF and TBI pairs. Provide either this, or gVCFs and TBIs, but not both."
         dict:     "reference sequence dictionary"
         bed:      "intervals to which joint calling should be restricted"
 
@@ -27,8 +28,10 @@ workflow JointCall {
     }
 
     input {
-        Array[File] gvcfs
-        Array[File] tbis
+        Array[File]? gvcfs
+        Array[File]? tbis
+
+        File? gvcf_and_tbi_manifest
 
         File dict
         File? bed
@@ -43,14 +46,29 @@ workflow JointCall {
         String prefix = "out"
     }
 
-    Int cpus_exp = if defined(num_cpus) then select_first([num_cpus]) else 2*length(gvcfs)
+    if (defined(gvcfs) != defined(tbis)) {
+        call Utils.StopWorkflow as PairedInputsMissing { input: reason = "gVCF array and tbi must be specified at the same time." }
+    }
+    if ( defined(gvcf_and_tbi_manifest) == defined(gvcfs) ) {
+        call Utils.StopWorkflow as MutexInputsGiven { input: reason = "Provide either gVCF array and TBI array or a manifest file, not both." }
+    }
+
+    if (defined(gvcf_and_tbi_manifest)) {
+        call SplitManifest { input: manifest = select_first([gvcf_and_tbi_manifest]) }
+    }
+    Array[Pair[String, String]] gvcfs_and_tbis = if defined(gvcf_and_tbi_manifest)
+                                                 then select_first([SplitManifest.g_N_t])
+                                                 else zip( select_first([gvcfs]), select_first([tbis]) )
+
+
+    Int cpus_exp = if defined(num_cpus) then select_first([num_cpus]) else 2*length(gvcfs_and_tbis)
     Int cpus_act = if cpus_exp < max_cpus then cpus_exp else max_cpus
 
     # List all of the contigs in the reference
     call GetRanges { input: dict = dict, bed = bed }
 
     # Shard all gVCFs into per-contig shards
-    scatter (p in zip(gvcfs, tbis)) {
+    scatter (p in gvcfs_and_tbis) {
         call ShardVCFByRanges { input: gvcf = p.left, tbi = p.right, ranges = GetRanges.ranges }
     }
 
@@ -79,6 +97,31 @@ workflow JointCall {
     output {
         File joint_gvcf = ConcatBCFs.joint_gvcf
         File joint_gvcf_tbi = ConcatBCFs.joint_gvcf_tbi
+    }
+}
+
+task SplitManifest {
+    meta {
+        description: "Split a 2-col manifest into two arrays of URIs, each holding [gvcf] and [tbi]"
+    }
+    parameter_meta {
+        manifest: "2-col manifest file, holding URI to [(gvcf, tbi)]"
+    }
+    input {
+        File manifest
+    }
+    output {
+        Array[Pair[String, String]] g_N_t = zip(read_lines("gvcfs.txt"), read_lines("tbis.txt"))
+    }
+    command <<<
+    set -euxo pipefail
+
+        cut -f1 ~{manifest} > gvcfs.txt
+        cut -f2 ~{manifest} > tbis.txt
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
 
