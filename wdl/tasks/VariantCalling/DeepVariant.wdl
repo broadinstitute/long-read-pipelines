@@ -164,7 +164,7 @@ task DV {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    String output_root = "/mnt/disks/cromwell_root/dv_output"
 
     command <<<
         set -euxo pipefail
@@ -173,7 +173,7 @@ task DV {
 
         mkdir -p "~{output_root}"
 
-        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        export MONITOR_MOUNT_POINT="/mnt/disks/cromwell_root/"
         bash /opt/vm_local_monitoring_script.sh &> resources.log &
         job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
 
@@ -261,7 +261,7 @@ task DV_gpu {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    String output_root = "/mnt/disks/cromwell_root/dv_output"
 
     command <<<
         set -euxo pipefail
@@ -270,7 +270,7 @@ task DV_gpu {
 
         mkdir -p "~{output_root}"
 
-        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        export MONITOR_MOUNT_POINT="/mnt/disks/cromwell_root/"
         bash vm_local_monitoring_script.sh &> resources.log &
         job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
         gpustat -a -i 1 &> gpu.usages.log &
