@@ -53,6 +53,8 @@ workflow SRWholeGenome {
 
         fingerprint_haploytpe_db_file: "Haplotype DB file from which to fingerprint the input data."
 
+        qc_pass: "Boolean indicating if the input data passed QC."
+
         contigs_names_to_ignore:  "Array of names of contigs to ignore for the purposes of reporting variants."
         gcs_out_root_dir:    "GCS Bucket into which to finalize outputs.  If no bucket is given, outputs will not be finalized and instead will remain in their native execution location."
     }
@@ -101,7 +103,14 @@ workflow SRWholeGenome {
 
         File? interval_list
 
+        Boolean? qc_pass 
+
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
+    }
+
+    # Before doing anything, we need to check if the QC pass flag is set.  If it is, we can skip the rest of the workflow.
+    if (defined(qc_pass) && !select_first([qc_pass])) {
+        call Utils.StopWorkflow as InputDataQCFailed{input: reason = "QC failed for input data."}
     }
 
     # Read ref map into map data type so we can access its fields:
