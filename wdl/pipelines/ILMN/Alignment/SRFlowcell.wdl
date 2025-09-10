@@ -504,5 +504,9 @@ workflow SRFlowcell {
 
         String? qc_status = t_024_AssessQualityMetrics.qc_status
         String? qc_message = t_024_AssessQualityMetrics.qc_message
+
+        Int? num_decontaminated_reads = t_005_DecontaminateSample.num_decontaminated_reads
+        Int? num_contaminated_reads = t_005_DecontaminateSample.num_contaminated_reads
+        Float? percent_contaminated = t_005_DecontaminateSample.percent_contaminated
     }
 }

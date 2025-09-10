@@ -188,6 +188,10 @@ workflow RemoveSingleOrganismContamination {
         File decontaminated_fq1 = select_first([t_015_FinalizeDecontaminatedFq1.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end1])
         File decontaminated_fq2 = select_first([t_016_FinalizeDecontaminatedFq2.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_end2])
         File decontaminated_unpaired = select_first([t_017_FinalizeDecontaminatedUnpaired.gcs_path, t_012_CreateFastqFromDecontaminatedReads.fq_unpaired])
+
+        Int num_decontaminated_reads = t_008_ExtractDecontaminatedReads.num_reads
+        Int num_contaminated_reads = t_009_ExtractContaminatedReads.num_reads
+        Float percent_contaminated = 100.0 * t_009_ExtractContaminatedReads.num_reads / (t_008_ExtractDecontaminatedReads.num_reads + t_009_ExtractContaminatedReads.num_reads)
     }
 }
 
@@ -223,10 +227,12 @@ task ExtractReadsWithSamtools {
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
 
         samtools view -h -b -F ~{sam_flags} -@$np ~{extra_args} ~{bam} > ~{prefix}.bam
+        samtools view -c ~{prefix}.bam > "num_reads.txt"
     >>>
 
     output {
         File output_bam = "~{prefix}.bam"
+        Int num_reads = read_int("num_reads.txt")
     }
 
     #########################
