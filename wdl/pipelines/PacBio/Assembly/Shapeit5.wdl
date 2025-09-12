@@ -31,7 +31,7 @@ task phasing{
     # add AN AC tag
     bcftools +fill-tags ~{vcf_input} -Ob -o tmp.out.bcf -- -t AN,AC
     bcftools index tmp.out.bcf
-phase_common_static --input tmp.out.bcf --filter-maf ~{minimal_maf} --region ~{region} --map ~{mappingfile} --output scaffold.bcf --thread ~{num_threads}
+    phase_common_static --input tmp.out.bcf --filter-maf ~{minimal_maf} --region ~{region} --map ~{mappingfile} --output scaffold.bcf --thread ~{num_threads}
     >>>
 
     output{
