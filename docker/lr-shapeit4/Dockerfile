@@ -49,7 +49,7 @@ RUN apt-get -qqy update --fix-missing \
         python3-pip \
         xz-utils \
         tk-dev \
-        python-dev \
+        python-dev-is-python3 \
         bsdmainutils \
         unzip \
         python3-pycurl \
@@ -107,16 +107,16 @@ RUN git clone https://github.com/odelaneau/shapeit4.git \
 ENV PATH=/shapeit4/shapeit4/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # # BCFTOOLS
-# RUN wget https://github.com/samtools/bcftools/releases/download/${bcftools_version}/bcftools-${bcftools_version}.tar.bz2 \
-#     && tar xjf bcftools-${bcftools_version}.tar.bz2 \
-#     && rm bcftools-${bcftools_version}.tar.bz2 \
-#     && cd bcftools-${bcftools_version} \
-#     && ./configure --without-curses \
-#     && make \
-#     && make install \
-#     && cd ${work_dir} \
-#     && rm -rf bcftools-${bcftools_version} \
-#     && bcftools --help
+RUN wget https://github.com/samtools/bcftools/releases/download/${bcftools_version}/bcftools-${bcftools_version}.tar.bz2 \
+    && tar xjf bcftools-${bcftools_version}.tar.bz2 \
+    && rm bcftools-${bcftools_version}.tar.bz2 \
+    && cd bcftools-${bcftools_version} \
+    && ./configure --without-curses \
+    && make \
+    && make install \
+    && cd ${work_dir} \
+    && rm -rf bcftools-${bcftools_version} \
+    && bcftools --help
 
 
 
