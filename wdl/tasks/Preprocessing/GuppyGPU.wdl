@@ -142,6 +142,12 @@ task Basecall {
         String? barcode_kit
         Int index = 0
 
+        String gpu_type = "nvidia-tesla-p100"
+        Int gpu_count = 1
+        String nvidia_driver_version = "418.152.00"
+        Array[String] gcp_zones = ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"]
+        String cpu_platform = "Intel Haswell"
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -227,11 +233,12 @@ task Basecall {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        gpuType:                "nvidia-tesla-p100"
-        gpuCount:               1
-        nvidiaDriverVersion:    "418.152.00"
-        zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
-        cpuPlatform:            "Intel Haswell"
+        gpuType:                gpu_type
+        gpuCount:               gpu_count
+        nvidiaDriverVersion:    nvidia_driver_version
+        # zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
+        zones:                  gcp_zones
+        cpuPlatform:            cpu_platform
     }
 }
 
