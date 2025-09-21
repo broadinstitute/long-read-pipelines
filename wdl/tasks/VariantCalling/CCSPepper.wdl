@@ -34,7 +34,7 @@ workflow CCSPepper {
         Int dv_threads
         Int dv_memory
 
-        String zones = "us-central1-b us-central1-c"
+        Array[String] zones = ["us-central1-b", "us-central1-c"]
     }
 
     call Pepper as get_hap_tagged_bam {
@@ -81,7 +81,7 @@ task Pepper {
 
         Int threads
         Int memory
-        String zones
+        Array[String] zones
 
         RuntimeAttr? runtime_attr_override
     }
@@ -169,7 +169,7 @@ task DV {
 
         Int threads
         Int memory
-        String zones
+        Array[String] zones
 
         RuntimeAttr? runtime_attr_override
     }
@@ -264,7 +264,7 @@ task MarginPhase {
         File ref_fasta_fai
 
         Int memory
-        String zones
+        Array[String] zones
 
         RuntimeAttr? runtime_attr_override
     }

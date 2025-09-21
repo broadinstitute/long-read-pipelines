@@ -1690,7 +1690,7 @@ task RandomZoneSpewer {
 
         # NOTE: as of May 19, 2025, requested zones must all be in the same region.
         #       The below code is a fix for that.
-        
+
         rm -f zones.txt
 
         if [[ "~{region}" == "us-central1" ]]; then
@@ -1735,7 +1735,7 @@ task RandomZoneSpewer {
     >>>
 
     output {
-        String zones = read_string("result.txt")
+        Array[String] zones = read_lines("result.txt")
     }
 
     runtime {

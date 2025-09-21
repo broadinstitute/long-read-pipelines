@@ -96,7 +96,7 @@ task ShardLongReads {
 
         String prefix = "shard"
 
-        String zones = "us-central1-c us-central1-b"
+        Array[String] zones = ["us-central1-c", "us-central1-b"]
         Int? num_ssds
 
         RuntimeAttr? runtime_attr_override

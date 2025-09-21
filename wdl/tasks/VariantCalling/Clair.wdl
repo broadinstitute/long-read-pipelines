@@ -38,7 +38,7 @@ task Clair {
         String? chr
         String preset
 
-        String zones
+        Array[String] zones
 
         RuntimeAttr? runtime_attr_override
     }

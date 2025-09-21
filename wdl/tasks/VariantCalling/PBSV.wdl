@@ -28,7 +28,7 @@ workflow RunPBSV {
         File ref_fasta_fai
         String prefix
 
-        String zones
+        Array[String] zones
 
         File? tandem_repeat_bed
     }
@@ -68,7 +68,7 @@ task Discover {
         File? tandem_repeat_bed
         String? chr
         String prefix
-        String zones
+        Array[String] zones
         RuntimeAttr? runtime_attr_override
     }
 
@@ -133,7 +133,7 @@ task Call {
         File ref_fasta_fai
         Boolean ccs
         String prefix
-        String zones
+        Array[String] zones
         RuntimeAttr? runtime_attr_override
     }
 
