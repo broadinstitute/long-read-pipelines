@@ -221,7 +221,7 @@ task Basecall {
         gpuType:                "nvidia-tesla-p100"
         gpuCount:               1
         nvidiaDriverVersion:    "418.152.00"
-        zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
+        zones:                  ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"]
         cpuPlatform:            "Intel Haswell"
     }
 }

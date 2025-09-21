@@ -1679,15 +1679,58 @@ task RandomZoneSpewer {
 
     input {
         Int num_of_zones
+
+        String region = "us-central1"
     }
 
     command <<<
         set -eux
 
         # by no means a perfect solution, but that's not desired anyway
-        all_known_zones=("us-central1-a" "us-central1-b" "us-central1-c" "us-central1-f" "us-east1-b" "us-east1-c" "us-east1-d" "us-east4-a" "us-east4-b" "us-east4-c" "us-west1-a" "us-west1-b" "us-west1-c" "us-west2-a" "us-west2-b" "us-west2-c" "us-west3-a" "us-west3-b" "us-west3-c" "us-west4-a" "us-west4-b" "us-west4-c")
-        for zone in "${all_known_zones[@]}"; do echo "${zone}" >> zones.txt; done
 
+        # NOTE: as of May 19, 2025, requested zones must all be in the same region.
+        #       The below code is a fix for that.
+        
+        rm -f zones.txt
+
+        if [[ "~{region}" == "us-central1" ]]; then
+            echo "us-central1-a" >> zones.txt
+            echo "us-central1-b" >> zones.txt
+            echo "us-central1-c" >> zones.txt
+            echo "us-central1-f" >> zones.txt
+        elif [[ "~{region}" == "us-east1" ]]; then
+            echo "us-east1-b" >> zones.txt
+            echo "us-east1-c" >> zones.txt
+            echo "us-east1-d" >> zones.txt
+            echo "us-east4-a" >> zones.txt
+            echo "us-east4-b" >> zones.txt
+            echo "us-east4-c" >> zones.txt
+        elif [[ "~{region}" == "us-west1" ]]; then
+            echo "us-west1-a" >> zones.txt
+            echo "us-west1-b" >> zones.txt
+            echo "us-west1-c" >> zones.txt
+        elif [[ "~{region}" == "us-west2" ]]; then
+            echo "us-west2-a" >> zones.txt
+            echo "us-west2-b" >> zones.txt
+            echo "us-west2-c" >> zones.txt
+        elif [[ "~{region}" == "us-west3" ]]; then
+            echo "us-west3-a" >> zones.txt
+            echo "us-west3-b" >> zones.txt
+            echo "us-west3-c" >> zones.txt
+        elif [[ "~{region}" == "us-west4" ]]; then
+            echo "us-west4-a" >> zones.txt
+            echo "us-west4-b" >> zones.txt
+            echo "us-west4-c" >> zones.txt
+        else
+            echo "Invalid region: ~{region}"
+            echo "Defaulting to us-central1"
+
+            echo "us-central1-a" >> zones.txt
+            echo "us-central1-b" >> zones.txt
+            echo "us-central1-c" >> zones.txt
+            echo "us-central1-f" >> zones.txt
+        fi
+        
         shuf zones.txt | head -n ~{num_of_zones} | tr '\n' ' ' > "result.txt"
     >>>
 
