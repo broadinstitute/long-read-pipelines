@@ -16,7 +16,7 @@ workflow Hifiasm {
         File reads
         String prefix
 
-        String zones = "us-central1-a us-central1-b us-central1-c"
+        Array[String] zones = ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"]
     }
 
     call AssembleForAltContigs {
@@ -58,7 +58,7 @@ task AssembleForHaplotigs {
     input {
         File reads
         String prefix = "out"
-        String zones
+        Array[String] zones
 
         RuntimeAttr? runtime_attr_override
     }
@@ -130,7 +130,7 @@ task AssembleForHaplotigs {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        zones: zones
+        zones:                  "${sep=' ' zones}"
     }
 }
 
@@ -138,7 +138,7 @@ task AssembleForAltContigs {
     input {
         File reads
         String prefix = "out"
-        String zones
+        Array[String] zones
 
         RuntimeAttr? runtime_attr_override
     }
@@ -203,6 +203,6 @@ task AssembleForAltContigs {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
-        zones: zones
+        zones:                  "${sep=' ' zones}"
     }
 }
