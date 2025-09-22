@@ -80,7 +80,7 @@ task MedakaPolish {
         gpuType:                "nvidia-tesla-t4"
         gpuCount:               1
         nvidiaDriverVersion:    "418.152.00"
-        zones:                  ["us-east1-c"]
+        zones:                  ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"]
         cpuPlatform:            "Intel Haswell"
         docker:                 select_first([runtime_attr.docker, default_attr.docker])
     }
