@@ -1671,6 +1671,8 @@ task RandomZoneSpewer {
 
     meta {
         description: "Spews a random GCP zone"
+        ## TODO: This is probably the right thing to do, but we need to test it:
+        # volatile: true
     }
 
     parameter_meta {
@@ -1731,7 +1733,16 @@ task RandomZoneSpewer {
             echo "us-central1-f" >> zones.txt
         fi
         
-        shuf zones.txt | head -n ~{num_of_zones} | tr '\n' ' ' > "result.txt"
+        shuf zones.txt | head -n ~{num_of_zones} > "result.txt"
+
+        echo "Zone list from which to randomly choose ~{num_of_zones}:"
+        cat zones.txt
+
+        echo 
+        echo    
+
+        echo "Final Zone List:"
+        cat result.txt
     >>>
 
     output {
