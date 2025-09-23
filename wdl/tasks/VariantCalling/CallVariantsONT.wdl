@@ -105,7 +105,7 @@ workflow CallVariants {
                     sites_vcf_tbi = sites_vcf_tbi,
 
                     preset = "ONT",
-                    zones = PickGcpZones.zones
+                    zone_string = PickGcpZones.zone_string
             }
         }
 
@@ -149,7 +149,7 @@ workflow CallVariants {
                         ref_fasta_fai = ref_map["fai"],
                         threads       = select_first([dvp_threads]),
                         memory        = select_first([dvp_memory]),
-                        zones = PickGcpZones.zones
+                        zone_string = PickGcpZones.zone_string
                 }
             }
 
@@ -214,7 +214,7 @@ workflow CallVariants {
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
                         is_ccs = false,
-                        zones = PickGcpZones.zones
+                        zone_string = PickGcpZones.zone_string
                 }
 
                 call Utils.InferSampleName {
@@ -244,7 +244,7 @@ workflow CallVariants {
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
                     is_ccs = false,
-                    zones = PickGcpZones.zones
+                    zone_string = PickGcpZones.zone_string
             }
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }

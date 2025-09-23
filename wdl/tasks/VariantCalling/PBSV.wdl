@@ -15,7 +15,7 @@ workflow RunPBSV {
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         prefix:            "prefix for output"
-        zones:             "zones to run in"
+        zone_string:             "zones to run in"
         tandem_repeat_bed: "BED file containing TRF finder results (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 
@@ -28,7 +28,7 @@ workflow RunPBSV {
         File ref_fasta_fai
         String prefix
 
-        Array[String] zones
+        String zone_string
 
         File? tandem_repeat_bed
     }
@@ -41,7 +41,7 @@ workflow RunPBSV {
             ref_fasta_fai     = ref_fasta_fai,
             tandem_repeat_bed = tandem_repeat_bed,
             prefix            = prefix,
-            zones             = zones
+            zone_string             = zone_string
     }
 
     call Call {
@@ -51,7 +51,7 @@ workflow RunPBSV {
             ref_fasta_fai = ref_fasta_fai,
             ccs           = is_ccs,
             prefix        = prefix,
-            zones         = zones
+            zone_string         = zone_string
     }
 
     output {
@@ -68,7 +68,7 @@ task Discover {
         File? tandem_repeat_bed
         String? chr
         String prefix
-        Array[String] zones
+        String zone_string
         RuntimeAttr? runtime_attr_override
     }
 
@@ -89,8 +89,6 @@ task Discover {
     Int runtime_disk_size = if disk_size < MINIMAL_DISK then MINIMAL_DISK else disk_size
 
     String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
-
-    String zone_string = sub(sub("~{sep=' ' zones}", "\n", ""), "\r", "")
 
     command <<<
         set -euxo pipefail
@@ -135,7 +133,7 @@ task Call {
         File ref_fasta_fai
         Boolean ccs
         String prefix
-        Array[String] zones
+        String zone_string
         RuntimeAttr? runtime_attr_override
     }
 
@@ -182,7 +180,7 @@ task Call {
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        zones:                  "~{sep=' ' zones}"
+        zones:                  zone_string
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])

@@ -1733,7 +1733,11 @@ task RandomZoneSpewer {
             echo "us-central1-f" >> zones.txt
         fi
         
-        shuf zones.txt | head -n ~{num_of_zones} > "result.txt"
+        shuf zones.txt | head -n ~{num_of_zones} > "chosen_zones.txt"
+
+        cat chosen_zones.txt | tr '\n' ' ' | tr -d '\r' > "zone_string.txt"
+
+        #########################################################
 
         echo "Zone list from which to randomly choose ~{num_of_zones}:"
         cat zones.txt
@@ -1742,11 +1746,17 @@ task RandomZoneSpewer {
         echo    
 
         echo "Final Zone List:"
-        cat result.txt
+        cat chosen_zones.txt
+
+        echo 
+        echo
+        echo "Zone string:"
+        cat zone_string.txt
     >>>
 
     output {
         Array[String] zones = read_lines("result.txt")
+        String zone_string = read_string("zone_string.txt")
     }
 
     runtime {

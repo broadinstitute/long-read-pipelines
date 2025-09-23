@@ -15,7 +15,7 @@ task Pepper {
         ref_fasta_fai: "The reference fasta index file."
         threads: "The number of threads to use."
         memory: "The amount of memory to use."
-        zones: "select which zone (GCP) to run this task"
+        zone_string: "select which zone (GCP) to run this task"
         runtime_attr_override: "override the default runtime attributes"
     }
 
@@ -29,7 +29,7 @@ task Pepper {
         Int threads
         Int memory
 
-        Array[String] zones = ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"]
+        String zone_string = "us-central1-c us-central1-f us-central1-a us-central1-b"
 
         RuntimeAttr? runtime_attr_override
     }
@@ -114,7 +114,7 @@ task Pepper {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
-        zones:                  "~{sep=' ' zones}"
+        zones:                  zone_string
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
