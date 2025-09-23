@@ -2013,13 +2013,15 @@ task CompressAndIndex {
     }
 }
 
-task ConcatBCFs {
+task ConcatVariants {
     meta {
-        description: "Concatenate BCFs into a single .vcf.bgz file and index it."
+        description: "Concatenate VCFs/BCFs into a single .vcf.bgz file and index it."
     }
 
     input {
-        Array[File] bcfs
+        Array[File] variant_files
+
+        Boolean is_gvcf = false
 
         Int num_cpus = 4
         String prefix = "out"
@@ -2027,18 +2029,20 @@ task ConcatBCFs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 2*ceil(size(bcfs, "GB"))
+    Int disk_size = 1 + 2*ceil(size(variant_files, "GB"))
+
+    String file_suffix = if is_gvcf then "g.vcf.bgz" else "vcf.bgz"
 
     command <<<
         set -euxo pipefail
 
-        bcftools concat -n ~{sep=' ' bcfs} | bcftools view | bgzip -@ ~{num_cpus} -c > ~{prefix}.g.vcf.bgz
-        tabix -p vcf ~{prefix}.g.vcf.bgz
+        bcftools concat -n ~{sep=' ' variant_files} | bcftools view | bgzip -@ ~{num_cpus} -c > ~{prefix}.~{file_suffix}
+        tabix -p vcf ~{prefix}.~{file_suffix}
     >>>
 
     output {
-        File joint_gvcf = "~{prefix}.g.vcf.bgz"
-        File joint_gvcf_tbi = "~{prefix}.g.vcf.bgz.tbi"
+        File combined_vcf = "~{prefix}.~{file_suffix}"
+        File combined_vcf_tbi = "~{prefix}.~{file_suffix}.tbi"
     }
 
     #########################

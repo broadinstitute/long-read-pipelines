@@ -94,11 +94,11 @@ workflow JointCall {
     }
 
     # Concatenate the contig-sharded joint calls into a single joint callset
-    call VarUtils.ConcatBCFs { input: bcfs = Call.joint_bcf, prefix = prefix }
+    call VarUtils.ConcatVariants as ConcatBCFs { input: variant_files = Call.joint_bcf, prefix = prefix }
 
     output {
-        File joint_gvcf = ConcatBCFs.joint_gvcf
-        File joint_gvcf_tbi = ConcatBCFs.joint_gvcf_tbi
+        File joint_vcf = ConcatBCFs.combined_vcf
+        File joint_vcf_tbi = ConcatBCFs.combined_vcf_tbi
     }
 }
 

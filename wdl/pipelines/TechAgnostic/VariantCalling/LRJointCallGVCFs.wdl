@@ -49,14 +49,14 @@ workflow LRJointCallGVCFs {
 
     call Hail.ConvertToHailMT {
         input:
-            gvcf = JointCall.joint_gvcf,
-            tbi = JointCall.joint_gvcf_tbi,
+            gvcf = JointCall.joint_vcf,
+            tbi = JointCall.joint_vcf_tbi,
             prefix = prefix
     }
 
     # Finalize
-    call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = JointCall.joint_gvcf }
-    call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = JointCall.joint_gvcf_tbi }
+    call FF.FinalizeToFile as FinalizeVCF { input: outdir = outdir, file = JointCall.joint_vcf }
+    call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = JointCall.joint_vcf_tbi }
     call FF.FinalizeToFile as FinalizeMT { input: outdir = outdir, file = ConvertToHailMT.mt_tar }
 
     ##########
@@ -64,8 +64,8 @@ workflow LRJointCallGVCFs {
     ##########
 
     output {
-        File joint_gvcf = FinalizeGVCF.gcs_path
-        File joint_gvcf_tbi = FinalizeTBI.gcs_path
+        File joint_vcf = FinalizeVCF.gcs_path
+        File joint_vcf_tbi = FinalizeTBI.gcs_path
         String joint_mt = FinalizeMT.gcs_path
     }
 }
