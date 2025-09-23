@@ -1672,7 +1672,7 @@ task RandomZoneSpewer {
     meta {
         description: "Spews a random GCP zone"
         ## TODO: This is probably the right thing to do, but we need to test it:
-        # volatile: true
+        volatile: true
     }
 
     parameter_meta {
