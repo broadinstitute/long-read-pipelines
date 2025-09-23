@@ -90,7 +90,7 @@ task Discover {
 
     String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
 
-    String zone_string = "~{sep=' ' zones}"
+    String zone_string = sub(sub("~{sep=' ' zones}", "\n", ""), "\r", "")
 
     command <<<
         set -euxo pipefail
