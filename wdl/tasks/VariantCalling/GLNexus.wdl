@@ -87,7 +87,7 @@ workflow JointCall {
 
                 config = config,
                 config_file = config_file,
-                
+
                 more_PL = more_PL,
                 squeeze = squeeze,
                 trim_uncalled_alleles = trim_uncalled_alleles,
@@ -243,9 +243,6 @@ task Call {
     Int disk_size = 1 + 5*ceil(size(gvcfs, "GB"))
     Int mem = 4*num_cpus
 
-    # If a config file is provided, use it, otherwise use the config string:
-    String final_config = if (defined(config_file)) then config_file else config
-
     command <<<
         set -x
 
@@ -255,7 +252,7 @@ task Call {
         echo ~{gvcfs[0]} | sed 's/.*locus_//' | sed 's/.g.vcf.bgz//' | sed 's/___/\t/g' > range.bed
 
         glnexus_cli \
-            --config ~{final_config} \
+            --config ~{if (defined(config_file)) then "~{config_file}" else "~{config}"} \
             --bed range.bed \
             ~{if more_PL then "--more-PL" else ""} \
             ~{if squeeze then "--squeeze" else ""} \
