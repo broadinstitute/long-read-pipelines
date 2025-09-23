@@ -1755,7 +1755,7 @@ task RandomZoneSpewer {
     >>>
 
     output {
-        Array[String] zones = read_lines("result.txt")
+        Array[String] zones = read_lines("chosen_zones.txt")
         String zone_string = read_string("zone_string.txt")
     }
 
