@@ -12,6 +12,10 @@ workflow JointCall {
     parameter_meta {
         gvcfs:    "gVCF files to perform joint calling upon"
         tbis:     "gVCF index files"
+
+        background_sample_gvcfs: "Array of GVCFs to use as background samples for joint calling."
+        background_sample_gvcf_indices: "Array of GVCF index files for `background_sample_gvcfs`.  Order should correspond to that in `background_sample_gvcfs`."
+
         dict:     "reference sequence dictionary"
         bed:      "intervals to which joint calling should be restricted"
 
@@ -30,6 +34,9 @@ workflow JointCall {
     input {
         Array[File] gvcfs
         Array[File] tbis
+
+        Array[Array[File]]? background_sample_gvcfs
+        Array[Array[File]]? background_sample_gvcf_indices
 
         File dict
         File? bed
@@ -52,8 +59,19 @@ workflow JointCall {
     # List all of the contigs in the reference
     call GetRanges { input: dict = dict, bed = bed }
 
+    # Check for background samples and combine them with the input gVCFs if they exist:
+    if (defined(background_sample_gvcfs)) {
+        Array[File] flattened_background_sample_gvcfs = flatten(select_first([background_sample_gvcfs]))
+        Array[File] flattened_background_sample_gvcf_indices = flatten(select_first([background_sample_gvcf_indices]))
+
+        Array[File] gvcfs_and_background_samples = flatten([gvcfs, flattened_background_sample_gvcfs])
+        Array[File] tbis_and_background_samples = flatten([tbis, flattened_background_sample_gvcf_indices])
+    }
+    Array[File] final_gvcfs = select_first([gvcfs_and_background_samples, gvcfs])
+    Array[File] final_tbis = select_first([tbis_and_background_samples, tbis])
+
     # Shard all gVCFs into per-contig shards
-    scatter (p in zip(gvcfs, tbis)) {
+    scatter (p in zip(final_gvcfs, final_tbis)) {
         call ShardVCFByRanges { input: gvcf = p.left, tbi = p.right, ranges = GetRanges.ranges }
     }
 

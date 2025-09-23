@@ -14,6 +14,8 @@ workflow LRJointCallGVCFs {
         tbis:             "GCS paths to gVCF tbi files"
         ref_map_file:     "table indicating reference sequence and auxillary file locations"
         prefix:           "prefix for output joint-called gVCF and tabix index"
+        background_sample_gvcfs: "Array of GVCFs to use as background samples for joint calling."
+        background_sample_gvcf_indices: "Array of GVCF index files for `background_sample_gvcfs`.  Order should correspond to that in `background_sample_gvcfs`."
         gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
@@ -23,6 +25,9 @@ workflow LRJointCallGVCFs {
         File ref_map_file
 
         String prefix
+
+        Array[Array[File]]? background_sample_gvcfs
+        Array[Array[File]]? background_sample_gvcf_indices
 
         String gcs_out_root_dir
     }
@@ -36,6 +41,8 @@ workflow LRJointCallGVCFs {
         input:
             gvcfs = gvcfs,
             tbis = tbis,
+            background_sample_gvcfs = background_sample_gvcfs,
+            background_sample_gvcf_indices = background_sample_gvcf_indices,
             dict = ref_map['dict'],
             prefix = prefix
     }
