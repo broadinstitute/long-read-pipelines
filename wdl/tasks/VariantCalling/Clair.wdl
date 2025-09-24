@@ -153,6 +153,6 @@ task CopyDP_MINToDP {
         bootDiskSizeGb: 25
         preemptible:    2
         maxRetries:     1
-        docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+        docker:         "staphb/bcftools:1.22"
     }
 }
