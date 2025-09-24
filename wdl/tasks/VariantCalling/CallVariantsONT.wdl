@@ -107,6 +107,15 @@ workflow CallVariants {
                     preset = "ONT",
                     zone_string = PickGcpZones.zone_string
             }
+
+            # Copy the DP_MIN field to the DP field in the gVCF file 
+            # so we can use it for joint calling with GATK-called GVCF files:
+            call Clair3.CopyDP_MINToDP as Clair_CopyDP_MINToDP {
+                input:
+                    gvcf = Clair.gvcf,
+                    gvcf_tbi = Clair.gvcf_tbi,
+                    output_prefix = prefix + ".clair.g"
+            }
         }
 
         call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
@@ -118,7 +127,7 @@ workflow CallVariants {
 
         call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
             input:
-                vcfs = Clair.gvcf,
+                vcfs = Clair_CopyDP_MINToDP.gvcf_out,
                 ref_fasta_fai = ref_map["fai"],
                 prefix = prefix + ".clair.g"
         }
