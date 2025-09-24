@@ -1,0 +1,21 @@
+{
+  "PBCCSWholeGenome.aligned_bais": [
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64020e_220303_2002560.01.downsample.bai",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64218e_220328_1613170.01.downsample.bai",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64218e_220330_0132120.01.downsample.bai",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64297e_220215_1930240.01.downsample.bai",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64297e_220218_1550340.01.downsample.bai",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64297e_220220_0052040.01.downsample.bai",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64297e_220303_1959350.01.downsample.bai"
+  ],
+
+  "PBCCSWholeGenome.aligned_bams": [
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64020e_220303_2002560.01.downsample.bam",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64218e_220328_1613170.01.downsample.bam",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64218e_220330_0132120.01.downsample.bam",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64297e_220215_1930240.01.downsample.bam",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64297e_220218_1550340.01.downsample.bam",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64297e_220220_0052040.01.downsample.bam",
+    "gs://broad-dsp-lrma-pipeline-test-data/NA24385/downsampled_bam_01/m64297e_220303_1959350.01.downsample.bam"
+  ]
+}

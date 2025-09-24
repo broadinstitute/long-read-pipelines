@@ -1,0 +1,36 @@
+# Runs all workflow tests every Sunday
+
+name: carrot-test-weekly
+on:
+  schedule:
+    - cron: '0 7 * * 0'  # Run every Sunday at 7am
+jobs:
+    publish-test:
+        runs-on: ubuntu-latest
+        steps:
+
+        # https://github.com/google-github-actions/setup-gcloud#service-account-key-json
+        - id: auth
+          uses: google-github-actions/auth@v0
+          with:
+            credentials_json: ${{ secrets.CARROT_SA_KEY }}
+
+        - name: Set up Cloud SDK
+          uses: google-github-actions/setup-gcloud@v0
+
+        # https://cloud.google.com/pubsub/docs/publisher#publish_messages
+        - name: Use gcloud CLI
+          run: >
+            gcloud pubsub topics publish ${{ secrets.CARROT_TOPIC_NAME }}
+            --message='{"source":"github",
+            "author":"${{ github.triggering_actor }}",
+            "owner":"${{ github.repository_owner }}",
+            "wdl_tests_dir":"wdl_test",
+            "repo_url":"${{ github.repositoryUrl }}",
+            "branch_name":"${{ github.ref_name }}",
+            "commit":"${{ github.sha }}",
+            "repo":"${{ github.repository }}",
+            "test_names": "",
+            "issue_number":"",
+            "software_name":""
+            }'
