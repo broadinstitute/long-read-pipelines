@@ -79,9 +79,9 @@ task Clair {
 
         # save both VCF and gVCF
         File vcf = "merge_output.vcf.gz"
-        File vcf_tbi = "merge_output.vcf.gz.tbi"
+        File? vcf_tbi = "merge_output.vcf.gz.tbi"
         File gvcf = "merge_output.gvcf.gz"
-        File gvcf_tbi = "merge_output.gvcf.gz.tbi"
+        File? gvcf_tbi = "merge_output.gvcf.gz.tbi"
     }
 
     #########################
