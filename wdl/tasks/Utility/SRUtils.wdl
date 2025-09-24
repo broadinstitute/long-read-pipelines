@@ -540,6 +540,7 @@ task BaseRecalibrator {
         File known_sites_index
 
         String prefix
+        Int maximum_cycle_value = 1000
 
         RuntimeAttr? runtime_attr_override
     }
@@ -568,7 +569,9 @@ task BaseRecalibrator {
             -I ~{input_bam} \
             --use-original-qualities \
             -O ~{prefix}.txt \
-            --known-sites ~{known_sites_vcf}
+            --known-sites ~{known_sites_vcf} \
+            --maximum-cycle-value ~{maximum_cycle_value} 
+
 
     }
     #########################
