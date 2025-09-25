@@ -44,6 +44,7 @@ workflow LRJointCallGVCFs {
             background_sample_gvcfs = background_sample_gvcfs,
             background_sample_gvcf_indices = background_sample_gvcf_indices,
             dict = ref_map['dict'],
+            force_add_missing_dp = true,
             prefix = prefix
     }
 

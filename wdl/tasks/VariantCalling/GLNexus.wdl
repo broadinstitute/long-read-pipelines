@@ -24,6 +24,8 @@ workflow JointCall {
         squeeze:  "reduce pVCF size by suppressing detail in cells derived from reference bands"
         trim_uncalled_alleles: "remove alleles with no output GT calls in postprocessing"
 
+        force_add_missing_dp: "force adding missing DP field to gVCFs"
+
         num_cpus: "number of CPUs to use"
         max_cpus: "maximum number of CPUs to allow"
         prefix:   "output prefix for joined-called BCF and GVCF files"
@@ -47,6 +49,8 @@ workflow JointCall {
         Boolean more_PL = false
         Boolean squeeze = false
         Boolean trim_uncalled_alleles = false
+
+        Boolean force_add_missing_dp = false
 
         Int? num_cpus
         Int max_cpus = 64
@@ -91,6 +95,8 @@ workflow JointCall {
                 more_PL = more_PL,
                 squeeze = squeeze,
                 trim_uncalled_alleles = trim_uncalled_alleles,
+
+                force_add_missing_dp = force_add_missing_dp,
 
                 num_cpus = cpus_act,
                 prefix = prefix
@@ -234,13 +240,15 @@ task Call {
         Boolean squeeze = false
         Boolean trim_uncalled_alleles = false
 
+        Boolean force_add_missing_dp = false
+
         Int num_cpus = 96
         String prefix = "out"
 
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 5*ceil(size(gvcfs, "GB"))
+    Int disk_size = 1 + 5*ceil(size(gvcfs, "GB")) * if (force_add_missing_dp) then 2 else 1
     Int mem = 4*num_cpus
 
     command <<<
@@ -251,13 +259,32 @@ task Call {
 
         echo ~{gvcfs[0]} | sed 's/.*locus_//' | sed 's/.g.vcf.bgz//' | sed 's/___/\t/g' > range.bed
 
+        gvcf_file_list=~{write_lines(gvcfs)}
+
+        if [[ "~{force_add_missing_dp}" == "true" ]]; then
+            echo "Force adding missing DP field to gVCFs"
+            fixed_gvcf_file_list="fixed_gvcf_file_list.txt"
+            while read gvcf ; do
+                echo "Processing ${gvcf}"
+                bn=$(basename ${gvcf} | sed -e 's/\.gz$//' -e 's/\.bgz$//' -e 's/\.vcf$//' -e 's@\.g$@@')
+                nn=${bn}.missing_dp_added.g.vcf.gz
+                SM=$(bcftools query -l ${gvcf})
+                grep -v ':DP:' ${gvcf} | grep -v '^#' | awk -F$'\t' 'BEGIN{OFS="\t"}{print $1,$2,"0"}' | bgzip -c > annot.txt.gz
+                bcftools annotate -Oz2 -W=tbi -o ${nn} -s "${SM}" -a annot.txt.gz -c CHROM,POS,FORMAT/DP ${gvcf}
+                echo ${nn} >> ${fixed_gvcf_file_list}
+            done < ${gvcf_file_list}
+
+            gvcf_file_list=${fixed_gvcf_file_list}
+        fi
+
+
         glnexus_cli \
             --config ~{if (defined(config_file)) then "~{config_file}" else "~{config}"} \
             --bed range.bed \
             ~{if more_PL then "--more-PL" else ""} \
             ~{if squeeze then "--squeeze" else ""} \
             ~{if trim_uncalled_alleles then "--trim-uncalled-alleles" else ""} \
-            --list ~{write_lines(gvcfs)} \
+            --list ${gvcf_file_list} \
             > ~{prefix}.bcf
     >>>
 
