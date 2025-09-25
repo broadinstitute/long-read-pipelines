@@ -113,7 +113,6 @@ workflow CallVariants {
             call Clair3.CopyDP_MINToDP as Clair_CopyDP_MINToDP {
                 input:
                     gvcf = Clair.gvcf,
-                    gvcf_tbi = select_first([Clair.gvcf_tbi]),
                     output_prefix = prefix + ".clair.g"
             }
         } 

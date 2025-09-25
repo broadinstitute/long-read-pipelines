@@ -115,7 +115,6 @@ task CopyDP_MINToDP {
 
     input {
         File gvcf
-        File gvcf_tbi
 
         String output_prefix
     }
