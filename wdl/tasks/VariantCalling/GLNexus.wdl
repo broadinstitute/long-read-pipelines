@@ -270,7 +270,8 @@ task Call {
                 nn=${bn}.missing_dp_added.g.vcf.gz
                 SM=$(bcftools query -l ${gvcf})
                 grep -v ':DP:' ${gvcf} | grep -v '^#' | awk -F$'\t' 'BEGIN{OFS="\t"}{print $1,$2,"0"}' | bgzip -c > annot.txt.gz
-                bcftools annotate -Oz2 -W=tbi -o ${nn} -s "${SM}" -a annot.txt.gz -c CHROM,POS,FORMAT/DP ${gvcf}
+                bcftools annotate -Oz2 -o ${nn} -s "${SM}" -a annot.txt.gz -c CHROM,POS,FORMAT/DP ${gvcf}
+                bcftools index -t ${nn}
                 echo ${nn} >> ${fixed_gvcf_file_list}
             done < ${gvcf_file_list}
 
