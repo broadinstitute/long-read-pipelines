@@ -16,6 +16,9 @@ workflow LRJointCallGVCFs {
         prefix:           "prefix for output joint-called gVCF and tabix index"
         background_sample_gvcfs: "Array of GVCFs to use as background samples for joint calling."
         background_sample_gvcf_indices: "Array of GVCF index files for `background_sample_gvcfs`.  Order should correspond to that in `background_sample_gvcfs`."
+        
+        force_add_missing_dp: "force adding missing DP field to gVCFs"
+
         gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
 
@@ -28,6 +31,8 @@ workflow LRJointCallGVCFs {
 
         Array[Array[File]]? background_sample_gvcfs
         Array[Array[File]]? background_sample_gvcf_indices
+
+        Boolean force_add_missing_dp = false
 
         String gcs_out_root_dir
     }
@@ -44,7 +49,7 @@ workflow LRJointCallGVCFs {
             background_sample_gvcfs = background_sample_gvcfs,
             background_sample_gvcf_indices = background_sample_gvcf_indices,
             dict = ref_map['dict'],
-            force_add_missing_dp = true,
+            force_add_missing_dp = force_add_missing_dp,
             prefix = prefix
     }
 
