@@ -133,7 +133,7 @@ task Basecall {
         String? barcode_kit
         Int index = 0
 
-        Array[String] zones = ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"]
+        String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
 
         RuntimeAttr? runtime_attr_override
     }
@@ -223,7 +223,7 @@ task Basecall {
         gpuType:                "nvidia-tesla-p100"
         gpuCount:               1
         nvidiaDriverVersion:    "418.152.00"
-        zones:                  "~{sep=' ' zones}"
+        zones:                  zones
         cpuPlatform:            "Intel Haswell"
     }
 }

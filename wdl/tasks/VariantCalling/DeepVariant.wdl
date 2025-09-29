@@ -22,7 +22,7 @@ workflow DeepVariant {
         Int dv_threads
         Int dv_memory
 
-        Array[String] zones = ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"]
+        String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
 
     parameter_meta {
@@ -60,7 +60,7 @@ task DV {
 
         Int threads
         Int memory
-        Array[String] zones
+        String zones
 
         RuntimeAttr? runtime_attr_override
     }
