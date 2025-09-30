@@ -59,7 +59,7 @@ workflow CallVariants {
                     pepper_memory  = select_first([dvp_memory]),
                     dv_threads = select_first([dvp_threads]),
                     dv_memory  = select_first([dvp_memory]),
-                    zones = arbitrary.zones
+                    zones = arbitrary.zone_string
             }
         }
     }

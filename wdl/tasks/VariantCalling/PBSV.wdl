@@ -41,7 +41,7 @@ workflow RunPBSV {
             ref_fasta_fai     = ref_fasta_fai,
             tandem_repeat_bed = tandem_repeat_bed,
             prefix            = prefix,
-            zone_string             = zone_string
+            zone_string       = zone_string
     }
 
     call Call {
@@ -51,7 +51,7 @@ workflow RunPBSV {
             ref_fasta_fai = ref_fasta_fai,
             ccs           = is_ccs,
             prefix        = prefix,
-            zone_string         = zone_string
+            zone_string   = zone_string
     }
 
     output {
