@@ -92,7 +92,7 @@ workflow CallVariants {
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
                         is_ccs = false,
-                        zones = arbitrary.zones
+                        zone_string = arbitrary.zone_string
                 }
 
                 call Sniffles.Sniffles {
@@ -146,7 +146,7 @@ workflow CallVariants {
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
                     is_ccs = false,
-                    zones = arbitrary.zones
+                    zone_string = arbitrary.zone_string
             }
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }
 
