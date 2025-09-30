@@ -228,6 +228,25 @@ task ShardVCFByRanges {
 task Call {
     meta {
         description: "Joint-call gVCFs with GLNexus."
+        note: "This task includes code to force add missing DP field to gVCFs.  This is included here to avoid localization overhead for moving the files around 2x."
+    }
+
+    parameter_meta {
+        gvcfs: "gVCF files to perform joint calling upon"
+
+        config: "GLNexus configuration file"
+        config_file: "GLNexus configuration file"
+        
+        more_PL: "Include PL from reference bands and other cases omitted by default"
+        squeeze: "Reduce pVCF size by suppressing detail in cells derived from reference bands"
+        trim_uncalled_alleles: "Remove alleles with no output GT calls in postprocessing"
+        
+        force_add_missing_dp: "Adds DP field from INFO to sample-level data in gVCFs.  This is required to enable GLNexus calling on GATK-called GVCFs.  This is included as part of this task so that the gVCF files do not need to be localized twice (otherwise joint calling won't scale well to thousands of samples)."
+
+        num_cpus: "Number of CPUs to use"
+        prefix: "Output prefix for joined-called BCF and GVCF files"
+
+        runtime_attr_override: "Runtime attributes override struct"
     }
 
     input {

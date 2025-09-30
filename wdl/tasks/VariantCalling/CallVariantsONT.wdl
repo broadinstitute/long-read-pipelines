@@ -110,7 +110,7 @@ workflow CallVariants {
 
             # Copy the DP_MIN field to the DP field in the gVCF file 
             # so we can use it for joint calling with GATK-called GVCF files:
-            call Clair3.CopyDP_MINToDP as Clair_CopyDP_MINToDP {
+            call VariantUtils.CopyDP_MINToDP as Clair_CopyDP_MINToDP {
                 input:
                     gvcf = Clair.gvcf,
                     output_prefix = prefix + ".clair.g"
