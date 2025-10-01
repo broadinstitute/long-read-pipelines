@@ -304,7 +304,17 @@ task CallDrugResistanceMutations {
                         # If this gene has a name, we should get it.
                         # otherwise, we'll use the ID:
                         annotations = {raw.split("=")[0].lower():raw.split("=")[1] for raw in gff_fields[8].split(";")}
-                        gene_id = annotations["gene_id"]
+
+                        # Try to get the gene ID from the GFF file:
+                        # This Try block is for compatibility with PlasmoDB-46 GFF files.
+                        try:
+                            gene_id = annotations["gene_id"]
+                        except KeyError:
+                            gene_id = annotations['parent']
+                            indx = gene_id.rfind(".")
+                            if indx != -1:
+                                gene_id = gene_id[:indx]
+
                         transcript_id = annotations['parent']
 
                         gene_cds_transcript_dict[contig][gene_id][transcript_id].append((start, end))

@@ -208,6 +208,8 @@ task Megalodon {
         File variants
         String SM
 
+        String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -324,7 +326,7 @@ task Megalodon {
         gpuType:                "nvidia-tesla-p100"
         gpuCount:               1
         nvidiaDriverVersion:    "418.152.00"
-        zones:                  ["us-central1-c", "us-central1-f", "us-east1-b", "us-east1-c", "us-west1-a", "us-west1-b"]
+        zones:                  zones
         cpuPlatform:            "Intel Haswell"
     }
 }
