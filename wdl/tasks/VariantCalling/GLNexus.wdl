@@ -230,12 +230,27 @@ task Call {
         description: "Joint-call gVCFs with GLNexus."
         note: "This task includes code to force add missing DP field to gVCFs.  This is included here to avoid localization overhead for moving the files around 2x."
     }
+#     Configuration presets:
+#             Name          CRC32C        Description
+#             gatk      1926883223        Joint-call GATK-style gVCFs
+#  gatk_unfiltered      4039280095        Merge GATK-style gVCFs with no QC filters or genotype revision
+#           xAtlas      1991666133        Joint-call xAtlas gVCFs
+# xAtlas_unfiltered       221875257       Merge xAtlas gVCFs with no QC filters or genotype revision
+#           weCall      2898360729        Joint-call weCall gVCFs
+# weCall_unfiltered      4254257210       Merge weCall gVCFs with no filtering or genotype revision
+#      DeepVariant      2932316105        Joint call DeepVariant whole genome sequencing gVCFs
+#   DeepVariantWGS      2932316105        Joint call DeepVariant whole genome sequencing gVCFs
+#   DeepVariantWES      1063427682        Joint call DeepVariant whole exome sequencing gVCFs
+# DeepVariantWES_MED_DP      2412618877   Joint call DeepVariant whole exome sequencing gVCFs, populating 0/0 DP from MED_DP instead of MIN_DP
+# DeepVariant_unfiltered      3285998180  Merge DeepVariant gVCFs with no QC filters or genotype revision
+#         Strelka2       395868656        [EXPERIMENTAL] Merge Strelka2 gVCFs with no QC filters or genotype revision
+#              GxS      3929547104        [EXPERIMENTAL] merging for GxS
 
     parameter_meta {
         gvcfs: "gVCF files to perform joint calling upon"
 
-        config: "GLNexus configuration file"
-        config_file: "GLNexus configuration file"
+        config: "GLNexus configuration preset.  One of: gatk, gatk_unfiltered, xAtlas, xAtlas_unfiltered, weCall, weCall_unfiltered, DeepVariant, DeepVariantWGS, DeepVariantWES, DeepVariantWES_MED_DP, DeepVariant_unfiltered, Strelka2, GxS."
+        config_file: "Custom configuration file override for GLNexus.  If provided, this will override the config parameter."
         
         more_PL: "Include PL from reference bands and other cases omitted by default"
         squeeze: "Reduce pVCF size by suppressing detail in cells derived from reference bands"
