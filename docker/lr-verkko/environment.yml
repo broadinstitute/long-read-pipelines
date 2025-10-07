@@ -1,0 +1,15 @@
+name: verkko
+
+channels:
+  - bioconda
+  - defaults
+  - conda-forge
+  - r
+
+dependencies:
+  - verkko=2.2.1
+  - r-base=4.3.3
+  - r-essentials=4.3.1
+  - r-ggplot2=3.5.2
+  - r-scales=1.4.0
+

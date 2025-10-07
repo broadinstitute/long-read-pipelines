@@ -1,5 +1,5 @@
-IMAGE_NAME = lr-hifiasm
-VERSION = 0.24.0
+IMAGE_NAME = lr-verkko
+VERSION = 2.2.1
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest
