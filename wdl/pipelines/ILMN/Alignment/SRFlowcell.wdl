@@ -4,7 +4,7 @@ import "../../../tasks/Utility/SRUtils.wdl" as SRUTIL
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/QC/AlignedMetrics.wdl" as AM
 import "../../../tasks/QC/FastQC.wdl" as FastQC
-import "../../../tasks/Preprocessing/RemoveSingleOrganismContamination.wdl" as DECONTAMINATE
+import "../../TechAgnostic/Utility/RemoveSingleOrganismContamination.wdl" as DECONTAMINATE
 import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../tasks/QC/QCAssessment.wdl" as QCAssessment
 workflow SRFlowcell {
