@@ -60,6 +60,8 @@ task AssembleForHaplotigs {
         String prefix = "out"
         String zones
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -78,6 +80,7 @@ task AssembleForHaplotigs {
             -o ~{prefix} \
             -t~{num_cpus} \
             ~{reads} \
+            ~{extra_args} \
             2>&1 | tee hifiasm.log
 
         tree -h .
@@ -119,7 +122,7 @@ task AssembleForHaplotigs {
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.16.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.24.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -140,6 +143,8 @@ task AssembleForAltContigs {
         String prefix = "out"
         String zones
 
+        String extra_args = ""
+
         RuntimeAttr? runtime_attr_override
     }
     Int proposed_memory = 4 * ceil(size(reads, "GB"))
@@ -158,6 +163,7 @@ task AssembleForAltContigs {
             -t~{num_cpus} \
             --primary \
             ~{reads} \
+            ~{extra_args} \
             2>&1 | tee hifiasm.log
 
         tree -h .
@@ -192,7 +198,7 @@ task AssembleForAltContigs {
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.16.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.24.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
