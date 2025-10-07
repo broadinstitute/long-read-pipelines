@@ -70,7 +70,7 @@ workflow CallVariants {
     # Block for small variants handling
     ######################################################################
 
-    call Utils.RandomZoneSpewer as arbitrary {input: num_of_zones = 3}
+    call Utils.RandomZoneSpewer as PickGcpZones {input: num_of_zones = 3}
 
     # todo: merge the two scattering scheme into a better one
     if (call_small_variants) {
@@ -105,9 +105,17 @@ workflow CallVariants {
                     sites_vcf_tbi = sites_vcf_tbi,
 
                     preset = "ONT",
-                    zones = arbitrary.zones
+                    zone_string = PickGcpZones.zone_string
             }
-        }
+
+            # Copy the DP_MIN field to the DP field in the gVCF file 
+            # so we can use it for joint calling with GATK-called GVCF files:
+            call VariantUtils.CopyDP_MINToDP as Clair_CopyDP_MINToDP {
+                input:
+                    gvcf = Clair.gvcf,
+                    output_prefix = prefix + ".clair.g"
+            }
+        } 
 
         call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
             input:
@@ -118,7 +126,7 @@ workflow CallVariants {
 
         call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
             input:
-                vcfs = Clair.gvcf,
+                vcfs = Clair_CopyDP_MINToDP.gvcf_out,
                 ref_fasta_fai = ref_map["fai"],
                 prefix = prefix + ".clair.g"
         }
@@ -149,7 +157,7 @@ workflow CallVariants {
                         ref_fasta_fai = ref_map["fai"],
                         threads       = select_first([dvp_threads]),
                         memory        = select_first([dvp_memory]),
-                        zones = arbitrary.zones
+                        zone_string = PickGcpZones.zone_string
                 }
             }
 
@@ -214,7 +222,7 @@ workflow CallVariants {
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
                         is_ccs = false,
-                        zones = arbitrary.zones
+                        zone_string = PickGcpZones.zone_string
                 }
 
                 call Utils.InferSampleName {
@@ -244,7 +252,7 @@ workflow CallVariants {
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
                     is_ccs = false,
-                    zones = arbitrary.zones
+                    zone_string = PickGcpZones.zone_string
             }
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }

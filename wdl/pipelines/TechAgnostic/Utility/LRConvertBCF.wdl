@@ -26,18 +26,18 @@ workflow LRConvertBCF {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/JointCallGVCFs/~{prefix}"
 
     # Convert the joint .bcf callset into a single joint .vcf.bgz callset
-    call VarUtils.ConcatBCFs { input: bcfs = [ joint_bcf ], prefix = prefix }
+    call VarUtils.ConcatVariants as ConcatBCFs { input: variant_files = [ joint_bcf ], prefix = prefix }
 
     call Hail.ConvertToHailMT {
         input:
-            gvcf = ConcatBCFs.joint_gvcf,
-            tbi = ConcatBCFs.joint_gvcf_tbi,
+            gvcf = ConcatBCFs.combined_vcf,
+            tbi = ConcatBCFs.combined_vcf_tbi,
             prefix = prefix
     }
 
     # Finalize
-    call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = ConcatBCFs.joint_gvcf }
-    call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = ConcatBCFs.joint_gvcf_tbi }
+    call FF.FinalizeToFile as FinalizeGVCF { input: outdir = outdir, file = ConcatBCFs.combined_vcf }
+    call FF.FinalizeToFile as FinalizeTBI { input: outdir = outdir, file = ConcatBCFs.combined_vcf_tbi }
     call FF.FinalizeToFile as FinalizeHailMT { input: outdir = outdir, file = ConvertToHailMT.mt_tar }
 
     ##########
@@ -45,8 +45,8 @@ workflow LRConvertBCF {
     ##########
 
     output {
-        File joint_gvcf = FinalizeGVCF.gcs_path
-        File joint_gvcf_tbi = FinalizeTBI.gcs_path
+        File joint_vcf = FinalizeGVCF.gcs_path
+        File joint_vcf_tbi = FinalizeTBI.gcs_path
         String joint_mt = FinalizeHailMT.gcs_path
     }
 }

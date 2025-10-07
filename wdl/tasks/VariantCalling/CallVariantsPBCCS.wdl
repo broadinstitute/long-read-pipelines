@@ -102,7 +102,7 @@ workflow CallVariants {
                     sites_vcf_tbi = sites_vcf_tbi,
 
                     preset = "CCS",
-                    zones = arbitrary.zones
+                    zone_string = arbitrary.zone_string
             }
         }
 
@@ -150,7 +150,7 @@ workflow CallVariants {
                         pepper_memory  = select_first([dvp_memory]),
                         dv_threads = select_first([dvp_threads]),
                         dv_memory  = select_first([dvp_memory]),
-                        zones = arbitrary.zones
+                        zones = arbitrary.zone_string
                 }
             }
 
@@ -186,7 +186,7 @@ workflow CallVariants {
                     ref_fasta     = ref_fasta,
                     ref_fasta_fai = ref_fasta_fai,
                     memory        = select_first([dvp_memory, 64]),
-                    zones = arbitrary.zones
+                    zones = arbitrary.zone_string
             }
         }
     }
@@ -222,7 +222,7 @@ workflow CallVariants {
                         prefix = prefix,
                         tandem_repeat_bed = tandem_repeat_bed,
                         is_ccs = true,
-                        zones = arbitrary.zones
+                        zone_string = arbitrary.zone_string
                 }
 
             }
@@ -246,7 +246,7 @@ workflow CallVariants {
                     prefix = prefix,
                     tandem_repeat_bed = tandem_repeat_bed,
                     is_ccs = true,
-                    zones = arbitrary.zones
+                    zone_string = arbitrary.zone_string
             }
 
             call VariantUtils.ZipAndIndexVCF as ZipAndIndexPBSV {input: vcf = PBSVslow.vcf }

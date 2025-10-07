@@ -56,7 +56,7 @@ workflow AlignAndCheckFingerprintCCS {
         call PB.ShardLongReads {
             input:
                 unaligned_bam = uBAM, unaligned_pbi = uPBI,
-                num_shards = 50, num_ssds = Guess.numb_of_local_ssd, zones = arbitrary.zones
+                num_shards = 50, num_ssds = Guess.numb_of_local_ssd, zones = arbitrary.zone_string
         }
 
         scatter (unaligned_bam in ShardLongReads.unmapped_shards) {

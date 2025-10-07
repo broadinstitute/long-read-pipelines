@@ -12,6 +12,10 @@ workflow JointCall {
     parameter_meta {
         gvcfs:    "gVCF files to perform joint calling upon"
         tbis:     "gVCF index files"
+
+        background_sample_gvcfs: "Array of GVCFs to use as background samples for joint calling."
+        background_sample_gvcf_indices: "Array of GVCF index files for `background_sample_gvcfs`.  Order should correspond to that in `background_sample_gvcfs`."
+
         dict:     "reference sequence dictionary"
         bed:      "intervals to which joint calling should be restricted"
 
@@ -19,6 +23,8 @@ workflow JointCall {
         more_PL:  "include PL from reference bands and other cases omitted by default"
         squeeze:  "reduce pVCF size by suppressing detail in cells derived from reference bands"
         trim_uncalled_alleles: "remove alleles with no output GT calls in postprocessing"
+
+        force_add_missing_dp: "force adding missing DP field to gVCFs"
 
         num_cpus: "number of CPUs to use"
         max_cpus: "maximum number of CPUs to allow"
@@ -31,13 +37,20 @@ workflow JointCall {
         Array[File] gvcfs
         Array[File] tbis
 
+        Array[Array[File]]? background_sample_gvcfs
+        Array[Array[File]]? background_sample_gvcf_indices
+
         File dict
         File? bed
 
         String config = "DeepVariantWGS"
+        File? config_file
+        
         Boolean more_PL = false
         Boolean squeeze = false
         Boolean trim_uncalled_alleles = false
+
+        Boolean force_add_missing_dp = false
 
         Int? num_cpus
         Int max_cpus = 64
@@ -52,8 +65,19 @@ workflow JointCall {
     # List all of the contigs in the reference
     call GetRanges { input: dict = dict, bed = bed }
 
+    # Check for background samples and combine them with the input gVCFs if they exist:
+    if (defined(background_sample_gvcfs)) {
+        Array[File] flattened_background_sample_gvcfs = flatten(select_first([background_sample_gvcfs]))
+        Array[File] flattened_background_sample_gvcf_indices = flatten(select_first([background_sample_gvcf_indices]))
+
+        Array[File] gvcfs_and_background_samples = flatten([gvcfs, flattened_background_sample_gvcfs])
+        Array[File] tbis_and_background_samples = flatten([tbis, flattened_background_sample_gvcf_indices])
+    }
+    Array[File] final_gvcfs = select_first([gvcfs_and_background_samples, gvcfs])
+    Array[File] final_tbis = select_first([tbis_and_background_samples, tbis])
+
     # Shard all gVCFs into per-contig shards
-    scatter (p in zip(gvcfs, tbis)) {
+    scatter (p in zip(final_gvcfs, final_tbis)) {
         call ShardVCFByRanges { input: gvcf = p.left, tbi = p.right, ranges = GetRanges.ranges }
     }
 
@@ -66,9 +90,13 @@ workflow JointCall {
                 gvcfs = per_contig_gvcfs,
 
                 config = config,
+                config_file = config_file,
+
                 more_PL = more_PL,
                 squeeze = squeeze,
                 trim_uncalled_alleles = trim_uncalled_alleles,
+
+                force_add_missing_dp = force_add_missing_dp,
 
                 num_cpus = cpus_act,
                 prefix = prefix
@@ -76,11 +104,11 @@ workflow JointCall {
     }
 
     # Concatenate the contig-sharded joint calls into a single joint callset
-    call VarUtils.ConcatBCFs { input: bcfs = Call.joint_bcf, prefix = prefix }
+    call VarUtils.ConcatVariants as ConcatBCFs { input: variant_files = Call.joint_bcf, prefix = prefix }
 
     output {
-        File joint_gvcf = ConcatBCFs.joint_gvcf
-        File joint_gvcf_tbi = ConcatBCFs.joint_gvcf_tbi
+        File joint_vcf = ConcatBCFs.combined_vcf
+        File joint_vcf_tbi = ConcatBCFs.combined_vcf_tbi
     }
 }
 
@@ -200,15 +228,53 @@ task ShardVCFByRanges {
 task Call {
     meta {
         description: "Joint-call gVCFs with GLNexus."
+        note: "This task includes code to force add missing DP field to gVCFs.  This is included here to avoid localization overhead for moving the files around 2x."
+    }
+#     Configuration presets:
+#             Name          CRC32C        Description
+#             gatk      1926883223        Joint-call GATK-style gVCFs
+#  gatk_unfiltered      4039280095        Merge GATK-style gVCFs with no QC filters or genotype revision
+#           xAtlas      1991666133        Joint-call xAtlas gVCFs
+# xAtlas_unfiltered       221875257       Merge xAtlas gVCFs with no QC filters or genotype revision
+#           weCall      2898360729        Joint-call weCall gVCFs
+# weCall_unfiltered      4254257210       Merge weCall gVCFs with no filtering or genotype revision
+#      DeepVariant      2932316105        Joint call DeepVariant whole genome sequencing gVCFs
+#   DeepVariantWGS      2932316105        Joint call DeepVariant whole genome sequencing gVCFs
+#   DeepVariantWES      1063427682        Joint call DeepVariant whole exome sequencing gVCFs
+# DeepVariantWES_MED_DP      2412618877   Joint call DeepVariant whole exome sequencing gVCFs, populating 0/0 DP from MED_DP instead of MIN_DP
+# DeepVariant_unfiltered      3285998180  Merge DeepVariant gVCFs with no QC filters or genotype revision
+#         Strelka2       395868656        [EXPERIMENTAL] Merge Strelka2 gVCFs with no QC filters or genotype revision
+#              GxS      3929547104        [EXPERIMENTAL] merging for GxS
+
+    parameter_meta {
+        gvcfs: "gVCF files to perform joint calling upon"
+
+        config: "GLNexus configuration preset.  One of: gatk, gatk_unfiltered, xAtlas, xAtlas_unfiltered, weCall, weCall_unfiltered, DeepVariant, DeepVariantWGS, DeepVariantWES, DeepVariantWES_MED_DP, DeepVariant_unfiltered, Strelka2, GxS."
+        config_file: "Custom configuration file override for GLNexus.  If provided, this will override the config parameter."
+        
+        more_PL: "Include PL from reference bands and other cases omitted by default"
+        squeeze: "Reduce pVCF size by suppressing detail in cells derived from reference bands"
+        trim_uncalled_alleles: "Remove alleles with no output GT calls in postprocessing"
+        
+        force_add_missing_dp: "Adds DP field from INFO to sample-level data in gVCFs.  This is required to enable GLNexus calling on GATK-called GVCFs.  This is included as part of this task so that the gVCF files do not need to be localized twice (otherwise joint calling won't scale well to thousands of samples)."
+
+        num_cpus: "Number of CPUs to use"
+        prefix: "Output prefix for joined-called BCF and GVCF files"
+
+        runtime_attr_override: "Runtime attributes override struct"
     }
 
     input {
         Array[File] gvcfs
 
         String config = "DeepVariantWGS"
+        File? config_file
+
         Boolean more_PL = false
         Boolean squeeze = false
         Boolean trim_uncalled_alleles = false
+
+        Boolean force_add_missing_dp = false
 
         Int num_cpus = 96
         String prefix = "out"
@@ -216,7 +282,7 @@ task Call {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 5*ceil(size(gvcfs, "GB"))
+    Int disk_size = 1 + 5*ceil(size(gvcfs, "GB")) * if (force_add_missing_dp) then 2 else 1
     Int mem = 4*num_cpus
 
     command <<<
@@ -227,13 +293,34 @@ task Call {
 
         echo ~{gvcfs[0]} | sed 's/.*locus_//' | sed 's/.g.vcf.bgz//' | sed 's/___/\t/g' > range.bed
 
+        gvcf_file_list=~{write_lines(gvcfs)}
+
+        if [[ "~{force_add_missing_dp}" == "true" ]]; then
+            echo "Force adding missing DP field to gVCFs"
+            fixed_gvcf_file_list="fixed_gvcf_file_list.txt"
+            while read gvcf ; do
+                echo "Processing ${gvcf}"
+                bn=$(basename ${gvcf} | sed -e 's/\.gz$//' -e 's/\.bgz$//' -e 's/\.vcf$//' -e 's@\.g$@@')
+                nn=${bn}.missing_dp_added.g.vcf.gz
+                SM=$(bcftools query -l ${gvcf})
+                bcftools view ${gvcf} | grep -v ':DP:' | grep -v '^#' | awk -F$'\t' 'BEGIN{OFS="\t"}{print $1,$2,"0"}' | bgzip -c > annot.txt.gz
+                tabix -s1 -b2 -e2 annot.txt.gz
+                bcftools annotate -Oz2 -o ${nn} -s "${SM}" -a annot.txt.gz -c CHROM,POS,FORMAT/DP ${gvcf}
+                bcftools index -t ${nn}
+                echo ${nn} >> ${fixed_gvcf_file_list}
+            done < ${gvcf_file_list}
+
+            gvcf_file_list=${fixed_gvcf_file_list}
+        fi
+
+
         glnexus_cli \
-            --config ~{config} \
+            --config ~{if (defined(config_file)) then "~{config_file}" else "~{config}"} \
             --bed range.bed \
             ~{if more_PL then "--more-PL" else ""} \
             ~{if squeeze then "--squeeze" else ""} \
             ~{if trim_uncalled_alleles then "--trim-uncalled-alleles" else ""} \
-            --list ~{write_lines(gvcfs)} \
+            --list ${gvcf_file_list} \
             > ~{prefix}.bcf
     >>>
 

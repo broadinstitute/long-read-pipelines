@@ -60,6 +60,11 @@ task IsLocusDeleted {
     command <<<
         set -euxo pipefail
 
+        # This unset is necessary to avoid a bug in the batch environment.
+        # Batch injects this variable, which causes the task to fail in the case that the native
+        # python installation is in a non-default location.
+        unset CLOUDSDK_PYTHON
+        
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         samtools view -bhX ~{bam} ~{bai} ~{chr} > chr.bam
         samtools index chr.bam

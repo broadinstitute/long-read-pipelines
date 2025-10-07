@@ -95,7 +95,7 @@ workflow PBFlowcell {
             num_shards = data_presets[experiment_type].num_shards,
             drop_per_base_N_pulse_tags = drop_per_base_N_pulse_tags,
             num_ssds = Guess.numb_of_local_ssd,
-            zones = arbitrary.zones
+            zones = arbitrary.zone_string
     }
 
     # TODO: Peeking should only be done on CCS reads (if available)

@@ -1,11 +1,11 @@
 # some basic bioinformatics utilities.
 
 ############### stage 0: build samtools and bcftools from source
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SAMTOOLS_VERSION=1.13
-ARG BCFTOOLS_VERSION=1.13
+ARG SAMTOOLS_VERSION=1.22.1
+ARG BCFTOOLS_VERSION=1.22
 RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
@@ -41,7 +41,7 @@ RUN apt-get -qqy update --fix-missing && \
     bcftools --help
 
 ############### stage 1: other commonly used bioinformatics utilities 
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 ENV HOME=/root
 

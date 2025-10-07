@@ -530,7 +530,7 @@ task CheckForVariants {
             docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
             preemptible: select_first([preemptible,0])
             disks: "local-disk " + disk_size + " HDD"
-            bootDiskSizeGb: "16"
+            bootDiskSizeGb: 16
             memory: memoryRam + " GB"
     }
 
@@ -775,7 +775,7 @@ task EvalGATKGC {
         docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
         preemptible: select_first([preemptible,0])
         disks: "local-disk " + disk_size + " HDD"
-        bootDiskSizeGb: "16"
+        bootDiskSizeGb: 16
         memory: memoryRam + " GB"
     }
 
@@ -843,7 +843,7 @@ task ConvertIntervals {
         docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
         preemptible: select_first([preemptible,0])
         disks: "local-disk " + disk_size + " HDD"
-        bootDiskSizeGb: "16"
+        bootDiskSizeGb: 16
         memory: memoryRam + " GB"
     }
 
@@ -882,7 +882,7 @@ task FixVcfHeader {
             docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
             preemptible: select_first([preemptible,0])
             disks: "local-disk " + disk_size + " HDD"
-            bootDiskSizeGb: "16"
+            bootDiskSizeGb: 16
             memory: memoryRam + " GB"
     }
 
@@ -923,7 +923,7 @@ task CountUNKVcfEval {
                 docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
                 preemptible: select_first([preemptible,0])
                 disks: "local-disk " + disk_size + " HDD"
-                bootDiskSizeGb: "16"
+                bootDiskSizeGb: 16
                 memory: memoryRam + " GB"
     }
     output {
@@ -967,7 +967,7 @@ task CountUNKGC {
                     docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
                     preemptible: select_first([preemptible,0])
                     disks: "local-disk " + disk_size + " HDD"
-                    bootDiskSizeGb: "16"
+                    bootDiskSizeGb: 16
                     memory: memoryRam + " GB"
         }
 
@@ -1043,7 +1043,7 @@ task EvalForVariantSelection {
             docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
             preemptible: select_first([preemptible,0])
             disks: "local-disk " + disk_size + " HDD"
-            bootDiskSizeGb: "16"
+            bootDiskSizeGb: 16
             memory: memoryRam + " GB"
     }
 
@@ -1483,7 +1483,7 @@ task MatchEvalTruth {
             docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
             preemptible: select_first([preemptible,0])
             disks: "local-disk " + disk_size + " HDD"
-            bootDiskSizeGb: "16"
+            bootDiskSizeGb: 16
             memory: memoryRam + " GB"
         }
 }
