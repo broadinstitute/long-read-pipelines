@@ -528,6 +528,8 @@
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#required_28">Required</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_11">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_28">Outputs</a>
@@ -538,7 +540,7 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_29">Inputs</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_11">Defaults</a>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_12">Defaults</a>
     </li>
         </ul>
     </li>
@@ -568,7 +570,7 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_24">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_12">Defaults</a>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_13">Defaults</a>
     </li>
         </ul>
     </li>
@@ -610,7 +612,7 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_26">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_13">Defaults</a>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_14">Defaults</a>
     </li>
         </ul>
     </li>
@@ -1403,9 +1405,14 @@
 <ul>
 <li><code>num_of_zones</code> (Int, <strong>required</strong>): number of zones to spew</li>
 </ul>
+<h4 id="defaults_11">Defaults</h4>
+<ul>
+<li><code>region</code> (String, default="us-central1")</li>
+</ul>
 <h3 id="outputs_28">Outputs</h3>
 <ul>
-<li><code>zones</code> (String)</li>
+<li><code>zones</code> (Array[String])</li>
+<li><code>zone_string</code> (String)</li>
 </ul>
 <h2 id="getcurrenttimestampstring">GetCurrentTimestampString</h2>
 <dl>
@@ -1415,7 +1422,7 @@
 <dd>Get the current timestamp as a string</dd>
 </dl>
 <h3 id="inputs_29">Inputs</h3>
-<h4 id="defaults_11">Defaults</h4>
+<h4 id="defaults_12">Defaults</h4>
 <ul>
 <li><code>date_format</code> (String, default="%Y%m%d_%H%M%S_%N"): The date format string to use. See the unix <code>date</code> command for more info.</li>
 </ul>
@@ -1456,7 +1463,7 @@
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?): Runtime attributes override struct.</li>
 </ul>
-<h4 id="defaults_12">Defaults</h4>
+<h4 id="defaults_13">Defaults</h4>
 <ul>
 <li><code>prefix</code> (String, default="reads"): [default-valued] prefix for output BAM</li>
 </ul>
@@ -1521,7 +1528,7 @@
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_13">Defaults</h4>
+<h4 id="defaults_14">Defaults</h4>
 <ul>
 <li><code>size</code> (Int, default=200000)</li>
 </ul>

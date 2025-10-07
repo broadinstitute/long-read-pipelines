@@ -3,7 +3,7 @@ digraph {
 	compound=true rankdir=LR
 	node [fontname=Roboto]
 	edge [color="#00000080"]
-	"call-arbitrary" [label=arbitrary shape=cds]
+	"call-PickGcpZones" [label=PickGcpZones shape=cds]
 	subgraph "cluster-if-L76C5" {
 		fontname=Roboto label="if(call_small_variants)" rank=same
 		"call-SmallVariantsScatterPrepp" [label=SmallVariantsScatterPrepp shape=cds]
@@ -11,68 +11,70 @@ digraph {
 			fontname=Roboto label="scatter(SmallVariantsScatterPrepp.chrs)" rank=same
 			"call-SmallVariantsScatter" [label=SmallVariantsScatter shape=cds]
 			"call-Clair" [label=Clair shape=cds]
+			"call-Clair_CopyDP_MINToDP" [label=Clair_CopyDP_MINToDP shape=cds]
 			"scatter-L86C9-c" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"call-MergeAndSortClairVCFs" [label=MergeAndSortClairVCFs shape=cds]
 		"call-MergeAndSortClair_gVCFs" [label=MergeAndSortClair_gVCFs shape=cds]
-		subgraph "cluster-if-L127C9" {
+		subgraph "cluster-if-L135C9" {
 			fontname=Roboto label="if(run_dv_pepper_analysis)" rank=same
-			subgraph "cluster-scatter-L134C13-pair" {
+			subgraph "cluster-scatter-L142C13-pair" {
 				fontname=Roboto label="scatter(ided_interval_list_files)" rank=same
 				"call-size_balanced_scatter" [label=size_balanced_scatter shape=cds]
 				"call-Pepper" [label=Pepper shape=cds]
-				"scatter-L134C13-pair" [label="" height=0 margin=0 style=invis width=0]
+				"scatter-L142C13-pair" [label="" height=0 margin=0 style=invis width=0]
 			}
 			"call-MergeDeepVariantGVCFs" [label=MergeDeepVariantGVCFs shape=cds]
 			"call-MergeDeepVariantPhasedVCFs" [label=MergeDeepVariantPhasedVCFs shape=cds]
 			"call-MergeDeepVariantVCFs" [label=MergeDeepVariantVCFs shape=cds]
 			"call-MergeBams" [label=MergeBams shape=cds]
-			"if-L127C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L135C9" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"if-L76C5" [label="" height=0 margin=0 style=invis width=0]
 	}
-	subgraph "cluster-if-L189C5" {
+	subgraph "cluster-if-L197C5" {
 		fontname=Roboto label="if(call_svs)" rank=same
-		subgraph "cluster-if-L190C9" {
+		subgraph "cluster-if-L198C9" {
 			fontname=Roboto label="if(fast_less_sensitive_sv)" rank=same
 			"call-MakeChrIntervalList" [label=MakeChrIntervalList shape=cds]
-			subgraph "cluster-scatter-L198C13-c" {
+			subgraph "cluster-scatter-L206C13-c" {
 				fontname=Roboto label="scatter(MakeChrIntervalList.chrs)" rank=same
 				"call-SubsetBam" [label=SubsetBam shape=cds]
 				"call-RunPBSV" [label=RunPBSV shape=cds]
 				"call-InferSampleName" [label=InferSampleName shape=cds]
-				"scatter-L198C13-c" [label="" height=0 margin=0 style=invis width=0]
+				"scatter-L206C13-c" [label="" height=0 margin=0 style=invis width=0]
 			}
 			"call-MergePBSVVCFs" [label=MergePBSVVCFs shape=cds]
-			"if-L190C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L198C9" [label="" height=0 margin=0 style=invis width=0]
 		}
-		subgraph "cluster-if-L237C9" {
+		subgraph "cluster-if-L245C9" {
 			fontname=Roboto label="if(!fast_less_sensitive_sv)" rank=same
 			"call-PBSVslow" [label=PBSVslow shape=cds]
 			"call-ZipAndIndexPBSV" [label=ZipAndIndexPBSV shape=cds]
-			"if-L237C9" [label="" height=0 margin=0 style=invis width=0]
+			"if-L245C9" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"call-Sniffles2SV" [label=Sniffles2SV shape=cds]
 		"call-ZipAndIndexSnifflesVCF" [label=ZipAndIndexSnifflesVCF shape=cds]
-		"if-L189C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L197C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-SmallVariantsScatterPrepp" -> "scatter-L86C9-c" [lhead="cluster-scatter-L86C9-c"]
-	"call-arbitrary" -> "call-Clair"
 	"call-SmallVariantsScatter" -> "call-Clair"
+	"call-PickGcpZones" -> "call-Clair"
+	"call-Clair" -> "call-Clair_CopyDP_MINToDP"
 	"call-Clair" -> "call-MergeAndSortClairVCFs"
-	"call-Clair" -> "call-MergeAndSortClair_gVCFs"
-	"call-arbitrary" -> "call-Pepper"
+	"call-Clair_CopyDP_MINToDP" -> "call-MergeAndSortClair_gVCFs"
 	"call-size_balanced_scatter" -> "call-Pepper"
+	"call-PickGcpZones" -> "call-Pepper"
 	"call-Pepper" -> "call-MergeDeepVariantGVCFs"
 	"call-Pepper" -> "call-MergeDeepVariantPhasedVCFs"
 	"call-Pepper" -> "call-MergeDeepVariantVCFs"
 	"call-Pepper" -> "call-MergeBams"
-	"call-MakeChrIntervalList" -> "scatter-L198C13-c" [lhead="cluster-scatter-L198C13-c"]
+	"call-MakeChrIntervalList" -> "scatter-L206C13-c" [lhead="cluster-scatter-L206C13-c"]
 	"call-SubsetBam" -> "call-RunPBSV"
-	"call-arbitrary" -> "call-RunPBSV"
+	"call-PickGcpZones" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-InferSampleName"
 	"call-RunPBSV" -> "call-MergePBSVVCFs"
-	"call-arbitrary" -> "call-PBSVslow"
+	"call-PickGcpZones" -> "call-PBSVslow"
 	"call-PBSVslow" -> "call-ZipAndIndexPBSV"
 	"call-Sniffles2SV" -> "call-ZipAndIndexSnifflesVCF"
 }

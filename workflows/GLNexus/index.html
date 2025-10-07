@@ -348,7 +348,10 @@
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
+<li><code>background_sample_gvcf_indices</code> (Array[Array[File]]?): Array of GVCF index files for <code>background_sample_gvcfs</code>.  Order should correspond to that in <code>background_sample_gvcfs</code>.</li>
+<li><code>background_sample_gvcfs</code> (Array[Array[File]]?): Array of GVCFs to use as background samples for joint calling.</li>
 <li><code>bed</code> (File?): intervals to which joint calling should be restricted</li>
+<li><code>config_file</code> (File?)</li>
 <li><code>num_cpus</code> (Int?): number of CPUs to use</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
 <li><code>Call.runtime_attr_override</code> (RuntimeAttr?): override default runtime attributes</li>
@@ -359,17 +362,19 @@
 <h4 id="defaults">Defaults</h4>
 <ul>
 <li><code>config</code> (String, default="DeepVariantWGS"): configuration preset name or .yml filename</li>
+<li><code>force_add_missing_dp</code> (Boolean, default=false): force adding missing DP field to gVCFs</li>
 <li><code>max_cpus</code> (Int, default=64): maximum number of CPUs to allow</li>
 <li><code>more_PL</code> (Boolean, default=false): include PL from reference bands and other cases omitted by default</li>
 <li><code>prefix</code> (String, default="out"): output prefix for joined-called BCF and GVCF files</li>
 <li><code>squeeze</code> (Boolean, default=false): reduce pVCF size by suppressing detail in cells derived from reference bands</li>
 <li><code>trim_uncalled_alleles</code> (Boolean, default=false): remove alleles with no output GT calls in postprocessing</li>
+<li><code>ConcatBCFs.is_gvcf</code> (Boolean, default=false)</li>
 <li><code>ConcatBCFs.num_cpus</code> (Int, default=4): number of CPUs to use</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>joint_gvcf</code> (File)</li>
-<li><code>joint_gvcf_tbi</code> (File)</li>
+<li><code>joint_vcf</code> (File)</li>
+<li><code>joint_vcf_tbi</code> (File)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
 <p><img alt="GLNexus" src="../../dot/GLNexus.dot.png" /></p>

@@ -350,19 +350,22 @@
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
+<li><code>background_sample_gvcf_indices</code> (Array[Array[File]]?): Array of GVCF index files for <code>background_sample_gvcfs</code>.  Order should correspond to that in <code>background_sample_gvcfs</code>.</li>
+<li><code>background_sample_gvcfs</code> (Array[Array[File]]?): Array of GVCFs to use as background samples for joint calling.</li>
 <li><code>ConvertToHailMT.ref_fai</code> (String?)</li>
 <li><code>ConvertToHailMT.ref_fasta</code> (String?)</li>
 <li><code>ConvertToHailMT.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeGVCF.keyfile</code> (File?)</li>
-<li><code>FinalizeGVCF.name</code> (String?)</li>
-<li><code>FinalizeGVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeMT.keyfile</code> (File?)</li>
 <li><code>FinalizeMT.name</code> (String?)</li>
 <li><code>FinalizeMT.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FinalizeTBI.keyfile</code> (File?)</li>
 <li><code>FinalizeTBI.name</code> (String?)</li>
 <li><code>FinalizeTBI.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>FinalizeVCF.keyfile</code> (File?)</li>
+<li><code>FinalizeVCF.name</code> (String?)</li>
+<li><code>FinalizeVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>JointCall.bed</code> (File?)</li>
+<li><code>JointCall.config_file</code> (File?)</li>
 <li><code>JointCall.num_cpus</code> (Int?)</li>
 <li><code>JointCall.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>JointCall.Call.runtime_attr_override</code> (RuntimeAttr?)</li>
@@ -372,18 +375,20 @@
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
+<li><code>force_add_missing_dp</code> (Boolean, default=false): force adding missing DP field to gVCFs</li>
 <li><code>ConvertToHailMT.reference</code> (String, default="GRCh38")</li>
 <li><code>JointCall.config</code> (String, default="DeepVariantWGS")</li>
 <li><code>JointCall.max_cpus</code> (Int, default=64)</li>
 <li><code>JointCall.more_PL</code> (Boolean, default=false)</li>
 <li><code>JointCall.squeeze</code> (Boolean, default=false)</li>
 <li><code>JointCall.trim_uncalled_alleles</code> (Boolean, default=false)</li>
+<li><code>JointCall.ConcatBCFs.is_gvcf</code> (Boolean, default=false)</li>
 <li><code>JointCall.ConcatBCFs.num_cpus</code> (Int, default=4)</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>joint_gvcf</code> (File)</li>
-<li><code>joint_gvcf_tbi</code> (File)</li>
+<li><code>joint_vcf</code> (File)</li>
+<li><code>joint_vcf_tbi</code> (File)</li>
 <li><code>joint_mt</code> (String)</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>

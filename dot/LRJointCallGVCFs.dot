@@ -5,11 +5,11 @@ digraph {
 	edge [color="#00000080"]
 	"call-JointCall" [label=JointCall shape=cds]
 	"call-ConvertToHailMT" [label=ConvertToHailMT shape=cds]
-	"call-FinalizeGVCF" [label=FinalizeGVCF shape=cds]
+	"call-FinalizeVCF" [label=FinalizeVCF shape=cds]
 	"call-FinalizeTBI" [label=FinalizeTBI shape=cds]
 	"call-FinalizeMT" [label=FinalizeMT shape=cds]
 	"call-JointCall" -> "call-ConvertToHailMT"
-	"call-JointCall" -> "call-FinalizeGVCF"
+	"call-JointCall" -> "call-FinalizeVCF"
 	"call-JointCall" -> "call-FinalizeTBI"
 	"call-ConvertToHailMT" -> "call-FinalizeMT"
 }
