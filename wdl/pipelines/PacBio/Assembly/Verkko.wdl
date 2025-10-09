@@ -40,29 +40,28 @@ workflow Verkko {
                         (if defined(paternal_hapmer_database_tar_gz) then 1 else 0) +
                         (if defined(hap_kmers_type) then 1 else 0)
 
-
     # Validate that either all hapmer fastq file set options are given or none of them are given:
     Int hapmer_fastq_defined_count = (if defined(maternal_fastq_files) then 1 else 0) + 
                         (if defined(paternal_fastq_files) then 1 else 0) +
                         (if defined(hap_kmers_type) then 1 else 0)
 
-    if ((hapmer_fastq_defined_count != 3) && (hapmer_fastq_defined_count != 0)) {
+    if ((hapmer_fastq_defined_count != 3) && (hapmer_fastq_defined_count != 0) && (hapmer_database_defined_count != 3) && (hapmer_fastq_defined_count != 1)) {
         call Utils.StopWorkflow as t_000_StopWorkflow_InvalidHapmeFastqOptions {
             input:
-                reason = "Either all or none of the parental hapmer fastq file sets must be defined.  If both are defined, the hap_kmers_type must be defined as well."
+                reason = "Either all or none of the parental hapmer fastq file sets must be defined.  If both are defined, the hap_kmers_type must be defined as well"
         }
     }
-    if ((hapmer_database_defined_count != 3) && (hapmer_database_defined_count != 0)) {
+    if ((hapmer_database_defined_count != 3) && (hapmer_database_defined_count != 0) && (hapmer_database_defined_count != 3) && (hapmer_fastq_defined_count != 1)) {
         call Utils.StopWorkflow as t_000_StopWorkflow_InvalidHapmerDatabaseOptions {
             input:
-                reason = "Either all or none of the parental hapmer database file sets must be defined.  If both are defined, the hap_kmers_type must be defined as well."
+                reason = "Either all or none of the parental hapmer database file sets must be defined.  If both are defined, the hap_kmers_type must be defined as well"
         }
     }
 
     if ((hapmer_database_defined_count == 3) && (hapmer_fastq_defined_count == 3)) {
         call Utils.StopWorkflow as t_000_StopWorkflow_InvalidHapmerDatabaseAndFastqOptions {
             input:
-                reason = "You must either provide hapmer fastq file sets or hapmer database files, but not both."
+                reason = "You must either provide hapmer fastq file sets or hapmer database files, but not both"
         }
     }
 
