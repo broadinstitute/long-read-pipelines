@@ -9,7 +9,13 @@ workflow Verkko {
         description: "Perform a genome assembly using Verkko2."
     }
     parameter_meta {
-
+        pacbio_hifi_reads: "PacBio HiFi reads"
+        sample_name: "Sample name"
+        is_haploid: "Whether the sample is haploid (default: false)"
+        nanopore_scaffolding_reads: "Nanopore scaffolding reads"
+        maternal_fastq_files: "Maternal fastq files for trio assembly (optional)"
+        paternal_fastq_files: "Paternal fastq files for trio assembly (optional)"
+        hap_kmers_type: "Hapmer database type for trio assembly (optional)"
     }
     input {
         File pacbio_hifi_reads
