@@ -12,7 +12,7 @@ workflow Verkko {
         pacbio_hifi_reads: "PacBio HiFi reads"
         sample_name: "Sample name"
         is_haploid: "Whether the sample is haploid (default: false)"
-        nanopore_scaffolding_reads: "Nanopore scaffolding reads"
+        nanopore_scaffolding_read_basecall_dir: "Nanopore scaffolding reads basecall directory"
         maternal_fastq_files: "Maternal fastq files for trio assembly (optional)"
         paternal_fastq_files: "Paternal fastq files for trio assembly (optional)"
         hap_kmers_type: "Hapmer database type for trio assembly (optional)"
@@ -22,7 +22,7 @@ workflow Verkko {
         String sample_name
         Boolean is_haploid = false
         
-        File? nanopore_scaffolding_reads
+        String? nanopore_scaffolding_read_basecall_dir
 
         Array[File]? maternal_fastq_files
         Array[File]? paternal_fastq_files
@@ -52,7 +52,7 @@ workflow Verkko {
     call VerkoAssemble as t_002_VerkkoAssemble {
         input:
             pacbio_hifi_reads = pacbio_hifi_reads,
-            nanopore_scaffolding_reads = nanopore_scaffolding_reads,
+            nanopore_scaffolding_read_basecall_dir = nanopore_scaffolding_read_basecall_dir,
             prefix = sample_name,
             maternal_hapmer_database_tar_gz = t_001_CreateParentalHapmerDatabases.maternal_hapmer_database_tar_gz,
             paternal_hapmer_database_tar_gz = t_001_CreateParentalHapmerDatabases.paternal_hapmer_database_tar_gz,
@@ -68,7 +68,7 @@ workflow Verkko {
 task VerkoAssemble {
     input {
         File pacbio_hifi_reads
-        File? nanopore_scaffolding_reads
+        String? nanopore_scaffolding_read_basecall_dir
         String prefix
 
         Boolean is_haploid = true
@@ -86,12 +86,12 @@ task VerkoAssemble {
 
     String out_folder_name = "~{prefix}_assembly_verkko"
 
-    String nanopore_scaffolding_arg = if defined(nanopore_scaffolding_reads) then "--nano ~{nanopore_scaffolding_reads}" else ""
     String hap_kmers_arg = if (defined(maternal_hapmer_database_tar_gz) && defined(paternal_hapmer_database_tar_gz) && defined(hap_kmers_type)) then "--hap-kmers" + basename(select_first([maternal_hapmer_database_tar_gz]), ".tar.gz") + " " + basename(select_first([paternal_hapmer_database_tar_gz]), ".tar.gz") + " " + hap_kmers_type else ""
 
+    # Nanopore scaffolding is about 30GB, but we don't know how much space it will take up.
     Int disk_size = 10 + 2*(
         2 * ceil(size(pacbio_hifi_reads, "GB")) + 
-        2 * ceil(size(nanopore_scaffolding_reads, "GB")) + 
+        30 + 
         11 * ceil(size(maternal_hapmer_database_tar_gz, "GB")) + 
         11 * ceil(size(paternal_hapmer_database_tar_gz, "GB"))
     )
@@ -114,12 +114,24 @@ task VerkoAssemble {
             exit 1
         fi
 
+        # Setup nanopore scaffolding if we have any:
+        if [[ -n "~{nanopore_scaffolding_read_basecall_dir}" ]]; then
+            mkdir nanopore_scaffolding
+            gsutil -m cp -r "~{nanopore_scaffolding_read_basecall_dir}/*" nanopore_scaffolding/
+            fastq_file_exemplar=$(find nanopore_scaffolding -type f -name "*fastq*" | head -n1)
+            nanopore_scaffolding_fastq_folder=$(dirname ${fastq_file_exemplar})
+            nanopore_scaffolding_arg="--nano ${nanopore_scaffolding_fastq_folder}"
+        else
+            nanopore_scaffolding_arg=""
+        fi
+
+        ############################################################
         set -euxo pipefail
 
         time verkko \
             -d ~{out_folder_name} \
             --hifi ~{pacbio_hifi_reads} \
-            ~{nanopore_scaffolding_arg} \
+            ${nanopore_scaffolding_arg} \
             ~{true="--haploid" false="" is_haploid} \
             ~{hap_kmers_arg}
 
