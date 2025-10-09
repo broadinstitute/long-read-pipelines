@@ -18,7 +18,7 @@ workflow Verkko {
         hap_kmers_type: "Hapmer database type for trio assembly (optional)"
     }
     input {
-        File pacbio_hifi_reads
+        Array[File] pacbio_hifi_reads
         String sample_name
         Boolean is_haploid = false
         
@@ -67,7 +67,7 @@ workflow Verkko {
 
 task VerkoAssemble {
     input {
-        File pacbio_hifi_reads
+        Array[File] pacbio_hifi_reads
         String? nanopore_scaffolding_read_basecall_dir
         String prefix
 
@@ -130,7 +130,7 @@ task VerkoAssemble {
 
         time verkko \
             -d ~{out_folder_name} \
-            --hifi ~{pacbio_hifi_reads} \
+            --hifi ~{sep=' ' pacbio_hifi_reads} \
             ${nanopore_scaffolding_arg} \
             ~{true="--haploid" false="" is_haploid} \
             ~{hap_kmers_arg}
