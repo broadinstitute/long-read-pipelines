@@ -12,9 +12,15 @@ workflow Verkko {
         pacbio_hifi_reads: "PacBio HiFi reads"
         sample_name: "Sample name"
         is_haploid: "Whether the sample is haploid (default: false)"
+        
+        maternal_hapmer_database_tar_gz: "Maternal hapmer database tar.gz (optional)"
+        paternal_hapmer_database_tar_gz: "Paternal hapmer database tar.gz (optional)"
+        hap_kmers_type: "Hapmer database type (optional)"
+        
         nanopore_scaffolding_read_basecall_dir: "Nanopore scaffolding reads basecall directory"
-        maternal_fastq_files: "Maternal fastq files for trio assembly (optional)"
-        paternal_fastq_files: "Paternal fastq files for trio assembly (optional)"
+
+        maternal_fastq_files: "Maternal fastq files for trio assembly from which to generate hapmer databases (optional)"
+        paternal_fastq_files: "Paternal fastq files for trio assembly from which to generate hapmer databases (optional)"
         hap_kmers_type: "Hapmer database type for trio assembly (optional)"
     }
     input {
@@ -26,21 +32,43 @@ workflow Verkko {
 
         Array[File]? maternal_fastq_files
         Array[File]? paternal_fastq_files
+        File? maternal_hapmer_database_tar_gz
+        File? paternal_hapmer_database_tar_gz
         String? hap_kmers_type
     }
 
-    # Validate that either all hapmer options are given or none of them are given:
-    Int defined_count = (if defined(maternal_fastq_files) then 1 else 0) + 
+    # Validate that either all hapmer database options are given or none of them are given:
+    Int hapmer_database_defined_count = (if defined(maternal_hapmer_database_tar_gz) then 1 else 0) + 
+                        (if defined(paternal_hapmer_database_tar_gz) then 1 else 0) +
+                        (if defined(hap_kmers_type) then 1 else 0)
+
+
+    # Validate that either all hapmer fastq file set options are given or none of them are given:
+    Int hapmer_fastq_defined_count = (if defined(maternal_fastq_files) then 1 else 0) + 
                         (if defined(paternal_fastq_files) then 1 else 0) +
                         (if defined(hap_kmers_type) then 1 else 0)
 
-    if ((defined_count != 3) && (defined_count != 0)) {
-        call Utils.StopWorkflow as t_000_StopWorkflow_InvalidHapmerOptions {
+    if ((hapmer_fastq_defined_count != 3) && (hapmer_fastq_defined_count != 0)) {
+        call Utils.StopWorkflow as t_000_StopWorkflow_InvalidHapmeFastqOptions {
             input:
-                reason = "Either all or none of the parental hapmer databases must be defined.  If both are defined, the hap_kmers_type must be defined as well."
+                reason = "Either all or none of the parental hapmer fastq file sets must be defined.  If both are defined, the hap_kmers_type must be defined as well."
         }
     }
-    if (defined_count == 3) {
+    if ((hapmer_database_defined_count != 3) && (hapmer_database_defined_count != 0)) {
+        call Utils.StopWorkflow as t_000_StopWorkflow_InvalidHapmerDatabaseOptions {
+            input:
+                reason = "Either all or none of the parental hapmer database file sets must be defined.  If both are defined, the hap_kmers_type must be defined as well."
+        }
+    }
+
+    if ((hapmer_database_defined_count == 3) && (hapmer_fastq_defined_count == 3)) {
+        call Utils.StopWorkflow as t_000_StopWorkflow_InvalidHapmerDatabaseAndFastqOptions {
+            input:
+                reason = "You must either provide hapmer fastq file sets or hapmer database files, but not both."
+        }
+    }
+
+    if ((hapmer_fastq_defined_count == 3) && (hapmer_database_defined_count != 3)) {
         call CreateParentalHapmerDatabases as t_001_CreateParentalHapmerDatabases {
             input:
                 maternal_fastq_files = select_first([maternal_fastq_files]),
@@ -49,13 +77,18 @@ workflow Verkko {
         }
     }
 
+    if ((hapmer_database_defined_count == 3) || (hapmer_fastq_defined_count == 3)) {
+        File final_maternal_hapmer_database_tar_gz = select_first([maternal_hapmer_database_tar_gz, t_001_CreateParentalHapmerDatabases.maternal_hapmer_database_tar_gz])
+        File final_paternal_hapmer_database_tar_gz = select_first([paternal_hapmer_database_tar_gz, t_001_CreateParentalHapmerDatabases.paternal_hapmer_database_tar_gz])
+    }
+
     call VerkoAssemble as t_002_VerkkoAssemble {
         input:
             pacbio_hifi_reads = pacbio_hifi_reads,
             nanopore_scaffolding_read_basecall_dir = nanopore_scaffolding_read_basecall_dir,
             prefix = sample_name,
-            maternal_hapmer_database_tar_gz = t_001_CreateParentalHapmerDatabases.maternal_hapmer_database_tar_gz,
-            paternal_hapmer_database_tar_gz = t_001_CreateParentalHapmerDatabases.paternal_hapmer_database_tar_gz,
+            maternal_hapmer_database_tar_gz = final_maternal_hapmer_database_tar_gz,
+            paternal_hapmer_database_tar_gz = final_paternal_hapmer_database_tar_gz,
             hap_kmers_type = hap_kmers_type
     }
 
