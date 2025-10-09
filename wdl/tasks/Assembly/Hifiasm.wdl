@@ -9,11 +9,13 @@ workflow Hifiasm {
     }
     parameter_meta {
         reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
+        ont_ultralong_reads: "ONT reads (ideally ultralong, in fastq format, compressed or uncompressed)"
         prefix:   "prefix to apply to assembly output filenames"
     }
 
     input {
         File reads
+        File? ont_ultralong_reads
         String prefix
 
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
@@ -22,6 +24,7 @@ workflow Hifiasm {
     call AssembleForAltContigs {
         input:
             reads  = reads,
+            ont_ultralong_reads = ont_ultralong_reads,
             prefix = prefix,
             zones = zones
     }
@@ -29,6 +32,7 @@ workflow Hifiasm {
     call AssembleForHaplotigs {
         input:
             reads  = reads,
+            ont_ultralong_reads = ont_ultralong_reads,
             prefix = prefix,
             zones = zones
     }
@@ -60,6 +64,21 @@ task AssembleForHaplotigs {
         String prefix = "out"
         String zones
 
+        File? ont_ultralong_reads
+
+        File? maternal_fastq_1
+        File? maternal_fastq_2
+        File? paternal_fastq_1
+        File? paternal_fastq_2
+
+        String? telomere_5_prime_sequence
+
+        Boolean haploid = false
+
+        Int kmer_size = 51
+        Int homopolymer_kmer_size = 37
+        Int yak_bloom_filter_size = 37
+
         String extra_args = ""
 
         RuntimeAttr? runtime_attr_override
@@ -71,14 +90,58 @@ task AssembleForHaplotigs {
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
 
-    Int disk_size = 10 * ceil(size(reads, "GB"))
+    Int disk_size = 10 + 10 * ceil(size(reads, "GB")) + 10 * ceil(size(ont_ultralong_reads, "GB"))
+
+    String ont_ultralong_reads_arg = if defined(ont_ultralong_reads) then "--ul " + ont_ultralong_reads else ""
+    String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + telomere_5_prime_sequence else ""
 
     command <<<
+        # Check if we have the parental fastq files for trio assembly.
+        # They must be either all defined or undefined:
+        defined_count=0
+        if [[ -n "~{maternal_fastq_1}" ]]; then ((defined_count++)); fi
+        if [[ -n "~{maternal_fastq_2}" ]]; then ((defined_count++)); fi
+        if [[ -n "~{paternal_fastq_1}" ]]; then ((defined_count++)); fi
+        if [[ -n "~{paternal_fastq_2}" ]]; then ((defined_count++)); fi
+        
+        if [[ $defined_count -ne 4 ]] && [[ $defined_count -ne 2 ]] && [[ $defined_count -ne 0 ]]; then
+            echo "Error: Either 2, 4, or none of the parental fastq files must be defined." 1>&2
+            echo "       Maternal fastq 1: ~{maternal_fastq_1}" 1>&2
+            echo "       Maternal fastq 2: ~{maternal_fastq_2}" 1>&2
+            echo "       Paternal fastq 1: ~{paternal_fastq_1}" 1>&2
+            echo "       Paternal fastq 2: ~{paternal_fastq_2}" 1>&2
+            exit 1
+        fi
+
+        # Make sure we use all our processors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            let np=${np}-1
+        fi
+
         set -euxo pipefail
+
+        # Generate parental kmer databases if provided:
+        trio_arg=""
+        if [[ $defined_count -ne 4 ]] ; then
+            ./yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak <(zcat ~{maternal_fastq_1}) <(zcat ~{maternal_fastq_2})
+            ./yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak <(zcat ~{paternal_fastq_1}) <(zcat ~{paternal_fastq_2})
+            trio_arg="-1 maternal.yak -2 paternal.yak"
+        elif [[ $defined_count -ne 2 ]] ; then
+            yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak ~{maternal_fastq_1}
+            yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak ~{paternal_fastq_1}
+            trio_arg="-1 maternal.yak -2 paternal.yak"
+        fi
 
         time hifiasm \
             -o ~{prefix} \
-            -t~{num_cpus} \
+            -t$((np-1)) \
+            -k ~{kmer_size} \
+            -f ~{homopolymer_kmer_size} \
+            ~{ont_ultralong_reads_arg} \
+            ${trio_arg} \
+            ~{true="-l0" false="" haploid} \
+            ~{telomere_5_prime_sequence_arg} \
             ~{reads} \
             ~{extra_args} \
             2>&1 | tee hifiasm.log
@@ -143,6 +206,21 @@ task AssembleForAltContigs {
         String prefix = "out"
         String zones
 
+        File? ont_ultralong_reads
+
+        File? maternal_fastq_1
+        File? maternal_fastq_2
+        File? paternal_fastq_1
+        File? paternal_fastq_2
+
+        String? telomere_5_prime_sequence
+
+        Boolean haploid = false
+
+        Int kmer_size = 51
+        Int homopolymer_kmer_size = 37
+        Int yak_bloom_filter_size = 37
+
         String extra_args = ""
 
         RuntimeAttr? runtime_attr_override
@@ -155,12 +233,58 @@ task AssembleForAltContigs {
 
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
+    String ont_ultralong_reads_arg = if defined(ont_ultralong_reads) then "--ul " + ont_ultralong_reads else ""
+    String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + telomere_5_prime_sequence else ""
+
     command <<<
+        # Check if we have the parental fastq files for trio assembly.
+        # They must be either all defined or undefined:
+        defined_count=0
+        if [[ -n "~{maternal_fastq_1}" ]]; then ((defined_count++)); fi
+        if [[ -n "~{maternal_fastq_2}" ]]; then ((defined_count++)); fi
+        if [[ -n "~{paternal_fastq_1}" ]]; then ((defined_count++)); fi
+        if [[ -n "~{paternal_fastq_2}" ]]; then ((defined_count++)); fi
+        
+        if [[ $defined_count -ne 4 ]] && [[ $defined_count -ne 2 ]] && [[ $defined_count -ne 0 ]]; then
+            echo "Error: Either 2, 4, or none of the parental fastq files must be defined." 1>&2
+            echo "       Maternal fastq 1: ~{maternal_fastq_1}" 1>&2
+            echo "       Maternal fastq 2: ~{maternal_fastq_2}" 1>&2
+            echo "       Paternal fastq 1: ~{paternal_fastq_1}" 1>&2
+            echo "       Paternal fastq 2: ~{paternal_fastq_2}" 1>&2
+            exit 1
+        fi
+
+        # Make sure we use all our processors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            let np=${np}-1
+        fi
+
+        set -euxo pipefail
+
+        # Generate parental kmer databases if provided:
+        trio_arg=""
+        if [[ $defined_count -ne 4 ]] ; then
+            ./yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak <(zcat ~{maternal_fastq_1}) <(zcat ~{maternal_fastq_2})
+            ./yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak <(zcat ~{paternal_fastq_1}) <(zcat ~{paternal_fastq_2})
+            trio_arg="-1 maternal.yak -2 paternal.yak"
+        elif [[ $defined_count -ne 2 ]] ; then
+            yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak ~{maternal_fastq_1}
+            yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak ~{paternal_fastq_1}
+            trio_arg="-1 maternal.yak -2 paternal.yak"
+        fi
+
         set -euxo pipefail
 
         time hifiasm \
             -o ~{prefix} \
-            -t~{num_cpus} \
+            -t${np} \
+            -k ~{kmer_size} \
+            -f ~{homopolymer_kmer_size} \
+            ~{ont_ultralong_reads_arg} \
+            ${trio_arg} \
+            ~{true="-l0" false="" haploid} \
+            ~{telomere_5_prime_sequence_arg} \
             --primary \
             ~{reads} \
             ~{extra_args} \
