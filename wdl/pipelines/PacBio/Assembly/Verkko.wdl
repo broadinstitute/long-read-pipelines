@@ -13,14 +13,12 @@ workflow Verkko {
         sample_name: "Sample name"
         is_haploid: "Whether the sample is haploid (default: false)"
         
-        maternal_hapmer_database_tar_gz: "Maternal hapmer database tar.gz (optional)"
-        paternal_hapmer_database_tar_gz: "Paternal hapmer database tar.gz (optional)"
-        hap_kmers_type: "Hapmer database type (optional)"
-        
         nanopore_scaffolding_read_basecall_dir: "Nanopore scaffolding reads basecall directory"
 
         maternal_fastq_files: "Maternal fastq files for trio assembly from which to generate hapmer databases (optional)"
         paternal_fastq_files: "Paternal fastq files for trio assembly from which to generate hapmer databases (optional)"
+        maternal_hapmer_database_tar_gz: "Maternal hapmer database tar.gz (optional)"
+        paternal_hapmer_database_tar_gz: "Paternal hapmer database tar.gz (optional)"
         hap_kmers_type: "Hapmer database type for trio assembly (optional)"
     }
     input {
