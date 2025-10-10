@@ -110,7 +110,9 @@ RUN apt-get -qqy update --fix-missing && \
                  pv \
                  tree \
                  zlib1g-dev \
-                 openjdk-11-jre && \
+                 openjdk-11-jre \
+                 curl \
+                 git-lfs && \
     apt-get -qqy clean && \
     rm -rf /tmp/* \
            /var/tmp/* \
@@ -129,6 +131,15 @@ COPY --from=build_merqury /merqury /merqury
 COPY --from=build_merqury /usr/local/bin/* /usr/local/bin/
 
 ENV VIRTUAL_ENV=/venv
-ENV PATH="$VIRTUAL_ENV/bin:/usr/local/cargo/bin:$PATH"
+ENV PATH="$VIRTUAL_ENV/bin:/usr/local/cargo/bin:/root/google-cloud-sdk/bin:$PATH"
 ENV MERQURY=/merqury
+
+# Now install gsutil so we have it in this conda env later:
+RUN export PATH="$VIRTUAL_ENV/bin:/usr/local/cargo/bin:$PATH" && curl https://sdk.cloud.google.com | bash
+
+## Setup crcmodc for gsutil:
+#RUN apt-get install -y gcc aria2 python3-dev python3-setuptools && \
+#			pip3 uninstall -y crcmod && \
+#			pip3 install --no-cache-dir -U crcmod
+#
 
