@@ -2,7 +2,6 @@ version 1.0
 
 workflow TerraEnvironmentTesting {
     input {
-        String? test_string
     }
 
     call CheckEnvironmentVariables{input:}
@@ -13,6 +12,12 @@ workflow TerraEnvironmentTesting {
 }
 
 task CheckEnvironmentVariables {
+
+
+    meta {
+        volatile: true
+    }
+
     input {
     }
 
@@ -27,6 +32,6 @@ task CheckEnvironmentVariables {
 
     runtime {
         disks: "local-disk 10 HDD"
-        docker: "gcr.io/cloud-marketplace/google/ubuntu2204:b25bdce835cb"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2204:b25bdce835cbcde2cf02c94dd37cca3c6b43c6967f5a8a8a8e6a77e4956551a0"
     }
 }
