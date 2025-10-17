@@ -32,6 +32,6 @@ task CheckEnvironmentVariables {
 
     runtime {
         disks: "local-disk 10 HDD"
-        docker: "gcr.io/cloud-marketplace/google/ubuntu2204:b25bdce835cbcde2cf02c94dd37cca3c6b43c6967f5a8a8a8e6a77e4956551a0"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2204@sha256:b25bdce835cbcde2cf02c94dd37cca3c6b43c6967f5a8a8a8e6a77e4956551a0"
     }
 }
