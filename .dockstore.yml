@@ -180,3 +180,6 @@ workflows:
 - name: RemoveSingleOrganismContamination
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/RemoveSingleOrganismContamination.wdl
+- name: TerraEnvironmentTesting
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/TerraEnvironmentTesting.wdl
