@@ -1,5 +1,5 @@
 ############### stage 0
-FROM continuumio/miniconda3:24.4.0-0 AS build
+FROM continuumio/miniconda3:25.3.1-1 AS build
 ARG PKM='conda'
 ARG CONDA_ENV_NAME='env'
 ARG INSTALL_CMD="${PKM} env create -n ${CONDA_ENV_NAME}"
@@ -24,6 +24,8 @@ RUN git clone https://github.com/EPPIcenter/ampseq-qc.git && \
     ${INSTALL_CMD} --file environment.yml && \
     ${CLEAN_CMD}
 
+RUN R -e 'install.packages(c("shiny", "ggplot2", "dplyr", "quarto"), repos="http://cran.rstudio.com/")'
+
 # Use conda-pack to create a standalone enviornment
 # in /venv:
 RUN conda-pack \
@@ -44,6 +46,10 @@ COPY --from=build /venv /venv
 ENV VIRTUAL_ENV=/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install our python packages:
+# Install our packages:
 RUN apt-get update -y
 RUN apt-get install -y git vim
+RUN wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.8.25/quarto-1.8.25-linux-amd64.deb && \
+    apt install ./quarto-1.8.25-linux-amd64.deb && \
+    rm ./quarto-1.8.25-linux-amd64.deb
+
