@@ -1,4 +1,4 @@
-IMAGE_NAME = sr-mad4hatterQC
+IMAGE_NAME = sr-mad4hatter-qc
 VERSION = 0.0.1
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
