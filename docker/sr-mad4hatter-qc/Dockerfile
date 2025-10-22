@@ -17,14 +17,11 @@ RUN ${PKM} update -y -n base conda && \
     ${PKM} config --set solver libmamba && \
     ${CLEAN_CMD}
 
-# Install the MAD4hatter QC resources:
-RUN git clone https://github.com/EPPIcenter/ampseq-qc.git && \
-    cd ampseq-qc && \
-    git checkout 5e93ce1 && \
-    ${INSTALL_CMD} --file environment.yml && \
+# Copy environment.yml to the container:
+COPY environment.yml environment.yml
+RUN ${INSTALL_CMD}  \
+        --file environment.yml && \
     ${CLEAN_CMD}
-
-RUN R -e 'install.packages(c("shiny", "ggplot2", "dplyr", "quarto"), repos="http://cran.rstudio.com/")'
 
 # Use conda-pack to create a standalone enviornment
 # in /venv:
@@ -48,8 +45,10 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install our packages:
 RUN apt-get update -y
-RUN apt-get install -y git vim
+RUN apt-get install -y git vim wget
 RUN wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.8.25/quarto-1.8.25-linux-amd64.deb && \
-    apt install ./quarto-1.8.25-linux-amd64.deb && \
+    apt-get install -y ./quarto-1.8.25-linux-amd64.deb && \
     rm ./quarto-1.8.25-linux-amd64.deb
+
+RUN git clone https://github.com/EPPIcenter/ampseq-qc.git 
 
