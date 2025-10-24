@@ -1475,7 +1475,7 @@ task GetCurrentTimestampString {
          docker: "ubuntu:19.10"
          memory: "512 MB"
          disks: "local-disk 10 HDD"
-         bootDiskSizeGb: "15"
+         bootDiskSizeGb: 15
          preemptible: 0
          cpu: 1
      }

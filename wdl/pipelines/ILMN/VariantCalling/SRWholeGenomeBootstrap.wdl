@@ -32,7 +32,7 @@ workflow SRWholeGenome {
         Boolean run_HC_analysis = true
         Boolean run_dv_pepper_analysis = true
 
-        Boolean enable_hc_pileup_mode = true
+        Boolean enable_hc_pileup_mode = false
 
         Int dvp_threads = 32
         Int dvp_memory = 128
