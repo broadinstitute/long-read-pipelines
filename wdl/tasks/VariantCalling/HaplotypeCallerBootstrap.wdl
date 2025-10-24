@@ -32,6 +32,9 @@ workflow CallVariantsWithHaplotypeCaller {
         Float heterozygosity_stdev = 0.01
         Float indel_heterozygosity = 0.000125
 
+        Float max_reads_per_alignment_start
+        Float max_num_haplotypes_in_population
+
         Boolean enable_pileup_mode = false
 
         String mito_contig = "chrM"
@@ -69,6 +72,8 @@ workflow CallVariantsWithHaplotypeCaller {
                 heterozygosity = heterozygosity,
                 heterozygosity_stdev = heterozygosity_stdev,
                 indel_heterozygosity = indel_heterozygosity,
+                max_reads_per_alignment_start = max_reads_per_alignment_start,
+                max_num_haplotypes_in_population = max_num_haplotypes_in_population,
                 use_spanning_event_genotyping = true,
                 runtime_attr_override = runtime_attr_override
         }
@@ -151,6 +156,9 @@ task HaplotypeCaller_GATK4_VCF {
         Float heterozygosity_stdev = 0.01
         Float indel_heterozygosity = 0.000125
 
+        Float max_reads_per_alignment_start = 50
+        Float max_num_haplotypes_in_population = 128
+
         Boolean make_gvcf
         Boolean make_bamout
 
@@ -205,6 +213,8 @@ task HaplotypeCaller_GATK4_VCF {
                 --heterozygosity ~{heterozygosity} \
                 --heterozygosity-stdev ~{heterozygosity_stdev} \
                 --indel-heterozygosity ~{indel_heterozygosity} \
+                --max-reads-per-alignment-start ~{max_reads_per_alignment_start} \
+                --max-num-haplotypes-in-population ~{max_num_haplotypes_in_population} \
                 --linked-de-bruijn-graph \
                 ~{true="--pileup-detection --pileup-detection-enable-indel-pileup-calling" false="" enable_pileup_mode} \
                 --annotate-with-num-discovered-alleles \

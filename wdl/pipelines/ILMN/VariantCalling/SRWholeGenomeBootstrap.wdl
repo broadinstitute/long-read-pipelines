@@ -43,6 +43,9 @@ workflow SRWholeGenome {
         Float heterozygosity_stdev = 0.01
         Float indel_heterozygosity = 0.000125
 
+        Float max_reads_per_alignment_start
+        Float max_num_haplotypes_in_population
+
         File? bed_to_compute_coverage
 
         File? fingerprint_haplotype_db_file
@@ -169,6 +172,9 @@ workflow SRWholeGenome {
                 heterozygosity    = heterozygosity,
                 heterozygosity_stdev = heterozygosity_stdev,
                 indel_heterozygosity = indel_heterozygosity,
+
+                max_reads_per_alignment_start = max_reads_per_alignment_start,
+                max_num_haplotypes_in_population = max_num_haplotypes_in_population,
 
                 prefix = participant_name + ".haplotype_caller",
 
