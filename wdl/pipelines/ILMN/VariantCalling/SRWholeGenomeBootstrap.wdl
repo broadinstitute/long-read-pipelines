@@ -43,8 +43,8 @@ workflow SRWholeGenome {
         Float heterozygosity_stdev = 0.01
         Float indel_heterozygosity = 0.000125
 
-        Int max_reads_per_alignment_start
-        Int max_num_haplotypes_in_population
+        Int max_reads_per_alignment_start = 50
+        Int max_num_haplotypes_in_population = 128
 
         File? bed_to_compute_coverage
 
