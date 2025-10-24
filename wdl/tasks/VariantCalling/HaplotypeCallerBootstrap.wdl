@@ -32,8 +32,8 @@ workflow CallVariantsWithHaplotypeCaller {
         Float heterozygosity_stdev = 0.01
         Float indel_heterozygosity = 0.000125
 
-        Float max_reads_per_alignment_start
-        Float max_num_haplotypes_in_population
+        Int max_reads_per_alignment_start
+        Int max_num_haplotypes_in_population
 
         Boolean enable_pileup_mode = false
 
@@ -156,8 +156,8 @@ task HaplotypeCaller_GATK4_VCF {
         Float heterozygosity_stdev = 0.01
         Float indel_heterozygosity = 0.000125
 
-        Float max_reads_per_alignment_start = 50
-        Float max_num_haplotypes_in_population = 128
+        Int max_reads_per_alignment_start = 50
+        Int max_num_haplotypes_in_population = 128
 
         Boolean make_gvcf
         Boolean make_bamout
