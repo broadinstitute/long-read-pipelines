@@ -42,6 +42,6 @@ task immunoAnnotate{
         # bootDiskSizeGb: 10
         preemptible: 2
         maxRetries: 1
-        docker: "hangsuunc/immunoannot:v1"
+        docker: "us.gcr.io/broad-dsp-lrma/hangsuunc/immuannot:v1"
     }
 }
