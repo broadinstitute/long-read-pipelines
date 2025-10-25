@@ -46,10 +46,8 @@ RUN apt-get -qqy update --fix-missing \
         python3-pip \
         xz-utils \
         tk-dev \
-        python-dev \
         bsdmainutils \
         unzip \
-        python3-pycurl \
         bedtools
 
 
@@ -88,4 +86,5 @@ RUN wget https://github.com/lh3/minimap2/releases/download/v${mm2_version}/minim
 # install immunoannot
 RUN git clone https://github.com/YingZhou001/Immuannot.git \
         && cd Immuannot \
-        && tar xvf refData-2023Jun05.tgz
+        && wget https://zenodo.org/records/10948964/files/Data-2024Feb02.tar.gz?download=1 \
+        && tar xvf Data-2024Feb02.tar.gz?download=1
