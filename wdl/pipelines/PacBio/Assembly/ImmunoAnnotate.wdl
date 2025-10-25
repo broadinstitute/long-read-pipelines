@@ -25,7 +25,7 @@ task immunoAnnotate{
         Int threads = 2
     }
     command <<<
-        bash /Immuannot/scripts/immuannot.sh -c ~{target_asm} -r /Immuannot/refData-2023Jun05 -o ~{prefix} -t ~{threads}
+        bash /Immuannot/scripts.pub.v3/immuannot.sh -c ~{target_asm} -r /Immuannot/refData-2023Jun05 -o ~{prefix} -t ~{threads}
     >>>
 
     output{
