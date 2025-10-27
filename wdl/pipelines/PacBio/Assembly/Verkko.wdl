@@ -123,7 +123,7 @@ task CombineNanoporeReads {
         # This is necessary because the command-line arg may be too long with a lot of files:
         # 
         echo '#!/usr/bin/env bash' > concat_script.sh
-        echo -n "zcat " >>  concat_script.sh
+        echo -n "cat " >>  concat_script.sh
         find nanopore_reads -type f -name "*fastq*" | tr '\n' ' ' >> concat_script.sh
         echo " > nanopore_reads.fastq.gz" >> concat_script.sh
 
