@@ -131,7 +131,7 @@ task CombineNanoporeReads {
         cat concat_script.sh
 
         chmod +x concat_script.sh
-        ./concat_script.sh
+        time ./concat_script.sh
     >>>
 
     output {
@@ -210,7 +210,7 @@ task VerkoAssemble {
         fi
 
         if [ -n "~{nanopore_scaffolding_reads_fastq_gz}" ]; then
-            nanopore_scaffolding_reads_fastq_gz_arg="--nano " + ~{nanopore_scaffolding_reads_fastq_gz}
+            nanopore_scaffolding_reads_fastq_gz_arg="--nano ~{nanopore_scaffolding_reads_fastq_gz}"
         else
             nanopore_scaffolding_reads_fastq_gz_arg=""
         fi
