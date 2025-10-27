@@ -37,7 +37,7 @@ RUN /venv/bin/conda-unpack
 
 # We now have to fix the verkko executable because they don't know the difference between 
 # Bourne shell and BASH shell:
-RUN sed -i '1c !/usr/bin/env bash' /venv/bin/verkko
+RUN sed -i '1c #!/usr/bin/env bash' /venv/bin/verkko
 
 
 RUN ${CLEAN_CMD}
