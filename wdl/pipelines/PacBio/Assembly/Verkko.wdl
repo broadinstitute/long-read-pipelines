@@ -111,7 +111,7 @@ task CombineNanoporeReads {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = disk_size_pad_gb + 100 + 2*ceil(size(nanopore_scaffolding_read_basecall_dir, "GB"))
+    Int disk_size = disk_size_pad_gb + 100
 
     command <<<
         set -euxo pipefail
