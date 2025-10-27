@@ -28,6 +28,14 @@ workflow PBAssembleWithHifiasm {
 
         File? ref_fasta_for_eval
 
+        File? ont_ultralong_reads
+        File? maternal_fastq_1
+        File? maternal_fastq_2
+        File? paternal_fastq_1
+        File? paternal_fastq_2
+        String? telomere_5_prime_sequence
+        Boolean haploid = false
+
         String gcs_out_root_dir
     }
 
@@ -40,6 +48,13 @@ workflow PBAssembleWithHifiasm {
     call HA.Hifiasm {
         input:
             reads = ccs_fq,
+            ont_ultralong_reads = ont_ultralong_reads,
+            maternal_fastq_1 = maternal_fastq_1,
+            maternal_fastq_2 = maternal_fastq_2,
+            paternal_fastq_1 = paternal_fastq_1,
+            paternal_fastq_2 = paternal_fastq_2,
+            telomere_5_prime_sequence = telomere_5_prime_sequence,
+            haploid = haploid,
             prefix = prefix
     }
 

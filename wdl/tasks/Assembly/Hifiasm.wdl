@@ -16,7 +16,17 @@ workflow Hifiasm {
     input {
         File reads
         File? ont_ultralong_reads
+
+        File? maternal_fastq_1
+        File? maternal_fastq_2
+        File? paternal_fastq_1
+        File? paternal_fastq_2
+
+        String? telomere_5_prime_sequence
+
         String prefix
+
+        Boolean haploid = false
 
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
@@ -25,6 +35,12 @@ workflow Hifiasm {
         input:
             reads  = reads,
             ont_ultralong_reads = ont_ultralong_reads,
+            maternal_fastq_1 = maternal_fastq_1,
+            maternal_fastq_2 = maternal_fastq_2,
+            paternal_fastq_1 = paternal_fastq_1,
+            paternal_fastq_2 = paternal_fastq_2,
+            telomere_5_prime_sequence = telomere_5_prime_sequence,
+            haploid = haploid,
             prefix = prefix,
             zones = zones
     }
@@ -33,6 +49,12 @@ workflow Hifiasm {
         input:
             reads  = reads,
             ont_ultralong_reads = ont_ultralong_reads,
+            maternal_fastq_1 = maternal_fastq_1,
+            maternal_fastq_2 = maternal_fastq_2,
+            paternal_fastq_1 = paternal_fastq_1,
+            paternal_fastq_2 = paternal_fastq_2,
+            telomere_5_prime_sequence = telomere_5_prime_sequence,
+            haploid = haploid,
             prefix = prefix,
             zones = zones
     }
@@ -233,8 +255,8 @@ task AssembleForAltContigs {
 
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
-    String ont_ultralong_reads_arg = if defined(ont_ultralong_reads) then "--ul " + ont_ultralong_reads else ""
-    String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + telomere_5_prime_sequence else ""
+    String ont_ultralong_reads_arg = if defined(ont_ultralong_reads) then "--ul " + select_first([ont_ultralong_reads]) else ""
+    String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + select_first([telomere_5_prime_sequence]) else ""
 
     command <<<
         # Check if we have the parental fastq files for trio assembly.
