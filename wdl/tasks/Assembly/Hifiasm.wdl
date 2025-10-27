@@ -118,6 +118,8 @@ task AssembleForHaplotigs {
     String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + telomere_5_prime_sequence else ""
 
     command <<<
+        set -uxo pipefail
+
         # Check if we have the parental fastq files for trio assembly.
         # They must be either all defined or undefined:
         defined_count=0
@@ -145,11 +147,11 @@ task AssembleForHaplotigs {
 
         # Generate parental kmer databases if provided:
         trio_arg=""
-        if [[ $defined_count -ne 4 ]] ; then
+        if [[ $defined_count -eq 4 ]] ; then
             ./yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak <(zcat ~{maternal_fastq_1}) <(zcat ~{maternal_fastq_2})
             ./yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak <(zcat ~{paternal_fastq_1}) <(zcat ~{paternal_fastq_2})
             trio_arg="-1 maternal.yak -2 paternal.yak"
-        elif [[ $defined_count -ne 2 ]] ; then
+        elif [[ $defined_count -eq 2 ]] ; then
             yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak ~{maternal_fastq_1}
             yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak ~{paternal_fastq_1}
             trio_arg="-1 maternal.yak -2 paternal.yak"
@@ -260,6 +262,8 @@ task AssembleForAltContigs {
     String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + select_first([telomere_5_prime_sequence]) else ""
 
     command <<<
+        set -uxo pipefail
+
         # Check if we have the parental fastq files for trio assembly.
         # They must be either all defined or undefined:
         defined_count=0
@@ -287,11 +291,11 @@ task AssembleForAltContigs {
 
         # Generate parental kmer databases if provided:
         trio_arg=""
-        if [[ $defined_count -ne 4 ]] ; then
+        if [[ $defined_count -eq 4 ]] ; then
             ./yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak <(zcat ~{maternal_fastq_1}) <(zcat ~{maternal_fastq_2})
             ./yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak <(zcat ~{paternal_fastq_1}) <(zcat ~{paternal_fastq_2})
             trio_arg="-1 maternal.yak -2 paternal.yak"
-        elif [[ $defined_count -ne 2 ]] ; then
+        elif [[ $defined_count -eq 2 ]] ; then
             yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak ~{maternal_fastq_1}
             yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak ~{paternal_fastq_1}
             trio_arg="-1 maternal.yak -2 paternal.yak"
