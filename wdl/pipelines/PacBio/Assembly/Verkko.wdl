@@ -79,10 +79,17 @@ workflow Verkko {
         File final_paternal_hapmer_database_tar_gz = select_first([paternal_hapmer_database_tar_gz, t_001_CreateParentalHapmerDatabases.paternal_hapmer_database_tar_gz])
     }
 
-    call VerkoAssemble as t_002_VerkkoAssemble {
+    if (defined(nanopore_scaffolding_read_basecall_dir)) {
+        call CombineNanoporeReads as t_002_CombineNanoporeReads {
+            input:
+                nanopore_scaffolding_read_basecall_dir = select_first([nanopore_scaffolding_read_basecall_dir])
+        }
+    }
+
+    call VerkoAssemble as t_003_VerkkoAssemble {
         input:
             pacbio_hifi_reads = pacbio_hifi_reads,
-            nanopore_scaffolding_read_basecall_dir = nanopore_scaffolding_read_basecall_dir,
+            nanopore_scaffolding_reads_fastq_gz = t_002_CombineNanoporeReads.nanopore_reads_fastq_gz,
             prefix = sample_name,
             maternal_hapmer_database_tar_gz = final_maternal_hapmer_database_tar_gz,
             paternal_hapmer_database_tar_gz = final_paternal_hapmer_database_tar_gz,
@@ -90,19 +97,77 @@ workflow Verkko {
     }
 
     output {
-        File assembly_fasta = t_002_VerkkoAssemble.assembly_fasta
-        File output_dir_tar_gz = t_002_VerkkoAssemble.output_dir_tar_gz    
+        File assembly_fasta = t_003_VerkkoAssemble.assembly_fasta
+        File output_dir_tar_gz = t_003_VerkkoAssemble.output_dir_tar_gz    
+    }
+}
+
+task CombineNanoporeReads {
+    input {
+        String nanopore_scaffolding_read_basecall_dir
+
+        Int disk_size_pad_gb = 10
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = disk_size_pad_gb + 100 + 2*ceil(size(nanopore_scaffolding_read_basecall_dir, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        mkdir nanopore_reads
+        gsutil -m cp -r "~{nanopore_scaffolding_read_basecall_dir}/*" nanopore_reads/
+        
+        # Create a cat script.
+        # This is necessary because the command-line arg may be too long with a lot of files:
+        # 
+        echo '#!/usr/bin/env bash' > concat_script.sh
+        echo -n "zcat " >>  concat_script.sh
+        find nanopore_reads -type f -name "*fastq*" | tr '\n' ' ' >> concat_script.sh
+        echo " > nanopore_reads.fastq.gz" >> concat_script.sh
+
+        echo "concat_script contents: "
+        cat concat_script.sh
+
+        chmod +x concat_script.sh
+        ./concat_script.sh
+    >>>
+
+    output {
+        File nanopore_reads_fastq_gz = "nanopore_reads.fastq.gz"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             2,
+        disk_gb:            disk_size,
+        boot_disk_gb:       15,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
 
 task VerkoAssemble {
     input {
         Array[File] pacbio_hifi_reads
-        String? nanopore_scaffolding_read_basecall_dir
         String prefix
 
         Boolean is_haploid = true
 
+        File? nanopore_scaffolding_reads_fastq_gz
         File? maternal_hapmer_database_tar_gz
         File? paternal_hapmer_database_tar_gz
         String? hap_kmers_type
@@ -116,12 +181,12 @@ task VerkoAssemble {
 
     String out_folder_name = "~{prefix}_assembly_verkko"
 
-    String hap_kmers_arg = if (defined(maternal_hapmer_database_tar_gz) && defined(paternal_hapmer_database_tar_gz) && defined(hap_kmers_type)) then "--hap-kmers " + basename(select_first([maternal_hapmer_database_tar_gz]), ".tar.gz") + " " + basename(select_first([paternal_hapmer_database_tar_gz]), ".tar.gz") + " " + hap_kmers_type else ""
+    String hap_kmers_arg = if (defined(maternal_hapmer_database_tar_gz) && defined(paternal_hapmer_database_tar_gz) && defined(hap_kmers_type)) then "--hap-kmers " + basename(select_first([maternal_hapmer_database_tar_gz]), ".tar.gz") + " " + basename(select_first([paternal_hapmer_database_tar_gz]), ".tar.gz") + " " + select_first([hap_kmers_type]) else ""
 
     # Nanopore scaffolding is about 30GB, but we don't know how much space it will take up.
     Int disk_size = 10 + 2*(
         2 * ceil(size(pacbio_hifi_reads, "GB")) + 
-        30 + 
+        2 * ceil(size(nanopore_scaffolding_reads_fastq_gz, "GB")) +
         11 * ceil(size(maternal_hapmer_database_tar_gz, "GB")) + 
         11 * ceil(size(paternal_hapmer_database_tar_gz, "GB"))
     )
@@ -144,15 +209,10 @@ task VerkoAssemble {
             exit 1
         fi
 
-        # Setup nanopore scaffolding if we have any:
-        if [[ -n "~{nanopore_scaffolding_read_basecall_dir}" ]]; then
-            mkdir nanopore_scaffolding
-            gsutil -m cp -r "~{nanopore_scaffolding_read_basecall_dir}/*" nanopore_scaffolding/
-            fastq_file_exemplar=$(find nanopore_scaffolding -type f -name "*fastq*" | head -n1)
-            nanopore_scaffolding_fastq_folder=$(dirname ${fastq_file_exemplar})
-            nanopore_scaffolding_arg="--nano ${nanopore_scaffolding_fastq_folder}"
+        if [ -n "~{nanopore_scaffolding_reads_fastq_gz}" ]; then
+            nanopore_scaffolding_reads_fastq_gz_arg="--nano " + ~{nanopore_scaffolding_reads_fastq_gz}
         else
-            nanopore_scaffolding_arg=""
+            nanopore_scaffolding_reads_fastq_gz_arg=""
         fi
 
         ############################################################
@@ -161,7 +221,7 @@ task VerkoAssemble {
         time verkko \
             -d ~{out_folder_name} \
             --hifi ~{sep=' ' pacbio_hifi_reads} \
-            ${nanopore_scaffolding_arg} \
+            ${nanopore_scaffolding_reads_fastq_gz_arg}
             ~{true="--haploid" false="" is_haploid} \
             ~{hap_kmers_arg}
 

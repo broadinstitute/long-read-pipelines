@@ -163,6 +163,7 @@ task AssembleForHaplotigs {
             ~{ont_ultralong_reads_arg} \
             ${trio_arg} \
             ~{true="-l0" false="" haploid} \
+            ~{true="--n-hap 1" false="" haploid} \
             ~{telomere_5_prime_sequence_arg} \
             ~{reads} \
             ~{extra_args} \
@@ -306,6 +307,7 @@ task AssembleForAltContigs {
             ~{ont_ultralong_reads_arg} \
             ${trio_arg} \
             ~{true="-l0" false="" haploid} \
+            ~{true="--n-hap 1" false="" haploid} \
             ~{telomere_5_prime_sequence_arg} \
             --primary \
             ~{reads} \
