@@ -17,6 +17,8 @@ task Quast {
         Array[File] assemblies
         Boolean is_large = false
 
+        String? extra_args
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -33,6 +35,7 @@ task Quast {
         quast --no-icarus \
               "~{size_optimization}" \
               --threads "${num_core}" \
+              ~{extra_args} \
               ~{true='-r' false='' defined(ref)} \
               ~{select_first([ref, ""])} \
               ~{sep=' ' assemblies}
