@@ -22,7 +22,8 @@ task immunoAnnotate{
         Int threads = 2
     }
     command <<<
-        bash /Immuannot/scripts.pub.v3/immuannot.sh -c ~{target_asm} -r /Immuannot/Data-2024Feb02 -o ~{prefix} -t ~{threads}
+        gunzip -c ~{target_asm} > target_asm.fasta
+        bash /Immuannot/scripts.pub.v3/immuannot.sh -c target_asm.fasta -r /Immuannot/Data-2024Feb02 -o ~{prefix} -t ~{threads}
     >>>
     
     output{
