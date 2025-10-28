@@ -5,16 +5,13 @@ workflow ImmunoAnnotate{
         description: "a workflow that extract vcfs in a genomic interval"
     }
     input{
-        File target_assembly_Hap1
-        File target_assembly_Hap2
+        File target_asm
         String prefix
     }
-    call immunoAnnotate as hap1_annotation {input: target_asm=target_assembly_Hap1, prefix = prefix + "hap1"}
-    call immunoAnnotate as hap2_annotation {input: target_asm=target_assembly_Hap2, prefix = prefix + "hap2"}
+    call immunoAnnotate as annotation {input: target_asm=target_asm, prefix = prefix + "hap1"}
     
     output {
-        File annotation1 = hap1_annotation.gtf_file
-        File annotation2 = hap2_annotation.gtf_file
+        File annotation = annotation.gtf_file
     }
 }
 
