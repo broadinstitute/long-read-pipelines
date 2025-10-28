@@ -47,7 +47,7 @@ workflow HifiasmTrio {
             zones = zones
     }
 
-    call AssembleTrioData as t001_AssembleTrioData {
+    call AssembleTrioData as t003_AssembleTrioData {
         input:
             reads  = reads,
             ont_ultralong_reads = ont_ultralong_reads,
@@ -60,18 +60,18 @@ workflow HifiasmTrio {
     }
 
     output {
-        File maternal_phased_gfa  = t001_AssembleTrioData.maternal_phased_gfa
-        File maternal_phased_fa = t001_AssembleTrioData.maternal_phased_fa
+        File maternal_phased_gfa  = t003_AssembleTrioData.maternal_phased_gfa
+        File maternal_phased_fa = t003_AssembleTrioData.maternal_phased_fa
 
-        File paternal_phased_gfa  = t001_AssembleTrioData.paternal_phased_gfa
-        File paternal_phased_fa = t001_AssembleTrioData.paternal_phased_fa
+        File paternal_phased_gfa  = t003_AssembleTrioData.paternal_phased_gfa
+        File paternal_phased_fa = t003_AssembleTrioData.paternal_phased_fa
 
-        File merged_unitigs_gfa = t001_AssembleTrioData.merged_unitigs_gfa
-        File merged_unitigs_fa = t001_AssembleTrioData.merged_unitigs_fa
+        File merged_unitigs_gfa = t003_AssembleTrioData.merged_unitigs_gfa
+        File merged_unitigs_fa = t003_AssembleTrioData.merged_unitigs_fa
 
-        File all_outputs_gz = t001_AssembleTrioData.all_outputs_gz
+        File all_outputs_gz = t003_AssembleTrioData.all_outputs_gz
 
-        File log = t001_AssembleTrioData.log
+        File log = t003_AssembleTrioData.log
     }
 }
 
@@ -169,7 +169,7 @@ task AssembleTrioData {
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
 
-    Int disk_size = 10 + 
+    Int disk_size_gb = 10 + 
                     10 * ceil(size(reads, "GB")) + 
                     10 * ceil(size(ont_ultralong_reads, "GB")) +
                     2 * ceil(size(maternal_yak_database, "GB")) +
@@ -235,7 +235,7 @@ task AssembleTrioData {
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
         mem_gb:             memory,
-        disk_gb:            disk_size,
+        disk_gb:            disk_size_gb,
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        0,
