@@ -58,7 +58,7 @@ workflow PBAssembleWithHifiasmTrio {
     call HAT.HifiasmTrio as t003_HifiasmTrio {
         input:
             reads = ccs_fq,
-            ont_ultralong_reads = t_002_CombineNanoporeReads.nanopore_reads_fastq_gz,
+            ont_ultralong_reads_fastq = t_002_CombineNanoporeReads.nanopore_reads_fastq_gz,
             maternal_fastq_1 = maternal_fastq_1,
             maternal_fastq_2 = maternal_fastq_2,
             paternal_fastq_1 = paternal_fastq_1,

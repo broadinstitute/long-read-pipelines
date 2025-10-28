@@ -15,7 +15,7 @@ workflow HifiasmTrio {
 
     input {
         File reads
-        File? ont_ultralong_reads
+        File? ont_ultralong_reads_fastq
 
         File maternal_fastq_1
         File? maternal_fastq_2
@@ -50,7 +50,7 @@ workflow HifiasmTrio {
     call AssembleTrioData as t003_AssembleTrioData {
         input:
             reads  = reads,
-            ont_ultralong_reads = ont_ultralong_reads,
+            ont_ultralong_reads_fastq = ont_ultralong_reads_fastq,
             maternal_yak_database = t001_CreateMaternalYakDatabase.yak_database,
             paternal_yak_database = t002_CreatePaternalYakDatabase.yak_database,
             telomere_5_prime_sequence = telomere_5_prime_sequence,
@@ -145,7 +145,7 @@ task AssembleTrioData {
         String prefix = "out"
         String zones
 
-        File? ont_ultralong_reads
+        File? ont_ultralong_reads_fastq
 
         File maternal_yak_database
         File paternal_yak_database
@@ -171,11 +171,10 @@ task AssembleTrioData {
 
     Int disk_size_gb = 10 + 
                     10 * ceil(size(reads, "GB")) + 
-                    10 * ceil(size(ont_ultralong_reads, "GB")) +
+                    10 * ceil(size(ont_ultralong_reads_fastq, "GB")) +
                     2 * ceil(size(maternal_yak_database, "GB")) +
                     2 * ceil(size(paternal_yak_database, "GB"))
 
-    String ont_ultralong_reads_arg = if defined(ont_ultralong_reads) then "--ul " + select_first([ont_ultralong_reads]) else ""
     String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + select_first([telomere_5_prime_sequence]) else ""
 
     command <<<
@@ -185,6 +184,11 @@ task AssembleTrioData {
             let np=${np}-1
         fi
 
+        ont_arg=""
+        if [[ -n "~{ont_ultralong_reads_fastq}" ]]; then
+            ont_arg="--ul ~{ont_ultralong_reads_fastq}"
+        fi
+
         set -euxo pipefail
 
         time hifiasm \
@@ -192,7 +196,7 @@ task AssembleTrioData {
             -t$((np-1)) \
             -k ~{kmer_size} \
             -f ~{homopolymer_kmer_size} \
-            ~{ont_ultralong_reads_arg} \
+            ${ont_arg} \
             -1 ~{maternal_yak_database} \
             -2 ~{paternal_yak_database} \
             ~{true="-l0" false="" haploid} \
