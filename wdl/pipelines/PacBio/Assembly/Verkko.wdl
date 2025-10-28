@@ -2,6 +2,7 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Utils.wdl"
+import "../../../tasks/Utility/ONTUtils.wdl" as ONTUtils
 
 workflow Verkko {
 
@@ -80,7 +81,7 @@ workflow Verkko {
     }
 
     if (defined(nanopore_scaffolding_read_basecall_dir)) {
-        call CombineNanoporeReads as t_002_CombineNanoporeReads {
+        call ONTUtils.CombineNanoporeReads as t_002_CombineNanoporeReads {
             input:
                 nanopore_scaffolding_read_basecall_dir = select_first([nanopore_scaffolding_read_basecall_dir])
         }
@@ -99,64 +100,6 @@ workflow Verkko {
     output {
         File assembly_fasta = t_003_VerkkoAssemble.assembly_fasta
         File output_dir_tar_gz = t_003_VerkkoAssemble.output_dir_tar_gz    
-    }
-}
-
-task CombineNanoporeReads {
-    input {
-        String nanopore_scaffolding_read_basecall_dir
-
-        Int disk_size_pad_gb = 10
-
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Int disk_size = disk_size_pad_gb + 100
-
-    command <<<
-        set -euxo pipefail
-
-        mkdir nanopore_reads
-        gsutil -m cp -r "~{nanopore_scaffolding_read_basecall_dir}/*" nanopore_reads/
-        
-        # Create a cat script.
-        # This is necessary because the command-line arg may be too long with a lot of files:
-        # 
-        echo '#!/usr/bin/env bash' > concat_script.sh
-        echo -n "cat " >>  concat_script.sh
-        find nanopore_reads -type f -name "*fastq*" | tr '\n' ' ' >> concat_script.sh
-        echo " > nanopore_reads.fastq.gz" >> concat_script.sh
-
-        echo "concat_script contents: "
-        cat concat_script.sh
-
-        chmod +x concat_script.sh
-        time ./concat_script.sh
-    >>>
-
-    output {
-        File nanopore_reads_fastq_gz = "nanopore_reads.fastq.gz"
-    }
-
-    #########################
-    RuntimeAttr default_attr = object {
-        cpu_cores:          1,
-        mem_gb:             2,
-        disk_gb:            disk_size,
-        boot_disk_gb:       15,
-        preemptible_tries:  1,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
-    }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-    runtime {
-        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
-        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
-        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
 

@@ -4,6 +4,7 @@ import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Assembly/HifiasmTrio.wdl" as HAT
 import "../../../tasks/QC/Quast.wdl" as QuastEval
 import "../../../tasks/Utility/Finalize.wdl" as FF
+import "../../../tasks/Utility/ONTUtils.wdl" as ONTUtils
 
 workflow PBAssembleWithHifiasmTrio {
 
@@ -31,7 +32,7 @@ workflow PBAssembleWithHifiasmTrio {
 
         File? ref_fasta_for_eval
         String? quast_extra_args
-        File? ont_ultralong_reads
+        File? nanopore_scaffolding_read_basecall_dir
         File? maternal_fastq_2
         File? paternal_fastq_2
         String? telomere_5_prime_sequence
@@ -47,10 +48,17 @@ workflow PBAssembleWithHifiasmTrio {
     }
     File ccs_fq  = select_first([ t001_MergeAllFastqs.merged_fastq, ccs_fqs[0] ])
 
-    call HAT.HifiasmTrio as t002_HifiasmTrio {
+    if (defined(nanopore_scaffolding_read_basecall_dir)) {
+        call ONTUtils.CombineNanoporeReads as t_002_CombineNanoporeReads {
+            input:
+                nanopore_scaffolding_read_basecall_dir = select_first([nanopore_scaffolding_read_basecall_dir])
+        }
+    }
+
+    call HAT.HifiasmTrio as t003_HifiasmTrio {
         input:
             reads = ccs_fq,
-            ont_ultralong_reads = ont_ultralong_reads,
+            ont_ultralong_reads = t_002_CombineNanoporeReads.nanopore_reads_fastq_gz,
             maternal_fastq_1 = maternal_fastq_1,
             maternal_fastq_2 = maternal_fastq_2,
             paternal_fastq_1 = paternal_fastq_1,
@@ -61,18 +69,18 @@ workflow PBAssembleWithHifiasmTrio {
     }
 
     # todo: assumes ploidy 2
-    call QuastEval.Quast as t003_primary_h0_h1_quast {
+    call QuastEval.Quast as t004_primary_h0_h1_quast {
         input:
             ref = ref_fasta_for_eval,
             is_large = true,
-            assemblies = [t002_HifiasmTrio.merged_unitigs_fa,
-                          t002_HifiasmTrio.maternal_phased_fa,
-                          t002_HifiasmTrio.paternal_phased_fa],
+            assemblies = [t003_HifiasmTrio.merged_unitigs_fa,
+                          t003_HifiasmTrio.maternal_phased_fa,
+                          t003_HifiasmTrio.paternal_phased_fa],
             extra_args = quast_extra_args
     }
 
-    call QuastEval.SummarizeQuastReport as t004_primary_h0_h1_quast_summary {
-        input: quast_report_txt = t003_primary_h0_h1_quast.report_txt
+    call QuastEval.SummarizeQuastReport as t005_primary_h0_h1_quast_summary {
+        input: quast_report_txt = t004_primary_h0_h1_quast.report_txt
     }
 
     #########################################################################################
@@ -95,27 +103,27 @@ workflow PBAssembleWithHifiasmTrio {
 
 
     # assembly results themselves
-    call FF.CompressAndFinalize as t006_FinalizeHifiasmPrimaryGFA   { input: outdir = dir, file = t002_HifiasmTrio.maternal_phased_gfa }
-    call FF.CompressAndFinalize as t007_FinalizeHifiasmPrimaryFA    { input: outdir = dir, file = t002_HifiasmTrio.maternal_phased_fa }
+    call FF.CompressAndFinalize as t006_FinalizeHifiasmPrimaryGFA   { input: outdir = dir, file = t003_HifiasmTrio.maternal_phased_gfa }
+    call FF.CompressAndFinalize as t007_FinalizeHifiasmPrimaryFA    { input: outdir = dir, file = t003_HifiasmTrio.maternal_phased_fa }
 
-    call FF.CompressAndFinalize as t008_FinalizeHifiasmAlternateGFA   { input: outdir = dir, file = t002_HifiasmTrio.paternal_phased_gfa }
-    call FF.CompressAndFinalize as t009_FinalizeHifiasmAlternateFA    { input: outdir = dir, file = t002_HifiasmTrio.paternal_phased_fa }
+    call FF.CompressAndFinalize as t008_FinalizeHifiasmAlternateGFA   { input: outdir = dir, file = t003_HifiasmTrio.paternal_phased_gfa }
+    call FF.CompressAndFinalize as t009_FinalizeHifiasmAlternateFA    { input: outdir = dir, file = t003_HifiasmTrio.paternal_phased_fa }
 
-    call FF.CompressAndFinalize as t010_FinalizeMergedUnitigsGFA   { input: outdir = dir, file = t002_HifiasmTrio.merged_unitigs_gfa }
-    call FF.CompressAndFinalize as t011_FinalizeMergedUnitigsFA    { input: outdir = dir, file = t002_HifiasmTrio.merged_unitigs_fa }
+    call FF.CompressAndFinalize as t010_FinalizeMergedUnitigsGFA   { input: outdir = dir, file = t003_HifiasmTrio.merged_unitigs_gfa }
+    call FF.CompressAndFinalize as t011_FinalizeMergedUnitigsFA    { input: outdir = dir, file = t003_HifiasmTrio.merged_unitigs_fa }
 
-    call FF.CompressAndFinalize as t012_FinalizeAllOutputsGZ    { input: outdir = dir, file = t002_HifiasmTrio.all_outputs_gz }
+    call FF.CompressAndFinalize as t012_FinalizeAllOutputsGZ    { input: outdir = dir, file = t003_HifiasmTrio.all_outputs_gz }
 
     call FF.FinalizeToFile as t013_FinalizeQuastReportHtml {
-        input: outdir = dir, file = t003_primary_h0_h1_quast.report_html
+        input: outdir = dir, file = t004_primary_h0_h1_quast.report_html
     }
     call FF.FinalizeAndCompress as t014_FinalizeQuastReports {
-        input: outdir = dir, files = t003_primary_h0_h1_quast.report_in_various_formats, prefix = prefix + ".quast_reports"
+        input: outdir = dir, files = t004_primary_h0_h1_quast.report_in_various_formats, prefix = prefix + ".quast_reports"
     }
     call FF.FinalizeToFile as t015_FinalizeQuastSummaryAll {
-        input: outdir = dir, file = t004_primary_h0_h1_quast_summary.quast_metrics_together
+        input: outdir = dir, file = t005_primary_h0_h1_quast_summary.quast_metrics_together
     }
-    scatter (report in t004_primary_h0_h1_quast_summary.quast_metrics ) {
+    scatter (report in t005_primary_h0_h1_quast_summary.quast_metrics ) {
         call FF.FinalizeToFile as t016_FinalizeQuastIndividualSummary  { input: outdir = dir, file = report }
     }
 
