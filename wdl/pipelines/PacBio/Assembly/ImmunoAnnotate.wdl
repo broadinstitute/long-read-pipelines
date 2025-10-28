@@ -8,10 +8,10 @@ workflow ImmunoAnnotate{
         File target_asm
         String prefix
     }
-    call immunoAnnotate as annotation {input: target_asm=target_asm, prefix = prefix + "hap1"}
+    call immunoAnnotate as annotation {input: target_asm=target_asm, prefix = prefix}
     
     output {
-        File annotation = annotation.gtf_file
+        File output_file = annotation.gtf_file
     }
 }
 
