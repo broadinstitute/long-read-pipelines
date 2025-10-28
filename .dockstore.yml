@@ -180,3 +180,6 @@ workflows:
 - name: AssembleWithVerkko
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/Verkko.wdl
+- name: PBAssembleWithHifiasmTrio
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/PacBio/Assembly/PBAssembleWithHifiasmTrio.wdl
