@@ -17,9 +17,9 @@ workflow HifiasmTrio {
         File reads
         File? ont_ultralong_reads
 
-        File? maternal_fastq_1
+        File maternal_fastq_1
         File? maternal_fastq_2
-        File? paternal_fastq_1
+        File paternal_fastq_1
         File? paternal_fastq_2
 
         String? telomere_5_prime_sequence
@@ -31,14 +31,28 @@ workflow HifiasmTrio {
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
 
+    call CreateYakDatabases as t001_CreateMaternalYakDatabase {
+        input:
+            fastq_1 = maternal_fastq_1,
+            fastq_2 = maternal_fastq_2,
+            prefix = prefix,
+            zones = zones
+    }
+
+    call CreateYakDatabases as t002_CreatePaternalYakDatabase {
+        input:
+            fastq_1 = paternal_fastq_1,
+            fastq_2 = paternal_fastq_2,
+            prefix = prefix,
+            zones = zones
+    }
+
     call AssembleTrioData as t001_AssembleTrioData {
         input:
             reads  = reads,
             ont_ultralong_reads = ont_ultralong_reads,
-            maternal_fastq_1 = maternal_fastq_1,
-            maternal_fastq_2 = maternal_fastq_2,
-            paternal_fastq_1 = paternal_fastq_1,
-            paternal_fastq_2 = paternal_fastq_2,
+            maternal_yak_database = t001_CreateMaternalYakDatabase.yak_database,
+            paternal_yak_database = t002_CreatePaternalYakDatabase.yak_database,
             telomere_5_prime_sequence = telomere_5_prime_sequence,
             haploid = haploid,
             prefix = prefix,
@@ -61,6 +75,70 @@ workflow HifiasmTrio {
     }
 }
 
+task CreateYakDatabases {
+    input {
+        File fastq_1
+        File? fastq_2
+
+        String prefix
+
+        String zones
+
+        Int kmer_size = 51
+        Int yak_bloom_filter_size = 37
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + 2*ceil(size(fastq_1, "GB")) + 2*ceil(size(fastq_2, "GB"))
+
+    String yak_arg = if defined(fastq_2) then "<(zcat ~{fastq_1}) <(zcat ~{fastq_2})" else "<(zcat ~{fastq_1})"
+
+    command <<<
+        set -euxo pipefail
+
+        # Make sure we use all our processors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            let np=${np}-1
+        fi
+
+        time yak count \
+                -t${np} \
+                -b~{yak_bloom_filter_size} \
+                -k~{kmer_size} \
+                -o ~{prefix}.yak \
+                ~{yak_arg}
+    >>>
+
+    output {
+        File yak_database = "~{prefix}.yak"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          12,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.24.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+        zones:                  zones
+    }
+    
+}
+
 task AssembleTrioData {
     input {
         File reads
@@ -69,10 +147,8 @@ task AssembleTrioData {
 
         File? ont_ultralong_reads
 
-        File? maternal_fastq_1
-        File? maternal_fastq_2
-        File? paternal_fastq_1
-        File? paternal_fastq_2
+        File maternal_yak_database
+        File paternal_yak_database
 
         String? telomere_5_prime_sequence
 
@@ -93,31 +169,16 @@ task AssembleTrioData {
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
 
-    Int disk_size = 10 + 10 * ceil(size(reads, "GB")) + 10 * ceil(size(ont_ultralong_reads, "GB"))
+    Int disk_size = 10 + 
+                    10 * ceil(size(reads, "GB")) + 
+                    10 * ceil(size(ont_ultralong_reads, "GB")) +
+                    2 * ceil(size(maternal_yak_database, "GB")) +
+                    2 * ceil(size(paternal_yak_database, "GB"))
 
     String ont_ultralong_reads_arg = if defined(ont_ultralong_reads) then "--ul " + select_first([ont_ultralong_reads]) else ""
     String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + select_first([telomere_5_prime_sequence]) else ""
 
     command <<<
-        set -uxo pipefail
-
-        # Check if we have the parental fastq files for trio assembly.
-        # They must be either all defined or undefined:
-        defined_count=0
-        if [[ -n "~{maternal_fastq_1}" ]]; then ((defined_count++)); fi
-        if [[ -n "~{maternal_fastq_2}" ]]; then ((defined_count++)); fi
-        if [[ -n "~{paternal_fastq_1}" ]]; then ((defined_count++)); fi
-        if [[ -n "~{paternal_fastq_2}" ]]; then ((defined_count++)); fi
-        
-        if [[ $defined_count -ne 4 ]] && [[ $defined_count -ne 2 ]] && [[ $defined_count -ne 0 ]]; then
-            echo "Error: Either 2, 4, or none of the parental fastq files must be defined." 1>&2
-            echo "       Maternal fastq 1: ~{maternal_fastq_1}" 1>&2
-            echo "       Maternal fastq 2: ~{maternal_fastq_2}" 1>&2
-            echo "       Paternal fastq 1: ~{paternal_fastq_1}" 1>&2
-            echo "       Paternal fastq 2: ~{paternal_fastq_2}" 1>&2
-            exit 1
-        fi
-
         # Make sure we use all our processors:
         np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
         if [[ ${np} -gt 2 ]] ; then
@@ -126,25 +187,14 @@ task AssembleTrioData {
 
         set -euxo pipefail
 
-        # Generate parental kmer databases if provided:
-        trio_arg=""
-        if [[ $defined_count -eq 4 ]] ; then
-            ./yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak <(zcat ~{maternal_fastq_1}) <(zcat ~{maternal_fastq_2})
-            ./yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak <(zcat ~{paternal_fastq_1}) <(zcat ~{paternal_fastq_2})
-            trio_arg="-1 maternal.yak -2 paternal.yak"
-        elif [[ $defined_count -eq 2 ]] ; then
-            yak count -b~{yak_bloom_filter_size} -t${np} -o maternal.yak ~{maternal_fastq_1}
-            yak count -b~{yak_bloom_filter_size} -t${np} -o paternal.yak ~{paternal_fastq_1}
-            trio_arg="-1 maternal.yak -2 paternal.yak"
-        fi
-
         time hifiasm \
             -o ~{prefix} \
             -t$((np-1)) \
             -k ~{kmer_size} \
             -f ~{homopolymer_kmer_size} \
             ~{ont_ultralong_reads_arg} \
-            ${trio_arg} \
+            -1 ~{maternal_yak_database} \
+            -2 ~{paternal_yak_database} \
             ~{true="-l0" false="" haploid} \
             ~{true="--n-hap 1" false="" haploid} \
             ~{telomere_5_prime_sequence_arg} \
