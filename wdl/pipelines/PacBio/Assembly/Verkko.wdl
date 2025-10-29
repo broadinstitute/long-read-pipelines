@@ -132,6 +132,8 @@ task VerkoAssemble {
 
         Boolean is_haploid = true
 
+        String telomere_motif = "CCCTAA"  ## Default telomere motif for Verkko
+
         File? nanopore_scaffolding_reads_fastq_gz
         File? maternal_hapmer_database_tar_gz
         File? paternal_hapmer_database_tar_gz
@@ -186,6 +188,7 @@ task VerkoAssemble {
         time verkko \
             -d ~{out_folder_name} \
             --hifi ~{sep=' ' pacbio_hifi_reads} \
+            --telomere-motif ~{telomere_motif} \
             ${nanopore_scaffolding_reads_fastq_gz_arg} \
             ~{true="--haploid" false="" is_haploid} \
             ~{hap_kmers_arg}
