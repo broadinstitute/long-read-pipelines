@@ -34,8 +34,8 @@ task immunoAnnotate{
     Int disk_size = 1 + ceil(2 * size(target_asm, "GiB"))
 
     runtime {
-        cpu: 2
-        memory: "16 GiB"
+        cpu: 4
+        memory: "32 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         # bootDiskSizeGb: 10
         preemptible: 2
