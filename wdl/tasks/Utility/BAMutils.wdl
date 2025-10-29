@@ -287,7 +287,7 @@ task ValidateSamFile {
     String output_name = "${output_basename}_${validation_mode}.txt"
 
     String base = basename(bam, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
 
     command <<<
         set -eux
@@ -348,7 +348,7 @@ task SamtoolsFlagStats {
 
     String base = basename(bam, ".bam")
 
-    String local_bam = "/cromwell_root/~{base}"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}"
 
     Map[String, String] reformat_user_input = {'JSON': 'json',       'json': 'json',
                                                "TSV": 'tsv',         'tsv': 'tsv',
@@ -464,7 +464,7 @@ task CountMethylCallReads {
     }
 
     String base = basename(bam, '.bam')
-    String local_bam = "/cromwell_root/~{base}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
 
     command <<<
         set -euxo pipefail
@@ -630,7 +630,7 @@ task CountAlignmentRecordsByFlag {
     # Int n = length(names_and_decimal_flags)
 
     String base = basename(aligned_bam, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
     command <<<
         set -eux
 
@@ -795,7 +795,7 @@ task ResetSamplename {
     }
 
     String prefix = basename(bam, ".bam")
-    String local_bam = "/cromwell_root/~{prefix}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{prefix}.bam"
     String out_prefix = "~{prefix}.ResetSamplename"
     command <<<
         set -euxo pipefail
@@ -882,7 +882,7 @@ task FilterBamByLen {
 
     Boolean is_aligned = defined(bai)
 
-    String local_bam = "/cromwell_root/~{base}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
 
     command <<<
         set -euxo pipefail
@@ -980,7 +980,7 @@ task GatherReadsWithoutMethylCalls {
     }
 
     String p = basename(bam, ".bam")
-    String local_bam = "/cromwell_root/~{p}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{p}.bam"
 
     command <<<
         set -euxo pipefail
@@ -1061,7 +1061,7 @@ task SubsetBamToLocusLocal {
 
     String subset_prefix = prefix + "." + interval_id
 
-    String local_bam = "/cromwell_root/~{basename(bam)}"
+    String local_bam = "/mnt/disks/cromwell_root/~{basename(bam)}"
 
     command <<<
         set -euxo pipefail
@@ -1125,7 +1125,7 @@ task DeduplicateQuerynameSortedBam {
     }
 
     String base = basename(qnorder_bam, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
 
     Int disk_size = 3 * ceil(size(qnorder_bam, "GB"))
 
@@ -1215,7 +1215,7 @@ task BamToFastq {
     Boolean custom_tags_to_preserve = 0<length(tags_to_preserve)
 
     String base = basename(bam)
-    String local_bam = "/cromwell_root/~{base}"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}"
     command <<<
         set -euxo pipefail
 
@@ -1302,7 +1302,7 @@ task GetPileup {
     String baq_option = if disable_baq then '-B' else '-E'
 
     String base = basename(bam)
-    String local_bam = "/cromwell_root/~{base}"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}"
 
     command <<<
         set -euxo pipefail
@@ -1363,7 +1363,7 @@ task BamToRelevantPileup {
     String baq_option = if disable_baq then '-B' else '-E'
 
     String base = basename(bam)
-    String local_bam = "/cromwell_root/~{base}"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}"
 
     command <<<
         set -euxo pipefail
@@ -1470,7 +1470,7 @@ task SamtoolsReset {
     String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
 
     String base = basename(bam, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
 
     command <<<
         set -eux
@@ -1674,7 +1674,7 @@ task SplitNameSortedUbam {
     String helper_arg = if (defined(read_cnt)) then "--TOTAL_READS_IN_INPUT ~{read_cnt}" else " "
 
     String base = basename(uBAM, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
 
     command <<<
         set -eux
@@ -1833,8 +1833,8 @@ task ShardAlignedBam {
 
     String base = basename(aligned_bam, ".bam")
 
-    String local_bam = "/cromwell_root/~{base}.bam"
-    String local_bai = "/cromwell_root/~{base}.bam.bai"
+    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
+    String local_bai = "/mnt/disks/cromwell_root/~{base}.bam.bai"
 
     Int vm_cores = parallel_subset_jobs * 2 + 2
     Int vm_memory = vm_cores * 4
@@ -1955,7 +1955,9 @@ task MergeBamsWithSamtools {
 
         mkdir -p bams_dir
         time \
-        gcloud storage cp ~{sep=' ' bams} /cromwell_root/bams_dir/
+        gcloud storage cp \
+            ~{sep=' ' bams} \
+            /mnt/disks/cromwell_root/bams_dir/
         ls bams_dir
 
         cd bams_dir && ls ./*.bam > bams.list
@@ -1968,7 +1970,7 @@ task MergeBamsWithSamtools {
             -b bams.list
         mv ~{out_prefix}.bam \
            ~{out_prefix}.bam.bai \
-        /cromwell_root
+        /mnt/disks/cromwell_root/
     >>>
     #########################
     Int local_ssd_sz = if size(bams, "GiB") > 150 then 750 else 375
@@ -2030,7 +2032,9 @@ task MergeBamsQuerynameSortedWithPicard {
         set -eux
 
         mkdir -p bams_dir
-        gcloud storage cp ~{sep=' ' qns_bams} /cromwell_root/bams_dir/
+        gcloud storage cp \
+            ~{sep=' ' qns_bams} \
+            /mnt/disks/cromwell_root/bams_dir/
         ls bams_dir
 
         # higher memory, also lower # of reads in memory given ~100 longer reads (1.5E4 bp vs 1.5E2 bp)
@@ -2041,7 +2045,7 @@ task MergeBamsQuerynameSortedWithPicard {
             -use_jdk_deflater -use_jdk_inflater \
             --SORT_ORDER queryname \
             -I ~{sep=" -I " base_names} \
-            -O "/cromwell_root/~{out_prefix}.bam"
+            -O "/mnt/disks/cromwell_root/~{out_prefix}.bam"
     >>>
 
     #########################
