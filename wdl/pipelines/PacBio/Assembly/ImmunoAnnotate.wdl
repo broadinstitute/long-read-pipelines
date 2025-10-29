@@ -35,7 +35,7 @@ task immunoAnnotate{
 
     runtime {
         cpu: 2
-        memory: "8 GiB"
+        memory: "16 GiB"
         disks: "local-disk " + disk_size + " HDD" #"local-disk 100 HDD"
         # bootDiskSizeGb: 10
         preemptible: 2
