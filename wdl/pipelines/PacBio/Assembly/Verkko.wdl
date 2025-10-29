@@ -164,7 +164,7 @@ task VerkoAssemble {
         time verkko \
             -d ~{out_folder_name} \
             --hifi ~{sep=' ' pacbio_hifi_reads} \
-            ${nanopore_scaffolding_reads_fastq_gz_arg}
+            ${nanopore_scaffolding_reads_fastq_gz_arg} \
             ~{true="--haploid" false="" is_haploid} \
             ~{hap_kmers_arg}
 
