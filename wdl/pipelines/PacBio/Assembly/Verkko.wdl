@@ -151,7 +151,7 @@ task VerkoAssemble {
     String hap_kmers_arg = if (defined(maternal_hapmer_database_tar_gz) && defined(paternal_hapmer_database_tar_gz) && defined(hap_kmers_type)) then "--hap-kmers " + basename(select_first([maternal_hapmer_database_tar_gz]), ".tar.gz") + " " + basename(select_first([paternal_hapmer_database_tar_gz]), ".tar.gz") + " " + select_first([hap_kmers_type]) else ""
 
     # Nanopore scaffolding is about 30GB, but we don't know how much space it will take up.
-    Int disk_size = 10 + 2*(
+    Int disk_size = 10 + 4*(
         2 * ceil(size(pacbio_hifi_reads, "GB")) + 
         2 * ceil(size(nanopore_scaffolding_reads_fastq_gz, "GB")) +
         11 * ceil(size(maternal_hapmer_database_tar_gz, "GB")) + 
