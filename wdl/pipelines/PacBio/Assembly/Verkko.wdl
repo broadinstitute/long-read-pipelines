@@ -3,6 +3,7 @@ version 1.0
 import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Utils.wdl"
 import "../../../tasks/Utility/ONTUtils.wdl" as ONTUtils
+import "../../../tasks/QC/Quast.wdl" as QuastEval
 
 workflow Verkko {
 
@@ -34,6 +35,9 @@ workflow Verkko {
         File? maternal_hapmer_database_tar_gz
         File? paternal_hapmer_database_tar_gz
         String? hap_kmers_type
+
+        File? ref_fasta_for_eval
+        String? quast_extra_args
     }
 
     # Validate that either all hapmer database options are given or none of them are given:
@@ -97,9 +101,27 @@ workflow Verkko {
             hap_kmers_type = hap_kmers_type
     }
 
+    # todo: assumes ploidy 2
+    call QuastEval.Quast as t004_quast {
+        input:
+            ref = ref_fasta_for_eval,
+            is_large = true,
+            assemblies = [t_003_VerkkoAssemble.assembly_fasta],
+            extra_args = quast_extra_args
+    }
+
+    call QuastEval.SummarizeQuastReport as t005_quast_summary {
+        input: quast_report_txt = t004_quast.report_txt
+    }
+
     output {
         File assembly_fasta = t_003_VerkkoAssemble.assembly_fasta
-        File output_dir_tar_gz = t_003_VerkkoAssemble.output_dir_tar_gz    
+        File output_dir_tar_gz = t_003_VerkkoAssemble.output_dir_tar_gz 
+
+        File quast_report_html = t004_quast.report_html
+        File quast_report_txt = t004_quast.report_txt
+        File quast_report_summary = t005_quast_summary.quast_metrics_together
+        Array[File] quast_report_in_various_formats = t004_quast.report_in_various_formats
     }
 }
 
