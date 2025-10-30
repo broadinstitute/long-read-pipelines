@@ -1415,8 +1415,10 @@ task BamToRelevantPileup {
     Int cores = 12
     Int memory = 4 + cores
     Int local_ssd_sz = if size(bam, "GiB") > 150 then 750 else 375
-    Int pd_sz = 20 + 2 * ceil(size(bam, "GiB"))
-    Int disk_size = if "LOCAL" == disk_type then local_ssd_sz else pd_sz
+    Int pd_sz = 20 + 4 * ceil(size(bam, "GiB"))
+    Int min_pd_sz = 300
+    Int picked_pd_sz = if pd_sz < min_pd_sz then min_pd_sz else pd_sz
+    Int disk_size = if "LOCAL" == disk_type then local_ssd_sz else picked_pd_sz
 
     runtime {
         cpu:            "~{cores}"
