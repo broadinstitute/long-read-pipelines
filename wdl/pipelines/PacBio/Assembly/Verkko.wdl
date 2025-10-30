@@ -193,7 +193,7 @@ task VerkoAssemble {
             ~{true="--haploid" false="" is_haploid} \
             ~{hap_kmers_arg}
 
-        cp ~{out_folder_name}/assembly.fasta ~{out_folder_name}/~{prefix}.fasta.gz
+        cp ~{out_folder_name}/assembly.fasta ~{out_folder_name}/~{prefix}.fasta
 
         tar -czf ~{out_folder_name}.tar.gz ~{out_folder_name}
     >>>
