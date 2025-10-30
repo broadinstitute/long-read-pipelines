@@ -3,6 +3,7 @@ version 1.0
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Assembly/Hifiasm.wdl" as HA
 import "../../../tasks/QC/Quast.wdl" as QuastEval
+import "../../../tasks/Utility/ONTUtils.wdl" as ONTUtils
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
@@ -23,6 +24,8 @@ workflow PBAssembleWithHifiasm {
     input {
         Array[File] ccs_fqs
 
+        String? ont_basecall_dir
+
         String participant_name
         String prefix
 
@@ -39,10 +42,21 @@ workflow PBAssembleWithHifiasm {
     }
 
     #########################################################################################
+
     if (length(ccs_fqs) > 1) {
         call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = ccs_fqs }
     }
-    File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, ccs_fqs[0] ])
+    if (defined(ont_basecall_dir)) {
+        call ONTUtils.CombineNanoporeReads as CombineNanoporeReads {
+            input:
+                nanopore_scaffolding_read_basecall_dir = select_first([ont_basecall_dir])
+        }
+
+        call Utils.MergeFastqs as MergeHiFiAndNanoporeReads { 
+            input: fastqs = [select_first([MergeAllFastqs.merged_fastq, ccs_fqs[0]]), CombineNanoporeReads.nanopore_reads_fastq_gz] 
+        }
+    }
+    File ccs_fq  = select_first([ MergeHiFiAndNanoporeReads.merged_fastq, MergeAllFastqs.merged_fastq, ccs_fqs[0] ])
 
     call HA.Hifiasm {
         input:

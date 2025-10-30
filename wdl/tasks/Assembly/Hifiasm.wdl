@@ -21,7 +21,9 @@ workflow Hifiasm {
         Int minimizer_window_size = 51
 
         Boolean haploid = false
-        
+
+        String extra_args = ""
+
         String? telomere_5_prime_sequence
 
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
@@ -36,6 +38,7 @@ workflow Hifiasm {
             kmer_size = kmer_size,
             bloom_filter_bits = bloom_filter_bits,
             minimizer_window_size = minimizer_window_size,
+            extra_args = extra_args,
             zones = zones
     }
 
@@ -48,6 +51,7 @@ workflow Hifiasm {
             bloom_filter_bits = bloom_filter_bits,
             minimizer_window_size = minimizer_window_size,
             haploid = haploid,
+            extra_args = extra_args,
             zones = zones   
     }
 
