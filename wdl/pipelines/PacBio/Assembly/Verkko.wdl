@@ -36,6 +36,8 @@ workflow Verkko {
         File? paternal_hapmer_database_tar_gz
         String? hap_kmers_type
 
+        Int kmer_size = 51
+
         File? ref_fasta_for_eval
         String? quast_extra_args
     }
@@ -75,6 +77,7 @@ workflow Verkko {
             input:
                 maternal_fastq_files = select_first([maternal_fastq_files]),
                 paternal_fastq_files = select_first([paternal_fastq_files]),
+                kmer_size = kmer_size,
                 prefix = sample_name
         }
     }
@@ -179,7 +182,7 @@ task VerkoAssemble {
         if [ -n "~{nanopore_scaffolding_reads_fastq_gz}" ]; then
             nanopore_scaffolding_reads_fastq_gz_arg="--nano ~{nanopore_scaffolding_reads_fastq_gz}"
         else
-            nanopore_scaffolding_reads_fastq_gz_arg=""
+            nanopore_scaffolding_reads_fastq_gz_arg="--no-nano"
         fi
 
         ############################################################
@@ -260,8 +263,8 @@ task CreateParentalHapmerDatabases {
 
         set -euxo pipefail
 
-        time meryl count compress k=30 threads=$((np-1)) memory=${memory_gb} ~{sep=' ' maternal_fastq_files} output ~{prefix}_maternal_~{out_base_name}.meryl
-        time meryl count compress k=30 threads=$((np-1)) memory=${memory_gb} ~{sep=' ' paternal_fastq_files} output ~{prefix}_paternal_~{out_base_name}.meryl
+        time meryl count compress k=~{kmer_size} threads=$((np-1)) memory=${memory_gb} ~{sep=' ' maternal_fastq_files} output ~{prefix}_maternal_~{out_base_name}.meryl
+        time meryl count compress k=~{kmer_size} threads=$((np-1)) memory=${memory_gb} ~{sep=' ' paternal_fastq_files} output ~{prefix}_paternal_~{out_base_name}.meryl
 
         $MERQURY/trio/hapmers.sh ~{prefix}_maternal_~{out_base_name}.meryl ~{prefix}_paternal_~{out_base_name}.meryl
 

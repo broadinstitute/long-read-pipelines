@@ -26,6 +26,13 @@ workflow PBAssembleWithHifiasm {
         String participant_name
         String prefix
 
+        Boolean haploid = false
+        Int kmer_size = 51
+        Int bloom_filter_bits = 37
+        Int minimizer_window_size = 51
+
+        String? telomere_5_prime_sequence
+
         File? ref_fasta_for_eval
 
         String gcs_out_root_dir
@@ -40,7 +47,12 @@ workflow PBAssembleWithHifiasm {
     call HA.Hifiasm {
         input:
             reads = ccs_fq,
-            prefix = prefix
+            prefix = prefix,
+            kmer_size = kmer_size,
+            bloom_filter_bits = bloom_filter_bits,
+            minimizer_window_size = minimizer_window_size,
+            haploid = haploid,
+            telomere_5_prime_sequence = telomere_5_prime_sequence
     }
 
     # todo: assumes ploidy 2

@@ -155,8 +155,7 @@ task AssembleTrioData {
         Boolean haploid = false
 
         Int kmer_size = 51
-        Int homopolymer_kmer_size = 37
-        Int yak_bloom_filter_size = 37
+        Int bloom_filter_bits = 37
 
         String extra_args = ""
 
@@ -195,10 +194,11 @@ task AssembleTrioData {
             -o ~{prefix} \
             -t$((np-1)) \
             -k ~{kmer_size} \
-            -f ~{homopolymer_kmer_size} \
+            -f ~{bloom_filter_bits} \
             ${ont_arg} \
             -1 ~{maternal_yak_database} \
             -2 ~{paternal_yak_database} \
+            --trio-dual \
             ~{true="-l0" false="" haploid} \
             ~{true="--n-hap 1" false="" haploid} \
             ~{telomere_5_prime_sequence_arg} \

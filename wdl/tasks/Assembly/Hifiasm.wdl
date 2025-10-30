@@ -16,6 +16,14 @@ workflow Hifiasm {
         File reads
         String prefix
 
+        Int kmer_size = 51
+        Int bloom_filter_bits = 37
+        Int minimizer_window_size = 51
+
+        Boolean haploid = false
+        
+        String? telomere_5_prime_sequence
+
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
 
@@ -23,6 +31,11 @@ workflow Hifiasm {
         input:
             reads  = reads,
             prefix = prefix,
+            telomere_5_prime_sequence = telomere_5_prime_sequence,
+            haploid = haploid,
+            kmer_size = kmer_size,
+            bloom_filter_bits = bloom_filter_bits,
+            minimizer_window_size = minimizer_window_size,
             zones = zones
     }
 
@@ -30,7 +43,12 @@ workflow Hifiasm {
         input:
             reads  = reads,
             prefix = prefix,
-            zones = zones
+            telomere_5_prime_sequence = telomere_5_prime_sequence,
+            kmer_size = kmer_size,
+            bloom_filter_bits = bloom_filter_bits,
+            minimizer_window_size = minimizer_window_size,
+            haploid = haploid,
+            zones = zones   
     }
 
     output {
@@ -58,10 +76,22 @@ task AssembleForHaplotigs {
     input {
         File reads
         String prefix = "out"
+        String? telomere_5_prime_sequence
+        
+        Boolean haploid = false
+
+        Int kmer_size = 51
+        Int bloom_filter_bits = 37
+        Int minimizer_window_size = 51
+
+        String extra_args = ""
+
         String zones
 
         RuntimeAttr? runtime_attr_override
     }
+
+    String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + select_first([telomere_5_prime_sequence]) else ""
 
     Int proposed_memory = 4 * ceil(size(reads, "GB"))
     Int memory = if proposed_memory < 96 then 96 else proposed_memory  # this 96 magic number is purely empirical
@@ -77,6 +107,13 @@ task AssembleForHaplotigs {
         time hifiasm \
             -o ~{prefix} \
             -t~{num_cpus} \
+            -k ~{kmer_size} \
+            -f ~{bloom_filter_bits} \
+            -m ~{minimizer_window_size} \
+            ~{true="-l0" false="" haploid} \
+            ~{true="--n-hap 1" false="" haploid} \
+            ~{telomere_5_prime_sequence_arg} \
+            ~{extra_args} \
             ~{reads} \
             2>&1 | tee hifiasm.log
 
@@ -138,10 +175,22 @@ task AssembleForAltContigs {
     input {
         File reads
         String prefix = "out"
+        String? telomere_5_prime_sequence
+
+        Int kmer_size = 51
+        Int bloom_filter_bits = 37
+        Int minimizer_window_size = 51
+        Boolean haploid = false
+
+        String extra_args = ""
+
         String zones
 
         RuntimeAttr? runtime_attr_override
     }
+
+    String telomere_5_prime_sequence_arg = if defined(telomere_5_prime_sequence) then "--telo-m " + select_first([telomere_5_prime_sequence]) else ""
+
     Int proposed_memory = 4 * ceil(size(reads, "GB"))
     Int memory = if proposed_memory < 96 then 96 else if proposed_memory > 512 then 512 else proposed_memory # this 96 magic number is purely empirical
     Int n = memory / 4  # this might be an odd number
@@ -157,6 +206,13 @@ task AssembleForAltContigs {
             -o ~{prefix} \
             -t~{num_cpus} \
             --primary \
+            -k ~{kmer_size} \
+            -f ~{bloom_filter_bits} \
+            -m ~{minimizer_window_size} \
+            ~{true="-l0" false="" haploid} \
+            ~{true="--n-hap 1" false="" haploid} \
+            ~{telomere_5_prime_sequence_arg} \
+            ~{extra_args} \
             ~{reads} \
             2>&1 | tee hifiasm.log
 
