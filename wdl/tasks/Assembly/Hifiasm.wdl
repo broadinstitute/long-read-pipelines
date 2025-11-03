@@ -14,6 +14,7 @@ workflow Hifiasm {
 
     input {
         File reads
+        File? ont_reads_fastq
         String prefix
 
         Int kmer_size = 51
@@ -32,6 +33,7 @@ workflow Hifiasm {
     call AssembleForAltContigs {
         input:
             reads  = reads,
+            ont_reads_fastq = ont_reads_fastq,
             prefix = prefix,
             telomere_5_prime_sequence = telomere_5_prime_sequence,
             haploid = haploid,
@@ -45,6 +47,7 @@ workflow Hifiasm {
     call AssembleForHaplotigs {
         input:
             reads  = reads,
+            ont_reads_fastq = ont_reads_fastq,
             prefix = prefix,
             telomere_5_prime_sequence = telomere_5_prime_sequence,
             kmer_size = kmer_size,
@@ -62,11 +65,15 @@ workflow Hifiasm {
         File alternate_gfa  = AssembleForAltContigs.alternate_gfa
         File alternate_tigs = AssembleForAltContigs.alternate_tigs
 
+        File alt_contig_assembly_all_outputs_gz = AssembleForAltContigs.all_outputs_gz
+
         File log_in_pVSa_mode = AssembleForAltContigs.log
 
         ###########
-        Array[File] phased_gfas = AssembleForHaplotigs.phased_gfas
-        Array[File] phased_tigs = AssembleForHaplotigs.phased_tigs
+        Array[File]? phased_gfas = AssembleForHaplotigs.phased_gfas
+        Array[File]? phased_tigs = AssembleForHaplotigs.phased_tigs
+
+        File haplotig_assembly_all_outputs_gz = AssembleForHaplotigs.all_outputs_gz
 
         File log_in_hap_mode = AssembleForHaplotigs.log
 
@@ -79,6 +86,7 @@ workflow Hifiasm {
 task AssembleForHaplotigs {
     input {
         File reads
+        File? ont_reads_fastq
         String prefix = "out"
         String? telomere_5_prime_sequence
         
@@ -103,10 +111,13 @@ task AssembleForHaplotigs {
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
 
-    Int disk_size = 10 * ceil(size(reads, "GB"))
+    Int disk_size = 50 + (10 * ceil(size(reads, "GB")) + 10 * ceil(size(ont_reads_fastq, "GB")))
 
     command <<<
         set -euxo pipefail
+
+        echo "Memory requested: ~{memory} GiB" > hifiasm.log
+        echo "Memory available: $(free -m | grep '^Mem' | awk '{print $2}') MB" >> hifiasm.log
 
         time hifiasm \
             -o ~{prefix} \
@@ -119,7 +130,8 @@ task AssembleForHaplotigs {
             ~{telomere_5_prime_sequence_arg} \
             ~{extra_args} \
             ~{reads} \
-            2>&1 | tee hifiasm.log
+            ~{ont_reads_fastq} \
+            2>&1 | tee -a hifiasm.log
 
         tree -h .
 
@@ -129,16 +141,19 @@ task AssembleForHaplotigs {
             ~{prefix}.bp.p_ctg.gfa \
             > ~{prefix}.bp.p_ctg.fa
 
-        ls "~{prefix}.bp.hap"*".p_ctg.gfa"
+        ls "*.gfa"
 
         # GFA graph to contigs, for each haplotig set
-        for haplotype_gfa in ~{prefix}.bp.hap*.p_ctg.gfa; do
-            filename=$(basename -- "${haplotype_gfa}")
+        for gfa in *.gfa; do
+            filename=$(basename -- "${gfa}")
             haplotype="${filename%.*}"
             awk '/^S/{print ">"$2; print $3}' \
-                "${haplotype_gfa}" \
+                "${gfa}" \
                 > "${haplotype}".fa
         done
+
+        # Save everything in a tar.gz file:
+        tar -zcf ~{prefix}_hifiasm_assembleforhaplotigs.tar.gz ~{prefix}.*
     >>>
 
     output {
@@ -146,8 +161,10 @@ task AssembleForHaplotigs {
         File primary_gfa = "~{prefix}.bp.p_ctg.gfa"
         File primary_fa = "~{prefix}.bp.p_ctg.fa"
 
-        Array[File] phased_gfas = glob("~{prefix}.bp.hap*.p_ctg.gfa")
-        Array[File] phased_tigs = glob("~{prefix}.bp.hap*.p_ctg.fa")
+        Array[File]? phased_gfas = glob("~{prefix}.bp.hap*.p_ctg.gfa")
+        Array[File]? phased_tigs = glob("~{prefix}.bp.hap*.p_ctg.fa")
+
+        File all_outputs_gz = "~{prefix}_hifiasm_assembleforhaplotigs.tar.gz"
 
         File log = "hifiasm.log"
     }
@@ -178,6 +195,7 @@ task AssembleForHaplotigs {
 task AssembleForAltContigs {
     input {
         File reads
+        File? ont_reads_fastq
         String prefix = "out"
         String? telomere_5_prime_sequence
 
@@ -201,10 +219,13 @@ task AssembleForAltContigs {
     Int num_cpus_proposal = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
     Int num_cpus = if num_cpus_proposal > 96 then 96 else num_cpus_proposal
 
-    Int disk_size = 10 * ceil(size(reads, "GB"))
+    Int disk_size = 50 + (10 * ceil(size(reads, "GB")) + 10 * ceil(size(ont_reads_fastq, "GB")))
 
     command <<<
         set -euxo pipefail
+
+        echo "Memory requested: ~{memory} GiB" > hifiasm.log
+        echo "Memory available: $(free -m | grep '^Mem' | awk '{print $2}') MB" >> hifiasm.log
 
         time hifiasm \
             -o ~{prefix} \
@@ -218,7 +239,8 @@ task AssembleForAltContigs {
             ~{telomere_5_prime_sequence_arg} \
             ~{extra_args} \
             ~{reads} \
-            2>&1 | tee hifiasm.log
+            ~{ont_reads_fastq} \
+            2>&1 | tee -a hifiasm.log
 
         tree -h .
 
@@ -232,6 +254,9 @@ task AssembleForAltContigs {
         awk '/^S/{print ">"$2; print $3}' \
             ~{prefix}.a_ctg.gfa \
             > ~{prefix}.a_ctg.fa
+
+        # Save everything in a tar.gz file:
+        tar -zcf ~{prefix}_hifiasm_assembleforaltcontigs.tar.gz ~{prefix}.*
     >>>
 
     output {
@@ -240,6 +265,8 @@ task AssembleForAltContigs {
 
         File alternate_gfa  = "~{prefix}.a_ctg.gfa"
         File alternate_tigs = "~{prefix}.a_ctg.fa"
+
+        File all_outputs_gz = "~{prefix}_hifiasm_assembleforaltcontigs.tar.gz"
 
         File log = "hifiasm.log"
     }

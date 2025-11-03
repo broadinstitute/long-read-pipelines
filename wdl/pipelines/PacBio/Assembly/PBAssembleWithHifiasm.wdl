@@ -46,21 +46,19 @@ workflow PBAssembleWithHifiasm {
     if (length(ccs_fqs) > 1) {
         call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = ccs_fqs }
     }
+    File ccs_fq  = select_first([MergeAllFastqs.merged_fastq, ccs_fqs[0]])
+
     if (defined(ont_basecall_dir)) {
         call ONTUtils.CombineNanoporeReads as CombineNanoporeReads {
             input:
                 nanopore_scaffolding_read_basecall_dir = select_first([ont_basecall_dir])
         }
-
-        call Utils.MergeFastqs as MergeHiFiAndNanoporeReads { 
-            input: fastqs = [select_first([MergeAllFastqs.merged_fastq, ccs_fqs[0]]), CombineNanoporeReads.nanopore_reads_fastq_gz] 
-        }
     }
-    File ccs_fq  = select_first([ MergeHiFiAndNanoporeReads.merged_fastq, MergeAllFastqs.merged_fastq, ccs_fqs[0] ])
 
     call HA.Hifiasm {
         input:
             reads = ccs_fq,
+            ont_reads_fastq = CombineNanoporeReads.nanopore_reads_fastq_gz,
             prefix = prefix,
             kmer_size = kmer_size,
             bloom_filter_bits = bloom_filter_bits,
@@ -70,13 +68,13 @@ workflow PBAssembleWithHifiasm {
     }
 
     # todo: assumes ploidy 2
+    
+    Array[File] assemblies_for_quast_eval = if defined(Hifiasm.phased_tigs) then [Hifiasm.primary_tigs, select_first([Hifiasm.phased_tigs]), select_first([Hifiasm.phased_tigs])[1]] else [Hifiasm.primary_tigs]
     call QuastEval.Quast as primary_h0_h1_quast {
         input:
             ref = ref_fasta_for_eval,
             is_large = true,
-            assemblies = [Hifiasm.primary_tigs,
-                          Hifiasm.phased_tigs[0],
-                          Hifiasm.phased_tigs[1]]
+            assemblies = assemblies_for_quast_eval
     }
 
     call QuastEval.SummarizeQuastReport as primary_h0_h1_quast_summary {
@@ -109,8 +107,15 @@ workflow PBAssembleWithHifiasm {
     call FF.CompressAndFinalize as FinalizeHifiasmAlternateGFA   { input: outdir = dir, file = Hifiasm.alternate_gfa }
     call FF.CompressAndFinalize as FinalizeHifiasmAlternateFA    { input: outdir = dir, file = Hifiasm.alternate_tigs }
 
-    call FF.FinalizeAndCompress as FinalizeHifiasmHapGFAs  { input: outdir = dir, files = Hifiasm.phased_gfas, prefix = prefix + ".haploGFAs" }
-    call FF.FinalizeAndCompress as FinalizeHifiasmHapFAs   { input: outdir = dir, files = Hifiasm.phased_tigs, prefix = prefix + ".haploTigs" }
+    if (defined(Hifiasm.phased_gfas)) {
+        call FF.FinalizeAndCompress as FinalizeHifiasmHapGFAs  { input: outdir = dir, files = select_first([Hifiasm.phased_gfas]), prefix = prefix + ".haploGFAs" }
+    }
+    if (defined(Hifiasm.phased_tigs)) {
+        call FF.FinalizeAndCompress as FinalizeHifiasmHapFAs   { input: outdir = dir, files = select_first([Hifiasm.phased_tigs]), prefix = prefix + ".haploTigs" }
+    }
+
+    call FF.FinalizeToFile as FinalizeHifiasmAltContigsAllOutputsGZ { input: outdir = dir, file = Hifiasm.alt_contig_assembly_all_outputs_gz }
+    call FF.FinalizeToFile as FinalizeHifiasmHaplotigAllOutputsGZ { input: outdir = dir, file = Hifiasm.haplotig_assembly_all_outputs_gz }
 
     call FF.FinalizeToFile as FinalizeQuastReportHtml {
         input: outdir = dir, file = primary_h0_h1_quast.report_html
@@ -131,8 +136,8 @@ workflow PBAssembleWithHifiasm {
         File hifiasm_primary_gfa  = FinalizeHifiasmPrimaryGFA.gcs_path
         File hifiasm_primary_tigs = FinalizeHifiasmPrimaryFA.gcs_path
 
-        File hifiasm_haploGFAs = FinalizeHifiasmHapGFAs.gcs_path
-        File hifiasm_haplotigs = FinalizeHifiasmHapFAs.gcs_path
+        File? hifiasm_haploGFAs = FinalizeHifiasmHapGFAs.gcs_path
+        File? hifiasm_haplotigs = FinalizeHifiasmHapFAs.gcs_path
 
         File hifiasm_alternate_gfa  = FinalizeHifiasmAlternateGFA.gcs_path
         File hifiasm_alternate_tigs = FinalizeHifiasmAlternateFA.gcs_path

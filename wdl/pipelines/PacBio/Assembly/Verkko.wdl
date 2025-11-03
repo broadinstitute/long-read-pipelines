@@ -158,7 +158,7 @@ task VerkoAssemble {
         2 * ceil(size(pacbio_hifi_reads, "GB")) + 
         2 * ceil(size(nanopore_scaffolding_reads_fastq_gz, "GB")) +
         11 * ceil(size(maternal_hapmer_database_tar_gz, "GB")) + 
-        11 * ceil(size(paternal_hapmer_database_tar_gz, "GB"))
+        11 * ceil(size(paternal_hapmer_database_tar_gz, "GB")) 
     )
 
     command <<<
