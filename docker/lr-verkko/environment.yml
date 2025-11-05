@@ -12,4 +12,5 @@ dependencies:
   - r-essentials=4.3.1
   - r-ggplot2=3.5.2
   - r-scales=1.4.0
+  - r-argparse=2.2.2
 
