@@ -130,6 +130,14 @@ workflow PBAssembleWithHifiasm {
         call FF.FinalizeToFile as FinalizeQuastIndividualSummary  { input: outdir = dir, file = report }
     }
 
+    if (length(FinalizeQuastIndividualSummary.gcs_path) > 1) {
+        File final_quast_summary_on_H0 = FinalizeQuastIndividualSummary.gcs_path[1]
+    }
+
+    if (length(FinalizeQuastIndividualSummary.gcs_path) > 2) {
+        File final_quast_summary_on_H1 = FinalizeQuastIndividualSummary.gcs_path[2]
+    }
+
     output {
         File merged_fq = finalized_merged_fq_path
 
@@ -148,7 +156,7 @@ workflow PBAssembleWithHifiasm {
         File? quast_summary_on_all = FinalizeQuastSummaryAll.gcs_path
 
         File? quast_summary_on_primary = FinalizeQuastIndividualSummary.gcs_path[0]
-        File? quast_summary_on_H0 = FinalizeQuastIndividualSummary.gcs_path[1]
-        File? quast_summary_on_H1 = FinalizeQuastIndividualSummary.gcs_path[2]
+        File? quast_summary_on_H0 = final_quast_summary_on_H0
+        File? quast_summary_on_H1 = final_quast_summary_on_H1
     }
 }
