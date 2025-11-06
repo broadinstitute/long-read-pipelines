@@ -69,7 +69,7 @@ workflow PBAssembleWithHifiasm {
 
     # todo: assumes ploidy 2
     
-    Array[File] assemblies_for_quast_eval = if defined(Hifiasm.phased_tigs) then [Hifiasm.primary_tigs, select_first([Hifiasm.phased_tigs]), select_first([Hifiasm.phased_tigs])[1]] else [Hifiasm.primary_tigs]
+    Array[File] assemblies_for_quast_eval = if (defined(Hifiasm.phased_tigs) && length(select_first([Hifiasm.phased_tigs])) > 0) then [Hifiasm.primary_tigs, select_first([Hifiasm.phased_tigs]), select_first([Hifiasm.phased_tigs])[1]] else [Hifiasm.primary_tigs]
     call QuastEval.Quast as primary_h0_h1_quast {
         input:
             ref = ref_fasta_for_eval,
