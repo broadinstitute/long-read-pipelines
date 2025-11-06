@@ -141,8 +141,6 @@ task AssembleForHaplotigs {
             ~{prefix}.bp.p_ctg.gfa \
             > ~{prefix}.bp.p_ctg.fa
 
-        ls "*.gfa"
-
         # GFA graph to contigs, for each haplotig set
         for gfa in *.gfa; do
             filename=$(basename -- "${gfa}")
