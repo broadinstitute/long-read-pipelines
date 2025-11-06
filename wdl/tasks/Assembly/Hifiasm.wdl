@@ -152,6 +152,8 @@ task AssembleForHaplotigs {
                 > "${haplotype}".fa
         done
 
+        du -hs 
+
         # Save everything in a tar.gz file:
         tar -zcf ~{prefix}_hifiasm_assembleforhaplotigs.tar.gz ~{prefix}.*
     >>>
@@ -254,6 +256,8 @@ task AssembleForAltContigs {
         awk '/^S/{print ">"$2; print $3}' \
             ~{prefix}.a_ctg.gfa \
             > ~{prefix}.a_ctg.fa
+
+        du -hs 
 
         # Save everything in a tar.gz file:
         tar -zcf ~{prefix}_hifiasm_assembleforaltcontigs.tar.gz ~{prefix}.*
