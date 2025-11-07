@@ -107,10 +107,10 @@ workflow PBAssembleWithHifiasm {
     call FF.CompressAndFinalize as FinalizeHifiasmAlternateGFA   { input: outdir = dir, file = Hifiasm.alternate_gfa }
     call FF.CompressAndFinalize as FinalizeHifiasmAlternateFA    { input: outdir = dir, file = Hifiasm.alternate_tigs }
 
-    if (defined(Hifiasm.phased_gfas)) {
+    if (defined(Hifiasm.phased_gfas) && length(select_first([Hifiasm.phased_gfas])) > 0) {
         call FF.FinalizeAndCompress as FinalizeHifiasmHapGFAs  { input: outdir = dir, files = select_first([Hifiasm.phased_gfas]), prefix = prefix + ".haploGFAs" }
     }
-    if (defined(Hifiasm.phased_tigs)) {
+    if (defined(Hifiasm.phased_tigs) && length(select_first([Hifiasm.phased_tigs])) > 0) {
         call FF.FinalizeAndCompress as FinalizeHifiasmHapFAs   { input: outdir = dir, files = select_first([Hifiasm.phased_tigs]), prefix = prefix + ".haploTigs" }
     }
 
