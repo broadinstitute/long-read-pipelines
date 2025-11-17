@@ -28,6 +28,8 @@ workflow Hifiasm {
         String? telomere_5_prime_sequence
 
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
+
+        RuntimeAttr? runtime_attr_override
     }
 
     call AssembleForAltContigs {
