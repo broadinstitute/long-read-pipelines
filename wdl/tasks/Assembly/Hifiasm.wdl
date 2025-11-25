@@ -127,8 +127,8 @@ task AssembleForHaplotigs {
         echo "n: ~{n}" | tee -a hifiasm.log
         echo "num_cpus_proposal: ~{num_cpus_proposal}" | tee -a hifiasm.log
         echo "num_cpus: ~{num_cpus}" | tee -a hifiasm.log
-        echo "default_attr: ~{default_attr}" | tee -a hifiasm.log
-        echo "runtime_attr: ~{runtime_attr}" | tee -a hifiasm.log
+        echo "default_attr: [mem_gb: ~{select_first([default_attr.mem_gb])}, cpu_cores: ~{select_first([default_attr.cpu_cores])}, disk_gb: ~{select_first([default_attr.disk_gb])}, boot_disk_gb: ~{select_first([default_attr.boot_disk_gb])}, preemptible_tries: ~{select_first([default_attr.preemptible_tries])}, max_retries: ~{select_first([default_attr.max_retries])}, docker: ~{select_first([default_attr.docker])}]" | tee -a hifiasm.log
+        echo "runtime_attr: [mem_gb: ~{select_first([runtime_attr.mem_gb])}, cpu_cores: ~{select_first([runtime_attr.cpu_cores])}, disk_gb: ~{select_first([runtime_attr.disk_gb])}, boot_disk_gb: ~{select_first([runtime_attr.boot_disk_gb])}, preemptible_tries: ~{select_first([runtime_attr.preemptible_tries])}, max_retries: ~{select_first([runtime_attr.max_retries])}, docker: ~{select_first([runtime_attr.docker])}]" | tee -a hifiasm.log
         echo "--------------------------------" | tee -a hifiasm.log
 
         time hifiasm \
@@ -243,8 +243,8 @@ task AssembleForAltContigs {
         echo "n: ~{n}" | tee -a hifiasm.log
         echo "num_cpus_proposal: ~{num_cpus_proposal}" | tee -a hifiasm.log
         echo "num_cpus: ~{num_cpus}" | tee -a hifiasm.log
-        echo "default_attr: ~{default_attr}" | tee -a hifiasm.log
-        echo "runtime_attr: ~{runtime_attr}" | tee -a hifiasm.log
+        echo "default_attr: [mem_gb: ~{select_first([default_attr.mem_gb])}, cpu_cores: ~{select_first([default_attr.cpu_cores])}, disk_gb: ~{select_first([default_attr.disk_gb])}, boot_disk_gb: ~{select_first([default_attr.boot_disk_gb])}, preemptible_tries: ~{select_first([default_attr.preemptible_tries])}, max_retries: ~{select_first([default_attr.max_retries])}, docker: ~{select_first([default_attr.docker])}]" | tee -a hifiasm.log
+        echo "runtime_attr: [mem_gb: ~{select_first([runtime_attr.mem_gb])}, cpu_cores: ~{select_first([runtime_attr.cpu_cores])}, disk_gb: ~{select_first([runtime_attr.disk_gb])}, boot_disk_gb: ~{select_first([runtime_attr.boot_disk_gb])}, preemptible_tries: ~{select_first([runtime_attr.preemptible_tries])}, max_retries: ~{select_first([runtime_attr.max_retries])}, docker: ~{select_first([runtime_attr.docker])}]" | tee -a hifiasm.log
         echo "--------------------------------" | tee -a hifiasm.log
 
         time hifiasm \
