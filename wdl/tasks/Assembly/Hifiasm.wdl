@@ -43,7 +43,8 @@ workflow Hifiasm {
             bloom_filter_bits = bloom_filter_bits,
             minimizer_window_size = minimizer_window_size,
             extra_args = extra_args,
-            zones = zones
+            zones = zones,
+            runtime_attr_override = runtime_attr_override
     }
 
     call AssembleForHaplotigs {
@@ -57,7 +58,8 @@ workflow Hifiasm {
             minimizer_window_size = minimizer_window_size,
             haploid = haploid,
             extra_args = extra_args,
-            zones = zones   
+            zones = zones,
+            runtime_attr_override = runtime_attr_override
     }
 
     output {
@@ -118,8 +120,15 @@ task AssembleForHaplotigs {
     command <<<
         set -euxo pipefail
 
-        echo "Memory requested: ~{memory} GiB" > hifiasm.log
-        echo "Memory available: $(free -m | grep '^Mem' | awk '{print $2}') MB" >> hifiasm.log
+        echo "Proposed memory: ~{proposed_memory} GiB" | tee hifiasm.log
+        echo "Memory requested: ~{memory} GiB" | tee -a hifiasm.log
+        echo "Memory available: $(free -m | grep '^Mem' | awk '{print $2}') MB" | tee -a hifiasm.log
+        echo "n: ~{n}" | tee -a hifiasm.log
+        echo "num_cpus_proposal: ~{num_cpus_proposal}" | tee -a hifiasm.log
+        echo "num_cpus: ~{num_cpus}" | tee -a hifiasm.log
+        echo "runtime_attr_override: ~{runtime_attr_override}" | tee -a hifiasm.log
+        echo "runtime_attr: ~{runtime_attr}" | tee -a hifiasm.log
+        echo "--------------------------------" | tee -a hifiasm.log
 
         time hifiasm \
             -o ~{prefix} \
@@ -226,8 +235,15 @@ task AssembleForAltContigs {
     command <<<
         set -euxo pipefail
 
-        echo "Memory requested: ~{memory} GiB" > hifiasm.log
-        echo "Memory available: $(free -m | grep '^Mem' | awk '{print $2}') MB" >> hifiasm.log
+        echo "Proposed memory: ~{proposed_memory} GiB" | tee hifiasm.log
+        echo "Memory requested: ~{memory} GiB" | tee -a hifiasm.log
+        echo "Memory available: $(free -m | grep '^Mem' | awk '{print $2}') MB" | tee -a hifiasm.log
+        echo "n: ~{n}" | tee -a hifiasm.log
+        echo "num_cpus_proposal: ~{num_cpus_proposal}" | tee -a hifiasm.log
+        echo "num_cpus: ~{num_cpus}" | tee -a hifiasm.log
+        echo "runtime_attr_override: ~{runtime_attr_override}" | tee -a hifiasm.log
+        echo "runtime_attr: ~{runtime_attr}" | tee -a hifiasm.log
+        echo "--------------------------------" | tee -a hifiasm.log
 
         time hifiasm \
             -o ~{prefix} \
