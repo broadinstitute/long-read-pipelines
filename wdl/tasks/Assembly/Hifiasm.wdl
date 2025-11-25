@@ -120,13 +120,14 @@ task AssembleForHaplotigs {
     command <<<
         set -euxo pipefail
 
-        echo "Proposed memory: ~{proposed_memory} GiB" | tee hifiasm.log
+        echo "--------------------------------" | tee hifiasm.log
+        echo "Proposed memory: ~{proposed_memory} GiB" | tee -a hifiasm.log
         echo "Memory requested: ~{memory} GiB" | tee -a hifiasm.log
         echo "Memory available: $(free -m | grep '^Mem' | awk '{print $2}') MB" | tee -a hifiasm.log
         echo "n: ~{n}" | tee -a hifiasm.log
         echo "num_cpus_proposal: ~{num_cpus_proposal}" | tee -a hifiasm.log
         echo "num_cpus: ~{num_cpus}" | tee -a hifiasm.log
-        echo "runtime_attr_override: ~{runtime_attr_override}" | tee -a hifiasm.log
+        echo "default_attr: ~{default_attr}" | tee -a hifiasm.log
         echo "runtime_attr: ~{runtime_attr}" | tee -a hifiasm.log
         echo "--------------------------------" | tee -a hifiasm.log
 
@@ -235,13 +236,14 @@ task AssembleForAltContigs {
     command <<<
         set -euxo pipefail
 
-        echo "Proposed memory: ~{proposed_memory} GiB" | tee hifiasm.log
+        echo "--------------------------------" | tee hifiasm.log
+        echo "Proposed memory: ~{proposed_memory} GiB" | tee -a hifiasm.log
         echo "Memory requested: ~{memory} GiB" | tee -a hifiasm.log
         echo "Memory available: $(free -m | grep '^Mem' | awk '{print $2}') MB" | tee -a hifiasm.log
         echo "n: ~{n}" | tee -a hifiasm.log
         echo "num_cpus_proposal: ~{num_cpus_proposal}" | tee -a hifiasm.log
         echo "num_cpus: ~{num_cpus}" | tee -a hifiasm.log
-        echo "runtime_attr_override: ~{runtime_attr_override}" | tee -a hifiasm.log
+        echo "default_attr: ~{default_attr}" | tee -a hifiasm.log
         echo "runtime_attr: ~{runtime_attr}" | tee -a hifiasm.log
         echo "--------------------------------" | tee -a hifiasm.log
 
