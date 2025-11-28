@@ -19,10 +19,13 @@ digraph {
 	"decl-fq_e1" [label=fq_e1 shape=plaintext]
 	"decl-fq_e2" [label=fq_e2 shape=plaintext]
 	"call-t_005_FilterOutHumanReads" [label=t_005_FilterOutHumanReads shape=cds]
+	"decl-RG" [label=RG shape=plaintext]
 	"call-t_006_AlignReads" [label=t_006_AlignReads shape=cds]
+	"call-t_007_ChangeReadGroup" [label=t_007_ChangeReadGroup shape=cds]
 	"call-t_008_SortAlignedBam" [label=t_008_SortAlignedBam shape=cds]
 	"call-t_009_MarkDuplicates" [label=t_009_MarkDuplicates shape=cds]
 	"call-t_010_ReorderSam" [label=t_010_ReorderSam shape=cds]
+	"call-t_010a_RemoveBadBamHeaderProgramLines" [label=t_010a_RemoveBadBamHeaderProgramLines shape=cds]
 	"call-t_011_RealignIndels" [label=t_011_RealignIndels shape=cds]
 	"call-t_012_IndexRealignIndels" [label=t_012_IndexRealignIndels shape=cds]
 	"call-t_012_BQSR" [label=t_012_BQSR shape=cds]
@@ -36,13 +39,16 @@ digraph {
 	"call-t_002_RevertSam" -> "call-t_003_Bam2Fastq"
 	"call-t_003_Bam2Fastq" -> "decl-fq_e1"
 	"call-t_003_Bam2Fastq" -> "decl-fq_e2"
-	"decl-fq_e1" -> "call-t_005_FilterOutHumanReads"
 	"decl-fq_e2" -> "call-t_005_FilterOutHumanReads"
+	"decl-fq_e1" -> "call-t_005_FilterOutHumanReads"
+	"call-t_004_GetRawReadGroup" -> "decl-RG"
 	"call-t_005_FilterOutHumanReads" -> "call-t_006_AlignReads"
-	"call-t_006_AlignReads" -> "call-t_008_SortAlignedBam"
+	"call-t_006_AlignReads" -> "call-t_007_ChangeReadGroup"
+	"call-t_007_ChangeReadGroup" -> "call-t_008_SortAlignedBam"
 	"call-t_008_SortAlignedBam" -> "call-t_009_MarkDuplicates"
 	"call-t_009_MarkDuplicates" -> "call-t_010_ReorderSam"
-	"call-t_010_ReorderSam" -> "call-t_011_RealignIndels"
+	"call-t_010_ReorderSam" -> "call-t_010a_RemoveBadBamHeaderProgramLines"
+	"call-t_010a_RemoveBadBamHeaderProgramLines" -> "call-t_011_RealignIndels"
 	"call-t_011_RealignIndels" -> "call-t_012_IndexRealignIndels"
 	"call-t_012_IndexRealignIndels" -> "call-t_012_BQSR"
 	"call-t_011_RealignIndels" -> "call-t_012_BQSR"

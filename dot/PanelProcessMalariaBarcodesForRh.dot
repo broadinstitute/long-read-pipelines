@@ -10,7 +10,7 @@ digraph {
 	"call-t_003_FinalizeOutputs" [label=t_003_FinalizeOutputs shape=cds]
 	"call-t_001_WdlExecutionStartTimestamp" -> "decl-outdir"
 	"call-t_002_ProcessBarcodeSpreadsheet" -> "decl-keyfile"
-	"decl-outdir" -> "call-t_003_FinalizeOutputs"
-	"decl-keyfile" -> "call-t_003_FinalizeOutputs"
 	"call-t_002_ProcessBarcodeSpreadsheet" -> "call-t_003_FinalizeOutputs"
+	"decl-keyfile" -> "call-t_003_FinalizeOutputs"
+	"decl-outdir" -> "call-t_003_FinalizeOutputs"
 }
