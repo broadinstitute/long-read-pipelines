@@ -252,6 +252,25 @@ task AssembleForAltContigs {
 
     Int disk_size = 50 + (10 * ceil(size(reads, "GB")) + 10 * ceil(size(ont_reads_fastq, "GB")))
 
+    # This is how we have to do this because of the idiosyncrasies of optional fields in WDL structs:
+    String default_attr_mem_gb_str = if defined(default_attr.mem_gb) then "mem_gb: " + select_first([default_attr.mem_gb]) + ", " else ""
+    String default_attr_cpu_cores_str = if defined(default_attr.cpu_cores) then "cpu_cores: " + select_first([default_attr.cpu_cores]) + ", " else ""
+    String default_attr_disk_gb_str = if defined(default_attr.disk_gb) then "disk_gb: " + select_first([default_attr.disk_gb]) + ", " else ""
+    String default_attr_boot_disk_gb_str = if defined(default_attr.boot_disk_gb) then "boot_disk_gb: " + select_first([default_attr.boot_disk_gb]) + ", " else ""
+    String default_attr_preemptible_tries_str = if defined(default_attr.preemptible_tries) then "preemptible_tries: " + select_first([default_attr.preemptible_tries]) else ""
+    String default_attr_max_retries_str = if defined(default_attr.max_retries) then "max_retries: " + select_first([default_attr.max_retries]) else ""
+    String default_attr_docker_str = if defined(default_attr.docker) then "docker: " + select_first([default_attr.docker]) else ""
+    String default_attr_summary = "{ " + default_attr_mem_gb_str + default_attr_cpu_cores_str + default_attr_disk_gb_str + default_attr_boot_disk_gb_str + default_attr_preemptible_tries_str + default_attr_max_retries_str + default_attr_docker_str + " }"
+
+    String runtime_attr_mem_gb_str = if defined(runtime_attr.mem_gb) then "mem_gb: " + select_first([runtime_attr.mem_gb]) + ", " else ""
+    String runtime_attr_cpu_cores_str = if defined(runtime_attr.cpu_cores) then "cpu_cores: " + select_first([runtime_attr.cpu_cores]) + ", " else ""
+    String runtime_attr_disk_gb_str = if defined(runtime_attr.disk_gb) then "disk_gb: " + select_first([runtime_attr.disk_gb]) + ", " else ""
+    String runtime_attr_boot_disk_gb_str = if defined(runtime_attr.boot_disk_gb) then "boot_disk_gb: " + select_first([runtime_attr.boot_disk_gb]) + ", " else ""
+    String runtime_attr_preemptible_tries_str = if defined(runtime_attr.preemptible_tries) then "preemptible_tries: " + select_first([runtime_attr.preemptible_tries]) else ""
+    String runtime_attr_max_retries_str = if defined(runtime_attr.max_retries) then "max_retries: " + select_first([runtime_attr.max_retries]) + ", " else ""
+    String runtime_attr_docker_str = if defined(runtime_attr.docker) then "docker: " + select_first([runtime_attr.docker]) else ""
+    String runtime_attr_summary = "{ " + runtime_attr_mem_gb_str + runtime_attr_cpu_cores_str + runtime_attr_disk_gb_str + runtime_attr_boot_disk_gb_str + runtime_attr_preemptible_tries_str + runtime_attr_max_retries_str + runtime_attr_docker_str + " }"
+
     command <<<
         set -euxo pipefail
 
@@ -262,8 +281,8 @@ task AssembleForAltContigs {
         echo "n: ~{n}" | tee -a hifiasm.log
         echo "num_cpus_proposal: ~{num_cpus_proposal}" | tee -a hifiasm.log
         echo "num_cpus: ~{num_cpus}" | tee -a hifiasm.log
-        echo "default_attr: [mem_gb: ~{select_first([default_attr.mem_gb])}, cpu_cores: ~{select_first([default_attr.cpu_cores])}, disk_gb: ~{select_first([default_attr.disk_gb])}, boot_disk_gb: ~{select_first([default_attr.boot_disk_gb])}, preemptible_tries: ~{select_first([default_attr.preemptible_tries])}, max_retries: ~{select_first([default_attr.max_retries])}, docker: ~{select_first([default_attr.docker])}]" | tee -a hifiasm.log
-        echo "runtime_attr: [mem_gb: ~{select_first([runtime_attr.mem_gb])}, cpu_cores: ~{select_first([runtime_attr.cpu_cores])}, disk_gb: ~{select_first([runtime_attr.disk_gb])}, boot_disk_gb: ~{select_first([runtime_attr.boot_disk_gb])}, preemptible_tries: ~{select_first([runtime_attr.preemptible_tries])}, max_retries: ~{select_first([runtime_attr.max_retries])}, docker: ~{select_first([runtime_attr.docker])}]" | tee -a hifiasm.log
+        echo "default_attr: ~{default_attr_summary}" | tee -a hifiasm.log
+        echo "runtime_attr: ~{runtime_attr_summary}" | tee -a hifiasm.log
         echo "--------------------------------" | tee -a hifiasm.log
 
         time hifiasm \
