@@ -83,11 +83,11 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
                 contaminant_ref_map["rev.1.bt2"],
                 contaminant_ref_map["rev.2.bt2"]
             ],
-            contaminant_organism_label = "human"
+            contaminant_organism_label = contaminant_ref_name
     }
 
     # 2 - Align to Plasmodium reference:
-    String RG = "@RG\tID:FLOWCELL_~{sample_name}\tSM:~{sample_name}\tPL:ILLUMINA\tLB:LIB_~{sample_name}"
+    String RG = select_first([t_004_GetRawReadGroup.rg, "@RG\tID:FLOWCELL_" + sample_name + "\tSM:" + sample_name + "\tPL:ILLUMINA\tLB:LIB_" + sample_name ])
 
     # 2a - Align reads to reference with BWA-MEM2:
     call SRUTIL.BwaMem2 as t_006_AlignReads {
@@ -103,14 +103,24 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             ref_bwt = ref_map["bwt"],
             ref_pac = ref_map["pac"],
             mark_short_splits_as_secondary = true,
-            read_group = RG,
+            prefix = sample_name + ".aligned.tmp"
+    }
+
+    # 2a.1 - Change read group:
+    call Utils.ChangeReadGroup as t_007_ChangeReadGroup {
+        input:
+            input_bam = t_006_AlignReads.bam,
+            ID = sample_name,
+            SM = sample_name,
+            PL = "ILLUMINA",
+            LB = "LIB_" + sample_name,
             prefix = sample_name + ".aligned"
     }
 
     # 2b - Sort Bam:
     call Utils.SortSam as t_008_SortAlignedBam {
         input:
-            input_bam = t_006_AlignReads.bam,
+            input_bam = t_007_ChangeReadGroup.output_bam,
             prefix = sample_name + ".aligned.sorted"
     }
 
@@ -139,11 +149,19 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             prefix = sample_name + ".aligned.sorted.marked_duplicates.reordered"
     }
 
+    # For some reason for some files we're getting bad program lines in the header.  This task removes them.
+    # This is a hack to get around the issue.
+    call RemoveBadBamHeaderProgramLines as t_010a_RemoveBadBamHeaderProgramLines {
+        input:
+            input_bam = t_010_ReorderSam.output_bam,
+            prefix = sample_name + ".aligned.sorted.marked_duplicates.reordered"
+    }
+
     # 5 - Realign indels:
     call RealignIndels as t_011_RealignIndels {
         input:
-            input_bam = t_010_ReorderSam.output_bam,
-            input_bai = t_010_ReorderSam.output_bam_index,
+            input_bam = t_010a_RemoveBadBamHeaderProgramLines.output_bam,
+            input_bai = t_010a_RemoveBadBamHeaderProgramLines.output_bam_index,
             reference_fasta = ref_map["fasta"],
             reference_fai = ref_map["fai"],
             reference_dict = ref_map["dict"],
@@ -294,8 +312,20 @@ task FilterOutTargetOrganismReads {
             let np=${np}-1
         fi
 
+        # Move the bowtie2 index files to the same directory as the reference fasta file:
+        ref_dir=$(dirname ~{contaminant_reference_fasta})
+        while read f ; do 
+            indx_dirname=$( dirname ${f} )
+            if [[ "${indx_dirname}" != "${ref_dir}" ]] ; then
+                mv ${f} ${ref_dir}
+            fi
+        done < ~{write_lines(contaminant_reference_bowtie_indices)}
+
+        # Get the basename of the bowtie2 index file so we can reference it in the bowtie2 command:
+        bowtie2_index_basename=$(echo "~{contaminant_reference_bowtie_indices[0]}" | grep bt2 | head -n1 | sed 's@\.[a-zA-Z0-9]*\.bt2@@')
+
         echo "Aligning to contaminant genome:"
-        bowtie2 -x ~{contaminant_reference_fasta} \
+        bowtie2 -x ${bowtie2_index_basename} \
             --threads ${np} \
             -1 ~{fq_end1} \
             -2 ~{fq_end2} | \
@@ -607,7 +637,7 @@ task HaplotypeCaller {
     Int disk_size = 1 + 4*ceil(size([input_bam, reference_fasta], "GB"))
 
     String gvcf_arg = if (gvcf_mode) then "-ERC GVCF" else ""
-    String out_suffix = if (gvcf_mode) then ".g.vcf" else ".vcf"
+    String out_suffix = if (gvcf_mode) then "g.vcf" else "vcf"
 
     command <<<
         ################################
@@ -688,5 +718,93 @@ task Error {
         bootDiskSizeGb: 10
         preemptible: 1
         cpu: 1
+    }
+}
+
+
+task RemoveBadBamHeaderProgramLines {
+     meta {
+        description: "Remove bad program lines from the header of a BAM file."
+    }
+
+    parameter_meta {
+        input_bam: "The BAM file to sort"
+        prefix: "The basename for the output BAM file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
+    input {
+        File input_bam
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 10*ceil(size(input_bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+        if [[ ${np} -gt 2 ]] ; then
+            np=$((np-1))
+        fi
+
+        samtools view -H ~{input_bam} > header.txt 2>errors.txt
+
+        while read -r line; do
+            if [[ $line =~ ^\[W::sam_hdr_link_pg\]\ PG\ line\ with\ PN:.*\ has\ a\ PP\ link\ to\ missing\ program\ \'.*\'$ ]]; then
+                # Detected a warning about a bad PG line in the header
+                echo "Detected bad PG line warning: ${line}"
+                echo "Fixing bad program line"
+
+                # Extract the PN (Program Name) and PP (Previous Program) fields from the warning message
+                pn=$(echo "$line" | sed -E "s/.*PG line with PN:([^ ]*) has a PP link to missing program '([^']+)'.*/\1/")
+                missing_pp=$(echo "$line" | sed -E "s/.*PG line with PN:[^ ]* has a PP link to missing program '([^']+)'.*/\1/")
+
+                # Now, edit the header.txt in-place:
+                # - Find the @PG line with ID:$pn and PP:$missing_pp and remove the PP field from that line
+                sed -iE "/^@PG/{
+                    /ID:${pn}/{
+                        /PP:${missing_pp}/{
+                            s/(PP:${missing_pp}\b:?)(\t)?//g
+                        }
+                    }
+                }" header.txt
+            else
+                echo "WARNING: Unable to recover from error in samtools view -H: ${line}"
+                echo "Will ignore this error, but this may cause failures down the line."
+            fi
+        done < errors.txt
+
+        samtools reheader header.txt ~{input_bam} > ~{prefix}.bam
+        samtools index -@ ${np} ~{prefix}.bam
+    >>>
+
+    output {
+        File output_bam = "~{prefix}.bam"
+        File output_bam_index = "~{prefix}.bam.bai"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }

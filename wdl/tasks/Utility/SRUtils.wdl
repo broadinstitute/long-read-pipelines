@@ -199,7 +199,8 @@ task BwaMem2 {
                       + 4*ceil(size(ref_pac, "GB"))
                       + 4*ceil(size(ref_0123, "GB"))
 
-    String rg_arg = if defined(read_group) then " -R " else ""
+    String rg_arg = if defined(read_group) then " -R " else "" 
+    String rg_val_wrapper = if defined(read_group) then "'" else ""
 
     command <<<
         set -euxo pipefail
@@ -223,7 +224,7 @@ task BwaMem2 {
             -v 3 \
             -t ${np} \
             -Y \
-            ~{rg_arg}'~{default="" read_group}' \
+            ~{rg_arg}~{rg_val_wrapper}~{default="" read_group}~{rg_val_wrapper} \
             ~{true='-M' false="" mark_short_splits_as_secondary} \
             ~{ref_fasta} \
             ~{fq_end1} \

@@ -113,6 +113,73 @@ task SortSam {
     }
 }
 
+task ChangeReadGroup {
+     meta {
+        description: "Change the read group of a BAM file."
+    }
+
+    parameter_meta {
+        input_bam: "The BAM file to sort"
+        ID: "The new ID for the read group"
+        SM: "The new sample name for the read group"
+        PL: "The new platform for the read group"
+        LB: "The new library name for the read group"
+        prefix: "The basename for the output BAM file"
+        runtime_attr_override: "Override the default runtime attributes"
+    }
+
+    input {
+        File input_bam
+        String prefix
+
+        String ID
+        String SM
+        String PL
+        String LB
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 1 + 10*ceil(size(input_bam, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        samtools addreplacerg --no-PG \
+            -r 'ID:~{ID}' \
+            -r 'LB:~{LB}' \
+            -r 'SM:~{SM}' \
+            -r 'PL:~{PL}' \
+            ~{input_bam} \
+            -o ~{prefix}.bam
+    >>>
+
+    output {
+        File output_bam = "~{prefix}.bam"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task MakeChrIntervalList {
 
     meta {
