@@ -406,7 +406,8 @@ task ReblockGVCF {
        boot_disk_gb:       25,
        preemptible_tries:  1,
        max_retries:        1,
-       docker:             "broadinstitute/gatk-nightly:2024-04-16-4.5.0.0-25-g986cb1549-NIGHTLY-SNAPSHOT"
+    #    docker:             "broadinstitute/gatk-nightly:2024-04-16-4.5.0.0-25-g986cb1549-NIGHTLY-SNAPSHOT"
+       docker: "broadinstitute/gatk-nightly:2025-08-29-4.6.2.0-17-g2a1f41bf3-NIGHTLY-SNAPSHOT"
     }
     # TODO: Fix this docker image to a stable version after the next GATK release!
 
