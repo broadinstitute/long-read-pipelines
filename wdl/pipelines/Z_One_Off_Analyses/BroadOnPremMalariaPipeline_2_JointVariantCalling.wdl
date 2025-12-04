@@ -30,18 +30,18 @@ workflow BroadOnPremMalariaPipeline_2_JointVariantCalling {
             prefix = sample_name,
             input_vcfs = vcf_files,
             input_vcf_indices = vcf_index_files,
-            reference_fasta = ref_map["reference_fasta"],
-            reference_fai = ref_map["reference_fai"],
-            reference_dict = ref_map["reference_dict"]
+            reference_fasta = ref_map["fasta"],
+            reference_fai = ref_map["fai"],
+            reference_dict = ref_map["dict"]
     }
 
     call BroadOnPremMalariaPipelineTasks.VariantRecalibrator as t_002_VariantRecalibrator {
         input:
             prefix = sample_name,
             input_vcf = t_001_GenotypeGVCFs.vcf,
-            reference_fasta = ref_map["reference_fasta"],
-            reference_fai = ref_map["reference_fai"],
-            reference_dict = ref_map["reference_dict"],
+            reference_fasta = ref_map["fasta"],
+            reference_fai = ref_map["fai"],
+            reference_dict = ref_map["dict"],
             resource_vcf_7g8_gb4 = resource_vcf_7g8_gb4,
             resource_vcf_hb3_dd2 = resource_vcf_hb3_dd2,
             resource_vcf_3d7_hb3 = resource_vcf_3d7_hb3
