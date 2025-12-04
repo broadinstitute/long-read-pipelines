@@ -73,7 +73,13 @@ task GenotypeGVCFs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 10*ceil(size([input_vcfs, reference_fasta, reference_fai, reference_dict, input_vcf_indices], "GB"))
+    Int disk_size = 1 + 10*ceil(
+        size(input_vcfs, "GB")
+        + size(input_vcf_indices, "GB")
+        + size(reference_fasta, "GB")
+        + size(reference_fai, "GB")
+        + size(reference_dict, "GB")
+    )
 
     command <<<
         ################################
