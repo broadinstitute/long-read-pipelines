@@ -1718,6 +1718,21 @@ task ExtractVariantAnnotations {
             --maximum-number-of-unlabeled-variants ~{max_unlabeled_variants} \
             ${resource_flags} \
             -O ~{prefix}_extracted_annotations_~{mode}
+
+        echo "Exit code: $?" 1>&2
+        echo "Directory Contents:" 1>&2
+        ls -l 1>&2
+
+        if [[ ! -f "~{prefix}_extracted_annotations_~{mode}.annot.hdf5" ]]; then
+            echo "ERROR: No annotation HDF5 file found." 1>&2
+            num_variants=$(bcftools index -n ~{prefix}_extracted_annotations_~{mode}.vcf.gz)
+            echo "Number of variants in extracted VCF: $num_variants" 1>&2
+            if [[ $num_variants -eq 0 ]]; then
+                echo "No variants found in extracted VCF.  This is the problem." 1>&2
+            fi
+            # Force a failure here:
+            false
+        fi
     >>>
 
     output {
