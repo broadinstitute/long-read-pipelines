@@ -6,7 +6,7 @@ import "../../tasks/Utility/Utils.wdl" as UTILS
 import "../../tasks/Utility/Finalize.wdl" as FF
 import "../../tasks/Z_One_Off_Analyses/Pf_Niare_HaplotypeCaller.wdl" as Niare_HC
 
-workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR {
+workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS {
 
     meta {
         author: "Jonn Smith"
