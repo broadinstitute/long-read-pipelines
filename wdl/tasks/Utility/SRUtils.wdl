@@ -526,6 +526,82 @@ task MarkDuplicates {
     }
 }
 
+task MarkDuplicatesAndSort {
+    input {
+        File input_bam
+
+        String prefix
+
+        # The program default for READ_NAME_REGEX is appropriate in nearly every case.
+        # Sometimes we wish to supply "null" in order to turn off optical duplicate detection
+        # This can be desirable if you don't mind the estimated library size being wrong and optical duplicate detection is taking >7 days and failing
+        String? read_name_regex
+
+        Float? sorting_collection_size_ratio
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int compression_level = 2
+
+    Int disk_size = 1 + 4*ceil(size(input_bam, "GB"))
+
+    # Task is assuming query-sorted input so that the Secondary and Supplementary reads get marked correctly
+    # This works because the output of BWA is query-grouped and therefore, so is the output of MergeBamAlignment.
+    # While query-grouped isn't actually query-sorted, it's good enough for MarkDuplicates with ASSUME_SORT_ORDER="queryname"
+
+    command <<<
+        set -euxo pipefail
+
+        tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
+        java_memory_size_mb=$((tot_mem_mb-5120))
+
+        java -Dsamjdk.compression_level=~{compression_level} -Xms${java_memory_size_mb}m -jar /usr/picard/picard.jar \
+            MarkDuplicates \
+            INPUT=~{input_bam} \
+            OUTPUT=/dev/stdout \
+            METRICS_FILE=~{prefix}.metrics.txt \
+            VALIDATION_STRINGENCY=SILENT \
+            ~{"READ_NAME_REGEX=" + read_name_regex} \
+            ~{"SORTING_COLLECTION_SIZE_RATIO=" + sorting_collection_size_ratio} \
+            OPTICAL_DUPLICATE_PIXEL_DISTANCE=2500 \
+            ASSUME_SORT_ORDER="queryname" \
+            CLEAR_DT="false" \
+            ADD_PG_TAG_TO_READS=false | \
+        java -jar /usr/picard/picard.jar SortSam \
+            INPUT=/dev/stdin \
+            OUTPUT=~{prefix}.bam \
+            CREATE_INDEX=true
+    >>>
+
+    output {
+        File bam = "~{prefix}.bam"
+        File bai = "~{prefix}.bam.bai"
+        File metrics = "~{prefix}.metrics.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          16,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 
 # Generate Base Quality Score Recalibration (BQSR) model
 task BaseRecalibrator {
@@ -681,6 +757,103 @@ task ApplyBQSR {
     output {
         File recalibrated_bam = "~{prefix}.bam"
         File recalibrated_bai = "~{prefix}.bam.bai"
+    }
+}
+
+task RunBaseRecalibratorAndApplyBQSR {
+    input {
+        File input_bam
+        File input_bam_index
+
+        File ref_dict
+        File ref_fasta
+        File ref_fasta_index
+
+        File known_sites_vcf
+        File known_sites_index
+
+        Boolean bin_base_qualities = true
+        Boolean emit_original_quals = true
+
+        String prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int compression_level = 2
+    Int java_memory_size_mb = 30768
+
+    parameter_meta {
+        input_bam: { localization_optional: true }
+        known_sites_vcf: { localization_optional: true }
+    }
+
+    Int disk_size = 5 + 4*ceil(size(input_bam, "GB"))
+                      + 4*ceil(size(input_bam_index, "GB"))
+                      + 2*ceil(size(ref_dict, "GB"))
+                      + 2*ceil(size(ref_fasta, "GB"))
+                      + 2*ceil(size(ref_fasta_index, "GB"))
+                      + 2*ceil(size(known_sites_vcf, "GB"))
+                      + 2*ceil(size(known_sites_index, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal -Xms5000m" \
+            BaseRecalibrator \
+            -R ~{ref_fasta} \
+            -I ~{input_bam} \
+            --use-original-qualities \
+            -O ~{prefix}.baseRecalibratorReport.txt \
+            --known-sites ~{known_sites_vcf}
+
+        gatk --java-options "-XX:+PrintFlagsFinal \
+            -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Dsamjdk.compression_level=~{compression_level} -Xms8192m -Xmx~{java_memory_size_mb}m" \
+            ApplyBQSR \
+            --create-output-bam-md5 \
+            --add-output-sam-program-record \
+            -R ~{ref_fasta} \
+            -I ~{input_bam} \
+            --use-original-qualities \
+            -O ~{prefix}.bam \
+            -bqsr ~{prefix}.baseRecalibratorReport.txt \
+            --emit-original-quals ~{emit_original_quals} \
+            ~{true='--static-quantized-quals 10' false='' bin_base_qualities} \
+            ~{true='--static-quantized-quals 20' false='' bin_base_qualities} \
+            ~{true='--static-quantized-quals 30' false='' bin_base_qualities} \
+            --allow-missing-read-group true \
+
+        # Make sure we use all our proocesors:
+        np=$(cat /proc/cpuinfo | grep ^processor | tail -n1 | awk '{print $NF+1}')
+
+        samtools index -@${np} ~{prefix}.bam
+    >>>
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          16,
+        mem_gb:             32,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  1,
+        max_retries:        1,
+        # docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+        # Temporary snapshot build for testing the fix for BQSR issue https://github.com/broadinstitute/gatk/issues/6242
+        docker:             "us.gcr.io/broad-dsde-methods/broad-gatk-snapshots/gatk-remote-builds:jonn-4dd794b3f4e4e4e6a86f309a5ea1b580bf774b7c-4.5.0.0-48-g4dd794b3f" 
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+    output {
+        File recalibrated_bam = "~{prefix}.bam"
+        File recalibrated_bai = "~{prefix}.bam.bai"
+        File recalibration_report = "~{prefix}.baseRecalibratorReport.txt"
     }
 }
 
