@@ -51,6 +51,9 @@ CMD ["bash"]
 # copy from previous stage the binaries from samtools build
 COPY --from=0 /usr/local/bin/* /usr/local/bin/
 
+# copy bcftools plugins:
+COPY --from=0 /usr/local/libexec/bcftools/ /usr/local/libexec/bcftools/
+
 #### Basic utilities
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qqy update --fix-missing && \
