@@ -2092,11 +2092,6 @@ task SplitContigToIntervals {
         String contig
         Int size = 200000
 
-        File ref_fasta
-        File ref_fasta_fai
-
-        String prefix
-
         RuntimeAttr? runtime_attr_override
     }
 
@@ -2105,16 +2100,20 @@ task SplitContigToIntervals {
     command <<<
         set -euxo pipefail
 
-        cat ~{ref_dict} | awk '{print $2,$3}' | grep '^SN' | sed -e 's@SN:@@' -e 's@LN:@@' | tr ' ' '\t' > genome.txt
+        awk '{print $2,$3}' |~{ref_dict}  grep '^SN' | sed -e 's@SN:@@' -e 's@LN:@@' | tr ' ' '\t' > genome.txt
         grep "~{contig}" genome.txt > genome.contig.txt
 
         bedtools makewindows -g genome.contig.txt -w ~{size} > ~{contig}.~{size}bp_intervals.bed
 
+        max_pos=$(tail -n1 ~{contig}.~{size}bp_intervals.bed | awk '{print $3}')
+
         # Make individual bed files from each line:
-        while read line ; do
+        # NOTE: We need to add leading zeros here for sorting purposes.
+        while read -r line ; do
             start=$(echo "${line}" | cut -d $'\t' -f 2)
             end=$(echo "${line}" | cut -d $'\t' -f 3)
-            echo "${line}" > ~{contig}.${start}-${end}.single_interval.bed
+            new_fn=$(printf "%s.%0${#max_pos}d-%0${#max_pos}d.single_interval.bed" ~{contig} "${start}" "${end}")
+            echo "${line}" > "${new_fn}"
         done < ~{contig}.~{size}bp_intervals.bed
     >>>
 
