@@ -1352,8 +1352,6 @@ task GatherVcfs {
         Array[File] input_vcf_indices
         String prefix
 
-        Boolean sort_input_vcfs = false
-
         RuntimeAttr? runtime_attr_override
     }
 
@@ -1368,25 +1366,13 @@ task GatherVcfs {
     command <<<
         set -euxo pipefail
 
-        # Sometimes because of how WDL is executed, some VCFs won't be in the right order.
-        # If we assume that the shards are in the right order, we can sort the VCF paths and 
-        # pass them in via an arguments file.
-        INPUT_VCF_ARG_FILE=input_vcf_arg_file.txt
-        if ~{sort_input_vcfs}; then
-            f=~{write_lines(input_vcfs)}
-            cat $f | sort | sed 's/^/--input /g' > ${INPUT_VCF_ARG_FILE}
-        else
-            f=~{write_lines(input_vcfs)}
-            cat $f | sed 's/^/--input /g' > ${INPUT_VCF_ARG_FILE}
-        fi
-
         # --ignore-safety-checks makes a big performance difference so we include it in our invocation.
         # This argument disables expensive checks that the file headers contain the same set of
         # genotyped samples and that files are in order by position of first record.
         gatk --java-options "-Xms6000m -Xmx6500m" \
             GatherVcfsCloud \
             --ignore-safety-checks \
-            --arguments_file ${INPUT_VCF_ARG_FILE} \
+            --input ~{sep=" --input " input_vcfs} \
             --output ~{prefix}.vcf.gz
 
         tabix -p vcf ~{prefix}.vcf.gz

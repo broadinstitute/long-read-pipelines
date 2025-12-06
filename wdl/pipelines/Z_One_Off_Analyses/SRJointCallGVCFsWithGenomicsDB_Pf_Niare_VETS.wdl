@@ -140,7 +140,6 @@ workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS {
             input:
                 input_vcfs = GenotypeGVCFs.output_vcf,
                 input_vcf_indices = GenotypeGVCFs.output_vcf_index,
-                sort_input_vcfs = true,
                 prefix = prefix + "." + contig + ".raw.merged",
         }
 
