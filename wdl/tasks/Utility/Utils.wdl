@@ -2100,7 +2100,7 @@ task SplitContigToIntervals {
     command <<<
         set -euxo pipefail
 
-        awk '{print $2,$3}' |~{ref_dict}  grep '^SN' | sed -e 's@SN:@@' -e 's@LN:@@' | tr ' ' '\t' > genome.txt
+        awk '{print $2,$3}' ~{ref_dict} | grep '^SN' | sed -e 's@SN:@@' -e 's@LN:@@' | tr ' ' '\t' > genome.txt
         grep "~{contig}" genome.txt > genome.contig.txt
 
         bedtools makewindows -g genome.contig.txt -w ~{size} > ~{contig}.~{size}bp_intervals.bed
