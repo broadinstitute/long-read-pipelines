@@ -226,7 +226,7 @@ task SortCompressIndexVcf {
                 $8 = new_info_str
                 print
             }
-            AWK_CODE
+AWK_CODE
          
         ################################
 
