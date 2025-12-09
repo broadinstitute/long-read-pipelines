@@ -142,7 +142,7 @@ task SortCompressIndexVcf {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 + 10*ceil(size(input_vcf, "GB"))
+    Int disk_size = 10 + 10*ceil(2*size(input_vcf, "GB"))
 
     String output_vcf = basename(input_vcf) + ".gz"
 
@@ -161,8 +161,76 @@ task SortCompressIndexVcf {
         tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
 
         ################################
+         
+        # First we need to fix the integer values in the floating point INFO fields.
+        # Without this fix / hack, downstream GATK3 tools will fail (specifically GenotypeGVCFs)
+        
+        awk -f - "~{input_vcf}" > tmp.vcf << 'AWK_CODE'
+            BEGIN {
+                FS = "\t"; OFS = "\t"
 
-        bcftools sort -m$((tot_mem_mb-2048))M -Oz2 -o ~{output_vcf} ~{input_vcf}
+                # Define the set of ID keys that require floating point enforcement
+                targets["BaseQRankSum"] = 1
+                targets["ClippingRankSum"] = 1
+                targets["ExcessHet"] = 1
+                targets["HaplotypeScore"] = 1
+                targets["InbreedingCoeff"] = 1
+                targets["MLEAF"] = 1
+                targets["MQ"] = 1
+                targets["MQRankSum"] = 1
+                targets["RAW_MQ"] = 1
+                targets["ReadPosRankSum"] = 1
+            }
+
+            # Pass header lines through unchanged
+            /^#/ { print; next }
+
+            {
+                # Column 8 is the INFO column
+                # Split the INFO string by semicolon into an array
+                n = split($8, info_fields, ";")
+                
+                new_info_str = ""
+
+                for (i = 1; i <= n; i++) {
+                    # Split Key=Value pairs
+                    # We check if split returns 2 parts to avoid breaking on Boolean Flags
+                    if (split(info_fields[i], kv, "=") == 2) {
+                        key = kv[1]
+                        val = kv[2]
+
+                        # Check if this key is in our target list
+                        if (key in targets) {
+                            # Handle Number=A (comma-separated lists) like MLEAF
+                            m = split(val, subvals, ",")
+                            new_val_str = ""
+
+                            for (j = 1; j <= m; j++) {
+                                # Regex Check: Match strictly integers (optional - sign, digits only)
+                                # This ignores values that are already floats (contain a dot)
+                                if (subvals[j] ~ /^-?[0-9]+$/) {
+                                    subvals[j] = subvals[j] ".0"
+                                }
+                                # Reconstruct comma-separated list
+                                new_val_str = (j == 1 ? "" : new_val_str ",") subvals[j]
+                            }
+                            # Update the field with the new value
+                            info_fields[i] = key "=" new_val_str
+                        }
+                    }
+                    # Reconstruct the semicolon-separated INFO string
+                    new_info_str = (i == 1 ? "" : new_info_str ";") info_fields[i]
+                }
+
+                # Replace the INFO column and print the line
+                $8 = new_info_str
+                print
+            }
+            AWK_CODE
+         
+        ################################
+
+        bcftools sort -m$((tot_mem_mb-2048))M -Oz2 -o ~{output_vcf} tmp.vcf
         bcftools index --threads ${np} --tbi  ~{output_vcf}
     >>>
 
