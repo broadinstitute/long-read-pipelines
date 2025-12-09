@@ -145,7 +145,7 @@ workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR {
                 prefix = prefix + "." + contig,
         }
 
-        call Niare_HC.ApplyVqsrIndel as ApplyVqsrSnp {
+        call Niare_HC.ApplyVqsrSnp as ApplyVqsrSnp {
             input:
                 input_vcf = ApplyVqsrIndel.output_vcf,
                 input_vcf_index = ApplyVqsrIndel.output_vcf_index,
