@@ -100,7 +100,16 @@ workflow SRWholeGenome_Simplified {
 
         File? interval_list
 
+        Boolean? reads_pass_qc
+
         Array[String] contigs_names_to_ignore = ["RANDOM_PLACEHOLDER_VALUE"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
+    }
+
+    # Fail fast if the reads did not pass QC:
+    if (defined(reads_pass_qc)) {
+        if (! select_first([reads_pass_qc])) {
+            call Utils.StopWorkflow{ input: reason = "Input reads did not pass QC (according to reads_pass_qc input parameter).  Aborting execution."}
+        }
     }
 
     # Read ref map into map data type so we can access its fields:

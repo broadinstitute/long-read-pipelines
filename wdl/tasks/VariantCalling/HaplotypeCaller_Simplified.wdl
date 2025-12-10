@@ -251,3 +251,75 @@ task HaplotypeCaller_GATK4_VCF {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task ReblockGVCF {
+
+    input {
+        File gvcf
+        File gvcf_index
+
+        File ref_fasta
+        File ref_fasta_fai
+        File ref_dict
+
+        String prefix
+
+        Array[Int] gq_blocks = [20, 30, 40]
+
+        Float? tree_score_cutoff
+
+        Array[String]? annotations_to_keep
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = ceil((size(gvcf, "GiB") * 4) + size(ref_fasta, "GiB") + size(ref_fasta_fai, "GiB") + size(ref_dict, "GiB") + 10)
+
+    String annotations_to_keep_arg = if defined(annotations_to_keep) then "--annotations-to-keep" else ""
+
+    command {
+        set -euxo pipefail
+
+        gatk --java-options "-Xms3000m -Xmx3000m" \
+            ReblockGVCF \
+                -R ~{ref_fasta} \
+                -V ~{gvcf} \
+                -do-qual-approx \
+                -G StandardAnnotation -G StandardHCAnnotation  \
+                -A AssemblyComplexity \
+                --annotate-with-num-discovered-alleles \
+                --floor-blocks \
+                -GQB ~{sep=" -GQB " gq_blocks} \
+                ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
+                ~{annotations_to_keep_arg} ~{sep=" --annotations-to-keep " annotations_to_keep} \
+                -O ~{prefix}.rb.g.vcf.gz
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+       cpu_cores:          2,
+       mem_gb:             4,
+       disk_gb:            disk_size,
+       boot_disk_gb:       25,
+       preemptible_tries:  2,
+       max_retries:        1,
+       docker:             "broadinstitute/gatk-nightly:2024-04-16-4.5.0.0-25-g986cb1549-NIGHTLY-SNAPSHOT"
+    }
+    # TODO: Fix this docker image to a stable version after the next GATK release!
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+
+    output {
+        File output_gvcf = "~{prefix}.rb.g.vcf.gz"
+        File output_gvcf_index = "~{prefix}.rb.g.vcf.gz.tbi"
+    }
+}
